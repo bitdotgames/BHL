@@ -1,4 +1,6 @@
-# BeHavior Language(BHL) is specifically tailored for Behavior Trees(BT) programming using familiar imperative style constructs.
+# *B*e*H*avior *L*anguage
+
+## BHL is specifically tailored for Behavior Trees(BT) programming using familiar imperative style constructs.
 
 ## BHL features:
 
@@ -15,7 +17,7 @@
 
 ## Code example:
 
-```golang
+```go
 func Unit FindUnit(Vec3 pos, float radius) {
   Unit[] us = GetUnits()
     int i = 0
@@ -32,7 +34,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
 ## Mixing BT with imperative style:
 
-```golang
+```go
 func ALPHA_APPEAR(int id, float time_to_appear) {
   float time_start = time()
     paral {
@@ -47,7 +49,7 @@ func ALPHA_APPEAR(int id, float time_to_appear) {
 
 ## Lambda support:
 
-```golang
+```go
 Unit u = FindTarget()
 float distance = 4
 u.InjectScript(func() {
@@ -60,7 +62,7 @@ u.InjectScript(func() {
 
 ## *defer* support:
 
-```golang
+```go
 seq {
   RimColorSet(color: {r:  0.65, a: 1.0}, power: 1.1)
   defer { RimColorSet(color: {a: 0}, power: 0) }
