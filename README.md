@@ -1,17 +1,17 @@
 # *B*e*H*avior *L*anguage
 
-## BHL is specifically tailored for Behavior Trees(BT) programming using familiar imperative style constructs.
+BHL is specifically tailored for Behavior Trees(BT) programming using familiar imperative style constructs
 
 ## BHL features:
 
 * ANTLR based: C# fronted(mono) + C# interpreting backend(Unity3d’s mono)
 * Statically typed
-* Supports core BT building blocks: seq, paral, paral_all, prio, not, forever, until_success, until_failure, etc
-* Basic types: float, int, bool, string, enums, arrays, classes
-* Supports imperative style control constructs: if/else, while, break, return
-* Allows user defined: functions, lambdas, classes
+* Supports core BT building blocks: *seq, paral, paral_all, prio, not, forever, until_success, until_failure,* etc
+* Basic types: *float, int, bool, string, enums, arrays, classes*
+* Supports imperative style control constructs: *if/else, while, break, return*
+* Allows user defined: *functions, lambdas, classes*
 * Supports C# bindings to user types and functions
-* Golang alike defer
+* Golang alike *defer*
 * Code hot reload
 * Strict control over memory allocations 
 
