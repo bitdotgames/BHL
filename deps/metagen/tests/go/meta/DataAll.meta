@@ -1,0 +1,47 @@
+struct DataPlayer
+  @POD @table:player @pkey:id
+  id                : uint32
+  version           : string @strmax:16
+  gold              : uint8 @default:0 #bonus
+end
+
+struct ProtoBase
+  id    : uint32
+  title : string @strmax:16 @default:"`'Hello"
+end
+
+struct ProtoBuilding extends ProtoBase
+  floors : int32
+end
+
+struct ConfHand
+  fingers : uint32
+end
+
+struct ProtoMan
+  left_hand : ConfHand
+  right_hand : ConfHand
+end
+
+struct ProtoTags
+  children : ProtoBase[]
+  tags : string[]
+end
+
+
+RPC 10 GET_ALL_PROTO(
+  ticket      : string @strmax:128
+)
+  list : ProtoBase[] @virtual
+end
+
+enum EnumStock
+  GOLD            = 108683766 # @stock/gold
+  XP              = 90110385  # @stock/xp
+end
+
+struct ConfStock
+  id    : EnumStock
+end
+
+# vim: syntax=go

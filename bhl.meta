@@ -1,0 +1,191 @@
+
+struct AST
+  children : AST[] @virtual @default:[]
+end
+
+struct AST_Interim extends AST
+end
+
+struct AST_Import extends AST
+  modules  : uint32[]
+end
+
+struct AST_Module extends AST
+  nname : uint32
+end
+
+enum EnumUnaryOp
+  NEG  = 1
+  NOT  = 2
+end
+
+struct AST_UnaryOpExp extends AST
+  type    : EnumUnaryOp
+end
+
+enum EnumBinaryOp
+  AND     = 1
+  OR      = 2
+  ADD     = 3
+  SUB     = 4
+  MUL     = 5
+  DIV     = 6
+  MOD     = 7
+  GT      = 8
+  LT      = 9
+  GTE     = 10
+  LTE     = 11
+  EQ      = 12
+  NQ      = 13
+  BIT_OR  = 14
+  BIT_AND = 15
+end
+
+struct AST_BinaryOpExp extends AST
+  type    : EnumBinaryOp
+end
+
+struct AST_New extends AST
+  ntype : uint32
+  type  : string #for debug
+end
+
+struct AST_FuncDecl extends AST
+  ntype   : uint32
+  type    : string #for debug
+  nname1  : uint32
+  name    : string @default:"" #for debug
+  nname2  : uint32 #NOTE: due to msgpack 64 bit error on Windows we have to split nname
+end
+
+struct AST_UseParam
+  nname     : uint32
+  name      : string @default:"" #for debug
+end
+
+struct AST_LambdaDecl extends AST_FuncDecl
+  useparams : AST_UseParam[] 
+end
+
+struct AST_TypeCast extends AST
+  ntype   : uint32
+  type    : string @default:"" #for debug
+end
+
+enum EnumCall
+  VAR      = 1
+  MVAR     = 10
+  FUNC     = 3
+  MFUNC     = 30
+  ARR_IDX  = 4
+  FUNC2VAR = 5
+  VAR2FUNC = 6
+end
+
+#TODO: this one is too generic, 
+#      extract more fine-grained AST nodes out of it
+struct AST_Call extends AST
+  type        : EnumCall
+  nname1      : uint32
+  name        : string @default:"" #for debug
+  cargs_num   : int32
+  scope_ntype : uint32
+  nname2      : uint32 #NOTE: due to msgpack 64 bit error on Windows we have to split nname
+end
+
+struct AST_Return extends AST
+end
+
+struct AST_Break extends AST
+end
+
+enum EnumLiteral
+  NUM   = 1
+  BOOL  = 2
+  STR   = 3
+  NIL   = 4
+end
+
+struct AST_Literal extends AST
+  type    : EnumLiteral
+  nval    : double @default:0
+  sval    : string @default:""
+end
+
+struct AST_VarDecl extends AST
+  type    : string
+  nname   : uint32
+  name    : string @default:"" #for debug
+end
+
+struct AST_Assign extends AST
+end
+
+enum EnumBlock
+  FUNC            = 0 
+  SEQ             = 1 
+  DEFER           = 2 
+  PARAL           = 3 
+  PARAL_ALL       = 4 
+  PRIO            = 5 
+  FOREVER         = 6 
+  IF              = 7 
+  WHILE           = 8 
+  FOR             = 9 
+  UNTIL_FAILURE   = 10
+  UNTIL_FAILURE_  = 11 #always returns success
+  UNTIL_SUCCESS   = 12
+  NOT             = 13
+  SEQ_            = 14 #always returns success 
+  EVAL            = 15
+  GROUP           = 16 
+end
+
+struct AST_Block extends AST
+  type    : EnumBlock
+end
+
+struct AST_JsonObj extends AST
+  ntype : uint32
+end
+
+struct AST_JsonArr extends AST
+  ntype : uint32
+end
+
+struct AST_JsonPair extends AST
+  nname       : uint32
+  name        : string @default:"" #for debug
+  scope_ntype : uint32
+end
+
+///////////////////////////////////////////////////////
+
+struct AST_Func2Assets
+  func1  : uint32 #splitting uint64 due to windows msgpack issues
+  func2  : uint32
+  assets : string[] 
+end
+
+struct AST_Func2Crefs
+  func1  : uint32  #splitting uint64 due to windows msgpack issues
+  func2  : uint32
+  crefs  : string[] 
+end
+
+//NOTE: currently result is written in a more low-level fashion 
+//      since metagen doesn't support binary blobs
+//struct AST_ExportItem
+// format    : int32  #0 - binary, 1 - lz4
+// module_id : uint32 
+// module    : binary
+//end
+//
+//struct AST_Result
+//  items   : AST_ExportItem[]
+//end
+
+struct AST_PostProcResult
+  func2assets : AST_Func2Assets[]
+  func2crefs  : AST_Func2Crefs[]
+end

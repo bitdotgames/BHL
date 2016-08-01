@@ -1,0 +1,12 @@
+syntax: glob
+
+# Mac OS X
+*.DS_Store
+.tags
+
+tmp
+src/autogen.cs*
+*.exe
+*.mdb
+bhl*.dll*
+

@@ -1,0 +1,215 @@
+#!/usr/bin/env php
+<?php
+$BHL_ROOT = dirname(__FILE__).'/';
+require_once($BHL_ROOT . '/deps/taskman.inc.php');
+require_once($BHL_ROOT . '/deps/helpers.inc.php');
+
+taskman_run($argv);
+
+/**
+ * @deps genmeta
+ */
+function task_build_dll()
+{
+  global $BHL_ROOT;
+
+  mcs_build(array(
+    "$BHL_ROOT/deps/msgpack/Compiler/*.cs",
+    "$BHL_ROOT/deps/msgpack/*.cs",
+    "$BHL_ROOT/deps/metagen/metagen.cs",
+    "$BHL_ROOT/src/g/*.cs",
+    "$BHL_ROOT/src/*.cs",
+  ),
+  "$BHL_ROOT/bhl_front.dll",
+  "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library"
+  );
+}
+
+function task_clean()
+{
+  global $BHL_ROOT;
+
+  ensure_rm("$BHL_ROOT/bhl_front.dll");
+  ensure_rm("$BHL_ROOT/bhl_front.dll.mdb");
+  ensure_rm("$BHL_ROOT/bhl.exe");
+  ensure_rm("$BHL_ROOT/bhl.exe.mdb");
+  ensure_rm("$BHL_ROOT/text.exe");
+  ensure_rm("$BHL_ROOT/text.exe.mdb");
+}
+
+/**
+ * @deps genmeta,geng
+ */
+function task_regen()
+{}
+
+function task_geng()
+{   
+  global $BHL_ROOT;
+
+  ensure_mkdir("$BHL_ROOT/tmp");
+
+  ensure_copy("$BHL_ROOT/bhl.g", "$BHL_ROOT/tmp/bhl.g");
+  ensure_copy("$BHL_ROOT/bin/g4sharp", "$BHL_ROOT/tmp/g4sharp");
+
+  taskman_shell_ensure("cd $BHL_ROOT/tmp && ./g4sharp bhl.g && cp bhl*.cs ../src/g/ ");
+}
+
+/**
+ * @deps build_dll
+ */
+function task_run(array $args = array())
+{
+  global $BHL_ROOT;
+
+  $sources = array(
+    "$BHL_ROOT/bhl.cs",
+    "$BHL_ROOT/bhl_front.dll", 
+    "$BHL_ROOT/lz4.dll", 
+    "$BHL_ROOT/mono_opts.dll"
+  );
+
+  if(taskman_propor('USER_SOURCES', ''))
+  {
+    $user_sources = explode(',', taskman_prop('USER_SOURCES', ''));
+    $user_sources[] = "$BHL_ROOT/bhl_front.dll";
+    mcs_build($user_sources,
+    "$BHL_ROOT/bhl_user.dll",
+    "-define:BHL_FRONT -debug -target:library"
+    );
+    $sources[] = "$BHL_ROOT/bhl_user.dll";
+  }
+
+  if(taskman_propor('POSTPROC_SOURCES', ''))
+  {
+    $postproc_sources = explode(',', taskman_prop('POSTPROC_SOURCES', ''));
+    $postproc_sources[] = "$BHL_ROOT/bhl_front.dll";
+    mcs_build($postproc_sources,
+    "$BHL_ROOT/bhl_postproc.dll",
+    "-define:BHL_FRONT -debug -target:library"
+    );
+    $args[] = "--postproc_dll=$BHL_ROOT/bhl_postproc.dll";
+  }
+
+  mcs_build($sources,
+  "$BHL_ROOT/bhl.exe",
+  "-define:BHL_FRONT -debug"
+  );
+
+  mono_run("$BHL_ROOT/bhl.exe", $args, '--debug');
+}
+
+/**
+ * @deps build_dll
+ */
+function task_test()
+{
+  global $BHL_ROOT;
+
+  mcs_build(array(
+    "$BHL_ROOT/test.cs",
+    "$BHL_ROOT/bhl_front.dll",
+  ),
+  "$BHL_ROOT/test.exe",
+  "-define:BHL_FRONT -debug"
+  );
+
+  mono_run("$BHL_ROOT/test.exe", array(), '--debug');
+}
+
+function mcs_bin()
+{
+  return "mcs";
+}
+
+function mono_bin()
+{
+  return "mono";
+}
+
+function _bhl_str_ends_with($haystack, $needle)
+{
+    // search forward starting from end minus needle length characters
+    return $needle === "" || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== false);
+}
+
+function mcs_build(array $file_specs, $result, $opts = '')
+{
+  global $BHL_ROOT;
+
+  $antlr_dll = "$BHL_ROOT/Antlr4.Runtime.dll"; 
+  $refs = array($antlr_dll);
+
+  $files = array();
+  foreach($file_specs as $file_spec)
+  {
+    if(strpos($file_spec, '*') !== false)
+    {
+      $files = array_merge($files, glob($file_spec));
+    }
+    else
+    {
+      if(!is_file($file_spec))
+        throw new Exception("Bad file '$file_spec'");
+      $files[] = $file_spec;
+    }
+  }
+
+  foreach($files as $idx => $file)
+  {
+    if(_bhl_str_ends_with($file, '.dll'))
+    {
+      unset($files[$idx]);
+      $refs[] = $file;
+    }
+  } 
+
+  if(!$files)
+    throw new Exception("No files");
+
+  if(need_to_regen($result, $files) || need_to_regen($result, $refs))
+  {
+    $cmd = mcs_bin() . ($refs ? " -r:" . implode(" -r:", $refs) : "") . " $opts -out:$result " . implode(" ", $files); 
+    //var_dump($cmd);
+    taskman_shell_ensure($cmd);
+  }
+}
+
+function mono_run($exe, array $args = array(), $opts = '')
+{
+  //NOTE: on Windows we execute binaries natively, ignoring any opts however
+  if(is_win())
+  {
+    $exe = realpath($exe);
+    taskman_shell_ensure("$exe " . implode(' ', $args)); 
+  }
+  else
+    taskman_shell_ensure(mono_bin() . " $opts $exe " . implode(' ', $args));
+}
+
+function task_genmeta()
+{
+  global $BHL_ROOT;
+
+  include_once("$BHL_ROOT/deps/metagen/metagen.inc.php");
+  include_once("$BHL_ROOT/deps/metagen/targets/cs/cs_generator.inc.php");
+
+  $meta = mtg_parse_meta(array($BHL_ROOT));
+
+  $codegen = new mtgCsCodegen();
+  $codegen->namespace = 'bhl';
+
+  mtg_run(new mtgCsGenerator(), array( 
+    "codegen" => $codegen,
+    "meta" => $meta,
+    "out-dir" => "$BHL_ROOT/autogen" , 
+    "bundle" => "$BHL_ROOT/src/autogen.cs", 
+  ));
+}
+
+function task_ast_dump(array $args)
+{
+  $bin = file_get_contents($args[0]);
+  $unpacked = msgpack_unpack($bin);
+  var_dump($unpacked);
+}

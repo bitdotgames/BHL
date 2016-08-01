@@ -1,0 +1,293 @@
+grammar bhl;
+
+program
+	: progblock* EOF
+	;
+
+progblock
+  : imports? funcDecls
+  ;
+
+imports 
+  : mimport+
+  ;
+
+mimport
+  : 'import' NORMALSTRING
+  ;
+
+funcDecls 
+  : funcDecl+
+  ;
+
+type 
+	: NAME FNARGS? ARR?
+  ;
+
+//expressions
+explist
+  : exp (',' exp)*
+  ;
+
+exp
+  : 'null'                                                  #ExpLiteralNull
+  | 'false'                                                 #ExpLiteralFalse
+  | 'true'                                                  #ExpLiteralTrue
+  | number                                                  #ExpLiteralNum
+  | string                                                  #ExpLiteralStr
+	| callExp                                                 #ExpCall
+	| staticCallExp                                           #ExpStaticCall
+  | 'new' type                                              #ExpNew
+  | funcLambda                                              #ExpLambda
+	| '(' type ')' exp                                        #ExpTypeCast
+	| operatorUnary exp								                        #ExpUnary
+	| '(' exp ')'                                             #ExpParen
+	| exp operatorBitAnd exp							                    #ExpBitAnd
+	| exp operatorBitOr exp	                                  #ExpBitOr
+	| exp operatorMulDivMod exp		                            #ExpMulDivMod
+	| exp operatorAddSub exp						                      #ExpAddSub
+	| exp operatorComparison exp					                    #ExpCompare
+	| exp operatorAnd exp							                        #ExpAnd
+	| exp operatorOr exp	                                    #ExpOr
+  | 'eval' block                                            #ExpEval
+	;
+
+//statements
+statement
+  : varDeclare                                                  #VarDecl
+	| callExp '=' exp                                             #Assign
+	| callExp 																									  #SymbCall
+	| mainIf elseIf* else?                                        #If
+	| 'while' exp block    																        #While
+	| 'break'                                                     #Break
+  | 'return' exp?                                               #Return
+	| 'seq' block  																 						    #Seq
+	| 'seq_' block  																 						  #Seq_
+	| 'paral' block  																							#Paral
+	| 'paral_all' block  			 																		#ParalAll
+	| 'forever' block  																 						#Forever
+	| 'defer' block  																 							#Defer
+	| 'prio' block  																 							#Prio
+	| 'until_failure' block  	 											 							#UntilFailure
+	| 'until_failure_' block  	 											 			 			#UntilFailure_
+	| 'until_success' block  	 											 							#UntilSuccess
+	| 'not' block  	 											 							          #Not
+  | block                                                       #BlockNested
+	;
+
+mainIf
+  : 'if' exp block 
+  ;
+
+elseIf
+  : 'else' 'if' exp block
+  ;
+
+else
+  : 'else' block
+  ;
+
+//vars && funcs
+callExp
+	: callExpItem memberAccess* 
+	;
+
+callExpItem
+  : NAME callArgs? arrAccess?
+  ;
+
+//for now supporting only Foo::Bar type of static call
+staticCallExp
+  : NAME staticCallItem
+  ;
+
+staticCallItem
+  : '::' NAME
+  ;
+
+arrAccess
+	: ('[' exp ']')
+	;
+
+memberAccess
+	: '.' callExpItem
+	;
+
+retstat
+	: 'return' explist?
+	;
+
+callArgs
+	: '(' callArg? (',' callArg)* ')'
+	;
+
+callArg
+	: (NAME ':') ? (exp | jsonObject)
+  ;
+
+block 
+	: '{' statement* '}'
+	;
+
+funcDecl
+	: 'func' type? NAME '(' funcParams? ')' funcBlock
+	;
+
+funcBlock
+  : block
+  ;
+
+funcLambda
+  : 'func' type? '(' funcParams? ')' funcBlock
+  ;
+
+funcParams
+	: varDeclare ( ',' varDeclare )*
+	;
+
+varDeclare
+  : type NAME initVar?
+  ;
+
+initVar
+	: '=' exp
+	;
+
+operatorOr 
+	: '||';
+
+operatorAnd 
+	: '&&';
+
+operatorBitOr 
+	: '|';
+
+operatorBitAnd 
+	: '&';
+
+operatorComparison 
+	: '<' | '>' | '<=' | '>=' | '!=' | '==';
+
+operatorAddSub
+	: '+' | '-';
+
+operatorMulDivMod
+	: '*' | '/' | '%';
+
+operatorUnary
+    : '!' | '-';
+
+number
+    : INT | HEX | FLOAT
+    ;
+
+string
+    : NORMALSTRING
+    ;
+
+jsonObject
+    :   '{' jsonPair (',' jsonPair)* '}'
+    |   jsonEmptyObj
+    ;
+
+jsonEmptyObj
+    : OBJ
+    ;
+
+jsonPair
+    :   NAME ':' jsonValue 
+    ;
+
+jsonArray
+    :   '[' jsonValue (',' jsonValue)* ']'
+    |   jsonEmptyArr
+    ;
+
+jsonEmptyArr
+    : ARR
+    ;
+
+jsonValue
+    :   exp
+    |   jsonObject  // recursion
+    |   jsonArray   // recursion
+    ;
+
+////////////////////////////// lexer /////////////////////////////
+
+NAME
+  : [a-zA-Z_][a-zA-Z_0-9]*
+  ;
+
+ARR
+  : '[' ']'
+  ;
+
+OBJ
+  : '{' '}'
+  ;
+
+FNARGS
+  : '^' '(' ')'
+  ;
+
+NORMALSTRING
+	: '"' ( EscapeSequence | ~('\\'|'"') )* '"'  //" let's keep text editor happy
+	;
+
+INT
+	: Digit+
+	;
+
+HEX
+	: '0' [xX] HexDigit+
+	;
+
+FLOAT
+	: Digit+ '.' Digit* ExponentPart?
+	| '.' Digit+ ExponentPart?
+	| Digit+ ExponentPart
+	;
+
+fragment
+ExponentPart
+	: [eE] [+-]? Digit+
+	;
+
+fragment
+EscapeSequence
+	: '\\' [abfnrtvz"'\\] //" let's keep text editor happy
+	| '\\' '\r'? '\n'
+	;
+
+fragment
+Digit
+	: [0-9]
+	;
+
+fragment
+HexDigit
+	: [0-9a-fA-F]
+	;
+
+//white space
+WS
+  : [ \t]+ -> channel(HIDDEN)
+  ;
+
+//line terminators
+NL
+    : ( '\r' '\n'?
+        |   '\n'
+      )
+   -> channel(HIDDEN)
+  ;
+
+//comments
+SINGLE_LINE_COMMENT 
+  : '//' ~[\r\n]* -> channel(HIDDEN)
+  ;
+
+DELIMITED_COMMENT 
+  :   '/*' .*? '*/' -> channel(HIDDEN)
+  ;
