@@ -210,13 +210,11 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
   static public void DefaultConverter(DynVal dv, ref T res)
   {
-    res = (T)dv.obj;
-  }
-
-  static public void EnumConverter(DynVal dv, ref T res)
-  {
     //TODO: is there a non-allocating way to achieve the same?
-    res = (T)Enum.ToObject(typeof(T), (int)dv.num);
+    if(typeof(T).IsEnum)
+      res = (T)Enum.ToObject(typeof(T), (int)dv.num);
+    else
+      res = (T)dv.obj;
   }
 
   public ArrayTypeSymbolT(GlobalScope globs, Type original, ConverterCb converter = null) 
