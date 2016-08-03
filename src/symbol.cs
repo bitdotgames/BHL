@@ -208,9 +208,15 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate void ConverterCb(DynVal dv, ref T res);
   public static ConverterCb Convert;
 
-  static void DefaultConverter(DynVal dv, ref T res)
+  static public void DefaultConverter(DynVal dv, ref T res)
   {
     res = (T)dv.obj;
+  }
+
+  static public void EnumConverter(DynVal dv, ref T res)
+  {
+    //TODO: is there a non-allocating way to achieve the same?
+    res = (T)Enum.ToObject(typeof(T), (int)dv.num);
   }
 
   public ArrayTypeSymbolT(GlobalScope globs, Type original, ConverterCb converter = null) 
