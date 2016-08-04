@@ -5141,6 +5141,38 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestIfWithMultipleReturns()
+  {
+    string bhl = @"
+
+    func int test(int b) 
+    {
+      if(b == 1) {
+        return 2
+      }
+
+      return 3
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.setArgs(new DynVal(1));
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 2);
+    AssertEqual(intp.StackCount(), 0);
+
+    node.setArgs(new DynVal(10));
+    res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 3);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
   public void TestIfFalseComplexCondition()
   {
     string bhl = @"
