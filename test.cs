@@ -32,6 +32,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     var res = intp.ExecNode(node).val;
 
+    //NodeDump(node);
     AssertEqual(res.num, 100);
     AssertEqual(intp.StackCount(), 0);
   }

@@ -1334,6 +1334,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
         node.AddChild(st);
     }
 
+    //NOTE: replacing last return in a function with its statement 
+    if(node.children.Count > 0 && node.children[node.children.Count-1] is AST_Return)
+    {
+      var ret = node.children[node.children.Count-1]; 
+      if(ret.children.Count > 0)
+        node.children[node.children.Count-1] = ret.children[0];
+    }
+
     if(new_local_scope)
       curr_scope = curr_scope.GetEnclosingScope();
 
