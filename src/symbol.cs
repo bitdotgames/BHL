@@ -40,8 +40,8 @@ public class WrappedNode
     var interval = tree.SourceInterval;
     var begin = tokens.Get(interval.a);
 
-    string line = string.Format("(@{0},{1})", begin.Line, begin.Column);
-    return tree.GetText() + ts + line;
+    string line = string.Format("@({0},{1}) ", begin.Line, begin.Column);
+    return line + tree.GetText() + ts;
   }
 
   public string LocationAfter()
@@ -53,8 +53,8 @@ public class WrappedNode
     var interval = tree.SourceInterval;
     var end = tokens.Get(interval.b);
 
-    string line = string.Format("(@{0},{1})", end.Line, end.Column);
-    return tree.GetText() + ts + line;
+    string line = string.Format("@({0},{1}) ", end.Line, end.Column);
+    return line + tree.GetText() + ts;
   }
 #else
   public string Location()

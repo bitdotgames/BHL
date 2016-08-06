@@ -13,11 +13,18 @@ using Antlr4.Runtime.Sharpen;
 
 namespace bhl {
 
+public class ParseError : Exception
+{
+  public ParseError(string str)
+    : base(str)
+  {}
+}
+
 public class ErrorLexerListener : IAntlrErrorListener<int>
 {
   public virtual void SyntaxError(IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
   {
-    throw new Exception("line " + line + ":" + charPositionInLine + " " + msg);
+    throw new ParseError("@(" + line + "," + charPositionInLine + ") " + msg);
   }
 }
 
@@ -30,7 +37,7 @@ public class ErrorParserListener : IParserErrorListener
 {
   public virtual void SyntaxError(IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
   {
-    throw new Exception("line " + line + ":" + charPositionInLine + " " + msg);
+    throw new ParseError("@(" + line + "," + charPositionInLine + ") " + msg);
   }
 
 	public virtual void ReportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)
@@ -79,19 +86,25 @@ public class AST_Builder : bhlBaseVisitor<AST>
   
   public static AST_Module Source2AST(Module module, Stream src, GlobalScope globs, ModuleRegistry mr, bool defs_only = false)
   {
-    var tokens = Source2Tokens(src);
-    var p = new bhlParser(tokens);
-    p.AddErrorListener(new ErrorParserListener());
-    p.ErrorHandler = new ErrorStrategy();
+    try
+    {
+      var tokens = Source2Tokens(src);
+      var p = new bhlParser(tokens);
+      p.AddErrorListener(new ErrorParserListener());
+      p.ErrorHandler = new ErrorStrategy();
 
-    var cst = p.program();
+      var cst = p.program();
 
-    var b = new AST_Builder(module, tokens, globs, mr, defs_only);
-    var ast = b.VisitProgram(cst) as AST_Module;
-    if(ast == null)
-      throw new Exception("Bad AST");
-
-    return ast;
+      var b = new AST_Builder(module, tokens, globs, mr, defs_only);
+      var ast = b.VisitProgram(cst) as AST_Module;
+      if(ast == null)
+        throw new Exception("Bad AST");
+      return ast;
+    }
+    catch(ParseError e)
+    {
+      throw new UserError(module.file_path, e.Message);
+    }
   }
 
   static public void Source2Bin(Module module, Stream src, Stream dst, GlobalScope globs, ModuleRegistry mr)
