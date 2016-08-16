@@ -50,42 +50,10 @@ public %type_name% %class% %parent%
     return copy;
   }
 
-  public %virt_method% MetaIoError write(IDataWriter writer) 
-  {
-    MetaIoError err = writer.BeginArray(getFieldsCount());
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    err = writeFields(writer);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    return writer.EndArray();
-  }
-
   public %virt_method% MetaIoError writeFields(IDataWriter writer) 
   {
     MetaIoError err = MetaIoError.SUCCESS;
     %write_buffer%
-    return err;
-  }
-  
-  public %virt_method% MetaIoError read(IDataReader reader) 
-  {
-    MetaIoError err = MetaIoError.SUCCESS;
-
-    err = reader.BeginArray();
-    if(err != MetaIoError.SUCCESS)
-      return err == MetaIoError.DATA_MISSING ? MetaIoError.DATA_MISSING0 : err;
-    
-    err = readFields(reader);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    err = reader.EndArray();
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
     return err;
   }
 

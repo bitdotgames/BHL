@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.IO;
+using game; //for metagen
 
 namespace bhl {
 
