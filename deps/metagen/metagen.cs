@@ -23,6 +23,8 @@ public interface IMetaStruct
 {
   string CLASS_NAME();
   uint CLASS_ID();
+  MetaIoError write(IDataWriter writer);  //could be moved to extension if we did't use structs
+  MetaIoError read(IDataReader reader);   //could be moved to extension if we did't use structs
   MetaIoError writeFields(IDataWriter writer); //write fields ONLY, without struct meta info
   MetaIoError readFields(IDataReader reader); //read fields ONLY, without struct meta info
   int getFieldsCount();
@@ -47,60 +49,6 @@ public interface IRpc
   bool isDone();
   bool isFailed();
   void reset();
-}
-
-public static class MetagenExtensions
-{
-  /////////////////////////////////////////////
-
-  static public MetaIoError read(this IMetaStruct m, IDataReader reader) 
-  {
-    MetaIoError err = MetaIoError.SUCCESS;
-
-    err = reader.BeginArray();
-    if(err != MetaIoError.SUCCESS)
-      return err == MetaIoError.DATA_MISSING ? MetaIoError.DATA_MISSING0 : err;
-    
-    err = m.readFields(reader);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    err = reader.EndArray();
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    return err;
-  }
-
-  static public MetaIoError write(this IMetaStruct m, IDataWriter writer) 
-  {
-    MetaIoError err = writer.BeginArray(m.getFieldsCount());
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    err = m.writeFields(writer);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    return writer.EndArray();
-  }
-
-  /////////////////////////////////////////////
-
-  static public bool isDone(this IRpc r)
-  {
-    return r.getError() != null;
-  }
-
-  static public bool isSuccess(this IRpc r)
-  {
-    return r.getError() == null || r.getError().isOk();
-  }
-
-  static public bool isFailed(this IRpc r)
-  {
-    return r.isDone() && !r.isSuccess();
-  }
 }
 
 public interface IDataReader 
