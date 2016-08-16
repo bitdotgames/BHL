@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using game;
 
 namespace bhl {
 
@@ -1560,6 +1561,136 @@ public class Interpreter : AST_Visitor
     curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE_PUSH_CTX));
 
     jcts.Pop();
+  }
+}
+
+public class UserBindings
+{
+  public virtual void Register(GlobalScope globs) {}
+}
+
+public class EmptyUserBindings : UserBindings {}
+
+public static class InterpreterRegistry
+{
+  const int FMT_BIN = 0;
+  const int FMT_LZ4 = 1;
+
+  static Stream source;
+  static MsgPackDataReader reader;
+  static Lz4DecoderStream decoder = new Lz4DecoderStream();
+  static MemoryStream mod_stream = new MemoryStream();
+  static MsgPackDataReader mod_reader;
+  static MemoryStream lz_stream = new MemoryStream();
+  static MemoryStream lz_dst_stream = new MemoryStream();
+
+  public class Entry
+  {
+    public long stream_pos;
+    public int format;
+  }
+
+  static Dictionary<uint, Entry> entries = new Dictionary<uint, Entry>();
+
+  static public void Load(Stream source_)
+  {
+    entries.Clear();
+
+    source = source_;
+    source.Position = 0;
+
+    mod_reader = new MsgPackDataReader(mod_stream);
+
+    reader = new MsgPackDataReader(source);
+
+    int total_modules = 0;
+
+    Util.Verify(reader.ReadI32(ref total_modules) == MetaIoError.SUCCESS);
+    //Log.Debug("Total modules: " + total_modules);
+    while(total_modules-- > 0)
+    {
+      int format = 0;
+      Util.Verify(reader.ReadI32(ref format) == MetaIoError.SUCCESS);
+
+      uint id = 0;
+      Util.Verify(reader.ReadU32(ref id) == MetaIoError.SUCCESS);
+
+      var ent = new Entry();
+      ent.format = format;
+      ent.stream_pos = source.Position;
+      if(entries.ContainsKey(id))
+        Util.Verify(false, "Key already exists: " + id);
+      entries.Add(id, ent);
+
+      //skipping binary blob
+      var tmp_buf = TempBuffer.Get();
+      int tmp_buf_len = 0;
+      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
+      TempBuffer.Update(tmp_buf);
+    }
+  }
+
+  static public AST_Module LoadModule(uint id)
+  {
+    Entry ent;
+    if(!entries.TryGetValue(id, out ent))
+      Util.Verify(false, "Entry not found: " + id);
+
+    byte[] res = null;
+    int res_len = 0;
+    DecodeBin(ent, ref res, ref res_len);
+
+    mod_stream.SetData(res, 0, res_len);
+    mod_reader.setPos(0);
+
+    Util.SetupAutogenFactory();
+
+    var ast = new AST_Module();
+    Util.Verify(ast.read(mod_reader) == MetaIoError.SUCCESS);
+
+    Util.RestoreAutogenFactory();
+
+    return ast;
+  }
+
+  static void DecodeBin(Entry ent, ref byte[] res, ref int res_len)
+  {
+    if(ent.format == FMT_BIN)
+    {
+      var tmp_buf = TempBuffer.Get();
+      int tmp_buf_len = 0;
+      reader.setPos(ent.stream_pos);
+      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
+      TempBuffer.Update(tmp_buf);
+      res = tmp_buf;
+      res_len = tmp_buf_len;
+    }
+    else if(ent.format == FMT_LZ4)
+    {
+      var lz_buf = TempBuffer.Get();
+      int lz_buf_len = 0;
+      reader.setPos(ent.stream_pos);
+      Util.Verify(reader.ReadRaw(ref lz_buf, ref lz_buf_len) == MetaIoError.SUCCESS);
+      TempBuffer.Update(lz_buf);
+
+      var dst_buf = TempBuffer.Get();
+      var lz_size = (int)BitConverter.ToUInt32(lz_buf, 0);
+      if(lz_size > dst_buf.Length)
+        Array.Resize(ref dst_buf, lz_size);
+      TempBuffer.Update(dst_buf);
+
+      lz_dst_stream.SetData(dst_buf, 0, dst_buf.Length);
+      //NOTE: uncompressed size is only added by PHP implementation
+      //taking into account first 4 bytes which store uncompressed size
+      //lz_stream.SetData(lz_buf, 4, lz_buf_len-4);
+      lz_stream.SetData(lz_buf, 0, lz_buf_len);
+      decoder.Reset(lz_stream);
+      decoder.CopyTo(lz_dst_stream);
+      res = lz_dst_stream.GetBuffer();
+      res_len = (int)lz_dst_stream.Position;
+    }
+    else
+      throw new Exception("Unknown format");
   }
 }
 

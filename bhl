@@ -41,7 +41,8 @@ function task_build_back_dll(array $args)
     "$BHL_ROOT/src/scope.cs", 
     "$BHL_ROOT/src/backend.cs", 
     "$BHL_ROOT/src/nodes.cs", 
-    "$BHL_ROOT/src/util.cs"
+    "$BHL_ROOT/src/util.cs",
+    "$BHL_ROOT/src/lz4.cs",
    ), 
   "$BHL_ROOT/bhl_back.dll",
   "-debug -target:library",
@@ -103,7 +104,7 @@ function task_run(array $args = array())
       "$BHL_ROOT/bhl_user.dll",
       "-define:BHL_FRONT -debug -target:library"
     );
-    $sources[] = "$BHL_ROOT/bhl_user.dll";
+    $args[] = "--bindings_dll=$BHL_ROOT/bhl_user.dll";
   }
 
   if(taskman_propor('POSTPROC_SOURCES', ''))

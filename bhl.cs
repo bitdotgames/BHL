@@ -22,21 +22,24 @@ public class BHL
 
   public static void Main(string[] args)
   {
-    string dir = "";
+    string src_dir = "";
 		string res_file = "";
     string cache_dir = "";
     string err_file = "";
     string postproc_dll_path = "";
+    string userbindings_dll_path = "";
 
     var p = new OptionSet () {
 			{ "dir=", "source dir",
-				v => dir = v },
+				v => src_dir = v },
 			{ "result=", "result file",
 				v => res_file = v },
 			{ "cache_dir=", "cache dir",
 				v => cache_dir = v },
 			{ "postproc_dll=", "posprocess dll path",
 				v => postproc_dll_path = v },
+			{ "bindings_dll=", "bindings dll path",
+				v => userbindings_dll_path = v },
 			{ "error=", "error file",
 				v => err_file = v },
 			{ "d", "debug version",
@@ -52,8 +55,8 @@ public class BHL
       Usage(e.Message);
     }
 
-    if(dir == "")
-      Usage("Directory not set");
+    if(src_dir == "")
+      Usage("Source directory not set");
 
     if(res_file == "")
       Usage("Result file path not set");
@@ -64,11 +67,21 @@ public class BHL
     if(err_file == "")
       Usage("Err file not set");
 
-    if(!Directory.Exists(dir))
+    if(!Directory.Exists(src_dir))
       Usage("Source directory is not valid");
+    src_dir = Path.GetFullPath(src_dir);
 
-    PostProcessor postproc = new NonePostProcessor();
+    UserBindings userbindings = new EmptyUserBindings();
+    if(userbindings_dll_path != "")
+    {
+      var userbindings_assembly = System.Reflection.Assembly.LoadFrom(userbindings_dll_path);
+      var userbindings_class = userbindings_assembly.GetTypes()[0];
+      userbindings = System.Activator.CreateInstance(userbindings_class) as UserBindings;
+      if(userbindings == null)
+        Usage("User bindings are invalid");
+    }
 
+    PostProcessor postproc = new EmptyPostProcessor();
     if(postproc_dll_path != "")
     {
       var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll_path);
@@ -78,13 +91,15 @@ public class BHL
         Usage("User postprocessor is invalid");
     }
 
-    Directory.CreateDirectory(Path.GetDirectoryName(res_file));
+    var res_dir = Path.GetDirectoryName(res_file); 
+    if(res_dir.Length > 0)
+      Directory.CreateDirectory(res_dir);
 
     Directory.CreateDirectory(cache_dir);
 
     var files = new List<string>();
 
-    DirWalk(dir, 
+    DirWalk(src_dir, 
       delegate(string file) 
       { 
         if(TestFile(file))
@@ -100,7 +115,7 @@ public class BHL
 		//Shuffle(files);
 
     var globs = SymbolTable.CreateBuiltins();
-    BHL_Bindings.Register(globs);
+    userbindings.Register(globs);
 
     Util.SetupAutogenFactory();
 
@@ -116,7 +131,7 @@ public class BHL
 
       var w = new Worker();
       w.id = ++wid;
-      w.inc_dir = dir;
+      w.inc_dir = src_dir;
       w.cache_dir = cache_dir;
       w.bindings = globs;
       w.files = files;

@@ -227,6 +227,28 @@ public static class Extensions
     stream.Position = 0;
     return stream;
   }
+
+  public static void SetData(this MemoryStream ms, byte[] b, int offset, int blen)
+  {
+    ms.SetLength(0);
+    ms.Write(b, offset, blen);
+    ms.Position = 0;
+  }
+
+  public static int CopyTo(this Stream src, Stream dest)
+  {
+    int size = (src.CanSeek) ? Math.Min((int)(src.Length - src.Position), 0x2000) : 0x2000;
+    byte[] buffer = new byte[size];
+    int total = 0;
+    int n;
+    do
+    {
+      n = src.Read(buffer, 0, buffer.Length);
+      dest.Write(buffer, 0, n);
+      total += n;
+    } while (n != 0);           
+    return total;
+  }
 }
 
 static public class Util
@@ -239,6 +261,23 @@ static public class Util
   static public void DefaultDebug(string str)
   {
     Console.WriteLine("[DEBUG] " + str);
+  }
+
+  ////////////////////////////////////////////////////////
+
+  public static void Verify(bool condition)
+  {
+    if(!condition) throw new Exception();
+  }
+
+  public static void Verify(bool condition, string fmt, params object[] vals)
+  {
+    if(!condition) throw new Exception(string.Format(fmt, vals));
+  }
+
+  public static void Verify(bool condition, string msg)
+  {
+    if(!condition) throw new Exception(msg);
   }
 
   ////////////////////////////////////////////////////////
@@ -1093,235 +1132,30 @@ public class FastStack<T>
   }
 }
 
-//NOTE: seems to be broken
-public class FastDictionary<K, V>
+//NOTE: cache for less GC operations
+public static class TempBuffer
 {
-  int[] hashes;
-  DictionaryEntry[] entries;
-  const int initialsize = 89;
-  int nextfree;
-  const float loadfactor = 1f;
-  static readonly uint[] primeSizes = new uint[]{ 89, 179, 359, 719, 1439, 2879, 5779, 11579, 23159, 46327,
-    92657, 185323, 370661, 741337, 1482707, 2965421, 5930887, 11861791,
-    23723599, 47447201, 94894427, 189788857, 379577741, 759155483};
+  static byte[][] tmp_bufs = new byte[][] { new byte[512], new byte[512], new byte[512] };
+  static int tmp_buf_counter = 0;
+  static public int stats_max_buf = 0;
 
-  //int maxitems = (int)( initialsize * loadfactor );
-
-  private struct DictionaryEntry
+  static public byte[] Get()
   {
-    public K key;
-    public int next;
-    public V value;
-    public uint hashcode;
+    var buf = tmp_bufs[tmp_buf_counter % 3];
+    ++tmp_buf_counter;
+    return buf;
   }
 
-  public FastDictionary()
+  static public void Update(byte[] buf)
   {
-    Initialize();
+    var idx = (tmp_buf_counter-1) % 3;
+    //for debug
+    //var curr = tmp_bufs[idx];
+    //if(curr != buf)
+    //  Log.Debug(curr.Length + " VS " + buf.Length);
+    tmp_bufs[idx] = buf;
+    stats_max_buf = stats_max_buf < buf.Length ? buf.Length : stats_max_buf;
   }
-
-  public int InitOrGetPosition(K key)
-  {
-    return Add(key, default(V), false);
-  }
-
-  public V GetAtPosition(int pos)
-  {
-    return entries[pos].value;
-  }
-
-  public void StoreAtPosition(int pos, V value)
-  {
-    entries[pos].value = value;
-  }
-
-  public int Add(K key, V value, bool overwrite)
-  {
-    if (nextfree >= entries.Length)
-      Resize();
-
-    uint hash = (uint)key.GetHashCode();
-
-    uint hashPos = hash % (uint)hashes.Length;
-
-    int entryLocation = hashes[hashPos];
-
-    int storePos = nextfree;
-
-
-    if (entryLocation != -1) // already there
-    {
-      int currEntryPos = entryLocation;
-
-      do
-      {
-        DictionaryEntry entry = entries[currEntryPos];
-
-        // same key is in the dictionary
-        if (key.Equals(entry.key))
-        {
-          if (!overwrite)
-            return currEntryPos;
-
-          storePos = currEntryPos;
-          break; // do not increment nextfree - overwriting the value
-        }
-
-        currEntryPos = entry.next;
-
-      } while (currEntryPos > -1);
-
-      nextfree++;
-    }
-    else // new value
-    {
-      //hashcount++;
-      nextfree++;
-    }
-
-    hashes[hashPos] = storePos;
-
-    entries[storePos].next = entryLocation;
-    entries[storePos].key = key;
-    entries[storePos].value = value;
-    entries[storePos].hashcode = hash;
-
-    return storePos;
-  }
-
-  private void Resize()
-  {
-    uint newsize = FindNewSize();
-    int[] newhashes = new int[newsize];
-    DictionaryEntry[] newentries = new DictionaryEntry[newsize];
-
-    Array.Copy(entries, newentries, nextfree);
-
-    for (int i = 0; i < newsize; i++)
-    {
-      newhashes[i] = -1;
-    }
-
-    for (int i = 0; i < nextfree; i++)
-    {
-      uint pos = newentries[i].hashcode % newsize;
-      int prevpos = newhashes[pos];
-      newhashes[pos] = i;
-
-      if (prevpos != -1)
-        newentries[i].next = prevpos;
-    }
-
-    hashes = newhashes;
-    entries = newentries;
-
-    //maxitems = (int) (newsize * loadfactor );
-  }
-
-  private uint FindNewSize()
-  {
-    uint roughsize = (uint)hashes.Length * 2 + 1;
-
-    for (int i = 0; i < primeSizes.Length; i++)
-    {
-      if (primeSizes[i] >= roughsize)
-        return primeSizes[i];
-    }
-
-    throw new NotImplementedException("Too large array");
-  }
-
-  public V Get(K key)
-  {
-    int pos = GetPosition(key);
-
-    if (pos == -1)
-      throw new Exception("Key does not exist");
-
-    return entries[pos].value;
-  }
-
-  public int GetPosition(K key)
-  {
-    uint hash = (uint)key.GetHashCode();
-
-    uint pos = hash % (uint)hashes.Length;
-
-    int entryLocation = hashes[pos];
-
-    if (entryLocation == -1)
-      return -1;
-
-    int nextpos = entryLocation;
-
-    do
-    {
-      DictionaryEntry entry = entries[nextpos];
-
-      if (key.Equals(entry.key))
-        return nextpos;
-
-      nextpos = entry.next;
-
-    } while (nextpos != -1);
-
-    return -1;
-  }
-
-  public bool ContainsKey(K key)
-  {
-    return GetPosition(key) != -1;
-  }
-
-  public bool TryGetValue(K key, out V value)
-  {
-    int pos = GetPosition(key);
-
-    if (pos == -1)
-    {
-      value = default(V);
-      return false;
-    }
-
-    value = entries[pos].value;
-
-    return true;
-  }
-
-  public V this[K key]
-  {
-    get
-    {
-      return Get(key);
-    }
-    set
-    {
-      Add(key, value, true);
-    }
-  }
-
-  public void Clear()
-  {
-    Initialize();
-  }
-
-  private void Initialize()
-  {
-    this.hashes = new int[initialsize];
-    this.entries = new DictionaryEntry[initialsize];
-    nextfree = 0;
-
-    for (int i = 0; i < entries.Length; i++)
-    {
-      hashes[i] = -1;
-    }
-  }
-
-  public int Count
-  {
-    get { return nextfree; }
-  }
-
 }
 
 } //namespace bhl

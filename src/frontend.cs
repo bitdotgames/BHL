@@ -1500,10 +1500,11 @@ public class ModuleRegistry
       if(full_path.IndexOf(inc_path) == 0)
       {
         norm_path = full_path.Replace(inc_path, "");
-        norm_path = norm_path.Replace("\\", "/");
+        norm_path = norm_path.Replace('\\', '/');
         //stripping .bhl extension
         norm_path = norm_path.Substring(0, norm_path.Length-4);
-        norm_path.TrimStart('/');
+        //stripping initial /
+        norm_path = norm_path.TrimStart('/', '\\');
         break;
       }
     }
@@ -1521,6 +1522,7 @@ public class PostProcessor
   public virtual void Finish() {}
 }
 
-public class NonePostProcessor : PostProcessor {}
+public class EmptyPostProcessor : PostProcessor {}
+
 
 } //namespace bhl
