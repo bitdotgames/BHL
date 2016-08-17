@@ -1,6 +1,6 @@
 # *B*e*H*avior *L*anguage
 
-*bhl* is a programming language specifically tailored for Behavior Trees(BT) coding using familiar imperative style constructs. It was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1Q1wpy9M5XPmY6zU9Kjo2v9YiJQjrDBXdDZaSjcuh71s/edit?usp=sharing). 
+*bhl* is a programming language specifically tailored for Behavior Trees(BT) coding using familiar imperative style patterns. It was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1Q1wpy9M5XPmY6zU9Kjo2v9YiJQjrDBXdDZaSjcuh71s/edit?usp=sharing). 
 
 ## bhl features
 
@@ -33,17 +33,19 @@ func AlphaAppear(int id, float time_to_appear) {
 ## Building
 
 Before building you have to be aware of the bhl architecture:
-https://puu.sh/qEkYv/edf3b678aa.png
+![bhl architecture](https://puu.sh/qEkYv/edf3b678aa.png)
 
 Currently bhl assumes that you have [mono](http://www.mono-project.com/) installed and its binaries are in your PATH.
 
-bhl comes with its own simple build tool *bhl*. It allows you to build frontend dll, backend dll, compile bhl sources into a binary, etc. 
+bhl comes with its own simple build tool *bhl*. It allows you to build frontend dll, backend dll, compile bhl sources into a binary, run unit tests etc. 
 
 In the example directory you can find a simple illustration of gluing together frontend and backend. Just try running *run.sh* script. Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
 
 ## Tests
 
 For now there's no any real documentation for bhl except presentation slides. However, there are many unit tests in the *tests.cs* which cover almost all bhl features.
+
+You can run unit tests by executing the following command:
 
 # Some more code samples
 
