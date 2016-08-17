@@ -43,7 +43,7 @@ In order to use the frontend you can use the **bhl** tool which ships with the c
 
 ### Backend
 
-Before using the backend you have to compile the **bhl_back.dll** and somehow integrate it with your code. See the quick build example below for instructions.  
+Before using the backend you have to compile the **bhl_back.dll** and somehow integrate it into your build pipeline. See the quick build example below for instructions.  
 
 ## Quick build example
 
