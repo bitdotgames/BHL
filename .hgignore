@@ -5,6 +5,7 @@ syntax: glob
 .tags
 
 tmp
+build
 src/autogen.cs*
 *.exe
 *.mdb

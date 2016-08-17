@@ -30,7 +30,9 @@ then
   #4. Running example
   MONO_PATH=$UNITY_MONO_PATH/lib/mono/2.0/:../ $UNITY_MONO_PATH/bin/mono --debug example.exe
 else
- php ../bhl build_back_dll mcs 
- mcs -r:../bhl_back.dll -out:example.exe bindings.cs example.cs
- mono --debug example.exe
+  #2. Building bhl backend dll
+  php ../bhl build_back_dll mcs 
+  #3. Building example: adding bhl backend dll, user bindings 
+  mcs -r:../bhl_back.dll -out:example.exe bindings.cs example.cs
+  MONO_PATH=$MONO_PATH:../ mono --debug example.exe
 fi
