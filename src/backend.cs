@@ -865,8 +865,7 @@ public class Interpreter : AST_Visitor
   }
   FastStack<JsonCtx> jcts = new FastStack<JsonCtx>(128);
 
-  public delegate AST_Module ModuleLoader(uint id);
-  ModuleLoader module_loader;
+  IModuleLoader module_loader;
   public Dictionary<uint,bool> loaded_modules = new Dictionary<uint,bool>();
 
   Dictionary<ulong,AST_FuncDecl> func_decls = new Dictionary<ulong,AST_FuncDecl>();
@@ -876,7 +875,7 @@ public class Interpreter : AST_Visitor
 
   FastStack<DynVal> stack = new FastStack<DynVal>(256);
 
-  public void Init(GlobalScope bindings, ModuleLoader module_loader)
+  public void Init(GlobalScope bindings, IModuleLoader module_loader)
   {
     node_stack.Clear();
     curr_node = null;
@@ -930,7 +929,7 @@ public class Interpreter : AST_Visitor
     if(module_loader == null)
       throw new Exception("Module loader is not set");
 
-    var mod_ast = module_loader(mod_id);
+    var mod_ast = module_loader.LoadModule(mod_id);
     Interpret(mod_ast);
   }
 
@@ -1571,18 +1570,23 @@ public class UserBindings
 
 public class EmptyUserBindings : UserBindings {}
 
-public static class InterpreterRegistry
+public interface IModuleLoader
+{
+  AST_Module LoadModule(uint id);
+}
+
+public class ModuleLoader : IModuleLoader
 {
   const int FMT_BIN = 0;
   const int FMT_LZ4 = 1;
 
-  static Stream source;
-  static MsgPackDataReader reader;
-  static Lz4DecoderStream decoder = new Lz4DecoderStream();
-  static MemoryStream mod_stream = new MemoryStream();
-  static MsgPackDataReader mod_reader;
-  static MemoryStream lz_stream = new MemoryStream();
-  static MemoryStream lz_dst_stream = new MemoryStream();
+  Stream source;
+  MsgPackDataReader reader;
+  Lz4DecoderStream decoder = new Lz4DecoderStream();
+  MemoryStream mod_stream = new MemoryStream();
+  MsgPackDataReader mod_reader;
+  MemoryStream lz_stream = new MemoryStream();
+  MemoryStream lz_dst_stream = new MemoryStream();
 
   public class Entry
   {
@@ -1590,9 +1594,14 @@ public static class InterpreterRegistry
     public int format;
   }
 
-  static Dictionary<uint, Entry> entries = new Dictionary<uint, Entry>();
+  Dictionary<uint, Entry> entries = new Dictionary<uint, Entry>();
 
-  static public void Load(Stream source_)
+  public ModuleLoader(Stream source)
+  {
+    Load(source);
+  }
+
+  void Load(Stream source_)
   {
     entries.Clear();
 
@@ -1630,7 +1639,7 @@ public static class InterpreterRegistry
     }
   }
 
-  static public AST_Module LoadModule(uint id)
+  public AST_Module LoadModule(uint id)
   {
     Entry ent;
     if(!entries.TryGetValue(id, out ent))
@@ -1653,7 +1662,7 @@ public static class InterpreterRegistry
     return ast;
   }
 
-  static void DecodeBin(Entry ent, ref byte[] res, ref int res_len)
+  void DecodeBin(Entry ent, ref byte[] res, ref int res_len)
   {
     if(ent.format == FMT_BIN)
     {

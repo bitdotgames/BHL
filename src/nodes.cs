@@ -1617,7 +1617,7 @@ public class FuncNode : SequentialNode
   public bool has_void_value;
   public int args_num;
 
-  public void setArgs(params DynVal[] args)
+  public void SetArgs(params DynVal[] args)
   {
     var interp = Interpreter.instance;
 

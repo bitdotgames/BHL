@@ -1,10 +1,10 @@
 # *B*e*H*avior *L*anguage
 
-BHL is specifically tailored for Behavior Trees(BT) programming using familiar imperative style constructs
+*bhl* is a programming language specifically tailored for Behavior Trees(BT) coding using familiar imperative style constructs. It was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1Q1wpy9M5XPmY6zU9Kjo2v9YiJQjrDBXdDZaSjcuh71s/edit?usp=sharing). 
 
-## BHL features:
+## bhl features
 
-* ANTLR based: C# fronted(mono) + C# interpreting backend(Unity3d’s mono)
+* [ANTLR](http://www.antlr.org/) based: C# frontend + C# interpreting backend
 * Statically typed
 * Supports core BT building blocks: *seq, paral, paral_all, prio, not, forever, until_success, until_failure,* etc
 * Basic types: *float, int, bool, string, enums, arrays, classes*
@@ -12,10 +12,42 @@ BHL is specifically tailored for Behavior Trees(BT) programming using familiar i
 * Allows user defined: *functions, lambdas, classes*
 * Supports C# bindings to user types and functions
 * Golang alike *defer*
-* Code hot reload
+* Hot code reload
 * Strict control over memory allocations 
 
-## Code example:
+## Code sample
+
+```go
+func AlphaAppear(int id, float time_to_appear) {
+  float time_start = time()
+    paral {
+      forever {
+        float alpha = clamp01((time()-time_start)/time_to_appear)
+          SetObjAlpha(id: id, alpha: alpha)
+      }
+      Wait(sec: time_to_appear)
+    }
+}
+```
+
+## Building
+
+Before building you have to be aware of the bhl architecture:
+https://puu.sh/qEkYv/edf3b678aa.png
+
+Currently bhl assumes that you have [mono](http://www.mono-project.com/) installed and its binaries are in your PATH.
+
+bhl comes with its own simple build tool *bhl*. It allows you to build frontend dll, backend dll, compile bhl sources into a binary, etc. 
+
+In the example directory you can find a simple illustration of gluing together frontend and backend. Just try running *run.sh* script. Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
+
+## Tests
+
+For now there's no any real documentation for bhl except presentation slides. However, there are many unit tests in the *tests.cs* which cover almost all bhl features.
+
+# Some more code samples
+
+## Imperative style only
 
 ```go
 func Unit FindUnit(Vec3 pos, float radius) {
@@ -32,22 +64,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 }
 ```
 
-## Mixing BT with imperative style:
-
-```go
-func ALPHA_APPEAR(int id, float time_to_appear) {
-  float time_start = time()
-    paral {
-      forever {
-        float alpha = clamp01((time()-time_start)/time_to_appear)
-          SetObjAlpha(id: id, alpha: alpha)
-      }
-      Wait(sec: time_to_appear)
-    }
-}
-```
-
-## Lambda support:
+## Lambda support
 
 ```go
 Unit u = FindTarget()
@@ -60,7 +77,7 @@ u.InjectScript(func() {
 })
 ```
 
-## *defer* support:
+## *defer* support
 
 ```go
 seq {

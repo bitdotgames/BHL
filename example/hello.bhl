@@ -1,0 +1,7 @@
+
+func Hello(string name) {
+  //while(true) {
+    Trace("Hello, " + name)
+    Wait(0.5)
+  //}
+}

@@ -214,7 +214,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 3);
@@ -235,12 +235,12 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
 
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
     AssertEqual(res.num, 3);
     AssertEqual(intp.StackCount(), 0);
 
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     res = intp.ExecNode(node).val;
     AssertEqual(res.num, 42);
     AssertEqual(intp.StackCount(), 0);
@@ -259,7 +259,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -279,7 +279,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 7);
@@ -299,7 +299,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 4);
@@ -319,7 +319,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 2);
@@ -339,7 +339,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 6);
@@ -359,7 +359,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(4));
+    node.SetArgs(new DynVal(4));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 2);
@@ -379,7 +379,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(4));
+    node.SetArgs(new DynVal(4));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -399,7 +399,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(4));
+    node.SetArgs(new DynVal(4));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 0);
@@ -419,7 +419,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(4));
+    node.SetArgs(new DynVal(4));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -439,7 +439,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(4));
+    node.SetArgs(new DynVal(4));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 0);
@@ -459,7 +459,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(4));
+    node.SetArgs(new DynVal(4));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -479,7 +479,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -499,7 +499,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -519,7 +519,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal("b"));
+    node.SetArgs(new DynVal("b"));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -539,7 +539,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(20));
+    node.SetArgs(new DynVal(20));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 0);
@@ -559,7 +559,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal("b"));
+    node.SetArgs(new DynVal("b"));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -579,7 +579,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal("b"));
+    node.SetArgs(new DynVal("b"));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 0);
@@ -599,7 +599,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(20));
+    node.SetArgs(new DynVal(20));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -619,7 +619,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(20));
+    node.SetArgs(new DynVal(20));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -639,7 +639,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3), new DynVal(7));
+    node.SetArgs(new DynVal(3), new DynVal(7));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 7);
@@ -659,7 +659,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3), new DynVal(7));
+    node.SetArgs(new DynVal(3), new DynVal(7));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 3);
@@ -684,7 +684,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 3);
@@ -709,7 +709,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 3);
@@ -971,7 +971,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -998,7 +998,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 45);
@@ -1019,7 +1019,7 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
 
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "3");
@@ -1040,7 +1040,7 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
 
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "3");
@@ -1061,7 +1061,7 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
 
-    node.setArgs(new DynVal(3.9));
+    node.SetArgs(new DynVal(3.9));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 3);
@@ -1146,7 +1146,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
 
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "36");
@@ -1187,7 +1187,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 42);
@@ -1229,7 +1229,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 44);
@@ -1276,7 +1276,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 42+43);
@@ -1725,7 +1725,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     //NodeDump(node);
@@ -1754,7 +1754,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     //NodeDump(node);
@@ -1785,7 +1785,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 202);
@@ -1837,7 +1837,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 202);
@@ -1867,7 +1867,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 2);
@@ -1898,7 +1898,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 8);
@@ -1942,7 +1942,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 1);
@@ -2072,7 +2072,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(20));
+    node.SetArgs(new DynVal(20));
     //NodeDump(node);
     var res = intp.ExecNode(node).val;
 
@@ -2097,7 +2097,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(20));
+    node.SetArgs(new DynVal(20));
     //NodeDump(node);
     var res = intp.ExecNode(node).val;
 
@@ -2279,7 +2279,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "3102030");
@@ -2351,7 +2351,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "2102030");
@@ -4408,7 +4408,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     //NodeDump(node);
@@ -4438,7 +4438,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(3));
+    node.SetArgs(new DynVal(3));
     var res = intp.ExecNode(node).val;
 
     //NodeDump(node);
@@ -4636,7 +4636,7 @@ public class BHL_Test
 
     {
       var node = intp.GetFuncNode("test");
-      node.setArgs(new DynVal(3));
+      node.SetArgs(new DynVal(3));
       var res = intp.ExecNode(node).val;
 
       AssertEqual(res.num, 3);
@@ -4647,7 +4647,7 @@ public class BHL_Test
 
     {
       var node = intp.GetFuncNode("test");
-      node.setArgs(new DynVal(30));
+      node.SetArgs(new DynVal(30));
       var res = intp.ExecNode(node).val;
 
       AssertEqual(res.num, 30);
@@ -4683,7 +4683,7 @@ public class BHL_Test
     AssertEqual(FuncCallNode.PoolCountFree, 0);
 
     var node1 = intp.GetFuncNode("test");
-    node1.setArgs(new DynVal(3));
+    node1.SetArgs(new DynVal(3));
     var status = node1.run(null);
     AssertEqual(BHS.RUNNING, status);
     
@@ -4691,7 +4691,7 @@ public class BHL_Test
     AssertEqual(FuncCallNode.PoolCountFree, 0);
 
     var node2 = intp.GetFuncNode("test");
-    node2.setArgs(new DynVal(30));
+    node2.SetArgs(new DynVal(30));
     status = node2.run(null);
     AssertEqual(BHS.RUNNING, status);
 
@@ -4933,12 +4933,12 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
 
     var foo = intp.GetFuncNode("foo");
-    foo.setArgs(new DynVal(10));
+    foo.SetArgs(new DynVal(10));
     var res = intp.ExecNode(foo).val;
     AssertEqual(res.num, 10);
     AssertEqual(intp.StackCount(), 0);
 
-    foo.setArgs(new DynVal(20));
+    foo.SetArgs(new DynVal(20));
     res = intp.ExecNode(foo).val;
     AssertEqual(res.num, 20);
     AssertEqual(intp.StackCount(), 0);
@@ -5159,13 +5159,13 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(1));
+    node.SetArgs(new DynVal(1));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 2);
     AssertEqual(intp.StackCount(), 0);
 
-    node.setArgs(new DynVal(10));
+    node.SetArgs(new DynVal(10));
     res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 3);
@@ -5845,7 +5845,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     intp.ExecNode(node, false);
 
     var str = GetString(trace_stream);
@@ -6030,7 +6030,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     intp.ExecNode(node, false);
 
     var str = GetString(trace_stream);
@@ -6061,7 +6061,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     intp.ExecNode(node, false);
 
     var str = GetString(trace_stream);
@@ -6092,7 +6092,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     //NodeDump(node);
     intp.ExecNode(node, false);
 
@@ -6121,7 +6121,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.setArgs(new DynVal(42));
+    node.SetArgs(new DynVal(42));
     intp.ExecNode(node, false);
 
     //NodeDump(node);
@@ -6134,9 +6134,12 @@ public class BHL_Test
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
   }
 
-  static public AST_Module LoadModuleDummy(uint id)
+  public class DummyModuleLoader : IModuleLoader
   {
-    return new AST_Module();
+    public AST_Module LoadModule(uint id)
+    {
+      return new AST_Module();
+    }
   }
 
   [IsTested()]
@@ -6175,10 +6178,10 @@ public class BHL_Test
     fp2src.Add("bhl2", bhl2);
     fp2src.Add("bhl3", bhl3);
     mreg.test_sources = fp2src;
-    var intp = Interpret(fp2src, globs, mreg, LoadModuleDummy);
+    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
 
     var node = intp.GetFuncNode("bhl1", "test");
-    node.setArgs(new DynVal(23));
+    node.SetArgs(new DynVal(23));
     //NodeDump(node);
     var res = intp.ExecNode(node, true).val;
 
@@ -6227,10 +6230,10 @@ public class BHL_Test
     fp2src.Add("bhl2", bhl2);
     fp2src.Add("bhl3", bhl3);
     mreg.test_sources = fp2src;
-    var intp = Interpret(fp2src, globs, mreg, LoadModuleDummy);
+    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
 
     var node = intp.GetFuncNode("bhl1", "test");
-    node.setArgs(new DynVal(2));
+    node.SetArgs(new DynVal(2));
     //NodeDump(node);
     var res = intp.ExecNode(node, true).val;
 
@@ -6280,10 +6283,10 @@ public class BHL_Test
     fp2src.Add("bhl3", bhl3);
     mreg.test_sources = fp2src;
 
-    var intp = Interpret(fp2src, globs, mreg, LoadModuleDummy);
+    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
 
     var node = intp.GetFuncNode("bhl1", "test");
-    node.setArgs(new DynVal(23));
+    node.SetArgs(new DynVal(23));
     //NodeDump(node);
     var res = intp.ExecNode(node, true).val;
 
@@ -6896,14 +6899,14 @@ func Unit FindUnit(Vec3 pos, float radius) {
     AssertTrue(idx != -1);
   }
 
-  static Interpreter Interpret(string fpath, string src, GlobalScope globs = null, ModuleRegistry mreg = null, Interpreter.ModuleLoader mloader = null, bool show_ast = false)
+  static Interpreter Interpret(string fpath, string src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false)
   {
     var dict = new Dictionary<string, string>();
     dict.Add(fpath, src);
     return Interpret(dict, globs, mreg, mloader, show_ast);
   }
 
-  static Interpreter Interpret(Dictionary<string, string> fpath2src, GlobalScope globs = null, ModuleRegistry mreg = null, Interpreter.ModuleLoader mloader = null, bool show_ast = false)
+  static Interpreter Interpret(Dictionary<string, string> fpath2src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false)
   {
     Util.DEBUG = true;
 

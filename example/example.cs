@@ -1,20 +1,32 @@
 using System;
+using System.Threading;
 using System.IO;
 using bhl;
 
-public class BHL_Example
+public class Example
 {
   public static void Main(string[] args)
   {
-    var bhl_symbols = SymbolTable.CreateBuiltins();
+    var symbols = SymbolTable.CreateBuiltins();
+    var bnd = new MyBindings();
+    bnd.Register(symbols);
 
-    var bytes = File.ReadAllBytes("tmp/bhl.bytes");
-    InterpreterRegistry.Load(new MemoryStream(bytes));
+    var bytes = new MemoryStream(File.ReadAllBytes("tmp/bhl.bytes"));
+    var ml = new ModuleLoader(bytes);
 
     var intp = Interpreter.instance;
-    intp.Init(bhl_symbols, InterpreterRegistry.LoadModule);
 
-    var node = intp.GetFuncNode("mage", "MAGE");
-    node.run(null);
+    intp.Init(symbols, ml);
+
+    var node = intp.GetFuncNode("hello", "Hello");
+
+    //NOTE: emulating update game loop
+    Time.dt = 0.016f;
+    while(true)
+    {
+      node.SetArgs(new DynVal("John Silver"));
+      node.run(null);
+      Thread.Sleep(16);
+    }
   }
 }
