@@ -1703,7 +1703,7 @@ public class FuncNodeAST : FuncNode
     var fparams = decl.fparams();
     var func_args = fparams.children.Count == 0 ? 0 : fparams.children[0].children.Count;
 
-    Util.Debug("CALL FUNC AST INIT " + decl.name + " " + decl.nname + " " + func_args);
+    //Util.Debug("CALL FUNC AST INIT " + func_args);
 
     //setting args passed to func
     for(int i=func_args;i-- > 0;)
@@ -1712,7 +1712,7 @@ public class FuncNodeAST : FuncNode
       var fparam_name = fparam.Name();
       var fparam_val = interp.PopValue();
 
-      //Console.WriteLine(fparam_name + "=" + fparam_val);
+      //Util.Debug(fparam_name + "=" + fparam_val);
       mem.Set(fparam_name, fparam_val);
     }
 

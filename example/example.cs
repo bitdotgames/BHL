@@ -24,7 +24,8 @@ public class Example
     Time.dt = 0.016f;
     while(true)
     {
-      node.SetArgs(new DynVal("John Silver"));
+      if(node.getStatus() != BHS.RUNNING)
+        node.SetArgs(new DynVal("John Silver"));
       node.run(null);
       Thread.Sleep(16);
     }

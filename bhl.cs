@@ -66,6 +66,8 @@ public class BHL
 
     if(err_file == "")
       Usage("Err file not set");
+    if(File.Exists(err_file))
+      File.Delete(err_file);
 
     if(!Directory.Exists(src_dir))
       Usage("Source directory is not valid");
