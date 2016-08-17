@@ -29,6 +29,22 @@ public class MyBindings : UserBindings
     }
 
     {
+      var fn = new SimpleFuncBindSymbol("Rand", globs.type("float"),
+        delegate(object agent)
+        {
+#if !BHL_FRONT
+          var interp = Interpreter.instance;
+          var rnd = new Random();
+          var val = rnd.NextDouble(); 
+          interp.PushValue(new DynVal(val));
+#endif
+          return BHS.SUCCESS;
+        }
+      );
+      globs.define(fn);
+    }
+
+    {
       var fn = new FuncBindSymbol("Wait", globs.type("void"),
           delegate() { return new WaitNode(); }
       );

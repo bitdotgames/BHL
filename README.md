@@ -59,7 +59,7 @@ Just try running *run.sh* script:
 
 > Hello, John Silver
 
-> Hello, John Silver
+> Bye, John Silver
 
 > Hello, John Silver
 

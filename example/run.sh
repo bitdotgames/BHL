@@ -1,8 +1,10 @@
 #!/bin/bash
 
-UNITY_MONO_PATH=/Applications/Unity/Unity.app/Contents/Frameworks/Mono
-#Unity 5.4 it's here
-#UNITY_MONO_PATH=/Applications/Unity/Unity.app/Contents/Mono
+#For Unity 5.4 it's here
+UNITY_MONO_PATH=/Applications/Unity/Unity.app/Contents/Mono
+if [ ! -d $UNITY_MONO_PATH ] ; then
+  UNITY_MONO_PATH=/Applications/Unity/Unity.app/Contents/Frameworks/Mono
+fi
 
 #1. Running frontend over bhl sources
 php ../bhl -D USER_SOURCES=bindings.cs run --dir=. --result=tmp/bhl.bytes --cache_dir=tmp --error=tmp/bhl.err
