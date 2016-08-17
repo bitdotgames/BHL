@@ -107,3 +107,18 @@ seq {
 }
 ```
 
+# Roadmap
+
+## Version 0.1
+
+1. *ref* semantics similar to C#
+2. Function multiple return values
+3. More generic functors support
+
+## Version 1.0
+
+1. Byte code optimization(switch to flatbuffers ?)
+2. Ternary operator support
+3. while syntax sugar: for(...) {} support
+4. More optimal executor
+
