@@ -143,8 +143,9 @@ seq {
 
 ## Version 1.0
 
-1. Byte code optimization (switch to flatbuffers ?)
-2. Ternary operator support
-3. **while** syntax sugar: **for(...) {}** support
-4. More optimal executor
+1. User defined structs
+2. Byte code optimization (switch to flatbuffers ?)
+3. Ternary operator support
+4. **while** syntax sugar: **for(...) {}** support
+5. More optimal executor
 
