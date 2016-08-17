@@ -2,7 +2,7 @@
 
 *bhl* is a programming language specifically tailored for Behavior Trees(BT) coding using familiar imperative style patterns. It was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1Q1wpy9M5XPmY6zU9Kjo2v9YiJQjrDBXdDZaSjcuh71s/edit?usp=sharing). 
 
-Please note that bhl is in pre-alpha state. Nonetheless it has been battle tested in real world project and heavily used for mobile game development.
+Please note that bhl is in pre-alpha state. Nonetheless it has been battle tested in real world project and heavily used by BIT.GAMES for mobile games development.
 
 ## bhl features
 
@@ -112,13 +112,13 @@ seq {
 ## Version 0.1
 
 1. *ref* semantics similar to C#
-2. Function multiple return values
+2. Multiple return values support
 3. More generic functors support
 
 ## Version 1.0
 
-1. Byte code optimization(switch to flatbuffers ?)
+1. Byte code optimization (switch to flatbuffers ?)
 2. Ternary operator support
-3. while syntax sugar: for(...) {} support
+3. *while* syntax sugar: *for(...) {}* support
 4. More optimal executor
 
