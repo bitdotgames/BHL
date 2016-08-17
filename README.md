@@ -1,6 +1,6 @@
-# *B*e*H*avior *L*anguage
+# **B**e**H**avior **L**anguage
 
-*bhl* is a programming language specifically tailored for Behavior Trees(BT) coding using familiar imperative style patterns. It was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1Q1wpy9M5XPmY6zU9Kjo2v9YiJQjrDBXdDZaSjcuh71s/edit?usp=sharing). 
+**bhl** is a programming language specifically tailored for Behavior Trees(BT) coding using familiar imperative style patterns. It was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1Q1wpy9M5XPmY6zU9Kjo2v9YiJQjrDBXdDZaSjcuh71s/edit?usp=sharing). 
 
 Please note that bhl is in pre-alpha state. Nonetheless it has been battle tested in real world project and heavily used by BIT.GAMES for mobile games development.
 
@@ -13,7 +13,7 @@ Please note that bhl is in pre-alpha state. Nonetheless it has been battle teste
 * Supports imperative style control constructs: *if/else, while, break, return*
 * Allows user defined: *functions, lambdas, classes*
 * Supports C# bindings to user types and functions
-* Golang alike *defer*
+* Golang alike **defer**
 * Hot code reload
 * Strict control over memory allocations 
 
@@ -57,7 +57,7 @@ Please note that while bhl works fine under Windows the example assumes you are 
 
 ## Building
 
-bhl comes with its own simple build tool *bhl*. bhl tool is written in PHP and should work just fine both on \*nix and Windows platforms. 
+bhl comes with its own simple build tool **bhl**. bhl tool is written in PHP and should work just fine both on \*nix and Windows platforms. 
 
 It allows you to build frontend dll, backend dll, compile bhl sources into a binary, run unit tests etc. 
 
@@ -67,7 +67,7 @@ You can view all available build tasks with the following command:
 
 ## Tests
 
-For now there is no any documentation for bhl except presentation slides. However, there are many unit tests in the *tests.cs* which cover almost all bhl features.
+For now there is no any documentation for bhl except presentation slides. However, there are many unit tests in the **tests.cs** which cover almost all bhl features.
 
 You can run unit tests by executing the following command:
 
@@ -105,7 +105,7 @@ u.InjectScript(func() {
 })
 ```
 
-## *defer* support
+## **defer** support
 
 ```go
 seq {
@@ -119,7 +119,7 @@ seq {
 
 ## Version 0.1
 
-1. *ref* semantics similar to C#
+1. **ref** semantics similar to C#
 2. Multiple return values support
 3. More generic functors support
 
@@ -127,6 +127,6 @@ seq {
 
 1. Byte code optimization (switch to flatbuffers ?)
 2. Ternary operator support
-3. *while* syntax sugar: *for(...) {}* support
+3. **while** syntax sugar: **for(...) {}** support
 4. More optimal executor
 
