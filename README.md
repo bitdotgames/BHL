@@ -35,6 +35,16 @@ func AlphaAppear(int id, float time_to_appear) {
 
 ![bhl architecture](https://puu.sh/qEkYv/edf3b678aa.png)
 
+bhl utilizes a standard interpreter architecture with a **frontend** and a **backend**. Frontend is responsible for reading input files, static type checking and bytecode generation. Binary bytecode is post-processed and optimized in a separate stage. Processed byte code can be used by the backend. Backend is a interpreter responsible for runtime bytecode evaluation. Backed can be nicely integrated with Unity3d. 
+
+### Frontend
+
+In order to use the frontend you can use the **bhl** tool which ships with the code. See the quick build example below for instructions.  
+
+### Backend
+
+Before using the backend you have to compile the **bhl_back.dll** and somehow integrate it with your code. See the quick build example below for instructions.  
+
 ## Quick build example
 
 Currently bhl assumes that you have [mono](http://www.mono-project.com/) installed and its binaries are in your PATH.
@@ -59,7 +69,7 @@ Please note that while bhl works fine under Windows the example assumes you are 
 
 ### Unity3d integration
 
-The example script has also a special Unity3d compatibility mode. It shows how you can build a bhl backend dll for Unity3d. After that you can put it into Assets/Plugins directory and use bhl for your Unity3d game development. This mode can be enabled just as follows: 
+The example script has also a special Unity3d compatibility mode. It illustrates how you can build a bhl backend dll for Unity3d. After that you can put it into Assets/Plugins directory and use bhl for your Unity3d game development. This mode can be enabled just as follows: 
 
 > cd example && ./run.sh -unity
 
