@@ -2,7 +2,7 @@
 
 **bhl** is a programming language specifically tailored for Behavior Trees(BT) coding using familiar imperative style patterns. It was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1Q1wpy9M5XPmY6zU9Kjo2v9YiJQjrDBXdDZaSjcuh71s/edit?usp=sharing). 
 
-Please note that bhl is in pre-alpha state. Nonetheless it has been battle tested in real world project and heavily used by BIT.GAMES for mobile games development.
+Please note that bhl is in pre-alpha state and currently targets only C# platform. Nonetheless it has been battle tested in real world project and heavily used by BIT.GAMES for mobile games development.
 
 ## bhl features
 
@@ -13,7 +13,7 @@ Please note that bhl is in pre-alpha state. Nonetheless it has been battle teste
 * Supports imperative style control constructs: *if/else, while, break, return*
 * Allows user defined: *functions, lambdas, classes*
 * Supports C# bindings to user types and functions
-* Golang alike **defer**
+* Golang alike *defer*
 * Hot code reload
 * Strict control over memory allocations 
 
@@ -39,7 +39,9 @@ func AlphaAppear(int id, float time_to_appear) {
 
 Currently bhl assumes that you have [mono](http://www.mono-project.com/) installed and its binaries are in your PATH.
 
-In the example directory you can find a simple illustration of gluing together **frontend** and **backend**. Just try running *run.sh* script: 
+In the example directory you can find a simple illustration of gluing together **frontend** and **backend**. 
+
+Just try running *run.sh* script: 
 
 > cd example && ./run.sh
 
@@ -52,6 +54,10 @@ In the example directory you can find a simple illustration of gluing together *
 > Hello, John Silver
 
 > ...
+
+The example script has also a special Unity3d compatibility mode. It shows how you can build a bhl backend dll for Unity3d. After that you can put it into Assets/Plugins directory and use bhl for your Unity3d game development. This mode can be enabled just as follows: 
+
+> cd example && ./run.sh -unity
 
 Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
 
@@ -67,7 +73,7 @@ You can view all available build tasks with the following command:
 
 ## Tests
 
-For now there is no any documentation for bhl except presentation slides. However, there are many unit tests in the **tests.cs** which cover almost all bhl features.
+For now there is no any documentation for bhl except presentation slides. However, there are many unit tests in **tests.cs** which cover almost all bhl features.
 
 You can run unit tests by executing the following command:
 
@@ -92,7 +98,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 }
 ```
 
-## Lambda support
+## **lambda** support
 
 ```go
 Unit u = FindTarget()
