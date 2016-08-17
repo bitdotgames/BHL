@@ -35,7 +35,7 @@ func AlphaAppear(int id, float time_to_appear) {
 
 ![bhl architecture](https://puu.sh/qEkYv/edf3b678aa.png)
 
-bhl utilizes a standard interpreter architecture with a **frontend** and a **backend**. Frontend is responsible for reading input files, static type checking and bytecode generation. Binary bytecode is post-processed and optimized in a separate stage. Processed byte code can be used by the backend. Backend is a interpreter responsible for runtime bytecode evaluation. Backed can be nicely integrated with Unity3d. 
+bhl utilizes a standard interpreter architecture with a **frontend** and a **backend**. Frontend is responsible for reading input files, static type checking and bytecode generation. Binary bytecode is post-processed and optimized in a separate stage. Processed byte code can be used by the backend. Backend is a interpreter responsible for runtime bytecode evaluation. Backend can be nicely integrated with Unity3d. 
 
 ### Frontend
 
