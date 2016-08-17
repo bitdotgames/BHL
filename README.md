@@ -43,9 +43,11 @@ In the example directory you can find a simple illustration of gluing together f
 
 ## Tests
 
-For now there's no any real documentation for bhl except presentation slides. However, there are many unit tests in the *tests.cs* which cover almost all bhl features.
+For now there is no any documentation for bhl except presentation slides. However, there are many unit tests in the *tests.cs* which cover almost all bhl features.
 
 You can run unit tests by executing the following command:
+
+> $ bhl test
 
 # Some more code samples
 
