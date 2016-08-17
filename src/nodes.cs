@@ -1703,7 +1703,7 @@ public class FuncNodeAST : FuncNode
     var fparams = decl.fparams();
     var func_args = fparams.children.Count == 0 ? 0 : fparams.children[0].children.Count;
 
-    //Util.Debug("CALL FUNC AST INIT " + decl.name + " " + decl.nname + " " + func_args);
+    Util.Debug("CALL FUNC AST INIT " + decl.name + " " + decl.nname + " " + func_args);
 
     //setting args passed to func
     for(int i=func_args;i-- > 0;)
