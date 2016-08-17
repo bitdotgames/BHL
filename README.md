@@ -42,10 +42,15 @@ bhl comes with its own simple build tool *bhl*. It allows you to build frontend 
 In the example directory you can find a simple illustration of gluing together frontend and backend. Just try running *run.sh* script: 
 
 > cd example && ./run.sh
+
 > ...
+
 > Hello, John Silver
+
 > Hello, John Silver
+
 > Hello, John Silver
+
 > ...
 
 Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
