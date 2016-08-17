@@ -31,17 +31,15 @@ func AlphaAppear(int id, float time_to_appear) {
     }
 }
 ```
+## Architecture
 
-## Building
-
-Before building you have to be aware of the bhl architecture:
 ![bhl architecture](https://puu.sh/qEkYv/edf3b678aa.png)
+
+## Quick build example
 
 Currently bhl assumes that you have [mono](http://www.mono-project.com/) installed and its binaries are in your PATH.
 
-bhl comes with its own simple build tool *bhl*. It allows you to build frontend dll, backend dll, compile bhl sources into a binary, run unit tests etc. 
-
-In the example directory you can find a simple illustration of gluing together frontend and backend. Just try running *run.sh* script: 
+In the example directory you can find a simple illustration of gluing together **frontend** and **backend**. Just try running *run.sh* script: 
 
 > cd example && ./run.sh
 
@@ -56,6 +54,16 @@ In the example directory you can find a simple illustration of gluing together f
 > ...
 
 Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
+
+## Building
+
+bhl comes with its own simple build tool *bhl*. bhl tool is written in PHP and should work just fine both on \*nix and Windows platforms. 
+
+It allows you to build frontend dll, backend dll, compile bhl sources into a binary, run unit tests etc. 
+
+You can view all available build tasks with the following command:
+
+> $ bhl help
 
 ## Tests
 
