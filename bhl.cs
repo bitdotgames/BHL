@@ -15,13 +15,15 @@ public class BHL
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("./bhl --dir=<dir> --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d]");
+    Console.WriteLine("./bhl --dir=<root src dir> [--src=<file1,file2,..>|--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
 
   public static void Main(string[] args)
   {
+    var files = new List<string>();
+
     string src_dir = "";
 		string res_file = "";
     string cache_dir = "";
@@ -32,6 +34,10 @@ public class BHL
     var p = new OptionSet () {
 			{ "dir=", "source dir",
 				v => src_dir = v },
+			{ "src=", "source files",
+				v => files.AddRange(v.Split(',')) },
+			{ "files=", "source files list",
+				v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
 			{ "result=", "result file",
 				v => res_file = v },
 			{ "cache_dir=", "cache dir",
@@ -55,8 +61,9 @@ public class BHL
       Usage(e.Message);
     }
 
-    if(src_dir == "")
-      Usage("Source directory not set");
+    if(!Directory.Exists(src_dir))
+      Usage("Root source directory is not valid");
+    src_dir = Path.GetFullPath(src_dir);
 
     if(res_file == "")
       Usage("Result file path not set");
@@ -68,10 +75,6 @@ public class BHL
       Usage("Err file not set");
     if(File.Exists(err_file))
       File.Delete(err_file);
-
-    if(!Directory.Exists(src_dir))
-      Usage("Source directory is not valid");
-    src_dir = Path.GetFullPath(src_dir);
 
     UserBindings userbindings = new EmptyUserBindings();
     if(userbindings_dll_path != "")
@@ -99,15 +102,16 @@ public class BHL
 
     Directory.CreateDirectory(cache_dir);
 
-    var files = new List<string>();
-
-    DirWalk(src_dir, 
-      delegate(string file) 
-      { 
-        if(TestFile(file))
-          files.Add(file);
-      }
-    );
+    if(files.Count == 0)
+    {
+      DirWalk(src_dir, 
+        delegate(string file) 
+        { 
+          if(TestFile(file))
+            files.Add(file);
+        }
+      );
+    }
 
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
 
