@@ -865,7 +865,7 @@ public class Interpreter : AST_Visitor
   }
   FastStack<JsonCtx> jcts = new FastStack<JsonCtx>(128);
 
-  IModuleLoader module_loader;
+  public IModuleLoader module_loader;
   public Dictionary<uint,bool> loaded_modules = new Dictionary<uint,bool>();
 
   Dictionary<ulong,AST_FuncDecl> func_decls = new Dictionary<ulong,AST_FuncDecl>();
@@ -930,6 +930,8 @@ public class Interpreter : AST_Visitor
       throw new Exception("Module loader is not set");
 
     var mod_ast = module_loader.LoadModule(mod_id);
+    if(mod_ast == null)
+      throw new Exception("Could not load module: " + mod_id);
     Interpret(mod_ast);
   }
 
@@ -1572,6 +1574,7 @@ public class EmptyUserBindings : UserBindings {}
 
 public interface IModuleLoader
 {
+  //NOTE: must return null if no such module
   AST_Module LoadModule(uint id);
 }
 
@@ -1615,7 +1618,7 @@ public class ModuleLoader : IModuleLoader
     int total_modules = 0;
 
     Util.Verify(reader.ReadI32(ref total_modules) == MetaIoError.SUCCESS);
-    //Log.Debug("Total modules: " + total_modules);
+    //Util.Debug("Total modules: " + total_modules);
     while(total_modules-- > 0)
     {
       int format = 0;
@@ -1643,7 +1646,7 @@ public class ModuleLoader : IModuleLoader
   {
     Entry ent;
     if(!entries.TryGetValue(id, out ent))
-      Util.Verify(false, "Entry not found: " + id);
+      return null;
 
     byte[] res = null;
     int res_len = 0;
@@ -1700,6 +1703,23 @@ public class ModuleLoader : IModuleLoader
     }
     else
       throw new Exception("Unknown format");
+  }
+}
+
+public class ExtensibleModuleLoader : IModuleLoader
+{
+  public List<IModuleLoader> loaders = new List<IModuleLoader>();
+
+  public AST_Module LoadModule(uint id)
+  {
+    for(int i=0;i<loaders.Count;++i)
+    {
+      var ld = loaders[i];
+      var ast = ld.LoadModule(id);
+      if(ast != null)
+        return ast;
+    }
+    return null;
   }
 }
 
