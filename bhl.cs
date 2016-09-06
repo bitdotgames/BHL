@@ -15,7 +15,7 @@ public class BHL
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("./bhl --dir=<root src dir> [--src=<file1,file2,..>|--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d]");
+    Console.WriteLine("./bhl --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -34,8 +34,6 @@ public class BHL
     var p = new OptionSet () {
 			{ "dir=", "source dir",
 				v => src_dir = v },
-			{ "src=", "source files",
-				v => files.AddRange(v.Split(',')) },
 			{ "files=", "source files list",
 				v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
 			{ "result=", "result file",
@@ -52,14 +50,16 @@ public class BHL
 				v => Util.DEBUG = v != null }
      };
 
+    var extra = new List<string>();
     try
     {
-      p.Parse(args);
+      extra = p.Parse(args);
     }
     catch(OptionException e)
     {
       Usage(e.Message);
     }
+    files.AddRange(extra);
 
     if(!Directory.Exists(src_dir))
       Usage("Root source directory is not valid");
