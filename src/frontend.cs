@@ -333,7 +333,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         node = AST_Util.New_Call(EnumCall.FUNC2VAR, str_name, func_call_id);
         if(func_symb.type != SymbolTable._void)
           FireError(Location(name) + " : Currently only void^() function pointers are supported");
-        else if(func_symb.GetMembers().Count > 0)
+        else if(func_symb.GetRequiredArgsNum() > 0)
           FireError(Location(name) + " : Function expects arguments to be passed");
         type = SymbolTable._fn_void;
       }

@@ -334,6 +334,7 @@ public class FuncSymbol : ScopedSymbol
 
   public virtual int GetTotalArgsNum() { return 0; }
   public virtual int GetDefaultArgsNum() { return 0; }
+  public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
   public virtual ulong GetCallId() { return nname; }
 #if BHL_FRONT
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }

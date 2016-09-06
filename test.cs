@@ -2700,6 +2700,83 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestLambdaPassAsVar()
+  {
+    string bhl = @"
+
+    func foo(void^() fn)
+    {
+      fn()
+    }
+
+    func void test() 
+    {
+      void^() fun = 
+        func()
+        { 
+          trace(""HERE"")
+        }             
+
+      foo(fun)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStartScript(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, false);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("HERE", str);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrWithDeclPassedAsArg()
+  {
+    string bhl = @"
+
+    func foo(void^() fn)
+    {
+      fn()
+    }
+
+    func hey()
+    {
+      float foo
+      trace(""HERE"")
+    }
+
+    func void test() 
+    {
+      foo(hey)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, false);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("HERE", str);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
   public void TestFuncPtrForBindFunc()
   {
     string bhl = @"
