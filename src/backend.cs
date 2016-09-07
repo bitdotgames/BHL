@@ -1580,8 +1580,8 @@ public interface IModuleLoader
 
 public class ModuleLoader : IModuleLoader
 {
-  const int FMT_BIN = 0;
-  const int FMT_LZ4 = 1;
+  const byte FMT_BIN = 0;
+  const byte FMT_LZ4 = 1;
 
   Stream source;
   MsgPackDataReader reader;
@@ -1593,8 +1593,8 @@ public class ModuleLoader : IModuleLoader
 
   public class Entry
   {
+    public byte format;
     public long stream_pos;
-    public int format;
   }
 
   Dictionary<uint, Entry> entries = new Dictionary<uint, Entry>();
@@ -1628,7 +1628,7 @@ public class ModuleLoader : IModuleLoader
       Util.Verify(reader.ReadU32(ref id) == MetaIoError.SUCCESS);
 
       var ent = new Entry();
-      ent.format = format;
+      ent.format = (byte)format;
       ent.stream_pos = source.Position;
       if(entries.ContainsKey(id))
         Util.Verify(false, "Key already exists: " + id);
