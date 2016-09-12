@@ -8,11 +8,12 @@ namespace bhl {
 //NOTE: it's a struct
 public struct DynVal
 {
-  public const int NONE   = 0;
-  public const int NUMBER = 1;
-  public const int BOOL   = 2;
-  public const int STRING = 3;
-  public const int USER   = 4;
+  public const byte NONE   = 0;
+  public const byte NUMBER = 1;
+  public const byte BOOL   = 2;
+  public const byte STRING = 3;
+  public const byte USER   = 4;
+  public const byte REF    = 5;
 
   public const int REF_INC          =  1;
   public const int REF_DEC          = -1;
@@ -22,7 +23,7 @@ public struct DynVal
 
   public bool IsEmpty { get { return type == NONE; } }
 
-  public int type { get { return _type; } }
+  public byte type { get { return _type; } }
 
   public double num {
     get {
@@ -60,20 +61,18 @@ public struct DynVal
     }
   }
 
-  //NOTE: even though it's public it's not intended for direct assigning,
-  //      except in cases you know what you are doing
-  public int _type;
+  byte _type;
   //NOTE: semi-private, don't use directly 
   public double _num;
   //NOTE: for non-allocating storage of structs(e.g vectors, quaternions)
   public double num2;
   public double num3;
   public double num4;
+  public double num5;
   //NOTE: semi-private, don't use directly 
   public string _str;
   //NOTE: semi-private, don't use directly 
   public object _obj;
-  public bool use_refc;
 
   public DynVal(string s)
   {
@@ -82,9 +81,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = null;
     _str = "";
-    use_refc = false;
 
     Set(s);
   }
@@ -96,9 +95,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = null;
     _str = s;
-    use_refc = false;
   }
 
   public DynVal(int n)
@@ -108,9 +107,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = null;
     _str = "";
-    use_refc = false;
 
     Set(n);
   }
@@ -122,9 +121,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = null;
     _str = "";
-    use_refc = false;
   }
 
   public DynVal(double n)
@@ -134,9 +133,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = null;
     _str = "";
-    use_refc = false;
 
     Set(n);
   }
@@ -148,9 +147,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = null;
     _str = "";
-    use_refc = false;
   }
 
   public DynVal(bool b)
@@ -160,9 +159,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = null;
     _str = "";
-    use_refc = false;
 
     Set(b);
   }
@@ -174,9 +173,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = null;
     _str = "";
-    use_refc = false;
   }
 
   public void Set(object o)
@@ -186,9 +185,9 @@ public struct DynVal
     num2 = 0;
     num3 = 0;
     num4 = 0;
+    num5 = 0;
     _obj = o;
     _str = "";
-    use_refc = o is DynValRefcounted;
   }
 
   public bool IsEqual(DynVal o)
@@ -199,6 +198,7 @@ public struct DynVal
       num2 == o.num2 &&
       num3 == o.num3 &&
       num4 == o.num4 &&
+      num5 == o.num5 &&
       _str == o.str &&
       _obj == o.obj;
   }
@@ -219,7 +219,7 @@ public struct DynVal
 
   public void IncRefs()
   {
-    if(!use_refc)
+    if(_obj == null || !(_obj is DynValRefcounted))
       return;
 
     (_obj as DynValRefcounted).RefCountEvent(REF_INC);
@@ -227,7 +227,7 @@ public struct DynVal
 
   public void DecRefs()
   {
-    if(!use_refc)
+    if(_obj == null || !(_obj is DynValRefcounted))
       return;
 
     (_obj as DynValRefcounted).RefCountEvent(REF_DEC);
@@ -235,7 +235,7 @@ public struct DynVal
 
   public void TryRelease()
   {
-    if(!use_refc)
+    if(_obj == null || !(_obj is DynValRefcounted))
       return;
 
     (_obj as DynValRefcounted).RefCountEvent(REF_TRY_RELEASE);
@@ -1504,9 +1504,7 @@ public class Interpreter : AST_Visitor
       curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.WRITE));
     }
     else
-    {
-      curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.DECL));
-    }
+      curr_node.addChild(new VarAccessNode(node.Name(), node.IsRef() ? VarAccessNode.DECL_REF : VarAccessNode.DECL));
   }
 
   public override void DoVisit(bhl.AST_JsonObj node)

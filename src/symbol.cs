@@ -244,12 +244,15 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   }
 }
 
-// Represents a variable definition (name,type) in symbol table
 public class VariableSymbol : Symbol 
 {
-  public VariableSymbol(WrappedNode n, string name, Type type) 
+  public bool is_ref;
+
+  public VariableSymbol(WrappedNode n, string name, Type type, bool is_ref = false) 
     : base(n, name, type) 
-  {}
+  {
+    this.is_ref = is_ref;
+  }
 }
 
 public class FuncArgSymbol : VariableSymbol

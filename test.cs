@@ -958,6 +958,33 @@ public class BHL_Test
     AssertEqual(intp.StackCount(), 0);
   }
 
+  //TODO:
+  //[IsTested()]
+  public void TestPassRef()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test(float k) 
+    {
+      foo(k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(new DynVal(3));
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 4);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
   [IsTested()]
   public void TestSimpleExpression()
   {

@@ -674,11 +674,11 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_VarDecl New_VarDecl(string type, string name)
+  static public AST_VarDecl New_VarDecl(string type, string name, bool is_ref)
   {
     var n = new AST_VarDecl();
     n.type = type;
-    n.nname = Hash.CRC28(name);
+    n.nname = Hash.CRC28(name) | ((is_ref ? 0u : 1u) << 29);
     if(Util.DEBUG)
     {
       n.name = name;
@@ -689,7 +689,12 @@ static public class AST_Util
 
   static public HashedName Name(this AST_VarDecl n)
   {
-    return new HashedName(n.nname, n.name);
+    return new HashedName(n.nname & 0xFFFFFFF, n.name);
+  }
+
+  static public bool IsRef(this AST_VarDecl n)
+  {
+    return (n.nname & (1u << 29)) != 0; 
   }
 
   ////////////////////////////////////////////////////////

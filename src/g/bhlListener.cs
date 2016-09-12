@@ -99,17 +99,17 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExplist([NotNull] bhlParser.ExplistContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpBitOr</c>
+	/// Enter a parse tree produced by the <c>ExpOr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
+	void EnterExpOr([NotNull] bhlParser.ExpOrContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpBitOr</c>
+	/// Exit a parse tree produced by the <c>ExpOr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
+	void ExitExpOr([NotNull] bhlParser.ExpOrContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLiteralFalse</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -123,29 +123,29 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpLiteralFalse([NotNull] bhlParser.ExpLiteralFalseContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpOr</c>
+	/// Enter a parse tree produced by the <c>ExpLiteralNum</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpOr([NotNull] bhlParser.ExpOrContext context);
+	void EnterExpLiteralNum([NotNull] bhlParser.ExpLiteralNumContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpOr</c>
+	/// Exit a parse tree produced by the <c>ExpLiteralNum</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpOr([NotNull] bhlParser.ExpOrContext context);
+	void ExitExpLiteralNum([NotNull] bhlParser.ExpLiteralNumContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpAnd</c>
+	/// Enter a parse tree produced by the <c>ExpCall</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpAnd([NotNull] bhlParser.ExpAndContext context);
+	void EnterExpCall([NotNull] bhlParser.ExpCallContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpAnd</c>
+	/// Exit a parse tree produced by the <c>ExpCall</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpAnd([NotNull] bhlParser.ExpAndContext context);
+	void ExitExpCall([NotNull] bhlParser.ExpCallContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpMulDivMod</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -159,41 +159,29 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpMulDivMod([NotNull] bhlParser.ExpMulDivModContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpBitAnd</c>
+	/// Enter a parse tree produced by the <c>ExpEval</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpBitAnd([NotNull] bhlParser.ExpBitAndContext context);
+	void EnterExpEval([NotNull] bhlParser.ExpEvalContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpBitAnd</c>
+	/// Exit a parse tree produced by the <c>ExpEval</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpBitAnd([NotNull] bhlParser.ExpBitAndContext context);
+	void ExitExpEval([NotNull] bhlParser.ExpEvalContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpLiteralNum</c>
+	/// Enter a parse tree produced by the <c>ExpCompare</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpLiteralNum([NotNull] bhlParser.ExpLiteralNumContext context);
+	void EnterExpCompare([NotNull] bhlParser.ExpCompareContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpLiteralNum</c>
+	/// Exit a parse tree produced by the <c>ExpCompare</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpLiteralNum([NotNull] bhlParser.ExpLiteralNumContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpStaticCall</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpStaticCall([NotNull] bhlParser.ExpStaticCallContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpStaticCall</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpStaticCall([NotNull] bhlParser.ExpStaticCallContext context);
+	void ExitExpCompare([NotNull] bhlParser.ExpCompareContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLiteralStr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -207,29 +195,17 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpLiteralStr([NotNull] bhlParser.ExpLiteralStrContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpEval</c>
+	/// Enter a parse tree produced by the <c>ExpUnary</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpEval([NotNull] bhlParser.ExpEvalContext context);
+	void EnterExpUnary([NotNull] bhlParser.ExpUnaryContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpEval</c>
+	/// Exit a parse tree produced by the <c>ExpUnary</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpEval([NotNull] bhlParser.ExpEvalContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpAddSub</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpAddSub</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
+	void ExitExpUnary([NotNull] bhlParser.ExpUnaryContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLiteralTrue</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -243,17 +219,41 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpLiteralTrue([NotNull] bhlParser.ExpLiteralTrueContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpCall</c>
+	/// Enter a parse tree produced by the <c>ExpNew</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpCall([NotNull] bhlParser.ExpCallContext context);
+	void EnterExpNew([NotNull] bhlParser.ExpNewContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpCall</c>
+	/// Exit a parse tree produced by the <c>ExpNew</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpCall([NotNull] bhlParser.ExpCallContext context);
+	void ExitExpNew([NotNull] bhlParser.ExpNewContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpAddSub</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpAddSub</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpBitAnd</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpBitAnd([NotNull] bhlParser.ExpBitAndContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpBitAnd</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpBitAnd([NotNull] bhlParser.ExpBitAndContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpTypeCast</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -279,53 +279,17 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpLiteralNull([NotNull] bhlParser.ExpLiteralNullContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpCompare</c>
+	/// Enter a parse tree produced by the <c>ExpStaticCall</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpCompare([NotNull] bhlParser.ExpCompareContext context);
+	void EnterExpStaticCall([NotNull] bhlParser.ExpStaticCallContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpCompare</c>
+	/// Exit a parse tree produced by the <c>ExpStaticCall</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpCompare([NotNull] bhlParser.ExpCompareContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpParen</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpParen([NotNull] bhlParser.ExpParenContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpParen</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpParen([NotNull] bhlParser.ExpParenContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpUnary</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpUnary([NotNull] bhlParser.ExpUnaryContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpUnary</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpUnary([NotNull] bhlParser.ExpUnaryContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpNew</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpNew([NotNull] bhlParser.ExpNewContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpNew</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpNew([NotNull] bhlParser.ExpNewContext context);
+	void ExitExpStaticCall([NotNull] bhlParser.ExpStaticCallContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLambda</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -338,6 +302,42 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpLambda([NotNull] bhlParser.ExpLambdaContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpAnd</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpAnd([NotNull] bhlParser.ExpAndContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpAnd</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpAnd([NotNull] bhlParser.ExpAndContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpBitOr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpBitOr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpParen</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpParen([NotNull] bhlParser.ExpParenContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpParen</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpParen([NotNull] bhlParser.ExpParenContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>VarDecl</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -836,6 +836,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitOperatorUnary([NotNull] bhlParser.OperatorUnaryContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.isRef"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterIsRef([NotNull] bhlParser.IsRefContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.isRef"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitIsRef([NotNull] bhlParser.IsRefContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.number"/>.
 	/// </summary>

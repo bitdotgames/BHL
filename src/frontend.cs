@@ -1054,6 +1054,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return node;
   }
 
+  //NOTE: not supported yet
   //public override AST VisitContinue(bhlParser.ContinueContext ctx)
   //{
   //  if(while_stack == 0)
@@ -1132,7 +1133,37 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitVarDeclare(bhlParser.VarDeclareContext ctx)
   {
-    return CommonVisitVarDecl(ctx.type(), ctx.NAME(), ctx.initVar());
+    var name = ctx.NAME();
+    var str_name = name.GetText();
+    var str_type = ctx.type().GetText();
+    var defarg = ctx.initVar();
+    Type var_type = curr_scope.resolve(str_type) as Type; 
+    if(var_type == null)
+      FireError(Location(name) +  ": Type '" + str_type + "' not found");
+
+    var var_node = Wrap(name); 
+    var_node.eval_type = var_type;
+
+    bool is_ref = ctx.isRef() != null;
+    if(is_ref)
+    {
+      if(!(curr_scope is FuncSymbol))
+        FireError(Location(name) +  ": ref is only allowed in function declaration");
+      if(defarg != null)
+        FireError(Location(name) +  ": ref is not allowed with default values");
+    }
+    var symb = new VariableSymbol(var_node, str_name, var_type, is_ref);
+
+    var node = AST_Util.New_VarDecl(str_type, str_name, is_ref);
+    if(defarg != null)
+    {
+      node.AddChild(Visit(defarg));
+      SymbolTable.CheckAssign(var_node, Wrap(defarg));
+    }
+
+    curr_scope.define(symb);
+  
+    return node;
   }
 
   public override AST VisitBlock(bhlParser.BlockContext ctx)
@@ -1276,31 +1307,6 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
     SymbolTable.CheckAssign(dst_node, src_node);
 
-    return node;
-  }
-
-  AST_VarDecl CommonVisitVarDecl(IParseTree type, ITerminalNode name, IParseTree defarg)
-  {
-    var str_name = name.GetText();
-    var str_type = type.GetText();
-    Type var_type = curr_scope.resolve(str_type) as Type; 
-    if(var_type == null)
-      FireError(Location(name) +  ": Type '" + str_type + "' not found");
-
-    var var_node = Wrap(name); 
-    var_node.eval_type = var_type;
-
-    var symb = new VariableSymbol(var_node, str_name, var_type);
-
-    var node = AST_Util.New_VarDecl(str_type, str_name);
-    if(defarg != null)
-    {
-      node.AddChild(Visit(defarg));
-      SymbolTable.CheckAssign(var_node, Wrap(defarg));
-    }
-
-    curr_scope.define(symb);
-  
     return node;
   }
 

@@ -1453,9 +1453,10 @@ public class TypeCastNode : BehaviorTreeTerminalNode
 
 public class VarAccessNode : BehaviorTreeTerminalNode
 {
-  public const int READ  = 0;
-  public const int WRITE = 1;
-  public const int DECL  = 2;
+  public const int READ      = 0;
+  public const int WRITE     = 1;
+  public const int DECL      = 2;
+  public const int DECL_REF  = 3;
 
   HashedName name;
   public int mode = READ;
@@ -1481,6 +1482,11 @@ public class VarAccessNode : BehaviorTreeTerminalNode
       interp.PushValue(val);
     }
     else if(mode == DECL)
+    {
+      var val = new DynVal();
+      interp.SetScopeValue(name, val);
+    }
+    else if(mode == DECL_REF)
     {
       var val = new DynVal();
       interp.SetScopeValue(name, val);

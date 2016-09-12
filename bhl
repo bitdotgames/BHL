@@ -77,7 +77,7 @@ function task_geng()
   ensure_copy("$BHL_ROOT/bhl.g", "$BHL_ROOT/tmp/bhl.g");
   ensure_copy("$BHL_ROOT/bin/g4sharp", "$BHL_ROOT/tmp/g4sharp");
 
-  taskman_shell_ensure("cd $BHL_ROOT/tmp && ./g4sharp bhl.g && cp bhl*.cs ../src/g/ ");
+  taskman_shell_ensure("cd $BHL_ROOT/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/ ");
 }
 
 /**

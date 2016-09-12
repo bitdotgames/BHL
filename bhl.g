@@ -146,7 +146,7 @@ funcParams
 	;
 
 varDeclare
-  : type NAME initVar?
+  : isRef? type NAME initVar?
   ;
 
 initVar
@@ -154,36 +154,48 @@ initVar
 	;
 
 operatorOr 
-	: '||';
+	: '||'
+  ;
 
 operatorAnd 
-	: '&&';
+	: '&&'
+  ;
 
 operatorBitOr 
-	: '|';
+	: '|'
+  ;
 
 operatorBitAnd 
-	: '&';
+	: '&'
+  ;
 
 operatorComparison 
-	: '<' | '>' | '<=' | '>=' | '!=' | '==';
+	: '<' | '>' | '<=' | '>=' | '!=' | '=='
+  ;
 
 operatorAddSub
-	: '+' | '-';
+	: '+' | '-'
+  ;
 
 operatorMulDivMod
-	: '*' | '/' | '%';
+	: '*' | '/' | '%'
+  ;
 
 operatorUnary
-    : '!' | '-';
+  : '!' | '-'
+  ;
+
+isRef
+  : 'ref'
+  ;
 
 number
-    : INT | HEX | FLOAT
-    ;
+  : INT | HEX | FLOAT
+  ;
 
 string
-    : NORMALSTRING
-    ;
+  : NORMALSTRING
+  ;
 
 jsonObject
     :   '{' jsonPair (',' jsonPair)* '}'
