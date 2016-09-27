@@ -900,8 +900,7 @@ public class BHL_Test
       
     func void test() 
     {
-      float f = 1
-      foo(b: 24, k: 3, f : f)
+      foo(b: 24, k: 3, f : 1)
     }
     ";
 
@@ -909,7 +908,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl);
       },
-      "unknown argument"
+      "f: No such named argument"
     );
   }
 

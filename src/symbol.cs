@@ -325,7 +325,8 @@ public abstract class ScopedSymbol : Symbol, Scope
 
 public class FuncSymbol : ScopedSymbol 
 {
-  OrderedDictionary ordered_args = new OrderedDictionary();
+  OrderedDictionary members = new OrderedDictionary();
+  OrderedDictionary args = null;
 
   public bool return_statement_found = false;
 
@@ -333,7 +334,26 @@ public class FuncSymbol : ScopedSymbol
     : base(n, name, ret_type, parent)
   {}
 
-  public override OrderedDictionary GetMembers() { return ordered_args; }
+  public override OrderedDictionary GetMembers() { return members; }
+
+  //NOTE: currently func arguments are not separated from function local
+  //      arguments which is a bit 'smelly', this probably should be fixed
+  public OrderedDictionary GetArgs()
+  {
+    if(args == null)
+    {
+      args = new OrderedDictionary();
+      var en = members.GetEnumerator();
+      en.MoveNext();
+      int total_args = GetTotalArgsNum();
+      for(int i=0;i<total_args;++i)
+      {
+        args.Add(en.Key, en.Value);
+        en.MoveNext();
+      }
+    }
+    return args;
+  }
 
   public virtual int GetTotalArgsNum() { return 0; }
   public virtual int GetDefaultArgsNum() { return 0; }
@@ -345,7 +365,7 @@ public class FuncSymbol : ScopedSymbol
 
   public new string GetName() 
   {
-    return name+"("+string.Join(",", ordered_args.GetStringKeys().ToArray())+")";
+    return name;
   }
 }
 

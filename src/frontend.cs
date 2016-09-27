@@ -382,7 +382,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   void AddCallArgs(bhlParser.CallExpItemContext ctx, FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call new_node)
   {     
-    var func_args = func_symb.GetMembers();
+    var func_args = func_symb.GetArgs();
     var total_args_num = func_symb.GetTotalArgsNum();
     var default_args_num = func_symb.GetDefaultArgsNum();
     int required_args_num = total_args_num - default_args_num;
@@ -410,9 +410,6 @@ public class AST_Builder : bhlBaseVisitor<AST>
         if(idx == -1)
           FireError(Location(ca_name) +  ": No such named argument");
       }
-      
-      if(idx >= norm_cargs.Count)
-        FireError(Location(ca) +  ": There is no normalized argument " + (idx + 1) + ", total normalized arguments " + norm_cargs.Count);
       
       if(idx >= func_args.Count)
         FireError(Location(ca) +  ": There is no argument " + (idx + 1) + ", total arguments " + func_args.Count);
