@@ -886,6 +886,32 @@ public class BHL_Test
       "missing default argument expression"
     );
   }
+  
+  [IsTested()]
+  public void TestFuncExtraArgumentMatchesLocalVariable()
+  {
+    string bhl = @"
+
+    func void foo(float b, float k)
+    {
+      float f = 3
+      float a = b + k
+    }
+      
+    func void test() 
+    {
+      float f = 1
+      foo(b: 24, k: 3, f : f)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "unknown argument"
+    );
+  }
 
   [IsTested()]
   public void TestFuncSeveralDefaultArgsMixed()

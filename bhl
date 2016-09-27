@@ -212,14 +212,7 @@ function mcs_build(array $file_specs, $result, $opts = '', $binary = '')
 
 function mono_run($exe, array $args = array(), $opts = '')
 {
-  //NOTE: on Windows we execute binaries natively, ignoring any opts however
-  if(is_win())
-  {
-    $exe = realpath($exe);
-    taskman_shell_ensure("$exe " . implode(' ', $args)); 
-  }
-  else
-    taskman_shell_ensure(mono_bin() . " $opts $exe " . implode(' ', $args));
+  taskman_shell_ensure(mono_bin() . " $opts $exe " . implode(' ', $args));
 }
 
 function task_genmeta()
