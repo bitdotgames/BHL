@@ -864,6 +864,66 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncDefaultArgIsFunc()
+  {
+    string bhl = @"
+
+    func float bar(float m)
+    {
+      return m
+    }
+
+    func float foo(float b, float k = bar(1))
+    {
+      return b + k
+    }
+      
+    func float test() 
+    {
+      return foo(24)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 25);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
+  public void TestFuncDefaultArgIsFunc2()
+  {
+    string bhl = @"
+
+    func float bar(float m)
+    {
+      return m
+    }
+
+    func float foo(float b = 1, float k = bar(1))
+    {
+      return b + k
+    }
+      
+    func float test() 
+    {
+      return foo(26, bar(2))
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 28);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
   public void TestFuncMissingDefaultArgument()
   {
     string bhl = @"
