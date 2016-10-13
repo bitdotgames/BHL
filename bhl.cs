@@ -388,12 +388,12 @@ public class BHL
                 w.symbols.Add(new Symbol2File(fn.Name(), file));
             }
 
+            w.postproc.PostProc(ref ast);
             w.result.Add(ast);
             w.lz4_result.Add(EncodeToLZ4(ast));
           }
         }
 
-        w.postproc.PostProc(w.result);
       }
       catch(UserError e)
       {

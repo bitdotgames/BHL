@@ -1525,7 +1525,7 @@ public class ModuleRegistry
 public class PostProcessor
 {
   public virtual bool NeedToRegen(List<string> files) { return false; }
-  public virtual void PostProc(List<AST_Module> result) {}
+  public virtual void PostProc(ref AST_Module result) { }
   public virtual void Finish() {}
 }
 
