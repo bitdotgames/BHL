@@ -342,14 +342,17 @@ public class FuncSymbol : ScopedSymbol
   {
     if(args == null)
     {
-      args = new OrderedDictionary();
-      var en = members.GetEnumerator();
-      en.MoveNext();
-      int total_args = GetTotalArgsNum();
-      for(int i=0;i<total_args;++i)
+      lock(this)
       {
-        args.Add(en.Key, en.Value);
+        args = new OrderedDictionary();
+        var en = members.GetEnumerator();
         en.MoveNext();
+        int total_args = GetTotalArgsNum();
+        for(int i=0;i<total_args;++i)
+        {
+          args.Add(en.Key, en.Value);
+          en.MoveNext();
+        }
       }
     }
     return args;
