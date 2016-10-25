@@ -39,11 +39,6 @@ public static class Hash
     return Crc32.Compute(bytes, bytes.Length);
   }
 
-  static public uint CRC31(string id)
-  {
-    return CRC32(id) & 0x7FFFFFFF;
-  }
-
   static public uint CRC28(string id)
   {
     return CRC32(id) & 0xFFFFFFF;

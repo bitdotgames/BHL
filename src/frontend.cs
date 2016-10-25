@@ -1388,7 +1388,7 @@ public class Module
   {
     if(id == 0)
     {
-      //Console.WriteLine("NORM " + norm_path);
+      //Console.WriteLine("MODULE PATH " + norm_path);
       id = Hash.CRC32(norm_path);
     }
     return id;
