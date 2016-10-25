@@ -73,7 +73,7 @@ public struct DynVal
   public string _str;
   //NOTE: semi-private, don't use directly 
   public object _obj;
-  DynValRefcounted _refc;
+  bool _is_refc;
 
   public DynVal(string s)
   {
@@ -84,7 +84,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = null;
-    _refc = null;
+    _is_refc = false;
     _str = "";
 
     Set(s);
@@ -99,7 +99,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = null;
-    _refc = null;
+    _is_refc = false;
     _str = s;
   }
 
@@ -112,7 +112,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = null;
-    _refc = null;
+    _is_refc = false;
     _str = "";
 
     Set(n);
@@ -127,7 +127,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = null;
-    _refc = null;
+    _is_refc = false;
     _str = "";
   }
 
@@ -140,7 +140,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = null;
-    _refc = null;
+    _is_refc = false;
     _str = "";
 
     Set(n);
@@ -155,7 +155,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = null;
-    _refc = null;
+    _is_refc = false;
     _str = "";
   }
 
@@ -168,7 +168,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = null;
-    _refc = null;
+    _is_refc = false;
     _str = "";
 
     Set(b);
@@ -183,7 +183,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = null;
-    _refc = null;
+    _is_refc = false;
     _str = "";
   }
 
@@ -196,7 +196,7 @@ public struct DynVal
     num4 = 0;
     num5 = 0;
     _obj = o;
-    _refc = o as DynValRefcounted;
+    _is_refc = o is DynValRefcounted;
     _str = "";
   }
 
@@ -229,26 +229,26 @@ public struct DynVal
 
   public void IncRefs()
   {
-    if(_refc == null)
+    if(_obj == null || !_is_refc)
       return;
 
-    _refc.RefCountEvent(REF_INC);
+    (_obj as DynValRefcounted).RefCountEvent(REF_INC);
   }
 
   public void DecRefs()
   {
-    if(_refc == null)
+    if(_obj == null || !_is_refc)
       return;
 
-    _refc.RefCountEvent(REF_DEC);
+    (_obj as DynValRefcounted).RefCountEvent(REF_DEC);
   }
 
   public void TryRelease()
   {
-    if(_refc == null)
+    if(_obj == null || !_is_refc)
       return;
 
-    _refc.RefCountEvent(REF_TRY_RELEASE);
+    (_obj as DynValRefcounted).RefCountEvent(REF_TRY_RELEASE);
   }
 }
 
