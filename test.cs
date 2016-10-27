@@ -1620,26 +1620,28 @@ public class BHL_Test
       this.stream = stream;
     }
 
-    public void RefCountEvent(int r)
+    public void RefCountInc()
     {
       var sw = new StreamWriter(stream);
-      if(r == DynVal.REF_INC)
-      {
-        ++refs;
-        sw.Write("INC" + refs + ";");
-      }
-      else if(r == DynVal.REF_DEC)
-      {
-        --refs;
-        sw.Write("DEC" + refs + ";");
-      }
-      else if(r == DynVal.REF_TRY_RELEASE)
-      {
-        sw.Write("REL" + refs + ";");
-      }
-      else
-        throw new Exception("???");
+      ++refs;
+      sw.Write("INC" + refs + ";");
       sw.Flush();
+    }
+
+    public void RefCountDec()
+    {
+      var sw = new StreamWriter(stream);
+      --refs;
+      sw.Write("DEC" + refs + ";");
+      sw.Flush();
+    }
+
+    public bool RefCountTryRelease()
+    {
+      var sw = new StreamWriter(stream);
+      sw.Write("REL" + refs + ";");
+      sw.Flush();
+      return refs == 0;
     }
   }
 
@@ -1809,7 +1811,7 @@ public class BHL_Test
           delegate(ref DynVal ctx, DynVal v) {
             var f = (FooLambda)ctx.obj;
             var fctx = (FuncCtx)v.obj;
-            fctx.IncRefs();
+            fctx.RefCountInc();
             if(f.script.Count == 0) f.script.Add(new BaseLambda()); ((BaseLambda)(f.script[0])).fct.obj = fctx;
             ctx.obj = f;
           }
@@ -2218,6 +2220,42 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestArrayPoolInForever()
+  {
+    string bhl = @"
+
+    func string[] make()
+    {
+      string[] arr = new string[]
+      return arr
+    }
+      
+    func test() 
+    {
+      forever {
+        string[] arr = new string[]
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.run(null);
+
+    //NodeDump(node);
+    
+    for(int i=0;i<2;++i)
+      node.run(null);
+
+    node.stop(null);
+
+    AssertEqual(DynValList.PoolCount, 2);
+    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+  }
+
+  [IsTested()]
   public void TestStringArray()
   {
     string bhl = @"
@@ -2276,8 +2314,6 @@ public class BHL_Test
     ";
 
     var globs = SymbolTable.CreateBuiltins();
-
-    BindEnum(globs);
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
@@ -2546,7 +2582,7 @@ public class BHL_Test
       var interp = Interpreter.instance;
       var dv = interp.PopValue(); 
       var fct = (FuncCtx)dv.obj;
-      fct.IncRefs();
+      fct.RefCountInc();
 
       var func_node = fct.GetNode();
 
@@ -2561,7 +2597,10 @@ public class BHL_Test
 
       var lfunc = children[0] as FuncNodeLambda;
       if(lfunc != null)
-        lfunc.ctx.DecRefs();
+      {
+        lfunc.ctx.RefCountDec();
+        lfunc.ctx.RefCountTryRelease();
+      }
     }
   }
 
@@ -6100,7 +6139,8 @@ public class BHL_Test
     public override void deinit(object agent)
     {
       var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      fct.DecRefs();
+      fct.RefCountDec();
+      fct.RefCountTryRelease();
     }
   }
 
@@ -6724,7 +6764,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
-  public void TestRefCountAssign()
+  public void TestRefCountAssignSame()
   {
     string bhl = @"
     func void test() 
@@ -6748,7 +6788,64 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;DEC1;REL1;DEC0;REL0;", str);
+    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;DEC1;INC2;REL2;DEC1;REL1;DEC0;REL0;", str);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
+  public void TestRefCountAssignSelf()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC r1 = new RefC
+      r1 = r1
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindRefC(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, false);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;DEC0;INC1;REL1;DEC0;REL0;", str);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
+  public void TestRefCountAssignOverwrite()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC r1 = new RefC
+      RefC r2 = new RefC
+      r1 = r2
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindRefC(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, false);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;INC2;DEC1;DEC0;INC2;REL0;DEC1;REL1;DEC0;REL0;", str);
     AssertEqual(intp.StackCount(), 0);
   }
 
@@ -7101,6 +7198,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     FuncCallNode.PoolClear();
     FuncCtx.PoolClear();
+    DynValList.PoolClear();
 
     globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
 

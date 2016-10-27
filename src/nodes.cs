@@ -1829,7 +1829,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     fct = FuncCtx.PoolRequest(fr);
     //NOTE: explicitely increasing refs number during function call
     //      so that func ctx is alive while function is called
-    fct.IncRefs();
+    fct.RefCountInc();
 
     var ldecl = fr.decl as AST_LambdaDecl;
     if(ldecl != null)
@@ -1852,7 +1852,8 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
   public override void defer(object agent)
   {
     //NOTE: decreasing refs on defer
-    fct.DecRefs();
+    fct.RefCountDec();
+    fct.RefCountTryRelease();
     fct = null;
   }
 

@@ -15,12 +15,6 @@ public struct DynVal
   public const byte USER   = 4;
   public const byte REF    = 5;
 
-  public const int REF_INC          =  1;
-  public const int REF_DEC          = -1;
-  public const int REF_TRY_RELEASE  = -2;
-
-  public delegate void RefsCb(object obj, int r);
-
   public bool IsEmpty { get { return type == NONE; } }
 
   public byte type { get { return _type; } }
@@ -232,7 +226,7 @@ public struct DynVal
     if(_obj == null || !_is_refc)
       return;
 
-    (_obj as DynValRefcounted).RefCountEvent(REF_INC);
+    (_obj as DynValRefcounted).RefCountInc();
   }
 
   public void DecRefs()
@@ -240,21 +234,23 @@ public struct DynVal
     if(_obj == null || !_is_refc)
       return;
 
-    (_obj as DynValRefcounted).RefCountEvent(REF_DEC);
+    (_obj as DynValRefcounted).RefCountDec();
   }
 
-  public void TryRelease()
+  public bool TryRelease()
   {
     if(_obj == null || !_is_refc)
-      return;
+      return false;
 
-    (_obj as DynValRefcounted).RefCountEvent(REF_TRY_RELEASE);
+    return (_obj as DynValRefcounted).RefCountTryRelease();
   }
 }
 
 public interface DynValRefcounted
 {
-  void RefCountEvent(int r);
+  void RefCountInc();
+  void RefCountDec();
+  bool RefCountTryRelease();
 }
 
 public class MemoryScope
@@ -283,15 +279,14 @@ public class MemoryScope
 
   public void Set(HashedName key, DynVal val)
   {
-    if(vars.ContainsKey((uint)key.n))
-    {
-      vars[(uint)key.n] = val;
-    }
-    else
-    {
-      val.IncRefs();
-      vars[(uint)key.n] = val;
-    }
+    uint k = (uint)key.n; 
+    DynVal prev;
+    if(vars.TryGetValue(k, out prev))
+      prev.DecRefs();
+    vars[k] = val;
+    val.IncRefs();
+    //NOTE: if there are no refs to it try releasing it
+    prev.TryRelease();
   }
 
   public bool TryGet(HashedName key, out DynVal val)
@@ -436,6 +431,7 @@ public abstract class AST_Visitor
 
 public class FuncCtx : DynValRefcounted
 {
+  //NOTE: -1 means it's in released state
   public int refs;
 
   public FuncRef fr;
@@ -462,30 +458,18 @@ public class FuncCtx : DynValRefcounted
     return fnode;
   }
 
-  public void RefCountEvent(int r)
-  {
-    //Console.WriteLine("REFS CB: " + self.refs + " " + r);
-
-    if(r == DynVal.REF_INC)
-      IncRefs();
-    else if(r == DynVal.REF_DEC)
-      DecRefs(false);
-    else if(r == DynVal.REF_TRY_RELEASE)
-      TryRelease();
-  }
-
   public FuncCtx IncRefsOrDup()
   {
     if(refs == 1)
     {
-      IncRefs();
+      RefCountInc();
       return this;
     }
     else if(refs > 1)
     {
       var dup = FuncCtx.PoolRequest(fr);
       dup.mem.CopyFrom(mem);
-      dup.IncRefs();
+      dup.RefCountInc();
       return dup;
     }
     else
@@ -494,14 +478,14 @@ public class FuncCtx : DynValRefcounted
     }
   }
 
-  public void IncRefs()
+  public void RefCountInc()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
     ++refs;
   }
 
-  public void DecRefs(bool try_release = true)
+  public void RefCountDec()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
@@ -509,17 +493,15 @@ public class FuncCtx : DynValRefcounted
       throw new Exception("Double free");
 
     --refs;
-    if(try_release)
-      TryRelease();
   }
 
-  public void TryRelease()
+  public bool RefCountTryRelease()
   {
-    if(refs == 0)
-    {
-      PoolRelease(this);
-      refs = -1;
-    }
+    if(refs > 0)
+      return false;
+    
+    PoolRelease(this);
+    return true;
   }
 
   //////////////////////////////////////////////
@@ -547,6 +529,8 @@ public class FuncCtx : DynValRefcounted
 
         item.used = true;
         pool[i] = item;
+        if(item.fct.refs != -1)
+          throw new Exception("Expected to be released");
         item.fct.refs = 0;
         return item.fct;
       }
@@ -567,18 +551,23 @@ public class FuncCtx : DynValRefcounted
 
   static public void PoolRelease(FuncCtx fct)
   {
+    if(fct.refs > 0)
+      throw new Exception("Freeing live object, refs " + fct.refs);
+
     for(int i=0;i<pool.Count;++i)
     {
       var item = pool[i];
       if(item.fct == fct)
       {
         //Util.Debug("FTX RELEASE " + fct.GetHashCode());
+        item.fct.refs = -1;
         item.fct.mem.Clear();
         item.used = false;
         pool[i] = item;
         break;
       }
     }
+
   }
 
   static public void PoolClear()
@@ -617,17 +606,8 @@ public class FuncCtx : DynValRefcounted
 
 public class DynValList : List<DynVal>, DynValRefcounted
 {
+  //NOTE: -1 means it's in released state
   public int refs;
-
-  public void RefCountEvent(int r)
-  {
-    if(r == DynVal.REF_INC)
-      IncRefs();
-    else if(r == DynVal.REF_DEC)
-      DecRefs(false);
-    else if(r == DynVal.REF_TRY_RELEASE)
-      TryRelease();
-  }
 
   //TODO: results in boxing?
   //public static implicit operator DynVal(DynValList lst)
@@ -642,14 +622,14 @@ public class DynValList : List<DynVal>, DynValRefcounted
     return dv;
   }
 
-  public void IncRefs()
+  public void RefCountInc()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
     ++refs;
   }
 
-  public void DecRefs(bool try_release = true)
+  public void RefCountDec()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
@@ -657,24 +637,22 @@ public class DynValList : List<DynVal>, DynValRefcounted
       throw new Exception("Double free");
 
     --refs;
-    if(try_release)
-      TryRelease();
   }
 
-  public void TryRelease()
+  public bool RefCountTryRelease()
   {
-    if(refs == 0)
+    if(refs > 0)
+      return false;
+    
+    for(int i=0;i<Count;++i)
     {
-      for(int i=0;i<Count;++i)
-      {
-        this[i].DecRefs();
-        this[i].TryRelease();
-      }
-      Clear();
-
-      PoolRelease(this);
-      refs = -1;
+      this[i].DecRefs();
+      this[i].TryRelease();
     }
+    Clear();
+
+    PoolRelease(this);
+    return true;
   }
 
   ///////////////////////////////////////
@@ -698,9 +676,12 @@ public class DynValList : List<DynVal>, DynValRefcounted
       {
         ++pool_hit;
 
+        if(item.lst.refs != -1)
+          throw new Exception("Expected to be released");
+
+        item.lst.refs = 0;
         item.used = true;
         pool[i] = item;
-        item.lst.refs = 0;
         return item.lst;
       }
     }
@@ -719,12 +700,16 @@ public class DynValList : List<DynVal>, DynValRefcounted
 
   static public void PoolRelease(DynValList lst)
   {
+    if(lst.refs > 0)
+      throw new Exception("Freeing live object, refs " + lst.refs);
+
     for(int i=0;i<pool.Count;++i)
     {
       var item = pool[i];
       if(item.lst == lst)
       {
         item.lst.Clear();
+        item.lst.refs = -1;
         item.used = false;
         pool[i] = item;
         break;
