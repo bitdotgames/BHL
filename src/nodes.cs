@@ -1589,7 +1589,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       if(var_symb is FieldSymbol)
       {
         (var_symb as FieldSymbol).setter(ref ctx, val);
-        val.TryRelease();
+        val.RefTryRelease();
       }
       else
         throw new Exception("Not implemented");
@@ -1829,7 +1829,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     fct = FuncCtx.PoolRequest(fr);
     //NOTE: explicitely increasing refs number during function call
     //      so that func ctx is alive while function is called
-    fct.RefCountInc();
+    fct.RefInc();
 
     var ldecl = fr.decl as AST_LambdaDecl;
     if(ldecl != null)
@@ -1852,8 +1852,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
   public override void defer(object agent)
   {
     //NOTE: decreasing refs on defer
-    fct.RefCountDec();
-    fct.RefCountTryRelease();
+    fct.RefDec();
     fct = null;
   }
 
@@ -1975,7 +1974,7 @@ public class Array_AddNode : BehaviorTreeTerminalNode
     var lst = arr.obj as DynValList;
     if(lst == null)
       throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
-    val.IncRefs();
+    val.RefInc();
     lst.Add(val);
 
     if(push_arr)

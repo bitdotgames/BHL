@@ -221,36 +221,36 @@ public struct DynVal
       return "DYNVAL: type:"+type;
   }
 
-  public void IncRefs()
+  public void RefInc()
   {
     if(_obj == null || _refc == null)
       return;
 
-    _refc.RefCountInc();
+    _refc.RefInc();
   }
 
-  public void DecRefs()
+  public void RefDec(bool can_release = true)
   {
     if(_obj == null || _refc == null)
       return;
 
-    _refc.RefCountDec();
+    _refc.RefDec(can_release);
   }
 
-  public bool TryRelease()
+  public bool RefTryRelease()
   {
     if(_obj == null || _refc == null)
       return false;
 
-    return _refc.RefCountTryRelease();
+    return _refc.RefTryRelease();
   }
 }
 
 public interface DynValRefcounted
 {
-  void RefCountInc();
-  void RefCountDec();
-  bool RefCountTryRelease();
+  void RefInc();
+  void RefDec(bool can_release = true);
+  bool RefTryRelease();
 }
 
 public class MemoryScope
@@ -265,8 +265,7 @@ public class MemoryScope
       while(enm.MoveNext())
       {
         var val = enm.Current.Value;
-        val.DecRefs();
-        val.TryRelease();
+        val.RefDec();
       }
     }
     finally
@@ -282,11 +281,11 @@ public class MemoryScope
     uint k = (uint)key.n; 
     DynVal prev;
     if(vars.TryGetValue(k, out prev))
-      prev.DecRefs();
+      prev.RefDec(false);
     vars[k] = val;
-    val.IncRefs();
+    val.RefInc();
     //NOTE: if there are no refs to it try releasing it
-    prev.TryRelease();
+    prev.RefTryRelease();
   }
 
   public bool TryGet(HashedName key, out DynVal val)
@@ -299,8 +298,7 @@ public class MemoryScope
     DynVal val;
     if(vars.TryGetValue((uint)key.n, out val))
     {
-      val.DecRefs();
-      val.TryRelease();
+      val.RefDec();
       vars.Remove((uint)key.n);
     }
   }
@@ -462,14 +460,14 @@ public class FuncCtx : DynValRefcounted
   {
     if(refs == 1)
     {
-      RefCountInc();
+      RefInc();
       return this;
     }
     else if(refs > 1)
     {
       var dup = FuncCtx.PoolRequest(fr);
       dup.mem.CopyFrom(mem);
-      dup.RefCountInc();
+      dup.RefInc();
       return dup;
     }
     else
@@ -478,14 +476,14 @@ public class FuncCtx : DynValRefcounted
     }
   }
 
-  public void RefCountInc()
+  public void RefInc()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
     ++refs;
   }
 
-  public void RefCountDec()
+  public void RefDec(bool can_release = true)
   {
     if(refs == -1)
       throw new Exception("Invalid state");
@@ -493,9 +491,11 @@ public class FuncCtx : DynValRefcounted
       throw new Exception("Double free");
 
     --refs;
+    if(can_release)
+      RefTryRelease();
   }
 
-  public bool RefCountTryRelease()
+  public bool RefTryRelease()
   {
     if(refs > 0)
       return false;
@@ -622,14 +622,14 @@ public class DynValList : List<DynVal>, DynValRefcounted
     return dv;
   }
 
-  public void RefCountInc()
+  public void RefInc()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
     ++refs;
   }
 
-  public void RefCountDec()
+  public void RefDec(bool can_release = true)
   {
     if(refs == -1)
       throw new Exception("Invalid state");
@@ -637,18 +637,17 @@ public class DynValList : List<DynVal>, DynValRefcounted
       throw new Exception("Double free");
 
     --refs;
+    if(can_release)
+      RefTryRelease();
   }
 
-  public bool RefCountTryRelease()
+  public bool RefTryRelease()
   {
     if(refs > 0)
       return false;
     
     for(int i=0;i<Count;++i)
-    {
-      this[i].DecRefs();
-      this[i].TryRelease();
-    }
+      this[i].RefDec();
     Clear();
 
     PoolRelease(this);
@@ -1088,7 +1087,7 @@ public class Interpreter : AST_Visitor
 
   public void PushValue(DynVal v)
   {
-    v.IncRefs();
+    v.RefInc();
     stack.Push(v);
   }
 
@@ -1096,7 +1095,7 @@ public class Interpreter : AST_Visitor
   {
     var v = stack.PopFast();
     if(dec_refs)
-      v.DecRefs();
+      v.RefDec(false);
     return v;
   }
 

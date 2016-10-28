@@ -1620,7 +1620,7 @@ public class BHL_Test
       this.stream = stream;
     }
 
-    public void RefCountInc()
+    public void RefInc()
     {
       var sw = new StreamWriter(stream);
       ++refs;
@@ -1628,15 +1628,17 @@ public class BHL_Test
       sw.Flush();
     }
 
-    public void RefCountDec()
+    public void RefDec(bool can_release = true)
     {
       var sw = new StreamWriter(stream);
       --refs;
       sw.Write("DEC" + refs + ";");
       sw.Flush();
+      if(can_release)
+        RefTryRelease();
     }
 
-    public bool RefCountTryRelease()
+    public bool RefTryRelease()
     {
       var sw = new StreamWriter(stream);
       sw.Write("REL" + refs + ";");
@@ -1811,7 +1813,7 @@ public class BHL_Test
           delegate(ref DynVal ctx, DynVal v) {
             var f = (FooLambda)ctx.obj;
             var fctx = (FuncCtx)v.obj;
-            fctx.RefCountInc();
+            fctx.RefInc();
             if(f.script.Count == 0) f.script.Add(new BaseLambda()); ((BaseLambda)(f.script[0])).fct.obj = fctx;
             ctx.obj = f;
           }
@@ -2285,7 +2287,7 @@ public class BHL_Test
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
     AssertEqual(intp.StackCount(), 0);
-    res.TryRelease();
+    res.RefTryRelease();
   }
 
   [IsTested()]
@@ -2330,7 +2332,7 @@ public class BHL_Test
 
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 0);
-    res.TryRelease();
+    res.RefTryRelease();
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 1);
   }
@@ -2390,7 +2392,7 @@ public class BHL_Test
     AssertEqual(lst[0].num, 20);
     AssertEqual(lst[1].num, 10);
     AssertEqual(intp.StackCount(), 0);
-    res.TryRelease();
+    res.RefTryRelease();
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
   }
 
@@ -2582,7 +2584,7 @@ public class BHL_Test
       var interp = Interpreter.instance;
       var dv = interp.PopValue(); 
       var fct = (FuncCtx)dv.obj;
-      fct.RefCountInc();
+      fct.RefInc();
 
       var func_node = fct.GetNode();
 
@@ -2598,8 +2600,7 @@ public class BHL_Test
       var lfunc = children[0] as FuncNodeLambda;
       if(lfunc != null)
       {
-        lfunc.ctx.RefCountDec();
-        lfunc.ctx.RefCountTryRelease();
+        lfunc.ctx.RefDec();
       }
     }
   }
@@ -6139,8 +6140,7 @@ public class BHL_Test
     public override void deinit(object agent)
     {
       var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      fct.RefCountDec();
-      fct.RefCountTryRelease();
+      fct.RefDec();
     }
   }
 
