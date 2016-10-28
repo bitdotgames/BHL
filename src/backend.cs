@@ -456,7 +456,7 @@ public class FuncCtx : DynValRefcounted
     return fnode;
   }
 
-  public FuncCtx RefsIncOrDup()
+  public FuncCtx RefIncOrDup()
   {
     if(refs == 1)
     {
