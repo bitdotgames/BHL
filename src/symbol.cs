@@ -326,7 +326,7 @@ public abstract class ScopedSymbol : Symbol, Scope
 public class FuncSymbol : ScopedSymbol 
 {
   OrderedDictionary members = new OrderedDictionary();
-  OrderedDictionary args = null;
+  OrderedDictionary args = new OrderedDictionary();
 
   public bool return_statement_found = false;
 
@@ -336,26 +336,15 @@ public class FuncSymbol : ScopedSymbol
 
   public override OrderedDictionary GetMembers() { return members; }
 
-  //NOTE: currently func arguments are not separated from function local
-  //      arguments which is a bit 'smelly', this probably should be fixed
   public OrderedDictionary GetArgs()
   {
-    if(args == null)
-    {
-      lock(this)
-      {
-        args = new OrderedDictionary();
-        var en = members.GetEnumerator();
-        en.MoveNext();
-        int total_args = GetTotalArgsNum();
-        for(int i=0;i<total_args;++i)
-        {
-          args.Add(en.Key, en.Value);
-          en.MoveNext();
-        }
-      }
-    }
     return args;
+  }
+
+  public void DefineArg(string name) 
+  {
+    var sym = (Symbol)members[name];
+    args.Add(name, sym);
   }
 
   public virtual int GetTotalArgsNum() { return 0; }
@@ -516,6 +505,14 @@ public class FuncBindSymbol : FuncSymbol
 
   public override int GetTotalArgsNum() { return GetMembers().Count; }
   public override int GetDefaultArgsNum() { return def_args_num; }
+
+  public override void define(Symbol sym) 
+  {
+    base.define(sym);
+
+    //NOTE: for bind funcs every defined symbol is assumed to be an argument
+    DefineArg(sym.name);
+  }
 }
 
 public class SimpleFuncBindSymbol : FuncBindSymbol

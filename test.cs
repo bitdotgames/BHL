@@ -1180,7 +1180,6 @@ public class BHL_Test
     AssertEqual(intp.StackCount(), 0);
   }
 
-
   [IsTested()]
   public void TestCastIntToAny()
   {
@@ -1262,6 +1261,58 @@ public class BHL_Test
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "36");
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
+  public void TestImplicitIntArgsCast()
+  {
+    string bhl = @"
+
+    func float foo(float a, float b)
+    {
+      return a + b
+    }
+      
+    func float test() 
+    {
+      return foo(1, 2.0)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 3);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
+  public void TestImplicitIntArgsCastBindFunc()
+  {
+    string bhl = @"
+
+    func float bar(float a)
+    {
+      return a
+    }
+      
+    func float test() 
+    {
+      return bar(a : min(1, 0.3))
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindMin(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 0.3f);
     AssertEqual(intp.StackCount(), 0);
   }
 
@@ -2651,6 +2702,26 @@ public class BHL_Test
       var fn = new FuncBindSymbol("trace", globs.type("void"),
           delegate() { return new TraceNode(trace_stream); } );
       fn.define(new FuncArgSymbol("str", globs.type("string")));
+
+      globs.define(fn);
+    }
+  }
+
+  void BindMin(GlobalScope globs)
+  {
+    {
+      var fn = new SimpleFuncBindSymbol("min", globs.type("float"),
+        delegate(object agent)
+        {
+          var interp = Interpreter.instance;
+          var b = (float)interp.PopValue().num;
+          var a = (float)interp.PopValue().num;
+          interp.PushValue(new DynVal(a > b ? b : a)); 
+          return BHS.SUCCESS;
+        }
+      );
+      fn.define(new FuncArgSymbol("a", globs.type("float")));
+      fn.define(new FuncArgSymbol("b", globs.type("float")));
 
       globs.define(fn);
     }

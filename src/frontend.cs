@@ -1116,6 +1116,8 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var node = AST_Util.New_Interim();
 
+    var func = curr_scope as FuncSymbol;
+
     var fparams = ctx.varDeclare();
     bool found_default_arg = false;
     for(int i=0;i<fparams.Length;++i)
@@ -1127,6 +1129,8 @@ public class AST_Builder : bhlBaseVisitor<AST>
         FireError(Location(fp.NAME()) + ": missing default argument expression");
 
       node.AddChild(Visit(fp));
+
+      func.DefineArg(fp.NAME().GetText());
     }
 
     return node;
