@@ -1282,7 +1282,7 @@ public class LiteralNode : BehaviorTreeTerminalNode
     else if(node.type == bhl.EnumLiteral.NIL)
     {
       var dv = new DynVal();
-      dv.obj = null;
+      dv.SetNil();
       interp.PushValue(dv);
     }
     else

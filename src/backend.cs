@@ -14,6 +14,7 @@ public struct DynVal
   public const byte STRING = 3;
   public const byte USER   = 4;
   public const byte REF    = 5;
+  public const byte NIL    = 6;
 
   public bool IsEmpty { get { return type == NONE; } }
 
@@ -191,6 +192,19 @@ public struct DynVal
     num5 = 0;
     _obj = o;
     _refc = o as DynValRefcounted;
+    _str = "";
+  }
+
+  public void SetNil()
+  {
+    _type = NIL;
+    _num = 0;
+    num2 = 0;
+    num3 = 0;
+    num4 = 0;
+    num5 = 0;
+    _obj = null;
+    _refc = null;
     _str = "";
   }
 

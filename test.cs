@@ -5731,6 +5731,25 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestNullIncompatible()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      return 0 == null
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
   public void TestNullArray()
   {
     string bhl = @"
