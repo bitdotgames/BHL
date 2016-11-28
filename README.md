@@ -116,6 +116,21 @@ You can run unit tests by executing the following command:
 
 # Some more code samples
 
+## Imperative style mixed with BT
+
+```go
+func AlphaAppear(int id, float time_to_appear) {
+  float time_start = time()
+  paral {
+    forever {
+      float alpha = clamp01((time()-time_start)/time_to_appear)
+      SetObjAlpha(id: id, alpha: alpha)
+    }
+    Wait(sec: time_to_appear)
+ }
+}
+```
+
 ## Imperative style only
 
 ```go
