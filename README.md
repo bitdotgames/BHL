@@ -20,14 +20,37 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 ## Code sample
 
 ```go
-func AlphaAppear(int id, float time_to_appear) {
-  float time_start = time()
-  paral {
+func GREMLIN_KANO(float damage_mult)
+{
+  paral_all {
+    SCATTER_AFTER_GET_HIT()
     forever {
-      float alpha = clamp01((time()-time_start)/time_to_appear)
-      SetObjAlpha(id: id, alpha: alpha)
+      paral {
+        StateChanged()
+        prio {
+          OVERRIDE()
+          SPAWNED()
+          ON_WATCH()
+          WANDER()
+          DEAD()
+          DYING()
+          SCATTER()
+          paral {
+            RETHINK_LISTENER(func() {
+              Check(mem().GetNumOr("HEAVY_STAMP",0) <= time())
+              Check(mem().GetNumOr("ROLL_STAMP",0) <= time())
+            })
+            prio {
+              GREMLIN_KANO_ROLL_ATTACK(radius_min : 3, radius_max : 7, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
+              GREMLIN_KANO_HEAVY_ATTACK(radius_max : 2, cooldown : 8, global_cooldown : 5, angle : 60)
+              ATTACK()
+            }
+          }
+          ATTACK()
+          IDLE()
+        }
+      }
     }
-    Wait(sec: time_to_appear)
   }
 }
 ```
