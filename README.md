@@ -78,6 +78,8 @@ Just try running *run.sh* script:
 
 > cd example && ./run.sh
 
+Example executes the following [ simple script ](example/hello.bhl)
+
 > ...
 
 > Hello, John Silver
