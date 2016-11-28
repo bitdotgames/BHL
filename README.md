@@ -78,7 +78,7 @@ Just try running *run.sh* script:
 
 > cd example && ./run.sh
 
-Example executes the following [ simple script ](example/hello.bhl)
+This example executes the following [ simple script ](example/hello.bhl)
 
 > ...
 
