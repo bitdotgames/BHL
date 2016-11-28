@@ -22,13 +22,13 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 ```go
 func AlphaAppear(int id, float time_to_appear) {
   float time_start = time()
-    paral {
-      forever {
-        float alpha = clamp01((time()-time_start)/time_to_appear)
-          SetObjAlpha(id: id, alpha: alpha)
-      }
-      Wait(sec: time_to_appear)
+  paral {
+    forever {
+      float alpha = clamp01((time()-time_start)/time_to_appear)
+      SetObjAlpha(id: id, alpha: alpha)
     }
+    Wait(sec: time_to_appear)
+  }
 }
 ```
 ## Architecture
@@ -98,14 +98,14 @@ You can run unit tests by executing the following command:
 ```go
 func Unit FindUnit(Vec3 pos, float radius) {
   Unit[] us = GetUnits()
-    int i = 0
-    while(i < us.Count) {
-      Unit u = us.At(i)
-        if(u.position.Sub(pos).len < radius) {
-          return u
-        } 
-      i = i + 1
-    }
+  int i = 0
+  while(i < us.Count) {
+    Unit u = us.At(i)
+    if(u.position.Sub(pos).len < radius) {
+     return u
+    } 
+    i = i + 1
+   }
   return null
 }
 ```
@@ -148,4 +148,3 @@ seq {
 3. Ternary operator support
 4. **while** syntax sugar: **for(...) {}** support
 5. More optimal executor
-
