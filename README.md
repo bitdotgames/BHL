@@ -20,7 +20,7 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 ## Code sample
 
 ```go
-func GREMLIN_KANO(float damage_mult)
+func GREMLIN_KANO(float radius_max)
 {
   paral_all {
     SCATTER_AFTER_GET_HIT()
@@ -41,8 +41,8 @@ func GREMLIN_KANO(float damage_mult)
               Check(mem().GetNumOr("ROLL_STAMP",0) <= time())
             })
             prio {
-              GREMLIN_KANO_ROLL_ATTACK(radius_min : 3, radius_max : 7, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
-              GREMLIN_KANO_HEAVY_ATTACK(radius_max : 2, cooldown : 8, global_cooldown : 5, angle : 60)
+              GREMLIN_KANO_ROLL_ATTACK(radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
+              GREMLIN_KANO_HEAVY_ATTACK(radius_max : radius_max, cooldown : 8, global_cooldown : 5, angle : 60)
               ATTACK()
             }
           }
