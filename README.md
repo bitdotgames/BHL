@@ -20,7 +20,7 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 ## Code sample
 
 ```go
-func GREMLIN_KANO(float radius_max)
+func UNIT_GREMLIN(float radius_max)
 {
   paral_all {
     SCATTER_AFTER_GET_HIT()
