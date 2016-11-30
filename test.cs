@@ -1659,6 +1659,20 @@ public class BHL_Test
 
       globs.define(fn);
     }
+
+    {
+      var fn = new SimpleFuncBindSymbol("mkcolor_null", globs.type("Color"),
+          delegate(object agent) { 
+            var interp = Interpreter.instance;
+            var dv = new DynVal();
+            dv.obj = null;
+            interp.PushValue(dv);
+            return BHS.SUCCESS;
+          }
+      );
+
+      globs.define(fn);
+    }
   }
 
   public class RefC : DynValRefcounted
@@ -5727,6 +5741,35 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;NOT NULL;EQ;", str);
+    AssertEqual(intp.StackCount(), 0);
+  }
+
+  [IsTested()]
+  public void TestSetNullObjFromUserBinding()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c = mkcolor_null()
+      if(c == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, false);
+
+    var str = GetString(trace_stream);
+    AssertEqual("NULL;", str);
     AssertEqual(intp.StackCount(), 0);
   }
 

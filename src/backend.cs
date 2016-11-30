@@ -184,7 +184,7 @@ public struct DynVal
 
   public void Set(object o)
   {
-    _type = USER;
+    _type = o == null ? NIL : USER;
     _num = 0;
     num2 = 0;
     num3 = 0;
@@ -231,6 +231,8 @@ public struct DynVal
       return _str + ":<STRING>";
     else if(type == USER)
       return _obj.GetType().Name + ":<USER>";
+    else if(type == NIL)
+      return "<NIL>";
     else
       return "DYNVAL: type:"+type;
   }
