@@ -110,7 +110,7 @@ You can view all available build tasks with the following command:
 
 ## Tests
 
-For now there is no any documentation for bhl except presentation slides. However, there are many unit tests in **tests.cs** which cover almost all bhl features.
+For now there is no any documentation for bhl except presentation slides. However, there are many unit tests in [**tests.cs**] (tests.cs) which cover almost all bhl features.
 
 You can run unit tests by executing the following command:
 
