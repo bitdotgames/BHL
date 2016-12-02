@@ -130,7 +130,7 @@ function task_run(array $args = array())
 /**
  * @deps build_front_dll
  */
-function task_test()
+function task_test(array $args = array())
 {
   global $BHL_ROOT;
 
@@ -143,7 +143,7 @@ function task_test()
   "-define:BHL_FRONT -debug"
   );
 
-  mono_run("$BHL_ROOT/test.exe", array(), '--debug');
+  mono_run("$BHL_ROOT/test.exe", $args, '--debug ');
 }
 
 function mcs_bin()

@@ -109,7 +109,6 @@ public struct HashedName
   }
 }
 
-//TODO: keep a free list
 static public class OPool
 {
   public struct PoolItem

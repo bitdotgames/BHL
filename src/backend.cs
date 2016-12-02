@@ -5,14 +5,13 @@ using game;
 
 namespace bhl {
 
-//NOTE: it's a struct
-public struct DynVal
+public class DynVal
 {
   public const byte NONE   = 0;
   public const byte NUMBER = 1;
   public const byte BOOL   = 2;
   public const byte STRING = 3;
-  public const byte USER   = 4;
+  public const byte OBJ    = 4;
   public const byte REF    = 5;
   public const byte NIL    = 6;
 
@@ -25,7 +24,7 @@ public struct DynVal
       return _num;
     }
     set {
-      Set(value);
+      SetNum(value);
     }
   }
 
@@ -34,7 +33,7 @@ public struct DynVal
       return _str;
     }
     set {
-      Set(value);
+      SetStr(value);
     }
   }
 
@@ -43,7 +42,7 @@ public struct DynVal
       return _obj;
     }
     set {
-      Set(value);
+      SetObj(value);
     }
   }
 
@@ -52,173 +51,224 @@ public struct DynVal
       return _num == 1;
     }
     set {
-      Set(value);
+      SetBool(value);
     }
   }
 
   byte _type;
-  //NOTE: semi-private, don't use directly 
-  public double _num;
-  //NOTE: for non-allocating storage of structs(e.g vectors, quaternions)
-  public double num2;
-  public double num3;
-  public double num4;
-  public double num5;
-  //NOTE: semi-private, don't use directly 
-  public string _str;
-  //NOTE: semi-private, don't use directly 
-  public object _obj;
+  //NOTE: -1 means it's in released state
+  public int _refs;
   DynValRefcounted _refc;
 
-  public DynVal(string s)
+  //NOTE: below members are semi-public, one can use them for 
+  //      fast access or non-allocating storage of structs(e.g vectors, quaternions)
+  public double _num;
+  public double _num2;
+  public double _num3;
+  public double _num4;
+  public double _num5;
+  public string _str;
+  public object _obj;
+
+  static Queue<DynVal> pool = new Queue<DynVal>(64);
+  static int pool_miss;
+  static int pool_hit;
+
+  static public DynVal New()
+  {
+    DynVal dv;
+    if(pool.Count == 0)
+    {
+      ++pool_miss;
+      dv = new DynVal();
+      //Console.WriteLine("NEW1: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+    }
+    else
+    {
+      ++pool_hit;
+      dv = pool.Dequeue();
+      //Console.WriteLine("HIT: " + dv.GetHashCode() + " "/* + Environment.StackTrace*/);
+      //NOTE: DynVal is Reset here instead of Del, see notes below 
+      dv.Reset();
+      dv._refs = 0;
+    }
+    return dv;
+  }
+
+  static public void Del(DynVal dv)
+  {
+    //NOTE: we don't Reset DynVal immediately, giving a caller
+    //      a chance to access its properties
+    if(dv._refs > 0)
+      throw new Exception("Deleting live object");
+    dv._refs = -1;
+
+    //NOTE: we'd like to ensure there are some spare values before 
+    //      the released one, this way it will be possible to call 
+    //      safely New() right after Del() since it won't return
+    //      just deleted object
+    int spare = 1 - pool.Count;
+    for(int i=0;i<spare;i++)
+    {
+      ++pool_miss;
+      var tmp = new DynVal(); 
+      pool.Enqueue(tmp);
+      //Console.WriteLine("NEW2: " + tmp.GetHashCode());
+    }
+    pool.Enqueue(dv);
+    //Console.WriteLine("DEL: " + dv.GetHashCode());
+  }
+
+  //NOTE: refcount is not reset
+  void Reset()
   {
     _type = NONE;
     _num = 0;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
+    _num2 = 0;
+    _num3 = 0;
+    _num4 = 0;
+    _num5 = 0;
+    _str = "";
     _obj = null;
     _refc = null;
-    _str = "";
-
-    Set(s);
   }
 
-  public void Set(string s)
+  public void ValueCopyFrom(DynVal dv)
   {
+    _type = dv._type;
+    _num = dv._num;
+    _num2 = dv._num2;
+    _num3 = dv._num3;
+    _num4 = dv._num4;
+    _num5 = dv._num5;
+    _str = dv._str;
+    _obj = dv._obj;
+    _refc = dv._refc;
+  }
+
+  public DynVal ValueClone()
+  {
+    DynVal dv = New();
+    dv.ValueCopyFrom(this);
+    return dv;
+  }
+
+  public void ValueRefInc()
+  {
+    if(_refc != null)
+      _refc.RefInc();
+  }
+
+  public void ValueRefDec(bool can_release = true)
+  {
+    if(_refc != null)
+      _refc.RefDec(can_release);
+  }
+
+  public bool ValueTryRelease()
+  {
+    if(_refc == null)
+      return false;
+
+    return _refc.RefTryRelease();
+  }
+
+  static public DynVal NewStr(string s)
+  {
+    DynVal dv = New();
+    dv.SetStr(s);
+    return dv;
+  }
+
+  public void SetStr(string s)
+  {
+    Reset();
     _type = STRING;
-    _num = 0;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
-    _obj = null;
-    _refc = null;
     _str = s;
   }
 
-  public DynVal(int n)
+  static public DynVal NewNum(int n)
   {
-    _type = NONE;
-    _num = 0;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
-    _obj = null;
-    _refc = null;
-    _str = "";
-
-    Set(n);
+    DynVal dv = New();
+    dv.SetNum(n);
+    return dv;
   }
 
-  public void Set(int n)
+  public void SetNum(int n)
   {
+    Reset();
     _type = NUMBER;
     _num = n;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
-    _obj = null;
-    _refc = null;
-    _str = "";
   }
 
-  public DynVal(double n)
+  static public DynVal NewNum(double n)
   {
-    _type = NONE;
-    _num = 0;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
-    _obj = null;
-    _refc = null;
-    _str = "";
-
-    Set(n);
+    DynVal dv = New();
+    dv.SetNum(n);
+    return dv;
   }
 
-  public void Set(double n)
+  public void SetNum(double n)
   {
+    Reset();
     _type = NUMBER;
     _num = n;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
-    _obj = null;
-    _refc = null;
-    _str = "";
   }
 
-  public DynVal(bool b)
+  static public DynVal NewBool(bool b)
   {
-    _type = NONE;
-    _num = 0;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
-    _obj = null;
-    _refc = null;
-    _str = "";
-
-    Set(b);
+    DynVal dv = New();
+    dv.SetBool(b);
+    return dv;
   }
 
-  public void Set(bool b)
+  public void SetBool(bool b)
   {
+    Reset();
     _type = BOOL;
     _num = b ? 1.0f : 0.0f;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
-    _obj = null;
-    _refc = null;
-    _str = "";
   }
 
-  public void Set(object o)
+  static public DynVal NewObj(object o)
   {
-    _type = USER;
-    _num = 0;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
+    DynVal dv = New();
+    dv.SetObj(o);
+    return dv;
+  }
+
+  public void SetObj(object o)
+  {
+    Reset();
+    _type = OBJ;
     _obj = o;
     _refc = o as DynValRefcounted;
-    _str = "";
+  }
+
+  static public DynVal NewNil()
+  {
+    DynVal dv = New();
+    dv.SetNil();
+    return dv;
   }
 
   public void SetNil()
   {
+    Reset();
     _type = NIL;
-    _num = 0;
-    num2 = 0;
-    num3 = 0;
-    num4 = 0;
-    num5 = 0;
-    _obj = null;
-    _refc = null;
-    _str = "";
   }
 
   public bool IsEqual(DynVal o)
   {
-    return
+    return this == o || (
       _type == o.type &&
-      _num == o.num &&
-      num2 == o.num2 &&
-      num3 == o.num3 &&
-      num4 == o.num4 &&
-      num5 == o.num5 &&
-      _str == o.str &&
-      _obj == o.obj;
+      _num == o._num &&
+      _num2 == o._num2 &&
+      _num3 == o._num3 &&
+      _num4 == o._num4 &&
+      _num5 == o._num5 &&
+      _str == o._str &&
+      _obj == o._obj
+      );
   }
 
   public override string ToString() 
@@ -229,34 +279,62 @@ public struct DynVal
       return bval + ":<BOOL>";
     else if(type == STRING)
       return _str + ":<STRING>";
-    else if(type == USER)
-      return _obj.GetType().Name + ":<USER>";
+    else if(type == NIL)
+      return "<NIL>";
+    else if(type == OBJ)
+      return _obj.GetType().Name + ":<OBJ>";
     else
       return "DYNVAL: type:"+type;
   }
 
   public void RefInc()
   {
-    if(_obj == null || _refc == null)
-      return;
+    if(_refs == -1)
+      throw new Exception("Invalid state");
 
-    _refc.RefInc();
+    ++_refs;
+    //Console.WriteLine("RETAIN: " + _refs + " "/* + Environment.StackTrace*/);
   }
 
-  public void RefDec(bool can_release = true)
+  public void RefDec()
   {
-    if(_obj == null || _refc == null)
-      return;
+    if(_refs == -1)
+      throw new Exception("Invalid state");
+    else if(_refs == 0)
+      throw new Exception("Double free");
 
-    _refc.RefDec(can_release);
+    --_refs;
+    //Console.WriteLine("RELEASE: " + _refs + " "/* + Environment.StackTrace*/);
+
+    if(_refs == 0)
+      Del(this);
   }
 
-  public bool RefTryRelease()
+  static public void PoolClear()
   {
-    if(_obj == null || _refc == null)
-      return false;
+    pool_hit = 0;
+    pool_miss = 0;
+    pool.Clear();
+  }
 
-    return _refc.RefTryRelease();
+  static public int PoolHits
+  {
+    get { return pool_hit; } 
+  }
+
+  static public int PoolMisses
+  {
+    get { return pool_miss; } 
+  }
+
+  static public int PoolCount
+  {
+    get { return pool_miss; }
+  }
+
+  static public int PoolCountFree
+  {
+    get { return pool.Count; }
   }
 }
 
@@ -279,6 +357,7 @@ public class MemoryScope
       while(enm.MoveNext())
       {
         var val = enm.Current.Value;
+        val.ValueRefDec();
         val.RefDec();
       }
     }
@@ -293,13 +372,18 @@ public class MemoryScope
   public void Set(HashedName key, DynVal val)
   {
     uint k = (uint)key.n; 
-    DynVal prev;
+    DynVal prev = null;
     if(vars.TryGetValue(k, out prev))
-      prev.RefDec(false);
+      prev.ValueRefDec(false);
     vars[k] = val;
+    val.ValueRefInc();
     val.RefInc();
     //NOTE: if there are no refs to it try releasing it
-    prev.RefTryRelease();
+    if(prev != null)
+    {
+      prev.ValueTryRelease();
+      prev.RefDec();
+    }
   }
 
   public bool TryGet(HashedName key, out DynVal val)
@@ -312,6 +396,7 @@ public class MemoryScope
     DynVal val;
     if(vars.TryGetValue((uint)key.n, out val))
     {
+      val.ValueRefDec();
       val.RefDec();
       vars.Remove((uint)key.n);
     }
@@ -526,7 +611,7 @@ public class FuncCtx : DynValRefcounted
     public FuncCtx fct;
   }
 
-  static public List<PoolItem> pool = new List<PoolItem>();
+  static List<PoolItem> pool = new List<PoolItem>();
   static int pool_hit;
   static int pool_miss;
 
@@ -623,19 +708,6 @@ public class DynValList : List<DynVal>, DynValRefcounted
   //NOTE: -1 means it's in released state
   public int refs;
 
-  //TODO: results in boxing?
-  //public static implicit operator DynVal(DynValList lst)
-  //{
-  //  return lst.ToDynVal();
-  //}
-
-  public DynVal ToDynVal()
-  {
-    var dv = new DynVal();
-    dv.obj = this;
-    return dv;
-  }
-
   public void RefInc()
   {
     if(refs == -1)
@@ -661,54 +733,40 @@ public class DynValList : List<DynVal>, DynValRefcounted
       return false;
     
     for(int i=0;i<Count;++i)
+    {
+      this[i].ValueRefDec();
       this[i].RefDec();
-    Clear();
-
+    }
     PoolRelease(this);
+
     return true;
   }
 
   ///////////////////////////////////////
 
-  public struct PoolItem
-  {
-    public bool used;
-    public DynValList lst;
-  }
-
-  static public List<PoolItem> pool = new List<PoolItem>();
+  static public Stack<DynValList> pool = new Stack<DynValList>();
   static int pool_hit;
   static int pool_miss;
 
   public static DynValList PoolRequest()
   {
-    for(int i=0;i<pool.Count;++i)
-    {
-      var item = pool[i];
-      if(!item.used)
-      {
-        ++pool_hit;
-
-        if(item.lst.refs != -1)
-          throw new Exception("Expected to be released");
-
-        item.lst.refs = 0;
-        item.used = true;
-        pool[i] = item;
-        return item.lst;
-      }
-    }
-
+    DynValList lst;
+    if(pool.Count == 0)
     {
       ++pool_miss;
-
-      var lst = new DynValList();
-      var item = new PoolItem();
-      item.lst = lst;
-      item.used = true;
-      pool.Add(item);
-      return lst;
+      lst = new DynValList();
     }
+    else
+    {
+      ++pool_hit;
+      lst = pool.Pop();
+
+      if(lst.refs != -1)
+        throw new Exception("Expected to be released");
+      lst.refs = 0;
+    }
+
+    return lst;
   }
 
   static public void PoolRelease(DynValList lst)
@@ -716,22 +774,15 @@ public class DynValList : List<DynVal>, DynValRefcounted
     if(lst.refs > 0)
       throw new Exception("Freeing live object, refs " + lst.refs);
 
-    for(int i=0;i<pool.Count;++i)
-    {
-      var item = pool[i];
-      if(item.lst == lst)
-      {
-        item.lst.Clear();
-        item.lst.refs = -1;
-        item.used = false;
-        pool[i] = item;
-        break;
-      }
-    }
+    lst.refs = -1;
+    lst.Clear();
+    pool.Push(lst);
   }
 
   static public void PoolClear()
   {
+    pool_miss = 0;
+    pool_hit = 0;
     pool.Clear();
   }
 
@@ -747,20 +798,12 @@ public class DynValList : List<DynVal>, DynValRefcounted
 
   static public int PoolCount
   {
-    get { return pool.Count; }
+    get { return pool_miss; }
   }
 
   static public int PoolCountFree
   {
-    get {
-      int free = 0;
-      for(int i=0;i<pool.Count;++i)
-      {
-        if(!pool[i].used)
-          ++free;
-      }
-      return free;
-    }
+    get { return pool.Count; }
   }
   /////////////////////////////////////////
   
@@ -779,8 +822,8 @@ public class DynValList : List<DynVal>, DynValRefcounted
   {
     var lst = PoolRequest();
     for(int i=0;i<dst.Count;++i)
-      lst.Add(new DynVal(dst[i]));
-    dv = lst.ToDynVal();
+      lst.Add(DynVal.NewStr(dst[i]));
+    dv.SetObj(lst);
   }
 
   public static void Decode(DynVal dv, ref List<uint> dst)
@@ -798,8 +841,8 @@ public class DynValList : List<DynVal>, DynValRefcounted
   {
     var lst = PoolRequest();
     for(int i=0;i<dst.Count;++i)
-      lst.Add(new DynVal(dst[i]));
-    dv = lst.ToDynVal();
+      lst.Add(DynVal.NewNum(dst[i]));
+    dv.SetObj(lst);
   }
 
   public static void Decode(DynVal dv, ref List<int> dst)
@@ -817,8 +860,8 @@ public class DynValList : List<DynVal>, DynValRefcounted
   {
     var lst = PoolRequest();
     for(int i=0;i<dst.Count;++i)
-      lst.Add(new DynVal(dst[i]));
-    dv = lst.ToDynVal();
+      lst.Add(DynVal.NewNum(dst[i]));
+    dv.SetObj(lst);
   }
 }
 
@@ -887,7 +930,7 @@ public class Interpreter : AST_Visitor
   {
     node_stack.Clear();
     curr_node = null;
-    last_member_ctx = new DynVal();
+    last_member_ctx = null;
     mstack.Clear();
     curr_mem = null;
     loaded_modules.Clear();
@@ -916,7 +959,7 @@ public class Interpreter : AST_Visitor
       if(res.status != BHS.RUNNING)
         break;
     }
-    res.val = ret_value ? PopValue() : new DynVal();
+    res.val = ret_value ? PopValue() : null;
     return res;
   }
 
@@ -1102,14 +1145,15 @@ public class Interpreter : AST_Visitor
   public void PushValue(DynVal v)
   {
     v.RefInc();
+    v.ValueRefInc();
     stack.Push(v);
   }
 
-  public DynVal PopValue(bool dec_refs = true)
+  public DynVal PopValue()
   {
     var v = stack.PopFast();
-    if(dec_refs)
-      v.RefDec(false);
+    v.ValueRefDec(can_release: false);
+    v.RefDec();
     return v;
   }
 
@@ -1120,6 +1164,11 @@ public class Interpreter : AST_Visitor
 
     res = stack.Peek();
     return true;
+  }
+
+  public DynVal PeekValue()
+  {
+    return stack.Peek();
   }
 
   public int StackCount()
@@ -1402,8 +1451,9 @@ public class Interpreter : AST_Visitor
       //2. in a simpler case just reset the config
       else
       {
-        var dv = new DynVal();
+        var dv = DynVal.New();
         conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
+        DynVal.Del(dv);
         curr_node.addChild(conf_node);
       }
     }

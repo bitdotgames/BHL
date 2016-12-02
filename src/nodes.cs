@@ -827,7 +827,7 @@ public class EvalNode : SequentialNode
     if(status != BHS.RUNNING)
     {
       var interp = Interpreter.instance;
-      interp.PushValue(new DynVal(status == BHS.SUCCESS ? true : false));
+      interp.PushValue(DynVal.NewBool(status == BHS.SUCCESS ? true : false));
       //since we are inside eval block we should not propagate failures
       if(status == BHS.FAILURE)
         status = BHS.SUCCESS;
@@ -1192,7 +1192,7 @@ public class ResetConfigNode : BehaviorTreeTerminalNode
 
   public override void init(object agent) 
   {
-    var dv = new DynVal();
+    var dv = DynVal.New();
     conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
 
     if(push)
@@ -1228,7 +1228,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
     if(bnd.creator == null)
       throw new Exception("Class binding doesn't have creator: " + ntype);
 
-    var val = new DynVal(); 
+    var val = DynVal.New(); 
     bnd.creator(ref val);
     interp.PushValue(val);
   }
@@ -1274,17 +1274,13 @@ public class LiteralNode : BehaviorTreeTerminalNode
     var interp = Interpreter.instance;
 
     if(node.type == bhl.EnumLiteral.NUM)
-      interp.PushValue(new DynVal(node.nval));
+      interp.PushValue(DynVal.NewNum(node.nval));
     else if(node.type == bhl.EnumLiteral.BOOL)
-      interp.PushValue(new DynVal(node.nval == 1));
+      interp.PushValue(DynVal.NewBool(node.nval == 1));
     else if(node.type == bhl.EnumLiteral.STR)
-      interp.PushValue(new DynVal(node.sval));
+      interp.PushValue(DynVal.NewStr(node.sval));
     else if(node.type == bhl.EnumLiteral.NIL)
-    {
-      var dv = new DynVal();
-      dv.SetNil();
-      interp.PushValue(dv);
-    }
+      interp.PushValue(DynVal.NewNil());
     else
       throw new Exception("Bad literal:" + node.type);
   }
@@ -1311,11 +1307,11 @@ public class UnaryOpNode : BehaviorTreeTerminalNode
 
     if(node.type == EnumUnaryOp.NEG)
     {
-      interp.PushValue(new DynVal(-a.num));
+      interp.PushValue(DynVal.NewNum(-a.num));
     }
     else if(node.type == EnumUnaryOp.NOT)
     {
-      interp.PushValue(new DynVal(!a.bval));
+      interp.PushValue(DynVal.NewBool(!a.bval));
     }
     else
       throw new Exception("Unsupported unary op:" + node.type);
@@ -1347,66 +1343,66 @@ public class BinaryOpNode : BehaviorTreeTerminalNode
     if(node.type == EnumBinaryOp.AND)
     {
       //TODO: what about short-circuit behavior of '&&' ?
-      interp.PushValue(new DynVal(a.bval && b.bval));
+      interp.PushValue(DynVal.NewBool(a.bval && b.bval));
     }
     else if(node.type == EnumBinaryOp.OR)
     {
-      interp.PushValue(new DynVal(a.bval || b.bval));
+      interp.PushValue(DynVal.NewBool(a.bval || b.bval));
     }
     else if(node.type == EnumBinaryOp.ADD)
     {
       if(a.type == DynVal.STRING && a.type == b.type)
-        interp.PushValue(new DynVal(a.str + b.str));
+        interp.PushValue(DynVal.NewStr(a._str + b._str));
       else
-        interp.PushValue(new DynVal(a.num + b.num));
+        interp.PushValue(DynVal.NewNum(a._num + b._num));
     }
     else if(node.type == EnumBinaryOp.EQ)
     {
-      interp.PushValue(new DynVal(a.IsEqual(b)));
+      interp.PushValue(DynVal.NewBool(a.IsEqual(b)));
     }
     else if(node.type == EnumBinaryOp.NQ)
     {
-      interp.PushValue(new DynVal(!a.IsEqual(b)));
+      interp.PushValue(DynVal.NewBool(!a.IsEqual(b)));
     }
     else if(node.type == EnumBinaryOp.LT)
     {
-      interp.PushValue(new DynVal(a.num < b.num));
+      interp.PushValue(DynVal.NewBool(a._num < b._num));
     }
     else if(node.type == EnumBinaryOp.LTE)
     {
-      interp.PushValue(new DynVal(a.num <= b.num));
+      interp.PushValue(DynVal.NewBool(a._num <= b._num));
     }
     else if(node.type == EnumBinaryOp.GT)
     {
-      interp.PushValue(new DynVal(a.num > b.num));
+      interp.PushValue(DynVal.NewBool(a._num > b._num));
     }
     else if(node.type == EnumBinaryOp.GTE)
     {
-      interp.PushValue(new DynVal(a.num >= b.num));
+      interp.PushValue(DynVal.NewBool(a._num >= b._num));
     }
     else if(node.type == EnumBinaryOp.SUB)
     {
-      interp.PushValue(new DynVal(a.num - b.num));
+      interp.PushValue(DynVal.NewNum(a._num - b._num));
     }
     else if(node.type == EnumBinaryOp.MUL)
     {
-      interp.PushValue(new DynVal(a.num * b.num));
+      interp.PushValue(DynVal.NewNum(a._num * b._num));
     }
     else if(node.type == EnumBinaryOp.DIV)
     {
-      interp.PushValue(new DynVal(a.num / b.num));
+      interp.PushValue(DynVal.NewNum(a._num / b._num));
     }
     else if(node.type == EnumBinaryOp.MOD)
     {
-      interp.PushValue(new DynVal((int)a.num % (int)b.num));
+      interp.PushValue(DynVal.NewNum((int)a._num % (int)b._num));
     }
     else if(node.type == EnumBinaryOp.BIT_AND)
     {
-      interp.PushValue(new DynVal((int)a.num & (int)b.num));
+      interp.PushValue(DynVal.NewNum((int)a._num & (int)b._num));
     }
     else if(node.type == EnumBinaryOp.BIT_OR)
     {
-      interp.PushValue(new DynVal((int)a.num | (int)b.num));
+      interp.PushValue(DynVal.NewNum((int)a._num | (int)b._num));
     }
     else
       throw new Exception("Unsupported binary op:" + node.type);
@@ -1430,19 +1426,21 @@ public class TypeCastNode : BehaviorTreeTerminalNode
   public override void init(object agent)
   {
     var interp = Interpreter.instance;
+
     var val = interp.PopValue();
+    var res = val.ValueClone();
 
     //TODO: add better casting support
     if(node.ntype == SymbolTable._int.nname)
     {
-      val.Set((int)val.num);
+      res.SetNum((int)val.num);
     }
     else if(node.ntype == SymbolTable._string.nname && val.type != DynVal.STRING)
     {
-      val.Set("" + val.num);
+      res.SetStr("" + val.num);
     }
 
-    interp.PushValue(val);
+    interp.PushValue(res);
   }
 
   public override string inspect(object agent)
@@ -1473,7 +1471,7 @@ public class VarAccessNode : BehaviorTreeTerminalNode
 
     if(mode == WRITE)
     {
-      var val = interp.PopValue();
+      var val = interp.PopValue().ValueClone();
       interp.SetScopeValue(name, val);
     }
     else if(mode == READ)
@@ -1483,12 +1481,12 @@ public class VarAccessNode : BehaviorTreeTerminalNode
     }
     else if(mode == DECL)
     {
-      var val = new DynVal();
+      var val = DynVal.New();
       interp.SetScopeValue(name, val);
     }
     else if(mode == DECL_REF)
     {
-      var val = new DynVal();
+      var val = DynVal.New();
       interp.SetScopeValue(name, val);
     }
     else
@@ -1502,7 +1500,7 @@ public class VarAccessNode : BehaviorTreeTerminalNode
       str += "<- =";
     else if(mode == READ)
       str += "->";
-    else if(mode == DECL)
+    else if(mode == DECL || mode == DECL_REF)
       str += "=";
     return str;
   }
@@ -1552,17 +1550,14 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       if(var_symb == null)
         throw new Exception("Not a variable symbol: " + name);
 
-      var ctx = interp.PopValue();
+      var ctx = mode == READ_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
 
-      var val = new DynVal();
+      var val = DynVal.New();
 
       if(var_symb is FieldSymbol)
         (var_symb as FieldSymbol).getter(ctx, ref val);
       else
         throw new Exception("Not implemented");
-
-      if(mode == READ_PUSH_CTX)
-        interp.PushValue(ctx);
 
       interp.PushValue(val);
     }
@@ -1572,13 +1567,13 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       if(var_symb == null)
         throw new Exception("Not a variable symbol: " + name);
 
-      DynVal val = new DynVal();
-      DynVal ctx = new DynVal();
+      DynVal val = null;
+      DynVal ctx = null;
 
       if(mode == WRITE_PUSH_CTX || mode == WRITE2)
       {
         val = interp.PopValue();
-        ctx = interp.PopValue();
+        ctx = mode == WRITE_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
       }
       else
       {
@@ -1589,13 +1584,10 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       if(var_symb is FieldSymbol)
       {
         (var_symb as FieldSymbol).setter(ref ctx, val);
-        val.RefTryRelease();
+        val.ValueTryRelease();
       }
       else
         throw new Exception("Not implemented");
-
-      if(mode == WRITE_PUSH_CTX)
-        interp.PushValue(ctx);
     }
   }
 
@@ -1716,7 +1708,8 @@ public class FuncNodeAST : FuncNode
     {
       var fparam = (AST_VarDecl)fparams.children[0].children[i];
       var fparam_name = fparam.Name();
-      var fparam_val = interp.PopValue();
+      //copying passed value to the new function
+      var fparam_val = interp.PopValue().ValueClone();
 
       //Util.Debug(fparam_name + "=" + fparam_val);
       mem.Set(fparam_name, fparam_val);
@@ -1843,8 +1836,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
       }
     }
 
-    var fdv = new DynVal();
-    fdv.obj = fct;
+    var fdv = DynVal.NewObj(fct);
     //Util.Debug("PUSH FCTX: " + fct.decl.Name() + " " + agent.GetHashCode());
     interp.PushValue(fdv);
   }
@@ -1933,7 +1925,7 @@ public class Array_NewNode : BehaviorTreeTerminalNode
   public override void init(object agent)
   {
     var interp = Interpreter.instance;
-    var val = DynValList.PoolRequest().ToDynVal();
+    var val = DynVal.NewObj(DynValList.PoolRequest());
     interp.PushValue(val);
   }
 
@@ -1948,8 +1940,7 @@ public class Array_NewNodeT<T> : BehaviorTreeTerminalNode
   public override void init(object agent)
   {
     var interp = Interpreter.instance;
-    var arr = new DynVal();
-    arr.obj = new List<T>();
+    var arr = DynVal.NewObj(new List<T>());
     interp.PushValue(arr);
   }
 
@@ -1968,17 +1959,15 @@ public class Array_AddNode : BehaviorTreeTerminalNode
     var interp = Interpreter.instance;
 
     //NOTE: args are in reverse order in stack
-    var val = interp.PopValue();
-    var arr = interp.PopValue();
+    var val = interp.PopValue().ValueClone();
+    var arr = push_arr ? interp.PeekValue() : interp.PopValue();
 
     var lst = arr.obj as DynValList;
     if(lst == null)
       throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
     val.RefInc();
+    val.ValueRefInc();
     lst.Add(val);
-
-    if(push_arr)
-      interp.PushValue(arr);
   }
 
   public override string inspect(object agent)
@@ -1998,7 +1987,7 @@ public class Array_AddNodeT<T> : Array_AddNode where T : new()
 
     //NOTE: args are in reverse order in stack
     var val = interp.PopValue();
-    var arr = interp.PopValue(dec_refs: !push_arr);
+    var arr = push_arr ? interp.PeekValue() : interp.PopValue();
 
     var lst = (arr.obj as List<T>);
     if(lst == null)
@@ -2006,9 +1995,6 @@ public class Array_AddNodeT<T> : Array_AddNode where T : new()
     T obj = new T();
     ArrayTypeSymbolT<T>.Convert(val, ref obj);
     lst.Add(obj);
-
-    if(push_arr)
-      interp.PushValue(arr);
   }
 }
 
@@ -2051,8 +2037,7 @@ public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
       throw new UserError("Not a List<" + typeof(T).Name + ">: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
 
     var res = lst[(int)idx.num]; 
-    var val = new DynVal();
-    val.obj = res;
+    var val = DynVal.NewObj(res);
     interp.PushValue(val);
   }
 

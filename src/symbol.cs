@@ -165,7 +165,7 @@ public class ArrayTypeSymbol : ClassSymbol
         delegate(bhl.DynVal ctx, ref bhl.DynVal v)
         {
           var lst = (IList)ctx.obj;
-          v.Set(lst.Count);
+          v.SetNum(lst.Count);
         },
         //read only property
         null
@@ -176,7 +176,7 @@ public class ArrayTypeSymbol : ClassSymbol
 
   public virtual void CreateArr(ref DynVal v)
   {
-    v = DynValList.PoolRequest().ToDynVal();
+    v.SetObj(DynValList.PoolRequest());
   }
 
   public virtual BehaviorTreeNode Create_New()
