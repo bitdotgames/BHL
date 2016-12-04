@@ -672,7 +672,7 @@ static public class AST_Util
   {
     var n = new AST_VarDecl();
     n.type = type;
-    n.nname = Hash.CRC28(name) | ((is_ref ? 0u : 1u) << 29);
+    n.nname = Hash.CRC28(name) | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
     {
       n.name = name;

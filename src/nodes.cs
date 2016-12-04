@@ -1454,7 +1454,6 @@ public class VarAccessNode : BehaviorTreeTerminalNode
   public const int READ      = 0;
   public const int WRITE     = 1;
   public const int DECL      = 2;
-  public const int DECL_REF  = 3;
 
   HashedName name;
   public int mode = READ;
@@ -1472,19 +1471,17 @@ public class VarAccessNode : BehaviorTreeTerminalNode
     if(mode == WRITE)
     {
       var val = interp.PopValue().ValueClone();
+      //Console.WriteLine("WRITE " + val + " " + val.GetHashCode());
       interp.SetScopeValue(name, val);
+      val.RefTryRelease();
     }
     else if(mode == READ)
     {
       var val = interp.GetScopeValue(name);
+      //Console.WriteLine("READ " + val + " " + val.GetHashCode());
       interp.PushValue(val);
     }
     else if(mode == DECL)
-    {
-      var val = DynVal.New();
-      interp.SetScopeValue(name, val);
-    }
-    else if(mode == DECL_REF)
     {
       var val = DynVal.New();
       interp.SetScopeValue(name, val);
@@ -1500,7 +1497,7 @@ public class VarAccessNode : BehaviorTreeTerminalNode
       str += "<- =";
     else if(mode == READ)
       str += "->";
-    else if(mode == DECL || mode == DECL_REF)
+    else if(mode == DECL)
       str += "=";
     return str;
   }
@@ -1708,11 +1705,13 @@ public class FuncNodeAST : FuncNode
     {
       var fparam = (AST_VarDecl)fparams.children[0].children[i];
       var fparam_name = fparam.Name();
-      //copying passed value to the new function
-      var fparam_val = interp.PopValue().ValueClone();
 
-      //Util.Debug(fparam_name + "=" + fparam_val);
+      var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
+      //var fparam_val = interp.PopRef();
+      //Util.Debug(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
       mem.Set(fparam_name, fparam_val);
+
+      fparam_val.RefTryRelease();
     }
 
     base.init(agent);

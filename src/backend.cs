@@ -81,13 +81,13 @@ public class DynVal
     {
       ++pool_miss;
       dv = new DynVal();
-      //Console.WriteLine("NEW1: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("NEW: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
     }
     else
     {
       ++pool_hit;
       dv = pool.Dequeue();
-      //Console.WriteLine("HIT: " + dv.GetHashCode() + " "/* + Environment.StackTrace*/);
+      //Console.WriteLine("NEW2: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
       //NOTE: DynVal is Reset here instead of Del, see notes below 
       dv.Reset();
       dv._refs = 0;
@@ -107,8 +107,7 @@ public class DynVal
     //      the released one, this way it will be possible to call 
     //      safely New() right after Del() since it won't return
     //      just deleted object
-    int spare = 1 - pool.Count;
-    for(int i=0;i<spare;i++)
+    if(pool.Count == 0)
     {
       ++pool_miss;
       var tmp = new DynVal(); 
@@ -293,10 +292,10 @@ public class DynVal
       throw new Exception("Invalid state");
 
     ++_refs;
-    //Console.WriteLine("RETAIN: " + _refs + " "/* + Environment.StackTrace*/);
+    //Console.WriteLine("INC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
   }
 
-  public void RefDec()
+  public void RefDec(bool can_release = true)
   {
     if(_refs == -1)
       throw new Exception("Invalid state");
@@ -304,8 +303,14 @@ public class DynVal
       throw new Exception("Double free");
 
     --_refs;
-    //Console.WriteLine("RELEASE: " + _refs + " "/* + Environment.StackTrace*/);
+    //Console.WriteLine("DEC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
 
+    if(can_release)
+      RefTryRelease();
+  }
+
+  public void RefTryRelease()
+  {
     if(_refs == 0)
       Del(this);
   }
@@ -374,15 +379,18 @@ public class MemoryScope
     uint k = (uint)key.n; 
     DynVal prev = null;
     if(vars.TryGetValue(k, out prev))
-      prev.ValueRefDec(false);
-    vars[k] = val;
-    val.ValueRefInc();
-    val.RefInc();
-    //NOTE: if there are no refs to it try releasing it
-    if(prev != null)
     {
-      prev.ValueTryRelease();
-      prev.RefDec();
+      val.ValueRefInc();
+      prev.ValueRefDec();
+      prev.ValueCopyFrom(val);
+      //Console.WriteLine("VAL SET2 " + prev.GetHashCode());
+    }
+    else
+    {
+      //Console.WriteLine("VAL SET1 " + val.GetHashCode());
+      vars[k] = val;
+      val.ValueRefInc();
+      val.RefInc();
     }
   }
 
@@ -1157,6 +1165,13 @@ public class Interpreter : AST_Visitor
     return v;
   }
 
+  public DynVal PopRef()
+  {
+    var v = stack.PopFast();
+    v.RefDec(can_release: false);
+    return v;
+  }
+
   public bool PeekValue(ref DynVal res)
   {
     if(stack.Count == 0)
@@ -1562,7 +1577,7 @@ public class Interpreter : AST_Visitor
       curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.WRITE));
     }
     else
-      curr_node.addChild(new VarAccessNode(node.Name(), node.IsRef() ? VarAccessNode.DECL_REF : VarAccessNode.DECL));
+      curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.DECL));
   }
 
   public override void DoVisit(bhl.AST_JsonObj node)

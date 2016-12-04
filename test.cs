@@ -1044,9 +1044,34 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  //TODO:
-  //[IsTested()]
-  public void TestPassRef()
+  [IsTested()]
+  public void TestPassByValue()
+  {
+    string bhl = @"
+      
+    func void foo(float a)
+    {
+      a = a + 1
+    }
+
+    func float test() 
+    {
+      float k = 1
+      foo(k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 1);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRef()
   {
     string bhl = @"
 
@@ -1066,6 +1091,94 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 4);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefNested()
+  {
+    string bhl = @"
+
+    func bar(ref float b)
+    {
+      b = b * 2
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+      bar(a)
+    }
+      
+    func float test(float k) 
+    {
+      foo(k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 8);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefMixed()
+  {
+    string bhl = @"
+
+    func foo(ref float a, float b) 
+    {
+      a = a + b
+    }
+      
+    func float test(float k) 
+    {
+      foo(k, k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 6);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefReturn()
+  {
+    string bhl = @"
+
+    func float foo(ref float a) 
+    {
+      a = a + 1
+      return a
+    }
+      
+    func float test(float k) 
+    {
+      return foo(k)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
 
     AssertEqual(num, 4);
     CommonChecks(intp);
@@ -6877,7 +6990,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;DEC1;INC2;REL2;DEC1;REL1;DEC0;REL0;", str);
+    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;DEC2;REL2;DEC1;REL1;DEC0;REL0;", str);
     CommonChecks(intp);
   }
 
@@ -6905,7 +7018,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;DEC0;INC1;REL1;DEC0;REL0;", str);
+    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;DEC1;REL1;DEC0;REL0;", str);
     CommonChecks(intp);
   }
 
@@ -6934,7 +7047,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;INC2;DEC1;DEC0;INC2;REL0;DEC1;REL1;DEC0;REL0;", str);
+    AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;INC2;DEC1;INC2;DEC0;REL0;DEC1;REL1;DEC0;REL0;", str);
     CommonChecks(intp);
   }
 
