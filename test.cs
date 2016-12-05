@@ -1082,7 +1082,7 @@ public class BHL_Test
       
     func float test(float k) 
     {
-      foo(k)
+      foo(ref k)
       return k
     }
     ";
@@ -1110,12 +1110,12 @@ public class BHL_Test
     func foo(ref float a) 
     {
       a = a + 1
-      bar(a)
+      bar(ref a)
     }
       
     func float test(float k) 
     {
-      foo(k)
+      foo(ref k)
       return k
     }
     ";
@@ -1142,7 +1142,34 @@ public class BHL_Test
       
     func float test(float k) 
     {
-      foo(k, k)
+      foo(ref k, k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 6);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefNamedArg()
+  {
+    string bhl = @"
+
+    func foo(ref float a, float b) 
+    {
+      a = a + b
+    }
+      
+    func float test(float k) 
+    {
+      foo(a : ref k, b: k)
       return k
     }
     ";
@@ -1170,7 +1197,7 @@ public class BHL_Test
       
     func float test(float k) 
     {
-      return foo(k)
+      return foo(ref k)
     }
     ";
 
@@ -1182,6 +1209,43 @@ public class BHL_Test
 
     AssertEqual(num, 4);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestRefsAllowedInFuncArgsOnly()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      ref float a
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "ref is only allowed in function declaration"
+    );
+  }
+
+  [IsTested()]
+  public void TestRefsDefaultArgsNotAllowed()
+  {
+    string bhl = @"
+
+    func void foo(ref float k = 10)
+    {
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "ref is not allowed to have a default value"
+    );
   }
 
   [IsTested()]

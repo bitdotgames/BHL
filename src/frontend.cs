@@ -455,6 +455,11 @@ public class AST_Builder : bhlBaseVisitor<AST>
         var func_arg_symb = (Symbol)func_args[i];
         var func_arg_type = func_arg_symb.node == null ? func_arg_symb.type : func_arg_symb.node.eval_type;  
 
+        if(ca.isRef() == null && func_symb.IsRefAt(i))
+          FireError(Location(ca) +  ": 'ref' specifier is missing");
+        else if(ca.isRef() != null && !func_symb.IsRefAt(i))
+          FireError(Location(ca) +  ": this argument is not passed by ref");
+
         PushJsonType(func_arg_type);
         new_node.AddChild(Visit(ca));
         PopJsonType();
@@ -1117,6 +1122,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var node = AST_Util.New_Interim();
 
     var func = curr_scope as FuncSymbol;
+    func.visitings_args = true;
 
     var fparams = ctx.varDeclare();
     bool found_default_arg = false;
@@ -1132,6 +1138,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
       func.DefineArg(fp.NAME().GetText());
     }
+    func.visitings_args = false;
 
     return node;
   }
@@ -1152,10 +1159,12 @@ public class AST_Builder : bhlBaseVisitor<AST>
     bool is_ref = ctx.isRef() != null;
     if(is_ref)
     {
-      if(!(curr_scope is FuncSymbol))
+      var fscope = curr_scope as FuncSymbol;
+
+      if(fscope == null || !fscope.visitings_args)
         FireError(Location(name) +  ": ref is only allowed in function declaration");
       if(defarg != null)
-        FireError(Location(name) +  ": ref is not allowed with default values");
+        FireError(Location(name) +  ": ref is not allowed to have a default value");
     }
     var symb = new VariableSymbol(var_node, str_name, var_type, is_ref);
 

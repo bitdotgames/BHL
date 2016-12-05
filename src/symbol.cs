@@ -328,6 +328,7 @@ public class FuncSymbol : ScopedSymbol
   OrderedDictionary members = new OrderedDictionary();
   OrderedDictionary args = new OrderedDictionary();
 
+  public bool visitings_args = false;
   public bool return_statement_found = false;
 
   public FuncSymbol(WrappedNode n, string name, Type ret_type, Scope parent) 
@@ -353,6 +354,7 @@ public class FuncSymbol : ScopedSymbol
   public virtual ulong GetCallId() { return nname; }
 #if BHL_FRONT
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
+  public virtual bool IsRefAt(int idx) { return false; }
 #endif
 
   public new string GetName() 
@@ -457,7 +459,7 @@ public class FuncSymbolAST : FuncSymbol
 {
   public AST_FuncDecl decl;
 #if BHL_FRONT
-  //NOTE: storing fparams so it can be accessed later for default args
+  //NOTE: storing fparams so it can be accessed later for misc things, e.g. default args
   public bhlParser.FuncParamsContext fparams;
 #endif
 
@@ -486,6 +488,15 @@ public class FuncSymbolAST : FuncSymbol
     var vdecl = fparams.varDeclare()[idx];
     var vinit = vdecl.initVar(); 
     return vinit;
+  }
+
+  public override bool IsRefAt(int idx) 
+  {
+    if(fparams == null)
+      return false;
+
+    var vdecl = fparams.varDeclare()[idx];
+    return vdecl.isRef() != null;
   }
 #endif
 }
