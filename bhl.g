@@ -122,7 +122,7 @@ callArgs
 	;
 
 callArg
-	: (NAME ':') ? (exp | jsonObject)
+	: (NAME ':')? isRef? (exp | jsonObject)
   ;
 
 block 

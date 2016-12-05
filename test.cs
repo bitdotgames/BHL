@@ -30,11 +30,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
     //NodeDump(node);
-    AssertEqual(res.num, 100);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 100);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -50,10 +50,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var str = ExtractStr(intp.ExecNode(node));
 
-    AssertEqual(res.str, "bar");
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(str, "bar");
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -69,10 +69,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -88,10 +88,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -109,10 +109,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -130,10 +130,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 42);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 42);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -174,10 +174,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 42);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 42);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -195,10 +195,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 300);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 300);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -214,11 +214,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -235,15 +235,15 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
 
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    AssertEqual(num, 3);
+    CommonChecks(intp);
 
-    node.SetArgs(new DynVal(42));
-    res = intp.ExecNode(node).val;
-    AssertEqual(res.num, 42);
-    AssertEqual(intp.StackCount(), 0);
+    node.SetArgs(DynVal.NewNum(42));
+    num = ExtractNum(intp.ExecNode(node));
+    AssertEqual(num, 42);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -259,11 +259,12 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -279,11 +280,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 7);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 7);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -299,11 +300,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 4);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 4);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -319,11 +320,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 2);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 2);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -339,11 +340,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 6);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 6);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -359,11 +360,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(4));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(4));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 2);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 2);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -379,11 +380,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(4));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(4));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -399,11 +400,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(4));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(4));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -419,11 +420,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(4));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(4));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -439,11 +440,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(4));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(4));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -459,11 +460,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(4));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(4));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -479,11 +480,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -499,11 +500,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -519,11 +520,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal("b"));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewStr("b"));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -539,11 +540,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(20));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(20));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -559,11 +560,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal("b"));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewStr("b"));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -579,11 +580,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal("b"));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewStr("b"));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -599,11 +600,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(20));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(20));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -619,11 +620,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(20));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(20));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -639,11 +640,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3), new DynVal(7));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3), DynVal.NewNum(7));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 7);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 7);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -659,11 +660,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3), new DynVal(7));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3), DynVal.NewNum(7));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -684,11 +685,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -709,11 +710,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -734,10 +735,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 2);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 2);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -759,10 +760,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 42);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 42);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -832,10 +833,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 24);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 24);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -857,10 +858,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 66);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 66);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -887,10 +888,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 25);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 25);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -917,10 +918,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 28);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 28);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -991,10 +992,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, -3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, -3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1016,10 +1017,10 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, -98);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, -98);
+    CommonChecks(intp);
   }
 
   //TODO: this is not supported yet
@@ -1037,15 +1038,40 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 42);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 42);
+    CommonChecks(intp);
   }
 
-  //TODO:
-  //[IsTested()]
-  public void TestPassRef()
+  [IsTested()]
+  public void TestPassByValue()
+  {
+    string bhl = @"
+      
+    func void foo(float a)
+    {
+      a = a + 1
+    }
+
+    func float test() 
+    {
+      float k = 1
+      foo(k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 1);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRef()
   {
     string bhl = @"
 
@@ -1056,18 +1082,214 @@ public class BHL_Test
       
     func float test(float k) 
     {
-      foo(k)
+      foo(ref k)
       return k
     }
     ";
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
 
-    AssertEqual(res.num, 4);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 4);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefNested()
+  {
+    string bhl = @"
+
+    func bar(ref float b)
+    {
+      b = b * 2
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+      bar(ref a)
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 8);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefMixed()
+  {
+    string bhl = @"
+
+    func foo(ref float a, float b) 
+    {
+      a = a + b
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k, k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 6);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefInUserBinding()
+  {
+    string bhl = @"
+
+    func float test(float k) 
+    {
+      func_with_ref(k, ref k)
+      return k
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("func_with_ref", "void", 
+          delegate(object agent)
+          {
+            var interp = Interpreter.instance;
+            var b = interp.PopRef();
+            var a = interp.PopValue().num;
+
+            b.num = a * 2;
+
+            return BHS.SUCCESS;
+          }
+          );
+      fn.define(new FuncArgSymbol("a", "float"));
+      fn.define(new FuncArgSymbol("b", "float", true/*is ref*/));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 6);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefNamedArg()
+  {
+    string bhl = @"
+
+    func foo(ref float a, float b) 
+    {
+      a = a + b
+    }
+      
+    func float test(float k) 
+    {
+      foo(a : ref k, b: k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 6);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefAndThenReturn()
+  {
+    string bhl = @"
+
+    func float foo(ref float a) 
+    {
+      a = a + 1
+      return a
+    }
+      
+    func float test(float k) 
+    {
+      return foo(ref k)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 4);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestRefsAllowedInFuncArgsOnly()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      ref float a
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "ref is only allowed in function declaration"
+    );
+  }
+
+  [IsTested()]
+  public void TestRefsDefaultArgsNotAllowed()
+  {
+    string bhl = @"
+
+    func void foo(ref float k = 10)
+    {
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "ref is not allowed to have a default value"
+    );
   }
 
   [IsTested()]
@@ -1083,11 +1305,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(num, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1110,11 +1332,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 45);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 45);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1131,11 +1353,11 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
 
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractStr(intp.ExecNode(node));
 
-    AssertEqual(res.str, "3");
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, "3");
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1152,11 +1374,11 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
 
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractStr(intp.ExecNode(node));
 
-    AssertEqual(res.str, "3");
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, "3");
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1173,11 +1395,11 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
 
-    node.SetArgs(new DynVal(3.9));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3.9));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1193,10 +1415,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 121);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 121);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1217,10 +1439,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 121);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 121);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1236,10 +1458,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractStr(intp.ExecNode(node));
 
-    AssertEqual(res.str, "foo");
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, "foo");
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1257,11 +1479,11 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
 
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractStr(intp.ExecNode(node));
 
-    AssertEqual(res.str, "36");
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, "36");
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1282,10 +1504,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1310,10 +1532,10 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0.3f);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 0.3f);
+    CommonChecks(intp);
   }
 
   public class RetValNode : BehaviorTreeTerminalNode
@@ -1321,7 +1543,7 @@ public class BHL_Test
     public override void init(object agent)
     {
       var interp = Interpreter.instance;
-      var k = interp.PopValue();
+      var k = interp.PopValue().ValueClone();
       interp.PushValue(k);
     }
   }
@@ -1340,9 +1562,9 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new FuncBindSymbol("ret_val", globs.type("float"),
+      var fn = new FuncBindSymbol("ret_val", "float",
           delegate() { return new RetValNode(); } );
-      fn.define(new FuncArgSymbol("k", globs.type("float")));
+      fn.define(new FuncArgSymbol("k", "float"));
 
       globs.define(fn);
     }
@@ -1350,11 +1572,11 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    node.SetArgs(new DynVal(42));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(42));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 42);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 42);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1371,20 +1593,20 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new SimpleFuncBindSymbol("func_with_def", "float", 
           delegate(object agent)
           {
             var interp = Interpreter.instance;
             var b = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 2;
             var a = interp.PopValue().num;
 
-            interp.PushValue(new DynVal(a + b));
+            interp.PushValue(DynVal.NewNum(a + b));
 
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.define(new FuncArgSymbol("a", "float"));
+      fn.define(new FuncArgSymbol("b", "float"));
 
       globs.define(fn);
     }
@@ -1392,11 +1614,11 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    node.SetArgs(new DynVal(42));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(42));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 44);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 44);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1418,20 +1640,20 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new SimpleFuncBindSymbol("func_with_def", "float", 
           delegate(object agent)
           {
             var interp = Interpreter.instance;
             var b = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 2;
             var a = interp.PopValue().num;
 
-            interp.PushValue(new DynVal(a + b));
+            interp.PushValue(DynVal.NewNum(a + b));
 
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.define(new FuncArgSymbol("a", "float"));
+      fn.define(new FuncArgSymbol("b", "float"));
 
       globs.define(fn);
     }
@@ -1439,11 +1661,11 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    node.SetArgs(new DynVal(42));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(42));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 42+43);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 42+43);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1460,18 +1682,18 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new SimpleFuncBindSymbol("func_with_def", "float", 
           delegate(object agent)
           {
             var interp = Interpreter.instance;
             var a = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 14;
 
-            interp.PushValue(new DynVal(a));
+            interp.PushValue(DynVal.NewNum(a));
 
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
+      fn.define(new FuncArgSymbol("a", "float"));
 
       globs.define(fn);
     }
@@ -1479,10 +1701,10 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 14);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 14);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1508,7 +1730,7 @@ public class BHL_Test
     var res = intp.ExecNode(node, false);
 
     AssertEqual(res.status, BHS.FAILURE);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1526,7 +1748,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("float"),
+      var fn = new SimpleFuncBindSymbol("foo", "float",
           delegate(object agent) { return BHS.FAILURE; } );
       globs.define(fn);
     }
@@ -1536,7 +1758,7 @@ public class BHL_Test
     var res = intp.ExecNode(node, false);
 
     AssertEqual(res.status, BHS.FAILURE);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   public class Color
@@ -1559,8 +1781,7 @@ public class BHL_Test
       var r = interp.PopValue().num;
       var c = new Color();
       c.r = (float)r;
-      var dv = new DynVal();
-      dv.obj = c;
+      var dv = DynVal.NewObj(c);
 
       interp.PushValue(dv);
     }
@@ -1576,13 +1797,13 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Color>(globs, cl));
+      globs.define(new ArrayTypeSymbolT<Color>(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("r", globs.type("float"),
+      cl.define(new FieldSymbol("r", "float",
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (Color)ctx.obj;
-          v.Set(c.r);
+          v.SetNum(c.r);
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -1591,11 +1812,11 @@ public class BHL_Test
           ctx.obj = c;
         }
       ));
-      cl.define(new FieldSymbol("g", globs.type("float"),
+      cl.define(new FieldSymbol("g", "float",
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (Color)ctx.obj;
-          v.Set(c.g);
+          v.SetNum(c.g);
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -1606,7 +1827,7 @@ public class BHL_Test
       ));
 
       {
-        var m = new SimpleFuncBindSymbol("Add", globs.type("Color"),
+        var m = new SimpleFuncBindSymbol("Add", "Color",
           delegate(object agent)
           {
             var interp = Interpreter.instance;
@@ -1618,21 +1839,19 @@ public class BHL_Test
             newc.r = c.r + k;
             newc.g = c.g + k;
 
-            var dv = new DynVal();
-            dv.obj = newc;
-
+            var dv = DynVal.NewObj(newc);
             interp.PushValue(dv);
 
             return BHS.SUCCESS;
           }
         );
-        m.define(new FuncArgSymbol("k", globs.type("float")));
+        m.define(new FuncArgSymbol("k", "float"));
 
         cl.define(m);
       }
 
       {
-        var m = new SimpleFuncBindSymbol("mult_summ", globs.type("float"),
+        var m = new SimpleFuncBindSymbol("mult_summ", "float",
           delegate(object agent)
           {
             var interp = Interpreter.instance;
@@ -1640,28 +1859,28 @@ public class BHL_Test
             var k = interp.PopValue().num;
             var c = (Color)interp.PopValue().obj;
 
-            interp.PushValue(new DynVal((c.r * k) + (c.g * k)));
+            interp.PushValue(DynVal.NewNum((c.r * k) + (c.g * k)));
 
             return BHS.SUCCESS;
           }
         );
-        m.define(new FuncArgSymbol("k", globs.type("float")));
+        m.define(new FuncArgSymbol("k", "float"));
 
         cl.define(m);
       }
     }
 
     {
-      var fn = new FuncBindSymbol("mkcolor", globs.type("Color"),
+      var fn = new FuncBindSymbol("mkcolor", "Color",
           delegate() { return new MkColorNode(); }
       );
-      fn.define(new FuncArgSymbol("r", globs.type("float")));
+      fn.define(new FuncArgSymbol("r", "float"));
 
       globs.define(fn);
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("mkcolor_null", globs.type("Color"),
+      var fn = new SimpleFuncBindSymbol("mkcolor_null", "Color",
           delegate(object agent) { 
             var interp = Interpreter.instance;
             var dv = new DynVal();
@@ -1750,7 +1969,7 @@ public class BHL_Test
         }
       );
       {
-        var vs = new bhl.FieldSymbol("refs", globs.type("int"),
+        var vs = new bhl.FieldSymbol("refs", "int",
           delegate(bhl.DynVal ctx, ref bhl.DynVal v)
           {
             v.num = ((RefC)ctx.obj).refs;
@@ -1761,7 +1980,7 @@ public class BHL_Test
         cl.define(vs);
       }
       globs.define(cl);
-      globs.define(new ArrayTypeSymbol(globs, cl));
+      globs.define(new ArrayTypeSymbol(globs, new TypeRef(cl)));
     }
 
     {
@@ -1773,7 +1992,7 @@ public class BHL_Test
       );
       globs.define(cl);
 
-      cl.define(new FieldSymbol("r", globs.type("RefC"),
+      cl.define(new FieldSymbol("r", "RefC",
           delegate(DynVal ctx, ref DynVal v) {
             var c = (ConfigNodeRefC)ctx.obj;
             v.obj = c.r;
@@ -1793,11 +2012,11 @@ public class BHL_Test
     }
 
     {
-      var fn = new ConfNodeSymbol("NodeRefC", globs.type("void"),
+      var fn = new ConfNodeSymbol("NodeRefC", "void",
           delegate() { var n = new NodeRefC(mstream); n.conf = new ConfigNodeRefC(); n.conf.reset(); return n; }, 
           delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((NodeRefC)n).conf; v.obj = conf; if(reset) conf.reset(); }
           );
-      fn.define(new FuncArgSymbol("c", globs.type("ConfigNodeRefC")));
+      fn.define(new FuncArgSymbol("c", "ConfigNodeRefC"));
 
       globs.define(fn);
     }
@@ -1807,20 +2026,20 @@ public class BHL_Test
   void BindFoo(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol( "Foo",
+      var cl = new ClassBindSymbol("Foo",
         delegate(ref DynVal v) 
         { 
           v.obj = new Foo();
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Foo>(globs, cl));
+      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("hey", globs.type("int"),
+      cl.define(new FieldSymbol("hey", "int",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
-          v.Set(f.hey);
+          v.SetNum(f.hey);
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -1829,7 +2048,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("colors", globs.type("Color[]"),
+      cl.define(new FieldSymbol("colors", "Color[]",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
@@ -1842,7 +2061,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("sub_color", globs.type("Color"),
+      cl.define(new FieldSymbol("sub_color", "Color",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
@@ -1868,9 +2087,9 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Foo>(globs, cl));
+      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("script", globs.type("void^()"),
+      cl.define(new FieldSymbol("script", "void^()",
           delegate(DynVal ctx, ref DynVal v) {
             var f = (FooLambda)ctx.obj;
             v.obj = f.script.Count == 0 ? null : ((BaseLambda)(f.script[0])).fct.obj;
@@ -1906,13 +2125,13 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
 
     //NodeDump(node);
 
-    AssertEqual(res.num, 202);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 202);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1935,12 +2154,12 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
 
     //NodeDump(node);
-    AssertEqual(res.num, 60);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 60);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -1966,11 +2185,11 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 202);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 202);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2000,7 +2219,7 @@ public class BHL_Test
       );
       globs.define(cl);
 
-      cl.define(new FieldSymbol("c", globs.type("Color"),
+      cl.define(new FieldSymbol("c", "Color",
         delegate(DynVal ctx, ref DynVal v)
         {
           var cn = (ColorNested)ctx.obj;
@@ -2018,11 +2237,11 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 202);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 202);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2048,11 +2267,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 2);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 2);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2079,11 +2298,11 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 8);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 8);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2123,18 +2342,18 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.SetArgs(new DynVal(2));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 1);
+    CommonChecks(intp);
   }
 
   void BindEnum(GlobalScope globs)
   {
     var en = new EnumSymbol(null, "EnumState", null);
     globs.define(en);
-    globs.define(new ArrayTypeSymbol(globs, en));
+    globs.define(new ArrayTypeSymbol(globs, new TypeRef(en)));
 
     en.define(new EnumItemSymbol(null, en, "SPAWNED",  10));
     en.define(new EnumItemSymbol(null, en, "SPAWNED2", 20));
@@ -2158,10 +2377,10 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 30);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 30);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2182,10 +2401,10 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 20);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 20);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2206,10 +2425,10 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 10);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 10);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2233,7 +2452,7 @@ public class BHL_Test
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "20");
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2253,12 +2472,12 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(20));
+    node.SetArgs(DynVal.NewNum(20));
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2278,12 +2497,12 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(20));
+    node.SetArgs(DynVal.NewNum(20));
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2351,8 +2570,8 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
-    AssertEqual(intp.StackCount(), 0);
-    res.RefTryRelease();
+    res.ValueTryRelease();
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2391,15 +2610,16 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
-    AssertEqual(intp.StackCount(), 0);
 
     //NodeDump(node);
 
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 0);
-    res.RefTryRelease();
+    res.ValueTryRelease();
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 1);
+
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2422,10 +2642,10 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 2);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 2);
+    CommonChecks(intp);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
   }
 
@@ -2456,9 +2676,9 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].num, 20);
     AssertEqual(lst[1].num, 10);
-    AssertEqual(intp.StackCount(), 0);
-    res.RefTryRelease();
+    res.ValueTryRelease();
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2494,11 +2714,11 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.SetArgs(new DynVal(2));
+    node.SetArgs(DynVal.NewNum(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "3102030");
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   public class BaseScript
@@ -2566,11 +2786,11 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    node.SetArgs(new DynVal(2));
+    node.SetArgs(DynVal.NewNum(2));
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.str, "2102030");
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2628,9 +2848,9 @@ public class BHL_Test
     BindEnum(globs);
 
     {
-      var fn = new FuncBindSymbol("StateIs", globs.type("void"),
+      var fn = new FuncBindSymbol("StateIs", "void",
           delegate() { return new StateIsNode(); });
-      fn.define(new FuncArgSymbol("state", globs.type("EnumState")));
+      fn.define(new FuncArgSymbol("state", "EnumState"));
 
       globs.define(fn);
     }
@@ -2713,9 +2933,9 @@ public class BHL_Test
   void BindTrace(GlobalScope globs, MemoryStream trace_stream)
   {
     {
-      var fn = new FuncBindSymbol("trace", globs.type("void"),
+      var fn = new FuncBindSymbol("trace", "void",
           delegate() { return new TraceNode(trace_stream); } );
-      fn.define(new FuncArgSymbol("str", globs.type("string")));
+      fn.define(new FuncArgSymbol("str", "string"));
 
       globs.define(fn);
     }
@@ -2724,18 +2944,18 @@ public class BHL_Test
   void BindMin(GlobalScope globs)
   {
     {
-      var fn = new SimpleFuncBindSymbol("min", globs.type("float"),
+      var fn = new SimpleFuncBindSymbol("min", "float",
         delegate(object agent)
         {
           var interp = Interpreter.instance;
           var b = (float)interp.PopValue().num;
           var a = (float)interp.PopValue().num;
-          interp.PushValue(new DynVal(a > b ? b : a)); 
+          interp.PushValue(DynVal.NewNum(a > b ? b : a)); 
           return BHS.SUCCESS;
         }
       );
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.define(new FuncArgSymbol("a", "float"));
+      fn.define(new FuncArgSymbol("b", "float"));
 
       globs.define(fn);
     }
@@ -2766,7 +2986,7 @@ public class BHL_Test
   void BindNodeWithDefer(GlobalScope globs, MemoryStream s)
   {
     {
-      var fn = new FuncBindSymbol("NodeWithDefer", globs.type("void"),
+      var fn = new FuncBindSymbol("NodeWithDefer", "void",
           delegate() { return new NodeWithDefer(s); } );
 
       globs.define(fn);
@@ -2776,10 +2996,10 @@ public class BHL_Test
   void BindWaitTicks(GlobalScope globs)
   {
     {
-      var fn = new FuncBindSymbol("WaitTicks", globs.type("void"),
+      var fn = new FuncBindSymbol("WaitTicks", "void",
           delegate() { return new WaitTicksNode(); } );
-      fn.define(new FuncArgSymbol("ticks", globs.type("int")));
-      fn.define(new FuncArgSymbol("is_success", globs.type("bool")));
+      fn.define(new FuncArgSymbol("ticks", "int"));
+      fn.define(new FuncArgSymbol("is_success", "bool"));
 
       globs.define(fn);
     }
@@ -2825,15 +3045,15 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HERE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   void BindStartScript(GlobalScope globs)
   {
     {
-      var fn = new FuncBindSymbol("StartScript", globs.type("void"),
+      var fn = new FuncBindSymbol("StartScript", "void",
           delegate() { return new StartScriptNode(); } );
-      fn.define(new FuncArgSymbol("script", globs.type("void^()")));
+      fn.define(new FuncArgSymbol("script", "void^()"));
 
       globs.define(fn);
     }
@@ -2867,7 +3087,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HERE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
     //NodeDump(node);
   }
 
@@ -2901,7 +3121,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HERE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2933,7 +3153,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("FOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -2972,7 +3192,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HERE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3010,7 +3230,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HERE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3030,7 +3250,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("void"), 
+      var fn = new SimpleFuncBindSymbol("foo", "void", 
           delegate(object agent)
           {
             AddString(trace_stream, "FOO");
@@ -3048,7 +3268,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("FOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3083,7 +3303,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HEREHEREHERE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3117,7 +3337,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HEREHERE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3158,7 +3378,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HEREHERE2", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3193,7 +3413,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("1020", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3235,7 +3455,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("10", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3308,7 +3528,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("1020", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3354,7 +3574,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("1020", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3414,7 +3634,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("1020HEY!12HEY!", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3457,7 +3677,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3502,7 +3722,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3545,7 +3765,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3590,7 +3810,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3633,7 +3853,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3683,7 +3903,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("A", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3733,7 +3953,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3782,7 +4002,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("B", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3818,11 +4038,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
 
-    AssertEqual(res.num, 10);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 10);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3877,7 +4097,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("AB", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3927,7 +4147,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3975,11 +4195,11 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
 
-    AssertEqual(res.num, 1520);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 1520);
+    CommonChecks(intp);
   }
   
   [IsTested()]
@@ -4011,7 +4231,7 @@ public class BHL_Test
     
     var str = GetString(trace_stream);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4064,7 +4284,7 @@ public class BHL_Test
     //NodeDump(node);
     var str = GetString(trace_stream);
     AssertEqual("BARHEY", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4124,7 +4344,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARHEYFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4153,10 +4373,10 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 142);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 142);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4205,7 +4425,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARHEYFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4240,7 +4460,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("142", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4287,7 +4507,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BAR~BARFOO~FOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4336,7 +4556,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("~FOOBAR~BAR", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4386,7 +4606,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4445,7 +4665,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BARHEYFOO", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4475,7 +4695,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4506,7 +4726,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4535,7 +4755,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("DEFER!!!", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4566,7 +4786,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("DEFER!!!", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4585,10 +4805,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 1);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4607,10 +4827,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4695,10 +4915,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 0);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4722,13 +4942,13 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractNum(intp.ExecNode(node));
 
     //NodeDump(node);
 
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4752,13 +4972,13 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(3));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractNum(intp.ExecNode(node));
 
     //NodeDump(node);
 
-    AssertEqual(res.num, 4);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 4);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4806,7 +5026,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("BBBBB", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4845,7 +5065,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4885,7 +5105,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4925,7 +5145,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4950,22 +5170,22 @@ public class BHL_Test
 
     {
       var node = intp.GetFuncNode("test");
-      node.SetArgs(new DynVal(3));
-      var res = intp.ExecNode(node).val;
+      node.SetArgs(DynVal.NewNum(3));
+      var res = ExtractNum(intp.ExecNode(node));
 
-      AssertEqual(res.num, 3);
-      AssertEqual(intp.StackCount(), 0);
+      AssertEqual(res, 3);
+      CommonChecks(intp);
     }
 
     AssertEqual(FuncCallNode.PoolCount, 1);
 
     {
       var node = intp.GetFuncNode("test");
-      node.SetArgs(new DynVal(30));
-      var res = intp.ExecNode(node).val;
+      node.SetArgs(DynVal.NewNum(30));
+      var res = ExtractNum(intp.ExecNode(node));
 
-      AssertEqual(res.num, 30);
-      AssertEqual(intp.StackCount(), 0);
+      AssertEqual(res, 30);
+      CommonChecks(intp);
     }
 
     AssertEqual(FuncCallNode.PoolCount, 1);
@@ -4997,7 +5217,7 @@ public class BHL_Test
     AssertEqual(FuncCallNode.PoolCountFree, 0);
 
     var node1 = intp.GetFuncNode("test");
-    node1.SetArgs(new DynVal(3));
+    node1.SetArgs(DynVal.NewNum(3));
     var status = node1.run(null);
     AssertEqual(BHS.RUNNING, status);
     
@@ -5005,7 +5225,7 @@ public class BHL_Test
     AssertEqual(FuncCallNode.PoolCountFree, 0);
 
     var node2 = intp.GetFuncNode("test");
-    node2.SetArgs(new DynVal(30));
+    node2.SetArgs(DynVal.NewNum(30));
     status = node2.run(null);
     AssertEqual(BHS.RUNNING, status);
 
@@ -5113,7 +5333,7 @@ public class BHL_Test
     //NodeDump(node);
 
     AssertEqual(">1" + ">2" + ">3", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
 
     AssertEqual(FuncCallNode.PoolCount, 3);
     AssertEqual(FuncCallNode.PoolCountFree, 3);
@@ -5154,7 +5374,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual(">1", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
 
     AssertEqual(1, FuncCtx.PoolCount);
     AssertEqual(1, FuncCtx.PoolCountFree);
@@ -5187,7 +5407,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual(">1", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
 
     AssertEqual(1, FuncCtx.PoolCount);
     AssertEqual(1, FuncCtx.PoolCountFree);
@@ -5221,7 +5441,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual(">1", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
 
     AssertEqual(1, FuncCtx.PoolCount);
     AssertEqual(1, FuncCtx.PoolCountFree);
@@ -5247,15 +5467,15 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
 
     var foo = intp.GetFuncNode("foo");
-    foo.SetArgs(new DynVal(10));
-    var res = intp.ExecNode(foo).val;
-    AssertEqual(res.num, 10);
-    AssertEqual(intp.StackCount(), 0);
+    foo.SetArgs(DynVal.NewNum(10));
+    var res = ExtractNum(intp.ExecNode(foo));
+    AssertEqual(res, 10);
+    CommonChecks(intp);
 
-    foo.SetArgs(new DynVal(20));
-    res = intp.ExecNode(foo).val;
-    AssertEqual(res.num, 20);
-    AssertEqual(intp.StackCount(), 0);
+    foo.SetArgs(DynVal.NewNum(20));
+    res = ExtractNum(intp.ExecNode(foo));
+    AssertEqual(res, 20);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5283,7 +5503,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5311,7 +5531,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5393,10 +5613,10 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node).val;
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(30, res.num);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(30, res);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5424,7 +5644,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5451,7 +5671,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5473,17 +5693,17 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(1));
-    var res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(1));
+    var res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 2);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 2);
+    CommonChecks(intp);
 
-    node.SetArgs(new DynVal(10));
-    res = intp.ExecNode(node).val;
+    node.SetArgs(DynVal.NewNum(10));
+    res = ExtractNum(intp.ExecNode(node));
 
-    AssertEqual(res.num, 3);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(res, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5510,7 +5730,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5541,7 +5761,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5572,7 +5792,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5601,7 +5821,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("ELSE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5633,7 +5853,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("ELSE", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5662,7 +5882,7 @@ public class BHL_Test
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 100);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5698,7 +5918,7 @@ public class BHL_Test
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 42);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5741,7 +5961,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;NOT NULL;EQ;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5832,7 +6052,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;NOT NULL;EQ;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5871,7 +6091,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;NOT NULL;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5900,7 +6120,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("012", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5932,7 +6152,7 @@ public class BHL_Test
     var res = intp.PopValue();
 
     AssertEqual(1000, res.num);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5961,7 +6181,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -5990,7 +6210,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6043,7 +6263,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("01", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6079,7 +6299,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("01", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6137,7 +6357,7 @@ public class BHL_Test
 //
 //    var str = GetString(trace_stream);
 //    AssertEqual("02", str);
-//    AssertEqual(intp.StackCount(), 0);
+//    CommonChecks(intp);
 //  }
 
   [IsTested()]
@@ -6166,7 +6386,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("012", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   public class MakeFooNode : BehaviorTreeTerminalNode
@@ -6174,7 +6394,7 @@ public class BHL_Test
     public override void init(object agent)
     {
       var interp = Interpreter.instance;
-      var foo = interp.PopValue();
+      var foo = interp.PopValue().ValueClone();
       interp.PushValue(foo);
     }
   }
@@ -6198,23 +6418,23 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncBindSymbol("MakeFoo", "Foo",
           delegate() { return new MakeFooNode(); } );
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.define(new FuncArgSymbol("conf", "Foo"));
 
       globs.define(fn);
     }
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(42));
+    node.SetArgs(DynVal.NewNum(42));
     intp.ExecNode(node, false);
 
     var str = GetString(trace_stream);
 
     //NodeDump(node);
     AssertEqual("14232342", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   public class ConfigNode_Conf
@@ -6287,13 +6507,13 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<ConfigNode_Conf>(globs, cl));
+      globs.define(new ArrayTypeSymbolT<ConfigNode_Conf>(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("hey", globs.type("int"),
+      cl.define(new FieldSymbol("hey", "int",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
-          v.Set(f.hey);
+          v.SetNum(f.hey);
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -6302,7 +6522,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("colors", globs.type("Color[]"),
+      cl.define(new FieldSymbol("colors", "Color[]",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
@@ -6315,7 +6535,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("sub_color", globs.type("Color"),
+      cl.define(new FieldSymbol("sub_color", "Color",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
@@ -6328,7 +6548,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("strs", globs.type("string[]"),
+      cl.define(new FieldSymbol("strs", "string[]",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
@@ -6345,11 +6565,11 @@ public class BHL_Test
     }
 
     {
-      var fn = new ConfNodeSymbol("ConfigNode", globs.type("void"),
+      var fn = new ConfNodeSymbol("ConfigNode", "void",
           delegate() { var n = new ConfigNode(trace_stream); n.conf = new ConfigNode_Conf(); n.conf.reset(); return n; }, 
           delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNode)n).conf; v.obj = conf; if(reset) conf.reset(); }
           );
-      fn.define(new FuncArgSymbol("c", globs.type("ConfigNode_Conf")));
+      fn.define(new FuncArgSymbol("c", "ConfigNode_Conf"));
 
       globs.define(fn);
     }
@@ -6359,11 +6579,11 @@ public class BHL_Test
   void BindConfigNodeLambda(GlobalScope globs)
   {
     {
-      var fn = new ConfNodeSymbol("ConfigNodeLambda", globs.type("void"),
+      var fn = new ConfNodeSymbol("ConfigNodeLambda", "void",
           delegate() { var n = new ConfigNodeLambda(); n.conf = new FooLambda(); n.conf.reset(); return n; }, 
           delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNodeLambda)n).conf; v.obj = conf; if(reset) conf.reset(); }
           );
-      fn.define(new FuncArgSymbol("c", globs.type("FooLambda")));
+      fn.define(new FuncArgSymbol("c", "FooLambda"));
 
       globs.define(fn);
     }
@@ -6392,14 +6612,14 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(42));
+    node.SetArgs(DynVal.NewNum(42));
     intp.ExecNode(node, false);
 
     var str = GetString(trace_stream);
 
     //NodeDump(node);
     AssertEqual("142:3:2:3:42:10:100:foo,hey", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
   }
@@ -6423,14 +6643,14 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(42));
+    node.SetArgs(DynVal.NewNum(42));
     intp.ExecNode(node, false);
 
     var str = GetString(trace_stream);
 
     //NodeDump(node);
     AssertEqual("142:3:2:3:42:10:100:foo,hey", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
   }
@@ -6454,14 +6674,14 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(42));
+    node.SetArgs(DynVal.NewNum(42));
     //NodeDump(node);
     intp.ExecNode(node, false);
 
     var str = GetString(trace_stream);
 
     AssertEqual("0:0:0:", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6483,7 +6703,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(new DynVal(42));
+    node.SetArgs(DynVal.NewNum(42));
     intp.ExecNode(node, false);
 
     //NodeDump(node);
@@ -6491,7 +6711,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("142:10:100:foo,hey", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
   }
@@ -6543,12 +6763,12 @@ public class BHL_Test
     var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
 
     var node = intp.GetFuncNode("bhl1", "test");
-    node.SetArgs(new DynVal(23));
+    node.SetArgs(DynVal.NewNum(23));
     //NodeDump(node);
     var res = intp.ExecNode(node, true).val;
 
     AssertEqual(res.num, 23);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6595,12 +6815,12 @@ public class BHL_Test
     var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
 
     var node = intp.GetFuncNode("bhl1", "test");
-    node.SetArgs(new DynVal(2));
+    node.SetArgs(DynVal.NewNum(2));
     //NodeDump(node);
     var res = intp.ExecNode(node, true).val;
 
     AssertEqual(res.num, 4);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6648,12 +6868,12 @@ public class BHL_Test
     var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
 
     var node = intp.GetFuncNode("bhl1", "test");
-    node.SetArgs(new DynVal(23));
+    node.SetArgs(DynVal.NewNum(23));
     //NodeDump(node);
     var res = intp.ExecNode(node, true).val;
 
     AssertEqual(res.num, 23);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   void BindForSlides(GlobalScope globs)
@@ -6667,18 +6887,18 @@ public class BHL_Test
       globs.define(cl);
 
       {
-        var m = new SimpleFuncBindSymbol("Sub", globs.type("Vec3"),
+        var m = new SimpleFuncBindSymbol("Sub", "Vec3",
           delegate(object agent)
           {
             return BHS.SUCCESS;
           }
         );
-        m.define(new FuncArgSymbol("val", globs.type("Vec3")));
+        m.define(new FuncArgSymbol("val", "Vec3"));
 
         cl.define(m);
       }
 
-      cl.define(new FieldSymbol("len", globs.type("float"),
+      cl.define(new FieldSymbol("len", "float",
         delegate(DynVal ctx, ref DynVal v)
         {},
         //setter not allowed
@@ -6693,9 +6913,9 @@ public class BHL_Test
       );
 
       globs.define(cl);
-      globs.define(new ArrayTypeSymbol(globs, cl));
+      globs.define(new ArrayTypeSymbol(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("position", globs.type("Vec3"),
+      cl.define(new FieldSymbol("position", "Vec3",
         delegate(DynVal ctx, ref DynVal v)
         {},
         //setter not allowed
@@ -6704,7 +6924,7 @@ public class BHL_Test
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("get_units", globs.type("Unit[]"),
+      var fn = new SimpleFuncBindSymbol("get_units", "Unit[]",
         delegate(object agent)
         {
           return BHS.SUCCESS;
@@ -6867,7 +7087,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6893,7 +7113,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6921,8 +7141,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;DEC1;INC2;REL2;DEC1;REL1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;DEC2;REL2;DEC1;REL1;DEC0;REL0;", str);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6949,8 +7169,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;DEC0;INC1;REL1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;DEC1;REL1;DEC0;REL0;", str);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -6978,8 +7198,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;INC2;DEC1;DEC0;INC2;REL0;DEC1;REL1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;INC2;DEC1;INC2;DEC0;REL0;DEC1;REL1;DEC0;REL0;", str);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7006,7 +7226,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;DEC0;REL0;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7043,7 +7263,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     //NodeDump(node);
     AssertEqual("INC1;DEC0;INC1;INC2;DEC1;REFS1;INC2;INC3;INC4;DEC3;REFS3;DEC2;REL2;INC3;DEC2;REFS2;DEC1;REL1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7070,7 +7290,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7099,7 +7319,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;INC2;DEC1;DEC0;REL0;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7132,7 +7352,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;INC2;DEC1;REL1;DEC0;INC1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7165,7 +7385,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;HERE;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7204,7 +7424,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;INC2;DEC1;REL1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;DEC2;REL2;DEC1;REL1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7232,7 +7452,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;WRITE!REL0;NODE!", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -7264,7 +7484,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;WRITE!REL2;NODE!DEC1;REL1;DEC0;REL0;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   ////////////////////////////////////////////////
@@ -7329,9 +7549,10 @@ func Unit FindUnit(Vec3 pos, float radius) {
   {
     Util.DEBUG = true;
 
+    DynVal.PoolClear();
+    DynValList.PoolClear();
     FuncCallNode.PoolClear();
     FuncCtx.PoolClear();
-    DynValList.PoolClear();
 
     globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
 
@@ -7389,6 +7610,22 @@ func Unit FindUnit(Vec3 pos, float radius) {
       }
     }
   }
+
+  void CommonChecks(Interpreter intp)
+  {
+    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
+  }
+
+  static double ExtractNum(Interpreter.Result res)
+  {
+    return res.val.num;
+  }
+
+  static string ExtractStr(Interpreter.Result res)
+  {
+    return res.val.str;
+  }
 }
 
 public class BHL_TestRunner
@@ -7405,23 +7642,31 @@ public class BHL_TestRunner
       if(IsMemberTested(method))
       {
         Util.SetupAutogenFactory();
-        ++c;
-        //too verbose
-        //Console.WriteLine("Running "  + method.Name);
-        //try
+        if(IsAllowedToRun(args, method))
         {
+          ++c;
           method.Invoke(test, new object[] {});
         }
-        //catch(TargetInvocationException e)
-        //{
-        //  throw e.InnerException;
-        //}
       }
     }
     Console.WriteLine("Done running "  + c + " tests");
   }
 
-  private static bool IsMemberTested(MemberInfo member)
+  static bool IsAllowedToRun(string[] args, MemberInfo member)
+  {
+    if(args == null || args.Length == 0)
+      return true;
+
+    for(int i=0;i<args.Length;++i)
+    {
+      if(args[i] == member.Name)
+        return true;
+    }
+
+    return false;
+  }
+
+  static bool IsMemberTested(MemberInfo member)
   {
     foreach(var attribute in member.GetCustomAttributes(true))
     {
