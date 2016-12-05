@@ -39,6 +39,16 @@ public struct TypeRef
     return new TypeRef(name);
   }
 
+  public static implicit operator TypeRef(ClassSymbol cl)
+  {
+    return new TypeRef(cl);
+  }
+
+  public static implicit operator TypeRef(EnumSymbol en)
+  {
+    return new TypeRef(en);
+  }
+
   public Type Get()
   {
     if(type != null)
