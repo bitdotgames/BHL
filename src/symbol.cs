@@ -246,20 +246,20 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
 public class VariableSymbol : Symbol 
 {
-  public bool is_ref;
-
-  public VariableSymbol(WrappedNode n, string name, Type type, bool is_ref = false) 
+  public VariableSymbol(WrappedNode n, string name, Type type) 
     : base(n, name, type) 
-  {
-    this.is_ref = is_ref;
-  }
+  {}
 }
 
 public class FuncArgSymbol : VariableSymbol
 {
-  public FuncArgSymbol(string name, Type type)
+  public bool is_ref;
+
+  public FuncArgSymbol(string name, Type type, bool is_ref = false)
     : base(null, name, type)
-  {}
+  {
+    this.is_ref = is_ref;
+  }
 }
 
 public class FieldSymbol : VariableSymbol
@@ -344,7 +344,7 @@ public class FuncSymbol : ScopedSymbol
 
   public void DefineArg(string name) 
   {
-    var sym = (Symbol)members[name];
+    var sym = (FuncArgSymbol)members[name];
     args.Add(name, sym);
   }
 
@@ -352,9 +352,13 @@ public class FuncSymbol : ScopedSymbol
   public virtual int GetDefaultArgsNum() { return 0; }
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
   public virtual ulong GetCallId() { return nname; }
+  public bool IsRefAt(int idx) 
+  {
+    var farg = members[idx] as FuncArgSymbol;
+    return farg != null && farg.is_ref;
+  }
 #if BHL_FRONT
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
-  public virtual bool IsRefAt(int idx) { return false; }
 #endif
 
   public new string GetName() 
@@ -488,15 +492,6 @@ public class FuncSymbolAST : FuncSymbol
     var vdecl = fparams.varDeclare()[idx];
     var vinit = vdecl.initVar(); 
     return vinit;
-  }
-
-  public override bool IsRefAt(int idx) 
-  {
-    if(fparams == null)
-      return false;
-
-    var vdecl = fparams.varDeclare()[idx];
-    return vdecl.isRef() != null;
   }
 #endif
 }

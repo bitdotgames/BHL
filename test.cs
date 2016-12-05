@@ -1158,6 +1158,50 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassByRefInUserBinding()
+  {
+    string bhl = @"
+
+    func float test(float k) 
+    {
+      func_with_ref(k, ref k)
+      return k
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("func_with_ref", globs.type("void"), 
+          delegate(object agent)
+          {
+            var interp = Interpreter.instance;
+            var b = interp.PopRef();
+            var a = interp.PopValue().num;
+
+            b.num = a * 2;
+
+            return BHS.SUCCESS;
+          }
+          );
+      fn.define(new FuncArgSymbol("a", globs.type("float")));
+      fn.define(new FuncArgSymbol("b", globs.type("float"), true/*is ref*/));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 6);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestPassByRefNamedArg()
   {
     string bhl = @"
@@ -1185,7 +1229,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestPassByRefReturn()
+  public void TestPassByRefAndThenReturn()
   {
     string bhl = @"
 

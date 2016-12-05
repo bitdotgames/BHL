@@ -458,7 +458,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         if(ca.isRef() == null && func_symb.IsRefAt(i))
           FireError(Location(ca) +  ": 'ref' specifier is missing");
         else if(ca.isRef() != null && !func_symb.IsRefAt(i))
-          FireError(Location(ca) +  ": this argument is not passed by ref");
+          FireError(Location(ca) +  ": argument is not a ref");
 
         PushJsonType(func_arg_type);
         new_node.AddChild(Visit(ca));
@@ -1156,17 +1156,21 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var var_node = Wrap(name); 
     var_node.eval_type = var_type;
 
+    var fscope = curr_scope as FuncSymbol;
+    bool func_arg = fscope != null && fscope.visitings_args;
+
     bool is_ref = ctx.isRef() != null;
     if(is_ref)
     {
-      var fscope = curr_scope as FuncSymbol;
-
-      if(fscope == null || !fscope.visitings_args)
+      if(!func_arg)
         FireError(Location(name) +  ": ref is only allowed in function declaration");
+
       if(defarg != null)
         FireError(Location(name) +  ": ref is not allowed to have a default value");
     }
-    var symb = new VariableSymbol(var_node, str_name, var_type, is_ref);
+    Symbol symb = func_arg ? 
+      (Symbol) new FuncArgSymbol(str_name, var_type, is_ref) :
+      (Symbol) new VariableSymbol(var_node, str_name, var_type);
 
     var node = AST_Util.New_VarDecl(str_type, str_name, is_ref);
     if(defarg != null)
