@@ -17,6 +17,38 @@ public interface Type
   int GetTypeIndex();
 }
 
+public struct TypeRef
+{
+  public Type type;
+  public string name;
+
+  public TypeRef(string name)
+  {
+    this.name = name;
+    this.type = null;
+  }
+
+  public TypeRef(Type type)
+  {
+    this.name = type.GetName();
+    this.type = type;
+  }
+
+  public static implicit operator TypeRef(string name)
+  {
+    return new TypeRef(name);
+  }
+
+  public Type Get()
+  {
+    if(type != null)
+      return type;
+
+    type = Interpreter.instance.bindings.type(name);
+    return type;
+  }
+}
+
 public class WrappedNode
 {
 #if BHL_FRONT
@@ -77,7 +109,7 @@ public class Symbol
   public string name;
   // Hashed symbol name
   public uint nname;
-  public Type type;
+  public TypeRef type;
   // All symbols know what scope contains them.
   public Scope scope;
 
@@ -88,11 +120,9 @@ public class Symbol
     this.nname = Hash.CRC28(name);
   }
 
-  public Symbol(WrappedNode node, string name, Type type) 
+  public Symbol(WrappedNode node, string name, TypeRef type) 
     : this(node, name) 
   { 
-    if(type == null)
-      throw new Exception("Type not set for symbol '" + name + "'");
     this.type = type; 
   }
 
@@ -104,9 +134,9 @@ public class Symbol
   public override string ToString() 
   {
     string s = "";
-    if(scope != null) s = scope.GetScopeName()+".";
-    if(type != null) return '<'+s+GetName()+":"+type+'>';
-    return s+GetName();
+    if(scope != null) 
+      s = scope.GetScopeName()+".";
+    return '<'+s+GetName()+":"+type.name+'>';
   }
 
   public string Location()
@@ -133,35 +163,35 @@ public class BuiltInTypeSymbol : Symbol, Type
 
 public class ArrayTypeSymbol : ClassSymbol
 {
-  public Type original;
+  public TypeRef original;
 
-  public ArrayTypeSymbol(GlobalScope globs, Type original) 
-    : base(null, original.GetName() + "[]", null, null)
+  public ArrayTypeSymbol(GlobalScope globs, TypeRef original) 
+    : base(null, original.name + "[]", null, null)
   {
     this.original = original;
 
     this.creator = CreateArr;
 
     {
-      var fn = new FuncBindSymbol("Add", (Type)globs.resolve("void"), Create_Add);
+      var fn = new FuncBindSymbol("Add", "void", Create_Add);
       fn.define(new FuncArgSymbol("o", original));
       this.define(fn);
     }
 
     {
       var fn = new FuncBindSymbol("At", original, Create_At);
-      fn.define(new FuncArgSymbol("idx", (Type)globs.resolve("int")));
+      fn.define(new FuncArgSymbol("idx", "int"));
       this.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("RemoveAt", (Type)globs.resolve("void"), Create_RemoveAt);
-      fn.define(new FuncArgSymbol("idx", (Type)globs.resolve("int")));
+      var fn = new FuncBindSymbol("RemoveAt", "void", Create_RemoveAt);
+      fn.define(new FuncArgSymbol("idx", "int"));
       this.define(fn);
     }
 
     {
-      var vs = new bhl.FieldSymbol("Count", (bhl.Type)globs.resolve("int"),
+      var vs = new bhl.FieldSymbol("Count", "int",
         delegate(bhl.DynVal ctx, ref bhl.DynVal v)
         {
           var lst = (IList)ctx.obj;
@@ -199,9 +229,8 @@ public class ArrayTypeSymbol : ClassSymbol
     return new Array_RemoveAtNode();
   }
 
-  public new int GetTypeIndex() { return original.GetTypeIndex(); }
+  public new int GetTypeIndex() { return original.Get().GetTypeIndex(); }
 }
-
 
 public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 {
@@ -217,7 +246,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
       res = (T)dv.obj;
   }
 
-  public ArrayTypeSymbolT(GlobalScope globs, Type original, ConverterCb converter = null) 
+  public ArrayTypeSymbolT(GlobalScope globs, TypeRef original, ConverterCb converter = null) 
     : base(globs, original)
   {
     Convert = converter == null ? DefaultConverter : converter;
@@ -246,7 +275,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
 public class VariableSymbol : Symbol 
 {
-  public VariableSymbol(WrappedNode n, string name, Type type) 
+  public VariableSymbol(WrappedNode n, string name, TypeRef type) 
     : base(n, name, type) 
   {}
 }
@@ -255,7 +284,7 @@ public class FuncArgSymbol : VariableSymbol
 {
   public bool is_ref;
 
-  public FuncArgSymbol(string name, Type type, bool is_ref = false)
+  public FuncArgSymbol(string name, TypeRef type, bool is_ref = false)
     : base(null, name, type)
   {
     this.is_ref = is_ref;
@@ -267,7 +296,7 @@ public class FieldSymbol : VariableSymbol
   public Interpreter.FieldGetter getter;
   public Interpreter.FieldSetter setter;
 
-  public FieldSymbol(string name, Type type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null) 
+  public FieldSymbol(string name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null) 
     : base(null, name, type)
   {
     this.getter = getter;
@@ -279,7 +308,7 @@ public abstract class ScopedSymbol : Symbol, Scope
 {
   protected Scope enclosing_scope;
 
-  public ScopedSymbol(WrappedNode n, string name, Type type, Scope enclosing_scope) 
+  public ScopedSymbol(WrappedNode n, string name, TypeRef type, Scope enclosing_scope) 
     : base(n, name, type)
   {
     this.enclosing_scope = enclosing_scope;
@@ -331,7 +360,7 @@ public class FuncSymbol : ScopedSymbol
   public bool visitings_args = false;
   public bool return_statement_found = false;
 
-  public FuncSymbol(WrappedNode n, string name, Type ret_type, Scope parent) 
+  public FuncSymbol(WrappedNode n, string name, TypeRef ret_type, Scope parent) 
     : base(n, name, ret_type, parent)
   {}
 
@@ -385,7 +414,7 @@ public class LambdaSymbol : FuncSymbol
 
   List<FuncDecl> fdecl_stack;
 
-  public LambdaSymbol(AST_LambdaDecl decl, List<FuncDecl> fdecl_stack, WrappedNode n, string name, Type ret_type, Scope parent) 
+  public LambdaSymbol(AST_LambdaDecl decl, List<FuncDecl> fdecl_stack, WrappedNode n, string name, TypeRef ret_type, Scope parent) 
     : base(n, name, ret_type, parent)
   {
     this.decl = decl;
@@ -467,7 +496,7 @@ public class FuncSymbolAST : FuncSymbol
   public bhlParser.FuncParamsContext fparams;
 #endif
 
-  public FuncSymbolAST(AST_FuncDecl decl, WrappedNode n, string name, Type ret_type, Scope parent
+  public FuncSymbolAST(AST_FuncDecl decl, WrappedNode n, string name, TypeRef ret_type, Scope parent
 #if BHL_FRONT
       , bhlParser.FuncParamsContext fparams
 #endif
@@ -502,7 +531,7 @@ public class FuncBindSymbol : FuncSymbol
 
   public int def_args_num;
 
-  public FuncBindSymbol(string name, Type ret_type, Interpreter.FuncNodeCreator func_creator, int def_args_num = 0) 
+  public FuncBindSymbol(string name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, int def_args_num = 0) 
     : base(null, name, ret_type, null)
   {
     this.func_creator = func_creator;
@@ -523,7 +552,7 @@ public class FuncBindSymbol : FuncSymbol
 
 public class SimpleFuncBindSymbol : FuncBindSymbol
 {
-  public SimpleFuncBindSymbol(string name, Type ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
+  public SimpleFuncBindSymbol(string name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
     : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num )
   {}
 }
@@ -532,7 +561,7 @@ public class ConfNodeSymbol : FuncBindSymbol
 {
   public Interpreter.ConfigGetter conf_getter;
 
-  public ConfNodeSymbol(string name, Type ret_type, Interpreter.FuncNodeCreator func_creator, Interpreter.ConfigGetter conf_getter) 
+  public ConfNodeSymbol(string name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, Interpreter.ConfigGetter conf_getter) 
     : base(name, ret_type, func_creator)
   {
     this.conf_getter = conf_getter;
@@ -817,26 +846,26 @@ static public class SymbolTable
       if(t != null) 
       {
         var blt = (BuiltInTypeSymbol)t; 
-        globals.define(new ArrayTypeSymbol(globals, blt));
+        globals.define(new ArrayTypeSymbol(globals, new TypeRef(blt)));
       }
     }
 
     {
-      var fn = new FuncBindSymbol("RUNNING", globals.type("void"),
+      var fn = new FuncBindSymbol("RUNNING", "void",
         delegate() { return new AlwaysRunning(); } 
       );
       globals.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("YIELD", globals.type("void"),
+      var fn = new FuncBindSymbol("YIELD", "void",
         delegate() { return new YieldOnce(); } 
       );
       globals.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("SUCCESS", globals.type("void"),
+      var fn = new FuncBindSymbol("SUCCESS", "void",
         delegate() { return new AlwaysSuccess(); } 
       );
 
@@ -844,7 +873,7 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncBindSymbol("FAILURE", globals.type("void"),
+      var fn = new FuncBindSymbol("FAILURE", "void",
         delegate() { return new AlwaysFailure(); } 
       );
 

@@ -1861,7 +1861,7 @@ public class FuncNodeBinding : FuncNode
   {
     this.symb = symb;
 
-    this.has_void_value = symb.type == SymbolTable._void;
+    this.has_void_value = symb.type.Get() == SymbolTable._void;
 
     this.addChild(CreateBindingNode());
   }

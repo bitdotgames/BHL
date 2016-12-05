@@ -282,7 +282,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       var backup_scope = curr_scope;
       curr_scope = orig_scope;
 
-      if(var_symb != null && var_symb.type is FuncTypeSymbol)
+      if(var_symb != null && var_symb.type.Get() is FuncTypeSymbol)
       {
         node = AST_Util.New_Call(EnumCall.VAR2FUNC, str_name, Hash.CRC28(str_name), SymbolTable._fn_void);
         //TODO: for now there are no func call args
@@ -292,7 +292,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         node = AST_Util.New_Call(member_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, str_name, func_symb.GetCallId(), (Symbol)member_scope);
         AddCallArgs(ctx, func_symb, cargs, ref node);
-        type = func_symb.type;
+        type = func_symb.type.Get();
       }
       else
       {
@@ -302,7 +302,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         {
           node = AST_Util.New_Call(EnumCall.FUNC, str_name, func_symb.GetCallId());
           AddCallArgs(ctx, func_symb, cargs, ref node);
-          type = func_symb.type;
+          type = func_symb.type.Get();
         }
         else
         {
@@ -321,7 +321,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       if(var_symb != null)
       {
         node = AST_Util.New_Call(member_scope != null ? EnumCall.MVAR : EnumCall.VAR, str_name, Hash.CRC28(str_name), (Symbol)member_scope);
-        type = var_symb.type;
+        type = var_symb.type.Get();
       }
       else if(func_symb != null)
       {
@@ -331,7 +331,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         ulong func_call_id = call_func_symb.GetCallId();
 
         node = AST_Util.New_Call(EnumCall.FUNC2VAR, str_name, func_call_id);
-        if(func_symb.type != SymbolTable._void)
+        if(func_symb.type.Get() != SymbolTable._void)
           FireError(Location(name) + " : Currently only void^() function pointers are supported");
         else if(func_symb.GetRequiredArgsNum() > 0)
           FireError(Location(name) + " : Function expects arguments to be passed");
@@ -355,7 +355,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var symb = curr_scope.resolve(name.GetText());
 
-    var arr_type = symb.type as ArrayTypeSymbol;
+    var arr_type = symb.type.Get() as ArrayTypeSymbol;
     if(arr_type == null)
       FireError(Location(name) +  " : Symbol is not an array");
 
@@ -369,7 +369,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     if(Wrap(arr_exp).eval_type != SymbolTable._int)
       FireError(symb.Location() +  " : Array index expression is not of type int");
 
-    type = arr_type.original;
+    type = arr_type.original.Get();
 
     return node;
   }
@@ -453,7 +453,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         ++args_passed;
 
         var func_arg_symb = (Symbol)func_args[i];
-        var func_arg_type = func_arg_symb.node == null ? func_arg_symb.type : func_arg_symb.node.eval_type;  
+        var func_arg_type = func_arg_symb.node == null ? func_arg_symb.type.Get() : func_arg_symb.node.eval_type;  
 
         if(ca.isRef() == null && func_symb.IsRefAt(i))
           FireError(Location(ca) +  ": 'ref' specifier is missing");
@@ -468,7 +468,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
         //NOTE: if symbol is from bindings we don't have a source node attached to it
         if(func_arg_symb.node == null)
-          SymbolTable.CheckAssign(func_arg_symb.type, wca);
+          SymbolTable.CheckAssign(func_arg_symb.type.Get(), wca);
         else
           SymbolTable.CheckAssign(func_arg_symb.node, wca);
       }
@@ -512,7 +512,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var func_name = curr_m.GetId() + "_" + NextLambdaId(); 
     var node = AST_Util.New_LambdaDecl(curr_m.GetId(), str_type, func_name);
     var lambda_node = Wrap(ctx);
-    var symb = new LambdaSymbol(node, this.func_decl_stack, lambda_node, func_name, var_type, mscope);
+    var symb = new LambdaSymbol(node, this.func_decl_stack, lambda_node, func_name, new TypeRef(var_type), mscope);
 
     PushFuncDecl(new FuncDecl(node, symb));
 
@@ -595,7 +595,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       FireError(Location(ctx) + ": Array is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
-    PushJsonType(arr_type.original);
+    PushJsonType(arr_type.original.Get());
 
     var node = AST_Util.New_JsonArr(arr_type);
 
@@ -625,14 +625,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
     var node = AST_Util.New_JsonPair(curr_type.GetName(), name_str);
 
-    PushJsonType(member.type);
+    PushJsonType(member.type.Get());
 
     var jval = ctx.jsonValue(); 
     node.AddChild(Visit(jval));
 
     PopJsonType();
 
-    Wrap(ctx).eval_type = member.type;
+    Wrap(ctx).eval_type = member.type.Get();
 
     return node;
   }
@@ -1091,7 +1091,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var func_node = Wrap(ctx);
     func_node.eval_type = var_type;
     var node = AST_Util.New_FuncDecl(curr_m.GetId(), str_type, str_name);
-    var symb = new FuncSymbolAST(node, func_node, str_name, var_type, curr_scope, ctx.funcParams());
+    var symb = new FuncSymbolAST(node, func_node, str_name, new TypeRef(var_type), curr_scope, ctx.funcParams());
     mscope.define(symb);
     curr_m.symbols.define(symb);
     curr_scope = symb;
@@ -1169,8 +1169,8 @@ public class AST_Builder : bhlBaseVisitor<AST>
         FireError(Location(name) +  ": ref is not allowed to have a default value");
     }
     Symbol symb = func_arg ? 
-      (Symbol) new FuncArgSymbol(str_name, var_type, is_ref) :
-      (Symbol) new VariableSymbol(var_node, str_name, var_type);
+      (Symbol) new FuncArgSymbol(str_name, new TypeRef(var_type), is_ref) :
+      (Symbol) new VariableSymbol(var_node, str_name, new TypeRef(var_type));
 
     var node = AST_Util.New_VarDecl(str_type, str_name, is_ref);
     if(defarg != null)

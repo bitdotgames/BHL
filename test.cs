@@ -1172,7 +1172,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_ref", globs.type("void"), 
+      var fn = new SimpleFuncBindSymbol("func_with_ref", "void", 
           delegate(object agent)
           {
             var interp = Interpreter.instance;
@@ -1184,8 +1184,8 @@ public class BHL_Test
             return BHS.SUCCESS;
           }
           );
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float"), true/*is ref*/));
+      fn.define(new FuncArgSymbol("a", "float"));
+      fn.define(new FuncArgSymbol("b", "float", true/*is ref*/));
 
       globs.define(fn);
     }
@@ -1562,9 +1562,9 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new FuncBindSymbol("ret_val", globs.type("float"),
+      var fn = new FuncBindSymbol("ret_val", "float",
           delegate() { return new RetValNode(); } );
-      fn.define(new FuncArgSymbol("k", globs.type("float")));
+      fn.define(new FuncArgSymbol("k", "float"));
 
       globs.define(fn);
     }
@@ -1593,7 +1593,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new SimpleFuncBindSymbol("func_with_def", "float", 
           delegate(object agent)
           {
             var interp = Interpreter.instance;
@@ -1605,8 +1605,8 @@ public class BHL_Test
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.define(new FuncArgSymbol("a", "float"));
+      fn.define(new FuncArgSymbol("b", "float"));
 
       globs.define(fn);
     }
@@ -1640,7 +1640,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new SimpleFuncBindSymbol("func_with_def", "float", 
           delegate(object agent)
           {
             var interp = Interpreter.instance;
@@ -1652,8 +1652,8 @@ public class BHL_Test
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.define(new FuncArgSymbol("a", "float"));
+      fn.define(new FuncArgSymbol("b", "float"));
 
       globs.define(fn);
     }
@@ -1682,7 +1682,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new SimpleFuncBindSymbol("func_with_def", "float", 
           delegate(object agent)
           {
             var interp = Interpreter.instance;
@@ -1693,7 +1693,7 @@ public class BHL_Test
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
+      fn.define(new FuncArgSymbol("a", "float"));
 
       globs.define(fn);
     }
@@ -1748,7 +1748,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("float"),
+      var fn = new SimpleFuncBindSymbol("foo", "float",
           delegate(object agent) { return BHS.FAILURE; } );
       globs.define(fn);
     }
@@ -1797,9 +1797,9 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Color>(globs, cl));
+      globs.define(new ArrayTypeSymbolT<Color>(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("r", globs.type("float"),
+      cl.define(new FieldSymbol("r", "float",
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (Color)ctx.obj;
@@ -1812,7 +1812,7 @@ public class BHL_Test
           ctx.obj = c;
         }
       ));
-      cl.define(new FieldSymbol("g", globs.type("float"),
+      cl.define(new FieldSymbol("g", "float",
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (Color)ctx.obj;
@@ -1827,7 +1827,7 @@ public class BHL_Test
       ));
 
       {
-        var m = new SimpleFuncBindSymbol("Add", globs.type("Color"),
+        var m = new SimpleFuncBindSymbol("Add", "Color",
           delegate(object agent)
           {
             var interp = Interpreter.instance;
@@ -1845,13 +1845,13 @@ public class BHL_Test
             return BHS.SUCCESS;
           }
         );
-        m.define(new FuncArgSymbol("k", globs.type("float")));
+        m.define(new FuncArgSymbol("k", "float"));
 
         cl.define(m);
       }
 
       {
-        var m = new SimpleFuncBindSymbol("mult_summ", globs.type("float"),
+        var m = new SimpleFuncBindSymbol("mult_summ", "float",
           delegate(object agent)
           {
             var interp = Interpreter.instance;
@@ -1864,17 +1864,17 @@ public class BHL_Test
             return BHS.SUCCESS;
           }
         );
-        m.define(new FuncArgSymbol("k", globs.type("float")));
+        m.define(new FuncArgSymbol("k", "float"));
 
         cl.define(m);
       }
     }
 
     {
-      var fn = new FuncBindSymbol("mkcolor", globs.type("Color"),
+      var fn = new FuncBindSymbol("mkcolor", "Color",
           delegate() { return new MkColorNode(); }
       );
-      fn.define(new FuncArgSymbol("r", globs.type("float")));
+      fn.define(new FuncArgSymbol("r", "float"));
 
       globs.define(fn);
     }
@@ -1955,7 +1955,7 @@ public class BHL_Test
         }
       );
       {
-        var vs = new bhl.FieldSymbol("refs", globs.type("int"),
+        var vs = new bhl.FieldSymbol("refs", "int",
           delegate(bhl.DynVal ctx, ref bhl.DynVal v)
           {
             v.num = ((RefC)ctx.obj).refs;
@@ -1966,7 +1966,7 @@ public class BHL_Test
         cl.define(vs);
       }
       globs.define(cl);
-      globs.define(new ArrayTypeSymbol(globs, cl));
+      globs.define(new ArrayTypeSymbol(globs, new TypeRef(cl)));
     }
 
     {
@@ -1978,7 +1978,7 @@ public class BHL_Test
       );
       globs.define(cl);
 
-      cl.define(new FieldSymbol("r", globs.type("RefC"),
+      cl.define(new FieldSymbol("r", "RefC",
           delegate(DynVal ctx, ref DynVal v) {
             var c = (ConfigNodeRefC)ctx.obj;
             v.obj = c.r;
@@ -1998,11 +1998,11 @@ public class BHL_Test
     }
 
     {
-      var fn = new ConfNodeSymbol("NodeRefC", globs.type("void"),
+      var fn = new ConfNodeSymbol("NodeRefC", "void",
           delegate() { var n = new NodeRefC(mstream); n.conf = new ConfigNodeRefC(); n.conf.reset(); return n; }, 
           delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((NodeRefC)n).conf; v.obj = conf; if(reset) conf.reset(); }
           );
-      fn.define(new FuncArgSymbol("c", globs.type("ConfigNodeRefC")));
+      fn.define(new FuncArgSymbol("c", "ConfigNodeRefC"));
 
       globs.define(fn);
     }
@@ -2012,16 +2012,16 @@ public class BHL_Test
   void BindFoo(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol( "Foo",
+      var cl = new ClassBindSymbol("Foo",
         delegate(ref DynVal v) 
         { 
           v.obj = new Foo();
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Foo>(globs, cl));
+      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("hey", globs.type("int"),
+      cl.define(new FieldSymbol("hey", "int",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
@@ -2034,7 +2034,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("colors", globs.type("Color[]"),
+      cl.define(new FieldSymbol("colors", "Color[]",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
@@ -2047,7 +2047,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("sub_color", globs.type("Color"),
+      cl.define(new FieldSymbol("sub_color", "Color",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
@@ -2073,9 +2073,9 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Foo>(globs, cl));
+      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("script", globs.type("void^()"),
+      cl.define(new FieldSymbol("script", "void^()",
           delegate(DynVal ctx, ref DynVal v) {
             var f = (FooLambda)ctx.obj;
             v.obj = f.script.Count == 0 ? null : ((BaseLambda)(f.script[0])).fct.obj;
@@ -2205,7 +2205,7 @@ public class BHL_Test
       );
       globs.define(cl);
 
-      cl.define(new FieldSymbol("c", globs.type("Color"),
+      cl.define(new FieldSymbol("c", "Color",
         delegate(DynVal ctx, ref DynVal v)
         {
           var cn = (ColorNested)ctx.obj;
@@ -2339,7 +2339,7 @@ public class BHL_Test
   {
     var en = new EnumSymbol(null, "EnumState", null);
     globs.define(en);
-    globs.define(new ArrayTypeSymbol(globs, en));
+    globs.define(new ArrayTypeSymbol(globs, new TypeRef(en)));
 
     en.define(new EnumItemSymbol(null, en, "SPAWNED",  10));
     en.define(new EnumItemSymbol(null, en, "SPAWNED2", 20));
@@ -2834,9 +2834,9 @@ public class BHL_Test
     BindEnum(globs);
 
     {
-      var fn = new FuncBindSymbol("StateIs", globs.type("void"),
+      var fn = new FuncBindSymbol("StateIs", "void",
           delegate() { return new StateIsNode(); });
-      fn.define(new FuncArgSymbol("state", globs.type("EnumState")));
+      fn.define(new FuncArgSymbol("state", "EnumState"));
 
       globs.define(fn);
     }
@@ -2919,9 +2919,9 @@ public class BHL_Test
   void BindTrace(GlobalScope globs, MemoryStream trace_stream)
   {
     {
-      var fn = new FuncBindSymbol("trace", globs.type("void"),
+      var fn = new FuncBindSymbol("trace", "void",
           delegate() { return new TraceNode(trace_stream); } );
-      fn.define(new FuncArgSymbol("str", globs.type("string")));
+      fn.define(new FuncArgSymbol("str", "string"));
 
       globs.define(fn);
     }
@@ -2930,7 +2930,7 @@ public class BHL_Test
   void BindMin(GlobalScope globs)
   {
     {
-      var fn = new SimpleFuncBindSymbol("min", globs.type("float"),
+      var fn = new SimpleFuncBindSymbol("min", "float",
         delegate(object agent)
         {
           var interp = Interpreter.instance;
@@ -2940,8 +2940,8 @@ public class BHL_Test
           return BHS.SUCCESS;
         }
       );
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.define(new FuncArgSymbol("a", "float"));
+      fn.define(new FuncArgSymbol("b", "float"));
 
       globs.define(fn);
     }
@@ -2972,7 +2972,7 @@ public class BHL_Test
   void BindNodeWithDefer(GlobalScope globs, MemoryStream s)
   {
     {
-      var fn = new FuncBindSymbol("NodeWithDefer", globs.type("void"),
+      var fn = new FuncBindSymbol("NodeWithDefer", "void",
           delegate() { return new NodeWithDefer(s); } );
 
       globs.define(fn);
@@ -2982,10 +2982,10 @@ public class BHL_Test
   void BindWaitTicks(GlobalScope globs)
   {
     {
-      var fn = new FuncBindSymbol("WaitTicks", globs.type("void"),
+      var fn = new FuncBindSymbol("WaitTicks", "void",
           delegate() { return new WaitTicksNode(); } );
-      fn.define(new FuncArgSymbol("ticks", globs.type("int")));
-      fn.define(new FuncArgSymbol("is_success", globs.type("bool")));
+      fn.define(new FuncArgSymbol("ticks", "int"));
+      fn.define(new FuncArgSymbol("is_success", "bool"));
 
       globs.define(fn);
     }
@@ -3037,9 +3037,9 @@ public class BHL_Test
   void BindStartScript(GlobalScope globs)
   {
     {
-      var fn = new FuncBindSymbol("StartScript", globs.type("void"),
+      var fn = new FuncBindSymbol("StartScript", "void",
           delegate() { return new StartScriptNode(); } );
-      fn.define(new FuncArgSymbol("script", globs.type("void^()")));
+      fn.define(new FuncArgSymbol("script", "void^()"));
 
       globs.define(fn);
     }
@@ -3236,7 +3236,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("void"), 
+      var fn = new SimpleFuncBindSymbol("foo", "void", 
           delegate(object agent)
           {
             AddString(trace_stream, "FOO");
@@ -6375,9 +6375,9 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncBindSymbol("MakeFoo", "Foo",
           delegate() { return new MakeFooNode(); } );
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.define(new FuncArgSymbol("conf", "Foo"));
 
       globs.define(fn);
     }
@@ -6464,9 +6464,9 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<ConfigNode_Conf>(globs, cl));
+      globs.define(new ArrayTypeSymbolT<ConfigNode_Conf>(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("hey", globs.type("int"),
+      cl.define(new FieldSymbol("hey", "int",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
@@ -6479,7 +6479,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("colors", globs.type("Color[]"),
+      cl.define(new FieldSymbol("colors", "Color[]",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
@@ -6492,7 +6492,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("sub_color", globs.type("Color"),
+      cl.define(new FieldSymbol("sub_color", "Color",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
@@ -6505,7 +6505,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("strs", globs.type("string[]"),
+      cl.define(new FieldSymbol("strs", "string[]",
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
@@ -6522,11 +6522,11 @@ public class BHL_Test
     }
 
     {
-      var fn = new ConfNodeSymbol("ConfigNode", globs.type("void"),
+      var fn = new ConfNodeSymbol("ConfigNode", "void",
           delegate() { var n = new ConfigNode(trace_stream); n.conf = new ConfigNode_Conf(); n.conf.reset(); return n; }, 
           delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNode)n).conf; v.obj = conf; if(reset) conf.reset(); }
           );
-      fn.define(new FuncArgSymbol("c", globs.type("ConfigNode_Conf")));
+      fn.define(new FuncArgSymbol("c", "ConfigNode_Conf"));
 
       globs.define(fn);
     }
@@ -6536,11 +6536,11 @@ public class BHL_Test
   void BindConfigNodeLambda(GlobalScope globs)
   {
     {
-      var fn = new ConfNodeSymbol("ConfigNodeLambda", globs.type("void"),
+      var fn = new ConfNodeSymbol("ConfigNodeLambda", "void",
           delegate() { var n = new ConfigNodeLambda(); n.conf = new FooLambda(); n.conf.reset(); return n; }, 
           delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNodeLambda)n).conf; v.obj = conf; if(reset) conf.reset(); }
           );
-      fn.define(new FuncArgSymbol("c", globs.type("FooLambda")));
+      fn.define(new FuncArgSymbol("c", "FooLambda"));
 
       globs.define(fn);
     }
@@ -6844,18 +6844,18 @@ public class BHL_Test
       globs.define(cl);
 
       {
-        var m = new SimpleFuncBindSymbol("Sub", globs.type("Vec3"),
+        var m = new SimpleFuncBindSymbol("Sub", "Vec3",
           delegate(object agent)
           {
             return BHS.SUCCESS;
           }
         );
-        m.define(new FuncArgSymbol("val", globs.type("Vec3")));
+        m.define(new FuncArgSymbol("val", "Vec3"));
 
         cl.define(m);
       }
 
-      cl.define(new FieldSymbol("len", globs.type("float"),
+      cl.define(new FieldSymbol("len", "float",
         delegate(DynVal ctx, ref DynVal v)
         {},
         //setter not allowed
@@ -6870,9 +6870,9 @@ public class BHL_Test
       );
 
       globs.define(cl);
-      globs.define(new ArrayTypeSymbol(globs, cl));
+      globs.define(new ArrayTypeSymbol(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("position", globs.type("Vec3"),
+      cl.define(new FieldSymbol("position", "Vec3",
         delegate(DynVal ctx, ref DynVal v)
         {},
         //setter not allowed
@@ -6881,7 +6881,7 @@ public class BHL_Test
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("get_units", globs.type("Unit[]"),
+      var fn = new SimpleFuncBindSymbol("get_units", "Unit[]",
         delegate(object agent)
         {
           return BHS.SUCCESS;
