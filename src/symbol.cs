@@ -19,6 +19,8 @@ public interface Type
 
 public struct TypeRef
 {
+  static public GlobalScope bindings;
+
   public Type type;
   public string name;
 
@@ -54,7 +56,7 @@ public struct TypeRef
     if(type != null)
       return type;
 
-    type = Interpreter.instance.bindings.type(name);
+    type = bindings.type(name);
     return type;
   }
 }

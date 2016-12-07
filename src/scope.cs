@@ -80,7 +80,11 @@ public class GlobalScope : BaseScope
 
   public GlobalScope() 
     : base(null) 
-  {}
+  {
+    //TODO: probably not the best place
+    TypeRef.bindings = this;
+  }
+
   public override string GetScopeName() { return "global"; }
 
   public override void define(Symbol sym) 
