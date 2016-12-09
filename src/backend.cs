@@ -315,6 +315,16 @@ public class DynVal
       Del(this);
   }
 
+  static public void PoolAlloc(int num)
+  {
+    for(int i=0;i<num;++i)
+    {
+      ++pool_miss;
+      var tmp = new DynVal(); 
+      pool.Enqueue(tmp);
+    }
+  }
+
   static public void PoolClear()
   {
     pool_hit = 0;
