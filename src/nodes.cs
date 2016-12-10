@@ -1707,7 +1707,6 @@ public class FuncNodeAST : FuncNode
       var fparam_name = fparam.Name();
 
       var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
-      //var fparam_val = interp.PopRef();
       //Util.Debug(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
       mem.Set(fparam_name, fparam_val);
 
@@ -1826,7 +1825,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     var ldecl = fr.decl as AST_LambdaDecl;
     if(ldecl != null)
     {
-      //copying use params to its own memory scope
+      //setting use params to its own memory scope
       for(int i=0;i<ldecl.useparams.Count;++i)
       {
         var up = ldecl.useparams[i];

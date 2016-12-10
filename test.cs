@@ -1098,6 +1098,34 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassByRefAssignToNonRef()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      float b = a
+      b = b + 1
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 3);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestPassByRefNested()
   {
     string bhl = @"
@@ -1290,6 +1318,33 @@ public class BHL_Test
       },
       "ref is not allowed to have a default value"
     );
+  }
+
+  [IsTested()]
+  public void TestLambdaUsesByRef()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      foo(func() { a = a + 1 } )
+      return a
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 3);
+    CommonChecks(intp);
   }
 
   [IsTested()]
