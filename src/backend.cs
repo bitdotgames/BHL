@@ -5,6 +5,18 @@ using game;
 
 namespace bhl {
 
+public struct RefOp
+{
+  public const int INC                  = 1;
+  public const int DEC                  = 2;
+  public const int DEC_NO_RELEASE       = 4;
+  public const int TRY_RELEASE          = 8;
+  public const int USR_INC              = 16;
+  public const int USR_DEC              = 32;
+  public const int USR_DEC_NO_RELEASE   = 64;
+  public const int USR_TRY_RELEASE      = 128;
+}
+
 public class DynVal
 {
   public const byte NONE   = 0;
@@ -152,24 +164,65 @@ public class DynVal
     return dv;
   }
 
-  public void ValueRefInc()
+  //NOTE: see RefOp for constants
+  public void RefMod(int op)
   {
     if(_refc != null)
-      _refc.RefInc();
-  }
+    {
+      if((op & RefOp.USR_INC) != 0)
+      {
+        _refc.RefInc();
+      }
+      else if((op & RefOp.USR_DEC) != 0)
+      {
+        _refc.RefDec(true);
+      }
+      else if((op & RefOp.USR_DEC_NO_RELEASE) != 0)
+      {
+        _refc.RefDec(false);
+      }
+      else if((op & RefOp.USR_TRY_RELEASE) != 0)
+      {
+        _refc.RefTryRelease();
+      }
+    }
 
-  public void ValueRefDec(bool can_release = true)
-  {
-    if(_refc != null)
-      _refc.RefDec(can_release);
-  }
+    if((op & RefOp.INC) != 0)
+    {
+      if(_refs == -1)
+        throw new Exception("Invalid state");
 
-  public bool ValueTryRelease()
-  {
-    if(_refc == null)
-      return false;
+      ++_refs;
+      //Console.WriteLine("INC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+    } 
+    else if((op & RefOp.DEC) != 0)
+    {
+      if(_refs == -1)
+        throw new Exception("Invalid state");
+      else if(_refs == 0)
+        throw new Exception("Double free");
 
-    return _refc.RefTryRelease();
+      --_refs;
+      //Console.WriteLine("DEC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+
+      if(_refs == 0)
+        Del(this);
+    }
+    else if((op & RefOp.DEC_NO_RELEASE) != 0)
+    {
+      if(_refs == -1)
+        throw new Exception("Invalid state");
+      else if(_refs == 0)
+        throw new Exception("Double free");
+
+      --_refs;
+      //Console.WriteLine("DEC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+    }
+    else if((op & RefOp.TRY_RELEASE) != 0)
+    {
+      if(_refs == 0)
+        Del(this);
+    }
   }
 
   static public DynVal NewStr(string s)
@@ -286,35 +339,6 @@ public class DynVal
       return "DYNVAL: type:"+type;
   }
 
-  public void RefInc()
-  {
-    if(_refs == -1)
-      throw new Exception("Invalid state");
-
-    ++_refs;
-    //Console.WriteLine("INC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
-  }
-
-  public void RefDec(bool can_release = true)
-  {
-    if(_refs == -1)
-      throw new Exception("Invalid state");
-    else if(_refs == 0)
-      throw new Exception("Double free");
-
-    --_refs;
-    //Console.WriteLine("DEC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
-
-    if(can_release)
-      RefTryRelease();
-  }
-
-  public void RefTryRelease()
-  {
-    if(_refs == 0)
-      Del(this);
-  }
-
   static public void PoolAlloc(int num)
   {
     for(int i=0;i<num;++i)
@@ -372,8 +396,8 @@ public class MemoryScope
       while(enm.MoveNext())
       {
         var val = enm.Current.Value;
-        val.ValueRefDec();
-        val.RefDec();
+
+        val.RefMod(RefOp.USR_DEC | RefOp.DEC);
       }
     }
     finally
@@ -390,8 +414,8 @@ public class MemoryScope
     DynVal prev = null;
     if(vars.TryGetValue(k, out prev))
     {
-      val.ValueRefInc();
-      prev.ValueRefDec();
+      val.RefMod(RefOp.USR_INC);
+      prev.RefMod(RefOp.USR_DEC);
       prev.ValueCopyFrom(val);
       //Console.WriteLine("VAL SET2 " + prev.GetHashCode());
     }
@@ -399,8 +423,8 @@ public class MemoryScope
     {
       //Console.WriteLine("VAL SET1 " + val.GetHashCode());
       vars[k] = val;
-      val.ValueRefInc();
-      val.RefInc();
+
+      val.RefMod(RefOp.USR_INC | RefOp.INC);
     }
   }
 
@@ -414,8 +438,7 @@ public class MemoryScope
     DynVal val;
     if(vars.TryGetValue((uint)key.n, out val))
     {
-      val.ValueRefDec();
-      val.RefDec();
+      val.RefMod(RefOp.USR_DEC | RefOp.DEC);
       vars.Remove((uint)key.n);
     }
   }
@@ -752,8 +775,7 @@ public class DynValList : List<DynVal>, DynValRefcounted
     
     for(int i=0;i<Count;++i)
     {
-      this[i].ValueRefDec();
-      this[i].RefDec();
+      this[i].RefMod(RefOp.USR_DEC | RefOp.DEC);
     }
     PoolRelease(this);
 
@@ -1162,23 +1184,21 @@ public class Interpreter : AST_Visitor
 
   public void PushValue(DynVal v)
   {
-    v.RefInc();
-    v.ValueRefInc();
+    v.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(v);
   }
 
   public DynVal PopValue()
   {
     var v = stack.PopFast();
-    v.ValueRefDec(can_release: false);
-    v.RefDec();
+    v.RefMod(RefOp.USR_DEC_NO_RELEASE | RefOp.DEC);
     return v;
   }
 
   public DynVal PopRef()
   {
     var v = stack.PopFast();
-    v.RefDec(can_release: false);
+    v.RefMod(RefOp.DEC_NO_RELEASE);
     return v;
   }
 

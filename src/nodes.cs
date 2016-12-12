@@ -1473,7 +1473,7 @@ public class VarAccessNode : BehaviorTreeTerminalNode
       var val = interp.PopValue().ValueClone();
       //Console.WriteLine("WRITE " + val + " " + val.GetHashCode());
       interp.SetScopeValue(name, val);
-      val.RefTryRelease();
+      val.RefMod(RefOp.TRY_RELEASE);
     }
     else if(mode == READ)
     {
@@ -1581,7 +1581,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       if(var_symb is FieldSymbol)
       {
         (var_symb as FieldSymbol).setter(ref ctx, val);
-        val.ValueTryRelease();
+        val.RefMod(RefOp.USR_TRY_RELEASE);
       }
       else
         throw new Exception("Not implemented");
@@ -1710,7 +1710,7 @@ public class FuncNodeAST : FuncNode
       //Util.Debug(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
       mem.Set(fparam_name, fparam_val);
 
-      fparam_val.RefTryRelease();
+      fparam_val.RefMod(RefOp.TRY_RELEASE);
     }
 
     base.init(agent);
@@ -1963,8 +1963,7 @@ public class Array_AddNode : BehaviorTreeTerminalNode
     var lst = arr.obj as DynValList;
     if(lst == null)
       throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
-    val.RefInc();
-    val.ValueRefInc();
+    val.RefMod(RefOp.INC | RefOp.USR_INC);
     lst.Add(val);
   }
 

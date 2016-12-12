@@ -2625,7 +2625,7 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
-    res.ValueTryRelease();
+    res.RefMod(RefOp.USR_TRY_RELEASE);
     CommonChecks(intp);
   }
 
@@ -2670,7 +2670,7 @@ public class BHL_Test
 
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 0);
-    res.ValueTryRelease();
+    res.RefMod(RefOp.USR_TRY_RELEASE);
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 1);
 
@@ -2731,7 +2731,7 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].num, 20);
     AssertEqual(lst[1].num, 10);
-    res.ValueTryRelease();
+    res.RefMod(RefOp.USR_TRY_RELEASE);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
     CommonChecks(intp);
   }
