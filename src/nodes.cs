@@ -1963,7 +1963,6 @@ public class Array_AddNode : BehaviorTreeTerminalNode
     var lst = arr.obj as DynValList;
     if(lst == null)
       throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
-    val.RefMod(RefOp.INC | RefOp.USR_INC);
     lst.Add(val);
   }
 

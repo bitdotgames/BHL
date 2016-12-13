@@ -2969,8 +2969,6 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    BindEnum(globs);
-
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
@@ -2982,7 +2980,38 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
-    res.RefMod(RefOp.USR_TRY_RELEASE);
+    lst.RefTryRelease();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestRemoveFromArray()
+  {
+    string bhl = @"
+      
+    func string[] test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""foo"")
+      arr.Add(""bar"")
+      arr.RemoveAt(1)
+      return arr
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = intp.ExecNode(node).val;
+
+    //NodeDump(node);
+
+    var lst = res.obj as DynValList;
+    AssertEqual(lst.Count, 1);
+    AssertEqual(lst[0].str, "foo");
+    lst.RefTryRelease();
     CommonChecks(intp);
   }
 
@@ -3027,7 +3056,7 @@ public class BHL_Test
 
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 0);
-    res.RefMod(RefOp.USR_TRY_RELEASE);
+    lst.RefTryRelease();
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 1);
 
@@ -3088,7 +3117,7 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].num, 20);
     AssertEqual(lst[1].num, 10);
-    res.RefMod(RefOp.USR_TRY_RELEASE);
+    lst.RefTryRelease();
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
     CommonChecks(intp);
   }

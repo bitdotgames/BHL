@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using game;
 
@@ -742,10 +743,139 @@ public class FuncCtx : DynValRefcounted
   }
 }
 
-public class DynValList : List<DynVal>, DynValRefcounted
+public class DynValList : IList<DynVal>, IList, DynValRefcounted
 {
+  List<DynVal> lst = new List<DynVal>();
+
   //NOTE: -1 means it's in released state
   public int refs;
+
+  //////////////////IList//////////////////
+
+  public int Count { get { return lst.Count; } }
+
+  public bool IsFixedSize { get { return false; } }
+  public bool IsReadOnly { get { return false; } }
+  public bool IsSynchronized { get { throw new NotImplementedException(); } }
+  public object SyncRoot { get { throw new NotImplementedException(); } }
+
+  public void Add(DynVal dv)
+  {
+    dv.RefMod(RefOp.INC | RefOp.USR_INC);
+    lst.Add(dv);
+  }
+
+  public void AddRange(IList<DynVal> list)
+  {
+    for(int i=0; i<list.Count; ++i)
+      Add(list[i]);
+  }
+
+  public void RemoveAt(int idx)
+  {
+    var dv = lst[idx];
+    dv.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    lst.RemoveAt(idx); 
+  }
+
+  public void Clear()
+  {
+    for(int i=0;i<Count;++i)
+      lst[i].RefMod(RefOp.USR_DEC | RefOp.DEC);
+
+    lst.Clear();
+  }
+
+  public DynVal this[int i]
+  {
+    get {
+      return lst[i];
+    }
+    set {
+      throw new NotImplementedException();
+    }
+  }
+
+  public int IndexOf(DynVal dv)
+  {
+    return lst.IndexOf(dv);
+  }
+
+  public bool Contains(DynVal dv)
+  {
+    return IndexOf(dv) >= 0;
+  }
+
+  public bool Remove(DynVal dv)
+  {
+    int idx = IndexOf(dv);
+    if(idx < 0)
+      return false;
+    RemoveAt(idx);
+    return true;
+  }
+
+  public void CopyTo(DynVal[] arr, int len)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void Insert(int pos, DynVal o)
+  {
+    throw new NotImplementedException();
+  }
+
+  public IEnumerator<DynVal> GetEnumerator()
+  {
+    throw new NotImplementedException();
+  }
+
+  IEnumerator IEnumerable.GetEnumerator()
+  {
+    return GetEnumerator();
+  }
+
+  object IList.this[int i]
+  {
+    get {
+      return lst[i];
+    }
+    set {
+      throw new NotImplementedException();
+    }
+  }
+
+  public int Add(object value)
+  {
+    throw new NotImplementedException();
+  }
+
+  public bool Contains(object value)
+  {
+    return lst.Contains(value as DynVal);
+  }
+
+  public int IndexOf(object value)
+  {
+    return lst.IndexOf(value as DynVal);
+  }
+
+  public void Insert(int index, object value)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void Remove(object value)
+  {
+    lst.Remove(value as DynVal);
+  }
+
+  public void CopyTo(Array array, int index)
+  {
+    throw new NotImplementedException();
+  }
+
+  ///////////////////////////////////////
 
   public void RefInc()
   {
@@ -771,10 +901,7 @@ public class DynValList : List<DynVal>, DynValRefcounted
     if(refs > 0)
       return false;
     
-    for(int i=0;i<Count;++i)
-    {
-      this[i].RefMod(RefOp.USR_DEC | RefOp.DEC);
-    }
+    Clear();
     PoolRelease(this);
 
     return true;
