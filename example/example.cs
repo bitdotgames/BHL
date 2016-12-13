@@ -25,7 +25,7 @@ public class Example
     while(true)
     {
       if(node.getStatus() != BHS.RUNNING)
-        node.SetArgs(new DynVal("John Silver"));
+        node.SetArgs(DynVal.NewStr("John Silver"));
       node.run(null);
       Thread.Sleep(16);
     }

@@ -12,7 +12,7 @@ public class MyBindings : UserBindings
   public override void Register(GlobalScope globs)
   {
     {
-      var fn = new SimpleFuncBindSymbol("Trace", globs.type("void"),
+      var fn = new SimpleFuncBindSymbol("Trace", "void",
         delegate(object agent)
         {
 #if !BHL_FRONT
@@ -23,20 +23,20 @@ public class MyBindings : UserBindings
           return BHS.SUCCESS;
         }
       );
-      fn.define(new FuncArgSymbol("str", globs.type("string")));
+      fn.define(new FuncArgSymbol("str", "string"));
 
       globs.define(fn);
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("Rand", globs.type("float"),
+      var fn = new SimpleFuncBindSymbol("Rand", "float",
         delegate(object agent)
         {
 #if !BHL_FRONT
           var interp = Interpreter.instance;
           var rnd = new Random();
           var val = rnd.NextDouble(); 
-          interp.PushValue(new DynVal(val));
+          interp.PushValue(DynVal.NewNum(val));
 #endif
           return BHS.SUCCESS;
         }
@@ -45,10 +45,10 @@ public class MyBindings : UserBindings
     }
 
     {
-      var fn = new FuncBindSymbol("Wait", globs.type("void"),
+      var fn = new FuncBindSymbol("Wait", "void",
           delegate() { return new WaitNode(); }
       );
-      fn.define(new FuncArgSymbol("t", globs.type("float")));
+      fn.define(new FuncArgSymbol("t", "float"));
 
       globs.define(fn);
     }
