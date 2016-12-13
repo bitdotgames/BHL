@@ -14,6 +14,7 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 * Allows user defined: *functions, lambdas, classes*
 * Supports C# bindings to user types and functions
 * Golang alike *defer*
+* Passing arguments to function by *ref* like in C#
 * Hot code reload
 * Strict control over memory allocations 
 
@@ -177,9 +178,9 @@ seq {
 
 ## Version 0.1
 
-1. **ref** semantics similar to C#
-2. Multiple return values support
-3. More generic functors support
+1. ~~**ref** semantics similar to C#~~
+2. More generic functors support
+3. Multiple return values support
 
 ## Version 1.0
 
