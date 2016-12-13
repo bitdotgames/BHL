@@ -1817,7 +1817,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
 
-    fct = FuncCtx.PoolRequest(fr);
+    fct = FuncCtx.New(fr);
     //NOTE: explicitely increasing refs number during function call
     //      so that func ctx is alive while function is called
     fct.RefInc();
@@ -1923,7 +1923,7 @@ public class Array_NewNode : BehaviorTreeTerminalNode
   public override void init(object agent)
   {
     var interp = Interpreter.instance;
-    var val = DynVal.NewObj(DynValList.PoolRequest());
+    var val = DynVal.NewObj(DynValList.New());
     interp.PushValue(val);
   }
 

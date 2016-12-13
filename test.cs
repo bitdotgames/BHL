@@ -3016,6 +3016,55 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDynValListOwnership()
+  {
+    var lst = DynValList.New();
+
+    {
+      var dv = DynVal.New();
+      lst.Add(dv);
+      AssertEqual(dv.refs, 1);
+
+      lst.Clear();
+      AssertEqual(dv.refs, -1);
+    }
+
+    {
+      var dv = DynVal.New();
+      lst.Add(dv);
+      AssertEqual(dv.refs, 1);
+
+      lst.RemoveAt(0);
+      AssertEqual(dv.refs, -1);
+
+      lst.Clear();
+      AssertEqual(dv.refs, -1);
+    }
+
+    {
+      var dv0 = DynVal.New();
+      var dv1 = DynVal.New();
+      lst.Add(dv0);
+      lst.Add(dv1);
+      AssertEqual(dv0.refs, 1);
+      AssertEqual(dv1.refs, 1);
+
+      lst.RemoveAt(1);
+      AssertEqual(dv0.refs, 1);
+      AssertEqual(dv1.refs, -1);
+
+      lst.Clear();
+      AssertEqual(dv0.refs, -1);
+      AssertEqual(dv1.refs, -1);
+    }
+
+    DynValList.Del(lst);
+
+    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+    AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
+  }
+
+  [IsTested()]
   public void TestArrayPool()
   {
     string bhl = @"

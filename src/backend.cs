@@ -71,6 +71,8 @@ public class DynVal
   byte _type;
   //NOTE: -1 means it's in released state
   public int _refs;
+  public int refs { get { return _refs; } } 
+
   DynValRefcounted _refc;
 
   //NOTE: below members are semi-public, one can use them for 
@@ -604,7 +606,7 @@ public class FuncCtx : DynValRefcounted
     }
     else if(refs > 1)
     {
-      var dup = FuncCtx.PoolRequest(fr);
+      var dup = FuncCtx.New(fr);
       dup.mem.CopyFrom(mem);
       dup.RefInc();
       return dup;
@@ -639,7 +641,7 @@ public class FuncCtx : DynValRefcounted
     if(refs > 0)
       return false;
     
-    PoolRelease(this);
+    Del(this);
     return true;
   }
 
@@ -655,7 +657,7 @@ public class FuncCtx : DynValRefcounted
   static int pool_hit;
   static int pool_miss;
 
-  public static FuncCtx PoolRequest(FuncRef fr)
+  public static FuncCtx New(FuncRef fr)
   {
     for(int i=0;i<pool.Count;++i)
     {
@@ -688,7 +690,7 @@ public class FuncCtx : DynValRefcounted
     }
   }
 
-  static public void PoolRelease(FuncCtx fct)
+  static public void Del(FuncCtx fct)
   {
     if(fct.refs > 0)
       throw new Exception("Freeing live object, refs " + fct.refs);
@@ -901,8 +903,7 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
     if(refs > 0)
       return false;
     
-    Clear();
-    PoolRelease(this);
+    Del(this);
 
     return true;
   }
@@ -913,7 +914,7 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
   static int pool_hit;
   static int pool_miss;
 
-  public static DynValList PoolRequest()
+  public static DynValList New()
   {
     DynValList lst;
     if(pool.Count == 0)
@@ -934,7 +935,7 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
     return lst;
   }
 
-  static public void PoolRelease(DynValList lst)
+  static public void Del(DynValList lst)
   {
     if(lst.refs > 0)
       throw new Exception("Freeing live object, refs " + lst.refs);
@@ -985,7 +986,7 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
 
   public static void Encode(List<string> dst, ref DynVal dv)
   {
-    var lst = PoolRequest();
+    var lst = New();
     for(int i=0;i<dst.Count;++i)
       lst.Add(DynVal.NewStr(dst[i]));
     dv.SetObj(lst);
@@ -1004,7 +1005,7 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
 
   public static void Encode(List<uint> dst, ref DynVal dv)
   {
-    var lst = PoolRequest();
+    var lst = New();
     for(int i=0;i<dst.Count;++i)
       lst.Add(DynVal.NewNum(dst[i]));
     dv.SetObj(lst);
@@ -1023,7 +1024,7 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
 
   public static void Encode(List<int> dst, ref DynVal dv)
   {
-    var lst = PoolRequest();
+    var lst = New();
     for(int i=0;i<dst.Count;++i)
       lst.Add(DynVal.NewNum(dst[i]));
     dv.SetObj(lst);

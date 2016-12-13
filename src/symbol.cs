@@ -218,7 +218,7 @@ public class ArrayTypeSymbol : ClassSymbol
 
   public virtual void CreateArr(ref DynVal v)
   {
-    v.SetObj(DynValList.PoolRequest());
+    v.SetObj(DynValList.New());
   }
 
   public virtual BehaviorTreeNode Create_New()
