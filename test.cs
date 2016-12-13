@@ -1098,6 +1098,31 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassByRefAlreadyDefinedError()
+  {
+    string bhl = @"
+
+    func foo(ref float a, float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k, k)
+      return k
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "Already defined symbol 'a'"
+    );
+  }
+
+  [IsTested()]
   public void TestPassByRefAssignToNonRef()
   {
     string bhl = @"
@@ -1321,7 +1346,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestLambdaUsesByRef()
+  public void TestLambdaUsesValueImplicit()
   {
     string bhl = @"
 
@@ -1343,7 +1368,339 @@ public class BHL_Test
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
 
+    AssertEqual(num, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaUsesByRefExplicit()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      foo(func() use(ref a) { a = a + 1 } )
+      return a
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
     AssertEqual(num, 3);
+    CommonChecks(intp);
+  }
+
+
+  [IsTested()]
+  public void TestLambdaUseByValue()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      foo(func() use(a) { a = a + 1 } )
+      return a
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaUseMixed()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      float b = 10
+      foo(func() use(a, ref b) 
+        { 
+          a = a + 1 
+          b = b * 2
+        } 
+      )
+      return a + b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 22);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaUseNested()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      float b = 10
+      foo(func() use(a, ref b) 
+        { 
+          void^() fn = func() use(ref a, ref b) {
+            a = a + 1 
+            b = b * 2
+          }
+          fn()
+        } 
+      )
+      return a + b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 22);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaUseNestedOverride()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      float b = 10
+      foo(func() use(a, ref b) 
+        { 
+          void^() fn = func() use(ref a, b) {
+            a = a + 1 
+            b = b * 2
+          }
+          fn()
+        } 
+      )
+      return a + b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 12);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaUseParamDoesntExist()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func void test() 
+    {
+      foo(func() use(a) { a = a + 1 } )
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "Symbol 'a' not defined in parent scope"
+    );
+  }
+
+  [IsTested()]
+  public void TestLambdaDoubleUseParam()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func void test() 
+    {
+      float a = 1
+      foo(func() use(a, a) { a = a + 1 } )
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "Already defined symbol 'a'"
+    );
+  }
+
+  [IsTested()]
+  public void TestLambdaDoubleUseParam2()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func void test() 
+    {
+      float a = 1
+      foo(func() use(a, ref a) { a = a + 1 } )
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "Already defined symbol 'a'"
+    );
+  }
+
+  [IsTested()]
+  public void TestLambdaUseReserveValueUpfront()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      paral_all {
+        foo(func() use(a) { 
+          WaitTicks(2, true)
+          a = a + 1 
+          trace(""A:"" + (string)a)
+        } )
+        seq { a = 100 }
+      }
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+    BindWaitTicks(globs);
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    {
+      var status = node.run(null);
+      AssertEqual(BHS.RUNNING, status);
+    }
+
+    {
+      var status = node.run(null);
+      AssertEqual(BHS.SUCCESS, status);
+    }
+
+    var num = intp.PopValue().num;
+
+    AssertEqual(num, 100);
+    var str = GetString(trace_stream);
+    AssertEqual("A:3", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaUseReserveValueUpfrontForUserBind()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      float a = 2
+      paral_all {
+        StartScript(func() use(a) { 
+          WaitTicks(2, true)
+          a = a + 1 
+          trace(""A:"" + (string)a)
+        } )
+        seq { a = 100 }
+      }
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+    BindWaitTicks(globs);
+    BindTrace(globs, trace_stream);
+    BindStartScript(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    {
+      var status = node.run(null);
+      AssertEqual(BHS.RUNNING, status);
+    }
+
+    {
+      var status = node.run(null);
+      AssertEqual(BHS.SUCCESS, status);
+    }
+
+    var num = intp.PopValue().num;
+
+    AssertEqual(num, 100);
+    var str = GetString(trace_stream);
+    AssertEqual("A:3", str);
     CommonChecks(intp);
   }
 

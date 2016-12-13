@@ -418,6 +418,18 @@ public class FuncDecl
     this.node = node;
     this.symbol = symbol;
   }
+
+  public bool IsLambda()
+  {
+    return node is AST_LambdaDecl;
+  }
+
+  public void AddUseParam(Symbol s, bool is_ref)
+  {
+    var up = AST_Util.New_UseParam(s.name, is_ref); 
+    (node as AST_LambdaDecl).useparams.Add(up);
+    symbol.define(s);
+  }
 }
 
 public class LambdaSymbol : FuncSymbol
@@ -488,12 +500,9 @@ public class LambdaSymbol : FuncSymbol
     for(int j=from_idx;j<=to_idx;++j)
     {
       var decl = fdecl_stack[j];
-      var lmb = decl.node as AST_LambdaDecl;
-      if(lmb == null)
+      if(!decl.IsLambda())
         continue;
-
-      lmb.useparams.Add(AST_Util.New_UseParam(res.name));
-      decl.symbol.define(res);
+      decl.AddUseParam(res, false/*not a ref*/);
     }
   }
 

@@ -441,6 +441,18 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncLambda([NotNull] bhlParser.FuncLambdaContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.useName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUseName([NotNull] bhlParser.UseNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.useBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUseBlock([NotNull] bhlParser.UseBlockContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcParams"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

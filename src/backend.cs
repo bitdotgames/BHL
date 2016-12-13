@@ -396,7 +396,6 @@ public class MemoryScope
       while(enm.MoveNext())
       {
         var val = enm.Current.Value;
-
         val.RefMod(RefOp.USR_DEC | RefOp.DEC);
       }
     }
@@ -423,7 +422,6 @@ public class MemoryScope
     {
       //Console.WriteLine("VAL SET1 " + val.GetHashCode());
       vars[k] = val;
-
       val.RefMod(RefOp.USR_INC | RefOp.INC);
     }
   }
@@ -1589,6 +1587,7 @@ public class Interpreter : AST_Visitor
     Visit(node.children[1]);
     //2. eval expression
     Visit(node.children[0]);
+    //TODO: move this to frontend
     //3. let's tune eval expression
     var last_child = curr_node.children[curr_node.children.Count-1];
     if(last_child is MVarAccessNode)

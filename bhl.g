@@ -138,7 +138,15 @@ funcBlock
   ;
 
 funcLambda
-  : 'func' type? '(' funcParams? ')' funcBlock
+  : 'func' type? '(' funcParams? ')' useBlock? funcBlock
+  ;
+
+useName
+  : isRef? NAME
+  ;
+
+useBlock
+  : 'use' '(' useName (',' useName)* ')'
   ;
 
 funcParams

@@ -777,6 +777,30 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFuncLambda([NotNull] bhlParser.FuncLambdaContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.useName"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterUseName([NotNull] bhlParser.UseNameContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.useName"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitUseName([NotNull] bhlParser.UseNameContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.useBlock"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterUseBlock([NotNull] bhlParser.UseBlockContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.useBlock"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitUseBlock([NotNull] bhlParser.UseBlockContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcParams"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

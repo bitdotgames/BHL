@@ -529,11 +529,6 @@ static public class AST_Util
     return new HashedName(n.nname(), n.name);
   }
 
-  static public HashedName Name(this AST_UseParam n)
-  {
-    return new HashedName(n.nname, n.name);
-  }
-
   ////////////////////////////////////////////////////////
   
   static public AST_UnaryOpExp New_UnaryOpExp(EnumUnaryOp type)
@@ -570,16 +565,26 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_UseParam New_UseParam(string name)
+  static public AST_UseParam New_UseParam(string name, bool is_ref)
   {
     var n = new AST_UseParam();
-    n.nname = Hash.CRC28(name);
+    n.nname = Hash.CRC28(name) | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
     {
       n.name = name;
     }
 
     return n;
+  }
+
+  static public bool IsRef(this AST_UseParam n)
+  {
+    return (n.nname & (1u << 29)) != 0; 
+  }
+
+  static public HashedName Name(this AST_UseParam n)
+  {
+    return new HashedName(n.nname & 0xFFFFFFF, n.name);
   }
 
   ////////////////////////////////////////////////////////

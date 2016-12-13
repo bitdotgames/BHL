@@ -27,6 +27,7 @@ public class BHL
     string src_dir = "";
 		string res_file = "";
     string cache_dir = "";
+    bool use_cache = true;
     string err_file = "";
     string postproc_dll_path = "";
     string userbindings_dll_path = "";
@@ -40,6 +41,8 @@ public class BHL
 				v => res_file = v },
 			{ "cache_dir=", "cache dir",
 				v => cache_dir = v },
+			{ "use_cache=", "use cache",
+				v => use_cache = int.Parse(v) == 1 },
 			{ "postproc_dll=", "posprocess dll path",
 				v => postproc_dll_path = v },
 			{ "bindings_dll=", "bindings dll path",
@@ -115,7 +118,7 @@ public class BHL
 
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
 
-    if(!Util.NeedToRegen(res_file, files) && (postproc != null && !postproc.NeedToRegen(files)))
+    if(use_cache && !Util.NeedToRegen(res_file, files) && (postproc != null && !postproc.NeedToRegen(files)))
       return;
 
 		//Shuffle(files);
@@ -139,6 +142,7 @@ public class BHL
       w.id = ++wid;
       w.inc_dir = src_dir;
       w.cache_dir = cache_dir;
+      w.use_cache = use_cache;
       w.bindings = globs;
       w.files = files;
       w.start = idx;
@@ -251,6 +255,7 @@ public class BHL
     public int id;
     public Thread th;
     public string inc_dir;
+    public bool use_cache;
     public string cache_dir;
     public List<string> files;
     public GlobalScope bindings;
@@ -355,7 +360,7 @@ public class BHL
 
             AST_Module ast = null;
 
-            if(!Util.NeedToRegen(cache_file, deps))
+            if(w.use_cache && !Util.NeedToRegen(cache_file, deps))
             {
               try
               {

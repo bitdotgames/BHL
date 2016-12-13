@@ -514,11 +514,27 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(node, this.func_decl_stack, lambda_node, func_name, new TypeRef(var_type), mscope);
 
-    PushFuncDecl(new FuncDecl(node, symb));
+    var fdecl = new FuncDecl(node, symb);
+    PushFuncDecl(fdecl);
 
     var fparams = ctx.funcLambda().funcParams();
     if(fparams != null)
       node.fparams().AddChild(Visit(fparams));
+
+    var useblock = ctx.funcLambda().useBlock();
+    if(useblock != null)
+    {
+      for(int i=0;i<useblock.useName().Length;++i)
+      {
+        var un = useblock.useName()[i]; 
+        var un_name_str = un.NAME().GetText(); 
+        var un_symb = curr_scope.resolve(un_name_str);
+        if(un_symb == null)
+          FireError(Location(un) +  " : Symbol '" + un_name_str + "' not defined in parent scope");
+
+        fdecl.AddUseParam(un_symb, un.isRef() != null);
+      }
+    }
 
     //NOTE: for now defining lambdas in a module scope 
     mscope.define(symb);
