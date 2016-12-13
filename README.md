@@ -178,9 +178,9 @@ seq {
 
 ## Version 0.1
 
-1. **ref** semantics similar to C#
-2. Multiple return values support
-3. More generic functors support
+1. ~~**ref** semantics similar to C#~~
+2. More generic functors support
+3. Multiple return values support
 
 ## Version 1.0
 
