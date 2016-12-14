@@ -598,6 +598,21 @@ public class FuncCtx : DynValRefcounted
     return fnode;
   }
 
+  public FuncCtx SplitIfUsed()
+  {
+    if(fnode == null)
+    {
+      return this;
+    }
+    else
+    {
+      var dup = FuncCtx.New(fr);
+      dup.mem.CopyFrom(mem);
+      dup.RefInc();
+      return dup;
+    }
+  }
+
   public void RefInc()
   {
     if(refs == -1)
