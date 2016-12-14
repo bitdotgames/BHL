@@ -1827,8 +1827,8 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
       for(int i=0;i<ldecl.useparams.Count;++i)
       {
         var up = ldecl.useparams[i];
-        var val = up.IsRef() ? interp.GetScopeValue(up.Name()) : interp.GetScopeValue(up.Name()).ValueClone();
-        fct.mem.Set(up.Name(), val);
+        var val = interp.GetScopeValue(up.Name());
+        fct.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
       }
     }
 

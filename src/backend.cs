@@ -25,8 +25,7 @@ public class DynVal
   public const byte BOOL   = 2;
   public const byte STRING = 3;
   public const byte OBJ    = 4;
-  public const byte REF    = 5;
-  public const byte NIL    = 6;
+  public const byte NIL    = 5;
 
   public bool IsEmpty { get { return type == NONE; } }
 
@@ -434,6 +433,11 @@ public class MemoryScope
     return vars.TryGetValue((uint)key.n, out val);
   }
 
+  public DynVal Get(HashedName key)
+  {
+    return vars[(uint)key.n];
+  }
+
   public void Unset(HashedName key)
   {
     DynVal val;
@@ -607,7 +611,19 @@ public class FuncCtx : DynValRefcounted
     else
     {
       var dup = FuncCtx.New(fr);
-      dup.mem.CopyFrom(mem);
+
+      //NOTE: need to properly set use params
+      if(fr.decl is AST_LambdaDecl)
+      {
+        var ldecl = fr.decl as AST_LambdaDecl;
+        for(int i=0;i<ldecl.useparams.Count;++i)
+        {
+          var up = ldecl.useparams[i];
+          var val = mem.Get(up.Name());
+          dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        }
+      }
+
       dup.RefInc();
       return dup;
     }

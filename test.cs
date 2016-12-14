@@ -3556,16 +3556,24 @@ public class BHL_Test
           delegate(object agent)
           {
             var interp = Interpreter.instance;
+            int num = (int)interp.PopValue().num;
             var fct = (FuncCtx)interp.PopValue().obj;
             fct.RefInc();
-            var node = fct.GetNode();
-            //Console.WriteLine("FREFS START: " + fct.GetHashCode() + " " + fct.refs);
-            ScriptMgr.instance.add(node);
+
+            for(int i=0;i<num;++i)
+            {
+              fct = fct.SplitIfUsed();
+              var node = fct.GetNode();
+              //Console.WriteLine("FREFS START: " + fct.GetHashCode() + " " + fct.refs);
+              ScriptMgr.instance.add(node);
+            }
+
             return BHS.SUCCESS;
           }
       );
 
       fn.define(new FuncArgSymbol("script", "void^()"));
+      fn.define(new FuncArgSymbol("num", "int"));
 
       globs.define(fn);
     }
@@ -3814,10 +3822,11 @@ public class BHL_Test
     {
       forever {
         StartScriptInMgr(
-          func() { 
+          script: func() { 
             trace(""HERE;"") 
             RUNNING()
-          } 
+          },
+        num : 1
         )
       }
     }
@@ -3860,6 +3869,145 @@ public class BHL_Test
       AssertEqual(2, cs.Count); 
       AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
     }
+
+    ScriptMgr.instance.stop(null);
+
+    AssertTrue(!ScriptMgr.instance.busy());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaManyTimesInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      StartScriptInMgr(
+        script: func() { 
+          RUNNING()
+        },
+        num : 3
+      )
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindStartScriptInMgr(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run(null);
+    AssertEqual(status, BHS.SUCCESS);
+
+    ScriptMgr.instance.run(null);
+
+    var cs = ScriptMgr.instance.getChildren();
+    AssertEqual(3, cs.Count); 
+    AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
+    AssertTrue(cs[1].GetHashCode() != cs[2].GetHashCode());
+    AssertTrue(cs[0].GetHashCode() != cs[2].GetHashCode());
+
+    //NodeDump(node);
+
+    ScriptMgr.instance.stop(null);
+
+    AssertTrue(!ScriptMgr.instance.busy());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaManyTimesInScriptMgrWithUseVals()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      float a = 0
+      StartScriptInMgr(
+        script: func() { 
+          a = a + 1
+          trace((string) a + "";"") 
+          RUNNING()
+        },
+        num : 3
+      )
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStartScriptInMgr(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run(null);
+    AssertEqual(status, BHS.SUCCESS);
+
+    ScriptMgr.instance.run(null);
+
+    var cs = ScriptMgr.instance.getChildren();
+    AssertEqual(3, cs.Count); 
+    AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
+    AssertTrue(cs[1].GetHashCode() != cs[2].GetHashCode());
+    AssertTrue(cs[0].GetHashCode() != cs[2].GetHashCode());
+
+    //NodeDump(node);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1;1;1;", str);
+
+    ScriptMgr.instance.stop(null);
+
+    AssertTrue(!ScriptMgr.instance.busy());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaManyTimesInScriptMgrWithRefs()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      float a = 0
+      float b = 0
+      StartScriptInMgr(
+        script: func() use(ref b) { 
+          a = a + 1
+          b = b + 1
+          trace((string) a + "","" + (string) b + "";"") 
+          RUNNING()
+        },
+        num : 3
+      )
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStartScriptInMgr(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run(null);
+    AssertEqual(status, BHS.SUCCESS);
+
+    ScriptMgr.instance.run(null);
+
+    //NodeDump(node);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1,1;1,2;1,3;", str);
 
     ScriptMgr.instance.stop(null);
 
