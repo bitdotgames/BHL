@@ -187,11 +187,11 @@ seq {
 1. ~~**ref** semantics similar to C#~~
 2. More generic functors support
 3. Multiple return values support
+4. **while** syntax sugar: **for(...) {}** support
+5. Ternary operator support
 
 ## Version 1.0
 
-1. User defined structs
-2. Byte code optimization (switch to flatbuffers ?)
-3. Ternary operator support
-4. **while** syntax sugar: **for(...) {}** support
-5. More optimal executor
+1. Byte code optimization
+2. More optimal executor
+3. User defined structs
