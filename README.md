@@ -189,7 +189,7 @@ seq {
 3. Multiple return values support
 4. **while** syntax sugar: **for(...) {}** support
 5. Ternary operator support
-6. More generic initializators  
+6. More generic initializers
 
 ## Version ???
 
