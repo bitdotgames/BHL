@@ -3549,6 +3549,28 @@ public class BHL_Test
     }
   }
 
+  void BindStartScriptInMgr(GlobalScope globs)
+  {
+    {
+      var fn = new SimpleFuncBindSymbol("StartScriptInMgr", "void",
+          delegate(object agent)
+          {
+            var interp = Interpreter.instance;
+            var fct = (FuncCtx)interp.PopValue().obj;
+            fct.RefInc();
+            var node = fct.GetNode();
+            //Console.WriteLine("FREFS START: " + fct.GetHashCode() + " " + fct.refs);
+            ScriptMgr.instance.add(node);
+            return BHS.SUCCESS;
+          }
+      );
+
+      fn.define(new FuncArgSymbol("script", "void^()"));
+
+      globs.define(fn);
+    }
+  }
+
   [IsTested()]
   public void TestLambda()
   {
@@ -3682,6 +3704,166 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("HERE", str);
+    CommonChecks(intp);
+  }
+
+  public class ScriptMgr : BehaviorTreeInternalNode
+  {
+    public static ScriptMgr instance = new ScriptMgr();
+
+    List<BehaviorTreeNode> pending_removed = new List<BehaviorTreeNode>();
+    bool in_exec = false;
+
+    public List<BehaviorTreeNode> getChildren()
+    {
+      return children;
+    }
+
+    public void add(BehaviorTreeNode node)
+    {
+      children.Add(node);
+    }
+
+    public override void init(object agent)
+    {}
+
+    public override BHS execute(object agent)
+    {
+      in_exec = true;
+
+      for(int i=0;i<children.Count;i++)
+        runAt(agent, i);
+
+      in_exec = false;
+
+      for(int i=0;i<pending_removed.Count;++i)
+        doDel(pending_removed[i], agent);
+      pending_removed.Clear();
+
+      return BHS.RUNNING;
+    }
+
+    public override void stop(object agent)
+    {
+      for(int i=children.Count;i-- > 0;)
+      {
+        var node = children[i];
+        doDel(node, agent);
+      }
+    }
+
+    void runAt(object agent, int idx)
+    {
+      var node = children[idx];
+      
+      if(pending_removed.Count > 0 && pending_removed.Contains(node))
+        return;
+
+      var result = node.run(agent);
+
+      if(result != BHS.RUNNING)
+        doDel(node, agent);
+    }
+
+    void doDel(BehaviorTreeNode node, object agent)
+    {
+      int idx = children.IndexOf(node);
+      if(idx == -1)
+        return;
+      
+      if(in_exec)
+      {
+        if(pending_removed.IndexOf(node) == -1)
+          pending_removed.Add(node);
+      }
+      else
+      {
+        //removing child ASAP so that it can't be 
+        //be removed several times
+        children.RemoveAt(idx);
+
+        node.stop(agent);
+
+        if(node is FuncNodeLambda)
+        {
+          var lmb = node as FuncNodeLambda;
+          lmb.ctx.RefDec();
+          //Console.WriteLine("FREFS DEL " + lmb.ctx.GetHashCode() + " " + lmb.ctx.refs);
+        }
+      }
+    }
+
+    public void runNode(object agent, BehaviorTreeNode node)
+    {
+      int idx = children.IndexOf(node);
+      runAt(agent, idx);
+    }
+
+    public bool busy()
+    {
+      return children.Count > 0 || pending_removed.Count > 0;
+    }
+  }
+
+  [IsTested()]
+  public void TestStartLambdaInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      forever {
+        StartScriptInMgr(
+          func() { 
+            trace(""HERE;"") 
+            RUNNING()
+          } 
+        )
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStartScriptInMgr(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    {
+      var status = node.run(null);
+      AssertEqual(status, BHS.RUNNING);
+
+      ScriptMgr.instance.run(null);
+
+      var str = GetString(trace_stream);
+      AssertEqual("HERE;", str);
+
+      var cs = ScriptMgr.instance.getChildren();
+      AssertEqual(1, cs.Count); 
+    }
+
+    //NodeDump(node);
+
+    {
+      var status = node.run(null);
+      AssertEqual(status, BHS.RUNNING);
+
+      ScriptMgr.instance.run(null);
+
+      var str = GetString(trace_stream);
+      AssertEqual("HERE;HERE;", str);
+
+      var cs = ScriptMgr.instance.getChildren();
+      AssertEqual(2, cs.Count); 
+      AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
+    }
+
+    ScriptMgr.instance.stop(null);
+
+    AssertTrue(!ScriptMgr.instance.busy());
     CommonChecks(intp);
   }
 
@@ -8105,6 +8287,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
   {
     AssertEqual(intp.StackCount(), 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
+    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+    AssertEqual(FuncCtx.PoolCount, FuncCtx.PoolCountFree);
   }
 
   static double ExtractNum(Interpreter.Result res)

@@ -1806,7 +1806,6 @@ public class FuncNodeLambda : FuncNodeAST
 public class PushFuncCtxNode : BehaviorTreeTerminalNode
 {
   FuncRef fr;
-  FuncCtx fct;
 
   public PushFuncCtxNode(AST_FuncDecl decl, FuncBindSymbol fbnd)
   {
@@ -1815,12 +1814,11 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
 
   public override void init(object agent)
   {
+    //Console.WriteLine("PUSH CTX " + this.GetHashCode());
+
     var interp = Interpreter.instance;
 
-    fct = FuncCtx.New(fr);
-    //NOTE: explicitely increasing refs number during function call
-    //      so that func ctx is alive while function is called
-    fct.RefInc();
+    var fct = FuncCtx.New(fr);
 
     var ldecl = fr.decl as AST_LambdaDecl;
     if(ldecl != null)
@@ -1837,13 +1835,6 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     var fdv = DynVal.NewObj(fct);
     //Util.Debug("PUSH FCTX: " + fct.decl.Name() + " " + agent.GetHashCode());
     interp.PushValue(fdv);
-  }
-
-  public override void defer(object agent)
-  {
-    //NOTE: decreasing refs on defer
-    fct.RefDec();
-    fct = null;
   }
 
   public override string inspect(object agent)

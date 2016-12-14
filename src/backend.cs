@@ -570,7 +570,8 @@ public abstract class AST_Visitor
 
 public class FuncCtx : DynValRefcounted
 {
-  //NOTE: -1 means it's in released state
+  //NOTE: -1 means it's in released state,
+  //      public only for inspection
   public int refs;
 
   public FuncRef fr;
@@ -597,31 +598,13 @@ public class FuncCtx : DynValRefcounted
     return fnode;
   }
 
-  public FuncCtx RefIncOrDup()
-  {
-    if(refs == 1)
-    {
-      RefInc();
-      return this;
-    }
-    else if(refs > 1)
-    {
-      var dup = FuncCtx.New(fr);
-      dup.mem.CopyFrom(mem);
-      dup.RefInc();
-      return dup;
-    }
-    else
-    {
-      throw new Exception("Invalid state: " + refs);
-    }
-  }
-
   public void RefInc()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
     ++refs;
+
+    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode()/* + " " + Environment.StackTrace*/);
   }
 
   public void RefDec(bool can_release = true)
@@ -632,6 +615,9 @@ public class FuncCtx : DynValRefcounted
       throw new Exception("Double free");
 
     --refs;
+
+    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode()/* + " " + Environment.StackTrace*/);
+
     if(can_release)
       RefTryRelease();
   }
@@ -749,7 +735,8 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
 {
   List<DynVal> lst = new List<DynVal>();
 
-  //NOTE: -1 means it's in released state
+  //NOTE: -1 means it's in released state,
+  //      public only for inspection
   public int refs;
 
   //////////////////IList//////////////////
