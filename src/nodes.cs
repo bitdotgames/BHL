@@ -871,9 +871,13 @@ public class ForeverNode : SequentialNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
     //NOTE: we need to stop child in order to make it 
-    //      reset its status and re-init on the next run
+    //      reset its status and re-init on the next run,
+    //      also we force currStatus to be BHS.RUNNING since
+    //      logic in stop *needs* that but we officially return
+    //      running status *below* that call 
+    currStatus = BHS.RUNNING;
     if(status != BHS.RUNNING)
-      base.stop(agent);
+      stop(agent);
 
     return BHS.RUNNING;
   }
@@ -1806,6 +1810,7 @@ public class FuncNodeLambda : FuncNodeAST
 public class PushFuncCtxNode : BehaviorTreeTerminalNode
 {
   FuncRef fr;
+  FuncCtx fct;
 
   public PushFuncCtxNode(AST_FuncDecl decl, FuncBindSymbol fbnd)
   {
@@ -1818,7 +1823,11 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
 
     var interp = Interpreter.instance;
 
-    var fct = FuncCtx.New(fr);
+    fct = FuncCtx.New(fr);
+    //NOTE: we really want FuncCtx to be alive while
+    //      the node using this func ctx is still active.
+    //      See also defer() below
+    fct.RefInc();
 
     var ldecl = fr.decl as AST_LambdaDecl;
     if(ldecl != null)
@@ -1835,6 +1844,12 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     var fdv = DynVal.NewObj(fct);
     //Util.Debug("PUSH FCTX: " + fct.decl.Name() + " " + agent.GetHashCode());
     interp.PushValue(fdv);
+  }
+
+  public override void defer(object agent)
+  {
+    fct.RefDec();
+    fct = null;
   }
 
   public override string inspect(object agent)

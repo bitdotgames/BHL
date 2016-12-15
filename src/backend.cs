@@ -604,6 +604,9 @@ public class FuncCtx : DynValRefcounted
 
   public FuncCtx SplitIfUsed()
   {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+
     if(fnode == null)
     {
       return this;

@@ -5850,6 +5850,83 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDeferInForever()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      forever {
+        defer {
+          trace(""HEY;"")
+        }
+      }
+      defer {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    for(int i=0;i<3;++i)
+    {
+      var status = node.run(null);
+      AssertEqual(BHS.RUNNING, status);
+    }
+
+    //...will be running forever, well, we assume that :)
+
+    var str = GetString(trace_stream);
+    AssertEqual("HEY;HEY;HEY;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestNodeWithDeferInForever()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      forever {
+        NodeWithDefer()
+      }
+      defer {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+    
+    BindNodeWithDefer(globs, trace_stream);
+    BindTrace(globs, trace_stream);
+   
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    for(int i=0;i<3;++i)
+    {
+      var status = node.run(null);
+      AssertEqual(BHS.RUNNING, status);
+    }
+
+    //...will be running forever, well, we assume that :)
+
+    var str = GetString(trace_stream);
+    AssertEqual("DEFER!!!DEFER!!!DEFER!!!", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUntilSuccess()
   {
     string bhl = @"
