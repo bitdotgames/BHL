@@ -41,8 +41,8 @@ public class BHL
 				v => res_file = v },
 			{ "cache_dir=", "cache dir",
 				v => cache_dir = v },
-			{ "use_cache=", "use cache",
-				v => use_cache = int.Parse(v) == 1 },
+			{ "C", "don't use cache",
+				v => use_cache = v == null },
 			{ "postproc_dll=", "posprocess dll path",
 				v => postproc_dll_path = v },
 			{ "bindings_dll=", "bindings dll path",
@@ -120,8 +120,6 @@ public class BHL
 
     if(use_cache && !Util.NeedToRegen(res_file, files) && (postproc != null && !postproc.NeedToRegen(files)))
       return;
-
-		//Shuffle(files);
 
     var globs = SymbolTable.CreateBuiltins();
     userbindings.Register(globs);
@@ -347,6 +345,9 @@ public class BHL
           if(cnt > 0 && cnt % 500 == 0)
             Console.WriteLine("BHL Worker " + w.id + " " + cnt + "/" + w.count);
 
+          //var sw1 = new Stopwatch();
+          //sw1.Start();
+
           var file = w.files[i]; 
           //Console.WriteLine("Processing " + file + " " + w.id);
           using(var sfs = File.OpenRead(file))
@@ -397,6 +398,10 @@ public class BHL
             w.result.Add(ast);
             w.lz4_result.Add(EncodeToLZ4(ast));
           }
+
+          //sw1.Stop();
+          //if(sw1.ElapsedMilliseconds > 100)
+          //  Console.WriteLine("BHL Worker {0}: slow file '{1}'({2} sec)", w.id, file, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
         }
 
       }
