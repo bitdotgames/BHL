@@ -1246,6 +1246,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
 public class CallVarFuncPtr : BehaviorTreeDecoratorNode
 {
   HashedName name;
+  FuncCtx fct;
 
   public CallVarFuncPtr(HashedName name)
   {
@@ -1255,12 +1256,20 @@ public class CallVarFuncPtr : BehaviorTreeDecoratorNode
   public override void init(object agent) 
   {
     var interp = Interpreter.instance;
-    var fct = (FuncCtx)interp.GetScopeValue(name).obj;
-
+    fct = (FuncCtx)interp.GetScopeValue(name).obj;
+     
+    fct = fct.AutoClone();
+    fct.RefInc();
     var func_node = fct.EnsureNode();
     this.setSlave(func_node);
 
     base.init(agent);
+  }
+  
+  public override void deinit(object agent)
+  {
+    fct.RefDec();
+    fct = null;   
   }
 }
 

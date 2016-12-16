@@ -3556,11 +3556,11 @@ public class BHL_Test
             bool now = interp.PopValue().bval;
             int num = (int)interp.PopValue().num;
             var fct = (FuncCtx)interp.PopValue().obj;
-            fct.RefInc();
 
             for(int i=0;i<num;++i)
             {
               fct = fct.AutoClone();
+              fct.RefInc();
               var node = fct.EnsureNode();
               //Console.WriteLine("FREFS START: " + fct.GetHashCode() + " " + fct.refs);
               ScriptMgr.instance.add(node, now);

@@ -621,7 +621,6 @@ public class FuncCtx : DynValRefcounted
       }
     }
 
-    dup.RefInc();
     return dup;
   }
 
