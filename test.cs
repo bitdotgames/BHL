@@ -3794,12 +3794,9 @@ public class BHL_Test
 
         node.stop(agent);
 
-        if(node is FuncNodeLambda)
-        {
-          var lmb = node as FuncNodeLambda;
-          lmb.ctx.RefDec();
-          //Console.WriteLine("FREFS DEL " + lmb.ctx.GetHashCode() + " " + lmb.ctx.refs);
-        }
+        var fnode = node as FuncNode;
+        if(fnode != null)
+          fnode.TryReleaseContext();
       }
     }
 
@@ -3920,6 +3917,155 @@ public class BHL_Test
     ScriptMgr.instance.stop(null);
 
     AssertTrue(!ScriptMgr.instance.busy());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStartFuncPtrManyTimesInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      void^() fn = func() {
+        trace(""HERE;"")
+        RUNNING()
+      }
+
+      StartScriptInMgr(
+        script: fn,
+        num : 2,
+        now : true
+      )
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindStartScriptInMgr(globs);
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run(null);
+    AssertEqual(status, BHS.SUCCESS);
+
+    var cs = ScriptMgr.instance.getChildren();
+    AssertEqual(2, cs.Count); 
+    AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
+
+    //NodeDump(node);
+
+    var str = GetString(trace_stream);
+    AssertEqual("HERE;HERE;", str);
+
+    ScriptMgr.instance.stop(null);
+    AssertTrue(!ScriptMgr.instance.busy());
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStartBindFuncPtrManyTimesInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      StartScriptInMgr(
+        script: say_here,
+        num : 2,
+        now : true
+      )
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindStartScriptInMgr(globs);
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new SimpleFuncBindSymbol("say_here", "void", 
+          delegate(object agent)
+          {
+            AddString(trace_stream, "HERE;");
+            return BHS.RUNNING;
+          }
+          );
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run(null);
+    AssertEqual(status, BHS.SUCCESS);
+
+    var cs = ScriptMgr.instance.getChildren();
+    AssertEqual(2, cs.Count); 
+    AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
+
+    //NodeDump(node);
+
+    var str = GetString(trace_stream);
+    AssertEqual("HERE;HERE;", str);
+
+    ScriptMgr.instance.stop(null);
+    AssertTrue(!ScriptMgr.instance.busy());
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaVarManyTimesInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      void^() fn = func() {
+        trace(""HERE;"")
+        RUNNING()
+      }
+
+      StartScriptInMgr(
+        script: func() { 
+          fn()
+        },
+        num : 2,
+        now : true
+      )
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindStartScriptInMgr(globs);
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run(null);
+    AssertEqual(status, BHS.SUCCESS);
+
+    var cs = ScriptMgr.instance.getChildren();
+    AssertEqual(2, cs.Count); 
+    AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
+
+    //NodeDump(node);
+
+    var str = GetString(trace_stream);
+    AssertEqual("HERE;HERE;", str);
+
+    ScriptMgr.instance.stop(null);
+    AssertTrue(!ScriptMgr.instance.busy());
+
     CommonChecks(intp);
   }
 

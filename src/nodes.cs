@@ -1246,7 +1246,6 @@ public class ConstructNode : BehaviorTreeTerminalNode
 public class CallVarFuncPtr : BehaviorTreeDecoratorNode
 {
   HashedName name;
-  FuncCtx fct;
 
   public CallVarFuncPtr(HashedName name)
   {
@@ -1256,7 +1255,7 @@ public class CallVarFuncPtr : BehaviorTreeDecoratorNode
   public override void init(object agent) 
   {
     var interp = Interpreter.instance;
-    fct = (FuncCtx)interp.GetScopeValue(name).obj;
+    var fct = (FuncCtx)interp.GetScopeValue(name).obj;
      
     fct = fct.AutoClone();
     fct.RefInc();
@@ -1268,8 +1267,9 @@ public class CallVarFuncPtr : BehaviorTreeDecoratorNode
   
   public override void deinit(object agent)
   {
-    fct.RefDec();
-    fct = null;   
+    ((FuncNode)children[0]).TryReleaseContext();
+
+    base.deinit(agent);
   }
 }
 
@@ -1617,8 +1617,10 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
   }
 }
 
-public class FuncNode : SequentialNode
+abstract public class FuncNode : SequentialNode
 {
+  public FuncCtx fct;
+
   public bool has_void_value;
   public int args_num;
 
@@ -1633,6 +1635,12 @@ public class FuncNode : SequentialNode
       var arg = args[i];
       interp.PushValue(arg);
     }
+  }
+
+  public void TryReleaseContext()
+  {
+    if(fct != null)
+      fct.RefDec();
   }
 
   public virtual int DeclArgsNum()
@@ -1664,8 +1672,9 @@ public class FuncNodeAST : FuncNode
 
   protected MemoryScope mem = new MemoryScope();
 
-  public FuncNodeAST(AST_FuncDecl decl)
+  public FuncNodeAST(AST_FuncDecl decl, FuncCtx fct)
   {
+    this.fct = fct;
     this.decl = decl;
     this.has_void_value = decl.ntype == SymbolTable._void.nname;
   }
@@ -1792,17 +1801,13 @@ public class FuncNodeAST : FuncNode
 
 public class FuncNodeLambda : FuncNodeAST
 {
-  public FuncCtx ctx;
-
-  public FuncNodeLambda(FuncCtx ctx)
-    : base(ctx.fr.decl)
-  {
-    this.ctx = ctx;
-  }
+  public FuncNodeLambda(FuncCtx fct)
+    : base(fct.fr.decl, fct)
+  {}
 
   public override void init(object agent)
   {
-    this.mem.CopyFrom(ctx.mem);
+    this.mem.CopyFrom(fct.mem);
 
     base.init(agent);
   }
@@ -1868,8 +1873,9 @@ public class FuncNodeBinding : FuncNode
 {
   public FuncBindSymbol symb;
 
-  public FuncNodeBinding(FuncBindSymbol symb)
+  public FuncNodeBinding(FuncBindSymbol symb, FuncCtx fct)
   {
+    this.fct = fct;
     this.symb = symb;
 
     this.has_void_value = symb.type.Get() == SymbolTable._void;

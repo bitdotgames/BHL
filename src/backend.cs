@@ -593,11 +593,11 @@ public class FuncCtx : DynValRefcounted
       return fnode;
 
     if(fr.fbnd != null)
-      fnode = new FuncNodeBinding(fr.fbnd);
+      fnode = new FuncNodeBinding(fr.fbnd, this);
     else if(fr.decl is AST_LambdaDecl)
       fnode = new FuncNodeLambda(this);
     else
-      fnode = new FuncNodeAST(fr.decl);
+      fnode = new FuncNodeAST(fr.decl, this);
 
     return fnode;
   }
@@ -1222,9 +1222,9 @@ public class Interpreter : AST_Visitor
     var fr = GetFuncRef(name);
 
     if(fr.fbnd != null)
-      return new FuncNodeBinding(fr.fbnd);
+      return new FuncNodeBinding(fr.fbnd, null);
     else
-      return new FuncNodeAST(fr.decl);
+      return new FuncNodeAST(fr.decl, null);
   }
 
   public FuncNode GetFuncNode(string module_name, string func_name)
@@ -1245,7 +1245,7 @@ public class Interpreter : AST_Visitor
 
     var func_symb = bnd_member as FuncBindSymbol;
     if(func_symb != null)
-      return new FuncNodeBinding(func_symb);
+      return new FuncNodeBinding(func_symb, null);
 
     throw new Exception("Not a func symbol: " + name);
   }
