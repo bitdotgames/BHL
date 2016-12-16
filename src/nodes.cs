@@ -1257,7 +1257,7 @@ public class CallVarFuncPtr : BehaviorTreeDecoratorNode
     var interp = Interpreter.instance;
     var fct = (FuncCtx)interp.GetScopeValue(name).obj;
 
-    var func_node = fct.GetNode();
+    var func_node = fct.EnsureNode();
     this.setSlave(func_node);
 
     base.init(agent);
@@ -1583,10 +1583,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       }
 
       if(var_symb is FieldSymbol)
-      {
         (var_symb as FieldSymbol).setter(ref ctx, val);
-        val.RefMod(RefOp.USR_TRY_RELEASE);
-      }
       else
         throw new Exception("Not implemented");
     }

@@ -2509,7 +2509,6 @@ public class BHL_Test
           delegate(ref DynVal ctx, DynVal v) {
             var f = (FooLambda)ctx.obj;
             var fctx = (FuncCtx)v.obj;
-            fctx.RefInc();
             if(f.script.Count == 0) f.script.Add(new BaseLambda()); ((BaseLambda)(f.script[0])).fct.obj = fctx;
             ctx.obj = f;
           }
@@ -3354,29 +3353,27 @@ public class BHL_Test
 
   public class StartScriptNode : BehaviorTreeDecoratorNode
   {
+    FuncCtx fct;
+
     public override void init(object agent)
     {
       var interp = Interpreter.instance;
       var dv = interp.PopValue(); 
-      var fct = (FuncCtx)dv.obj;
+      fct = (FuncCtx)dv.obj;
       fct.RefInc();
 
-      var func_node = fct.GetNode();
+      var func_node = fct.EnsureNode();
 
       this.setSlave(func_node);
 
       base.init(agent);
     }
 
-    public override void defer(object agent)
+    public override void deinit(object agent)
     {
-      base.defer(agent);
-
-      var lfunc = children[0] as FuncNodeLambda;
-      if(lfunc != null)
-      {
-        lfunc.ctx.RefDec();
-      }
+      base.deinit(agent);
+      fct.RefDec();
+      fct = null;
     }
   }
 
@@ -3556,16 +3553,17 @@ public class BHL_Test
           delegate(object agent)
           {
             var interp = Interpreter.instance;
+            bool now = interp.PopValue().bval;
             int num = (int)interp.PopValue().num;
             var fct = (FuncCtx)interp.PopValue().obj;
             fct.RefInc();
 
             for(int i=0;i<num;++i)
             {
-              fct = fct.SplitIfUsed();
-              var node = fct.GetNode();
+              fct = fct.AutoClone();
+              var node = fct.EnsureNode();
               //Console.WriteLine("FREFS START: " + fct.GetHashCode() + " " + fct.refs);
-              ScriptMgr.instance.add(node);
+              ScriptMgr.instance.add(node, now);
             }
 
             return BHS.SUCCESS;
@@ -3574,6 +3572,7 @@ public class BHL_Test
 
       fn.define(new FuncArgSymbol("script", "void^()"));
       fn.define(new FuncArgSymbol("num", "int"));
+      fn.define(new FuncArgSymbol("now", "bool"));
 
       globs.define(fn);
     }
@@ -3727,9 +3726,12 @@ public class BHL_Test
       return children;
     }
 
-    public void add(BehaviorTreeNode node)
+    public void add(BehaviorTreeNode node, bool now = false, object agent = null)
     {
       children.Add(node);
+
+      if(now)
+        runNode(agent, node);
     }
 
     public override void init(object agent)
@@ -3826,7 +3828,8 @@ public class BHL_Test
             trace(""HERE;"") 
             RUNNING()
           },
-        num : 1
+          num : 1,
+          now : false
         )
       }
     }
@@ -3887,7 +3890,8 @@ public class BHL_Test
         script: func() { 
           RUNNING()
         },
-        num : 3
+        num : 3,
+        now : false
       )
     }
     ";
@@ -3920,6 +3924,39 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestLambdaIsKeptInFuncCallScope()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      StartScriptInMgr(
+        script: func() { 
+          trace(""DO;"")
+        },
+        num : 2,
+        now : true
+      )
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStartScriptInMgr(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run(null);
+    AssertEqual(status, BHS.SUCCESS);
+    AssertTrue(!ScriptMgr.instance.busy());
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestStartLambdaManyTimesInScriptMgrWithUseVals()
   {
     string bhl = @"
@@ -3933,7 +3970,8 @@ public class BHL_Test
           trace((string) a + "";"") 
           RUNNING()
         },
-        num : 3
+        num : 3,
+        now : false
       )
     }
     ";
@@ -3985,7 +4023,8 @@ public class BHL_Test
           trace((string) a + "","" + (string) b + "";"") 
           RUNNING()
         },
-        num : 3
+        num : 3,
+        now : false
       )
     }
     ";
@@ -7380,7 +7419,8 @@ public class BHL_Test
     public override void init(object agent)
     {
       var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      var func_node = fct.GetNode();
+      fct.RefInc();
+      var func_node = fct.EnsureNode();
 
       this.setSlave(func_node);
 
@@ -7457,6 +7497,7 @@ public class BHL_Test
           var tmp = f.strs;
           DynValList.Decode(v, ref tmp);
           ctx.obj = f;
+          ((DynValList)v.obj).RefTryRelease();
         }
       ));
     }
@@ -8348,7 +8389,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var str = GetString(trace_stream);
 
-    AssertEqual("INC1;DEC0;WRITE!REL0;NODE!", str);
+    AssertEqual("INC1;DEC0;WRITE!NODE!", str);
     CommonChecks(intp);
   }
 
@@ -8380,7 +8421,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var str = GetString(trace_stream);
 
-    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;WRITE!REL2;NODE!DEC1;REL1;DEC0;REL0;", str);
+    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;WRITE!NODE!DEC1;REL1;DEC0;REL0;", str);
     CommonChecks(intp);
   }
 

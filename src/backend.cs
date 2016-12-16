@@ -587,7 +587,7 @@ public class FuncCtx : DynValRefcounted
     this.fr = fr;
   }
 
-  public FuncNode GetNode()
+  public FuncNode EnsureNode()
   {
     if(fnode != null)
       return fnode;
@@ -602,34 +602,34 @@ public class FuncCtx : DynValRefcounted
     return fnode;
   }
 
-  public FuncCtx SplitIfUsed()
+  public FuncCtx Clone()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
 
-    if(fnode == null)
-    {
-      return this;
-    }
-    else
-    {
-      var dup = FuncCtx.New(fr);
+    var dup = FuncCtx.New(fr);
 
-      //NOTE: need to properly set use params
-      if(fr.decl is AST_LambdaDecl)
+    //NOTE: need to properly set use params
+    if(fr.decl is AST_LambdaDecl)
+    {
+      var ldecl = fr.decl as AST_LambdaDecl;
+      for(int i=0;i<ldecl.useparams.Count;++i)
       {
-        var ldecl = fr.decl as AST_LambdaDecl;
-        for(int i=0;i<ldecl.useparams.Count;++i)
-        {
-          var up = ldecl.useparams[i];
-          var val = mem.Get(up.Name());
-          dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
-        }
+        var up = ldecl.useparams[i];
+        var val = mem.Get(up.Name());
+        dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
       }
-
-      dup.RefInc();
-      return dup;
     }
+
+    dup.RefInc();
+    return dup;
+  }
+
+  public FuncCtx AutoClone()
+  {
+    if(fnode != null)
+      return Clone(); 
+    return this;
   }
 
   public void RefInc()
@@ -638,7 +638,7 @@ public class FuncCtx : DynValRefcounted
       throw new Exception("Invalid state");
     ++refs;
 
-    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode()/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
   }
 
   public void RefDec(bool can_release = true)
@@ -650,7 +650,7 @@ public class FuncCtx : DynValRefcounted
 
     --refs;
 
-    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode()/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
 
     if(can_release)
       RefTryRelease();
@@ -723,6 +723,7 @@ public class FuncCtx : DynValRefcounted
         //Util.Debug("FTX RELEASE " + fct.GetHashCode());
         item.fct.refs = -1;
         item.fct.mem.Clear();
+        item.fct.fnode = null;
         item.used = false;
         pool[i] = item;
         break;
