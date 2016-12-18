@@ -170,6 +170,13 @@ func Unit FindUnit(Vec3 pos, float radius) {
 ## **ref** support
 
 ```go
+
+Unit FindTarget(Unit self, ref float dist_to_target) {
+...
+  dist_to_target = u.position.Sub(self.position).length
+  return u
+}
+
 float dist_to_target = 0
 Unit u = FindTarget(ref dist_to_target)
 ```
