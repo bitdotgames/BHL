@@ -85,45 +85,25 @@ Just try running *run.sh* script:
 This example executes the following [ simple script ](example/unit.bhl)
 
 > Unit starts...
-
 > No target in range
-
 > Idling 3 sec...
-
 > State changed!
-
 > Idle interrupted!
-
 > Found new target 703! Approaching it.
-
 > Attacking target 703
-
 > Target 703 is dead!
-
 > Found new target 666! Approaching it.
-
 > State changed!
-
 > Found new target 902! Approaching it.
-
 > Attacking target 902
-
 > Target 902 is dead!
-
 > No target in range
-
 > Idling 1 sec...
-
 > Idle complete
-
 > No target in range
-
 > Idling 1 sec...
-
 > State changed!
-
 > Idle interrupted!
-
 > ...
 
 Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
