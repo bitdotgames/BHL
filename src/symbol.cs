@@ -624,8 +624,11 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     this.creator = creator;
   }
 
-  public bool IsChildOf(ClassSymbol p)
+  public bool IsSubclassOf(ClassSymbol p)
   {
+    if(this == p)
+      return true;
+
     for(var tmp = super_class; tmp != null; tmp = tmp.super_class)
     {
       if(tmp == p)
@@ -928,7 +931,7 @@ static public class SymbolTable
     var pcl = pt as ClassSymbol;
     if(pcl == null)
       return false;
-    return cl.IsChildOf(pcl);
+    return cl.IsSubclassOf(pcl);
   }
 
   static public bool IsInSameClassHierarchy(Type a, Type b) 
@@ -939,7 +942,7 @@ static public class SymbolTable
     var cb = b as ClassSymbol;
     if(cb == null)
       return false;
-    return cb.IsChildOf(ca) || ca.IsChildOf(cb);
+    return cb.IsSubclassOf(ca) || ca.IsSubclassOf(cb);
   }
 
   static public void CheckAssign(WrappedNode lhs, WrappedNode rhs) 
