@@ -18,14 +18,12 @@ public class Example
 
     intp.Init(symbols, ml);
 
-    var node = intp.GetFuncNode("hello", "Hello");
+    var node = intp.GetFuncNode("unit", "Unit");
 
     //NOTE: emulating update game loop
     Time.dt = 0.016f;
     while(true)
     {
-      if(node.getStatus() != BHS.RUNNING)
-        node.SetArgs(DynVal.NewStr("John Silver"));
       node.run(null);
       Thread.Sleep(16);
     }

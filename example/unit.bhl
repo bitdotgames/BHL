@@ -1,0 +1,91 @@
+
+func Idle()
+{
+  bool done = false
+  defer {
+    if(!done) {
+      Trace("Idle interrupted!")
+    } else {
+      Trace("Idle complete")
+    }
+  }
+
+  int sec = (int)(1 + Rand() * 3)
+  Trace("Idling " + (string)sec + " sec...")
+
+  Wait(sec)
+
+  defer {
+    done = true
+  }
+}
+
+func FindTarget(ref int target_id)
+{
+  target_id = 0
+
+  if(Rand() < 0.6) {
+    Trace("No target in range")
+    FAILURE()
+  }
+
+  int tmp_target_id = (int)(Rand() * 1000)
+  Trace("Found new target " + (string)tmp_target_id + "! Approaching it.")
+
+  int sec = (int)(1 + Rand() * 3)
+  Wait(sec)
+  target_id = tmp_target_id
+}
+
+func AttackTarget(ref int target_id)
+{
+  if(target_id == 0) {
+    FAILURE()
+  }
+
+  Trace("Attacking target " + (string)target_id + "")
+  Wait(0.2)
+  Trace("Target " + (string)target_id + " is dead!")
+  target_id = 0
+}
+
+func StateChanged(ref int state)
+{
+  int last_state = state
+  while(last_state == state) {
+    RUNNING()
+  }
+  Trace("State changed!")
+}
+
+func RandomStateChanger(ref int state)
+{
+  forever {
+    Wait(1 + Rand() * 4)
+    state = state + 1
+  }
+}
+
+func Unit() {
+  Trace("Unit starts...")
+
+  int state = 0
+  int target_id = 0
+
+  paral {
+
+    RandomStateChanger(ref state)
+
+    forever {
+      paral {
+        StateChanged(ref state)
+        prio {
+          AttackTarget(ref target_id)
+          FindTarget(ref target_id)
+          Idle()
+        }
+      }
+    }
+
+  }
+}
