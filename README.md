@@ -82,15 +82,47 @@ Just try running *run.sh* script:
 
 > cd example && ./run.sh
 
-This example executes the following [ simple script ](example/hello.bhl)
+This example executes the following [ simple script ](example/unit.bhl)
 
-> ...
+> Unit starts...
 
-> Hello, John Silver
+> No target in range
 
-> Bye, John Silver
+> Idling 3 sec...
 
-> Hello, John Silver
+> State changed!
+
+> Idle interrupted!
+
+> Found new target 703! Approaching it.
+
+> Attacking target 703
+
+> Target 703 is dead!
+
+> Found new target 666! Approaching it.
+
+> State changed!
+
+> Found new target 902! Approaching it.
+
+> Attacking target 902
+
+> Target 902 is dead!
+
+> No target in range
+
+> Idling 1 sec...
+
+> Idle complete
+
+> No target in range
+
+> Idling 1 sec...
+
+> State changed!
+
+> Idle interrupted!
 
 > ...
 
