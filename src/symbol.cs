@@ -53,6 +53,9 @@ public struct TypeRef
 
   public Type Get()
   {
+    if(name == null)
+      return null;
+
     if(type != null)
       return type;
 
@@ -178,7 +181,7 @@ public class ArrayTypeSymbol : ClassSymbol
   public TypeRef original;
 
   public ArrayTypeSymbol(GlobalScope globs, TypeRef original) 
-    : base(null, original.name + "[]", null, null)
+    : base(null, original.name + "[]", new TypeRef(), null)
   {
     this.original = original;
 
@@ -337,9 +340,9 @@ public abstract class ScopedSymbol : Symbol, Scope
     if(s != null)
       return s;
 
-    // if not here, check any parent scope
-    if(GetParentScope() != null)
-      return GetParentScope().resolve(name);
+    var pscope = GetParentScope();
+    if(pscope != null)
+      return pscope.resolve(name);
 
     return null;
   }
@@ -354,8 +357,8 @@ public abstract class ScopedSymbol : Symbol, Scope
     sym.scope = this; // track the scope in each symbol
   }
 
-  public Scope GetParentScope() { return GetEnclosingScope(); }
-  public Scope GetEnclosingScope() { return enclosing_scope; }
+  public virtual Scope GetParentScope() { return GetEnclosingScope(); }
+  public virtual Scope GetEnclosingScope() { return enclosing_scope; }
 
   public String GetScopeName() { return name; }
 
@@ -455,8 +458,9 @@ public class LambdaSymbol : FuncSymbol
     if(s != null)
       return s;
 
-    if(GetParentScope() != null)
-      return GetParentScope().resolve(name);
+    var pscope = GetParentScope();
+    if(pscope != null)
+      return pscope.resolve(name);
 
     return null;
   }
@@ -607,43 +611,46 @@ public class FuncTypeSymbol : Symbol, Type
 
 public class ClassSymbol : ScopedSymbol, Scope, Type 
 {
-  // This is the superclass not enclosing_scope field. We still record
-  //  the enclosing scope so we can push in and pop out of class defs.
   ClassSymbol super_class;
-  // List of all fields and methods
-
   public OrderedDictionary members = new OrderedDictionary();
-
   Dictionary<ulong, Symbol> hashed_symbols = new Dictionary<ulong, Symbol>();
 
   public Interpreter.ClassCreator creator;
 
-  public ClassSymbol(WrappedNode n, string name, Scope enclosing_scope, ClassSymbol super_class, Interpreter.ClassCreator creator = null)
+  public ClassSymbol(WrappedNode n, string name, TypeRef super_class, Scope enclosing_scope, Interpreter.ClassCreator creator = null)
     : base(n, name, enclosing_scope)
   {
-    this.super_class = super_class;
+    this.super_class = (ClassSymbol)super_class.Get();
     this.creator = creator;
   }
 
-  public new Scope GetParentScope() 
+  public bool IsChildOf(ClassSymbol p)
+  {
+    for(var tmp = super_class; tmp != null; tmp = tmp.super_class)
+    {
+      if(tmp == p)
+        return true;
+    }
+    return false;
+  }
+
+  public override Scope GetParentScope() 
   {
     if(super_class == null) 
       return this.enclosing_scope; // globals
 
-    return super_class; // if not root object, return super
+    return super_class;
   }
 
-  // For a.b, only look in a's class hierarchy to resolve b, not globals
-  public Symbol ResolveMember(string name) 
+  public Symbol resolveMember(ulong nname)
   {
-    Symbol s = (Symbol)members[name];
-    if(s != null)
-      return s;
+    Symbol sym;
+    if(hashed_symbols.TryGetValue(nname, out sym))
+      return sym;
 
-    // if not here, check just the superclass chain
     if(super_class != null)
-      return super_class.ResolveMember(name);
-    
+      return super_class.resolveMember(nname);
+
     return null;
   }
 
@@ -652,14 +659,6 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     base.define(sym);
 
     hashed_symbols.Add(sym.nname, sym);
-  }
-
-  public Symbol findMember(ulong nname)
-  {
-    Symbol sym;
-    if(hashed_symbols.TryGetValue(nname, out sym))
-      return sym;
-    return null;
   }
 
   public int GetTypeIndex() { return SymbolTable.tUSER; }
@@ -676,13 +675,18 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
 public class ClassBindSymbol : ClassSymbol
 {
   public ClassBindSymbol(string name, Interpreter.ClassCreator creator)
-    : base(null, name, null, null, creator)
+    : base(null, name, new TypeRef(), null, creator)
+  {}
+
+  public ClassBindSymbol(string name, string parent, Interpreter.ClassCreator creator)
+    : base(null, name, new TypeRef(parent), null, creator)
   {}
 }
 
 public class EnumSymbol : ScopedSymbol, Scope, Type 
 {
   Dictionary<uint, Symbol> hashed_symbols = new Dictionary<uint, Symbol>();
+  public OrderedDictionary members = new OrderedDictionary();
 
   public EnumSymbol(WrappedNode n, string name, Scope enclosing_scope)
       : base(n, name, enclosing_scope)
@@ -690,23 +694,11 @@ public class EnumSymbol : ScopedSymbol, Scope, Type
 
   public int GetTypeIndex() { return SymbolTable.tENUM; }
 
-  public OrderedDictionary members = new OrderedDictionary();
-
   public override OrderedDictionary GetMembers() { return members; }
-
-  public Symbol ResolveMember(string name) 
-  {
-    Symbol s = (Symbol)members[name];
-    if(s != null)
-      return s;
-    
-    return null;
-  }
 
   public override void define(Symbol sym) 
   {
     base.define(sym);
-
     hashed_symbols.Add(sym.nname, sym);
   }
 
@@ -742,97 +734,97 @@ public class EnumItemSymbol : Symbol, Type
 
 static public class SymbolTable 
 {
-	// arithmetic types defined in order from narrowest to widest
-	public const int tUSER 		  = 0; // user-defined type
-	public const int tBOOLEAN 	= 1;
-	public const int tSTRING 	  = 2;
-	public const int tINT 			= 3;
-	public const int tFLOAT 		= 4;
-	public const int tVOID 		  = 5;
-	public const int tENUM 		  = 6;
-	public const int tANY 		  = 7;
+  // arithmetic types defined in order from narrowest to widest
+  public const int tUSER      = 0; // user-defined type
+  public const int tBOOLEAN   = 1;
+  public const int tSTRING    = 2;
+  public const int tINT       = 3;
+  public const int tFLOAT     = 4;
+  public const int tVOID      = 5;
+  public const int tENUM      = 6;
+  public const int tANY       = 7;
 
-	static public BuiltInTypeSymbol _boolean = new BuiltInTypeSymbol("bool", tBOOLEAN);
-	static public BuiltInTypeSymbol _string = new BuiltInTypeSymbol("string", tSTRING);
-	static public BuiltInTypeSymbol _int = new BuiltInTypeSymbol("int", tINT);
-	static public BuiltInTypeSymbol _float = new BuiltInTypeSymbol("float", tFLOAT);
-	static public BuiltInTypeSymbol _void = new BuiltInTypeSymbol("void", tVOID);
-	static public BuiltInTypeSymbol _enum = new BuiltInTypeSymbol("enum", tENUM);
-	static public BuiltInTypeSymbol _any = new BuiltInTypeSymbol("any", tANY);
-	static public BuiltInTypeSymbol _null = new BuiltInTypeSymbol("null", tUSER);
-	static public FuncTypeSymbol _fn_void = new FuncTypeSymbol(_void);
+  static public BuiltInTypeSymbol _boolean = new BuiltInTypeSymbol("bool", tBOOLEAN);
+  static public BuiltInTypeSymbol _string = new BuiltInTypeSymbol("string", tSTRING);
+  static public BuiltInTypeSymbol _int = new BuiltInTypeSymbol("int", tINT);
+  static public BuiltInTypeSymbol _float = new BuiltInTypeSymbol("float", tFLOAT);
+  static public BuiltInTypeSymbol _void = new BuiltInTypeSymbol("void", tVOID);
+  static public BuiltInTypeSymbol _enum = new BuiltInTypeSymbol("enum", tENUM);
+  static public BuiltInTypeSymbol _any = new BuiltInTypeSymbol("any", tANY);
+  static public BuiltInTypeSymbol _null = new BuiltInTypeSymbol("null", tUSER);
+  static public FuncTypeSymbol _fn_void = new FuncTypeSymbol(_void);
 
-	// Arithmetic types defined in order from narrowest to widest
-	public static Type[] indexToType = new Type[] {
-			// 0,  1,        2,       3,    4,      5,     6       7
-			null, _boolean, _string, _int, _float, _void,  _enum, _any
-	};
+  // Arithmetic types defined in order from narrowest to widest
+  public static Type[] indexToType = new Type[] {
+      // 0,  1,        2,       3,    4,      5,     6       7
+      null, _boolean, _string, _int, _float, _void,  _enum, _any
+  };
 
-	// Map t1 op t2 to result type (_void implies illegal)
-	public static Type[,] arithmeticResultType = new Type[,] {
-			/*          struct  boolean  string   int     float    void    enum    any */
-			/*struct*/  {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
-			/*boolean*/ {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
-			/*string*/  {_void, _void,   _string, _void,  _void,   _void,  _void,  _void},
-			/*int*/     {_void, _void,   _void,   _int,   _float,  _void,  _void,  _void},
-			/*float*/   {_void, _void,   _void,   _float, _float,  _void,  _void,  _void},
-			/*void*/    {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
-			/*enum*/    {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
-			/*any*/     {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void}
-	};
+  // Map t1 op t2 to result type (_void implies illegal)
+  public static Type[,] arithmeticResultType = new Type[,] {
+      /*          struct  boolean  string   int     float    void    enum    any */
+      /*struct*/  {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
+      /*boolean*/ {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
+      /*string*/  {_void, _void,   _string, _void,  _void,   _void,  _void,  _void},
+      /*int*/     {_void, _void,   _void,   _int,   _float,  _void,  _void,  _void},
+      /*float*/   {_void, _void,   _void,   _float, _float,  _void,  _void,  _void},
+      /*void*/    {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
+      /*enum*/    {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
+      /*any*/     {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void}
+  };
 
-	public static Type[,] relationalResultType = new Type[,] {
-			/*          struct  boolean string    int       float     void    enum    any */
-			/*struct*/  {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
-			/*boolean*/ {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
-			/*string*/  {_void, _void,  _boolean, _void,    _void,    _void,  _void,  _void},
-			/*int*/     {_void, _void,  _void,    _boolean, _boolean, _void,  _void,  _void},
-			/*float*/   {_void, _void,  _void,    _boolean, _boolean, _void,  _void,  _void},
-			/*void*/    {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
-			/*enum*/    {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
-			/*any*/     {_void, _void,   _void,   _void,    _void,    _void,  _void,  _void}
-	};
+  public static Type[,] relationalResultType = new Type[,] {
+      /*          struct  boolean string    int       float     void    enum    any */
+      /*struct*/  {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
+      /*boolean*/ {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
+      /*string*/  {_void, _void,  _boolean, _void,    _void,    _void,  _void,  _void},
+      /*int*/     {_void, _void,  _void,    _boolean, _boolean, _void,  _void,  _void},
+      /*float*/   {_void, _void,  _void,    _boolean, _boolean, _void,  _void,  _void},
+      /*void*/    {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
+      /*enum*/    {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
+      /*any*/     {_void, _void,   _void,   _void,    _void,    _void,  _void,  _void}
+  };
 
-	public static Type[,] equalityResultType = new Type[,] {
-			/*           struct boolean   string    int       float     void    enum     any */
-			/*struct*/  {_boolean, _void,    _void,    _void,    _void,   _void,  _void,  _void},
-			/*boolean*/ {_void,   _boolean, _void,    _void,    _void,    _void,  _void,  _void},
-			/*string*/  {_void,   _void,    _boolean, _void,    _void,    _void,  _void,  _void},
-			/*int*/     {_void,   _void,    _void,    _boolean, _boolean, _void,  _void,  _void},
-			/*float*/   {_void,   _void,    _void,    _boolean, _boolean, _void,  _void,  _void},
-			/*void*/    {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void},
-			/*enum*/    {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void},
-			/*any*/     {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void}
-	};
+  public static Type[,] equalityResultType = new Type[,] {
+      /*           struct boolean   string    int       float     void    enum     any */
+      /*struct*/  {_boolean, _void,    _void,    _void,    _void,   _void,  _void,  _void},
+      /*boolean*/ {_void,   _boolean, _void,    _void,    _void,    _void,  _void,  _void},
+      /*string*/  {_void,   _void,    _boolean, _void,    _void,    _void,  _void,  _void},
+      /*int*/     {_void,   _void,    _void,    _boolean, _boolean, _void,  _void,  _void},
+      /*float*/   {_void,   _void,    _void,    _boolean, _boolean, _void,  _void,  _void},
+      /*void*/    {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void},
+      /*enum*/    {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void},
+      /*any*/     {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void}
+  };
 
-	// Indicate whether a type needs a promotion to a wider type.
-	//  If not null, implies promotion required.  Null does NOT imply
-	//  error--it implies no promotion.  This works for
-	//  arithmetic, equality, and relational operators in bhl
-	// 
-	public static Type[,] promoteFromTo = new Type[,] {
-			/*          struct  boolean  string  int     float    void   enum   any*/
-			/*struct*/  {null,  null,    null,   null,   null,    null,  null,  null},
-			/*boolean*/ {null,  null,    null,   null,   null,    null,  null,  null},
-			/*string*/  {null,  null,    null,   null,   null,    null,  null,  null},
-			/*int*/     {null,  null,    null,   null,   _float,  null,  null,  null},
-			/*float*/   {null,  null,    null,   null,    null,   null,  null,  null},
-			/*void*/    {null,  null,    null,   null,    null,   null,  null,  null},
-			/*enum*/    {null,  null,    null,   null,    null,   null,  null,  null},
-			/*any*/     {null,  null,    null,   null,    null,   null,  null,  null}
-	};
+  // Indicate whether a type needs a promotion to a wider type.
+  //  If not null, implies promotion required.  Null does NOT imply
+  //  error--it implies no promotion.  This works for
+  //  arithmetic, equality, and relational operators in bhl
+  // 
+  public static Type[,] promoteFromTo = new Type[,] {
+      /*          struct  boolean  string  int     float    void   enum   any*/
+      /*struct*/  {null,  null,    null,   null,   null,    null,  null,  null},
+      /*boolean*/ {null,  null,    null,   null,   null,    null,  null,  null},
+      /*string*/  {null,  null,    null,   null,   null,    null,  null,  null},
+      /*int*/     {null,  null,    null,   null,   _float,  null,  null,  null},
+      /*float*/   {null,  null,    null,   null,    null,   null,  null,  null},
+      /*void*/    {null,  null,    null,   null,    null,   null,  null,  null},
+      /*enum*/    {null,  null,    null,   null,    null,   null,  null,  null},
+      /*any*/     {null,  null,    null,   null,    null,   null,  null,  null}
+  };
 
-	public static Type[,] castFromTo = new Type[,] {
-			/*          struct  boolean  string   int     float   void   enum   any*/
-			/*struct*/  {null,  null,    null,    null,   null,   null,  null,  _any},
-			/*boolean*/ {null,  null,    _string, _int,   _float, null,  null,  _any},
-			/*string*/  {null,  null,    _string, null,   null,   null,  null,  _any},
-			/*int*/     {null,  _boolean,_string, _int,   _float, null,  null,  _any},
-			/*float*/   {null,  _boolean,_string, _int,   _float, null,  _enum,  _any},
-			/*void*/    {null,  null,    null,    null,   null,   null,  null,  null},
-			/*enum*/    {null,  null,    _string, _int,   _float,   null,  null,  _any},
-			/*any*/     {null,  _boolean,_string, _int,   null,   null,  null,  _any}
-	};
+  public static Type[,] castFromTo = new Type[,] {
+      /*          struct  boolean  string   int     float   void   enum   any*/
+      /*struct*/  {null,  null,    null,    null,   null,   null,  null,  _any},
+      /*boolean*/ {null,  null,    _string, _int,   _float, null,  null,  _any},
+      /*string*/  {null,  null,    _string, null,   null,   null,  null,  _any},
+      /*int*/     {null,  _boolean,_string, _int,   _float, null,  null,  _any},
+      /*float*/   {null,  _boolean,_string, _int,   _float, null,  _enum,  _any},
+      /*void*/    {null,  null,    null,    null,   null,   null,  null,  null},
+      /*enum*/    {null,  null,    _string, _int,   _float,   null,  null,  _any},
+      /*any*/     {null,  _boolean,_string, _int,   null,   null,  null,  _any}
+  };
 
   static public GlobalScope CreateBuiltins()
   {
@@ -841,17 +833,8 @@ static public class SymbolTable
     return globals;
   }
 
-	static public void InitBuiltins(GlobalScope globals) 
-	{
-    // if you wanted a predefined Object class hierarchy root
-    // like Java, you'd define it here:
-/*
-    var objectRoot = new ClassSymbol("Object", globals, null);
-    MethodSymbol hashCode =
-        new MethodSymbol("hashCode",new BuiltInTypeSymbol("int"),objectRoot);
-    objectRoot.define(hashCode);
-    globals.define(objectRoot);
-*/
+  static public void InitBuiltins(GlobalScope globals) 
+  {
     foreach(Type t in indexToType) 
     {
       if(t != null) 
@@ -902,7 +885,7 @@ static public class SymbolTable
     }
 
     globals.define(_fn_void);
-	}
+  }
 
   static public Type GetResultType(Type[,] typeTable, WrappedNode a, WrappedNode b) 
   {
@@ -927,49 +910,71 @@ static public class SymbolTable
   }
 
   static public bool CanAssignTo(Type valueType, Type destType, Type promotion) 
-	{
-    // either types are same or value was successfully promoted
+  {
     return valueType == destType || 
            promotion == destType || 
            destType == _any ||
            (destType is ClassSymbol && valueType == _null) ||
-           (destType == _fn_void && valueType == _null)
+           (destType == _fn_void && valueType == _null) || 
+           IsChildClass(valueType, destType)
            ;
   }
 
-	static public void CheckAssign(WrappedNode lhs, WrappedNode rhs) 
-	{
-		int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
-		int trhs = rhs.eval_type.GetTypeIndex();
-		rhs.promote_to_type = promoteFromTo[trhs,tlhs];
-		if(!CanAssignTo(rhs.eval_type, lhs.eval_type, rhs.promote_to_type)) 
+  static public bool IsChildClass(Type t, Type pt) 
+  {
+    var cl = t as ClassSymbol;
+    if(cl == null)
+      return false;
+    var pcl = pt as ClassSymbol;
+    if(pcl == null)
+      return false;
+    return cl.IsChildOf(pcl);
+  }
+
+  static public bool IsInSameClassHierarchy(Type a, Type b) 
+  {
+    var ca = a as ClassSymbol;
+    if(ca == null)
+      return false;
+    var cb = b as ClassSymbol;
+    if(cb == null)
+      return false;
+    return cb.IsChildOf(ca) || ca.IsChildOf(cb);
+  }
+
+  static public void CheckAssign(WrappedNode lhs, WrappedNode rhs) 
+  {
+    int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
+    int trhs = rhs.eval_type.GetTypeIndex();
+    rhs.promote_to_type = promoteFromTo[trhs,tlhs];
+    if(!CanAssignTo(rhs.eval_type, lhs.eval_type, rhs.promote_to_type)) 
     {
       throw new UserError(
         lhs.Location()+", "+
         rhs.Location()+" have incompatible types "
       );
-		}
-	}
+    }
+  }
 
   //NOTE: version for bindings
-	static public void CheckAssign(Type lhs, WrappedNode rhs) 
+  static public void CheckAssign(Type lhs, WrappedNode rhs) 
   {
-		int tlhs = lhs.GetTypeIndex(); // promote right to left type?
-		int trhs = rhs.eval_type.GetTypeIndex();
-		rhs.promote_to_type = promoteFromTo[trhs,tlhs];
-		if(!CanAssignTo(rhs.eval_type, lhs, rhs.promote_to_type)) 
+    int tlhs = lhs.GetTypeIndex(); // promote right to left type?
+    int trhs = rhs.eval_type.GetTypeIndex();
+    rhs.promote_to_type = promoteFromTo[trhs,tlhs];
+    if(!CanAssignTo(rhs.eval_type, lhs, rhs.promote_to_type)) 
     {
       throw new UserError(
         lhs.GetName()+", "+
         rhs.Location()+" have incompatible types"
       );
-		}
+    }
   }
 
-	static public void CheckCast(WrappedNode type, WrappedNode exp) 
+  static public void CheckCast(WrappedNode type, WrappedNode exp) 
   {
-		int tlhs = type.eval_type.GetTypeIndex();
-		int trhs = exp.eval_type.GetTypeIndex();
+    int tlhs = type.eval_type.GetTypeIndex();
+    int trhs = exp.eval_type.GetTypeIndex();
 
     //special case: we allow to cast from 'any' to any user type
     if(trhs == SymbolTable.tANY && tlhs == SymbolTable.tUSER)
@@ -979,15 +984,18 @@ static public class SymbolTable
     if((trhs == SymbolTable.tFLOAT || trhs == SymbolTable.tINT) && tlhs == SymbolTable.tENUM)
       return;
 
-		var cast_type = castFromTo[trhs,tlhs];
+    var cast_type = castFromTo[trhs,tlhs];
 
-    if(cast_type != type.eval_type)
-    {
-      throw new UserError(
-        type.Location()+", "+
-        exp.Location()+" have incompatible types for casting "
-      );
-    }
+    if(cast_type == type.eval_type)
+      return;
+
+    if(IsInSameClassHierarchy(exp.eval_type, type.eval_type))
+      return;
+    
+    throw new UserError(
+      type.Location()+", "+
+      exp.Location()+" have incompatible types for casting "
+    );
   }
 
   static public Type Bop(WrappedNode a, WrappedNode b) 
@@ -1047,17 +1055,17 @@ static public class SymbolTable
     return a.eval_type;
   }
 
-	// 'this' and 'super' need to know about enclosing class
-	static public ClassSymbol GetEnclosingClass(Scope s) 
-  {
-    // walk upwards from s looking for a class
-    while(s != null) 
-    {
-      if (s is ClassSymbol) return (ClassSymbol)s;
-      s = s.GetParentScope();
-    }
-    return null;
-	}
+  // 'this' and 'super' need to know about enclosing class
+  //static public ClassSymbol GetEnclosingClass(Scope s) 
+  //{
+  //  // walk upwards from s looking for a class
+  //  while(s != null) 
+  //  {
+  //    if (s is ClassSymbol) return (ClassSymbol)s;
+  //    s = s.GetParentScope();
+  //  }
+  //  return null;
+  //}
 }
 
 } //namespace bhl

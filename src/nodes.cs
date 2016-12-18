@@ -1549,7 +1549,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       if(bnd == null)
         throw new Exception("Class binding not found: " + scope_ntype); 
 
-      bnd_member = bnd.findMember(name.n);
+      bnd_member = bnd.resolveMember(name.n);
       if(bnd_member == null)
         throw new Exception("Member not found: " + name);
     }

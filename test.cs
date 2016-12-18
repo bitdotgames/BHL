@@ -2179,6 +2179,11 @@ public class BHL_Test
     public float g;
   }
 
+  public class ColorAlpha : Color
+  {
+    public float a;
+  }
+
   public class ColorNested
   {
     public Color c = new Color();
@@ -2303,6 +2308,53 @@ public class BHL_Test
       );
 
       globs.define(fn);
+    }
+  }
+
+  void BindColorAlpha(GlobalScope globs)
+  {
+    BindColor(globs);
+
+    {
+      var cl = new ClassBindSymbol("ColorAlpha", "Color",
+        delegate(ref DynVal v) 
+        { 
+          v.obj = new ColorAlpha();
+        }
+      );
+
+      globs.define(cl);
+
+      cl.define(new FieldSymbol("a", "float",
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var c = (ColorAlpha)ctx.obj;
+          v.SetNum(c.a);
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var c = (ColorAlpha)ctx.obj;
+          c.a = (float)v.num; 
+          ctx.obj = c;
+        }
+      ));
+
+      {
+        var m = new SimpleFuncBindSymbol("mult_summ_alpha", "float",
+          delegate(object agent)
+          {
+            var interp = Interpreter.instance;
+
+            var c = (ColorAlpha)interp.PopValue().obj;
+
+            interp.PushValue(DynVal.NewNum((c.r * c.a) + (c.g * c.a)));
+
+            return BHS.SUCCESS;
+          }
+        );
+
+        cl.define(m);
+      }
     }
   }
 
@@ -2601,6 +2653,231 @@ public class BHL_Test
 
     AssertEqual(res, 202);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindChildClass()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      c.a = 1000
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+
+    AssertEqual(res, 1202);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassCallParentMethod()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = 10
+      c.g = 20
+      return c.mult_summ(k)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+
+    AssertEqual(res, 60);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassCallOwnMethod()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = 10
+      c.g = 20
+      c.a = 3
+      return c.mult_summ_alpha()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+
+    AssertEqual(res, 90);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassImplicitBaseCast()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+
+    AssertEqual(res, 202);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassExplicitBaseCast()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = (Color)new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+
+    AssertEqual(res, 202);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassExplicitDownCast()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha orig = new ColorAlpha
+      orig.a = 1000
+      Color tmp = (Color)orig
+      tmp.r = 1
+      tmp.g = 100
+      ColorAlpha c = (ColorAlpha)tmp
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+
+    AssertEqual(res, 1101);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestIncompatibleImplicitClassCast()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Foo tmp = new Color
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+    BindFoo(globs);
+
+    AssertError<UserError>(
+       delegate() {
+         Interpret("", bhl, globs);
+       },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestIncompatibleExplicitClassCast()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Foo tmp = (Foo)new Color
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+    BindFoo(globs);
+
+    AssertError<UserError>(
+       delegate() {
+         Interpret("", bhl, globs);
+       },
+      "have incompatible types for casting"
+    );
   }
 
   [IsTested()]
@@ -3894,7 +4171,6 @@ public class BHL_Test
     ";
 
     var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
 
     BindStartScriptInMgr(globs);
 
@@ -8043,6 +8319,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("FindUnit");
+    if(node == null)
+      throw new Exception("???");
     //NodeDump(node);
   }
 

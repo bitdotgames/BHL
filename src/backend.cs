@@ -1239,7 +1239,7 @@ public class Interpreter : AST_Visitor
     if(bnd == null)
       throw new Exception("Class binding not found: " + class_type); 
 
-    var bnd_member = bnd.findMember(name.n);
+    var bnd_member = bnd.resolveMember(name.n);
     if(bnd_member == null)
       throw new Exception("Member not found: " + name);
 
