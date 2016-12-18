@@ -23,6 +23,9 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 ```go
 func UNIT_GREMLIN(float radius_max)
 {
+  int HEAVY_LAST_TIME = 0
+  int ROLL_LAST_TIME = 0
+
   paral_all {
     SCATTER_AFTER_GET_HIT()
     forever {
@@ -38,12 +41,12 @@ func UNIT_GREMLIN(float radius_max)
           SCATTER()
           paral {
             RETHINK_LISTENER(func() {
-              Check(mem().GetNumOr("HEAVY_STAMP",0) <= time())
-              Check(mem().GetNumOr("ROLL_STAMP",0) <= time())
+              Check(HEAVY_LAST_TIME <= time())
+              Check(ROLL_LAST_TIME <= time())
             })
             prio {
-              GREMLIN_KANO_ROLL_ATTACK(radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
-              GREMLIN_KANO_HEAVY_ATTACK(radius_max : radius_max, cooldown : 8, global_cooldown : 5, angle : 60)
+              GREMLIN_ROLL_ATTACK(stamp : ref ROLL_LAST_TIME, radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
+              GREMLIN_HEAVY_ATTACK(stamp : ref HEAVY_LAST_TIME, radius_max : radius_max, cooldown : 8, global_cooldown : 5, angle : 60)
               ATTACK()
             }
           }
