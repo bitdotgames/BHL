@@ -10,12 +10,12 @@ public struct RefOp
 {
   public const int INC                  = 1;
   public const int DEC                  = 2;
-  public const int DEC_NO_RELEASE       = 4;
-  public const int TRY_RELEASE          = 8;
+  public const int DEC_NO_DEL           = 4;
+  public const int TRY_DEL              = 8;
   public const int USR_INC              = 16;
   public const int USR_DEC              = 32;
-  public const int USR_DEC_NO_RELEASE   = 64;
-  public const int USR_TRY_RELEASE      = 128;
+  public const int USR_DEC_NO_DEL       = 64;
+  public const int USR_TRY_DEL          = 128;
 }
 
 public class DynVal
@@ -173,19 +173,19 @@ public class DynVal
     {
       if((op & RefOp.USR_INC) != 0)
       {
-        _refc.RefInc();
+        _refc.Retain();
       }
       else if((op & RefOp.USR_DEC) != 0)
       {
-        _refc.RefDec(true);
+        _refc.Release(true);
       }
-      else if((op & RefOp.USR_DEC_NO_RELEASE) != 0)
+      else if((op & RefOp.USR_DEC_NO_DEL) != 0)
       {
-        _refc.RefDec(false);
+        _refc.Release(false);
       }
-      else if((op & RefOp.USR_TRY_RELEASE) != 0)
+      else if((op & RefOp.USR_TRY_DEL) != 0)
       {
-        _refc.RefTryRelease();
+        _refc.TryDel();
       }
     }
 
@@ -210,7 +210,7 @@ public class DynVal
       if(_refs == 0)
         Del(this);
     }
-    else if((op & RefOp.DEC_NO_RELEASE) != 0)
+    else if((op & RefOp.DEC_NO_DEL) != 0)
     {
       if(_refs == -1)
         throw new Exception("Invalid state");
@@ -220,7 +220,7 @@ public class DynVal
       --_refs;
       //Console.WriteLine("DEC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
     }
-    else if((op & RefOp.TRY_RELEASE) != 0)
+    else if((op & RefOp.TRY_DEL) != 0)
     {
       if(_refs == 0)
         Del(this);
@@ -381,9 +381,9 @@ public class DynVal
 
 public interface DynValRefcounted
 {
-  void RefInc();
-  void RefDec(bool can_release = true);
-  bool RefTryRelease();
+  void Retain();
+  void Release(bool can_del = true);
+  bool TryDel();
 }
 
 public class MemoryScope
@@ -631,7 +631,7 @@ public class FuncCtx : DynValRefcounted
     return this;
   }
 
-  public void RefInc()
+  public void Retain()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
@@ -640,7 +640,7 @@ public class FuncCtx : DynValRefcounted
     //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
   }
 
-  public void RefDec(bool can_release = true)
+  public void Release(bool can_del = true)
   {
     if(refs == -1)
       throw new Exception("Invalid state");
@@ -651,11 +651,11 @@ public class FuncCtx : DynValRefcounted
 
     //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
 
-    if(can_release)
-      RefTryRelease();
+    if(can_del)
+      TryDel();
   }
 
-  public bool RefTryRelease()
+  public bool TryDel()
   {
     if(refs > 0)
       return false;
@@ -900,14 +900,14 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
 
   ///////////////////////////////////////
 
-  public void RefInc()
+  public void Retain()
   {
     if(refs == -1)
       throw new Exception("Invalid state");
     ++refs;
   }
 
-  public void RefDec(bool can_release = true)
+  public void Release(bool can_del = true)
   {
     if(refs == -1)
       throw new Exception("Invalid state");
@@ -915,11 +915,11 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
       throw new Exception("Double free");
 
     --refs;
-    if(can_release)
-      RefTryRelease();
+    if(can_del)
+      TryDel();
   }
 
-  public bool RefTryRelease()
+  public bool TryDel()
   {
     if(refs > 0)
       return false;
@@ -1338,14 +1338,14 @@ public class Interpreter : AST_Visitor
   public DynVal PopValue()
   {
     var v = stack.PopFast();
-    v.RefMod(RefOp.USR_DEC_NO_RELEASE | RefOp.DEC);
+    v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
     return v;
   }
 
   public DynVal PopRef()
   {
     var v = stack.PopFast();
-    v.RefMod(RefOp.DEC_NO_RELEASE);
+    v.RefMod(RefOp.DEC_NO_DEL);
     return v;
   }
 

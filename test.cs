@@ -2368,7 +2368,7 @@ public class BHL_Test
       this.stream = stream;
     }
 
-    public void RefInc()
+    public void Retain()
     {
       var sw = new StreamWriter(stream);
       ++refs;
@@ -2376,17 +2376,17 @@ public class BHL_Test
       sw.Flush();
     }
 
-    public void RefDec(bool can_release = true)
+    public void Release(bool can_del = true)
     {
       var sw = new StreamWriter(stream);
       --refs;
       sw.Write("DEC" + refs + ";");
       sw.Flush();
-      if(can_release)
-        RefTryRelease();
+      if(can_del)
+        TryDel();
     }
 
-    public bool RefTryRelease()
+    public bool TryDel()
     {
       var sw = new StreamWriter(stream);
       sw.Write("REL" + refs + ";");
@@ -3256,7 +3256,7 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
-    lst.RefTryRelease();
+    lst.TryDel();
     CommonChecks(intp);
   }
 
@@ -3287,7 +3287,7 @@ public class BHL_Test
     var lst = res.obj as DynValList;
     AssertEqual(lst.Count, 1);
     AssertEqual(lst[0].str, "foo");
-    lst.RefTryRelease();
+    lst.TryDel();
     CommonChecks(intp);
   }
 
@@ -3381,7 +3381,7 @@ public class BHL_Test
 
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 0);
-    lst.RefTryRelease();
+    lst.TryDel();
     AssertEqual(DynValList.PoolCount, 1);
     AssertEqual(DynValList.PoolCountFree, 1);
 
@@ -3442,7 +3442,7 @@ public class BHL_Test
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].num, 20);
     AssertEqual(lst[1].num, 10);
-    lst.RefTryRelease();
+    lst.TryDel();
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
     CommonChecks(intp);
   }
@@ -3637,7 +3637,7 @@ public class BHL_Test
       var interp = Interpreter.instance;
       var dv = interp.PopValue(); 
       fct = (FuncCtx)dv.obj;
-      fct.RefInc();
+      fct.Retain();
 
       var func_node = fct.EnsureNode();
 
@@ -3649,7 +3649,7 @@ public class BHL_Test
     public override void deinit(object agent)
     {
       base.deinit(agent);
-      fct.RefDec();
+      fct.Release();
       fct = null;
     }
   }
@@ -3837,7 +3837,7 @@ public class BHL_Test
             for(int i=0;i<num;++i)
             {
               fct = fct.AutoClone();
-              fct.RefInc();
+              fct.Retain();
               var node = fct.EnsureNode();
               //Console.WriteLine("FREFS START: " + fct.GetHashCode() + " " + fct.refs);
               ScriptMgr.instance.add(node, now);
@@ -4072,8 +4072,8 @@ public class BHL_Test
         node.stop(agent);
 
         var fnode = node as FuncNode;
-        if(fnode != null)
-          fnode.TryReleaseContext();
+        if(fnode != null && fnode.fct != null)
+          fnode.fct.Release();
       }
     }
 
@@ -7932,7 +7932,7 @@ public class BHL_Test
     public override void init(object agent)
     {
       var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      fct.RefInc();
+      fct.Retain();
       var func_node = fct.EnsureNode();
 
       this.setSlave(func_node);
@@ -7943,7 +7943,7 @@ public class BHL_Test
     public override void deinit(object agent)
     {
       var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      fct.RefDec();
+      fct.Release();
     }
   }
 
@@ -8010,7 +8010,7 @@ public class BHL_Test
           var tmp = f.strs;
           DynValList.Decode(v, ref tmp);
           ctx.obj = f;
-          ((DynValList)v.obj).RefTryRelease();
+          ((DynValList)v.obj).TryDel();
         }
       ));
     }

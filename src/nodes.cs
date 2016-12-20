@@ -1258,7 +1258,7 @@ public class CallVarFuncPtr : BehaviorTreeDecoratorNode
     var fct = (FuncCtx)interp.GetScopeValue(name).obj;
      
     fct = fct.AutoClone();
-    fct.RefInc();
+    fct.Retain();
     var func_node = fct.EnsureNode();
     this.setSlave(func_node);
 
@@ -1267,7 +1267,7 @@ public class CallVarFuncPtr : BehaviorTreeDecoratorNode
   
   public override void deinit(object agent)
   {
-    ((FuncNode)children[0]).TryReleaseContext();
+    ((FuncNode)children[0]).fct.Release();
 
     base.deinit(agent);
   }
@@ -1486,7 +1486,7 @@ public class VarAccessNode : BehaviorTreeTerminalNode
       var val = interp.PopValue().ValueClone();
       //Console.WriteLine("WRITE " + val + " " + val.GetHashCode());
       interp.SetScopeValue(name, val);
-      val.RefMod(RefOp.TRY_RELEASE);
+      val.RefMod(RefOp.TRY_DEL);
     }
     else if(mode == READ)
     {
@@ -1637,12 +1637,6 @@ abstract public class FuncNode : SequentialNode
     }
   }
 
-  public void TryReleaseContext()
-  {
-    if(fct != null)
-      fct.RefDec();
-  }
-
   public virtual int DeclArgsNum()
   {
     return 0;
@@ -1729,7 +1723,7 @@ public class FuncNodeAST : FuncNode
       //Util.Debug(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
       mem.Set(fparam_name, fparam_val);
 
-      fparam_val.RefMod(RefOp.TRY_RELEASE);
+      fparam_val.RefMod(RefOp.TRY_DEL);
     }
 
     base.init(agent);
@@ -1838,7 +1832,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     //NOTE: we really want FuncCtx to be alive while
     //      the node using this func ctx is still active.
     //      See also defer() below
-    fct.RefInc();
+    fct.Retain();
 
     var ldecl = fr.decl as AST_LambdaDecl;
     if(ldecl != null)
@@ -1859,7 +1853,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
 
   public override void defer(object agent)
   {
-    fct.RefDec();
+    fct.Release();
     fct = null;
   }
 
