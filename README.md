@@ -23,6 +23,9 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 ```go
 func UNIT_GREMLIN(float radius_max)
 {
+  int HEAVY_LAST_TIME = 0
+  int ROLL_LAST_TIME = 0
+
   paral_all {
     SCATTER_AFTER_GET_HIT()
     forever {
@@ -38,12 +41,12 @@ func UNIT_GREMLIN(float radius_max)
           SCATTER()
           paral {
             RETHINK_LISTENER(func() {
-              Check(mem().GetNumOr("HEAVY_STAMP",0) <= time())
-              Check(mem().GetNumOr("ROLL_STAMP",0) <= time())
+              Check(HEAVY_LAST_TIME <= time())
+              Check(ROLL_LAST_TIME <= time())
             })
             prio {
-              GREMLIN_KANO_ROLL_ATTACK(radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
-              GREMLIN_KANO_HEAVY_ATTACK(radius_max : radius_max, cooldown : 8, global_cooldown : 5, angle : 60)
+              GREMLIN_ROLL_ATTACK(stamp : ref ROLL_LAST_TIME, radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
+              GREMLIN_HEAVY_ATTACK(stamp : ref HEAVY_LAST_TIME, radius_max : radius_max, cooldown : 8, global_cooldown : 5, angle : 60)
               ATTACK()
             }
           }
@@ -79,23 +82,37 @@ Just try running *run.sh* script:
 
 > cd example && ./run.sh
 
-This example executes the following [ simple script ](example/hello.bhl)
+This example executes the following [ simple script ](example/unit.bhl)
 
-> ...
-
-> Hello, John Silver
-
-> Bye, John Silver
-
-> Hello, John Silver
-
-> ...
+```markdown
+Unit starts...
+No target in range
+Idling 3 sec...
+State changed!
+Idle interrupted!
+Found new target 703! Approaching it.
+Attacking target 703
+Target 703 is dead!
+Found new target 666! Approaching it.
+State changed!
+Found new target 902! Approaching it.
+Attacking target 902
+Target 902 is dead!
+No target in range
+Idling 1 sec...
+Idle complete
+No target in range
+Idling 1 sec...
+State changed!
+Idle interrupted!
+...
+```
 
 Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
 
 ### Unity3d integration
 
-The example script has also a special Unity3d compatibility mode. It illustrates how you can build a bhl backend dll for Unity3d. After that you can put it into Assets/Plugins directory and use bhl for your Unity3d game development. This mode can be enabled just as follows: 
+The example script has also a special Unity3d compatibility mode. It illustrates how you can build a bhl backend dll(**bhl_back.dll**) for Unity3d. After that you can put it into Assets/Plugins directory and use bhl for your Unity3d game development. This mode can be enabled just as follows: 
 
 > cd example && ./run.sh -unity
 
@@ -153,6 +170,13 @@ func Unit FindUnit(Vec3 pos, float radius) {
 ## **ref** support
 
 ```go
+
+Unit FindTarget(Unit self, ref float dist_to_target) {
+...
+  dist_to_target = u.position.Sub(self.position).length
+  return u
+}
+
 float dist_to_target = 0
 Unit u = FindTarget(ref dist_to_target)
 ```
