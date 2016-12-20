@@ -6263,6 +6263,35 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestRecursion()
+  {
+    string bhl = @"
+      
+    func float mult(float k)
+    {
+      if(k == 0) {
+        return 1
+      }
+      return 2 * mult(k-1)
+    }
+
+    func float test(float k) 
+    {
+      return mult(k)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 8);
+    CommonChecks(intp);
+  }
+
+
+  [IsTested()]
   public void TestForever()
   {
     string bhl = @"
