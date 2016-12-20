@@ -1080,8 +1080,6 @@ public class Interpreter : AST_Visitor
 
   public DynVal last_member_ctx;
 
-  FastStack<int> func_args_stack = new FastStack<int>(128);
-
   FastStack<MemoryScope> mstack = new FastStack<MemoryScope>(128);
   MemoryScope curr_mem;
 
@@ -1111,6 +1109,7 @@ public class Interpreter : AST_Visitor
 
   public GlobalScope bindings;
 
+  FastStack<int> func_args_stack = new FastStack<int>(128);
   FastStack<DynVal> stack = new FastStack<DynVal>(256);
 
   public void Init(GlobalScope bindings, IModuleLoader module_loader)
@@ -1123,6 +1122,7 @@ public class Interpreter : AST_Visitor
     loaded_modules.Clear();
     func_decls.Clear();
     lmb_decls.Clear();
+    func_args_stack.Clear();
     stack.Clear();
 
     this.bindings = bindings;

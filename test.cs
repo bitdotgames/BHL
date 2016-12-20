@@ -6290,6 +6290,26 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestBadRecursion()
+  {
+    string bhl = @"
+      
+    func test() 
+    {
+      test()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertError<IndexOutOfRangeException>(
+      delegate() { 
+        intp.ExecNode(node, false);
+      },
+      "Index was outside the bounds of the array"
+    );
+  }
 
   [IsTested()]
   public void TestForever()
