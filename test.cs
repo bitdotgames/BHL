@@ -6388,6 +6388,97 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDeferInWhile()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      while(i < 3) {
+        defer {
+          trace(""WHILE;"")
+        }
+        i = i + 1
+      }
+      defer {
+        trace(""AFTER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, false);
+
+    var str = GetString(trace_stream);
+    AssertEqual("WHILE;WHILE;WHILE;AFTER;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestDeferInPrio()
+  {
+    string bhl = @"
+
+    func foo()
+    {
+      defer {
+        trace(""FOO;"")
+      }
+      FAILURE()
+    }
+
+    func bar()
+    {
+      defer {
+        trace(""BAR;"")
+      }
+    }
+
+    func never()
+    {
+      defer {
+        trace(""NEVER;"")
+      }
+    }
+
+    func test() 
+    {
+      prio {
+        defer {
+          trace(""PRIO;"")
+        }
+        foo() 
+        bar()
+        never()
+      }
+      defer {
+        trace(""AFTER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, false);
+
+    var str = GetString(trace_stream);
+    AssertEqual("FOO;BAR;PRIO;AFTER;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUntilSuccess()
   {
     string bhl = @"
