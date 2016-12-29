@@ -1545,9 +1545,19 @@ public class Interpreter : AST_Visitor
       curr_node.addChild(new VarAccessNode(node.Name()));
       VisitChildren(node);
     }
+    else if(node.type == EnumCall.VARW)
+    {
+      curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.WRITE));
+      VisitChildren(node);
+    }
     else if(node.type == EnumCall.MVAR)
     {
       curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name()));
+      VisitChildren(node);
+    }
+    else if(node.type == EnumCall.MVARW)
+    {
+      curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE));
       VisitChildren(node);
     }
     else if(node.type == EnumCall.FUNC || node.type == EnumCall.MFUNC)
@@ -1625,7 +1635,7 @@ public class Interpreter : AST_Visitor
         var last_child = group.children[group.children.Count-1];
         //1.1. changing write mode or popping config
         if(last_child is MVarAccessNode)
-          (last_child as MVarAccessNode).mode = MVarAccessNode.WRITE2;
+          (last_child as MVarAccessNode).mode = MVarAccessNode.WRITE_INV_ARGS;
         else
           group.addChild(new PopValueNode());
 
@@ -1739,10 +1749,10 @@ public class Interpreter : AST_Visitor
     //TODO: move this to frontend
     //3. let's tune eval expression
     var last_child = curr_node.children[curr_node.children.Count-1];
-    if(last_child is MVarAccessNode)
-      (last_child as MVarAccessNode).mode = MVarAccessNode.WRITE;
-    else if(last_child is VarAccessNode)
+    if(last_child is VarAccessNode)
       (last_child as VarAccessNode).mode = VarAccessNode.WRITE;
+    else if(last_child is MVarAccessNode)
+      (last_child as MVarAccessNode).mode = MVarAccessNode.WRITE;
     else
       throw new Exception("Not supported target node: " + last_child.GetType());
   }

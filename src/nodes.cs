@@ -1521,7 +1521,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
   public const int READ           = 1;
   public const int WRITE          = 2;
   public const int WRITE_PUSH_CTX = 3;
-  public const int WRITE2         = 4;
+  public const int WRITE_INV_ARGS = 4;
   public const int READ_PUSH_CTX  = 5;
 
   uint scope_ntype;
@@ -1571,7 +1571,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       interp.PushValue(val);
     }
-    else if(mode == WRITE || mode == WRITE_PUSH_CTX || mode == WRITE2)
+    else if(mode == WRITE || mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
     {
       var var_symb = (VariableSymbol)bnd_member;
       if(var_symb == null)
@@ -1580,7 +1580,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       DynVal val = null;
       DynVal ctx = null;
 
-      if(mode == WRITE_PUSH_CTX || mode == WRITE2)
+      if(mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
       {
         val = interp.PopValue();
         ctx = mode == WRITE_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
@@ -1604,7 +1604,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
     if(mode == WRITE)
       str += "<-c <-v =";
-    else if(mode == WRITE2)
+    else if(mode == WRITE_INV_ARGS)
       str += "<-v <-c =";
     else if(mode == WRITE_PUSH_CTX)
       str += "<-v <-c = c->";
