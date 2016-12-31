@@ -4,5 +4,5 @@ cp test.bhl tmp/
 cp g4 tmp/
 cp grun tmp/
 cd tmp
-export CLASSPATH=".:/Users/pachanga/Downloads/antlr-4.5.1-complete.jar:$CLASSPATH"
+export CLASSPATH=".:/usr/local/lib/antlr-4.5.3-complete.jar:$CLASSPATH"
 ./g4 bhl.g && javac bhl*.java && ./grun bhl program -tree < test.bhl
