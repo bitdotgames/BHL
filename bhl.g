@@ -20,8 +20,12 @@ funcDecls
   : funcDecl+
   ;
 
+fnargs
+  : '^' '(' names? ')'
+  ;
+
 type 
-	: NAME FNARGS? ARR?
+	: NAME fnargs? ARR?
   ;
 
 //expressions
@@ -145,6 +149,10 @@ useName
   : isRef? NAME
   ;
 
+names
+  : NAME (',' NAME)*
+  ;
+
 useBlock
   : 'use' '(' useName (',' useName)* ')'
   ;
@@ -245,10 +253,6 @@ ARR
 
 OBJ
   : '{' '}'
-  ;
-
-FNARGS
-  : '^' '(' ')'
   ;
 
 NORMALSTRING
