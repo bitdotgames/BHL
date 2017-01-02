@@ -23,17 +23,26 @@ public struct TypeRef
 
   public Type type;
   public string name;
+#if BHL_FRONT
+  public bhlParser.TypeContext node;
+#endif
 
   public TypeRef(string name)
   {
     this.name = name;
     this.type = null;
+#if BHL_FRONT
+    this.node = null;
+#endif
   }
 
   public TypeRef(Type type)
   {
     this.name = type.GetName();
     this.type = type;
+#if BHL_FRONT
+    this.node = null;
+#endif
   }
 
   public static implicit operator TypeRef(string name)

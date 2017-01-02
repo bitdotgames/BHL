@@ -158,6 +158,19 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return n;
   }
 
+  TypeRef ResolveType(bhlParser.TypeContext node)
+  {
+    var str = node == null ? "void" : node.GetText();
+    var type = globals.resolve(str) as Type;
+
+    var tr = new TypeRef();
+    tr.type = type;
+    tr.name = str;
+    tr.node = node;
+
+    return tr;
+  }
+
   public override AST VisitProgram(bhlParser.ProgramContext ctx)
   {
     AST_Module ast = AST_Util.New_Module(curr_m.GetId());
@@ -502,17 +515,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitExpLambda(bhlParser.ExpLambdaContext ctx)
   {
-    var type = ctx.funcLambda().type();
-
-    var str_type = type == null ? "void" : type.GetText();
-    Type var_type = globals.resolve(str_type) as Type; 
-    if(var_type == null)
-      FireError(Location(type) + ": Type '" + str_type + "' not found");
+    var tr = ResolveType(ctx.funcLambda().type());
+    if(tr.type == null)
+      FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
 
     var func_name = curr_m.GetId() + "_" + NextLambdaId(); 
-    var node = AST_Util.New_LambdaDecl(curr_m.GetId(), str_type, func_name);
+    var node = AST_Util.New_LambdaDecl(curr_m.GetId(), tr.name, func_name);
     var lambda_node = Wrap(ctx);
-    var symb = new LambdaSymbol(node, this.func_decl_stack, lambda_node, func_name, new TypeRef(var_type), mscope);
+    var symb = new LambdaSymbol(node, this.func_decl_stack, lambda_node, func_name, tr, mscope);
 
     var fdecl = new FuncDecl(node, symb);
     PushFuncDecl(fdecl);
@@ -546,8 +556,8 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
     PopFuncDecl();
 
-    if(var_type != SymbolTable._void || fparams != null)
-      FireError(Location(type) +  " : Currently only void^() lambdas are supported");
+    if(tr.type != SymbolTable._void || fparams != null)
+      FireError(Location(tr.node) +  " : Currently only void^() lambdas are supported");
 
     //TODO: make it more generic some day
     Wrap(ctx).eval_type = SymbolTable._fn_void;
@@ -710,13 +720,12 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var str_type = ctx.type().GetText();
-    var type = globals.resolve(str_type) as Type; 
-    if(type == null)
-      FireError(Location(ctx.type()) + ": Type '" + str_type + "' not found");
+    var tr = ResolveType(ctx.type());
+    if(tr.type == null)
+      FireError(Location(tr.node) + ": Type '" + tr.node + "' not found");
 
-    var res = AST_Util.New_New(str_type);
-    Wrap(ctx).eval_type = type;
+    var res = AST_Util.New_New(tr.name);
+    Wrap(ctx).eval_type = tr.type;
 
     return res;
   }
@@ -731,16 +740,15 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
-    var str_type = ctx.type().GetText();
-    var type = globals.resolve(str_type) as Type; 
-    if(type == null)
-      FireError(Location(ctx.type()) + ": Type '" + str_type + "' not found");
+    var tr = ResolveType(ctx.type());
+    if(tr.type == null)
+      FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
 
-    var node = AST_Util.New_TypeCast(str_type);
+    var node = AST_Util.New_TypeCast(tr.name);
     var exp = ctx.exp();
     node.AddChild(Visit(exp));
 
-    Wrap(ctx).eval_type = type;
+    Wrap(ctx).eval_type = tr.type;
 
     SymbolTable.CheckCast(Wrap(ctx), Wrap(exp)); 
 
@@ -1095,19 +1103,16 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var type = ctx.type();
-
-    var str_type = type == null ? "void" : type.GetText();
-    Type var_type = globals.resolve(str_type) as Type; 
-    if(var_type == null)
-      FireError(Location(type) + ": Type '" + str_type + "' not found");
+    var tr = ResolveType(ctx.type());
+    if(tr.type == null)
+      FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
 
     var str_name = ctx.NAME().GetText();
 
     var func_node = Wrap(ctx);
-    func_node.eval_type = var_type;
-    var node = AST_Util.New_FuncDecl(curr_m.GetId(), str_type, str_name);
-    var symb = new FuncSymbolAST(node, func_node, str_name, new TypeRef(var_type), curr_scope, ctx.funcParams());
+    func_node.eval_type = tr.type;
+    var node = AST_Util.New_FuncDecl(curr_m.GetId(), tr.name, str_name);
+    var symb = new FuncSymbolAST(node, func_node, str_name, tr, curr_scope, ctx.funcParams());
     mscope.define(symb);
     curr_m.symbols.define(symb);
     curr_scope = symb;
@@ -1122,7 +1127,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     {
       node.block().AddChild(Visit(ctx.funcBlock()));
 
-      if(var_type != SymbolTable._void && !symb.return_statement_found)
+      if(tr.type != SymbolTable._void && !symb.return_statement_found)
         FireError(Location(ctx.NAME()) + ": matching 'return' statement not found");
     }
 
@@ -1163,14 +1168,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var name = ctx.NAME();
     var str_name = name.GetText();
-    var str_type = ctx.type().GetText();
     var defarg = ctx.initVar();
-    Type var_type = curr_scope.resolve(str_type) as Type; 
-    if(var_type == null)
-      FireError(Location(name) +  ": Type '" + str_type + "' not found");
+
+    var tr = ResolveType(ctx.type());
+    if(tr.type == null)
+      FireError(Location(tr.node) +  ": Type '" + tr.name + "' not found");
 
     var var_node = Wrap(name); 
-    var_node.eval_type = var_type;
+    var_node.eval_type = tr.type;
 
     var fscope = curr_scope as FuncSymbol;
     bool func_arg = fscope != null && fscope.visitings_args;
@@ -1185,10 +1190,10 @@ public class AST_Builder : bhlBaseVisitor<AST>
         FireError(Location(name) +  ": ref is not allowed to have a default value");
     }
     Symbol symb = func_arg ? 
-      (Symbol) new FuncArgSymbol(str_name, new TypeRef(var_type), is_ref) :
-      (Symbol) new VariableSymbol(var_node, str_name, new TypeRef(var_type));
+      (Symbol) new FuncArgSymbol(str_name, tr, is_ref) :
+      (Symbol) new VariableSymbol(var_node, str_name, tr);
 
-    var node = AST_Util.New_VarDecl(str_type, str_name, is_ref);
+    var node = AST_Util.New_VarDecl(tr.name, str_name, is_ref);
     if(defarg != null)
     {
       node.AddChild(Visit(defarg));
