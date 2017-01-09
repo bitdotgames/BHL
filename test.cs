@@ -3983,6 +3983,11 @@ public class BHL_Test
       AssertEqual(type.fnargs().names().NAME()[0].GetText(), "int");
       AssertTrue(type.ARR() != null);
     }
+
+    {
+      var type = AST_Builder.ParseType("float^");
+      AssertTrue(type == null);
+    }
   }
 
   //[IsTested()]
