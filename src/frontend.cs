@@ -107,6 +107,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
     }
   }
 
+  public static bhlParser.TypeContext ParseType(string type)
+  {
+    var tokens = Source2Tokens(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(type)));
+    var p = new bhlParser(tokens);
+    return p.type();
+  }
+
   static public void Source2Bin(Module module, Stream src, Stream dst, GlobalScope globs, ModuleRegistry mr)
   {
     var ast = Source2AST(module, src, globs, mr);

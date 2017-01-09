@@ -3952,6 +3952,39 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestParseType()
+  {
+    {
+      var type = AST_Builder.ParseType("bool");
+      AssertEqual(type.NAME().GetText(), "bool");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
+    }
+
+    {
+      var type = AST_Builder.ParseType("int[]");
+      AssertEqual(type.NAME().GetText(), "int");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() != null);
+    }
+
+    {
+      var type = AST_Builder.ParseType("bool^(int,string)");
+      AssertEqual(type.NAME().GetText(), "bool");
+      AssertEqual(type.fnargs().names().NAME()[0].GetText(), "int");
+      AssertEqual(type.fnargs().names().NAME()[1].GetText(), "string");
+      AssertTrue(type.ARR() == null);
+    }
+
+    {
+      var type = AST_Builder.ParseType("float^(int)[]");
+      AssertEqual(type.NAME().GetText(), "float");
+      AssertEqual(type.fnargs().names().NAME()[0].GetText(), "int");
+      AssertTrue(type.ARR() != null);
+    }
+  }
+
   //[IsTested()]
   public void TestComplexFuncPtr()
   {
