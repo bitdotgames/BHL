@@ -3953,6 +3953,36 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncPtrLambda()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      void^() ptr = func() {
+        trace(""FOO"")
+      }
+      ptr()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, false);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("FOO", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestParseType()
   {
     {
@@ -4035,7 +4065,7 @@ public class BHL_Test
   public void TestComplexFuncPtrLambda()
   {
     string bhl = @"
-    func bool test(int b) 
+    func bool test(int a) 
     {
       bool^(int,string) ptr = 
         func bool (int a, string k)
@@ -4043,7 +4073,7 @@ public class BHL_Test
           trace(k)
           return a > 2
         }
-      return ptr(b, ""HEY"")
+      return ptr(a, ""HEY"")
     }
     ";
 
