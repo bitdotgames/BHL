@@ -1243,33 +1243,76 @@ public class ConstructNode : BehaviorTreeTerminalNode
   }
 }
 
-public class CallVarFuncPtr : BehaviorTreeDecoratorNode
+public class CallVarFuncPtr : SequentialNode
 {
-  HashedName name;
+  AST_Call node;
 
-  public CallVarFuncPtr(HashedName name)
+  public CallVarFuncPtr(AST_Call node)
   {
-    this.name = name;
+    this.node = node;
   }
 
   public override void init(object agent) 
   {
     var interp = Interpreter.instance;
+    var name = node.Name();
     var fct = (FuncCtx)interp.GetScopeValue(name).obj;
      
     fct = fct.AutoClone();
     fct.Retain();
     var func_node = fct.EnsureNode();
-    this.setSlave(func_node);
 
-    base.init(agent);
+    children.Clear();
+
+    interp.PushNode(this);
+    for(int i=0;i<node.cargs_num;++i)
+      interp.Visit(node.children[i]);
+    interp.PopNode();
+
+    children.Add(func_node);
   }
-  
-  public override void deinit(object agent)
-  {
-    ((FuncNode)children[0]).fct.Release();
 
-    base.deinit(agent);
+  override public void deinit(object agent)
+  {
+    ((FuncNode)children[children.Count-1]).fct.Release();
+
+    //NOTE: we don't stop children here because this node behaves NOT like
+    //      a block node but rather emulating a terminal node
+  } 
+
+  override public void defer(object agent)
+  {
+    stopChildren(agent);
+  }
+
+  public override BHS execute(object agent)
+  {
+    var interp = Interpreter.instance;
+    interp.PushFuncArgsNum(node.cargs_num);
+
+    BHS status = BHS.SUCCESS;
+    while(currentPosition < children.Count)
+    {
+      var currentTask = children[currentPosition];
+      //status = currentTask.run(agent);
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.init(agent);
+      status = currentTask.execute(agent);
+      currentTask.currStatus = status;
+      currentTask.lastExecuteStatus = currentTask.currStatus;
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.deinit(agent);
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(status == BHS.SUCCESS)
+        ++currentPosition;
+      else
+        break;
+    } 
+
+    interp.PopFuncArgsNum();
+
+    return status;
   }
 }
 

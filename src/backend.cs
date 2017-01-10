@@ -1260,6 +1260,7 @@ public class Interpreter : AST_Visitor
     func_args_stack.Pop();
   }
 
+  //NOTE: usually used in bindings
   public int GetFuncArgsNum()
   {
     return func_args_stack.Peek();
@@ -1568,9 +1569,13 @@ public class Interpreter : AST_Visitor
       for(int i=node.cargs_num;i<node.children.Count;++i)
         Visit(node.children[i]);
     }
-    else if(node.type == EnumCall.VAR2FUNC)
+    else if(node.type == EnumCall.FUNC_PTR)
     {
-      curr_node.addChild(new CallVarFuncPtr(node.Name()));
+      curr_node.addChild(new CallVarFuncPtr(node));
+
+      //rest of the call chain
+      for(int i=node.cargs_num;i<node.children.Count;++i)
+        Visit(node.children[i]);
     }
     else if(node.type == EnumCall.FUNC2VAR)
     {

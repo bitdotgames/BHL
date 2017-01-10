@@ -179,6 +179,12 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var str = node == null ? "void" : node.GetText();
     var type = globals.resolve(str) as Type;
 
+    if(type == null && node != null && node.fnargs() != null)
+    {
+      //TODO: add it to globals?
+      type = new FuncType(node);
+    }
+
     var tr = new TypeRef();
     tr.type = type;
     tr.name = str;
@@ -311,17 +317,24 @@ public class AST_Builder : bhlBaseVisitor<AST>
       var backup_scope = curr_scope;
       curr_scope = orig_scope;
 
-      if(var_symb != null && var_symb.type.Get() is FuncTypeSymbol)
+      if(var_symb != null && var_symb.type.Get() is FuncType)
       {
-        node = AST_Util.New_Call(EnumCall.VAR2FUNC, str_name, Hash.CRC28(str_name), SymbolTable._fn_void);
-        //TODO: for now there are no func call args
-        type = SymbolTable._void;
+        var ftype = var_symb.type.Get() as FuncType;
+        node = AST_Util.New_Call(EnumCall.FUNC_PTR, str_name, Hash.CRC28(str_name));
+        //AddCallArgs(ctx, func_symb, cargs, ref node);
+        for(int ci=0;ci<cargs.callArg().Length;++ci)
+        {
+          var ca = cargs.callArg()[ci];
+          node.AddChild(Visit(ca));
+        }
+        node.cargs_num = cargs.callArg().Length;
+        type = ftype.ret_type.Get();
       }
       else if(func_symb != null)
       {
         node = AST_Util.New_Call(member_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, str_name, func_symb.GetCallId(), (Symbol)member_scope);
         AddCallArgs(ctx, func_symb, cargs, ref node);
-        type = func_symb.type.Get();
+        type = func_symb.GetFuncType().ret_type.Get();
       }
       else
       {
@@ -331,7 +344,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         {
           node = AST_Util.New_Call(EnumCall.FUNC, str_name, func_symb.GetCallId());
           AddCallArgs(ctx, func_symb, cargs, ref node);
-          type = func_symb.type.Get();
+          type = func_symb.GetFuncType().ret_type.Get();
         }
         else
         {
@@ -360,11 +373,9 @@ public class AST_Builder : bhlBaseVisitor<AST>
         ulong func_call_id = call_func_symb.GetCallId();
 
         node = AST_Util.New_Call(EnumCall.FUNC2VAR, str_name, func_call_id);
-        if(func_symb.type.Get() != SymbolTable._void)
-          FireError(Location(name) + " : Currently only void^() function pointers are supported");
-        else if(func_symb.GetRequiredArgsNum() > 0)
-          FireError(Location(name) + " : Function expects arguments to be passed");
-        type = SymbolTable._fn_void;
+        //if(func_symb.GetRequiredArgsNum() > 0)
+        //  FireError(Location(name) + " : Function expects arguments to be passed");
+        type = func_symb.type.Get();
       }
       else
       {
@@ -484,9 +495,9 @@ public class AST_Builder : bhlBaseVisitor<AST>
         var func_arg_symb = (Symbol)func_args[i];
         var func_arg_type = func_arg_symb.node == null ? func_arg_symb.type.Get() : func_arg_symb.node.eval_type;  
 
-        if(ca.isRef() == null && func_symb.IsRefAt(i))
+        if(ca.isRef() == null && func_symb.IsArgRefAt(i))
           FireError(Location(ca) +  ": 'ref' specifier is missing");
-        else if(ca.isRef() != null && !func_symb.IsRefAt(i))
+        else if(ca.isRef() != null && !func_symb.IsArgRefAt(i))
           FireError(Location(ca) +  ": argument is not a ref");
 
         PushJsonType(func_arg_type);
@@ -572,11 +583,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
     PopFuncDecl();
 
-    if(tr.type != SymbolTable._void || fparams != null)
-      FireError(Location(tr.node) +  " : Currently only void^() lambdas are supported");
-
-    //TODO: make it more generic some day
-    Wrap(ctx).eval_type = SymbolTable._fn_void;
+    Wrap(ctx).eval_type = symb.type.Get();
 
     curr_scope = scope_backup;
 

@@ -81,7 +81,7 @@ enum EnumCall
   MFUNC     = 30
   ARR_IDX  = 4
   FUNC2VAR = 5
-  VAR2FUNC = 6
+  FUNC_PTR = 6
 end
 
 #TODO: this one is too generic, 

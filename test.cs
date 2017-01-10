@@ -3985,12 +3985,20 @@ public class BHL_Test
     }
 
     {
+      //malformed
       var type = AST_Builder.ParseType("float^");
       AssertTrue(type == null);
     }
+
+    {
+      //malformed
+      var type = AST_Builder.ParseType("int]");
+      //TODO:
+      //AssertTrue(type == null);
+    }
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestComplexFuncPtr()
   {
     string bhl = @"
@@ -4003,7 +4011,7 @@ public class BHL_Test
     func bool test(int a) 
     {
       bool^(int,string) ptr = foo
-      ptr(a, ""HEY"")
+      return ptr(a, ""HEY"")
     }
     ";
 
@@ -4014,9 +4022,9 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    //NodeDump(node);
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractBool(intp.ExecNode(node));
+    //NodeDump(node);
     AssertTrue(res);
     var str = GetString(trace_stream);
     AssertEqual("HEY", str);

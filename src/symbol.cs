@@ -24,15 +24,31 @@ public struct TypeRef
   public Type type;
   public string name;
 #if BHL_FRONT
+  //NOTE: parse location of the type
   public bhlParser.TypeContext node;
 #endif
+
+  public static bool IsComplexType(string name)
+  {
+    return name.IndexOf("^") != -1;
+  }
 
   public TypeRef(string name)
   {
     this.name = name;
     this.type = null;
-#if BHL_FRONT
     this.node = null;
+
+#if BHL_FRONT
+    if(IsComplexType(name))
+    {
+      var tmp = AST_Builder.ParseType(name);
+      if(tmp == null)
+        throw new Exception("Bad type: " + name);
+
+      if(tmp.fnargs() != null)
+        this.type = new FuncType(tmp);
+    }
 #endif
   }
 
@@ -45,9 +61,32 @@ public struct TypeRef
 #endif
   }
 
+#if BHL_FRONT
+  public TypeRef(bhlParser.TypeContext node)
+  {
+    this.name = node.GetText();
+
+    if(node.fnargs() != null)
+      this.type = new FuncType(node);
+    else
+      this.type = null;
+    this.node = node;
+  }
+
+  public static implicit operator TypeRef(bhlParser.TypeContext node)
+  {
+    return new TypeRef(node);
+  }
+#endif
+
   public static implicit operator TypeRef(string name)
   {
     return new TypeRef(name);
+  }
+
+  public static implicit operator TypeRef(FuncType ft)
+  {
+    return new TypeRef(ft);
   }
 
   public static implicit operator TypeRef(ClassSymbol cl)
@@ -62,11 +101,11 @@ public struct TypeRef
 
   public Type Get()
   {
-    if(name == null)
-      return null;
-
     if(type != null)
       return type;
+
+    if(name == null)
+      return null;
 
     type = bindings.type(name);
     return type;
@@ -376,7 +415,78 @@ public abstract class ScopedSymbol : Symbol, Scope
   public abstract OrderedDictionary GetMembers();
 }
 
-public class FuncSymbol : ScopedSymbol 
+public class FuncType : Type
+{
+  public string name;
+  public uint nname;
+  public TypeRef ret_type;
+  public List<TypeRef> arg_types = new List<TypeRef>();
+
+  public int GetTypeIndex() { return SymbolTable.tUSER; }
+  public string GetName() { return name; }
+  public uint GetNname() { return nname; }
+
+  public FuncType()
+  {}
+
+#if BHL_FRONT
+  public FuncType(bhlParser.TypeContext node)
+  {
+    ret_type = node.NAME().GetText();
+    var fnames = node.fnargs().names();
+    if(fnames != null)
+    {
+      for(int i=0;i<fnames.NAME().Length;++i)
+      {
+        var name = fnames.NAME()[i];
+        arg_types.Add(name.GetText());
+      }
+    }
+    Update();
+  }
+#endif
+
+  public FuncType(TypeRef ret_type)
+  {
+    this.ret_type = ret_type;
+    Update();
+  }
+
+  public bool IsCompatible(FuncType o)
+  {
+    return nname == o.nname;
+
+    //if(type.name != o.type.name)
+    //  return false;
+
+    //if(arg_types.Count != o.arg_types.Count)
+    //  return false;
+
+    //for(int i=0;i<arg_types.Count;++i)
+    //{
+    //  if(arg_types[i].name != o.arg_types[i].name)
+    //    return false;
+    //}
+
+    //return true;
+  }
+
+  public void Update()
+  {
+    name = ret_type.name + "^("; 
+    for(int i=0;i<arg_types.Count;++i)
+    {
+      if(i > 0)
+        name += ",";
+      name += arg_types[i].name;
+    }
+    name += ")";
+
+    nname = Hash.CRC28(name);
+  }
+}
+
+public class FuncSymbol : ScopedSymbol
 {
   OrderedDictionary members = new OrderedDictionary();
   OrderedDictionary args = new OrderedDictionary();
@@ -384,11 +494,16 @@ public class FuncSymbol : ScopedSymbol
   public bool visitings_args = false;
   public bool return_statement_found = false;
 
-  public FuncSymbol(WrappedNode n, string name, TypeRef ret_type, Scope parent) 
-    : base(n, name, ret_type, parent)
+  public FuncSymbol(WrappedNode n, string name, FuncType type, Scope parent) 
+    : base(n, name, type, parent)
   {}
 
   public override OrderedDictionary GetMembers() { return members; }
+
+  public FuncType GetFuncType()
+  {
+    return (FuncType)this.type.Get();
+  }
 
   public OrderedDictionary GetArgs()
   {
@@ -401,15 +516,17 @@ public class FuncSymbol : ScopedSymbol
     args.Add(name, sym);
   }
 
+  public virtual ulong GetCallId() { return nname; }
+
   public virtual int GetTotalArgsNum() { return 0; }
   public virtual int GetDefaultArgsNum() { return 0; }
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
-  public virtual ulong GetCallId() { return nname; }
-  public bool IsRefAt(int idx) 
+  public bool IsArgRefAt(int idx) 
   {
     var farg = members[idx] as FuncArgSymbol;
     return farg != null && farg.is_ref;
   }
+
 #if BHL_FRONT
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
 #endif
@@ -451,10 +568,24 @@ public class LambdaSymbol : FuncSymbol
   List<FuncDecl> fdecl_stack;
 
   public LambdaSymbol(AST_LambdaDecl decl, List<FuncDecl> fdecl_stack, WrappedNode n, string name, TypeRef ret_type, Scope parent) 
-    : base(n, name, ret_type, parent)
+    : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
+#if BHL_FRONT
+    var ft = GetFuncType();
+    var ctx = (bhlParser.ExpLambdaContext)n.tree;
+    var fparams = ctx.funcLambda().funcParams();
+    if(fparams != null)
+    {
+      for(int i=0;i<fparams.varDeclare().Length;++i)
+      {
+        var vd = fparams.varDeclare()[i];
+        ft.arg_types.Add(vd.type());
+      }
+    }
+    ft.Update();
+#endif
   }
 
   public override Symbol resolve(string name) 
@@ -535,11 +666,22 @@ public class FuncSymbolAST : FuncSymbol
       , bhlParser.FuncParamsContext fparams
 #endif
       ) 
-    : base(n, name, ret_type, parent)
+    : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
 #if BHL_FRONT
     this.fparams = fparams;
+
+    var ft = GetFuncType();
+    if(fparams != null)
+    {
+      for(int i=0;i<fparams.varDeclare().Length;++i)
+      {
+        var vd = fparams.varDeclare()[i];
+        ft.arg_types.Add(vd.type());
+      }
+    }
+    ft.Update();
 #endif
   }
 
@@ -566,7 +708,7 @@ public class FuncBindSymbol : FuncSymbol
   public int def_args_num;
 
   public FuncBindSymbol(string name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, int def_args_num = 0) 
-    : base(null, name, ret_type, null)
+    : base(null, name, new FuncType(ret_type), null)
   {
     this.func_creator = func_creator;
     this.def_args_num = def_args_num;
@@ -581,6 +723,10 @@ public class FuncBindSymbol : FuncSymbol
 
     //NOTE: for bind funcs every defined symbol is assumed to be an argument
     DefineArg(sym.name);
+
+    var ft = GetFuncType();
+    ft.arg_types.Add(sym.type);
+    ft.Update();
   }
 }
 
@@ -603,19 +749,6 @@ public class ConfNodeSymbol : FuncBindSymbol
 
   //NOTE: very controverse, but makes porting and usage much cleaner
   public override int GetDefaultArgsNum() { return 1; }
-}
-
-public class FuncTypeSymbol : Symbol, Type
-{
-  public Type original;
-
-  public FuncTypeSymbol(Type original) 
-    : base(null, original.GetName() + "^()")
-  {
-    this.original = original;
-  }
-
-  public int GetTypeIndex() { return SymbolTable.tUSER; }
 }
 
 public class ClassSymbol : ScopedSymbol, Scope, Type 
@@ -764,7 +897,6 @@ static public class SymbolTable
   static public BuiltInTypeSymbol _enum = new BuiltInTypeSymbol("enum", tENUM);
   static public BuiltInTypeSymbol _any = new BuiltInTypeSymbol("any", tANY);
   static public BuiltInTypeSymbol _null = new BuiltInTypeSymbol("null", tUSER);
-  static public FuncTypeSymbol _fn_void = new FuncTypeSymbol(_void);
 
   // Arithmetic types defined in order from narrowest to widest
   public static Type[] indexToType = new Type[] {
@@ -895,8 +1027,6 @@ static public class SymbolTable
 
       globals.define(fn);
     }
-
-    globals.define(_fn_void);
   }
 
   static public Type GetResultType(Type[,] typeTable, WrappedNode a, WrappedNode b) 
@@ -927,9 +1057,21 @@ static public class SymbolTable
            promotion == destType || 
            destType == _any ||
            (destType is ClassSymbol && valueType == _null) ||
-           (destType == _fn_void && valueType == _null) || 
+           (destType is FuncType && valueType == _null) || 
+           IsCompatibleFuncTypes(valueType, destType) ||
            IsChildClass(valueType, destType)
            ;
+  }
+
+  static public bool IsCompatibleFuncTypes(Type a, Type b) 
+  {
+    var fa = a as FuncType;
+    if(fa == null)
+      return false;
+    var fb = b as FuncType;
+    if(fb == null)
+      return false;
+    return fa.IsCompatible(fb);
   }
 
   static public bool IsChildClass(Type t, Type pt) 

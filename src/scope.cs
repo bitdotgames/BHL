@@ -97,7 +97,6 @@ public class GlobalScope : BaseScope
   static bool IsBuiltin(Symbol s)
   {
     return ((s is BuiltInTypeSymbol) || 
-            (s == SymbolTable._fn_void) ||
             (s is ArrayTypeSymbol)
            );
   }
