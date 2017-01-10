@@ -334,7 +334,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         node = AST_Util.New_Call(member_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, str_name, func_symb.GetCallId(), (Symbol)member_scope);
         AddCallArgs(ctx, func_symb, cargs, ref node);
-        type = func_symb.GetFuncType().ret_type.Get();
+        type = func_symb.GetReturnType();
       }
       else
       {
@@ -344,7 +344,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         {
           node = AST_Util.New_Call(EnumCall.FUNC, str_name, func_symb.GetCallId());
           AddCallArgs(ctx, func_symb, cargs, ref node);
-          type = func_symb.GetFuncType().ret_type.Get();
+          type = func_symb.GetReturnType();
         }
         else
         {
@@ -580,7 +580,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     mscope.define(symb);
 
     //NOTE: while we are inside lambda the eval type is the return type of
-    Wrap(ctx).eval_type = symb.GetFuncType().ret_type.Get();
+    Wrap(ctx).eval_type = symb.GetReturnType();
 
     node.block().AddChild(Visit(ctx.funcLambda().funcBlock()));
 

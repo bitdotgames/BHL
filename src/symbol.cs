@@ -505,6 +505,11 @@ public class FuncSymbol : ScopedSymbol
     return (FuncType)this.type.Get();
   }
 
+  public Type GetReturnType()
+  {
+    return GetFuncType().ret_type.Get();
+  }
+
   public OrderedDictionary GetArgs()
   {
     return args;
