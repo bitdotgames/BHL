@@ -554,10 +554,6 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var fdecl = new FuncDecl(node, symb);
     PushFuncDecl(fdecl);
 
-    var fparams = ctx.funcLambda().funcParams();
-    if(fparams != null)
-      node.fparams().AddChild(Visit(fparams));
-
     var useblock = ctx.funcLambda().useBlock();
     if(useblock != null)
     {
@@ -573,16 +569,24 @@ public class AST_Builder : bhlBaseVisitor<AST>
       }
     }
 
+    var scope_backup = curr_scope;
+    curr_scope = symb;
+
+    var fparams = ctx.funcLambda().funcParams();
+    if(fparams != null)
+      node.fparams().AddChild(Visit(fparams));
+
     //NOTE: for now defining lambdas in a module scope 
     mscope.define(symb);
 
-    var scope_backup = curr_scope;
-    curr_scope = symb;
+    //NOTE: while we are inside lambda the eval type is the return type of
+    Wrap(ctx).eval_type = symb.GetFuncType().ret_type.Get();
 
     node.block().AddChild(Visit(ctx.funcLambda().funcBlock()));
 
     PopFuncDecl();
 
+    //NOTE: once we are out of lambda the eval type is the lambda itself
     Wrap(ctx).eval_type = symb.type.Get();
 
     curr_scope = scope_backup;

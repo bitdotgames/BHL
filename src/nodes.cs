@@ -1880,6 +1880,8 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     var ldecl = fr.decl as AST_LambdaDecl;
     if(ldecl != null)
     {
+      //Console.WriteLine("PUSH LCTX " + this.GetHashCode() + " " + ldecl.useparams.Count);
+
       //setting use params to its own memory scope
       for(int i=0;i<ldecl.useparams.Count;++i)
       {

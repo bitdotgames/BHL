@@ -4032,6 +4032,38 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestComplexFuncPtrLambda()
+  {
+    string bhl = @"
+    func bool test(int b) 
+    {
+      bool^(int,string) ptr = 
+        func bool (int a, string k)
+        {
+          trace(k)
+          return a > 2
+        }
+      return ptr(b, ""HEY"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractBool(intp.ExecNode(node));
+    //NodeDump(node);
+    AssertTrue(res);
+    var str = GetString(trace_stream);
+    AssertEqual("HEY", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestLambdaPassAsVar()
   {
     string bhl = @"
