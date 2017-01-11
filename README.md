@@ -40,9 +40,9 @@ func UNIT_GREMLIN(float radius_max)
           DYING()
           SCATTER()
           paral {
-            RETHINK_LISTENER(func() {
-              Check(HEAVY_LAST_TIME <= time())
-              Check(ROLL_LAST_TIME <= time())
+            RETHINK_LISTENER(func bool () {
+              return HEAVY_LAST_TIME <= time() || 
+                     ROLL_LAST_TIME <= time()
             })
             prio {
               GREMLIN_ROLL_ATTACK(stamp : ref ROLL_LAST_TIME, radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
