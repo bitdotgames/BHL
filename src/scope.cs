@@ -117,6 +117,11 @@ public class GlobalScope : BaseScope
     }
     return tr;
   }
+
+  public TypeRef type(Type t)
+  {
+    return new TypeRef(t);
+  }
 }
 
 public class LocalScope : BaseScope 
