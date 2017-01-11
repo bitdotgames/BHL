@@ -10,8 +10,6 @@ using bhl;
 
 public class BHL
 {
-  const int MAX_THREADS = 6;
-
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
@@ -25,12 +23,13 @@ public class BHL
     var files = new List<string>();
 
     string src_dir = "";
-		string res_file = "";
+    string res_file = "";
     string cache_dir = "";
     bool use_cache = true;
     string err_file = "";
     string postproc_dll_path = "";
     string userbindings_dll_path = "";
+    int MAX_THREADS = 1;
 
     var p = new OptionSet () {
 			{ "dir=", "source dir",
@@ -49,6 +48,8 @@ public class BHL
 				v => userbindings_dll_path = v },
 			{ "error=", "error file",
 				v => err_file = v },
+			{ "threads=", "number of threads",
+			    v => MAX_THREADS = int.Parse(v) },			
 			{ "d", "debug version",
 				v => Util.DEBUG = v != null }
      };
