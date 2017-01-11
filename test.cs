@@ -4062,6 +4062,70 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes()
+  {
+    string bhl = @"
+    func bool foo(int a, string k)
+    {
+      trace(k)
+      return a > 2
+    }
+
+    func bool test(int a) 
+    {
+      bool^(int,string) ptr = foo
+      return ptr(a, ""HEY"") && ptr(a-1, ""BAR"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractBool(intp.ExecNode(node));
+    //NodeDump(node);
+    AssertTrue(!res);
+    var str = GetString(trace_stream);
+    AssertEqual("HEYBAR", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes2()
+  {
+    string bhl = @"
+    func int foo(int a)
+    {
+      int^(int) p = 
+        func int (int a) {
+          return a * 2
+        }
+
+      return p(a)
+    }
+
+    func int test(int a) 
+    {
+      return foo(a) + foo(a+1)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+    AssertEqual(res, 14);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestComplexFuncPtrPassRef()
   {
     string bhl = @"
