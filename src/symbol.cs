@@ -53,9 +53,9 @@ public struct TypeRef
     this.name = name;
     this.type = null;
     this.is_ref = false;
-    this.node = null;
 
 #if BHL_FRONT
+    this.node = null;
     if(IsCompoundType(name))
     {
       var tmp = AST_Builder.ParseType(name);
