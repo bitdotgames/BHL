@@ -80,10 +80,7 @@ public class GlobalScope : BaseScope
 
   public GlobalScope() 
     : base(null) 
-  {
-    //TODO: probably not the best place
-    TypeRef.bindings = this;
-  }
+  {}
 
   public override string GetScopeName() { return "global"; }
 
@@ -111,7 +108,7 @@ public class GlobalScope : BaseScope
 
   public TypeRef type(string name)
   {
-    return new TypeRef(name);
+    return new TypeRef(this, name);
   }
 }
 

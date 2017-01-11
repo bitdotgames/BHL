@@ -182,7 +182,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     if(type == null && node != null && node.fnargs() != null)
     {
       //TODO: add it to globals?
-      type = new FuncType(node);
+      type = new FuncType(globals, node);
     }
 
     var tr = new TypeRef();
@@ -367,8 +367,6 @@ public class AST_Builder : bhlBaseVisitor<AST>
         ulong func_call_id = call_func_symb.GetCallId();
 
         node = AST_Util.New_Call(EnumCall.FUNC2VAR, str_name, func_call_id);
-        //if(func_symb.GetRequiredArgsNum() > 0)
-        //  FireError(Location(name) + " : Function expects arguments to be passed");
         type = func_symb.type.Get();
       }
       else
@@ -587,7 +585,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var func_name = curr_m.GetId() + "_" + NextLambdaId(); 
     var node = AST_Util.New_LambdaDecl(curr_m.GetId(), tr.name, func_name);
     var lambda_node = Wrap(ctx);
-    var symb = new LambdaSymbol(node, this.func_decl_stack, lambda_node, func_name, tr, mscope);
+    var symb = new LambdaSymbol(globals, node, this.func_decl_stack, lambda_node, func_name, tr, mscope);
 
     var fdecl = new FuncDecl(node, symb);
     PushFuncDecl(fdecl);
@@ -1177,7 +1175,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
     var node = AST_Util.New_FuncDecl(curr_m.GetId(), tr.name, str_name);
-    var symb = new FuncSymbolAST(node, func_node, str_name, tr, curr_scope, ctx.funcParams());
+    var symb = new FuncSymbolAST(globals, node, func_node, str_name, tr, curr_scope, ctx.funcParams());
     mscope.define(symb);
     curr_m.symbols.define(symb);
     curr_scope = symb;

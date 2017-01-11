@@ -19,7 +19,7 @@ public interface Type
 
 public struct TypeRef
 {
-  static public GlobalScope bindings;
+  public GlobalScope bindings;
 
   public Type type;
   public bool is_ref;
@@ -34,8 +34,22 @@ public struct TypeRef
     return name.IndexOf("^") != -1;
   }
 
-  public TypeRef(string name)
+  public static TypeRef NewEmpty()
   {
+    var t = new TypeRef();
+    t.bindings = null;
+    t.name = null;
+    t.type = null;
+    t.is_ref = false;
+#if BHL_FRONT
+    t.node = null;
+#endif
+    return t;
+  }
+
+  public TypeRef(GlobalScope bindings, string name)
+  {
+    this.bindings = bindings;
     this.name = name;
     this.type = null;
     this.is_ref = false;
@@ -49,13 +63,14 @@ public struct TypeRef
         throw new Exception("Bad type: " + name);
 
       if(tmp.fnargs() != null)
-        this.type = new FuncType(tmp);
+        this.type = new FuncType(bindings, tmp);
     }
 #endif
   }
 
   public TypeRef(Type type)
   {
+    this.bindings = null;
     this.name = type.GetName();
     this.type = type;
     this.is_ref = false;
@@ -65,39 +80,15 @@ public struct TypeRef
   }
 
 #if BHL_FRONT
-  public TypeRef(bhlParser.TypeContext node)
+  public TypeRef(GlobalScope bindings, bhlParser.TypeContext node)
   {
+    this.bindings = bindings;
     this.name = node.GetText();
-    this.type = node.fnargs() != null ? new FuncType(node) : null;
+    this.type = node.fnargs() != null ? new FuncType(bindings, node) : null;
     this.is_ref = false;
     this.node = node;
   }
-
-  public static implicit operator TypeRef(bhlParser.TypeContext node)
-  {
-    return new TypeRef(node);
-  }
 #endif
-
-  public static implicit operator TypeRef(string name)
-  {
-    return new TypeRef(name);
-  }
-
-  public static implicit operator TypeRef(FuncType ft)
-  {
-    return new TypeRef(ft);
-  }
-
-  public static implicit operator TypeRef(ClassSymbol cl)
-  {
-    return new TypeRef(cl);
-  }
-
-  public static implicit operator TypeRef(EnumSymbol en)
-  {
-    return new TypeRef(en);
-  }
 
   public Type Get()
   {
@@ -238,25 +229,25 @@ public class ArrayTypeSymbol : ClassSymbol
     this.creator = CreateArr;
 
     {
-      var fn = new FuncBindSymbol("Add", "void", Create_Add);
+      var fn = new FuncBindSymbol("Add", globs.type("void"), Create_Add);
       fn.define(new FuncArgSymbol("o", original));
       this.define(fn);
     }
 
     {
       var fn = new FuncBindSymbol("At", original, Create_At);
-      fn.define(new FuncArgSymbol("idx", "int"));
+      fn.define(new FuncArgSymbol("idx", globs.type("int")));
       this.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("RemoveAt", "void", Create_RemoveAt);
-      fn.define(new FuncArgSymbol("idx", "int"));
+      var fn = new FuncBindSymbol("RemoveAt", globs.type("void"), Create_RemoveAt);
+      fn.define(new FuncArgSymbol("idx", globs.type("int")));
       this.define(fn);
     }
 
     {
-      var vs = new bhl.FieldSymbol("Count", "int",
+      var vs = new bhl.FieldSymbol("Count", globs.type("int"),
         delegate(bhl.DynVal ctx, ref bhl.DynVal v)
         {
           var lst = (IList)ctx.obj;
@@ -432,16 +423,16 @@ public class FuncType : Type
   {}
 
 #if BHL_FRONT
-  public FuncType(bhlParser.TypeContext node)
+  public FuncType(GlobalScope globals, bhlParser.TypeContext node)
   {
-    ret_type = node.NAME().GetText();
+    ret_type = globals.type(node.NAME().GetText());
     var fnames = node.fnargs().names();
     if(fnames != null)
     {
       for(int i=0;i<fnames.refName().Length;++i)
       {
         var name = fnames.refName()[i];
-        var arg_type = new TypeRef(name.NAME().GetText());
+        var arg_type = globals.type(name.NAME().GetText());
         arg_type.is_ref = name.isRef() != null; 
         arg_types.Add(arg_type);
       }
@@ -487,7 +478,7 @@ public class FuncSymbol : ScopedSymbol
   public bool return_statement_found = false;
 
   public FuncSymbol(WrappedNode n, string name, FuncType type, Scope parent) 
-    : base(n, name, type, parent)
+    : base(n, name, new TypeRef(type), parent)
   {}
 
   public override OrderedDictionary GetMembers() { return members; }
@@ -564,7 +555,7 @@ public class LambdaSymbol : FuncSymbol
 
   List<FuncDecl> fdecl_stack;
 
-  public LambdaSymbol(AST_LambdaDecl decl, List<FuncDecl> fdecl_stack, WrappedNode n, string name, TypeRef ret_type, Scope parent) 
+  public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl, List<FuncDecl> fdecl_stack, WrappedNode n, string name, TypeRef ret_type, Scope parent) 
     : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
@@ -578,7 +569,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.varDeclare().Length;++i)
       {
         var vd = fparams.varDeclare()[i];
-        ft.arg_types.Add(vd.type());
+        ft.arg_types.Add(new TypeRef(globs, vd.type()));
       }
     }
     ft.Update();
@@ -658,7 +649,7 @@ public class FuncSymbolAST : FuncSymbol
   public bhlParser.FuncParamsContext fparams;
 #endif
 
-  public FuncSymbolAST(AST_FuncDecl decl, WrappedNode n, string name, TypeRef ret_type, Scope parent
+  public FuncSymbolAST(GlobalScope globals, AST_FuncDecl decl, WrappedNode n, string name, TypeRef ret_type, Scope parent
 #if BHL_FRONT
       , bhlParser.FuncParamsContext fparams
 #endif
@@ -675,7 +666,7 @@ public class FuncSymbolAST : FuncSymbol
       for(int i=0;i<fparams.varDeclare().Length;++i)
       {
         var vd = fparams.varDeclare()[i];
-        var type = new TypeRef(vd.type());
+        var type = new TypeRef(globals, vd.type());
         type.is_ref = vd.isRef() != null;
         ft.arg_types.Add(type);
       }
@@ -819,11 +810,11 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
 public class ClassBindSymbol : ClassSymbol
 {
   public ClassBindSymbol(string name, Interpreter.ClassCreator creator)
-    : base(null, name, new TypeRef(), null, creator)
+    : base(null, name, TypeRef.NewEmpty(), null, creator)
   {}
 
-  public ClassBindSymbol(string name, string parent, Interpreter.ClassCreator creator)
-    : base(null, name, new TypeRef(parent), null, creator)
+  public ClassBindSymbol(string name, TypeRef super_class, Interpreter.ClassCreator creator)
+    : base(null, name, super_class, null, creator)
   {}
 }
 
@@ -998,21 +989,21 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncBindSymbol("RUNNING", "void",
+      var fn = new FuncBindSymbol("RUNNING", globals.type("void"),
         delegate() { return new AlwaysRunning(); } 
       );
       globals.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("YIELD", "void",
+      var fn = new FuncBindSymbol("YIELD", globals.type("void"),
         delegate() { return new YieldOnce(); } 
       );
       globals.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("SUCCESS", "void",
+      var fn = new FuncBindSymbol("SUCCESS", globals.type("void"),
         delegate() { return new AlwaysSuccess(); } 
       );
 
@@ -1020,7 +1011,7 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncBindSymbol("FAILURE", "void",
+      var fn = new FuncBindSymbol("FAILURE", globals.type("void"),
         delegate() { return new AlwaysFailure(); } 
       );
 
