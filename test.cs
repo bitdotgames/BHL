@@ -4062,6 +4062,42 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestComplexFuncPtrPassRef()
+  {
+    string bhl = @"
+    func void foo(int a, string k, ref bool res)
+    {
+      trace(k)
+      res = a > 2
+    }
+
+    func bool test(int a) 
+    {
+      void^(int,string, ref  bool) ptr = foo
+      bool res = false
+      ptr(a, ""HEY"", ref res)
+      return res
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractBool(intp.ExecNode(node));
+    //NodeDump(node);
+    AssertTrue(res);
+    var str = GetString(trace_stream);
+    AssertEqual("HEY", str);
+    CommonChecks(intp);
+  }
+
+
+  [IsTested()]
   public void TestComplexFuncPtrLambda()
   {
     string bhl = @"
@@ -4157,6 +4193,93 @@ public class BHL_Test
         Interpret("", bhl, globs);
       },
       @"int, @(7,10) ""hey"":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgRefTypeCheck()
+  {
+    string bhl = @"
+    func void foo(int a, ref  float b) { }
+
+    func void test() 
+    {
+      float b = 1
+      void^(int, ref float) ptr = foo
+      ptr(10, b)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      @"b:<float>: 'ref' is missing"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgRefTypeCheck2()
+  {
+    string bhl = @"
+    func void foo(int a, ref float b) { }
+
+    func void test() 
+    {
+      float b = 1
+      void^(int, float) ptr = foo
+      ptr(10, ref b)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "ptr:<void^(int,float)>, @(7,28) =foo:<void^(int,ref float)> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrPassConflictingRef()
+  {
+    string bhl = @"
+    func void foo(int a, string k, refbool res)
+    {
+      trace(k)
+    }
+
+    func bool test(int a) 
+    {
+      void^(int,string,ref bool) ptr = foo
+      bool res = false
+      ptr(a, ""HEY"", ref res)
+      return res
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    {
+      var cl = new ClassBindSymbol("refbool",
+        delegate(ref DynVal v) 
+        {}
+      );
+      globs.define(cl);
+    }
+
+    BindTrace(globs, trace_stream);
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "have incompatible types"
     );
   }
 

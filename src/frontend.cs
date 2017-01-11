@@ -490,9 +490,9 @@ public class AST_Builder : bhlBaseVisitor<AST>
         var func_arg_type = func_arg_symb.node == null ? func_arg_symb.type.Get() : func_arg_symb.node.eval_type;  
 
         if(ca.isRef() == null && func_symb.IsArgRefAt(i))
-          FireError(Location(ca) +  ": 'ref' specifier is missing");
+          FireError(Location(ca) +  ": 'ref' is missing");
         else if(ca.isRef() != null && !func_symb.IsArgRefAt(i))
-          FireError(Location(ca) +  ": argument is not a ref");
+          FireError(Location(ca) +  ": argument is not a 'ref'");
 
         PushJsonType(func_arg_type);
         new_node.AddChild(Visit(ca));
@@ -525,16 +525,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
         FireError(Location(next_arg) +  ": Missing argument of type '" + arg_type.name + "'");
-        FireError(Location(cargs) +  ": Not enough arguments");
       }
 
       var ca = cargs.callArg()[i];
       var ca_name = ca.NAME();
 
       if(ca_name != null)
-      {
         FireError(Location(ca_name) +  ": Named arguments not supported for function pointers");
-      }
 
       var type = arg_type.Get();
       PushJsonType(type);
@@ -544,14 +541,16 @@ public class AST_Builder : bhlBaseVisitor<AST>
       var wca = Wrap(ca);
       SymbolTable.CheckAssign(type, wca);
 
+      if(arg_type.is_ref && ca.isRef() == null)
+        FireError(Location(ca) +  ": 'ref' is missing");
+      else if(!arg_type.is_ref && ca.isRef() != null)
+        FireError(Location(ca) +  ": argument is not a 'ref'");
+
       prev_ca = ca;
     }
 
     if(ca_len != func_args.Count)
-    {
-      var next_arg = FindNextCallArg(cargs, prev_ca);
-      FireError(Location(next_arg) +  ": Too many arguments");
-    }
+      FireError(Location(cargs) +  ": Too many arguments");
 
     new_node.cargs_num = func_args.Count;
   }

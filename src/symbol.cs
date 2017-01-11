@@ -459,20 +459,6 @@ public class FuncType : Type
   public bool IsCompatible(FuncType o)
   {
     return nname == o.nname;
-
-    //if(type.name != o.type.name)
-    //  return false;
-
-    //if(arg_types.Count != o.arg_types.Count)
-    //  return false;
-
-    //for(int i=0;i<arg_types.Count;++i)
-    //{
-    //  if(arg_types[i].name != o.arg_types[i].name)
-    //    return false;
-    //}
-
-    //return true;
   }
 
   public void Update()
@@ -482,6 +468,8 @@ public class FuncType : Type
     {
       if(i > 0)
         name += ",";
+      if(arg_types[i].is_ref)
+        name += "ref ";
       name += arg_types[i].name;
     }
     name += ")";
@@ -687,7 +675,9 @@ public class FuncSymbolAST : FuncSymbol
       for(int i=0;i<fparams.varDeclare().Length;++i)
       {
         var vd = fparams.varDeclare()[i];
-        ft.arg_types.Add(vd.type());
+        var type = new TypeRef(vd.type());
+        type.is_ref = vd.isRef() != null;
+        ft.arg_types.Add(type);
       }
     }
     ft.Update();
