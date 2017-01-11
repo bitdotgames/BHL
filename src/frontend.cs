@@ -321,19 +321,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         var ftype = var_symb.type.Get() as FuncType;
         node = AST_Util.New_Call(EnumCall.FUNC_PTR, str_name, Hash.CRC28(str_name));
-        //AddCallArgs(ctx, func_symb, cargs, ref node);
-        for(int ci=0;ci<cargs.callArg().Length;++ci)
-        {
-          var ca = cargs.callArg()[ci];
-          node.AddChild(Visit(ca));
-        }
-        node.cargs_num = cargs.callArg().Length;
+        AddCallArgs(ftype, cargs, ref node);
         type = ftype.ret_type.Get();
       }
       else if(func_symb != null)
       {
         node = AST_Util.New_Call(member_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, str_name, func_symb.GetCallId(), (Symbol)member_scope);
-        AddCallArgs(ctx, func_symb, cargs, ref node);
+        AddCallArgs(func_symb, cargs, ref node);
         type = func_symb.GetReturnType();
       }
       else
@@ -343,7 +337,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         if(func_symb != null)
         {
           node = AST_Util.New_Call(EnumCall.FUNC, str_name, func_symb.GetCallId());
-          AddCallArgs(ctx, func_symb, cargs, ref node);
+          AddCallArgs(func_symb, cargs, ref node);
           type = func_symb.GetReturnType();
         }
         else
@@ -420,7 +414,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     public Symbol orig;
   }
 
-  void AddCallArgs(bhlParser.CallExpItemContext ctx, FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call new_node)
+  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call new_node)
   {     
     var func_args = func_symb.GetArgs();
     var total_args_num = func_symb.GetTotalArgsNum();
@@ -517,6 +511,51 @@ public class AST_Builder : bhlBaseVisitor<AST>
     new_node.cargs_num = args_passed;
   }
 
+  void AddCallArgs(FuncType func_type, bhlParser.CallArgsContext cargs, ref AST_Call new_node)
+  {     
+    var func_args = func_type.arg_types;
+
+    int ca_len = cargs.callArg().Length; 
+    IParseTree prev_ca = null;
+    for(int i=0;i<func_args.Count;++i)
+    {
+      var arg_type = func_args[i]; 
+
+      if(i == ca_len)
+      {
+        var next_arg = FindNextCallArg(cargs, prev_ca);
+        FireError(Location(next_arg) +  ": Missing argument of type '" + arg_type.name + "'");
+        FireError(Location(cargs) +  ": Not enough arguments");
+      }
+
+      var ca = cargs.callArg()[i];
+      var ca_name = ca.NAME();
+
+      if(ca_name != null)
+      {
+        FireError(Location(ca_name) +  ": Named arguments not supported for function pointers");
+      }
+
+      var type = arg_type.Get();
+      PushJsonType(type);
+      new_node.AddChild(Visit(ca));
+      PopJsonType();
+
+      var wca = Wrap(ca);
+      SymbolTable.CheckAssign(type, wca);
+
+      prev_ca = ca;
+    }
+
+    if(ca_len != func_args.Count)
+    {
+      var next_arg = FindNextCallArg(cargs, prev_ca);
+      FireError(Location(next_arg) +  ": Too many arguments");
+    }
+
+    new_node.cargs_num = func_args.Count;
+  }
+
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
   {
     for(int i=0;i<cargs.callArg().Length;++i)
@@ -557,9 +596,9 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var useblock = ctx.funcLambda().useBlock();
     if(useblock != null)
     {
-      for(int i=0;i<useblock.useName().Length;++i)
+      for(int i=0;i<useblock.refName().Length;++i)
       {
-        var un = useblock.useName()[i]; 
+        var un = useblock.refName()[i]; 
         var un_name_str = un.NAME().GetText(); 
         var un_symb = curr_scope.resolve(un_name_str);
         if(un_symb == null)

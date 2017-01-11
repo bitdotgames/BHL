@@ -739,15 +739,15 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitFuncLambda([NotNull] bhlParser.FuncLambdaContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.useName"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.refName"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterUseName([NotNull] bhlParser.UseNameContext context);
+	void EnterRefName([NotNull] bhlParser.RefNameContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.useName"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.refName"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitUseName([NotNull] bhlParser.UseNameContext context);
+	void ExitRefName([NotNull] bhlParser.RefNameContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.names"/>.
 	/// </summary>

@@ -449,11 +449,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncLambda([NotNull] bhlParser.FuncLambdaContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.useName"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.refName"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitUseName([NotNull] bhlParser.UseNameContext context);
+	Result VisitRefName([NotNull] bhlParser.RefNameContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.names"/>.
 	/// </summary>

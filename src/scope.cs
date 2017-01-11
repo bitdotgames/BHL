@@ -109,12 +109,9 @@ public class GlobalScope : BaseScope
     return null;
   }
 
-  public bhl.Type type(string name)
+  public TypeRef type(string name)
   {
-    var type = (bhl.Type)resolve(name);
-    if(type == null)
-      throw new Exception("Bad type: " + name);
-    return type;
+    return new TypeRef(name);
   }
 }
 

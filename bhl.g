@@ -145,16 +145,16 @@ funcLambda
   : 'func' type? '(' funcParams? ')' useBlock? funcBlock
   ;
 
-useName
+refName
   : isRef? NAME
   ;
 
 names
-  : NAME (',' NAME)*
+  : refName (',' refName)*
   ;
 
 useBlock
-  : 'use' '(' useName (',' useName)* ')'
+  : 'use' '(' refName (',' refName)* ')'
   ;
 
 funcParams

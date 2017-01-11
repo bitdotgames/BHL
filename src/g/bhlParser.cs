@@ -49,7 +49,7 @@ public partial class bhlParser : Parser {
 		RULE_else = 12, RULE_callExp = 13, RULE_callExpItem = 14, RULE_staticCallExp = 15, 
 		RULE_staticCallItem = 16, RULE_arrAccess = 17, RULE_memberAccess = 18, 
 		RULE_retstat = 19, RULE_callArgs = 20, RULE_callArg = 21, RULE_block = 22, 
-		RULE_funcDecl = 23, RULE_funcBlock = 24, RULE_funcLambda = 25, RULE_useName = 26, 
+		RULE_funcDecl = 23, RULE_funcBlock = 24, RULE_funcLambda = 25, RULE_refName = 26, 
 		RULE_names = 27, RULE_useBlock = 28, RULE_funcParams = 29, RULE_varDeclare = 30, 
 		RULE_initVar = 31, RULE_operatorOr = 32, RULE_operatorAnd = 33, RULE_operatorBitOr = 34, 
 		RULE_operatorBitAnd = 35, RULE_operatorComparison = 36, RULE_operatorAddSub = 37, 
@@ -61,7 +61,7 @@ public partial class bhlParser : Parser {
 		"explist", "exp", "statement", "mainIf", "elseIf", "else", "callExp", 
 		"callExpItem", "staticCallExp", "staticCallItem", "arrAccess", "memberAccess", 
 		"retstat", "callArgs", "callArg", "block", "funcDecl", "funcBlock", "funcLambda", 
-		"useName", "names", "useBlock", "funcParams", "varDeclare", "initVar", 
+		"refName", "names", "useBlock", "funcParams", "varDeclare", "initVar", 
 		"operatorOr", "operatorAnd", "operatorBitOr", "operatorBitAnd", "operatorComparison", 
 		"operatorAddSub", "operatorMulDivMod", "operatorUnary", "isRef", "number", 
 		"string", "jsonObject", "jsonEmptyObj", "jsonPair", "jsonArray", "jsonEmptyArr", 
@@ -435,7 +435,7 @@ public partial class bhlParser : Parser {
 			State = 125; Match(T__2);
 			State = 127;
 			_la = TokenStream.La(1);
-			if (_la==NAME) {
+			if (_la==T__52 || _la==NAME) {
 				{
 				State = 126; names();
 				}
@@ -2796,35 +2796,35 @@ public partial class bhlParser : Parser {
 		return _localctx;
 	}
 
-	public partial class UseNameContext : ParserRuleContext {
+	public partial class RefNameContext : ParserRuleContext {
 		public ITerminalNode NAME() { return GetToken(bhlParser.NAME, 0); }
 		public IsRefContext isRef() {
 			return GetRuleContext<IsRefContext>(0);
 		}
-		public UseNameContext(ParserRuleContext parent, int invokingState)
+		public RefNameContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_useName; } }
+		public override int RuleIndex { get { return RULE_refName; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterUseName(this);
+			if (typedListener != null) typedListener.EnterRefName(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitUseName(this);
+			if (typedListener != null) typedListener.ExitRefName(this);
 		}
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitUseName(this);
+			if (typedVisitor != null) return typedVisitor.VisitRefName(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public UseNameContext useName() {
-		UseNameContext _localctx = new UseNameContext(Context, State);
-		EnterRule(_localctx, 52, RULE_useName);
+	public RefNameContext refName() {
+		RefNameContext _localctx = new RefNameContext(Context, State);
+		EnterRule(_localctx, 52, RULE_refName);
 		int _la;
 		try {
 			EnterOuterAlt(_localctx, 1);
@@ -2852,9 +2852,11 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class NamesContext : ParserRuleContext {
-		public ITerminalNode[] NAME() { return GetTokens(bhlParser.NAME); }
-		public ITerminalNode NAME(int i) {
-			return GetToken(bhlParser.NAME, i);
+		public RefNameContext[] refName() {
+			return GetRuleContexts<RefNameContext>();
+		}
+		public RefNameContext refName(int i) {
+			return GetRuleContext<RefNameContext>(i);
 		}
 		public NamesContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -2884,7 +2886,7 @@ public partial class bhlParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 365; Match(NAME);
+			State = 365; refName();
 			State = 370;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.La(1);
@@ -2892,7 +2894,7 @@ public partial class bhlParser : Parser {
 				{
 				{
 				State = 366; Match(T__4);
-				State = 367; Match(NAME);
+				State = 367; refName();
 				}
 				}
 				State = 372;
@@ -2913,11 +2915,11 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class UseBlockContext : ParserRuleContext {
-		public UseNameContext[] useName() {
-			return GetRuleContexts<UseNameContext>();
+		public RefNameContext[] refName() {
+			return GetRuleContexts<RefNameContext>();
 		}
-		public UseNameContext useName(int i) {
-			return GetRuleContext<UseNameContext>(i);
+		public RefNameContext refName(int i) {
+			return GetRuleContext<RefNameContext>(i);
 		}
 		public UseBlockContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -2949,7 +2951,7 @@ public partial class bhlParser : Parser {
 			{
 			State = 373; Match(T__35);
 			State = 374; Match(T__2);
-			State = 375; useName();
+			State = 375; refName();
 			State = 380;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.La(1);
@@ -2957,7 +2959,7 @@ public partial class bhlParser : Parser {
 				{
 				{
 				State = 376; Match(T__4);
-				State = 377; useName();
+				State = 377; refName();
 				}
 				}
 				State = 382;
@@ -4242,9 +4244,9 @@ public partial class bhlParser : Parser {
 		sb.Append("\x2\x2\x168\x169\x5\x32\x1A\x2\x169\x35\x3\x2\x2\x2\x16A\x16C");
 		sb.Append("\x5R*\x2\x16B\x16A\x3\x2\x2\x2\x16B\x16C\x3\x2\x2\x2\x16C\x16D");
 		sb.Append("\x3\x2\x2\x2\x16D\x16E\a\x38\x2\x2\x16E\x37\x3\x2\x2\x2\x16F");
-		sb.Append("\x174\a\x38\x2\x2\x170\x171\a\a\x2\x2\x171\x173\a\x38\x2\x2");
-		sb.Append("\x172\x170\x3\x2\x2\x2\x173\x176\x3\x2\x2\x2\x174\x172\x3\x2");
-		sb.Append("\x2\x2\x174\x175\x3\x2\x2\x2\x175\x39\x3\x2\x2\x2\x176\x174");
+		sb.Append("\x174\x5\x36\x1C\x2\x170\x171\a\a\x2\x2\x171\x173\x5\x36\x1C");
+		sb.Append("\x2\x172\x170\x3\x2\x2\x2\x173\x176\x3\x2\x2\x2\x174\x172\x3");
+		sb.Append("\x2\x2\x2\x174\x175\x3\x2\x2\x2\x175\x39\x3\x2\x2\x2\x176\x174");
 		sb.Append("\x3\x2\x2\x2\x177\x178\a&\x2\x2\x178\x179\a\x5\x2\x2\x179\x17E");
 		sb.Append("\x5\x36\x1C\x2\x17A\x17B\a\a\x2\x2\x17B\x17D\x5\x36\x1C\x2\x17C");
 		sb.Append("\x17A\x3\x2\x2\x2\x17D\x180\x3\x2\x2\x2\x17E\x17C\x3\x2\x2\x2");

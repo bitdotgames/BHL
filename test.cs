@@ -4002,15 +4002,15 @@ public class BHL_Test
     {
       var type = AST_Builder.ParseType("bool^(int,string)");
       AssertEqual(type.NAME().GetText(), "bool");
-      AssertEqual(type.fnargs().names().NAME()[0].GetText(), "int");
-      AssertEqual(type.fnargs().names().NAME()[1].GetText(), "string");
+      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
+      AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
       AssertTrue(type.ARR() == null);
     }
 
     {
       var type = AST_Builder.ParseType("float^(int)[]");
       AssertEqual(type.NAME().GetText(), "float");
-      AssertEqual(type.fnargs().names().NAME()[0].GetText(), "int");
+      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
       AssertTrue(type.ARR() != null);
     }
 
@@ -4021,9 +4021,9 @@ public class BHL_Test
     }
 
     {
-      //malformed
-      var type = AST_Builder.ParseType("int]");
       //TODO:
+      //malformed
+      //var type = AST_Builder.ParseType("int]");
       //AssertTrue(type == null);
     }
   }
@@ -4091,6 +4091,142 @@ public class BHL_Test
     var str = GetString(trace_stream);
     AssertEqual("HEY", str);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrIncompatibleRetType()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      bool^(int) ptr = foo
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "@(6,17) ptr:<bool^(int)>, @(6,21) =foo:<void^(int)> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrArgTypeCheck()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      void^(float) ptr = foo
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "@(6,19) ptr:<void^(float)>, @(6,23) =foo:<void^(int)> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgTypeCheck()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      void^(int) ptr = foo
+      ptr(""hey"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      @"int, @(7,10) ""hey"":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgNotEnoughArgsCheck()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      void^(int) ptr = foo
+      ptr()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "Missing argument of type 'int'"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgNotEnoughArgsCheck2()
+  {
+    string bhl = @"
+    func void foo(int a, float b) { }
+
+    func void test() 
+    {
+      void^(int, float) ptr = foo
+      ptr(10)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "Missing argument of type 'float'"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgTooManyArgsCheck()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      void^(int) ptr = foo
+      ptr(10, 30)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "Too many arguments"
+    );
   }
 
   [IsTested()]

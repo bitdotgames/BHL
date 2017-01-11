@@ -22,13 +22,14 @@ public struct TypeRef
   static public GlobalScope bindings;
 
   public Type type;
+  public bool is_ref;
   public string name;
 #if BHL_FRONT
   //NOTE: parse location of the type
   public bhlParser.TypeContext node;
 #endif
 
-  public static bool IsComplexType(string name)
+  public static bool IsCompoundType(string name)
   {
     return name.IndexOf("^") != -1;
   }
@@ -37,10 +38,11 @@ public struct TypeRef
   {
     this.name = name;
     this.type = null;
+    this.is_ref = false;
     this.node = null;
 
 #if BHL_FRONT
-    if(IsComplexType(name))
+    if(IsCompoundType(name))
     {
       var tmp = AST_Builder.ParseType(name);
       if(tmp == null)
@@ -56,6 +58,7 @@ public struct TypeRef
   {
     this.name = type.GetName();
     this.type = type;
+    this.is_ref = false;
 #if BHL_FRONT
     this.node = null;
 #endif
@@ -65,11 +68,8 @@ public struct TypeRef
   public TypeRef(bhlParser.TypeContext node)
   {
     this.name = node.GetText();
-
-    if(node.fnargs() != null)
-      this.type = new FuncType(node);
-    else
-      this.type = null;
+    this.type = node.fnargs() != null ? new FuncType(node) : null;
+    this.is_ref = false;
     this.node = node;
   }
 
@@ -107,7 +107,9 @@ public struct TypeRef
     if(name == null)
       return null;
 
-    type = bindings.type(name);
+    type = (bhl.Type)bindings.resolve(name);
+    if(type == null)
+      throw new Exception("Bad type: " + name);
     return type;
   }
 }
@@ -436,10 +438,12 @@ public class FuncType : Type
     var fnames = node.fnargs().names();
     if(fnames != null)
     {
-      for(int i=0;i<fnames.NAME().Length;++i)
+      for(int i=0;i<fnames.refName().Length;++i)
       {
-        var name = fnames.NAME()[i];
-        arg_types.Add(name.GetText());
+        var name = fnames.refName()[i];
+        var arg_type = new TypeRef(name.NAME().GetText());
+        arg_type.is_ref = name.isRef() != null; 
+        arg_types.Add(arg_type);
       }
     }
     Update();
@@ -1115,7 +1119,6 @@ static public class SymbolTable
     }
   }
 
-  //NOTE: version for bindings
   static public void CheckAssign(Type lhs, WrappedNode rhs) 
   {
     int tlhs = lhs.GetTypeIndex(); // promote right to left type?
