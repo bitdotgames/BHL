@@ -77,6 +77,7 @@ public abstract class BaseScope : Scope
 public class GlobalScope : BaseScope 
 {
   Dictionary<ulong, Symbol> hashed_symbols = new Dictionary<ulong, Symbol>();
+  Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
 
   public GlobalScope() 
     : base(null) 
@@ -108,7 +109,13 @@ public class GlobalScope : BaseScope
 
   public TypeRef type(string name)
   {
-    return new TypeRef(this, name);
+    TypeRef tr;
+    if(!type_cache.TryGetValue(name, out tr))
+    {
+      tr = new TypeRef(this, name); 
+      type_cache[name] = tr;
+    }
+    return tr;
   }
 }
 

@@ -1254,22 +1254,31 @@ public class CallVarFuncPtr : SequentialNode
 
   public override void init(object agent) 
   {
+    base.init(agent);
+
     var interp = Interpreter.instance;
     var name = node.Name();
     var fct = (FuncCtx)interp.GetScopeValue(name).obj;
      
+    //NOTE: if func ctx is shared we need to make sure 
+    //      we use a unique version here, hence AutoClone
     fct = fct.AutoClone();
     fct.Retain();
     var func_node = fct.EnsureNode();
 
-    children.Clear();
+    //NOTE: traversing arg.nodes only for the first time
+    if(children.Count == 0)
+    {
+      interp.PushNode(this);
+      for(int i=0;i<node.cargs_num;++i)
+        interp.Visit(node.children[i]);
+      interp.PopNode();
 
-    interp.PushNode(this);
-    for(int i=0;i<node.cargs_num;++i)
-      interp.Visit(node.children[i]);
-    interp.PopNode();
-
-    children.Add(func_node);
+      children.Add(func_node);
+    }
+    //NOTE: else below is not tested, need a better test for this
+    else
+      children[children.Count-1] = func_node;
   }
 
   override public void deinit(object agent)

@@ -4117,11 +4117,135 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    node.SetArgs(DynVal.NewNum(3));
-    var res = ExtractNum(intp.ExecNode(node));
-    //NodeDump(node);
-    AssertEqual(res, 14);
+    {
+      var node = intp.GetFuncNode("test");
+      node.SetArgs(DynVal.NewNum(3));
+      var res = ExtractNum(intp.ExecNode(node));
+      //NodeDump(node);
+      AssertEqual(res, 14);
+    }
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes3()
+  {
+    string bhl = @"
+    func int foo(int a)
+    {
+      int^(int) p = 
+        func int (int a) {
+          return a
+        }
+
+      return p(a)
+    }
+
+    func int test(int a) 
+    {
+      return foo(a) + foo(a)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    {
+      var node = intp.GetFuncNode("test");
+      node.SetArgs(DynVal.NewNum(3));
+      var res = ExtractNum(intp.ExecNode(node));
+      //NodeDump(node);
+      AssertEqual(res, 6);
+    }
+    {
+      var node = intp.GetFuncNode("test");
+      node.SetArgs(DynVal.NewNum(4));
+      var res = ExtractNum(intp.ExecNode(node));
+      //NodeDump(node);
+      AssertEqual(res, 8);
+    }
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes4()
+  {
+    string bhl = @"
+    func int foo(int a)
+    {
+      int^(int) p = 
+        func int (int a) {
+          return a
+        }
+
+      int tmp = p(a)
+
+      p = func int (int a) {
+          return a * 2
+      }
+
+      return tmp + p(a)
+    }
+
+    func int test(int a) 
+    {
+      return foo(a) + foo(a+1)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    {
+      var node = intp.GetFuncNode("test");
+      node.SetArgs(DynVal.NewNum(3));
+      var res = ExtractNum(intp.ExecNode(node));
+      //NodeDump(node);
+      AssertEqual(res, 9 + 12);
+    }
+    {
+      var node = intp.GetFuncNode("test");
+      node.SetArgs(DynVal.NewNum(4));
+      var res = ExtractNum(intp.ExecNode(node));
+      //NodeDump(node);
+      AssertEqual(res, 12 + 15);
+    }
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes5()
+  {
+    string bhl = @"
+    func int foo(int^(int) p, int a)
+    {
+      return p(a)
+    }
+
+    func int test(int a) 
+    {
+      return foo(func int(int a) { return a }, a) + 
+             foo(func int(int a) { return a * 2 }, a+1)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    {
+      var node = intp.GetFuncNode("test");
+      node.SetArgs(DynVal.NewNum(3));
+      var res = ExtractNum(intp.ExecNode(node));
+      //NodeDump(node);
+      AssertEqual(res, 3 + 8);
+    }
+    {
+      var node = intp.GetFuncNode("test");
+      node.SetArgs(DynVal.NewNum(4));
+      var res = ExtractNum(intp.ExecNode(node));
+      //NodeDump(node);
+      AssertEqual(res, 4 + 10);
+    }
     CommonChecks(intp);
   }
 
