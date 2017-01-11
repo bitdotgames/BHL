@@ -209,7 +209,7 @@ seq {
 ## Version 0.1
 
 1. ~~**ref** semantics similar to C#~~
-2. More generic functors support
+2. ~~More generic functors support~~
 3. Multiple return values support
 4. **while** syntax sugar: **for(...) {}** support
 5. Ternary operator support
