@@ -3921,6 +3921,53 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestParseType()
+  {
+    {
+      var type = AST_Builder.ParseType("bool");
+      AssertEqual(type.NAME().GetText(), "bool");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
+    }
+
+    {
+      var type = AST_Builder.ParseType("int[]");
+      AssertEqual(type.NAME().GetText(), "int");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() != null);
+    }
+
+    {
+      var type = AST_Builder.ParseType("bool^(int,string)");
+      AssertEqual(type.NAME().GetText(), "bool");
+      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
+      AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
+      AssertTrue(type.ARR() == null);
+    }
+
+    {
+      var type = AST_Builder.ParseType("float^(int)[]");
+      AssertEqual(type.NAME().GetText(), "float");
+      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
+      AssertTrue(type.ARR() != null);
+    }
+
+    {
+      //malformed
+      var type = AST_Builder.ParseType("float^");
+      AssertTrue(type == null);
+    }
+
+    {
+      //TODO:
+      //malformed
+      //var type = AST_Builder.ParseType("int]");
+      //AssertTrue(type == null);
+    }
+  }
+
+
+  [IsTested()]
   public void TestFuncPtr()
   {
     string bhl = @"
@@ -3980,52 +4027,6 @@ public class BHL_Test
 
     AssertEqual("FOO", str);
     CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestParseType()
-  {
-    {
-      var type = AST_Builder.ParseType("bool");
-      AssertEqual(type.NAME().GetText(), "bool");
-      AssertTrue(type.fnargs() == null);
-      AssertTrue(type.ARR() == null);
-    }
-
-    {
-      var type = AST_Builder.ParseType("int[]");
-      AssertEqual(type.NAME().GetText(), "int");
-      AssertTrue(type.fnargs() == null);
-      AssertTrue(type.ARR() != null);
-    }
-
-    {
-      var type = AST_Builder.ParseType("bool^(int,string)");
-      AssertEqual(type.NAME().GetText(), "bool");
-      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
-      AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
-      AssertTrue(type.ARR() == null);
-    }
-
-    {
-      var type = AST_Builder.ParseType("float^(int)[]");
-      AssertEqual(type.NAME().GetText(), "float");
-      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
-      AssertTrue(type.ARR() != null);
-    }
-
-    {
-      //malformed
-      var type = AST_Builder.ParseType("float^");
-      AssertTrue(type == null);
-    }
-
-    {
-      //TODO:
-      //malformed
-      //var type = AST_Builder.ParseType("int]");
-      //AssertTrue(type == null);
-    }
   }
 
   [IsTested()]
@@ -4246,6 +4247,33 @@ public class BHL_Test
       //NodeDump(node);
       AssertEqual(res, 4 + 10);
     }
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestReturnComplexFuncPtr()
+  {
+    string bhl = @"
+    func bool^(int) foo()
+    {
+      return func bool(int a) { return a > 2 } 
+    }
+
+    func bool test(int a) 
+    {
+      bool^(int) ptr = foo()
+      return ptr(a)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractBool(intp.ExecNode(node));
+    //NodeDump(node);
+    AssertTrue(res);
     CommonChecks(intp);
   }
 
