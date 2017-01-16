@@ -77,7 +77,6 @@ public abstract class BaseScope : Scope
 public class GlobalScope : BaseScope 
 {
   Dictionary<ulong, Symbol> hashed_symbols = new Dictionary<ulong, Symbol>();
-  Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
 
   public GlobalScope() 
     : base(null) 
@@ -107,14 +106,69 @@ public class GlobalScope : BaseScope
     return null;
   }
 
+  public static bool IsCompoundType(string name)
+  {
+    for(int i=0;i<name.Length;++i)
+    {
+      char c = name[i];
+      if(!(Char.IsLetterOrDigit(c) || c == '_'))
+        return true;
+    }
+    return false;
+  }
+
+#if BHL_FRONT
+  public TypeRef type(bhlParser.TypeContext node)
+  {
+    var str = node == null ? "void" : node.GetText();
+    var type = resolve(str) as Type;
+
+    if(type == null && node != null)
+    {    
+      if(node.fnargs() != null)
+        type = new FuncType(this, node);
+
+      if(node.ARR() != null)
+      {
+        //checking if it's an array of func ptrs
+        if(type != null)
+          type = new ArrayTypeSymbol(this, new TypeRef(type));
+        else
+          type = new ArrayTypeSymbol(this, node);
+      }
+      
+      if(type == null)
+        throw new Exception("Bad type: " + type);
+    }
+
+    var tr = new TypeRef();
+    tr.type = type;
+    tr.name = str;
+    tr.node = node;
+
+    return tr;
+  }
+#endif
+
   public TypeRef type(string name)
   {
-    TypeRef tr;
-    if(!type_cache.TryGetValue(name, out tr))
+    //1. let's check if the type was already explicitely defined
+    var t = resolve(name) as Type;
+    if(t != null)
+      return new TypeRef(t);
+
+#if BHL_FRONT
+    if(IsCompoundType(name))
     {
-      tr = new TypeRef(this, name); 
-      type_cache[name] = tr;
+      var node = AST_Builder.ParseType(name);
+      if(node == null)
+        throw new Exception("Bad type: " + name);
+
+      return this.type(node);
     }
+#endif
+
+    var tr = new TypeRef(this, name);
     return tr;
   }
 

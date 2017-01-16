@@ -597,7 +597,7 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, string name, ulong nname, Symbol scope_symb = null)
+  static public AST_Call New_Call(EnumCall type, string name, ulong nname, ClassSymbol scope_symb = null)
   {
     var n = new AST_Call();
     n.type = type;
@@ -607,7 +607,7 @@ static public class AST_Util
     {
       n.name = name;
     }
-    n.scope_ntype = scope_symb != null ? scope_symb.nname : 0;
+    n.scope_ntype = scope_symb != null ? scope_symb.GetNtype() : 0;
 
     return n;
   }
@@ -644,13 +644,13 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_New New_New(string type)
+  static public AST_New New_New(ClassSymbol type)
   {
     var n = new AST_New();
-    n.ntype = Hash.CRC28(type);
+    n.ntype = type.GetNtype();
     if(Util.DEBUG)
     {
-      n.type = type;
+      n.type = type.GetName();
     }
 
     return n;
@@ -726,7 +726,7 @@ static public class AST_Util
   static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type)
   {
     var n = new AST_JsonArr();
-    n.ntype = arr_type.nname;
+    n.ntype = arr_type.GetNtype();
     return n;
   }
 

@@ -1569,9 +1569,9 @@ public class Interpreter : AST_Visitor
       for(int i=node.cargs_num;i<node.children.Count;++i)
         Visit(node.children[i]);
     }
-    else if(node.type == EnumCall.FUNC_PTR)
+    else if(node.type == EnumCall.FUNC_PTR || node.type == EnumCall.FUNC_PTR_POP)
     {
-      curr_node.addChild(new CallVarFuncPtr(node));
+      curr_node.addChild(new CallFuncPtr(node));
 
       //rest of the call chain
       for(int i=node.cargs_num;i<node.children.Count;++i)

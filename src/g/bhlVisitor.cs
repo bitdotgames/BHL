@@ -377,6 +377,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCallExp([NotNull] bhlParser.CallExpContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.chainExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitChainExp([NotNull] bhlParser.ChainExpContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.callExpItem"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

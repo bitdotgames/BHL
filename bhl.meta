@@ -73,15 +73,16 @@ struct AST_TypeCast extends AST
 end
 
 enum EnumCall
-  VAR      = 1
-  VARW     = 2
-  MVAR     = 10
-  MVARW    = 11
-  FUNC     = 3
-  MFUNC     = 30
-  ARR_IDX  = 4
-  FUNC2VAR = 5
-  FUNC_PTR = 6
+  VAR           = 1
+  VARW          = 2
+  MVAR          = 10
+  MVARW         = 11
+  FUNC          = 3
+  MFUNC         = 30
+  ARR_IDX       = 4
+  FUNC2VAR      = 5
+  FUNC_PTR      = 6
+  FUNC_PTR_POP  = 7
 end
 
 #TODO: this one is too generic, 

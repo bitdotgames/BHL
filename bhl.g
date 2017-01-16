@@ -93,8 +93,12 @@ else
 
 //vars && funcs
 callExp
-	: callExpItem memberAccess* 
+	: callExpItem chainExp* 
 	;
+
+chainExp
+  : memberAccess | callArgs | arrAccess
+  ;
 
 callExpItem
   : NAME callArgs? arrAccess?
@@ -142,7 +146,7 @@ funcBlock
   ;
 
 funcLambda
-  : 'func' type? '(' funcParams? ')' useBlock? funcBlock
+  : 'func' type? '(' funcParams? ')' useBlock? funcBlock chainExp*
   ;
 
 refName

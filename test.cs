@@ -3966,7 +3966,6 @@ public class BHL_Test
     }
   }
 
-
   [IsTested()]
   public void TestFuncPtr()
   {
@@ -4251,6 +4250,42 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestArrayOfComplexFuncPtr()
+  {
+    string bhl = @"
+    func int test(int a) 
+    {
+      int^(int,string)[] ptrs = new int^(int,string)[]
+      ptrs.Add(func int(int a, string b) { 
+          trace(b) 
+          return a*2 
+      })
+      ptrs.Add(func int(int a, string b) { 
+          trace(b)
+          return a*10
+      })
+
+      return ptrs[0](a, ""what"") + ptrs[1](a, ""hey"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+    AssertEqual(res, 3*2 + 3*10);
+    var str = GetString(trace_stream);
+    AssertEqual("whathey", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestReturnComplexFuncPtr()
   {
     string bhl = @"
@@ -4263,6 +4298,54 @@ public class BHL_Test
     {
       bool^(int) ptr = foo()
       return ptr(a)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractBool(intp.ExecNode(node));
+    //NodeDump(node);
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestReturnAndCallComplexFuncPtr()
+  {
+    string bhl = @"
+    func bool^(int) foo()
+    {
+      return func bool(int a) { return a > 2 } 
+    }
+
+    func bool test(int a) 
+    {
+      return foo()(a)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractBool(intp.ExecNode(node));
+    //NodeDump(node);
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCallLambdaInPlace()
+  {
+    string bhl = @"
+
+    func bool test(int a) 
+    {
+      return func bool(int a) { return a > 2 }(a) 
     }
     ";
 

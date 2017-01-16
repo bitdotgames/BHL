@@ -29,11 +29,6 @@ public struct TypeRef
   public bhlParser.TypeContext node;
 #endif
 
-  public static bool IsCompoundType(string name)
-  {
-    return name.IndexOf("^") != -1;
-  }
-
   public static TypeRef NewEmpty()
   {
     var t = new TypeRef();
@@ -56,16 +51,6 @@ public struct TypeRef
 
 #if BHL_FRONT
     this.node = null;
-
-    if(IsCompoundType(name))
-    {
-      var tmp = AST_Builder.ParseType(name);
-      if(tmp == null)
-        throw new Exception("Bad type: " + name);
-
-      if(tmp.fnargs() != null)
-        this.type = new FuncType(bindings, tmp);
-    }
 #endif
   }
 
@@ -79,17 +64,6 @@ public struct TypeRef
     this.node = null;
 #endif
   }
-
-#if BHL_FRONT
-  public TypeRef(GlobalScope bindings, bhlParser.TypeContext node)
-  {
-    this.bindings = bindings;
-    this.name = node.GetText();
-    this.type = node.fnargs() != null ? new FuncType(bindings, node) : null;
-    this.is_ref = false;
-    this.node = node;
-  }
-#endif
 
   public Type Get()
   {
@@ -218,9 +192,95 @@ public class BuiltInTypeSymbol : Symbol, Type
   public int GetTypeIndex() { return type_index; }
 }
 
+public class ClassSymbol : ScopedSymbol, Scope, Type 
+{
+  ClassSymbol super_class;
+  public OrderedDictionary members = new OrderedDictionary();
+  Dictionary<ulong, Symbol> hashed_symbols = new Dictionary<ulong, Symbol>();
+
+  public Interpreter.ClassCreator creator;
+
+  public ClassSymbol(WrappedNode n, string name, TypeRef super_class, Scope enclosing_scope, Interpreter.ClassCreator creator = null)
+    : base(n, name, enclosing_scope)
+  {
+    this.super_class = (ClassSymbol)super_class.Get();
+    this.creator = creator;
+  }
+
+  public virtual uint GetNtype()
+  {
+    return this.nname;
+  }
+
+  public bool IsSubclassOf(ClassSymbol p)
+  {
+    if(this == p)
+      return true;
+
+    for(var tmp = super_class; tmp != null; tmp = tmp.super_class)
+    {
+      if(tmp == p)
+        return true;
+    }
+    return false;
+  }
+
+  public override Scope GetParentScope() 
+  {
+    if(super_class == null) 
+      return this.enclosing_scope; // globals
+
+    return super_class;
+  }
+
+  public Symbol resolveMember(ulong nname)
+  {
+    Symbol sym;
+    if(hashed_symbols.TryGetValue(nname, out sym))
+      return sym;
+
+    if(super_class != null)
+      return super_class.resolveMember(nname);
+
+    return null;
+  }
+
+  public override void define(Symbol sym) 
+  {
+    base.define(sym);
+
+    hashed_symbols.Add(sym.nname, sym);
+  }
+
+  public int GetTypeIndex() { return SymbolTable.tUSER; }
+
+  public override OrderedDictionary GetMembers() { return members; }
+
+  public override string ToString() 
+  {
+    return "class "+name+":{"+
+            string.Join(",", members.GetStringKeys().ToArray())+"}";
+  }
+}
+
 public class ArrayTypeSymbol : ClassSymbol
 {
+  public static readonly uint GENERIC_CLASS_NTYPE = Hash.CRC28("[]"); 
+
   public TypeRef original;
+
+  //NOTE: this one is used as a fallback for all arrays which
+  //      were not explicitely re-defined 
+  static public void DefineGeneric(GlobalScope globs)
+  {
+    globs.define(new ArrayTypeSymbol(globs, new TypeRef(globs, "")));
+  }
+
+#if BHL_FRONT
+  public ArrayTypeSymbol(GlobalScope globs, bhlParser.TypeContext node)
+    : this(globs, new TypeRef(globs, node.NAME().GetText()))
+  {}
+#endif
 
   public ArrayTypeSymbol(GlobalScope globs, TypeRef original) 
     : base(null, original.name + "[]", new TypeRef(), null)
@@ -259,6 +319,11 @@ public class ArrayTypeSymbol : ClassSymbol
       );
       this.define(vs);
     }
+  }
+
+  public override uint GetNtype()
+  {
+    return GENERIC_CLASS_NTYPE;
   }
 
   public virtual void CreateArr(ref DynVal v)
@@ -307,6 +372,14 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     : base(globs, original)
   {
     Convert = converter == null ? DefaultConverter : converter;
+  }
+
+  //NOTE: for arrays which were specifically defined for certain types  
+  //      this one returns unique name instead of generic one returned by
+  //      default
+  public override uint GetNtype()
+  {
+    return this.nname;
   }
 
   public override void CreateArr(ref DynVal v)
@@ -413,6 +486,7 @@ public class FuncType : Type
 {
   public string name;
   public uint nname;
+
   public TypeRef ret_type;
   public List<TypeRef> arg_types = new List<TypeRef>();
 
@@ -446,11 +520,6 @@ public class FuncType : Type
   {
     this.ret_type = ret_type;
     Update();
-  }
-
-  public bool IsCompatible(FuncType o)
-  {
-    return nname == o.nname;
   }
 
   public void Update()
@@ -570,7 +639,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.varDeclare().Length;++i)
       {
         var vd = fparams.varDeclare()[i];
-        ft.arg_types.Add(new TypeRef(globs, vd.type()));
+        ft.arg_types.Add(globs.type(vd.type()));
       }
     }
     ft.Update();
@@ -667,7 +736,7 @@ public class FuncSymbolAST : FuncSymbol
       for(int i=0;i<fparams.varDeclare().Length;++i)
       {
         var vd = fparams.varDeclare()[i];
-        var type = new TypeRef(globals, vd.type());
+        var type = globals.type(vd.type());
         type.is_ref = vd.isRef() != null;
         ft.arg_types.Add(type);
       }
@@ -740,72 +809,6 @@ public class ConfNodeSymbol : FuncBindSymbol
 
   //NOTE: very controverse, but makes porting and usage much cleaner
   public override int GetDefaultArgsNum() { return 1; }
-}
-
-public class ClassSymbol : ScopedSymbol, Scope, Type 
-{
-  ClassSymbol super_class;
-  public OrderedDictionary members = new OrderedDictionary();
-  Dictionary<ulong, Symbol> hashed_symbols = new Dictionary<ulong, Symbol>();
-
-  public Interpreter.ClassCreator creator;
-
-  public ClassSymbol(WrappedNode n, string name, TypeRef super_class, Scope enclosing_scope, Interpreter.ClassCreator creator = null)
-    : base(n, name, enclosing_scope)
-  {
-    this.super_class = (ClassSymbol)super_class.Get();
-    this.creator = creator;
-  }
-
-  public bool IsSubclassOf(ClassSymbol p)
-  {
-    if(this == p)
-      return true;
-
-    for(var tmp = super_class; tmp != null; tmp = tmp.super_class)
-    {
-      if(tmp == p)
-        return true;
-    }
-    return false;
-  }
-
-  public override Scope GetParentScope() 
-  {
-    if(super_class == null) 
-      return this.enclosing_scope; // globals
-
-    return super_class;
-  }
-
-  public Symbol resolveMember(ulong nname)
-  {
-    Symbol sym;
-    if(hashed_symbols.TryGetValue(nname, out sym))
-      return sym;
-
-    if(super_class != null)
-      return super_class.resolveMember(nname);
-
-    return null;
-  }
-
-  public override void define(Symbol sym) 
-  {
-    base.define(sym);
-
-    hashed_symbols.Add(sym.nname, sym);
-  }
-
-  public int GetTypeIndex() { return SymbolTable.tUSER; }
-
-  public override OrderedDictionary GetMembers() { return members; }
-
-  public override string ToString() 
-  {
-    return "class "+name+":{"+
-            string.Join(",", members.GetStringKeys().ToArray())+"}";
-  }
 }
 
 public class ClassBindSymbol : ClassSymbol
@@ -979,15 +982,7 @@ static public class SymbolTable
       }
     }
 
-    //defining array symbols after built-in symbols were already defined
-    foreach(Type t in indexToType) 
-    {
-      if(t != null) 
-      {
-        var blt = (BuiltInTypeSymbol)t; 
-        globals.define(new ArrayTypeSymbol(globals, new TypeRef(blt)));
-      }
-    }
+    ArrayTypeSymbol.DefineGeneric(globals);
 
     {
       var fn = new FuncBindSymbol("RUNNING", globals.type("void"),
@@ -1049,20 +1044,9 @@ static public class SymbolTable
            destType == _any ||
            (destType is ClassSymbol && valueType == _null) ||
            (destType is FuncType && valueType == _null) || 
-           IsCompatibleFuncTypes(valueType, destType) ||
+           valueType.GetNname() == destType.GetNname() ||
            IsChildClass(valueType, destType)
            ;
-  }
-
-  static public bool IsCompatibleFuncTypes(Type a, Type b) 
-  {
-    var fa = a as FuncType;
-    if(fa == null)
-      return false;
-    var fb = b as FuncType;
-    if(fb == null)
-      return false;
-    return fa.IsCompatible(fb);
   }
 
   static public bool IsChildClass(Type t, Type pt) 

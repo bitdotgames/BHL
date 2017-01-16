@@ -1243,11 +1243,11 @@ public class ConstructNode : BehaviorTreeTerminalNode
   }
 }
 
-public class CallVarFuncPtr : SequentialNode
+public class CallFuncPtr : SequentialNode
 {
   AST_Call node;
 
-  public CallVarFuncPtr(AST_Call node)
+  public CallFuncPtr(AST_Call node)
   {
     this.node = node;
   }
@@ -1257,8 +1257,8 @@ public class CallVarFuncPtr : SequentialNode
     base.init(agent);
 
     var interp = Interpreter.instance;
-    var name = node.Name();
-    var fct = (FuncCtx)interp.GetScopeValue(name).obj;
+    var val = node.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(node.Name()); 
+    var fct = (FuncCtx)val.obj;
      
     //NOTE: if func ctx is shared we need to make sure 
     //      we use a unique version here, hence AutoClone
