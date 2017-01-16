@@ -150,25 +150,35 @@ public class GlobalScope : BaseScope
   }
 #endif
 
+  Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
+
   public TypeRef type(string name)
   {
-    //1. let's check if the type was already explicitely defined
-    var t = resolve(name) as Type;
-    if(t != null)
-      return new TypeRef(t);
-
-#if BHL_FRONT
-    if(IsCompoundType(name))
+    TypeRef tr;
+    if(!type_cache.TryGetValue(name, out tr))
     {
-      var node = AST_Builder.ParseType(name);
-      if(node == null)
-        throw new Exception("Bad type: " + name);
+      //let's check if the type was already explicitely defined
+      var t = resolve(name) as Type;
+      if(t != null)
+        tr = new TypeRef(t);
+      else
+      {
+#if BHL_FRONT
+        if(IsCompoundType(name))
+        {
+          var node = AST_Builder.ParseType(name);
+          if(node == null)
+            throw new Exception("Bad type: " + name);
 
-      return this.type(node);
-    }
+          tr = this.type(node);
+        }
+        else
 #endif
+        tr = new TypeRef(this, name);
+      }
 
-    var tr = new TypeRef(this, name);
+      type_cache.Add(name, tr);
+    }
     return tr;
   }
 
