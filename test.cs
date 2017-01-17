@@ -2589,9 +2589,8 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
-    var res = ExtractNum(intp.ExecNode(node));
-
     //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 202);
     CommonChecks(intp);
@@ -4250,7 +4249,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestArrayOfComplexFuncPtr()
+  public void TestArrayOfComplexFuncPtrs()
   {
     string bhl = @"
     func int test(int a) 

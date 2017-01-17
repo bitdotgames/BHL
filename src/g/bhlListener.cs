@@ -629,16 +629,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitChainExp([NotNull] bhlParser.ChainExpContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.callExpItem"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterCallExpItem([NotNull] bhlParser.CallExpItemContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.callExpItem"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitCallExpItem([NotNull] bhlParser.CallExpItemContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.staticCallExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -678,16 +668,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitMemberAccess([NotNull] bhlParser.MemberAccessContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.retstat"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterRetstat([NotNull] bhlParser.RetstatContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.retstat"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitRetstat([NotNull] bhlParser.RetstatContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.callArgs"/>.
 	/// </summary>

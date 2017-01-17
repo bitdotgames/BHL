@@ -244,77 +244,119 @@ public class AST_Builder : bhlBaseVisitor<AST>
   public override AST VisitCallExp(bhlParser.CallExpContext ctx)
   {
     Type curr_type = null;
-    var item = ctx.callExpItem(); 
-    var node = ProcCallExpItem(item.NAME(), item.callArgs(), item.arrAccess(), curr_scope, null, ref curr_type);
 
-    var chain = ctx.chainExp(); 
-    if(chain != null)
-      ProcessChainedCall(chain, node, ref curr_type);
+    var node = ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type);
 
     Wrap(ctx).eval_type = curr_type;
 
     return node;
   }
 
-  void ProcessChainedCall(bhlParser.ChainExpContext[] chain, AST node, ref Type curr_type)
+  void ChainCallNode(AST new_node, ref AST curr_node, ref AST top_node)
+  {
+    if(curr_node != null)
+      curr_node.AddChild(new_node);
+    else
+      curr_node = new_node;
+    curr_node = new_node;
+
+    if(top_node == null)
+      top_node = new_node;
+  }
+
+  AST ProcChainedCall(ITerminalNode root_name, bhlParser.ChainExpContext[] chain, ref Type curr_type)
   {
     var orig_scope = curr_scope;
 
-    var prev_node = node;
+    AST top_node = null;
 
-    for(int c=0;c<chain.Length;++c)
+    ITerminalNode curr_name = root_name;
+    ClassSymbol curr_class = null;
+    AST curr_node = null;
+
+    if(root_name != null)
     {
-      var ch = chain[c];
+      var root_str_name = root_name.GetText();
+      var name_symb = curr_scope.resolve(root_str_name);
+      if(name_symb == null)
+        FireError(Location(root_name) + " : Symbol not resolved");
+      curr_type = name_symb.type.Get();
+    }
 
-      var ma = ch.memberAccess();
-      var cargs = ch.callArgs();
-      if(ma != null)
+    if(chain != null)
+    {
+      for(int c=0;c<chain.Length;++c)
       {
-        var member_scope = curr_type as ScopedSymbol; 
-        if(member_scope == null)
-          FireError(Location(ma) + " : Type '" + curr_type.GetName() + "' doesn't support member access via '.' ");
+        var ch = chain[c];
 
-        curr_scope = member_scope;
-        var ma_item = ma.callExpItem(); 
-        var tmp_node = ProcCallExpItem(ma_item.NAME(), ma_item.callArgs(), ma_item.arrAccess(), orig_scope, member_scope, ref curr_type);
+        var cargs = ch.callArgs();
+        var ma = ch.memberAccess();
+        var arra = ch.arrAccess();
 
-        prev_node.AddChild(tmp_node);
-        prev_node = tmp_node;
-      }
-      else if(cargs != null)
-      {
-        var tmp_node = ProcCallExpItem(null, cargs, null, orig_scope, null, ref curr_type);
+        if(cargs != null)
+        {
+          var new_node = ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type);
+          ChainCallNode(new_node, ref curr_node, ref top_node);
+          curr_class = null;
+          curr_name = null;
+        }
+        else if(arra != null)
+        {
+          var new_node = ProcCallChainItem(curr_name, null, arra, curr_class, ref curr_type);
+          ChainCallNode(new_node, ref curr_node, ref top_node);
+          curr_class = null;
+          curr_name = null;
+        }
+        else if(ma != null)
+        {
+          if(curr_name != null)
+          {
+            var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type);
+            ChainCallNode(new_node, ref curr_node, ref top_node);
+          }
 
-        prev_node.AddChild(tmp_node);
-        prev_node = tmp_node;
+          curr_class = curr_type as ClassSymbol; 
+          if(curr_class == null)
+            FireError(Location(ma) + " : Type '" + curr_type.GetName() + "' doesn't support member access via '.' ");
+
+          curr_name = ma.NAME();
+        }
       }
     }
 
+    //checking the leftover of the call chain
+    if(curr_name != null)
+    {
+      var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type);
+      ChainCallNode(new_node, ref curr_node, ref top_node);
+    }
+
     curr_scope = orig_scope;
+
+    return top_node;
   }
 
-  AST_Call ProcCallExpItem(ITerminalNode name, bhlParser.CallArgsContext cargs, bhlParser.ArrAccessContext arra, Scope orig_scope, Scope member_scope, ref Type type)
+  AST_Call ProcCallChainItem(ITerminalNode name, bhlParser.CallArgsContext cargs, bhlParser.ArrAccessContext arra, ClassSymbol class_scope, ref Type type)
   {
-
     AST_Call node = null;
 
     if(name != null)
     {
       string str_name = name.GetText();
-      var name_symb = curr_scope.resolve(str_name);
+      var name_symb = class_scope == null ? curr_scope.resolve(str_name) : class_scope.resolve(str_name);
       if(name_symb == null)
         FireError(Location(name) + " : Symbol not resolved");
+
+      var var_symb = name_symb as VariableSymbol;
+      var func_symb = name_symb as FuncSymbol;
+
+      //func or method call
       if(cargs != null)
       {
         if(name_symb is FieldSymbol)
           FireError(Location(name) + " : Symbol is not a function");
 
-        var var_symb = name_symb as VariableSymbol;
-        var func_symb = name_symb as FuncSymbol;
-
-        var backup_scope = curr_scope;
-        curr_scope = orig_scope;
-
+        //func ptr
         if(var_symb != null && var_symb.type.Get() is FuncType)
         {
           var ftype = var_symb.type.Get() as FuncType;
@@ -324,7 +366,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         }
         else if(func_symb != null)
         {
-          node = AST_Util.New_Call(member_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, str_name, func_symb.GetCallId(), (ClassSymbol)member_scope);
+          node = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, str_name, func_symb.GetCallId(), class_scope);
           AddCallArgs(func_symb, cargs, ref node);
           type = func_symb.GetReturnType();
         }
@@ -341,20 +383,15 @@ public class AST_Builder : bhlBaseVisitor<AST>
           else
           {
             FireError(Location(name) +  " : Symbol is not not a function");
-            type = null;
           }
         }
-
-        curr_scope = backup_scope;
       }
+      //variable or attribute call
       else
       {
-        var var_symb = name_symb as VariableSymbol;
-        var func_symb = name_symb as FuncSymbol;
-
         if(var_symb != null)
         {
-          node = AST_Util.New_Call(member_scope != null ? EnumCall.MVAR : EnumCall.VAR, str_name, Hash.CRC28(str_name), (ClassSymbol)member_scope);
+          node = AST_Util.New_Call(class_scope != null ? EnumCall.MVAR : EnumCall.VAR, str_name, Hash.CRC28(str_name), class_scope);
           type = var_symb.type.Get();
         }
         else if(func_symb != null)
@@ -370,42 +407,47 @@ public class AST_Builder : bhlBaseVisitor<AST>
         else
         {
           FireError(Location(name) +  " : Symbol usage is not valid");
-          type = null;
         }
       }
     }
     else if(cargs != null)
     {
       var ftype = (FuncType)type;
+      if(ftype == null)
+        throw new Exception("Func type is missing");
       
       node = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, "", 0);
       AddCallArgs(ftype, cargs, ref node);
       type = ftype.ret_type.Get();
     }
+    else
+      throw new Exception("Not expected");
 
     if(arra != null)
-      node = AddArrIndex(node, arra, name, out type);
+      node = AddArrIndex(node, arra, ref type);
+
+    if(node == null)
+      throw new Exception("Node not assigned");
 
     return node;
   }
 
-  AST_Call AddArrIndex(AST_Call root, bhlParser.ArrAccessContext arra, ITerminalNode name, out Type type)
+  AST_Call AddArrIndex(AST_Call root, bhlParser.ArrAccessContext arra, ref Type type)
   {
-    var symb = curr_scope.resolve(name.GetText());
-
-    var arr_type = symb.type.Get() as ArrayTypeSymbol;
+    var arr_type = type as ArrayTypeSymbol;
     if(arr_type == null)
-      FireError(Location(name) +  " : Symbol is not an array");
+      FireError(Location(arra) +  " : Symbol is not an array");
 
     var node = AST_Util.New_Call(EnumCall.ARR_IDX, "", 0);
     node.scope_ntype = arr_type.GetNtype();
 
     var arr_exp = arra.exp();
-    node.AddChild(root);
+    if(root != null)
+      node.AddChild(root);
     node.AddChild(Visit(arr_exp));
 
     if(Wrap(arr_exp).eval_type != SymbolTable._int)
-      FireError(symb.Location() +  " : Array index expression is not of type int");
+      FireError(Location(arr_exp) +  " : Array index expression is not of type int");
 
     type = arr_type.original.Get();
 
@@ -639,7 +681,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     {
       var interim = AST_Util.New_Interim();
       interim.AddChild(node);
-      ProcessChainedCall(chain, interim, ref curr_type);
+      interim.AddChild(ProcChainedCall(null, chain, ref curr_type));
       Wrap(ctx).eval_type = curr_type;
       return interim;
     }

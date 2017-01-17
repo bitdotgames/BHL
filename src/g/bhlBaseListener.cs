@@ -737,18 +737,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitChainExp([NotNull] bhlParser.ChainExpContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.callExpItem"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterCallExpItem([NotNull] bhlParser.CallExpItemContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.callExpItem"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitCallExpItem([NotNull] bhlParser.CallExpItemContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.staticCallExp"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -796,18 +784,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitMemberAccess([NotNull] bhlParser.MemberAccessContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.retstat"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterRetstat([NotNull] bhlParser.RetstatContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.retstat"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitRetstat([NotNull] bhlParser.RetstatContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.callArgs"/>.
 	/// <para>The default implementation does nothing.</para>

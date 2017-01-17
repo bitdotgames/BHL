@@ -93,15 +93,11 @@ else
 
 //vars && funcs
 callExp
-	: callExpItem chainExp* 
+	: NAME chainExp* 
 	;
 
 chainExp
-  : memberAccess | callArgs | arrAccess
-  ;
-
-callExpItem
-  : NAME callArgs? arrAccess?
+  : callArgs | memberAccess | arrAccess
   ;
 
 //for now supporting only Foo::Bar type of static call
@@ -118,11 +114,7 @@ arrAccess
 	;
 
 memberAccess
-	: '.' callExpItem
-	;
-
-retstat
-	: 'return' explist?
+	: '.' NAME
 	;
 
 callArgs
@@ -218,32 +210,32 @@ string
   ;
 
 jsonObject
-    :   '{' jsonPair (',' jsonPair)* '}'
-    |   jsonEmptyObj
-    ;
+  :   '{' jsonPair (',' jsonPair)* '}'
+  |   jsonEmptyObj
+  ;
 
 jsonEmptyObj
-    : OBJ
-    ;
+  : OBJ
+  ;
 
 jsonPair
-    :   NAME ':' jsonValue 
-    ;
+  : NAME ':' jsonValue 
+  ;
 
 jsonArray
-    :   '[' jsonValue (',' jsonValue)* ']'
-    |   jsonEmptyArr
-    ;
+  :  '[' jsonValue (',' jsonValue)* ']'
+  |  jsonEmptyArr
+  ;
 
 jsonEmptyArr
-    : ARR
-    ;
+  : ARR
+  ;
 
 jsonValue
-    :   exp
-    |   jsonObject  // recursion
-    |   jsonArray   // recursion
-    ;
+  :  exp
+  |  jsonObject  // recursion
+  |  jsonArray   // recursion
+  ;
 
 ////////////////////////////// lexer /////////////////////////////
 
