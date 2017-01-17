@@ -336,8 +336,6 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   {
     return new Array_RemoveAtNode();
   }
-
-  public new int GetTypeIndex() { return original.Get().GetTypeIndex(); }
 }
 
 //NOTE: this one is used as a fallback for all arrays which
