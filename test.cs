@@ -3225,7 +3225,7 @@ public class BHL_Test
     node.stop(null);
 
     AssertEqual(DynValList.PoolCount, 2);
-    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -4359,7 +4359,7 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestCallLambdaInPlaceArray()
   {
     string bhl = @"

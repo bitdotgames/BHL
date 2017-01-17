@@ -2076,6 +2076,9 @@ public class Array_AtNode : BehaviorTreeTerminalNode
 
     var res = lst[(int)idx.num]; 
     interp.PushValue(res);
+    //NOTE: this can be an indexing operation for the temporary array,
+    //      we need to try del the array if so
+    lst.TryDel();
   }
 
   public override string inspect(object agent)
