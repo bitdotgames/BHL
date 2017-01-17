@@ -2444,7 +2444,7 @@ public class BHL_Test
         cl.define(vs);
       }
       globs.define(cl);
-      globs.define(new ArrayTypeSymbol(globs, new TypeRef(cl)));
+      globs.define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
     }
 
     {
@@ -3040,7 +3040,7 @@ public class BHL_Test
   {
     var en = new EnumSymbol(null, "EnumState", null);
     globs.define(en);
-    globs.define(new ArrayTypeSymbol(globs, new TypeRef(en)));
+    globs.define(new GenericArrayTypeSymbol(globs, new TypeRef(en)));
 
     en.define(new EnumItemSymbol(null, en, "SPAWNED",  10));
     en.define(new EnumItemSymbol(null, en, "SPAWNED2", 20));
@@ -4357,6 +4357,75 @@ public class BHL_Test
     //NodeDump(node);
     AssertTrue(res);
     CommonChecks(intp);
+  }
+
+  //[IsTested()]
+  public void TestCallLambdaInPlaceArray()
+  {
+    string bhl = @"
+
+    func int test(int a) 
+    {
+      return func int[](int a) { 
+        int[] ns = new int[]
+        ns.Add(a)
+        ns.Add(a*2)
+        return ns
+      }(a)[1] 
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(3));
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+    AssertEqual(res, 6);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCallLambdaInPlaceInvalid()
+  {
+    string bhl = @"
+
+    func bool test(int a) 
+    {
+      return func bool(int a) { return a > 2 }.foo 
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "Type 'bool^(int)' doesn't support member access via '.'"
+    );
+  }
+
+  [IsTested()]
+  public void TestCallLambdaInPlaceInvalid2()
+  {
+    string bhl = @"
+
+    func bool test(int a) 
+    {
+      return func bool(int a) { return a > 2 }[10] 
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "Accessing not an array type 'bool^(int)'"
+    );
   }
 
   [IsTested()]
@@ -9111,7 +9180,7 @@ public class BHL_Test
       );
 
       globs.define(cl);
-      globs.define(new ArrayTypeSymbol(globs, new TypeRef(cl)));
+      globs.define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
 
       cl.define(new FieldSymbol("position", globs.type("Vec3"),
         delegate(DynVal ctx, ref DynVal v)

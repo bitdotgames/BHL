@@ -263,18 +263,9 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   }
 }
 
-public class ArrayTypeSymbol : ClassSymbol
+abstract public class ArrayTypeSymbol : ClassSymbol
 {
-  public static readonly uint GENERIC_CLASS_NTYPE = Hash.CRC28("[]"); 
-
   public TypeRef original;
-
-  //NOTE: this one is used as a fallback for all arrays which
-  //      were not explicitely re-defined 
-  static public void DefineGeneric(GlobalScope globs)
-  {
-    globs.define(new ArrayTypeSymbol(globs, new TypeRef(globs, "")));
-  }
 
 #if BHL_FRONT
   public ArrayTypeSymbol(GlobalScope globs, bhlParser.TypeContext node)
@@ -321,11 +312,6 @@ public class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public override uint GetNtype()
-  {
-    return GENERIC_CLASS_NTYPE;
-  }
-
   public virtual void CreateArr(ref DynVal v)
   {
     v.SetObj(DynValList.New());
@@ -354,6 +340,32 @@ public class ArrayTypeSymbol : ClassSymbol
   public new int GetTypeIndex() { return original.Get().GetTypeIndex(); }
 }
 
+//NOTE: this one is used as a fallback for all arrays which
+//      were not explicitely re-defined 
+public class GenericArrayTypeSymbol : ArrayTypeSymbol
+{
+  public static readonly uint GENERIC_CLASS_NTYPE = Hash.CRC28("[]"); 
+
+#if BHL_FRONT
+  public GenericArrayTypeSymbol(GlobalScope globs, bhlParser.TypeContext node)
+    : base(globs, node)
+  {}
+#endif
+
+  public GenericArrayTypeSymbol(GlobalScope globs, TypeRef original) 
+    : base(globs, original)
+  {}
+
+  public GenericArrayTypeSymbol(GlobalScope globs) 
+    : base(globs, new TypeRef(globs, ""))
+  {}
+
+  public override uint GetNtype()
+  {
+    return GENERIC_CLASS_NTYPE;
+  }
+}
+
 public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 {
   public delegate void ConverterCb(DynVal dv, ref T res);
@@ -372,14 +384,6 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     : base(globs, original)
   {
     Convert = converter == null ? DefaultConverter : converter;
-  }
-
-  //NOTE: for arrays which were specifically defined for certain types  
-  //      this one returns unique name instead of generic one returned by
-  //      default
-  public override uint GetNtype()
-  {
-    return this.nname;
   }
 
   public override void CreateArr(ref DynVal v)
@@ -982,7 +986,7 @@ static public class SymbolTable
       }
     }
 
-    ArrayTypeSymbol.DefineGeneric(globals);
+    globals.define(new GenericArrayTypeSymbol(globals));
 
     {
       var fn = new FuncBindSymbol("RUNNING", globals.type("void"),

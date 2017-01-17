@@ -420,8 +420,6 @@ public class AST_Builder : bhlBaseVisitor<AST>
       AddCallArgs(ftype, cargs, ref node);
       type = ftype.ret_type.Get();
     }
-    else
-      throw new Exception("Not expected");
 
     if(arra != null)
       node = AddArrIndex(node, arra, ref type);
@@ -436,7 +434,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var arr_type = type as ArrayTypeSymbol;
     if(arr_type == null)
-      FireError(Location(arra) +  " : Symbol is not an array");
+      FireError(Location(arra) +  " : Accessing not an array type '" + type.GetName() + "'");
 
     var node = AST_Util.New_Call(EnumCall.ARR_IDX, "", 0);
     node.scope_ntype = arr_type.GetNtype();

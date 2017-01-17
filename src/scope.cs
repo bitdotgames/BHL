@@ -132,9 +132,9 @@ public class GlobalScope : BaseScope
       {
         //checking if it's an array of func ptrs
         if(type != null)
-          type = new ArrayTypeSymbol(this, new TypeRef(type));
+          type = new GenericArrayTypeSymbol(this, new TypeRef(type));
         else
-          type = new ArrayTypeSymbol(this, node);
+          type = new GenericArrayTypeSymbol(this, node);
       }
       
       if(type == null)
