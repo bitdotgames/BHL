@@ -351,6 +351,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     if(lst == null)
       throw new UserError("Not a DynValList: " + (ctx.obj != null ? ctx.obj.GetType().Name : ""));
     v.SetNum(lst.Count);
+    //NOTE: this can be an operation for the temp. array,
+    //      we need to try del the array if so
     lst.TryDel();
   }
 
