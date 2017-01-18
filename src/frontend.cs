@@ -416,7 +416,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       if(ftype == null)
         throw new Exception("Func type is missing");
       
-      node = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, "", 0);
+      node = AST_Util.New_Call(EnumCall.FUNC_PTR_POP);
       AddCallArgs(ftype, cargs, ref node);
       type = ftype.ret_type.Get();
     }
@@ -436,20 +436,21 @@ public class AST_Builder : bhlBaseVisitor<AST>
     if(arr_type == null)
       FireError(Location(arra) +  " : Accessing not an array type '" + type.GetName() + "'");
 
-    var node = AST_Util.New_Call(EnumCall.ARR_IDX, "", 0);
+    var node = AST_Util.New_Call(EnumCall.ARR_IDX);
     node.scope_ntype = arr_type.GetNtype();
 
     var arr_exp = arra.exp();
-    if(root != null)
-      node.AddChild(root);
     node.AddChild(Visit(arr_exp));
+
+    if(root != null)
+      root.AddChild(node);
 
     if(Wrap(arr_exp).eval_type != SymbolTable._int)
       FireError(Location(arr_exp) +  " : Array index expression is not of type int");
 
     type = arr_type.original.Get();
 
-    return node;
+    return root == null ? node : root;
   }
 
   class NormCallArg

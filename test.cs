@@ -3606,9 +3606,43 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  public class BaseScript
+  [IsTested()]
+  public void TestBindedClassTmpArray()
   {
+    string bhl = @"
+
+    func Color[] mkarray()
+    {
+      Color[] cs = new Color[]
+      Color c0 = new Color
+      c0.g = 1
+      cs.Add(c0)
+      Color c1 = new Color
+      c1.r = 10
+      cs.Add(c1)
+      return cs
+    }
+      
+    func float test() 
+    {
+      return mkarray()[1].r
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 10);
+    CommonChecks(intp);
   }
+
+  public class BaseScript
+  {}
 
   public class TestPtr 
   {

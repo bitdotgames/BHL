@@ -1595,13 +1595,8 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.ARR_IDX)
     {
+      //expression
       Visit(node.children[0]);
-      int rest_idx = 1;
-      if(node.children.Count > 1)
-      {
-        Visit(node.children[1]);
-        rest_idx = 2;
-      }
 
       var bnd = bindings.FindBinding<ArrayTypeSymbol>(node.scope_ntype);
       if(bnd == null)
@@ -1610,7 +1605,7 @@ public class Interpreter : AST_Visitor
       curr_node.addChild(bnd.Create_At());
 
       //rest of the call chain
-      for(int i=rest_idx;i<node.children.Count;++i)
+      for(int i=1;i<node.children.Count;++i)
         Visit(node.children[i]);
     }
     else 
