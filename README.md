@@ -210,10 +210,11 @@ seq {
 
 1. ~~**ref** semantics similar to C#~~
 2. ~~More generic functors support~~
-3. Multiple return values support
-4. **while** syntax sugar: **for(...) {}** support
-5. Ternary operator support
-6. More generic initializers
+3. More generic initializers
+4. Multiple return values support
+5. **while** syntax sugar: **for(...) {}** support
+6. Ternary operator support
+
 
 ## Version ???
 
