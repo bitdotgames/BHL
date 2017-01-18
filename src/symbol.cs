@@ -299,12 +299,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     }
 
     {
-      var vs = new bhl.FieldSymbol("Count", globs.type("int"),
-        delegate(bhl.DynVal ctx, ref bhl.DynVal v)
-        {
-          var lst = (IList)ctx.obj;
-          v.SetNum(lst.Count);
-        },
+      var vs = new bhl.FieldSymbol("Count", globs.type("int"), Create_Count,
         //read only property
         null
       );
@@ -312,30 +307,12 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public virtual void CreateArr(ref DynVal v)
-  {
-    v.SetObj(DynValList.New());
-  }
-
-  public virtual BehaviorTreeNode Create_New()
-  {
-    return new Array_NewNode();
-  }
-
-  public virtual BehaviorTreeNode Create_Add()
-  {
-    return new Array_AddNode();
-  }
-
-  public virtual BehaviorTreeNode Create_At()
-  {
-    return new Array_AtNode();
-  }
-
-  public virtual BehaviorTreeNode Create_RemoveAt()
-  {
-    return new Array_RemoveAtNode();
-  }
+  public abstract void CreateArr(ref DynVal v);
+  public abstract void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v);
+  public abstract BehaviorTreeNode Create_New();
+  public abstract BehaviorTreeNode Create_Add();
+  public abstract BehaviorTreeNode Create_At();
+  public abstract BehaviorTreeNode Create_RemoveAt();
 }
 
 //NOTE: this one is used as a fallback for all arrays which
@@ -361,6 +338,40 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override uint GetNtype()
   {
     return GENERIC_CLASS_NTYPE;
+  }
+
+  public override void CreateArr(ref DynVal v)
+  {
+    v.SetObj(DynValList.New());
+  }
+
+  public override void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v)
+  {
+    var lst = ctx.obj as DynValList;
+    if(lst == null)
+      throw new UserError("Not a DynValList: " + (ctx.obj != null ? ctx.obj.GetType().Name : ""));
+    v.SetNum(lst.Count);
+    lst.TryDel();
+  }
+
+  public override BehaviorTreeNode Create_New()
+  {
+    return new Array_NewNode();
+  }
+
+  public override BehaviorTreeNode Create_Add()
+  {
+    return new Array_AddNode();
+  }
+
+  public override BehaviorTreeNode Create_At()
+  {
+    return new Array_AtNode();
+  }
+
+  public override BehaviorTreeNode Create_RemoveAt()
+  {
+    return new Array_RemoveAtNode();
   }
 }
 
@@ -389,6 +400,12 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     v.obj = new List<T>();
   }
 
+  public override void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v)
+  {
+    var lst = (IList)ctx.obj;
+    v.SetNum(lst.Count);
+  }
+
   public override BehaviorTreeNode Create_New()
   {
     return new Array_NewNodeT<T>();
@@ -402,6 +419,11 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public override BehaviorTreeNode Create_At()
   {
     return new Array_AtNodeT<T>();
+  }
+
+  public override BehaviorTreeNode Create_RemoveAt()
+  {
+    return new Array_RemoveAtNodeT();
   }
 }
 
