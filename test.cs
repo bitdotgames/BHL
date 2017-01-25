@@ -3,6 +3,7 @@ using System.Reflection;
 using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Collections;
 using System.Threading;
 using Antlr4.Runtime;
 using bhl;
@@ -2214,7 +2215,7 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Color>(globs, new TypeRef(cl)));
+      globs.define(new ArrayTypeSymbolT<Color>(globs, new TypeRef(cl), delegate() { return new List<Color>(); } ));
 
       cl.define(new FieldSymbol("r", globs.type("float"),
         delegate(DynVal ctx, ref DynVal v)
@@ -2497,7 +2498,7 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl)));
+      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl), delegate() { return new List<Foo>(); } ));
 
       cl.define(new FieldSymbol("hey", globs.type("int"),
         delegate(DynVal ctx, ref DynVal v)
@@ -2551,7 +2552,7 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl)));
+      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl), delegate() { return new List<Foo>(); } ));
 
       cl.define(new FieldSymbol("script", globs.type("void^()"),
           delegate(DynVal ctx, ref DynVal v) {
@@ -8773,7 +8774,7 @@ public class BHL_Test
         }
       );
       globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<ConfigNode_Conf>(globs, new TypeRef(cl)));
+      globs.define(new ArrayTypeSymbolT<ConfigNode_Conf>(globs, new TypeRef(cl), delegate() { return new List<ConfigNode_Conf>(); } ));
 
       cl.define(new FieldSymbol("hey", globs.type("int"),
         delegate(DynVal ctx, ref DynVal v)

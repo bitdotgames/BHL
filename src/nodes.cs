@@ -1999,12 +1999,12 @@ public class Array_NewNode : BehaviorTreeTerminalNode
   }
 }
 
-public class Array_NewNodeT<T> : BehaviorTreeTerminalNode
+public class Array_NewNodeT<T> : BehaviorTreeTerminalNode where T : new()
 {
   public override void init(object agent)
   {
     var interp = Interpreter.instance;
-    var arr = DynVal.NewObj(new List<T>());
+    var arr = DynVal.NewObj(ArrayTypeSymbolT<T>.Creator());
     interp.PushValue(arr);
   }
 
@@ -2051,7 +2051,7 @@ public class Array_AddNodeT<T> : Array_AddNode where T : new()
     var val = interp.PopValue();
     var arr = push_arr ? interp.PeekValue() : interp.PopValue();
 
-    var lst = (arr.obj as List<T>);
+    var lst = (arr.obj as IList<T>);
     if(lst == null)
       throw new UserError("Not an array:" + (arr.obj != null ? arr.obj.GetType().Name : ""));
     T obj = new T();
@@ -2097,7 +2097,7 @@ public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
     var idx = interp.PopValue();
     var arr = interp.PopValue();
 
-    var lst = (arr.obj as List<T>);
+    var lst = (arr.obj as IList<T>);
     if(lst == null)
       throw new UserError("Not a List<" + typeof(T).Name + ">: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
 

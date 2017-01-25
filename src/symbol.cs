@@ -369,6 +369,9 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate void ConverterCb(DynVal dv, ref T res);
   public static ConverterCb Convert;
 
+  public delegate IList<T> CreatorCb();
+  public static CreatorCb Creator;
+
   static public void DefaultConverter(DynVal dv, ref T res)
   {
     //TODO: is there a non-allocating way to achieve the same?
@@ -378,15 +381,17 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
       res = (T)dv.obj;
   }
 
-  public ArrayTypeSymbolT(GlobalScope globs, TypeRef original, ConverterCb converter = null) 
+  public ArrayTypeSymbolT(GlobalScope globs, TypeRef original, CreatorCb creator, ConverterCb converter = null) 
     : base(globs, original)
   {
     Convert = converter == null ? DefaultConverter : converter;
+
+    Creator = creator;
   }
 
   public override void CreateArr(ref DynVal v)
   {
-    v.obj = new List<T>();
+    v.obj = Creator();
   }
 
   public override BehaviorTreeNode Create_New()
