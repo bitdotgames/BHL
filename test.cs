@@ -3292,6 +3292,126 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestTempArrayIdx()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func int test() 
+    {
+      return mkarray()[1]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 100);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTempArrayCount()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func int test() 
+    {
+      return mkarray().Count
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTempArrayRemoveAt()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func void test() 
+    {
+      mkarray().RemoveAt(0)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    intp.ExecNode(node, false);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTempArrayAdd()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func void test() 
+    {
+      mkarray().Add(300)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    intp.ExecNode(node, false);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestDynValListOwnership()
   {
     var lst = DynValList.New();
@@ -3487,9 +3607,43 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  public class BaseScript
+  [IsTested()]
+  public void TestBindedClassTmpArray()
   {
+    string bhl = @"
+
+    func Color[] mkarray()
+    {
+      Color[] cs = new Color[]
+      Color c0 = new Color
+      c0.g = 1
+      cs.Add(c0)
+      Color c1 = new Color
+      c1.r = 10
+      cs.Add(c1)
+      return cs
+    }
+      
+    func float test() 
+    {
+      return mkarray()[1].r
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 10);
+    CommonChecks(intp);
   }
+
+  public class BaseScript
+  {}
 
   public class TestPtr 
   {

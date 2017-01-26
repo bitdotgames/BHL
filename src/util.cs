@@ -597,7 +597,7 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, string name, ulong nname, ClassSymbol scope_symb = null)
+  static public AST_Call New_Call(EnumCall type, string name = "", ulong nname = 0, ClassSymbol scope_symb = null)
   {
     var n = new AST_Call();
     n.type = type;

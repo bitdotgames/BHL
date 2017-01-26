@@ -2030,6 +2030,9 @@ public class Array_AddNode : BehaviorTreeTerminalNode
     if(lst == null)
       throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
     lst.Add(val);
+    //NOTE: this can be an operation for the temp. array,
+    //      we need to try del the array if so
+    lst.TryDel();
   }
 
   public override string inspect(object agent)
@@ -2076,7 +2079,7 @@ public class Array_AtNode : BehaviorTreeTerminalNode
 
     var res = lst[(int)idx.num]; 
     interp.PushValue(res);
-    //NOTE: this can be an indexing operation for the temporary array,
+    //NOTE: this can be an operation for the temp. array,
     //      we need to try del the array if so
     lst.TryDel();
   }
@@ -2113,6 +2116,32 @@ public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
 }
 
 public class Array_RemoveAtNode : BehaviorTreeTerminalNode
+{
+  public override void init(object agent)
+  {
+    var interp = Interpreter.instance;
+
+    //NOTE: args are in reverse order in stack
+    var idx = interp.PopValue();
+    var arr = interp.PopValue();
+
+    var lst = arr.obj as DynValList;
+    if(lst == null)
+      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+
+    lst.RemoveAt((int)idx.num); 
+    //NOTE: this can be an operation for the temp. array,
+    //      we need to try del the array if so
+    lst.TryDel();
+  }
+
+  public override string inspect(object agent)
+  {
+    return "<- <-";
+  }
+}
+
+public class Array_RemoveAtNodeT : BehaviorTreeTerminalNode
 {
   public override void init(object agent)
   {
