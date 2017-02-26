@@ -26,7 +26,7 @@ public struct TypeRef
   public string name;
 #if BHL_FRONT
   //NOTE: parse location of the type
-  public bhlParser.TypeContext node;
+  public IParseTree node;
 #endif
 
   public static TypeRef NewEmpty()
@@ -511,6 +511,31 @@ public abstract class ScopedSymbol : Symbol, Scope
   // Indicate how subclasses store scope members. Allows us to
   // factor out common code in this class.
   public abstract OrderedDictionary GetMembers();
+}
+
+public class MultiType : Type
+{
+  public string name;
+  public uint nname;
+
+  public List<TypeRef> items = new List<TypeRef>();
+
+  public int GetTypeIndex() { return SymbolTable.tUSER; }
+  public string GetName() { return name; }
+  public uint GetNname() { return nname; }
+
+  public void Update()
+  {
+    name = "";
+    for(int i=0;i<items.Count;++i)
+    {
+      if(i > 0)
+        name += ",";
+      name += items[i].name;
+    }
+
+    nname = Hash.CRC28(name);
+  }
 }
 
 public class FuncType : Type

@@ -625,7 +625,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitExpLambda(bhlParser.ExpLambdaContext ctx)
   {
-    var tr = globals.type(ctx.funcLambda().type());
+    var tr = globals.type(ctx.funcLambda().retType());
     if(tr.type == null)
       FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
 
@@ -1224,7 +1224,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var tr = globals.type(ctx.type());
+    var tr = globals.type(ctx.retType());
     if(tr.type == null)
       FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
 

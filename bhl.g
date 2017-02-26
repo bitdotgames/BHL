@@ -130,7 +130,7 @@ block
 	;
 
 funcDecl
-	: 'func' type? NAME '(' funcParams? ')' funcBlock
+	: 'func' retType? NAME '(' funcParams? ')' funcBlock
 	;
 
 funcBlock
@@ -138,11 +138,15 @@ funcBlock
   ;
 
 funcLambda
-  : 'func' type? '(' funcParams? ')' useBlock? funcBlock chainExp*
+  : 'func' retType? '(' funcParams? ')' useBlock? funcBlock chainExp*
   ;
 
 refName
   : isRef? NAME
+  ;
+
+retType
+  : type (',' type)*
   ;
 
 names

@@ -449,6 +449,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitRefName([NotNull] bhlParser.RefNameContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.retType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitRetType([NotNull] bhlParser.RetTypeContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.names"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

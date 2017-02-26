@@ -120,7 +120,7 @@ public class GlobalScope : BaseScope
 #if BHL_FRONT
   public TypeRef type(bhlParser.TypeContext node)
   {
-    var str = node == null ? "void" : node.GetText();
+    var str = node.GetText();
     var type = resolve(str) as Type;
 
     if(type == null && node != null)
@@ -139,6 +139,32 @@ public class GlobalScope : BaseScope
       
       if(type == null)
         throw new Exception("Bad type: " + type);
+    }
+
+    var tr = new TypeRef();
+    tr.type = type;
+    tr.name = str;
+    tr.node = node;
+
+    return tr;
+  }
+
+  public TypeRef type(bhlParser.RetTypeContext node)
+  {
+    var str = node == null ? "void" : node.GetText();
+    var type = resolve(str) as Type;
+
+    if(type == null && node != null)
+    {    
+      if(node.type().Length > 1)
+      {
+        var mtype = new MultiType();
+        for(int i=0;i<node.type().Length;++i)
+          mtype.items.Add(this.type(node.type()[i]));
+        type = mtype;
+      }
+      else
+        return this.type(node.type()[0]);
     }
 
     var tr = new TypeRef();
