@@ -2140,7 +2140,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node, false);
+    var res = intp.ExecNode(node, 0);
 
     AssertEqual(res.status, BHS.FAILURE);
     CommonChecks(intp);
@@ -2168,7 +2168,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    var res = intp.ExecNode(node, false);
+    var res = intp.ExecNode(node, 0);
 
     AssertEqual(res.status, BHS.FAILURE);
     CommonChecks(intp);
@@ -3377,7 +3377,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     CommonChecks(intp);
   }
@@ -3406,7 +3406,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     CommonChecks(intp);
   }
@@ -3778,7 +3778,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    var res = intp.ExecNode(node, false);
+    var res = intp.ExecNode(node, 0);
     AssertEqual(res.status, BHS.FAILURE);
   }
 
@@ -3957,7 +3957,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
     //NodeDump(node);
 
     var str = GetString(trace_stream);
@@ -4032,7 +4032,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -4066,7 +4066,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -4144,7 +4144,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -4174,7 +4174,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -4905,7 +4905,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -5428,7 +5428,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -5466,7 +5466,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -5501,7 +5501,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -5534,8 +5534,8 @@ public class BHL_Test
     var node1 = intp.GetFuncNode("test");
     var node2 = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node1, false);
-    intp.ExecNode(node2, false);
+    intp.ExecNode(node1, 0);
+    intp.ExecNode(node2, 0);
 
     var str = GetString(trace_stream);
 
@@ -5575,8 +5575,8 @@ public class BHL_Test
     BindStartScript(globs);
 
     var intp = Interpret("", bhl, globs);
-    intp.ExecNode(intp.GetFuncNode("test"), false);
-    intp.ExecNode(intp.GetFuncNode("test2"), false);
+    intp.ExecNode(intp.GetFuncNode("test"), 0);
+    intp.ExecNode(intp.GetFuncNode("test2"), 0);
 
     var str = GetString(trace_stream);
 
@@ -5611,7 +5611,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -5653,7 +5653,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -5726,7 +5726,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -5772,7 +5772,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -5833,7 +5833,7 @@ public class BHL_Test
 
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("1020HEY!12HEY!", str);
@@ -6659,7 +6659,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("142", str);
@@ -7227,7 +7227,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     AssertError<IndexOutOfRangeException>(
       delegate() { 
-        intp.ExecNode(node, false);
+        intp.ExecNode(node, 0);
       },
       "Index was outside the bounds of the array"
     );
@@ -7385,7 +7385,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("WHILE;WHILE;WHILE;AFTER;", str);
@@ -7442,7 +7442,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("FOO;BAR;PRIO;AFTER;", str);
@@ -7919,7 +7919,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
@@ -7947,7 +7947,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
@@ -8060,7 +8060,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
@@ -8087,7 +8087,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
@@ -8146,7 +8146,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
@@ -8177,7 +8177,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
@@ -8208,7 +8208,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("OK", str);
@@ -8237,7 +8237,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("ELSE", str);
@@ -8269,7 +8269,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("ELSE", str);
@@ -8377,7 +8377,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;NOT NULL;EQ;", str);
@@ -8406,7 +8406,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;", str);
@@ -8468,7 +8468,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;NOT NULL;EQ;", str);
@@ -8507,7 +8507,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;NOT NULL;", str);
@@ -8536,7 +8536,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("012", str);
@@ -8597,7 +8597,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
@@ -8626,7 +8626,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("", str);
@@ -8679,7 +8679,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("01", str);
@@ -8773,7 +8773,7 @@ public class BHL_Test
 //    var intp = Interpret("", bhl, globs);
 //    var node = intp.GetFuncNode("test");
 //    //NodeDump(node);
-//    intp.ExecNode(node, false);
+//    intp.ExecNode(node, 0);
 //
 //    var str = GetString(trace_stream);
 //    AssertEqual("02", str);
@@ -8802,7 +8802,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("012", str);
@@ -8848,7 +8848,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(42));
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9035,7 +9035,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(42));
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9066,7 +9066,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(42));
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9098,7 +9098,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(42));
     //NodeDump(node);
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9126,7 +9126,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(42));
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     //NodeDump(node);
 
@@ -9187,7 +9187,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("bhl1", "test");
     node.SetArgs(DynVal.NewNum(23));
     //NodeDump(node);
-    var res = intp.ExecNode(node, true).val;
+    var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 23);
     CommonChecks(intp);
@@ -9239,7 +9239,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("bhl1", "test");
     node.SetArgs(DynVal.NewNum(2));
     //NodeDump(node);
-    var res = intp.ExecNode(node, true).val;
+    var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 4);
     CommonChecks(intp);
@@ -9292,7 +9292,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("bhl1", "test");
     node.SetArgs(DynVal.NewNum(23));
     //NodeDump(node);
-    var res = intp.ExecNode(node, true).val;
+    var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 23);
     CommonChecks(intp);
@@ -9489,6 +9489,27 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestReturnMultiple()
+  {
+    string bhl = @"
+      
+    func float,string test() 
+    {
+      return 100,""foo""
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 2).vals;
+
+    AssertEqual(vals[0].num, 100);
+    AssertEqual(vals[1].str, "foo");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestRefCountSimple()
   {
     string bhl = @"
@@ -9506,7 +9527,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9560,7 +9581,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9588,7 +9609,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9617,7 +9638,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9645,7 +9666,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9681,7 +9702,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9709,7 +9730,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9738,7 +9759,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9771,7 +9792,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9804,7 +9825,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9843,7 +9864,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 
@@ -9869,7 +9890,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     //NodeDump(node);
 
@@ -9903,7 +9924,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, false);
+    intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
 

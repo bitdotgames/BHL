@@ -1132,10 +1132,17 @@ public class Interpreter : AST_Visitor
   public struct Result
   {
     public BHS status;
-    public DynVal val;
+    public DynVal[] vals;
+
+    public DynVal val 
+    {
+      get {
+        return vals != null ? vals[0] : null;
+      }
+    }
   }
 
-  public Result ExecNode(BehaviorTreeNode node, bool ret_value = true, object agent = null)
+  public Result ExecNode(BehaviorTreeNode node, int ret_vals = 1, object agent = null)
   {
     Result res = new Result();
 
@@ -1146,7 +1153,14 @@ public class Interpreter : AST_Visitor
       if(res.status != BHS.RUNNING)
         break;
     }
-    res.val = ret_value ? PopValue() : null;
+    if(ret_vals > 0)
+    {
+      res.vals = new DynVal[ret_vals];
+      for(int i=ret_vals;i-- > 0;)
+        res.vals[i] = PopValue();
+    }
+    else
+      res.vals = null;
     return res;
   }
 

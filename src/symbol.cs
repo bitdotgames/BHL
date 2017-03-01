@@ -1165,7 +1165,9 @@ static public class SymbolTable
       return;
 
     //special case: we allow to cast from 'any' numeric type to enum
-    if((trhs == SymbolTable.tFLOAT || trhs == SymbolTable.tINT) && tlhs == SymbolTable.tENUM)
+    if((trhs == SymbolTable.tFLOAT || 
+        trhs == SymbolTable.tINT) && 
+        tlhs == SymbolTable.tENUM)
       return;
 
     var cast_type = castFromTo[trhs,tlhs];

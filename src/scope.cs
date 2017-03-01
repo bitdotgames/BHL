@@ -136,10 +136,10 @@ public class GlobalScope : BaseScope
         else
           type = new GenericArrayTypeSymbol(this, node);
       }
-      
-      if(type == null)
-        throw new Exception("Bad type: " + type);
     }
+
+    if(type == null)
+      throw new Exception("Bad type: " + type);
 
     var tr = new TypeRef();
     tr.type = type;
@@ -166,6 +166,9 @@ public class GlobalScope : BaseScope
       else
         return this.type(node.type()[0]);
     }
+
+    if(type == null)
+      throw new Exception("Bad type: " + type);
 
     var tr = new TypeRef();
     tr.type = type;

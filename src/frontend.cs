@@ -1169,31 +1169,53 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var func_symb = PeekFuncDecl().symbol;
     func_symb.return_statement_found = true;
 
-    var node = AST_Util.New_Return();
+    var ret_node = AST_Util.New_Return();
 
     if(func_symb == null)
       FireError(Location(ctx) + ": return statement is not in function");
 
-    var exp = ctx.exp();
-    if(exp != null)
+    var explist = ctx.explist();
+    if(explist != null)
     {
-      var exp_node = Visit(exp);
+      int len = explist.exp().Length;
 
-      //NOTE: workaround for cases like: `return trace(...)`
-      //      where exp has void type, in this case
-      //      we simply ignore exp_node since return will take
-      //      effect right before it
-      if(Wrap(exp).eval_type != SymbolTable._void)
+      if(len == 1)
       {
-        node.AddChild(exp_node);
-        SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
-        Wrap(ctx).eval_type = Wrap(exp).eval_type;
+        var exp = explist.exp()[0];
+        var exp_node = Visit(exp);
+
+        //NOTE: workaround for cases like: `return trace(...)`
+        //      where exp has void type, in this case
+        //      we simply ignore exp_node since return will take
+        //      effect right before it
+        if(Wrap(exp).eval_type != SymbolTable._void)
+        {
+          ret_node.AddChild(exp_node);
+          SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
+          Wrap(ctx).eval_type = Wrap(exp).eval_type;
+        }
+      }
+      else
+      {
+        var ret_type = new MultiType();
+
+        for(int i=0;i<len;++i)
+        {
+          var exp = explist.exp()[i];
+          var exp_node = Visit(exp);
+          ret_node.AddChild(exp_node);
+          ret_type.items.Add(new TypeRef(Wrap(exp).eval_type));
+        }
+        //TODO:
+        //SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
+        ret_type.Update();
+        Wrap(ctx).eval_type = ret_type;
       }
     }
     else
       Wrap(ctx).eval_type = SymbolTable._void;
 
-    return node;
+    return ret_node;
   }
 
   public override AST VisitBreak(bhlParser.BreakContext ctx)
@@ -1513,12 +1535,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
         node.AddChild(st);
     }
 
-    //NOTE: replacing last return in a function with its statement 
+    //NOTE: replacing last return in a function with its statement as an optimization 
     if(type == EnumBlock.FUNC && node.children.Count > 0 && node.children[node.children.Count-1] is AST_Return)
     {
       var ret = node.children[node.children.Count-1]; 
       if(ret.children.Count > 0)
         node.children[node.children.Count-1] = ret.children[0];
+      for(int i=1;i<ret.children.Count;++i)
+        node.children.Add(ret.children[i]);
     }
 
     if(new_local_scope)

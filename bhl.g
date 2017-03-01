@@ -64,7 +64,7 @@ statement
 	| mainIf elseIf* else?                                        #If
 	| 'while' exp block    																        #While
 	| 'break'                                                     #Break
-  | 'return' exp?                                               #Return
+  | 'return' explist?                                           #Return
 	| 'seq' block  																 						    #Seq
 	| 'seq_' block  																 						  #Seq_
 	| 'paral' block  																							#Paral
