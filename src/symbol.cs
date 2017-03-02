@@ -692,9 +692,9 @@ public class LambdaSymbol : FuncSymbol
     var fparams = ctx.funcLambda().funcParams();
     if(fparams != null)
     {
-      for(int i=0;i<fparams.varDeclare().Length;++i)
+      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
-        var vd = fparams.varDeclare()[i];
+        var vd = fparams.funcParamDeclare()[i];
         ft.arg_types.Add(globs.type(vd.type()));
       }
     }
@@ -789,9 +789,9 @@ public class FuncSymbolAST : FuncSymbol
     var ft = GetFuncType();
     if(fparams != null)
     {
-      for(int i=0;i<fparams.varDeclare().Length;++i)
+      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
-        var vd = fparams.varDeclare()[i];
+        var vd = fparams.funcParamDeclare()[i];
         var type = globals.type(vd.type());
         type.is_ref = vd.isRef() != null;
         ft.arg_types.Add(type);
@@ -810,8 +810,8 @@ public class FuncSymbolAST : FuncSymbol
     if(fparams == null)
       return null; 
 
-    var vdecl = fparams.varDeclare()[idx];
-    var vinit = vdecl.initVar(); 
+    var vdecl = fparams.funcParamDeclare()[idx];
+    var vinit = vdecl.assignExp(); 
     return vinit;
   }
 #endif

@@ -473,17 +473,29 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncParams([NotNull] bhlParser.FuncParamsContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.funcParamDeclare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFuncParamDeclare([NotNull] bhlParser.FuncParamDeclareContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varsDeclare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarsDeclare([NotNull] bhlParser.VarsDeclareContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.varDeclare"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitVarDeclare([NotNull] bhlParser.VarDeclareContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.initVar"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.assignExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitInitVar([NotNull] bhlParser.InitVarContext context);
+	Result VisitAssignExp([NotNull] bhlParser.AssignExpContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.operatorOr"/>.
 	/// </summary>

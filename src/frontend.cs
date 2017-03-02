@@ -851,7 +851,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return res;
   }
 
-  public override AST VisitInitVar(bhlParser.InitVarContext ctx)
+  public override AST VisitAssignExp(bhlParser.AssignExpContext ctx)
   {
     var exp = ctx.exp();
     var res = Visit(exp);
@@ -1288,12 +1288,12 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var func = curr_scope as FuncSymbol;
     func.visitings_args = true;
 
-    var fparams = ctx.varDeclare();
+    var fparams = ctx.funcParamDeclare();
     bool found_default_arg = false;
     for(int i=0;i<fparams.Length;++i)
     {
       var fp = fparams[i]; 
-      if(fp.initVar() != null)
+      if(fp.assignExp() != null)
         found_default_arg = true;
       else if(found_default_arg)
         FireError(Location(fp.NAME()) + ": missing default argument expression");
@@ -1307,44 +1307,87 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return node;
   }
 
-  public override AST VisitVarDeclare(bhlParser.VarDeclareContext ctx)
+  public override AST VisitVarsDeclare(bhlParser.VarsDeclareContext ctx)
+  {
+    AST exp_node = null;
+    var assign_exp = ctx.assignExp();
+    if(assign_exp != null)
+      exp_node = Visit(assign_exp);
+
+    AST root_node = null;
+    AST last_node = null;
+    for(int i=0;i<ctx.varDeclare().Length;++i)
+    {
+      var vd = ctx.varDeclare()[i];
+
+      var node = CommonDeclVar(vd.NAME(), vd.type(), false/*is ref*/, false/*not func arg*/);
+      
+      if(root_node == null)
+        root_node = node;
+      
+      if(last_node != null)
+        last_node.AddChild(node);
+
+      last_node = node;
+    }
+
+    if(exp_node != null)
+    {
+      if(ctx.varDeclare().Length == 1)
+        SymbolTable.CheckAssign(Wrap(ctx.varDeclare()[0].NAME()), Wrap(assign_exp));
+      //else TODO
+      //
+      last_node.AddChild(exp_node);
+    }
+
+    return root_node;
+  }
+
+  public override AST VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
   {
     var name = ctx.NAME();
-    var str_name = name.GetText();
-    var defarg = ctx.initVar();
+    var assign_exp = ctx.assignExp();
+    bool is_ref = ctx.isRef() != null;
 
-    var tr = globals.type(ctx.type());
+    if(is_ref && assign_exp != null)
+      FireError(Location(name) +  ": ref is not allowed to have a default value");
+
+    AST exp_node = null;
+    if(assign_exp != null)
+      exp_node = Visit(assign_exp);
+
+    var node = CommonDeclVar(name, ctx.type(), is_ref, true/*func arg*/);
+
+    if(exp_node != null)
+    {
+      SymbolTable.CheckAssign(Wrap(name), Wrap(assign_exp));
+      node.AddChild(exp_node);
+    }
+  
+    return node;
+  }
+
+  AST CommonDeclVar(ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg)
+  {
+    var str_name = name.GetText();
+
+    var tr = globals.type(type);
     if(tr.type == null)
       FireError(Location(tr.node) +  ": Type '" + tr.name + "' not found");
 
     var var_node = Wrap(name); 
     var_node.eval_type = tr.type;
 
-    var fscope = curr_scope as FuncSymbol;
-    bool func_arg = fscope != null && fscope.visitings_args;
+    if(is_ref && !func_arg)
+      FireError(Location(name) +  ": ref is only allowed in function declaration");
 
-    bool is_ref = ctx.isRef() != null;
-    if(is_ref)
-    {
-      if(!func_arg)
-        FireError(Location(name) +  ": ref is only allowed in function declaration");
-
-      if(defarg != null)
-        FireError(Location(name) +  ": ref is not allowed to have a default value");
-    }
     Symbol symb = func_arg ? 
       (Symbol) new FuncArgSymbol(str_name, tr, is_ref) :
       (Symbol) new VariableSymbol(var_node, str_name, tr);
 
     var node = AST_Util.New_VarDecl(tr.name, str_name, is_ref);
-    if(defarg != null)
-    {
-      node.AddChild(Visit(defarg));
-      SymbolTable.CheckAssign(var_node, Wrap(defarg));
-    }
-
     curr_scope.define(symb);
-  
+
     return node;
   }
 

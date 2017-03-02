@@ -1324,7 +1324,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl);
       },
-      "ref is only allowed in function declaration"
+      "mismatched input 'ref'"
     );
   }
 
@@ -9506,6 +9506,33 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertEqual(vals[0].num, 100);
     AssertEqual(vals[1].str, "foo");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleVarAssign()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      float a,string s = foo()
+      return a,s
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 2).vals;
+
+    AssertEqual(vals[0].num, 100);
+    AssertEqual(vals[1].str, "bar");
     CommonChecks(intp);
   }
 

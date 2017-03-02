@@ -58,7 +58,7 @@ exp
 
 //statements
 statement
-  : varDeclare                                                  #VarDecl
+  : varsDeclare                                                 #VarDecl
 	| callExp '=' exp                                             #Assign
 	| callExp 																									  #SymbCall
 	| mainIf elseIf* else?                                        #If
@@ -158,14 +158,22 @@ useBlock
   ;
 
 funcParams
-	: varDeclare ( ',' varDeclare )*
+	: funcParamDeclare ( ',' funcParamDeclare )*
 	;
 
-varDeclare
-  : isRef? type NAME initVar?
+funcParamDeclare
+  : isRef? type NAME assignExp?
   ;
 
-initVar
+varsDeclare
+	: varDeclare ( ',' varDeclare )* assignExp?
+  ;
+
+varDeclare
+  : type NAME
+  ;
+
+assignExp
 	: '=' exp
 	;
 
