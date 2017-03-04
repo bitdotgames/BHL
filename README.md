@@ -15,6 +15,7 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 * Supports C# bindings to user types and functions
 * Golang alike *defer*
 * Passing arguments to function by *ref* like in C#
+* Multiple values return like in Go
 * Hot code reload
 * Strict control over memory allocations 
 
