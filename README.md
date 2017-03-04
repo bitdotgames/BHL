@@ -180,6 +180,18 @@ Unit FindTarget(Unit self, ref float dist_to_target) {
 float dist_to_target = 0
 Unit u = FindTarget(ref dist_to_target)
 ```
+## **multiple return values** support
+
+```go
+
+Unit,float FindTarget(Unit self) {
+...
+  float dist_to_target = u.position.Sub(self.position).length
+  return u,dist_to_target
+}
+
+Unit u,float dist_to_target = FindTarget()
+```
 
 ## **lambda** support
 
