@@ -1197,6 +1197,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
       }
       else
       {
+        var fmret_type = func_symb.GetReturnType() as MultiType;
+        if(fmret_type == null)
+          FireError(Location(ctx) + ": function doesn't support multi return");
+
+        if(fmret_type.items.Count != len)
+          FireError(Location(ctx) + ": multi return size doesn't match destination");
+
         var ret_type = new MultiType();
 
         for(int i=0;i<len;++i)
@@ -1205,9 +1212,9 @@ public class AST_Builder : bhlBaseVisitor<AST>
           var exp_node = Visit(exp);
           ret_node.AddChild(exp_node);
           ret_type.items.Add(new TypeRef(Wrap(exp).eval_type));
+          
+          SymbolTable.CheckAssign(fmret_type.items[i].Get(), Wrap(exp));
         }
-        //TODO:
-        //SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
         ret_type.Update();
         Wrap(ctx).eval_type = ret_type;
       }
@@ -1314,11 +1321,15 @@ public class AST_Builder : bhlBaseVisitor<AST>
     if(assign_exp != null)
       exp_node = Visit(assign_exp);
 
+    var vdecls = ctx.varDeclare();
+
+    //NOTE: multiple decl.vars are chained(next one is added as a child to the prev.one), 
+    //      this is kinda hacky but OK for now
     AST root_node = null;
     AST last_node = null;
-    for(int i=0;i<ctx.varDeclare().Length;++i)
+    for(int i=0;i<vdecls.Length;++i)
     {
-      var vd = ctx.varDeclare()[i];
+      var vd = vdecls[i];
 
       var node = CommonDeclVar(vd.NAME(), vd.type(), false/*is ref*/, false/*not func arg*/);
       
@@ -1333,10 +1344,24 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
     if(exp_node != null)
     {
-      if(ctx.varDeclare().Length == 1)
-        SymbolTable.CheckAssign(Wrap(ctx.varDeclare()[0].NAME()), Wrap(assign_exp));
-      //else TODO
-      //
+      if(vdecls.Length > 1)
+      {
+        var exp_type = Wrap(assign_exp).eval_type as MultiType; 
+        if(exp_type == null)
+          FireError(Location(assign_exp) + ": multi return expected");
+
+        if(exp_type.items.Count != vdecls.Length)
+          FireError(Location(assign_exp) + ": multi return size doesn't match destination");
+
+        for(int i=0;i<vdecls.Length;++i)
+        {
+          var vd = vdecls[i];
+          SymbolTable.CheckAssign(Wrap(vd.NAME()), exp_type.items[i].Get());
+        }
+
+      }
+      else
+        SymbolTable.CheckAssign(Wrap(vdecls[0].NAME()), Wrap(assign_exp));
       last_node.AddChild(exp_node);
     }
 

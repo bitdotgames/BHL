@@ -161,6 +161,7 @@ public class GlobalScope : BaseScope
         var mtype = new MultiType();
         for(int i=0;i<node.type().Length;++i)
           mtype.items.Add(this.type(node.type()[i]));
+        mtype.Update();
         type = mtype;
       }
       else

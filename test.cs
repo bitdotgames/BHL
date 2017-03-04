@@ -9510,6 +9510,63 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestReturnMultipleInFuncBadCast()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return ""bar"",100
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"float, @(5,13) ""bar"":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleInFuncNotEnough()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return ""bar""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"<float,string>, @(5,13) ""bar"":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleInFuncTooMany()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 1,""bar"",1
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "multi return size doesn't match destination"
+    );
+  }
+
+  [IsTested()]
   public void TestReturnMultipleVarAssign()
   {
     string bhl = @"
@@ -9534,6 +9591,102 @@ func Unit FindUnit(Vec3 pos, float radius) {
     AssertEqual(vals[0].num, 100);
     AssertEqual(vals[1].str, "bar");
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleBadCast()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func void test() 
+    {
+      string a,float s = foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "a:<string>, float have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleNotEnough()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func void test() 
+    {
+      float s = foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "s:<float>, @(10,14) =foo():<float,string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleTooMany()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func void test() 
+    {
+      float s,string a,int f = foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "foo():<float,string>: multi return size doesn't match destination"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleNonConsumed()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func void test() 
+    {
+      foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "Non consumed value"
+    );
   }
 
   [IsTested()]

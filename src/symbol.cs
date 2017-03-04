@@ -91,6 +91,7 @@ public class WrappedNode
   public Scope scope;
   public Symbol symbol;
   public Type eval_type;
+  //TODO: why keep it?
   public Type promote_to_type;
 
 #if BHL_FRONT
@@ -1154,6 +1155,21 @@ static public class SymbolTable
       );
     }
   }
+
+  static public void CheckAssign(WrappedNode lhs, Type rhs) 
+  {
+    int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
+    int trhs = rhs.GetTypeIndex();
+    var promote_to_type = promoteFromTo[trhs,tlhs];
+    if(!CanAssignTo(rhs, lhs.eval_type, promote_to_type)) 
+    {
+      throw new UserError(
+        lhs.Location()+", "+
+        rhs.GetName()+" have incompatible types "
+      );
+    }
+  }
+
 
   static public void CheckCast(WrappedNode type, WrappedNode exp) 
   {
