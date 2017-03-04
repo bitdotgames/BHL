@@ -4078,21 +4078,31 @@ public class BHL_Test
   public void TestParseType()
   {
     {
-      var type = AST_Builder.ParseType("bool");
+      var type = AST_Builder.ParseType("bool").type()[0];
       AssertEqual(type.NAME().GetText(), "bool");
       AssertTrue(type.fnargs() == null);
       AssertTrue(type.ARR() == null);
     }
 
     {
-      var type = AST_Builder.ParseType("int[]");
+      var ret = AST_Builder.ParseType("bool,float");
+      AssertEqual(ret.type()[0].NAME().GetText(), "bool");
+      AssertTrue(ret.type()[0].fnargs() == null);
+      AssertTrue(ret.type()[0].ARR() == null);
+      AssertEqual(ret.type()[1].NAME().GetText(), "float");
+      AssertTrue(ret.type()[1].fnargs() == null);
+      AssertTrue(ret.type()[1].ARR() == null);
+    }
+
+    {
+      var type = AST_Builder.ParseType("int[]").type()[0];
       AssertEqual(type.NAME().GetText(), "int");
       AssertTrue(type.fnargs() == null);
       AssertTrue(type.ARR() != null);
     }
 
     {
-      var type = AST_Builder.ParseType("bool^(int,string)");
+      var type = AST_Builder.ParseType("bool^(int,string)").type()[0];
       AssertEqual(type.NAME().GetText(), "bool");
       AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
       AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
@@ -4100,7 +4110,20 @@ public class BHL_Test
     }
 
     {
-      var type = AST_Builder.ParseType("float^(int)[]");
+      var ret = AST_Builder.ParseType("bool^(int,string),float[]");
+      var type = ret.type()[0];
+      AssertEqual(type.NAME().GetText(), "bool");
+      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
+      AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
+      AssertTrue(type.ARR() == null);
+      type = ret.type()[1];
+      AssertEqual(type.NAME().GetText(), "float");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() != null);
+    }
+
+    {
+      var type = AST_Builder.ParseType("float^(int)[]").type()[0];
       AssertEqual(type.NAME().GetText(), "float");
       AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
       AssertTrue(type.ARR() != null);
@@ -9687,6 +9710,43 @@ func Unit FindUnit(Vec3 pos, float radius) {
       },
       "Non consumed value"
     );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleFromBindings()
+  {
+    string bhl = @"
+      
+    func float,string test() 
+    {
+      return func_mult()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("func_mult", globs.type("float,string"), 
+          delegate(object agent)
+          {
+            var interp = Interpreter.instance;
+            //last returned value comes first
+            interp.PushValue(DynVal.NewStr("foo"));
+            interp.PushValue(DynVal.NewNum(42));
+            return BHS.SUCCESS;
+          }
+        );
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 2).vals;
+
+    AssertEqual(vals[0].str, "foo");
+    AssertEqual(vals[1].num, 42);
+    CommonChecks(intp);
   }
 
   [IsTested()]

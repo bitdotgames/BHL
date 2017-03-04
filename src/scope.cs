@@ -200,7 +200,10 @@ public class GlobalScope : BaseScope
           if(node == null)
             throw new Exception("Bad type: " + name);
 
-          tr = this.type(node);
+          if(node.type().Length == 1)
+            tr = this.type(node.type()[0]);
+          else
+            tr = this.type(node);
         }
         else
 #endif

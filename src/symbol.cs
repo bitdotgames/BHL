@@ -1170,7 +1170,6 @@ static public class SymbolTable
     }
   }
 
-
   static public void CheckCast(WrappedNode type, WrappedNode exp) 
   {
     int tlhs = type.eval_type.GetTypeIndex();

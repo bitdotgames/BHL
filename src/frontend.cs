@@ -107,7 +107,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     }
   }
 
-  public static bhlParser.TypeContext ParseType(string type)
+  public static bhlParser.RetTypeContext ParseType(string type)
   {
     try
     {
@@ -115,7 +115,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       var p = new bhlParser(tokens);
       p.AddErrorListener(new ErrorParserListener());
       p.ErrorHandler = new ErrorStrategy();
-      return p.type();
+      return p.retType();
     }
     catch(Exception)
     {
