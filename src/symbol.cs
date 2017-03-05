@@ -601,7 +601,6 @@ public class FuncSymbol : ScopedSymbol
   OrderedDictionary members = new OrderedDictionary();
   OrderedDictionary args = new OrderedDictionary();
 
-  public bool visitings_args = false;
   public bool return_statement_found = false;
 
   public FuncSymbol(WrappedNode n, string name, FuncType type, Scope parent) 

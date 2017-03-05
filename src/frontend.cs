@@ -1293,7 +1293,6 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var node = AST_Util.New_Interim();
 
     var func = curr_scope as FuncSymbol;
-    func.visitings_args = true;
 
     var fparams = ctx.funcParamDeclare();
     bool found_default_arg = false;
@@ -1309,7 +1308,6 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
       func.DefineArg(fp.NAME().GetText());
     }
-    func.visitings_args = false;
 
     return node;
   }
