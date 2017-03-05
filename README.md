@@ -15,7 +15,7 @@ Please note that bhl is in pre-alpha state and currently targets only C# platfor
 * Supports C# bindings to user types and functions
 * Golang alike *defer*
 * Passing arguments to function by *ref* like in C#
-* Multiple values return like in Go
+* Multiple returned values like in Go
 * Hot code reload
 * Strict control over memory allocations 
 
@@ -97,15 +97,6 @@ Target 703 is dead!
 Found new target 666! Approaching it.
 State changed!
 Found new target 902! Approaching it.
-Attacking target 902
-Target 902 is dead!
-No target in range
-Idling 1 sec...
-Idle complete
-No target in range
-Idling 1 sec...
-State changed!
-Idle interrupted!
 ...
 ```
 
@@ -181,7 +172,7 @@ Unit FindTarget(Unit self, ref float dist_to_target) {
 float dist_to_target = 0
 Unit u = FindTarget(self, ref dist_to_target)
 ```
-## **multiple return values** support
+## **multiple returned values** support
 
 ```go
 
