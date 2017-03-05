@@ -179,7 +179,7 @@ Unit FindTarget(Unit self, ref float dist_to_target) {
 }
 
 float dist_to_target = 0
-Unit u = FindTarget(ref dist_to_target)
+Unit u = FindTarget(self, ref dist_to_target)
 ```
 ## **multiple return values** support
 
@@ -191,7 +191,7 @@ Unit,float FindTarget(Unit self) {
   return u,dist_to_target
 }
 
-Unit u,float dist_to_target = FindTarget()
+Unit u,float dist_to_target = FindTarget(self)
 ```
 
 ## **lambda** support
