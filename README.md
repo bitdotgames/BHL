@@ -210,7 +210,7 @@ seq {
 
 # Roadmap
 
-## Version 0.1
+## Version 0.9
 
 1. ~~**ref** semantics similar to C#~~
 2. ~~More generic functors support~~
@@ -218,10 +218,9 @@ seq {
 4. ~~Multiple return values support~~
 5. **while** syntax sugar: **for(...) {}** support
 6. Ternary operator support
-
+7. User defined structs
 
 ## Version ???
 
 1. Byte code optimization
 2. More optimal executor
-3. User defined structs
