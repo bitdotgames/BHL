@@ -717,10 +717,10 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var curr_type = PeekJsonType();
     if(curr_type == null)
-      FireError(Location(ctx) + ": Json context not set");
+      FireError(Location(ctx) + ": {..} not expected");
 
     if(!(curr_type is ClassSymbol) || (curr_type is ArrayTypeSymbol))
-      FireError(Location(ctx) + ": Object is not expected, need '" + curr_type + "'");
+      FireError(Location(ctx) + ": {..} is not expected, need '" + curr_type + "'");
 
     Wrap(ctx).eval_type = curr_type;
     var root_type_name = curr_type.GetName();
@@ -741,10 +741,10 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var curr_type = PeekJsonType();
     if(curr_type == null)
-      FireError(Location(ctx) + ": Json context is not set");
+      FireError(Location(ctx) + ": [..] not expected");
 
     if(!(curr_type is ArrayTypeSymbol))
-      FireError(Location(ctx) + ": Array is not expected, need '" + curr_type + "'");
+      FireError(Location(ctx) + ": [..] is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
     PushJsonType(arr_type.original.Get());
@@ -1320,11 +1320,28 @@ public class AST_Builder : bhlBaseVisitor<AST>
   public override AST VisitVarsDeclare(bhlParser.VarsDeclareContext ctx)
   {
     AST exp_node = null;
+    var vdecls = ctx.varDeclare();
     var assign_exp = ctx.assignExp();
     if(assign_exp != null)
+    {
+      //NOTE: look forward at expression and push json type 
+      //      if it's a json-init-expression
+      bool pop_json_type = false;
+      if(vdecls.Length == 1 && 
+         (assign_exp.exp() is bhlParser.ExpJsonObjContext || 
+          assign_exp.exp() is bhlParser.ExpJsonArrContext))
+      {
+        pop_json_type = true;
+        var vd = vdecls[0];
+        var tr = globals.type(vd.type());
+        PushJsonType(tr.Get());
+      }
+
       exp_node = Visit(assign_exp);
 
-    var vdecls = ctx.varDeclare();
+      if(pop_json_type)
+        PopJsonType();
+    }
 
     //NOTE: multiple decl.vars are chained(next one is added as a child to the prev.one), 
     //      this is kinda hacky but OK for now
@@ -1361,10 +1378,10 @@ public class AST_Builder : bhlBaseVisitor<AST>
           var vd = vdecls[i];
           SymbolTable.CheckAssign(Wrap(vd.NAME()), exp_type.items[i].Get());
         }
-
       }
       else
         SymbolTable.CheckAssign(Wrap(vdecls[0].NAME()), Wrap(assign_exp));
+
       last_node.AddChild(exp_node);
     }
 

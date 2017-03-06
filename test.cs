@@ -2840,6 +2840,7 @@ public class BHL_Test
     func float test() 
     {
       Foo tmp = new Color
+      return 1
     }
     ";
 
@@ -8842,20 +8843,230 @@ public class BHL_Test
     }
   }
 
-  //[IsTested()]
-  //public void TestJsonEmptyCtor()
-  //{
-  //  string bhl = @"
-  //  func float test()
-  //  {
-  //    Color c = {}
-  //    return c.r + c.g + c.b
-  //  }
-  //  ";
-  //}
+  [IsTested()]
+  public void TestJsonEmptyCtor()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color c = {}
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 0);
+    CommonChecks(intp);
+  }
 
   [IsTested()]
-  public void TestJsonInit()
+  public void TestJsonPartialCtor()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color c = {g: 10}
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 10);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonFullCtor()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color c = {r: 1, g: 10}
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 11);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonCtorNotExpectedMember()
+  {
+    string bhl = @"
+    func void test()
+    {
+      Color c = {b: 10}
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"No such attribute 'b' in 'class Color"
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonCtorBadType()
+  {
+    string bhl = @"
+    func void test()
+    {
+      Color c = {r: ""what""}
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"float, @(4,20) ""what"":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonEmptyArrCtor()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int[] a = []
+      return a.Count 
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonArrCtor()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int[] a = [1,2,3]
+      return a[0] + a[1] + a[2]
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 6);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonArrComplexCtor()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color[] cs = [{r:10, g:100}, {g:1000, r:1}]
+      return cs[0].r + cs[0].g + cs[1].r + cs[1].g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 1111);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonObjNotExpected()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color c
+      c = {}
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"{..} not expected"
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonArrNotExpected()
+  {
+    string bhl = @"
+    func void test()
+    {
+      float[] b
+      b = []
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"[..] not expected"
+    );
+  }
+
+
+  [IsTested()]
+  public void TestJsonFuncArg()
   {
     string bhl = @"
     func void test(float b) 
