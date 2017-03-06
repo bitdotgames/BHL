@@ -99,6 +99,13 @@ u.InjectScript(func() {
 })
 ```
 
+### Function pointers
+
+```go
+bool^(int) p = func bool(int b) { return b > 1 }
+return p(10)
+```
+
 ### **defer** support
 
 ```go
