@@ -80,6 +80,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExplist([NotNull] bhlParser.ExplistContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpJsonArr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpOr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -149,6 +156,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpNew([NotNull] bhlParser.ExpNewContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpJsonObj</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpJsonObj([NotNull] bhlParser.ExpJsonObjContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpUnary</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.

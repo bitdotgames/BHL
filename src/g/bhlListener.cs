@@ -111,6 +111,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExplist([NotNull] bhlParser.ExplistContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpJsonArr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpJsonArr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpOr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -230,6 +242,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpNew([NotNull] bhlParser.ExpNewContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpJsonObj</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpJsonObj([NotNull] bhlParser.ExpJsonObjContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpJsonObj</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpJsonObj([NotNull] bhlParser.ExpJsonObjContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpUnary</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.

@@ -131,6 +131,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExplist([NotNull] bhlParser.ExplistContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpJsonArr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpJsonArr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpOr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -270,6 +284,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpNew([NotNull] bhlParser.ExpNewContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpJsonObj</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpJsonObj([NotNull] bhlParser.ExpJsonObjContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpJsonObj</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpJsonObj([NotNull] bhlParser.ExpJsonObjContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpUnary</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.

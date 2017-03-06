@@ -114,6 +114,17 @@ public partial class bhlBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// <return>The visitor result.</return>
 	public virtual Result VisitExplist([NotNull] bhlParser.ExplistContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpJsonArr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpOr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>
@@ -223,6 +234,17 @@ public partial class bhlBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitExpNew([NotNull] bhlParser.ExpNewContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpJsonObj</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitExpJsonObj([NotNull] bhlParser.ExpJsonObjContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpUnary</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.

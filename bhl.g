@@ -42,6 +42,8 @@ exp
 	| callExp                                                 #ExpCall
 	| staticCallExp                                           #ExpStaticCall
   | 'new' type                                              #ExpNew
+  | jsonObject                                              #ExpJsonObj
+  | jsonArray                                               #ExpJsonArr
   | funcLambda                                              #ExpLambda
 	| '(' type ')' exp                                        #ExpTypeCast
 	| operatorUnary exp								                        #ExpUnary
@@ -122,7 +124,7 @@ callArgs
 	;
 
 callArg
-	: (NAME ':')? isRef? (exp | jsonObject)
+	: (NAME ':')? isRef? exp
   ;
 
 block 

@@ -691,21 +691,26 @@ public class AST_Builder : bhlBaseVisitor<AST>
   public override AST VisitCallArg(bhlParser.CallArgContext ctx)
   {
     var exp = ctx.exp();
-    var json = ctx.jsonObject();
+    var node = Visit(exp);
+    Wrap(ctx).eval_type = Wrap(exp).eval_type;
+    return node;
 
-    if(exp != null)
-    {
-      var node = Visit(exp);
-      Wrap(ctx).eval_type = Wrap(exp).eval_type;
-      return node;
-    }
-    //NOTE: json object
-    else
-    {
-      var node = Visit(json);
-      Wrap(ctx).eval_type = Wrap(json).eval_type;
-      return node;
-    }
+  }
+
+  public override AST VisitExpJsonObj(bhlParser.ExpJsonObjContext ctx)
+  {
+    var json = ctx.jsonObject();
+    var node = Visit(json);
+    Wrap(ctx).eval_type = Wrap(json).eval_type;
+    return node;
+  }
+
+  public override AST VisitExpJsonArr(bhlParser.ExpJsonArrContext ctx)
+  {
+    var json = ctx.jsonArray();
+    var node = Visit(json);
+    Wrap(ctx).eval_type = Wrap(json).eval_type;
+    return node;
   }
 
   public override AST VisitJsonObject(bhlParser.JsonObjectContext ctx)
@@ -748,11 +753,11 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
     var vals = ctx.jsonValue();
     for(int i=0;i<vals.Length;++i)
-    {
       node.AddChild(Visit(vals[i]));
-    }
 
     PopJsonType();
+
+    Wrap(ctx).eval_type = arr_type;
 
     return node;
   }

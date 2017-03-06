@@ -8842,6 +8842,18 @@ public class BHL_Test
     }
   }
 
+  //[IsTested()]
+  //public void TestJsonEmptyCtor()
+  //{
+  //  string bhl = @"
+  //  func float test()
+  //  {
+  //    Color c = {}
+  //    return c.r + c.g + c.b
+  //  }
+  //  ";
+  //}
+
   [IsTested()]
   public void TestJsonInit()
   {
