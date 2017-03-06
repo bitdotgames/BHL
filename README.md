@@ -57,7 +57,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
 ```go
 Color c = {r:0.9, g:0.5, b:0.1, a:0.3}
-Vec3[] = [{x: 10}, {y: 100, z: 100}, {y: 1}]
+Vec3[] vs = [{x: 10}, {y: 100, z: 100}, {y: 1}]
 ```
 
 ### **ref** support
