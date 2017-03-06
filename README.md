@@ -52,6 +52,14 @@ func Unit FindUnit(Vec3 pos, float radius) {
   return null
 }
 ```
+
+### Generic initializers support
+
+```go
+Color c = {r:0.9, g:0.5, b:0.1, a:0.3}
+Vec3[] = [{x: 10}, {y: 100, z: 100}, {y: 1}]
+```
+
 ### **ref** support
 
 ```go
@@ -65,7 +73,7 @@ Unit FindTarget(Unit self, ref float dist_to_target) {
 float dist_to_target = 0
 Unit u = FindTarget(self, ref dist_to_target)
 ```
-### **multiple returned values** support
+### **Multiple returned values** support
 
 ```go
 
@@ -100,7 +108,7 @@ seq {
      ... 
 }
 ```
-### some unit's top behavior
+### Some unit's top behavior
 
 ```go
 func UNIT_GREMLIN(float radius_max)
@@ -212,8 +220,8 @@ You can run unit tests by executing the following command:
 ## Version 0.9
 
 1. ~~**ref** semantics similar to C#~~
-2. ~~More generic functors support~~
-3. More generic initializers
+2. ~~Generic functors support~~
+3. ~~Generic initializers~~
 4. ~~Multiple return values support~~
 5. **while** syntax sugar: **for(...) {}** support
 6. Ternary operator support
