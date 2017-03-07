@@ -2151,7 +2151,7 @@ public class Array_RemoveAtNodeT : BehaviorTreeTerminalNode
     var idx = interp.PopValue();
     var arr = interp.PopValue();
 
-    var lst = (arr.obj as IList);
+    var lst = arr.obj as IList;
     if(lst == null)
       throw new UserError("Not an array");
 
