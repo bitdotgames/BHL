@@ -8861,6 +8861,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
 
     AssertEqual(num, 0);
     CommonChecks(intp);
@@ -8970,6 +8971,7 @@ public class BHL_Test
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
 
     AssertEqual(num, 0);
     CommonChecks(intp);
