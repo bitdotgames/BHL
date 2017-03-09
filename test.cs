@@ -9124,6 +9124,7 @@ public class BHL_Test
   public class ConfigNode : BehaviorTreeTerminalNode
   {
     public ConfigNode_Conf conf = new ConfigNode_Conf();
+    public bool with_ref = false;
 
     Stream sm;
 
@@ -9140,6 +9141,13 @@ public class BHL_Test
         (conf.colors.Count > 0 ? (":" + conf.colors.Count + ":" + conf.colors[0].r + ":" + conf.colors[1].g + ":" + conf.colors[2].g) : "") + 
         ":" + conf.sub_color.r + ":" + conf.sub_color.g + 
         ":" + string.Join(",", conf.strs));
+
+      if(with_ref)
+      {
+        var ref_val = Interpreter.instance.PopRef();
+        sw.Write(":" + ref_val.num);
+      }
+
       sw.Flush();
     }
   }
@@ -9166,7 +9174,7 @@ public class BHL_Test
     }
   }
 
-  void BindConfigNode(GlobalScope globs, MemoryStream trace_stream)
+  void BindConfigNode_Conf(GlobalScope globs)
   {
     {
       var cl = new ClassBindSymbol( "ConfigNode_Conf",
@@ -9233,6 +9241,11 @@ public class BHL_Test
         }
       ));
     }
+  }
+
+  void BindConfigNode(GlobalScope globs, MemoryStream trace_stream)
+  {
+    BindConfigNode_Conf(globs);
 
     {
       var fn = new ConfNodeSymbol("ConfigNode", globs.type("void"),
@@ -9259,6 +9272,23 @@ public class BHL_Test
     }
 
   }
+
+  void BindConfigNodeWithRef(GlobalScope globs, MemoryStream trace_stream)
+  {
+    BindConfigNode_Conf(globs);
+
+    {
+      var fn = new ConfNodeSymbol("ConfigNodeWithRef", globs.type("void"),
+          delegate() { var n = new ConfigNode(trace_stream); n.with_ref = true; n.conf = new ConfigNode_Conf(); n.conf.reset(); return n; }, 
+          delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNode)n).conf; v.obj = conf; if(reset) conf.reset(); }
+          );
+      fn.define(new FuncArgSymbol("c", globs.type("ConfigNode_Conf")));
+      fn.define(new FuncArgSymbol("arg", globs.type("float"), true/*ref*/));
+
+      globs.define(fn);
+    }
+  }
+  
 
   [IsTested()]
   public void TestConfigNodeArrayAsVar()
@@ -9386,12 +9416,65 @@ public class BHL_Test
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
   }
 
+  [IsTested()]
+  public void TestConfigNodeWithRef()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      float b = 10
+      ConfigNodeWithRef({hey:142}, ref b)
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindConfigNodeWithRef(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("142:0:0::10", str);
+    CommonChecks(intp);
+  }
+
   public class DummyModuleLoader : IModuleLoader
   {
     public AST_Module LoadModule(uint id)
     {
       return new AST_Module();
     }
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestEmptyUserClass()
+  {
+    string bhl = @"
+
+    class Foo {}
+      
+    func bool test() 
+    {
+      Foo f = {}
+      return f != null
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    bool res = ExtractBool(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertTrue(res);
+    CommonChecks(intp);
   }
 
   [IsTested()]

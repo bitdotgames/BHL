@@ -1649,7 +1649,6 @@ public class Interpreter : AST_Visitor
 
         PushNode(group, false);
         VisitChildren(ast.children[0]);
-        PopNode();
 
         var last_child = group.children[group.children.Count-1];
         //1.1. changing write mode or popping config
@@ -1657,6 +1656,12 @@ public class Interpreter : AST_Visitor
           (last_child as MVarAccessNode).mode = MVarAccessNode.WRITE_INV_ARGS;
         else
           group.addChild(new PopValueNode());
+
+        //1.2 processing extra args
+        for(int i=1;i<ast.children.Count;++i)
+          Visit(ast.children[i]);
+
+        PopNode();
 
         if(can_be_precalculated)
         {
