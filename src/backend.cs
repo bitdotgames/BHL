@@ -765,7 +765,7 @@ public class FuncCtx : DynValRefcounted
   }
 }
 
-public class DynValList : IList<DynVal>, IList, DynValRefcounted
+public class DynValList : IList<DynVal>, DynValRefcounted
 {
   List<DynVal> lst = new List<DynVal>();
 
@@ -856,46 +856,6 @@ public class DynValList : IList<DynVal>, IList, DynValRefcounted
   IEnumerator IEnumerable.GetEnumerator()
   {
     return GetEnumerator();
-  }
-
-  object IList.this[int i]
-  {
-    get {
-      return lst[i];
-    }
-    set {
-      throw new NotImplementedException();
-    }
-  }
-
-  public int Add(object value)
-  {
-    throw new NotImplementedException();
-  }
-
-  public bool Contains(object value)
-  {
-    return lst.Contains(value as DynVal);
-  }
-
-  public int IndexOf(object value)
-  {
-    return lst.IndexOf(value as DynVal);
-  }
-
-  public void Insert(int index, object value)
-  {
-    throw new NotImplementedException();
-  }
-
-  public void Remove(object value)
-  {
-    lst.Remove(value as DynVal);
-  }
-
-  public void CopyTo(Array array, int index)
-  {
-    throw new NotImplementedException();
   }
 
   ///////////////////////////////////////

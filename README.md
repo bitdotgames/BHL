@@ -232,7 +232,7 @@ You can run unit tests by executing the following command:
 4. ~~Multiple return values support~~
 5. **while** syntax sugar: **for(...) {}** support
 6. Ternary operator support
-7. User defined structs
+7. User defined classes
 
 ## Version ???
 
