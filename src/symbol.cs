@@ -380,13 +380,13 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
 public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 {
-  public delegate void ConverterCb(DynVal dv, out T res);
+  public delegate void ConverterCb(DynVal dv, ref T res);
   public static ConverterCb Convert;
 
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  static public void DefaultConverter(DynVal dv, out T res)
+  static public void DefaultConverter(DynVal dv, ref T res)
   {
     //TODO: is there a non-allocating way to achieve the same?
     if(typeof(T).IsEnum)
