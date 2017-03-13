@@ -2058,7 +2058,7 @@ public class Array_AddNodeT<T> : Array_AddNode where T : new()
     if(lst == null)
       throw new UserError("Not an array:" + (arr.obj != null ? arr.obj.GetType().Name : ""));
     T obj = new T();
-    ArrayTypeSymbolT<T>.Convert(val, ref obj);
+    ArrayTypeSymbolT<T>.Convert(val, out obj);
     lst.Add(obj);
   }
 }
