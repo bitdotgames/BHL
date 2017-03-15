@@ -9105,6 +9105,43 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestJsonFuncArgChainCall()
+  {
+    string bhl = @"
+    func void test(float b) 
+    {
+      trace((string)MakeFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]}).colors.Count)
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+          delegate() { return new MakeFooNode(); } );
+      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNum(42));
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("3", str);
+    CommonChecks(intp);
+  }
+
   public class ConfigNode_Conf
   {
     public List<string> strs = new List<string>();
@@ -9125,6 +9162,7 @@ public class BHL_Test
   {
     public ConfigNode_Conf conf = new ConfigNode_Conf();
     public bool with_ref = false;
+    public bool with_color_return = false;
 
     Stream sm;
 
@@ -9146,6 +9184,13 @@ public class BHL_Test
       {
         var ref_val = Interpreter.instance.PopRef();
         sw.Write(":" + ref_val.num);
+      }
+
+      if(with_color_return)
+      {
+        var dv = DynVal.New();
+        dv.obj = conf.sub_color;
+        Interpreter.instance.PushValue(dv);
       }
 
       sw.Flush();
@@ -9289,6 +9334,20 @@ public class BHL_Test
     }
   }
   
+  void BindConfigNodeWithReturn(GlobalScope globs, MemoryStream trace_stream)
+  {
+    BindConfigNode_Conf(globs);
+
+    {
+      var fn = new ConfNodeSymbol("ConfigNodeWithReturn", globs.type("Color"),
+          delegate() { var n = new ConfigNode(trace_stream); n.with_color_return = true; n.conf = new ConfigNode_Conf(); n.conf.reset(); return n; }, 
+          delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNode)n).conf; v.obj = conf; if(reset) conf.reset(); }
+          );
+      fn.define(new FuncArgSymbol("c", globs.type("ConfigNode_Conf")));
+
+      globs.define(fn);
+    }
+  }
 
   [IsTested()]
   public void TestConfigNodeArrayAsVar()
@@ -9414,6 +9473,36 @@ public class BHL_Test
     CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+  }
+
+  [IsTested()]
+  public void TestConfigNodeWithReturnChainCall()
+  {
+    string bhl = @"
+    func float test() 
+    {
+      Color c = ConfigNodeWithReturn({sub_color:{g:1}, strs:[""foo"", ""bar""]}).Add(10)
+      return c.g
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindConfigNodeWithReturn(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 11);
+
+    var str = GetString(trace_stream);
+    AssertEqual("0:0:1:foo,bar", str);
+    CommonChecks(intp);
   }
 
   [IsTested()]
