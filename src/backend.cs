@@ -782,6 +782,11 @@ public class DynValList : IList<DynVal>, DynValRefcounted
   public bool IsSynchronized { get { throw new NotImplementedException(); } }
   public object SyncRoot { get { throw new NotImplementedException(); } }
 
+  public static implicit operator DynVal(DynValList lst)
+  {
+    return DynVal.NewObj(lst);
+  }
+
   public void Add(DynVal dv)
   {
     dv.RefMod(RefOp.INC | RefOp.USR_INC);
