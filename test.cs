@@ -9930,6 +9930,28 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestReturnMultiple3()
+  {
+    string bhl = @"
+      
+    func float,string,int test() 
+    {
+      return 100,""foo"",3
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 3).vals;
+
+    AssertEqual(vals[0].num, 100);
+    AssertEqual(vals[1].str, "foo");
+    AssertEqual(vals[2].num, 3);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestReturnMultipleInFuncBadCast()
   {
     string bhl = @"
@@ -10188,6 +10210,47 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertEqual(vals[0].str, "foo");
     AssertEqual(vals[1].num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestReturnMultiple4FromBindings()
+  {
+    string bhl = @"
+      
+    func float,string,int,float test() 
+    {
+      return func_mult()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("func_mult", globs.type("float,string,int,float"), 
+          delegate(object agent)
+          {
+            var interp = Interpreter.instance;
+            //last returned value comes first
+            interp.PushValue(DynVal.NewNum(104));
+            interp.PushValue(DynVal.NewStr("foo"));
+            interp.PushValue(DynVal.NewNum(12));
+            interp.PushValue(DynVal.NewNum(42.5));
+            return BHS.SUCCESS;
+          }
+        );
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 4).vals;
+
+    AssertEqual(vals[0].num, 104);
+    AssertEqual(vals[1].str, "foo");
+    AssertEqual(vals[2].num, 12);
+    AssertEqual(vals[3].num, 42.5);
     CommonChecks(intp);
   }
 
