@@ -1623,9 +1623,8 @@ public class Interpreter : AST_Visitor
           group.addChild(new PopValueNode());
 
         //1.2 processing extra args
-        for(int i=1;i<ast.children.Count;++i)
+        for(int i=1;i<ast.cargs_num;++i)
           Visit(ast.children[i]);
-
         PopNode();
 
         if(can_be_precalculated)
