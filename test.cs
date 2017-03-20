@@ -10194,9 +10194,9 @@ func Unit FindUnit(Vec3 pos, float radius) {
           delegate(object agent)
           {
             var interp = Interpreter.instance;
-            //last returned value comes first
-            interp.PushValue(DynVal.NewStr("foo"));
+            
             interp.PushValue(DynVal.NewNum(42));
+            interp.PushValue(DynVal.NewStr("foo"));
             return BHS.SUCCESS;
           }
         );
@@ -10208,8 +10208,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
 
-    AssertEqual(vals[0].str, "foo");
-    AssertEqual(vals[1].num, 42);
+    AssertEqual(vals[0].num, 42);
+    AssertEqual(vals[1].str, "foo");
     CommonChecks(intp);
   }
 
@@ -10220,7 +10220,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
       
     func float,string,int,float test() 
     {
-      return func_mult()
+      float a,string b,int c,float d = func_mult()
+      return a,b,c,d
     }
     ";
 
@@ -10231,7 +10232,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
           delegate(object agent)
           {
             var interp = Interpreter.instance;
-            //last returned value comes first
+            
             interp.PushValue(DynVal.NewNum(104));
             interp.PushValue(DynVal.NewStr("foo"));
             interp.PushValue(DynVal.NewNum(12));
