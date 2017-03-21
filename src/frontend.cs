@@ -24,7 +24,7 @@ public class ErrorLexerListener : IAntlrErrorListener<int>
 {
   public virtual void SyntaxError(IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
   {
-    throw new ParseError("@(" + line + "," + charPositionInLine + ") " + msg);
+    throw new ParseError("@(" + line + "," + charPositionInLine + ") " + (msg.Length > 200 ? msg.Substring(0, 100) + "..." + msg.Substring(msg.Length-100) : msg));
   }
 }
 
@@ -37,7 +37,7 @@ public class ErrorParserListener : IParserErrorListener
 {
   public virtual void SyntaxError(IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
   {
-    throw new ParseError("@(" + line + "," + charPositionInLine + ") " + msg);
+    throw new ParseError("@(" + line + "," + charPositionInLine + ") " + (msg.Length > 200 ? msg.Substring(0, 100) + "..." + msg.Substring(msg.Length-100) : msg));
   }
 
   public virtual void ReportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)
