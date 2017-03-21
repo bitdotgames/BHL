@@ -233,6 +233,7 @@ You can run unit tests by executing the following command:
 5. **while** syntax sugar: **for(...) {}** support
 6. Ternary operator support
 7. User defined classes
+8. Better runtime errors mapped to script lines
 
 ## Version ???
 
