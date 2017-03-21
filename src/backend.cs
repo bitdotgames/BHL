@@ -914,7 +914,7 @@ public class DynValList : IList<DynVal>, DynValRefcounted
       lst = pool.Pop();
 
       if(lst.refs != -1)
-        throw new Exception("Expected to be released");
+        throw new Exception("Expected to be released, refs " + lst.refs);
       lst.refs = 0;
     }
 
