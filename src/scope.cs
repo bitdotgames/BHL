@@ -139,7 +139,7 @@ public class GlobalScope : BaseScope
     }
 
     if(type == null)
-      throw new Exception("Bad type: " + type);
+      throw new Exception("Bad type: '" + str + "'");
 
     var tr = new TypeRef();
     tr.type = type;
@@ -169,7 +169,7 @@ public class GlobalScope : BaseScope
     }
 
     if(type == null)
-      throw new Exception("Bad type: " + type);
+      throw new Exception("Bad type: '" + str + "'");
 
     var tr = new TypeRef();
     tr.type = type;
@@ -198,7 +198,7 @@ public class GlobalScope : BaseScope
         {
           var node = AST_Builder.ParseType(name);
           if(node == null)
-            throw new Exception("Bad type: " + name);
+            throw new Exception("Bad type: '" + name + "'");
 
           if(node.type().Length == 1)
             tr = this.type(node.type()[0]);

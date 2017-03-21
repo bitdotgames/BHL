@@ -4087,6 +4087,7 @@ public class BHL_Test
 
     {
       var ret = AST_Builder.ParseType("bool,float");
+      AssertEqual(ret.type().Length, 2);
       AssertEqual(ret.type()[0].NAME().GetText(), "bool");
       AssertTrue(ret.type()[0].fnargs() == null);
       AssertTrue(ret.type()[0].ARR() == null);
@@ -4112,6 +4113,7 @@ public class BHL_Test
 
     {
       var ret = AST_Builder.ParseType("bool^(int,string),float[]");
+      AssertEqual(ret.type().Length, 2);
       var type = ret.type()[0];
       AssertEqual(type.NAME().GetText(), "bool");
       AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
@@ -4128,6 +4130,23 @@ public class BHL_Test
       AssertEqual(type.NAME().GetText(), "float");
       AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
       AssertTrue(type.ARR() != null);
+    }
+
+    {
+      var ret = AST_Builder.ParseType("Vec3,Vec3,Vec3");
+      AssertEqual(ret.type().Length, 3);
+      var type = ret.type()[0];
+      AssertEqual(type.NAME().GetText(), "Vec3");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
+      type = ret.type()[1];
+      AssertEqual(type.NAME().GetText(), "Vec3");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
+      type = ret.type()[2];
+      AssertEqual(type.NAME().GetText(), "Vec3");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
     }
 
     {
