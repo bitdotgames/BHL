@@ -138,10 +138,8 @@ public class GlobalScope : BaseScope
       }
     }
 
-    if(type == null)
-      throw new Exception("Bad type: '" + str + "'");
-
     var tr = new TypeRef();
+    tr.bindings = this;
     tr.type = type;
     tr.name = str;
     tr.node = node;
@@ -168,10 +166,8 @@ public class GlobalScope : BaseScope
         return this.type(node.type()[0]);
     }
 
-    if(type == null)
-      throw new Exception("Bad type: '" + str + "'");
-
     var tr = new TypeRef();
+    tr.bindings = this;
     tr.type = type;
     tr.name = str;
     tr.node = node;
@@ -190,7 +186,9 @@ public class GlobalScope : BaseScope
       //let's check if the type was already explicitely defined
       var t = resolve(name) as Type;
       if(t != null)
+      {
         tr = new TypeRef(t);
+      }
       else
       {
 #if BHL_FRONT

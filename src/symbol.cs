@@ -17,7 +17,7 @@ public interface Type
   int GetTypeIndex();
 }
 
-public struct TypeRef
+public class TypeRef
 {
   public GlobalScope bindings;
 
@@ -29,18 +29,8 @@ public struct TypeRef
   public IParseTree node;
 #endif
 
-  public static TypeRef NewEmpty()
-  {
-    var t = new TypeRef();
-    t.bindings = null;
-    t.name = null;
-    t.type = null;
-    t.is_ref = false;
-#if BHL_FRONT
-    t.node = null;
-#endif
-    return t;
-  }
+  public TypeRef()
+  {}
 
   public TypeRef(GlobalScope bindings, string name)
   {
@@ -75,7 +65,7 @@ public struct TypeRef
 
     type = (bhl.Type)bindings.resolve(name);
     if(type == null)
-      throw new Exception("Bad type: " + name);
+      throw new Exception("Bad type: '" + name + "'");
     return type;
   }
 }
@@ -204,7 +194,7 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   public ClassSymbol(WrappedNode n, string name, TypeRef super_class, Scope enclosing_scope, Interpreter.ClassCreator creator = null)
     : base(n, name, enclosing_scope)
   {
-    this.super_class = (ClassSymbol)super_class.Get();
+    this.super_class = super_class == null ? null : (ClassSymbol)super_class.Get();
     this.creator = creator;
   }
 
@@ -870,7 +860,7 @@ public class ConfNodeSymbol : FuncBindSymbol
 public class ClassBindSymbol : ClassSymbol
 {
   public ClassBindSymbol(string name, Interpreter.ClassCreator creator)
-    : base(null, name, TypeRef.NewEmpty(), null, creator)
+    : base(null, name, null, null, creator)
   {}
 
   public ClassBindSymbol(string name, TypeRef super_class, Interpreter.ClassCreator creator)
