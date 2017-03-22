@@ -9293,13 +9293,13 @@ public class BHL_Test
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
-          DynValList.Encode(f.strs, ref v);
+          v.Encode(f.strs);
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
           var tmp = f.strs;
-          DynValList.Decode(v, ref tmp);
+          v.Decode(ref tmp);
           ctx.obj = f;
           ((DynValList)v.obj).TryDel();
         }
@@ -10842,6 +10842,66 @@ func Unit FindUnit(Vec3 pos, float radius) {
   static string ExtractStr(Interpreter.Result res)
   {
     return res.val.str;
+  }
+}
+
+public static class BHL_TestExt 
+{
+  public static void Decode(this DynVal dv, ref List<string> dst)
+  {
+    dst.Clear();
+    var src = (DynValList)dv.obj;
+    for(int i=0;i<src.Count;++i)
+    {
+      var tmp = src[i];
+      dst.Add(tmp.str);
+    }
+  }
+
+  public static void Encode(this DynVal dv, List<string> dst)
+  {
+    var lst = DynValList.New();
+    for(int i=0;i<dst.Count;++i)
+      lst.Add(DynVal.NewStr(dst[i]));
+    dv.SetObj(lst);
+  }
+
+  public static void Decode(this DynVal dv, ref List<uint> dst)
+  {
+    dst.Clear();
+    var src = (DynValList)dv.obj;
+    for(int i=0;i<src.Count;++i)
+    {
+      var tmp = src[i];
+      dst.Add((uint)tmp.num);
+    }
+  }
+
+  public static void Encode(this DynVal dv, List<uint> dst)
+  {
+    var lst = DynValList.New();
+    for(int i=0;i<dst.Count;++i)
+      lst.Add(DynVal.NewNum(dst[i]));
+    dv.SetObj(lst);
+  }
+
+  public static void Decode(this DynVal dv, ref List<int> dst)
+  {
+    dst.Clear();
+    var src = (DynValList)dv.obj;
+    for(int i=0;i<src.Count;++i)
+    {
+      var tmp = src[i];
+      dst.Add((int)tmp.num);
+    }
+  }
+
+  public static void Encode(this DynVal dv, List<int> dst)
+  {
+    var lst = DynValList.New();
+    for(int i=0;i<dst.Count;++i)
+      lst.Add(DynVal.NewNum(dst[i]));
+    dv.SetObj(lst);
   }
 }
 

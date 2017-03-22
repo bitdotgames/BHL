@@ -690,7 +690,7 @@ public class FuncCtx : DynValRefcounted
         item.used = true;
         pool[i] = item;
         if(item.fct.refs != -1)
-          throw new Exception("Expected to be released");
+          throw new Exception("Expected to be released, refs " + item.fct.refs);
         item.fct.refs = 0;
         return item.fct;
       }
@@ -956,64 +956,6 @@ public class DynValList : IList<DynVal>, DynValRefcounted
   static public int PoolCountFree
   {
     get { return pool.Count; }
-  }
-  /////////////////////////////////////////
-  
-  public static void Decode(DynVal dv, ref List<string> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add(tmp.str);
-    }
-  }
-
-  public static void Encode(List<string> dst, ref DynVal dv)
-  {
-    var lst = New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewStr(dst[i]));
-    dv.SetObj(lst);
-  }
-
-  public static void Decode(DynVal dv, ref List<uint> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add((uint)tmp.num);
-    }
-  }
-
-  public static void Encode(List<uint> dst, ref DynVal dv)
-  {
-    var lst = New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewNum(dst[i]));
-    dv.SetObj(lst);
-  }
-
-  public static void Decode(DynVal dv, ref List<int> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add((int)tmp.num);
-    }
-  }
-
-  public static void Encode(List<int> dst, ref DynVal dv)
-  {
-    var lst = New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewNum(dst[i]));
-    dv.SetObj(lst);
   }
 }
 
