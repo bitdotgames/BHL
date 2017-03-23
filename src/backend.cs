@@ -657,7 +657,7 @@ public class FuncCtx : DynValRefcounted
 
   public bool TryDel()
   {
-    if(refs > 0)
+    if(refs != 0)
       return false;
     
     Del(this);
@@ -886,7 +886,7 @@ public class DynValList : IList<DynVal>, DynValRefcounted
 
   public bool TryDel()
   {
-    if(refs > 0)
+    if(refs != 0)
       return false;
     
     Del(this);
