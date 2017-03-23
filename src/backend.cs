@@ -711,8 +711,8 @@ public class FuncCtx : DynValRefcounted
 
   static public void Del(FuncCtx fct)
   {
-    if(fct.refs > 0)
-      throw new Exception("Freeing live object, refs " + fct.refs);
+    if(fct.refs != 0)
+      throw new Exception("Freeing invalid object, refs " + fct.refs);
 
     for(int i=0;i<pool.Count;++i)
     {
@@ -923,8 +923,8 @@ public class DynValList : IList<DynVal>, DynValRefcounted
 
   static public void Del(DynValList lst)
   {
-    if(lst.refs > 0)
-      throw new Exception("Freeing live object, refs " + lst.refs);
+    if(lst.refs != 0)
+      throw new Exception("Freeing invalid object, refs " + lst.refs);
 
     lst.refs = -1;
     lst.Clear();
