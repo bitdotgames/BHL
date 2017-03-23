@@ -113,8 +113,8 @@ public class DynVal
   {
     //NOTE: we don't Reset DynVal immediately, giving a caller
     //      a chance to access its properties
-    if(dv._refs > 0)
-      throw new Exception("Deleting live object");
+    if(dv._refs != 0)
+      throw new Exception("Deleting invalid object, refs " + dv._refs);
     dv._refs = -1;
 
     //NOTE: we'd like to ensure there are some spare values before 
