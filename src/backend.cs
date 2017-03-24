@@ -88,6 +88,10 @@ public class DynVal
   static int pool_miss;
   static int pool_hit;
 
+  //NOTE: use New() instead
+  private DynVal()
+  {}
+
   static public DynVal New()
   {
     DynVal dv;
@@ -126,10 +130,12 @@ public class DynVal
       ++pool_miss;
       var tmp = new DynVal(); 
       pool.Enqueue(tmp);
-      //Console.WriteLine("NEW2: " + tmp.GetHashCode());
+      //Console.WriteLine("NEW3: " + tmp.GetHashCode()/* + " " + Environment.StackTrace*/);
     }
     pool.Enqueue(dv);
-    //Console.WriteLine("DEL: " + dv.GetHashCode());
+    //Console.WriteLine("DEL: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+    if(pool.Count > pool_miss)
+      throw new Exception("Unbalanced New/Del " + pool.Count + " " + pool_miss);
   }
 
   //NOTE: refcount is not reset
@@ -900,6 +906,10 @@ public class DynValList : IList<DynVal>, DynValRefcounted
   static int pool_hit;
   static int pool_miss;
 
+  //NOTE: use New() instead
+  private DynValList()
+  {}
+
   public static DynValList New()
   {
     DynValList lst;
@@ -929,6 +939,9 @@ public class DynValList : IList<DynVal>, DynValRefcounted
     lst.refs = -1;
     lst.Clear();
     pool.Push(lst);
+
+    if(pool.Count > pool_miss)
+      throw new Exception("Unbalanced New/Del");
   }
 
   static public void PoolClear()

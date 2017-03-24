@@ -2301,7 +2301,7 @@ public class BHL_Test
       var fn = new SimpleFuncBindSymbol("mkcolor_null", globs.type("Color"),
           delegate(object agent) { 
             var interp = Interpreter.instance;
-            var dv = new DynVal();
+            var dv = DynVal.New();
             dv.obj = null;
             interp.PushValue(dv);
             return BHS.SUCCESS;
@@ -8449,11 +8449,12 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
+    //NodeDump(node);
     intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;", str);
-    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
   }
 
   [IsTested()]
