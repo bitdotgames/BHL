@@ -12,6 +12,7 @@ end
 
 struct AST_Module extends AST
   nname : uint32
+  name  : string @default:"" #for debug
 end
 
 enum EnumUnaryOp
@@ -56,6 +57,7 @@ struct AST_FuncDecl extends AST
   nname1  : uint32
   name    : string @default:"" #for debug
   nname2  : uint32 #NOTE: due to msgpack 64 bit error on Windows we have to split nname
+  module  : uint32
 end
 
 struct AST_UseParam
@@ -91,9 +93,10 @@ struct AST_Call extends AST
   type        : EnumCall
   nname1      : uint32
   name        : string @default:"" #for debug
-  cargs_num   : int32
+  cargs_num   : int32   #singed because it's used loops 
   scope_ntype : uint32
   nname2      : uint32 #NOTE: due to msgpack 64 bit error on Windows we have to split nname
+  line_num    : int32
 end
 
 struct AST_Return extends AST

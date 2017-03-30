@@ -271,20 +271,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpLiteralTrue([NotNull] bhlParser.ExpLiteralTrueContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpNew</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterExpNew([NotNull] bhlParser.ExpNewContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpNew</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitExpNew([NotNull] bhlParser.ExpNewContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpJsonObj</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -312,6 +298,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpUnary([NotNull] bhlParser.ExpUnaryContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpNew</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpNew([NotNull] bhlParser.ExpNewContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpNew</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpNew([NotNull] bhlParser.ExpNewContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpAddSub</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -438,6 +438,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpParen([NotNull] bhlParser.ExpParenContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.newExp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterNewExp([NotNull] bhlParser.NewExpContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.newExp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitNewExp([NotNull] bhlParser.NewExpContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>VarDecl</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

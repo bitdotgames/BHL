@@ -231,18 +231,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpLiteralTrue([NotNull] bhlParser.ExpLiteralTrueContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpNew</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpNew([NotNull] bhlParser.ExpNewContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpNew</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpNew([NotNull] bhlParser.ExpNewContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpJsonObj</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -266,6 +254,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpUnary([NotNull] bhlParser.ExpUnaryContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpNew</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpNew([NotNull] bhlParser.ExpNewContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpNew</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpNew([NotNull] bhlParser.ExpNewContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpAddSub</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -374,6 +374,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpParen([NotNull] bhlParser.ExpParenContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.newExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterNewExp([NotNull] bhlParser.NewExpContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.newExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitNewExp([NotNull] bhlParser.NewExpContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>VarDecl</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

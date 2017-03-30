@@ -425,10 +425,12 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Module New_Module(uint nname)
+  static public AST_Module New_Module(uint nname, string name)
   {
     var n = new AST_Module();
     n.nname = nname;
+    if(Util.DEBUG)
+      n.name = name;
     return n;
   }
 
@@ -556,9 +558,7 @@ static public class AST_Util
     var n = new AST_TypeCast();
     n.ntype = Hash.CRC28(type);
     if(Util.DEBUG)
-    {
       n.type = type;
-    }
 
     return n;
   }
@@ -570,9 +570,7 @@ static public class AST_Util
     var n = new AST_UseParam();
     n.nname = Hash.CRC28(name) | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
-    {
       n.name = name;
-    }
 
     return n;
   }
@@ -597,16 +595,15 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, string name = "", ulong nname = 0, ClassSymbol scope_symb = null)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", ulong nname = 0, ClassSymbol scope_symb = null)
   {
     var n = new AST_Call();
     n.type = type;
+    n.line_num = line_num;
     n.nname1 = (uint)(nname & 0xFFFFFFFF);
     n.nname2 = (uint)(nname >> 31);
     if(Util.DEBUG)
-    {
       n.name = name;
-    }
     n.scope_ntype = scope_symb != null ? scope_symb.GetNtype() : 0;
 
     return n;
@@ -649,9 +646,7 @@ static public class AST_Util
     var n = new AST_New();
     n.ntype = type.GetNtype();
     if(Util.DEBUG)
-    {
       n.type = type.GetName();
-    }
 
     return n;
   }
@@ -679,9 +674,7 @@ static public class AST_Util
     n.type = type;
     n.nname = Hash.CRC28(name) | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
-    {
       n.name = name;
-    }
 
     return n;
   }
@@ -737,9 +730,7 @@ static public class AST_Util
     n.scope_ntype = Hash.CRC28(scope_type);
     n.nname = Hash.CRC28(name);
     if(Util.DEBUG)
-    {
       n.name = name;
-    }
 
     return n;
   }

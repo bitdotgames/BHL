@@ -8978,6 +8978,105 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestJsonExplicitEmptyClass()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha c = new ColorAlpha {}
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonExplicitClass()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha c = new ColorAlpha {a: 1, g: 10, r: 100}
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 111);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonExplicitSubClass()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Color c = new ColorAlpha {a: 1, g: 10, r: 100}
+      ColorAlpha ca = (ColorAlpha)c
+      return ca.r + ca.g + ca.a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 111);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonExplicitSubClassNotCompatible()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      ColorAlpha c = new Color {g: 10, r: 100}
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"have incompatible types"
+    );
+  }
+
+  [IsTested()]
   public void TestJsonEmptyArrCtor()
   {
     string bhl = @"
@@ -9086,6 +9185,81 @@ public class BHL_Test
     );
   }
 
+  [IsTested()]
+  public void TestJsonArrayExplicit()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Color[] cs = [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
+      ColorAlpha ca = (ColorAlpha)cs[0]
+      return ca.a + cs[1].g + cs[2].r
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 114);
+    CommonChecks(intp);
+  }
+
+
+  [IsTested()]
+  public void TestJsonArrayExplicitSubClass()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Color[] cs = [{r:1,g:2}, new ColorAlpha {g: 10, r: 100, a:2}]
+      ColorAlpha c = (ColorAlpha)cs[1]
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 112);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonArrayExplicitSubClassNotCompatible()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      ColorAlpha[] c = [{r:1,g:2,a:100}, new Color {g: 10, r: 100}]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"have incompatible types"
+    );
+  }
 
   [IsTested()]
   public void TestJsonFuncArg()

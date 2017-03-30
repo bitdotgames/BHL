@@ -41,7 +41,6 @@ exp
   | string                                                  #ExpLiteralStr
 	| callExp                                                 #ExpCall
 	| staticCallExp                                           #ExpStaticCall
-  | 'new' type                                              #ExpNew
   | jsonObject                                              #ExpJsonObj
   | jsonArray                                               #ExpJsonArr
   | funcLambda                                              #ExpLambda
@@ -56,7 +55,12 @@ exp
 	| exp operatorAnd exp							                        #ExpAnd
 	| exp operatorOr exp	                                    #ExpOr
   | 'eval' block                                            #ExpEval
+  | newExp                                                  #ExpNew
 	;
+
+newExp
+  : 'new' type
+  ;
 
 //statements
 statement
@@ -224,8 +228,8 @@ string
   ;
 
 jsonObject
-  :   '{' jsonPair (',' jsonPair)* '}'
-  |   jsonEmptyObj
+  :   newExp? '{' jsonPair (',' jsonPair)* '}'
+  |   newExp? jsonEmptyObj
   ;
 
 jsonEmptyObj

@@ -176,7 +176,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitProgram(bhlParser.ProgramContext ctx)
   {
-    AST_Module ast = AST_Util.New_Module(curr_m.GetId());
+    AST_Module ast = AST_Util.New_Module(curr_m.GetId(), curr_m.norm_path);
     for(int i=0;i<ctx.progblock().Length;++i)
       AddToModule(ast, ctx.progblock()[i]);
     return ast;
@@ -360,13 +360,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
         if(var_symb != null && var_symb.type.Get() is FuncType)
         {
           var ftype = var_symb.type.Get() as FuncType;
-          node = AST_Util.New_Call(EnumCall.FUNC_PTR, str_name, Hash.CRC28(str_name));
+          node = AST_Util.New_Call(EnumCall.FUNC_PTR, name.SourceInterval.a, str_name, Hash.CRC28(str_name));
           AddCallArgs(ftype, cargs, ref node);
           type = ftype.ret_type.Get();
         }
         else if(func_symb != null)
         {
-          node = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, str_name, func_symb.GetCallId(), class_scope);
+          node = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, name.SourceInterval.a, str_name, func_symb.GetCallId(), class_scope);
           AddCallArgs(func_symb, cargs, ref node);
           type = func_symb.GetReturnType();
         }
@@ -376,7 +376,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
           func_symb = mscope.resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            node = AST_Util.New_Call(EnumCall.FUNC, str_name, func_symb.GetCallId());
+            node = AST_Util.New_Call(EnumCall.FUNC, name.SourceInterval.a, str_name, func_symb.GetCallId());
             AddCallArgs(func_symb, cargs, ref node);
             type = func_symb.GetReturnType();
           }
@@ -391,7 +391,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         if(var_symb != null)
         {
-          node = AST_Util.New_Call(class_scope != null ? EnumCall.MVAR : EnumCall.VAR, str_name, Hash.CRC28(str_name), class_scope);
+          node = AST_Util.New_Call(class_scope != null ? EnumCall.MVAR : EnumCall.VAR, name.SourceInterval.a, str_name, Hash.CRC28(str_name), class_scope);
           type = var_symb.type.Get();
         }
         else if(func_symb != null)
@@ -401,7 +401,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
             FireError(Location(name) +  " : No such function found");
           ulong func_call_id = call_func_symb.GetCallId();
 
-          node = AST_Util.New_Call(EnumCall.FUNC2VAR, str_name, func_call_id);
+          node = AST_Util.New_Call(EnumCall.FUNC2VAR, name.SourceInterval.a, str_name, func_call_id);
           type = func_symb.type.Get();
         }
         else
@@ -416,7 +416,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       if(ftype == null)
         throw new Exception("Func type is missing");
       
-      node = AST_Util.New_Call(EnumCall.FUNC_PTR_POP);
+      node = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, cargs.SourceInterval.a);
       AddCallArgs(ftype, cargs, ref node);
       type = ftype.ret_type.Get();
     }
@@ -436,7 +436,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     if(arr_type == null)
       FireError(Location(arra) +  " : Accessing not an array type '" + type.GetName() + "'");
 
-    var node = AST_Util.New_Call(EnumCall.ARR_IDX);
+    var node = AST_Util.New_Call(EnumCall.ARR_IDX, arra.SourceInterval.a);
     node.scope_ntype = arr_type.GetNtype();
 
     var arr_exp = arra.exp();
@@ -700,8 +700,10 @@ public class AST_Builder : bhlBaseVisitor<AST>
   public override AST VisitExpJsonObj(bhlParser.ExpJsonObjContext ctx)
   {
     var json = ctx.jsonObject();
+
     var node = Visit(json);
     Wrap(ctx).eval_type = Wrap(json).eval_type;
+
     return node;
   }
 
@@ -715,7 +717,16 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitJsonObject(bhlParser.JsonObjectContext ctx)
   {
+    var new_exp = ctx.newExp();
+
+    if(new_exp != null)
+    {
+      var tr = globals.type(new_exp.type());
+      PushJsonType(tr.type);
+    }
+
     var curr_type = PeekJsonType();
+
     if(curr_type == null)
       FireError(Location(ctx) + ": {..} not expected");
 
@@ -733,6 +744,9 @@ public class AST_Builder : bhlBaseVisitor<AST>
       var pair = pairs[i]; 
       node.AddChild(Visit(pair));
     }
+
+    if(new_exp != null)
+      PopJsonType();
 
     return node;
   }
@@ -846,7 +860,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tr = globals.type(ctx.type());
+    var tr = globals.type(ctx.newExp().type());
     if(tr.type == null)
       FireError(Location(tr.node) + ": Type '" + tr.node + "' not found");
 
