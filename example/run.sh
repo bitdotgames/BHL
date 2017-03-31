@@ -7,6 +7,7 @@ if [ ! -d $UNITY_MONO_PATH ] ; then
 fi
 
 #1. Running frontend over bhl sources
+rm tmp/bhl.bytes
 php ../bhl -D USER_SOURCES=bindings.cs run --dir=. --result=tmp/bhl.bytes --cache_dir=tmp --error=tmp/bhl.err
 
 if [ $? -ne 0 ] ;
