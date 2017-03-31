@@ -722,6 +722,8 @@ public class AST_Builder : bhlBaseVisitor<AST>
     if(new_exp != null)
     {
       var tr = globals.type(new_exp.type());
+      if(tr.type == null)
+        FireError(Location(new_exp.type()) + ": Type '" + tr.name + "' not found");
       PushJsonType(tr.type);
     }
 
@@ -862,7 +864,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var tr = globals.type(ctx.newExp().type());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": Type '" + tr.node + "' not found");
+      FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
 
     var res = AST_Util.New_New((ClassSymbol)tr.type);
     Wrap(ctx).eval_type = tr.type;

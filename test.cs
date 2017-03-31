@@ -9003,6 +9003,27 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestJsonExplicitNoSuchClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      any c = new Foo {}
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"Type 'Foo' not found"
+    );
+  }
+
+  [IsTested()]
   public void TestJsonExplicitClass()
   {
     string bhl = @"
@@ -9195,6 +9216,36 @@ public class BHL_Test
       Color[] cs = [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
       ColorAlpha ca = (ColorAlpha)cs[0]
       return ca.a + cs[1].g + cs[2].r
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 114);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonArrayExplicitAsArg()
+  {
+    string bhl = @"
+
+    func float foo(Color[] cs)
+    {
+      ColorAlpha ca = (ColorAlpha)cs[0]
+      return ca.a + cs[1].g + cs[2].r
+    }
+      
+    func float test() 
+    {
+      return foo([new ColorAlpha {a:4}, {g:10}, new Color {r:100}])
     }
     ";
 
