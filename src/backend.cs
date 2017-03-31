@@ -1114,23 +1114,32 @@ public class Interpreter : AST_Visitor
 
   public FuncRef GetFuncRef(HashedName name)
   {
-    var fr = new FuncRef();
+    FuncRef fr;
+    if(!GetFuncRef(name, out fr))
+      throw new Exception("No such function: " + name);
+
+    return fr;
+  }
+
+  public bool GetFuncRef(HashedName name, out FuncRef fr)
+  {
+    fr = new FuncRef();
 
     var fbnd = bindings.FindBinding<FuncBindSymbol>(name.n);
     if(fbnd != null)
     {
       fr.fbnd = fbnd;
-      return fr;
+      return true;
     }
 
     var func_decl = FetchFuncDecl(name.n);
     if(func_decl != null)
     {
       fr.decl = func_decl;
-      return fr;
+      return true;
     }
 
-    throw new Exception("No such function: " + name);
+    return false;
   }
 
   AST_FuncDecl FetchFuncDecl(ulong name)
@@ -1792,6 +1801,7 @@ public class ModuleLoader : IModuleLoader
   MsgPackDataReader mod_reader;
   MemoryStream lz_stream = new MemoryStream();
   MemoryStream lz_dst_stream = new MemoryStream();
+  bool strict;
 
   public class Entry
   {
@@ -1801,8 +1811,9 @@ public class ModuleLoader : IModuleLoader
 
   Dictionary<uint, Entry> entries = new Dictionary<uint, Entry>();
 
-  public ModuleLoader(Stream source)
+  public ModuleLoader(Stream source, bool strict = true)
   {
+    this.strict = strict;
     Load(source);
   }
 
@@ -1860,7 +1871,10 @@ public class ModuleLoader : IModuleLoader
     Util.SetupAutogenFactory();
 
     var ast = new AST_Module();
-    Util.Verify(ast.read(mod_reader) == MetaIoError.SUCCESS);
+
+    var ok = ast.read(mod_reader) == MetaIoError.SUCCESS;
+    if(strict && !ok)
+      Util.Verify(false, "Can't load module " + id);
 
     Util.RestoreAutogenFactory();
 
