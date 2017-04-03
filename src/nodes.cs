@@ -353,6 +353,8 @@ public class FuncCallNode : SequentialNode
   const int FUNC_READY    = 1;
   const int FUNC_DETACHED = 2;
 
+  uint func_module = 0;
+  PoolItem pool_item;
   int func_status = FUNC_INIT;
 
   AST_Call node;
@@ -396,6 +398,7 @@ public class FuncCallNode : SequentialNode
       InflateUserFunc(interp, pi);
 
       pool_item = pi;
+      func_module = (pi.fnode is FuncNodeAST) ? (pi.fnode as FuncNodeAST).decl.nname1 : 0;
       this.addChild(pool_item.bnode);
 
       interp.PopNode();
@@ -416,7 +419,7 @@ public class FuncCallNode : SequentialNode
   {
     var interp = Interpreter.instance;
 
-    interp.curr_module = node.nname1;
+    interp.curr_module = func_module;
     interp.curr_line = node.line_num;
     interp.func_args_stack.Push(node.cargs_num);
 
@@ -484,8 +487,7 @@ public class FuncCallNode : SequentialNode
 
   ///////////////////////////////////////////////////////////////////
   static public bool PoolUse = true;
-
-  PoolItem pool_item;
+ 
   static int free_count = 0;
   static int last_pool_id = 0;
   static int valid_pool_id = -1;
