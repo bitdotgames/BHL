@@ -57,7 +57,6 @@ struct AST_FuncDecl extends AST
   nname1  : uint32
   nname2  : uint32 #NOTE: due to msgpack 64 bit error on Windows we have to split nname
   name    : string @default:"" #for debug
-  module  : uint32
 end
 
 struct AST_UseParam

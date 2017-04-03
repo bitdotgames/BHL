@@ -1022,15 +1022,19 @@ public class Interpreter : AST_Visitor
   FastStack<JsonCtx> jcts = new FastStack<JsonCtx>(128);
 
   public IModuleLoader module_loader;
-  public Dictionary<uint,bool> loaded_modules = new Dictionary<uint,bool>();
+  //NOTE: key is a module id, value is a file path
+  public Dictionary<uint,string> loaded_modules = new Dictionary<uint,string>();
 
   Dictionary<ulong,AST_FuncDecl> func_decls = new Dictionary<ulong,AST_FuncDecl>();
   Dictionary<ulong,AST_LambdaDecl> lmb_decls = new Dictionary<ulong,AST_LambdaDecl>();
 
   public GlobalScope bindings;
 
-  FastStack<int> func_args_stack = new FastStack<int>(128);
   FastStack<DynVal> stack = new FastStack<DynVal>(256);
+
+  public uint curr_module; 
+  public int curr_line;
+  public FastStack<int> func_args_stack = new FastStack<int>(128);
 
   public void Init(GlobalScope bindings, IModuleLoader module_loader)
   {
@@ -1096,7 +1100,6 @@ public class Interpreter : AST_Visitor
 
     if(loaded_modules.ContainsKey(mod_id))
       return;
-    loaded_modules.Add(mod_id, true);
 
     if(module_loader == null)
       throw new Exception("Module loader is not set");
@@ -1104,6 +1107,9 @@ public class Interpreter : AST_Visitor
     var mod_ast = module_loader.LoadModule(mod_id);
     if(mod_ast == null)
       throw new Exception("Could not load module: " + mod_id);
+
+    loaded_modules.Add(mod_id, mod_ast.name);
+
     Interpret(mod_ast);
   }
 
@@ -1191,16 +1197,6 @@ public class Interpreter : AST_Visitor
       return new FuncNodeBinding(func_symb, null);
 
     throw new Exception("Not a func symbol: " + name);
-  }
-
-  public void PushFuncArgsNum(int args_num)
-  {
-    func_args_stack.Push(args_num);
-  }
-
-  public void PopFuncArgsNum()
-  {
-    func_args_stack.Pop();
   }
 
   //NOTE: usually used in bindings

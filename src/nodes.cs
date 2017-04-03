@@ -416,7 +416,9 @@ public class FuncCallNode : SequentialNode
   {
     var interp = Interpreter.instance;
 
-    interp.PushFuncArgsNum(node.cargs_num);
+    interp.curr_module = node.nname1;
+    interp.curr_line = node.line_num;
+    interp.func_args_stack.Push(node.cargs_num);
 
     //var status = base.execute(agent);
     ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -443,7 +445,7 @@ public class FuncCallNode : SequentialNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
-    interp.PopFuncArgsNum();
+    interp.func_args_stack.Pop();
 
     return status;
   }
@@ -1297,7 +1299,7 @@ public class CallFuncPtr : SequentialNode
   public override BHS execute(object agent)
   {
     var interp = Interpreter.instance;
-    interp.PushFuncArgsNum(node.cargs_num);
+    interp.func_args_stack.Push(node.cargs_num);
 
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
@@ -1319,7 +1321,7 @@ public class CallFuncPtr : SequentialNode
         break;
     } 
 
-    interp.PopFuncArgsNum();
+    interp.func_args_stack.Pop();
 
     return status;
   }
