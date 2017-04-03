@@ -245,7 +245,8 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     Type curr_type = null;
 
-    var node = ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type);
+    int line = ctx.Start.Line;
+    var node = ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type, line);
 
     Wrap(ctx).eval_type = curr_type;
 
@@ -264,7 +265,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       top_node = new_node;
   }
 
-  AST ProcChainedCall(ITerminalNode root_name, bhlParser.ChainExpContext[] chain, ref Type curr_type)
+  AST ProcChainedCall(ITerminalNode root_name, bhlParser.ChainExpContext[] chain, ref Type curr_type, int line)
   {
     var orig_scope = curr_scope;
 
@@ -295,14 +296,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
         if(cargs != null)
         {
-          var new_node = ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type);
+          var new_node = ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line);
           ChainCallNode(new_node, ref curr_node, ref top_node);
           curr_class = null;
           curr_name = null;
         }
         else if(arra != null)
         {
-          var new_node = ProcCallChainItem(curr_name, null, arra, curr_class, ref curr_type);
+          var new_node = ProcCallChainItem(curr_name, null, arra, curr_class, ref curr_type, line);
           ChainCallNode(new_node, ref curr_node, ref top_node);
           curr_class = null;
           curr_name = null;
@@ -311,7 +312,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         {
           if(curr_name != null)
           {
-            var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type);
+            var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line);
             ChainCallNode(new_node, ref curr_node, ref top_node);
           }
 
@@ -327,7 +328,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     //checking the leftover of the call chain
     if(curr_name != null)
     {
-      var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type);
+      var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line);
       ChainCallNode(new_node, ref curr_node, ref top_node);
     }
 
@@ -336,7 +337,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return top_node;
   }
 
-  AST_Call ProcCallChainItem(ITerminalNode name, bhlParser.CallArgsContext cargs, bhlParser.ArrAccessContext arra, ClassSymbol class_scope, ref Type type)
+  AST_Call ProcCallChainItem(ITerminalNode name, bhlParser.CallArgsContext cargs, bhlParser.ArrAccessContext arra, ClassSymbol class_scope, ref Type type, int line)
   {
     AST_Call node = null;
 
@@ -360,13 +361,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
         if(var_symb != null && var_symb.type.Get() is FuncType)
         {
           var ftype = var_symb.type.Get() as FuncType;
-          node = AST_Util.New_Call(EnumCall.FUNC_PTR, name.SourceInterval.a, str_name, Hash.CRC28(str_name));
+          node = AST_Util.New_Call(EnumCall.FUNC_PTR, line, str_name, Hash.CRC28(str_name));
           AddCallArgs(ftype, cargs, ref node);
           type = ftype.ret_type.Get();
         }
         else if(func_symb != null)
         {
-          node = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, name.SourceInterval.a, str_name, func_symb.GetCallId(), class_scope);
+          node = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, str_name, func_symb.GetCallId(), class_scope);
           AddCallArgs(func_symb, cargs, ref node);
           type = func_symb.GetReturnType();
         }
@@ -376,7 +377,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
           func_symb = mscope.resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            node = AST_Util.New_Call(EnumCall.FUNC, name.SourceInterval.a, str_name, func_symb.GetCallId());
+            node = AST_Util.New_Call(EnumCall.FUNC, line, str_name, func_symb.GetCallId());
             AddCallArgs(func_symb, cargs, ref node);
             type = func_symb.GetReturnType();
           }
@@ -391,7 +392,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         if(var_symb != null)
         {
-          node = AST_Util.New_Call(class_scope != null ? EnumCall.MVAR : EnumCall.VAR, name.SourceInterval.a, str_name, Hash.CRC28(str_name), class_scope);
+          node = AST_Util.New_Call(class_scope != null ? EnumCall.MVAR : EnumCall.VAR, line, str_name, Hash.CRC28(str_name), class_scope);
           type = var_symb.type.Get();
         }
         else if(func_symb != null)
@@ -401,7 +402,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
             FireError(Location(name) +  " : No such function found");
           ulong func_call_id = call_func_symb.GetCallId();
 
-          node = AST_Util.New_Call(EnumCall.FUNC2VAR, name.SourceInterval.a, str_name, func_call_id);
+          node = AST_Util.New_Call(EnumCall.FUNC2VAR, line, str_name, func_call_id);
           type = func_symb.type.Get();
         }
         else
@@ -416,13 +417,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
       if(ftype == null)
         throw new Exception("Func type is missing");
       
-      node = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, cargs.SourceInterval.a);
+      node = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, line);
       AddCallArgs(ftype, cargs, ref node);
       type = ftype.ret_type.Get();
     }
 
     if(arra != null)
-      node = AddArrIndex(node, arra, ref type);
+      node = AddArrIndex(node, arra, ref type, line);
 
     if(node == null)
       throw new Exception("Node not assigned");
@@ -430,13 +431,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return node;
   }
 
-  AST_Call AddArrIndex(AST_Call root, bhlParser.ArrAccessContext arra, ref Type type)
+  AST_Call AddArrIndex(AST_Call root, bhlParser.ArrAccessContext arra, ref Type type, int line)
   {
     var arr_type = type as ArrayTypeSymbol;
     if(arr_type == null)
       FireError(Location(arra) +  " : Accessing not an array type '" + type.GetName() + "'");
 
-    var node = AST_Util.New_Call(EnumCall.ARR_IDX, arra.SourceInterval.a);
+    var node = AST_Util.New_Call(EnumCall.ARR_IDX, line);
     node.scope_ntype = arr_type.GetNtype();
 
     var arr_exp = arra.exp();
@@ -680,7 +681,8 @@ public class AST_Builder : bhlBaseVisitor<AST>
     {
       var interim = AST_Util.New_Interim();
       interim.AddChild(node);
-      interim.AddChild(ProcChainedCall(null, chain, ref curr_type));
+      int line = ctx.funcLambda().Start.Line;
+      interim.AddChild(ProcChainedCall(null, chain, ref curr_type, line));
       Wrap(ctx).eval_type = curr_type;
       return interim;
     }
