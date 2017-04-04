@@ -353,6 +353,7 @@ public class FuncCallNode : SequentialNode
   const int FUNC_READY    = 1;
   const int FUNC_DETACHED = 2;
 
+  PoolItem pool_item;
   int func_status = FUNC_INIT;
 
   AST_Call node;
@@ -416,9 +417,9 @@ public class FuncCallNode : SequentialNode
   {
     var interp = Interpreter.instance;
 
-    if(node.nname1 != 0)
+    if(pool_item.mod_id != 0)
     {
-      interp.curr_module = node.nname1;
+      interp.curr_module = pool_item.mod_id;
       interp.curr_line = node.line_num;
     }
     interp.func_args_stack.Push(node.cargs_num);
@@ -487,8 +488,7 @@ public class FuncCallNode : SequentialNode
 
   ///////////////////////////////////////////////////////////////////
   static public bool PoolUse = true;
-
-  PoolItem pool_item;
+ 
   static int free_count = 0;
   static int last_pool_id = 0;
   static int valid_pool_id = -1;
@@ -502,6 +502,7 @@ public class FuncCallNode : SequentialNode
     public AST_Call ast;
     public FuncNode fnode;
     public BehaviorTreeNode bnode;
+    public uint mod_id;
 
     public PoolItem(AST_Call _ast)
     {
@@ -511,6 +512,7 @@ public class FuncCallNode : SequentialNode
       ast = _ast;
       fnode = null;
       bnode = null;
+      mod_id = 0;
     }
 
     public bool IsEmpty()
@@ -608,6 +610,7 @@ public class FuncCallNode : SequentialNode
     var fnode = interp.GetFuncNode(pi.ast);
     pi.fnode = fnode;
     var fbnd = fnode as FuncNodeBinding; 
+    pi.mod_id = (fnode is FuncNodeAST) ? (fnode as FuncNodeAST).decl.nname1 : 0;
     //NOTE: optimization for C# func binding
     pi.bnode = fbnd != null ? fbnd.CreateBindingNode() : fnode;
     return fbnd == null;
