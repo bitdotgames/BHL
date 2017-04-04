@@ -610,7 +610,7 @@ public class FuncCallNode : SequentialNode
     var fnode = interp.GetFuncNode(pi.ast);
     pi.fnode = fnode;
     var fbnd = fnode as FuncNodeBinding; 
-    pi.mod_id = (fnode is FuncNodeAST) ? (fnode as FuncNodeAST).decl.nname1 : 0;
+    pi.mod_id = (fnode is FuncNodeAST) ? (fnode as FuncNodeAST).decl.nname2 : 0;
     //NOTE: optimization for C# func binding
     pi.bnode = fbnd != null ? fbnd.CreateBindingNode() : fnode;
     return fbnd == null;
