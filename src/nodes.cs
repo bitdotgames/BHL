@@ -356,7 +356,7 @@ public class FuncCallNode : SequentialNode
   PoolItem pool_item;
   int func_status = FUNC_INIT;
 
-  AST_Call node;
+  public AST_Call node;
 
   public FuncCallNode(AST_Call node)
   {
