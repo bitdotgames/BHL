@@ -416,8 +416,11 @@ public class FuncCallNode : SequentialNode
   {
     var interp = Interpreter.instance;
 
-    interp.curr_module = node.nname1;
-    interp.curr_line = node.line_num;
+    if(node.nname1 != 0)
+    {
+      interp.curr_module = node.nname1;
+      interp.curr_line = node.line_num;
+    }
     interp.func_args_stack.Push(node.cargs_num);
 
     //var status = base.execute(agent);
