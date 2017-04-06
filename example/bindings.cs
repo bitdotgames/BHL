@@ -13,7 +13,7 @@ public class MyBindings : UserBindings
   {
     {
       var fn = new SimpleFuncBindSymbol("Trace", globs.type("void"),
-        delegate(object agent)
+        delegate()
         {
 #if !BHL_FRONT
           var interp = Interpreter.instance;
@@ -30,7 +30,7 @@ public class MyBindings : UserBindings
 
     {
       var fn = new SimpleFuncBindSymbol("Rand", globs.type("float"),
-        delegate(object agent)
+        delegate()
         {
 #if !BHL_FRONT
           var interp = Interpreter.instance;
@@ -65,13 +65,13 @@ public class WaitNode : BehaviorTreeTerminalNode
 {
   float time_left;
 
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
     time_left = (float)interp.PopValue().num;
   }
 
-  public override BHS execute(object agent)
+  public override BHS execute()
   {
     time_left -= Time.dt;
 

@@ -24,7 +24,7 @@ public class Example
     Time.dt = 0.016f;
     while(true)
     {
-      node.run(null);
+      node.run();
       Thread.Sleep(16);
     }
   }
