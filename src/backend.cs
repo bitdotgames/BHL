@@ -515,6 +515,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_Return node);
   public abstract void DoVisit(AST_Break node);
   public abstract void DoVisit(AST_Literal node);
+  public abstract void DoVisit(AST_LogicOpExp node);
   public abstract void DoVisit(AST_BinaryOpExp node);
   public abstract void DoVisit(AST_UnaryOpExp node);
   public abstract void DoVisit(AST_New node);
@@ -550,6 +551,8 @@ public abstract class AST_Visitor
       DoVisit(node as AST_Return);
     else if(node is AST_Break)
       DoVisit(node as AST_Break);
+    else if(node is AST_LogicOpExp)
+      DoVisit(node as AST_LogicOpExp);
     else if(node is AST_BinaryOpExp)
       DoVisit(node as AST_BinaryOpExp);
     else if(node is AST_UnaryOpExp)
@@ -1680,6 +1683,18 @@ public class Interpreter : AST_Visitor
   {
     VisitChildren(node);
     curr_node.addChild(new BinaryOpNode(node));
+  }
+
+  public override void DoVisit(AST_LogicOpExp node)
+  {
+    PushNode(new LogicOpNode(node));
+      PushNode(new GroupNode());
+      Visit(node.children[0]);
+      PopNode();
+      PushNode(new GroupNode());
+      Visit(node.children[1]);
+      PopNode();
+    PopNode();
   }
 
   public override void DoVisit(AST_UnaryOpExp node)

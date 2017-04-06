@@ -1043,7 +1043,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitExpAnd(bhlParser.ExpAndContext ctx)
   {
-    var node = AST_Util.New_BinaryOpExp(EnumBinaryOp.AND);
+    var node = AST_Util.New_LogicOpExp(EnumLogicOp.AND);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1057,7 +1057,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
   public override AST VisitExpOr(bhlParser.ExpOrContext ctx)
   {
-    var node = AST_Util.New_BinaryOpExp(EnumBinaryOp.OR);
+    var node = AST_Util.New_LogicOpExp(EnumLogicOp.OR);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 

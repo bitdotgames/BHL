@@ -1003,6 +1003,86 @@ public class DeferNode : BehaviorTreeInternalNode
   }
 }
 
+public class LogicOpNode : BehaviorTreeInternalNode
+{
+  EnumLogicOp type;
+  int curr_pos = -1;
+
+  public LogicOpNode(AST_LogicOpExp node)
+  {
+    this.type = node.type;
+  }
+
+  public override void init()
+  {
+    if(children.Count != 2)
+      throw new Exception("Bad children count: " + children.Count);
+
+    curr_pos = 0;
+  }
+
+  override public BHS execute()
+  {
+    var interp = Interpreter.instance;
+
+    while(true)
+    {
+      var selected = children[curr_pos];
+
+      //return selected.run();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(selected.currStatus != BHS.RUNNING)
+        selected.init();
+      BHS status = selected.execute();
+      selected.currStatus = status;
+      selected.lastExecuteStatus = selected.currStatus;
+      if(selected.currStatus != BHS.RUNNING)
+        selected.deinit();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+
+      if(status == BHS.RUNNING || status == BHS.FAILURE)
+        return status;
+
+      var v = interp.PopValue();
+
+      if(type == EnumLogicOp.OR)
+      {
+        if(v.bval == true)
+        {
+          interp.PushValue(DynVal.NewBool(true));
+          return BHS.SUCCESS;
+        }
+
+        if(curr_pos == 0)
+          ++curr_pos;
+        else
+        {
+          interp.PushValue(DynVal.NewBool(false));
+          return BHS.SUCCESS;
+        }
+      }
+      else if(type == EnumLogicOp.AND)
+      {
+        if(v.bval == false)
+        {
+          interp.PushValue(DynVal.NewBool(false));
+          return BHS.SUCCESS;
+        }
+
+        if(curr_pos == 0)
+          ++curr_pos;
+        else 
+        {
+          interp.PushValue(DynVal.NewBool(true));
+          return BHS.SUCCESS;
+        }
+      }
+      else
+        throw new Exception("Unsupported logic op:" + type);
+    }
+  }
+}
+
 public class IfNode : BehaviorTreeInternalNode
 {
   int curr_pos = -1;
@@ -1397,11 +1477,11 @@ public class UnaryOpNode : BehaviorTreeTerminalNode
 
 public class BinaryOpNode : BehaviorTreeTerminalNode
 {
-  AST_BinaryOpExp node;
+  EnumBinaryOp type;
 
   public BinaryOpNode(AST_BinaryOpExp node)
   {
-    this.node = node;
+    this.type = node.type;
   }
 
   public override void init()
@@ -1412,77 +1492,68 @@ public class BinaryOpNode : BehaviorTreeTerminalNode
 
     //Console.WriteLine("BINARY OP " + node.type + " " + a + "," + b);
 
-    if(node.type == EnumBinaryOp.AND)
-    {
-      //TODO: what about short-circuit behavior of '&&' ?
-      interp.PushValue(DynVal.NewBool(a.bval && b.bval));
-    }
-    else if(node.type == EnumBinaryOp.OR)
-    {
-      interp.PushValue(DynVal.NewBool(a.bval || b.bval));
-    }
-    else if(node.type == EnumBinaryOp.ADD)
+    if(type == EnumBinaryOp.ADD)
     {
       if(a.type == DynVal.STRING && a.type == b.type)
         interp.PushValue(DynVal.NewStr(a._str + b._str));
       else
         interp.PushValue(DynVal.NewNum(a._num + b._num));
     }
-    else if(node.type == EnumBinaryOp.EQ)
+    else if(type == EnumBinaryOp.EQ)
     {
       interp.PushValue(DynVal.NewBool(a.IsEqual(b)));
     }
-    else if(node.type == EnumBinaryOp.NQ)
+    else if(type == EnumBinaryOp.NQ)
     {
       interp.PushValue(DynVal.NewBool(!a.IsEqual(b)));
     }
-    else if(node.type == EnumBinaryOp.LT)
+    else if(type == EnumBinaryOp.LT)
     {
       interp.PushValue(DynVal.NewBool(a._num < b._num));
     }
-    else if(node.type == EnumBinaryOp.LTE)
+    else if(type == EnumBinaryOp.LTE)
     {
       interp.PushValue(DynVal.NewBool(a._num <= b._num));
     }
-    else if(node.type == EnumBinaryOp.GT)
+    else if(type == EnumBinaryOp.GT)
     {
       interp.PushValue(DynVal.NewBool(a._num > b._num));
     }
-    else if(node.type == EnumBinaryOp.GTE)
+    else if(type == EnumBinaryOp.GTE)
     {
       interp.PushValue(DynVal.NewBool(a._num >= b._num));
     }
-    else if(node.type == EnumBinaryOp.SUB)
+    else if(type == EnumBinaryOp.SUB)
     {
       interp.PushValue(DynVal.NewNum(a._num - b._num));
     }
-    else if(node.type == EnumBinaryOp.MUL)
+    else if(type == EnumBinaryOp.MUL)
     {
       interp.PushValue(DynVal.NewNum(a._num * b._num));
     }
-    else if(node.type == EnumBinaryOp.DIV)
+    else if(type == EnumBinaryOp.DIV)
     {
       interp.PushValue(DynVal.NewNum(a._num / b._num));
     }
-    else if(node.type == EnumBinaryOp.MOD)
+    else if(type == EnumBinaryOp.MOD)
     {
       interp.PushValue(DynVal.NewNum((int)a._num % (int)b._num));
     }
-    else if(node.type == EnumBinaryOp.BIT_AND)
+    else if(type == EnumBinaryOp.BIT_AND)
     {
       interp.PushValue(DynVal.NewNum((int)a._num & (int)b._num));
     }
-    else if(node.type == EnumBinaryOp.BIT_OR)
+    else if(type == EnumBinaryOp.BIT_OR)
     {
       interp.PushValue(DynVal.NewNum((int)a._num | (int)b._num));
     }
     else
-      throw new Exception("Unsupported binary op:" + node.type);
+      throw new Exception("Unsupported binary op:" + type);
   }
 
   public override string inspect()
   {
-    return "(" + node.type + ") <- <- ->";
+    return "(" + type + ") <- <- ->";
   }
 }
 

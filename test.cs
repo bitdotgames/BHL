@@ -8189,6 +8189,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
+    //NodeDump(node);
     intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
@@ -8424,6 +8425,70 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("NULL;NOT NULL;EQ;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestOrShortCircuit()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c = null
+      if(c == null || c.r == 0) {
+        trace(""OK;"")
+      } else {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("OK;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestAndShortCircuit()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c = null
+      if(c != null && c.r == 0) {
+        trace(""NEVER;"")
+      } else {
+        trace(""OK;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("OK;", str);
     CommonChecks(intp);
   }
 
