@@ -1066,14 +1066,14 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  public Result ExecNode(BehaviorTreeNode node, int ret_vals = 1, object agent = null)
+  public Result ExecNode(BehaviorTreeNode node, int ret_vals = 1)
   {
     Result res = new Result();
 
     res.status = BHS.NONE;
     while(true)
     {
-      res.status = node.run(agent);
+      res.status = node.run();
       if(res.status != BHS.RUNNING)
         break;
     }
@@ -1589,7 +1589,7 @@ public class Interpreter : AST_Visitor
 
         if(can_be_precalculated)
         {
-          group.run(null);
+          group.run();
           curr_node.addChild(conf_node);
         }
         else

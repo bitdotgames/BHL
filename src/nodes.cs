@@ -52,27 +52,27 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
 
   //NOTE: this method is heavily used for inlining, 
   //      don't change its contents if you are not sure
-  public BHS run(object agent)
+  public BHS run()
   {
     if(currStatus != BHS.RUNNING)
-      init(agent);
-    currStatus = execute(agent);
+      init();
+    currStatus = execute();
     lastExecuteStatus = currStatus;
     if(currStatus != BHS.RUNNING)
-      deinit(agent);
+      deinit();
     return currStatus;
   }
 
-  public virtual void stop(object agent)
+  public virtual void stop()
   {
     if(currStatus == BHS.RUNNING)
-      deinit(agent);
+      deinit();
     if(currStatus != BHS.NONE)
-      defer(agent);
+      defer();
     currStatus = BHS.NONE;
   }
 
-  public virtual string inspect(object agent) { return ""; }
+  public virtual string inspect() { return ""; }
 
   public BHS getStatus() { return currStatus; }
   public BHS getExecuteStatus() { return lastExecuteStatus; }
@@ -80,27 +80,27 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
 
   //NOTE: methods below should never be called directly
   // This method will be invoked before the node is executed for the first time.
-  public abstract void init(object agent);
+  public abstract void init();
   // This method will be invoked once if node was running and then stopped running.
-  public abstract void deinit(object agent);
+  public abstract void deinit();
   // This method is invoked when the node should be run.
-  public abstract BHS execute(object agent);
+  public abstract BHS execute();
   // This method is invoked when the node goes out of the scope
-  public abstract void defer(object agent);
+  public abstract void defer();
 }
 
 public abstract class BehaviorTreeTerminalNode : BehaviorTreeNode
 {
-  public override void init(object agent)
+  public override void init()
   {}
 
-  public override void deinit(object agent)
+  public override void deinit()
   {}
 
-  public override void defer(object agent)
+  public override void defer()
   {}
 
-  public override BHS execute(object agent)
+  public override BHS execute()
   {
     return BHS.SUCCESS;
   }
@@ -135,57 +135,57 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
   }
 
   //NOTE: normally you never really want to override this one
-  override public void deinit(object agent)
+  override public void deinit()
   {
-    stopChildren(agent);
+    stopChildren();
   }
 
   //NOTE: normally you never really want to override this one
-  override public void defer(object agent)
+  override public void defer()
   {}
 
-  protected void stopChildren(object agent)
+  protected void stopChildren()
   {
     //NOTE: stopping children in the reverse order
     for(int i=children.Count;i-- > 0;)
-      children[i].stop(agent);
+      children[i].stop();
   }
 }
 
 public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 {
-  public override void init(object agent)
+  public override void init()
   {
     if(children.Count != 1)
       throw new Exception("One child is expected");
   }
 
-  public override BHS execute(object agent)
+  public override BHS execute()
   {
-    //BHS status = children[0].run(agent);
+    //BHS status = children[0].run();
     BHS status;
     var currentTask = children[0];
     ////////////////////FORCING CODE INLINE////////////////////////////////
     if(currentTask.currStatus != BHS.RUNNING)
-      currentTask.init(agent);
-    status = currentTask.execute(agent);
+      currentTask.init();
+    status = currentTask.execute();
     currentTask.currStatus = status;
     currentTask.lastExecuteStatus = currentTask.currStatus;
     if(currentTask.currStatus != BHS.RUNNING)
-      currentTask.deinit(agent);
+      currentTask.deinit();
     ////////////////////FORCING CODE INLINE////////////////////////////////
     return status;
   }
 
-  override public void deinit(object agent)
+  override public void deinit()
   {
     //NOTE: we don't stop children here because this node behaves NOT like
     //      a block node but rather emulating a terminal node
   } 
 
-  override public void defer(object agent)
+  override public void defer()
   {
-    stopChildren(agent);
+    stopChildren();
   }
 
   public void setSlave(BehaviorTreeNode node)
@@ -203,13 +203,13 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
 public class AlwaysRunning : BehaviorTreeNode
 {
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     return BHS.RUNNING;
   }
-  override public void init(object agent){}
-  override public void deinit(object agent){}
-  override public void defer(object agent){}
+  override public void init(){}
+  override public void deinit(){}
+  override public void defer(){}
 }
 
 //////////////////////////////////////////
@@ -218,7 +218,7 @@ public class YieldOnce : BehaviorTreeNode
 {
   bool yielded = false;
 
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     if(!yielded)
     {
@@ -228,38 +228,38 @@ public class YieldOnce : BehaviorTreeNode
     else
       return BHS.SUCCESS;
   }
-  override public void init(object agent)
+  override public void init()
   {
     yielded = false;
   }
-  override public void deinit(object agent){}
-  override public void defer(object agent){}
+  override public void deinit(){}
+  override public void defer(){}
 }
 
 //////////////////////////////////////////
 
 public class AlwaysSuccess : BehaviorTreeNode
 {
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     return BHS.SUCCESS;
   }
-  override public void init(object agent){}
-  override public void deinit(object agent){}
-  override public void defer(object agent){}
+  override public void init(){}
+  override public void deinit(){}
+  override public void defer(){}
 }
 
 //////////////////////////////////////////
 
 public class AlwaysFailure : BehaviorTreeNode
 {
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     return BHS.FAILURE;
   }
-  override public void init(object agent){}
-  override public void deinit(object agent){}
-  override public void defer(object agent){}
+  override public void init(){}
+  override public void deinit(){}
+  override public void defer(){}
 }
 
 
@@ -269,26 +269,26 @@ public class SequentialNode : BehaviorTreeInternalNode
 {
   protected int currentPosition = 0;
 
-  override public void init(object agent)
+  override public void init()
   {
     currentPosition = 0;
   }
 
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -301,23 +301,23 @@ public class SequentialNode : BehaviorTreeInternalNode
 
 public class SequentialNode_ : SequentialNode
 {
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
-    //var status = base.execute(agent);
+    //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -335,15 +335,15 @@ public class SequentialNode_ : SequentialNode
 
 public class GroupNode : SequentialNode
 {
-  override public void deinit(object agent)
+  override public void deinit()
   {
     //NOTE: we don't stop children here because this node behaves NOT like
     //      a block node but rather emulating a terminal node
   }
 
-  override public void defer(object agent)
+  override public void defer()
   {
-    stopChildren(agent);
+    stopChildren();
   }
 }
 
@@ -413,7 +413,7 @@ public class FuncCallNode : SequentialNode
     }
   }
 
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     var interp = Interpreter.instance;
 
@@ -423,21 +423,21 @@ public class FuncCallNode : SequentialNode
     
     interp.func_args_stack.Push(node.cargs_num);
 
-    //var status = base.execute(agent);
+    //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -453,22 +453,22 @@ public class FuncCallNode : SequentialNode
     return status;
   }
 
-  override public void init(object agent)
+  override public void init()
   {
     Inflate();
 
-    base.init(agent);
+    base.init();
   }
 
-  override public void deinit(object agent)
+  override public void deinit()
   {
     //NOTE: we don't stop children here because this node behaves NOT like
     //      a block node but rather emulating a terminal node
   }
 
-  override public void defer(object agent)
+  override public void defer()
   {
-    stopChildren(agent);
+    stopChildren();
 
     if(!pool_item.IsEmpty() && pool_item.IsCached())
     {
@@ -480,7 +480,7 @@ public class FuncCallNode : SequentialNode
     }
   }
 
-  override public string inspect(object agent) 
+  override public string inspect() 
   {
     return "" + node.Name();
   }
@@ -655,10 +655,10 @@ public class ParallelNode : BehaviorTreeInternalNode
     succeedPolicy = policy;
   }
 
-  override public void init(object agent) 
+  override public void init() 
   {}
 
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     bool sawAllSuccess = true;
     for(int i=0;i<children.Count;++i)
@@ -667,16 +667,16 @@ public class ParallelNode : BehaviorTreeInternalNode
 
       if(currentTask.getStatus() == BHS.NONE || currentTask.getStatus() == BHS.RUNNING)
       {
-        //BHS status = currentTask.run(agent);
+        //BHS status = currentTask.run();
         BHS status;
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(currentTask.currStatus != BHS.RUNNING)
-          currentTask.init(agent);
-        status = currentTask.execute(agent);
+          currentTask.init();
+        status = currentTask.execute();
         currentTask.currStatus = status;
         currentTask.lastExecuteStatus = currentTask.currStatus;
         if(currentTask.currStatus != BHS.RUNNING)
-          currentTask.deinit(agent);
+          currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(status == BHS.FAILURE)
           return BHS.FAILURE;
@@ -711,27 +711,27 @@ public class PriorityNode : BehaviorTreeInternalNode
 {
   private int currentPosition = -1;
 
-  override public void init(object agent)
+  override public void init()
   {
     currentPosition = -1;
   }
 
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     BHS status;
 
     if(currentPosition != -1) //there's one still running
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
 
       if(status == BHS.RUNNING)
@@ -764,15 +764,15 @@ public class PriorityNode : BehaviorTreeInternalNode
        //keep trying children until one doesn't fail
       while(true)
       {
-        //status = currentTask.run(agent);
+        //status = currentTask.run();
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(currentTask.currStatus != BHS.RUNNING)
-          currentTask.init(agent);
-        status = currentTask.execute(agent);
+          currentTask.init();
+        status = currentTask.execute();
         currentTask.currStatus = status;
         currentTask.lastExecuteStatus = currentTask.currStatus;
         if(currentTask.currStatus != BHS.RUNNING)
-          currentTask.deinit(agent);
+          currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(status != BHS.FAILURE)
           break;
@@ -804,23 +804,23 @@ public class PriorityNode : BehaviorTreeInternalNode
 
 public class EvalNode : SequentialNode
 {
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
-    //var status = base.execute(agent);
+    //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -843,7 +843,7 @@ public class EvalNode : SequentialNode
     return status;
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "->";
   }
@@ -851,23 +851,23 @@ public class EvalNode : SequentialNode
 
 public class ForeverNode : SequentialNode
 {
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
-    //var status = base.execute(agent);
+    //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -884,7 +884,7 @@ public class ForeverNode : SequentialNode
     //      running status *below* that call 
     currStatus = BHS.RUNNING;
     if(status != BHS.RUNNING)
-      stop(agent);
+      stop();
 
     return BHS.RUNNING;
   }
@@ -892,23 +892,23 @@ public class ForeverNode : SequentialNode
 
 public class MonitorSuccessNode : SequentialNode
 {
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
-    //var status = base.execute(agent);
+    //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -925,7 +925,7 @@ public class MonitorSuccessNode : SequentialNode
     //NOTE: we need to stop children in order to make them 
     //      reset its status and re-init on the next run
     if(status == BHS.FAILURE)
-      base.stop(agent);
+      base.stop();
 
     return BHS.RUNNING;
   }
@@ -940,23 +940,23 @@ public class MonitorFailureNode : SequentialNode
     status_on_failure = _status_on_failure;
   }
   
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
-    //var status = base.execute(agent);
+    //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -972,7 +972,7 @@ public class MonitorFailureNode : SequentialNode
     //NOTE: we need to stop children in order to make them 
     //      reset its status and re-init on the next run
     if(status == BHS.SUCCESS)
-      base.stop(agent);
+      base.stop();
 
     return BHS.RUNNING;
   }
@@ -982,22 +982,22 @@ public class DeferNode : BehaviorTreeInternalNode
 {
   public BHS result = BHS.SUCCESS; 
 
-  override public void init(object agent)
+  override public void init()
   {}
 
   //NOTE: does nothing on purpose
-  override public void deinit(object agent)
+  override public void deinit()
   {}
 
-  override public void defer(object agent)
+  override public void defer()
   {
     for(int i=0;i<children.Count;++i)
-      children[i].run(agent);
+      children[i].run();
 
-    stopChildren(agent);
+    stopChildren();
   }
 
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     return result;
   }
@@ -1008,7 +1008,7 @@ public class IfNode : BehaviorTreeInternalNode
   int curr_pos = -1;
   BehaviorTreeNode  selected;
 
-  override public void init(object agent)
+  override public void init()
   {
     if(children.Count < 2)
       throw new Exception("Bad children count: " + children.Count);
@@ -1017,7 +1017,7 @@ public class IfNode : BehaviorTreeInternalNode
     curr_pos = 0;
   }
 
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     var interp = Interpreter.instance;
 
@@ -1025,7 +1025,7 @@ public class IfNode : BehaviorTreeInternalNode
     while(selected == null)
     {
       var cond = children[curr_pos];
-      var status = cond.run(agent);
+      var status = cond.run();
 
       if(status == BHS.RUNNING || status == BHS.FAILURE)
         return status;
@@ -1049,21 +1049,21 @@ public class IfNode : BehaviorTreeInternalNode
     }
 
     {
-      //return selected.run(agent);
+      //return selected.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(selected.currStatus != BHS.RUNNING)
-        selected.init(agent);
-      BHS status = selected.execute(agent);
+        selected.init();
+      BHS status = selected.execute();
       selected.currStatus = status;
       selected.lastExecuteStatus = selected.currStatus;
       if(selected.currStatus != BHS.RUNNING)
-        selected.deinit(agent);
+        selected.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       return status;
     }
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "<- " + (curr_pos+1) + "x";
   }
@@ -1071,13 +1071,13 @@ public class IfNode : BehaviorTreeInternalNode
 
 public class LoopNode : BehaviorTreeInternalNode
 {
-  override public void init(object agent)
+  override public void init()
   {
     if(children.Count != 2)
       throw new Exception("Bad children count: " + children.Count);
   }
 
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
     var cond = children[0];
     var body = children[1];
@@ -1085,7 +1085,7 @@ public class LoopNode : BehaviorTreeInternalNode
 
     while(true)
     {
-      var status = cond.run(agent);
+      var status = cond.run();
       if(status == BHS.RUNNING || status == BHS.FAILURE)
         return status;
 
@@ -1096,14 +1096,14 @@ public class LoopNode : BehaviorTreeInternalNode
 
       try
       {
-        var body_status = body.run(agent);
+        var body_status = body.run();
         if(body_status == BHS.RUNNING || body_status == BHS.FAILURE)
           return body_status;
       }
       catch(Interpreter.BreakException)
       {
-        cond.stop(agent);
-        body.stop(agent);
+        cond.stop();
+        body.stop();
         return BHS.SUCCESS;
       }
     }
@@ -1112,9 +1112,9 @@ public class LoopNode : BehaviorTreeInternalNode
 
 public class InvertNode : BehaviorTreeDecoratorNode
 {
-  override public BHS execute(object agent)
+  override public BHS execute()
   {
-    BHS status = base.execute(agent);
+    BHS status = base.execute();
 
     if(status == BHS.FAILURE)
       return BHS.SUCCESS;
@@ -1128,7 +1128,7 @@ public class InvertNode : BehaviorTreeDecoratorNode
 
 public class ReturnNode : BehaviorTreeTerminalNode
 {
-  public override void init(object agent) 
+  public override void init() 
   {
     var interp = Interpreter.instance;
     interp.JumpReturn();
@@ -1137,7 +1137,7 @@ public class ReturnNode : BehaviorTreeTerminalNode
 
 public class BreakNode : BehaviorTreeTerminalNode
 {
-  public override void init(object agent) 
+  public override void init() 
   {
     var interp = Interpreter.instance;
     interp.JumpBreak();
@@ -1146,7 +1146,7 @@ public class BreakNode : BehaviorTreeTerminalNode
 
 //public class ContinueNode : BehaviorTreeTerminalNode
 //{
-//  public override void init(object agent) 
+//  public override void init() 
 //  {
 //    var interp = Interpreter.instance;
 //    interp.JumpContinue();
@@ -1155,13 +1155,13 @@ public class BreakNode : BehaviorTreeTerminalNode
 
 public class PopValueNode : BehaviorTreeTerminalNode
 {
-  public override void init(object agent) 
+  public override void init() 
   {
     var interp = Interpreter.instance;
     interp.PopValue();
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "<-";
   }
@@ -1176,13 +1176,13 @@ public class PushValueNode : BehaviorTreeTerminalNode
     this.dv = dv;
   }
 
-  public override void init(object agent) 
+  public override void init() 
   {
     var interp = Interpreter.instance;
     interp.PushValue(dv);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "->";
   }
@@ -1201,7 +1201,7 @@ public class ResetConfigNode : BehaviorTreeTerminalNode
     this.push = push;
   }
 
-  public override void init(object agent) 
+  public override void init() 
   {
     var dv = DynVal.New();
     conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
@@ -1213,7 +1213,7 @@ public class ResetConfigNode : BehaviorTreeTerminalNode
     }
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return push ? "->" : "";
   }
@@ -1228,7 +1228,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
     this.ntype = ntype;
   }
 
-  public override void init(object agent) 
+  public override void init() 
   {
     var interp = Interpreter.instance;
 
@@ -1244,7 +1244,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
     interp.PushValue(val);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return ntype + " ->";
   }
@@ -1259,9 +1259,9 @@ public class CallFuncPtr : SequentialNode
     this.node = node;
   }
 
-  public override void init(object agent) 
+  public override void init() 
   {
-    base.init(agent);
+    base.init();
 
     var interp = Interpreter.instance;
     var val = node.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(node.Name()); 
@@ -1288,7 +1288,7 @@ public class CallFuncPtr : SequentialNode
       children[children.Count-1] = func_node;
   }
 
-  override public void deinit(object agent)
+  override public void deinit()
   {
     ((FuncNode)children[children.Count-1]).fct.Release();
 
@@ -1296,12 +1296,12 @@ public class CallFuncPtr : SequentialNode
     //      a block node but rather emulating a terminal node
   } 
 
-  override public void defer(object agent)
+  override public void defer()
   {
-    stopChildren(agent);
+    stopChildren();
   }
 
-  public override BHS execute(object agent)
+  public override BHS execute()
   {
     var interp = Interpreter.instance;
     interp.func_args_stack.Push(node.cargs_num);
@@ -1310,15 +1310,15 @@ public class CallFuncPtr : SequentialNode
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
-      //status = currentTask.run(agent);
+      //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init(agent);
-      status = currentTask.execute(agent);
+        currentTask.init();
+      status = currentTask.execute();
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit(agent);
+        currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -1341,7 +1341,7 @@ public class LiteralNode : BehaviorTreeTerminalNode
     this.node = node;
   }
 
-  public override void init(object agent) 
+  public override void init() 
   {
     var interp = Interpreter.instance;
 
@@ -1357,7 +1357,7 @@ public class LiteralNode : BehaviorTreeTerminalNode
       throw new Exception("Bad literal:" + node.type);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "(" + node.nval + "," + node.sval + ") ->";
   }
@@ -1372,7 +1372,7 @@ public class UnaryOpNode : BehaviorTreeTerminalNode
     this.node = node;
   }
 
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
     var a = interp.PopValue();
@@ -1389,7 +1389,7 @@ public class UnaryOpNode : BehaviorTreeTerminalNode
       throw new Exception("Unsupported unary op:" + node.type);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "(" + node.type + ") <- ->";
   }
@@ -1404,7 +1404,7 @@ public class BinaryOpNode : BehaviorTreeTerminalNode
     this.node = node;
   }
 
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
     var b = interp.PopValue();
@@ -1480,7 +1480,7 @@ public class BinaryOpNode : BehaviorTreeTerminalNode
       throw new Exception("Unsupported binary op:" + node.type);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "(" + node.type + ") <- <- ->";
   }
@@ -1495,7 +1495,7 @@ public class TypeCastNode : BehaviorTreeTerminalNode
     this.node = node;
   }
 
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -1515,7 +1515,7 @@ public class TypeCastNode : BehaviorTreeTerminalNode
     interp.PushValue(res);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "(" + node.type + ") <- ->";
   }
@@ -1536,7 +1536,7 @@ public class VarAccessNode : BehaviorTreeTerminalNode
     this.mode = mode;
   }
 
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -1562,7 +1562,7 @@ public class VarAccessNode : BehaviorTreeTerminalNode
       throw new Exception("Unknown mode: " + mode);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     string str = name + " ";
     if(mode == WRITE)
@@ -1597,7 +1597,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
     this.mode = mode;
   }
 
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
     
@@ -1657,7 +1657,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
     }
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     string str = scope_ntype + "," + name + " "; 
 
@@ -1761,7 +1761,7 @@ public class FuncNodeAST : FuncNode
     inflated = true;
   }
 
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -1785,22 +1785,22 @@ public class FuncNodeAST : FuncNode
       fparam_val.RefMod(RefOp.TRY_DEL);
     }
 
-    base.init(agent);
+    base.init();
   }
 
-  public override void deinit(object agent)
+  public override void deinit()
   {
     var interp = Interpreter.instance;
 
     //NOTE: let defer have access to the memory
     interp.PushScope(mem);
-    base.deinit(agent);
+    base.deinit();
     interp.PopScope();
 
     mem.Clear();
   }
 
-  public override BHS execute(object agent) 
+  public override BHS execute() 
   {
     var interp = Interpreter.instance;
 
@@ -1809,21 +1809,21 @@ public class FuncNodeAST : FuncNode
     BHS status;
     try
     {
-      //status = base.execute(agent);
+      //status = base.execute();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       status = BHS.SUCCESS;
       while(currentPosition < children.Count)
       {
         var currentTask = children[currentPosition];
-        //status = currentTask.run(agent);
+        //status = currentTask.run();
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(currentTask.currStatus != BHS.RUNNING)
-          currentTask.init(agent);
-        status = currentTask.execute(agent);
+          currentTask.init();
+        status = currentTask.execute();
         currentTask.currStatus = status;
         currentTask.lastExecuteStatus = currentTask.currStatus;
         if(currentTask.currStatus != BHS.RUNNING)
-          currentTask.deinit(agent);
+          currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(status == BHS.SUCCESS)
           ++currentPosition;
@@ -1838,7 +1838,7 @@ public class FuncNodeAST : FuncNode
     {
       //Console.WriteLine("CATCH RETURN " + decl.nname + " " + e.val);
       status = BHS.SUCCESS;
-      this.stop(agent);
+      this.stop();
     }
 
     interp.PopScope();
@@ -1846,7 +1846,7 @@ public class FuncNodeAST : FuncNode
     return status;
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return decl.Name() + "(<- x " + this.args_num + ")" + (has_void_value ? "" : "(->)");
   }
@@ -1858,14 +1858,14 @@ public class FuncNodeLambda : FuncNodeAST
     : base(fct.fr.decl, fct)
   {}
 
-  public override void init(object agent)
+  public override void init()
   {
     this.mem.CopyFrom(fct.mem);
 
-    base.init(agent);
+    base.init();
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).useparams.Count + "x =";
   }
@@ -1881,7 +1881,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     fr = new FuncRef(decl, fbnd);
   }
 
-  public override void init(object agent)
+  public override void init()
   {
     //Console.WriteLine("PUSH CTX " + this.GetHashCode());
 
@@ -1908,17 +1908,17 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     }
 
     var fdv = DynVal.NewObj(fct);
-    //Util.Debug("PUSH FCTX: " + fct.decl.Name() + " " + agent.GetHashCode());
+    //Util.Debug("PUSH FCTX: " + fct.decl.Name());
     interp.PushValue(fdv);
   }
 
-  public override void defer(object agent)
+  public override void defer()
   {
     fct.Release();
     fct = null;
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return fr.Name() + " ->";
   }
@@ -1946,12 +1946,12 @@ public class FuncNodeBinding : FuncNode
     return symb.func_creator();
   }
 
-  public override void init(object agent) 
+  public override void init() 
   {
     if(this.args_num > symb.GetMembers().Count)
       throw new Exception("Too many args for func " + symb.nname);
 
-    base.init(agent);
+    base.init();
   }
 
   public override string GetName()
@@ -1959,7 +1959,7 @@ public class FuncNodeBinding : FuncNode
     return symb.name;
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return symb.name + "(<- x " + this.args_num + ") ";
   }
@@ -1967,7 +1967,7 @@ public class FuncNodeBinding : FuncNode
 
 public class SimpleFunctorNode : BehaviorTreeTerminalNode
 {
-  public delegate BHS Functor(object agent);
+  public delegate BHS Functor();
 
   Functor fn;
   string name;
@@ -1978,12 +1978,12 @@ public class SimpleFunctorNode : BehaviorTreeTerminalNode
     this.name = name;
   }
 
-  public override BHS execute(object agent)
+  public override BHS execute()
   {
-    return fn(agent);
+    return fn();
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return name;
   }
@@ -1993,14 +1993,14 @@ public class SimpleFunctorNode : BehaviorTreeTerminalNode
 
 public class Array_NewNode : BehaviorTreeTerminalNode
 {
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
     var val = DynVal.NewObj(DynValList.New());
     interp.PushValue(val);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "->";
   }
@@ -2008,14 +2008,14 @@ public class Array_NewNode : BehaviorTreeTerminalNode
 
 public class Array_NewNodeT<T> : BehaviorTreeTerminalNode where T : new()
 {
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
     var arr = DynVal.NewObj(ArrayTypeSymbolT<T>.Creator());
     interp.PushValue(arr);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "->";
   }
@@ -2025,7 +2025,7 @@ public class Array_AddNode : BehaviorTreeTerminalNode
 {
   public bool push_arr = false;
 
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -2042,7 +2042,7 @@ public class Array_AddNode : BehaviorTreeTerminalNode
     lst.TryDel();
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     if(push_arr)
       return "<- <- ->";
@@ -2053,7 +2053,7 @@ public class Array_AddNode : BehaviorTreeTerminalNode
 
 public class Array_AddNodeT<T> : Array_AddNode where T : new()
 {
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -2072,7 +2072,7 @@ public class Array_AddNodeT<T> : Array_AddNode where T : new()
 
 public class Array_AtNode : BehaviorTreeTerminalNode
 {
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -2091,7 +2091,7 @@ public class Array_AtNode : BehaviorTreeTerminalNode
     lst.TryDel();
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "<- <- ->";
   }
@@ -2099,7 +2099,7 @@ public class Array_AtNode : BehaviorTreeTerminalNode
 
 public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
 {
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -2116,7 +2116,7 @@ public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
     interp.PushValue(val);
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "<- <- ->";
   }
@@ -2124,7 +2124,7 @@ public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
 
 public class Array_RemoveAtNode : BehaviorTreeTerminalNode
 {
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -2142,7 +2142,7 @@ public class Array_RemoveAtNode : BehaviorTreeTerminalNode
     lst.TryDel();
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "<- <-";
   }
@@ -2150,7 +2150,7 @@ public class Array_RemoveAtNode : BehaviorTreeTerminalNode
 
 public class Array_RemoveAtNodeT : BehaviorTreeTerminalNode
 {
-  public override void init(object agent)
+  public override void init()
   {
     var interp = Interpreter.instance;
 
@@ -2165,7 +2165,7 @@ public class Array_RemoveAtNodeT : BehaviorTreeTerminalNode
     lst.RemoveAt((int)idx.num); 
   }
 
-  public override string inspect(object agent)
+  public override string inspect()
   {
     return "<- <-";
   }
