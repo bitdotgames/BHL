@@ -339,6 +339,9 @@ public class BHL
 
       string self_bin_file = GetSelfFile();
 
+      int cache_hit = 0;
+      int cache_miss = 0;
+
       try
       {
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
@@ -367,6 +370,7 @@ public class BHL
               try
               {
                 ast = Util.File2Meta<AST_Module>(cache_file);
+                ++cache_hit;
                 //Console.WriteLine("Cache hit");
               }
               catch(Exception)
@@ -379,6 +383,7 @@ public class BHL
             
             if(ast == null)
             {
+              ++cache_miss;
               //Console.WriteLine("CACHE MISS");
 
               var mod = new Module(mreg.FilePath2ModulePath(file), file);
@@ -417,7 +422,7 @@ public class BHL
       }
     
       sw.Stop();
-      Console.WriteLine("BHL Worker {0} done({1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+      Console.WriteLine("BHL Worker {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
   }
 
