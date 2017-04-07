@@ -1005,10 +1005,10 @@ public class DeferNode : BehaviorTreeInternalNode
 
 public class LogicOpNode : BehaviorTreeInternalNode
 {
-  EnumLogicOp type;
+  EnumBinaryOp type;
   int curr_pos = -1;
 
-  public LogicOpNode(AST_LogicOpExp node)
+  public LogicOpNode(AST_BinaryOpExp node)
   {
     this.type = node.type;
   }
@@ -1045,7 +1045,7 @@ public class LogicOpNode : BehaviorTreeInternalNode
 
       var v = interp.PopValue();
 
-      if(type == EnumLogicOp.OR)
+      if(type == EnumBinaryOp.OR)
       {
         if(v.bval == true)
         {
@@ -1061,7 +1061,7 @@ public class LogicOpNode : BehaviorTreeInternalNode
           return BHS.SUCCESS;
         }
       }
-      else if(type == EnumLogicOp.AND)
+      else if(type == EnumBinaryOp.AND)
       {
         if(v.bval == false)
         {

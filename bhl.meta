@@ -25,6 +25,8 @@ struct AST_UnaryOpExp extends AST
 end
 
 enum EnumBinaryOp
+  AND     = 1
+  OR      = 2
   ADD     = 3
   SUB     = 4
   MUL     = 5
@@ -42,15 +44,6 @@ end
 
 struct AST_BinaryOpExp extends AST
   type    : EnumBinaryOp
-end
-
-enum EnumLogicOp
-  AND     = 1
-  OR      = 2
-end
-
-struct AST_LogicOpExp extends AST
-  type   : EnumLogicOp
 end
 
 struct AST_New extends AST

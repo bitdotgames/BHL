@@ -553,16 +553,6 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_LogicOpExp New_LogicOpExp(EnumLogicOp type)
-  {
-    var n = new AST_LogicOpExp();
-    n.type = type;
-
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
   static public AST_TypeCast New_TypeCast(string type)
   {
     var n = new AST_TypeCast();
@@ -966,13 +956,6 @@ public class AST_Dumper : AST_Visitor
       Console.Write(" (" + node.nval + ")");
     else if(node.type == EnumLiteral.STR)
       Console.Write(" ('" + node.sval + "')");
-  }
-
-  public override void DoVisit(AST_LogicOpExp node)
-  {
-    Console.Write("(LOP " + node.type);
-    VisitChildren(node);
-    Console.Write(")");
   }
 
   public override void DoVisit(AST_BinaryOpExp node)
