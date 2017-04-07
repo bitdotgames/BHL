@@ -1017,55 +1017,55 @@ public class AST_Dumper : AST_Visitor
 
 public class FastStackDynamic<T> : List<T>
 {
-	public FastStackDynamic(int startingCapacity)
-		: base(startingCapacity)
-	{}
+  public FastStackDynamic(int startingCapacity)
+    : base(startingCapacity)
+  {}
 
-	public T Push(T item)
-	{
-		this.Add(item);
-		return item;
-	}
+  public T Push(T item)
+  {
+    this.Add(item);
+    return item;
+  }
 
-	public void Expand(int size)
-	{
-		for(int i = 0; i < size; i++)
-			this.Add(default(T));
-	}
+  public void Expand(int size)
+  {
+    for(int i = 0; i < size; i++)
+      this.Add(default(T));
+  }
 
-	public void Zero(int index)
-	{
-		this[index] = default(T);
-	}
+  public void Zero(int index)
+  {
+    this[index] = default(T);
+  }
 
-	public T Peek(int idxofs = 0)
-	{
-		T item = this[this.Count - 1 - idxofs];
-		return item;
-	}
-	public void CropAtCount(int p)
-	{
-		RemoveLast(Count - p);
-	}
+  public T Peek()
+  {
+    return this[this.Count - 1];
+  }
 
-	public void RemoveLast( int cnt = 1)
-	{
-		if (cnt == 1)
-		{
-			this.RemoveAt(this.Count - 1);
-		}
-		else
-		{
-			this.RemoveRange(this.Count - cnt, cnt);
-		}
-	}
+  public void CropAtCount(int p)
+  {
+    RemoveLast(Count - p);
+  }
 
-	public T Pop()
-	{
-		T retval = this[this.Count - 1];
-		this.RemoveAt(this.Count - 1);
-		return retval;
-	}
+  public void RemoveLast( int cnt = 1)
+  {
+    if (cnt == 1)
+    {
+      this.RemoveAt(this.Count - 1);
+    }
+    else
+    {
+      this.RemoveRange(this.Count - cnt, cnt);
+    }
+  }
+
+  public T Pop()
+  {
+    T retval = this[this.Count - 1];
+    this.RemoveAt(this.Count - 1);
+    return retval;
+  }
 }
 
 public class FastStack<T>
@@ -1090,10 +1090,9 @@ public class FastStack<T>
     return item;
   }
 
-  public T Peek(int idxofs = 0)
+  public T Peek()
   {
-    T item = m_Storage[m_HeadIdx - 1 - idxofs];
-    return item;
+    return m_Storage[m_HeadIdx - 1];
   }
 
   public void Set(int idxofs, T item)

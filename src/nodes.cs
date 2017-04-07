@@ -417,8 +417,6 @@ public class FuncCallNode : SequentialNode
   {
     var interp = Interpreter.instance;
 
-    if(pool_item.mod_id != 0)
-      interp.curr_module = pool_item.mod_id;
     interp.curr_line = node.line_num;
     
     interp.func_args_stack.Push(node.cargs_num);
@@ -501,7 +499,6 @@ public class FuncCallNode : SequentialNode
     public AST_Call ast;
     public FuncNode fnode;
     public BehaviorTreeNode bnode;
-    public uint mod_id;
 
     public PoolItem(AST_Call _ast)
     {
@@ -511,7 +508,6 @@ public class FuncCallNode : SequentialNode
       ast = _ast;
       fnode = null;
       bnode = null;
-      mod_id = 0;
     }
 
     public bool IsEmpty()
@@ -609,7 +605,6 @@ public class FuncCallNode : SequentialNode
     var fnode = interp.GetFuncNode(pi.ast);
     pi.fnode = fnode;
     var fbnd = fnode as FuncNodeBinding; 
-    pi.mod_id = (fnode is FuncNodeAST) ? (fnode as FuncNodeAST).decl.nname2 : 0;
     //NOTE: optimization for C# func binding
     pi.bnode = fbnd != null ? fbnd.CreateBindingNode() : fnode;
     return fbnd == null;
@@ -1877,6 +1872,8 @@ public class FuncNodeAST : FuncNode
 
     interp.PushScope(mem);
 
+    interp.module_stack.Push(decl.nname2);
+
     BHS status;
     try
     {
@@ -1913,6 +1910,7 @@ public class FuncNodeAST : FuncNode
     }
 
     interp.PopScope();
+    interp.module_stack.Pop();
 
     return status;
   }

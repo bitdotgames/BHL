@@ -1032,8 +1032,17 @@ public class Interpreter : AST_Visitor
 
   FastStack<DynVal> stack = new FastStack<DynVal>(256);
 
-  public uint curr_module; 
   public int curr_line;
+  public uint curr_module {
+    get {
+      if(module_stack.Count > 1)
+        return module_stack[module_stack.Count-2];
+      else 
+        return 0;
+    }
+  }
+  public FastStack<uint> module_stack = new FastStack<uint>(128);
+
   public FastStack<int> func_args_stack = new FastStack<int>(128);
 
   public void Init(GlobalScope bindings, IModuleLoader module_loader)
@@ -1048,6 +1057,7 @@ public class Interpreter : AST_Visitor
     lmb_decls.Clear();
     func_args_stack.Clear();
     stack.Clear();
+    module_stack.Clear();
 
     this.bindings = bindings;
     this.module_loader = module_loader;
