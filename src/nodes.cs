@@ -446,7 +446,7 @@ public class FuncCallNode : SequentialNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
-    interp.func_args_stack.Pop();
+    interp.func_args_stack.PopFast();
 
     return status;
   }
@@ -1401,7 +1401,7 @@ public class CallFuncPtr : SequentialNode
         break;
     } 
 
-    interp.func_args_stack.Pop();
+    interp.func_args_stack.PopFast();
 
     return status;
   }
@@ -1910,7 +1910,7 @@ public class FuncNodeAST : FuncNode
     }
 
     interp.PopScope();
-    interp.module_stack.Pop();
+    interp.module_stack.PopFast();
 
     return status;
   }
