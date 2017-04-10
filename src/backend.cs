@@ -1056,16 +1056,20 @@ public class Interpreter : AST_Visitor
     this.module_loader = module_loader;
   }
 
+  //NOTE: At the moment we can report line number approximately. Strictly speaking
+  //      we only can report the line number of the called function where error happened
   public void GetErrorLine(out uint mod_id, out string mod_name, out int line_num)
   {
     mod_name = "?";
     mod_id = 0;
     line_num = -1;
+
     if(module_stack.Count > 1)
     {
       mod_id = module_stack[module_stack.Count - 2];
       line_num = curr_line;
     }
+    //NOTE: special case when there is no real call line
     else if(module_stack.Count == 1)
     {
       mod_id = module_stack[0];
