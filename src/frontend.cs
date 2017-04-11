@@ -1327,7 +1327,18 @@ public class AST_Builder : bhlBaseVisitor<AST>
       else if(found_default_arg)
         FireError(Location(fp.NAME()) + ": missing default argument expression");
 
+      bool pop_json_type = false;
+      if(found_default_arg)
+      {
+        var tr = globals.type(fp.type());
+        PushJsonType(tr.Get());
+        pop_json_type = true;
+      }
+
       node.AddChild(Visit(fp));
+
+      if(pop_json_type)
+        PopJsonType();
 
       func.DefineArg(fp.NAME().GetText());
     }

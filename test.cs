@@ -9225,6 +9225,60 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestJsonDefaultArg()
+  {
+    string bhl = @"
+    func float foo(Color c = {r:10})
+    {
+      return c.r
+    }
+
+    func float test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 10);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonArrDefaultArg()
+  {
+    string bhl = @"
+    func float foo(Color[] c = [{r:10}])
+    {
+      return c[0].r
+    }
+
+    func float test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 10);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestJsonObjReAssign()
   {
     string bhl = @"
