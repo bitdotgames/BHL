@@ -10373,6 +10373,31 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestReturnMultipleVarAssignNoSuchSymbol()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      float a,s = foo()
+      return a,s
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "s : Symbol not resolved"
+    );
+  }
+
+  [IsTested()]
   public void TestReturnMultipleLambda()
   {
     string bhl = @"
