@@ -1351,7 +1351,17 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         pop_json_type = true;
         var vd = vdecls[0];
-        var tr = globals.type(vd.type());
+        var vd_type = vd.type();
+        TypeRef tr;
+        if(vd_type == null)
+        {
+          var vd_symb = curr_scope.resolve(vd.NAME().GetText());
+          if(vd_symb == null)
+            FireError(Location(vd) + " : Symbol not resolved");
+          tr = vd_symb.type;
+        }
+        else
+          tr = globals.type(vd_type);
         PushJsonType(tr.Get());
       }
 
@@ -1368,8 +1378,21 @@ public class AST_Builder : bhlBaseVisitor<AST>
     for(int i=0;i<vdecls.Length;++i)
     {
       var vd = vdecls[i];
+      var vd_type = vd.type();
 
-      var node = CommonDeclVar(vd.NAME(), vd.type(), false/*is ref*/, false/*not func arg*/);
+      AST node = null;
+
+      if(vd_type == null)
+      {
+        string vd_name = vd.NAME().GetText(); 
+        var vd_symb = curr_scope.resolve(vd_name);
+        if(vd_symb == null)
+          FireError(Location(vd) + " : Symbol not resolved");
+        Wrap(vd.NAME()).eval_type = vd_symb.type.Get();
+        node = AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vd_name, Hash.CRC28(vd_name));
+      }
+      else
+        node = CommonDeclVar(vd.NAME(), vd_type, false/*is ref*/, false/*not func arg*/);
       
       if(root_node == null)
         root_node = node;

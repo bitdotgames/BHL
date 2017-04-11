@@ -1511,8 +1511,8 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.VARW)
     {
-      curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.WRITE));
       VisitChildren(node);
+      curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.WRITE));
     }
     else if(node.type == EnumCall.MVAR)
     {
@@ -1728,11 +1728,10 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_Assign node)
   {
-    //1. calc final value
+    //1. calc assigned value(push on to stack)
     Visit(node.children[1]);
-    //2. eval expression
+    //2. eval expression assigned value(read from stack)
     Visit(node.children[0]);
-    //TODO: move this to frontend
     //3. let's tune eval expression
     var last_child = curr_node.children[curr_node.children.Count-1];
     if(last_child is VarAccessNode)

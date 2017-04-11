@@ -9225,13 +9225,13 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestJsonObjNotExpected()
+  public void TestJsonObjReAssign()
   {
     string bhl = @"
     func float test()
     {
-      Color c
-      c = {}
+      Color c = {r: 1}
+      c = {g:10}
       return c.r + c.g
     }
     ";
@@ -9240,35 +9240,34 @@ public class BHL_Test
 
     BindColor(globs);
 
-    AssertError<UserError>(
-      delegate() { 
-        Interpret("", bhl, globs);
-      },
-      @"{..} not expected"
-    );
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 10);
+    CommonChecks(intp);
   }
 
   [IsTested()]
-  public void TestJsonArrNotExpected()
+  public void TestJsonArrReAssign()
   {
     string bhl = @"
-    func void test()
+    func float test()
     {
-      float[] b
-      b = []
+      float[] b = [1]
+      b = [2,3]
+      return b[0] + b[1]
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
 
-    BindColor(globs);
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret("", bhl, globs);
-      },
-      @"[..] not expected"
-    );
+    AssertEqual(num, 5);
+    CommonChecks(intp);
   }
 
   [IsTested()]

@@ -175,8 +175,9 @@ varsDeclare
 	: varDeclare ( ',' varDeclare )* assignExp?
   ;
 
+//NOTE: as temporary hack varDeclare allows type to be optional
 varDeclare
-  : type NAME
+  : type? NAME
   ;
 
 assignExp
