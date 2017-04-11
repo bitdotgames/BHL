@@ -10346,6 +10346,34 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestReturnMultipleVarAssign2()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      string s
+      float a,s = foo()
+      return a,s
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 2).vals;
+
+    AssertEqual(vals[0].num, 100);
+    AssertEqual(vals[1].str, "bar");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestReturnMultipleLambda()
   {
     string bhl = @"
