@@ -1428,6 +1428,77 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncReplacesArrayValueByRef()
+  {
+    string bhl = @"
+
+    func float[] make()
+    {
+      float[] fs = [42]
+      return fs
+    }
+
+    func foo(ref float[] a) 
+    {
+      a = make()
+    }
+      
+    func float test() 
+    {
+      float[] a
+      foo(ref a)
+      return a[0]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestFuncReplacesArrayValueByRef2()
+  {
+    string bhl = @"
+
+    func float[] make()
+    {
+      float[] fs = [42]
+      return fs
+    }
+
+    func foo(ref float[] a) 
+    {
+      a = make()
+    }
+      
+    func float test() 
+    {
+      float[] a = []
+      foo(ref a)
+      return a[0]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestLambdaReplacesArrayValueByRef()
   {
     string bhl = @"

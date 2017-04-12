@@ -1865,6 +1865,19 @@ public class FuncNodeAST : FuncNode
     interp.module_stack.PopFast();
     interp.PopScope();
 
+    //NOTE: user content passed by ref must survive memory 
+    //      cleanup
+    var fparams = decl.fparams();
+    var func_args = fparams.children.Count == 0 ? 0 : fparams.children[0].children.Count;
+    for(int i=func_args;i-- > 0;)
+    {
+      var fparam = (AST_VarDecl)fparams.children[0].children[i];
+      if(fparam.IsRef())
+      {
+        var val = mem.Get(fparam.Name());
+        val.RefMod(RefOp.USR_INC);
+      }
+    }
     mem.Clear();
   }
 
