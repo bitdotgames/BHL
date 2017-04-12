@@ -1374,6 +1374,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestLambdaUsesArrayImplicit()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float[] a = []
+      foo(func() { a.Add(10) } )
+      return a[0]
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 10);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestLambdaUsesByRefExplicit()
   {
     string bhl = @"
@@ -1400,6 +1427,43 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestLambdaReplacesArrayValueByRef()
+  {
+    string bhl = @"
+
+    func float[] make()
+    {
+      float[] fs = [42]
+      return fs
+    }
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float[] a
+      foo(func() use(ref a) { 
+          a = make() 
+        } 
+      )
+      return a[0]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
 
   [IsTested()]
   public void TestLambdaUseByValue()
@@ -3854,6 +3918,18 @@ public class BHL_Test
     {
       var fn = new FuncBindSymbol("trace", globs.type("void"),
           delegate() { return new TraceNode(trace_stream); } );
+      fn.define(new FuncArgSymbol("str", globs.type("string")));
+
+      globs.define(fn);
+    }
+  }
+
+  //simple console outputting version
+  void BindTrace(GlobalScope globs)
+  {
+    {
+      var fn = new SimpleFuncBindSymbol("trace", globs.type("void"),
+          delegate() { Console.WriteLine(Interpreter.instance.PopValue().str); return BHS.SUCCESS; } );
       fn.define(new FuncArgSymbol("str", globs.type("string")));
 
       globs.define(fn);
@@ -9163,6 +9239,36 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestJsonReturnObject()
+  {
+    string bhl = @"
+
+    func Color make()
+    {
+      return {r: 42}
+    }
+      
+    func float test() 
+    {
+      Color c = make()
+      return c.r
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestJsonEmptyArrCtor()
   {
     string bhl = @"
@@ -9332,6 +9438,37 @@ public class BHL_Test
     func float test() 
     {
       Color[] cs = [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
+      ColorAlpha ca = (ColorAlpha)cs[0]
+      return ca.a + cs[1].g + cs[2].r
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 114);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonArrayReturn()
+  {
+    string bhl = @"
+
+    func Color[] make()
+    {
+      return [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
+    }
+      
+    func float test() 
+    {
+      Color[] cs = make()
       ColorAlpha ca = (ColorAlpha)cs[0]
       return ca.a + cs[1].g + cs[2].r
     }

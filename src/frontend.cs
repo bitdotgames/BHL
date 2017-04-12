@@ -1202,10 +1202,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
     {
       int len = explist.exp().Length;
 
+      var fret_type = func_symb.GetReturnType();
+
       if(len == 1)
       {
         var exp = explist.exp()[0];
+        PushJsonType(fret_type);
         var exp_node = Visit(exp);
+        PopJsonType();
 
         //NOTE: workaround for cases like: `return trace(...)`
         //      where exp has void type, in this case
@@ -1220,7 +1224,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       }
       else
       {
-        var fmret_type = func_symb.GetReturnType() as MultiType;
+        var fmret_type = fret_type as MultiType;
         if(fmret_type == null)
           FireError(Location(ctx) + ": function doesn't support multi return");
 

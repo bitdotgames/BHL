@@ -874,8 +874,9 @@ public class DynValList : IList<DynVal>, DynValRefcounted
   public void Retain()
   {
     if(refs == -1)
-      throw new Exception("Invalid state");
+      throw new Exception("Invalid state " + GetHashCode());
     ++refs;
+    //Console.WriteLine("RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
   }
 
   public void Release(bool can_del = true)
@@ -886,6 +887,7 @@ public class DynValList : IList<DynVal>, DynValRefcounted
       throw new Exception("Double free");
 
     --refs;
+    //Console.WriteLine("RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
     if(can_del)
       TryDel();
   }
@@ -894,6 +896,8 @@ public class DynValList : IList<DynVal>, DynValRefcounted
   {
     if(refs != 0)
       return false;
+
+    //Console.WriteLine("DEL " + GetHashCode());
     
     Del(this);
 

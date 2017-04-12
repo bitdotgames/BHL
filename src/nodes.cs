@@ -1935,6 +1935,24 @@ public class FuncNodeLambda : FuncNodeAST
     base.init();
   }
 
+  public override void deinit()
+  {
+    var ldecl = (AST_LambdaDecl)decl;
+    //NOTE: user content passed by ref must survive memory 
+    //      cleanup
+    for(int i=0;i<ldecl.useparams.Count;++i)
+    {
+      var up = ldecl.useparams[i];
+      if(up.IsRef())
+      {
+        var val = this.mem.Get(up.Name());
+        val.RefMod(RefOp.USR_INC);
+      }
+    }
+
+    base.deinit();
+  }
+
   public override string inspect()
   {
     return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).useparams.Count + "x =";
@@ -1984,6 +2002,22 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
 
   public override void defer()
   {
+    var ldecl = fr.decl as AST_LambdaDecl;
+    if(ldecl != null)
+    {
+      for(int i=0;i<ldecl.useparams.Count;++i)
+      {
+        var up = ldecl.useparams[i];
+        //NOTE: user content passed by ref must survive memory 
+        //      cleanup
+        if(up.IsRef())
+        {
+          var val = fct.mem.Get(up.Name());
+          val.RefMod(RefOp.USR_INC);
+        }
+      }
+    }
+
     fct.Release();
     fct = null;
   }
