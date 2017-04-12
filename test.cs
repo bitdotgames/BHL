@@ -10426,6 +10426,103 @@ func Unit FindUnit(Vec3 pos, float radius) {
     CommonChecks(intp);
   }
 
+  //TODO:
+  //[IsTested()]
+  public void TestReturnMultipleVarAssignObjectAttr()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      string s
+      Color c = {}
+      c.r,s = foo()
+      return c.r,s
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 2).vals;
+
+    AssertEqual(vals[0].num, 100);
+    AssertEqual(vals[1].str, "bar");
+    CommonChecks(intp);
+  }
+
+  //[IsTested()]
+  public void TestReturnMultipleVarAssignArrItem()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      string[] s = [""]
+      float r,s[0] = foo()
+      return r,s[0]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 2).vals;
+
+    AssertEqual(vals[0].num, 100);
+    AssertEqual(vals[1].str, "bar");
+    CommonChecks(intp);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestReturnMultipleVarAssignArrItem2()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      string s
+      Color[] c = [{}]
+      c[0].r,s = foo()
+      return c[0].r,s
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var vals = intp.ExecNode(node, 2).vals;
+
+    AssertEqual(vals[0].num, 100);
+    AssertEqual(vals[1].str, "bar");
+    CommonChecks(intp);
+  }
+
   [IsTested()]
   public void TestReturnMultipleVarAssignNoSuchSymbol()
   {
