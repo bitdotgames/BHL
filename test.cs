@@ -5733,21 +5733,19 @@ public class BHL_Test
     {
       float a = 0
       float b = 0
+      //float[] fs = []
       StartScriptInMgr(
-        script: func() use(ref b) { 
+        script: func() use(ref b/*, ref fs*/) { 
           a = a + 1
           b = b + 1
+          //fs.Add(b)
           trace((string) a + "","" + (string) b + "";"") 
+          //trace((string) a + "","" + (string) b + "","" + (string) fs.Count + "";"") 
           RUNNING()
         },
         num : 3,
         now : false
       )
-      //NOTE: since test func 'owns' b variable we need to wait 
-      //      for completion of script mgr execution 
-      while(b != 3) {
-        RUNNING()
-      }
     }
     ";
 
@@ -5762,21 +5760,22 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
-    AssertEqual(status, BHS.RUNNING);
+    AssertEqual(status, BHS.SUCCESS);
 
     ScriptMgr.instance.run();
 
     //NodeDump(node);
 
     var str = GetString(trace_stream);
+    //AssertEqual("1,1,1;1,2,2;1,3,3;", str);
     AssertEqual("1,1;1,2;1,3;", str);
 
     ScriptMgr.instance.stop();
 
     AssertTrue(!ScriptMgr.instance.busy());
 
-    status = node.run();
-    AssertEqual(status, BHS.SUCCESS);
+    //status = node.run();
+    //AssertEqual(status, BHS.SUCCESS);
     CommonChecks(intp);
   }
 

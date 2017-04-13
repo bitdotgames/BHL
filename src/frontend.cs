@@ -765,7 +765,10 @@ public class AST_Builder : bhlBaseVisitor<AST>
       FireError(Location(ctx) + ": [..] is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
-    PushJsonType(arr_type.original.Get());
+    var orig_type = arr_type.original.TryGet();
+    if(orig_type == null)
+      FireError(Location(ctx) + ": Type '" + arr_type.original.name + "' not found");
+    PushJsonType(orig_type);
 
     var node = AST_Util.New_JsonArr(arr_type);
 

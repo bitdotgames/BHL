@@ -410,7 +410,9 @@ public class MemoryScope
       while(enm.MoveNext())
       {
         var val = enm.Current.Value;
-        if(!val.is_ref)
+        if(val.is_ref)
+          val.dv.RefMod(RefOp.DEC);
+        else
           val.dv.RefMod(RefOp.USR_DEC | RefOp.DEC);
       }
     }
@@ -440,7 +442,9 @@ public class MemoryScope
       val.dv = dv; 
       val.is_ref = is_ref;
       vars[k] = val;
-      if(!is_ref)
+      if(is_ref)
+        dv.RefMod(RefOp.INC);
+      else
         dv.RefMod(RefOp.USR_INC | RefOp.INC);
     }
   }

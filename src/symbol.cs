@@ -68,6 +68,18 @@ public class TypeRef
       throw new Exception("Bad type: '" + name + "'");
     return type;
   }
+
+  public Type TryGet()
+  {
+    if(type != null)
+      return type;
+
+    if(name == null)
+      return null;
+
+    type = (bhl.Type)bindings.resolve(name);
+    return type;
+  }
 }
 
 public class WrappedNode
