@@ -394,7 +394,13 @@ public interface DynValRefcounted
 
 public class MemoryScope
 {
-  public Dictionary<uint, DynVal> vars = new Dictionary<uint, DynVal>();
+  public struct Value
+  {
+    public bool is_ref;
+    public DynVal dv;
+  }
+
+  public Dictionary<uint, Value> vars = new Dictionary<uint, Value>();
 
   public void Clear()
   {
@@ -404,7 +410,8 @@ public class MemoryScope
       while(enm.MoveNext())
       {
         var val = enm.Current.Value;
-        val.RefMod(RefOp.USR_DEC | RefOp.DEC);
+        if(!val.is_ref)
+          val.dv.RefMod(RefOp.USR_DEC | RefOp.DEC);
       }
     }
     finally
@@ -415,43 +422,40 @@ public class MemoryScope
     vars.Clear();
   }
 
-  public void Set(HashedName key, DynVal val)
+  public void Set(HashedName key, DynVal dv, bool is_ref = false)
   {
     uint k = (uint)key.n; 
-    DynVal prev = null;
+    Value prev;
     if(vars.TryGetValue(k, out prev))
     {
-      val.RefMod(RefOp.USR_INC);
-      prev.RefMod(RefOp.USR_DEC);
-      prev.ValueCopyFrom(val);
+      dv.RefMod(RefOp.USR_INC);
+      prev.dv.RefMod(RefOp.USR_DEC);
+      prev.dv.ValueCopyFrom(dv);
       //Console.WriteLine("VAL SET2 " + prev.GetHashCode());
     }
     else
     {
       //Console.WriteLine("VAL SET1 " + val.GetHashCode());
+      var val = new Value();
+      val.dv = dv; 
+      val.is_ref = is_ref;
       vars[k] = val;
-      val.RefMod(RefOp.USR_INC | RefOp.INC);
+      if(!is_ref)
+        dv.RefMod(RefOp.USR_INC | RefOp.INC);
     }
   }
 
-  public bool TryGet(HashedName key, out DynVal val)
+  public bool TryGet(HashedName key, out DynVal dv)
   {
-    return vars.TryGetValue((uint)key.n, out val);
+    Value val;
+    bool res = vars.TryGetValue((uint)key.n, out val);
+    dv = val.dv;
+    return res;
   }
 
   public DynVal Get(HashedName key)
   {
-    return vars[(uint)key.n];
-  }
-
-  public void Unset(HashedName key)
-  {
-    DynVal val;
-    if(vars.TryGetValue((uint)key.n, out val))
-    {
-      val.RefMod(RefOp.USR_DEC | RefOp.DEC);
-      vars.Remove((uint)key.n);
-    }
+    return vars[(uint)key.n].dv;
   }
 
   public void CopyFrom(MemoryScope o)
@@ -463,7 +467,7 @@ public class MemoryScope
       {
         var key = enm.Current.Key;
         var val = enm.Current.Value;
-        Set(key, val);
+        Set(key, val.dv, val.is_ref);
       }
     }
     finally
@@ -585,6 +589,8 @@ public class FuncCtx : DynValRefcounted
   public int refs;
 
   public FuncRef fr;
+  //NOTE: this memory scope used for 'use' variables, it's then
+  //      copied to concrete memory scope of the function
   public MemoryScope mem = new MemoryScope();
   public FuncNode fnode;
 
@@ -623,7 +629,8 @@ public class FuncCtx : DynValRefcounted
       {
         var up = ldecl.useparams[i];
         var val = mem.Get(up.Name());
-        dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        bool is_ref = up.IsRef(); 
+        dup.mem.Set(up.Name(), is_ref ? val : val.ValueClone(), is_ref);
       }
     }
 
@@ -874,7 +881,7 @@ public class DynValList : IList<DynVal>, DynValRefcounted
   public void Retain()
   {
     if(refs == -1)
-      throw new Exception("Invalid state " + GetHashCode());
+      throw new Exception("Invalid state");
     ++refs;
     //Console.WriteLine("RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
   }
@@ -902,6 +909,13 @@ public class DynValList : IList<DynVal>, DynValRefcounted
     Del(this);
 
     return true;
+  }
+
+  public void CopyFrom(DynValList lst)
+  {
+    Clear();
+    for(int i=0;i<lst.Count;++i)
+      Add(lst[i]);
   }
 
   ///////////////////////////////////////
@@ -1310,10 +1324,16 @@ public class Interpreter : AST_Visitor
     return v;
   }
 
+  public void PushRef(DynVal v)
+  {
+    v.RefMod(RefOp.INC);
+    stack.Push(v);
+  }
+
   public DynVal PopRef()
   {
     var v = stack.PopFast();
-    v.RefMod(RefOp.DEC_NO_DEL);
+    v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
     return v;
   }
 

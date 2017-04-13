@@ -1462,27 +1462,84 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestFuncReplacesArrayValueByRef2()
   {
     string bhl = @"
 
-    func float[] make()
-    {
-      float[] fs = [42]
-      return fs
-    }
-
     func foo(ref float[] a) 
     {
-      a = make()
+      a = [42]
     }
       
     func float test() 
     {
       float[] a = []
       foo(ref a)
+      return a[0]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncReplacesArrayValueByRef3()
+  {
+    string bhl = @"
+
+    func foo(ref float[] a) 
+    {
+      a = [42]
+      float[] b = a
+    }
+      
+    func float test() 
+    {
+      float[] a = []
+      foo(ref a)
+      return a[0]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaReplacesArrayValueByRef()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float[] a
+      foo(func() use(ref a) { 
+          a = [42]
+        } 
+      )
       return a[0]
     }
     ";
@@ -1499,15 +1556,9 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestLambdaReplacesArrayValueByRef()
+  public void TestLambdaReplacesArrayValueByRef2()
   {
     string bhl = @"
-
-    func float[] make()
-    {
-      float[] fs = [42]
-      return fs
-    }
 
     func foo(void^() fn) 
     {
@@ -1516,9 +1567,9 @@ public class BHL_Test
       
     func float test() 
     {
-      float[] a
+      float[] a = []
       foo(func() use(ref a) { 
-          a = make() 
+          a = [42]
         } 
       )
       return a[0]
@@ -3996,10 +4047,10 @@ public class BHL_Test
   }
 
   //simple console outputting version
-  void BindTrace(GlobalScope globs)
+  void BindLog(GlobalScope globs)
   {
     {
-      var fn = new SimpleFuncBindSymbol("trace", globs.type("void"),
+      var fn = new SimpleFuncBindSymbol("log", globs.type("void"),
           delegate() { Console.WriteLine(Interpreter.instance.PopValue().str); return BHS.SUCCESS; } );
       fn.define(new FuncArgSymbol("str", globs.type("string")));
 
@@ -5560,12 +5611,18 @@ public class BHL_Test
         num : 3,
         now : false
       )
+      //NOTE: since test func 'owns' b variable we need to wait 
+      //      for completion of script mgr execution 
+      while(b != 3) {
+        RUNNING()
+      }
     }
     ";
 
     var globs = SymbolTable.CreateBuiltins();
     var trace_stream = new MemoryStream();
 
+    BindLog(globs);
     BindTrace(globs, trace_stream);
     BindStartScriptInMgr(globs);
 
@@ -5573,7 +5630,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
-    AssertEqual(status, BHS.SUCCESS);
+    AssertEqual(status, BHS.RUNNING);
 
     ScriptMgr.instance.run();
 
@@ -5585,6 +5642,9 @@ public class BHL_Test
     ScriptMgr.instance.stop();
 
     AssertTrue(!ScriptMgr.instance.busy());
+
+    status = node.run();
+    AssertEqual(status, BHS.SUCCESS);
     CommonChecks(intp);
   }
 

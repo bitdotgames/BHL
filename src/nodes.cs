@@ -1844,9 +1844,10 @@ public class FuncNodeAST : FuncNode
       var fparam = (AST_VarDecl)fparams.children[0].children[i];
       var fparam_name = fparam.Name();
 
-      var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
+      bool is_ref = fparam.IsRef();
+      var fparam_val = is_ref ? interp.PopRef() : interp.PopValue().ValueClone();
       //Util.Debug(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
-      mem.Set(fparam_name, fparam_val);
+      mem.Set(fparam_name, fparam_val, is_ref);
 
       fparam_val.RefMod(RefOp.TRY_DEL);
     }
@@ -1865,19 +1866,6 @@ public class FuncNodeAST : FuncNode
     interp.module_stack.PopFast();
     interp.PopScope();
 
-    //NOTE: user content passed by ref must survive memory 
-    //      cleanup
-    var fparams = decl.fparams();
-    var func_args = fparams.children.Count == 0 ? 0 : fparams.children[0].children.Count;
-    for(int i=func_args;i-- > 0;)
-    {
-      var fparam = (AST_VarDecl)fparams.children[0].children[i];
-      if(fparam.IsRef())
-      {
-        var val = mem.Get(fparam.Name());
-        val.RefMod(RefOp.USR_INC);
-      }
-    }
     mem.Clear();
   }
 
@@ -1948,24 +1936,6 @@ public class FuncNodeLambda : FuncNodeAST
     base.init();
   }
 
-  public override void deinit()
-  {
-    var ldecl = (AST_LambdaDecl)decl;
-    //NOTE: user content passed by ref must survive memory 
-    //      cleanup
-    for(int i=0;i<ldecl.useparams.Count;++i)
-    {
-      var up = ldecl.useparams[i];
-      if(up.IsRef())
-      {
-        var val = this.mem.Get(up.Name());
-        val.RefMod(RefOp.USR_INC);
-      }
-    }
-
-    base.deinit();
-  }
-
   public override string inspect()
   {
     return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).useparams.Count + "x =";
@@ -2004,7 +1974,10 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
       {
         var up = ldecl.useparams[i];
         var val = interp.GetScopeValue(up.Name());
-        fct.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        if(up.IsRef())
+          fct.mem.Set(up.Name(), val, true/*is ref*/);
+        else
+          fct.mem.Set(up.Name(), val.ValueClone());
       }
     }
 
@@ -2015,22 +1988,6 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
 
   public override void defer()
   {
-    var ldecl = fr.decl as AST_LambdaDecl;
-    if(ldecl != null)
-    {
-      for(int i=0;i<ldecl.useparams.Count;++i)
-      {
-        var up = ldecl.useparams[i];
-        //NOTE: user content passed by ref must survive memory 
-        //      cleanup
-        if(up.IsRef())
-        {
-          var val = fct.mem.Get(up.Name());
-          val.RefMod(RefOp.USR_INC);
-        }
-      }
-    }
-
     fct.Release();
     fct = null;
   }
