@@ -1588,6 +1588,138 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncReplacesFuncPtrByRef()
+  {
+    string bhl = @"
+
+    func float bar() 
+    { 
+      return 42
+    } 
+
+    func foo(ref float^() a) 
+    {
+      a = bar
+    }
+      
+    func float test() 
+    {
+      float^() a
+      foo(ref a)
+      return a()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncReplacesFuncPtrByRef2()
+  {
+    string bhl = @"
+
+    func float bar() 
+    { 
+      return 42
+    } 
+
+    func foo(ref float^() a) 
+    {
+      a = bar
+    }
+      
+    func float test() 
+    {
+      float^() a = func float() { return 45 } 
+      foo(ref a)
+      return a()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaReplacesFuncPtrByRef()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float^() a
+      foo(func() use(ref a) { 
+          a = func float () { return 42 }
+        } 
+      )
+      return a()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestLambdaReplacesFuncPtrByRef2()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float^() a = func float() { return 45 } 
+      foo(func() use(ref a) { 
+          a = func float () { return 42 }
+        } 
+      )
+      return a()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestLambdaUseByValue()
   {
     string bhl = @"
