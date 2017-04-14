@@ -1524,6 +1524,37 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassArrayToFunctionByValue()
+  {
+    string bhl = @"
+
+    func foo(int[] a)
+    {
+      a = [100]
+    }
+      
+    func int test() 
+    {
+      int[] a = [1, 2]
+
+      foo(a)
+
+      return a[0]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 1);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestLambdaReplacesArrayValueByRef()
   {
     string bhl = @"
@@ -5733,14 +5764,13 @@ public class BHL_Test
     {
       float a = 0
       float b = 0
-      //float[] fs = []
+      float[] fs = []
       StartScriptInMgr(
-        script: func() use(ref b/*, ref fs*/) { 
+        script: func() use(ref b, ref fs) { 
           a = a + 1
           b = b + 1
-          //fs.Add(b)
-          trace((string) a + "","" + (string) b + "";"") 
-          //trace((string) a + "","" + (string) b + "","" + (string) fs.Count + "";"") 
+          fs.Add(b)
+          trace((string) a + "","" + (string) b + "","" + (string) fs.Count + "";"") 
           RUNNING()
         },
         num : 3,
@@ -5767,15 +5797,12 @@ public class BHL_Test
     //NodeDump(node);
 
     var str = GetString(trace_stream);
-    //AssertEqual("1,1,1;1,2,2;1,3,3;", str);
-    AssertEqual("1,1;1,2;1,3;", str);
+    AssertEqual("1,1,1;1,2,2;1,3,3;", str);
 
     ScriptMgr.instance.stop();
 
     AssertTrue(!ScriptMgr.instance.busy());
 
-    //status = node.run();
-    //AssertEqual(status, BHS.SUCCESS);
     CommonChecks(intp);
   }
 

@@ -394,13 +394,7 @@ public interface DynValRefcounted
 
 public class MemoryScope
 {
-  public struct Value
-  {
-    public bool is_ref;
-    public DynVal dv;
-  }
-
-  public Dictionary<uint, Value> vars = new Dictionary<uint, Value>();
+  public Dictionary<uint, DynVal> vars = new Dictionary<uint, DynVal>();
 
   public void Clear()
   {
@@ -410,10 +404,7 @@ public class MemoryScope
       while(enm.MoveNext())
       {
         var val = enm.Current.Value;
-        if(val.is_ref)
-          val.dv.RefMod(RefOp.DEC);
-        else
-          val.dv.RefMod(RefOp.USR_DEC | RefOp.DEC);
+        val.RefMod(RefOp.USR_DEC | RefOp.DEC);
       }
     }
     finally
@@ -424,42 +415,36 @@ public class MemoryScope
     vars.Clear();
   }
 
-  public void Set(HashedName key, DynVal dv, bool is_ref = false)
+  public void Set(HashedName key, DynVal val)
   {
     uint k = (uint)key.n; 
-    Value prev;
+    DynVal prev;
     if(vars.TryGetValue(k, out prev))
     {
-      dv.RefMod(RefOp.USR_INC);
-      prev.dv.RefMod(RefOp.USR_DEC);
-      prev.dv.ValueCopyFrom(dv);
+      for(int i=0;i<prev._refs;++i)
+      {
+        val.RefMod(RefOp.USR_INC);
+        prev.RefMod(RefOp.USR_DEC);
+      }
+      prev.ValueCopyFrom(val);
       //Console.WriteLine("VAL SET2 " + prev.GetHashCode());
     }
     else
     {
       //Console.WriteLine("VAL SET1 " + val.GetHashCode());
-      var val = new Value();
-      val.dv = dv; 
-      val.is_ref = is_ref;
       vars[k] = val;
-      if(is_ref)
-        dv.RefMod(RefOp.INC);
-      else
-        dv.RefMod(RefOp.USR_INC | RefOp.INC);
+      val.RefMod(RefOp.USR_INC | RefOp.INC);
     }
   }
 
-  public bool TryGet(HashedName key, out DynVal dv)
+  public bool TryGet(HashedName key, out DynVal val)
   {
-    Value val;
-    bool res = vars.TryGetValue((uint)key.n, out val);
-    dv = val.dv;
-    return res;
+    return vars.TryGetValue((uint)key.n, out val);
   }
 
   public DynVal Get(HashedName key)
   {
-    return vars[(uint)key.n].dv;
+    return vars[(uint)key.n];
   }
 
   public void CopyFrom(MemoryScope o)
@@ -471,7 +456,7 @@ public class MemoryScope
       {
         var key = enm.Current.Key;
         var val = enm.Current.Value;
-        Set(key, val.dv, val.is_ref);
+        Set(key, val);
       }
     }
     finally
@@ -633,8 +618,7 @@ public class FuncCtx : DynValRefcounted
       {
         var up = ldecl.useparams[i];
         var val = mem.Get(up.Name());
-        bool is_ref = up.IsRef(); 
-        dup.mem.Set(up.Name(), is_ref ? val : val.ValueClone(), is_ref);
+        dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
       }
     }
 
