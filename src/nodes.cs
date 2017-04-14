@@ -417,8 +417,6 @@ public class FuncCallNode : SequentialNode
   {
     var interp = Interpreter.instance;
 
-    interp.curr_line = node.line_num;
-    
     interp.func_args_stack.Push(node.cargs_num);
 
     //var status = base.execute();
@@ -1860,9 +1858,9 @@ public class FuncNodeAST : FuncNode
 
     //NOTE: let defer have access to the memory
     interp.PushScope(mem);
-    interp.module_stack.Push(decl.nname2);
+    interp.call_stack.Push(decl.nname());
     base.deinit();
-    interp.module_stack.PopFast();
+    interp.call_stack.PopFast();
     interp.PopScope();
 
     mem.Clear();
@@ -1873,7 +1871,7 @@ public class FuncNodeAST : FuncNode
     var interp = Interpreter.instance;
 
     interp.PushScope(mem);
-    interp.module_stack.Push(decl.nname2);
+    interp.call_stack.Push(decl.nname());
 
     BHS status;
     try
@@ -1911,7 +1909,7 @@ public class FuncNodeAST : FuncNode
     }
 
     interp.PopScope();
-    interp.module_stack.PopFast();
+    interp.call_stack.PopFast();
 
     return status;
   }

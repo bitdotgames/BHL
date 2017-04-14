@@ -93,9 +93,8 @@ struct AST_Call extends AST
   nname1      : uint32
   nname2      : uint32 #NOTE: due to msgpack 64 bit error on Windows we have to split nname
   name        : string @default:"" #for debug
-  cargs_num   : int32  #NOTE: singed because it's used in for loops 
+  cargs_num   : int32  #NOTE: singed for convenience in loops
   scope_ntype : uint32
-  line_num    : int32
 end
 
 struct AST_Return extends AST

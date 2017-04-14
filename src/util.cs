@@ -599,7 +599,6 @@ static public class AST_Util
   {
     var n = new AST_Call();
     n.type = type;
-    n.line_num = line_num;
     n.nname1 = (uint)(nname & 0xFFFFFFFF);
     n.nname2 = (uint)(nname >> 31);
     if(Util.DEBUG)

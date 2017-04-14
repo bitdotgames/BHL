@@ -1038,8 +1038,7 @@ public class Interpreter : AST_Visitor
 
   FastStack<DynVal> stack = new FastStack<DynVal>(256);
 
-  public int curr_line;
-  public FastStack<uint> module_stack = new FastStack<uint>(128);
+  public FastStack<ulong> call_stack = new FastStack<ulong>(128);
 
   public FastStack<int> func_args_stack = new FastStack<int>(128);
 
@@ -1055,32 +1054,10 @@ public class Interpreter : AST_Visitor
     lmb_decls.Clear();
     func_args_stack.Clear();
     stack.Clear();
-    curr_line = 0;
-    module_stack.Clear();
+    call_stack.Clear();
 
     this.bindings = bindings;
     this.module_loader = module_loader;
-  }
-
-  //NOTE: At the moment we can report line number approximately. Strictly speaking
-  //      we only can report the line number of the called function where error happened
-  public void GetErrorLine(out uint mod_id, out string mod_name, out int line_num)
-  {
-    mod_name = "?";
-    mod_id = 0;
-    line_num = -1;
-
-    if(module_stack.Count > 1)
-    {
-      mod_id = module_stack[module_stack.Count - 2];
-      line_num = curr_line;
-    }
-    //NOTE: special case when there is no real call line
-    else if(module_stack.Count == 1)
-    {
-      mod_id = module_stack[0];
-    }
-    loaded_modules.TryGetValue(mod_id, out mod_name);
   }
 
   public struct Result
