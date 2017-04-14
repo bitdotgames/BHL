@@ -1168,7 +1168,7 @@ public class Interpreter : AST_Visitor
       return true;
     }
 
-    var func_decl = FetchFuncDecl(name.n);
+    var func_decl = FindFuncDecl(name.n);
     if(func_decl != null)
     {
       fr.decl = func_decl;
@@ -1178,7 +1178,7 @@ public class Interpreter : AST_Visitor
     return false;
   }
 
-  AST_FuncDecl FetchFuncDecl(ulong name)
+  public AST_FuncDecl FindFuncDecl(ulong name)
   {
     AST_FuncDecl func_decl;
     if(func_decls.TryGetValue(name, out func_decl))
@@ -1554,7 +1554,7 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.FUNC2VAR)
     {
-      var func_decl = FetchFuncDecl(node.nname());
+      var func_decl = FindFuncDecl(node.nname());
       if(func_decl != null)
       {
         curr_node.addChild(new PushFuncCtxNode(func_decl, null));
