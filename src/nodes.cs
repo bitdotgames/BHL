@@ -1858,7 +1858,7 @@ public class FuncNodeAST : FuncNode
 
     //NOTE: let defer have access to the memory
     interp.PushScope(mem);
-    interp.call_stack.Push(decl.nname());
+    interp.call_stack.Push(decl);
     base.deinit();
     interp.call_stack.PopFast();
     interp.PopScope();
@@ -1871,7 +1871,7 @@ public class FuncNodeAST : FuncNode
     var interp = Interpreter.instance;
 
     interp.PushScope(mem);
-    interp.call_stack.Push(decl.nname());
+    interp.call_stack.Push(decl);
 
     BHS status;
     try

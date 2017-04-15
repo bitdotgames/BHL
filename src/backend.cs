@@ -1038,7 +1038,7 @@ public class Interpreter : AST_Visitor
 
   FastStack<DynVal> stack = new FastStack<DynVal>(256);
 
-  public FastStack<ulong> call_stack = new FastStack<ulong>(128);
+  public FastStack<AST_FuncDecl> call_stack = new FastStack<AST_FuncDecl>(128);
 
   public FastStack<int> func_args_stack = new FastStack<int>(128);
 
