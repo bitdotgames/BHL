@@ -153,7 +153,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl);
       },
-      "Symbol not resolved"
+      "symbol not resolved"
     );
   }
 
@@ -787,7 +787,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl);
       },
-      "Missing argument 'k'"
+      "missing argument 'k'"
     );
   }
 
@@ -811,7 +811,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl);
       },
-      "Missing argument 'radius'"
+      "missing argument 'radius'"
     );
   }
 
@@ -970,7 +970,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl);
       },
-      "f: No such named argument"
+      "f: no such named argument"
     );
   }
 
@@ -1119,7 +1119,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl);
       },
-      "Already defined symbol 'a'"
+      "already defined symbol 'a'"
     );
   }
 
@@ -1342,7 +1342,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl);
       },
-      "ref is not allowed to have a default value"
+      "'ref' is not allowed to have a default value"
     );
   }
 
@@ -1902,7 +1902,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl);
       },
-      "Symbol 'a' not defined in parent scope"
+      "symbol 'a' not defined in parent scope"
     );
   }
 
@@ -1927,7 +1927,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl);
       },
-      "Already defined symbol 'a'"
+      "already defined symbol 'a'"
     );
   }
 
@@ -1952,7 +1952,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl);
       },
-      "Already defined symbol 'a'"
+      "already defined symbol 'a'"
     );
   }
 
@@ -3611,6 +3611,36 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestStringArrayAssign()
+  {
+    string bhl = @"
+      
+    func string[] test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""foo"")
+      arr[0] = ""bar""
+      return arr
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    //NodeDump(node);
+
+    var res = intp.ExecNode(node).val;
+
+    var lst = res.obj as DynValList;
+    AssertEqual(lst.Count, 1);
+    AssertEqual(lst[0].str, "bar");
+    lst.TryDel();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestRemoveFromArray()
   {
     string bhl = @"
@@ -4088,7 +4118,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl, globs);
       },
-      "Symbol is not a function"
+      "symbol is not a function"
     );
   }
 
@@ -4962,7 +4992,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl, globs);
       },
-      "Type 'bool^(int)' doesn't support member access via '.'"
+      "type 'bool^(int)' doesn't support member access via '.'"
     );
   }
 
@@ -4983,7 +5013,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl, globs);
       },
-      "Accessing not an array type 'bool^(int)'"
+      "accessing not an array type 'bool^(int)'"
     );
   }
 
@@ -5228,7 +5258,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl, globs);
       },
-      "Missing argument of type 'int'"
+      "missing argument of type 'int'"
     );
   }
 
@@ -5251,7 +5281,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl, globs);
       },
-      "Missing argument of type 'float'"
+      "missing argument of type 'float'"
     );
   }
 
@@ -5274,7 +5304,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl, globs);
       },
-      "Too many arguments"
+      "too many arguments"
     );
   }
 
@@ -6097,7 +6127,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl, globs);
       },
-      "Already defined symbol 'a'"
+      "already defined symbol 'a'"
     );
   }
 
@@ -9124,7 +9154,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl, globs);
       },
-      "Not within loop construct"
+      "not within loop construct"
     );
   }
 
@@ -9216,7 +9246,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl, globs);
       },
-      "Already defined symbol 'i'"
+      "already defined symbol 'i'"
     );
   }
 
@@ -9381,7 +9411,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl, globs);
       },
-      @"No such attribute 'b' in 'class Color"
+      @"no such attribute 'b' in 'class Color"
     );
   }
 
@@ -9449,7 +9479,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl, globs);
       },
-      @"Type 'Foo' not found"
+      @"type 'Foo' not found"
     );
   }
 
@@ -10852,8 +10882,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     CommonChecks(intp);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestReturnMultipleVarAssignObjectAttr()
   {
     string bhl = @"
@@ -10885,7 +10914,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     CommonChecks(intp);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestReturnMultipleVarAssignArrItem()
   {
     string bhl = @"
@@ -10897,7 +10926,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       
     func float,string test() 
     {
-      string[] s = [""]
+      string[] s = [""""]
       float r,s[0] = foo()
       return r,s[0]
     }
@@ -10916,8 +10945,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     CommonChecks(intp);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestReturnMultipleVarAssignArrItem2()
   {
     string bhl = @"
@@ -10970,7 +10998,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       delegate() { 
         Interpret("", bhl);
       },
-      "s : Symbol not resolved"
+      "s : symbol not resolved"
     );
   }
 
@@ -11063,7 +11091,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       delegate() { 
         Interpret("", bhl);
       },
-      "s:<float>, @(10,14) =foo():<float,string> have incompatible types"
+      "multi return size doesn't match destination"
     );
   }
 
@@ -11087,7 +11115,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       delegate() { 
         Interpret("", bhl);
       },
-      "foo():<float,string>: multi return size doesn't match destination"
+      "multi return size doesn't match destination"
     );
   }
 
@@ -11111,7 +11139,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       delegate() { 
         Interpret("", bhl);
       },
-      "Non consumed value"
+      "foo() : non consumed value"
     );
   }
 

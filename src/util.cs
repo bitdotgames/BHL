@@ -667,10 +667,9 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_VarDecl New_VarDecl(string type, string name, bool is_ref)
+  static public AST_VarDecl New_VarDecl(string name, bool is_ref)
   {
     var n = new AST_VarDecl();
-    n.type = type;
     n.nname = Hash.CRC28(name) | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
       n.name = name;
@@ -686,14 +685,6 @@ static public class AST_Util
   static public bool IsRef(this AST_VarDecl n)
   {
     return (n.nname & (1u << 29)) != 0; 
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_Assign New_Assign()
-  {
-    var n = new AST_Assign();
-    return n;
   }
 
   ////////////////////////////////////////////////////////
@@ -978,16 +969,9 @@ public class AST_Dumper : AST_Visitor
     Console.Write(")");
   }
 
-  public override void DoVisit(AST_Assign node)
-  {
-    Console.Write("(ASSIGN ");
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
   public override void DoVisit(AST_VarDecl node)
   {
-    Console.Write("(VARDECL " + node.type + " " + node.name + " " + node.nname);
+    Console.Write("(VARDECL " + node.name + " " + node.nname);
     VisitChildren(node);
     Console.Write(")");
   }

@@ -237,7 +237,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var res = Visit(exp);
     var eval_type = Wrap(exp).eval_type;
     if(eval_type != null && eval_type != SymbolTable._void)
-      FireError(Location(ctx) + " : Non consumed value");
+      FireError(Location(ctx) + " : non consumed value");
     return res;
   }
 
@@ -246,7 +246,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     Type curr_type = null;
 
     int line = ctx.Start.Line;
-    var node = ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type, line);
+    var node = ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type, line, false);
 
     Wrap(ctx).eval_type = curr_type;
 
@@ -265,7 +265,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
       top_node = new_node;
   }
 
-  AST ProcChainedCall(ITerminalNode root_name, bhlParser.ChainExpContext[] chain, ref Type curr_type, int line)
+  AST ProcChainedCall(
+    ITerminalNode root_name, 
+    bhlParser.ChainExpContext[] chain, 
+    ref Type curr_type, 
+    int line, 
+    bool write
+   )
   {
     var orig_scope = curr_scope;
 
@@ -280,7 +286,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       var root_str_name = root_name.GetText();
       var name_symb = curr_scope.resolve(root_str_name);
       if(name_symb == null)
-        FireError(Location(root_name) + " : Symbol not resolved");
+        FireError(Location(root_name) + " : symbol not resolved");
       curr_type = name_symb.type.Get();
     }
 
@@ -292,18 +298,19 @@ public class AST_Builder : bhlBaseVisitor<AST>
 
         var cargs = ch.callArgs();
         var ma = ch.memberAccess();
-        var arra = ch.arrAccess();
+        var arracc = ch.arrAccess();
+        bool is_last = c == chain.Length-1;
 
         if(cargs != null)
         {
-          var new_node = ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line);
+          var new_node = ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, false);
           ChainCallNode(new_node, ref curr_node, ref top_node);
           curr_class = null;
           curr_name = null;
         }
-        else if(arra != null)
+        else if(arracc != null)
         {
-          var new_node = ProcCallChainItem(curr_name, null, arra, curr_class, ref curr_type, line);
+          var new_node = ProcCallChainItem(curr_name, null, arracc, curr_class, ref curr_type, line, write && is_last);
           ChainCallNode(new_node, ref curr_node, ref top_node);
           curr_class = null;
           curr_name = null;
@@ -312,13 +319,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
         {
           if(curr_name != null)
           {
-            var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line);
+            var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, false);
             ChainCallNode(new_node, ref curr_node, ref top_node);
           }
 
           curr_class = curr_type as ClassSymbol; 
           if(curr_class == null)
-            FireError(Location(ma) + " : Type '" + curr_type.GetName() + "' doesn't support member access via '.' ");
+            FireError(Location(ma) + " : type '" + curr_type.GetName() + "' doesn't support member access via '.' ");
 
           curr_name = ma.NAME();
         }
@@ -328,7 +335,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     //checking the leftover of the call chain
     if(curr_name != null)
     {
-      var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line);
+      var new_node = ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, write);
       ChainCallNode(new_node, ref curr_node, ref top_node);
     }
 
@@ -337,7 +344,15 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return top_node;
   }
 
-  AST_Call ProcCallChainItem(ITerminalNode name, bhlParser.CallArgsContext cargs, bhlParser.ArrAccessContext arra, ClassSymbol class_scope, ref Type type, int line)
+  AST_Call ProcCallChainItem(
+    ITerminalNode name, 
+    bhlParser.CallArgsContext cargs, 
+    bhlParser.ArrAccessContext arracc, 
+    ClassSymbol class_scope, 
+    ref Type type, 
+    int line, 
+    bool write
+    )
   {
     AST_Call node = null;
 
@@ -346,7 +361,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       string str_name = name.GetText();
       var name_symb = class_scope == null ? curr_scope.resolve(str_name) : class_scope.resolve(str_name);
       if(name_symb == null)
-        FireError(Location(name) + " : Symbol not resolved");
+        FireError(Location(name) + " : symbol not resolved");
 
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
@@ -355,7 +370,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       if(cargs != null)
       {
         if(name_symb is FieldSymbol)
-          FireError(Location(name) + " : Symbol is not a function");
+          FireError(Location(name) + " : symbol is not a function");
 
         //func ptr
         if(var_symb != null && var_symb.type.Get() is FuncType)
@@ -383,7 +398,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
           }
           else
           {
-            FireError(Location(name) +  " : Symbol is not not a function");
+            FireError(Location(name) +  " : symbol is not not a function");
           }
         }
       }
@@ -392,14 +407,18 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         if(var_symb != null)
         {
-          node = AST_Util.New_Call(class_scope != null ? EnumCall.MVAR : EnumCall.VAR, line, str_name, Hash.CRC28(str_name), class_scope);
+          node = AST_Util.New_Call(class_scope != null ? 
+            (write && arracc == null ? EnumCall.MVARW : EnumCall.MVAR) : 
+            (write && arracc == null ? EnumCall.VARW : EnumCall.VAR), 
+            line, str_name, Hash.CRC28(str_name), class_scope
+          );
           type = var_symb.type.Get();
         }
         else if(func_symb != null)
         {
           var call_func_symb = mscope.resolve(str_name) as FuncSymbol;
           if(call_func_symb == null)
-            FireError(Location(name) +  " : No such function found");
+            FireError(Location(name) +  " : no such function found");
           ulong func_call_id = call_func_symb.GetCallId();
 
           node = AST_Util.New_Call(EnumCall.FUNC2VAR, line, str_name, func_call_id);
@@ -407,7 +426,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         }
         else
         {
-          FireError(Location(name) +  " : Symbol usage is not valid");
+          FireError(Location(name) +  " : symbol usage is not valid");
         }
       }
     }
@@ -422,8 +441,8 @@ public class AST_Builder : bhlBaseVisitor<AST>
       type = ftype.ret_type.Get();
     }
 
-    if(arra != null)
-      node = AddArrIndex(node, arra, ref type, line);
+    if(arracc != null)
+      node = AddArrIndex(node, arracc, ref type, line, write);
 
     if(node == null)
       throw new Exception("Node not assigned");
@@ -431,23 +450,31 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return node;
   }
 
-  AST_Call AddArrIndex(AST_Call root, bhlParser.ArrAccessContext arra, ref Type type, int line)
+  AST_Call AddArrIndex(AST_Call root, bhlParser.ArrAccessContext arracc, ref Type type, int line, bool write)
   {
     var arr_type = type as ArrayTypeSymbol;
     if(arr_type == null)
-      FireError(Location(arra) +  " : Accessing not an array type '" + type.GetName() + "'");
+      FireError(Location(arracc) +  " : accessing not an array type '" + type.GetName() + "'");
 
-    var node = AST_Util.New_Call(EnumCall.ARR_IDX, line);
+    var node = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
     node.scope_ntype = arr_type.GetNtype();
 
-    var arr_exp = arra.exp();
+    var arr_exp = arracc.exp();
     node.AddChild(Visit(arr_exp));
 
     if(root != null)
-      root.AddChild(node);
+    {
+      if(write)
+      {
+        node.AddChild(root);
+        root = node;
+      }
+      else
+        root.AddChild(node);
+    }
 
     if(Wrap(arr_exp).eval_type != SymbolTable._int)
-      FireError(Location(arr_exp) +  " : Array index expression is not of type int");
+      FireError(Location(arr_exp) +  " : array index expression is not of type int");
 
     type = arr_type.original.Get();
 
@@ -488,14 +515,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
       {
         idx = func_args.FindStringKeyIndex(ca_name.GetText());
         if(idx == -1)
-          FireError(Location(ca_name) +  ": No such named argument");
+          FireError(Location(ca_name) +  ": no such named argument");
       }
       
       if(idx >= func_args.Count)
-        FireError(Location(ca) +  ": There is no argument " + (idx + 1) + ", total arguments " + func_args.Count);
+        FireError(Location(ca) +  ": there is no argument " + (idx + 1) + ", total arguments " + func_args.Count);
 
       if(idx >= func_args.Count)
-        FireError(Location(ca) +  ": Too many arguments for function");
+        FireError(Location(ca) +  ": too many arguments for function");
 
       norm_cargs[idx].ca = ca;
     }
@@ -511,7 +538,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         var next_arg = FindNextCallArg(cargs, prev_ca);
 
         if(i < required_args_num)
-          FireError(Location(next_arg) +  ": Missing argument '" + norm_cargs[i].orig.name + "'");
+          FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name + "'");
         //rest are args by default
         else if(HasAllDefaultArgsAfter(norm_cargs, i))
           break;
@@ -524,7 +551,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
             new_node.AddChild(Visit(default_arg));
           }
           else
-            FireError(Location(next_arg) +  ": Missing argument '" + norm_cargs[i].orig.name + "'");
+            FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name + "'");
         }
       }
       else
@@ -570,14 +597,14 @@ public class AST_Builder : bhlBaseVisitor<AST>
       if(i == ca_len)
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
-        FireError(Location(next_arg) +  ": Missing argument of type '" + arg_type.name + "'");
+        FireError(Location(next_arg) +  ": missing argument of type '" + arg_type.name + "'");
       }
 
       var ca = cargs.callArg()[i];
       var ca_name = ca.NAME();
 
       if(ca_name != null)
-        FireError(Location(ca_name) +  ": Named arguments not supported for function pointers");
+        FireError(Location(ca_name) +  ": named arguments not supported for function pointers");
 
       var type = arg_type.Get();
       PushJsonType(type);
@@ -596,7 +623,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     }
 
     if(ca_len != func_args.Count)
-      FireError(Location(cargs) +  ": Too many arguments");
+      FireError(Location(cargs) +  ": too many arguments");
 
     new_node.cargs_num = func_args.Count;
   }
@@ -628,7 +655,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var tr = globals.type(ctx.funcLambda().retType());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
+      FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
 
     var func_name = curr_m.GetId() + "_" + NextLambdaId(); 
     var node = AST_Util.New_LambdaDecl(curr_m.GetId(), tr.name, func_name);
@@ -647,7 +674,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
         var un_name_str = un.NAME().GetText(); 
         var un_symb = curr_scope.resolve(un_name_str);
         if(un_symb == null)
-          FireError(Location(un) +  " : Symbol '" + un_name_str + "' not defined in parent scope");
+          FireError(Location(un) +  " : symbol '" + un_name_str + "' not defined in parent scope");
 
         fdecl.AddUseParam(un_symb, un.isRef() != null);
       }
@@ -682,7 +709,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
       var interim = AST_Util.New_Interim();
       interim.AddChild(node);
       int line = ctx.funcLambda().Start.Line;
-      interim.AddChild(ProcChainedCall(null, chain, ref curr_type, line));
+      interim.AddChild(ProcChainedCall(null, chain, ref curr_type, line, false));
       Wrap(ctx).eval_type = curr_type;
       return interim;
     }
@@ -725,7 +752,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     {
       var tr = globals.type(new_exp.type());
       if(tr.type == null)
-        FireError(Location(new_exp.type()) + ": Type '" + tr.name + "' not found");
+        FireError(Location(new_exp.type()) + ": type '" + tr.name + "' not found");
       PushJsonType(tr.type);
     }
 
@@ -767,7 +794,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var arr_type = curr_type as ArrayTypeSymbol;
     var orig_type = arr_type.original.TryGet();
     if(orig_type == null)
-      FireError(Location(ctx) + ": Type '" + arr_type.original.name + "' not found");
+      FireError(Location(ctx) + ": type '" + arr_type.original.name + "' not found");
     PushJsonType(orig_type);
 
     var node = AST_Util.New_JsonArr(arr_type);
@@ -788,13 +815,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var curr_type = PeekJsonType();
     var scoped_symb = (ClassSymbol)curr_type;
     if(scoped_symb == null)
-      FireError(Location(ctx) + ": Expecting class type, got '" + curr_type + "' instead");
+      FireError(Location(ctx) + ": expecting class type, got '" + curr_type + "' instead");
 
     var name_str = ctx.NAME().GetText();
     
     var member = scoped_symb.resolve(name_str);
     if(member == null)
-      FireError(Location(ctx) + ": No such attribute '" + name_str + "' in '" + scoped_symb + "'");
+      FireError(Location(ctx) + ": no such attribute '" + name_str + "' in '" + scoped_symb + "'");
 
     var node = AST_Util.New_JsonPair(curr_type.GetName(), name_str);
 
@@ -842,13 +869,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
     var ctx_name = exp.NAME();
     var enum_symb = globals.resolve(ctx_name.GetText()) as EnumSymbol;
     if(enum_symb == null)
-      FireError(Location(ctx) + ": Type '" + ctx_name + "' not found");
+      FireError(Location(ctx) + ": type '" + ctx_name + "' not found");
 
     var item_name = exp.staticCallItem().NAME();
     var enum_val = enum_symb.findValue(Hash.CRC28(item_name.GetText()));
 
     if(enum_val == null)
-      FireError(Location(ctx) + ": Enum value not found '" + item_name.GetText() + "'");
+      FireError(Location(ctx) + ": enum value not found '" + item_name.GetText() + "'");
 
     Wrap(ctx).eval_type = enum_symb;
 
@@ -869,7 +896,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var tr = globals.type(ctx.newExp().type());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
+      FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
 
     var res = AST_Util.New_New((ClassSymbol)tr.type);
     Wrap(ctx).eval_type = tr.type;
@@ -889,7 +916,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var tr = globals.type(ctx.type());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
+      FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
 
     var node = AST_Util.New_TypeCast(tr.name);
     var exp = ctx.exp();
@@ -1258,7 +1285,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   public override AST VisitBreak(bhlParser.BreakContext ctx)
   {
     if(while_stack == 0)
-      FireError(Location(ctx) + ": Not within loop construct");
+      FireError(Location(ctx) + ": not within loop construct");
 
     var node = AST_Util.New_Break();
     return node;
@@ -1268,7 +1295,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   //public override AST VisitContinue(bhlParser.ContinueContext ctx)
   //{
   //  if(while_stack == 0)
-  //    FireError(Location(ctx) + ": Not within loop construct");
+  //    FireError(Location(ctx) + ": not within loop construct");
 
   //  var node = AST_Util.New_Continue();
   //  return node;
@@ -1285,7 +1312,7 @@ public class AST_Builder : bhlBaseVisitor<AST>
   {
     var tr = globals.type(ctx.retType());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": Type '" + tr.name + "' not found");
+      FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
 
     var str_name = ctx.NAME().GetText();
 
@@ -1353,98 +1380,140 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return node;
   }
 
-  public override AST VisitVarsDeclare(bhlParser.VarsDeclareContext ctx)
+  public override AST VisitVarDecl(bhlParser.VarDeclContext ctx)
   {
-    AST exp_node = null;
-    var vdecls = ctx.varDeclare();
+    var vd = ctx.varDeclare(); 
+    return CommonDeclVar(vd.NAME(), vd.type(), false/*is ref*/, false/*not func arg*/, false/*read*/);
+  }
+
+  public override AST VisitDeclAssign(bhlParser.DeclAssignContext ctx)
+  {
+    var vdecls = ctx.varsDeclareOrCallExps().varDeclareOrCallExp();
     var assign_exp = ctx.assignExp();
-    if(assign_exp != null)
-    {
-      //NOTE: look forward at expression and push json type 
-      //      if it's a json-init-expression
-      bool pop_json_type = false;
-      if(vdecls.Length == 1 && 
-         (assign_exp.exp() is bhlParser.ExpJsonObjContext || 
-          assign_exp.exp() is bhlParser.ExpJsonArrContext))
-      {
-        pop_json_type = true;
-        var vd = vdecls[0];
-        var vd_type = vd.type();
-        TypeRef tr;
-        if(vd_type == null)
-        {
-          var vd_symb = curr_scope.resolve(vd.NAME().GetText());
-          if(vd_symb == null)
-            FireError(Location(vd) + " : Symbol not resolved");
-          tr = vd_symb.type;
-        }
-        else
-          tr = globals.type(vd_type);
-        PushJsonType(tr.Get());
-      }
 
-      exp_node = Visit(assign_exp);
+    //TODO: this is absolutely artificial, we should rather add nodes 
+    //      to the 'active' node
+    AST res_node = AST_Util.New_Interim();
 
-      if(pop_json_type)
-        PopJsonType();
-    }
-
-    //NOTE: multiple decl.vars are chained(next one is added as a child to the prev.one), 
-    //      this is kinda hacky but OK for now
-    AST root_node = null;
-    AST last_node = null;
+    Type assign_type = null;
     for(int i=0;i<vdecls.Length;++i)
     {
-      var vd = vdecls[i];
-      var vd_type = vd.type();
+      var tmp = vdecls[i];
+      var cexp = tmp.callExp();
+      var vd = tmp.varDeclare();
 
       AST node = null;
+      WrappedNode wnode = null;
+      Type curr_type = null;
+      bool is_decl = false;
 
-      if(vd_type == null)
+      if(cexp != null)
       {
-        string vd_name = vd.NAME().GetText(); 
-        var vd_symb = curr_scope.resolve(vd_name);
-        if(vd_symb == null)
-          FireError(Location(vd) + " : Symbol not resolved");
-        Wrap(vd.NAME()).eval_type = vd_symb.type.Get();
-        node = AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vd_name, Hash.CRC28(vd_name));
+        if(assign_exp == null)
+          FireError(Location(cexp) + " : assign expression expected");
+
+        int line = cexp.Start.Line;
+        node = ProcChainedCall(cexp.NAME(), cexp.chainExp(), ref curr_type, line, true/*write*/);
+
+        wnode = Wrap(cexp.NAME());
+        wnode.eval_type = curr_type;
       }
-      else
-        node = CommonDeclVar(vd.NAME(), vd_type, false/*is ref*/, false/*not func arg*/);
-      
-      if(root_node == null)
-        root_node = node;
-      
-      if(last_node != null)
-        last_node.AddChild(node);
-
-      last_node = node;
-    }
-
-    if(exp_node != null)
-    {
-      if(vdecls.Length > 1)
+      else 
       {
-        var exp_type = Wrap(assign_exp).eval_type as MultiType; 
-        if(exp_type == null)
-          FireError(Location(assign_exp) + ": multi return expected");
+        var vd_type = vd.type();
 
-        if(exp_type.items.Count != vdecls.Length)
-          FireError(Location(assign_exp) + ": multi return size doesn't match destination");
-
-        for(int i=0;i<vdecls.Length;++i)
+        if(vd_type == null)
         {
-          var vd = vdecls[i];
-          SymbolTable.CheckAssign(Wrap(vd.NAME()), exp_type.items[i].Get());
+          string vd_name = vd.NAME().GetText(); 
+          var vd_symb = curr_scope.resolve(vd_name);
+          if(vd_symb == null)
+            FireError(Location(vd) + " : symbol not resolved");
+          curr_type = vd_symb.type.Get();
+
+          wnode = Wrap(vd.NAME());
+          wnode.eval_type = curr_type;
+
+          node = AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vd_name, Hash.CRC28(vd_name));
+        }
+        else
+        {
+          node = CommonDeclVar(vd.NAME(), vd_type, false/*is ref*/, false/*not func arg*/, assign_exp != null);
+          is_decl = true;
+
+          wnode = Wrap(vd.NAME()); 
+          curr_type = wnode.eval_type;
         }
       }
-      else
-        SymbolTable.CheckAssign(Wrap(vdecls[0].NAME()), Wrap(assign_exp));
 
-      last_node.AddChild(exp_node);
+      //NOTE: if there is an assignment we have to visit it and push current
+      //      json type if required
+      if(assign_exp != null && assign_type == null)
+      {
+        //NOTE: look forward at expression and push json type 
+        //      if it's a json-init-expression
+        bool pop_json_type = false;
+        if((assign_exp.exp() is bhlParser.ExpJsonObjContext || 
+          assign_exp.exp() is bhlParser.ExpJsonArrContext))
+        {
+          if(vdecls.Length != 1)
+            FireError(Location(assign_exp) + " : multi assign not supported for JSON expression");
+
+          pop_json_type = true;
+
+          PushJsonType(curr_type);
+        }
+
+        //NOTE: temporarily removing just declared variable when visiting assignment expression
+        Symbol disabled_symbol = null;
+        if(is_decl)
+        {
+          var symbols = ((FuncSymbol)curr_scope).GetMembers();
+          disabled_symbol = (Symbol)symbols[symbols.Count - 1];
+          symbols.RemoveAt(symbols.Count - 1);
+        }
+
+        var assign_node = Visit(assign_exp);
+        assign_type = Wrap(assign_exp).eval_type;
+
+        //NOTE: declaring disabled symbol again
+        if(disabled_symbol != null)
+          curr_scope.define(disabled_symbol);
+
+        if(pop_json_type)
+          PopJsonType();
+
+        //NOTE: we want expression to be first since it pushes results on to the stack
+        res_node.AddChild(assign_node);
+
+        var mtype = assign_type as MultiType; 
+        if(vdecls.Length > 1)
+        {
+          if(mtype == null)
+            FireError(Location(assign_exp) + ": multi return expected");
+
+          if(mtype.items.Count != vdecls.Length)
+            FireError(Location(assign_exp) + ": multi return size doesn't match destination");
+        }
+        else if(mtype != null)
+          FireError(Location(assign_exp) + ": multi return size doesn't match destination");
+      }
+
+      if(assign_exp != null)
+        res_node.children.Insert(1, node);
+      else
+        res_node.AddChild(node);
+
+      if(assign_type != null)
+      {
+        var mtype = assign_type as MultiType;
+        if(mtype != null)
+          SymbolTable.CheckAssign(wnode, mtype.items[i].Get());
+        else
+          SymbolTable.CheckAssign(wnode, Wrap(assign_exp));
+      }
     }
 
-    return root_node;
+    return res_node.children.Count == 1 ? res_node.children[0] : res_node;
   }
 
   public override AST VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
@@ -1454,13 +1523,13 @@ public class AST_Builder : bhlBaseVisitor<AST>
     bool is_ref = ctx.isRef() != null;
 
     if(is_ref && assign_exp != null)
-      FireError(Location(name) +  ": ref is not allowed to have a default value");
+      FireError(Location(name) +  ": 'ref' is not allowed to have a default value");
 
     AST exp_node = null;
     if(assign_exp != null)
       exp_node = Visit(assign_exp);
 
-    var node = CommonDeclVar(name, ctx.type(), is_ref, true/*func arg*/);
+    var node = CommonDeclVar(name, ctx.type(), is_ref, true/*func arg*/, false/*read*/);
 
     if(exp_node != null)
     {
@@ -1471,28 +1540,30 @@ public class AST_Builder : bhlBaseVisitor<AST>
     return node;
   }
 
-  AST CommonDeclVar(ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg)
+  AST CommonDeclVar(ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg, bool write)
   {
     var str_name = name.GetText();
 
     var tr = globals.type(type);
     if(tr.type == null)
-      FireError(Location(tr.node) +  ": Type '" + tr.name + "' not found");
+      FireError(Location(tr.node) +  ": type '" + tr.name + "' not found");
 
     var var_node = Wrap(name); 
     var_node.eval_type = tr.type;
 
     if(is_ref && !func_arg)
-      FireError(Location(name) +  ": ref is only allowed in function declaration");
+      FireError(Location(name) +  ": 'ref' is only allowed in function declaration");
 
     Symbol symb = func_arg ? 
       (Symbol) new FuncArgSymbol(str_name, tr, is_ref) :
       (Symbol) new VariableSymbol(var_node, str_name, tr);
 
-    var node = AST_Util.New_VarDecl(tr.name, str_name, is_ref);
     curr_scope.define(symb);
 
-    return node;
+    if(write)
+      return AST_Util.New_Call(EnumCall.VARW, 0, str_name, Hash.CRC28(str_name));
+    else
+      return AST_Util.New_VarDecl(str_name, is_ref);
   }
 
   public override AST VisitBlock(bhlParser.BlockContext ctx)
@@ -1620,21 +1691,6 @@ public class AST_Builder : bhlBaseVisitor<AST>
     node.AddChild(CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false));
 
     --while_stack;
-
-    return node;
-  }
-
-  public override AST VisitAssign(bhlParser.AssignContext ctx)
-  {
-    var node = AST_Util.New_Assign();
-
-    node.AddChild(Visit(ctx.callExp()));
-    node.AddChild(Visit(ctx.exp()));
-
-    var dst_node = Wrap(ctx.callExp());
-    var src_node = Wrap(ctx.exp());
-
-    SymbolTable.CheckAssign(dst_node, src_node);
 
     return node;
   }

@@ -499,7 +499,6 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_Import node);
   public abstract void DoVisit(AST_Module node);
   public abstract void DoVisit(AST_VarDecl node);
-  public abstract void DoVisit(AST_Assign node);
   public abstract void DoVisit(AST_FuncDecl node);
   public abstract void DoVisit(AST_LambdaDecl node);
   public abstract void DoVisit(AST_Block node);
@@ -530,8 +529,6 @@ public abstract class AST_Visitor
       DoVisit(node as AST_Call);
     else if(node is AST_VarDecl)
       DoVisit(node as AST_VarDecl);
-    else if(node is AST_Assign)
-      DoVisit(node as AST_Assign);
     else if(node is AST_LambdaDecl)
       DoVisit(node as AST_LambdaDecl);
     //NOTE: base class must be handled after AST_LambdaDecl
@@ -821,7 +818,10 @@ public class DynValList : IList<DynVal>, DynValRefcounted
       return lst[i];
     }
     set {
-      throw new NotImplementedException();
+      var prev = lst[i];
+      prev.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      value.RefMod(RefOp.INC | RefOp.USR_INC);
+      lst[i] = value;
     }
   }
 
@@ -1510,8 +1510,8 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.MVARW)
     {
-      curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE));
       VisitChildren(node);
+      curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE));
     }
     else if(node.type == EnumCall.FUNC || node.type == EnumCall.MFUNC)
     {
@@ -1559,6 +1559,16 @@ public class Interpreter : AST_Visitor
       //rest of the call chain
       for(int i=1;i<node.children.Count;++i)
         Visit(node.children[i]);
+    }
+    else if(node.type == EnumCall.ARR_IDXW)
+    {
+      VisitChildren(node);
+
+      var bnd = bindings.FindBinding<ArrayTypeSymbol>(node.scope_ntype);
+      if(bnd == null)
+        throw new Exception("Could not find class binding: " + node.scope_ntype);
+
+      curr_node.addChild(bnd.Create_SetAt());
     }
     else 
       throw new Exception("Unsupported call type: " + node.type);
@@ -1715,31 +1725,10 @@ public class Interpreter : AST_Visitor
     curr_node.addChild(new UnaryOpNode(node));
   }
 
-  public override void DoVisit(AST_Assign node)
-  {
-    //1. calc assigned value(push on to stack)
-    Visit(node.children[1]);
-    //2. eval expression assigned value(read from stack)
-    Visit(node.children[0]);
-    //3. let's tune eval expression
-    var last_child = curr_node.children[curr_node.children.Count-1];
-    if(last_child is VarAccessNode)
-      (last_child as VarAccessNode).mode = VarAccessNode.WRITE;
-    else if(last_child is MVarAccessNode)
-      (last_child as MVarAccessNode).mode = MVarAccessNode.WRITE;
-    else
-      throw new Exception("Not supported target node: " + last_child.GetType());
-  }
-
   public override void DoVisit(AST_VarDecl node)
   {
-    if(node.children.Count > 0)
-    {
-      VisitChildren(node);
-      curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.WRITE));
-    }
-    else
-      curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.DECL));
+    VisitChildren(node);
+    curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.DECL));
   }
 
   public override void DoVisit(bhl.AST_JsonObj node)

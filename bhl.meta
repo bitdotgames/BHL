@@ -81,6 +81,7 @@ enum EnumCall
   FUNC          = 3
   MFUNC         = 30
   ARR_IDX       = 4
+  ARR_IDXW      = 40
   FUNC2VAR      = 5
   FUNC_PTR      = 6
   FUNC_PTR_POP  = 7
@@ -117,12 +118,8 @@ struct AST_Literal extends AST
 end
 
 struct AST_VarDecl extends AST
-  type    : string
   nname   : uint32
   name    : string @default:"" #for debug
-end
-
-struct AST_Assign extends AST
 end
 
 enum EnumBlock

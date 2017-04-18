@@ -64,8 +64,8 @@ newExp
 
 //statements
 statement
-  : varsDeclare                                                 #VarDecl
-	| callExp '=' exp                                             #Assign
+	: varDeclare                                                  #VarDecl
+	| varsDeclareOrCallExps assignExp                             #DeclAssign
 	| callExp 																									  #SymbCall
 	| mainIf elseIf* else?                                        #If
 	| 'while' exp block    																        #While
@@ -172,12 +172,19 @@ funcParamDeclare
   ;
 
 varsDeclare
-	: varDeclare ( ',' varDeclare )* assignExp?
+	: varDeclare ( ',' varDeclare )*
   ;
 
-//NOTE: as temporary hack varDeclare allows type to be optional
 varDeclare
-  : type? NAME
+  : type NAME
+  ;
+
+varsDeclareOrCallExps
+	: varDeclareOrCallExp ( ',' varDeclareOrCallExp )*
+  ;
+
+varDeclareOrCallExp
+  : varDeclare | callExp
   ;
 
 assignExp

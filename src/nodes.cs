@@ -2165,6 +2165,33 @@ public class Array_AtNode : BehaviorTreeTerminalNode
   }
 }
 
+public class Array_SetAtNode : BehaviorTreeTerminalNode
+{
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+
+    //NOTE: args are in reverse order in stack
+    var arr = interp.PopValue();
+    var idx = interp.PopValue();
+    var val = interp.PopValue().ValueClone();
+
+    var lst = arr.obj as DynValList;
+    if(lst == null)
+      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+
+    lst[(int)idx.num] = val; 
+    //NOTE: this can be an operation for the temp. array,
+    //      we need to try del the array if so
+    lst.TryDel();
+  }
+
+  public override string inspect()
+  {
+    return "<- <- <-";
+  }
+}
+
 public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
 {
   public override void init()
@@ -2187,6 +2214,32 @@ public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
   public override string inspect()
   {
     return "<- <- ->";
+  }
+}
+
+public class Array_SetAtNodeT<T> : BehaviorTreeTerminalNode where T : new()
+{
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+
+    //NOTE: args are in reverse order in stack
+    var arr = interp.PopValue();
+    var idx = interp.PopValue();
+    var val = interp.PopValue();
+
+    var lst = (arr.obj as IList<T>);
+    if(lst == null)
+      throw new UserError("Not a List<" + typeof(T).Name + ">: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+
+    T obj = new T();
+    ArrayTypeSymbolT<T>.Convert(val, ref obj);
+    lst[(int)idx.num] = obj;
+  }
+
+  public override string inspect()
+  {
+    return "<- <- <-";
   }
 }
 

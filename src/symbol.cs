@@ -315,6 +315,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract BehaviorTreeNode Create_New();
   public abstract BehaviorTreeNode Create_Add();
   public abstract BehaviorTreeNode Create_At();
+  public abstract BehaviorTreeNode Create_SetAt();
   public abstract BehaviorTreeNode Create_RemoveAt();
 }
 
@@ -374,6 +375,11 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return new Array_AtNode();
   }
 
+  public override BehaviorTreeNode Create_SetAt()
+  {
+    return new Array_SetAtNode();
+  }
+
   public override BehaviorTreeNode Create_RemoveAt()
   {
     return new Array_RemoveAtNode();
@@ -429,6 +435,11 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public override BehaviorTreeNode Create_At()
   {
     return new Array_AtNodeT<T>();
+  }
+
+  public override BehaviorTreeNode Create_SetAt()
+  {
+    return new Array_SetAtNodeT<T>();
   }
 
   public override BehaviorTreeNode Create_RemoveAt()
@@ -500,7 +511,7 @@ public abstract class ScopedSymbol : Symbol, Scope
   {
     var members = GetMembers(); 
     if(members.Contains(sym.name))
-      throw new UserError(sym.Location() + ": Already defined symbol '" + sym.name + "'"); 
+      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym.name, sym);
     sym.scope = this; // track the scope in each symbol
