@@ -604,6 +604,7 @@ static public class AST_Util
     if(Util.DEBUG)
       n.name = name;
     n.scope_ntype = scope_symb != null ? scope_symb.GetNtype() : 0;
+    n.line_num = (uint)line_num;
 
     return n;
   }
