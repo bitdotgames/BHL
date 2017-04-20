@@ -169,8 +169,8 @@ public class Symbol
   {
     string s = "";
     if(scope != null) 
-      s = scope.GetScopeName()+".";
-    return '<'+s+GetName()+":"+type.name+'>';
+      s = scope.GetScopeName() + '.';
+    return '<' + s + name??"?" + ':' + type.name??"?" + '>';
   }
 
   public string Location()
