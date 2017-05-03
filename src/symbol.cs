@@ -87,7 +87,7 @@ public class WrappedNode
 #if BHL_FRONT
   public IParseTree tree;
   public ITokenStream tokens;
-  public AST_Builder builder;
+  public Frontend builder;
 #endif
 
   public Scope scope;

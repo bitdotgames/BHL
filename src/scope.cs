@@ -194,7 +194,7 @@ public class GlobalScope : BaseScope
 #if BHL_FRONT
         if(IsCompoundType(name))
         {
-          var node = AST_Builder.ParseType(name);
+          var node = Frontend.ParseType(name);
           if(node == null)
             throw new Exception("Bad type: '" + name + "'");
 

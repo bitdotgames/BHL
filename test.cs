@@ -4470,14 +4470,14 @@ public class BHL_Test
   public void TestParseType()
   {
     {
-      var type = AST_Builder.ParseType("bool").type()[0];
+      var type = Frontend.ParseType("bool").type()[0];
       AssertEqual(type.NAME().GetText(), "bool");
       AssertTrue(type.fnargs() == null);
       AssertTrue(type.ARR() == null);
     }
 
     {
-      var ret = AST_Builder.ParseType("bool,float");
+      var ret = Frontend.ParseType("bool,float");
       AssertEqual(ret.type().Length, 2);
       AssertEqual(ret.type()[0].NAME().GetText(), "bool");
       AssertTrue(ret.type()[0].fnargs() == null);
@@ -4488,14 +4488,14 @@ public class BHL_Test
     }
 
     {
-      var type = AST_Builder.ParseType("int[]").type()[0];
+      var type = Frontend.ParseType("int[]").type()[0];
       AssertEqual(type.NAME().GetText(), "int");
       AssertTrue(type.fnargs() == null);
       AssertTrue(type.ARR() != null);
     }
 
     {
-      var type = AST_Builder.ParseType("bool^(int,string)").type()[0];
+      var type = Frontend.ParseType("bool^(int,string)").type()[0];
       AssertEqual(type.NAME().GetText(), "bool");
       AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
       AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
@@ -4503,7 +4503,7 @@ public class BHL_Test
     }
 
     {
-      var ret = AST_Builder.ParseType("bool^(int,string),float[]");
+      var ret = Frontend.ParseType("bool^(int,string),float[]");
       AssertEqual(ret.type().Length, 2);
       var type = ret.type()[0];
       AssertEqual(type.NAME().GetText(), "bool");
@@ -4517,14 +4517,14 @@ public class BHL_Test
     }
 
     {
-      var type = AST_Builder.ParseType("float^(int)[]").type()[0];
+      var type = Frontend.ParseType("float^(int)[]").type()[0];
       AssertEqual(type.NAME().GetText(), "float");
       AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
       AssertTrue(type.ARR() != null);
     }
 
     {
-      var ret = AST_Builder.ParseType("Vec3,Vec3,Vec3");
+      var ret = Frontend.ParseType("Vec3,Vec3,Vec3");
       AssertEqual(ret.type().Length, 3);
       var type = ret.type()[0];
       AssertEqual(type.NAME().GetText(), "Vec3");
@@ -4542,14 +4542,14 @@ public class BHL_Test
 
     {
       //malformed
-      var type = AST_Builder.ParseType("float^");
+      var type = Frontend.ParseType("float^");
       AssertTrue(type == null);
     }
 
     {
       //TODO:
       //malformed
-      //var type = AST_Builder.ParseType("int]");
+      //var type = Frontend.ParseType("int]");
       //AssertTrue(type == null);
     }
   }
@@ -11723,7 +11723,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     {
       var bin = new MemoryStream();
       var mod = new bhl.Module(item.Key, item.Key);
-      AST_Builder.Source2Bin(mod, item.Value.ToStream(), bin, globs, mreg);
+      Frontend.Source2Bin(mod, item.Value.ToStream(), bin, globs, mreg);
       bin.Position = 0;
 
       AST_Module ast = Util.Bin2Meta<AST_Module>(bin);
