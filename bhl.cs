@@ -387,7 +387,7 @@ public class BHL
               //Console.WriteLine("CACHE MISS");
 
               var mod = new Module(mreg.FilePath2ModulePath(file), file);
-              ast = AST_Builder.Source2AST(mod, sfs, w.bindings, mreg);
+              ast = Frontend.Source2AST(mod, sfs, w.bindings, mreg);
 
               //save the cache
               Util.Meta2File(ast, cache_file);
