@@ -1823,37 +1823,45 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  static bool StatementNeedsGroup(EnumBlock type, AST st) 
-  {
-    bool need_group = 
-      type == EnumBlock.PARAL || 
-      type == EnumBlock.PARAL_ALL || 
-      type == EnumBlock.PRIO;
-
-    if(!need_group)
-      return false;
-
-    if(st is AST_Block)
-      return false;
-
-    var call = st as AST_Call;
-    if(call == null)
-      return true;
-
-    //NOTE: not wrapping pure FuncCallNode(s) without any chain calls
-    return !((call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC) && 
-              call.cargs_num == call.children.Count);
-  }
-
   void CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope)
   {
     if(new_local_scope)
       curr_scope = new LocalScope(curr_scope); 
 
+    bool may_need_group = 
+      type == EnumBlock.PARAL || 
+      type == EnumBlock.PARAL_ALL || 
+      type == EnumBlock.PRIO;
+
     var node = AST_Util.New_Block(type);
+    var tmp = new AST_Interim();
     PushAST(node);
     for(int i=0;i<sts.Length;++i)
-      Visit(sts[i]);
+    {
+      //NOTE: we need to understand if we need to wrap statements
+      //      with a group 
+      if(may_need_group)
+      {
+        PushAST(tmp);
+
+        Visit(sts[i]);
+
+        PopAST();
+        //NOTE: wrapping in group only in case there are more than one child
+        if(tmp.children.Count > 1)
+        {
+          var g = AST_Util.New_Block(EnumBlock.GROUP);
+          for(int c=0;c<tmp.children.Count;++c)
+            g.AddChild(tmp.children[c]);
+          node.AddChild(g);
+        }
+        else
+          node.AddChild(tmp.children[0]);
+        tmp.children.Clear();
+      }
+      else
+        Visit(sts[i]);
+    }
     PopAST();
 
     //NOTE: replacing last return in a function with its statement as an optimization 

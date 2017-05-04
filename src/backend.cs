@@ -1664,6 +1664,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_Return node)
   {
+    //NOTE: expression comes first
     VisitChildren(node);
     curr_node.addChild(new ReturnNode());
   }
@@ -1700,6 +1701,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_UnaryOpExp node)
   {
+    //NOTE: expression comes first
     VisitChildren(node);
     curr_node.addChild(new UnaryOpNode(node));
   }
