@@ -158,6 +158,23 @@ public class Frontend : bhlBaseVisitor<object>
     ast_stack.Pop();
   }
 
+  void PushInterimAST()
+  {
+    var tmp = new AST_Interim();
+    PushAST(tmp);
+  }
+
+  void PopInterimAST()
+  {
+    var tmp = PeekAST();
+    PopAST();
+
+    if(tmp.children.Count == 1)
+      PeekAST().AddChild(tmp.children[0]);
+    else if(tmp.children.Count > 1)
+      PeekAST().AddChild(tmp);
+  }
+
   AST PeekAST()
   {
     return ast_stack.Peek();
@@ -323,9 +340,7 @@ public class Frontend : bhlBaseVisitor<object>
         else if(ma != null)
         {
           if(curr_name != null)
-          {
             ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, false);
-          }
 
           curr_class = curr_type as ClassSymbol; 
           if(curr_class == null)
@@ -338,9 +353,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //checking the leftover of the call chain
     if(curr_name != null)
-    {
       ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, write);
-    }
 
     curr_scope = orig_scope;
   }
@@ -442,10 +455,8 @@ public class Frontend : bhlBaseVisitor<object>
       type = ftype.ret_type.Get();
     }
 
-    if(node == null)
-      throw new Exception("Node not assigned");
-
-    PeekAST().AddChild(node);
+    if(node != null)
+      PeekAST().AddChild(node);
 
     if(arracc != null)
       AddArrIndex(arracc, ref type, line, write);
@@ -457,19 +468,16 @@ public class Frontend : bhlBaseVisitor<object>
     if(arr_type == null)
       FireError(Location(arracc) +  " : accessing not an array type '" + type.GetName() + "'");
 
-    var node = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
-    node.scope_ntype = arr_type.GetNtype();
-
     var arr_exp = arracc.exp();
-    //????
-    //PushAST(node);
     Visit(arr_exp);
-    //PopAST();
 
     if(Wrap(arr_exp).eval_type != SymbolTable._int)
       FireError(Location(arr_exp) +  " : array index expression is not of type int");
 
     type = arr_type.original.Get();
+
+    var node = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
+    node.scope_ntype = arr_type.GetNtype();
 
     PeekAST().AddChild(node);
   }
@@ -484,6 +492,7 @@ public class Frontend : bhlBaseVisitor<object>
   {     
     var func_args = func_symb.GetArgs();
     var total_args_num = func_symb.GetTotalArgsNum();
+    //Console.WriteLine(func_args.Count + " " + total_args_num);
     var default_args_num = func_symb.GetDefaultArgsNum();
     int required_args_num = total_args_num - default_args_num;
     int args_passed = 0;
@@ -520,6 +529,7 @@ public class Frontend : bhlBaseVisitor<object>
       norm_cargs[idx].ca = ca;
     }
 
+    PushAST(new_node);
     IParseTree prev_ca = null;
     //2. traversing normalized args
     for(int i=0;i<norm_cargs.Count;++i)
@@ -541,9 +551,9 @@ public class Frontend : bhlBaseVisitor<object>
           if(default_arg != null)
           {
             ++args_passed;
-            PushAST(new_node);
+            PushInterimAST();
             Visit(default_arg);
-            PopAST();
+            PopInterimAST();
           }
           else
             FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name + "'");
@@ -563,9 +573,9 @@ public class Frontend : bhlBaseVisitor<object>
           FireError(Location(ca) +  ": argument is not a 'ref'");
 
         PushJsonType(func_arg_type);
-        PushAST(new_node);
+        PushInterimAST();
         Visit(ca);
-        PopAST();
+        PopInterimAST();
         PopJsonType();
 
         var wca = Wrap(ca);
@@ -577,6 +587,7 @@ public class Frontend : bhlBaseVisitor<object>
           SymbolTable.CheckAssign(func_arg_symb.node, wca);
       }
     }
+    PopAST();
 
     new_node.cargs_num = args_passed;
   }
@@ -606,7 +617,9 @@ public class Frontend : bhlBaseVisitor<object>
 
       var type = arg_type.Get();
       PushJsonType(type);
+      PushInterimAST();
       Visit(ca);
+      PopInterimAST();
       PopJsonType();
 
       var wca = Wrap(ca);
@@ -711,7 +724,7 @@ public class Frontend : bhlBaseVisitor<object>
     var chain = ctx.funcLambda().chainExp(); 
     if(chain != null)
     {
-      var interim = AST_Util.New_Interim();
+      var interim = new AST_Interim();
       interim.AddChild(node);
       int line = ctx.funcLambda().Start.Line;
       PushAST(interim);
@@ -977,7 +990,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpParen(bhlParser.ExpParenContext ctx)
   {
-    var node = AST_Util.New_Interim();
+    var node = new AST_Interim();
     var exp = ctx.exp(); 
     PushAST(node);
     Visit(exp);
@@ -1296,17 +1309,21 @@ public class Frontend : bhlBaseVisitor<object>
     var explist = ctx.explist();
     if(explist != null)
     {
-      int len = explist.exp().Length;
+      int explen = explist.exp().Length;
 
       var fret_type = func_symb.GetReturnType();
 
-      if(len == 1)
+      //NOTE: immediately adding return node in case of void return type
+      if(fret_type == SymbolTable._void)
+        PeekAST().AddChild(ret_node);
+      else
+        PushAST(ret_node);
+
+      if(explen == 1)
       {
         var exp = explist.exp()[0];
         PushJsonType(fret_type);
-        PushAST(ret_node);
         Visit(exp);
-        PopAST();
         PopJsonType();
 
         //NOTE: workaround for cases like: `return \n trace(...)`
@@ -1325,13 +1342,12 @@ public class Frontend : bhlBaseVisitor<object>
         if(fmret_type == null)
           FireError(Location(ctx) + ": function doesn't support multi return");
 
-        if(fmret_type.items.Count != len)
+        if(fmret_type.items.Count != explen)
           FireError(Location(ctx) + ": multi return size doesn't match destination");
 
         var ret_type = new MultiType();
 
-        PushAST(ret_node);
-        for(int i=0;i<len;++i)
+        for(int i=0;i<explen;++i)
         {
           var exp = explist.exp()[i];
           Visit(exp);
@@ -1339,15 +1355,21 @@ public class Frontend : bhlBaseVisitor<object>
           
           SymbolTable.CheckAssign(fmret_type.items[i].Get(), Wrap(exp));
         }
-        PopAST();
         ret_type.Update();
         Wrap(ctx).eval_type = ret_type;
       }
+
+      if(fret_type != SymbolTable._void)
+      {
+        PopAST();
+        PeekAST().AddChild(ret_node);
+      }
     }
     else
+    {
       Wrap(ctx).eval_type = SymbolTable._void;
-
-    PeekAST().AddChild(ret_node);
+      PeekAST().AddChild(ret_node);
+    }
 
     return null;
   }
@@ -1381,7 +1403,9 @@ public class Frontend : bhlBaseVisitor<object>
 
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
+
     var node = AST_Util.New_FuncDecl(curr_m.GetId(), tr.name, str_name);
+
     var symb = new FuncSymbolAST(globals, node, func_node, str_name, tr, curr_scope, ctx.funcParams());
     mscope.define(symb);
     curr_m.symbols.define(symb);
@@ -1418,13 +1442,11 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncParams(bhlParser.FuncParamsContext ctx)
   {
-    var node = AST_Util.New_Interim();
-
     var func = curr_scope as FuncSymbol;
 
     var fparams = ctx.funcParamDeclare();
     bool found_default_arg = false;
-    PushAST(node);
+
     for(int i=0;i<fparams.Length;++i)
     {
       var fp = fparams[i]; 
@@ -1448,9 +1470,6 @@ public class Frontend : bhlBaseVisitor<object>
 
       func.DefineArg(fp.NAME().GetText());
     }
-    PopAST();
-
-    PeekAST().AddChild(node);
 
     return null;
   }
@@ -1458,7 +1477,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitVarDecl(bhlParser.VarDeclContext ctx)
   {
     var vd = ctx.varDeclare(); 
-    CommonDeclVar(vd.NAME(), vd.type(), false/*is ref*/, false/*not func arg*/, false/*read*/);
+    PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), false/*is ref*/, false/*not func arg*/, false/*read*/));
     return null;
   }
 
@@ -1512,7 +1531,8 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else
         {
-          CommonDeclVar(vd.NAME(), vd_type, false/*is ref*/, false/*not func arg*/, assign_exp != null);
+          var node = CommonDeclVar(vd.NAME(), vd_type, false/*is ref*/, false/*not func arg*/, assign_exp != null);
+          root.AddChild(node);
           is_decl = true;
 
           wnode = Wrap(vd.NAME()); 
@@ -1552,7 +1572,7 @@ public class Frontend : bhlBaseVisitor<object>
         PushAST(stash);
         Visit(assign_exp);
         PopAST();
-        for(int s=0;s<stash.children.Count;++s)
+        for(int s=stash.children.Count;s-- > 0;)
           root.children.Insert(root_first_idx, stash.children[s]);
 
         assign_type = Wrap(assign_exp).eval_type;
@@ -1598,17 +1618,26 @@ public class Frontend : bhlBaseVisitor<object>
     if(is_ref && assign_exp != null)
       FireError(Location(name) +  ": 'ref' is not allowed to have a default value");
 
+    AST_Interim exp_node = null;
     if(assign_exp != null)
+    {
+      exp_node = new AST_Interim();
+      PushAST(exp_node);
       Visit(assign_exp);
+      PopAST();
+    }
 
-    CommonDeclVar(name, ctx.type(), is_ref, true/*func arg*/, false/*read*/);
+    var node = CommonDeclVar(name, ctx.type(), is_ref, true/*func arg*/, false/*read*/);
+    if(exp_node != null)
+      node.AddChild(exp_node);
+    PeekAST().AddChild(node);
 
     if(assign_exp != null)
       SymbolTable.CheckAssign(Wrap(name), Wrap(assign_exp));
     return null;
   }
 
-  void CommonDeclVar(ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg, bool write)
+  AST CommonDeclVar(ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg, bool write)
   {
     var str_name = name.GetText();
 
@@ -1628,11 +1657,10 @@ public class Frontend : bhlBaseVisitor<object>
 
     curr_scope.define(symb);
 
-    var ast = PeekAST();
     if(write)
-      ast.AddChild(AST_Util.New_Call(EnumCall.VARW, 0, str_name, Hash.CRC28(str_name)));
+      return AST_Util.New_Call(EnumCall.VARW, 0, str_name, Hash.CRC28(str_name));
     else
-      ast.AddChild(AST_Util.New_VarDecl(str_name, is_ref));
+      return AST_Util.New_VarDecl(str_name, is_ref);
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
@@ -1823,24 +1851,10 @@ public class Frontend : bhlBaseVisitor<object>
       curr_scope = new LocalScope(curr_scope); 
 
     var node = AST_Util.New_Block(type);
-
+    PushAST(node);
     for(int i=0;i<sts.Length;++i)
-    {
-      var grp = AST_Util.New_Block(EnumBlock.GROUP);
-
-      PushAST(grp);
       Visit(sts[i]);
-      PopAST();
-
-      if(grp.children.Count > 1 || 
-        (grp.children.Count == 1 && StatementNeedsGroup(type, grp.children[0]))
-        )
-      {
-        node.AddChild(grp);
-      }
-      else if(grp.children.Count == 1)
-        node.AddChild(grp.children[0]);
-    }
+    PopAST();
 
     //NOTE: replacing last return in a function with its statement as an optimization 
     if(type == EnumBlock.FUNC && node.children.Count > 0 && node.children[node.children.Count-1] is AST_Return)

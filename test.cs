@@ -1072,6 +1072,246 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestStringArray()
+  {
+    string bhl = @"
+      
+    func string[] test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""foo"")
+      arr.Add(""bar"")
+      return arr
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = intp.ExecNode(node).val;
+
+    //NodeDump(node);
+
+    var lst = res.obj as DynValList;
+    AssertEqual(lst.Count, 2);
+    AssertEqual(lst[0].str, "foo");
+    AssertEqual(lst[1].str, "bar");
+    lst.TryDel();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStringArrayIndex()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""bar"")
+      arr.Add(""foo"")
+      return arr[1]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = ExtractStr(intp.ExecNode(node));
+
+    //NodeDump(node);
+
+    AssertEqual(res, "foo");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStringArrayAssign()
+  {
+    string bhl = @"
+      
+    func string[] test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""foo"")
+      arr[0] = ""bar""
+      return arr
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    //NodeDump(node);
+
+    var res = intp.ExecNode(node).val;
+
+    var lst = res.obj as DynValList;
+    AssertEqual(lst.Count, 1);
+    AssertEqual(lst[0].str, "bar");
+    lst.TryDel();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestRemoveFromArray()
+  {
+    string bhl = @"
+      
+    func string[] test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""foo"")
+      arr.Add(""bar"")
+      arr.RemoveAt(1)
+      return arr
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = intp.ExecNode(node).val;
+
+    //NodeDump(node);
+
+    var lst = res.obj as DynValList;
+    AssertEqual(lst.Count, 1);
+    AssertEqual(lst[0].str, "foo");
+    lst.TryDel();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTempArrayIdx()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func int test() 
+    {
+      return mkarray()[1]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 100);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTempArrayCount()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func int test() 
+    {
+      return mkarray().Count
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTempArrayRemoveAt()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func void test() 
+    {
+      mkarray().RemoveAt(0)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    intp.ExecNode(node, 0);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTempArrayAdd()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func void test() 
+    {
+      mkarray().Add(300)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    intp.ExecNode(node, 0);
+
+    CommonChecks(intp);
+  }
+
+
+  [IsTested()]
   public void TestPassByRef()
   {
     string bhl = @"
@@ -3348,6 +3588,99 @@ public class BHL_Test
   {
     string bhl = @"
       
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(k).g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestChainCall3()
+  {
+    string bhl = @"
+      
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(k).Add(1).g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 3);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestChainCall4()
+  {
+    string bhl = @"
+      
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(MakeColor(k).g).g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    node.SetArgs(DynVal.NewNum(2));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestChainCall5()
+  {
+    string bhl = @"
+      
     func Color MakeColor2(string temp)
     {
       Color c = new Color
@@ -3580,218 +3913,6 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestStringArray()
-  {
-    string bhl = @"
-      
-    func string[] test() 
-    {
-      string[] arr = new string[]
-      arr.Add(""foo"")
-      arr.Add(""bar"")
-      return arr
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    var res = intp.ExecNode(node).val;
-
-    //NodeDump(node);
-
-    var lst = res.obj as DynValList;
-    AssertEqual(lst.Count, 2);
-    AssertEqual(lst[0].str, "foo");
-    AssertEqual(lst[1].str, "bar");
-    lst.TryDel();
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestStringArrayAssign()
-  {
-    string bhl = @"
-      
-    func string[] test() 
-    {
-      string[] arr = new string[]
-      arr.Add(""foo"")
-      arr[0] = ""bar""
-      return arr
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    //NodeDump(node);
-
-    var res = intp.ExecNode(node).val;
-
-    var lst = res.obj as DynValList;
-    AssertEqual(lst.Count, 1);
-    AssertEqual(lst[0].str, "bar");
-    lst.TryDel();
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestRemoveFromArray()
-  {
-    string bhl = @"
-      
-    func string[] test() 
-    {
-      string[] arr = new string[]
-      arr.Add(""foo"")
-      arr.Add(""bar"")
-      arr.RemoveAt(1)
-      return arr
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    var res = intp.ExecNode(node).val;
-
-    //NodeDump(node);
-
-    var lst = res.obj as DynValList;
-    AssertEqual(lst.Count, 1);
-    AssertEqual(lst[0].str, "foo");
-    lst.TryDel();
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestTempArrayIdx()
-  {
-    string bhl = @"
-
-    func int[] mkarray()
-    {
-      int[] arr = new int[]
-      arr.Add(1)
-      arr.Add(100)
-      return arr
-    }
-      
-    func int test() 
-    {
-      return mkarray()[1]
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    var res = ExtractNum(intp.ExecNode(node));
-
-    AssertEqual(res, 100);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestTempArrayCount()
-  {
-    string bhl = @"
-
-    func int[] mkarray()
-    {
-      int[] arr = new int[]
-      arr.Add(1)
-      arr.Add(100)
-      return arr
-    }
-      
-    func int test() 
-    {
-      return mkarray().Count
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    var res = ExtractNum(intp.ExecNode(node));
-
-    AssertEqual(res, 2);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestTempArrayRemoveAt()
-  {
-    string bhl = @"
-
-    func int[] mkarray()
-    {
-      int[] arr = new int[]
-      arr.Add(1)
-      arr.Add(100)
-      return arr
-    }
-      
-    func void test() 
-    {
-      mkarray().RemoveAt(0)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    intp.ExecNode(node, 0);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestTempArrayAdd()
-  {
-    string bhl = @"
-
-    func int[] mkarray()
-    {
-      int[] arr = new int[]
-      arr.Add(1)
-      arr.Add(100)
-      return arr
-    }
-      
-    func void test() 
-    {
-      mkarray().Add(300)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    intp.ExecNode(node, 0);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestDynValListOwnership()
   {
     var lst = DynValList.New();
@@ -3907,7 +4028,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-
+    //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 2);

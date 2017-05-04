@@ -1496,38 +1496,26 @@ public class Interpreter : AST_Visitor
     if(node.type == EnumCall.VAR)
     {
       curr_node.addChild(new VarAccessNode(node.Name()));
-      VisitChildren(node);
     }
     else if(node.type == EnumCall.VARW)
     {
-      VisitChildren(node);
       curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.WRITE));
     }
     else if(node.type == EnumCall.MVAR)
     {
       curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name()));
-      VisitChildren(node);
     }
     else if(node.type == EnumCall.MVARW)
     {
-      VisitChildren(node);
       curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE));
     }
     else if(node.type == EnumCall.FUNC || node.type == EnumCall.MFUNC)
     {
       AddFuncCallNode(node);
-
-      //rest of the call chain
-      for(int i=node.cargs_num;i<node.children.Count;++i)
-        Visit(node.children[i]);
     }
     else if(node.type == EnumCall.FUNC_PTR || node.type == EnumCall.FUNC_PTR_POP)
     {
       curr_node.addChild(new CallFuncPtr(node));
-
-      //rest of the call chain
-      for(int i=node.cargs_num;i<node.children.Count;++i)
-        Visit(node.children[i]);
     }
     else if(node.type == EnumCall.FUNC2VAR)
     {
@@ -1547,23 +1535,14 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.ARR_IDX)
     {
-      //expression
-      Visit(node.children[0]);
-
       var bnd = bindings.FindBinding<ArrayTypeSymbol>(node.scope_ntype);
       if(bnd == null)
         throw new Exception("Could not find class binding: " + node.scope_ntype);
 
       curr_node.addChild(bnd.Create_At());
-
-      //rest of the call chain
-      for(int i=1;i<node.children.Count;++i)
-        Visit(node.children[i]);
     }
     else if(node.type == EnumCall.ARR_IDXW)
     {
-      VisitChildren(node);
-
       var bnd = bindings.FindBinding<ArrayTypeSymbol>(node.scope_ntype);
       if(bnd == null)
         throw new Exception("Could not find class binding: " + node.scope_ntype);
@@ -1727,6 +1706,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_VarDecl node)
   {
+    //NOTE: expression comes first
     VisitChildren(node);
     curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.DECL));
   }

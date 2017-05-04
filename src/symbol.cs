@@ -170,7 +170,7 @@ public class Symbol
     string s = "";
     if(scope != null) 
       s = scope.GetScopeName() + '.';
-    return '<' + s + name??"?" + ':' + type.name??"?" + '>';
+    return '<' + s + (name??"?") + ':' + (type.name??"?") + '>';
   }
 
   public string Location()

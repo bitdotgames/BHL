@@ -1217,6 +1217,7 @@ public class BreakNode : BehaviorTreeTerminalNode
   }
 }
 
+//TODO:
 //public class ContinueNode : BehaviorTreeTerminalNode
 //{
 //  public override void init() 
@@ -1684,7 +1685,6 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
         throw new Exception("Not a variable symbol: " + name);
 
       var ctx = mode == READ_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
-
       var val = DynVal.New();
 
       if(var_symb is FieldSymbol)
@@ -1799,13 +1799,13 @@ public class FuncNodeAST : FuncNode
   public override int DeclArgsNum()
   {
     var fparams = decl.fparams();
-    return fparams.children.Count == 0 ? 0 : fparams.children[0].children.Count;
+    return fparams.children.Count == 0 ? 0 : fparams.children.Count;
   }
 
   public override AST DeclArg(int i)
   {
     var fparams = decl.fparams();
-    return fparams.children.Count == 0 ? null : fparams.children[0].children[i];
+    return fparams.children.Count == 0 ? null : fparams.children[i];
   }
 
   public override string GetName()
@@ -1832,14 +1832,14 @@ public class FuncNodeAST : FuncNode
     Inflate();
 
     var fparams = decl.fparams();
-    var func_args = fparams.children.Count == 0 ? 0 : fparams.children[0].children.Count;
+    var func_args = fparams.children.Count == 0 ? 0 : fparams.children.Count;
 
     //Util.Debug("CALL FUNC AST INIT " + func_args);
 
-    //setting args passed to func
+    //NOTE: setting args passed to func
     for(int i=func_args;i-- > 0;)
     {
-      var fparam = (AST_VarDecl)fparams.children[0].children[i];
+      var fparam = (AST_VarDecl)fparams.children[i];
       var fparam_name = fparam.Name();
 
       var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
@@ -2171,9 +2171,8 @@ public class Array_SetAtNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
 
-    //NOTE: args are in reverse order in stack
-    var arr = interp.PopValue();
     var idx = interp.PopValue();
+    var arr = interp.PopValue();
     var val = interp.PopValue().ValueClone();
 
     var lst = arr.obj as DynValList;

@@ -411,16 +411,9 @@ static public class AST_Util
 
   static public AST NewInterimChild(this AST self)
   {
-    var c = AST_Util.New_Interim();
+    var c = new AST_Interim();
     self.AddChild(c);
     return c;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_Interim New_Interim()
-  {
-    return new AST_Interim();
   }
 
   ////////////////////////////////////////////////////////
@@ -485,11 +478,10 @@ static public class AST_Util
     if(fparams.children.Count == 0)
       return 0;
 
-    var sub_fparams = fparams.children[0];
     int num = 0;
-    for(int i=0;i<sub_fparams.children.Count;++i)
+    for(int i=0;i<fparams.children.Count;++i)
     {
-      var fc = sub_fparams.children[i];
+      var fc = fparams.children[i];
       if(fc.children.Count > 0)
         ++num;
     }
@@ -501,7 +493,7 @@ static public class AST_Util
     var fparams = n.fparams();
     if(fparams.children.Count == 0)
       return 0;
-    int num = fparams.children[0].children.Count;
+    int num = fparams.children.Count;
     return num;
   }
 
