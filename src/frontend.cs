@@ -1347,14 +1347,22 @@ public class Frontend : bhlBaseVisitor<object>
 
         var ret_type = new MultiType();
 
-        for(int i=0;i<explen;++i)
+        //NOTE: we traverse expressions in reversed order so that returned
+        //      values are properly placed on a stack
+        for(int i=explen;i-- > 0;)
         {
           var exp = explist.exp()[i];
           Visit(exp);
           ret_type.items.Add(new TypeRef(Wrap(exp).eval_type));
-          
+        }
+
+        //type checking is in proper order
+        for(int i=0;i<explen;++i)
+        {
+          var exp = explist.exp()[i];
           SymbolTable.CheckAssign(fmret_type.items[i].Get(), Wrap(exp));
         }
+
         ret_type.Update();
         Wrap(ctx).eval_type = ret_type;
       }
@@ -1515,6 +1523,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var vd_type = vd.type();
 
+        //check if we declare a var or use an existing one
         if(vd_type == null)
         {
           string vd_name = vd.NAME().GetText(); 

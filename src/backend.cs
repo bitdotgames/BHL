@@ -1087,7 +1087,7 @@ public class Interpreter : AST_Visitor
     if(ret_vals > 0)
     {
       res.vals = new DynVal[ret_vals];
-      for(int i=ret_vals;i-- > 0;)
+      for(int i=0;i<ret_vals;++i)
         res.vals[i] = PopValue();
     }
     else

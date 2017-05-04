@@ -5933,7 +5933,6 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     var trace_stream = new MemoryStream();
 
-    BindLog(globs);
     BindTrace(globs, trace_stream);
     BindStartScriptInMgr(globs);
 
@@ -10965,10 +10964,13 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var globs = SymbolTable.CreateBuiltins();
+    BindLog(globs);
+
+    var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
+    //NodeDump(node);
 
     AssertEqual(vals[0].num, 100);
     AssertEqual(vals[1].str, "bar");
@@ -11283,8 +11285,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
           {
             var interp = Interpreter.instance;
             
-            interp.PushValue(DynVal.NewNum(42));
             interp.PushValue(DynVal.NewStr("foo"));
+            interp.PushValue(DynVal.NewNum(42));
             return BHS.SUCCESS;
           }
         );
@@ -11321,10 +11323,10 @@ func Unit FindUnit(Vec3 pos, float radius) {
           {
             var interp = Interpreter.instance;
             
-            interp.PushValue(DynVal.NewNum(104));
-            interp.PushValue(DynVal.NewStr("foo"));
-            interp.PushValue(DynVal.NewNum(12));
             interp.PushValue(DynVal.NewNum(42.5));
+            interp.PushValue(DynVal.NewNum(12));
+            interp.PushValue(DynVal.NewStr("foo"));
+            interp.PushValue(DynVal.NewNum(104));
             return BHS.SUCCESS;
           }
         );
