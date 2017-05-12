@@ -1310,7 +1310,6 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-
   [IsTested()]
   public void TestPassByRef()
   {
@@ -1335,6 +1334,33 @@ public class BHL_Test
     //NodeDump(node);
 
     AssertEqual(num, 4);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefNonAssignedValue()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      float k
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 1);
     CommonChecks(intp);
   }
 
@@ -11335,8 +11361,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    //NodeDump(node);
     var vals = intp.ExecNode(node, 4).vals;
+    //NodeDump(node);
 
     AssertEqual(vals[0].num, 104);
     AssertEqual(vals[1].str, "foo");

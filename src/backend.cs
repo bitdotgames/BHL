@@ -1681,6 +1681,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_BinaryOpExp node)
   {
+    //NOTE: checking if it's a short circuit expression
     if((int)node.type < 3)
     {
       PushNode(new LogicOpNode(node));
@@ -1694,6 +1695,7 @@ public class Interpreter : AST_Visitor
     }
     else
     {
+      //NOTE: expression comes first
       VisitChildren(node);
       curr_node.addChild(new BinaryOpNode(node));
     }
