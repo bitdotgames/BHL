@@ -3853,6 +3853,31 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUsingBultingTypeAsFunc()
+  {
+    string bhl = @"
+
+    func float foo()
+    {
+      return 14
+    }
+      
+    func int test() 
+    {
+      return int(foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "int : symbol is not not a function"
+    );
+  }
+
+  [IsTested()]
   public void TestEqEnum()
   {
     string bhl = @"
