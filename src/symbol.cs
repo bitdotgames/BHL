@@ -189,6 +189,7 @@ public class BuiltInTypeSymbol : Symbol, Type
   public BuiltInTypeSymbol(string name, int type_index) 
     : base(null, name) 
   {
+    this.type = new TypeRef(this);
     this.type_index = type_index;
   }
 
