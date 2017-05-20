@@ -180,6 +180,9 @@ public class GlobalScope : BaseScope
 
   public TypeRef type(string name)
   {
+    if(name.Length == 0)
+      throw new Exception("Bad type: '" + name + "'");
+
     TypeRef tr;
     if(!type_cache.TryGetValue(name, out tr))
     {
