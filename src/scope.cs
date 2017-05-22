@@ -184,35 +184,36 @@ public class GlobalScope : BaseScope
       throw new Exception("Bad type: '" + name + "'");
 
     TypeRef tr;
-    if(!type_cache.TryGetValue(name, out tr))
+    if(type_cache.TryGetValue(name, out tr))
+      return tr;
+    
+    //let's check if the type was already explicitely defined
+    var t = resolve(name) as Type;
+    if(t != null)
     {
-      //let's check if the type was already explicitely defined
-      var t = resolve(name) as Type;
-      if(t != null)
+      tr = new TypeRef(t);
+    }
+    else
+    {
+#if BHL_FRONT
+      if(IsCompoundType(name))
       {
-        tr = new TypeRef(t);
+        var node = Frontend.ParseType(name);
+        if(node == null)
+          throw new Exception("Bad type: '" + name + "'");
+
+        if(node.type().Length == 1)
+          tr = this.type(node.type()[0]);
+        else
+          tr = this.type(node);
       }
       else
-      {
-#if BHL_FRONT
-        if(IsCompoundType(name))
-        {
-          var node = Frontend.ParseType(name);
-          if(node == null)
-            throw new Exception("Bad type: '" + name + "'");
-
-          if(node.type().Length == 1)
-            tr = this.type(node.type()[0]);
-          else
-            tr = this.type(node);
-        }
-        else
 #endif
         tr = new TypeRef(this, name);
-      }
-
-      type_cache.Add(name, tr);
     }
+
+    type_cache.Add(name, tr);
+    
     return tr;
   }
 
