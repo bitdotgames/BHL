@@ -693,7 +693,7 @@ public class ParallelNode : BehaviorTreeInternalNode
     //force DEFER to keep running
     DeferNode d = new_child as DeferNode;
     if(d != null)
-      d.result = BHS.RUNNING;
+      d.result = succeedPolicy == BhvPolicy.SUCCEED_ON_ALL ? BHS.SUCCESS : BHS.RUNNING;
     
     children.Add(new_child);
     return this;

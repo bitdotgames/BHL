@@ -7047,6 +7047,64 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestParalAllDefer()
+  {
+    string bhl = @"
+
+    func foo(int ticks)
+    {
+      WaitTicks(ticks, true)
+      trace(""A"")
+    }
+
+    func bar(int ticks)
+    {
+      WaitTicks(ticks, true)
+      trace(""B"")
+    }
+
+    func test() 
+    {
+      paral_all {
+        defer {
+          trace(""DEFER"")
+        }
+        bar(3)
+        foo(2)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindWaitTicks(globs);
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    {
+      var status = node.run();
+      AssertEqual(BHS.RUNNING, status);
+    }
+
+    {
+      var status = node.run();
+      AssertEqual(BHS.RUNNING, status);
+    }
+
+    {
+      var status = node.run();
+      AssertEqual(BHS.SUCCESS, status);
+    }
+
+    var str = GetString(trace_stream);
+    AssertEqual("ABDEFER", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestPrio()
   {
     string bhl = @"
