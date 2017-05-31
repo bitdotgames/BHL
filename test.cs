@@ -10154,6 +10154,48 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestJsonFuncArgWithFailingNode()
+  {
+    string bhl = @"
+    func int foo() 
+    {
+      FAILURE()
+      return 142
+    }
+    func void test() 
+    {
+      Foo f = MakeFoo({hey:1, colors:[{r:foo()}]})
+      trace((string)f.hey)
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+          delegate() { return new MakeFooNode(); });
+      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestJsonFuncArgChainCall()
   {
     string bhl = @"
@@ -11875,6 +11917,103 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;WRITE!NODE!DEC1;REL1;DEC0;REL0;", str);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStack()
+  {
+    //Push/Pop
+    {
+      var st = new FastStack<int>(16); 
+      st.Push(1);
+      st.Push(10);
+
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(10, st[1]);
+
+      AssertEqual(10, st.Pop());
+      AssertEqual(st.Count, 1);
+      AssertEqual(1, st[0]);
+
+      AssertEqual(1, st.Pop());
+      AssertEqual(st.Count, 0);
+    }
+
+    //Push/PopFast
+    {
+      var st = new FastStack<int>(16); 
+      st.Push(1);
+      st.Push(10);
+
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(10, st[1]);
+
+      AssertEqual(10, st.PopFast());
+      AssertEqual(st.Count, 1);
+      AssertEqual(1, st[0]);
+
+      AssertEqual(1, st.PopFast());
+      AssertEqual(st.Count, 0);
+    }
+
+    //Push/DecFast
+    {
+      var st = new FastStack<int>(16); 
+      st.Push(1);
+      st.Push(10);
+
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(10, st[1]);
+
+      st.DecFast();
+      AssertEqual(st.Count, 1);
+      AssertEqual(1, st[0]);
+
+      st.DecFast();
+      AssertEqual(st.Count, 0);
+    }
+
+    //RemoveAtFast
+    {
+      var st = new FastStack<int>(16); 
+      st.Push(1);
+      st.Push(2);
+      st.Push(3);
+
+      st.RemoveAtFast(1);
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(3, st[1]);
+    }
+
+    //RemoveAtFast
+    {
+      var st = new FastStack<int>(16); 
+      st.Push(1);
+      st.Push(2);
+      st.Push(3);
+
+      st.RemoveAtFast(0);
+      AssertEqual(st.Count, 2);
+      AssertEqual(2, st[0]);
+      AssertEqual(3, st[1]);
+    }
+
+    //RemoveAtFast
+    {
+      var st = new FastStack<int>(16); 
+      st.Push(1);
+      st.Push(2);
+      st.Push(3);
+
+      st.RemoveAtFast(2);
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(2, st[1]);
+    }
   }
 
   ////////////////////////////////////////////////

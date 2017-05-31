@@ -1076,6 +1076,19 @@ public class FastStack<T>
     m_Storage[m_HeadIdx - 1 - idxofs] = item;
   }
 
+  public void RemoveAtFast(int idx)
+  {
+    if(idx == (m_HeadIdx-1))
+    {
+      DecFast();
+    }
+    else
+    {
+      --m_HeadIdx;
+      Array.Copy(m_Storage, idx+1, m_Storage, idx, m_Storage.Length-idx-1);
+    }
+  }
+
   public T Pop()
   {
     --m_HeadIdx;
@@ -1087,7 +1100,7 @@ public class FastStack<T>
   public T PopFast()
   {
     --m_HeadIdx;
-    return  m_Storage[m_HeadIdx];
+    return m_Storage[m_HeadIdx];
   }
 
   public void DecFast()

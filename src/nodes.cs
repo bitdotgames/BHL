@@ -416,7 +416,7 @@ public class FuncCallNode : SequentialNode
   override public BHS execute()
   {
     var interp = Interpreter.instance;
-    interp.func_args_stack.Push(node.cargs_num);
+    interp.call_stack.Push(node);
 
     //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -443,7 +443,11 @@ public class FuncCallNode : SequentialNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
-    interp.func_args_stack.DecFast();
+    //NOTE: force cleaning of the value stack for the current function
+    if(status == BHS.FAILURE)
+      interp.CleanFuncStackValues(node);
+
+    interp.call_stack.DecFast();
 
     return status;
   }
@@ -1377,7 +1381,7 @@ public class CallFuncPtr : SequentialNode
   public override BHS execute()
   {
     var interp = Interpreter.instance;
-    interp.func_args_stack.Push(node.cargs_num);
+    interp.call_stack.Push(node);
 
     BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
@@ -1399,7 +1403,7 @@ public class CallFuncPtr : SequentialNode
         break;
     } 
 
-    interp.func_args_stack.DecFast();
+    interp.call_stack.DecFast();
 
     return status;
   }
@@ -1857,9 +1861,7 @@ public class FuncNodeAST : FuncNode
 
     //NOTE: let defer have access to the memory
     interp.PushScope(mem);
-    interp.call_stack.Push(decl);
     base.deinit();
-    interp.call_stack.DecFast();
     interp.PopScope();
 
     mem.Clear();
@@ -1870,7 +1872,6 @@ public class FuncNodeAST : FuncNode
     var interp = Interpreter.instance;
 
     interp.PushScope(mem);
-    interp.call_stack.Push(decl);
 
     BHS status;
     try
@@ -1908,7 +1909,6 @@ public class FuncNodeAST : FuncNode
     }
 
     interp.PopScope();
-    interp.call_stack.DecFast();
 
     return status;
   }

@@ -1037,10 +1037,9 @@ public class Interpreter : AST_Visitor
   public GlobalScope bindings;
 
   FastStack<DynVal> stack = new FastStack<DynVal>(256);
+  FastStack<AST_Call> stack_marks = new FastStack<AST_Call>(256);
 
-  public FastStack<AST_FuncDecl> call_stack = new FastStack<AST_FuncDecl>(128);
-
-  public FastStack<int> func_args_stack = new FastStack<int>(128);
+  public FastStack<AST_Call> call_stack = new FastStack<AST_Call>(128);
 
   public void Init(GlobalScope bindings, IModuleLoader module_loader)
   {
@@ -1052,7 +1051,6 @@ public class Interpreter : AST_Visitor
     loaded_modules.Clear();
     func_decls.Clear();
     lmb_decls.Clear();
-    func_args_stack.Clear();
     stack.Clear();
     call_stack.Clear();
 
@@ -1209,7 +1207,7 @@ public class Interpreter : AST_Visitor
   //NOTE: usually used in bindings
   public int GetFuncArgsNum()
   {
-    return func_args_stack.Peek();
+    return call_stack.Peek().cargs_num;
   }
 
   public void JumpReturn()
@@ -1280,25 +1278,45 @@ public class Interpreter : AST_Visitor
   {
     v.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(v);
+    stack_marks.Push(call_stack.Count > 0 ? call_stack.Peek() : null);
   }
 
   public DynVal PopValue()
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+    stack_marks.PopFast();
     return v;
+  }
+
+  public void CleanFuncStackValues(AST_Call call)
+  {
+    for(int i=stack_marks.Count;i-- > 0;)
+    {
+      var mark = stack_marks[i];
+      if(mark == call)
+      {
+        var dv = stack[i];
+        dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+
+        stack.RemoveAtFast(i);
+        stack_marks.RemoveAtFast(i);
+      }
+    }
   }
 
   public void PushRef(DynVal v)
   {
     v.RefMod(RefOp.INC);
     stack.Push(v);
+    stack_marks.Push(call_stack.Count > 0 ? call_stack.Peek() : null);
   }
 
   public DynVal PopRef()
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
+    stack_marks.PopFast();
     return v;
   }
 
