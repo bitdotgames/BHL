@@ -10154,7 +10154,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestJsonFuncArgWithFailingNode()
+  public void TestCleanFuncStack()
   {
     string bhl = @"
     func int foo() 
@@ -10203,7 +10203,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestJsonFuncArgWithFailingNodeInParal()
+  public void TestCleanFuncStackInParal()
   {
     string bhl = @"
     func int foo(int ticks) 
