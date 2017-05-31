@@ -1090,6 +1090,11 @@ public class FastStack<T>
     return  m_Storage[m_HeadIdx];
   }
 
+  public void DecFast()
+  {
+    --m_HeadIdx;
+  }
+
   public void Clear()
   {
     Array.Clear(m_Storage, 0, m_Storage.Length);
