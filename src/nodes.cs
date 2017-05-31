@@ -416,7 +416,6 @@ public class FuncCallNode : SequentialNode
   override public BHS execute()
   {
     var interp = Interpreter.instance;
-    interp.call_stack.Push(node);
 
     //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -426,6 +425,13 @@ public class FuncCallNode : SequentialNode
       var currentTask = children[currentPosition];
       //status = currentTask.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
+
+      //NOTE: the last node is actually the func call so
+      //      we push it on to the call stack when it's executed
+      bool is_func_call = currentPosition == children.Count-1;
+      if(is_func_call)
+        interp.call_stack.Push(node);
+
       if(currentTask.currStatus != BHS.RUNNING)
         currentTask.init();
       status = currentTask.execute();
@@ -433,6 +439,18 @@ public class FuncCallNode : SequentialNode
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
         currentTask.deinit();
+
+      //NOTE: only when it's actual func call we pop it from the call stack
+      //      and apply required stack cleanups
+      if(is_func_call)
+      {
+        //NOTE: force cleaning of the value stack for the current function
+        if(status == BHS.FAILURE)
+          interp.CleanFuncStackValues(node);
+
+        interp.call_stack.DecFast();
+      }
+
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -442,12 +460,6 @@ public class FuncCallNode : SequentialNode
     if(status != BHS.RUNNING)
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
-
-    //NOTE: force cleaning of the value stack for the current function
-    if(status == BHS.FAILURE)
-      interp.CleanFuncStackValues(node);
-
-    interp.call_stack.DecFast();
 
     return status;
   }

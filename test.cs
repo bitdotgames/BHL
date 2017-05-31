@@ -10162,10 +10162,16 @@ public class BHL_Test
       FAILURE()
       return 142
     }
-    func void test() 
+
+    func bar()
     {
       Foo f = MakeFoo({hey:1, colors:[{r:foo()}]})
       trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
     }
     ";
 
@@ -10192,6 +10198,69 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
+    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonFuncArgWithFailingNodeInParal()
+  {
+    string bhl = @"
+    func int foo(int ticks) 
+    {
+      WaitTicks(ticks, false)
+      return 42
+    }
+
+    func bar()
+    {
+      Foo f
+      paral_all {
+        seq {
+          f = MakeFoo({hey:10, colors:[{r:foo(2)}]})
+        }
+        seq {
+          f = MakeFoo({hey:20, colors:[{r:foo(3)}]})
+        }
+      }
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindWaitTicks(globs);
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+          delegate() { return new MakeFooNode(); });
+      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertTrue(status == BHS.RUNNING);
+    status = node.run();
+    AssertTrue(status == BHS.FAILURE);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("", str);
+    AssertEqual(intp.StackCount(), 0);
     CommonChecks(intp);
   }
 
