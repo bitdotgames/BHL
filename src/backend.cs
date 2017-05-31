@@ -1278,6 +1278,7 @@ public class Interpreter : AST_Visitor
   {
     v.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(v);
+    //NOTE: marking pushed value with current func call if it's present
     stack_marks.Push(call_stack.Count > 0 ? call_stack.Peek() : null);
   }
 
@@ -1285,7 +1286,15 @@ public class Interpreter : AST_Visitor
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-    stack_marks.PopFast();
+    stack_marks.DecFast();
+    return v;
+  }
+
+  public DynVal PopRef()
+  {
+    var v = stack.PopFast();
+    v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
+    stack_marks.DecFast();
     return v;
   }
 
@@ -1303,21 +1312,6 @@ public class Interpreter : AST_Visitor
         stack_marks.RemoveAtFast(i);
       }
     }
-  }
-
-  public void PushRef(DynVal v)
-  {
-    v.RefMod(RefOp.INC);
-    stack.Push(v);
-    stack_marks.Push(call_stack.Count > 0 ? call_stack.Peek() : null);
-  }
-
-  public DynVal PopRef()
-  {
-    var v = stack.PopFast();
-    v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
-    stack_marks.PopFast();
-    return v;
   }
 
   public bool PeekValue(ref DynVal res)
