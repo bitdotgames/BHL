@@ -10157,15 +10157,113 @@ public class BHL_Test
   public void TestCleanFuncStack()
   {
     string bhl = @"
-    func int foo() 
+    func int foo(int v) 
     {
       FAILURE()
-      return 142
+      return v
     }
 
     func bar()
     {
-      Foo f = MakeFoo({hey:1, colors:[{r:foo()}]})
+      Foo f = MakeFoo({hey:1, colors:[{r:foo(10)}]})
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+          delegate() { return new MakeFooNode(); });
+      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("", str);
+    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncPtrStack()
+  {
+    string bhl = @"
+    func int foo(int v) 
+    {
+      FAILURE()
+      return v
+    }
+
+    func bar()
+    {
+      int^(int) p = foo
+      Foo f = MakeFoo({hey:1, colors:[{r:p(42)}]})
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+          delegate() { return new MakeFooNode(); });
+      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("", str);
+    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanLambdaStack()
+  {
+    string bhl = @"
+    func bar()
+    {
+      Foo f = MakeFoo({hey:1, colors:[{r:
+          func int (int v) { 
+            FAILURE()
+            return v
+          }(42) 
+        }]})
       trace((string)f.hey)
     }
 
@@ -10221,6 +10319,69 @@ public class BHL_Test
         }
         seq {
           f = MakeFoo({hey:20, colors:[{r:foo(3)}]})
+        }
+      }
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindWaitTicks(globs);
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+          delegate() { return new MakeFooNode(); });
+      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertTrue(status == BHS.RUNNING);
+    status = node.run();
+    AssertTrue(status == BHS.FAILURE);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("", str);
+    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncPtrStackInParal()
+  {
+    string bhl = @"
+    func int foo(int ticks) 
+    {
+      WaitTicks(ticks, false)
+      return 42
+    }
+
+    func bar()
+    {
+      int^(int) p = foo
+      Foo f
+      paral_all {
+        seq {
+          f = MakeFoo({hey:10, colors:[{r:p(2)}]})
+        }
+        seq {
+          f = MakeFoo({hey:20, colors:[{r:p(3)}]})
         }
       }
       trace((string)f.hey)
