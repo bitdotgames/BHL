@@ -10426,6 +10426,76 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCleanLambdaStackInParal()
+  {
+    string bhl = @"
+    func bar()
+    {
+      Foo f
+      paral_all {
+        seq {
+          f = MakeFoo({hey:10, colors:[{r:
+              func int (int ticks) 
+              { 
+                WaitTicks(ticks, false)
+                FAILURE()
+                return ticks
+              }(2) 
+              }]})
+        }
+        seq {
+          f = MakeFoo({hey:20, colors:[{r:
+              func int (int ticks) 
+              { 
+                WaitTicks(ticks, false)
+                FAILURE()
+                return ticks
+              }(3) 
+              }]})
+        }
+      }
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindWaitTicks(globs);
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+          delegate() { return new MakeFooNode(); });
+      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertTrue(status == BHS.RUNNING);
+    status = node.run();
+    AssertTrue(status == BHS.FAILURE);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("", str);
+    AssertEqual(intp.StackCount(), 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestInterleaveFuncStackInParal()
   {
     string bhl = @"
