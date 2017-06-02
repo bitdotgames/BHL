@@ -1036,7 +1036,7 @@ public class Interpreter : AST_Visitor
 
   public GlobalScope bindings;
 
-  FastStack<DynVal> stack = new FastStack<DynVal>(256);
+  public FastStack<DynVal> stack = new FastStack<DynVal>(256);
   FastStack<AST_Call> stack_marks = new FastStack<AST_Call>(256);
 
   public FastStack<AST_Call> call_stack = new FastStack<AST_Call>(128);
@@ -1326,11 +1326,6 @@ public class Interpreter : AST_Visitor
   public DynVal PeekValue()
   {
     return stack.Peek();
-  }
-
-  public int StackCount()
-  {
-    return stack.Count;
   }
 
   ///////////////////////////////////////////////////////////

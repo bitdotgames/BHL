@@ -10198,7 +10198,7 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -10248,7 +10248,7 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -10296,7 +10296,7 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -10358,7 +10358,7 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -10421,7 +10421,7 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -10491,7 +10491,7 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -10558,7 +10558,7 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("233", str);
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -12509,7 +12509,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
   void CommonChecks(Interpreter intp)
   {
-    AssertEqual(intp.StackCount(), 0);
+    AssertEqual(intp.stack.Count, 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
     AssertEqual(FuncCtx.PoolCount, FuncCtx.PoolCountFree);
