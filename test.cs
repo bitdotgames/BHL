@@ -12382,8 +12382,38 @@ func Unit FindUnit(Vec3 pos, float radius) {
       AssertEqual(2, st[1]);
     }
   }
+  
+  [IsTested()]
+  public void TestDynVal()
+  {
+    // ToAny()
+    {
+      string str = "str";
+      double num = 33.0;
+      bool bl = false;
+      object obj = new List<int>(33);
+
+      var dv = DynVal.NewStr(str);
+      Assert(dv.ToAny() == (object)str);
+      
+      dv = DynVal.NewNum(num);
+      Assert((double)dv.ToAny() == num);
+
+      dv = DynVal.NewBool(bl);
+      Assert((bool)dv.ToAny() == bl);
+
+      dv = DynVal.NewObj(obj);
+      Assert(dv.ToAny() == obj);
+    }
+  }
 
   ////////////////////////////////////////////////
+
+  static void Assert(bool condition, string msg = null)
+  {
+    if(!condition)
+      throw new Exception("Assertion failed " + (msg != null ? msg : ""));
+  }
   
   static void AssertEqual(double a, double b)
   {
