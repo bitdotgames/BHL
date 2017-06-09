@@ -334,7 +334,7 @@ public class DynVal
   public override string ToString() 
   {
     if(type == NUMBER)
-      return _num  + ":<NUMBER>";
+      return _num + ":<NUMBER>";
     else if(type == BOOL)
       return bval + ":<BOOL>";
     else if(type == STRING)
@@ -345,6 +345,22 @@ public class DynVal
       return "<NIL>";
     else
       return "DYNVAL: type:"+type;
+  }
+
+  public object ToAny() 
+  {
+    if(type == NUMBER)
+      return (object)_num;
+    else if(type == BOOL)
+      return (object)bval;
+    else if(type == STRING)
+      return(object)_str;
+    else if(type == OBJ)
+      return _obj;
+    else if(type == NIL)
+      return null;
+    else
+      throw new Exception("ToAny(): please support type: " + type);
   }
 
   static public void PoolAlloc(int num)
