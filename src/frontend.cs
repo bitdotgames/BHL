@@ -1190,7 +1190,14 @@ public class Frontend : bhlBaseVisitor<object>
     if(int_num != null)
     {
       Wrap(ctx).eval_type = SymbolTable._int;
-      node.nval = int.Parse(int_num.GetText());
+      try
+      {
+        node.nval = int.Parse(int_num.GetText());
+      }
+      catch(OverflowException)
+      {
+        node.nval = double.Parse(int_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
+      }
     }
     else if(flt_num != null)
     {
