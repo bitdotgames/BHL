@@ -21,11 +21,20 @@ public class BHL_Test
   [IsTested()]
   public void TestReturnNum()
   {
+    TestReturnNum("100", 100);
+    TestReturnNum("2147483647", 2147483647);
+    TestReturnNum("2147483648", 2147483648);
+    TestReturnNum("100.5", 100, equality_expected : false);
+    TestReturnNum("2147483648.1", 2147483648, equality_expected : false);
+  }
+
+  void TestReturnNum(string numstr, double expected_num, bool equality_expected = true) 
+  {
     string bhl = @"
       
     func float test() 
     {
-      return 100
+      return "+numstr+@"
     }
     ";
 
@@ -34,7 +43,10 @@ public class BHL_Test
     var num = ExtractNum(intp.ExecNode(node));
 
     //NodeDump(node);
-    AssertEqual(num, 100);
+    if(equality_expected)
+      AssertEqual(num, expected_num);
+    else
+      Assert(num != expected_num, expected_num+" != "+numstr);
     CommonChecks(intp);
   }
 
