@@ -781,7 +781,8 @@ public class FuncCtx : DynValRefcounted
 
 public class DynValList : IList<DynVal>, DynValRefcounted
 {
-  List<DynVal> lst = new List<DynVal>();
+  //NOTE: exposed to allow manipulations like Reverse(). Use with caution.
+  public readonly List<DynVal> lst = new List<DynVal>();
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection
