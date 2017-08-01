@@ -2817,6 +2817,16 @@ public class BHL_Test
     public Color c = new Color();
   }
 
+  public struct StringStruct
+  {
+    public string str;
+  }
+
+  public struct NestedStruct
+  {
+    public StringStruct child;
+  }
+
   public class MkColorNode : BehaviorTreeTerminalNode
   {
     public override void init()
@@ -2936,6 +2946,64 @@ public class BHL_Test
       );
 
       globs.define(fn);
+    }
+  }
+
+  void BindStringStruct(GlobalScope globs)
+  {
+    {
+      var cl = new ClassBindSymbol("StringStruct",
+        delegate(ref DynVal v) 
+        { 
+          v.obj = new StringStruct();
+        }
+      );
+
+      globs.define(cl);
+
+      cl.define(new FieldSymbol("str", globs.type("string"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var c = (StringStruct)ctx.obj;
+          v.str = c.str;
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var c = (StringStruct)ctx.obj;
+          c.str = v._str; 
+          ctx.obj = c;
+        }
+      ));
+    }
+  }
+
+  void BindNestedStruct(GlobalScope globs)
+  {
+    BindStringStruct(globs);
+
+    {
+      var cl = new ClassBindSymbol("NestedStruct",
+        delegate(ref DynVal v) 
+        { 
+          v.obj = new NestedStruct();
+        }
+      );
+
+      globs.define(cl);
+
+      cl.define(new FieldSymbol("child", globs.type("StringStruct"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var c = (NestedStruct)ctx.obj;
+          v.obj = c.child;
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var c = (NestedStruct)ctx.obj;
+          c.child = (StringStruct)v.obj; 
+          ctx.obj = c;
+        }
+      ));
     }
   }
 
@@ -9746,6 +9814,31 @@ public class BHL_Test
     var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 111);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonNestedStruct()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      NestedStruct n = {child : {str : ""hey""}}
+      return n.child.str
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindNestedStruct(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractStr(intp.ExecNode(node));
+
+    AssertEqual(res, "hey");
     CommonChecks(intp);
   }
 
