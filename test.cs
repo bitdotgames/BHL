@@ -2825,6 +2825,7 @@ public class BHL_Test
   public struct NestedStruct
   {
     public StringStruct child;
+    public StringStruct child2;
   }
 
   public class MkColorNode : BehaviorTreeTerminalNode
@@ -3001,6 +3002,20 @@ public class BHL_Test
         {
           var c = (NestedStruct)ctx.obj;
           c.child = (StringStruct)v.obj; 
+          ctx.obj = c;
+        }
+      ));
+
+      cl.define(new FieldSymbol("child2", globs.type("StringStruct"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var c = (NestedStruct)ctx.obj;
+          v.obj = c.child2;
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var c = (NestedStruct)ctx.obj;
+          c.child2 = (StringStruct)v.obj; 
           ctx.obj = c;
         }
       ));
@@ -9824,8 +9839,11 @@ public class BHL_Test
       
     func string test() 
     {
-      NestedStruct n = {child : {str : ""hey""}}
-      return n.child.str
+      NestedStruct n = {
+        child : {str : ""hey""},
+        child2 : {str : ""hey2""}
+      }
+      return n.child2.str
     }
     ";
 
@@ -9838,7 +9856,7 @@ public class BHL_Test
     //NodeDump(node);
     var res = ExtractStr(intp.ExecNode(node));
 
-    AssertEqual(res, "hey");
+    AssertEqual(res, "hey2");
     CommonChecks(intp);
   }
 
