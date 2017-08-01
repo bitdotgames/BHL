@@ -2817,15 +2817,15 @@ public class BHL_Test
     public Color c = new Color();
   }
 
-  public struct StringStruct
+  public class StringClass
   {
     public string str;
   }
 
   public struct NestedStruct
   {
-    public StringStruct child;
-    public StringStruct child2;
+    public StringClass child;
+    public StringClass child2;
   }
 
   public class MkColorNode : BehaviorTreeTerminalNode
@@ -2950,13 +2950,13 @@ public class BHL_Test
     }
   }
 
-  void BindStringStruct(GlobalScope globs)
+  void BindStringClass(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol("StringStruct",
+      var cl = new ClassBindSymbol("StringClass",
         delegate(ref DynVal v) 
         { 
-          v.obj = new StringStruct();
+          v.obj = new StringClass();
         }
       );
 
@@ -2965,12 +2965,12 @@ public class BHL_Test
       cl.define(new FieldSymbol("str", globs.type("string"),
         delegate(DynVal ctx, ref DynVal v)
         {
-          var c = (StringStruct)ctx.obj;
+          var c = (StringClass)ctx.obj;
           v.str = c.str;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
-          var c = (StringStruct)ctx.obj;
+          var c = (StringClass)ctx.obj;
           c.str = v._str; 
           ctx.obj = c;
         }
@@ -2980,7 +2980,7 @@ public class BHL_Test
 
   void BindNestedStruct(GlobalScope globs)
   {
-    BindStringStruct(globs);
+    BindStringClass(globs);
 
     {
       var cl = new ClassBindSymbol("NestedStruct",
@@ -2992,21 +2992,21 @@ public class BHL_Test
 
       globs.define(cl);
 
-      cl.define(new FieldSymbol("child", globs.type("StringStruct"),
+      cl.define(new FieldSymbol("child", globs.type("StringClass"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (NestedStruct)ctx.obj;
-          v.obj = c.child;
+          v.SetObj(c.child);
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var c = (NestedStruct)ctx.obj;
-          c.child = (StringStruct)v.obj; 
+          c.child = (StringClass)v._obj; 
           ctx.obj = c;
         }
       ));
 
-      cl.define(new FieldSymbol("child2", globs.type("StringStruct"),
+      cl.define(new FieldSymbol("child2", globs.type("StringClass"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (NestedStruct)ctx.obj;
@@ -3015,7 +3015,7 @@ public class BHL_Test
         delegate(ref DynVal ctx, DynVal v)
         {
           var c = (NestedStruct)ctx.obj;
-          c.child2 = (StringStruct)v.obj; 
+          c.child2 = (StringClass)v.obj; 
           ctx.obj = c;
         }
       ));
@@ -9833,17 +9833,16 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestJsonNestedStruct()
+  public void TestJsonNestedStructWithClass()
   {
     string bhl = @"
       
     func string test() 
     {
       NestedStruct n = {
-        child : {str : ""hey""},
-        child2 : {str : ""hey2""}
+        child : {str : ""hey""}
       }
-      return n.child2.str
+      return n.child.str
     }
     ";
 
@@ -9856,7 +9855,7 @@ public class BHL_Test
     //NodeDump(node);
     var res = ExtractStr(intp.ExecNode(node));
 
-    AssertEqual(res, "hey2");
+    AssertEqual(res, "hey");
     CommonChecks(intp);
   }
 

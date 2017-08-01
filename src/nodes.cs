@@ -1673,11 +1673,11 @@ public class VarAccessNode : BehaviorTreeTerminalNode
 
 public class MVarAccessNode : BehaviorTreeTerminalNode
 {
-  public const int READ           = 1;
-  public const int WRITE          = 2;
-  public const int WRITE_PUSH_CTX = 3;
-  public const int WRITE_INV_ARGS = 4;
-  public const int READ_PUSH_CTX  = 5;
+  public const int READ                = 1;
+  public const int WRITE               = 2;
+  public const int WRITE_PUSH_CTX_SAFE = 3;
+  public const int WRITE_INV_ARGS      = 4;
+  public const int READ_PUSH_CTX       = 5;
 
   uint scope_ntype;
   HashedName name;
@@ -1698,9 +1698,10 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
     var interp = Interpreter.instance;
     
     //TODO: support user classes as well
+    ClassSymbol bnd = null;
     if(bnd_member == null)
     {
-      var bnd = interp.bindings.FindBinding<ClassSymbol>(scope_ntype);
+      bnd = interp.bindings.FindBinding<ClassSymbol>(scope_ntype);
       if(bnd == null)
         throw new Exception("Class binding not found: " + scope_ntype); 
 
@@ -1725,7 +1726,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       interp.PushValue(val);
     }
-    else if(mode == WRITE || mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
+    else if(mode == WRITE || mode == WRITE_PUSH_CTX_SAFE || mode == WRITE_INV_ARGS)
     {
       var var_symb = (VariableSymbol)bnd_member;
       if(var_symb == null)
@@ -1734,10 +1735,10 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       DynVal val = null;
       DynVal ctx = null;
 
-      if(mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
+      if(mode == WRITE_PUSH_CTX_SAFE || mode == WRITE_INV_ARGS)
       {
         val = interp.PopValue();
-        ctx = mode == WRITE_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
+        ctx = mode == WRITE_PUSH_CTX_SAFE ? interp.PeekValue() : interp.PopValue();
       }
       else
       {
@@ -1746,7 +1747,11 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       }
 
       if(var_symb is FieldSymbol)
+      {
+        if(mode == WRITE_PUSH_CTX_SAFE && ctx.obj == null)
+          bnd.creator(ref ctx);
         (var_symb as FieldSymbol).setter(ref ctx, val);
+      }
       else
         throw new Exception("Not implemented");
     }
@@ -1760,7 +1765,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       str += "<-c <-v =";
     else if(mode == WRITE_INV_ARGS)
       str += "<-v <-c =";
-    else if(mode == WRITE_PUSH_CTX)
+    else if(mode == WRITE_PUSH_CTX_SAFE)
       str += "<-v <-c = c->";
     else if(mode == READ)
       str += "<-c v->";
