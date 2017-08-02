@@ -1794,7 +1794,7 @@ public class Interpreter : AST_Visitor
     jcts.Push(jc);
 
     VisitChildren(node);
-    curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE_PUSH_CTX_SAFE));
+    curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE_PUSH_CTX));
 
     jcts.Pop();
   }

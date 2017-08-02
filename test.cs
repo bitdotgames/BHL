@@ -3055,7 +3055,10 @@ public class BHL_Test
       var cl = new ClassBindSymbol("MasterStruct",
         delegate(ref DynVal v) 
         { 
-          v.obj = new MasterStruct();
+          var o = new MasterStruct();
+          o.child = new StringClass();
+          o.child2 = new StringClass();
+          v.obj = o;
         }
       );
 
