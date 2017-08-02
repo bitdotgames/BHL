@@ -1748,7 +1748,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       if(var_symb is FieldSymbol)
       {
-        if(mode == WRITE_PUSH_CTX_SAFE && ctx.obj == null)
+        if(mode == WRITE_PUSH_CTX_SAFE && (ctx._type == DynVal.NONE || ctx._type == DynVal.NIL))
           bnd.creator(ref ctx);
         (var_symb as FieldSymbol).setter(ref ctx, val);
       }

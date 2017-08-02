@@ -2822,10 +2822,31 @@ public class BHL_Test
     public string str;
   }
 
-  public struct NestedStruct
+  public struct IntStruct
+  {
+    public int n;
+    public int n2;
+
+    public static void Decode(DynVal dv, ref IntStruct dst)
+    {
+      dst.n = (int)dv._num;
+      dst.n2 = (int)dv._num2;
+    }
+
+    public static void Encode(DynVal dv, IntStruct dst)
+    {
+      dv._type = DynVal.ENCODED;
+      dv._num = dst.n;
+      dv._num2 = dst.n2;
+    }
+  }
+
+  public struct MasterStruct
   {
     public StringClass child;
     public StringClass child2;
+    public IntStruct child_struct;
+    public IntStruct child_struct2;
   }
 
   public class MkColorNode : BehaviorTreeTerminalNode
@@ -2978,15 +2999,63 @@ public class BHL_Test
     }
   }
 
-  void BindNestedStruct(GlobalScope globs)
+  void BindIntStruct(GlobalScope globs)
   {
-    BindStringClass(globs);
-
     {
-      var cl = new ClassBindSymbol("NestedStruct",
+      var cl = new ClassBindSymbol("IntStruct",
         delegate(ref DynVal v) 
         { 
-          v.obj = new NestedStruct();
+          var s = new IntStruct();
+          IntStruct.Encode(v, s);
+        }
+      );
+
+      globs.define(cl);
+
+      cl.define(new FieldSymbol("n", globs.type("int"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var s = new IntStruct();
+          IntStruct.Decode(ctx, ref s);
+          v.num = s.n;
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var s = new IntStruct();
+          IntStruct.Decode(ctx, ref s);
+          s.n = (int)v.num;
+          IntStruct.Encode(ctx, s);
+        }
+      ));
+
+      cl.define(new FieldSymbol("n2", globs.type("int"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var s = new IntStruct();
+          IntStruct.Decode(ctx, ref s);
+          v.num = s.n2;
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var s = new IntStruct();
+          IntStruct.Decode(ctx, ref s);
+          s.n2 = (int)v.num;
+          IntStruct.Encode(ctx, s);
+        }
+      ));
+    }
+  }
+
+  void BindMasterStruct(GlobalScope globs)
+  {
+    BindStringClass(globs);
+    BindIntStruct(globs);
+
+    {
+      var cl = new ClassBindSymbol("MasterStruct",
+        delegate(ref DynVal v) 
+        { 
+          v.obj = new MasterStruct();
         }
       );
 
@@ -2995,12 +3064,12 @@ public class BHL_Test
       cl.define(new FieldSymbol("child", globs.type("StringClass"),
         delegate(DynVal ctx, ref DynVal v)
         {
-          var c = (NestedStruct)ctx.obj;
+          var c = (MasterStruct)ctx.obj;
           v.SetObj(c.child);
         },
         delegate(ref DynVal ctx, DynVal v)
         {
-          var c = (NestedStruct)ctx.obj;
+          var c = (MasterStruct)ctx.obj;
           c.child = (StringClass)v._obj; 
           ctx.obj = c;
         }
@@ -3009,16 +3078,49 @@ public class BHL_Test
       cl.define(new FieldSymbol("child2", globs.type("StringClass"),
         delegate(DynVal ctx, ref DynVal v)
         {
-          var c = (NestedStruct)ctx.obj;
+          var c = (MasterStruct)ctx.obj;
           v.obj = c.child2;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
-          var c = (NestedStruct)ctx.obj;
+          var c = (MasterStruct)ctx.obj;
           c.child2 = (StringClass)v.obj; 
           ctx.obj = c;
         }
       ));
+
+      cl.define(new FieldSymbol("child_struct", globs.type("IntStruct"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct.Encode(v, c.child_struct);
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct s = new IntStruct();
+          IntStruct.Decode(v, ref s);
+          c.child_struct = s;
+          ctx.obj = c;
+        }
+      ));
+
+      cl.define(new FieldSymbol("child_struct2", globs.type("IntStruct"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct.Encode(v, c.child_struct2);
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct s = new IntStruct();
+          IntStruct.Decode(v, ref s);
+          c.child_struct2 = s;
+          ctx.obj = c;
+        }
+      ));
+
     }
   }
 
@@ -9833,29 +9935,58 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestJsonNestedStructWithClass()
+  public void TestJsonMasterStructWithClass()
   {
     string bhl = @"
       
     func string test() 
     {
-      NestedStruct n = {
-        child : {str : ""hey""}
+      MasterStruct n = {
+        child : {str : ""hey""},
+        child2 : {str : ""hey2""}
       }
-      return n.child.str
+      return n.child2.str
     }
     ";
 
     var globs = SymbolTable.CreateBuiltins();
     
-    BindNestedStruct(globs);
+    BindMasterStruct(globs);
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractStr(intp.ExecNode(node));
 
-    AssertEqual(res, "hey");
+    AssertEqual(res, "hey2");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonMasterStructWithStruct()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      MasterStruct n = {
+        child_struct : {n: 1, n2:10},
+        child_struct2 : {n: 2, n2:20}
+      }
+      return n.child_struct2.n
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindMasterStruct(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
     CommonChecks(intp);
   }
 

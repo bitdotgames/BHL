@@ -20,12 +20,13 @@ public struct RefOp
 
 public class DynVal
 {
-  public const byte NONE   = 0;
-  public const byte NUMBER = 1;
-  public const byte BOOL   = 2;
-  public const byte STRING = 3;
-  public const byte OBJ    = 4;
-  public const byte NIL    = 5;
+  public const byte NONE      = 0;
+  public const byte NUMBER    = 1;
+  public const byte BOOL      = 2;
+  public const byte STRING    = 3;
+  public const byte OBJ       = 4;
+  public const byte NIL       = 5;
+  public const byte ENCODED   = 6; //used for small value type objects encoded directly into DynVal
 
   public bool IsEmpty { get { return type == NONE; } }
 
@@ -67,7 +68,6 @@ public class DynVal
     }
   }
 
-  byte _type;
   //NOTE: -1 means it's in released state
   public int _refs;
   public int refs { get { return _refs; } } 
@@ -76,6 +76,7 @@ public class DynVal
 
   //NOTE: below members are semi-public, one can use them for 
   //      fast access or non-allocating storage of structs(e.g vectors, quaternions)
+  public byte _type;
   public double _num;
   public double _num2;
   public double _num3;
@@ -343,6 +344,8 @@ public class DynVal
       return _obj.GetType().Name + ":<OBJ>";
     else if(type == NIL)
       return "<NIL>";
+    else if(type == ENCODED)
+      return "<ENCODED>";
     else
       return "DYNVAL: type:"+type;
   }
@@ -359,6 +362,8 @@ public class DynVal
       return _obj;
     else if(type == NIL)
       return null;
+    else if(type == ENCODED)
+      return this;
     else
       throw new Exception("ToAny(): please support type: " + type);
   }
