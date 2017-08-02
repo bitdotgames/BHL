@@ -10135,6 +10135,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestJsonDefaultEmptyArg()
+  {
+    string bhl = @"
+    func float foo(Color c = {})
+    {
+      return c.r
+    }
+
+    func float test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestJsonDefaultArg()
   {
     string bhl = @"
