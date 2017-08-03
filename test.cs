@@ -21,20 +21,39 @@ public class BHL_Test
   [IsTested()]
   public void TestReturnNum()
   {
-    TestReturnNum("100", 100);
-    TestReturnNum("2147483647", 2147483647);
-    TestReturnNum("2147483648", 2147483648);
-    TestReturnNum("100.5", 100, equality_expected : false);
-    TestReturnNum("2147483648.1", 2147483648, equality_expected : false);
+    string bhl = @"
+      
+    func int test() 
+    {
+      return 100
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var n = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(n, 100);
+    CommonChecks(intp);
   }
 
-  void TestReturnNum(string numstr, double expected_num, bool equality_expected = true) 
+  [IsTested()]
+  public void TestNumberPrecision()
+  {
+    DoTestReturnNum(bhlnum: "100", expected_num: 100);
+    DoTestReturnNum(bhlnum: "2147483647", expected_num: 2147483647);
+    DoTestReturnNum(bhlnum: "2147483648", expected_num: 2147483648);
+    DoTestReturnNum(bhlnum: "100.5", expected_num: 100.5);
+    DoTestReturnNum(bhlnum: "2147483648.1", expected_num: 2147483648.1);
+  }
+
+  void DoTestReturnNum(string bhlnum, double expected_num) 
   {
     string bhl = @"
       
     func float test() 
     {
-      return "+numstr+@"
+      return "+bhlnum+@"
     }
     ";
 
@@ -43,10 +62,7 @@ public class BHL_Test
     var num = ExtractNum(intp.ExecNode(node));
 
     //NodeDump(node);
-    if(equality_expected)
-      AssertEqual(num, expected_num);
-    else
-      Assert(num != expected_num, expected_num+" != "+numstr);
+    AssertEqual(num, expected_num);
     CommonChecks(intp);
   }
 
@@ -10216,7 +10232,34 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestJsonArgMismatch()
+  public void TestJsonDefaultArgIncompatibleType()
+  {
+    string bhl = @"
+    func float foo(ColorAlpha c = new Color{r:20})
+    {
+      return c.r
+    }
+
+    func float test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColorAlpha(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonArgTypeMismatch()
   {
     string bhl = @"
     func float foo(float a = 10)
