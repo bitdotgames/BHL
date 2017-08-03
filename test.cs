@@ -10162,6 +10162,85 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestJsonDefaultEmptyArgWithOtherDefaultArgs()
+  {
+    string bhl = @"
+    func float foo(Color c = {}, float a = 10)
+    {
+      return c.r
+    }
+
+    func float test()
+    {
+      return foo(a : 20)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonDefaultArgWithOtherDefaultArgs()
+  {
+    string bhl = @"
+    func float foo(Color c = {r:20}, float a = 10)
+    {
+      return c.r + a
+    }
+
+    func float test()
+    {
+      return foo(a : 20)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 40);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestJsonArgMismatch()
+  {
+    string bhl = @"
+    func float foo(float a = 10)
+    {
+      return a
+    }
+
+    func float test()
+    {
+      return foo(a : {})
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"can't be specified with {..}"
+    );
+  }
+
+  [IsTested()]
   public void TestJsonDefaultArg()
   {
     string bhl = @"

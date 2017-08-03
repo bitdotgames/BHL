@@ -536,6 +536,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var ca = norm_cargs[i].ca;
 
+      //NOTE: if call arg is not specified, try to find the default one
       if(ca == null)
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
@@ -551,9 +552,11 @@ public class Frontend : bhlBaseVisitor<object>
           if(default_arg != null)
           {
             ++args_passed;
+            PushJsonType(norm_cargs[i].orig.type.Get());
             PushInterimAST();
             Visit(default_arg);
             PopInterimAST();
+            PopJsonType();
           }
           else
             FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name + "'");
@@ -781,7 +784,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx) + ": {..} not expected");
 
     if(!(curr_type is ClassSymbol) || (curr_type is ArrayTypeSymbol))
-      FireError(Location(ctx) + ": {..} is not expected, need '" + curr_type + "'");
+      FireError(Location(ctx) + ": type '" + curr_type + " can't be specified with {..}'");
 
     Wrap(ctx).eval_type = curr_type;
     var root_type_name = curr_type.GetName();
