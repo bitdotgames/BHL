@@ -9269,6 +9269,49 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestNullStruct()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      IntStruct c = null
+      IntStruct c2 = new IntStruct
+      if(c == null) {
+        trace(""NULL;"")
+      }
+      if(c2 == null) {
+        trace(""NULL2;"")
+      }
+      if(c2 != null) {
+        trace(""NOT NULL;"")
+      }
+      c = c2
+      if(c2 == c) {
+        trace(""EQ;"")
+      }
+      if(c2 == null) {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindIntStruct(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("NULL;NOT NULL;EQ;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestOrShortCircuit()
   {
     string bhl = @"

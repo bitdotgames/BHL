@@ -784,7 +784,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx) + ": {..} not expected");
 
     if(!(curr_type is ClassSymbol) || (curr_type is ArrayTypeSymbol))
-      FireError(Location(ctx) + ": type '" + curr_type + " can't be specified with {..}'");
+      FireError(Location(ctx) + ": type '" + curr_type + "' can't be specified with {..}");
 
     Wrap(ctx).eval_type = curr_type;
     var root_type_name = curr_type.GetName();
