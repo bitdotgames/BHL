@@ -1,12 +1,14 @@
+struct AST_Base
+end
 
-struct AST
-  children : AST[] @virtual @default:[]
+struct AST extends AST_Base
+  children : AST_Base[] @virtual @default:[]
 end
 
 struct AST_Interim extends AST
 end
 
-struct AST_Import extends AST
+struct AST_Import extends AST_Base
   modules  : uint32[]
 end
 
@@ -99,22 +101,10 @@ struct AST_Call extends AST
   line_num    : uint32
 end
 
-#TODO:
-#struct AST_Op
-#  @POD
-#  type        : EnumOp
-#  nname1      : uint32
-#  nname2      : uint32
-#  counter     : int32
-#  arg         : uint32
-#  line_num    : uint32
-#  name        : string @default:"" #for debug
-#end
-
 struct AST_Return extends AST
 end
 
-struct AST_Break extends AST
+struct AST_Break extends AST_Base
 end
 
 enum EnumLiteral
@@ -124,7 +114,7 @@ enum EnumLiteral
   NIL   = 4
 end
 
-struct AST_Literal extends AST
+struct AST_Literal extends AST_Base
   type    : EnumLiteral
   nval    : double @default:0
   sval    : string @default:""
@@ -167,7 +157,7 @@ struct AST_JsonArr extends AST
   ntype : uint32
 end
 
-struct AST_JsonArrAddItem extends AST
+struct AST_JsonArrAddItem extends AST_Base
 end
 
 struct AST_JsonPair extends AST

@@ -1835,8 +1835,8 @@ public class FuncNodeAST : FuncNode
 
   public override AST DeclArg(int i)
   {
-    var fparams = decl.fparams();
-    return fparams.children.Count == 0 ? null : fparams.children[i];
+    var children = decl.fparams().GetChildren();
+    return children.Count == 0 ? null : children[i] as AST;
   }
 
   public override string GetName()

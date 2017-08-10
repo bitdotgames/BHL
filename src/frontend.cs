@@ -1885,10 +1885,14 @@ public class Frontend : bhlBaseVisitor<object>
     if(type == EnumBlock.FUNC && node.children.Count > 0 && node.children[node.children.Count-1] is AST_Return)
     {
       var ret = node.children[node.children.Count-1]; 
-      if(ret.children.Count > 0)
-        node.children[node.children.Count-1] = ret.children[0];
-      for(int i=1;i<ret.children.Count;++i)
-        node.children.Add(ret.children[i]);
+      var ret_children = ret.GetChildren();
+      if(ret_children != null)
+      {
+        if(ret_children.Count > 0)
+          node.children[node.children.Count-1] = ret_children[0];
+        for(int i=1;i<ret_children.Count;++i)
+          node.children.Add(ret_children[i]);
+      }
     }
 
     if(new_local_scope)

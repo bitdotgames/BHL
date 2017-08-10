@@ -402,7 +402,21 @@ static public class Util
 
 static public class AST_Util
 {
-  static public void AddChild(this AST self, AST c)
+  static public List<AST_Base> GetChildren(this AST_Base self)
+  {
+    var ast = self as AST;
+    return ast == null ? null : ast.children;
+  }
+
+  static public void AddChild(this AST_Base self, AST_Base c)
+  {
+    if(c == null)
+      return;
+    var ast = self as AST;
+    ast.children.Add(c);
+  }
+
+  static public void AddChild(this AST self, AST_Base c)
   {
     if(c == null)
       return;
@@ -464,12 +478,12 @@ static public class AST_Util
 
   static public AST fparams(this AST_FuncDecl n)
   {
-    return n.children[0];
+    return n.GetChildren()[0] as AST;
   }
 
   static public AST block(this AST_FuncDecl n)
   {
-    return n.children[1];
+    return n.GetChildren()[1] as AST;
   }
 
   static public int GetDefaultArgsNum(this AST_FuncDecl n)
@@ -481,8 +495,8 @@ static public class AST_Util
     int num = 0;
     for(int i=0;i<fparams.children.Count;++i)
     {
-      var fc = fparams.children[i];
-      if(fc.children.Count > 0)
+      var fc = fparams.children[i].GetChildren();
+      if(fc != null && fc.Count > 0)
         ++num;
     }
     return num;
@@ -933,7 +947,6 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Break node)
   {
     Console.Write("(BRK ");
-    VisitChildren(node);
     Console.Write(")");
   }
 

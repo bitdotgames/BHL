@@ -535,7 +535,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_JsonArr node);
   public abstract void DoVisit(AST_JsonPair node);
 
-  public void Visit(AST node)
+  public void Visit(AST_Base node)
   {
     if(node == null)
       throw new Exception("NULL node");
@@ -583,6 +583,8 @@ public abstract class AST_Visitor
 
   public void VisitChildren(AST node)
   {
+    if(node == null)
+      return;
     var children = node.children;
     for(int i=0;i<children.Count;++i)
       Visit(children[i]);
@@ -1604,7 +1606,7 @@ public class Interpreter : AST_Visitor
         group.addChild(rcn);
 
         PushNode(group, false);
-        VisitChildren(ast.children[0]);
+        VisitChildren(ast.children[0] as AST);
 
         var last_child = group.children[group.children.Count-1];
         //1.1. changing write mode or popping config
@@ -1660,16 +1662,18 @@ public class Interpreter : AST_Visitor
     return false;
   }
 
-  bool CheckIfConfigTweaksAreConstant(AST ast, uint json_ctx_type = 0)
+  bool CheckIfConfigTweaksAreConstant(AST_Base ast, uint json_ctx_type = 0)
   {
     if(ast is AST_JsonObj)
       json_ctx_type = (ast as AST_JsonObj).ntype;
     else if(ast is AST_JsonArr)
       json_ctx_type = (ast as AST_JsonArr).ntype;
 
-    for(int i=0;i<ast.children.Count;++i)
+    var children = ast.GetChildren();
+
+    for(int i=0;children != null && i<children.Count;++i)
     {
-      var c = ast.children[i];
+      var c = children[i];
 
       //Console.WriteLine(c.GetType().Name + " " + json_ctx_type);
 
