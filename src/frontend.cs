@@ -829,7 +829,9 @@ public class Frontend : bhlBaseVisitor<object>
     for(int i=0;i<vals.Length;++i)
     {
       Visit(vals[i]);
-      node.AddChild(AST_Util.New_JsonArrAddItem());
+      //the last item is added implicitely
+      if(i+1 < vals.Length)
+        node.AddChild(AST_Util.New_JsonArrAddItem());
     }
     PopAST();
 

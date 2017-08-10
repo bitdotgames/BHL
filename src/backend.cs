@@ -1775,6 +1775,7 @@ public class Interpreter : AST_Visitor
     {
       var c = node.children[i];
 
+      //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
         var n = (Array_AddNode)bnd.Create_Add(); 
@@ -1788,6 +1789,14 @@ public class Interpreter : AST_Visitor
         Visit(c);
         jcts.Pop();
       }
+    }
+
+    //adding last item item
+    if(node.children.Count > 0)
+    {
+      var n = (Array_AddNode)bnd.Create_Add(); 
+      n.push_arr = true;
+      curr_node.addChild(n);
     }
   }
 
