@@ -706,6 +706,12 @@ static public class AST_Util
     return n;
   }
 
+  static public AST_JsonArrAddItem New_JsonArrAddItem()
+  {
+    var n = new AST_JsonArrAddItem();
+    return n;
+  }
+
   static public AST_JsonPair New_JsonPair(string scope_type, string name)
   {
     var n = new AST_JsonPair();

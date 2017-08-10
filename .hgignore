@@ -2,7 +2,7 @@ syntax: glob
 
 # Mac OS X
 *.DS_Store
-.tags
+tags
 
 tmp
 build

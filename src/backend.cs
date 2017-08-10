@@ -1775,16 +1775,19 @@ public class Interpreter : AST_Visitor
     {
       var c = node.children[i];
 
-      var jc = new JsonCtx(JsonCtx.ARR, node.ntype, (uint)i);
-      jcts.Push(jc);
-
-      Visit(c);
-
-      jcts.Pop();
-
-      var n = (Array_AddNode)bnd.Create_Add(); 
-      n.push_arr = true;
-      curr_node.addChild(n);
+      if(c is AST_JsonArrAddItem)
+      {
+        var n = (Array_AddNode)bnd.Create_Add(); 
+        n.push_arr = true;
+        curr_node.addChild(n);
+      }
+      else
+      {
+        var jc = new JsonCtx(JsonCtx.ARR, node.ntype, (uint)i);
+        jcts.Push(jc);
+        Visit(c);
+        jcts.Pop();
+      }
     }
   }
 

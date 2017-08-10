@@ -11320,6 +11320,45 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestConfigNodeArrayExpIndex()
+  {
+    string bhl = @"
+    func StringClass mk(string str)
+    {
+      StringClass s = new StringClass
+      s.str = str
+      return s
+    }
+
+    func void test() 
+    {
+      string[] ss = [""hey""] 
+      ConfigNode({strs:[mk(""foo"").str, ss[0], mk(""bar"").str, ""bla""]})
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindStringClass(globs);
+    BindColor(globs);
+    BindFoo(globs);
+    BindConfigNode(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("0:0:0:foo,hey,bar,bla", str);
+    CommonChecks(intp);
+    AssertTrue(DynValList.PoolCount > 0);
+    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+  }
+
+  [IsTested()]
   public void TestConfigNodeWithEmptyConfig()
   {
     string bhl = @"

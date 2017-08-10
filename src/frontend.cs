@@ -827,7 +827,10 @@ public class Frontend : bhlBaseVisitor<object>
     PushAST(node);
     var vals = ctx.jsonValue();
     for(int i=0;i<vals.Length;++i)
+    {
       Visit(vals[i]);
+      node.AddChild(AST_Util.New_JsonArrAddItem());
+    }
     PopAST();
 
     PopJsonType();

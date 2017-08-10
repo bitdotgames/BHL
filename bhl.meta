@@ -167,6 +167,9 @@ struct AST_JsonArr extends AST
   ntype : uint32
 end
 
+struct AST_JsonArrAddItem extends AST
+end
+
 struct AST_JsonPair extends AST
   nname       : uint32
   name        : string @default:"" #for debug
