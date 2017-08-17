@@ -30,28 +30,31 @@ public class BHL
     string postproc_dll_path = "";
     string userbindings_dll_path = "";
     int MAX_THREADS = 1;
+    bool check_deps = true;
 
     var p = new OptionSet () {
-			{ "dir=", "source dir",
-				v => src_dir = v },
-			{ "files=", "source files list",
-				v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
-			{ "result=", "result file",
-				v => res_file = v },
-			{ "cache_dir=", "cache dir",
-				v => cache_dir = v },
-			{ "C", "don't use cache",
-				v => use_cache = v == null },
-			{ "postproc_dll=", "posprocess dll path",
-				v => postproc_dll_path = v },
-			{ "bindings_dll=", "bindings dll path",
-				v => userbindings_dll_path = v },
-			{ "error=", "error file",
-				v => err_file = v },
-			{ "threads=", "number of threads",
-			    v => MAX_THREADS = int.Parse(v) },			
-			{ "d", "debug version",
-				v => Util.DEBUG = v != null }
+      { "dir=", "source dir",
+        v => src_dir = v },
+      { "files=", "source files list",
+        v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
+      { "result=", "result file",
+        v => res_file = v },
+      { "cache_dir=", "cache dir",
+        v => cache_dir = v },
+      { "C", "don't use cache",
+        v => use_cache = v == null },
+      { "N", "don't check import deps",
+        v => check_deps = v == null },
+      { "postproc_dll=", "posprocess dll path",
+        v => postproc_dll_path = v },
+      { "bindings_dll=", "bindings dll path",
+        v => userbindings_dll_path = v },
+      { "error=", "error file",
+        v => err_file = v },
+      { "threads=", "number of threads",
+          v => MAX_THREADS = int.Parse(v) },
+      { "d", "debug version",
+        v => Util.DEBUG = v != null }
      };
 
     var extra = new List<string>();
@@ -142,6 +145,7 @@ public class BHL
       w.inc_dir = src_dir;
       w.cache_dir = cache_dir;
       w.use_cache = use_cache;
+      w.check_deps = check_deps;
       w.bindings = globs;
       w.files = files;
       w.start = idx;
@@ -208,14 +212,14 @@ public class BHL
   static void Shuffle(List<string> arr)
   {
     var rnd = new Random();
-		// Knuth shuffle algorithm :: courtesy of Wikipedia :)
-		for (int t = 0; t < arr.Count; ++t)
-		{
-			var tmp = arr[t];
-			int r = rnd.Next(t, arr.Count);
-			arr[t] = arr[r];
-			arr[r] = tmp;
-		}
+    // Knuth shuffle algorithm :: courtesy of Wikipedia :)
+    for (int t = 0; t < arr.Count; ++t)
+    {
+      var tmp = arr[t];
+      int r = rnd.Next(t, arr.Count);
+      arr[t] = arr[r];
+      arr[r] = tmp;
+    }
   }
 
   static Dictionary<ulong, string> uniq_symbols = new Dictionary<ulong, string>();
@@ -255,6 +259,7 @@ public class BHL
     public Thread th;
     public string inc_dir;
     public bool use_cache;
+    public bool check_deps;
     public string cache_dir;
     public List<string> files;
     public GlobalScope bindings;
@@ -356,7 +361,9 @@ public class BHL
           //Console.WriteLine("Processing " + file + " " + w.id);
           using(var sfs = File.OpenRead(file))
           {
-            var deps = ParseImports(mreg.GetIncludePath(), file, sfs);
+            var deps = w.check_deps ? 
+              ParseImports(mreg.GetIncludePath(), file, sfs) : 
+              new List<string>();
             deps.Add(file);
             //NOTE: adding self binary as a dep
             deps.Add(self_bin_file);
