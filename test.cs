@@ -12248,6 +12248,77 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestVarValueNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      float foo = 1
+      foo
+      return 2
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestAttributeNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      Color c = new Color
+      c.r
+      return 2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestReturnNonConsumed()
+  {
+    string bhl = @"
+
+    func float foo() 
+    {
+      return 100
+    }
+      
+    func int test() 
+    {
+      foo()
+      return 2
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestReturnMultipleNonConsumed()
   {
     string bhl = @"
@@ -12257,18 +12328,19 @@ func Unit FindUnit(Vec3 pos, float radius) {
       return 100,""bar""
     }
       
-    func void test() 
+    func int test() 
     {
       foo()
+      return 2
     }
     ";
 
-    AssertError<UserError>(
-      delegate() { 
-        Interpret("", bhl);
-      },
-      "foo() : non consumed value"
-    );
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
   }
 
   [IsTested()]

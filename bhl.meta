@@ -166,6 +166,9 @@ struct AST_JsonPair extends AST
   scope_ntype : uint32
 end
 
+struct AST_PopValue extends AST_Base
+end
+
 ///////////////////////////////////////////////////////
 
 struct AST_Func2Assets

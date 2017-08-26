@@ -277,7 +277,17 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp);
     var eval_type = Wrap(exp).eval_type;
     if(eval_type != null && eval_type != SymbolTable._void)
-      FireError(Location(ctx) + " : non consumed value");
+    {
+      //TODO: add a warning?
+      var mtype = eval_type as MultiType;
+      if(mtype != null)
+      {
+        for(int i=0;i<mtype.items.Count;++i)
+          PeekAST().AddChild(AST_Util.New_PopValue());
+      }
+      else
+        PeekAST().AddChild(AST_Util.New_PopValue());
+    }
     return null;
   }
 
