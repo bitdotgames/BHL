@@ -66,6 +66,7 @@ public class Frontend : bhlBaseVisitor<object>
   LocalScope mscope;
   GlobalScope globals;
   Scope curr_scope;
+  int scope_level;
 
   public static CommonTokenStream Source2Tokens(Stream s)
   {
@@ -1682,6 +1683,7 @@ public class Frontend : bhlBaseVisitor<object>
       (Symbol) new FuncArgSymbol(str_name, tr, is_ref) :
       (Symbol) new VariableSymbol(var_node, str_name, tr);
 
+    symb.scope_level = scope_level;
     curr_scope.define(symb);
 
     if(write)
@@ -1852,6 +1854,8 @@ public class Frontend : bhlBaseVisitor<object>
 
   void CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope)
   {
+    ++scope_level;
+
     if(new_local_scope)
       curr_scope = new LocalScope(curr_scope); 
 
@@ -1892,7 +1896,9 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
 
     //NOTE: replacing last return in a function with its statement as an optimization 
-    if(type == EnumBlock.FUNC && node.children.Count > 0 && node.children[node.children.Count-1] is AST_Return)
+    if(type == EnumBlock.FUNC && 
+       node.children.Count > 0 && 
+       node.children[node.children.Count-1] is AST_Return)
     {
       var ret = node.children[node.children.Count-1]; 
       var ret_children = ret.GetChildren();
@@ -1905,11 +1911,23 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
+    //NOTE: we need to undefine all symbols which were defined at the current
+    //      scope level
+    var scope_members = (curr_scope as ScopedSymbol).GetMembers();
+    for(int m=scope_members.Count;m-- > 0;)
+    {
+      var sym = (Symbol)scope_members[m];
+      if(sym.scope_level == scope_level)
+        sym.is_out_of_scope = true;
+    }
+    --scope_level;
+
     if(new_local_scope)
       curr_scope = curr_scope.GetEnclosingScope();
 
     PeekAST().AddChild(node);
   }
+
 }
 
 public class Module

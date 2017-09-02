@@ -9738,6 +9738,95 @@ public class BHL_Test
     );
   }
 
+  [IsTested()]
+  public void TestLocalScopeNotSupported2()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      seq {
+        int i = 1
+        i = i + 1
+      }
+      seq {
+        string i
+        i = ""foo""
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "already defined symbol 'i'"
+    );
+  }
+
+
+  [IsTested()]
+  public void TestVarDeclMustBeInUpperScope()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      seq {
+        int i = 1
+        i = i + 1
+      }
+      seq {
+        i = i + 2
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "i : symbol not resolved"
+    );
+  }
+
+  [IsTested()]
+  public void TestVarDeclMustBeInUpperScope2()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral_all {
+        seq {
+          int i = 1
+          seq {
+            i = i + 1
+          }
+        }
+        seq {
+          if(i == 2) {
+            RUNNING()
+          }
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "i : symbol not resolved"
+    );
+  }
+
 //TODO: continue not supported
 //  [IsTested()]
 //  public void TestWhileContinue()

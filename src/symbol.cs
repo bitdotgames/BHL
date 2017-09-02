@@ -144,8 +144,12 @@ public class Symbol
   // Hashed symbol name
   public uint nname;
   public TypeRef type;
-  // All symbols know what scope contains them.
+  // All symbols know what scope contains them
   public Scope scope;
+  // Symbols also know their 'scope level', 
+  // e.g. for  { { int a = 1 } } scope level will be 2
+  public int scope_level;
+  public bool is_out_of_scope;
 
   public Symbol(WrappedNode node, string name) 
   { 
@@ -499,7 +503,12 @@ public abstract class ScopedSymbol : Symbol, Scope
   {
     Symbol s = (Symbol)GetMembers()[name];
     if(s != null)
-      return s;
+    {
+      if(s.is_out_of_scope)
+        return null;
+      else
+        return s;
+    }
 
     var pscope = GetParentScope();
     if(pscope != null)
@@ -515,6 +524,7 @@ public abstract class ScopedSymbol : Symbol, Scope
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym.name, sym);
+
     sym.scope = this; // track the scope in each symbol
   }
 
@@ -523,8 +533,6 @@ public abstract class ScopedSymbol : Symbol, Scope
 
   public String GetScopeName() { return name; }
 
-  // Indicate how subclasses store scope members. Allows us to
-  // factor out common code in this class.
   public abstract OrderedDictionary GetMembers();
 }
 
