@@ -241,14 +241,14 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     return super_class;
   }
 
-  public Symbol resolveMember(ulong nname)
+  public Symbol ResolveMember(ulong nname)
   {
     Symbol sym;
     if(hashed_symbols.TryGetValue(nname, out sym))
       return sym;
 
     if(super_class != null)
-      return super_class.resolveMember(nname);
+      return super_class.ResolveMember(nname);
 
     return null;
   }
@@ -898,6 +898,25 @@ public class ClassBindSymbol : ClassSymbol
   public ClassBindSymbol(string name, TypeRef super_class, Interpreter.ClassCreator creator)
     : base(null, name, super_class, null, creator)
   {}
+}
+
+public class ClassSymbolAST : ClassSymbol
+{
+  public AST_ClassDecl decl;
+
+  public ClassSymbolAST(string name, AST_ClassDecl decl)
+    : base(null, name, null, null, null)
+  {
+    this.decl = decl;
+    this.creator = ClassCreator;
+    //NOTE: during runtime name string can be empty
+    //      however nname is always present
+    this.nname = decl.nname1;
+  }
+
+  void ClassCreator(ref DynVal res)
+  {
+  }
 }
 
 public class EnumSymbol : ScopedSymbol, Scope, Type 

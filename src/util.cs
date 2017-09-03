@@ -521,7 +521,6 @@ static public class AST_Util
     return ((ulong)n.nname2 << 31) | ((ulong)n.nname1);
   }
 
-
   ////////////////////////////////////////////////////////
 
   static public AST_LambdaDecl New_LambdaDecl(uint mod_id, string type, string name)
@@ -535,6 +534,29 @@ static public class AST_Util
   static public HashedName Name(this AST_LambdaDecl n)
   {
     return new HashedName(n.nname(), n.name);
+  }
+
+  ////////////////////////////////////////////////////////
+
+  static public AST_ClassDecl New_ClassDecl(uint mod_id, string name)
+  {
+    var n = new AST_ClassDecl();
+    n.nname2 = mod_id;
+    n.nname1 = Hash.CRC28(name);
+
+    if(Util.DEBUG)
+      n.name = name;
+    return n;
+  }
+
+  static public HashedName Name(this AST_ClassDecl n)
+  {
+    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname(), n.name);
+  }
+
+  static public ulong nname(this AST_ClassDecl n)
+  {
+    return ((ulong)n.nname2 << 31) | ((ulong)n.nname1);
   }
 
   ////////////////////////////////////////////////////////
@@ -916,6 +938,14 @@ public class AST_Dumper : AST_Visitor
     Console.Write(node.type + " " + node.nname() + " USE:");
     for(int i=0;i<node.useparams.Count;++i)
       Console.Write(" " + node.useparams[i].nname);
+    VisitChildren(node);
+    Console.Write(")");
+  }
+
+  public override void DoVisit(AST_ClassDecl node)
+  {
+    Console.Write("(CLASS ");
+    Console.Write(node.name + " " + node.nname());
     VisitChildren(node);
     Console.Write(")");
   }

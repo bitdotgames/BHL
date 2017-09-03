@@ -63,7 +63,7 @@ public class Frontend : bhlBaseVisitor<object>
   bool defs_only;
   ITokenStream tokens;
   ParseTreeProperty<WrappedNode> nodes = new ParseTreeProperty<WrappedNode>();
-  LocalScope mscope;
+  LocalScope mscope; //current module's scope
   GlobalScope globals;
   Scope curr_scope;
   int scope_level;
@@ -229,7 +229,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(imps != null)
         Visit(imps);
 
-      Visit(ctx.funcDecls()); 
+      Visit(ctx.decls()); 
     }
     catch(UserError e)
     {
@@ -1411,11 +1411,18 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitFuncDecls(bhlParser.FuncDeclsContext ctx)
+  public override object VisitDecls(bhlParser.DeclsContext ctx)
   {
-    var decls = ctx.funcDecl();
+    var decls = ctx.decl();
     for(int i=0;i<decls.Length;++i)
-      Visit(decls[i]);
+    {
+      var fndecl = decls[i].funcDecl();
+      var cldecl = decls[i].classDecl();
+      if(fndecl != null)
+        Visit(fndecl);
+      else if(cldecl != null)
+        Visit(cldecl);
+    }
 
     return null;
   }
@@ -1463,6 +1470,26 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope = curr_scope.GetEnclosingScope();
 
     PeekAST().AddChild(node);
+
+    return null;
+  }
+
+  public override object VisitClassDecl(bhlParser.ClassDeclContext ctx)
+  {
+    var str_name = ctx.NAME().GetText();
+
+    var ast = AST_Util.New_ClassDecl(curr_m.GetId(), str_name);
+
+    var symb = new ClassSymbolAST(str_name, ast);
+    globals.define(symb);
+    curr_m.symbols.define(symb);
+    curr_scope = symb;
+
+    //TODO: visit body
+
+    curr_scope = curr_scope.GetEnclosingScope();
+
+    PeekAST().AddChild(ast);
 
     return null;
   }

@@ -41,8 +41,8 @@ public abstract class BaseScope : Scope
       return s;
 
     // if not here, check any enclosing scope
-    if(GetParentScope() != null) 
-      return GetParentScope().resolve(name);
+    if(enclosing_scope != null) 
+      return enclosing_scope.resolve(name);
 
     return null;
   }
@@ -66,7 +66,7 @@ public abstract class BaseScope : Scope
     }
   }
 
-  public Scope GetParentScope() { return GetEnclosingScope(); }
+  public Scope GetParentScope() { return enclosing_scope; }
   public Scope GetEnclosingScope() { return enclosing_scope; }
 
   public abstract string GetScopeName();
@@ -89,6 +89,19 @@ public class GlobalScope : BaseScope
     base.define(sym);
 
     hashed_symbols.Add(sym.nname, sym);
+  }
+
+  public void RemoveUserDefines()
+  {
+    for(int i=symbols.Count;i-- > 0;)
+    {
+      var s = (Symbol)symbols[i];
+      if(s is ClassSymbolAST)
+      {
+        symbols.RemoveAt(i);
+        hashed_symbols.Remove((s as ClassSymbolAST).nname);
+      }
+    }
   }
 
   static bool IsBuiltin(Symbol s)

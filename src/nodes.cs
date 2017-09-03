@@ -1326,7 +1326,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
       throw new Exception("Could not find class binding: " + ntype);
 
     if(bnd.creator == null)
-      throw new Exception("Class binding doesn't have creator: " + ntype);
+      throw new Exception("Class doesn't have a creator: " + ntype);
 
     var val = DynVal.New(); 
     bnd.creator(ref val);
@@ -1704,7 +1704,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       if(bnd == null)
         throw new Exception("Class binding not found: " + scope_ntype); 
 
-      bnd_member = bnd.resolveMember(name.n);
+      bnd_member = bnd.ResolveMember(name.n);
       if(bnd_member == null)
         throw new Exception("Member not found: " + name);
     }

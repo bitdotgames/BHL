@@ -11575,12 +11575,12 @@ public class BHL_Test
     }
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestEmptyUserClass()
   {
     string bhl = @"
 
-    class Foo {}
+    class Foo { }
       
     func bool test() 
     {
@@ -13140,6 +13140,9 @@ func Unit FindUnit(Vec3 pos, float radius) {
       var mod = new bhl.Module(item.Key, item.Key);
       Frontend.Source2Bin(mod, item.Value.ToStream(), bin, globs, mreg);
       bin.Position = 0;
+
+      //NOTE: we want to remove user decls added during frontend execution
+      globs.RemoveUserDefines();
 
       AST_Module ast = Util.Bin2Meta<AST_Module>(bin);
       if(show_ast)

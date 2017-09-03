@@ -71,15 +71,25 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitMimport([NotNull] bhlParser.MimportContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.funcDecls"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.decls"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterFuncDecls([NotNull] bhlParser.FuncDeclsContext context);
+	void EnterDecls([NotNull] bhlParser.DeclsContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.funcDecls"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.decls"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitFuncDecls([NotNull] bhlParser.FuncDeclsContext context);
+	void ExitDecls([NotNull] bhlParser.DeclsContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.decl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterDecl([NotNull] bhlParser.DeclContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.decl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitDecl([NotNull] bhlParser.DeclContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.fnargs"/>.
 	/// </summary>
@@ -732,6 +742,26 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitBlock([NotNull] bhlParser.BlockContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.classDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterClassDecl([NotNull] bhlParser.ClassDeclContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.classDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitClassDecl([NotNull] bhlParser.ClassDeclContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.classBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterClassBlock([NotNull] bhlParser.ClassBlockContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.classBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitClassBlock([NotNull] bhlParser.ClassBlockContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>

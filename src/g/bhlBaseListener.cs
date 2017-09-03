@@ -83,17 +83,29 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitMimport([NotNull] bhlParser.MimportContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.funcDecls"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.decls"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterFuncDecls([NotNull] bhlParser.FuncDeclsContext context) { }
+	public virtual void EnterDecls([NotNull] bhlParser.DeclsContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.funcDecls"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.decls"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitFuncDecls([NotNull] bhlParser.FuncDeclsContext context) { }
+	public virtual void ExitDecls([NotNull] bhlParser.DeclsContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.decl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterDecl([NotNull] bhlParser.DeclContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.decl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitDecl([NotNull] bhlParser.DeclContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.fnargs"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -860,6 +872,30 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitBlock([NotNull] bhlParser.BlockContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.classDecl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterClassDecl([NotNull] bhlParser.ClassDeclContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.classDecl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitClassDecl([NotNull] bhlParser.ClassDeclContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.classBlock"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterClassBlock([NotNull] bhlParser.ClassBlockContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.classBlock"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitClassBlock([NotNull] bhlParser.ClassBlockContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// <para>The default implementation does nothing.</para>

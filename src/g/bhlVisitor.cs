@@ -56,11 +56,17 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMimport([NotNull] bhlParser.MimportContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.funcDecls"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.decls"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitFuncDecls([NotNull] bhlParser.FuncDeclsContext context);
+	Result VisitDecls([NotNull] bhlParser.DeclsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.decl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDecl([NotNull] bhlParser.DeclContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.fnargs"/>.
 	/// </summary>
@@ -444,6 +450,18 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitBlock([NotNull] bhlParser.BlockContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.classDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitClassDecl([NotNull] bhlParser.ClassDeclContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.classBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitClassBlock([NotNull] bhlParser.ClassBlockContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>

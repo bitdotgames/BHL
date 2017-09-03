@@ -17,7 +17,11 @@ mimport
   ;
 
 decls 
-  : (classDecl | funcDecl)+
+  : decl+
+  ;
+
+decl
+  : (classDecl | funcDecl)
   ;
 
 fnargs

@@ -522,6 +522,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_VarDecl node);
   public abstract void DoVisit(AST_FuncDecl node);
   public abstract void DoVisit(AST_LambdaDecl node);
+  public abstract void DoVisit(AST_ClassDecl node);
   public abstract void DoVisit(AST_Block node);
   public abstract void DoVisit(AST_TypeCast node);
   public abstract void DoVisit(AST_Call node);
@@ -556,6 +557,8 @@ public abstract class AST_Visitor
     //NOTE: base class must be handled after AST_LambdaDecl
     else if(node is AST_FuncDecl)
       DoVisit(node as AST_FuncDecl);
+    else if(node is AST_ClassDecl)
+      DoVisit(node as AST_ClassDecl);
     else if(node is AST_TypeCast)
       DoVisit(node as AST_TypeCast);
     else if(node is AST_Return)
@@ -1060,6 +1063,7 @@ public class Interpreter : AST_Visitor
 
   Dictionary<ulong,AST_FuncDecl> func_decls = new Dictionary<ulong,AST_FuncDecl>();
   Dictionary<ulong,AST_LambdaDecl> lmb_decls = new Dictionary<ulong,AST_LambdaDecl>();
+  Dictionary<ulong,AST_ClassDecl> class_decls = new Dictionary<ulong,AST_ClassDecl>();
 
   public GlobalScope bindings;
 
@@ -1078,6 +1082,7 @@ public class Interpreter : AST_Visitor
     loaded_modules.Clear();
     func_decls.Clear();
     lmb_decls.Clear();
+    class_decls.Clear();
     stack.Clear();
     call_stack.Clear();
 
@@ -1220,7 +1225,7 @@ public class Interpreter : AST_Visitor
     if(bnd == null)
       throw new Exception("Class binding not found: " + class_type); 
 
-    var bnd_member = bnd.resolveMember(name.n);
+    var bnd_member = bnd.ResolveMember(name.n);
     if(bnd_member == null)
       throw new Exception("Member not found: " + name);
 
@@ -1380,9 +1385,17 @@ public class Interpreter : AST_Visitor
     if(func_decls.ContainsKey(nname))
       throw new Exception("Func decl is already defined: " + name + "(" + nname + ")");
     else if(bindings.FindBinding<FuncBindSymbol>(nname) != null)
-      throw new Exception("Func binding already defined: " + name + "(" + nname + ")");
+      throw new Exception("Func binding is already defined: " + name + "(" + nname + ")");
     else if(lmb_decls.ContainsKey(nname))
-      throw new Exception("Lambda already defined: " + name + "(" + nname + ")");
+      throw new Exception("Lambda already is defined: " + name + "(" + nname + ")");
+  }
+
+  void CheckClassIsUnique(ulong nname, string name)
+  {
+    if(class_decls.ContainsKey(nname))
+      throw new Exception("Class decl is already defined: " + name + "(" + nname + ")");
+    else if(bindings.FindBinding<ClassBindSymbol>(nname) != null)
+      throw new Exception("Class binding is already defined: " + name + "(" + nname + ")");
   }
 
   public override void DoVisit(AST_FuncDecl node)
@@ -1402,6 +1415,16 @@ public class Interpreter : AST_Visitor
     }
 
     curr_node.addChild(new PushFuncCtxNode(node, null));
+  }
+
+  public override void DoVisit(AST_ClassDecl node)
+  {
+    CheckClassIsUnique(node.nname(), node.name);
+
+    var symb = new ClassSymbolAST(node.name, node);
+    bindings.define(symb);
+
+    class_decls.Add(node.nname(), node);
   }
 
   public override void DoVisit(AST_Block node)
