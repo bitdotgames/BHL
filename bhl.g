@@ -5,7 +5,7 @@ program
 	;
 
 progblock
-  : imports? funcDecls
+  : imports? decls
   ;
 
 imports 
@@ -16,8 +16,8 @@ mimport
   : 'import' NORMALSTRING
   ;
 
-funcDecls 
-  : funcDecl+
+decls 
+  : (classDecl | funcDecl)+
   ;
 
 fnargs
@@ -134,6 +134,14 @@ callArg
 block 
 	: '{' statement* '}'
 	;
+
+classDecl
+	: 'class' NAME classBlock
+	;
+
+classBlock
+  : '{' '}'
+  ;
 
 funcDecl
 	: 'func' retType? NAME '(' funcParams? ')' funcBlock

@@ -9829,37 +9829,37 @@ public class BHL_Test
 
 //TODO: continue not supported
 //  [IsTested()]
-//  public void TestWhileContinue()
-//  {
-//    string bhl = @"
-//
-//    func test() 
-//    {
-//      int i = 0
-//      while(i < 3) {
-//        i = i + 1
-//        if(i == 1) {
-//          continue
-//        } 
-//        trace((string)i)
-//      }
-//    }
-//    ";
-//
-//    var globs = SymbolTable.CreateBuiltins();
-//    var trace_stream = new MemoryStream();
-//
-//    BindTrace(globs, trace_stream);
-//
-//    var intp = Interpret("", bhl, globs);
-//    var node = intp.GetFuncNode("test");
-//    //NodeDump(node);
-//    intp.ExecNode(node, 0);
-//
-//    var str = GetString(trace_stream);
-//    AssertEqual("02", str);
-//    CommonChecks(intp);
-//  }
+  public void TestWhileContinue()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      while(i < 3) {
+        i = i + 1
+        if(i == 1) {
+          continue
+        } 
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("02", str);
+    CommonChecks(intp);
+  }
 
   [IsTested()]
   public void TestWhileComplexCondition()
@@ -11575,7 +11575,6 @@ public class BHL_Test
     }
   }
 
-  //TODO:
   //[IsTested()]
   public void TestEmptyUserClass()
   {
