@@ -11777,6 +11777,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUserClassCast()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+      
+    func float test() 
+    {
+      Foo f = { b : 101 }
+      any a = f
+      Foo f1 = (Foo)a
+      return f1.b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 101);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestImport()
   {
     string bhl1 = @"
