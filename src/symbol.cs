@@ -484,6 +484,30 @@ public class FieldSymbol : VariableSymbol
   }
 }
 
+public class FieldSymbolAST : FieldSymbol
+{
+  public FieldSymbolAST(string name) 
+    : base(name, null, null, null)
+  {
+    this.getter = Getter;
+    this.setter = Setter;
+  }
+
+  void Getter(DynVal ctx, ref DynVal v)
+  {
+    var m = (ClassStorage)ctx.obj;
+    v.ValueCopyFrom(m.Get(nname));
+  }
+
+  void Setter(ref DynVal ctx, DynVal v)
+  {
+    var m = (ClassStorage)ctx.obj;
+    var tmp = v.ValueClone();
+    m.Set(nname, tmp);
+    tmp.RefMod(RefOp.TRY_DEL);
+  }
+}
+
 public abstract class ScopedSymbol : Symbol, Scope 
 {
   protected Scope enclosing_scope;
@@ -909,13 +933,11 @@ public class ClassSymbolAST : ClassSymbol
   {
     this.decl = decl;
     this.creator = ClassCreator;
-    //NOTE: during runtime name string can be empty
-    //      however nname is always present
-    this.nname = decl.nname1;
   }
 
   void ClassCreator(ref DynVal res)
   {
+    res.SetObj(ClassStorage.New());
   }
 }
 

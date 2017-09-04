@@ -144,7 +144,11 @@ classDecl
 	;
 
 classBlock
-  : '{' '}'
+  : '{' classMember* '}'
+  ;
+
+classMember
+	: varDeclare
   ;
 
 funcDecl

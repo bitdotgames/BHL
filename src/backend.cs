@@ -487,6 +487,89 @@ public class MemoryScope
   }
 }
 
+public class ClassStorage : MemoryScope, DynValRefcounted
+{
+  //NOTE: -1 means it's in released state,
+  //      public only for inspection
+  public int refs;
+
+  static public Stack<ClassStorage> pool = new Stack<ClassStorage>();
+  static int pool_hit;
+  static int pool_miss;
+
+  //NOTE: use New() instead
+  private ClassStorage()
+  {}
+
+  public void Retain()
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    ++refs;
+
+    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
+  }
+
+  public void Release(bool can_del = true)
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    if(refs == 0)
+      throw new Exception("Double free");
+
+    --refs;
+
+    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
+
+    if(can_del)
+      TryDel();
+  }
+
+  public bool TryDel()
+  {
+    if(refs != 0)
+      return false;
+    
+    Del(this);
+    return true;
+  }
+
+  public static ClassStorage New()
+  {
+    ClassStorage cs;
+    if(pool.Count == 0)
+    {
+      ++pool_miss;
+      cs = new ClassStorage();
+    }
+    else
+    {
+      ++pool_hit;
+      cs = pool.Pop();
+
+      if(cs.refs != -1)
+        throw new Exception("Expected to be released, refs " + cs.refs);
+      cs.refs = 0;
+    }
+
+    return cs;
+  }
+
+  static public void Del(ClassStorage cs)
+  {
+    if(cs.refs != 0)
+      throw new Exception("Freeing invalid object, refs " + cs.refs);
+
+    cs.refs = -1;
+    cs.Clear();
+    pool.Push(cs);
+
+    if(pool.Count > pool_miss)
+      throw new Exception("Unbalanced New/Del");
+  }
+
+}
+
 public struct FuncRef
 {
   public AST_FuncDecl decl;
@@ -1421,8 +1504,18 @@ public class Interpreter : AST_Visitor
   {
     CheckClassIsUnique(node.nname(), node.name);
 
-    var symb = new ClassSymbolAST(node.name, node);
-    bindings.define(symb);
+    var cl = new ClassSymbolAST(node.name, node);
+    bindings.define(cl);
+
+    for(int i=0;i<node.children.Count;++i)
+    {
+      var child = node.children[i];
+      var vd = child as AST_VarDecl;
+      if(vd != null)
+      {
+        cl.define(new FieldSymbolAST(vd.name));
+      }
+    }
 
     class_decls.Add(node.nname(), node);
   }

@@ -544,7 +544,9 @@ static public class AST_Util
     n.nname2 = mod_id;
     n.nname1 = Hash.CRC28(name);
 
-    if(Util.DEBUG)
+    //NOTE: for now always storing the class text name,
+    //      remove this requirement later
+    //if(Util.DEBUG)
       n.name = name;
     return n;
   }

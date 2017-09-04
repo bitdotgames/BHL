@@ -1417,11 +1417,17 @@ public class Frontend : bhlBaseVisitor<object>
     for(int i=0;i<decls.Length;++i)
     {
       var fndecl = decls[i].funcDecl();
-      var cldecl = decls[i].classDecl();
       if(fndecl != null)
+      {
         Visit(fndecl);
-      else if(cldecl != null)
+        continue;
+      }
+      var cldecl = decls[i].classDecl();
+      if(cldecl != null)
+      {
         Visit(cldecl);
+        continue;
+      }
     }
 
     return null;
@@ -1438,26 +1444,26 @@ public class Frontend : bhlBaseVisitor<object>
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
 
-    var node = AST_Util.New_FuncDecl(curr_m.GetId(), tr.name, str_name);
+    var ast = AST_Util.New_FuncDecl(curr_m.GetId(), tr.name, str_name);
 
-    var symb = new FuncSymbolAST(globals, node, func_node, str_name, tr, curr_scope, ctx.funcParams());
+    var symb = new FuncSymbolAST(globals, ast, func_node, str_name, tr, curr_scope, ctx.funcParams());
     mscope.define(symb);
     curr_m.symbols.define(symb);
     curr_scope = symb;
 
-    PushFuncDecl(new FuncDecl(node, symb));
+    PushFuncDecl(new FuncDecl(ast, symb));
 
     var fparams = ctx.funcParams();
     if(fparams != null)
     {
-      PushAST(node.fparams());
+      PushAST(ast.fparams());
       Visit(fparams);
       PopAST();
     }
 
     if(!defs_only)
     {
-      PushAST(node.block());
+      PushAST(ast.block());
       Visit(ctx.funcBlock());
       PopAST();
 
@@ -1469,7 +1475,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     curr_scope = curr_scope.GetEnclosingScope();
 
-    PeekAST().AddChild(node);
+    PeekAST().AddChild(ast);
 
     return null;
   }
@@ -1485,7 +1491,18 @@ public class Frontend : bhlBaseVisitor<object>
     curr_m.symbols.define(symb);
     curr_scope = symb;
 
-    //TODO: visit body
+    for(int i=0;i<ctx.classBlock().classMember().Length;++i)
+    {
+      var cb = ctx.classBlock().classMember()[i];
+      var vd = cb.varDeclare();
+      if(vd != null)
+      {
+        var decl = CommonDeclVar(vd.NAME(), vd.type(), false/*not ref*/, false/*not func arg*/, false/*read*/);
+        //NOTE: forcing name to be always present due to current class members declaration requirement
+        (decl as AST_VarDecl).name = vd.NAME().GetText();
+        ast.AddChild(decl);
+      }
+    }
 
     curr_scope = curr_scope.GetEnclosingScope();
 

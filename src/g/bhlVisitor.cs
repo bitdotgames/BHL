@@ -463,6 +463,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitClassBlock([NotNull] bhlParser.ClassBlockContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.classMember"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitClassMember([NotNull] bhlParser.ClassMemberContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

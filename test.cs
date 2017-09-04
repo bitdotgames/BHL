@@ -11599,6 +11599,116 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestSeveralEmptyUserClasses()
+  {
+    string bhl = @"
+
+    class Foo { }
+    class Bar { }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      Bar b = {}
+      return f != null && b != null
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    bool res = ExtractBool(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassMember()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+      
+    func float test() 
+    {
+      Foo f = { b : 101 }
+      f.b = f.b + 1
+      return f.b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 102);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserSeveralClassMembers()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+      int c
+    }
+      
+    func float test() 
+    {
+      Foo f = { c : 2, b : 101.5 }
+      f.b = f.b + f.c
+      return f.b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 103.5);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserSeveralClassMembers2()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+      int c
+    }
+
+     class Bar {
+       float a
+     }
+      
+    func float test() 
+    {
+      Foo f = { c : 2, b : 101.5 }
+      Bar b = { a : 10 }
+      f.b = f.b + f.c + b.a
+      return f.b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 113.5);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestImport()
   {
     string bhl1 = @"
