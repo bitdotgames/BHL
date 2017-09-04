@@ -99,7 +99,7 @@ public class GlobalScope : BaseScope
       if(s is ClassSymbolAST)
       {
         symbols.RemoveAt(i);
-        hashed_symbols.Remove((s as ClassSymbolAST).nname);
+        hashed_symbols.Remove(s.nname);
       }
     }
   }

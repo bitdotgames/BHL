@@ -1519,7 +1519,7 @@ public class BinaryOpNode : BehaviorTreeTerminalNode
 
     if(type == EnumBinaryOp.ADD)
     {
-      if(a.type == DynVal.STRING && a.type == b.type)
+      if(a.type == DynVal.STRING || b.type == DynVal.STRING)
         interp.PushValue(DynVal.NewStr(a._str + b._str));
       else
         interp.PushValue(DynVal.NewNum(a._num + b._num));

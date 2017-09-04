@@ -937,7 +937,15 @@ public class ClassSymbolAST : ClassSymbol
 
   void ClassCreator(ref DynVal res)
   {
-    res.SetObj(ClassStorage.New());
+    var s = ClassStorage.New();
+    res.SetObj(s);
+
+    for(int i=0;i<members.Count;++i)
+    {
+      var m = (Symbol)members[i];
+      var dv = DynVal.New();
+      s.Set(m.nname, dv);
+    }
   }
 }
 

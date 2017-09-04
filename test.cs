@@ -11624,6 +11624,74 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUserClassDefaultInit()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+      int c
+      string s
+    }
+      
+    func void test() 
+    {
+      Foo f = {}
+      trace((string)f.b + "";"" + (string)f.c + "";"" + f.s + "";"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("0;0;;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassDefaultInitStringConcat()
+  {
+    string bhl = @"
+
+    class Foo { 
+      string s1
+      string s2
+    }
+      
+    func void test() 
+    {
+      Foo f = {}
+      string s = f.s1 + f.s2
+      trace(s)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUserClassMember()
   {
     string bhl = @"

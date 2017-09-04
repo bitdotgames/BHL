@@ -1504,7 +1504,7 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
-    curr_scope = curr_scope.GetEnclosingScope();
+    curr_scope = globals;
 
     PeekAST().AddChild(ast);
 
