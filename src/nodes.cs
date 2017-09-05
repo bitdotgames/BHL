@@ -1321,7 +1321,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
 
-    var bnd = interp.bindings.FindBinding<ClassSymbol>(ntype.n);
+    var bnd = interp.bindings.resolve(ntype.n) as ClassSymbol;
     if(bnd == null)
       throw new Exception("Could not find class binding: " + ntype);
 
@@ -1700,7 +1700,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
     //TODO: support user classes as well
     if(bnd_member == null)
     {
-      var bnd = interp.bindings.FindBinding<ClassSymbol>(scope_ntype);
+      var bnd = interp.bindings.resolve(scope_ntype) as ClassSymbol;
       if(bnd == null)
         throw new Exception("Class binding not found: " + scope_ntype); 
 

@@ -91,6 +91,13 @@ public class GlobalScope : BaseScope
     hashed_symbols.Add(sym.nname, sym);
   }
 
+  public Symbol resolve(ulong nname)
+  {
+    Symbol sym = null;
+    hashed_symbols.TryGetValue(nname, out sym);
+    return sym;
+  }
+
   public void RemoveUserDefines()
   {
     for(int i=symbols.Count;i-- > 0;)
@@ -109,14 +116,6 @@ public class GlobalScope : BaseScope
     return ((s is BuiltInTypeSymbol) || 
             (s is ArrayTypeSymbol)
            );
-  }
-
-  public T FindBinding<T>(ulong nname) where T : Symbol
-  {
-    Symbol sym;
-    if(hashed_symbols.TryGetValue(nname, out sym))
-      return sym as T;
-    return null;
   }
 
   public static bool IsCompoundType(string name)

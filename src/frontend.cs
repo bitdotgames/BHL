@@ -58,9 +58,10 @@ public class Frontend : bhlBaseVisitor<object>
     return lambda_id;
   }
 
+  bool defs_only;
+
   Module curr_m;
   ModuleRegistry mreg;
-  bool defs_only;
   ITokenStream tokens;
   ParseTreeProperty<WrappedNode> nodes = new ParseTreeProperty<WrappedNode>();
   LocalScope mscope; //current module's scope

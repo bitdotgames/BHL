@@ -1251,7 +1251,7 @@ public class Interpreter : AST_Visitor
   {
     fr = new FuncRef();
 
-    var fbnd = bindings.FindBinding<FuncBindSymbol>(name.n);
+    var fbnd = bindings.resolve(name.n) as FuncBindSymbol;
     if(fbnd != null)
     {
       fr.fbnd = fbnd;
@@ -1304,7 +1304,7 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetMFuncNode(uint class_type, HashedName name)
   {
-    var bnd = bindings.FindBinding<ClassSymbol>(class_type);
+    var bnd = bindings.resolve(class_type) as ClassSymbol;
     if(bnd == null)
       throw new Exception("Class binding not found: " + class_type); 
 
@@ -1467,7 +1467,7 @@ public class Interpreter : AST_Visitor
   {
     if(func_decls.ContainsKey(nname))
       throw new Exception("Func decl is already defined: " + name + "(" + nname + ")");
-    else if(bindings.FindBinding<FuncBindSymbol>(nname) != null)
+    else if(bindings.resolve(nname) as FuncBindSymbol != null)
       throw new Exception("Func binding is already defined: " + name + "(" + nname + ")");
     else if(lmb_decls.ContainsKey(nname))
       throw new Exception("Lambda already is defined: " + name + "(" + nname + ")");
@@ -1477,7 +1477,7 @@ public class Interpreter : AST_Visitor
   {
     if(class_decls.ContainsKey(nname))
       throw new Exception("Class decl is already defined: " + name + "(" + nname + ")");
-    else if(bindings.FindBinding<ClassBindSymbol>(nname) != null)
+    else if(bindings.resolve(nname) as ClassBindSymbol != null)
       throw new Exception("Class binding is already defined: " + name + "(" + nname + ")");
   }
 
@@ -1635,7 +1635,7 @@ public class Interpreter : AST_Visitor
 
   BehaviorTreeNode CreateConfNode(uint ntype)
   {
-    var bnd = bindings.FindBinding<ConfNodeSymbol>(ntype);
+    var bnd = bindings.resolve(ntype) as ConfNodeSymbol;
     if(bnd == null)
       throw new Exception("Could not find class binding: " + ntype);
     return bnd.func_creator();
@@ -1676,7 +1676,7 @@ public class Interpreter : AST_Visitor
       }
       else
       {
-        var bnd = bindings.FindBinding<FuncBindSymbol>(node.nname());
+        var bnd = bindings.resolve(node.nname()) as FuncBindSymbol;
         if(bnd == null)
           throw new Exception("Could not find func decl:" + node.Name());
 
@@ -1685,7 +1685,7 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.ARR_IDX)
     {
-      var bnd = bindings.FindBinding<ArrayTypeSymbol>(node.scope_ntype);
+      var bnd = bindings.resolve(node.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
         throw new Exception("Could not find class binding: " + node.scope_ntype);
 
@@ -1693,7 +1693,7 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.ARR_IDXW)
     {
-      var bnd = bindings.FindBinding<ArrayTypeSymbol>(node.scope_ntype);
+      var bnd = bindings.resolve(node.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
         throw new Exception("Could not find class binding: " + node.scope_ntype);
 
@@ -1705,7 +1705,7 @@ public class Interpreter : AST_Visitor
 
   void AddFuncCallNode(AST_Call ast)
   {
-    var func_symb = bindings.FindBinding<FuncSymbol>(ast.nname());
+    var func_symb = bindings.resolve(ast.nname()) as FuncSymbol;
 
     var fbind_symb = func_symb as FuncBindSymbol;
     var conf_symb = func_symb as ConfNodeSymbol;
@@ -1887,7 +1887,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonArr node)
   {
-    var bnd = bindings.FindBinding<ArrayTypeSymbol>(node.ntype);
+    var bnd = bindings.resolve(node.ntype) as ArrayTypeSymbol;
     if(bnd == null)
       throw new Exception("Could not find class binding: " + node.ntype);
 
