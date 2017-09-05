@@ -697,37 +697,13 @@ public class FuncSymbol : ScopedSymbol
   }
 }
 
-public class FuncDecl
-{
-  public AST_FuncDecl node;
-  public FuncSymbol symbol;
-
-  public FuncDecl(AST_FuncDecl node, FuncSymbol symbol)
-  {
-    this.node = node;
-    this.symbol = symbol;
-  }
-
-  public bool IsLambda()
-  {
-    return node is AST_LambdaDecl;
-  }
-
-  public void AddUseParam(Symbol s, bool is_ref)
-  {
-    var up = AST_Util.New_UseParam(s.name, is_ref); 
-    (node as AST_LambdaDecl).useparams.Add(up);
-    symbol.define(s);
-  }
-}
-
 public class LambdaSymbol : FuncSymbol
 {
   public AST_LambdaDecl decl;
 
-  List<FuncDecl> fdecl_stack;
+  List<FuncSymbol> fdecl_stack;
 
-  public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl, List<FuncDecl> fdecl_stack, WrappedNode n, string name, TypeRef ret_type, Scope parent) 
+  public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl, List<FuncSymbol> fdecl_stack, WrappedNode n, string name, TypeRef ret_type, Scope parent) 
     : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
@@ -746,6 +722,13 @@ public class LambdaSymbol : FuncSymbol
     }
     ft.Update();
 #endif
+  }
+
+  public void AddUseParam(Symbol s, bool is_ref)
+  {
+    var up = AST_Util.New_UseParam(s.name, is_ref); 
+    decl.useparams.Add(up);
+    this.define(s);
   }
 
   public override Symbol resolve(string name) 
@@ -776,7 +759,7 @@ public class LambdaSymbol : FuncSymbol
       var decl = fdecl_stack[i];
 
       //NOTE: only variable symbols are considered
-      var res = (Symbol)decl.symbol.GetMembers()[name] as VariableSymbol;
+      var res = (Symbol)decl.GetMembers()[name] as VariableSymbol;
 
       if(res != null)
       {
@@ -792,7 +775,7 @@ public class LambdaSymbol : FuncSymbol
   {
     for(int i=0;i<fdecl_stack.Count;++i)
     {
-      if(fdecl_stack[i].symbol == this)
+      if(fdecl_stack[i] == this)
         return i;
     }
     return -1;
@@ -803,10 +786,10 @@ public class LambdaSymbol : FuncSymbol
     //now let's put this result into all nested lambda scopes 
     for(int j=from_idx;j<=to_idx;++j)
     {
-      var decl = fdecl_stack[j];
-      if(!decl.IsLambda())
+      var lmb = fdecl_stack[j] as LambdaSymbol;
+      if(lmb == null)
         continue;
-      decl.AddUseParam(res, false/*not a ref*/);
+      lmb.AddUseParam(res, false/*not a ref*/);
     }
   }
 

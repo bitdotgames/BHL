@@ -688,8 +688,7 @@ public class Frontend : bhlBaseVisitor<object>
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(globals, ast, this.func_decl_stack, lambda_node, func_name, tr, mscope);
 
-    var fdecl = new FuncDecl(ast, symb);
-    PushFuncDecl(fdecl);
+    PushFuncDecl(symb);
 
     var useblock = ctx.funcLambda().useBlock();
     if(useblock != null)
@@ -702,7 +701,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(un_symb == null)
           FireError(Location(un) +  " : symbol '" + un_name_str + "' not defined in parent scope");
 
-        fdecl.AddUseParam(un_symb, un.isRef() != null);
+        symb.AddUseParam(un_symb, un.isRef() != null);
       }
     }
 
@@ -1273,11 +1272,11 @@ public class Frontend : bhlBaseVisitor<object>
   }
 
   //a list since it's easier to traverse by index
-  public List<FuncDecl> func_decl_stack = new List<FuncDecl>();
+  public List<FuncSymbol> func_decl_stack = new List<FuncSymbol>();
 
-  void PushFuncDecl(FuncDecl decl)
+  void PushFuncDecl(FuncSymbol symb)
   {
-    func_decl_stack.Add(decl);
+    func_decl_stack.Add(symb);
   }
 
   void PopFuncDecl()
@@ -1285,7 +1284,7 @@ public class Frontend : bhlBaseVisitor<object>
     func_decl_stack.RemoveAt(func_decl_stack.Count-1);
   }
 
-  FuncDecl PeekFuncDecl()
+  FuncSymbol PeekFuncDecl()
   {
     if(func_decl_stack.Count == 0)
       return null;
@@ -1317,7 +1316,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitReturn(bhlParser.ReturnContext ctx)
   {
-    var func_symb = PeekFuncDecl().symbol;
+    var func_symb = PeekFuncDecl();
     func_symb.return_statement_found = true;
 
     var ret_ast = AST_Util.New_Return();
@@ -1451,7 +1450,7 @@ public class Frontend : bhlBaseVisitor<object>
     curr_m.symbols.define(symb);
     curr_scope = symb;
 
-    PushFuncDecl(new FuncDecl(ast, symb));
+    PushFuncDecl(symb);
 
     var fparams = ctx.funcParams();
     if(fparams != null)
@@ -1834,7 +1833,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //NOTE: when inside if we reset whethe there was a return statement,
     //      this way we force the presence of return out of 'if/else' block 
-    var func_symb = PeekFuncDecl().symbol;
+    var func_symb = PeekFuncDecl();
     func_symb.return_statement_found = false;
 
     var else_if = ctx.elseIf();
