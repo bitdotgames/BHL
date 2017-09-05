@@ -11777,6 +11777,34 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestArrayOfUserClasses()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+      int c
+    }
+
+    func float test() 
+    {
+      Foo[] fs = [{b:1, c:2}]
+      fs.Add({b:10, c:20})
+
+      return fs[0].b + fs[0].c + fs[1].b + fs[1].c
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 33);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUserClassCast()
   {
     string bhl = @"
