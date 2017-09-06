@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.IO;
@@ -70,6 +69,18 @@ public struct HashedName
   public ulong n;
   public string s;
 
+  public uint n1 {
+    get {
+      return (uint)(n & 0xFFFFFFFF);
+    }
+  }
+
+  public uint n2 {
+    get {
+      return (uint)(n >> 31);
+    }
+  }
+
   public HashedName(ulong n, string s = "")
   {
     this.n = n;
@@ -79,8 +90,21 @@ public struct HashedName
   public HashedName(string s)
     : this(Hash.CRC28(s))
   {
-    if(Util.DEBUG)
-      this.s = s;
+    this.s = s;
+  }
+
+  public HashedName(uint n1, uint n2, string s = "")
+    : this(((ulong)n2 << 31) | ((ulong)n1), s)
+  {}
+
+  public HashedName(string n1, uint n2)
+    : this(Hash.CRC28(n1), n2, n1)
+  {}
+
+  public void Split(out uint n1, out uint n2)
+  {
+    n1 = (uint)(n & 0xFFFFFFFF);
+    n2 = (uint)(n >> 31);
   }
 
   public static implicit operator HashedName(ulong n)
@@ -105,7 +129,7 @@ public struct HashedName
 
   public override string ToString() 
   {
-    return "(" + n + ":" + s + ")";
+    return "(" + n + ":" + (s == null ? "?" : s) + ")";
   }
 }
 
@@ -181,29 +205,6 @@ static public class OPool
 
 public static class Extensions
 {
-  public static List<string> GetStringKeys(this OrderedDictionary col)
-  {
-    List<string> res = new List<string>();
-    foreach(var k in col.Keys)
-    {
-      var str = (string)k;
-      res.Add(str);
-    }
-    return res;
-  }
-
-  public static int FindStringKeyIndex(this OrderedDictionary col, string key)
-  {
-    int idx = 0;
-    foreach(var k in col.Keys)
-    {
-      if((string)k == key)
-        return idx;
-      ++idx;
-    }
-    return -1;
-  }
-
   public static void Append(this AST dst, AST src)
   {
     for(int i=0;i<src.children.Count;++i)
@@ -451,24 +452,25 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_FuncDecl New_FuncDecl(uint mod_id, string type, string name)
+  static public AST_FuncDecl New_FuncDecl(HashedName name, HashedName type)
   {
     var n = new AST_FuncDecl();
-    Init_FuncDecl(n, mod_id, type, name);
+    Init_FuncDecl(n, name, type);
     return n;
   }
 
-  static void Init_FuncDecl(AST_FuncDecl n, uint mod_id, string type, string name)
+  static void Init_FuncDecl(AST_FuncDecl n, HashedName name, HashedName type)
   {
-    n.ntype = Hash.CRC28(type); 
+    n.ntype = (uint)type.n; 
     if(Util.DEBUG)
-      n.type = type;
+      n.type = type.s;
 
-    n.nname2 = mod_id;
-    n.nname1 = Hash.CRC28(name);
+    n.nname1 = name.n1;
+    //module id
+    n.nname2 = name.n2;
 
     if(Util.DEBUG)
-      n.name = name;
+      n.name = name.s;
 
     //fparams
     n.NewInterimChild();
@@ -513,7 +515,7 @@ static public class AST_Util
 
   static public HashedName Name(this AST_FuncDecl n)
   {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname(), n.name);
+    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname1, n.nname2, n.name);
   }
 
   static public ulong nname(this AST_FuncDecl n)
@@ -523,31 +525,29 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_LambdaDecl New_LambdaDecl(uint mod_id, string type, string name)
+  static public AST_LambdaDecl New_LambdaDecl(HashedName name, HashedName type)
   {
     var n = new AST_LambdaDecl();
-    Init_FuncDecl(n, mod_id, type, name);
+    Init_FuncDecl(n, name, type);
 
     return n;
   }
 
   static public HashedName Name(this AST_LambdaDecl n)
   {
-    return new HashedName(n.nname(), n.name);
+    return new HashedName(n.nname1, n.nname2, n.name);
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_ClassDecl New_ClassDecl(uint mod_id, string name)
+  static public AST_ClassDecl New_ClassDecl(HashedName name)
   {
     var n = new AST_ClassDecl();
-    n.nname2 = mod_id;
-    n.nname1 = Hash.CRC28(name);
+    n.nname1 = name.n1;
+    n.nname2 = name.n2;
 
-    //NOTE: for now always storing the class text name,
-    //      remove this requirement later
-    //if(Util.DEBUG)
-      n.name = name;
+    if(Util.DEBUG)
+      n.name = name.s;
     return n;
   }
 
@@ -583,24 +583,24 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_TypeCast New_TypeCast(string type)
+  static public AST_TypeCast New_TypeCast(HashedName type)
   {
     var n = new AST_TypeCast();
-    n.ntype = Hash.CRC28(type);
+    n.ntype = (uint)type.n;
     if(Util.DEBUG)
-      n.type = type;
+      n.type = type.s;
 
     return n;
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_UseParam New_UseParam(string name, bool is_ref)
+  static public AST_UseParam New_UseParam(HashedName name, bool is_ref)
   {
     var n = new AST_UseParam();
-    n.nname = Hash.CRC28(name) | (is_ref ? 1u << 29 : 0u);
+    n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
-      n.name = name;
+      n.name = name.s;
 
     return n;
   }
@@ -617,23 +617,15 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public void SplitName(ulong nname, out uint nname1, out uint nname2)
-  {
-    nname1 = (uint)(nname & 0xFFFFFFFF);
-    nname2 = (uint)(nname >> 31);
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", ulong nname = 0, ClassSymbol scope_symb = null)
+  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name = new HashedName(), ClassSymbol scope_symb = null)
   {
     var n = new AST_Call();
     n.type = type;
-    n.nname1 = (uint)(nname & 0xFFFFFFFF);
-    n.nname2 = (uint)(nname >> 31);
+    n.nname1 = name.n1;
+    n.nname2 = name.n2;
     if(Util.DEBUG)
-      n.name = name;
-    n.scope_ntype = scope_symb != null ? scope_symb.GetNtype() : 0;
+      n.name = name.s;
+    n.scope_ntype = scope_symb != null ? (uint)scope_symb.Type().n : 0;
     n.line_num = (uint)line_num;
 
     return n;
@@ -681,9 +673,9 @@ static public class AST_Util
   static public AST_New New_New(ClassSymbol type)
   {
     var n = new AST_New();
-    n.ntype = type.GetNtype();
+    n.ntype = (uint)type.Type().n;
     if(Util.DEBUG)
-      n.type = type.GetName();
+      n.type = type.GetName().s;
 
     return n;
   }
@@ -705,12 +697,12 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_VarDecl New_VarDecl(string name, bool is_ref)
+  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref)
   {
     var n = new AST_VarDecl();
-    n.nname = Hash.CRC28(name) | (is_ref ? 1u << 29 : 0u);
+    n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
-      n.name = name;
+      n.name = name.s;
 
     return n;
   }
@@ -737,17 +729,17 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_JsonObj New_JsonObj(string root_type_name)
+  static public AST_JsonObj New_JsonObj(HashedName root_type_name)
   {
     var n = new AST_JsonObj();
-    n.ntype = Hash.CRC28(root_type_name);
+    n.ntype = (uint)root_type_name.n;
     return n;
   }
 
   static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type)
   {
     var n = new AST_JsonArr();
-    n.ntype = arr_type.GetNtype();
+    n.ntype = (uint)arr_type.Type().n;
     return n;
   }
 
@@ -757,14 +749,13 @@ static public class AST_Util
     return n;
   }
 
-  static public AST_JsonPair New_JsonPair(string scope_type, string name)
+  static public AST_JsonPair New_JsonPair(HashedName scope_type, HashedName name)
   {
     var n = new AST_JsonPair();
-    //NOTE: using CRC28 for compatibility with metagen
-    n.scope_ntype = Hash.CRC28(scope_type);
-    n.nname = Hash.CRC28(name);
+    n.scope_ntype = (uint)scope_type.n;
+    n.nname = (uint)name.n;
     if(Util.DEBUG)
-      n.name = name;
+      n.name = name.s;
 
     return n;
   }
@@ -1208,6 +1199,103 @@ public static class TempBuffer
     tmp_bufs[idx] = buf;
     stats_max_buf = stats_max_buf < buf.Length ? buf.Length : stats_max_buf;
   }
+}
+
+// A dictionary that remembers the order that keys were first inserted. If a new entry overwrites an existing entry, 
+// the original insertion position is left unchanged. 
+// Deleting an entry and reinserting it will move it to the end.
+public class OrderedDictionary<TKey, TValue>
+{
+	// An unordered dictionary of key pairs.
+	Dictionary<TKey, TValue> dict;
+
+	// The keys of the dictionary in the exposed order.
+	List<TKey> keys = new List<TKey>();
+
+	public OrderedDictionary()
+	{
+	  dict = new Dictionary<TKey, TValue>();
+  }
+
+	public OrderedDictionary(IEqualityComparer<TKey> cmp)
+	{
+	  dict = new Dictionary<TKey, TValue>(cmp);
+  }
+
+	public int Count
+	{
+		get {
+			return keys.Count;
+		}
+	}
+
+	public ICollection<TKey> Keys
+	{
+		get {
+      return keys.AsReadOnly();
+    }
+  }
+
+	// The value at the given index.
+	public TValue this[int index]
+	{
+		get {
+			var key = keys[index];
+			return dict[key];
+		}
+		set {
+			var key = keys[index];
+			dict[key] = value;
+		}
+	}
+
+	public int IndexOf(TKey key)
+	{
+		return keys.IndexOf(key);
+	}
+
+	public void RemoveAt(int index)
+	{
+		var key = keys[index];
+		dict.Remove(key);
+		keys.RemoveAt(index);
+	}
+
+	public bool ContainsKey(TKey key)
+	{
+		return dict.ContainsKey(key);
+	}
+
+	public bool TryGetValue(TKey key, out TValue value)
+	{
+		return dict.TryGetValue(key, out value);
+	}
+
+	public void Insert(int index, TKey key, TValue value)
+	{
+		// Dictionary operation first, so exception thrown if key already exists.
+		dict.Add(key, value);
+		keys.Insert(index, key);
+	}
+
+	public void Add(TKey key, TValue value)
+	{
+		// Dictionary operation first, so exception thrown if key already exists.
+		dict.Add(key, value);
+		keys.Add(key);
+	}
+
+	public void Remove(TKey key)
+	{
+		dict.Remove(key);
+		keys.Remove(key);
+	}
+
+	public void Clear()
+	{
+		dict.Clear();
+		keys.Clear();
+	}
 }
 
 } //namespace bhl

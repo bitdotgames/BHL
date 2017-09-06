@@ -6,7 +6,7 @@ namespace bhl {
 
 public interface Scope
 {
-  string GetScopeName();
+  HashedName GetScopeName();
 
   // Where to look next for symbols; superclass or enclosing scope
   Scope GetParentScope();
@@ -16,27 +16,74 @@ public interface Scope
   // Define a symbol in the current scope
   void define(Symbol sym);
   // Look up name in this scope or in parent scope if not here
-  Symbol resolve(string name);
+  Symbol resolve(HashedName name);
+}
+
+public class SymbolsDictionary : OrderedDictionary<HashedName,Symbol>
+{
+  class HashedNameEqualityCmp : IEqualityComparer<HashedName>
+  {
+    public bool Equals(HashedName a1, HashedName a2)
+    {
+      return a1.n == a2.n;
+    }
+
+    public int GetHashCode(HashedName a)
+    {
+      return (int)a.n1 + (int)a.n2;
+    }
+  }
+
+  static HashedNameEqualityCmp cmp = new HashedNameEqualityCmp();
+
+  public SymbolsDictionary()
+    : base(cmp)
+  {}
+
+  public List<string> GetStringKeys()
+  {
+    List<string> res = new List<string>();
+    foreach(var k in Keys)
+    {
+      var str = k.s;
+      res.Add(str);
+    }
+    return res;
+  }
+
+  public int FindStringKeyIndex(string key)
+  {
+    int idx = 0;
+    foreach(var k in Keys)
+    {
+      if(k.s == key)
+        return idx;
+      ++idx;
+    }
+    return -1;
+  }
 }
 
 public abstract class BaseScope : Scope 
 {
-  protected Scope enclosing_scope; // null if global (outermost) scope
-  protected OrderedDictionary symbols = new OrderedDictionary();
+  // null if global (outermost) scope
+  protected Scope enclosing_scope;
+  protected SymbolsDictionary symbols = new SymbolsDictionary();
 
   public BaseScope(Scope parent) 
   { 
     enclosing_scope = parent;  
   }
 
-  public OrderedDictionary GetMembers()
+  public SymbolsDictionary GetMembers()
   {
     return symbols;
   }
 
-  public Symbol resolve(string name) 
+  public Symbol resolve(HashedName name) 
   {
-    Symbol s = (Symbol)symbols[name];
+    Symbol s = null;
+    symbols.TryGetValue(name, out s);
     if(s != null)
       return s;
 
@@ -49,7 +96,7 @@ public abstract class BaseScope : Scope
 
   public virtual void define(Symbol sym) 
   {
-    if(symbols.Contains(sym.name))
+    if(symbols.ContainsKey(sym.name))
       throw new Exception(sym.Location() + ": Already defined symbol '" + sym.name + "'"); 
 
     symbols.Add(sym.name, sym);
@@ -59,9 +106,10 @@ public abstract class BaseScope : Scope
 
   public void Append(BaseScope other)
   {
-    foreach(var val in other.GetMembers().Values)
+    var ms = other.GetMembers(); 
+    for(int i=0;i<ms.Count;++i)
     {
-      var s = (Symbol)val;
+      var s = ms[i];
       define(s);
     }
   }
@@ -69,45 +117,29 @@ public abstract class BaseScope : Scope
   public Scope GetParentScope() { return enclosing_scope; }
   public Scope GetEnclosingScope() { return enclosing_scope; }
 
-  public abstract string GetScopeName();
+  public abstract HashedName GetScopeName();
 
   public override string ToString() { return string.Join(",", symbols.GetStringKeys().ToArray()); }
 }
 
 public class GlobalScope : BaseScope 
 {
-  Dictionary<ulong, Symbol> hashed_symbols = new Dictionary<ulong, Symbol>();
-
   public GlobalScope() 
     : base(null) 
   {}
 
-  public override string GetScopeName() { return "global"; }
-
-  public override void define(Symbol sym) 
-  {
-    base.define(sym);
-
-    hashed_symbols.Add(sym.nname, sym);
-  }
-
-  public Symbol resolve(ulong nname)
-  {
-    Symbol sym = null;
-    hashed_symbols.TryGetValue(nname, out sym);
-    return sym;
-  }
+  public override HashedName GetScopeName() { return new HashedName("global"); }
 
   public void RemoveUserDefines()
   {
     for(int i=symbols.Count;i-- > 0;)
     {
-      var s = (Symbol)symbols[i];
-      if(s is ClassSymbolAST)
-      {
+      var s = symbols[i];
+
+      bool need_to_remove = s is ClassSymbolAST;
+
+      if(need_to_remove)
         symbols.RemoveAt(i);
-        hashed_symbols.Remove(s.nname);
-      }
     }
   }
 
@@ -239,7 +271,8 @@ public class LocalScope : BaseScope
 {
   public LocalScope(Scope parent) 
     : base(parent) {}
-  public override string GetScopeName() { return "local"; }
+
+  public override HashedName GetScopeName() { return new HashedName("local"); }
 }
 
 } //namespace bhl

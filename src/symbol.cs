@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 
 #if BHL_FRONT
 using Antlr4.Runtime;
@@ -12,8 +11,7 @@ namespace bhl {
 
 public interface Type 
 {
-  string GetName();
-  uint GetNname();
+  HashedName GetName();
   int GetTypeIndex();
 }
 
@@ -23,7 +21,7 @@ public class TypeRef
 
   public Type type;
   public bool is_ref;
-  public string name;
+  public HashedName name;
 #if BHL_FRONT
   //NOTE: parse location of the type
   public IParseTree node;
@@ -32,7 +30,7 @@ public class TypeRef
   public TypeRef()
   {}
 
-  public TypeRef(GlobalScope bindings, string name)
+  public TypeRef(GlobalScope bindings, HashedName name)
   {
     this.bindings = bindings;
     this.name = name;
@@ -60,7 +58,7 @@ public class TypeRef
     if(type != null)
       return type;
 
-    if(name == null)
+    if(name.n == 0)
       return null;
 
     type = (bhl.Type)bindings.resolve(name);
@@ -74,7 +72,7 @@ public class TypeRef
     if(type != null)
       return type;
 
-    if(name == null)
+    if(name.n == 0)
       return null;
 
     type = (bhl.Type)bindings.resolve(name);
@@ -140,9 +138,7 @@ public class Symbol
   // Location in parse tree, can be null if it's a binding
   public WrappedNode node;
   // All symbols at least have a name
-  public string name;
-  // Hashed symbol name
-  public uint nname;
+  public HashedName name;
   public TypeRef type;
   // All symbols know what scope contains them
   public Scope scope;
@@ -151,30 +147,24 @@ public class Symbol
   public int scope_level;
   public bool is_out_of_scope;
 
-  public Symbol(WrappedNode node, string name) 
+  public Symbol(WrappedNode node, HashedName name) 
   { 
     this.node = node;
     this.name = name; 
-    this.nname = Hash.CRC28(name);
   }
 
-  public Symbol(WrappedNode node, string name, TypeRef type) 
+  public Symbol(WrappedNode node, HashedName name, TypeRef type) 
     : this(node, name) 
   { 
     this.type = type; 
   }
 
-  public string GetName() { return name; }
-  public uint GetNname() { return nname; }
-
-  public HashedName Name() { return new HashedName(nname, name); }
-
   public override string ToString() 
   {
     string s = "";
     if(scope != null) 
-      s = scope.GetScopeName() + '.';
-    return '<' + s + (name??"?") + ':' + (type.name??"?") + '>';
+      s = scope.GetScopeName() + ".";
+    return '<' + s + name + ':' + type + '>';
   }
 
   public string Location()
@@ -190,34 +180,34 @@ public class BuiltInTypeSymbol : Symbol, Type
 {
   public int type_index;
 
-  public BuiltInTypeSymbol(string name, int type_index) 
+  public BuiltInTypeSymbol(HashedName name, int type_index) 
     : base(null, name) 
   {
     this.type = new TypeRef(this);
     this.type_index = type_index;
   }
 
+  public HashedName GetName() { return name; }
   public int GetTypeIndex() { return type_index; }
 }
 
 public class ClassSymbol : ScopedSymbol, Scope, Type 
 {
   ClassSymbol super_class;
-  public OrderedDictionary members = new OrderedDictionary();
-  Dictionary<ulong, Symbol> hashed_symbols = new Dictionary<ulong, Symbol>();
+  public SymbolsDictionary members = new SymbolsDictionary();
 
   public Interpreter.ClassCreator creator;
 
-  public ClassSymbol(WrappedNode n, string name, TypeRef super_class, Scope enclosing_scope, Interpreter.ClassCreator creator = null)
+  public ClassSymbol(WrappedNode n, HashedName name, TypeRef super_class, Scope enclosing_scope, Interpreter.ClassCreator creator = null)
     : base(n, name, enclosing_scope)
   {
     this.super_class = super_class == null ? null : (ClassSymbol)super_class.Get();
     this.creator = creator;
   }
 
-  public virtual uint GetNtype()
+  public virtual HashedName Type()
   {
-    return this.nname;
+    return this.name;
   }
 
   public bool IsSubclassOf(ClassSymbol p)
@@ -241,28 +231,23 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     return super_class;
   }
 
-  public Symbol ResolveMember(ulong nname)
+  public Symbol ResolveMember(HashedName name)
   {
-    Symbol sym;
-    if(hashed_symbols.TryGetValue(nname, out sym))
+    Symbol sym = null;
+    members.TryGetValue(name, out sym);
+    if(sym != null)
       return sym;
 
     if(super_class != null)
-      return super_class.ResolveMember(nname);
+      return super_class.ResolveMember(name);
 
     return null;
   }
 
-  public override void define(Symbol sym) 
-  {
-    base.define(sym);
-
-    hashed_symbols.Add(sym.nname, sym);
-  }
-
+  public HashedName GetName() { return name; }
   public int GetTypeIndex() { return SymbolTable.tUSER; }
 
-  public override OrderedDictionary GetMembers() { return members; }
+  public override SymbolsDictionary GetMembers() { return members; }
 
   public override string ToString() 
   {
@@ -328,7 +313,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 //      were not explicitely re-defined 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
-  public static readonly uint GENERIC_CLASS_NTYPE = Hash.CRC28("[]"); 
+  public static readonly HashedName GENERIC_CLASS_TYPE = new HashedName("[]"); 
 
 #if BHL_FRONT
   public GenericArrayTypeSymbol(GlobalScope globs, bhlParser.TypeContext node)
@@ -344,9 +329,9 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     : base(globs, new TypeRef(globs, ""))
   {}
 
-  public override uint GetNtype()
+  public override HashedName Type()
   {
-    return GENERIC_CLASS_NTYPE;
+    return GENERIC_CLASS_TYPE;
   }
 
   public override void CreateArr(ref DynVal v)
@@ -455,7 +440,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
 public class VariableSymbol : Symbol 
 {
-  public VariableSymbol(WrappedNode n, string name, TypeRef type) 
+  public VariableSymbol(WrappedNode n, HashedName name, TypeRef type) 
     : base(n, name, type) 
   {}
 }
@@ -464,7 +449,7 @@ public class FuncArgSymbol : VariableSymbol
 {
   public bool is_ref;
 
-  public FuncArgSymbol(string name, TypeRef type, bool is_ref = false)
+  public FuncArgSymbol(HashedName name, TypeRef type, bool is_ref = false)
     : base(null, name, type)
   {
     this.is_ref = is_ref;
@@ -476,7 +461,7 @@ public class FieldSymbol : VariableSymbol
   public Interpreter.FieldGetter getter;
   public Interpreter.FieldSetter setter;
 
-  public FieldSymbol(string name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null) 
+  public FieldSymbol(HashedName name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null) 
     : base(null, name, type)
   {
     this.getter = getter;
@@ -486,7 +471,7 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolAST : FieldSymbol
 {
-  public FieldSymbolAST(string name) 
+  public FieldSymbolAST(HashedName name) 
     : base(name, null, null, null)
   {
     this.getter = Getter;
@@ -496,14 +481,14 @@ public class FieldSymbolAST : FieldSymbol
   void Getter(DynVal ctx, ref DynVal v)
   {
     var m = (ClassStorage)ctx.obj;
-    v.ValueCopyFrom(m.Get(nname));
+    v.ValueCopyFrom(m.Get(name));
   }
 
   void Setter(ref DynVal ctx, DynVal v)
   {
     var m = (ClassStorage)ctx.obj;
     var tmp = v.ValueClone();
-    m.Set(nname, tmp);
+    m.Set(name, tmp);
     tmp.RefMod(RefOp.TRY_DEL);
   }
 }
@@ -512,20 +497,21 @@ public abstract class ScopedSymbol : Symbol, Scope
 {
   protected Scope enclosing_scope;
 
-  public ScopedSymbol(WrappedNode n, string name, TypeRef type, Scope enclosing_scope) 
+  public ScopedSymbol(WrappedNode n, HashedName name, TypeRef type, Scope enclosing_scope) 
     : base(n, name, type)
   {
     this.enclosing_scope = enclosing_scope;
   }
-  public ScopedSymbol(WrappedNode n, string name, Scope enclosing_scope) 
+  public ScopedSymbol(WrappedNode n, HashedName name, Scope enclosing_scope) 
     : base(n, name)
   {
     this.enclosing_scope = enclosing_scope;
   }
 
-  public virtual Symbol resolve(string name) 
+  public virtual Symbol resolve(HashedName name) 
   {
-    Symbol s = (Symbol)GetMembers()[name];
+    Symbol s = null;
+    GetMembers().TryGetValue(name, out s);
     if(s != null)
     {
       if(s.is_out_of_scope)
@@ -544,7 +530,7 @@ public abstract class ScopedSymbol : Symbol, Scope
   public virtual void define(Symbol sym) 
   {
     var members = GetMembers(); 
-    if(members.Contains(sym.name))
+    if(members.ContainsKey(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym.name, sym);
@@ -555,47 +541,44 @@ public abstract class ScopedSymbol : Symbol, Scope
   public virtual Scope GetParentScope() { return GetEnclosingScope(); }
   public virtual Scope GetEnclosingScope() { return enclosing_scope; }
 
-  public String GetScopeName() { return name; }
+  public HashedName GetScopeName() { return name; }
 
-  public abstract OrderedDictionary GetMembers();
+  public abstract SymbolsDictionary GetMembers();
 }
 
 public class MultiType : Type
 {
-  public string name;
-  public uint nname;
+  public HashedName name;
 
   public List<TypeRef> items = new List<TypeRef>();
 
   public int GetTypeIndex() { return SymbolTable.tUSER; }
-  public string GetName() { return name; }
-  public uint GetNname() { return nname; }
+  public HashedName GetName() { return name; }
 
   public void Update()
   {
-    name = "";
+    string tmp = "";
+    //TODO: guess, this can be more optimal?
     for(int i=0;i<items.Count;++i)
     {
       if(i > 0)
-        name += ",";
-      name += items[i].name;
+        tmp += ",";
+      tmp += items[i].name.s;
     }
 
-    nname = Hash.CRC28(name);
+    name = new HashedName(tmp);
   }
 }
 
 public class FuncType : Type
 {
-  public string name;
-  public uint nname;
+  public HashedName name;
 
   public TypeRef ret_type;
   public List<TypeRef> arg_types = new List<TypeRef>();
 
   public int GetTypeIndex() { return SymbolTable.tUSER; }
-  public string GetName() { return name; }
-  public uint GetNname() { return nname; }
+  public HashedName GetName() { return name; }
 
   public FuncType()
   {}
@@ -627,33 +610,34 @@ public class FuncType : Type
 
   public void Update()
   {
-    name = ret_type.name + "^("; 
+    string tmp = "";
+    tmp = ret_type.name.s + "^("; 
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
-        name += ",";
+        tmp += ",";
       if(arg_types[i].is_ref)
-        name += "ref ";
-      name += arg_types[i].name;
+        tmp += "ref ";
+      tmp += arg_types[i].name.s;
     }
-    name += ")";
+    tmp += ")";
 
-    nname = Hash.CRC28(name);
+    name = new HashedName(tmp);
   }
 }
 
 public class FuncSymbol : ScopedSymbol
 {
-  OrderedDictionary members = new OrderedDictionary();
-  OrderedDictionary args = new OrderedDictionary();
+  SymbolsDictionary members = new SymbolsDictionary();
+  SymbolsDictionary args = new SymbolsDictionary();
 
   public bool return_statement_found = false;
 
-  public FuncSymbol(WrappedNode n, string name, FuncType type, Scope parent) 
+  public FuncSymbol(WrappedNode n, HashedName name, FuncType type, Scope parent) 
     : base(n, name, new TypeRef(type), parent)
   {}
 
-  public override OrderedDictionary GetMembers() { return members; }
+  public override SymbolsDictionary GetMembers() { return members; }
 
   public FuncType GetFuncType()
   {
@@ -665,22 +649,26 @@ public class FuncSymbol : ScopedSymbol
     return GetFuncType().ret_type.Get();
   }
 
-  public OrderedDictionary GetArgs()
+  public SymbolsDictionary GetArgs()
   {
     return args;
   }
 
-  public void DefineArg(string name) 
+  public void DefineArg(HashedName name) 
   {
-    var sym = (FuncArgSymbol)members[name];
-    args.Add(name, sym);
+    Symbol sym = null;
+    if(!members.TryGetValue(name, out sym))
+      throw new Exception("No such member: " + name);
+    var fsym = sym as FuncArgSymbol;
+    if(fsym == null)
+      throw new Exception("Bad symbol");
+    args.Add(name, fsym);
   }
-
-  public virtual ulong GetCallId() { return nname; }
 
   public virtual int GetTotalArgsNum() { return 0; }
   public virtual int GetDefaultArgsNum() { return 0; }
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
+
   public bool IsArgRefAt(int idx) 
   {
     var farg = members[idx] as FuncArgSymbol;
@@ -690,11 +678,6 @@ public class FuncSymbol : ScopedSymbol
 #if BHL_FRONT
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
 #endif
-
-  public new string GetName() 
-  {
-    return name;
-  }
 }
 
 public class LambdaSymbol : FuncSymbol
@@ -703,12 +686,13 @@ public class LambdaSymbol : FuncSymbol
 
   List<FuncSymbol> fdecl_stack;
 
-  public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl, List<FuncSymbol> fdecl_stack, WrappedNode n, string name, TypeRef ret_type, Scope parent) 
+#if BHL_FRONT
+  //frontend version
+  public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl, List<FuncSymbol> fdecl_stack, WrappedNode n, HashedName name, TypeRef ret_type, Scope parent) 
     : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
-#if BHL_FRONT
     var ft = GetFuncType();
     var ctx = (bhlParser.ExpLambdaContext)n.tree;
     var fparams = ctx.funcLambda().funcParams();
@@ -721,7 +705,14 @@ public class LambdaSymbol : FuncSymbol
       }
     }
     ft.Update();
+  }
 #endif
+
+  //backend version
+  public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl) 
+    : base(null, new HashedName(decl.nname1, decl.nname2), new FuncType(), globs)
+  {
+    this.decl = decl;
   }
 
   public void AddUseParam(Symbol s, bool is_ref)
@@ -731,9 +722,10 @@ public class LambdaSymbol : FuncSymbol
     this.define(s);
   }
 
-  public override Symbol resolve(string name) 
+  public override Symbol resolve(HashedName name) 
   {
-    var s = (Symbol)GetMembers()[name];
+    Symbol s = null;
+    GetMembers().TryGetValue(name, out s);
     if(s != null)
       return s;
 
@@ -748,7 +740,7 @@ public class LambdaSymbol : FuncSymbol
     return null;
   }
 
-  Symbol ResolveUpvalue(string name)
+  Symbol ResolveUpvalue(HashedName name)
   {
     int idx = FindMyIdxInStack();
     if(idx == -1)
@@ -759,9 +751,9 @@ public class LambdaSymbol : FuncSymbol
       var decl = fdecl_stack[i];
 
       //NOTE: only variable symbols are considered
-      var res = (Symbol)decl.GetMembers()[name] as VariableSymbol;
-
-      if(res != null)
+      Symbol res = null;
+      decl.GetMembers().TryGetValue(name, out res);
+      if(res != null && res is VariableSymbol)
       {
         DefineInStack(res, i+1, idx);
         return res;
@@ -792,8 +784,6 @@ public class LambdaSymbol : FuncSymbol
       lmb.AddUseParam(res, false/*not a ref*/);
     }
   }
-
-  public override ulong GetCallId() { return decl.nname(); }
 }
 
 public class FuncSymbolAST : FuncSymbol
@@ -804,35 +794,41 @@ public class FuncSymbolAST : FuncSymbol
   public bhlParser.FuncParamsContext fparams;
 #endif
 
-  public FuncSymbolAST(GlobalScope globals, AST_FuncDecl decl, WrappedNode n, string name, TypeRef ret_type, Scope parent
+  //frontend version
 #if BHL_FRONT
-      , bhlParser.FuncParamsContext fparams
-#endif
-      ) 
+  public FuncSymbolAST(GlobalScope globals, AST_FuncDecl decl, WrappedNode n, HashedName name, TypeRef ret_type, Scope parent, bhlParser.FuncParamsContext fparams) 
     : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
-#if BHL_FRONT
     this.fparams = fparams;
 
-    var ft = GetFuncType();
-    if(fparams != null)
+    if(n != null)
     {
-      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
+      var ft = GetFuncType();
+      if(fparams != null)
       {
-        var vd = fparams.funcParamDeclare()[i];
-        var type = globals.type(vd.type());
-        type.is_ref = vd.isRef() != null;
-        ft.arg_types.Add(type);
+        for(int i=0;i<fparams.funcParamDeclare().Length;++i)
+        {
+          var vd = fparams.funcParamDeclare()[i];
+          var type = globals.type(vd.type());
+          type.is_ref = vd.isRef() != null;
+          ft.arg_types.Add(type);
+        }
       }
+      ft.Update();
     }
-    ft.Update();
+  }
 #endif
+
+  //backend version
+  public FuncSymbolAST(GlobalScope globals, AST_FuncDecl decl)
+    : base(null, new HashedName(decl.nname1, decl.nname2), new FuncType(), globals)
+  {
+    this.decl = decl;
   }
 
   public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }
   public override int GetDefaultArgsNum() { return decl.GetDefaultArgsNum(); }
-  public override ulong GetCallId() { return decl.nname(); }
 #if BHL_FRONT
   public override IParseTree GetDefaultArgsExprAt(int idx) 
   { 
@@ -852,7 +848,7 @@ public class FuncBindSymbol : FuncSymbol
 
   public int def_args_num;
 
-  public FuncBindSymbol(string name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, int def_args_num = 0) 
+  public FuncBindSymbol(HashedName name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, int def_args_num = 0) 
     : base(null, name, new FuncType(ret_type), null)
   {
     this.func_creator = func_creator;
@@ -877,7 +873,7 @@ public class FuncBindSymbol : FuncSymbol
 
 public class SimpleFuncBindSymbol : FuncBindSymbol
 {
-  public SimpleFuncBindSymbol(string name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
+  public SimpleFuncBindSymbol(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
     : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num )
   {}
 }
@@ -886,7 +882,7 @@ public class ConfNodeSymbol : FuncBindSymbol
 {
   public Interpreter.ConfigGetter conf_getter;
 
-  public ConfNodeSymbol(string name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, Interpreter.ConfigGetter conf_getter) 
+  public ConfNodeSymbol(HashedName name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, Interpreter.ConfigGetter conf_getter) 
     : base(name, ret_type, func_creator)
   {
     this.conf_getter = conf_getter;
@@ -898,11 +894,11 @@ public class ConfNodeSymbol : FuncBindSymbol
 
 public class ClassBindSymbol : ClassSymbol
 {
-  public ClassBindSymbol(string name, Interpreter.ClassCreator creator)
+  public ClassBindSymbol(HashedName name, Interpreter.ClassCreator creator)
     : base(null, name, null, null, creator)
   {}
 
-  public ClassBindSymbol(string name, TypeRef super_class, Interpreter.ClassCreator creator)
+  public ClassBindSymbol(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator)
     : base(null, name, super_class, null, creator)
   {}
 }
@@ -911,7 +907,7 @@ public class ClassSymbolAST : ClassSymbol
 {
   public AST_ClassDecl decl;
 
-  public ClassSymbolAST(string name, AST_ClassDecl decl)
+  public ClassSymbolAST(HashedName name, AST_ClassDecl decl)
     : base(null, name, null, null, null)
   {
     this.decl = decl;
@@ -925,38 +921,29 @@ public class ClassSymbolAST : ClassSymbol
 
     for(int i=0;i<members.Count;++i)
     {
-      var m = (Symbol)members[i];
+      var m = members[i];
       var dv = DynVal.New();
-      s.Set(m.nname, dv);
+      s.Set(m.name, dv);
     }
   }
 }
 
 public class EnumSymbol : ScopedSymbol, Scope, Type 
 {
-  Dictionary<uint, Symbol> hashed_symbols = new Dictionary<uint, Symbol>();
-  public OrderedDictionary members = new OrderedDictionary();
+  public SymbolsDictionary members = new SymbolsDictionary();
 
-  public EnumSymbol(WrappedNode n, string name, Scope enclosing_scope)
+  public EnumSymbol(WrappedNode n, HashedName name, Scope enclosing_scope)
       : base(n, name, enclosing_scope)
   {}
 
+  public HashedName GetName() { return name; }
   public int GetTypeIndex() { return SymbolTable.tENUM; }
 
-  public override OrderedDictionary GetMembers() { return members; }
+  public override SymbolsDictionary GetMembers() { return members; }
 
-  public override void define(Symbol sym) 
+  public EnumItemSymbol FindValue(HashedName name)
   {
-    base.define(sym);
-    hashed_symbols.Add(sym.nname, sym);
-  }
-
-  public EnumItemSymbol findValue(uint nname)
-  {
-    Symbol sym;
-    if(hashed_symbols.TryGetValue(nname, out sym))
-      return sym as EnumItemSymbol;
-    return null;
+    return base.resolve(name) as EnumItemSymbol;
   }
 
   public override string ToString() 
@@ -978,6 +965,7 @@ public class EnumItemSymbol : Symbol, Type
     this.val = val;
   }
 
+  public HashedName GetName() { return en.name; }
   public int GetTypeIndex() { return en.GetTypeIndex(); }
 }
 
@@ -1154,7 +1142,7 @@ static public class SymbolTable
            destType == _any ||
            (destType is ClassSymbol && valueType == _null) ||
            (destType is FuncType && valueType == _null) || 
-           valueType.GetNname() == destType.GetNname() ||
+           valueType.GetName().n == destType.GetName().n ||
            IsChildClass(valueType, destType)
            ;
   }

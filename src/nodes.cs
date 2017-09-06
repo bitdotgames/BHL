@@ -1599,11 +1599,11 @@ public class TypeCastNode : BehaviorTreeTerminalNode
     var res = val.ValueClone();
 
     //TODO: add better casting support
-    if(node.ntype == SymbolTable._int.nname)
+    if(node.ntype == SymbolTable._int.name.n)
     {
       res.SetNum((int)val.num);
     }
-    else if(node.ntype == SymbolTable._string.nname && val.type != DynVal.STRING)
+    else if(node.ntype == SymbolTable._string.name.n && val.type != DynVal.STRING)
     {
       res.SetStr("" + val.num);
     }
@@ -1806,9 +1806,9 @@ abstract public class FuncNode : SequentialNode
     return DeclArgsNum() - args_num;
   }
 
-  public virtual string GetName()
+  public virtual HashedName GetName()
   {
-    return "";
+    return new HashedName();
   }
 }
 
@@ -1824,7 +1824,7 @@ public class FuncNodeAST : FuncNode
   {
     this.fct = fct;
     this.decl = decl;
-    this.has_void_value = decl.ntype == SymbolTable._void.nname;
+    this.has_void_value = decl.ntype == SymbolTable._void.name.n;
   }
 
   public override int DeclArgsNum()
@@ -1839,9 +1839,9 @@ public class FuncNodeAST : FuncNode
     return children.Count == 0 ? null : children[i] as AST;
   }
 
-  public override string GetName()
+  public override HashedName GetName()
   {
-    return decl.name;
+    return decl.Name();
   }
 
   public void Inflate()
@@ -1950,7 +1950,7 @@ public class FuncNodeAST : FuncNode
 public class FuncNodeLambda : FuncNodeAST
 {
   public FuncNodeLambda(FuncCtx fct)
-    : base(fct.fr.decl, fct)
+    : base((fct.fs as FuncSymbolAST).decl, fct)
   {}
 
   public override void init()
@@ -1968,12 +1968,12 @@ public class FuncNodeLambda : FuncNodeAST
 
 public class PushFuncCtxNode : BehaviorTreeTerminalNode
 {
-  FuncRef fr;
+  FuncSymbol fs;
   FuncCtx fct;
 
-  public PushFuncCtxNode(AST_FuncDecl decl, FuncBindSymbol fbnd)
+  public PushFuncCtxNode(FuncSymbol fs)
   {
-    fr = new FuncRef(decl, fbnd);
+    this.fs = fs;
   }
 
   public override void init()
@@ -1982,21 +1982,21 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
 
     var interp = Interpreter.instance;
 
-    fct = FuncCtx.New(fr);
+    fct = FuncCtx.New(fs);
     //NOTE: we really want FuncCtx to be alive while
     //      the node using this func ctx is still active.
     //      See also defer() below
     fct.Retain();
 
-    var ldecl = fr.decl as AST_LambdaDecl;
-    if(ldecl != null)
+    var lmb = fs as LambdaSymbol;
+    if(lmb != null)
     {
       //Console.WriteLine("PUSH LCTX " + this.GetHashCode() + " " + ldecl.useparams.Count);
 
       //setting use params to its own memory scope
-      for(int i=0;i<ldecl.useparams.Count;++i)
+      for(int i=0;i<lmb.decl.useparams.Count;++i)
       {
-        var up = ldecl.useparams[i];
+        var up = lmb.decl.useparams[i];
         var val = interp.GetScopeValue(up.Name());
         fct.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
       }
@@ -2015,7 +2015,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
 
   public override string inspect()
   {
-    return fr.Name() + " ->";
+    return fs.name + " ->";
   }
 }
 
@@ -2036,7 +2036,7 @@ public class FuncNodeBinding : FuncNode
   public BehaviorTreeNode CreateBindingNode()
   {
     if(symb.func_creator == null)
-      throw new Exception("Function binding is not found: " + symb.nname);
+      throw new Exception("Function binding is not found: " + symb.name);
 
     return symb.func_creator();
   }
@@ -2044,12 +2044,12 @@ public class FuncNodeBinding : FuncNode
   public override void init() 
   {
     if(this.args_num > symb.GetMembers().Count)
-      throw new Exception("Too many args for func " + symb.nname);
+      throw new Exception("Too many args for func " + symb.name);
 
     base.init();
   }
 
-  public override string GetName()
+  public override HashedName GetName()
   {
     return symb.name;
   }
@@ -2065,9 +2065,9 @@ public class SimpleFunctorNode : BehaviorTreeTerminalNode
   public delegate BHS Functor();
 
   Functor fn;
-  string name;
+  HashedName name;
 
-  public SimpleFunctorNode(Functor fn, string name/*for debug*/)
+  public SimpleFunctorNode(Functor fn, HashedName name/*for debug*/)
   {
     this.fn = fn;
     this.name = name;
@@ -2080,7 +2080,7 @@ public class SimpleFunctorNode : BehaviorTreeTerminalNode
 
   public override string inspect()
   {
-    return name;
+    return name.s;
   }
 }
 

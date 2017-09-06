@@ -415,7 +415,7 @@ public interface DynValRefcounted
 
 public class MemoryScope
 {
-  public Dictionary<uint, DynVal> vars = new Dictionary<uint, DynVal>();
+  public Dictionary<ulong, DynVal> vars = new Dictionary<ulong, DynVal>();
 
   public void Clear()
   {
@@ -438,7 +438,7 @@ public class MemoryScope
 
   public void Set(HashedName key, DynVal val)
   {
-    uint k = (uint)key.n; 
+    ulong k = key.n; 
     DynVal prev;
     if(vars.TryGetValue(k, out prev))
     {
@@ -460,12 +460,12 @@ public class MemoryScope
 
   public bool TryGet(HashedName key, out DynVal val)
   {
-    return vars.TryGetValue((uint)key.n, out val);
+    return vars.TryGetValue(key.n, out val);
   }
 
   public DynVal Get(HashedName key)
   {
-    return vars[(uint)key.n];
+    return vars[key.n];
   }
 
   public void CopyFrom(MemoryScope o)
@@ -567,34 +567,6 @@ public class ClassStorage : MemoryScope, DynValRefcounted
     if(pool.Count > pool_miss)
       throw new Exception("Unbalanced New/Del");
   }
-
-}
-
-public struct FuncRef
-{
-  public AST_FuncDecl decl;
-  public FuncBindSymbol fbnd;
-
-  public FuncRef(AST_FuncDecl decl, FuncBindSymbol fbnd)
-  {
-    this.decl = decl;
-    this.fbnd = fbnd;
-  }
-
-  public bool IsEqual(FuncRef o)
-  {
-    return decl == o.decl && fbnd == o.fbnd;
-  }
-
-  public HashedName Name()
-  {
-    if(decl != null)
-      return decl.Name();
-    else if(fbnd != null)
-      return fbnd.Name();
-    else
-      return new HashedName(0, "?");
-  }
 }
 
 public abstract class AST_Visitor
@@ -686,15 +658,15 @@ public class FuncCtx : DynValRefcounted
   //      public only for inspection
   public int refs;
 
-  public FuncRef fr;
+  public FuncSymbol fs;
   //NOTE: this memory scope used for 'use' variables, it's then
   //      copied to concrete memory scope of the function
   public MemoryScope mem = new MemoryScope();
   public FuncNode fnode;
 
-  FuncCtx(FuncRef fr)
+  FuncCtx(FuncSymbol fs)
   {
-    this.fr = fr;
+    this.fs = fs;
   }
 
   public FuncNode EnsureNode()
@@ -702,12 +674,12 @@ public class FuncCtx : DynValRefcounted
     if(fnode != null)
       return fnode;
 
-    if(fr.fbnd != null)
-      fnode = new FuncNodeBinding(fr.fbnd, this);
-    else if(fr.decl is AST_LambdaDecl)
+    if(fs is FuncBindSymbol)
+      fnode = new FuncNodeBinding(fs as FuncBindSymbol, this);
+    else if(fs is LambdaSymbol)
       fnode = new FuncNodeLambda(this);
     else
-      fnode = new FuncNodeAST(fr.decl, this);
+      fnode = new FuncNodeAST((fs as FuncSymbolAST).decl, this);
 
     return fnode;
   }
@@ -717,12 +689,12 @@ public class FuncCtx : DynValRefcounted
     if(refs == -1)
       throw new Exception("Invalid state");
 
-    var dup = FuncCtx.New(fr);
+    var dup = FuncCtx.New(fs);
 
     //NOTE: need to properly set use params
-    if(fr.decl is AST_LambdaDecl)
+    if(fs is LambdaSymbol)
     {
-      var ldecl = fr.decl as AST_LambdaDecl;
+      var ldecl = (fs as LambdaSymbol).decl as AST_LambdaDecl;
       for(int i=0;i<ldecl.useparams.Count;++i)
       {
         var up = ldecl.useparams[i];
@@ -786,12 +758,12 @@ public class FuncCtx : DynValRefcounted
   static int pool_hit;
   static int pool_miss;
 
-  public static FuncCtx New(FuncRef fr)
+  public static FuncCtx New(FuncSymbol fs)
   {
     for(int i=0;i<pool.Count;++i)
     {
       var item = pool[i];
-      if(!item.used && item.fct.fr.IsEqual(fr))
+      if(!item.used && item.fct.fs == fs)
       {
         ++pool_hit;
 
@@ -809,7 +781,7 @@ public class FuncCtx : DynValRefcounted
     {
       ++pool_miss;
 
-      var fct = new FuncCtx(fr);
+      var fct = new FuncCtx(fs);
       //Util.Debug("FTX REQUEST2 " + fct.GetHashCode());
       var item = new PoolItem();
       item.fct = fct;
@@ -1144,10 +1116,6 @@ public class Interpreter : AST_Visitor
   //NOTE: key is a module id, value is a file path
   public Dictionary<uint,string> loaded_modules = new Dictionary<uint,string>();
 
-  Dictionary<ulong,AST_FuncDecl> func_decls = new Dictionary<ulong,AST_FuncDecl>();
-  Dictionary<ulong,AST_LambdaDecl> lmb_decls = new Dictionary<ulong,AST_LambdaDecl>();
-  Dictionary<ulong,AST_ClassDecl> class_decls = new Dictionary<ulong,AST_ClassDecl>();
-
   public GlobalScope bindings;
 
   public FastStack<DynVal> stack = new FastStack<DynVal>(256);
@@ -1163,9 +1131,6 @@ public class Interpreter : AST_Visitor
     mstack.Clear();
     curr_mem = null;
     loaded_modules.Clear();
-    func_decls.Clear();
-    lmb_decls.Clear();
-    class_decls.Clear();
     stack.Clear();
     call_stack.Clear();
 
@@ -1238,44 +1203,6 @@ public class Interpreter : AST_Visitor
     LoadModule(Util.GetModuleId(module));
   }
 
-  public FuncRef GetFuncRef(HashedName name)
-  {
-    FuncRef fr;
-    if(!GetFuncRef(name, out fr))
-      throw new Exception("No such function: " + name);
-
-    return fr;
-  }
-
-  public bool GetFuncRef(HashedName name, out FuncRef fr)
-  {
-    fr = new FuncRef();
-
-    var fbnd = bindings.resolve(name.n) as FuncBindSymbol;
-    if(fbnd != null)
-    {
-      fr.fbnd = fbnd;
-      return true;
-    }
-
-    var func_decl = FindFuncDecl(name.n);
-    if(func_decl != null)
-    {
-      fr.decl = func_decl;
-      return true;
-    }
-
-    return false;
-  }
-
-  public AST_FuncDecl FindFuncDecl(ulong name)
-  {
-    AST_FuncDecl func_decl;
-    if(func_decls.TryGetValue(name, out func_decl))
-      return func_decl;
-    return null;
-  }
-
   public FuncNode GetFuncNode(AST_Call ast)
   {
     if(ast.type == EnumCall.FUNC)
@@ -1288,12 +1215,14 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetFuncNode(HashedName name)
   {
-    var fr = GetFuncRef(name);
+    var s = bindings.resolve(name.n);
 
-    if(fr.fbnd != null)
-      return new FuncNodeBinding(fr.fbnd, null);
+    if(s is FuncBindSymbol)
+      return new FuncNodeBinding(s as FuncBindSymbol, null);
+    else if(s is FuncSymbolAST)
+      return new FuncNodeAST((s as FuncSymbolAST).decl, null);
     else
-      return new FuncNodeAST(fr.decl, null);
+      throw new Exception("Not a func symbol: " + name);
   }
 
   public FuncNode GetFuncNode(string module_name, string func_name)
@@ -1304,15 +1233,15 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetMFuncNode(uint class_type, HashedName name)
   {
-    var bnd = bindings.resolve(class_type) as ClassSymbol;
-    if(bnd == null)
+    var cl = bindings.resolve(class_type) as ClassSymbol;
+    if(cl == null)
       throw new Exception("Class binding not found: " + class_type); 
 
-    var bnd_member = bnd.ResolveMember(name.n);
-    if(bnd_member == null)
+    var cl_member = cl.ResolveMember(name.n);
+    if(cl_member == null)
       throw new Exception("Member not found: " + name);
 
-    var func_symb = bnd_member as FuncBindSymbol;
+    var func_symb = cl_member as FuncBindSymbol;
     if(func_symb != null)
       return new FuncNodeBinding(func_symb, null);
 
@@ -1458,27 +1387,21 @@ public class Interpreter : AST_Visitor
   public override void DoVisit(AST_Import node)
   {
     for(int i=0;i<node.modules.Count;++i)
-    {
       LoadModule(node.modules[i]);
-    }
   }
 
   void CheckFuncIsUnique(ulong nname, string name)
   {
-    if(func_decls.ContainsKey(nname))
-      throw new Exception("Func decl is already defined: " + name + "(" + nname + ")");
-    else if(bindings.resolve(nname) as FuncBindSymbol != null)
-      throw new Exception("Func binding is already defined: " + name + "(" + nname + ")");
-    else if(lmb_decls.ContainsKey(nname))
-      throw new Exception("Lambda already is defined: " + name + "(" + nname + ")");
+    var s = bindings.resolve(nname) as FuncSymbol;
+    if(s != null)
+      throw new Exception("Function is already defined: " + name + "(" + nname + ")");
   }
 
   void CheckClassIsUnique(ulong nname, string name)
   {
-    if(class_decls.ContainsKey(nname))
-      throw new Exception("Class decl is already defined: " + name + "(" + nname + ")");
-    else if(bindings.resolve(nname) as ClassBindSymbol != null)
-      throw new Exception("Class binding is already defined: " + name + "(" + nname + ")");
+    var s = bindings.resolve(nname) as ClassSymbol;
+    if(s != null)
+      throw new Exception("Class is already defined: " + name + "(" + nname + ")");
   }
 
   public override void DoVisit(AST_FuncDecl node)
@@ -1486,18 +1409,19 @@ public class Interpreter : AST_Visitor
     CheckFuncIsUnique(node.nname(), node.name);
 
     //Util.Debug("Adding func " + node.name + "(" + node.nname + ")");
-    func_decls.Add(node.nname(), node);
+
+    var fn = new FuncSymbolAST(bindings, node);
+    bindings.define(fn);
   }
 
   public override void DoVisit(AST_LambdaDecl node)
   {
-    if(!lmb_decls.ContainsKey(node.nname()))
-    {
-      CheckFuncIsUnique(node.nname(), node.name);
-      lmb_decls.Add(node.nname(), node);
-    }
+    CheckFuncIsUnique(node.nname(), node.name);
 
-    curr_node.addChild(new PushFuncCtxNode(node, null));
+    var lmb = new LambdaSymbol(bindings, node);
+    bindings.define(lmb);
+
+    curr_node.addChild(new PushFuncCtxNode(lmb));
   }
 
   public override void DoVisit(AST_ClassDecl node)
@@ -1516,8 +1440,6 @@ public class Interpreter : AST_Visitor
         cl.define(new FieldSymbolAST(vd.name));
       }
     }
-
-    class_decls.Add(node.nname(), node);
   }
 
   public override void DoVisit(AST_Block node)
@@ -1669,19 +1591,10 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.FUNC2VAR)
     {
-      var func_decl = FindFuncDecl(node.nname());
-      if(func_decl != null)
-      {
-        curr_node.addChild(new PushFuncCtxNode(func_decl, null));
-      }
-      else
-      {
-        var bnd = bindings.resolve(node.nname()) as FuncBindSymbol;
-        if(bnd == null)
-          throw new Exception("Could not find func decl:" + node.Name());
-
-        curr_node.addChild(new PushFuncCtxNode(null, bnd));
-      }
+      var s = bindings.resolve(node.nname()) as FuncSymbol;
+      if(s == null)
+        throw new Exception("Could not find func:" + node.Name());
+      curr_node.addChild(new PushFuncCtxNode(s));
     }
     else if(node.type == EnumCall.ARR_IDX)
     {

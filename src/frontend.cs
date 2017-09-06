@@ -402,13 +402,13 @@ public class Frontend : bhlBaseVisitor<object>
         if(var_symb != null && var_symb.type.Get() is FuncType)
         {
           var ftype = var_symb.type.Get() as FuncType;
-          ast = AST_Util.New_Call(EnumCall.FUNC_PTR, line, str_name, Hash.CRC28(str_name));
+          ast = AST_Util.New_Call(EnumCall.FUNC_PTR, line, str_name);
           AddCallArgs(ftype, cargs, ref ast);
           type = ftype.ret_type.Get();
         }
         else if(func_symb != null)
         {
-          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, str_name, func_symb.GetCallId(), class_scope);
+          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, class_scope);
           AddCallArgs(func_symb, cargs, ref ast);
           type = func_symb.GetReturnType();
         }
@@ -418,7 +418,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = mscope.resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC, line, str_name, func_symb.GetCallId());
+            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name);
             AddCallArgs(func_symb, cargs, ref ast);
             type = func_symb.GetReturnType();
           }
@@ -436,7 +436,7 @@ public class Frontend : bhlBaseVisitor<object>
           ast = AST_Util.New_Call(class_scope != null ? 
             (write && arracc == null ? EnumCall.MVARW : EnumCall.MVAR) : 
             (write && arracc == null ? EnumCall.VARW : EnumCall.VAR), 
-            line, str_name, Hash.CRC28(str_name), class_scope
+            line, str_name, class_scope
           );
           type = var_symb.type.Get();
         }
@@ -445,9 +445,9 @@ public class Frontend : bhlBaseVisitor<object>
           var call_func_symb = mscope.resolve(str_name) as FuncSymbol;
           if(call_func_symb == null)
             FireError(Location(name) +  " : no such function found");
-          ulong func_call_id = call_func_symb.GetCallId();
+          var func_call_name = call_func_symb.name;
 
-          ast = AST_Util.New_Call(EnumCall.FUNC2VAR, line, str_name, func_call_id);
+          ast = AST_Util.New_Call(EnumCall.FUNC2VAR, line, func_call_name);
           type = func_symb.type.Get();
         }
         else
@@ -489,7 +489,7 @@ public class Frontend : bhlBaseVisitor<object>
     type = arr_type.original.Get();
 
     var ast = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
-    ast.scope_ntype = arr_type.GetNtype();
+    ast.scope_ntype = (uint)arr_type.Type().n;
 
     PeekAST().AddChild(ast);
   }
@@ -684,8 +684,8 @@ public class Frontend : bhlBaseVisitor<object>
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
 
-    var func_name = curr_m.GetId() + "_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(curr_m.GetId(), tr.name, func_name);
+    var func_name = new HashedName(curr_m.GetId() + "_" + NextLambdaId(), curr_m.GetId()); 
+    var ast = AST_Util.New_LambdaDecl(func_name, tr.name);
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(globals, ast, this.func_decl_stack, lambda_node, func_name, tr, mscope);
 
@@ -915,7 +915,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx) + ": type '" + ctx_name + "' not found");
 
     var item_name = exp.staticCallItem().NAME();
-    var enum_val = enum_symb.findValue(Hash.CRC28(item_name.GetText()));
+    var enum_val = enum_symb.FindValue(Hash.CRC28(item_name.GetText()));
 
     if(enum_val == null)
       FireError(Location(ctx) + ": enum value not found '" + item_name.GetText() + "'");
@@ -1444,9 +1444,10 @@ public class Frontend : bhlBaseVisitor<object>
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
 
-    var ast = AST_Util.New_FuncDecl(curr_m.GetId(), tr.name, str_name);
+    var func_name = new HashedName(str_name, curr_m.GetId());
+    var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
-    var symb = new FuncSymbolAST(globals, ast, func_node, str_name, tr, curr_scope, ctx.funcParams());
+    var symb = new FuncSymbolAST(globals, ast, func_node, func_name, tr, curr_scope, ctx.funcParams());
     mscope.define(symb);
     curr_m.symbols.define(symb);
     curr_scope = symb;
@@ -1484,9 +1485,10 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = ctx.NAME().GetText();
 
-    var ast = AST_Util.New_ClassDecl(curr_m.GetId(), str_name);
+    var class_name = new HashedName(str_name, curr_m.GetId());
+    var ast = AST_Util.New_ClassDecl(class_name);
 
-    var symb = new ClassSymbolAST(str_name, ast);
+    var symb = new ClassSymbolAST(class_name, ast);
     globals.define(symb);
     curr_m.symbols.define(symb);
     curr_scope = symb;
@@ -1598,7 +1600,7 @@ public class Frontend : bhlBaseVisitor<object>
           wnode = Wrap(vd.NAME());
           wnode.eval_type = curr_type;
 
-          var ast = AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vd_name, Hash.CRC28(vd_name));
+          var ast = AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vd_symb.name);
           root.AddChild(ast);
         }
         else
@@ -1731,7 +1733,7 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope.define(symb);
 
     if(write)
-      return AST_Util.New_Call(EnumCall.VARW, 0, str_name, Hash.CRC28(str_name));
+      return AST_Util.New_Call(EnumCall.VARW, 0, symb.name);
     else
       return AST_Util.New_VarDecl(str_name, is_ref);
   }
