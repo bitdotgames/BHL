@@ -1950,7 +1950,7 @@ public class FuncNodeAST : FuncNode
 public class FuncNodeLambda : FuncNodeAST
 {
   public FuncNodeLambda(FuncCtx fct)
-    : base((fct.fs as FuncSymbolAST).decl, fct)
+    : base((fct.fs as LambdaSymbol).decl, fct)
   {}
 
   public override void init()

@@ -267,7 +267,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 #endif
 
   public ArrayTypeSymbol(GlobalScope globs, TypeRef original) 
-    : base(null, original.name + "[]", new TypeRef(), null)
+    : base(null, original.name.s + "[]", new TypeRef(), null)
   {
     this.original = original;
 
@@ -796,7 +796,11 @@ public class FuncSymbolAST : FuncSymbol
 
   //frontend version
 #if BHL_FRONT
-  public FuncSymbolAST(GlobalScope globals, AST_FuncDecl decl, WrappedNode n, HashedName name, TypeRef ret_type, Scope parent, bhlParser.FuncParamsContext fparams) 
+  public FuncSymbolAST(
+      GlobalScope globals, AST_FuncDecl decl, WrappedNode n, 
+      HashedName name, TypeRef ret_type, 
+      Scope parent, bhlParser.FuncParamsContext fparams
+    ) 
     : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
@@ -822,7 +826,7 @@ public class FuncSymbolAST : FuncSymbol
 
   //backend version
   public FuncSymbolAST(GlobalScope globals, AST_FuncDecl decl)
-    : base(null, new HashedName(decl.nname1, decl.nname2), new FuncType(), globals)
+    : base(null, new HashedName(decl.nname1/*, decl.nname2*/), new FuncType(), globals)
   {
     this.decl = decl;
   }

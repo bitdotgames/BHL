@@ -13377,7 +13377,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       //NOTE: we want to remove user decls added during frontend execution
       globs.RemoveUserDefines();
 
-      AST_Module ast = Util.Bin2Meta<AST_Module>(bin);
+      var ast = Util.Bin2Meta<AST_Module>(bin);
       if(show_ast)
         ASTDump(ast);
 

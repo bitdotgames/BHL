@@ -265,7 +265,7 @@ public class Frontend : bhlBaseVisitor<object>
     import = import.Substring(1, import.Length-2);
     
     var module = mreg.ImportModule(curr_m, globals, import);
-    //NOTE: nulls means module is already imported
+    //NOTE: null means module is already imported
     if(module != null)
     {
       mscope.Append(module.symbols);
@@ -423,9 +423,7 @@ public class Frontend : bhlBaseVisitor<object>
             type = func_symb.GetReturnType();
           }
           else
-          {
             FireError(Location(name) +  " : symbol is not not a function");
-          }
         }
       }
       //variable or attribute call
@@ -684,7 +682,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
 
-    var func_name = new HashedName(curr_m.GetId() + "_" + NextLambdaId(), curr_m.GetId()); 
+    var func_name = new HashedName(curr_m.GetId() + "_lmb_" + NextLambdaId(), curr_m.GetId()); 
     var ast = AST_Util.New_LambdaDecl(func_name, tr.name);
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(globals, ast, this.func_decl_stack, lambda_node, func_name, tr, mscope);
@@ -1444,8 +1442,10 @@ public class Frontend : bhlBaseVisitor<object>
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
 
-    var func_name = new HashedName(str_name, curr_m.GetId());
-    var ast = AST_Util.New_FuncDecl(func_name, tr.name);
+    var func_name_full = new HashedName(str_name, curr_m.GetId());
+    //doesn't contain module id
+    var func_name = new HashedName((uint)func_name_full.n, func_name_full.s);
+    var ast = AST_Util.New_FuncDecl(func_name_full, tr.name);
 
     var symb = new FuncSymbolAST(globals, ast, func_node, func_name, tr, curr_scope, ctx.funcParams());
     mscope.define(symb);

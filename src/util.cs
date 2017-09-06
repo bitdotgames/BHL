@@ -129,7 +129,10 @@ public struct HashedName
 
   public override string ToString() 
   {
-    return "(" + n + ":" + (s == null ? "?" : s) + ")";
+    if(!string.IsNullOrEmpty(s))
+      return s;
+    else
+      return "(" + n + ")";
   }
 }
 

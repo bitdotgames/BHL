@@ -664,7 +664,7 @@ public class FuncCtx : DynValRefcounted
   public MemoryScope mem = new MemoryScope();
   public FuncNode fnode;
 
-  FuncCtx(FuncSymbol fs)
+  private FuncCtx(FuncSymbol fs)
   {
     this.fs = fs;
   }
@@ -1416,10 +1416,14 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_LambdaDecl node)
   {
-    CheckFuncIsUnique(node.nname(), node.name);
-
-    var lmb = new LambdaSymbol(bindings, node);
-    bindings.define(lmb);
+    //if there's such a lambda symbol already we re-use it
+    var lmb = bindings.resolve(node.nname()) as LambdaSymbol;
+    if(lmb == null)
+    {
+      CheckFuncIsUnique(node.nname(), node.name);
+      lmb = new LambdaSymbol(bindings, node);
+      bindings.define(lmb);
+    }
 
     curr_node.addChild(new PushFuncCtxNode(lmb));
   }

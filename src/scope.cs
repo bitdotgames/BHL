@@ -270,7 +270,8 @@ public class GlobalScope : BaseScope
 public class LocalScope : BaseScope 
 {
   public LocalScope(Scope parent) 
-    : base(parent) {}
+    : base(parent) 
+  {}
 
   public override HashedName GetScopeName() { return new HashedName("local"); }
 }
