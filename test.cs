@@ -2349,6 +2349,42 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestLambdaSelfCallAndBindValues()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      float a = 2
+
+      float res
+
+      void^() fn = func void^() (float a, int b) use(ref res)  
+      { 
+        return func() use(ref res) 
+        { 
+          res = a + b 
+        }
+      }(a, 1) 
+
+      a = 100
+
+      fn()
+
+      return res
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 3);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestSimpleExpression()
   {
     string bhl = @"

@@ -623,6 +623,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitBlockNested([NotNull] bhlParser.BlockNestedContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>LambdaCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterLambdaCall([NotNull] bhlParser.LambdaCallContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>LambdaCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitLambdaCall([NotNull] bhlParser.LambdaCallContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.mainIf"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

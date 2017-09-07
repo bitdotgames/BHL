@@ -304,6 +304,12 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitLambdaCall(bhlParser.LambdaCallContext ctx)
+  {
+    CommonVisitLambda(ctx, ctx.funcLambda());
+    return null;
+  }
+
   void ProcChainedCall(
     ITerminalNode root_name, 
     bhlParser.ChainExpContext[] chain, 
@@ -678,18 +684,27 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
   {
-    var tr = globals.type(ctx.funcLambda().retType());
+    CommonVisitLambda(ctx, ctx.funcLambda());
+    return null;
+  }
+
+  void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
+  {
+    var tr = globals.type(funcLambda.retType());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
     var func_name = new HashedName(curr_m.GetId() + "_lmb_" + NextLambdaId(), curr_m.GetId()); 
     var ast = AST_Util.New_LambdaDecl(func_name, tr.name);
     var lambda_node = Wrap(ctx);
-    var symb = new LambdaSymbol(globals, ast, this.func_decl_stack, lambda_node, func_name, tr, mscope);
+    var symb = new LambdaSymbol(
+      globals, ast, this.func_decl_stack, 
+      lambda_node, func_name, tr, mscope, funcLambda
+    );
 
     PushFuncDecl(symb);
 
-    var useblock = ctx.funcLambda().useBlock();
+    var useblock = funcLambda.useBlock();
     if(useblock != null)
     {
       for(int i=0;i<useblock.refName().Length;++i)
@@ -707,7 +722,7 @@ public class Frontend : bhlBaseVisitor<object>
     var scope_backup = curr_scope;
     curr_scope = symb;
 
-    var fparams = ctx.funcLambda().funcParams();
+    var fparams = funcLambda.funcParams();
     if(fparams != null)
     {
       PushAST(ast.fparams());
@@ -722,7 +737,7 @@ public class Frontend : bhlBaseVisitor<object>
     Wrap(ctx).eval_type = symb.GetReturnType();
 
     PushAST(ast.block());
-    Visit(ctx.funcLambda().funcBlock());
+    Visit(funcLambda.funcBlock());
     PopAST();
 
     PopFuncDecl();
@@ -733,12 +748,12 @@ public class Frontend : bhlBaseVisitor<object>
 
     curr_scope = scope_backup;
 
-    var chain = ctx.funcLambda().chainExp(); 
+    var chain = funcLambda.chainExp(); 
     if(chain != null)
     {
       var interim = new AST_Interim();
       interim.AddChild(ast);
-      int line = ctx.funcLambda().Start.Line;
+      int line = funcLambda.Start.Line;
       PushAST(interim);
       ProcChainedCall(null, chain, ref curr_type, line, false);
       PopAST();
@@ -747,7 +762,6 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
       PeekAST().AddChild(ast);
-    return null;
   }
 
   public override object VisitCallArg(bhlParser.CallArgContext ctx)

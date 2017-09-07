@@ -198,7 +198,13 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
 
   public Interpreter.ClassCreator creator;
 
-  public ClassSymbol(WrappedNode n, HashedName name, TypeRef super_class, Scope enclosing_scope, Interpreter.ClassCreator creator = null)
+  public ClassSymbol(
+    WrappedNode n, 
+    HashedName name, 
+    TypeRef super_class, 
+    Scope enclosing_scope, 
+    Interpreter.ClassCreator creator = null
+  )
     : base(n, name, enclosing_scope)
   {
     this.super_class = super_class == null ? null : (ClassSymbol)super_class.Get();
@@ -687,14 +693,22 @@ public class LambdaSymbol : FuncSymbol
 
 #if BHL_FRONT
   //frontend version
-  public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl, List<FuncSymbol> fdecl_stack, WrappedNode n, HashedName name, TypeRef ret_type, Scope parent) 
+  public LambdaSymbol(
+    GlobalScope globs, 
+    AST_LambdaDecl decl, 
+    List<FuncSymbol> fdecl_stack, 
+    WrappedNode n, 
+    HashedName name, 
+    TypeRef ret_type, 
+    Scope parent,
+    bhlParser.FuncLambdaContext lmb_ctx
+  ) 
     : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
     var ft = GetFuncType();
-    var ctx = (bhlParser.ExpLambdaContext)n.tree;
-    var fparams = ctx.funcLambda().funcParams();
+    var fparams = lmb_ctx.funcParams();
     if(fparams != null)
     {
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
@@ -796,10 +810,14 @@ public class FuncSymbolAST : FuncSymbol
   //frontend version
 #if BHL_FRONT
   public FuncSymbolAST(
-      GlobalScope globals, AST_FuncDecl decl, WrappedNode n, 
-      HashedName name, TypeRef ret_type, 
-      Scope parent, bhlParser.FuncParamsContext fparams
-    ) 
+    GlobalScope globals, 
+    AST_FuncDecl decl, 
+    WrappedNode n, 
+    HashedName name, 
+    TypeRef ret_type, 
+    Scope parent, 
+    bhlParser.FuncParamsContext fparams
+  ) 
     : base(n, name, new FuncType(ret_type), parent)
   {
     this.decl = decl;
@@ -851,7 +869,12 @@ public class FuncBindSymbol : FuncSymbol
 
   public int def_args_num;
 
-  public FuncBindSymbol(HashedName name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, int def_args_num = 0) 
+  public FuncBindSymbol(
+    HashedName name, 
+    TypeRef ret_type, 
+    Interpreter.FuncNodeCreator func_creator, 
+    int def_args_num = 0
+  ) 
     : base(null, name, new FuncType(ret_type), null)
   {
     this.func_creator = func_creator;

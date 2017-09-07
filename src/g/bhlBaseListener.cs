@@ -729,6 +729,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitBlockNested([NotNull] bhlParser.BlockNestedContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>LambdaCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterLambdaCall([NotNull] bhlParser.LambdaCallContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>LambdaCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitLambdaCall([NotNull] bhlParser.LambdaCallContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.mainIf"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
