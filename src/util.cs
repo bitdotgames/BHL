@@ -1207,96 +1207,96 @@ public static class TempBuffer
 // Deleting an entry and reinserting it will move it to the end.
 public class OrderedDictionary<TKey, TValue>
 {
-	// An unordered dictionary of key pairs.
-	Dictionary<TKey, TValue> dict;
+  // An unordered dictionary of key pairs.
+  Dictionary<TKey, TValue> dict;
 
-	// The keys of the dictionary in the exposed order.
-	List<TKey> keys = new List<TKey>();
+  // The keys of the dictionary in the exposed order.
+  List<TKey> keys = new List<TKey>();
 
-	public OrderedDictionary()
-	{
-	  dict = new Dictionary<TKey, TValue>();
+  public OrderedDictionary()
+  {
+    dict = new Dictionary<TKey, TValue>();
   }
 
-	public OrderedDictionary(IEqualityComparer<TKey> cmp)
-	{
-	  dict = new Dictionary<TKey, TValue>(cmp);
+  public OrderedDictionary(IEqualityComparer<TKey> cmp)
+  {
+    dict = new Dictionary<TKey, TValue>(cmp);
   }
 
-	public int Count
-	{
-		get {
-			return keys.Count;
-		}
-	}
+  public int Count
+  {
+    get {
+      return keys.Count;
+    }
+  }
 
-	public ICollection<TKey> Keys
-	{
-		get {
+  public ICollection<TKey> Keys
+  {
+    get {
       return keys.AsReadOnly();
     }
   }
 
-	// The value at the given index.
-	public TValue this[int index]
-	{
-		get {
-			var key = keys[index];
-			return dict[key];
-		}
-		set {
-			var key = keys[index];
-			dict[key] = value;
-		}
-	}
+  // The value at the given index.
+  public TValue this[int index]
+  {
+    get {
+      var key = keys[index];
+      return dict[key];
+    }
+    set {
+      var key = keys[index];
+      dict[key] = value;
+    }
+  }
 
-	public int IndexOf(TKey key)
-	{
-		return keys.IndexOf(key);
-	}
+  public int IndexOf(TKey key)
+  {
+    return keys.IndexOf(key);
+  }
 
-	public void RemoveAt(int index)
-	{
-		var key = keys[index];
-		dict.Remove(key);
-		keys.RemoveAt(index);
-	}
+  public void RemoveAt(int index)
+  {
+    var key = keys[index];
+    dict.Remove(key);
+    keys.RemoveAt(index);
+  }
 
-	public bool ContainsKey(TKey key)
-	{
-		return dict.ContainsKey(key);
-	}
+  public bool ContainsKey(TKey key)
+  {
+    return dict.ContainsKey(key);
+  }
 
-	public bool TryGetValue(TKey key, out TValue value)
-	{
-		return dict.TryGetValue(key, out value);
-	}
+  public bool TryGetValue(TKey key, out TValue value)
+  {
+    return dict.TryGetValue(key, out value);
+  }
 
-	public void Insert(int index, TKey key, TValue value)
-	{
-		// Dictionary operation first, so exception thrown if key already exists.
-		dict.Add(key, value);
-		keys.Insert(index, key);
-	}
+  public void Insert(int index, TKey key, TValue value)
+  {
+    // Dictionary operation first, so exception thrown if key already exists.
+    dict.Add(key, value);
+    keys.Insert(index, key);
+  }
 
-	public void Add(TKey key, TValue value)
-	{
-		// Dictionary operation first, so exception thrown if key already exists.
-		dict.Add(key, value);
-		keys.Add(key);
-	}
+  public void Add(TKey key, TValue value)
+  {
+    // Dictionary operation first, so exception thrown if key already exists.
+    dict.Add(key, value);
+    keys.Add(key);
+  }
 
-	public void Remove(TKey key)
-	{
-		dict.Remove(key);
-		keys.Remove(key);
-	}
+  public void Remove(TKey key)
+  {
+    dict.Remove(key);
+    keys.Remove(key);
+  }
 
-	public void Clear()
-	{
-		dict.Clear();
-		keys.Clear();
-	}
+  public void Clear()
+  {
+    dict.Clear();
+    keys.Clear();
+  }
 }
 
 } //namespace bhl

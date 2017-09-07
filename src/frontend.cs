@@ -1442,10 +1442,8 @@ public class Frontend : bhlBaseVisitor<object>
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
 
-    var func_name_full = new HashedName(str_name, curr_m.GetId());
-    //doesn't contain module id
-    var func_name = new HashedName((uint)func_name_full.n, func_name_full.s);
-    var ast = AST_Util.New_FuncDecl(func_name_full, tr.name);
+    var func_name = new HashedName(str_name, curr_m.GetId());
+    var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
     var symb = new FuncSymbolAST(globals, ast, func_node, func_name, tr, curr_scope, ctx.funcParams());
     mscope.define(symb);

@@ -1318,64 +1318,62 @@ public class SymbolsDictionary
 {
   Dictionary<ulong, Symbol> hash2symb = new Dictionary<ulong, Symbol>();
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
-	List<Symbol> list = new List<Symbol>();
+  List<Symbol> list = new List<Symbol>();
 
   public SymbolsDictionary()
   {}
 
-	public int Count
-	{
-		get {
-			return list.Count;
-		}
-	}
+  public int Count
+  {
+    get {
+      return list.Count;
+    }
+  }
 
-	public Symbol this[int index]
-	{
-		get {
-			return list[index];
-		}
-	}
+  public Symbol this[int index]
+  {
+    get {
+      return list[index];
+    }
+  }
 
-	public bool Contains(HashedName key)
-	{
-    if(!string.IsNullOrEmpty(key.s))
-      return str2symb.ContainsKey(key.s);
-    else
-      return hash2symb.ContainsKey(key.n);
-	}
+  public bool Contains(HashedName key)
+  {
+    if(hash2symb.ContainsKey(key.n))
+      return true;
+    return str2symb.ContainsKey(key.s);
+  }
 
-	public bool TryGetValue(HashedName key, out Symbol val)
-	{
-    if(!string.IsNullOrEmpty(key.s))
-      return str2symb.TryGetValue(key.s, out val);
-    else
-      return hash2symb.TryGetValue(key.n, out val);
-	}
+  public bool TryGetValue(HashedName key, out Symbol val)
+  {
+    if(hash2symb.TryGetValue(key.n, out val))
+      return true;
+    return str2symb.TryGetValue(key.s, out val);
+  }
 
-	public void Add(Symbol s)
-	{
-		// Dictionary operation first, so exception thrown if key already exists.
+  public void Add(Symbol s)
+  {
+    // Dictionary operation first, so exception thrown if key already exists.
     if(!string.IsNullOrEmpty(s.name.s))
-		  str2symb.Add(s.name.s, s);
-		hash2symb.Add(s.name.n, s);
-		list.Add(s);
-	}
+      str2symb.Add(s.name.s, s);
+    hash2symb.Add(s.name.n, s);
+    list.Add(s);
+  }
 
-	public void RemoveAt(int index)
-	{
-		var s = list[index];
+  public void RemoveAt(int index)
+  {
+    var s = list[index];
     if(!string.IsNullOrEmpty(s.name.s))
-		  str2symb.Remove(s.name.s);
+      str2symb.Remove(s.name.s);
     hash2symb.Remove(s.name.n);
-	}
+  }
 
-	public void Clear()
-	{
-		str2symb.Clear();
-		hash2symb.Clear();
-		list.Clear();
-	}
+  public void Clear()
+  {
+    str2symb.Clear();
+    hash2symb.Clear();
+    list.Clear();
+  }
 
   public List<string> GetStringKeys()
   {

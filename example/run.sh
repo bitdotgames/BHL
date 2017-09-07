@@ -8,7 +8,7 @@ fi
 
 #1. Running frontend over bhl sources
 rm tmp/bhl.bytes
-php ../bhl -D USER_SOURCES=bindings.cs run --dir=. --result=tmp/bhl.bytes --cache_dir=tmp --error=tmp/bhl.err
+php ../bhl -D USER_SOURCES=bindings.cs run -C --dir=. --result=tmp/bhl.bytes --cache_dir=tmp --error=tmp/bhl.err
 
 if [ $? -ne 0 ] ;
 then

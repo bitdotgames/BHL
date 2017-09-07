@@ -1409,8 +1409,6 @@ public class Interpreter : AST_Visitor
     var name = node.Name(); 
     CheckFuncIsUnique(name);
 
-    //Util.Debug("Adding func " + node.name + "(" + node.nname + ")");
-
     var fn = new FuncSymbolAST(bindings, node);
     bindings.define(fn);
   }
