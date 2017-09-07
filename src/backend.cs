@@ -1231,7 +1231,7 @@ public class Interpreter : AST_Visitor
     return GetFuncNode(Util.GetFuncId(module_name, func_name));
   }
 
-  public FuncNode GetMFuncNode(uint class_type, HashedName name)
+  public FuncNode GetMFuncNode(HashedName class_type, HashedName name)
   {
     var cl = bindings.resolve(class_type) as ClassSymbol;
     if(cl == null)
@@ -1390,23 +1390,24 @@ public class Interpreter : AST_Visitor
       LoadModule(node.modules[i]);
   }
 
-  void CheckFuncIsUnique(ulong nname, string name)
+  void CheckFuncIsUnique(HashedName name)
   {
-    var s = bindings.resolve(nname) as FuncSymbol;
+    var s = bindings.resolve(name) as FuncSymbol;
     if(s != null)
-      throw new Exception("Function is already defined: " + name + "(" + nname + ")");
+      throw new Exception("Function is already defined: " + name);
   }
 
-  void CheckClassIsUnique(ulong nname, string name)
+  void CheckClassIsUnique(HashedName name)
   {
-    var s = bindings.resolve(nname) as ClassSymbol;
+    var s = bindings.resolve(name) as ClassSymbol;
     if(s != null)
-      throw new Exception("Class is already defined: " + name + "(" + nname + ")");
+      throw new Exception("Class is already defined: " + name);
   }
 
   public override void DoVisit(AST_FuncDecl node)
   {
-    CheckFuncIsUnique(node.nname(), node.name);
+    var name = node.Name(); 
+    CheckFuncIsUnique(name);
 
     //Util.Debug("Adding func " + node.name + "(" + node.nname + ")");
 
@@ -1417,10 +1418,11 @@ public class Interpreter : AST_Visitor
   public override void DoVisit(AST_LambdaDecl node)
   {
     //if there's such a lambda symbol already we re-use it
-    var lmb = bindings.resolve(node.nname()) as LambdaSymbol;
+    var name = node.Name(); 
+    var lmb = bindings.resolve(name) as LambdaSymbol;
     if(lmb == null)
     {
-      CheckFuncIsUnique(node.nname(), node.name);
+      CheckFuncIsUnique(name);
       lmb = new LambdaSymbol(bindings, node);
       bindings.define(lmb);
     }
@@ -1430,9 +1432,10 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_ClassDecl node)
   {
-    CheckClassIsUnique(node.nname(), node.name);
+    var name = node.Name();
+    CheckClassIsUnique(name);
 
-    var cl = new ClassSymbolAST(node.name, node);
+    var cl = new ClassSymbolAST(name, node);
     bindings.define(cl);
 
     for(int i=0;i<node.children.Count;++i)

@@ -476,7 +476,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var arr_type = type as ArrayTypeSymbol;
     if(arr_type == null)
-      FireError(Location(arracc) +  " : accessing not an array type '" + type.GetName() + "'");
+      FireError(Location(arracc) +  " : accessing not an array type '" + type.GetName().s + "'");
 
     var arr_exp = arracc.exp();
     Visit(arr_exp);
@@ -619,7 +619,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(i == ca_len)
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
-        FireError(Location(next_arg) +  ": missing argument of type '" + arg_type.name + "'");
+        FireError(Location(next_arg) +  ": missing argument of type '" + arg_type.name.s + "'");
       }
 
       var ca = cargs.callArg()[i];
@@ -783,7 +783,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var tr = globals.type(new_exp.type());
       if(tr.type == null)
-        FireError(Location(new_exp.type()) + ": type '" + tr.name + "' not found");
+        FireError(Location(new_exp.type()) + ": type '" + tr.name.s + "' not found");
       PushJsonType(tr.type);
     }
 

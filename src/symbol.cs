@@ -99,7 +99,7 @@ public class WrappedNode
   {
     string ts = "";
     if(eval_type != null) 
-      ts = ":<"+eval_type.GetName()+">";
+      ts = ":<"+eval_type.GetName().s+">";
 
     var interval = tree.SourceInterval;
     var begin = tokens.Get(interval.a);
@@ -530,10 +530,10 @@ public abstract class ScopedSymbol : Symbol, Scope
   public virtual void define(Symbol sym) 
   {
     var members = GetMembers(); 
-    if(members.ContainsKey(sym.name))
-      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
+    if(members.Contains(sym.name))
+      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
-    members.Add(sym.name, sym);
+    members.Add(sym);
 
     sym.scope = this; // track the scope in each symbol
   }
@@ -610,8 +610,7 @@ public class FuncType : Type
 
   public void Update()
   {
-    string tmp = "";
-    tmp = ret_type.name.s + "^("; 
+    string tmp = ret_type.name.s + "^("; 
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
@@ -662,7 +661,7 @@ public class FuncSymbol : ScopedSymbol
     var fsym = sym as FuncArgSymbol;
     if(fsym == null)
       throw new Exception("Bad symbol");
-    args.Add(name, fsym);
+    args.Add(fsym);
   }
 
   public virtual int GetTotalArgsNum() { return 0; }
@@ -1084,6 +1083,7 @@ static public class SymbolTable
       }
     }
 
+    //for all generic arrays
     globals.define(new GenericArrayTypeSymbol(globals));
 
     {
@@ -1195,7 +1195,7 @@ static public class SymbolTable
     if(!CanAssignTo(rhs.eval_type, lhs, rhs.promote_to_type)) 
     {
       throw new UserError(
-        lhs.GetName()+", "+
+        lhs.GetName().s+", "+
         rhs.Location()+" have incompatible types"
       );
     }
@@ -1210,7 +1210,7 @@ static public class SymbolTable
     {
       throw new UserError(
         lhs.Location()+", "+
-        rhs.GetName()+" have incompatible types "
+        rhs.GetName().s+" have incompatible types "
       );
     }
   }
@@ -1312,6 +1312,88 @@ static public class SymbolTable
   //  }
   //  return null;
   //}
+}
+
+public class SymbolsDictionary
+{
+  Dictionary<ulong, Symbol> hash2symb = new Dictionary<ulong, Symbol>();
+  Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
+	List<Symbol> list = new List<Symbol>();
+
+  public SymbolsDictionary()
+  {}
+
+	public int Count
+	{
+		get {
+			return list.Count;
+		}
+	}
+
+	public Symbol this[int index]
+	{
+		get {
+			return list[index];
+		}
+	}
+
+	public bool Contains(HashedName key)
+	{
+    if(!string.IsNullOrEmpty(key.s))
+      return str2symb.ContainsKey(key.s);
+    else
+      return hash2symb.ContainsKey(key.n);
+	}
+
+	public bool TryGetValue(HashedName key, out Symbol val)
+	{
+    if(!string.IsNullOrEmpty(key.s))
+      return str2symb.TryGetValue(key.s, out val);
+    else
+      return hash2symb.TryGetValue(key.n, out val);
+	}
+
+	public void Add(Symbol s)
+	{
+		// Dictionary operation first, so exception thrown if key already exists.
+    if(!string.IsNullOrEmpty(s.name.s))
+		  str2symb.Add(s.name.s, s);
+		hash2symb.Add(s.name.n, s);
+		list.Add(s);
+	}
+
+	public void RemoveAt(int index)
+	{
+		var s = list[index];
+    if(!string.IsNullOrEmpty(s.name.s))
+		  str2symb.Remove(s.name.s);
+    hash2symb.Remove(s.name.n);
+	}
+
+	public void Clear()
+	{
+		str2symb.Clear();
+		hash2symb.Clear();
+		list.Clear();
+	}
+
+  public List<string> GetStringKeys()
+  {
+    List<string> res = new List<string>();
+    for(int i=0;i<list.Count;++i)
+      res.Add(list[i].name.s);
+    return res;
+  }
+
+  public int FindStringKeyIndex(string key)
+  {
+    for(int i=0;i<list.Count;++i)
+    {
+      if(list[i].name.s == key)
+        return i;
+    }
+    return -1;
+  }
 }
 
 } //namespace bhl

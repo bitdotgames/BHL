@@ -19,59 +19,6 @@ public interface Scope
   Symbol resolve(HashedName name);
 }
 
-public class SymbolsDictionary : OrderedDictionary<HashedName,Symbol>
-{
-  class HashedNameEqualityCmp : IEqualityComparer<HashedName>
-  {
-    public bool Equals(HashedName a1, HashedName a2)
-    {
-      // Here we consider string to be more unique than hash
-      if(!string.IsNullOrEmpty(a1.s) && !string.IsNullOrEmpty(a2.s))
-        return a1.s == a2.s;
-      else
-        return a1.n == a2.n;
-    }
-
-    public int GetHashCode(HashedName a)
-    {
-      // Here we consider string to be more unique than hash
-      if(!string.IsNullOrEmpty(a.s))
-        return a.s.GetHashCode();
-      else
-        return (int)a.n1 + (int)a.n2;
-    }
-  }
-
-  static HashedNameEqualityCmp cmp = new HashedNameEqualityCmp();
-
-  public SymbolsDictionary()
-    : base(cmp)
-  {}
-
-  public List<string> GetStringKeys()
-  {
-    List<string> res = new List<string>();
-    foreach(var k in Keys)
-    {
-      var str = k.s;
-      res.Add(str);
-    }
-    return res;
-  }
-
-  public int FindStringKeyIndex(string key)
-  {
-    int idx = 0;
-    foreach(var k in Keys)
-    {
-      if(k.s == key)
-        return idx;
-      ++idx;
-    }
-    return -1;
-  }
-}
-
 public abstract class BaseScope : Scope 
 {
   // null if global (outermost) scope
@@ -104,10 +51,10 @@ public abstract class BaseScope : Scope
 
   public virtual void define(Symbol sym) 
   {
-    if(symbols.ContainsKey(sym.name))
+    if(symbols.Contains(sym.name))
       throw new Exception(sym.Location() + ": Already defined symbol '" + sym.name + "'"); 
 
-    symbols.Add(sym.name, sym);
+    symbols.Add(sym);
 
     sym.scope = this; // track the scope in each symbol
   }

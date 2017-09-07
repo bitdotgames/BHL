@@ -1321,7 +1321,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
 
-    var bnd = interp.bindings.resolve(ntype.n) as ClassSymbol;
+    var bnd = interp.bindings.resolve(ntype) as ClassSymbol;
     if(bnd == null)
       throw new Exception("Could not find class binding: " + ntype);
 

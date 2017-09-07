@@ -673,9 +673,10 @@ static public class AST_Util
   static public AST_New New_New(ClassSymbol type)
   {
     var n = new AST_New();
-    n.ntype = (uint)type.Type().n;
+    var type_name = type.Type(); 
+    n.ntype = (uint)type_name.n;
     if(Util.DEBUG)
-      n.type = type.GetName().s;
+      n.type = type_name.s;
 
     return n;
   }
