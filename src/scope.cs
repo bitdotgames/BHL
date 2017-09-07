@@ -25,12 +25,20 @@ public class SymbolsDictionary : OrderedDictionary<HashedName,Symbol>
   {
     public bool Equals(HashedName a1, HashedName a2)
     {
-      return a1.n == a2.n;
+      // Here we consider string to be more unique than hash
+      if(!string.IsNullOrEmpty(a1.s) && !string.IsNullOrEmpty(a2.s))
+        return a1.s == a2.s;
+      else
+        return a1.n == a2.n;
     }
 
     public int GetHashCode(HashedName a)
     {
-      return (int)a.n1 + (int)a.n2;
+      // Here we consider string to be more unique than hash
+      if(!string.IsNullOrEmpty(a.s))
+        return a.s.GetHashCode();
+      else
+        return (int)a.n1 + (int)a.n2;
     }
   }
 

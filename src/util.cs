@@ -129,10 +129,7 @@ public struct HashedName
 
   public override string ToString() 
   {
-    if(!string.IsNullOrEmpty(s))
-      return s;
-    else
-      return "(" + n + ")";
+    return (s == null ? "" : s) + ":" + n;
   }
 }
 
@@ -383,24 +380,24 @@ static public class Util
     }
   }
 
-  static public ulong GetFuncId(uint mod_id, string name)
+  static public HashedName GetFuncId(uint mod_id, string name)
   {
-    return GetFuncId(mod_id, Hash.CRC28(name));
+    return new HashedName(name, mod_id);
   }
 
-  static public ulong GetFuncId(uint mod_id, uint name)
+  static public HashedName GetFuncId(uint mod_id, uint name)
   {
-    return ((ulong)mod_id << 31) | ((ulong)name);
+    return new HashedName(name, mod_id);
   }
 
-  static public ulong GetFuncId(string module, string name)
+  static public HashedName GetFuncId(string module, string name)
   {
-    return GetFuncId(GetModuleId(module), name);
+    return GetFuncId(Hash.CRC32(module), name);
   }
 
-  static public uint GetModuleId(string module)
+  static public HashedName GetModuleId(string module)
   {
-    return Hash.CRC32(module);
+    return new HashedName(Hash.CRC32(module), module);
   }
 }
 

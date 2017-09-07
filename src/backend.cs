@@ -1114,7 +1114,7 @@ public class Interpreter : AST_Visitor
 
   public IModuleLoader module_loader;
   //NOTE: key is a module id, value is a file path
-  public Dictionary<uint,string> loaded_modules = new Dictionary<uint,string>();
+  public Dictionary<ulong,string> loaded_modules = new Dictionary<ulong,string>();
 
   public GlobalScope bindings;
 
@@ -1178,12 +1178,12 @@ public class Interpreter : AST_Visitor
     Visit(ast);
   }
 
-  public void LoadModule(uint mod_id)
+  public void LoadModule(HashedName mod_id)
   {
-    if(mod_id == 0)
+    if(mod_id.n == 0)
       return;
 
-    if(loaded_modules.ContainsKey(mod_id))
+    if(loaded_modules.ContainsKey(mod_id.n))
       return;
 
     if(module_loader == null)
@@ -1193,7 +1193,7 @@ public class Interpreter : AST_Visitor
     if(mod_ast == null)
       throw new Exception("Could not load module: " + mod_id);
 
-    loaded_modules.Add(mod_id, mod_ast.name);
+    loaded_modules.Add(mod_id.n, mod_ast.name);
 
     Interpret(mod_ast);
   }
@@ -1215,7 +1215,7 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetFuncNode(HashedName name)
   {
-    var s = bindings.resolve(name.n);
+    var s = bindings.resolve(name);
 
     if(s is FuncBindSymbol)
       return new FuncNodeBinding(s as FuncBindSymbol, null);
@@ -1237,7 +1237,7 @@ public class Interpreter : AST_Visitor
     if(cl == null)
       throw new Exception("Class binding not found: " + class_type); 
 
-    var cl_member = cl.ResolveMember(name.n);
+    var cl_member = cl.ResolveMember(name);
     if(cl_member == null)
       throw new Exception("Member not found: " + name);
 
@@ -1867,7 +1867,7 @@ public class EmptyUserBindings : UserBindings {}
 public interface IModuleLoader
 {
   //NOTE: must return null if no such module
-  AST_Module LoadModule(uint id);
+  AST_Module LoadModule(HashedName id);
 }
 
 public class ModuleLoader : IModuleLoader
@@ -1890,7 +1890,7 @@ public class ModuleLoader : IModuleLoader
     public long stream_pos;
   }
 
-  Dictionary<uint, Entry> entries = new Dictionary<uint, Entry>();
+  Dictionary<ulong, Entry> entries = new Dictionary<ulong, Entry>();
 
   public ModuleLoader(Stream source, bool strict = true)
   {
@@ -1936,10 +1936,10 @@ public class ModuleLoader : IModuleLoader
     }
   }
 
-  public AST_Module LoadModule(uint id)
+  public AST_Module LoadModule(HashedName id)
   {
     Entry ent;
-    if(!entries.TryGetValue(id, out ent))
+    if(!entries.TryGetValue(id.n, out ent))
       return null;
 
     byte[] res = null;
@@ -2007,7 +2007,7 @@ public class ExtensibleModuleLoader : IModuleLoader
 {
   public List<IModuleLoader> loaders = new List<IModuleLoader>();
 
-  public AST_Module LoadModule(uint id)
+  public AST_Module LoadModule(HashedName id)
   {
     for(int i=0;i<loaders.Count;++i)
     {

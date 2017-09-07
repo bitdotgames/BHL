@@ -11569,7 +11569,7 @@ public class BHL_Test
 
   public class DummyModuleLoader : IModuleLoader
   {
-    public AST_Module LoadModule(uint id)
+    public AST_Module LoadModule(HashedName id)
     {
       return new AST_Module();
     }

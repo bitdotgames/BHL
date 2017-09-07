@@ -356,7 +356,7 @@ public class Frontend : bhlBaseVisitor<object>
 
           curr_class = curr_type as ClassSymbol; 
           if(curr_class == null)
-            FireError(Location(ma) + " : type '" + curr_type.GetName() + "' doesn't support member access via '.' ");
+            FireError(Location(ma) + " : type '" + curr_type.GetName().s + "' doesn't support member access via '.' ");
 
           curr_name = ma.NAME();
         }
@@ -552,7 +552,7 @@ public class Frontend : bhlBaseVisitor<object>
         var next_arg = FindNextCallArg(cargs, prev_ca);
 
         if(i < required_args_num)
-          FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name + "'");
+          FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name.s + "'");
         //rest are args by default
         else if(HasAllDefaultArgsAfter(norm_cargs, i))
           break;
@@ -569,7 +569,7 @@ public class Frontend : bhlBaseVisitor<object>
             PopJsonType();
           }
           else
-            FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name + "'");
+            FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name.s + "'");
         }
       }
       else
@@ -680,7 +680,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tr = globals.type(ctx.funcLambda().retType());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
+      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
     var func_name = new HashedName(curr_m.GetId() + "_lmb_" + NextLambdaId(), curr_m.GetId()); 
     var ast = AST_Util.New_LambdaDecl(func_name, tr.name);
@@ -1435,7 +1435,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tr = globals.type(ctx.retType());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
+      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
     var str_name = ctx.NAME().GetText();
 

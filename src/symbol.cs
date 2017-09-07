@@ -710,7 +710,7 @@ public class LambdaSymbol : FuncSymbol
 
   //backend version
   public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl) 
-    : base(null, new HashedName(decl.nname1, decl.nname2), new FuncType(), globs)
+    : base(null, decl.Name(), new FuncType(), globs)
   {
     this.decl = decl;
   }
@@ -826,7 +826,7 @@ public class FuncSymbolAST : FuncSymbol
 
   //backend version
   public FuncSymbolAST(GlobalScope globals, AST_FuncDecl decl)
-    : base(null, new HashedName(decl.nname1/*, decl.nname2*/), new FuncType(), globals)
+    : base(null, decl.Name(), new FuncType(), globals)
   {
     this.decl = decl;
   }
