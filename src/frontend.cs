@@ -2076,6 +2076,7 @@ public class ModuleRegistry
 
     Stream stream;
 
+    //for tests only
     if(test_sources.Count > 0)
     {
       var src = test_sources[full_path];
