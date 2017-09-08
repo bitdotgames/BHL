@@ -58,7 +58,10 @@ public class Frontend : bhlBaseVisitor<object>
     return lambda_id;
   }
 
-  bool defs_only;
+  //NOTE: in 'declarations only' mode only declarations are filled,
+  //      full definitions are omitted. This is useful when we only need 
+  //      to know which symbols can be imported from the current module
+  bool decls_only = false;
 
   Module curr_module;
   ModuleRegistry mreg;
@@ -88,7 +91,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
   
-  public static AST_Module Source2AST(Module module, Stream src, GlobalScope globs, ModuleRegistry mr, bool defs_only = false)
+  public static AST_Module Source2AST(Module module, Stream src, GlobalScope globs, ModuleRegistry mr, bool decls_only = false)
   {
     try
     {
@@ -97,7 +100,7 @@ public class Frontend : bhlBaseVisitor<object>
       p.AddErrorListener(new ErrorParserListener());
       p.ErrorHandler = new ErrorStrategy();
 
-      var f = new Frontend(module, tokens, globs, mr, defs_only);
+      var f = new Frontend(module, tokens, globs, mr, decls_only);
       var ast = f.ParseModule(p);
       return ast;
     }
@@ -135,12 +138,12 @@ public class Frontend : bhlBaseVisitor<object>
     throw new UserError(curr_module.file_path, msg);
   }
 
-  public Frontend(Module module, ITokenStream tokens, GlobalScope globs, ModuleRegistry mreg, bool defs_only = false)
+  public Frontend(Module module, ITokenStream tokens, GlobalScope globs, ModuleRegistry mreg, bool decls_only = false)
   {
     this.curr_module = module;
 
     this.tokens = tokens;
-    this.defs_only = defs_only;
+    this.decls_only = decls_only;
     if(globs == null)
       throw new Exception("Global scope is not set");
     this.locals = new LocalScope(globs);
@@ -246,7 +249,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitImports(bhlParser.ImportsContext ctx)
   {
-    if(!defs_only)
+    if(!decls_only)
     {
       var res = AST_Util.New_Imports();
 
@@ -1475,7 +1478,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    if(!defs_only)
+    if(!decls_only)
     {
       PushAST(ast.block());
       Visit(ctx.funcBlock());
@@ -2084,7 +2087,7 @@ public class ModuleRegistry
 
     m = new Module(norm_path, full_path);
    
-    Frontend.Source2AST(m, stream, globals, this, true/*defs.only*/);
+    Frontend.Source2AST(m, stream, globals, this, true/*declarations only*/);
 
     stream.Close();
 
