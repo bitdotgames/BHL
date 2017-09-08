@@ -2051,7 +2051,6 @@ public class ModuleRegistry
     modules.Add(m.file_path, m);
   }
 
-  //NOTE: should be thread safe?
   public Module ImportModule(Module curr_module, GlobalScope globals, string path)
   {
     string full_path;
@@ -2085,6 +2084,7 @@ public class ModuleRegistry
     else
       stream = File.OpenRead(full_path);
 
+    //3. Ok, let's parse it otherwise
     m = new Module(norm_path, full_path);
    
     Frontend.Source2AST(m, stream, globals, this, true/*declarations only*/);
