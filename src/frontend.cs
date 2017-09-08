@@ -60,12 +60,14 @@ public class Frontend : bhlBaseVisitor<object>
 
   bool defs_only;
 
-  Module curr_m;
+  Module curr_module;
   ModuleRegistry mreg;
   ITokenStream tokens;
   ParseTreeProperty<WrappedNode> nodes = new ParseTreeProperty<WrappedNode>();
-  LocalScope mscope; //current module's scope
-  GlobalScope globals;
+  //NOTE: current module's scope, it contains only symbols which belong to the current module
+  //      and symbols which were imported from other modules, it fallbacks to the global scope
+  //      if symbol is not found
+  LocalScope locals;
   Scope curr_scope;
   int scope_level;
 
@@ -130,22 +132,21 @@ public class Frontend : bhlBaseVisitor<object>
   public void FireError(string msg) 
   {
     //Console.Error.WriteLine(err);
-    throw new UserError(curr_m.file_path, msg);
+    throw new UserError(curr_module.file_path, msg);
   }
 
   public Frontend(Module module, ITokenStream tokens, GlobalScope globs, ModuleRegistry mreg, bool defs_only = false)
   {
-    this.curr_m = module;
+    this.curr_module = module;
 
     this.tokens = tokens;
     this.defs_only = defs_only;
-    this.mscope = new LocalScope(globs);
-    this.globals = globs;
-    if(this.globals == null)
+    if(globs == null)
       throw new Exception("Global scope is not set");
+    this.locals = new LocalScope(globs);
     this.mreg = mreg;
 
-    curr_scope = this.mscope;
+    curr_scope = this.locals;
   }
 
   Stack<AST> ast_stack = new Stack<AST>();
@@ -208,7 +209,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public AST_Module ParseModule(bhlParser p)
   {
-    var ast = AST_Util.New_Module(curr_m.GetId(), curr_m.norm_path);
+    var ast = AST_Util.New_Module(curr_module.GetId(), curr_module.norm_path);
     PushAST(ast);
     VisitProgram(p.program());
     PopAST();
@@ -236,7 +237,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       //NOTE: if file is not set we need to update it and re-throw the exception
       if(e.file == null)
-        e.file = curr_m.file_path;
+        e.file = curr_module.file_path;
       throw e;
     }
 
@@ -264,11 +265,11 @@ public class Frontend : bhlBaseVisitor<object>
     //removing quotes
     import = import.Substring(1, import.Length-2);
     
-    var module = mreg.ImportModule(curr_m, globals, import);
+    var module = mreg.ImportModule(curr_module, (GlobalScope)locals.GetEnclosingScope(), import);
     //NOTE: null means module is already imported
     if(module != null)
     {
-      mscope.Append(module.symbols);
+      locals.Append(module.symbols);
       ast.modules.Add(module.GetId());
     }
   }
@@ -421,7 +422,7 @@ public class Frontend : bhlBaseVisitor<object>
         else
         {
           //NOTE: let's try fetching func symbol from the module scope
-          func_symb = mscope.resolve(str_name) as FuncSymbol;
+          func_symb = locals.resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
             ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name);
@@ -446,7 +447,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          var call_func_symb = mscope.resolve(str_name) as FuncSymbol;
+          var call_func_symb = locals.resolve(str_name) as FuncSymbol;
           if(call_func_symb == null)
             FireError(Location(name) +  " : no such function found");
           var func_call_name = call_func_symb.name;
@@ -690,16 +691,16 @@ public class Frontend : bhlBaseVisitor<object>
 
   void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
   {
-    var tr = globals.type(funcLambda.retType());
+    var tr = locals.type(funcLambda.retType());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
-    var func_name = new HashedName(curr_m.GetId() + "_lmb_" + NextLambdaId(), curr_m.GetId()); 
+    var func_name = new HashedName(curr_module.GetId() + "_lmb_" + NextLambdaId(), curr_module.GetId()); 
     var ast = AST_Util.New_LambdaDecl(func_name, tr.name);
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(
-      globals, ast, this.func_decl_stack, 
-      lambda_node, func_name, tr, mscope, funcLambda
+      locals, ast, this.func_decl_stack, 
+      lambda_node, func_name, tr, funcLambda
     );
 
     PushFuncDecl(symb);
@@ -731,7 +732,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     //NOTE: for now defining lambdas in a module scope 
-    mscope.define(symb);
+    locals.define(symb);
 
     //NOTE: while we are inside lambda the eval type is the return type of
     Wrap(ctx).eval_type = symb.GetReturnType();
@@ -795,7 +796,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(new_exp != null)
     {
-      var tr = globals.type(new_exp.type());
+      var tr = locals.type(new_exp.type());
       if(tr.type == null)
         FireError(Location(new_exp.type()) + ": type '" + tr.name.s + "' not found");
       PushJsonType(tr.type);
@@ -922,7 +923,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var exp = ctx.staticCallExp(); 
     var ctx_name = exp.NAME();
-    var enum_symb = globals.resolve(ctx_name.GetText()) as EnumSymbol;
+    var enum_symb = locals.resolve(ctx_name.GetText()) as EnumSymbol;
     if(enum_symb == null)
       FireError(Location(ctx) + ": type '" + ctx_name + "' not found");
 
@@ -952,7 +953,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tr = globals.type(ctx.newExp().type());
+    var tr = locals.type(ctx.newExp().type());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
 
@@ -974,7 +975,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
-    var tr = globals.type(ctx.type());
+    var tr = locals.type(ctx.type());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
 
@@ -1447,7 +1448,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var tr = globals.type(ctx.retType());
+    var tr = locals.type(ctx.retType());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
@@ -1456,12 +1457,12 @@ public class Frontend : bhlBaseVisitor<object>
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
 
-    var func_name = new HashedName(str_name, curr_m.GetId());
+    var func_name = new HashedName(str_name, curr_module.GetId());
     var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
-    var symb = new FuncSymbolAST(globals, ast, func_node, func_name, tr, curr_scope, ctx.funcParams());
-    mscope.define(symb);
-    curr_m.symbols.define(symb);
+    var symb = new FuncSymbolAST(locals, ast, func_node, func_name, tr, ctx.funcParams());
+    locals.define(symb);
+    curr_module.symbols.define(symb);
     curr_scope = symb;
 
     PushFuncDecl(symb);
@@ -1486,7 +1487,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PopFuncDecl();
 
-    curr_scope = curr_scope.GetEnclosingScope();
+    curr_scope = locals;
 
     PeekAST().AddChild(ast);
 
@@ -1497,12 +1498,12 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = ctx.NAME().GetText();
 
-    var class_name = new HashedName(str_name, curr_m.GetId());
+    var class_name = new HashedName(str_name, curr_module.GetId());
     var ast = AST_Util.New_ClassDecl(class_name);
 
     var symb = new ClassSymbolAST(class_name, ast);
-    globals.define(symb);
-    curr_m.symbols.define(symb);
+    locals.define(symb);
+    curr_module.symbols.define(symb);
     curr_scope = symb;
 
     for(int i=0;i<ctx.classBlock().classMember().Length;++i)
@@ -1518,7 +1519,7 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
-    curr_scope = globals;
+    curr_scope = locals;
 
     PeekAST().AddChild(ast);
 
@@ -1543,7 +1544,7 @@ public class Frontend : bhlBaseVisitor<object>
       bool pop_json_type = false;
       if(found_default_arg)
       {
-        var tr = globals.type(fp.type());
+        var tr = locals.type(fp.type());
         PushJsonType(tr.Get());
         pop_json_type = true;
       }
@@ -1727,7 +1728,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = name.GetText();
 
-    var tr = globals.type(type);
+    var tr = locals.type(type);
     if(tr.type == null)
       FireError(Location(tr.node) +  ": type '" + tr.name + "' not found");
 
@@ -2048,16 +2049,16 @@ public class ModuleRegistry
   }
 
   //NOTE: should be thread safe?
-  public Module ImportModule(Module curr_m, GlobalScope globals, string path)
+  public Module ImportModule(Module curr_module, GlobalScope globals, string path)
   {
     string full_path;
     string norm_path;
-    ResolvePath(curr_m.file_path, path, out full_path, out norm_path);
+    ResolvePath(curr_module.file_path, path, out full_path, out norm_path);
 
-    //Console.WriteLine("IMPORT: " + full_path + " FROM:" + curr_m.file_path);
+    //Console.WriteLine("IMPORT: " + full_path + " FROM:" + curr_module.file_path);
 
     //1. checking repeated imports
-    if(curr_m.imports.ContainsKey(full_path))
+    if(curr_module.imports.ContainsKey(full_path))
     {
       //Console.WriteLine("HIT: " + full_path);
       return null;
@@ -2067,7 +2068,7 @@ public class ModuleRegistry
     Module m = TryGet(full_path);
     if(m != null)
     {
-      curr_m.imports.Add(full_path, m);
+      curr_module.imports.Add(full_path, m);
       return m;
     }
 
@@ -2087,8 +2088,8 @@ public class ModuleRegistry
 
     stream.Close();
 
-    //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_m.file_path);
-    curr_m.imports.Add(full_path, m);
+    //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
+    curr_module.imports.Add(full_path, m);
 
     Register(m);
 

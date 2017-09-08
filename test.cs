@@ -13410,9 +13410,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
       Frontend.Source2Bin(mod, item.Value.ToStream(), bin, globs, mreg);
       bin.Position = 0;
 
-      //NOTE: we want to remove user decls added during frontend execution
-      globs.RemoveUserDefines();
-
       var ast = Util.Bin2Meta<AST_Module>(bin);
       if(show_ast)
         ASTDump(ast);

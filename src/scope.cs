@@ -75,28 +75,6 @@ public abstract class BaseScope : Scope
   public abstract HashedName GetScopeName();
 
   public override string ToString() { return string.Join(",", symbols.GetStringKeys().ToArray()); }
-}
-
-public class GlobalScope : BaseScope 
-{
-  public GlobalScope() 
-    : base(null) 
-  {}
-
-  public override HashedName GetScopeName() { return new HashedName("global"); }
-
-  public void RemoveUserDefines()
-  {
-    for(int i=symbols.Count;i-- > 0;)
-    {
-      var s = symbols[i];
-
-      bool need_to_remove = s is ClassSymbolAST;
-
-      if(need_to_remove)
-        symbols.RemoveAt(i);
-    }
-  }
 
   static bool IsBuiltin(Symbol s)
   {
@@ -220,6 +198,15 @@ public class GlobalScope : BaseScope
   {
     return new TypeRef(t);
   }
+}
+
+public class GlobalScope : BaseScope 
+{
+  public GlobalScope() 
+    : base(null) 
+  {}
+
+  public override HashedName GetScopeName() { return new HashedName("global"); }
 }
 
 public class LocalScope : BaseScope 

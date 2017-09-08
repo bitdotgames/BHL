@@ -17,7 +17,7 @@ public interface Type
 
 public class TypeRef
 {
-  public GlobalScope bindings;
+  public BaseScope bindings;
 
   public Type type;
   public bool is_ref;
@@ -30,7 +30,7 @@ public class TypeRef
   public TypeRef()
   {}
 
-  public TypeRef(GlobalScope bindings, HashedName name)
+  public TypeRef(BaseScope bindings, HashedName name)
   {
     this.bindings = bindings;
     this.name = name;
@@ -267,12 +267,12 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public TypeRef original;
 
 #if BHL_FRONT
-  public ArrayTypeSymbol(GlobalScope globs, bhlParser.TypeContext node)
-    : this(globs, new TypeRef(globs, node.NAME().GetText()))
+  public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
+    : this(scope, new TypeRef(scope, node.NAME().GetText()))
   {}
 #endif
 
-  public ArrayTypeSymbol(GlobalScope globs, TypeRef original) 
+  public ArrayTypeSymbol(BaseScope scope, TypeRef original) 
     : base(null, original.name.s + "[]", new TypeRef(), null)
   {
     this.original = original;
@@ -280,25 +280,25 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     this.creator = CreateArr;
 
     {
-      var fn = new FuncBindSymbol("Add", globs.type("void"), Create_Add);
+      var fn = new FuncBindSymbol("Add", scope.type("void"), Create_Add);
       fn.define(new FuncArgSymbol("o", original));
       this.define(fn);
     }
 
     {
       var fn = new FuncBindSymbol("At", original, Create_At);
-      fn.define(new FuncArgSymbol("idx", globs.type("int")));
+      fn.define(new FuncArgSymbol("idx", scope.type("int")));
       this.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("RemoveAt", globs.type("void"), Create_RemoveAt);
-      fn.define(new FuncArgSymbol("idx", globs.type("int")));
+      var fn = new FuncBindSymbol("RemoveAt", scope.type("void"), Create_RemoveAt);
+      fn.define(new FuncArgSymbol("idx", scope.type("int")));
       this.define(fn);
     }
 
     {
-      var vs = new bhl.FieldSymbol("Count", globs.type("int"), Create_Count,
+      var vs = new bhl.FieldSymbol("Count", scope.type("int"), Create_Count,
         //read only property
         null
       );
@@ -322,17 +322,17 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public static readonly HashedName GENERIC_CLASS_TYPE = new HashedName("[]"); 
 
 #if BHL_FRONT
-  public GenericArrayTypeSymbol(GlobalScope globs, bhlParser.TypeContext node)
-    : base(globs, node)
+  public GenericArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
+    : base(scope, node)
   {}
 #endif
 
-  public GenericArrayTypeSymbol(GlobalScope globs, TypeRef original) 
-    : base(globs, original)
+  public GenericArrayTypeSymbol(BaseScope scope, TypeRef original) 
+    : base(scope, original)
   {}
 
-  public GenericArrayTypeSymbol(GlobalScope globs) 
-    : base(globs, new TypeRef(globs, ""))
+  public GenericArrayTypeSymbol(BaseScope scope) 
+    : base(scope, new TypeRef(scope, ""))
   {}
 
   public override HashedName Type()
@@ -399,8 +399,8 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
       res = (T)dv.obj;
   }
 
-  public ArrayTypeSymbolT(GlobalScope globs, TypeRef original, CreatorCb creator, ConverterCb converter = null) 
-    : base(globs, original)
+  public ArrayTypeSymbolT(BaseScope scope, TypeRef original, CreatorCb creator, ConverterCb converter = null) 
+    : base(scope, original)
   {
     Convert = converter == null ? DefaultConverter : converter;
 
@@ -508,6 +508,7 @@ public abstract class ScopedSymbol : Symbol, Scope
   {
     this.enclosing_scope = enclosing_scope;
   }
+
   public ScopedSymbol(WrappedNode n, HashedName name, Scope enclosing_scope) 
     : base(n, name)
   {
@@ -590,16 +591,16 @@ public class FuncType : Type
   {}
 
 #if BHL_FRONT
-  public FuncType(GlobalScope globals, bhlParser.TypeContext node)
+  public FuncType(BaseScope scope, bhlParser.TypeContext node)
   {
-    ret_type = globals.type(node.NAME().GetText());
+    ret_type = scope.type(node.NAME().GetText());
     var fnames = node.fnargs().names();
     if(fnames != null)
     {
       for(int i=0;i<fnames.refName().Length;++i)
       {
         var name = fnames.refName()[i];
-        var arg_type = globals.type(name.NAME().GetText());
+        var arg_type = scope.type(name.NAME().GetText());
         arg_type.is_ref = name.isRef() != null; 
         arg_types.Add(arg_type);
       }
@@ -694,13 +695,12 @@ public class LambdaSymbol : FuncSymbol
 #if BHL_FRONT
   //frontend version
   public LambdaSymbol(
-    GlobalScope globs, 
+    BaseScope parent,
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
     WrappedNode n, 
     HashedName name, 
     TypeRef ret_type, 
-    Scope parent,
     bhlParser.FuncLambdaContext lmb_ctx
   ) 
     : base(n, name, new FuncType(ret_type), parent)
@@ -714,7 +714,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        ft.arg_types.Add(globs.type(vd.type()));
+        ft.arg_types.Add(parent.type(vd.type()));
       }
     }
     ft.Update();
@@ -722,8 +722,8 @@ public class LambdaSymbol : FuncSymbol
 #endif
 
   //backend version
-  public LambdaSymbol(GlobalScope globs, AST_LambdaDecl decl) 
-    : base(null, decl.Name(), new FuncType(), globs)
+  public LambdaSymbol(BaseScope parent, AST_LambdaDecl decl) 
+    : base(null, decl.Name(), new FuncType(), parent)
   {
     this.decl = decl;
   }
@@ -810,12 +810,11 @@ public class FuncSymbolAST : FuncSymbol
   //frontend version
 #if BHL_FRONT
   public FuncSymbolAST(
-    GlobalScope globals, 
+    BaseScope parent, 
     AST_FuncDecl decl, 
     WrappedNode n, 
     HashedName name, 
     TypeRef ret_type, 
-    Scope parent, 
     bhlParser.FuncParamsContext fparams
   ) 
     : base(n, name, new FuncType(ret_type), parent)
@@ -831,7 +830,7 @@ public class FuncSymbolAST : FuncSymbol
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
         {
           var vd = fparams.funcParamDeclare()[i];
-          var type = globals.type(vd.type());
+          var type = parent.type(vd.type());
           type.is_ref = vd.isRef() != null;
           ft.arg_types.Add(type);
         }
@@ -842,8 +841,8 @@ public class FuncSymbolAST : FuncSymbol
 #endif
 
   //backend version
-  public FuncSymbolAST(GlobalScope globals, AST_FuncDecl decl)
-    : base(null, decl.Name(), new FuncType(), globals)
+  public FuncSymbolAST(BaseScope parent, AST_FuncDecl decl)
+    : base(null, decl.Name(), new FuncType(), parent)
   {
     this.decl = decl;
   }
