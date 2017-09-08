@@ -726,6 +726,7 @@ public class LambdaSymbol : FuncSymbol
     : base(null, decl.Name(), new FuncType(), parent)
   {
     this.decl = decl;
+    this.fdecl_stack = null;
   }
 
   public void AddUseParam(Symbol s, bool is_ref)
