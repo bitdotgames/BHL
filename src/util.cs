@@ -399,13 +399,6 @@ static public class Util
   {
     return new HashedName(Hash.CRC32(module), module);
   }
-
-  //keeping for BC
-  static public void SplitName(ulong n, out uint n1, out uint n2)
-  {
-    n1 = (uint)(n & 0xFFFFFFFF);
-    n2 = (uint)(n >> 31);
-  }
 }
 
 static public class AST_Util
@@ -773,6 +766,12 @@ static public class AST_Util
     return new HashedName(n.nname, n.name);
   }
 
+  //keeping for BC
+  static public void SplitName(ulong n, out uint n1, out uint n2)
+  {
+    n1 = (uint)(n & 0xFFFFFFFF);
+    n2 = (uint)(n >> 31);
+  }
 }
 
 /// <summary>
