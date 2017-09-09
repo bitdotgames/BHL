@@ -1116,14 +1116,16 @@ public class Interpreter : AST_Visitor
   //NOTE: key is a module id, value is a file path
   public Dictionary<ulong,string> loaded_modules = new Dictionary<ulong,string>();
 
-  public GlobalScope bindings;
+  public BaseScope symbols;
 
   public FastStack<DynVal> stack = new FastStack<DynVal>(256);
+  //NOTE: func marks are used in order to clean non-consumed values 
+  //      from the stack. This may happen due to runtime failures.
   FastStack<AST_Call> stack_marks = new FastStack<AST_Call>(256);
 
   public FastStack<AST_Call> call_stack = new FastStack<AST_Call>(128);
 
-  public void Init(GlobalScope bindings, IModuleLoader module_loader)
+  public void Init(BaseScope symbols, IModuleLoader module_loader)
   {
     node_stack.Clear();
     curr_node = null;
@@ -1134,7 +1136,7 @@ public class Interpreter : AST_Visitor
     stack.Clear();
     call_stack.Clear();
 
-    this.bindings = bindings;
+    this.symbols = symbols;
     this.module_loader = module_loader;
   }
 
@@ -1215,7 +1217,7 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetFuncNode(HashedName name)
   {
-    var s = bindings.resolve(name);
+    var s = symbols.resolve(name);
 
     if(s is FuncBindSymbol)
       return new FuncNodeBinding(s as FuncBindSymbol, null);
@@ -1233,7 +1235,7 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetMFuncNode(HashedName class_type, HashedName name)
   {
-    var cl = bindings.resolve(class_type) as ClassSymbol;
+    var cl = symbols.resolve(class_type) as ClassSymbol;
     if(cl == null)
       throw new Exception("Class binding not found: " + class_type); 
 
@@ -1248,7 +1250,7 @@ public class Interpreter : AST_Visitor
     throw new Exception("Not a func symbol: " + name);
   }
 
-  //NOTE: usually used in bindings
+  //NOTE: usually used in symbols
   public int GetFuncArgsNum()
   {
     return call_stack.Peek().cargs_num;
@@ -1392,14 +1394,14 @@ public class Interpreter : AST_Visitor
 
   void CheckFuncIsUnique(HashedName name)
   {
-    var s = bindings.resolve(name) as FuncSymbol;
+    var s = symbols.resolve(name) as FuncSymbol;
     if(s != null)
       throw new Exception("Function is already defined: " + name);
   }
 
   void CheckClassIsUnique(HashedName name)
   {
-    var s = bindings.resolve(name) as ClassSymbol;
+    var s = symbols.resolve(name) as ClassSymbol;
     if(s != null)
       throw new Exception("Class is already defined: " + name);
   }
@@ -1409,20 +1411,20 @@ public class Interpreter : AST_Visitor
     var name = node.Name(); 
     CheckFuncIsUnique(name);
 
-    var fn = new FuncSymbolAST(bindings, node);
-    bindings.define(fn);
+    var fn = new FuncSymbolAST(symbols, node);
+    symbols.define(fn);
   }
 
   public override void DoVisit(AST_LambdaDecl node)
   {
     //if there's such a lambda symbol already we re-use it
     var name = node.Name(); 
-    var lmb = bindings.resolve(name) as LambdaSymbol;
+    var lmb = symbols.resolve(name) as LambdaSymbol;
     if(lmb == null)
     {
       CheckFuncIsUnique(name);
-      lmb = new LambdaSymbol(bindings, node);
-      bindings.define(lmb);
+      lmb = new LambdaSymbol(symbols, node);
+      symbols.define(lmb);
     }
 
     curr_node.addChild(new PushFuncCtxNode(lmb));
@@ -1434,7 +1436,7 @@ public class Interpreter : AST_Visitor
     CheckClassIsUnique(name);
 
     var cl = new ClassSymbolAST(name, node);
-    bindings.define(cl);
+    symbols.define(cl);
 
     for(int i=0;i<node.children.Count;++i)
     {
@@ -1562,7 +1564,7 @@ public class Interpreter : AST_Visitor
 
   BehaviorTreeNode CreateConfNode(uint ntype)
   {
-    var bnd = bindings.resolve(ntype) as ConfNodeSymbol;
+    var bnd = symbols.resolve(ntype) as ConfNodeSymbol;
     if(bnd == null)
       throw new Exception("Could not find class binding: " + ntype);
     return bnd.func_creator();
@@ -1596,14 +1598,14 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.FUNC2VAR)
     {
-      var s = bindings.resolve(node.nname()) as FuncSymbol;
+      var s = symbols.resolve(node.nname()) as FuncSymbol;
       if(s == null)
         throw new Exception("Could not find func:" + node.Name());
       curr_node.addChild(new PushFuncCtxNode(s));
     }
     else if(node.type == EnumCall.ARR_IDX)
     {
-      var bnd = bindings.resolve(node.scope_ntype) as ArrayTypeSymbol;
+      var bnd = symbols.resolve(node.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
         throw new Exception("Could not find class binding: " + node.scope_ntype);
 
@@ -1611,7 +1613,7 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumCall.ARR_IDXW)
     {
-      var bnd = bindings.resolve(node.scope_ntype) as ArrayTypeSymbol;
+      var bnd = symbols.resolve(node.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
         throw new Exception("Could not find class binding: " + node.scope_ntype);
 
@@ -1623,7 +1625,7 @@ public class Interpreter : AST_Visitor
 
   void AddFuncCallNode(AST_Call ast)
   {
-    var func_symb = bindings.resolve(ast.nname()) as FuncSymbol;
+    var func_symb = symbols.resolve(ast.nname()) as FuncSymbol;
 
     var fbind_symb = func_symb as FuncBindSymbol;
     var conf_symb = func_symb as ConfNodeSymbol;
@@ -1805,7 +1807,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonArr node)
   {
-    var bnd = bindings.resolve(node.ntype) as ArrayTypeSymbol;
+    var bnd = symbols.resolve(node.ntype) as ArrayTypeSymbol;
     if(bnd == null)
       throw new Exception("Could not find class binding: " + node.ntype);
 
