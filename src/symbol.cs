@@ -1339,12 +1339,15 @@ static public class SymbolTable
 
 public class SymbolsDictionary
 {
+  //NOTE: Functions names are hashed with module id prepended in front but essentially
+  //      their string names are considered to be unique across all the global namespace.
+  //      Sometimes during parsing we need to lookup the function by the string name only
+  //      and at that time we don't have module id at hand(i.e we can't build the proper
+  //      ulong hash). For this reason we keep two dictionaries: by hash and by string.
+  //      However someday we really need to get rid of the str2symb.
   Dictionary<ulong, Symbol> hash2symb = new Dictionary<ulong, Symbol>();
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
   List<Symbol> list = new List<Symbol>();
-
-  public SymbolsDictionary()
-  {}
 
   public int Count
   {

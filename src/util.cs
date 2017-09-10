@@ -88,10 +88,8 @@ public struct HashedName
   }
 
   public HashedName(string s)
-    : this(Hash.CRC28(s))
-  {
-    this.s = s;
-  }
+    : this(Hash.CRC28(s), s)
+  {}
 
   public HashedName(uint n1, uint n2, string s = "")
     : this(((ulong)n2 << 31) | ((ulong)n1), s)
