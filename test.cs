@@ -11957,6 +11957,34 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestChildUserClassOfBindClass()
+  {
+    string bhl = @"
+
+    class ColorA : Color 
+    { 
+      float a
+    }
+      
+    func float test() 
+    {
+      ColorA c = { r : 1, g : 2, a : 3}
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"extending C# bound classes not currently supported"
+    );
+  }
+
+  [IsTested()]
   public void TestImport()
   {
     string bhl1 = @"
