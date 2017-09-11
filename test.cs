@@ -11898,6 +11898,69 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestChildUserClassDowncast()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      float y
+    }
+      
+    func float test() 
+    {
+      Foo f = { x : 1, y : 2}
+      Base b = (Foo)f
+      return b.x
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 1);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestChildUserClassUpcast()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      float y
+    }
+      
+    func float test() 
+    {
+      Foo f = { x : 1, y : 2}
+      Base b = (Foo)f
+      Foo f2 = (Foo)b
+      return f2.x + f2.y
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 3);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestChildUserClassDefaultInit()
   {
     string bhl = @"
