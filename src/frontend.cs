@@ -1501,7 +1501,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = ctx.NAME().GetText();
 
-    var class_name = new HashedName(str_name, curr_module.GetId());
+    var class_name = new HashedName(str_name);
 
     ClassSymbol parent = null;
     if(ctx.classEx() != null)

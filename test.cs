@@ -12108,6 +12108,59 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestImportClass()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float test(float k) 
+    {
+      Foo f = { x : k }
+      return bar(f)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+
+    class Foo
+    {
+      float x
+    }
+
+    func float bar(Foo f)
+    {
+      return hey(f.x)
+    }
+    ";
+
+    string bhl3 = @"
+    func float hey(float k)
+    {
+      return k
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var mreg = new ModuleRegistry();
+
+    var fp2src = new Dictionary<string, string>();
+    fp2src.Add("bhl1", bhl1);
+    fp2src.Add("bhl2", bhl2);
+    fp2src.Add("bhl3", bhl3);
+    mreg.test_sources = fp2src;
+    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+
+    var node = intp.GetFuncNode("bhl1", "test");
+    node.SetArgs(DynVal.NewNum(42));
+    //NodeDump(node);
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 42);
+    CommonChecks(intp);
+  }
+
   void BindForSlides(GlobalScope globs)
   {
     {

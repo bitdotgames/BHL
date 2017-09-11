@@ -542,13 +542,11 @@ static public class AST_Util
   {
     var n = new AST_ClassDecl();
 
-    n.nname1 = name.n1;
-    n.nname2 = name.n2;
+    n.nname = (uint)name.n;
     if(Util.DEBUG)
       n.name = name.s;
 
-    n.parentn1 = parent.n1;
-    n.parentn2 = parent.n2;
+    n.nparent = (uint)parent.n;
     if(Util.DEBUG)
       n.parent = parent.s;
 
@@ -557,22 +555,12 @@ static public class AST_Util
 
   static public HashedName Name(this AST_ClassDecl n)
   {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname(), n.name);
-  }
-
-  static public ulong nname(this AST_ClassDecl n)
-  {
-    return ((ulong)n.nname2 << 31) | ((ulong)n.nname1);
+    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname, n.name);
   }
 
   static public HashedName ParentName(this AST_ClassDecl n)
   {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.parentn(), n.parent);
-  }
-
-  static public ulong parentn(this AST_ClassDecl n)
-  {
-    return ((ulong)n.parentn2 << 31) | ((ulong)n.parentn1);
+    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nparent, n.parent);
   }
 
   ////////////////////////////////////////////////////////
@@ -959,7 +947,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_ClassDecl node)
   {
     Console.Write("(CLASS ");
-    Console.Write(node.name + " " + node.nname());
+    Console.Write(node.name + " " + node.nname);
     VisitChildren(node);
     Console.Write(")");
   }

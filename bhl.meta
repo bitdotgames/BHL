@@ -62,11 +62,9 @@ struct AST_FuncDecl extends AST
 end
 
 struct AST_ClassDecl extends AST
-  nname1    : uint32
-  nname2    : uint32 #NOTE: due to msgpack 64 bit error on Windows we have to split nname
+  nname     : uint32
   name      : string @default:"" #for debug
-  parentn1  : uint32 @default:0
-  parentn2  : uint32 @default:0
+  nparent   : uint32 @default:0
   parent    : string @default:"" #for debug
 end
 
