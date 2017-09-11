@@ -11898,6 +11898,65 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestChildUserClassDefaultInit()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      float y
+    }
+      
+    func float test() 
+    {
+      Foo f = { y : 2}
+      return f.x + f.y
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestChildUserClassAlreadyDefinedMember()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      int x
+    }
+      
+    func float test() 
+    {
+      Foo f = { x : 2}
+      return f.x
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"already defined symbol 'x'"
+    );
+  }
+
+  [IsTested()]
   public void TestImport()
   {
     string bhl1 = @"

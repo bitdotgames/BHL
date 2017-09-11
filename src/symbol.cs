@@ -250,6 +250,14 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     return null;
   }
 
+  public override void define(Symbol sym) 
+  {
+    if(super_class != null && super_class.GetMembers().Contains(sym.name))
+      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
+
+    base.define(sym);
+  }
+
   public HashedName GetName() { return name; }
   public int GetTypeIndex() { return SymbolTable.tUSER; }
 
