@@ -1435,7 +1435,9 @@ public class Interpreter : AST_Visitor
     var name = node.Name();
     CheckClassIsUnique(name);
 
-    var cl = new ClassSymbolAST(name, node);
+    var parent = symbols.resolve(node.ParentName()) as ClassSymbol;
+
+    var cl = new ClassSymbolAST(name, node, parent);
     symbols.define(cl);
 
     for(int i=0;i<node.children.Count;++i)

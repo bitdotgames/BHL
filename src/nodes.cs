@@ -1321,15 +1321,15 @@ public class ConstructNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
 
-    var bnd = interp.symbols.resolve(ntype) as ClassSymbol;
-    if(bnd == null)
-      throw new Exception("Could not find class binding: " + ntype);
+    var cls = interp.symbols.resolve(ntype) as ClassSymbol;
+    if(cls == null)
+      throw new Exception("Could not find class symbol: " + ntype);
 
-    if(bnd.creator == null)
+    if(cls.creator == null)
       throw new Exception("Class doesn't have a creator: " + ntype);
 
     var val = DynVal.New(); 
-    bnd.creator(ref val);
+    cls.creator(ref val);
     interp.PushValue(val);
   }
 
@@ -1684,7 +1684,8 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
   public int mode = READ;
 
-  Symbol bnd_member;
+  //NOTE: caching class member symbol
+  Symbol cls_member;
 
   public MVarAccessNode(uint scope_ntype, HashedName name, int mode = READ)
   {
@@ -1697,21 +1698,20 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
     
-    //TODO: support user classes as well
-    if(bnd_member == null)
+    if(cls_member == null)
     {
-      var bnd = interp.symbols.resolve(scope_ntype) as ClassSymbol;
-      if(bnd == null)
+      var cls = interp.symbols.resolve(scope_ntype) as ClassSymbol;
+      if(cls == null)
         throw new Exception("Class binding not found: " + scope_ntype); 
 
-      bnd_member = bnd.ResolveMember(name.n);
-      if(bnd_member == null)
+      cls_member = cls.ResolveMember(name.n);
+      if(cls_member == null)
         throw new Exception("Member not found: " + name);
     }
 
     if(mode == READ || mode == READ_PUSH_CTX)
     {
-      var var_symb = (VariableSymbol)bnd_member;
+      var var_symb = (VariableSymbol)cls_member;
       if(var_symb == null)
         throw new Exception("Not a variable symbol: " + name);
 
@@ -1727,7 +1727,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
     }
     else if(mode == WRITE || mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
     {
-      var var_symb = (VariableSymbol)bnd_member;
+      var var_symb = (VariableSymbol)cls_member;
       if(var_symb == null)
         throw new Exception("Not a variable symbol: " + name);
 

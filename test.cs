@@ -10024,7 +10024,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl, globs);
       },
-      @"no such attribute 'b' in 'class Color"
+      @"no such attribute 'b' in class 'Color"
     );
   }
 
@@ -11864,6 +11864,36 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual(res, 101);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestChildUserClass()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      float y
+    }
+      
+    func float test() 
+    {
+      Foo f = { x : 1, y : 2}
+      return f.x + f.y
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 3);
     CommonChecks(intp);
   }
 

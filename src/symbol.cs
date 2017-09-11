@@ -193,7 +193,7 @@ public class BuiltInTypeSymbol : Symbol, Type
 
 public class ClassSymbol : ScopedSymbol, Scope, Type 
 {
-  ClassSymbol super_class;
+  protected ClassSymbol super_class;
   public SymbolsDictionary members = new SymbolsDictionary();
 
   public Interpreter.ClassCreator creator;
@@ -933,8 +933,8 @@ public class ClassSymbolAST : ClassSymbol
 {
   public AST_ClassDecl decl;
 
-  public ClassSymbolAST(HashedName name, AST_ClassDecl decl)
-    : base(null, name, null, null, null)
+  public ClassSymbolAST(HashedName name, AST_ClassDecl decl, ClassSymbol parent = null)
+    : base(null, name, parent == null ? null : new TypeRef(parent), null, null)
   {
     this.decl = decl;
     this.creator = ClassCreator;
@@ -942,8 +942,17 @@ public class ClassSymbolAST : ClassSymbol
 
   void ClassCreator(ref DynVal res)
   {
-    var s = ClassStorage.New();
-    res.SetObj(s);
+    ClassStorage s = null;
+    if(super_class != null)
+    {
+      super_class.creator(ref res);
+      s = (ClassStorage)res.obj;
+    }
+    else
+    {
+      s = ClassStorage.New();
+      res.SetObj(s);
+    }
 
     for(int i=0;i<members.Count;++i)
     {

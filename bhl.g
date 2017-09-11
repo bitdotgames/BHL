@@ -141,7 +141,11 @@ block
   ;
 
 classDecl
-  : 'class' NAME classBlock
+  : 'class' NAME classEx? classBlock
+  ;
+
+classEx
+  : ':' NAME
   ;
 
 classBlock

@@ -881,7 +881,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     var member = scoped_symb.resolve(name_str);
     if(member == null)
-      FireError(Location(ctx) + ": no such attribute '" + name_str + "' in '" + scoped_symb + "'");
+      FireError(Location(ctx) + ": no such attribute '" + name_str + "' in class '" + scoped_symb.name.s + "'");
 
     var ast = AST_Util.New_JsonPair(curr_type.GetName(), name_str);
 
@@ -1502,9 +1502,18 @@ public class Frontend : bhlBaseVisitor<object>
     var str_name = ctx.NAME().GetText();
 
     var class_name = new HashedName(str_name, curr_module.GetId());
-    var ast = AST_Util.New_ClassDecl(class_name);
 
-    var symb = new ClassSymbolAST(class_name, ast);
+    ClassSymbol parent = null;
+    if(ctx.classEx() != null)
+    {
+      parent = locals.resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
+      if(parent == null)
+        FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
+    }
+
+    var ast = AST_Util.New_ClassDecl(class_name, parent == null ? new HashedName() : parent.name);
+
+    var symb = new ClassSymbolAST(class_name, ast, parent);
     locals.define(symb);
     curr_module.symbols.define(symb);
     curr_scope = symb;
