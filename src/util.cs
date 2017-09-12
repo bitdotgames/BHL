@@ -99,6 +99,12 @@ public struct HashedName
     : this(Hash.CRC28(n1), n2, n1)
   {}
 
+  static public void Split(long n, out uint n1, out uint n2)
+  {
+    n1 = (uint)(n & 0xFFFFFFFF);
+    n2 = (uint)(n >> 31);
+  }
+
   public void Split(out uint n1, out uint n2)
   {
     n1 = (uint)(n & 0xFFFFFFFF);
