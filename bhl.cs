@@ -212,7 +212,7 @@ public class BHL
   static void Shuffle(List<string> arr)
   {
     var rnd = new Random();
-    // Knuth shuffle algorithm :: courtesy of Wikipedia :)
+    // Knuth shuffle algorithm - courtesy of Wikipedia :)
     for (int t = 0; t < arr.Count; ++t)
     {
       var tmp = arr[t];
@@ -222,7 +222,34 @@ public class BHL
     }
   }
 
-  static Dictionary<ulong, string> uniq_symbols = new Dictionary<ulong, string>();
+  public class UniqueSymbols
+  {
+    Dictionary<ulong, string> hash2path = new Dictionary<ulong, string>();
+    Dictionary<string, string> str2path = new Dictionary<string, string>();
+
+    public bool TryGetValue(HashedName key, out string path)
+    {
+      if(hash2path.TryGetValue(key.n, out path))
+        return true;
+      return str2path.TryGetValue(key.s, out path);
+    }
+
+    public void Add(HashedName name, string path)
+    {
+      // Dictionary operation first, so exception thrown if key already exists.
+      if(!string.IsNullOrEmpty(name.s))
+        str2path.Add(name.s, path);
+      hash2path.Add(name.n, path);
+    }
+
+    public void Clear()
+    {
+      str2path.Clear();
+      hash2path.Clear();
+    }
+  }
+
+  static UniqueSymbols uniq_symbols = new UniqueSymbols();
 
   static void CheckUniqueSymbols(Worker w)
   {
@@ -231,13 +258,15 @@ public class BHL
       var symb = w.symbols[i];
 
       string fpath;
-      if(uniq_symbols.TryGetValue(symb.name.n, out fpath))
+      if(uniq_symbols.TryGetValue(symb.name, out fpath))
       {
         w.error = new UserError(symb.file, "Symbol '" + symb.name + "' is already declared in '" + fpath + "'");
         break;
       }
       else
-        uniq_symbols.Add(symb.name.n, symb.file);
+      {
+        uniq_symbols.Add(symb.name, symb.file);
+      }
     }
   }
 
