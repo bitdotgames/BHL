@@ -1394,6 +1394,13 @@ public class SymbolsDictionary
     return str2symb.TryGetValue(key.s, out val);
   }
 
+  public Symbol Find(HashedName key)
+  {
+    Symbol s = null;
+    TryGetValue(key, out s);
+    return s;
+  }
+
   public void Add(Symbol s)
   {
     // Dictionary operation first, so exception thrown if key already exists.
