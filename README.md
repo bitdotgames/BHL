@@ -53,6 +53,22 @@ func Unit FindUnit(Vec3 pos, float radius) {
 }
 ```
 
+### Userland structs support
+
+```go
+class Color {
+  float r
+  float g
+  float b
+  float a
+}
+
+Color c = new Color
+c.r = 0.9
+c.g = 0.5
+c.b = 0.7
+```
+
 ### Generic initializers support
 
 ```go
