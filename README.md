@@ -72,7 +72,12 @@ c.b = 0.7
 ### Generic initializers support
 
 ```go
-Color c = {r:0.9, g:0.5, b:0.1, a:0.3}
+class Vec3 {
+  float x
+  float y
+  float z
+}
+
 Vec3[] vs = [{x: 10}, {y: 100, z: 100}, {y: 1}]
 ```
 
