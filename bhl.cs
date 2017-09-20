@@ -433,7 +433,22 @@ public class BHL
             {
               var fn = c as AST_FuncDecl;
               if(fn != null)
+              {
                 w.symbols.Add(new Symbol2File(fn.Name(), file));
+                continue;
+              }
+              var cd = c as AST_ClassDecl;
+              if(cd != null)
+              {
+                w.symbols.Add(new Symbol2File(cd.Name(), file));
+                continue;
+              }
+              var vd = c as AST_VarDecl;
+              if(vd != null)
+              {
+                w.symbols.Add(new Symbol2File(vd.Name(), file));
+                continue;
+              }
             }
 
             w.postproc.PostProc(ref ast);
