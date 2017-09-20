@@ -21,7 +21,7 @@ decls
   ;
 
 decl
-  : (classDecl | funcDecl)
+  : (classDecl | funcDecl | varDeclareAssign)
   ;
 
 fnargs
@@ -64,6 +64,10 @@ exp
 
 newExp
   : 'new' type
+  ;
+
+varDeclareAssign
+  : varDeclare assignExp?
   ;
 
 //statements

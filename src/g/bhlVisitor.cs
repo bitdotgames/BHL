@@ -246,6 +246,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitNewExp([NotNull] bhlParser.NewExpContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>VarDecl</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
