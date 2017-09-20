@@ -85,7 +85,7 @@ class Vec3 {
 Vec3[] vs = [{x: 10}, {y: 100, z: 100}, {y: 1}]
 ```
 
-### **ref** support
+### Passing by **ref**
 
 ```go
 
@@ -98,7 +98,7 @@ Unit FindTarget(Unit self, ref float dist_to_target) {
 float dist_to_target = 0
 Unit u = FindTarget(self, ref dist_to_target)
 ```
-### **Multiple returned values** support
+### **Multiple returned values**
 
 ```go
 
@@ -111,7 +111,7 @@ Unit,float FindTarget(Unit self) {
 Unit u,float dist_to_target = FindTarget(self)
 ```
 
-### **lambda** support
+### **lambda**
 
 ```go
 Unit u = FindTarget()
