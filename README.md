@@ -53,7 +53,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 }
 ```
 
-### Userland structs
+### Structs
 
 ```go
 class Color3 {
