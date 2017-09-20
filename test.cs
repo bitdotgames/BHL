@@ -12048,6 +12048,110 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestGlobalVariableRead()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    Foo foo = {b : 100}
+      
+    func float test() 
+    {
+      return foo.b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 100);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestGlobalVariableWrite()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    Foo foo = {b : 100}
+
+    func float bar()
+    {
+      return foo.b
+    }
+      
+    func float test() 
+    {
+      foo.b = 101
+      return bar()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 101);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestGlobalVariableAlreadyDeclared()
+  {
+    string bhl = @"
+
+    int foo = 0
+    int foo = 1
+      
+    func int test() 
+    {
+      return foo
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"already defined symbol 'foo'"
+    );
+  }
+
+  [IsTested()]
+  public void TestLocalVariableHasPriorityOverGlobalOne()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    Foo foo = {b : 100}
+      
+    func float test() 
+    {
+      Foo foo = {b : 200}
+      return foo.b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 200);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestImport()
   {
     string bhl1 = @"
@@ -12177,7 +12281,6 @@ public class BHL_Test
     }
     ";
 
-
     var globs = SymbolTable.CreateBuiltins();
 
     var mreg = new ModuleRegistry();
@@ -12249,6 +12352,52 @@ public class BHL_Test
     var res = intp.ExecNode(node).val;
 
     AssertEqual(res.num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestImportGlobalVar()
+  {
+    string bhl1 = @"
+    import ""bhl3""  
+    func float test() 
+    {
+      return foo.x
+    }
+    ";
+
+    string bhl2 = @"
+
+    class Foo
+    {
+      float x
+    }
+
+    ";
+
+    string bhl3 = @"
+    import ""bhl2""  
+
+    Foo foo = {x : 10}
+
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var mreg = new ModuleRegistry();
+
+    var fp2src = new Dictionary<string, string>();
+    fp2src.Add("bhl1", bhl1);
+    fp2src.Add("bhl2", bhl2);
+    fp2src.Add("bhl3", bhl3);
+    mreg.test_sources = fp2src;
+    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+
+    var node = intp.GetFuncNode("bhl1", "test");
+    //NodeDump(node);
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 10);
     CommonChecks(intp);
   }
 
@@ -13688,6 +13837,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
   void CommonChecks(Interpreter intp)
   {
+    intp.glob_mem.Clear();
+
     AssertEqual(intp.stack.Count, 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);

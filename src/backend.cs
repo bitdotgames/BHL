@@ -1093,6 +1093,7 @@ public class Interpreter : AST_Visitor
 
   FastStack<MemoryScope> mstack = new FastStack<MemoryScope>(128);
   MemoryScope curr_mem;
+  public MemoryScope glob_mem = new MemoryScope();
 
   public struct JsonCtx
   {
@@ -1131,6 +1132,7 @@ public class Interpreter : AST_Visitor
     curr_node = null;
     last_member_ctx = null;
     mstack.Clear();
+    glob_mem.Clear();
     curr_mem = null;
     loaded_modules.Clear();
     stack.Clear();
@@ -1274,21 +1276,18 @@ public class Interpreter : AST_Visitor
 
   public void PushScope(MemoryScope mem)
   {
-    //Console.WriteLine("PUSH MEM");
     mstack.Push(mem);
     curr_mem = mem;
   }
 
   public void PopScope()
   {
-    //Console.WriteLine("POP MEM");
     mstack.Pop();
     curr_mem = mstack.Count > 0 ? mstack.Peek() : null;
   }
 
   public void SetScopeValue(HashedName name, DynVal val)
   {
-    //Console.WriteLine("MEM SET " + name + " " + val);
     curr_mem.Set(name, val);
   }
 
@@ -1296,12 +1295,11 @@ public class Interpreter : AST_Visitor
   {
     DynVal val;
     bool ok = curr_mem.TryGet(name, out val);
+    //NOTE: trying glob_mem if not found
     if(!ok)
-    {
-      //Console.WriteLine("MEM GET ERR " + name);
+      ok = glob_mem.TryGet(name, out val);
+    if(!ok)
       throw new Exception("No such variable " + name + " in scope");
-    }
-    //Console.WriteLine("MEM GET " + name);
     return val;
   }
 
@@ -1383,7 +1381,19 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_Module node)
   {
+    PushScope(glob_mem);
+
+    var g = new GroupNode();
+    PushNode(g, attach_as_child: false);
     VisitChildren(node);
+    PopNode();
+
+    //NOTE: we need to run it for globals initialization
+    var status = g.run();
+    if(status != BHS.SUCCESS)
+      throw new Exception("Global initialization error: " + status);
+
+    PopScope();
   }
 
   public override void DoVisit(AST_Import node)
@@ -1646,7 +1656,7 @@ public class Interpreter : AST_Visitor
         var rcn = new ResetConfigNode(conf_symb, conf_node, true/*push config*/); 
         group.addChild(rcn);
 
-        PushNode(group, false);
+        PushNode(group, attach_as_child: false);
         VisitChildren(ast.children[0] as AST);
 
         var last_child = group.children[group.children.Count-1];

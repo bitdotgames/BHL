@@ -249,16 +249,13 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitImports(bhlParser.ImportsContext ctx)
   {
-    if(!decls_only)
-    {
-      var res = AST_Util.New_Imports();
+    var res = AST_Util.New_Imports();
 
-      var imps = ctx.mimport();
-      for(int i=0;i<imps.Length;++i)
-        AddImport(res, imps[i]);
+    var imps = ctx.mimport();
+    for(int i=0;i<imps.Length;++i)
+      AddImport(res, imps[i]);
 
-      PeekAST().AddChild(res);
-    }
+    PeekAST().AddChild(res);
     return null;
   }
 
@@ -846,7 +843,7 @@ public class Frontend : bhlBaseVisitor<object>
     var arr_type = curr_type as ArrayTypeSymbol;
     var orig_type = arr_type.original.TryGet();
     if(orig_type == null)
-      FireError(Location(ctx) + ": type '" + arr_type.original.name + "' not found");
+      FireError(Location(ctx) + ": type '" + arr_type.original.name.s + "' not found");
     PushJsonType(orig_type);
 
     var ast = AST_Util.New_JsonArr(arr_type);
@@ -958,7 +955,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tr = locals.type(ctx.newExp().type());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
+      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
     var ast = AST_Util.New_New((ClassSymbol)tr.type);
     Wrap(ctx).eval_type = tr.type;
@@ -980,7 +977,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tr = locals.type(ctx.type());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name + "' not found");
+      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
     var ast = AST_Util.New_TypeCast(tr.name);
     var exp = ctx.exp();
@@ -1444,6 +1441,12 @@ public class Frontend : bhlBaseVisitor<object>
         Visit(cldecl);
         continue;
       }
+      var vdecl = decls[i].varDeclareAssign();
+      if(vdecl != null)
+      {
+        Visit(vdecl);
+        continue;
+      }
     }
 
     return null;
@@ -1464,8 +1467,8 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
     var symb = new FuncSymbolAST(locals, ast, func_node, func_name, tr, ctx.funcParams());
-    locals.define(symb);
     curr_module.symbols.define(symb);
+    locals.define(symb);
     curr_scope = symb;
 
     PushFuncDecl(symb);
@@ -1527,7 +1530,7 @@ public class Frontend : bhlBaseVisitor<object>
       var vd = cb.varDeclare();
       if(vd != null)
       {
-        var decl = CommonDeclVar(vd.NAME(), vd.type(), false/*not ref*/, false/*not func arg*/, false/*read*/);
+        var decl = CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
         //NOTE: forcing name to be always present due to current class members declaration requirement
         (decl as AST_VarDecl).name = vd.NAME().GetText();
         ast.AddChild(decl);
@@ -1537,6 +1540,48 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope = locals;
 
     PeekAST().AddChild(ast);
+
+    return null;
+  }
+
+  public override object VisitVarDeclareAssign(bhlParser.VarDeclareAssignContext ctx)
+  {
+    var vd = ctx.varDeclare(); 
+
+    if(decls_only)
+    {
+      var tr = locals.type(vd.type().GetText());
+      var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
+      curr_module.symbols.define(symb);
+    }
+    else
+    {
+      var assign_exp = ctx.assignExp();
+
+      AST_Interim exp_ast = null;
+      if(assign_exp != null)
+      {
+        var tr = locals.type(vd.type());
+        if(tr.type == null)
+          FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
+
+        exp_ast = new AST_Interim();
+        PushAST(exp_ast);
+        PushJsonType(tr.type);
+        Visit(assign_exp);
+        PopJsonType();
+        PopAST();
+      }
+
+      var ast = CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: true, write: assign_exp != null);
+
+      if(exp_ast != null)
+        PeekAST().AddChild(exp_ast);
+      PeekAST().AddChild(ast);
+
+      if(assign_exp != null)
+        SymbolTable.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
+    }
 
     return null;
   }
@@ -1578,7 +1623,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitVarDecl(bhlParser.VarDeclContext ctx)
   {
     var vd = ctx.varDeclare(); 
-    PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), false/*is ref*/, false/*not func arg*/, false/*read*/));
+    PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
     return null;
   }
 
@@ -1633,7 +1678,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else
         {
-          var ast = CommonDeclVar(vd.NAME(), vd_type, false/*is ref*/, false/*not func arg*/, assign_exp != null);
+          var ast = CommonDeclVar(vd.NAME(), vd_type, is_ref: false, func_arg: false, write: assign_exp != null);
           root.AddChild(ast);
           is_decl = true;
 
@@ -1729,7 +1774,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    var ast = CommonDeclVar(name, ctx.type(), is_ref, true/*func arg*/, false/*read*/);
+    var ast = CommonDeclVar(name, ctx.type(), is_ref, func_arg: true, write: false);
     if(exp_ast != null)
       ast.AddChild(exp_ast);
     PeekAST().AddChild(ast);
@@ -1745,7 +1790,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var tr = locals.type(type);
     if(tr.type == null)
-      FireError(Location(tr.node) +  ": type '" + tr.name + "' not found");
+      FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
 
     var var_node = Wrap(name); 
     var_node.eval_type = tr.type;
@@ -2100,14 +2145,13 @@ public class ModuleRegistry
     //3. Ok, let's parse it otherwise
     m = new Module(norm_path, full_path);
    
-    Frontend.Source2AST(m, stream, globals, this, true/*declarations only*/);
-
-    stream.Close();
-
     //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
     curr_module.imports.Add(full_path, m);
-
     Register(m);
+
+    Frontend.Source2AST(m, stream, globals, this, decls_only: true);
+
+    stream.Close();
 
     return m;
   }
