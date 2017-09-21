@@ -12251,7 +12251,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestImportInterleaved()
+  public void TestImportWithCycles()
   {
     string bhl1 = @"
     import ""bhl2""  
@@ -12300,6 +12300,46 @@ public class BHL_Test
 
     AssertEqual(res.num, 23);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestImportConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    func float bar() 
+    {
+      return 1
+    }
+
+    func float test() 
+    {
+      return bar()
+    }
+    ";
+
+    string bhl2 = @"
+    func float bar()
+    {
+      return 2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var mreg = new ModuleRegistry();
+
+    var fp2src = new Dictionary<string, string>();
+    fp2src.Add("bhl1", bhl1);
+    fp2src.Add("bhl2", bhl2);
+    mreg.test_sources = fp2src;
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+      },
+      @"already defined symbol 'bar'"
+    );
   }
 
   [IsTested()]
@@ -12356,6 +12396,37 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestImportClassConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    class Bar { }
+
+    func test() { }
+    ";
+
+    string bhl2 = @"
+    class Bar { }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var mreg = new ModuleRegistry();
+
+    var fp2src = new Dictionary<string, string>();
+    fp2src.Add("bhl1", bhl1);
+    fp2src.Add("bhl2", bhl2);
+    mreg.test_sources = fp2src;
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+      },
+      @"already defined symbol 'Bar'"
+    );
+  }
+
+  [IsTested()]
   public void TestImportGlobalVar()
   {
     string bhl1 = @"
@@ -12399,6 +12470,37 @@ public class BHL_Test
 
     AssertEqual(res.num, 10);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestImportGlobalVarConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    int foo = 10
+
+    func test() { }
+    ";
+
+    string bhl2 = @"
+    float foo = 100
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var mreg = new ModuleRegistry();
+
+    var fp2src = new Dictionary<string, string>();
+    fp2src.Add("bhl1", bhl1);
+    fp2src.Add("bhl2", bhl2);
+    mreg.test_sources = fp2src;
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+      },
+      @"already defined symbol 'foo'"
+    );
   }
 
   void BindForSlides(GlobalScope globs)
