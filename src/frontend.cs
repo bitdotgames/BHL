@@ -221,6 +221,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
   {
+    //Console.WriteLine(">>>> PROG VISIT " + curr_module.norm_path + " decls: " + decls_only);
     for(int i=0;i<ctx.progblock().Length;++i)
       Visit(ctx.progblock()[i]);
     return null;
@@ -731,7 +732,6 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    //NOTE: for now defining lambdas in a module scope 
     locals.define(symb);
 
     //NOTE: while we are inside lambda the eval type is the return type of
@@ -1467,7 +1467,8 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
     var symb = new FuncSymbolAST(locals, ast, func_node, func_name, tr, ctx.funcParams());
-    curr_module.symbols.define(symb);
+    if(decls_only)
+      curr_module.symbols.define(symb);
     locals.define(symb);
     curr_scope = symb;
 
@@ -1520,8 +1521,9 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_ClassDecl(class_name, parent == null ? new HashedName() : parent.name);
 
     var symb = new ClassSymbolAST(class_name, ast, parent);
+    if(decls_only)
+      curr_module.symbols.define(symb);
     locals.define(symb);
-    curr_module.symbols.define(symb);
     curr_scope = symb;
 
     for(int i=0;i<ctx.classBlock().classMember().Length;++i)
@@ -1553,6 +1555,7 @@ public class Frontend : bhlBaseVisitor<object>
       var tr = locals.type(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
       curr_module.symbols.define(symb);
+      locals.define(symb);
     }
     else
     {

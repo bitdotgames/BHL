@@ -722,6 +722,29 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUserFuncBindConflict()
+  {
+    string bhl = @"
+
+    func trace(string hey)
+    {
+    }
+      
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "already defined symbol 'trace'"
+    );
+  }
+
+  [IsTested()]
   public void TestPassNamedValue()
   {
     string bhl = @"
@@ -11635,6 +11658,31 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUserClassBindConflict()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      return f != null
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindFoo(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "already defined symbol 'Foo'"
+    );
+  }
+
+  [IsTested()]
   public void TestSeveralEmptyUserClasses()
   {
     string bhl = @"
@@ -13929,9 +13977,13 @@ func Unit FindUnit(Vec3 pos, float radius) {
     FuncCtx.PoolClear();
 
     globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
+    var iglobs = new GlobalScope();
+    var ms = globs.GetMembers();
+    for(int i=0;i<ms.Count;++i)
+      iglobs.define(ms[i]);
 
     var intp = Interpreter.instance;
-    intp.Init(globs, mloader);
+    intp.Init(iglobs, mloader);
 
     mreg = mreg == null ? new ModuleRegistry() : mreg;
 

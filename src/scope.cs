@@ -216,6 +216,14 @@ public class LocalScope : BaseScope
   {}
 
   public override HashedName GetScopeName() { return new HashedName("local"); }
+
+  public override void define(Symbol sym) 
+  {
+    if(enclosing_scope != null && enclosing_scope.resolve(sym.name) != null)
+      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
+
+    base.define(sym);
+  }
 }
 
 } //namespace bhl
