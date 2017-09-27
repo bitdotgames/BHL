@@ -1456,7 +1456,7 @@ public class Interpreter : AST_Visitor
       var vd = child as AST_VarDecl;
       if(vd != null)
       {
-        cl.define(new FieldSymbolAST(vd.name));
+        cl.define(new FieldSymbolAST(vd.name, vd.ntype));
       }
     }
   }

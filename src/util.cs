@@ -135,6 +135,11 @@ public struct HashedName
   {
     return (s == null ? "" : s) + ":" + n;
   }
+
+  public bool IsEqual(HashedName o)
+  {
+    return n == o.n;
+  }
 }
 
 static public class OPool
@@ -706,12 +711,13 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref)
+  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, uint ntype)
   {
     var n = new AST_VarDecl();
     n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
       n.name = name.s;
+    n.ntype = ntype;
 
     return n;
   }

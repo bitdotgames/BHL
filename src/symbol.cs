@@ -485,8 +485,8 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolAST : FieldSymbol
 {
-  public FieldSymbolAST(HashedName name) 
-    : base(name, null, null, null)
+  public FieldSymbolAST(HashedName name, HashedName type) 
+    : base(name, new TypeRef(null, type), null, null)
   {
     this.getter = Getter;
     this.setter = Setter;
@@ -966,6 +966,16 @@ public class ClassSymbolAST : ClassSymbol
     {
       var m = members[i];
       var dv = DynVal.New();
+      //NOTE: proper default init of built-in types
+      if(m.type.name.IsEqual(SymbolTable._float.type.name))
+        dv.SetNum(0);
+      else if(m.type.name.IsEqual(SymbolTable._int.type.name))
+        dv.SetNum(0);
+      else if(m.type.name.IsEqual(SymbolTable._string.type.name))
+        dv.SetStr("");
+      else if(m.type.name.IsEqual(SymbolTable._boolean.type.name))
+        dv.SetBool(false);
+
       s.Set(m.name, dv);
     }
   }

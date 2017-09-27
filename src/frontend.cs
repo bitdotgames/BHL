@@ -1811,7 +1811,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(write)
       return AST_Util.New_Call(EnumCall.VARW, 0, symb.name);
     else
-      return AST_Util.New_VarDecl(str_name, is_ref);
+      return AST_Util.New_VarDecl(str_name, is_ref, tr.name.n1);
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)

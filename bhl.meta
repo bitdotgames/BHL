@@ -130,6 +130,7 @@ end
 struct AST_VarDecl extends AST
   nname   : uint32
   name    : string @default:"" #for debug
+  ntype   : uint32
 end
 
 enum EnumBlock
