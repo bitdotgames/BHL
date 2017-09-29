@@ -3432,6 +3432,50 @@ public class BHL_Test
     }
   }
 
+  public class DynValContainer
+  {
+    public DynVal dv;
+  }
+
+  void BindDynValContainer(GlobalScope globs, DynValContainer c)
+  {
+    {
+      var cl = new ClassBindSymbol("DynValContainer",
+        delegate(ref DynVal v) 
+        { 
+          v.obj = new DynValContainer();
+        }
+      );
+      globs.define(cl);
+
+      cl.define(new FieldSymbol("dv", globs.type("any"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          var f = (DynValContainer)ctx.obj;
+          v.RefMod(RefOp.TRY_DEL);
+          v = f.dv;
+        },
+        delegate(ref DynVal ctx, DynVal v)
+        {
+          var f = (DynValContainer)ctx.obj;
+          if(f.dv != null)
+            f.dv.RefMod(RefOp.USR_DEC | RefOp.DEC);
+          if(v != null)
+            v.RefMod(RefOp.USR_INC | RefOp.INC);
+          f.dv = v;
+          ctx.obj = f;
+        }
+      ));
+    }
+
+    {
+      var fn = new SimpleFuncBindSymbol("get_dv_container", globs.type("DynValContainer"),
+          delegate() { Interpreter.instance.PushValue(DynVal.NewObj(c)); return BHS.SUCCESS; } );
+
+      globs.define(fn);
+    }
+  }
+
   void BindFooLambda(GlobalScope globs)
   {
     {
@@ -4203,6 +4247,53 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestVarInForever()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      forever {
+        int foo = 1
+        trace((string)foo + "";"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    //NodeDump(node);
+    
+    for(int i=0;i<5;++i)
+      node.run();
+    AssertEqual(DynVal.PoolCount, 4);
+    AssertEqual(DynVal.PoolCountFree, 3);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("1;1;1;1;1;", str);
+
+    for(int i=0;i<5;++i)
+      node.run();
+    AssertEqual(DynVal.PoolCount, 4);
+    AssertEqual(DynVal.PoolCountFree, 3);
+
+    str = GetString(trace_stream);
+
+    AssertEqual("1;1;1;1;1;" + "1;1;1;1;1;", str);
+
+    node.stop();
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestArrayPoolInForever()
   {
     string bhl = @"
@@ -4235,6 +4326,44 @@ public class BHL_Test
     node.stop();
 
     AssertEqual(DynValList.PoolCount, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassingDynValToBindClass()
+  {
+    string bhl = @"
+
+    class Foo
+    {
+      int b
+    }
+
+    func int test() 
+    {
+      Foo f = {b: 10} 
+      DynValContainer c = get_dv_container()
+      c.dv = f
+
+      Foo tmp = (Foo)c.dv
+      return tmp.b
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var c = new DynValContainer();
+
+    BindDynValContainer(globs, c);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 10);
+
+    c.dv.RefMod(RefOp.USR_DEC | RefOp.DEC);
+
     CommonChecks(intp);
   }
 
