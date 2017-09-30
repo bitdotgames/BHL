@@ -4341,11 +4341,14 @@ public class BHL_Test
 
     func int test() 
     {
-      Foo f = {b: 10} 
-      DynValContainer c = get_dv_container()
-      c.dv = f
+      Foo f1 = {b: 14} 
+      Foo f2 = {b: 10} 
 
-      Foo tmp = (Foo)c.dv
+      DynValContainer c = get_dv_container()
+      c.dv = f1
+      c.dv = f2
+
+      Foo tmp = (Foo)get_dv_container().dv
       return tmp.b
     }
     ";
