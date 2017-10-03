@@ -1547,7 +1547,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.PopRef();
+            var b = interp.PopValueNoDel();
             var a = interp.PopValue().num;
 
             b.num = a * 2;
@@ -3458,7 +3458,9 @@ public class BHL_Test
             v = f.dv;
           }
           else
+          {
             v.SetNil();
+          }
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -4421,7 +4423,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestPassingDynValToBindClassNull()
+  public void TestDynValToBindClassAnyNull()
   {
     string bhl = @"
 
@@ -4444,6 +4446,37 @@ public class BHL_Test
     var res = ExtractBool(intp.ExecNode(node));
 
     AssertTrue(res);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestDynValToBindClassAssignNull()
+  {
+    string bhl = @"
+
+    func bool test() 
+    {
+      DynValContainer c = get_dv_container()
+      c.dv = null
+      return c.dv == null
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var c = new DynValContainer();
+
+    BindDynValContainer(globs, c);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractBool(intp.ExecNode(node));
+
+    AssertTrue(res);
+
+    c.dv.RefDec();
 
     CommonChecks(intp);
   }

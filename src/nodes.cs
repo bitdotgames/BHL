@@ -1736,17 +1736,20 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       if(mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
       {
-        val = interp.PopValue();
+        val = interp.PopValueNoDel();
         ctx = mode == WRITE_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
       }
       else
       {
         ctx = interp.PopValue();
-        val = interp.PopValue();
+        val = interp.PopValueNoDel();
       }
 
       if(var_symb is FieldSymbol)
+      {
         (var_symb as FieldSymbol).setter(ref ctx, val);
+        val.RefMod(RefOp.TRY_DEL);
+      }
       else
         throw new Exception("Not implemented");
     }

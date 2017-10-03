@@ -1349,12 +1349,17 @@ public class Interpreter : AST_Visitor
     return v;
   }
 
-  public DynVal PopRef()
+  public DynVal PopValueNoDel()
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
     stack_marks.DecFast();
     return v;
+  }
+
+  public DynVal PopRef()
+  {
+    return PopValueNoDel();
   }
 
   public void CleanFuncStackValues(AST_Call call)
