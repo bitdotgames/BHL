@@ -1651,7 +1651,7 @@ public class VarAccessNode : BehaviorTreeTerminalNode
     }
     else if(mode == DECL)
     {
-      var val = DynVal.New();
+      var val = DynVal.NewNil();
       interp.SetScopeValue(name, val);
     }
     else

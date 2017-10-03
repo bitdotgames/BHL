@@ -1076,14 +1076,14 @@ static public class SymbolTable
 
   public static Type[,] equalityResultType = new Type[,] {
       /*           struct boolean   string    int       float     void    enum     any */
-      /*struct*/  {_boolean, _void,    _void,    _void,    _void,   _void,  _void,  _void},
+      /*struct*/  {_boolean,_void,    _void,    _void,    _void,    _void,  _void,  _void},
       /*boolean*/ {_void,   _boolean, _void,    _void,    _void,    _void,  _void,  _void},
       /*string*/  {_void,   _void,    _boolean, _void,    _void,    _void,  _void,  _void},
       /*int*/     {_void,   _void,    _void,    _boolean, _boolean, _void,  _void,  _void},
       /*float*/   {_void,   _void,    _void,    _boolean, _boolean, _void,  _void,  _void},
       /*void*/    {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void},
       /*enum*/    {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void},
-      /*any*/     {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void}
+      /*any*/     {_boolean,_void,    _void,    _void,    _void,    _void,  _void,  _void}
   };
 
   // Indicate whether a type needs a promotion to a wider type.
@@ -1174,11 +1174,12 @@ static public class SymbolTable
 
     int ta = a.eval_type.GetTypeIndex(); // type index of left operand
     int tb = b.eval_type.GetTypeIndex(); // type index of right operand
+
     Type result = typeTable[ta,tb];    // operation result type
     if(result == _void) 
     {
       throw new UserError(
-        a.Location()+", "+ b.Location()+" have incompatible types"
+        a.Location()+", "+ b.Location()+" have incompatible types " + ta + " " + tb
       );
     }
     else 

@@ -3452,16 +3452,21 @@ public class BHL_Test
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (DynValContainer)ctx.obj;
-          v.RefMod(RefOp.TRY_DEL);
-          v = f.dv;
+          if(f.dv != null)
+          {
+            v.RefTryDel();
+            v = f.dv;
+          }
+          else
+            v.SetNil();
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var f = (DynValContainer)ctx.obj;
           if(f.dv != null)
-            f.dv.RefMod(RefOp.USR_DEC | RefOp.DEC);
+            f.dv.RefDec();
           if(v != null)
-            v.RefMod(RefOp.USR_INC | RefOp.INC);
+            v.RefInc();
           f.dv = v;
           ctx.obj = f;
         }
@@ -3586,6 +3591,48 @@ public class BHL_Test
     var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 202);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestAnyNullEquality()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      any foo
+      return foo == null
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractBool(intp.ExecNode(node));
+
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestAnyNullAssign()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      any foo = null
+      return foo == null
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractBool(intp.ExecNode(node));
+
+    AssertTrue(res);
     CommonChecks(intp);
   }
 
@@ -4345,6 +4392,9 @@ public class BHL_Test
       Foo f2 = {b: 10} 
 
       DynValContainer c = get_dv_container()
+      if(c.dv != null) {
+        FAILURE()
+      }
       c.dv = f1
       c.dv = f2
 
@@ -4365,7 +4415,7 @@ public class BHL_Test
 
     AssertEqual(res, 10);
 
-    c.dv.RefMod(RefOp.USR_DEC | RefOp.DEC);
+    c.dv.RefDec();
 
     CommonChecks(intp);
   }
@@ -12034,6 +12084,55 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual(res, 102);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassAny()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      any foo = f
+      return foo != null
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    bool res = ExtractBool(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassAnyCastBack()
+  {
+    string bhl = @"
+
+    class Foo { int x }
+      
+    func int test() 
+    {
+      Foo f = {x : 10}
+      any foo = f
+      Foo f1 = (Foo)foo
+      return f1.x
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 10);
     CommonChecks(intp);
   }
 

@@ -234,6 +234,21 @@ public class DynVal
     }
   }
 
+  public void RefInc()
+  {
+    RefMod(RefOp.USR_INC | RefOp.INC);
+  }
+
+  public void RefDec()
+  {
+    RefMod(RefOp.USR_DEC | RefOp.DEC);
+  }
+
+  public void RefTryDel()
+  {
+    RefMod(RefOp.TRY_DEL);
+  }
+
   static public DynVal NewStr(string s)
   {
     DynVal dv = New();
