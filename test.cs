@@ -4421,6 +4421,34 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassingDynValToBindClassNull()
+  {
+    string bhl = @"
+
+    func bool test() 
+    {
+      DynValContainer c = get_dv_container()
+      any foo = c.dv
+      return foo == null
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var c = new DynValContainer();
+
+    BindDynValContainer(globs, c);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractBool(intp.ExecNode(node));
+
+    AssertTrue(res);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestDynValListOwnership()
   {
     var lst = DynValList.New();
