@@ -1326,7 +1326,8 @@ public class Frontend : bhlBaseVisitor<object>
     return json_type_stack.Peek();
   }
 
-  int while_stack = 0;
+  int loops_stack = 0;
+  int defer_stack = 0;
 
   public override object VisitReturn(bhlParser.ReturnContext ctx)
   {
@@ -1416,7 +1417,10 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitBreak(bhlParser.BreakContext ctx)
   {
-    if(while_stack == 0)
+    if(defer_stack > 0)
+      FireError(Location(ctx) + ": not within loop construct");
+
+    if(loops_stack == 0)
       FireError(Location(ctx) + ": not within loop construct");
 
     PeekAST().AddChild(AST_Util.New_Break());
@@ -1870,7 +1874,9 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitForever(bhlParser.ForeverContext ctx)
   {
+    ++loops_stack;
     CommonVisitBlock(EnumBlock.FOREVER, ctx.block().statement(), false);
+    --loops_stack;
     return null;
   }
 
@@ -1888,7 +1894,9 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitDefer(bhlParser.DeferContext ctx)
   {
+    ++defer_stack;
     CommonVisitBlock(EnumBlock.DEFER, ctx.block().statement(), false);
+    --defer_stack;
     return null;
   }
 
@@ -1953,7 +1961,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var ast = AST_Util.New_Block(EnumBlock.WHILE);
 
-    ++while_stack;
+    ++loops_stack;
 
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
     PushAST(cond);
@@ -1967,7 +1975,7 @@ public class Frontend : bhlBaseVisitor<object>
     CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
     PopAST();
 
-    --while_stack;
+    --loops_stack;
 
     PeekAST().AddChild(ast);
 

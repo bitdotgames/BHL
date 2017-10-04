@@ -871,7 +871,19 @@ public class ForeverNode : SequentialNode
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(currentTask.currStatus != BHS.RUNNING)
         currentTask.init();
-      status = currentTask.execute();
+
+      try
+      {
+        status = currentTask.execute();
+      }
+      catch(Interpreter.BreakException)
+      {
+        currentPosition = 0;
+        currStatus = BHS.SUCCESS;
+        stop();
+        return BHS.SUCCESS;
+      }
+
       currentTask.currStatus = status;
       currentTask.lastExecuteStatus = currentTask.currStatus;
       if(currentTask.currStatus != BHS.RUNNING)
@@ -888,7 +900,7 @@ public class ForeverNode : SequentialNode
     //NOTE: we need to stop child in order to make it 
     //      reset its status and re-init on the next run,
     //      also we force currStatus to be BHS.RUNNING since
-    //      logic in stop *needs* that but we officially return
+    //      logic in stop *needs* that even though we officially return
     //      running status *below* that call 
     currStatus = BHS.RUNNING;
     if(status != BHS.RUNNING)

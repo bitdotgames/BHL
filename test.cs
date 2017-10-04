@@ -8506,6 +8506,82 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestForeverBreak()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      forever {
+        i = i + 1
+        if(i == 3) {
+          break
+        }
+      }
+      return i
+    }
+    ";
+
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = node.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = node.run();
+    AssertEqual(BHS.SUCCESS, status);
+
+    var res = intp.PopValue();
+    AssertEqual(res.num, 3);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestDeferInForeverWithBreak()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      forever {
+        defer {
+          trace(""HEY;"")
+        }
+        i = i + 1
+        if(i == 2) {
+          break
+        }
+      }
+      defer {
+        trace(""YOU;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    for(int i=0;i<2;++i)
+      node.run();
+
+    var str = GetString(trace_stream);
+    AssertEqual("HEY;HEY;YOU;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestNodeWithDeferInForever()
   {
     string bhl = @"
@@ -9935,6 +10011,31 @@ public class BHL_Test
     func test() 
     {
       break
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "not within loop construct"
+    );
+  }
+
+  [IsTested()]
+  public void TestBadBreakInDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      while(true) {
+        defer {
+          break
+        }
+      }
     }
     ";
 
