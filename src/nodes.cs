@@ -864,36 +864,36 @@ public class ForeverNode : SequentialNode
     //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
     BHS status = BHS.SUCCESS;
-    while(currentPosition < children.Count)
+
+    try
     {
-      var currentTask = children[currentPosition];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init();
-
-      try
+      while(currentPosition < children.Count)
       {
+        var currentTask = children[currentPosition];
+        //status = currentTask.run();
+        ////////////////////FORCING CODE INLINE////////////////////////////////
+        if(currentTask.currStatus != BHS.RUNNING)
+          currentTask.init();
         status = currentTask.execute();
-      }
-      catch(Interpreter.BreakException)
-      {
-        currentPosition = 0;
-        currStatus = BHS.SUCCESS;
-        stop();
-        return BHS.SUCCESS;
-      }
+        currentTask.currStatus = status;
+        currentTask.lastExecuteStatus = currentTask.currStatus;
+        if(currentTask.currStatus != BHS.RUNNING)
+          currentTask.deinit();
+        ////////////////////FORCING CODE INLINE////////////////////////////////
+        if(status == BHS.SUCCESS)
+          ++currentPosition;
+        else
+          break;
+      } 
+    }
+    catch(Interpreter.BreakException)
+    {
+      currentPosition = 0;
+      currStatus = BHS.SUCCESS;
+      stop();
+      return BHS.SUCCESS;
+    }
 
-      currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = currentTask.currStatus;
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++currentPosition;
-      else
-        break;
-    } 
     if(status != BHS.RUNNING)
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
