@@ -9914,6 +9914,68 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestWhileEmptyArrLoop()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] arr = []
+      int i = 0
+      while(i < arr.Count) {
+        int tmp = arr[i]
+        trace((string)tmp)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestWhileArrLoop()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] arr = [1,2,3]
+      int i = 0
+      while(i < arr.Count) {
+        int tmp = arr[i]
+        trace((string)tmp)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestWhileManyTimesAtOneRun()
   {
     string bhl = @"
