@@ -975,6 +975,8 @@ public class ClassSymbolAST : ClassSymbol
         dv.SetStr("");
       else if(m.type.name.IsEqual(SymbolTable._boolean.type.name))
         dv.SetBool(false);
+      else 
+        dv.SetNil();
 
       s.Set(m.name, dv);
     }

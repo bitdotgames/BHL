@@ -9846,6 +9846,35 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestNullArrayByDefault()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color[] cs
+      if(cs == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("NULL;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestNullFuncPtr()
   {
     string bhl = @"
@@ -12238,6 +12267,32 @@ public class BHL_Test
     {
       Foo f = {}
       return f.c == false
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractBool(intp.ExecNode(node));
+
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassDefaultInitArr()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] a
+    }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      return f.a == null
     }
     ";
 
