@@ -12334,6 +12334,37 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUserClassWithSubClass()
+  {
+    string bhl = @"
+
+    class Bar {
+      int[] a
+    }
+
+    class Foo { 
+      Bar b
+    }
+      
+    func int test() 
+    {
+      Foo f = {b : { a : [10, 21] } }
+      return f.b.a[1]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 21);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitStringConcat()
   {
     string bhl = @"

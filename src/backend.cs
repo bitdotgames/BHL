@@ -1829,7 +1829,12 @@ public class Interpreter : AST_Visitor
     if(jcts.Count > 0 && jcts.Peek().type == JsonCtx.OBJ)
     {
       var jc = jcts.Peek();
-      curr_node.addChild(new MVarAccessNode(jc.scope_type, jc.name_or_idx, MVarAccessNode.READ_PUSH_CTX));
+      //NOTE: if it's a C# bind symbol we assume the obj is already
+      //      created and just push it onto the stack
+      if(symbols.resolve(jc.scope_type) is ClassBindSymbol)
+        curr_node.addChild(new MVarAccessNode(jc.scope_type, jc.name_or_idx, MVarAccessNode.READ_PUSH_CTX));
+      else
+        curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
     }
     else
       curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
