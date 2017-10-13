@@ -2145,7 +2145,7 @@ public class Array_AddNode : BehaviorTreeTerminalNode
 
     var lst = arr.obj as DynValList;
     if(lst == null)
-      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
     lst.Add(val);
     //NOTE: this can be an operation for the temp. array,
     //      we need to try del the array if so
@@ -2192,7 +2192,7 @@ public class Array_AtNode : BehaviorTreeTerminalNode
 
     var lst = arr.obj as DynValList;
     if(lst == null)
-      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
 
     var res = lst[(int)idx.num]; 
     interp.PushValue(res);
@@ -2219,7 +2219,7 @@ public class Array_SetAtNode : BehaviorTreeTerminalNode
 
     var lst = arr.obj as DynValList;
     if(lst == null)
-      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
 
     lst[(int)idx.num] = val; 
     //NOTE: this can be an operation for the temp. array,
@@ -2296,7 +2296,7 @@ public class Array_RemoveAtNode : BehaviorTreeTerminalNode
 
     var lst = arr.obj as DynValList;
     if(lst == null)
-      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
 
     lst.RemoveAt((int)idx.num); 
     //NOTE: this can be an operation for the temp. array,

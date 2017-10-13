@@ -50,7 +50,7 @@ exp
   | funcLambda                                              #ExpLambda
   | '(' type ')' exp                                        #ExpTypeCast
   | operatorUnary exp                                       #ExpUnary
-  | '(' exp ')'                                             #ExpParen
+  | '(' exp ')' chainExp*                                   #ExpParen
   | exp operatorBitAnd exp                                  #ExpBitAnd
   | exp operatorBitOr exp                                   #ExpBitOr
   | exp operatorMulDivMod exp                               #ExpMulDivMod

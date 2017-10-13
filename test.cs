@@ -12307,6 +12307,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUserClassWithArr()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] a
+    }
+      
+    func int test() 
+    {
+      Foo f = {a : [10, 20]}
+      return f.a[1]
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 20);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitStringConcat()
   {
     string bhl = @"
@@ -12526,6 +12553,84 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual(res, 101);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassInlineCast()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+      
+    func float test() 
+    {
+      Foo f = { b : 101 }
+      any a = f
+      return ((Foo)a).b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 101);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassInlineCastArr()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] b
+    }
+      
+    func int test() 
+    {
+      Foo f = { b : [101, 102] }
+      any a = f
+      return ((Foo)a).b[1]
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 102);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassInlineCastArr2()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] b
+    }
+      
+    func int test() 
+    {
+      Foo f = { b : [101, 102] }
+      any a = f
+      return ((Foo)a).b.Count
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
     CommonChecks(intp);
   }
 

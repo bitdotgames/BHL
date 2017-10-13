@@ -1026,11 +1026,20 @@ public class Frontend : bhlBaseVisitor<object>
     var exp = ctx.exp(); 
     PushAST(ast);
     Visit(exp);
+
+    var curr_type = Wrap(exp).eval_type;
+
+    var chain = ctx.chainExp(); 
+    if(chain != null)
+    {
+      int line = exp.Start.Line;
+      ProcChainedCall(null, chain, ref curr_type, line, false);
+    }
     PopAST();
-
-    Wrap(ctx).eval_type = Wrap(exp).eval_type;
-
+    
     PeekAST().AddChild(ast);
+    
+    Wrap(ctx).eval_type = curr_type;
 
     return null;
   }
