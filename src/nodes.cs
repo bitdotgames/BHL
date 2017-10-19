@@ -157,7 +157,7 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
   public override void init()
   {
     if(children.Count != 1)
-      throw new Exception("One child is expected");
+      throw new Exception("One child is expected, given " + children.Count);
   }
 
   public override BHS execute()
