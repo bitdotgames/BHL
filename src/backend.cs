@@ -139,6 +139,16 @@ public class DynVal
       throw new Exception("Unbalanced New/Del " + pool.Count + " " + pool_miss);
   }
 
+  //For proper assignments, like: dst = src (taking into account ref.counting)
+  static public void Assign(ref DynVal dst, DynVal src)
+  {
+    if(dst != null)
+      dst.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    if(src != null) 
+      src.RefMod(RefOp.INC | RefOp.USR_INC);
+    dst = src;
+  }
+
   //NOTE: refcount is not reset
   void Reset()
   {
