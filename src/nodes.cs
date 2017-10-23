@@ -355,6 +355,7 @@ public class FuncCallNode : SequentialNode
 
   PoolItem pool_item;
   int func_status = FUNC_INIT;
+  int stack_size_before;
 
   public AST_Call node;
 
@@ -382,13 +383,11 @@ public class FuncCallNode : SequentialNode
     }
   }
 
-  void Inflate()
+  void Inflate(Interpreter interp)
   {
     if(func_status == FUNC_INIT)
     {
       func_status = FUNC_READY;
-
-      var interp = Interpreter.instance;
 
       interp.PushNode(this);
 
@@ -415,7 +414,11 @@ public class FuncCallNode : SequentialNode
 
   override public void init()
   {
-    Inflate();
+    var interp = Interpreter.instance;
+
+    Inflate(interp);
+
+    stack_size_before = interp.stack.Count;
 
     base.init();
   }
@@ -451,11 +454,13 @@ public class FuncCallNode : SequentialNode
       //      and apply required stack cleanups
       if(is_func_call)
       {
-        //NOTE: force cleaning of the value stack for the current function
-        if(status == BHS.FAILURE)
-          interp.CleanFuncStackValues(node);
-
         interp.call_stack.DecFast();
+      }
+      //NOTE: force cleaning of the value stack for the current function
+      else if(status == BHS.FAILURE)
+      {
+        int diff = interp.stack.Count - stack_size_before;
+        interp.TrimStack(diff);
       }
 
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1354,6 +1359,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
 public class CallFuncPtr : SequentialNode
 {
   AST_Call node;
+  int stack_size_before;
 
   public CallFuncPtr(AST_Call node)
   {
@@ -1387,6 +1393,8 @@ public class CallFuncPtr : SequentialNode
     //NOTE: else below is not tested, need a better test for this
     else
       children[children.Count-1] = func_node;
+
+    stack_size_before = interp.stack.Count;
   }
 
   override public void deinit()
@@ -1430,11 +1438,13 @@ public class CallFuncPtr : SequentialNode
       //      and apply required stack cleanups
       if(is_func_call)
       {
-        //NOTE: force cleaning of the value stack for the current function
-        if(status == BHS.FAILURE)
-          interp.CleanFuncStackValues(node);
-
         interp.call_stack.DecFast();
+      }
+      //NOTE: force cleaning of the value stack for the current function
+      else if(status == BHS.FAILURE)
+      {
+        int diff = interp.stack.Count - stack_size_before;
+        interp.TrimStack(diff);
       }
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)

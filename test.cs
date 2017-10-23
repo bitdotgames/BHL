@@ -4379,6 +4379,45 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestStackInForever()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      return 100
+    }
+
+    func hey(int a)
+    {
+    }
+
+    func test() 
+    {
+      forever {
+        hey(foo())
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    //NodeDump(node);
+    
+    for(int i=0;i<5;++i)
+      node.run();
+    AssertEqual(intp.stack.Count, 0);
+    AssertEqual(DynVal.PoolCount, 2);
+    AssertEqual(DynVal.PoolCountFree, 2);
+
+    node.stop();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestPassingDynValToBindClass()
   {
     string bhl = @"
@@ -11229,6 +11268,70 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
+    AssertEqual(intp.stack.Count, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFailureWhilePassingArgsOnStack()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      FAILURE()
+      return 100
+    }
+
+    func hey(string b, int a)
+    {
+    }
+
+    func test() 
+    {
+      hey(""bar"", foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+    //NodeDump(node);
+    AssertEqual(intp.stack.Count, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFailureWhilePassingArgsOnStackInUntilSuccess()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      FAILURE()
+      return 100
+    }
+
+    func hey(string b, int a)
+    {
+    }
+
+    func test() 
+    {
+      until_success {
+        hey(""bar"", foo())
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, ret_vals: 0, keep_running: false);
+    //NodeDump(node);
     AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }

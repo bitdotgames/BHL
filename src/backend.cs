@@ -1145,10 +1145,6 @@ public class Interpreter : AST_Visitor
   public BaseScope symbols;
 
   public FastStack<DynVal> stack = new FastStack<DynVal>(256);
-  //NOTE: func marks are used in order to clean non-consumed values 
-  //      from the stack. This may happen due to runtime failures.
-  FastStack<AST_Call> stack_marks = new FastStack<AST_Call>(256);
-
   public FastStack<AST_Call> call_stack = new FastStack<AST_Call>(128);
 
   public void Init(BaseScope symbols, IModuleLoader module_loader)
@@ -1180,7 +1176,7 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  public Result ExecNode(BehaviorTreeNode node, int ret_vals = 1)
+  public Result ExecNode(BehaviorTreeNode node, int ret_vals = 1, bool keep_running = true)
   {
     Result res = new Result();
 
@@ -1189,6 +1185,9 @@ public class Interpreter : AST_Visitor
     {
       res.status = node.run();
       if(res.status != BHS.RUNNING)
+        break;
+
+      if(!keep_running)
         break;
     }
     if(ret_vals > 0)
@@ -1347,15 +1346,12 @@ public class Interpreter : AST_Visitor
   {
     v.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(v);
-    //NOTE: marking pushed value with current func call if it's present
-    stack_marks.Push(call_stack.Count > 0 ? call_stack.Peek() : null);
   }
 
   public DynVal PopValue()
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-    stack_marks.DecFast();
     return v;
   }
 
@@ -1363,7 +1359,6 @@ public class Interpreter : AST_Visitor
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
-    stack_marks.DecFast();
     return v;
   }
 
@@ -1372,19 +1367,14 @@ public class Interpreter : AST_Visitor
     return PopValueNoDel();
   }
 
-  public void CleanFuncStackValues(AST_Call call)
+  public void TrimStack(int amount)
   {
-    for(int i=stack_marks.Count;i-- > 0;)
+    for(int i=0;i<amount;++i)
     {
-      var mark = stack_marks[i];
-      if(mark == call)
-      {
-        var dv = stack[i];
-        dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-
-        stack.RemoveAtFast(i);
-        stack_marks.RemoveAtFast(i);
-      }
+      int idx = stack.Count - 1;
+      var dv = stack[idx];
+      dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+      stack.RemoveAtFast(idx);
     }
   }
 
