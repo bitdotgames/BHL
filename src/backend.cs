@@ -1367,15 +1367,10 @@ public class Interpreter : AST_Visitor
     return PopValueNoDel();
   }
 
-  public void TrimStack(int amount)
+  public void PopValues(int amount)
   {
     for(int i=0;i<amount;++i)
-    {
-      int idx = stack.Count - 1;
-      var dv = stack[idx];
-      dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-      stack.RemoveAtFast(idx);
-    }
+      PopValue();
   }
 
   public bool PeekValue(ref DynVal res)

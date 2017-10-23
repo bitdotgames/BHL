@@ -456,13 +456,12 @@ public class FuncCallNode : SequentialNode
       {
         interp.call_stack.DecFast();
       }
-      //NOTE: force cleaning of the value stack for the current function
+      //NOTE: force cleaning of the args.value stack in case of FAILURE
       else if(status == BHS.FAILURE)
       {
         int diff = interp.stack.Count - stack_size_before;
-        interp.TrimStack(diff);
+        interp.PopValues(diff);
       }
-
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -1440,11 +1439,11 @@ public class CallFuncPtr : SequentialNode
       {
         interp.call_stack.DecFast();
       }
-      //NOTE: force cleaning of the value stack for the current function
+      //NOTE: force cleaning of the args.value stack in case of FAILURE
       else if(status == BHS.FAILURE)
       {
         int diff = interp.stack.Count - stack_size_before;
-        interp.TrimStack(diff);
+        interp.PopValues(diff);
       }
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)

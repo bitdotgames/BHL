@@ -11273,7 +11273,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestFailureWhilePassingArgsOnStack()
+  public void TestCleanFuncArgsOnStack()
   {
     string bhl = @"
 
@@ -11304,11 +11304,17 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestFailureWhilePassingArgsOnStackInUntilSuccess()
+  public void TestCleanFuncArgsOnStackInUntilSuccess()
   {
     string bhl = @"
 
-    func int foo()
+    func float bar()
+    {
+      FAILURE()
+      return 1
+    }
+
+    func int foo(float b, float c)
     {
       FAILURE()
       return 100
@@ -11321,7 +11327,7 @@ public class BHL_Test
     func test() 
     {
       until_success {
-        hey(""bar"", foo())
+        hey(""bar"", foo(10, bar()))
       }
     }
     ";
