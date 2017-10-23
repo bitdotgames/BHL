@@ -459,7 +459,8 @@ public class FuncCallNode : SequentialNode
       //NOTE: force cleaning of the args.value stack in case of FAILURE
       else if(status == BHS.FAILURE)
       {
-        int diff = interp.stack.Count - stack_size_before;
+        //taking into account hidden class instance argument if required
+        int diff = interp.stack.Count - stack_size_before + (node.scope_ntype != 0 ? 1 : 0);
         interp.PopValues(diff);
       }
       ////////////////////FORCING CODE INLINE////////////////////////////////

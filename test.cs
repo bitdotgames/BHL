@@ -11304,6 +11304,38 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStackForFuncPtr()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      FAILURE()
+      return 100
+    }
+
+    func hey(string b, int a)
+    {
+    }
+
+    func test() 
+    {
+      void^(string,int) p = hey
+      p(""bar"", foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+    //NodeDump(node);
+    AssertEqual(intp.stack.Count, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestCleanFuncArgsOnStackInUntilSuccess()
   {
     string bhl = @"
@@ -11336,7 +11368,39 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
+    //NodeDump(node);
     intp.ExecNode(node, ret_vals: 0, keep_running: false);
+    AssertEqual(intp.stack.Count, 0);
+    intp.ExecNode(node, ret_vals: 0, keep_running: false);
+    AssertEqual(intp.stack.Count, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncThisArgOnStackForMethod()
+  {
+    string bhl = @"
+
+    func float foo()
+    {
+      FAILURE()
+      return 10
+    }
+
+    func test() 
+    {
+      Color c = new Color
+      c.mult_summ(foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
     //NodeDump(node);
     AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
