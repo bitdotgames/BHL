@@ -11304,38 +11304,6 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncArgsOnStackForFuncPtr()
-  {
-    string bhl = @"
-
-    func int foo()
-    {
-      FAILURE()
-      return 100
-    }
-
-    func hey(string b, int a)
-    {
-    }
-
-    func test() 
-    {
-      void^(string,int) p = hey
-      p(""bar"", foo())
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, 0);
-    //NodeDump(node);
-    AssertEqual(intp.stack.Count, 0);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestCleanFuncArgsOnStackInUntilSuccess()
   {
     string bhl = @"
@@ -11407,7 +11375,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncPtrStack()
+  public void TestCleanFuncArgsOnStackForFuncPtr()
   {
     string bhl = @"
     func int foo(int v) 
@@ -11457,7 +11425,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanLambdaStack()
+  public void TestCleanFuncArgsOnStackForLambda()
   {
     string bhl = @"
     func bar()
@@ -11505,7 +11473,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncStackInParal()
+  public void TestCleanArgsStackInParal()
   {
     string bhl = @"
     func int foo(int ticks) 
@@ -11567,7 +11535,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncPtrStackInParal()
+  public void TestCleanFuncPtrArgsStackInParal()
   {
     string bhl = @"
     func int foo(int ticks) 
@@ -11630,7 +11598,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanLambdaStackInParal()
+  public void TestCleanArgsStackInParalForLambda()
   {
     string bhl = @"
     func bar()
@@ -12503,6 +12471,190 @@ public class BHL_Test
     var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 20);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassDefaultInitFuncPtr()
+  {
+    string bhl = @"
+
+    class Foo { 
+      void^(int) ptr
+    }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      return f.ptr == null
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractBool(intp.ExecNode(node));
+
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassWithFuncPtr()
+  {
+    string bhl = @"
+
+    func int foo(int a)
+    {
+      return a + 1
+    }
+
+    class Foo { 
+      int^(int) ptr
+    }
+      
+    func int test() 
+    {
+      Foo f = {}
+      f.ptr = foo
+      return f.ptr(2)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(3, res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackClassPtr()
+  {
+    string bhl = @"
+
+    class Foo
+    {
+      void^(int,int) ptr
+    }
+
+    func int foo()
+    {
+      FAILURE()
+      return 10
+    }
+
+    func void bar(int a, int b)
+    {
+    }
+
+    func test() 
+    {
+      Foo f = {}
+      f.ptr = bar
+      f.ptr(10, foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+    //NodeDump(node);
+    AssertEqual(intp.stack.Count, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassWithFuncPtrsArray()
+  {
+    string bhl = @"
+
+    func int foo(int a)
+    {
+      return a + 1
+    }
+
+    func int foo2(int a)
+    {
+      return a + 10
+    }
+
+    class Foo { 
+      int^(int)[] ptrs
+    }
+      
+    func int test() 
+    {
+      Foo f = {ptrs: []}
+      f.ptrs.Add(foo)
+      f.ptrs.Add(foo2)
+      return f.ptrs[1](2)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(12, res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassWithFuncPtrsArrayCleanArgsStack()
+  {
+    string bhl = @"
+
+    func int foo(int a,int b)
+    {
+      return a + 1
+    }
+
+    func int foo2(int a,int b)
+    {
+      return a + 10
+    }
+
+    class Foo { 
+      int^(int,int)[] ptrs
+    }
+
+    func int bar()
+    {
+      FAILURE()
+      return 1
+    }
+      
+    func void test() 
+    {
+      Foo f = {ptrs: []}
+      f.ptrs.Add(foo)
+      f.ptrs.Add(foo2)
+      f.ptrs[1](2, bar())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+
+    intp.ExecNode(node, 0);
+    //NodeDump(node);
+    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 

@@ -410,9 +410,20 @@ public class Frontend : bhlBaseVisitor<object>
         if(var_symb != null && var_symb.type.Get() is FuncType)
         {
           var ftype = var_symb.type.Get() as FuncType;
-          ast = AST_Util.New_Call(EnumCall.FUNC_PTR, line, str_name);
-          AddCallArgs(ftype, cargs, ref ast);
-          type = ftype.ret_type.Get();
+
+          if(class_scope == null)
+          {
+            ast = AST_Util.New_Call(EnumCall.FUNC_PTR, line, str_name);
+            AddCallArgs(ftype, cargs, ref ast);
+            type = ftype.ret_type.Get();
+          }
+          else //func ptr member of class
+          {
+            PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, str_name, class_scope));
+            ast = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, line);
+            AddCallArgs(ftype, cargs, ref ast);
+            type = ftype.ret_type.Get();
+          }
         }
         else if(func_symb != null)
         {

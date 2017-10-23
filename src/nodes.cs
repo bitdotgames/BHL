@@ -1457,6 +1457,14 @@ public class CallFuncPtr : SequentialNode
 
     return status;
   }
+
+  public override string inspect()
+  {
+    if(node.type == EnumCall.FUNC_PTR_POP)
+      return "<-";
+    else
+      return ""+node.name;
+  }
 }
 
 public class LiteralNode : BehaviorTreeTerminalNode
