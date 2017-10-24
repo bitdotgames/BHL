@@ -419,6 +419,10 @@ public class FuncCallNode : SequentialNode
     Inflate(interp);
 
     stack_size_before = interp.stack.Count;
+    //NOTE: if it's a method call we need to take into account
+    //      pushed object instance as well
+    if(node.scope_ntype != 0)
+      --stack_size_before;
 
     base.init();
   }
@@ -460,8 +464,7 @@ public class FuncCallNode : SequentialNode
       else if(status == BHS.FAILURE)
       {
         //taking into account hidden class instance argument if required
-        int diff = interp.stack.Count - stack_size_before + (node.scope_ntype != 0 ? 1 : 0);
-        interp.PopValues(diff);
+        interp.PopValues(interp.stack.Count - stack_size_before);
       }
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
@@ -1443,8 +1446,7 @@ public class CallFuncPtr : SequentialNode
       //NOTE: force cleaning of the args.value stack in case of FAILURE
       else if(status == BHS.FAILURE)
       {
-        int diff = interp.stack.Count - stack_size_before;
-        interp.PopValues(diff);
+        interp.PopValues(interp.stack.Count - stack_size_before);
       }
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
