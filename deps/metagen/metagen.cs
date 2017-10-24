@@ -1,6 +1,7 @@
 using MsgPack;
 using System.IO;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace game {
@@ -21,7 +22,6 @@ public enum MetaIoError
 
 public interface IMetaStruct 
 {
-  string CLASS_NAME();
   uint CLASS_ID();
   MetaIoError write(IDataWriter writer);  //could be moved to extension if we did't use structs
   MetaIoError read(IDataReader reader);   //could be moved to extension if we did't use structs
@@ -33,22 +33,87 @@ public interface IMetaStruct
   void reset();
 }
 
+public abstract class BaseMetaStruct : IMetaStruct
+{
+  public virtual uint CLASS_ID() { return 0; }
+  public virtual MetaIoError writeFields(IDataWriter writer) { return MetaIoError.SUCCESS; }
+  public virtual MetaIoError readFields(IDataReader reader) { return MetaIoError.SUCCESS; }
+  public virtual int getFieldsCount() { return 0; }
+  public virtual void copy(IMetaStruct source) {}
+  public virtual IMetaStruct clone() { return null; }
+  public virtual void reset() {}
+
+  public virtual MetaIoError write(IDataWriter writer) 
+  {
+    MetaIoError err = writer.BeginArray(getFieldsCount());
+    if(err != MetaIoError.SUCCESS)
+      return err;
+    
+    err = writeFields(writer);
+    if(err != MetaIoError.SUCCESS)
+      return err;
+    
+    return writer.EndArray();
+  }
+
+  public virtual MetaIoError read(IDataReader reader) 
+  {
+    MetaIoError err = MetaIoError.SUCCESS;
+
+    err = reader.BeginArray();
+    if(err != MetaIoError.SUCCESS)
+      return err == MetaIoError.DATA_MISSING ? MetaIoError.DATA_MISSING0 : err;
+    
+    err = readFields(reader);
+    if(err != MetaIoError.SUCCESS)
+      return err;
+    
+    err = reader.EndArray();
+    if(err != MetaIoError.SUCCESS)
+      return err;
+    
+    return err;
+  }
+}
+
 public interface IRpcError
 {
   bool isOk();
+  int getServerError();
 }
 
 public interface IRpc
 {
-  string CLASS_NAME();
   int getCode();
   IMetaStruct getRequest();
   IMetaStruct getResponse();
   IRpcError getError();
   void setError(IRpcError err);
-  bool isDone();
-  bool isFailed();
-  void reset();
+}
+
+public static class MetagenExtensions
+{
+  static public bool isDone(this IRpc r)
+  {
+    return r.getError() != null;
+  }
+
+  static public bool isSuccess(this IRpc r)
+  {
+    return r.getError() == null || r.getError().isOk();
+  }
+
+  static public bool isFailed(this IRpc r)
+  {
+    return r.isDone() && !r.isSuccess();
+  }
+
+  static public void reset(this IRpc r) 
+  {
+    r.setError(null);
+    r.getRequest().reset();
+    r.getResponse().reset();
+  }
 }
 
 public interface IDataReader 
@@ -60,7 +125,9 @@ public interface IDataReader
   MetaIoError ReadI32(ref int v);
   MetaIoError ReadU32(ref uint v);
   MetaIoError ReadU64(ref ulong v);
+  MetaIoError ReadI64(ref long v);
   MetaIoError ReadFloat(ref float v);
+  MetaIoError ReadBool(ref bool v);
   MetaIoError ReadDouble(ref double v);
   MetaIoError ReadString(ref string v);
   MetaIoError ReadRaw(ref byte[] v, ref int vlen);
@@ -77,8 +144,10 @@ public interface IDataWriter
   MetaIoError WriteU16(ushort v);
   MetaIoError WriteI32(int v);
   MetaIoError WriteU32(uint v);
+  MetaIoError WriteI64(long v);
   MetaIoError WriteU64(ulong v);
   MetaIoError WriteFloat(float v);
+  MetaIoError WriteBool(bool v);
   MetaIoError WriteDouble(double v);
   MetaIoError WriteString(string v);
   MetaIoError BeginArray(int len); 
@@ -94,8 +163,14 @@ public static class MetaHelper
   public delegate string L_TCb(string text);
   static public L_TCb L_T;
 
-  public delegate string L_FromListCb(List<string> list);
+  public delegate string L_FromListCb(IList<string> list);
   static public L_FromListCb L_FromList;
+
+  public delegate string L_PFromListCb(IList<string> list, double force_n = double.NaN);
+  static public L_PFromListCb L_Pluralize;
+
+  public delegate bool L_PListCheckCb(IList<string> list, string plural_mark);
+  static public L_PListCheckCb L_IsPlural;
 
   public delegate void LogWarnCb(string text);
   static public LogWarnCb LogWarn = DefaultWarn;
@@ -193,6 +268,137 @@ public static class MetaHelper
     
     err = reader.EndArray();
     return mstruct;
+  }
+}
+
+//NOTE: it implements IList interface partially! 
+public class AutoArray<T> : IList<T>
+{
+  //for speed you can access directly the guts
+  public T[] Data;
+  public int Length;
+
+  public int Capacity 
+  {
+    get {
+      return Data == null ? 0 : Data.Length;
+    }
+
+    set {
+      Grow(value);
+    }
+  }
+
+  public int Count { get { return Length; }  }
+  public bool IsFixedSize { get { return false; } }
+  public bool IsReadOnly { get { return false; } }
+
+  public AutoArray(int capacity = 0)
+  {
+    if(capacity <= 0)
+      capacity = 1;
+
+    Length = 0;
+    Capacity = capacity;
+  }
+
+  public AutoArray(IList<T> list)
+  {
+    Capacity = list.Count;
+    AddRange(list);
+  }
+
+  public void AddRange(IList<T> list)
+  {
+    for(int i=0; i<list.Count; ++i)
+      Add(list[i]);
+  }
+
+  public void Clear()
+  {
+    Array.Clear(Data, 0, Length);
+    Length = 0;
+  }
+
+  public T this[int i]
+  {
+    get {
+      return Data[i];
+    }
+    set {
+      Data[i] = value;
+    }
+  }
+
+  public void Add(T val)
+  {
+    if((Length+1) > Data.Length)
+      Grow(Data.Length*2);
+    Data[Length] = val;
+    Length++;
+  }
+
+  public void RemoveAt(int index)
+  {
+    Array.Copy(Data, index+1, Data, index, Length-index-1);
+    //nullifying last element
+    Data[Length-1] = default(T);
+    Length--;
+  }
+
+  public void Grow(int capacity)
+  {
+    if(capacity < Length)
+      return;
+
+    var tmp = new T[capacity];
+    for(int i=0;i<Length;++i)
+      tmp[i] = Data[i];
+    Data = tmp;
+  }
+
+  public int IndexOf(T o)
+  {
+    for(int i=0;i<Length;++i)
+    {
+      if(Data[i].Equals(o))
+        return i;
+    }
+    return -1;
+  }
+
+  public bool Contains(T o)
+  {
+    return IndexOf(o) >= 0;
+  }
+
+  public bool Remove(T o)
+  {
+    int idx = IndexOf(o);
+    if(idx < 0)
+      return false;
+    RemoveAt(idx);
+    return true;
+  }
+
+  ///////////////// not implemented IList interface methods
+  public void Remove(object v)
+  {}
+
+  public void CopyTo(T[] arr, int len)
+  {}
+
+  public void Insert(int pos, T o)
+  {}
+
+  public IEnumerator<T> GetEnumerator()
+  {
+    return null;
+  }
+
+  IEnumerator IEnumerable.GetEnumerator()
+  {
+    return null;
   }
 }
 
@@ -302,6 +508,18 @@ public class MsgPackDataWriter : IDataWriter
     return decSpace();
   }
 
+  public MetaIoError WriteI64(long v) 
+  {
+    io.Write(v);
+    return decSpace();
+  }
+
+  public MetaIoError WriteBool(bool v) 
+  {
+    io.Write(v ? 1 : 0);
+    return decSpace();
+  }
+
   public MetaIoError WriteFloat(float v) 
   {
     io.Write(v);
@@ -375,9 +593,19 @@ public class MsgPackDataReader : IDataReader
       err = MetaIoError.FAIL_READ;
       return 0;
     }
-
+    
     MoveNext();
-    return io.IsSigned() ? io.ValueSigned : (int)io.ValueUnsigned;
+    
+    if(io.IsSigned())
+      return io.ValueSigned;
+    else if(io.IsUnsigned())
+      return (int)io.ValueUnsigned;
+    else
+    {
+      MetaHelper.LogWarn("Got type: " + io.Type);
+      err = MetaIoError.TYPE_DONT_MATCH; 
+      return 0;
+    }
   }
    
   uint nextUint(ref MetaIoError err) 
@@ -393,9 +621,19 @@ public class MsgPackDataReader : IDataReader
       err = MetaIoError.FAIL_READ;
       return 0;
     }
-
+    
     MoveNext();
-    return io.IsUnsigned() ? io.ValueUnsigned : (uint)io.ValueSigned;
+    
+    if(io.IsUnsigned())
+      return io.ValueUnsigned;
+    else if(io.IsSigned())
+      return (uint)io.ValueSigned;
+    else
+    {
+      MetaHelper.LogWarn("Got type: " + io.Type);
+      err = MetaIoError.TYPE_DONT_MATCH; 
+      return 0;
+    }
   }
 
   ulong nextUint64(ref MetaIoError err) 
@@ -411,7 +649,7 @@ public class MsgPackDataReader : IDataReader
       err = MetaIoError.FAIL_READ;
       return 0;
     }
-
+    
     MoveNext();
 
     if(io.IsUnsigned())
@@ -422,6 +660,38 @@ public class MsgPackDataReader : IDataReader
       return io.ValueUnsigned64;
     else if(io.IsSigned64())
       return (ulong)io.ValueSigned64;
+    else
+    {
+      MetaHelper.LogWarn("Got type: " + io.Type);
+      err = MetaIoError.TYPE_DONT_MATCH; 
+      return 0;
+    }
+  }
+
+  long nextInt64(ref MetaIoError err) 
+  {
+    if(!ArrayPositionValid())
+    {
+      err = MetaIoError.DATA_MISSING;
+      return 0;
+    }
+
+    if(!io.Read()) 
+    {
+      err = MetaIoError.FAIL_READ;
+      return 0;
+    }
+    
+    MoveNext();
+
+    if(io.IsUnsigned())
+      return (long)io.ValueUnsigned;
+    else if(io.IsSigned())
+      return io.ValueSigned;
+    else if(io.IsUnsigned64())
+      return (long)io.ValueUnsigned64;
+    else if(io.IsSigned64())
+      return io.ValueSigned64;
     else
     {
       MetaHelper.LogWarn("Got type: " + io.Type);
@@ -476,6 +746,21 @@ public class MsgPackDataReader : IDataReader
   {
     MetaIoError err = 0;
     v = nextUint64(ref err);
+    return err;
+  }
+
+  public MetaIoError ReadI64(ref long v) 
+  {
+    MetaIoError err = 0;
+    v = nextInt64(ref err);
+    return err;
+  }
+
+  public MetaIoError ReadBool(ref bool v) 
+  {
+    MetaIoError err = 0;
+    uint tmp = nextUint(ref err);
+    v = tmp == 1 ? true : false;
     return err;
   }
 

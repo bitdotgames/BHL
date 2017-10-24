@@ -23,22 +23,37 @@ class mtgPHPGenerator extends mtgGenerator
     mtg_mkdir(mtg_conf('out-dir'));
 
     $units = array();
+    $rpcs = array();
     foreach($meta->getUnits() as $unit)
     {
-      $out_file = $unit->object->getName() . '.class.php'; 
+      if($unit->object instanceof mtgMetaRPC)
+      {
+        $rpcs[] = $unit->object;
+        
+        $out_file = $unit->object->getName() . '.class.php'; 
+        $file = mtg_conf("out-dir") . "/" . $out_file; 
+        $targets[] = mtg_new_file($file,
+            array_merge($SHARED_DEPS, mtg_get_file_deps($meta, $unit)),
+            array('gen_php_struct', $codegen, $unit)
+        );
+      }
+      else if($unit->object instanceof mtgMetaEnum || $unit->object instanceof mtgMetaStruct)
+      {
+        $out_file = $unit->object->getName() . '.class.php'; 
 
-      $units[] = $unit;
-      $file = mtg_conf("out-dir") . "/" . $out_file; 
-      $files[] = $file; 
-      $targets[] = mtg_new_file($file,
-          array_merge($SHARED_DEPS, mtg_get_file_deps($meta, $unit)),
-          array('gen_php_struct', $codegen, $unit)
-          );
+        $units[] = $unit;
+        $file = mtg_conf("out-dir") . "/" . $out_file; 
+        $files[] = $file; 
+        $targets[] = mtg_new_file($file,
+            array_merge($SHARED_DEPS, mtg_get_file_deps($meta, $unit)),
+            array('gen_php_struct', $codegen, $unit)
+            );
+      }
     }
 
     $bundle = mtg_conf("bundle", null);
     if($bundle && $targets)
-      $targets[] = mtg_new_bundle($bundle, $files, array('gen_php_bundle', $units, $meta->getRPCs(), mtg_conf("inc-dir"))); 
+      $targets[] = mtg_new_bundle($bundle, $files, array('gen_php_bundle', $units, $rpcs, mtg_conf("inc-dir"))); 
 
     return $targets;
   }
@@ -46,20 +61,7 @@ class mtgPHPGenerator extends mtgGenerator
 
 function gen_php_struct($OUT, array $DEPS, mtgCodegen $codegen, mtgMetaInfoUnit $unit)
 {
-  try
-  {
-    $unit_obj = $unit->object;
-    if($unit_obj instanceof mtgMetaPacket)
-      return $codegen->genRPC($unit_obj);
-    if($unit_obj instanceof mtgMetaEnum)
-      return $codegen->genEnum($unit_obj);
-    else
-      return $codegen->genStruct($unit_obj);
-  }
-  catch(Exception $e)
-  {
-    throw new Exception("Error while generating struct '" . $unit_obj->getName() . "': " . $e->getMessage());
-  }
+  return $codegen->genUnit($unit);
 }
 
 function gen_php_bundle($OUT, array $DEPS, array $units, array $rpcs, $inc_dir)
@@ -79,7 +81,6 @@ function gen_php_bundle($OUT, array $DEPS, array $units, array $rpcs, $inc_dir)
     $base_name = basename($file);
     $bundle .= "$inc_dir . '/$base_name', '" . current(explode('.', $base_name)) . "', \n";
   }
-  $bundle .= "));\n";
 
   $map = array();
   foreach($units as $unit)
@@ -96,10 +97,18 @@ function gen_php_bundle($OUT, array $DEPS, array $units, array $rpcs, $inc_dir)
   foreach($rpcs as $rpc)
   {
     $code = $rpc->getCode();
-    $name = $rpc->in->getName();
+    $name = $rpc->getReq()->getName();
 
     $packet_map .= "case " . 1*$code . ": return new $name(\$data);\n";
+
+    $basenames = array(   
+      array(basename($rpc->getName().".class.php"), $rpc->getReq()->getName()),
+      array(basename($rpc->getName().".class.php"), $rpc->getRsp()->getName()),
+    );
+    foreach($basenames as $basename)
+      $bundle .= "$inc_dir . '/{$basename[0]}', '" . current(explode('.', $basename[1])) . "', \n";
   }
+  $bundle .= "));\n";
 
   $templater = new mtg_php_templater();
   $tpl = $templater->tpl_packet_bundle();

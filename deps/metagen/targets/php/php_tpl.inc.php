@@ -57,6 +57,8 @@ class %class% %parent_class%
   {
     return self::CLASS_ID;
   }
+  
+  %ext_methods%
 
   function import(&\$message, \$assoc = false, \$root = true)
   {
@@ -96,8 +98,7 @@ class %class% %parent_class%
   function fill(&\$message, \$assoc = false, \$virtual = false)
   {
     if(\$virtual)
-      //mgt_php_array_set_value(\$message, \$assoc, 'vclass__', get_class(\$this));
-      mgt_php_array_set_value(\$message, \$assoc, 'vclass__', \$this->getClassId());
+      mtg_php_array_set_value(\$message, \$assoc, 'vclass__', \$this->getClassId());
 
     try
     {

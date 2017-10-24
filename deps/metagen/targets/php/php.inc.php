@@ -7,9 +7,25 @@ class mtgPHPCodegen extends mtgCodegen
 {
   protected $filter_aliases = array();
 
-  function __construct(array $filter_aliases)
+  function __construct(array $filter_aliases = array())
   {
     $this->filter_aliases = $filter_aliases;
+  }
+
+  function genUnit(mtgMetaInfoUnit $unit)
+  {
+    $obj = $unit->object;
+    if($obj instanceof mtgMetaRPC)
+      return $this->genRPC($obj);
+    if($obj instanceof mtgMetaEnum)
+      return $this->genEnum($obj);
+    else if($obj instanceof mtgMetaStruct)
+      return $this->genStruct($obj);
+    else
+    {
+      echo "WARN: skipping meta unit '{$obj->getId()}'\n";
+      return '';
+    }
   }
 
   function genEnum(mtgMetaEnum $struct)
@@ -60,7 +76,14 @@ class mtgPHPCodegen extends mtgCodegen
     $repl['%default_enum_value%'] = $default_value;
   }
 
-  function genRPC(mtgMetaPacket $packet)
+  function genRPC(mtgMetaRpc $rpc)
+  {
+    $req = $this->genRPCPacket($rpc->getReq()); 
+    $rsp = $this->genRPCPacket($rpc->getRsp());
+    return $req . str_replace('<?php', '', $rsp);
+  }
+
+  function genRPCPacket(mtgMetaPacket $packet)
   {
     $templater = new mtg_php_templater();
 
@@ -113,10 +136,25 @@ class mtgPHPCodegen extends mtgCodegen
     $repl['%fill_fields%'] = '';
     $repl['%fill_buffer%'] = '';
     $repl['%total_top_fields%'] = sizeof($struct->getFields());
+    $repl["%ext_methods%"] = "";
 
     $repl['%class_props%'] = str_replace("\n", "", var_export($struct->getTokens(), true));
 
-    foreach(mtg_extract_deps($struct) as $dep)
+    $deps = array();
+    if($parent)
+      $deps[] = $parent.'';
+    foreach($struct->getFields() as $field)
+    {
+      $type = $field->getType();
+      if($type instanceof mtgArrType)
+        $type = $type->getValue();
+
+      if($type instanceof mtgUserType)
+        $deps[] = $type->getName();
+    }
+    $deps = array_unique($deps);
+
+    foreach($deps as $dep)
       $repl['%includes%'] .= "require_once(dirname(__FILE__) . '/$dep.class.php');\n";
 
     if($parent)
@@ -126,16 +164,20 @@ class mtgPHPCodegen extends mtgCodegen
       $repl['%fill_buffer%'] .= "parent::fill(\$message, \$assoc, false);\n";
     }
 
+    $indent = "        ";
+    $local_indent = "  ";
+    $fill_func_indent = "      ";
+
     foreach($struct->getFields() as $field)
     {
       $repl['%fields_names%'] .= "'" . $field->getName() . "',";
       $repl['%fields_props%'] .= "'" . $field->getName() . "' => " . str_replace("\n", "", var_export($field->getTokens(), true)) . ",";
       $field_type = $field->getType(); 
-      $repl['%fields_types%'] .= "'" . $field->getName() . "' => array('" . $field->getSuperType() . "', '" . (is_array($field_type) ?  ($field_type[0] . "', '" . $field_type[1]) : $field_type) . "'),";
+      $repl['%fields_types%'] .= "'" . $field->getName() . "' => '" . $field_type . "',";
 
       $repl['%fields_init%'] .= $this->genFieldInit($field, '$this->') . "\n";
-      $repl['%fill_fields%'] .= $this->genFieldFill($field, '$message', '$this->') . "++\$IDX;\n";
-      $repl['%fill_buffer%'] .= $this->genBufFill($field, '$message', '$this->') . "\n";
+      $repl['%fill_fields%'] .= $local_indent.$this->genFieldFill($field, '$message', true/*check_exist_data*/, '$this->', $indent) . $indent."++\$IDX;\n";
+      $repl['%fill_buffer%'] .= $this->genBufFill($field, '$message', '$this->', $fill_func_indent) . "\n";
       $repl['%fields%'] .= $this->genFieldDecl($field) . "\n";
     }
 
@@ -146,14 +188,14 @@ class mtgPHPCodegen extends mtgCodegen
     $this->undoTemp();
   }
 
-  function genFieldInit(mtgMetaField $field, $prefix="")
+  function genFieldInit(mtgMetaField $field, $prefix = "")
   {
     $tokens = $field->getTokens();
+    $type = $field->getType();
 
-    if($field->getSuperType() == "struct")
-      return $prefix . $field->getName() . " = new " . $field->getType() . "();";
-    
-    if($field->getSuperType() == "enum")
+    if($type instanceof mtgMetaStruct)
+      return $prefix . $field->getName() . " = new " . $type . "();";
+    else if($type instanceof mtgMetaEnum)
     {
       if(array_key_exists('default', $tokens))
         $default = $this->genDefault($tokens['default']);
@@ -161,13 +203,13 @@ class mtgPHPCodegen extends mtgCodegen
         $default = 'DEFAULT_VALUE';
 
       $default = str_replace('"', '', $default);
-      return $prefix . $field->getName() . " = " . $field->getType() . "::$default;";
+      return $prefix . $field->getName() . " = " . $type . "::$default;";
     }
-    else if($field->getSuperType() == "array")
+    else if($type instanceof mtgArrType)
       return $prefix . $field->getName() . " = array();";
-    else
+    else if($type instanceof mtgBuiltinType)
     {
-      if($field->getType() == "string")
+      if($type->isString())
         $init_value = "''";
       else
         $init_value = "0";
@@ -177,21 +219,25 @@ class mtgPHPCodegen extends mtgCodegen
 
       return $prefix . $field->getName() . " = $init_value;";
     }
+    else
+      throw new Exception("Unknown type '{$type}'");
   }
 
-  function genFieldFill(mtgMetaField $field, $buf, $prefix)
+  function genFieldFill(mtgMetaField $field, $buf, $check_exist_data, $prefix, $indent = "")
   {
-    return $this->genFieldFillEx($field->getName(), $field->getSuperType(), $field->getType(), $buf, $prefix, $field->getTokens());
+    return $this->genFieldFillEx($field->getName(), $field->getType(), $buf, $check_exist_data, $prefix, $field->getTokens(), false, "", $indent);
   }
 
-  function genFieldFillEx($name, $super_type, $type, $buf, $prefix = '', $tokens = array(), $as_is = false, $postfix = '')
+  function genFieldFillEx($name, mtgType $type, $buf, $check_exist_data, $prefix = '', $tokens = array(), $as_is = false, $postfix = '', $indent = "")
   {
     $str = '';
     $tmp_val = '$tmp_val__';
     $pname = $prefix.$name;
 
+    $cond_indent = $indent."  ";
+
     $default_value_arg = array_key_exists('default', $tokens) ? $this->genDefault($tokens['default']) : 'null';
-    if($super_type == "struct")
+    if($type instanceof mtgMetaStruct)
     {
       $default = array_key_exists('default', $tokens) ? $tokens['default'] : null;
       if($default)
@@ -207,61 +253,62 @@ class mtgPHPCodegen extends mtgCodegen
     }
 
     $str .= "\n";
+    if($check_exist_data)
+    {
+      $str .= $indent."if(!\$message)\n";
+      $str .= $cond_indent."return \$IDX;\n";
+    }
 
     if($as_is)
       $tmp_val = $buf;
     else
-      $str .= "{$tmp_val} = mgt_php_array_extract_val({$buf}, \$assoc, '{$name}', {$default_value_arg});\n";
+      $str .= $indent."{$tmp_val} = mtg_php_array_extract_val({$buf}, \$assoc, '{$name}', {$default_value_arg});\n";
 
-    $str .= "if({$tmp_val} != 0xDEADCDE)\n{\n";
+    $str .= $indent."if({$tmp_val} != 0xDEADCDE)\n".$indent."{\n";
 
-    if($super_type == "scalar")
+    if($type instanceof mtgBuiltinType)
     {
-      $str .= "{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
-      $str .= "{$pname} = mgt_php_val_num({$tmp_val});\n";
+      $str .= $cond_indent."{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
+      $str .= $cond_indent."{$pname} = mtg_php_val_{$type}({$tmp_val});\n";
     }
-    else if($super_type == "string")
-    {
-      $str .= "{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
-      $str .= "{$pname} = mgt_php_val_str({$tmp_val});\n";
-    }
-    else if($super_type == "struct")
+    else if($type instanceof mtgMetaStruct)
     {
       if(array_key_exists('virtual', $tokens))
       {
-        $str .= "{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
-        $str .= "\$tmp_sub_arr__ = mgt_php_val_arr({$tmp_val});\n";
-        $str .= "\$vclass__ = AutogenBundle::getClassName(mgt_php_val_num(mgt_php_array_extract_val(\$tmp_sub_arr__, \$assoc, 'vclass__')));\n";
-        $str .= "{$pname} = new \$vclass__(\$tmp_sub_arr__, \$assoc);\n";
-        $str .= "ASSERT_IS({$pname}, '{$type}');\n";
+        $str .= $cond_indent."{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
+        $str .= $cond_indent."\$tmp_sub_arr__ = mtg_php_val_arr({$tmp_val});\n";
+        $str .= $cond_indent."\$vclass__ = AutogenBundle::getClassName(mtg_php_val_uint32(mtg_php_array_extract_val(\$tmp_sub_arr__, \$assoc, 'vclass__')));\n";
+        $str .= $cond_indent."{$pname} = new \$vclass__(\$tmp_sub_arr__, \$assoc);\n";
+        $str .= $cond_indent."ASSERT_IS({$pname}, '{$type}');\n";
       }
       else
       {
-        $str .= "{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
-        $str .= "\$tmp_sub_arr__ = mgt_php_val_arr({$tmp_val});\n";
-        $str .= "{$pname} = new {$type}(\$tmp_sub_arr__, \$assoc);\n";
+        $str .= $cond_indent."{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
+        $str .= $cond_indent."\$tmp_sub_arr__ = mtg_php_val_arr({$tmp_val});\n";
+        $str .= $cond_indent."{$pname} = new {$type}(\$tmp_sub_arr__, \$assoc);\n";
       }
     }
-    else if($super_type == "array")
+    else if($type instanceof mtgArrType)
     {
       //TODO: maybe filters should be applied to the whole array as well?
-      $str .= "\$tmp_arr__ = mgt_php_val_arr({$tmp_val});\n";
-      $str .= "foreach(\$tmp_arr__ as \$tmp_arr_item__)\n";
-      $str .= "{\n";
+      $str .= $cond_indent."\$tmp_arr__ = mtg_php_val_arr({$tmp_val});\n";
+      $str .= $cond_indent."foreach(\$tmp_arr__ as \$tmp_arr_item__)\n";
+      $str .= $cond_indent."{\n";
       unset($tokens['default']);
-      $str .= $this->genFieldFillEx('$tmp__', $type[0], $type[1], "\$tmp_arr_item__", '', $tokens, true, "{$pname}[] = \$tmp__;\n") . "\n";
-      $str .= "}\n";
+      $str .= $this->genFieldFillEx('$tmp__', $type->getValue(), "\$tmp_arr_item__", false, '', $tokens, true, "{$pname}[] = \$tmp__;", $cond_indent."  ") . "\n";
+      $str .= $cond_indent."}\n";
     }
-    else if($super_type == "enum")
+    else if($type instanceof mtgMetaEnum)
     {
-      $str .= "{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
-      $str .= "{$pname} = mgt_php_val_enum('$type', {$tmp_val});\n";
+      $str .= $cond_indent."{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
+      $str .= $cond_indent."{$pname} = mtg_php_val_enum('$type', {$tmp_val});\n";
     }
     else
-      throw new Exception("Unknown type {$super_type}");
+      throw new Exception("Unknown type '{$type}'");
 
-    $str .= $postfix;
-    $str .= "}\n";
+    if($postfix)
+      $str .= $cond_indent.$postfix."\n";
+    $str .= $indent."}\n";
 
     return $str;
   }
@@ -297,57 +344,61 @@ class mtgPHPCodegen extends mtgCodegen
     return $str;
   }
 
-  function genBufFill(mtgMetaField $field, $buf, $prefix)
+  function genBufFill(mtgMetaField $field, $buf, $prefix, $indent = "")
   {
-    return $this->genBufFillEx($field->getName(), $field->getSuperType(), $field->getType(), $buf, $prefix, $field->getTokens());
+    return $this->genBufFillEx($field->getName(), $field->getType(), $buf, $prefix, $field->getTokens(), $indent);
   }
 
-  function genBufFillEx($name, $super_type, $type, $buf, $prefix = '', $tokens = array())
+  function genBufFillEx($name, mtgType $type, $buf, $prefix = '', $tokens = array(), $indent = "")
   {
     $str = '';
     $pname = $prefix.$name;
 
-    if($super_type == "scalar")
+    if($type instanceof mtgBuiltinType)
     {
-      $str .= "mgt_php_array_set_value({$buf}, \$assoc, '$name', 1*{$pname});";
+      if($type->isNumeric())
+        $str .= $indent."mtg_php_array_set_value({$buf}, \$assoc, '$name', 1*{$pname});";
+      else if($type->isString())
+        $str .= $indent."mtg_php_array_set_value({$buf}, \$assoc, '$name', ''.{$pname});";
+      else if($type->isBool())
+        $str .= $indent."mtg_php_array_set_value({$buf}, \$assoc, '$name', (bool){$pname});";
+      else
+        throw new Exception("Unknown type '$type'");
     }
-    else if($super_type == "string")
-    {
-      $str .= "mgt_php_array_set_value({$buf}, \$assoc, '$name', ''.{$pname});";
-    }
-    else if($super_type == "struct")
+    else if($type instanceof mtgMetaStruct)
     {
       if(array_key_exists('virtual', $tokens))
-        $str .= "mgt_php_array_set_value({$buf}, \$assoc, '$name', is_array({$pname}) ? {$pname} : {$pname}->export(\$assoc, true/*virtual*/));";
+        $str .= $indent."mtg_php_array_set_value({$buf}, \$assoc, '$name', is_array({$pname}) ? {$pname} : {$pname}->export(\$assoc, true/*virtual*/));";
       else
-        $str .= "mgt_php_array_set_value({$buf}, \$assoc, '$name', is_array({$pname}) ? {$pname} : {$pname}->export(\$assoc));";
+        $str .= $indent."mtg_php_array_set_value({$buf}, \$assoc, '$name', is_array({$pname}) ? {$pname} : {$pname}->export(\$assoc));";
     }
-    else if($super_type == "array")
+    else if($type instanceof mtgMetaEnum)
     {
-      $str .= "\$arr_tmp__ = array();\n";
+      $str .= $indent."mtg_php_array_set_value({$buf}, \$assoc, '$name', 1*{$pname});";
+    }
+    else if($type instanceof mtgArrType)
+    {
+      $str .= $indent."\$arr_tmp__ = array();\n";
       //NOTE: adding optimization, checking if the first item is array
-      $str .= "if(!\$assoc && {$pname} && is_array(current({$pname})))\n";
-      $str .= "{\n";
-      //$str .= "  mgt_php_debug('BULK:' . get_class(\$this));\n";
-      $str .= "  \$arr_tmp__ = {$pname};\n";
-      $str .= "}\n";
-      $str .= "else\n";
-      $str .= "  foreach({$pname} as \$idx__ => \$arr_tmp_item__)\n";
-      $str .= "  {\n";
-      $str .= "  " . $this->genBufFillEx('$arr_tmp_item__', $type[0], $type[1], "\$arr_tmp__", "", $tokens) . "\n";
-      $str .= "    if(\$assoc) {\n";
-      $str .= "      \$arr_tmp__[] =  \$arr_tmp__['\$arr_tmp_item__'];\n";
-      $str .= "      unset(\$arr_tmp__['\$arr_tmp_item__']);\n";
-      $str .= "    }\n";
-      $str .= "  }\n";
-      $str .= "mgt_php_array_set_value({$buf}, \$assoc, '$name', \$arr_tmp__);\n";
-    }
-    else if($super_type == "enum")
-    {
-      $str .= "mgt_php_array_set_value({$buf}, \$assoc, '$name', 1*{$pname});";
+      $str .= $indent."if(!\$assoc && {$pname} && is_array(current({$pname})))\n";
+      $str .= $indent."{\n";
+      //$str .= "  mtg_php_debug('BULK:' . get_class(\$this));\n";
+      $str .= $indent."  \$arr_tmp__ = {$pname};\n";
+      $str .= $indent."}\n";
+      $str .= $indent."else\n";
+      $str .= $indent."  foreach({$pname} as \$idx__ => \$arr_tmp_item__)\n";
+      $str .= $indent."  {\n";
+      $str .= $this->genBufFillEx('$arr_tmp_item__', $type->getValue(), "\$arr_tmp__", "", $tokens, $indent."    ") . "\n";
+      $str .= $indent."    if(\$assoc)\n";
+      $str .= $indent."    {\n";
+      $str .= $indent."      \$arr_tmp__[] =  \$arr_tmp__['\$arr_tmp_item__'];\n";
+      $str .= $indent."      unset(\$arr_tmp__['\$arr_tmp_item__']);\n";
+      $str .= $indent."    }\n";
+      $str .= $indent."  }\n";
+      $str .= $indent."mtg_php_array_set_value({$buf}, \$assoc, '$name', \$arr_tmp__);\n";
     }
     else
-      throw new Exception("Unknown type {$super_type}");
+      throw new Exception("Unknown type '{$type}'");
 
     return $str;
   }
@@ -368,62 +419,23 @@ class mtgPHPCodegen extends mtgCodegen
 
   function genFieldDecl(mtgMetaField $field)
   {
-    $type_comment = "/** @var " . $this->genNativeType($field) ." */\n";
-    if($field->getSuperType() == "string")
+    $type = $field->getType();
+
+    $type_comment = "/** @var " . $type ." */\n";
+    if($type instanceof mtgBuiltinType && $type->isString())
       return $type_comment."public \$" . $field->getName() . " = '';";
-    else if($field->getSuperType() == "struct")
+    else if($type instanceof mtgMetaStruct)
       return $type_comment."public \$" . $field->getName() . " = null;";
-    else if($field->getSuperType() == "array")
+    else if($type instanceof mtgArrType)
       return $type_comment."public \$" . $field->getName() . " = array();";
     else
       return $type_comment."public \$" . $field->getName() . ";";
-  }
-
-  function genNativeType(mtgMetaField $field)
-  {
-    return $this->genNativeTypeEx($field->getSuperType(), $field->getType());
-  }
-
-  function genNativeTypeEx($super_type, $type)
-  {
-    switch($super_type)
-    {
-      case "scalar":
-        return $this->genType($type);
-      case "string":
-        return "string";
-      case "array":
-        return $this->genType($type[1]) . "[]";
-      case "enum":
-        return $type;
-      case "struct":
-        return $type;
-      default:
-        throw new Exception("Unknown super type '{$super_type}'");
-    }
-  }
-
-  function genType($type)
-  {
-    if(in_array($type, mtgMetaInfo::$SCALAR_TYPES))
-    {
-      if($type == "float")
-        return "float";
-      else if($type == "double")
-        return "double";
-      else
-        return "int";
-    }
-    if($type == mtgMetaInfo::$STRING_TYPE)
-      return "string";
-    //struct?
-    return $type;
   }
 }
 
 ////////////////////////////////////////////////////////////////////////
 
-function mgt_php_array_extract_val(&$arr, $assoc, $name, $default = null)
+function mtg_php_array_extract_val(&$arr, $assoc, $name, $default = null)
 {
   if(!is_array($arr))
     throw new Exception("$name: Not an array");
@@ -453,7 +465,7 @@ function mgt_php_array_extract_val(&$arr, $assoc, $name, $default = null)
   return $val;
 }
 
-function mgt_php_array_set_value(&$arr, $assoc, $name, $value)
+function mtg_php_array_set_value(&$arr, $assoc, $name, $value)
 {
   if($assoc)
     $arr[$name] = $value;
@@ -461,11 +473,8 @@ function mgt_php_array_set_value(&$arr, $assoc, $name, $value)
     $arr[] = $value;
 }
 
-function mgt_php_val_str($val)
+function mtg_php_val_string($val)
 {
-  //special case for arrays (potentionally eval values)
-  if(is_array($val))
-    return $val;
   //special case for empty strings
   if(is_bool($val) && $val === false)
     return '';
@@ -474,24 +483,116 @@ function mgt_php_val_str($val)
   return $val;
 }
 
-function mgt_php_val_num($val)
+function mtg_php_val_bool($val)
 {
-  //special case for arrays (potentially eval values)
-  if(is_array($val))
-    return $val;
+  if(!is_bool($val))
+    throw new Exception("Bad item, not a bool(" . serialize($val) . ")");
+  return $val;
+}
+
+function mtg_php_val_float($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  return $val;
+}
+
+function mtg_php_val_double($val)
+{
   if(!is_numeric($val))
     throw new Exception("Bad item, not a number(" . serialize($val) . ")");
   return 1*$val;
 }
 
-function mgt_php_val_arr($val)
+function mtg_php_val_uint64($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  if(is_float($val))
+    throw new Exception("Value not in range: $val");
+  return $val;
+}
+
+function mtg_php_val_int64($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  if(is_float($val))
+    throw new Exception("Value not in range: $val");
+  return $val;
+}
+
+function mtg_php_val_uint32($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  if(($val < 0 && $val < -2147483648) || ($val > 0 && $val > 0xFFFFFFFF) || is_float($val))
+    throw new Exception("Value not in range: $val");
+  return $val;
+}
+
+function mtg_php_val_int32($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  if($val > 2147483647 || $val < -2147483648 || is_float($val))
+    throw new Exception("Value not in range: $val");
+  return $val;
+}
+
+function mtg_php_val_uint16($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  if($val > 0xFFFF || $val < 0 || is_float($val))
+    throw new Exception("Value not in range: $val");
+  return $val;
+}
+
+function mtg_php_val_int16($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  if($val > 32767 || $val < -32768 || is_float($val))
+    throw new Exception("Value not in range: $val");
+  return $val;
+}
+
+function mtg_php_val_uint8($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  if($val > 0xFF || $val < 0 || is_float($val))
+    throw new Exception("Value not in range: $val");
+  return $val;
+}
+
+function mtg_php_val_int8($val)
+{
+  if(!is_numeric($val))
+    throw new Exception("Bad item, not a number(" . serialize($val) . ")");
+  $val = 1*$val;
+  if($val > 127 || $val < -128 || is_float($val))
+    throw new Exception("Value not in range: $val");
+  return $val;
+}
+
+function mtg_php_val_arr($val)
 {
   if(!is_array($val))
     throw new Exception("Bad item, not an array(" . serialize($val) . ")");
   return $val;
 }
 
-function mgt_php_val_enum($enum, $val)
+function mtg_php_val_enum($enum, $val)
 {
   if(is_string($val))
     return call_user_func_array(array($enum, "getValueByName"), array($val));

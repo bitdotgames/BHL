@@ -16,17 +16,19 @@ public %type_name% %class% %parent%
 
   static public %new_method% uint STATIC_CLASS_ID = %class_id%;
 
-  public %new_method% uint CLASS_ID() 
+  public %virt_method% uint CLASS_ID() 
   {
     return %class_id%; 
   }
-  
-  public %new_method% string CLASS_NAME() 
-  {
-    return "%class%";
-  }
 
-  public %new_method% void reset() 
+  %commented_in_pod_begin%
+  public %class%()
+  {
+    reset();
+  }
+  %commented_in_pod_end%
+
+  public %virt_method% void reset() 
   {
     %fields_reset%
   }
@@ -50,6 +52,7 @@ public %type_name% %class% %parent%
     return copy;
   }
 
+  %commented_in_child_begin%
   public %virt_method% MetaIoError write(IDataWriter writer) 
   {
     MetaIoError err = writer.BeginArray(getFieldsCount());
@@ -62,6 +65,7 @@ public %type_name% %class% %parent%
     
     return writer.EndArray();
   }
+  %commented_in_child_end%
 
   public %virt_method% MetaIoError writeFields(IDataWriter writer) 
   {
@@ -69,7 +73,8 @@ public %type_name% %class% %parent%
     %write_buffer%
     return err;
   }
-
+  
+  %commented_in_child_begin%
   public %virt_method% MetaIoError read(IDataReader reader) 
   {
     MetaIoError err = MetaIoError.SUCCESS;
@@ -88,13 +93,12 @@ public %type_name% %class% %parent%
     
     return err;
   }
+  %commented_in_child_end%
 
   public %virt_method% MetaIoError readFields(IDataReader reader) 
   {
     MetaIoError err = MetaIoError.SUCCESS;
-
     reset();
-
     %read_buffer%
     return err;
   }
@@ -143,11 +147,6 @@ public class %class% : IRpc
   public %req_class% req = new %req_class%();
   public %rsp_class% rsp = new %rsp_class%();
 
-  public string CLASS_NAME() 
-  {
-    return "%class%";
-  }
-
   public int getCode() 
   {
     return %code%;
@@ -171,28 +170,6 @@ public class %class% : IRpc
   public IMetaStruct getResponse()
   {
     return rsp as IMetaStruct;
-  }
-
-  public bool isDone()
-  {
-    return error != null;
-  }
-
-  public bool isSuccess()
-  {
-    return error == null || error.isOk();
-  }
-
-  public bool isFailed()
-  {
-    return isDone() && !isSuccess();
-  }
-  
-  public void reset() 
-  {
-    error = null;
-    req.reset();
-    rsp.reset();
   }
 }
 
@@ -229,6 +206,13 @@ public class AutogenBundle {
 
   static public IMetaStruct createById(int crc) 
   {
+    //NOTE: reflection based creation, not reliable?
+    //var type = id2type(crc);
+    //if(type == null)
+    //  return null;
+    //return (IMetaStruct)System.Activator.CreateInstance(type);
+    
+    //NOTE: faster alternative
     switch(crc)
     {
       %create_struct_by_crc28%

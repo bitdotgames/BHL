@@ -7,6 +7,22 @@ class mtgCSCodegen extends mtgCodegen
 {
   public $namespace = 'game';
 
+  function genUnit(mtgMetaInfoUnit $unit)
+  {
+    $obj = $unit->object;
+    if($obj instanceof mtgMetaEnum)
+      return $this->genEnum($obj);
+    else if($obj instanceof mtgMetaStruct)
+      return $this->genStruct($obj);
+    else if($obj instanceof mtgMetaRPC)
+      return $this->genRPC($obj);
+    else
+    {
+      echo "WARN: skipping meta unit '{$obj->getId()}'\n";
+      return '';
+    }
+  }
+
   function genEnum(mtgMetaEnum $struct)
   {
     $templater = new mtg_cs_templater();
@@ -39,12 +55,15 @@ class mtgCSCodegen extends mtgCodegen
     $repl['%namespace%'] = $this->namespace;
     $repl['%class%'] = $rpc->getName();
     $repl['%code%'] = $rpc->getCode();
-    $repl['%req_class%'] = $rpc->in->getName();
-    $repl['%rsp_class%'] = $rpc->out->getName();
+    $repl['%req_class%'] = $rpc->getReq()->getName();
+    $repl['%rsp_class%'] = $rpc->getRsp()->getName();
     
     $tpl = $templater->tpl_rpc();
 
-    return mtg_fill_template($tpl, $repl);
+    return 
+      mtg_fill_template($tpl, $repl) . 
+      $this->genStruct($rpc->getReq()) .
+      $this->genStruct($rpc->getRsp());
   }
 
   function genStruct(mtgMetaStruct $struct)
@@ -84,6 +103,10 @@ class mtgCSCodegen extends mtgCodegen
   
     $repl['%new_method%'] = '';
     $repl['%virt_method%'] = ' virtual ';
+    $repl['%commented_in_child_begin%'] = '';
+    $repl['%commented_in_child_end%'] = '';
+    $repl['%commented_in_pod_begin%'] = '';
+    $repl['%commented_in_pod_end%'] = '';
 
     $repl['%read_buffer%'] .= "\n";
 
@@ -93,17 +116,22 @@ class mtgCSCodegen extends mtgCodegen
       $repl['%type_name%'] = 'struct';
       $repl['%parent%'] = " : IMetaStruct";
       $repl['%virt_method%'] = '';
+      $repl['%commented_in_pod_begin%'] = '/*';
+      $repl['%commented_in_pod_end%'] = '*/';
     }
     else
     {
       $repl['%type_name%'] = 'class';
-      $repl['%parent%'] = " : " . ($struct->getParent() ? $struct->getParent().",": "") . " IMetaStruct";
+      $repl['%parent%'] = " : " . ($struct->getParent() ? $struct->getParent() : " BaseMetaStruct");
+      $repl['%read_buffer%'] .= "\n    if ((err = base.readFields(reader)) != MetaIoError.SUCCESS) { return err; }";
+      $repl['%write_buffer%'] .= "\n    if ((err = base.writeFields(writer)) != MetaIoError.SUCCESS) { return err; }";
+      $repl['%commented_in_child_begin%'] = '/*';
+      $repl['%commented_in_child_end%'] = '*/';
+      $repl['%virt_method%'] = " override ";
+      
       if($parent = $struct->getParent())
       {
-        $repl['%read_buffer%'] .= "\n    if ((err = base.readFields(reader)) != MetaIoError.SUCCESS) { return err; }";
-        $repl['%write_buffer%'] .= "\n    if ((err = base.writeFields(writer)) != MetaIoError.SUCCESS) { return err; }";
         $repl['%new_method%'] = " new ";
-        $repl['%virt_method%'] = " override ";
         $repl['%fields_reset%'] = "base.reset();\n";
       }
       $fields = $struct->getFields();
@@ -117,7 +145,7 @@ class mtgCSCodegen extends mtgCodegen
     {
       $repl['%fields%'] .= "\n  " . $this->genFieldDecl($struct, $field);
       $repl['%fields_reset%'] .= "\n  " . $this->genFieldReset($field);
-      $repl['%read_buffer%'] .=  $this->genBufRead($field->getName(), $struct->getName().'.'.$field->getName(), $field->getSuperType(), $field->getType(), "reader", $field->getTokens());
+      $repl['%read_buffer%'] .=  $this->genBufRead($field->getName(), $struct->getName().'.'.$field->getName(), $field->getType(), "reader", $field->getTokens());
       $repl['%write_buffer%'] .= "\n      " . $this->genBufWrite($field, "writer");
       $repl['%copy_fields%'] .= "\n    " . $this->genFieldCopy($field);
     }
@@ -127,11 +155,11 @@ class mtgCSCodegen extends mtgCodegen
     $this->undoTemp();
   }  
 
-  function genType($type)
+  function genNativePlainType(mtgType $type)
   {
-    if(in_array($type, mtgMetaInfo::$SCALAR_TYPES))
+    if($type instanceof mtgBuiltinType)
     {
-      switch($type)
+      switch($type->getName())
       {
         case "int8":
           return "sbyte";
@@ -153,18 +181,21 @@ class mtgCSCodegen extends mtgCodegen
           return "double";
         case "uint64":
           return "ulong";
+        case "int64":
+          return "long";
+        case "string":
+          return "string";
+        case "bool":
+          return "bool";
       }
-      throw new Exception("Unknow type ".$type);
+      throw new Exception("Unknown type '{$type}'");
     }
-    if($type == mtgMetaInfo::$STRING_TYPE)
-      return "string";
-    //struct?
-    return $type;
+    return $type->getName();
   }
 
-  function genTypePrefix($type)
+  function genTypePrefix(mtgType $type)
   {
-    switch($type)
+    switch($type->getName())
     {
       case "float":
         return "Float";
@@ -172,6 +203,8 @@ class mtgCSCodegen extends mtgCodegen
         return "Double";
       case "uint64":
         return "U64";
+      case "int64":
+        return "I64";
       case "uint":
       case "uint32":
         return "U32";
@@ -186,48 +219,48 @@ class mtgCSCodegen extends mtgCodegen
         return "I16";
       case "int8":
         return "I8";
+      case "string":
+        return "String";
+      case "bool":
+        return "Bool";
       default:
-        throw new Exception("Unknow type {$type}");
+        throw new Exception("Unknown type '{$type}'");
     }
   }
 
   function genBufWrite(mtgMetaField $field, $buf)
   {
-    return $this->genBufWriteEx($field->getName(), $field->getSuperType(), $field->getType(), $buf, $field->getTokens());
+    return $this->genBufWriteEx($field->getName(), $field->getType(), $buf, $field->getTokens());
   }
 
-  function genBufWriteEx($fname, $super_type, $type, $buf, array $tokens = array())
+  function genBufWriteEx($fname, mtgType $type, $buf, array $tokens = array())
   {
     $str = '';
-    if($super_type == "scalar")
+    if($type instanceof mtgBuiltinType)
     {
       $str .= $this->genWrite("{$buf}.Write".$this->genTypePrefix($type)."($fname)");
     }
-    else if($super_type == "string")
-    {
-      $str .= $this->genWrite("{$buf}.WriteString({$fname})");
-    }
-    else if($super_type == "struct")
+    else if($type instanceof mtgMetaStruct)
     {
       if(array_key_exists('virtual', $tokens))
         $str .= $this->genWrite("MetaHelper.writeGeneric($buf, $fname)");
       else
         $str .= $this->genWrite("$fname.write($buf)");
     }
-    else if($super_type == "enum")
+    else if($type instanceof mtgMetaEnum)
     {
       $str .= $this->genWrite("{$buf}.WriteI32((int) ($fname))");
     }
-    else if($super_type == "array")
+    else if($type instanceof mtgArrType)
     {
       $str .= "\n    ".$this->genWrite("{$buf}.BeginArray({$fname} == null ? 0 : {$fname}.Count)");
       $str .= "\n    for (int i = 0; {$fname} != null && i < {$fname}.Count; i++) {";
-      $str .= "\n      ".$this->genBufWriteEx("{$fname}[i]", $type[0], $type[1], $buf, $tokens)."";
+      $str .= "\n      ".$this->genBufWriteEx("{$fname}[i]", $type->getValue(), $buf, $tokens)."";
       $str .= "\n    }";
       $str .= "\n    ".$this->genWrite("{$buf}.EndArray()")."\n"; 
     }
     else
-      throw new Exception("Unknown meta type '$super_type'");
+      throw new Exception("Unknown type '$type'");
 
     return $str;
   }
@@ -237,36 +270,32 @@ class mtgCSCodegen extends mtgCodegen
     return "if ((err = $op) != MetaIoError.SUCCESS) { return err; }";
   }
 
-  function genBufRead($fname, $fpath, $super_type, $type, $buf, array $tokens = array())
+  function genBufRead($fname, $fpath, mtgType $type, $buf, array $tokens = array())
   {
     $str = '';
     $name = "i".$this->nextId();
     $offset = "\n    ";
 
-    if($super_type == "scalar")
+    if($type instanceof mtgBuiltinType)
     {
       $str .= $this->genRead("{$buf}.Read".$this->genTypePrefix($type)."(ref $fname)", $fpath, $tokens, $offset);
     }
-    else if($super_type == "string")
-    {
-      $str .= $this->genRead("{$buf}.ReadString(ref $fname)", $fpath, $tokens, $offset);
-    }
-    else if($super_type == "struct")
+    else if($type instanceof mtgMetaStruct)
     {
       if(array_key_exists('virtual', $tokens))
         $str .= $offset . "if(({$fname} = ({$type}) MetaHelper.readGeneric(reader, ref err)) == null || err != MetaIoError.SUCCESS) { return err; };";
       else
         $str .= $this->genRead("{$fname}.read($buf)", $fpath, $tokens, $offset, true);
     }
-    else if($super_type == "enum")
+    else if($type instanceof mtgMetaEnum)
     {
       $str .= $offset . "int {$name}v = 0;";
       $str .= $this->genRead("{$buf}.ReadI32(ref {$name}v)", $fpath, $tokens, $offset);
       $str .= $offset . "{$fname} = ($type) {$name}v;";
     }
-    else if($super_type == "array")
+    else if($type instanceof mtgArrType)
     {
-      $native_type = $this->genNativeTypeEx($type[0], $type[1], $tokens);
+      $native_type = $this->genNativeType($type->getValue(), $tokens);
       $offset = "\n    ";
       $str .= "/*"."[]{$fname}"."*/";
       $str .= $this->genRead("{$buf}.BeginArray()", $fpath.".BeginArray", $tokens, $offset);
@@ -279,7 +308,7 @@ class mtgCSCodegen extends mtgCodegen
       $str .= $offset . "for (; {$name}_size > 0; {$name}_size--) {";
       $offset = "\n      ";
       $str .= $offset . "{$native_type} tmp_{$name} = ".$this->genConstructArgs($native_type).";";
-      $str .= $offset . $this->genBufRead("tmp_{$name}", $fpath.".[]", $type[0], $type[1], $buf, $tokens);
+      $str .= $offset . $this->genBufRead("tmp_{$name}", $fpath.".[]", $type->getValue(), $buf, $tokens);
       $str .= $offset . "{$fname}.Add(tmp_{$name});";
       $offset = "\n    ";
       $str .= $offset . "}";
@@ -287,17 +316,17 @@ class mtgCSCodegen extends mtgCodegen
       $str .= "\n";
     }
     else
-      throw new Exception("Unknown type {$super_type}");
+      throw new Exception("Unknown type '{$type}'");
 
     return $str;
   }
 
   function genRead($op, $field, $tokens, $offset, $is_struct = false)
   {
-    $warn_optional = "{ MetaHelper.LogWarn(\"Missing optional field\" + \"'{$field}'\"); return MetaIoError.SUCCESS; }";
+    $warn_optional = "{ \n#if DEBUG\n MetaHelper.LogWarn(\"Missing optional field\" + \"'{$field}'\");\n#endif\n return MetaIoError.SUCCESS; }";
     $optional = array_key_exists('optional', $tokens);
 
-    $fail = "{ MetaHelper.LogError(\"Failed read \" + \"'{$field}', \" + err); return err; }";
+    $fail = "{ \n#if DEBUG\n MetaHelper.LogError(\"Failed read \" + \"'{$field}', \" + err);\n#endif\n return err; }";
     if($optional)
     {
       $offset = str_replace("\n", "", $offset);
@@ -324,7 +353,7 @@ class mtgCSCodegen extends mtgCodegen
 
   function genFieldDecl(mtgMetaStruct $struct, mtgMetaField $field)
   {
-    $str = "public " . $this->genNativeType($field) . " ";
+    $str = "public " . $this->genFieldNativeType($field) . " ";
 
     if(!$this->isPOD($struct))
       $str .= $this->genFieldDeclInit($field);
@@ -338,19 +367,20 @@ class mtgCSCodegen extends mtgCodegen
   {
     $tokens = $field->getTokens();
     $name =  $this->genFieldName($field);
+    $type = $field->getType();
     $str = '';
 
-    if($field->getSuperType() == "array")
+    if($type instanceof mtgArrType)
     {
       $str .= "for(int i=0;other.{$name} != null && i<other.{$name}.Count;++i) { \n";
 
-      list($arr_super, $arr_type) = $field->getType();
-      if($arr_super == 'struct')
+      $vtype = $type->getValue();
+      if($vtype instanceof mtgMetaStruct)
       {
         if(array_key_exists('virtual', $tokens))
-          $str .= "var tmp = ({$arr_type})other.{$name}[i].clone();\n";
+          $str .= "var tmp = ({$vtype->getName()})other.{$name}[i].clone();\n";
         else
-          $str .= "var tmp = new {$arr_type}(); tmp.copyFrom(other.{$name}[i]);\n";
+          $str .= "var tmp = new {$vtype->getName()}(); tmp.copyFrom(other.{$name}[i]);\n";
         $str .= "{$name}.Add(tmp);\n";
       }
       else
@@ -358,10 +388,10 @@ class mtgCSCodegen extends mtgCodegen
 
       $str .= "}\n";
     }
-    else if($field->getSuperType() == "struct")
+    else if($type instanceof mtgMetaStruct)
     {
       if(array_key_exists('virtual', $tokens))
-        $str .= "{$name} = ({$field->getType()})other.{$name}.clone();\n";
+        $str .= "{$name} = ({$type->getName()})other.{$name}.clone();\n";
       else 
         $str .= "{$name}.copyFrom(other.{$name});\n";
     }
@@ -376,22 +406,14 @@ class mtgCSCodegen extends mtgCodegen
     $tokens = $field->getTokens();
     
     $str =  $this->genFieldName($field);
-    if($field->getSuperType() == "scalar")
+    $type = $field->getType();
+    if($type instanceof mtgBuiltinType)
     {
-      if(array_key_exists('default', $tokens) && is_numeric($tokens['default']))
-      {
-        $default = $tokens['default'];
-        if($field->getType() == "float")
-          $default .= "f";
-        $str .= " = $default";
-      }
-      else
-        $str .= " = 0";
+      if($type->isString())
+        $str .= ' = ""';
     }
-    else if($field->getType() == "string")
-      $str .= ' = ""';
     else
-      $str .= " = new ".$this->genNativeType($field)."()";
+      $str .= " = new ".$this->genFieldNativeType($field)."()";
     $str .= ";";
     return $str;
   }
@@ -401,106 +423,117 @@ class mtgCSCodegen extends mtgCodegen
     $tokens = $field->getTokens();
     $default = array_key_exists('default', $tokens) ? $tokens['default'] : null; 
 
-    return $this->genFieldResetEx($this->genFieldName($field), $field->getSuperType(), $field->getType(), $default);
+    return $this->genFieldResetEx($this->genFieldName($field), $field->getType(), $default);
   }
 
-  function genFieldResetEx($name, $super_type, $type, $default = null)
+  function genFieldResetEx($name, mtgType $type, $default = null)
   {
     $str = '';
-    if($super_type == "scalar")
+    if($type instanceof mtgBuiltinType)
     {
-      $str = $name;
-      //NOTE: numeric check is against str2num
-      if($default && is_numeric($default))
+      if($type->isNumeric())
       {
-        if($type == "float")
-          $default .= "f";
-        $str .= " = $default;";
+        $str = $name;
+        //NOTE: numeric check is against str2num
+        if($default && is_numeric($default))
+        {
+          if($type->isFloat())
+            $default .= "f";
+          $str .= " = $default;";
+        }
+        else
+          $str .= " = 0;";
       }
-      else
-        $str .= " = 0;";
+      else if($type->isString())
+      {
+        $str = $name;
+        if($default)
+        {
+          $str .= " = \"".trim($default, '"')."\";";
+        }
+        else
+          $str .= ' = "";';
+      }
+      else if($type->isBool())
+      {
+        $str = $name;
+        if($default)
+        {
+          $str .= " = ".trim($default, '"').";";
+        }
+        else
+          $str .= ' = false;';
+      }
+      else 
+        throw new Exception("Unknown type '$type'");
     }
-    else if($type == "string")
+    else if($type instanceof mtgArrType) 
     {
-      $str = $name;
+      $str = "if($name == null) $name = new ".$this->genNativeType($type)."(); ";
+      $str .= "$name.Clear();";
+
       if($default)
       {
-        $str .= " = \"".trim($default, '"')."\";";
+        $default_arr = is_array($default) ? $default : json_decode($default, true);
+        if(!is_array($default_arr))
+          throw new Exception("Bad default value for array: '$default'");
+
+        if($default_arr)
+        {
+          $type_str = $this->genNativeType($type->getValue());
+          $str .= "{ $type_str tmp__";
+          if($this->isNullableType($type->getValue()))
+            $str .= " = null";
+          $str .= ";";
+          foreach($default_arr as $v)
+          {
+            $str .= $this->genFieldResetEx("tmp__", $type->getValue(), $v);
+            $str .= "$name.Add(tmp__);";
+          }
+          $str .= "}";
+        }
       }
-      else
-        $str .= ' = "";';
     }
-    else 
+    else if($type instanceof mtgMetaEnum)
     {
-      if($super_type == "array")
-      {
-        $str = "if($name == null) $name = new ".$this->genNativeTypeEx($super_type, $type)."(); ";
-        $str .= "$name.Clear();";
-
-        if($default)
-        {
-          $default = is_array($default) ? $default : json_decode($default, true);
-          if(!is_array($default))
-            throw new Exception("Bad default value for array: $default");
-
-          if($default)
-          {
-            $type_str = $this->genNativeTypeEx($type[0], $type[1]);
-            $str .= "{ $type_str tmp__";
-            if($this->isNullableType($type[1]))
-              $str .= " = null";
-            $str .= ";";
-            foreach($default as $v)
-            {
-              $str .= $this->genFieldResetEx("tmp__", $type[0], $type[1], $v);
-              $str .= "$name.Add(tmp__);";
-            }
-            $str .= "}";
-          }
-        }
-      }
-      else if($super_type == "enum")
-      {
-        if($default)
-          $str = "$name = ".$this->genNativeTypeEx($super_type, $type).".".trim($default,'"')."; ";
-        else
-          $str = "$name = new ".$this->genNativeTypeEx($super_type, $type)."(); ";
-      }
+      if($default)
+        $str = "$name = ".$this->genNativeType($type).".".trim($default,'"')."; ";
       else
+        $str = "$name = new ".$this->genNativeType($type)."(); ";
+    }
+    else if($type instanceof mtgMetaStruct)
+    {
+      $str = "";
+      $is_pod = $type->hasToken('POD');
+      if(!$is_pod)
       {
-        $str = "";
-        $struct = $this->info->findUnit($type)->object;
-        $is_pod = $struct->hasToken('POD');
-        if(!$is_pod)
-        {
-          $str .= "if($name == null) ";
-          $str .= "$name = new ".$this->genNativeTypeEx($super_type, $type)."(); ";
-        }
-        $str .= "$name.reset(); ";
+        $str .= "if($name == null) ";
+        $str .= "$name = new ".$this->genNativeType($type)."(); ";
+      }
+      $str .= "$name.reset(); ";
 
-        if($default)
-        {
-          $default = is_array($default) ? $default : json_decode($default, true);
-          if(!is_array($default))
-            throw new Exception("Bad default value for struct: $default");
+      if($default)
+      {
+        $default = is_array($default) ? $default : json_decode($default, true);
+        if(!is_array($default))
+          throw new Exception("Bad default value for struct: $default");
 
-          foreach($default as $k => $v)
-          {
-            $kf = $struct->getField($k); 
-            $str .= $this->genFieldResetEx("$name." . $this->genFieldName($kf), $kf->getSuperType(), $kf->getType(), $v);
-          }
+        foreach($default as $k => $v)
+        {
+          $kf = $type->getField($k); 
+          $str .= $this->genFieldResetEx("$name." . $this->genFieldName($kf), $kf->getType(), $v);
         }
       }
     }
+    else
+      throw new Exception("Bad type '$type'");
     return $str;
   }
 
-  function isNullableType($type)
+  function isNullableType(mtgType $type)
   {
-    $unit = $this->info->findUnit($type, false); 
-    if(!$unit || $unit->object instanceof mtgMetaEnum)
-      return false;
-    return !$unit->object->hasToken('POD');
+    return $type instanceof mtgArrType || 
+           ($type instanceof mtgMetaStruct && !$type->hasToken('POD'));
   }
 
   function genFieldName(mtgMetaField $field)
@@ -508,30 +541,18 @@ class mtgCSCodegen extends mtgCodegen
     return $field->getName();  
   }
 
-  function genNativeType(mtgMetaField $field)
+  function genFieldNativeType(mtgMetaField $field)
   {
-    return $this->genNativeTypeEx($field->getSuperType(), $field->getType(), $field->getTokens());
+    return $this->genNativeType($field->getType(), $field->getTokens());
   }
 
-  function genNativeTypeEx($super_type, $type, array $tokens = array())
+  function genNativeType(mtgType $type, array $tokens = array())
   {
-    switch($super_type)
-    {
-      case "scalar":
-        return $this->genType($type);
-      case "string":
-        return "string";
-      case "array":
-      {
-        return "List<" . $this->genType($type[1]) . ">";
-      }
-      case "enum":
-        return $type;
-      case "struct":
-        return $type;
-      default:
-        throw new Exception("Unknown super type '{$super_type}'");
-    }
+    if($type instanceof mtgBuiltinType || $type instanceof mtgUserType)
+      return $this->genNativePlainType($type);
+    else if($type instanceof mtgArrType)
+      return "List<" . $this->genNativePlainType($type->getValue()) . ">";
+    else
+      throw new Exception("Unknown type '{$type}'");
   }
-
 }

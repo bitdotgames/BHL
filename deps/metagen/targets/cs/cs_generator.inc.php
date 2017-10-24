@@ -28,14 +28,6 @@ class mtgCsGenerator extends mtgGenerator
     {
       $units[] = $unit;
       $files = array_merge($files, mtg_get_file_deps($meta, $unit));
-
-      //$out_file = $unit->object->getName() . '.cs'; 
-      //$file = mtg_conf("out-dir") . "/" . $out_file; 
-      //$files[] = $file; 
-      //$targets[] = mtg_new_file($file,
-      //    array_merge($SHARED_DEPS, mtg_get_file_deps($meta, $unit)),
-      //    array('gen_cs_struct', $codegen, $unit)
-      //    );
     }
     
     $bundle = mtg_conf("bundle", null);
@@ -56,21 +48,24 @@ class mtgCsGenerator extends mtgGenerator
     $create_struct_by_crc28 = '';
     $create_rpc_by_id = '';
 
-    foreach($meta->getRPCs() as $rpc)
-    {
-      $units_src .= $codegen->genRPC($rpc);
-      $create_rpc_by_id .= "\n    case {$rpc->getCode()}: { return new {$rpc->getName()}(); };"; 
-    }
-
     foreach($units as $unit)
     {
-      $units_src .= cs_codegen($codegen, $unit) . "\n";
+      if($unit->object instanceof mtgMetaRPC)
+      {
+        $units_src .= $codegen->genUnit($unit);
+        $rpc = $unit->object;
+        $create_rpc_by_id .= "\n    case {$rpc->getCode()}: { return new {$rpc->getName()}(); };"; 
+      }
+      else if($unit->object instanceof mtgMetaEnum || $unit->object instanceof mtgMetaStruct)
+      {
+        $units_src .= $codegen->genUnit($unit) . "\n";
 
-      if($unit->object->hasToken('POD') || $unit->object instanceof mtgMetaEnum)
-        continue;
+        if($unit->object->hasToken('POD') || $unit->object instanceof mtgMetaEnum)
+          continue;
 
-      $id2type .= "\n    case {$unit->object->getClassId()}: { return typeof({$unit->object->getName()}); };";
-      $create_struct_by_crc28 .= "\n    case {$unit->object->getClassId()}: { return new {$unit->object->getName()}(); };";
+        $id2type .= "\n    case {$unit->object->getClassId()}: { return typeof({$unit->object->getName()}); };";
+        $create_struct_by_crc28 .= "\n    case {$unit->object->getClassId()}: { return new {$unit->object->getName()}(); };";
+      }
     }
 
     $templater = new mtg_cs_templater();
@@ -87,15 +82,5 @@ class mtgCsGenerator extends mtgGenerator
 
 function gen_cs_struct($OUT, array $DEPS, mtgCsCodegen $codegen, mtgMetaInfoUnit $unit)
 {
-  return cs_codegen($codegen, $unit);
+  return $codegen->genUnit($unit);
 }
-
-function cs_codegen(mtgCsCodegen $codegen, mtgMetaInfoUnit $unit)
-{
-  $unit_obj = $unit->object;
-  if($unit_obj instanceof mtgMetaEnum)
-    return $codegen->genEnum($unit_obj);
-  else
-    return $codegen->genStruct($unit_obj);
-}
-

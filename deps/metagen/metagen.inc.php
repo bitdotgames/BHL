@@ -42,7 +42,6 @@ function mtg_parse_argv($params, $noopt = array())
       // param doesn't belong to any option
       $result[] = $p;
   }
-  //var_dump($result);
   return $result;
 }
 
@@ -119,13 +118,67 @@ function mtg_conf_set($key, $val)
   $METAGEN_CONFIG[$key] = $val;
 }
 
+interface mtgType
+{}
+
+class mtgTypeRef implements mtgType
+{
+  private static $all = array();
+
+  private $name;
+  private $file;
+  private $line;
+  private $meta;
+  private $resolved;
+
+  function __construct($name_or_resolved, mtgMetaInfo $meta = null, $file = '', $line= 0)
+  {
+    if(is_object($name_or_resolved))
+    {
+      if(!($name_or_resolved instanceof mtgType))
+        throw new Exception("Bad type");
+      $this->resolved = $name_or_resolved;
+    }
+    else
+      $this->name = $name_or_resolved;
+
+    $this->meta = $meta;
+    $this->file = $file;
+    $this->line = $line;
+
+    self::$all[] = $this;
+  }
+
+  static function checkAllResolved()
+  {
+    foreach(self::$all as $ref)
+      $ref->resolve();
+  }
+
+  function resolve()
+  {
+    if($this->resolved)
+      return $this->resolved;
+
+    $u = $this->meta->findUnit($this->name, false/*non strict*/);
+    if($u)
+    {
+      $this->resolved = $u->object;
+      return $this->resolved;
+    }
+    else
+    {
+      throw new Exception("{$this->file}@{$this->line} : Symbol '{$this->name}' not found");
+    }
+  } 
+}
 
 class mtgMetaInfoUnit
 {
   public $file;
   public $object;
 
-  function __construct($f, mtgMetaStruct $o)
+  function __construct($f, mtgMetaUnit $o)
   {
     $this->file = $f;
     $this->object = $o;
@@ -134,18 +187,16 @@ class mtgMetaInfoUnit
 
 class mtgMetaInfo
 {
-  public static $SCALAR_TYPES = array('int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32', 'float', 'double', 'uint64');
-  public static $STRING_TYPE = 'string';
+  public static $BUILTIN_TYPES = array('int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32', 'float', 'double', 'uint64', 'int64', 'bool', 'string');
 
   private $units = array();
-  private $rpcs = array();
 
   function addUnit(mtgMetaInfoUnit $unit)
   {
-    if(isset($this->units[$unit->object->getName()]))
-      throw new Exception("Meta info unit '{$unit->object->getName()}' already defined in file '{$this->units[$unit->object->getName()]->file}'");
+    if(isset($this->units[$unit->object->getId()]))
+      throw new Exception("Meta info unit '{$unit->object->getId()}' already defined in file '{$this->units[$unit->object->getId()]->file}'");
 
-    $this->units[$unit->object->getName()] = $unit;
+    $this->units[$unit->object->getId()] = $unit;
   }
 
   function getUnits()
@@ -153,108 +204,20 @@ class mtgMetaInfo
     return $this->units;
   }
 
-  function findUnit($name, $strict = true)
+  function findUnit($id, $strict = true)
   {
-    if(isset($this->units[$name]))
-      return $this->units[$name];
+    if(isset($this->units[$id]))
+      return $this->units[$id];
     else if($strict)
-      throw new Exception("Unable find unit '$name'. Check that this type is defined.");
-  }
-
-  function addRPC(mtgMetaRPC $rpc)
-  {
-    if(isset($this->rpcs[$rpc->getCode()]))
-      throw new Exception("Duplicating RPC id {$rpc->getCode()})");
-    $this->rpcs[$rpc->getCode()] = $rpc;
-  }
-
-  function getRPCs()
-  {
-    return $this->rpcs;
+      throw new Exception("Unit '$id' not found");
   }
 }
 
-class mtgMetaStruct
+abstract class mtgMetaUnit
 {
-  private $id;
-  private $name;
-  private $fields = array();
-  private $parent = null;
-  private $tokens = array();
+  abstract function getId();
 
-  function __construct($name, $fields = array(), $parent = null, $tokens = array())
-  {
-    $this->name = $name;
-    $this->setFields($fields);
-    $this->parent = $parent;
-    $this->tokens = $tokens;
-  }
-
-  function getName()
-  {
-    return $this->name;
-  }
-
-  function getClassId()
-  {
-    //NOTE: using crc28 actually, making sure that crc32 is always an unsigned value,
-    return crc32($this->name) & 0xFFFFFFF;
-  }
-
-  function getParent()
-  {
-    return $this->parent;
-  }
-
-  function getFields()
-  {
-    return $this->fields;
-  }
-
-  function setFields(array $fields)
-  {
-    foreach($fields as $field)
-      $this->addField($field);
-  }
-
-  function addField(mtgMetaField $field)
-  {
-    if($this->hasField($field->getName()))
-      throw new Exception("Struct '{$this->name}' already has field '{$field->getName()}'");
-
-    $this->fields[$field->getName()] = $field;
-  }
-
-  function delField(mtgMetaField $field)
-  {
-    if(isset($this->fields[$field->getName()]))
-      unset($this->fields[$field->getName()]);
-  }
-
-  function hasField($name)
-  {
-    return isset($this->fields[$name]);
-  }
-
-  function getField($name)
-  {
-    if(!isset($this->fields[$name]))
-      throw new Exception("No such field '$name'");
-    return $this->fields[$name];
-  }
-
-  function findFieldOwner($name, mtgMetaInfo $meta)
-  {
-    $tmp = $this;
-    while($tmp)
-    {
-      $fields = $tmp->getFields();
-      if(isset($fields[$name]))
-        return $tmp;
-      $tmp = $tmp->getParent() ? $meta->findUnit($tmp->getParent())->object : null;
-    }
-    return null;
-  }
+  protected $tokens = array();
 
   function getTokens()
   {
@@ -282,19 +245,235 @@ class mtgMetaStruct
   }
 }
 
-class mtgMetaRPC
+class mtgUserType extends mtgMetaUnit implements mtgType
 {
-  public $name;
-  public $code;
-  public $in;
-  public $out;
+  protected $name;
 
-  function __construct($name, $code, mtgMetaStruct $in, mtgMetaStruct $out)
+  function __construct($name)
+  {
+    $this->name = $name;
+  }
+
+  function getName()
+  {
+    return $this->name;
+  }
+
+  function setName($name)
+  {
+    $this->name = $name;
+  }
+
+  function getId()
+  {
+    return $this->name;
+  }
+
+  function getClassId()
+  {
+    //NOTE: using crc28 actually, leaving some extra reserved space
+    return crc32($this->name) & 0xFFFFFFF;
+  }
+
+  function __toString()
+  {
+    return $this->name;
+  }
+}
+
+class mtgMetaStruct extends mtgUserType
+{
+  protected $fields = array();
+  protected $funcs = array();
+  protected $parent = null;
+
+  function __construct($name, $fields = array(), mtgTypeRef $parent = null, $tokens = array())
+  {
+    parent::__construct($name);
+
+    $this->setFields($fields);
+    $this->parent = $parent;
+    $this->tokens = $tokens;
+  }
+
+  function getParent()
+  {
+    return $this->parent ? $this->parent->resolve() : null;
+  }
+
+  function getFields()
+  {
+    return $this->fields;
+  }
+
+  function setFields(array $fields)
+  {
+    foreach($fields as $field)
+      $this->addField($field);
+  }
+
+  function addField(mtgMetaField $field)
+  {
+    if($this->hasField($field->getName()))
+      throw new Exception("Struct '{$this->name}' already has field '{$field->getName()}'");
+
+    $this->fields[$field->getName()] = $field;
+  }
+
+  //TODO: doesn't really belong here
+  function delField(mtgMetaField $field)
+  {
+    if(isset($this->fields[$field->getName()]))
+      unset($this->fields[$field->getName()]);
+  }
+
+  function hasField($name)
+  {
+    return isset($this->fields[$name]);
+  }
+
+  function getField($name)
+  {
+    if(!isset($this->fields[$name]))
+      throw new Exception("No such field '$name'");
+    return $this->fields[$name];
+  }
+
+  //TODO: doesn't really belong here
+  function findFieldOwner($name, mtgMetaInfo $meta)
+  {
+    $tmp = $this;
+    while($tmp)
+    {
+      $fields = $tmp->getFields();
+      if(isset($fields[$name]))
+        return $tmp;
+      $tmp = $tmp->getParent();
+    }
+    return null;
+  }
+
+  function getFuncs()
+  {
+    return $this->funcs;
+  }
+
+  function addFunc(mtgMetaFunc $fn)
+  {
+    if($this->hasFunc($fn->getName()))
+      throw new Exception("Struct '{$this->name}' already has func '{$fn->getName()}'");
+
+    $this->funcs[$fn->getName()] = $fn;
+  }
+
+  function hasFunc($name)
+  {
+    return isset($this->funcs[$name]);
+  }
+
+  function getFunc($name)
+  {
+    if(!isset($this->funcs[$name]))
+      throw new Exception("No such funcs '$name'");
+    return $this->funcs[$name];
+  }
+}
+
+class mtgMetaFunc extends mtgMetaUnit implements mtgType
+{
+  private $name;
+  private $args = array();
+  private $ret_type;
+
+  function __construct($name)
+  {
+    $this->name = $name;
+  }
+
+  function __toString()
+  {
+    $str = "func ";
+
+    $str .= $this->name.'(';
+    foreach($this->getArgs() as $arg)
+      $str .= $arg->getType() . ',';
+    $str = rtrim($str, ',');
+    $str .= ')';
+    if($ret_type = $this->getReturnType())
+      $str .= ':'.$ret_type;
+    return $str;
+  }
+
+  function setReturnType(mtgTypeRef $type)
+  {
+    $this->ret_type = $type;
+  }
+
+  function getReturnType()
+  {
+    return $this->ret_type ? $this->ret_type->resolve() : null;
+  }
+
+  function getName()
+  {
+    return $this->name;
+  }
+
+  function getId()
+  {
+    return $this->name;
+  }
+
+  function getArgs()
+  {
+    return $this->args;
+  }
+
+  function setArgs(array $args)
+  {
+    foreach($args as $arg)
+      $this->addArg($arg);
+  }
+
+  function addArg(mtgMetaField $arg)
+  {
+    if($this->hasArg($arg->getName()))
+      throw new Exception("Func '{$this->name}' already has arg '{$arg->getName()}'");
+
+    $this->args[$arg->getName()] = $arg;
+  }
+
+  function hasArg($name)
+  {
+    return isset($this->fields[$name]);
+  }
+
+  function getArg($name)
+  {
+    if(!isset($this->args[$name]))
+      throw new Exception("No such arg '$name'");
+    return $this->args[$name];
+  }
+}
+
+class mtgMetaRPC extends mtgMetaUnit
+{
+  private $name;
+  private $code;
+  private $in;
+  private $out;
+
+  function __construct($name, $code, mtgMetaPacket $in, mtgMetaPacket $out)
   {
     $this->name = $name;
     $this->code = $code;
     $this->in = $in;
     $this->out = $out;
+  }
+
+  function getId()
+  {
+    return $this->code;
   }
 
   function getName()
@@ -311,20 +490,180 @@ class mtgMetaRPC
   {
     return (int)$this->code;
   }
+
+  function getReq()
+  {
+    return $this->in;
+  }
+
+  function getRsp()
+  {
+    return $this->out;
+  }
+}
+
+class mtgBuiltinType implements mtgType
+{
+  private $name;
+
+  function __construct($name)
+  {
+    if(!in_array($name, mtgMetaInfo::$BUILTIN_TYPES))
+      throw new Exception("Not a built-in type '$name'");
+
+    $this->name = $name;
+  }
+
+  function getName()
+  {
+    return $this->name;
+  }
+
+  function __toString()
+  {
+    return $this->name;
+  }
+
+  function isNumeric()
+  {
+    return !$this->isString() && !$this->isBool();
+  }
+
+  function isString()
+  {
+    return $this->name === 'string';
+  }
+
+  function isInt()
+  {
+    return strpos($this->name, 'int') === 0;
+  }
+
+  function isUint()
+  {
+    return strpos($this->name, 'uint') === 0;
+  }
+
+  function isUint8()
+  {
+    return $this->name === 'uint8';
+  }
+
+  function isUint16()
+  {
+    return $this->name === 'uint16';
+  }
+
+  function isUint32()
+  {
+    return $this->name === 'uint32';
+  }
+
+  function isUint64()
+  {
+    return $this->name === 'uint64';
+  }
+
+  function isInt64()
+  {
+    return $this->name === 'int64';
+  }
+
+  function isInt8()
+  {
+    return $this->name === 'int8';
+  }
+
+  function isInt16()
+  {
+    return $this->name === 'int16';
+  }
+
+  function isInt32()
+  {
+    return $this->name === 'int32';
+  }
+
+  function isFloat()
+  {
+    return $this->name === 'float';
+  }
+
+  function isDouble()
+  {
+    return $this->name === 'double';
+  }
+
+  function isBool()
+  {
+    return $this->name === 'bool';
+  }
+}
+
+class mtgMultiType implements mtgType
+{
+  private $values = array();
+
+  function __construct(array $values = array())
+  {
+    foreach($values as $v)
+      $this->addValue($v);
+  }
+
+  function addValue(mtgTypeRef $val)
+  {
+    $this->values[] = $val;
+  }
+
+  function getValues()
+  {
+    $vals = array();
+    foreach($this->values as $val)
+    {
+      $vals[] = $val->resolve();
+    }
+
+    return $vals;
+  }
+
+  function __toString()
+  {
+    $str = '';
+    foreach($this->getValues() as $val)
+      $str .= $val;
+    return $str;
+  }
+}
+
+class mtgArrType implements mtgType
+{
+  private $value;
+
+  function __construct(mtgTypeRef $value)
+  {
+    $this->value = $value;
+  }
+
+  function __toString()
+  {
+    return $this->getValue() . '[]';
+  }
+
+  function getValue()
+  {
+    return $this->value->resolve();
+  }
 }
 
 class mtgMetaField
 {
   private $name;
-  //can be: scalar, string, struct, enum, array
-  private $super_type;
   private $type;
   private $tokens = array();
 
-  function __construct($name, $super_type, $type)
+  function __construct($name, mtgTypeRef $type)
   {
     $this->name = $name;
-    $this->super_type = $super_type;
     $this->type = $type;
   }
 
@@ -338,14 +677,9 @@ class mtgMetaField
     return $this->name;
   }
 
-  function getSuperType()
-  {
-    return $this->super_type;
-  }
-
   function getType()
   {
-    return $this->type;
+    return $this->type->resolve();
   }
 
   function getTokens()
@@ -367,92 +701,10 @@ class mtgMetaField
   {
     return array_key_exists($name, $this->tokens);
   }
-}
 
-class mtgMetaArrayField extends mtgMetaField
-{
-  private $size;
-
-  //empty size means autosize
-  function __construct($name, array $type, $size = '')
+  function getToken($name)
   {
-    if(!is_array($type) || sizeof($type) < 2)
-      throw new Exception("Invalid array type '$type'");
-
-    $this->size = $size;
-    parent::__construct($name, 'array', $type);
-  }
-
-  //for BC
-  function getArrayType()
-  {
-    return $this->getType();
-  }
-
-  function getSize()
-  {
-    return $this->size;
-  }
-
-  function isAutoSize()
-  {
-    return $this->size === '';
-  }
-}
-
-class mtgMetaStructField extends mtgMetaField
-{
-  function __construct($name, $type)
-  {
-    parent::__construct($name, 'struct', $type);
-  }
-
-  //for BC
-  function getStruct()
-  {
-    return $this->getType();
-  }
-}
-
-class mtgMetaEnumField extends mtgMetaField
-{
-  function __construct($name, $enum_type)
-  {
-    parent::__construct($name, 'enum', $enum_type);
-  }
-
-  //for BC
-  function getStruct()
-  {
-    return $this->getType();
-  }
-
-  function getEnum()
-  {
-    return $this->getType();
-  }
-} 
-
-
-class mtgMetaScalarField extends mtgMetaField
-{
-  function __construct($name, $scalar_type)
-  {
-    parent::__construct($name, 'scalar', $scalar_type);
-  }
-
-  //for BC
-  function getScalarType()
-  {
-    return $this->getType();
-  }
-}
-
-class mtgMetaStringField extends mtgMetaField
-{
-  function __construct($name)
-  {
-    parent::__construct($name, 'string', 'string');
+    return $this->hasToken($name) ? $this->tokens[$name] : null; 
   }
 }
 
@@ -482,6 +734,7 @@ class mtgMetaInfoParser
   const T_Struct          = 1009;
   const T_Prop            = 1010;
   const T_Extends         = 1011;
+  const T_Func            = 1012;
   const T_string          = 1020;
   const T_uint32          = 1021;
   const T_int32           = 1022;
@@ -491,6 +744,8 @@ class mtgMetaInfoParser
   const T_int8            = 1026;
   const T_float           = 1027;
   const T_uint64          = 1028;
+  const T_int64           = 1029;
+  const T_bool            = 1030;
 
   function __construct($config = array())
   {
@@ -509,6 +764,8 @@ class mtgMetaInfoParser
       "float" => self::T_float,
       "double" => self::T_float,
       "uint64" => self::T_uint64,
+      "int64" => self::T_int64,
+      "bool" => self::T_bool,
     );
     $this->token_strs = array_flip($this->idltypes);
     $this->token_strs[self::T_EOF] = '<EOF>';
@@ -522,6 +779,7 @@ class mtgMetaInfoParser
     $this->token_strs[self::T_Struct] = '<struct>';
     $this->token_strs[self::T_Prop] = '<@prop>';
     $this->token_strs[self::T_Extends] = '<extends>';
+    $this->token_strs[self::T_Func] = '<func>';
   }
 
   function parse(mtgMetaInfo $meta, $raw_file)
@@ -533,6 +791,8 @@ class mtgMetaInfoParser
       throw new Exception("No such file '$raw_file'");
 
     $this->_parse($file);
+
+    mtgTypeRef::checkAllResolved();
   }
 
   private function _parse($file)
@@ -586,6 +846,8 @@ class mtgMetaInfoParser
           $this->_parseEnum();
         else if($this->token == self::T_Struct)
           $this->_parseStruct();
+        else if($this->token == self::T_Func)
+          $this->_parseFreeFunc();
         else if($this->token == self::T_RPC)
           $this->_parseRPC();
         else
@@ -594,8 +856,90 @@ class mtgMetaInfoParser
     }
     catch(Exception $e)
     {
-      throw new Exception("$file line {$this->line} : " .  $e->getMessage() . " " . $e->getTraceAsString());
+      throw new Exception("$file@{$this->line} : " .  $e->getMessage() . " " . $e->getTraceAsString());
     }
+  }
+
+  private function _parseType($can_be_multi = false)
+  {
+    $types = array();
+
+    while(true)
+    {
+      $type = null;
+      $type_name = $this->attribute;
+      if($this->token == self::T_Identifier)
+      {
+        $type = new mtgTypeRef($type_name, $this->current_meta, $this->file, $this->line);
+        $this->_next();
+      }
+      else if($this->token == self::T_Func)
+      {
+        $func_type = $this->_parseFuncType();
+        $type = new mtgTypeRef($func_type);
+      }
+      else
+      {
+        $type = new mtgTypeRef(new mtgBuiltinType($type_name));
+        $this->_next();
+      }
+
+      if($this->token == ord('['))
+      {
+        $this->_next();
+        $this->_checkThenNext(']');
+        $type = new mtgTypeRef(new mtgArrType($type));
+      }
+      $types[] = $type;
+
+      if(!$can_be_multi)
+        break;
+
+      if($this->token != ord(','))
+        break;
+      $this->_next();
+    }
+
+    if(sizeof($types) > 1)
+      return new mtgTypeRef(new mtgMultiType($types));
+    else
+      return $types[0];
+  }
+
+  private function _parseFuncType()
+  {
+    $ftype = new mtgMetaFunc('');
+
+    $this->_next();
+
+    $this->_checkThenNext('(');
+
+    $c = 0;
+    while(true)
+    {
+      if($this->token == ord(')'))
+      {
+        $this->_next();
+        break;
+      }
+      else if($c > 0)
+      {
+        $this->_checkThenNext(',');
+      }
+
+      $arg_type = $this->_parseType();
+      $c++;
+      $arg = new mtgMetaField("_$c", $arg_type);
+      $ftype->addArg($arg);
+    }
+
+    if($this->token == ord(':'))
+    {
+      $this->_next();
+      $ret_type = $this->_parseType(true/*can be multi-type*/);
+      $ftype->setReturnType($ret_type);
+    }
+    return $ftype;
   }
 
   static function resolveIncludes(&$text, array $include_paths, $callback)
@@ -660,6 +1004,13 @@ class mtgMetaInfoParser
 
     $enum = new mtgMetaEnum($name);
     $this->current_meta->addUnit(new mtgMetaInfoUnit($this->file, $enum));
+
+    if($this->token == self::T_Prop)
+    {
+      $props = $this->_parseTokens();
+      $enum->setTokens($props);
+    }
+
     $or_values = array();
     while(true)
     {
@@ -680,16 +1031,13 @@ class mtgMetaInfoParser
     $enum->addOrValues($or_values);
   }
 
-  private function _parseFields($end_token)
+  private function _parseFields($next_doer)
   {
-    if(is_string($end_token))
-      $end_token = ord($end_token);
-
     $flds = array();
 
     while(true)
     {
-      if($this->_nextIf($end_token))
+      if($next_doer())
         break;
 
       if($this->token == self::T_Identifier)
@@ -699,35 +1047,16 @@ class mtgMetaInfoParser
         $this->_checkThenNext(':');
 
         if($this->token == self::T_Identifier || 
-          ($this->token >= self::T_string && $this->token <= self::T_uint64))
+          $this->token == self::T_Func ||
+          ($this->token >= self::T_string && $this->token <= self::T_bool))
         {
-          $type = $this->attribute;
+          $type = $this->_parseType();
 
-          $fld = null;
-          if($this->token == self::T_Identifier)
-          {
-            if($this->current_meta->findUnit($type)->object instanceof mtgMetaEnum)
-              $fld = new mtgMetaEnumField($name, $type);
-            else
-              $fld = new mtgMetaStructField($name, $type);
-          }
-          else if($this->token == self::T_string)
-            $fld = new mtgMetaStringField($name);
-          else
-            $fld = new mtgMetaScalarField($name, $type);
-
-          $this->_next();
-
-          if($this->token == ord('['))
-          {
-            $this->_next();
-            $this->_checkThenNext(']');
-            $fld = new mtgMetaArrayField($name, array($fld->getSuperType(), $type));
-          }
+          $fld = new mtgMetaField($name, $type);
 
           if($this->token == self::T_Prop)
           {
-            $props = $this->_parseProps($end_token);
+            $props = $this->_parseTokens();
             $fld->setTokens($props);
           }
 
@@ -737,12 +1066,78 @@ class mtgMetaInfoParser
           $this->_error("type expected");
       }
       else
-      {
         $this->_error("unexpected fields token");
-      }
     }
 
     return $flds;
+  }
+
+  private function _parseFuncs()
+  {
+    $end_token = self::T_End;
+
+    $funcs = array();
+
+    while(true)
+    {
+      $fn = $this->_parseFunc();
+      $funcs[] = $fn;
+
+      if($this->token == $end_token)
+      {
+        $this->_next();
+        break;
+      }
+      
+      $this->_next();
+    }
+
+    return $funcs;
+  }
+
+  private function _parseFunc()
+  {
+    if($this->token != self::T_Identifier)
+      $this->_error("unexpected func token");
+    
+    $name = $this->attribute;
+    $fn = new mtgMetaFunc($name);
+
+    $this->_next();
+    $this->_checkThenNext('(');
+    if($this->token == self::T_Prop)
+    {
+      $props = $this->_parseTokens();
+      $fn->setTokens($props);
+    }
+    $args = $this->_parseFields(function() 
+      { return $this->_nextIf(')'); } 
+    );
+    $fn->setArgs($args);
+
+    $ret_type = null;
+    if($this->token == ord(':'))
+    {
+      $this->_next();
+      if($this->token == self::T_Identifier ||
+         $this->token == self::T_Func ||
+        ($this->token >= self::T_string && $this->token <= self::T_bool))
+      {
+        $ret_type = $this->_parseType(true/*can be multi-type*/);
+        $fn->setReturnType($ret_type);
+      }
+      else
+        $this->_error("unexpected func type token");
+    }
+
+    return $fn;
+  }
+
+  private function _parseFreeFunc()
+  {
+    $this->_next();
+    $fn = $this->_parseFunc();
+    $this->current_meta->addUnit(new mtgMetaInfoUnit($this->file, $fn));
   }
 
   private function _parseStruct()
@@ -754,7 +1149,8 @@ class mtgMetaInfoParser
     if($this->token == self::T_Extends)
     {
       $this->_next();
-      $parent = $this->_checkThenNext(self::T_Identifier);
+      $parent_name = $this->_checkThenNext(self::T_Identifier);
+      $parent = new mtgTypeRef($parent_name, $this->current_meta, $this->file, $this->line);
     }
 
     $s = new mtgMetaStruct($name, array(), $parent);
@@ -762,13 +1158,32 @@ class mtgMetaInfoParser
 
     if($this->token == self::T_Prop)
     {
-      $props = $this->_parseProps(self::T_End);
+      $props = $this->_parseTokens();
       $s->setTokens($props);
     }
 
-    $flds = $this->_parseFields(self::T_End);
+    $seen_funcs = false;
+    $flds = $this->_parseFields(
+      function() use(&$seen_funcs) 
+      { 
+        if($this->_nextIf(self::T_End))
+          return true;
+        if($this->_nextIf(self::T_Func)) 
+        {
+          $seen_funcs = true;
+          return true;
+        }
+      }
+    );
     foreach($flds as $fld)
       $s->addField($fld);
+
+    if($seen_funcs)
+    {
+      $funcs = $this->_parseFuncs();
+      foreach($funcs as $fn)
+        $s->addFunc($fn);
+    }
   }
 
   private function _parseRPC()
@@ -777,8 +1192,12 @@ class mtgMetaInfoParser
     $code = $this->_checkThenNext(self::T_IntegerConstant);
     $name = $this->_checkThenNext(self::T_Identifier);
     $this->_checkThenNext('(');
-    $req_fields = $this->_parseFields(')');
-    $rsp_fields = $this->_parseFields(self::T_End);
+    $req_fields = $this->_parseFields(function() 
+      { return $this->_nextIf(')'); } 
+    );
+    $rsp_fields = $this->_parseFields(function() 
+      { return $this->_nextIf(self::T_End); } 
+    );
 
     $req = new mtgMetaPacket($code, "RPC_REQ_$name");
     $req->setFields($req_fields);
@@ -786,13 +1205,13 @@ class mtgMetaInfoParser
     $rsp->setFields($rsp_fields);
 
     $rpc = new mtgMetaRPC("RPC_$name", $code, $req, $rsp);
-    $this->current_meta->addRPC($rpc);
-    $this->current_meta->addUnit(new mtgMetaInfoUnit($this->file, $rpc->in));
-    $this->current_meta->addUnit(new mtgMetaInfoUnit($this->file, $rpc->out));
+    $this->current_meta->addUnit(new mtgMetaInfoUnit($this->file, $rpc));
   }
 
-  private function _parseProps($end_token)
+  private function _parseTokens()
   {
+    $new_line = ord("\n");
+
     $props = array();
 
     while(true)
@@ -808,9 +1227,15 @@ class mtgMetaInfoParser
       {
         while(true)
         {
-          $this->_next();
-          if(($value !== null && $this->token == self::T_Identifier) || $this->token == $end_token || $this->token == self::T_Prop)
+          $this->_next(false/*don't skip new line*/);
+          if($this->token == $new_line || 
+             $this->token == self::T_Prop)
+          {
+            //let's skip it
+            if($this->token == $new_line)
+              $this->_next();
             break;
+          }
 
           $tmp = $this->attribute; 
           if($this->token == self::T_StringConstant)
@@ -839,10 +1264,16 @@ class mtgMetaInfoParser
     return substr($this->source, $this->cursor, 1);
   }
 
-  private function _next()
+  private function _next($skip_newlines = true)
   {
-    $seen_newline = false;
+    $this->__next($skip_newlines);
+    //for debug
+    //var_dump("NEXT " . $this->token . " " . $this->attribute);
+    //debug_print_backtrace(0, 1);
+  }
 
+  private function __next($skip_newlines = true)
+  {
     while(true)
     {
       $c = $this->_symbol();
@@ -858,7 +1289,7 @@ class mtgMetaInfoParser
       {
         case -1: $this->cursor--; $this->token = self::T_EOF; return;
         case ' ': case "\r": case "\t": break;
-        case "\n": $this->line++; $seen_newline= true; break;
+        case "\n": $this->line++; if($skip_newlines) break; else return;
         case '{': case '}': case '(': case ')': case '[': case ']': case '|': return;
         case ',': case ':': case ';': case '=': return;
         case '.':
@@ -933,17 +1364,17 @@ class mtgMetaInfoParser
 
             if($this->attribute == "true" || $this->attribute == "false") 
             {
-              $this->attribute = ($this->attribute == "true") ? "1" : "0";
               $this->token = self::T_IntegerConstant;
               return;
             }
 
             //check for declaration keywords:
-            if($this->attribute == "struct")  { $this->token = self::T_Struct; return; }
-            if($this->attribute == "enum")    { $this->token = self::T_Enum;   return; }
-            if($this->attribute == "RPC")     { $this->token = self::T_RPC;    return; }
-            if($this->attribute == "end")     { $this->token = self::T_End;    return; }
-            if($this->attribute == "extends") { $this->token = self::T_Extends;    return; }
+            if($this->attribute == "struct")  { $this->token = self::T_Struct;    return; }
+            if($this->attribute == "enum")    { $this->token = self::T_Enum;      return; }
+            if($this->attribute == "RPC")     { $this->token = self::T_RPC;       return; }
+            if($this->attribute == "end")     { $this->token = self::T_End;       return; }
+            if($this->attribute == "extends") { $this->token = self::T_Extends;   return; }
+            if($this->attribute == "func")    { $this->token = self::T_Func;      return; }
 
             //if not it's a user defined identifier
             $this->token = self::T_Identifier;
@@ -1011,36 +1442,8 @@ class mtgMetaInfoParser
 
   private function _error($msg)
   {
-    throw new Exception($msg);
+    throw new Exception($msg . "(token: {$this->token}, attr: {$this->attribute}})");
   }
-}
-
-function mtg_is_complex($type)
-{
-  return (!in_array($type, mtgMetaInfo::$SCALAR_TYPES) && $type != mtgMetaInfo::$STRING_TYPE);
-}
-
-function mtg_extract_deps(mtgMetaStruct $struct)
-{
-  $deps = array();
-  $parent = $struct->getParent();
-  if($parent)
-    $deps[] = $parent;
-  foreach($struct->getFields() as $field)
-  {
-    if($field->getSuperType() == "struct")
-      $deps[] = $field->getType();
-    else if($field->getSuperType() == "enum")
-      $deps[] = $field->getType();
-    else if($field->getSuperType() == "array")
-    {
-      $type = $field->getType();
-      $sub = end($type);
-      if(mtg_is_complex($sub))
-        $deps[] = $sub;
-    }
-  }
-  return array_unique($deps);
 }
 
 function mtg_get_file_deps(mtgMetaInfo $info, mtgMetaInfoUnit $unit)
@@ -1052,22 +1455,17 @@ function mtg_get_file_deps(mtgMetaInfo $info, mtgMetaInfoUnit $unit)
   {
     foreach($unit->object->getFields() as $field)
     {
-      if($field->getSuperType() == "struct")
-        $deps[] = $info->findUnit($field->getType())->file;
-      else if($field->getSuperType() == "enum")
-        $deps[] = $info->findUnit($field->getType())->file;
-      else if($field->getSuperType() == "array")
-      {
-        $type = $field->getType();
-        $sub = end($type);
-        if(mtg_is_complex($sub))
-          $deps[] = $info->findUnit($sub)->file;
-      }
+      $type = $field->getType();
+      if($type instanceof mtgArrType)
+        $type = $type->getValue();
+
+      if($type instanceof mtgUserType)
+        $deps[] = $info->findUnit($type->getName())->file;
     }
 
     $parent = $unit->object->getParent();
     if($parent)
-      $deps = array_merge($deps, mtg_get_file_deps($info, $info->findUnit($parent)));
+      $deps = array_merge($deps, mtg_get_file_deps($info, $info->findUnit($parent->getName())));
   }
   return $deps;
 }
@@ -1078,13 +1476,20 @@ function mtg_get_all_fields(mtgMetaInfo $info, mtgMetaStruct $struct)
   $parent = $struct->getParent();
   if($parent)
     //NOTE: order is important, parent fields must come first
-    $fields = array_merge(mtg_get_all_fields($info, $info->findUnit($parent)->object), $fields);
+    $fields = array_merge(mtg_get_all_fields($info, $parent), $fields);
   return $fields;
 }
 
-function mtg_load_dir_meta(mtgMetaInfo $meta, mtgMetaInfoParser $meta_parser, $dir)
+function mtg_load_meta(mtgMetaInfo $meta, mtgMetaInfoParser $meta_parser, $dir_or_file)
 {
-  $files = mtg_find_meta_files($dir);
+  $files = array();
+  if(is_dir($dir_or_file))
+    $files = mtg_find_meta_files($dir_or_file);
+  else if(is_file($dir_or_file))
+    $files[] = $dir_or_file;
+  else
+    throw new Exception("Bad meta source '$dir_or_file'");
+
   foreach($files as $file)
     $meta_parser->parse($meta, $file);
 }
@@ -1350,28 +1755,6 @@ class mtgGenBundleTarget extends mtgGenTarget
   }
 }
 
-class msgMetaEnumValue
-{
-  private $name;
-  private $value;
-
-  function __construct($name, $value)
-  {
-    $this->name = $name;
-    $this->value = $value;
-  }
-
-  function getName()
-  {
-    return $this->name;
-  }
-
-  function getValue()
-  {
-    return $this->value;
-  } 
-} 
-
 class mtgMetaPacket extends mtgMetaStruct
 {
   private $code;
@@ -1380,7 +1763,7 @@ class mtgMetaPacket extends mtgMetaStruct
   {
     $this->code = $code;
 
-    parent :: __construct($name, array(), null, $tokens);
+    parent::__construct($name, array(), null, $tokens);
   }
 
   function getPrefix()
@@ -1405,26 +1788,9 @@ class mtgMetaPacket extends mtgMetaStruct
   }
 }
 
-class mtgMetaEnum extends mtgMetaStruct
+class mtgMetaEnum extends mtgUserType
 {
-  private $name;
   private $values = array();
-
-  function __construct($name)
-  {
-    $this->name = $name;
-  }
-
-  function getName()
-  {
-    return $this->name;
-  }
-
-  function getClassId()
-  {
-    //NOTE: using crc28 actually, making sure that crc32 is always an unsigned value,
-    return crc32($this->name) & 0xFFFFFFF;
-  }  
 
   function addValue($value_name, $value)
   {
@@ -1467,10 +1833,12 @@ abstract class mtgGenerator
   abstract function makeTargets(mtgMetaInfo $info);
 }
 
-class mtgCodegen
+abstract class mtgCodegen
 {
   protected $info;
   private $tmp_cmds = array();
+
+  abstract function genUnit(mtgMetaInfoUnit $unit);
 
   function setMetaInfo(mtgMetaInfo $info)
   {
@@ -1540,12 +1908,21 @@ function mtg_need_to_regen($file, array $deps)
   return false;
 }
 
-function mtg_parse_meta(array $meta_dirs)
+function mtg_parse_meta(array $meta_srcs)
 {
+  $meta_dirs = array();
+  foreach($meta_srcs as $src)
+  {
+    if(is_dir($src))
+      $meta_dirs[] = $src;
+    else if(is_file($src))
+      $meta_dirs[] = dirname($src);
+  }
+
   $meta_parser = new mtgMetaInfoParser(array('include_path' => $meta_dirs));
   $meta = new mtgMetaInfo();
-  foreach($meta_dirs as $dir)
-    mtg_load_dir_meta($meta, $meta_parser, $dir);
+  foreach($meta_srcs as $src)
+    mtg_load_meta($meta, $meta_parser, $src);
   return $meta;
 }
 
