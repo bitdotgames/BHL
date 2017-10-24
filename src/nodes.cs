@@ -460,10 +460,10 @@ public class FuncCallNode : SequentialNode
       {
         interp.call_stack.DecFast();
       }
-      //NOTE: force cleaning of the args.value stack in case of FAILURE
+      //NOTE: force cleaning of the args.value stack in case of FAILURE while
+      //      we are still processing arguments
       else if(status == BHS.FAILURE)
       {
-        //taking into account hidden class instance argument if required
         interp.PopValues(interp.stack.Count - stack_size_before);
       }
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1443,7 +1443,8 @@ public class CallFuncPtr : SequentialNode
       {
         interp.call_stack.DecFast();
       }
-      //NOTE: force cleaning of the args.value stack in case of FAILURE
+      //NOTE: force cleaning of the args.value stack in case of FAILURE while
+      //      we are still processing arguments
       else if(status == BHS.FAILURE)
       {
         interp.PopValues(interp.stack.Count - stack_size_before);
