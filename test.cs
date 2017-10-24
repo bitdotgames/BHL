@@ -3465,11 +3465,7 @@ public class BHL_Test
         delegate(ref DynVal ctx, DynVal v)
         {
           var f = (DynValContainer)ctx.obj;
-          if(f.dv != null)
-            f.dv.RefDec();
-          if(v != null)
-            v.RefInc();
-          f.dv = v;
+          f.dv = DynVal.Assign(f.dv, v);
           ctx.obj = f;
         }
       ));
