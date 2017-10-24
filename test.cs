@@ -7938,6 +7938,46 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDeferNested()
+  {
+    string bhl = @"
+
+    func bar()
+    {
+      defer {
+        trace(""~BAR1"")
+        defer {
+          trace(""~BAR2"")
+        }
+      }
+      trace(""BAR"")
+    }
+
+    func test() 
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    {
+      var status = node.run();
+      AssertEqual(BHS.SUCCESS, status);
+    }
+
+    var str = GetString(trace_stream);
+    AssertEqual("BAR~BAR1~BAR2", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestDeferAndReturn()
   {
     string bhl = @"
