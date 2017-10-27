@@ -15115,14 +15115,14 @@ func Unit FindUnit(Vec3 pos, float radius) {
     FuncCtx.PoolClear();
 
     globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
-    //creating local global scope and copying bound symbols from the global scope
-    var iglobs = new GlobalScope();
+    //creating local copy before interpreting anything
+    var local_globs = new GlobalScope();
     var ms = globs.GetMembers();
     for(int i=0;i<ms.Count;++i)
-      iglobs.define(ms[i]);
+      local_globs.define(ms[i]);
 
     var intp = Interpreter.instance;
-    intp.Init(iglobs, mloader);
+    intp.Init(local_globs, mloader);
 
     mreg = mreg == null ? new ModuleRegistry() : mreg;
 

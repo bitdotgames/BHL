@@ -1582,6 +1582,10 @@ public class Frontend : bhlBaseVisitor<object>
     var str_name = ctx.NAME().GetText();
     var enum_name = new HashedName(str_name);
 
+    //NOTE: currently all enum values are replaced with literals,
+    //      so that it doesn't really make sense to create AST for them.
+    //      But we do it just for consistency. Later once we have runtime 
+    //      type info this will be justified.
     var ast = AST_Util.New_EnumDecl(enum_name);
 
     var symb = new EnumSymbolAST(enum_name);
@@ -1596,11 +1600,12 @@ public class Frontend : bhlBaseVisitor<object>
       var em_name = em.NAME().GetText();
       int em_val = int.Parse(em.INT().GetText(), System.Globalization.CultureInfo.InvariantCulture);
 
-      var item = new AST_EnumItem();
-      item.value = em_val;
-      ast.AddChild(item);
-
       symb.AddItem(em_name, em_val);
+
+      var ast_item = new AST_EnumItem();
+      ast_item.nname = (uint)enum_name.n;
+      ast_item.value = em_val;
+      ast.AddChild(ast_item);
     }
 
     curr_scope = locals;

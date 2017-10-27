@@ -70,7 +70,6 @@ end
 
 struct AST_EnumItem extends AST_Base
   nname     : uint32
-  name      : string @default:"" #for debug
   value     : int32
 end
 
