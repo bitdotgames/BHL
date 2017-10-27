@@ -575,6 +575,24 @@ static public class AST_Util
   }
 
   ////////////////////////////////////////////////////////
+
+  static public AST_EnumDecl New_EnumDecl(HashedName name)
+  {
+    var n = new AST_EnumDecl();
+
+    n.nname = (uint)name.n;
+    if(Util.DEBUG)
+      n.name = name.s;
+
+    return n;
+  }
+
+  static public HashedName Name(this AST_EnumDecl n)
+  {
+    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname, n.name);
+  }
+
+  ////////////////////////////////////////////////////////
   
   static public AST_UnaryOpExp New_UnaryOpExp(EnumUnaryOp type)
   {
@@ -952,6 +970,14 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_ClassDecl node)
   {
     Console.Write("(CLASS ");
+    Console.Write(node.name + " " + node.nname);
+    VisitChildren(node);
+    Console.Write(")");
+  }
+
+  public override void DoVisit(AST_EnumDecl node)
+  {
+    Console.Write("(ENUM ");
     Console.Write(node.name + " " + node.nname);
     VisitChildren(node);
     Console.Write(")");

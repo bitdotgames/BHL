@@ -1008,6 +1008,20 @@ public class EnumSymbol : ScopedSymbol, Scope, Type
   }
 }
 
+public class EnumSymbolAST : EnumSymbol
+{
+  public EnumSymbolAST(HashedName name)
+    : base(null, name, null)
+  {
+  }
+
+  public void AddItem(string name, int val)
+  {
+    var item = new EnumItemSymbol(null, this, name, val);
+    members.Add(item);
+  }
+}
+
 public class EnumItemSymbol : Symbol, Type 
 {
   public EnumSymbol en;

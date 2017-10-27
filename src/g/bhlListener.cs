@@ -805,6 +805,36 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitClassMember([NotNull] bhlParser.ClassMemberContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.enumDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterEnumDecl([NotNull] bhlParser.EnumDeclContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.enumDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitEnumDecl([NotNull] bhlParser.EnumDeclContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.enumBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterEnumBlock([NotNull] bhlParser.EnumBlockContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.enumBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitEnumBlock([NotNull] bhlParser.EnumBlockContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.enumMember"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterEnumMember([NotNull] bhlParser.EnumMemberContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.enumMember"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitEnumMember([NotNull] bhlParser.EnumMemberContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -68,6 +68,17 @@ struct AST_ClassDecl extends AST
   parent    : string @default:"" #for debug
 end
 
+struct AST_EnumItem extends AST_Base
+  nname     : uint32
+  name      : string @default:"" #for debug
+  value     : int32
+end
+
+struct AST_EnumDecl extends AST
+  nname     : uint32
+  name      : string @default:"" #for debug
+end
+
 struct AST_UseParam
   nname     : uint32
   name      : string @default:"" #for debug

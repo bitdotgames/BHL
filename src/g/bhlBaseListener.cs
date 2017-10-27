@@ -947,6 +947,42 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitClassMember([NotNull] bhlParser.ClassMemberContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.enumDecl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterEnumDecl([NotNull] bhlParser.EnumDeclContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.enumDecl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitEnumDecl([NotNull] bhlParser.EnumDeclContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.enumBlock"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterEnumBlock([NotNull] bhlParser.EnumBlockContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.enumBlock"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitEnumBlock([NotNull] bhlParser.EnumBlockContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.enumMember"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterEnumMember([NotNull] bhlParser.EnumMemberContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.enumMember"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitEnumMember([NotNull] bhlParser.EnumMemberContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

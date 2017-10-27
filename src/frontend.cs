@@ -1471,6 +1471,13 @@ public class Frontend : bhlBaseVisitor<object>
         Visit(vdecl);
         continue;
       }
+
+      var edecl = decls[i].enumDecl();
+      if(edecl != null)
+      {
+        Visit(edecl);
+        continue;
+      }
     }
 
     return null;
@@ -1561,6 +1568,39 @@ public class Frontend : bhlBaseVisitor<object>
         (decl as AST_VarDecl).name = vd.NAME().GetText();
         ast.AddChild(decl);
       }
+    }
+
+    curr_scope = locals;
+
+    PeekAST().AddChild(ast);
+
+    return null;
+  }
+
+  public override object VisitEnumDecl(bhlParser.EnumDeclContext ctx)
+  {
+    var str_name = ctx.NAME().GetText();
+    var enum_name = new HashedName(str_name);
+
+    var ast = AST_Util.New_EnumDecl(enum_name);
+
+    var symb = new EnumSymbolAST(enum_name);
+    if(decls_only)
+      curr_module.symbols.define(symb);
+    locals.define(symb);
+    curr_scope = symb;
+
+    for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
+    {
+      var em = ctx.enumBlock().enumMember()[i];
+      var em_name = em.NAME().GetText();
+      int em_val = int.Parse(em.INT().GetText(), System.Globalization.CultureInfo.InvariantCulture);
+
+      var item = new AST_EnumItem();
+      item.value = em_val;
+      ast.AddChild(item);
+
+      symb.AddItem(em_name, em_val);
     }
 
     curr_scope = locals;

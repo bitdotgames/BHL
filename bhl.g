@@ -21,7 +21,7 @@ decls
   ;
 
 decl
-  : (classDecl | funcDecl | varDeclareAssign)
+  : (classDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
 fnargs
@@ -158,6 +158,18 @@ classBlock
 
 classMember
   : varDeclare
+  ;
+
+enumDecl
+  : 'enum' NAME enumBlock
+  ;
+
+enumBlock
+  : '{' enumMember+ '}'
+  ;
+
+enumMember
+  : NAME '=' INT
   ;
 
 funcDecl

@@ -4887,6 +4887,33 @@ public class BHL_Test
     AssertEqual(res.status, BHS.FAILURE);
   }
 
+  [IsTested()]
+  public void TestUserEnum()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+      
+    func int test() 
+    {
+      Foo f = Foo::B 
+      return (int)f
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
   public class StartScriptNode : BehaviorTreeDecoratorNode
   {
     FuncCtx fct;
@@ -15088,6 +15115,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     FuncCtx.PoolClear();
 
     globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
+    //creating local global scope and copying bound symbols from the global scope
     var iglobs = new GlobalScope();
     var ms = globs.GetMembers();
     for(int i=0;i<ms.Count;++i)

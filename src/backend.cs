@@ -603,6 +603,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_FuncDecl node);
   public abstract void DoVisit(AST_LambdaDecl node);
   public abstract void DoVisit(AST_ClassDecl node);
+  public abstract void DoVisit(AST_EnumDecl node);
   public abstract void DoVisit(AST_Block node);
   public abstract void DoVisit(AST_TypeCast node);
   public abstract void DoVisit(AST_Call node);
@@ -639,6 +640,8 @@ public abstract class AST_Visitor
       DoVisit(node as AST_FuncDecl);
     else if(node is AST_ClassDecl)
       DoVisit(node as AST_ClassDecl);
+    else if(node is AST_EnumDecl)
+      DoVisit(node as AST_EnumDecl);
     else if(node is AST_TypeCast)
       DoVisit(node as AST_TypeCast);
     else if(node is AST_Return)
@@ -1424,11 +1427,15 @@ public class Interpreter : AST_Visitor
       throw new Exception("Function is already defined: " + name);
   }
 
-  void CheckClassIsUnique(HashedName name)
+  void CheckNameIsUnique(HashedName name)
   {
-    var s = symbols.resolve(name) as ClassSymbol;
-    if(s != null)
+    var s = symbols.resolve(name);
+    var cs = s as ClassSymbol;
+    if(cs != null)
       throw new Exception("Class is already defined: " + name);
+    var es = s as EnumSymbol;
+    if(es != null)
+      throw new Exception("Enum is already defined: " + name);
   }
 
   public override void DoVisit(AST_FuncDecl node)
@@ -1458,7 +1465,7 @@ public class Interpreter : AST_Visitor
   public override void DoVisit(AST_ClassDecl node)
   {
     var name = node.Name();
-    CheckClassIsUnique(name);
+    CheckNameIsUnique(name);
 
     var parent = symbols.resolve(node.ParentName()) as ClassSymbol;
 
@@ -1474,6 +1481,15 @@ public class Interpreter : AST_Visitor
         cl.define(new FieldSymbolAST(vd.name, vd.ntype));
       }
     }
+  }
+
+  public override void DoVisit(AST_EnumDecl node)
+  {
+    var name = node.Name();
+    CheckNameIsUnique(name);
+
+    var es = new EnumSymbolAST(name);
+    symbols.define(es);
   }
 
   public override void DoVisit(AST_Block node)

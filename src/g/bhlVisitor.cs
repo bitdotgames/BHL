@@ -488,6 +488,24 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitClassMember([NotNull] bhlParser.ClassMemberContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.enumDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitEnumDecl([NotNull] bhlParser.EnumDeclContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.enumBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitEnumBlock([NotNull] bhlParser.EnumBlockContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.enumMember"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitEnumMember([NotNull] bhlParser.EnumMemberContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
