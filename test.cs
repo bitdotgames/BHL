@@ -12652,6 +12652,37 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUserClassDefaultInitEnum()
+  {
+    string bhl = @"
+
+    enum Bar {
+      NONE = 0
+      FOO  = 1
+    }
+
+    class Foo { 
+      Bar b
+    }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      return f.b == Bar::NONE
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractBool(intp.ExecNode(node));
+
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitArr()
   {
     string bhl = @"

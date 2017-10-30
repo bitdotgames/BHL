@@ -61,7 +61,12 @@ public class TypeRef
     if(name.n == 0)
       return null;
 
-    type = (bhl.Type)bindings.resolve(name);
+    //TODO: not sure if it's a non-ugly solution
+    if(bindings == null)
+      type = (bhl.Type)Interpreter.instance.symbols.resolve(name);
+    else
+      type = (bhl.Type)bindings.resolve(name);
+
     if(type == null)
       throw new Exception("Bad type: '" + name + "'");
     return type;
@@ -75,7 +80,12 @@ public class TypeRef
     if(name.n == 0)
       return null;
 
-    type = (bhl.Type)bindings.resolve(name);
+    //TODO: not sure if it's a non-ugly solution
+    if(bindings == null)
+      type = (bhl.Type)Interpreter.instance.symbols.resolve(name);
+    else
+      type = (bhl.Type)bindings.resolve(name);
+
     return type;
   }
 }
@@ -976,7 +986,13 @@ public class ClassSymbolAST : ClassSymbol
       else if(m.type.name.IsEqual(SymbolTable._boolean.type.name))
         dv.SetBool(false);
       else 
-        dv.SetNil();
+      {
+        var t = m.type.TryGet();
+        if(t is EnumSymbol)
+          dv.SetNum(0);
+        else
+          dv.SetNil();
+      }
 
       s.Set(m.name, dv);
     }
