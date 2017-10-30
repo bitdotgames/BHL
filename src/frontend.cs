@@ -1600,7 +1600,11 @@ public class Frontend : bhlBaseVisitor<object>
       var em_name = em.NAME().GetText();
       int em_val = int.Parse(em.INT().GetText(), System.Globalization.CultureInfo.InvariantCulture);
 
-      symb.AddItem(em_name, em_val);
+      int res = symb.TryAddItem(em_name, em_val);
+      if(res == 1)
+        FireError(Location(em.NAME()) + " : duplicate key '" + em_name + "'");
+      else if(res == 2)
+        FireError(Location(em.INT()) + " : duplicate value '" + em_val + "'");
 
       var ast_item = new AST_EnumItem();
       ast_item.nname = (uint)enum_name.n;

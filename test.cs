@@ -4914,6 +4914,97 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestUserEnumWithDuplicateKey()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+      A = 10
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"duplicate key 'A'"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserEnumWithDuplicateValue()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+      C = 1
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"duplicate value '1'"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserEnumConflictsWithAnotherEnum()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+
+    enum Foo
+    {
+      C = 3
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"already defined symbol 'Foo'"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserEnumConflictsWithClass()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+
+    class Foo
+    {
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"already defined symbol 'Foo'"
+    );
+  }
+
   public class StartScriptNode : BehaviorTreeDecoratorNode
   {
     FuncCtx fct;
@@ -13594,6 +13685,85 @@ public class BHL_Test
 
     string bhl2 = @"
     class Bar { }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var mreg = new ModuleRegistry();
+
+    var fp2src = new Dictionary<string, string>();
+    fp2src.Add("bhl1", bhl1);
+    fp2src.Add("bhl2", bhl2);
+    mreg.test_sources = fp2src;
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+      },
+      @"already defined symbol 'Bar'"
+    );
+  }
+
+  [IsTested()]
+  public void TestImportEnum()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    func float test() 
+    {
+      Foo f = Foo::B
+      return bar(f)
+    }
+    ";
+
+    string bhl2 = @"
+    enum Foo
+    {
+      A = 2
+      B = 3
+    }
+
+    func int bar(Foo f)
+    {
+      return (int)f * 10
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var mreg = new ModuleRegistry();
+
+    var fp2src = new Dictionary<string, string>();
+    fp2src.Add("bhl1", bhl1);
+    fp2src.Add("bhl2", bhl2);
+    mreg.test_sources = fp2src;
+    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+
+    var node = intp.GetFuncNode("bhl1", "test");
+    //NodeDump(node);
+    var res = intp.ExecNode(node).val;
+
+    AssertEqual(res.num, 30);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestImportEnumConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    enum Bar { 
+      FOO = 1
+    }
+
+    func test() { }
+    ";
+
+    string bhl2 = @"
+    enum Bar { 
+      BAR = 2
+    }
     ";
 
     var globs = SymbolTable.CreateBuiltins();

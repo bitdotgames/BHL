@@ -1015,10 +1015,21 @@ public class EnumSymbolAST : EnumSymbol
   {
   }
 
-  public void AddItem(string name, int val)
+  //0 - OK, 1 - duplicate key, 2 - duplicate value
+  public int TryAddItem(string name, int val)
   {
+    for(int i=0;i<members.Count;++i)
+    {
+      var m = (EnumItemSymbol)members[i];
+      if(m.val == val)
+        return 2;
+      else if(m.name.s == name)
+        return 1;
+    }
+
     var item = new EnumItemSymbol(null, this, name, val);
     members.Add(item);
+    return 0;
   }
 }
 
