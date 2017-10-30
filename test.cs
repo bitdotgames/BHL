@@ -4941,6 +4941,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestIntCastToUserEnum()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+      
+    func int test() 
+    {
+      Foo f = (Foo)2
+      return (int)f
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUserEnumWithDuplicateKey()
   {
     string bhl = @"
