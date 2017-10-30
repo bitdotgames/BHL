@@ -9076,6 +9076,29 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestYield()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      YIELD()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = node.run();
+    AssertEqual(BHS.SUCCESS, status);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestFuncCaching()
   {
     string bhl = @"
