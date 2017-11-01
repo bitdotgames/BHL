@@ -277,6 +277,7 @@ You can run unit tests by executing the following command:
 6. Ternary operator support
 7. ~~User defined structs~~
 8. User defined struct methods
+9. ~~User defined enums~~
 
 
 ## Version ???
