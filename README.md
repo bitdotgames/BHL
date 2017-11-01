@@ -73,6 +73,19 @@ c.b = 0.7
 c.a = 1.0
 ```
 
+### Enums
+
+```go
+enum Status {
+  None       = 0
+  Connecting = 1
+  Connected  = 2
+}
+
+Status s = Status::Connected
+
+```
+
 ### Generic initializers
 
 ```go
