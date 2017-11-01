@@ -475,9 +475,9 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else if(cargs != null)
     {
-      var ftype = (FuncType)type;
+      var ftype = type as FuncType;
       if(ftype == null)
-        throw new Exception("Func type is missing");
+        FireError(Location(cargs) +  " : no func to call");
       
       ast = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, line);
       AddCallArgs(ftype, cargs, ref ast);

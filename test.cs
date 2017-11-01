@@ -9485,6 +9485,48 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDanglingBrackets()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      ()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "missing '}' at '('"
+    );
+  }
+
+  [IsTested()]
+  public void TestDanglingBrackets2()
+  {
+    string bhl = @"
+
+    func foo() 
+    {
+    }
+
+    func test() 
+    {
+      foo() ()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "no func to call"
+    );
+  }
+
+  [IsTested()]
   public void TestNonMatchingReturnAfterIf()
   {
     string bhl = @"
