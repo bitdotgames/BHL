@@ -67,25 +67,6 @@ public class TypeRef
     else
       type = (bhl.Type)bindings.resolve(name);
 
-    if(type == null)
-      throw new Exception("Bad type: '" + name + "'");
-    return type;
-  }
-
-  public Type TryGet()
-  {
-    if(type != null)
-      return type;
-
-    if(name.n == 0)
-      return null;
-
-    //TODO: not sure if it's a non-ugly solution
-    if(bindings == null)
-      type = (bhl.Type)Interpreter.instance.symbols.resolve(name);
-    else
-      type = (bhl.Type)bindings.resolve(name);
-
     return type;
   }
 }
@@ -987,7 +968,7 @@ public class ClassSymbolAST : ClassSymbol
         dv.SetBool(false);
       else 
       {
-        var t = m.type.TryGet();
+        var t = m.type.Get();
         if(t is EnumSymbol)
           dv.SetNum(0);
         else

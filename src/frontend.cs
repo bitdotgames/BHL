@@ -852,7 +852,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx) + ": [..] is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
-    var orig_type = arr_type.original.TryGet();
+    var orig_type = arr_type.original.Get();
     if(orig_type == null)
       FireError(Location(ctx) + ": type '" + arr_type.original.name.s + "' not found");
     PushJsonType(orig_type);
