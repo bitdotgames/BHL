@@ -457,15 +457,11 @@ public class FuncCallNode : SequentialNode
       //NOTE: only when it's actual func call we pop it from the call stack
       //      and apply required stack cleanups
       if(is_func_call)
-      {
         interp.call_stack.DecFast();
-      }
       //NOTE: force cleaning of the args.value stack in case of FAILURE while
       //      we are still processing arguments
       else if(status == BHS.FAILURE)
-      {
         interp.PopValues(interp.stack.Count - stack_size_before);
-      }
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
