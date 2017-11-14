@@ -658,6 +658,105 @@ public class FuncCallNode : SequentialNode
   }
 }
 
+public class CallConfNode : SequentialNode 
+{
+  public bool push = false;
+  public BehaviorTreeNode conf_node;
+  public ConfNodeSymbol conf_symb;
+
+  int stack_size_before;
+
+  public CallConfNode(ConfNodeSymbol conf_symb, BehaviorTreeNode conf_node, bool push = false)
+  {
+    this.conf_symb = conf_symb;
+    this.conf_node = conf_node;
+    this.push = push;
+  }
+
+  override public void init()
+  {
+    var interp = Interpreter.instance;
+
+    stack_size_before = interp.stack.Count;
+
+    var dv = DynVal.New();
+    conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
+
+    if(push)
+      interp.PushValue(dv);
+
+    base.init();
+  }
+
+  override public BHS execute()
+  {
+    var interp = Interpreter.instance;
+
+    //var status = base.execute();
+    ////////////////////FORCING CODE INLINE////////////////////////////////
+    BHS status = BHS.SUCCESS;
+    while(currentPosition < children.Count)
+    {
+      var currentTask = children[currentPosition];
+      //status = currentTask.run();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+
+      //NOTE: the last node is actually the func call so
+      //      we push it on to the call stack when it's executed
+      bool is_func_call = currentPosition == children.Count-1;
+      //TODO:
+      //if(is_func_call)
+      //  interp.call_stack.Push(node);
+
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.init();
+      status = currentTask.execute();
+      currentTask.currStatus = status;
+      currentTask.lastExecuteStatus = currentTask.currStatus;
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.deinit();
+
+      //NOTE: only when it's actual func call we pop it from the call stack
+      //      and apply required stack cleanups
+      //TODO:
+      if(is_func_call)
+      {
+      //  interp.call_stack.DecFast();
+      }
+      //NOTE: force cleaning of the args.value stack in case of FAILURE while
+      //      we are still processing arguments
+      else if(status == BHS.FAILURE)
+        interp.PopValues(interp.stack.Count - stack_size_before);
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(status == BHS.SUCCESS)
+        ++currentPosition;
+      else
+        break;
+    } 
+    if(status != BHS.RUNNING)
+      currentPosition = 0;
+    ////////////////////FORCING CODE INLINE////////////////////////////////
+
+    return status;
+  }
+
+  override public void deinit()
+  {
+    //NOTE: we don't stop children here because this node behaves NOT like
+    //      a block node but rather emulating a terminal node
+  }
+
+  override public void defer()
+  {
+    stopChildren();
+  }
+
+  public override string inspect()
+  {
+    return push ? "->" : "";
+  }
+}
+
 public class ParallelNode : BehaviorTreeInternalNode
 {
   private BhvPolicy succeedPolicy;
@@ -1290,37 +1389,6 @@ public class PushValueNode : BehaviorTreeTerminalNode
   public override string inspect()
   {
     return "->";
-  }
-}
-
-public class ResetConfigNode : BehaviorTreeTerminalNode
-{
-  public bool push = false;
-  public BehaviorTreeNode conf_node;
-  public ConfNodeSymbol conf_symb;
-
-  public ResetConfigNode(ConfNodeSymbol conf_symb, BehaviorTreeNode conf_node, bool push = false)
-  {
-    this.conf_symb = conf_symb;
-    this.conf_node = conf_node;
-    this.push = push;
-  }
-
-  public override void init() 
-  {
-    var dv = DynVal.New();
-    conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
-
-    if(push)
-    {
-      var interp = Interpreter.instance;
-      interp.PushValue(dv);
-    }
-  }
-
-  public override string inspect()
-  {
-    return push ? "->" : "";
   }
 }
 

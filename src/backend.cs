@@ -1682,20 +1682,16 @@ public class Interpreter : AST_Visitor
       {
         bool can_be_precalculated = CheckIfConfigTweaksAreConstant(ast);
 
-        var group = new GroupNode();
-
-        var rcn = new ResetConfigNode(conf_symb, conf_node, true/*push config*/); 
-        group.addChild(rcn);
-
-        PushNode(group, attach_as_child: false);
+        var call = new CallConfNode(conf_symb, conf_node, true/*push config*/);
+        PushNode(call, attach_as_child: false);
         VisitChildren(ast.children[0] as AST);
 
-        var last_child = group.children[group.children.Count-1];
+        var last_child = call.children[call.children.Count-1];
         //1.1. changing write mode or popping config
         if(last_child is MVarAccessNode)
           (last_child as MVarAccessNode).mode = MVarAccessNode.WRITE_INV_ARGS;
         else
-          group.addChild(new PopValueNode());
+          call.addChild(new PopValueNode());
 
         //1.2 processing extra args
         for(int i=1;i<ast.cargs_num;++i)
@@ -1704,13 +1700,13 @@ public class Interpreter : AST_Visitor
 
         if(can_be_precalculated)
         {
-          group.run();
+          call.run();
           curr_node.addChild(conf_node);
         }
         else
         {
-          group.addChild(conf_node);
-          curr_node.addChild(group);
+          call.addChild(conf_node);
+          curr_node.addChild(call);
         }
       }
       //2. in a simpler case just reset the config

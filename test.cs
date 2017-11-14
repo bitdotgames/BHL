@@ -2849,7 +2849,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestReturnFailureFirstFromBindFunction()
+  public void TestFailureInBindFunction()
   {
     string bhl = @"
 
@@ -12282,6 +12282,37 @@ public class BHL_Test
     CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+  }
+
+  [IsTested()]
+  public void TestConfigNodeCleanFuncArgsStack()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      ConfigNode({strs:[""foo"", ""hey""], hey:foo()})
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
+          delegate() { return BHS.FAILURE; } );
+      globs.define(fn);
+    }
+
+    BindColor(globs);
+    BindFoo(globs);
+    BindConfigNode(globs, new MemoryStream());
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var result = node.run();
+    AssertEqual(result, BHS.FAILURE);
+
+    //NodeDump(node);
+    CommonChecks(intp);
   }
 
   [IsTested()]
