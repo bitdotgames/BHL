@@ -1719,7 +1719,7 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestPassByRefTmpClassField()
   {
     string bhl = @"
@@ -12845,8 +12845,32 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  //[IsTested()]
-  public void TestTmpUserClass()
+  [IsTested()]
+  public void TestTmpUserClassReadDefaultField()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int c
+    }
+      
+    func int test() 
+    {
+      return (new Foo).c
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(res, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTmpUserClassReadField()
   {
     string bhl = @"
 
@@ -12860,15 +12884,36 @@ public class BHL_Test
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
-    NodeDump(node);
+    //NodeDump(node);
 
     AssertEqual(res, 10);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTmpUserClassWriteFieldNotAllowed()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int c
+    }
+      
+    func test() 
+    {
+      (new Foo{c: 10}).c = 20
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"no viable alternative at input"
+    );
   }
 
   [IsTested()]
@@ -15270,7 +15315,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;REFS1;INC2;INC3;INC4;DEC3;REFS3;DEC2;REL2;INC3;DEC2;REFS2;DEC1;REL1;DEC0;REL0;", str);
+    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;REL1;REFS1;INC2;INC3;INC4;DEC3;REL3;REFS3;DEC2;REL2;INC3;DEC2;REL2;REFS2;DEC1;REL1;DEC0;REL0;", str);
     CommonChecks(intp);
   }
 
@@ -15326,7 +15371,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var str = GetString(trace_stream);
 
-    AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;INC2;DEC1;DEC0;REL0;DEC0;REL0;", str);
+    AssertEqual("INC1;DEC0;INC1;INC1;DEC0;INC1;INC2;DEC1;REL1;DEC0;REL0;DEC0;REL0;", str);
     CommonChecks(intp);
   }
 

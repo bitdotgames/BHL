@@ -1,3 +1,4 @@
+//#define DEBUG_REFS
 using System;
 using System.IO;
 using System.Collections;
@@ -100,13 +101,17 @@ public class DynVal
     {
       ++pool_miss;
       dv = new DynVal();
-      //Console.WriteLine("NEW: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+#if DEBUG_REFS
+      Console.WriteLine("NEW: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
     }
     else
     {
       ++pool_hit;
       dv = pool.Dequeue();
-      //Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+#if DEBUG_REFS
+      Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
       //NOTE: DynVal is Reset here instead of Del, see notes below 
       dv.Reset();
       dv._refs = 0;
@@ -212,7 +217,9 @@ public class DynVal
         throw new Exception("Invalid state");
 
       ++_refs;
-      //Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#if DEBUG_REFS
+      Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
     } 
     else if((op & RefOp.DEC) != 0)
     {
@@ -222,7 +229,9 @@ public class DynVal
         throw new Exception("Double free");
 
       --_refs;
-      //Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#if DEBUG_REFS
+      Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
 
       if(_refs == 0)
         Del(this);
@@ -235,11 +244,15 @@ public class DynVal
         throw new Exception("Double free");
 
       --_refs;
-      //Console.WriteLine("DCN: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#if DEBUG_REFS
+      Console.WriteLine("DCN: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
     }
     else if((op & RefOp.TRY_DEL) != 0)
     {
-      //Console.WriteLine("TDL: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#if DEBUG_REFS
+      Console.WriteLine("TDL: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
 
       if(_refs == 0)
         Del(this);

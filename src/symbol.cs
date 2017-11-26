@@ -483,7 +483,7 @@ public class FieldSymbolAST : FieldSymbol
   {
     this.getter = Getter;
     this.setter = Setter;
-    this.getref = Refget;
+    this.getref = Getref;
   }
 
   void Getter(DynVal ctx, ref DynVal v)
@@ -500,7 +500,7 @@ public class FieldSymbolAST : FieldSymbol
     tmp.RefMod(RefOp.TRY_DEL);
   }
 
-  void Refget(DynVal ctx, out DynVal v)
+  void Getref(DynVal ctx, out DynVal v)
   {
     var m = (ClassStorage)ctx.obj;
     v = m.Get(name);

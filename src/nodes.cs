@@ -1822,12 +1822,18 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
           DynVal val;
           (var_symb as FieldSymbol).getref(ctx, out val);
           interp.PushValue(val);
+          //NOTE: this can be an operation for the temp. object,
+          //      we need to take care of that
+          ctx.RefMod(RefOp.USR_TRY_DEL);
         }
         else
         {
           var val = DynVal.New();
           (var_symb as FieldSymbol).getter(ctx, ref val);
           interp.PushValue(val);
+          //NOTE: this can be an operation for the temp. object,
+          //      we need to take care of that
+          ctx.RefMod(RefOp.USR_TRY_DEL);
         }
       }
       else
