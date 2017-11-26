@@ -12917,6 +12917,25 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestEmptyParenExpression()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      ().foo
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"missing '}' at '('"
+    );
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitFloat()
   {
     string bhl = @"
