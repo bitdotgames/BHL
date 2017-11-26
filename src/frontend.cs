@@ -456,8 +456,13 @@ public class Frontend : bhlBaseVisitor<object>
             (is_write ? EnumCall.VARW : EnumCall.VAR), 
             line, str_name, class_scope
           );
+          //handling passing by ref for class fields
           if(class_scope != null && PeekCallByRef())
+          {
+            if(class_scope is ClassBindSymbol)
+              FireError(Location(name) +  " : getting field by 'ref' not supported for this class");
             ast.type = EnumCall.MVARREF; 
+          }
           type = var_symb.type.Get();
         }
         else if(func_symb != null)

@@ -1697,6 +1697,37 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassByRefBindClassFieldNotSupported()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      Color c = new Color
+
+      foo(ref c.r)
+      return c.r
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl, globs);
+      },
+      "getting field by 'ref' not supported"
+    );
+  }
+
+  [IsTested()]
   public void TestLambdaUsesValueImplicit()
   {
     string bhl = @"
