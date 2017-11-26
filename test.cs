@@ -1719,8 +1719,8 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  [IsTested()]
-  public void TestPassByRefClassField2()
+  //[IsTested()]
+  public void TestPassByRefTmpClassField()
   {
     string bhl = @"
 
@@ -1729,15 +1729,15 @@ public class BHL_Test
       float a
     }
 
-    func foo(ref float a) 
+    func float foo(ref float a) 
     {
       a = a + 1
+      return a
     }
       
     func float test() 
     {
-      foo(ref (new Bar).a)
-      return 0
+      return foo(ref (new Bar).a)
     }
     ";
 
@@ -1746,7 +1746,7 @@ public class BHL_Test
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
 
-    AssertEqual(num, 0);
+    AssertEqual(num, 1);
     CommonChecks(intp);
   }
 
@@ -12842,6 +12842,32 @@ public class BHL_Test
     var res = ExtractBool(intp.ExecNode(node));
 
     AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  //[IsTested()]
+  public void TestTmpUserClass()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int c
+    }
+      
+    func int test() 
+    {
+      return (new Foo{c: 10}).c
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+    NodeDump(node);
+
+    AssertEqual(res, 10);
     CommonChecks(intp);
   }
 
