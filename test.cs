@@ -1697,6 +1697,44 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassByRefClassFieldNested()
+  {
+    string bhl = @"
+
+    class Wow
+    {
+      float c
+    }
+
+    class Bar
+    {
+      Wow w
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      Bar b = { w: { c : 4} }
+
+      foo(ref b.w.c)
+      return b.w.c
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 5);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestPassByRefBindClassFieldNotSupported()
   {
     string bhl = @"
