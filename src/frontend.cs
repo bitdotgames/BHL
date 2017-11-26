@@ -1868,9 +1868,15 @@ public class Frontend : bhlBaseVisitor<object>
     var name = ctx.NAME();
     var assign_exp = ctx.assignExp();
     bool is_ref = ctx.isRef() != null;
+    bool is_null_ref = false;
 
     if(is_ref && assign_exp != null)
-      FireError(Location(name) +  ": 'ref' is not allowed to have a default value");
+    {
+      if(assign_exp.exp().GetText() == "null")
+        is_null_ref = true;
+      else
+        FireError(Location(name) +  ": 'ref' is not allowed to have a default value");
+    }
 
     AST_Interim exp_ast = null;
     if(assign_exp != null)
@@ -1886,7 +1892,7 @@ public class Frontend : bhlBaseVisitor<object>
       ast.AddChild(exp_ast);
     PeekAST().AddChild(ast);
 
-    if(assign_exp != null)
+    if(assign_exp != null && !is_null_ref)
       SymbolTable.CheckAssign(Wrap(name), Wrap(assign_exp));
     return null;
   }

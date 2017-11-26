@@ -1212,7 +1212,7 @@ static public class SymbolTable
     if(result == _void) 
     {
       throw new UserError(
-        a.Location()+", "+ b.Location()+" have incompatible types " + ta + " " + tb
+        a.Location()+", "+ b.Location()+" have incompatible types"// + ta + " " + tb
       );
     }
     else 
