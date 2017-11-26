@@ -1664,6 +1664,29 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassByRefLiteralNotAllowed()
+  {
+    string bhl = @"
+
+    void foo(ref int a) 
+    {
+    }
+
+    func void test() 
+    {
+      foo(ref 10)  
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret("", bhl);
+      },
+      "mismatched input '('"
+    );
+  }
+
+  [IsTested()]
   public void TestPassByRefClassField()
   {
     string bhl = @"
@@ -1731,6 +1754,49 @@ public class BHL_Test
     //NodeDump(node);
 
     AssertEqual(num, 5);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefClassFieldFuncPtr()
+  {
+    string bhl = @"
+
+    class Bar
+    {
+      int^() p
+    }
+
+    func int _5()
+    {
+      return 5
+    }
+
+    func int _10()
+    {
+      return 10
+    }
+
+    func foo(ref int^() p) 
+    {
+      p = _10
+    }
+      
+    func int test() 
+    {
+      Bar b = { p: _5}
+
+      foo(ref b.p)
+      return b.p()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 10);
     CommonChecks(intp);
   }
 
@@ -15545,9 +15611,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertTrue(err != null, "Error didn't occur"); 
     var idx = err.Message.IndexOf(msg);
-    if(idx == -1)
-      Console.WriteLine(err.Message);
-    AssertTrue(idx != -1);
+    AssertTrue(idx != -1, "Error message is: " + err.Message);
   }
 
   static Interpreter Interpret(string fpath, string src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false)
