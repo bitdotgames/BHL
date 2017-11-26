@@ -1664,6 +1664,39 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassByRefClassField()
+  {
+    string bhl = @"
+
+    class Bar
+    {
+      float a
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      Bar b = { a: 10}
+
+      foo(ref b.a)
+      return b.a
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 11);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestLambdaUsesValueImplicit()
   {
     string bhl = @"
@@ -15530,6 +15563,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
   {
     intp.glob_mem.Clear();
 
+    //Console.WriteLine(DynVal.PoolDump());
     AssertEqual(intp.stack.Count, 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);

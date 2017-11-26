@@ -450,11 +450,14 @@ public class Frontend : bhlBaseVisitor<object>
       {
         if(var_symb != null)
         {
+          bool is_write = write && arracc == null;
           ast = AST_Util.New_Call(class_scope != null ? 
-            (write && arracc == null ? EnumCall.MVARW : EnumCall.MVAR) : 
-            (write && arracc == null ? EnumCall.VARW : EnumCall.VAR), 
+            (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
+            (is_write ? EnumCall.VARW : EnumCall.VAR), 
             line, str_name, class_scope
           );
+          if(class_scope != null && PeekCallByRef())
+            ast.type = EnumCall.MVARREF; 
           type = var_symb.type.Get();
         }
         else if(func_symb != null)
@@ -599,16 +602,19 @@ public class Frontend : bhlBaseVisitor<object>
         var func_arg_symb = (Symbol)func_args[i];
         var func_arg_type = func_arg_symb.node == null ? func_arg_symb.type.Get() : func_arg_symb.node.eval_type;  
 
-        if(ca.isRef() == null && func_symb.IsArgRefAt(i))
+        bool is_ref = ca.isRef() != null;
+        if(!is_ref && func_symb.IsArgRefAt(i))
           FireError(Location(ca) +  ": 'ref' is missing");
-        else if(ca.isRef() != null && !func_symb.IsArgRefAt(i))
+        else if(is_ref && !func_symb.IsArgRefAt(i))
           FireError(Location(ca) +  ": argument is not a 'ref'");
 
+        PushCallByRef(is_ref);
         PushJsonType(func_arg_type);
         PushInterimAST();
         Visit(ca);
         PopInterimAST();
         PopJsonType();
+        PopCallByRef();
 
         var wca = Wrap(ca);
 
@@ -1344,6 +1350,26 @@ public class Frontend : bhlBaseVisitor<object>
       return null;
 
     return json_type_stack.Peek();
+  }
+
+  Stack<bool> call_by_ref_stack = new Stack<bool>();
+
+  void PushCallByRef(bool flag)
+  {
+    call_by_ref_stack.Push(flag);
+  }
+
+  void PopCallByRef()
+  {
+    call_by_ref_stack.Pop();
+  }
+
+  bool PeekCallByRef()
+  {
+    if(call_by_ref_stack.Count == 0)
+      return false;
+
+    return call_by_ref_stack.Peek();
   }
 
   int loops_stack = 0;

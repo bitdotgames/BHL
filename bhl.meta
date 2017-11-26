@@ -97,6 +97,7 @@ enum EnumCall
   VARW          = 2
   MVAR          = 10
   MVARW         = 11
+  MVARREF       = 12
   FUNC          = 3
   MFUNC         = 30
   ARR_IDX       = 4

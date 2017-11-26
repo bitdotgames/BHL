@@ -1772,9 +1772,10 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 {
   public const int READ                = 1;
   public const int WRITE               = 2;
-  public const int WRITE_PUSH_CTX = 3;
+  public const int WRITE_PUSH_CTX      = 3;
   public const int WRITE_INV_ARGS      = 4;
   public const int READ_PUSH_CTX       = 5;
+  public const int READ_REF            = 6;
 
   uint scope_ntype;
   HashedName name;
@@ -1806,28 +1807,34 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
         throw new Exception("Member not found: " + name);
     }
 
-    if(mode == READ || mode == READ_PUSH_CTX)
-    {
-      var var_symb = (VariableSymbol)cls_member;
-      if(var_symb == null)
-        throw new Exception("Not a variable symbol: " + name);
+    var var_symb = (VariableSymbol)cls_member;
+    if(var_symb == null)
+      throw new Exception("Not a variable symbol: " + name);
 
+    if(mode == READ || mode == READ_PUSH_CTX || mode == READ_REF)
+    {
       var ctx = mode == READ_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
-      var val = DynVal.New();
 
       if(var_symb is FieldSymbol)
-        (var_symb as FieldSymbol).getter(ctx, ref val);
+      {
+        if(mode == READ_REF)
+        {
+          DynVal val;
+          (var_symb as FieldSymbol).getref(ctx, out val);
+          interp.PushValue(val);
+        }
+        else
+        {
+          var val = DynVal.New();
+          (var_symb as FieldSymbol).getter(ctx, ref val);
+          interp.PushValue(val);
+        }
+      }
       else
         throw new Exception("Not implemented");
-
-      interp.PushValue(val);
     }
     else if(mode == WRITE || mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
     {
-      var var_symb = (VariableSymbol)cls_member;
-      if(var_symb == null)
-        throw new Exception("Not a variable symbol: " + name);
-
       DynVal val = null;
       DynVal ctx = null;
 
@@ -1864,6 +1871,8 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       str += "<-v <-c = c->";
     else if(mode == READ)
       str += "<-c v->";
+    else if(mode == READ_REF)
+      str += "<-c ref v->";
     else if(mode == READ_PUSH_CTX)
       str += "<-c c-> v->";
 
@@ -1965,8 +1974,6 @@ public class FuncNodeAST : FuncNode
     var fparams = decl.fparams();
     var func_args = fparams.children.Count == 0 ? 0 : fparams.children.Count;
 
-    //Util.Debug("CALL FUNC AST INIT " + func_args);
-
     //NOTE: setting args passed to func
     for(int i=func_args;i-- > 0;)
     {
@@ -1974,7 +1981,7 @@ public class FuncNodeAST : FuncNode
       var fparam_name = fparam.Name();
 
       var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
-      //Util.Debug(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
+      //Console.WriteLine(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
       mem.Set(fparam_name, fparam_val);
 
       fparam_val.RefMod(RefOp.TRY_DEL);

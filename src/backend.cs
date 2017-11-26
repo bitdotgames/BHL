@@ -106,7 +106,7 @@ public class DynVal
     {
       ++pool_hit;
       dv = pool.Dequeue();
-      //Console.WriteLine("NEW2: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
       //NOTE: DynVal is Reset here instead of Del, see notes below 
       dv.Reset();
       dv._refs = 0;
@@ -212,7 +212,7 @@ public class DynVal
         throw new Exception("Invalid state");
 
       ++_refs;
-      //Console.WriteLine("INC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
     } 
     else if((op & RefOp.DEC) != 0)
     {
@@ -222,7 +222,7 @@ public class DynVal
         throw new Exception("Double free");
 
       --_refs;
-      //Console.WriteLine("DEC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
 
       if(_refs == 0)
         Del(this);
@@ -235,10 +235,12 @@ public class DynVal
         throw new Exception("Double free");
 
       --_refs;
-      //Console.WriteLine("DEC: " + _refs + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("DCN: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
     }
     else if((op & RefOp.TRY_DEL) != 0)
     {
+      //Console.WriteLine("TDL: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+
       if(_refs == 0)
         Del(this);
     }
@@ -408,6 +410,17 @@ public class DynVal
     pool_hit = 0;
     pool_miss = 0;
     pool.Clear();
+  }
+
+  static public string PoolDump()
+  {
+    string res = "=== POOL ===\n";
+    res += "total:" + PoolCount + " free:" + PoolCountFree + "\n";
+    foreach(var v in pool)
+    {
+      res += v + " " + v.GetHashCode() + "\n"; 
+    }
+    return res;
   }
 
   static public int PoolHits
@@ -1111,6 +1124,7 @@ public class Interpreter : AST_Visitor
   public delegate void ClassCreator(ref DynVal res);
   public delegate void FieldGetter(DynVal v, ref DynVal res);
   public delegate void FieldSetter(ref DynVal v, DynVal nv);
+  public delegate void FieldRef(DynVal v, out DynVal res);
   public delegate BehaviorTreeNode FuncNodeCreator(); 
   public delegate void ConfigGetter(BehaviorTreeNode n, ref DynVal v, bool reset);
 
@@ -1630,6 +1644,10 @@ public class Interpreter : AST_Visitor
     else if(node.type == EnumCall.MVARW)
     {
       curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE));
+    }
+    else if(node.type == EnumCall.MVARREF)
+    {
+      curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.READ_REF));
     }
     else if(node.type == EnumCall.FUNC || node.type == EnumCall.MFUNC)
     {

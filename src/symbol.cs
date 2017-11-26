@@ -465,22 +465,25 @@ public class FieldSymbol : VariableSymbol
 {
   public Interpreter.FieldGetter getter;
   public Interpreter.FieldSetter setter;
+  public Interpreter.FieldRef getref;
 
-  public FieldSymbol(HashedName name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null) 
+  public FieldSymbol(HashedName name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null, Interpreter.FieldRef getref = null) 
     : base(null, name, type)
   {
     this.getter = getter;
     this.setter = setter;
+    this.getref = getref;
   }
 }
 
 public class FieldSymbolAST : FieldSymbol
 {
   public FieldSymbolAST(HashedName name, HashedName type) 
-    : base(name, new TypeRef(null, type), null, null)
+    : base(name, new TypeRef(null, type), null, null, null)
   {
     this.getter = Getter;
     this.setter = Setter;
+    this.getref = Refget;
   }
 
   void Getter(DynVal ctx, ref DynVal v)
@@ -495,6 +498,12 @@ public class FieldSymbolAST : FieldSymbol
     var tmp = v.ValueClone();
     m.Set(name, tmp);
     tmp.RefMod(RefOp.TRY_DEL);
+  }
+
+  void Refget(DynVal ctx, out DynVal v)
+  {
+    var m = (ClassStorage)ctx.obj;
+    v = m.Get(name);
   }
 }
 
