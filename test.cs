@@ -1755,6 +1755,67 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPassByRefArrayItem()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      float[] fs = [1,10,20]
+
+      foo(ref fs[1])
+      return fs[0] + fs[1] + fs[2]
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 32);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPassByRefArrayObj()
+  {
+    string bhl = @"
+
+    class Bar
+    {
+      float f
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      Bar[] bs = [{f:1},{f:10},{f:20}]
+
+      foo(ref bs[1].f)
+      return bs[0].f + bs[1].f + bs[2].f
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 32);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestPassByRefTmpClassField()
   {
     string bhl = @"
