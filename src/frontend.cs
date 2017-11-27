@@ -1872,6 +1872,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(is_ref && assign_exp != null)
     {
+      //NOTE: super special case for 'null refs'
       if(assign_exp.exp().GetText() == "null")
         is_null_ref = true;
       else
