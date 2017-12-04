@@ -81,9 +81,18 @@ function task_geng()
 }
 
 /**
- * @deps build_front_dll
+ * @deps build_front_dll 
  */
 function task_run(array $args = array())
+{
+  global $BHL_ROOT;
+
+  $bin = build_bin($args);
+
+  mono_run($bin, $args, '--debug');
+}
+
+function build_bin(&$runtime_args) 
 {
   global $BHL_ROOT;
 
@@ -104,7 +113,7 @@ function task_run(array $args = array())
       "$BHL_ROOT/bhl_user.dll",
       "-define:BHL_FRONT -debug -target:library"
     );
-    $args[] = "--bindings_dll=$BHL_ROOT/bhl_user.dll";
+    $runtime_args[] = "--bindings_dll=$BHL_ROOT/bhl_user.dll";
   }
 
   if(taskman_propor('POSTPROC_SOURCES', ''))
@@ -116,15 +125,27 @@ function task_run(array $args = array())
       "$BHL_ROOT/bhl_postproc.dll",
       "-define:BHL_FRONT -debug -target:library"
     );
-    $args[] = "--postproc_dll=$BHL_ROOT/bhl_postproc.dll";
+    $runtime_args[] = "--postproc_dll=$BHL_ROOT/bhl_postproc.dll";
   }
 
   mcs_build($sources,
-  "$BHL_ROOT/bhl.exe",
-  "-define:BHL_FRONT -debug"
+    "$BHL_ROOT/bhl.exe",
+    "-define:BHL_FRONT -debug"
   );
 
-  mono_run("$BHL_ROOT/bhl.exe", $args, '--debug');
+  //experimenting with AOT
+  //if(need_to_regen("$BHL_ROOT/bhl.exe.dylib", array("$BHL_ROOT/bhl.exe")))
+  //  taskman_shell_ensure("mono --aot=full -O=all $BHL_ROOT/bhl.exe");
+
+  return "$BHL_ROOT/bhl.exe";
+}
+
+/**
+ * @deps build_front_dll
+ */
+function task_build()
+{
+  build_bin($args);
 }
 
 /**

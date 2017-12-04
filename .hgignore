@@ -8,6 +8,7 @@ tmp
 build
 src/autogen.cs*
 *.exe
+*.dylib*
 *.mdb
 bhl*.dll*
 
