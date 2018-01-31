@@ -6243,7 +6243,6 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-
   [IsTested()]
   public void TestComplexFuncPtrLambda()
   {
@@ -6273,6 +6272,39 @@ public class BHL_Test
     AssertTrue(res);
     var str = GetString(trace_stream);
     AssertEqual("HEY", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrLambdaInALoop()
+  {
+    string bhl = @"
+    func test() 
+    {
+      void^(int) ptr = 
+        func void (int a)
+        {
+          trace((string)a)
+        }
+      int i = 0
+      while(i < 5)
+      {
+        ptr(i)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+    var str = GetString(trace_stream);
+    AssertEqual("01234", str);
     CommonChecks(intp);
   }
 

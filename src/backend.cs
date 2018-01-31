@@ -795,7 +795,7 @@ public class FuncCtx : DynValRefcounted
   {
     if(refs != 0)
       return false;
-    
+
     Del(this);
     return true;
   }
@@ -858,7 +858,9 @@ public class FuncCtx : DynValRefcounted
         //Util.Debug("FTX RELEASE " + fct.GetHashCode());
         item.fct.refs = -1;
         item.fct.mem.Clear();
-        item.fct.fnode = null;
+        //NOTE: we don't reset fnode on purpose, 
+        //      so that it will be reused on the next pool request
+        //item.fnode = ...
         item.used = false;
         pool[i] = item;
         break;

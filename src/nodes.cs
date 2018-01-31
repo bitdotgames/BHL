@@ -1459,14 +1459,17 @@ public class CallFuncPtr : SequentialNode
     }
     //NOTE: else below is not tested, need a better test for this
     else
+    {
       children[children.Count-1] = func_node;
+    }
 
     stack_size_before = interp.stack.Count;
   }
 
   override public void deinit()
   {
-    ((FuncNode)children[children.Count-1]).fct.Release();
+    var func_node = ((FuncNode)children[children.Count-1]);
+    func_node.fct.Release();
 
     //NOTE: we don't stop children here because this node behaves NOT like
     //      a block node but rather emulating a terminal node
