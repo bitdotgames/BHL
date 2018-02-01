@@ -728,6 +728,8 @@ public class FuncCtx : DynValRefcounted
     if(fnode != null)
       return fnode;
 
+    ++nodes_created;
+
     if(fs is FuncBindSymbol)
       fnode = new FuncNodeBinding(fs as FuncBindSymbol, this);
     else if(fs is LambdaSymbol)
@@ -811,6 +813,7 @@ public class FuncCtx : DynValRefcounted
   static List<PoolItem> pool = new List<PoolItem>();
   static int pool_hit;
   static int pool_miss;
+  static int nodes_created;
 
   public static FuncCtx New(FuncSymbol fs)
   {
@@ -871,6 +874,7 @@ public class FuncCtx : DynValRefcounted
 
   static public void PoolClear()
   {
+    nodes_created = 0;
     pool.Clear();
   }
 
@@ -900,6 +904,11 @@ public class FuncCtx : DynValRefcounted
       }
       return free;
     }
+  }
+
+  static public int NodesCreated
+  {
+    get { return nodes_created; }
   }
 }
 
