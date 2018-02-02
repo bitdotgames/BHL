@@ -6305,7 +6305,7 @@ public class BHL_Test
     intp.ExecNode(node, 0);
     var str = GetString(trace_stream);
     AssertEqual("01234", str);
-    AssertEqual(2, FuncCtx.NodesCreated);
+    AssertEqual(1+1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 

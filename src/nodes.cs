@@ -1439,6 +1439,7 @@ public class CallFuncPtr : SequentialNode
 
     var interp = Interpreter.instance;
     var val = node.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(node.Name()); 
+
     var fct = (FuncCtx)val.obj;
      
     //NOTE: if func ctx is shared we need to make sure 
@@ -1457,11 +1458,8 @@ public class CallFuncPtr : SequentialNode
 
       children.Add(func_node);
     }
-    //NOTE: else below is not tested, need a better test for this
     else
-    {
       children[children.Count-1] = func_node;
-    }
 
     stack_size_before = interp.stack.Count;
   }
