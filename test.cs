@@ -5774,6 +5774,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("FOO", str);
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -5804,6 +5805,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("FOO", str);
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -5837,6 +5839,7 @@ public class BHL_Test
     AssertTrue(res);
     var str = GetString(trace_stream);
     AssertEqual("HEY", str);
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -5870,6 +5873,7 @@ public class BHL_Test
     AssertTrue(!res);
     var str = GetString(trace_stream);
     AssertEqual("HEYBAR", str);
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -5903,6 +5907,7 @@ public class BHL_Test
       //NodeDump(node);
       AssertEqual(res, 14);
     }
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -5943,6 +5948,7 @@ public class BHL_Test
       //NodeDump(node);
       AssertEqual(res, 8);
     }
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -5989,6 +5995,7 @@ public class BHL_Test
       //NodeDump(node);
       AssertEqual(res, 12 + 15);
     }
+    AssertEqual(2, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6025,6 +6032,7 @@ public class BHL_Test
       //NodeDump(node);
       AssertEqual(res, 4 + 10);
     }
+    AssertEqual(2, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6061,6 +6069,7 @@ public class BHL_Test
     AssertEqual(res, 3*2 + 3*10);
     var str = GetString(trace_stream);
     AssertEqual("whathey", str);
+    AssertEqual(2, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6088,6 +6097,7 @@ public class BHL_Test
     var res = ExtractBool(intp.ExecNode(node));
     //NodeDump(node);
     AssertTrue(res);
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6114,6 +6124,7 @@ public class BHL_Test
     var res = ExtractBool(intp.ExecNode(node));
     //NodeDump(node);
     AssertTrue(res);
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6136,6 +6147,7 @@ public class BHL_Test
     var res = ExtractBool(intp.ExecNode(node));
     //NodeDump(node);
     AssertTrue(res);
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6305,7 +6317,7 @@ public class BHL_Test
     intp.ExecNode(node, 0);
     var str = GetString(trace_stream);
     AssertEqual("01234", str);
-    AssertEqual(1+1, FuncCtx.NodesCreated);
+    AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6670,7 +6682,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestStartLambdaInScriptMgr()
+  public void TestStartLambdaRunninInScriptMgr()
   {
     string bhl = @"
 
@@ -6730,6 +6742,70 @@ public class BHL_Test
     ScriptMgr.instance.stop();
 
     AssertTrue(!ScriptMgr.instance.busy());
+    AssertEqual(2, FuncCtx.NodesCreated);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      forever {
+        StartScriptInMgr(
+          script: func() { 
+            trace(""HERE;"") 
+          },
+          num : 1,
+          now : false
+        )
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStartScriptInMgr(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    {
+      var status = node.run();
+      AssertEqual(status, BHS.RUNNING);
+
+      ScriptMgr.instance.run();
+
+      var str = GetString(trace_stream);
+      AssertEqual("HERE;", str);
+
+      var cs = ScriptMgr.instance.getChildren();
+      AssertEqual(0, cs.Count); 
+    }
+
+    //NodeDump(node);
+
+    {
+      var status = node.run();
+      AssertEqual(status, BHS.RUNNING);
+
+      ScriptMgr.instance.run();
+
+      var str = GetString(trace_stream);
+      AssertEqual("HERE;HERE;", str);
+
+      var cs = ScriptMgr.instance.getChildren();
+      AssertEqual(0, cs.Count); 
+    }
+
+    ScriptMgr.instance.stop();
+
+    AssertTrue(!ScriptMgr.instance.busy());
+    AssertEqual(2, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6773,6 +6849,7 @@ public class BHL_Test
     ScriptMgr.instance.stop();
 
     AssertTrue(!ScriptMgr.instance.busy());
+    AssertEqual(3, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6820,6 +6897,7 @@ public class BHL_Test
     ScriptMgr.instance.stop();
     AssertTrue(!ScriptMgr.instance.busy());
 
+    AssertEqual(2, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
@@ -6922,6 +7000,7 @@ public class BHL_Test
     ScriptMgr.instance.stop();
     AssertTrue(!ScriptMgr.instance.busy());
 
+    AssertEqual(2+2, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
 
