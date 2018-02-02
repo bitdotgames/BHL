@@ -1441,8 +1441,8 @@ public class CallFuncPtr : SequentialNode
     var val = node.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(node.Name()); 
 
     var fct = ((FuncCtx)val.obj);
-    //NOTE: Func ctx can be shared and we need to make sure 
-    //      we use a non used version of the func node. For 
+    //NOTE: Func ctx may be shared and we need to make sure 
+    //      we get a *non used* version of the func node. For 
     //      this we could use FuncCtx.AutoClone() method but it tries
     //      to be as safe as possible and may allocate extra
     //      memory. However here we know exactly what we are doing

@@ -5810,6 +5810,81 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncPtrSeveralLambda()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      void^() ptr = func() {
+        trace(""FOO"")
+      }
+      ptr()
+      ptr()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("FOOFOO", str);
+    AssertEqual(1, FuncCtx.NodesCreated);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrSeveralLambdaRunning()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      void^(string) ptr = func(string arg) {
+        trace(arg)
+        YIELD()
+      }
+      paral {
+        ptr(""FOO"")
+        ptr(""BAR"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    {
+      var status = node.run();
+      AssertEqual(status, BHS.RUNNING);
+    }
+
+    {
+      var status = node.run();
+      AssertEqual(status, BHS.SUCCESS);
+    }
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("FOOBAR", str);
+    AssertEqual(2, FuncCtx.NodesCreated);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestComplexFuncPtr()
   {
     string bhl = @"
@@ -6682,6 +6757,69 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestStartLambdaInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      forever {
+        StartScriptInMgr(
+          script: func() { 
+            trace(""HERE;"") 
+          },
+          num : 1,
+          now : false
+        )
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStartScriptInMgr(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    {
+      var status = node.run();
+      AssertEqual(status, BHS.RUNNING);
+
+      ScriptMgr.instance.run();
+
+      var str = GetString(trace_stream);
+      AssertEqual("HERE;", str);
+
+      var cs = ScriptMgr.instance.getChildren();
+      AssertEqual(0, cs.Count); 
+    }
+
+    //NodeDump(node);
+
+    {
+      var status = node.run();
+      AssertEqual(status, BHS.RUNNING);
+
+      ScriptMgr.instance.run();
+
+      var str = GetString(trace_stream);
+      AssertEqual("HERE;HERE;", str);
+
+      var cs = ScriptMgr.instance.getChildren();
+      AssertEqual(0, cs.Count); 
+    }
+
+    ScriptMgr.instance.stop();
+
+    AssertTrue(!ScriptMgr.instance.busy());
+    AssertEqual(1, FuncCtx.NodesCreated);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestStartLambdaRunninInScriptMgr()
   {
     string bhl = @"
@@ -6737,69 +6875,6 @@ public class BHL_Test
       var cs = ScriptMgr.instance.getChildren();
       AssertEqual(2, cs.Count); 
       AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
-    }
-
-    ScriptMgr.instance.stop();
-
-    AssertTrue(!ScriptMgr.instance.busy());
-    AssertEqual(2, FuncCtx.NodesCreated);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestStartLambdaInScriptMgr()
-  {
-    string bhl = @"
-
-    func void test() 
-    {
-      forever {
-        StartScriptInMgr(
-          script: func() { 
-            trace(""HERE;"") 
-          },
-          num : 1,
-          now : false
-        )
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-    BindStartScriptInMgr(globs);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    {
-      var status = node.run();
-      AssertEqual(status, BHS.RUNNING);
-
-      ScriptMgr.instance.run();
-
-      var str = GetString(trace_stream);
-      AssertEqual("HERE;", str);
-
-      var cs = ScriptMgr.instance.getChildren();
-      AssertEqual(0, cs.Count); 
-    }
-
-    //NodeDump(node);
-
-    {
-      var status = node.run();
-      AssertEqual(status, BHS.RUNNING);
-
-      ScriptMgr.instance.run();
-
-      var str = GetString(trace_stream);
-      AssertEqual("HERE;HERE;", str);
-
-      var cs = ScriptMgr.instance.getChildren();
-      AssertEqual(0, cs.Count); 
     }
 
     ScriptMgr.instance.stop();

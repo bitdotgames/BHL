@@ -717,6 +717,7 @@ public class FuncCtx : DynValRefcounted
   //      copied to concrete memory scope of the function
   public MemoryScope mem = new MemoryScope();
   public FuncNode fnode;
+  public bool fnode_busy;
 
   private FuncCtx(FuncSymbol fs)
   {
@@ -725,6 +726,8 @@ public class FuncCtx : DynValRefcounted
 
   public FuncNode EnsureNode()
   {
+    fnode_busy = true;
+
     if(fnode != null)
       return fnode;
 
@@ -764,7 +767,7 @@ public class FuncCtx : DynValRefcounted
 
   public FuncCtx AutoClone()
   {
-    if(fnode != null)
+    if(fnode_busy)
       return Clone(); 
     return this;
   }
@@ -863,7 +866,8 @@ public class FuncCtx : DynValRefcounted
         item.fct.mem.Clear();
         //NOTE: we don't reset fnode on purpose, 
         //      so that it will be reused on the next pool request
-        //item.fnode = ...
+        //item.fct.fnode = ...
+        item.fct.fnode_busy = false;
         item.used = false;
         pool[i] = item;
         break;
