@@ -1440,11 +1440,9 @@ public class CallFuncPtr : SequentialNode
     var interp = Interpreter.instance;
     var val = node.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(node.Name()); 
 
-    var fct = (FuncCtx)val.obj;
-     
     //NOTE: if func ctx is shared we need to make sure 
     //      we use a unique version here, hence AutoClone
-    fct = fct.AutoClone();
+    var fct = ((FuncCtx)val.obj).AutoClone();
     fct.Retain();
     var func_node = fct.EnsureNode();
 
