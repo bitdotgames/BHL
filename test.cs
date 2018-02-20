@@ -9981,7 +9981,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl);
       },
-      "missing '}' at '('"
+      "mismatched input '(' expecting '}'"
     );
   }
 
@@ -13195,7 +13195,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl);
       },
-      @"no viable alternative at input"
+      @"mismatched input '(' expecting '}'"
     );
   }
 
@@ -13214,7 +13214,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl);
       },
-      @"missing '}' at '('"
+      @"mismatched input '(' expecting '}'"
     );
   }
 

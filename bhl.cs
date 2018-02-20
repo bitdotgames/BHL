@@ -381,10 +381,12 @@ public class BHL
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
         {
           if(cnt > 0 && cnt % 500 == 0)
-            Console.WriteLine("BHL Worker " + w.id + " " + cnt + "/" + w.count);
+          {
+            var elapsed = Math.Round(sw.ElapsedMilliseconds/1000.0f,2);
+            Console.WriteLine("BHL Worker " + w.id + " " + cnt + "/" + w.count + ", " + elapsed + " sec");
+          }
 
-          //var sw1 = new Stopwatch();
-          //sw1.Start();
+          //var sw1 = Stopwatch.StartNew();
 
           var file = w.files[i]; 
           //Console.WriteLine("Processing " + file + " " + w.id);
@@ -457,8 +459,7 @@ public class BHL
           }
 
           //sw1.Stop();
-          //if(sw1.ElapsedMilliseconds > 100)
-          //  Console.WriteLine("BHL Worker {0}: slow file '{1}'({2} sec)", w.id, file, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
+          //Console.WriteLine("BHL Worker {0}: file '{1}'({2} sec)", w.id, file, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
         }
 
       }

@@ -19,7 +19,7 @@ function task_build_front_dll()
     "$BHL_ROOT/deps/metagen/metagen.cs",
     "$BHL_ROOT/src/g/*.cs",
     "$BHL_ROOT/src/*.cs",
-    "$BHL_ROOT/Antlr4.Runtime.dll", 
+    "$BHL_ROOT/Antlr4.Runtime.Standard.dll", 
   ),
   "$BHL_ROOT/bhl_front.dll",
   "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library"
@@ -101,14 +101,14 @@ function build_bin(&$runtime_args)
     "$BHL_ROOT/bhl_front.dll", 
     "$BHL_ROOT/lz4.dll", 
     "$BHL_ROOT/mono_opts.dll",
-    "$BHL_ROOT/Antlr4.Runtime.dll", 
+    "$BHL_ROOT/Antlr4.Runtime.Standard.dll", 
   );
 
   if(taskman_propor('USER_SOURCES', ''))
   {
     $user_sources = explode(',', taskman_prop('USER_SOURCES', ''));
     $user_sources[] = "$BHL_ROOT/bhl_front.dll";
-    $user_sources[] = "$BHL_ROOT/Antlr4.Runtime.dll"; 
+    $user_sources[] = "$BHL_ROOT/Antlr4.Runtime.Standard.dll"; 
     mcs_build($user_sources,
       "$BHL_ROOT/bhl_user.dll",
       "-define:BHL_FRONT -debug -target:library"
@@ -120,7 +120,7 @@ function build_bin(&$runtime_args)
   {
     $postproc_sources = explode(',', taskman_prop('POSTPROC_SOURCES', ''));
     $postproc_sources[] = "$BHL_ROOT/bhl_front.dll";
-    $postproc_sources[] = "$BHL_ROOT/Antlr4.Runtime.dll"; 
+    $postproc_sources[] = "$BHL_ROOT/Antlr4.Runtime.Standard.dll"; 
     mcs_build($postproc_sources,
       "$BHL_ROOT/bhl_postproc.dll",
       "-define:BHL_FRONT -debug -target:library"
@@ -158,7 +158,7 @@ function task_test(array $args = array())
   mcs_build(array(
     "$BHL_ROOT/test.cs",
     "$BHL_ROOT/bhl_front.dll",
-    "$BHL_ROOT/Antlr4.Runtime.dll", 
+    "$BHL_ROOT/Antlr4.Runtime.Standard.dll", 
   ),
   "$BHL_ROOT/test.exe",
   "-define:BHL_FRONT -debug"
