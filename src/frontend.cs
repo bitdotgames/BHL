@@ -2292,7 +2292,7 @@ public class ModuleRegistry
 
     Parsed parsed;
     //4. Let's try the parsed cache if it's present
-    if(parsed_cache != null && parsed_cache.TryGetValue(full_path, out parsed))
+    if(parsed_cache != null && parsed_cache.TryGetValue(full_path, out parsed) && parsed != null)
     {
       //Console.WriteLine("HIT " + full_path);
       Frontend.Parsed2AST(m, parsed, globals, this, decls_only: true);
