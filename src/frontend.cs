@@ -48,6 +48,12 @@ public class ErrorParserListener : IParserErrorListener
   {}
 }
 
+public class Parsed
+{
+  public bhlParser.ProgramContext prog;
+  public ITokenStream tokens;
+}
+
 public class Frontend : bhlBaseVisitor<object>
 {
   static int lambda_id = 0;
@@ -90,18 +96,43 @@ public class Frontend : bhlBaseVisitor<object>
       return Source2AST(mod, sfs, globs, mr);
     }
   }
+
+  public static bhlParser Source2Parser(Stream src)
+  {
+    var tokens = Source2Tokens(src);
+    var p = new bhlParser(tokens);
+    p.AddErrorListener(new ErrorParserListener());
+    p.ErrorHandler = new ErrorStrategy();
+    return p;
+  }
   
   public static AST_Module Source2AST(Module module, Stream src, GlobalScope globs, ModuleRegistry mr, bool decls_only = false)
   {
     try
     {
-      var tokens = Source2Tokens(src);
-      var p = new bhlParser(tokens);
-      p.AddErrorListener(new ErrorParserListener());
-      p.ErrorHandler = new ErrorStrategy();
+      var p = Source2Parser(src);
 
-      var f = new Frontend(module, tokens, globs, mr, decls_only);
-      var ast = f.ParseModule(p);
+      var parsed = new Parsed();
+      parsed.tokens = p.TokenStream;
+      parsed.prog = p.program();
+
+      return Parsed2AST(module, parsed, globs, mr, decls_only);
+    }
+    catch(ParseError e)
+    {
+      throw new UserError(module.file_path, e.Message);
+    }
+  }
+
+  public static AST_Module Parsed2AST(Module module, Parsed p, GlobalScope globs, ModuleRegistry mr, bool decls_only = false)
+  {
+    try
+    {
+      //var sw1 = System.Diagnostics.Stopwatch.StartNew();
+      var f = new Frontend(module, p.tokens, globs, mr, decls_only);
+      var ast = f.ParseModule(p.prog);
+      //sw1.Stop();
+      //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
       return ast;
     }
     catch(ParseError e)
@@ -210,11 +241,11 @@ public class Frontend : bhlBaseVisitor<object>
     return n;
   }
 
-  public AST_Module ParseModule(bhlParser p)
+  public AST_Module ParseModule(bhlParser.ProgramContext p)
   {
     var ast = AST_Util.New_Module(curr_module.GetId(), curr_module.norm_path);
     PushAST(ast);
-    VisitProgram(p.program());
+    VisitProgram(p);
     PopAST();
     return ast;
   }
@@ -2200,9 +2231,12 @@ public class ModuleRegistry
 
   List<string> include_path = new List<string>();
   Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
+  Dictionary<string, Parsed> parsed_cache = null;
 
-  public ModuleRegistry()
-  {}
+  public void SetParsedCache(Dictionary<string, Parsed> cache)
+  {
+    parsed_cache = cache;
+  }
 
   public void AddToIncludePath(string path)
   {
@@ -2249,17 +2283,6 @@ public class ModuleRegistry
       return m;
     }
 
-    Stream stream;
-
-    //for tests only
-    if(test_sources.Count > 0)
-    {
-      var src = test_sources[full_path];
-      stream = src.ToStream();
-    }
-    else
-      stream = File.OpenRead(full_path);
-
     //3. Ok, let's parse it otherwise
     m = new Module(norm_path, full_path);
    
@@ -2267,9 +2290,31 @@ public class ModuleRegistry
     curr_module.imports.Add(full_path, m);
     Register(m);
 
-    Frontend.Source2AST(m, stream, globals, this, decls_only: true);
+    Parsed parsed;
+    //4. Let's try the parsed cache if it's present
+    if(parsed_cache != null && parsed_cache.TryGetValue(full_path, out parsed))
+    {
+      //Console.WriteLine("HIT " + full_path);
+      Frontend.Parsed2AST(m, parsed, globals, this, decls_only: true);
+    }
+    else
+    {
+      Stream stream;
 
-    stream.Close();
+      //for tests only
+      if(test_sources.Count > 0)
+      {
+        var src = test_sources[full_path];
+        stream = src.ToStream();
+      }
+      else
+        stream = File.OpenRead(full_path);
+
+      //Console.WriteLine("MISS " + full_path);
+      Frontend.Source2AST(m, stream, globals, this, decls_only: true);
+
+      stream.Close();
+    }
 
     return m;
   }

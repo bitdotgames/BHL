@@ -2051,9 +2051,10 @@ public class ModuleLoader : IModuleLoader
 
     var ast = new AST_Module();
 
-    var ok = ast.read(mod_reader) == MetaIoError.SUCCESS;
+    var read_res = ast.read(mod_reader);
+    var ok = read_res == MetaIoError.SUCCESS;
     if(strict && !ok)
-      Util.Verify(false, "Can't load module " + id);
+      Util.Verify(false, "Can't load module " + id + "(" + read_res + ")");
 
     Util.RestoreAutogenFactory();
 
