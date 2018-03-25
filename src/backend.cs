@@ -800,53 +800,42 @@ public class FuncCtx : DynValRefcounted
   {
     if(refs != 0)
       return false;
-
+    
     Del(this);
     return true;
   }
 
   //////////////////////////////////////////////
 
-  public struct PoolItem
-  {
-    public bool used;
-    public FuncCtx fct;
-  }
-
-  static List<PoolItem> pool = new List<PoolItem>();
+  static Dictionary<FuncSymbol, Stack<FuncCtx>> pool = new Dictionary<FuncSymbol, Stack<FuncCtx>>();
   static int pool_hit;
   static int pool_miss;
+  static int pool_free;
   static int nodes_created;
 
   public static FuncCtx New(FuncSymbol fs)
   {
-    for(int i=0;i<pool.Count;++i)
+    Stack<FuncCtx> stack;
+    if(!pool.TryGetValue(fs, out stack))
     {
-      var item = pool[i];
-      if(!item.used && item.fct.fs == fs)
-      {
-        ++pool_hit;
-
-        //Util.Debug("FTX REQUEST " + item.fct.GetHashCode());
-
-        item.used = true;
-        pool[i] = item;
-        if(item.fct.refs != -1)
-          throw new Exception("Expected to be released, refs " + item.fct.refs);
-        item.fct.refs = 0;
-        return item.fct;
-      }
+      stack = new Stack<FuncCtx>();
+      pool.Add(fs, stack);
     }
 
+    if(stack.Count == 0)
     {
       ++pool_miss;
-
       var fct = new FuncCtx(fs);
-      //Util.Debug("FTX REQUEST2 " + fct.GetHashCode());
-      var item = new PoolItem();
-      item.fct = fct;
-      item.used = true;
-      pool.Add(item);
+      return fct;
+    }
+    else
+    {
+      ++pool_hit;
+      --pool_free;
+      var fct = stack.Pop();
+      if(fct.refs != -1)
+        throw new Exception("Expected to be released, refs " + fct.refs);
+      fct.refs = 0;
       return fct;
     }
   }
@@ -856,29 +845,30 @@ public class FuncCtx : DynValRefcounted
     if(fct.refs != 0)
       throw new Exception("Freeing invalid object, refs " + fct.refs);
 
-    for(int i=0;i<pool.Count;++i)
+    //NOTE: actually there must be an existing stack, throw an exception if not?
+    Stack<FuncCtx> stack;
+    if(!pool.TryGetValue(fct.fs, out stack))
     {
-      var item = pool[i];
-      if(item.fct == fct)
-      {
-        //Util.Debug("FTX RELEASE " + fct.GetHashCode());
-        item.fct.refs = -1;
-        item.fct.mem.Clear();
-        //NOTE: we don't reset fnode on purpose, 
-        //      so that it will be reused on the next pool request
-        //item.fct.fnode = ...
-        item.fct.fnode_busy = false;
-        item.used = false;
-        pool[i] = item;
-        break;
-      }
+      stack = new Stack<FuncCtx>();
+      pool.Add(fct.fs, stack);
     }
 
+    fct.refs = -1;
+    fct.mem.Clear();
+    //NOTE: we don't reset fnode on purpose, 
+    //      so that it will be reused on the next pool request
+    //fct.fnode = null;
+    fct.fnode_busy = false;
+    ++pool_free;
+    stack.Push(fct);
   }
 
   static public void PoolClear()
   {
     nodes_created = 0;
+    pool_free = 0;
+    pool_hit = 0;
+    pool_miss = 0;
     pool.Clear();
   }
 
@@ -894,20 +884,12 @@ public class FuncCtx : DynValRefcounted
 
   static public int PoolCount
   {
-    get { return pool.Count; }
+    get { return pool_miss; }
   }
 
   static public int PoolCountFree
   {
-    get {
-      int free = 0;
-      for(int i=0;i<pool.Count;++i)
-      {
-        if(!pool[i].used)
-          ++free;
-      }
-      return free;
-    }
+    get { return pool_free; }
   }
 
   static public int NodesCreated
@@ -1327,18 +1309,14 @@ public class Interpreter : AST_Visitor
     return call_stack.Peek().cargs_num;
   }
 
-  //NOTE: caching exceptions for less allocations
-  static ReturnException return_exception = new ReturnException();
-  static BreakException break_exception = new BreakException();
-
   public void JumpReturn()
   {
-    throw return_exception;
+    throw new ReturnException();
   }
 
   public void JumpBreak()
   {
-    throw break_exception;
+    throw new BreakException();
   }
 
   //TODO: implement some day
@@ -2055,10 +2033,9 @@ public class ModuleLoader : IModuleLoader
 
     var ast = new AST_Module();
 
-    var read_res = ast.read(mod_reader);
-    var ok = read_res == MetaIoError.SUCCESS;
+    var ok = ast.read(mod_reader) == MetaIoError.SUCCESS;
     if(strict && !ok)
-      Util.Verify(false, "Can't load module " + id + "(" + read_res + ")");
+      Util.Verify(false, "Can't load module " + id);
 
     Util.RestoreAutogenFactory();
 
