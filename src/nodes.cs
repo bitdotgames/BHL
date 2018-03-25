@@ -652,9 +652,7 @@ public class FuncCallNode : SequentialNode
 
   static public int PoolCountFree
   {
-    get {
-      return free_count;
-    }
+    get { return free_count; }
   }
 }
 
