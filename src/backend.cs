@@ -891,6 +891,11 @@ public class FuncCtx : DynValRefcounted
   {
     get { return pool_free; }
   }
+
+  static public int NodesCreated
+  {
+    get { return nodes_created; }
+  }
 }
 
 public class DynValList : IList<DynVal>, DynValRefcounted
