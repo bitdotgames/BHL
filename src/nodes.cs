@@ -347,7 +347,7 @@ public class GroupNode : SequentialNode
   }
 }
 
-public class FuncASTCallNode : SequentialNode 
+public class FuncASTCallNode : FuncCallNode
 {
   const int FUNC_INIT     = 0;
   const int FUNC_READY    = 1;
@@ -355,43 +355,41 @@ public class FuncASTCallNode : SequentialNode
 
   PoolItem pool_item;
   int func_status = FUNC_INIT;
-  int stack_size_before;
 
-  public AST_Call node;
-
-  public FuncASTCallNode(AST_Call node)
-  {
-    this.node = node;
-  }
+  public FuncASTCallNode(AST_Call ast)
+    : base(ast)
+  {}
 
   void AttachUserFunc(Interpreter interp, PoolItem pi)
   {
-    pi.fnode.args_num = node.cargs_num;
+    pi.fnode.args_num = ast.cargs_num;
     var default_args_num = pi.fnode.DefaultArgsNum();
 
     //1. func args 
-    for(int i=0;i<node.cargs_num;++i)
-      interp.Visit(node.children[i]);
+    for(int i=0;i<ast.cargs_num;++i)
+      interp.Visit(ast.children[i]);
 
     //2. evaluating default args
     for(int i=0;i<default_args_num;++i)
     {
-      var decl_arg = pi.fnode.DeclArg(node.cargs_num + i);
+      var decl_arg = pi.fnode.DeclArg(ast.cargs_num + i);
       if(decl_arg.children.Count == 0)
-        throw new Exception("Bad default arg at idx " + (node.cargs_num + i) + " func " + pi.fnode.GetName());
+        throw new Exception("Bad default arg at idx " + (ast.cargs_num + i) + " func " + pi.fnode.GetName());
       interp.Visit(decl_arg.children[0]);
     }
   }
 
-  void Attach(Interpreter interp)
+  void Attach()
   {
     if(func_status == FUNC_INIT)
     {
+      var interp = Interpreter.instance;
+
       func_status = FUNC_READY;
 
       interp.PushNode(this);
 
-      var pi = PoolRequest(node);
+      var pi = PoolRequest(ast);
 
       AttachUserFunc(interp, pi);
 
@@ -404,8 +402,8 @@ public class FuncASTCallNode : SequentialNode
     {
       func_status = FUNC_READY;
 
-      var pi = PoolRequest(node);
-      pi.fnode.args_num = node.cargs_num;
+      var pi = PoolRequest(ast);
+      pi.fnode.args_num = ast.cargs_num;
 
       children[children.Count-1] = pi.fnode;
       pool_item = pi;
@@ -414,65 +412,9 @@ public class FuncASTCallNode : SequentialNode
 
   override public void init()
   {
-    var interp = Interpreter.instance;
-
-    Attach(interp);
-
-    stack_size_before = interp.stack.Count;
-    //NOTE: if it's a method call we need to take into account
-    //      pushed object instance as well
-    if(node.scope_ntype != 0)
-      --stack_size_before;
+    Attach();
 
     base.init();
-  }
-
-  override public BHS execute()
-  {
-    var interp = Interpreter.instance;
-
-    //var status = base.execute();
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    BHS status = BHS.SUCCESS;
-    while(currentPosition < children.Count)
-    {
-      var currentTask = children[currentPosition];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-
-      //NOTE: the last node is actually the func call so
-      //      we push it on to the call stack when it's executed
-      bool is_func_call = currentPosition == children.Count-1;
-      if(is_func_call)
-        interp.call_stack.Push(node);
-
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init();
-      status = currentTask.execute();
-      currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = currentTask.currStatus;
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit();
-
-      //NOTE: only when it's actual func call we pop it from the call stack
-      //      and apply required stack cleanups
-      if(is_func_call)
-        interp.call_stack.DecFast();
-      //NOTE: force cleaning of the args.value stack in case of FAILURE while
-      //      we are still processing arguments
-      else if(status == BHS.FAILURE)
-        interp.PopValues(interp.stack.Count - stack_size_before);
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++currentPosition;
-      else
-        break;
-    } 
-    if(status != BHS.RUNNING)
-      currentPosition = 0;
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-
-    return status;
   }
 
   override public void deinit()
@@ -489,9 +431,10 @@ public class FuncASTCallNode : SequentialNode
     }
   }
 
-  override public string inspect() 
+  override public void defer()
   {
-    return "" + node.Name();
+    //NOTE: this node intentionally calls defer for its children upon deinit,
+    //      not here
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -645,13 +588,13 @@ public class FuncASTCallNode : SequentialNode
   }
 }
 
-public class FuncBindCallNode : SequentialNode 
+public abstract class FuncCallNode : SequentialNode
 {
   int stack_size_before;
 
   public AST_Call ast;
 
-  public FuncBindCallNode(AST_Call ast)
+  public FuncCallNode(AST_Call ast)
   {
     this.ast = ast;
   }
@@ -716,6 +659,18 @@ public class FuncBindCallNode : SequentialNode
 
     return status;
   }
+
+  override public string inspect() 
+  {
+    return "" + ast.Name();
+  }
+}
+
+public class FuncBindCallNode : FuncCallNode
+{
+  public FuncBindCallNode(AST_Call ast)
+    : base(ast)
+  {}
 
   override public void deinit()
   {
