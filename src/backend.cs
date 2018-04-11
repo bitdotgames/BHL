@@ -1778,7 +1778,7 @@ public class Interpreter : AST_Visitor
     }
     else
     {
-      curr_node.addChild(new FuncASTCallNode(ast));  
+      curr_node.addChild(new FuncCallNode(ast));  
     }
   }
 

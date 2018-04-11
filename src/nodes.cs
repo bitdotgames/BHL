@@ -347,7 +347,7 @@ public class GroupNode : SequentialNode
   }
 }
 
-public class FuncASTCallNode : FuncCallNode
+public class FuncCallNode : FuncBaseCallNode
 {
   const int FUNC_INIT     = 0;
   const int FUNC_READY    = 1;
@@ -356,7 +356,7 @@ public class FuncASTCallNode : FuncCallNode
   PoolItem pool_item;
   int func_status = FUNC_INIT;
 
-  public FuncASTCallNode(AST_Call ast)
+  public FuncCallNode(AST_Call ast)
     : base(ast)
   {}
 
@@ -588,13 +588,12 @@ public class FuncASTCallNode : FuncCallNode
   }
 }
 
-public abstract class FuncCallNode : SequentialNode
+public abstract class FuncBaseCallNode : SequentialNode
 {
+  public AST_Call ast;
   int stack_size_before;
 
-  public AST_Call ast;
-
-  public FuncCallNode(AST_Call ast)
+  public FuncBaseCallNode(AST_Call ast)
   {
     this.ast = ast;
   }
@@ -666,7 +665,7 @@ public abstract class FuncCallNode : SequentialNode
   }
 }
 
-public class FuncBindCallNode : FuncCallNode
+public class FuncBindCallNode : FuncBaseCallNode
 {
   public FuncBindCallNode(AST_Call ast)
     : base(ast)
@@ -684,7 +683,7 @@ public class FuncBindCallNode : FuncCallNode
   }
 }
 
-public class CallConfNode : FuncCallNode
+public class CallConfNode : FuncBaseCallNode
 {
   public bool push = false;
   public BehaviorTreeNode conf_node;
@@ -1395,7 +1394,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
   }
 }
 
-public class CallFuncPtr : FuncCallNode
+public class CallFuncPtr : FuncBaseCallNode
 {
   public CallFuncPtr(AST_Call ast)
     : base(ast)
