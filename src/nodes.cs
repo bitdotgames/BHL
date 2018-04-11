@@ -1449,22 +1449,16 @@ public class ConstructNode : BehaviorTreeTerminalNode
   }
 }
 
-public class CallFuncPtr : SequentialNode
+public class CallFuncPtr : FuncCallNode
 {
-  AST_Call node;
-  int stack_size_before;
-
-  public CallFuncPtr(AST_Call node)
-  {
-    this.node = node;
-  }
+  public CallFuncPtr(AST_Call ast)
+    : base(ast)
+  {}
 
   public override void init() 
   {
-    base.init();
-
     var interp = Interpreter.instance;
-    var val = node.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(node.Name()); 
+    var val = ast.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(ast.Name()); 
 
     var fct = ((FuncCtx)val.obj);
     //NOTE: Func ctx may be shared and we need to make sure 
@@ -1483,8 +1477,8 @@ public class CallFuncPtr : SequentialNode
     if(children.Count == 0)
     {
       interp.PushNode(this);
-      for(int i=0;i<node.cargs_num;++i)
-        interp.Visit(node.children[i]);
+      for(int i=0;i<ast.cargs_num;++i)
+        interp.Visit(ast.children[i]);
       interp.PopNode();
 
       children.Add(func_node);
@@ -1492,7 +1486,7 @@ public class CallFuncPtr : SequentialNode
     else
       children[children.Count-1] = func_node;
 
-    stack_size_before = interp.stack.Count;
+    base.init();
   }
 
   override public void deinit()
@@ -1509,60 +1503,12 @@ public class CallFuncPtr : SequentialNode
     stopChildren();
   }
 
-  public override BHS execute()
-  {
-    var interp = Interpreter.instance;
-
-    BHS status = BHS.SUCCESS;
-    while(currentPosition < children.Count)
-    {
-      var currentTask = children[currentPosition];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      //NOTE: the last node is actually the func call so
-      //      we push it on to the call stack when it's executed
-      bool is_func_call = currentPosition == children.Count-1;
-      if(is_func_call)
-        interp.call_stack.Push(node);
-
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init();
-      status = currentTask.execute();
-      currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = currentTask.currStatus;
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit();
-
-      //NOTE: only when it's actual func call we pop it from the call stack
-      //      and apply required stack cleanups
-      if(is_func_call)
-      {
-        interp.call_stack.DecFast();
-      }
-      //NOTE: force cleaning of the args.value stack in case of FAILURE while
-      //      we are still processing arguments
-      else if(status == BHS.FAILURE)
-      {
-        interp.PopValues(interp.stack.Count - stack_size_before);
-      }
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++currentPosition;
-      else
-        break;
-    } 
-    if(status != BHS.RUNNING)
-      currentPosition = 0;
-
-    return status;
-  }
-
   public override string inspect()
   {
-    if(node.type == EnumCall.FUNC_PTR_POP)
+    if(ast.type == EnumCall.FUNC_PTR_POP)
       return "<-";
     else
-      return ""+node.name;
+      return ""+ast.name;
   }
 }
 
