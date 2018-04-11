@@ -1107,7 +1107,7 @@ public class Frontend : bhlBaseVisitor<object>
       type = EnumBinaryOp.SUB;
     else
       throw new Exception("Unknown type");
-
+    
     var ast = AST_Util.New_BinaryOpExp(type);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);

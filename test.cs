@@ -3940,6 +3940,354 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPlusNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      Color c3 = c1 + c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestMinusNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      Color c3 = c1 - c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestMultNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      Color c3 = c1 * c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestDivNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      Color c3 = c1 / c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestGtNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool r = c1 > c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestGteNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool r = c1 >= c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestLtNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool r = c1 > c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestLteNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool r = c1 > c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestUnaryMinusNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2 = -c1
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"must be numeric type"
+    );
+  }
+
+  [IsTested()]
+  public void TestBitAndNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      int a = c2 & c1
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"must be int type"
+    );
+  }
+
+  [IsTested()]
+  public void TestBitOrNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      int a = c2 | c1
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"must be int type"
+    );
+  }
+
+  [IsTested()]
+  public void TestLogicalAndNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool a = c2 && c1
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"must be bool type"
+    );
+  }
+
+  [IsTested()]
+  public void TestLogicalOrNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool a = c2 || c1
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"must be bool type"
+    );
+  }
+
+  [IsTested()]
+  public void TestUnaryNotNotOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      bool a = !c1
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      @"must be bool type"
+    );
+  }
+
+  [IsTested()]
   public void TestAnyNullEquality()
   {
     string bhl = @"

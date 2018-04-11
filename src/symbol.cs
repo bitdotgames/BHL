@@ -1328,13 +1328,47 @@ static public class SymbolTable
     );
   }
 
+  static public bool IsBopCompatibleType(Type type)
+  {
+    return type == _boolean || 
+           type == _string ||
+           type == _int ||
+           type == _float;
+  }
+
   static public Type Bop(WrappedNode a, WrappedNode b) 
   {
+    if(!IsBopCompatibleType(a.eval_type))
+      throw new UserError(
+        a.Location()+" operator is not overloaded"
+      );
+
+    if(!IsBopCompatibleType(b.eval_type))
+      throw new UserError(
+        b.Location()+" operator is not overloaded"
+      );
+
     return GetResultType(arithmeticResultType, a, b);
+  }
+
+  static public bool IsRelopCompatibleType(Type type)
+  {
+    return type == _int ||
+           type == _float;
   }
 
   static public Type Relop(WrappedNode a, WrappedNode b) 
   {
+    if(!IsRelopCompatibleType(a.eval_type))
+      throw new UserError(
+        a.Location()+" operator is not overloaded"
+      );
+
+    if(!IsRelopCompatibleType(b.eval_type))
+      throw new UserError(
+        b.Location()+" operator is not overloaded"
+      );
+
     GetResultType(relationalResultType, a, b);
     // even if the operands are incompatible, the type of
     // this operation must be boolean
@@ -1350,7 +1384,7 @@ static public class SymbolTable
   static public Type Uminus(WrappedNode a) 
   {
     if(!(a.eval_type == _int || a.eval_type == _float)) 
-      throw new UserError(a.Location()+" must have int/float type");
+      throw new UserError(a.Location()+" must be numeric type");
 
     return a.eval_type;
   }
@@ -1358,10 +1392,10 @@ static public class SymbolTable
   static public Type Bitop(WrappedNode a, WrappedNode b) 
   {
     if(a.eval_type != _int) 
-      throw new UserError(a.Location()+" must have int type");
+      throw new UserError(a.Location()+" must be int type");
 
     if(b.eval_type != _int)
-      throw new UserError(b.Location()+" must have int type");
+      throw new UserError(b.Location()+" must be int type");
 
     return _int;
   }
@@ -1369,10 +1403,10 @@ static public class SymbolTable
   static public Type Lop(WrappedNode a, WrappedNode b) 
   {
     if(a.eval_type != _boolean) 
-      throw new UserError(a.Location()+" must have bool type");
+      throw new UserError(a.Location()+" must be bool type");
 
     if(b.eval_type != _boolean)
-      throw new UserError(b.Location()+" must have bool type");
+      throw new UserError(b.Location()+" must be bool type");
 
     return _boolean;
   }
@@ -1380,7 +1414,7 @@ static public class SymbolTable
   static public Type Unot(WrappedNode a) 
   {
     if(a.eval_type != _boolean) 
-      throw new UserError(a.Location()+" must have boolean type");
+      throw new UserError(a.Location()+" must be bool type");
 
     return a.eval_type;
   }
