@@ -363,12 +363,11 @@ public class FuncCallNode : FuncBaseCallNode
 
   void VisitCallArgs(Interpreter interp, FuncNode fnode)
   {
-    var default_args_num = fnode.DefaultArgsNum();
-
     //1. func args 
     for(int i=0;i<ast.cargs_num;++i)
       interp.Visit(ast.children[i]);
 
+    var default_args_num = fnode.DefaultArgsNum();
     //2. evaluating default args
     for(int i=0;i<default_args_num;++i)
     {
@@ -1981,7 +1980,8 @@ public class FuncNodeLambda : FuncNodeAST
 
   public override void init()
   {
-    this.mem.CopyFrom(fct.mem);
+    if(fct.mem != null)
+      this.mem.CopyFrom(fct.mem);
 
     base.init();
   }
@@ -2053,7 +2053,8 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     if(lmb != null)
     {
       //Console.WriteLine("PUSH LCTX " + this.GetHashCode() + " " + ldecl.useparams.Count);
-
+      if(fct.mem == null && lmb.decl.useparams.Count > 0)
+        fct.mem = new MemoryScope();
       //setting use params to its own memory scope
       for(int i=0;i<lmb.decl.useparams.Count;++i)
       {
