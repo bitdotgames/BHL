@@ -363,7 +363,7 @@ public class FuncCallNode : FuncBaseCallNode
     : base(ast)
   {}
 
-  void AttachUserFunc(Interpreter interp, PoolItem pi)
+  void FillArgs(Interpreter interp, PoolItem pi)
   {
     pi.fnode.args_num = ast.cargs_num;
     var default_args_num = pi.fnode.DefaultArgsNum();
@@ -394,7 +394,7 @@ public class FuncCallNode : FuncBaseCallNode
 
       var pi = PoolRequest(ast);
 
-      AttachUserFunc(interp, pi);
+      FillArgs(interp, pi);
 
       pool_item = pi;
       this.addChild(pool_item.fnode);
@@ -670,9 +670,26 @@ public abstract class FuncBaseCallNode : SequentialNode
 
 public class FuncBindCallNode : FuncBaseCallNode
 {
-  public FuncBindCallNode(AST_Call ast)
+  public FuncBindCallNode(AST_Call ast, FuncBindSymbol symb)
     : base(ast)
-  {}
+  {
+    var interp = Interpreter.instance;
+    interp.PushNode(this, attach_as_child: false);
+
+    //1. func args
+    for(int i=0;i<ast.cargs_num;++i)
+      interp.Visit(ast.children[i]);
+
+    //TODO: user bind funcs don't support evalulated default args
+    //2. evaluating default args
+    //for(int i=0;i<fbind_symb.def_args_num;++i)
+    //{
+    //}
+
+    this.addChild(symb.func_creator());
+
+    interp.PopNode();
+  }
 
   override public void deinit()
   {

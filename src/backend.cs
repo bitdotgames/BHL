@@ -1766,24 +1766,11 @@ public class Interpreter : AST_Visitor
     {
       bool has_args = ast.cargs_num > 0 || fbind_symb.def_args_num > 0;
 
-      //special case if it's bind symbol without any args
       if(has_args)
-        PushNode(new FuncBindCallNode(ast));
-
-      //1. func args
-      for(int i=0;i<ast.cargs_num;++i)
-        Visit(ast.children[i]);
-
-      //TODO: user bind funcs don't support evalulated default args
-      //2. evaluating default args
-      //for(int i=0;i<fbind_symb.def_args_num;++i)
-      //{
-      //}
-
-      curr_node.addChild(fbind_symb.func_creator());
-
-      if(has_args)
-        PopNode();
+        curr_node.addChild(new FuncBindCallNode(ast, fbind_symb));
+      //special case if it's a simple bind symbol call without any args
+      else
+        curr_node.addChild(fbind_symb.func_creator());
     }
     else
     {
