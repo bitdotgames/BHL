@@ -1288,7 +1288,7 @@ public class Interpreter : AST_Visitor
     return GetFuncNode(Util.GetFuncId(module_name, func_name));
   }
 
-  FuncNode GetMFuncNode(HashedName class_type, HashedName name)
+  public FuncNode GetMFuncNode(HashedName class_type, HashedName name)
   {
     var func_symb = ResolveClassMember(class_type, name) as FuncBindSymbol;
     if(func_symb != null)

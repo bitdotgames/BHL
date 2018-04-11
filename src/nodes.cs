@@ -32,6 +32,8 @@ public interface BehaviorVisitor
   void visit(BehaviorTreeNode node);
 }
 
+//NOTE: this one probably should be an interface but for simplicity
+//      and efficiency reasons it is not
 public abstract class BehaviorTreeNode : BehaviorVisitable
 {
   //NOTE: semi-private, public for inlining
@@ -75,6 +77,7 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
   public virtual string inspect() { return ""; }
 
   public BHS getStatus() { return currStatus; }
+  //TODO: these two below are for inspecting purposes only
   public BHS getExecuteStatus() { return lastExecuteStatus; }
   public void resetExecuteStatus() { lastExecuteStatus = currStatus; }
 
@@ -1999,6 +2002,8 @@ public class FuncNodeLambda : FuncNodeAST
   }
 }
 
+//NOTE: this one is ugly and probably should not event exist 
+//      but it does just for the consistency
 public class FuncNodeBind : FuncNode
 {
   public FuncBindSymbol symb;
