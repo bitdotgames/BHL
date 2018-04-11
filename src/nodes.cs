@@ -557,7 +557,7 @@ public class FuncCallNode : FuncBaseCallNode
 
     pi.id = ++last_pool_id;
     var fnode = interp.GetFuncNode(pi.ast);
-    if(fnode is FuncNodeBind)
+    if(!(fnode is FuncNodeAST))
       throw new Exception("Not expected type of node");
     pi.fnode = fnode;
   }
