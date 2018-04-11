@@ -382,7 +382,7 @@ public class FuncCallNode : FuncBaseCallNode
     }
   }
 
-  void Attach()
+  override public void init()
   {
     if(func_status == FUNC_INIT)
     {
@@ -412,11 +412,6 @@ public class FuncCallNode : FuncBaseCallNode
       children[children.Count-1] = pi.fnode;
       idx_in_pool = pi.idx;
     }
-  }
-
-  override public void init()
-  {
-    Attach();
 
     base.init();
   }
