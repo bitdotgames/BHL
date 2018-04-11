@@ -361,9 +361,8 @@ public class FuncCallNode : FuncBaseCallNode
     : base(ast)
   {}
 
-  void InitArgs(Interpreter interp, FuncNode fnode)
+  void VisitCallArgs(Interpreter interp, FuncNode fnode)
   {
-    fnode.args_num = ast.cargs_num;
     var default_args_num = fnode.DefaultArgsNum();
 
     //1. func args 
@@ -386,14 +385,11 @@ public class FuncCallNode : FuncBaseCallNode
     {
       var interp = Interpreter.instance;
 
-      interp.PushNode(this);
-
       var pi = PoolRequest(ast);
 
-      InitArgs(interp, pi.fnode);
-
+      interp.PushNode(this);
+      VisitCallArgs(interp, pi.fnode);
       this.addChild(pi.fnode);
-
       interp.PopNode();
 
       idx_in_pool = pi.idx;
@@ -401,8 +397,6 @@ public class FuncCallNode : FuncBaseCallNode
     else if(idx_in_pool == IDX_DETACHED)
     {
       var pi = PoolRequest(ast);
-      //setting actual number of passed arguments
-      pi.fnode.args_num = ast.cargs_num;
 
       children[children.Count-1] = pi.fnode;
 
@@ -475,9 +469,9 @@ public class FuncCallNode : FuncBaseCallNode
   static int pool_hit;
   static int pool_miss;
 
-  static PoolItem PoolRequest(AST_Call node)
+  static PoolItem PoolRequest(AST_Call ast)
   {
-    ulong pool_id = node.FuncId(); 
+    ulong pool_id = ast.FuncId(); 
 
     int idx_in_pool = -1;
     if(func2last_free.TryGetValue(pool_id, out idx_in_pool) && idx_in_pool != -1)
@@ -493,11 +487,13 @@ public class FuncCallNode : FuncBaseCallNode
 
       pi.next_free = -1;
       pool[idx_in_pool] = pi;
+      //setting actual number of passed arguments
+      pi.fnode.args_num = ast.cargs_num;
       return pi;
     }
 
     {
-      var pi = new PoolItem(node);
+      var pi = new PoolItem(ast);
 
       InitPoolItem(ref pi);
 
@@ -508,6 +504,8 @@ public class FuncCallNode : FuncBaseCallNode
 
       ++pool_miss;
 
+      //setting actual number of passed arguments
+      pi.fnode.args_num = ast.cargs_num;
       return pi;
     }
   }
