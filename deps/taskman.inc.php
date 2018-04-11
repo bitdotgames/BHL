@@ -11,21 +11,7 @@ $GLOBALS['TASKMAN_CURRENT_TASK'] = null;
 $GLOBALS['TASKMAN_CONFIG'] = array();
 
 class TaskmanException extends Exception
-{
-  public function __toString()
-  {
-    global $TASKMAN_STACK;
-
-    $stack_str = ''; 
-    foreach($TASKMAN_STACK as $task)
-    {
-      $stack_str .= '->' . $task->getName();
-    }
-    return get_class($this) . 
-            " '{$this->message}' in {$this->file}({$this->line})\n" . 
-            "{$this->getTraceAsString()}\ntasks: $stack_str";
-  }
-}
+{}
 
 class TaskmanTask
 {
@@ -565,7 +551,7 @@ function taskman_shell_ensure($cmd, &$out=null)
 {
   taskman_shell($cmd, $ret, $out);
   if($ret != 0)
-    throw new TaskmanException("Shell execution error(exit code $ret)" .  (is_array($out) ? ":\n" . implode("\n", $out) : ''));
+    throw new TaskmanException("Shell execution error(exit code $ret)");
 }
 
 function taskman_shell($cmd, &$ret=null, &$out=null)
