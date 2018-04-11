@@ -2064,7 +2064,7 @@ public class FuncNodeBinding : FuncNode
     this.addChild(CreateBindingNode());
   }
 
-  public BehaviorTreeNode CreateBindingNode()
+  BehaviorTreeNode CreateBindingNode()
   {
     if(symb.func_creator == null)
       throw new Exception("Function binding is not found: " + symb.name);
