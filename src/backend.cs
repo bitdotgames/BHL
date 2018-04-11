@@ -733,12 +733,14 @@ public class FuncCtx : DynValRefcounted
 
     ++nodes_created;
 
-    if(fs is FuncBindSymbol)
-      fnode = new FuncNodeBinding(fs as FuncBindSymbol, this);
+    if(fs is FuncSymbolAST)
+      fnode = new FuncNodeAST((fs as FuncSymbolAST).decl, this);
     else if(fs is LambdaSymbol)
       fnode = new FuncNodeLambda(this);
+    else if(fs is FuncBindSymbol)
+      fnode = new FuncNodeBind(fs as FuncBindSymbol, this);
     else
-      fnode = new FuncNodeAST((fs as FuncSymbolAST).decl, this);
+      throw new Exception("Unknown symbol type");
 
     return fnode;
   }
@@ -1273,7 +1275,7 @@ public class Interpreter : AST_Visitor
     var s = symbols.resolve(name);
 
     if(s is FuncBindSymbol)
-      return new FuncNodeBinding(s as FuncBindSymbol, null);
+      return new FuncNodeBind(s as FuncBindSymbol, null);
     else if(s is FuncSymbolAST)
       return new FuncNodeAST((s as FuncSymbolAST).decl, null);
     else
@@ -1286,11 +1288,11 @@ public class Interpreter : AST_Visitor
     return GetFuncNode(Util.GetFuncId(module_name, func_name));
   }
 
-  public FuncNode GetMFuncNode(HashedName class_type, HashedName name)
+  FuncNode GetMFuncNode(HashedName class_type, HashedName name)
   {
     var func_symb = ResolveClassMember(class_type, name) as FuncBindSymbol;
     if(func_symb != null)
-      return new FuncNodeBinding(func_symb, null);
+      return new FuncNodeBind(func_symb, null);
 
     throw new Exception("Not a func symbol: " + name);
   }

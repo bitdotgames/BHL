@@ -554,7 +554,7 @@ public class FuncCallNode : FuncBaseCallNode
 
     pi.id = ++last_pool_id;
     var fnode = interp.GetFuncNode(pi.ast);
-    if(fnode is FuncNodeBinding)
+    if(fnode is FuncNodeBind)
       throw new Exception("Not expected type of node");
     pi.fnode = fnode;
   }
@@ -1999,6 +1999,39 @@ public class FuncNodeLambda : FuncNodeAST
   }
 }
 
+public class FuncNodeBind : FuncNode
+{
+  public FuncBindSymbol symb;
+
+  public FuncNodeBind(FuncBindSymbol symb, FuncCtx fct)
+  {
+    this.fct = fct;
+    this.symb = symb;
+
+    if(symb.func_creator == null)
+      throw new Exception("Function binding is not found: " + symb.name);
+    this.addChild(symb.func_creator());
+  }
+
+  public override void init() 
+  {
+    if(this.args_num > symb.GetMembers().Count)
+      throw new Exception("Too many args for func " + symb.name);
+
+    base.init();
+  }
+
+  public override HashedName GetName()
+  {
+    return symb.name;
+  }
+
+  public override string inspect()
+  {
+    return symb.name + "(<- x " + this.args_num + ") ";
+  }
+}
+
 public class PushFuncCtxNode : BehaviorTreeTerminalNode
 {
   FuncSymbol fs;
@@ -2049,44 +2082,6 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
   public override string inspect()
   {
     return fs.name + " ->";
-  }
-}
-
-public class FuncNodeBinding : FuncNode
-{
-  public FuncBindSymbol symb;
-
-  public FuncNodeBinding(FuncBindSymbol symb, FuncCtx fct)
-  {
-    this.fct = fct;
-    this.symb = symb;
-    this.addChild(CreateBindingNode());
-  }
-
-  BehaviorTreeNode CreateBindingNode()
-  {
-    if(symb.func_creator == null)
-      throw new Exception("Function binding is not found: " + symb.name);
-
-    return symb.func_creator();
-  }
-
-  public override void init() 
-  {
-    if(this.args_num > symb.GetMembers().Count)
-      throw new Exception("Too many args for func " + symb.name);
-
-    base.init();
-  }
-
-  public override HashedName GetName()
-  {
-    return symb.name;
-  }
-
-  public override string inspect()
-  {
-    return symb.name + "(<- x " + this.args_num + ") ";
   }
 }
 
