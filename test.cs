@@ -722,6 +722,58 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestUserFuncBinding()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      trace(""HERE"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+    //NodeDump(node);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("HERE", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserFuncBindWithoutArgs()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int n = answer42()
+      return n
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindAnswer42(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(42, num);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUserFuncBindConflict()
   {
     string bhl = @"
@@ -5430,6 +5482,15 @@ public class BHL_Test
     }
   }
 
+  void BindAnswer42(GlobalScope globs)
+  {
+    {
+      var fn = new SimpleFuncBindSymbol("answer42", globs.type("int"),
+          delegate() { Interpreter.instance.PushValue(DynVal.NewNum(42)); return BHS.SUCCESS; } );
+      globs.define(fn);
+    }
+  }
+
   //simple console outputting version
   void BindLog(GlobalScope globs)
   {
@@ -9598,7 +9659,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
 
-    AssertEqual(FuncCallNode.PoolCount, 0);
+    AssertEqual(FuncASTCallNode.PoolCount, 0);
 
     {
       var node = intp.GetFuncNode("test");
@@ -9609,7 +9670,7 @@ public class BHL_Test
       CommonChecks(intp);
     }
 
-    AssertEqual(FuncCallNode.PoolCount, 1);
+    AssertEqual(FuncASTCallNode.PoolCount, 1);
 
     {
       var node = intp.GetFuncNode("test");
@@ -9620,7 +9681,7 @@ public class BHL_Test
       CommonChecks(intp);
     }
 
-    AssertEqual(FuncCallNode.PoolCount, 1);
+    AssertEqual(FuncASTCallNode.PoolCount, 1);
   }
 
   [IsTested()]
@@ -9645,34 +9706,34 @@ public class BHL_Test
 
     var intp = Interpret("", bhl);
 
-    AssertEqual(FuncCallNode.PoolCount, 0);
-    AssertEqual(FuncCallNode.PoolCountFree, 0);
+    AssertEqual(FuncASTCallNode.PoolCount, 0);
+    AssertEqual(FuncASTCallNode.PoolCountFree, 0);
 
     var node1 = intp.GetFuncNode("test");
     node1.SetArgs(DynVal.NewNum(3));
     var status = node1.run();
     AssertEqual(BHS.RUNNING, status);
     
-    AssertEqual(FuncCallNode.PoolCount, 1);
-    AssertEqual(FuncCallNode.PoolCountFree, 0);
+    AssertEqual(FuncASTCallNode.PoolCount, 1);
+    AssertEqual(FuncASTCallNode.PoolCountFree, 1);
 
     var node2 = intp.GetFuncNode("test");
     node2.SetArgs(DynVal.NewNum(30));
     status = node2.run();
     AssertEqual(BHS.RUNNING, status);
 
-    AssertEqual(FuncCallNode.PoolCount, 2);
-    AssertEqual(FuncCallNode.PoolCountFree, 0);
+    AssertEqual(FuncASTCallNode.PoolCount, 1);
+    AssertEqual(FuncASTCallNode.PoolCountFree, 1);
 
     node1.stop();
 
-    AssertEqual(FuncCallNode.PoolCount, 2);
-    AssertEqual(FuncCallNode.PoolCountFree, 1);
+    AssertEqual(FuncASTCallNode.PoolCount, 1);
+    AssertEqual(FuncASTCallNode.PoolCountFree, 1);
 
     node2.stop();
 
-    AssertEqual(FuncCallNode.PoolCount, 2);
-    AssertEqual(FuncCallNode.PoolCountFree, 2);
+    AssertEqual(FuncASTCallNode.PoolCount, 1);
+    AssertEqual(FuncASTCallNode.PoolCountFree, 1);
   }
 
   [IsTested()]
@@ -9742,7 +9803,7 @@ public class BHL_Test
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    AssertEqual(FuncCallNode.PoolCount, 0);
+    AssertEqual(FuncASTCallNode.PoolCount, 0);
     {
       var s = node.run();
       AssertEqual(BHS.RUNNING, s);
@@ -9767,8 +9828,8 @@ public class BHL_Test
     AssertEqual(">1" + ">2" + ">3", str);
     CommonChecks(intp);
 
-    AssertEqual(FuncCallNode.PoolCount, 3);
-    AssertEqual(FuncCallNode.PoolCountFree, 3);
+    AssertEqual(FuncASTCallNode.PoolCount, 3);
+    AssertEqual(FuncASTCallNode.PoolCountFree, 3);
   }
 
   [IsTested()]
@@ -12048,6 +12109,41 @@ public class BHL_Test
     ";
 
     var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+    //NodeDump(node);
+    AssertEqual(intp.stack.Count, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackUserBind()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      FAILURE()
+      return 100
+    }
+
+    func test() 
+    {
+      hey(""bar"", foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("hey", globs.type("void"),
+          delegate() { return BHS.SUCCESS; } );
+      fn.define(new FuncArgSymbol("s", globs.type("string")));
+      fn.define(new FuncArgSymbol("i", globs.type("int")));
+      globs.define(fn);
+    }
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
@@ -16031,7 +16127,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     DynVal.PoolClear();
     DynValList.PoolClear();
-    FuncCallNode.PoolClear();
+    FuncASTCallNode.PoolClear();
     FuncCtx.PoolClear();
 
     globs = globs == null ? SymbolTable.CreateBuiltins() : globs;

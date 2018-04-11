@@ -347,7 +347,7 @@ public class GroupNode : SequentialNode
   }
 }
 
-public class FuncCallNode : SequentialNode 
+public class FuncASTCallNode : SequentialNode 
 {
   const int FUNC_INIT     = 0;
   const int FUNC_READY    = 1;
@@ -359,12 +359,12 @@ public class FuncCallNode : SequentialNode
 
   public AST_Call node;
 
-  public FuncCallNode(AST_Call node)
+  public FuncASTCallNode(AST_Call node)
   {
     this.node = node;
   }
 
-  void InflateUserFunc(Interpreter interp, PoolItem pi)
+  void AttachUserFunc(Interpreter interp, PoolItem pi)
   {
     pi.fnode.args_num = node.cargs_num;
     var default_args_num = pi.fnode.DefaultArgsNum();
@@ -383,7 +383,7 @@ public class FuncCallNode : SequentialNode
     }
   }
 
-  void Inflate(Interpreter interp)
+  void Attach(Interpreter interp)
   {
     if(func_status == FUNC_INIT)
     {
@@ -393,10 +393,10 @@ public class FuncCallNode : SequentialNode
 
       var pi = PoolRequest(node);
 
-      InflateUserFunc(interp, pi);
+      AttachUserFunc(interp, pi);
 
       pool_item = pi;
-      this.addChild(pool_item.bnode);
+      this.addChild(pool_item.fnode);
 
       interp.PopNode();
     }
@@ -407,7 +407,7 @@ public class FuncCallNode : SequentialNode
       var pi = PoolRequest(node);
       pi.fnode.args_num = node.cargs_num;
 
-      children[children.Count-1] = pi.bnode;
+      children[children.Count-1] = pi.fnode;
       pool_item = pi;
     }
   }
@@ -416,7 +416,7 @@ public class FuncCallNode : SequentialNode
   {
     var interp = Interpreter.instance;
 
-    Inflate(interp);
+    Attach(interp);
 
     stack_size_before = interp.stack.Count;
     //NOTE: if it's a method call we need to take into account
@@ -477,18 +477,12 @@ public class FuncCallNode : SequentialNode
 
   override public void deinit()
   {
-    //NOTE: we don't stop children here because this node behaves NOT like
-    //      a block node but rather emulating a terminal node
-  }
-
-  override public void defer()
-  {
     stopChildren();
 
     if(!pool_item.IsEmpty() && pool_item.IsCached())
     {
-      if(pool_item.bnode.getStatus() != BHS.NONE)
-        throw new Exception("Bad status: " + pool_item.bnode.getStatus());
+      if(pool_item.fnode.getStatus() != BHS.NONE)
+        throw new Exception("Bad status: " + pool_item.fnode.getStatus());
       PoolFree(pool_item);
       pool_item.Clear();
       func_status = FUNC_DETACHED;
@@ -515,7 +509,6 @@ public class FuncCallNode : SequentialNode
 
     public AST_Call ast;
     public FuncNode fnode;
-    public BehaviorTreeNode bnode;
 
     public PoolItem(AST_Call _ast)
     {
@@ -524,7 +517,6 @@ public class FuncCallNode : SequentialNode
       next_free = -1;
       ast = _ast;
       fnode = null;
-      bnode = null;
     }
 
     public bool IsEmpty()
@@ -543,7 +535,6 @@ public class FuncCallNode : SequentialNode
       next_free = -1;
       ast = null;
       fnode = null;
-      bnode = null;
     }
   }
 
@@ -564,8 +555,8 @@ public class FuncCallNode : SequentialNode
       {
         var pi = pool[pool_idx];
 
-        if(pi.bnode.getStatus() != BHS.NONE)
-          throw new Exception("Bad status: " + pi.bnode.getStatus());
+        if(pi.fnode.getStatus() != BHS.NONE)
+          throw new Exception("Bad status: " + pi.fnode.getStatus());
         ++pool_hit;
         --free_count;
 
@@ -580,10 +571,10 @@ public class FuncCallNode : SequentialNode
     {
       var pi = new PoolItem(node);
 
-      bool can_cache = InitPoolItem(ref pi);
+      InitPoolItem(ref pi);
 
       //NOTE: only userland funcs are put into cache
-      if(PoolUse && can_cache)
+      if(PoolUse)
       {
         pi.idx = pool.Count;
         pi.next_free = -1;
@@ -614,17 +605,15 @@ public class FuncCallNode : SequentialNode
     ++free_count;
   }
 
-  static bool InitPoolItem(ref PoolItem pi)
+  static void InitPoolItem(ref PoolItem pi)
   {
     var interp = Interpreter.instance;
 
     pi.id = ++last_pool_id;
     var fnode = interp.GetFuncNode(pi.ast);
+    if(fnode is FuncNodeBinding)
+      throw new Exception("Not expected type of node");
     pi.fnode = fnode;
-    var fbnd = fnode as FuncNodeBinding; 
-    //NOTE: optimization for C# func binding
-    pi.bnode = fbnd != null ? fbnd.CreateBindingNode() : fnode;
-    return fbnd == null;
   }
 
   static public void PoolClear()
@@ -653,6 +642,90 @@ public class FuncCallNode : SequentialNode
   static public int PoolCountFree
   {
     get { return free_count; }
+  }
+}
+
+public class FuncBindCallNode : SequentialNode 
+{
+  int stack_size_before;
+
+  public AST_Call ast;
+
+  public FuncBindCallNode(AST_Call ast)
+  {
+    this.ast = ast;
+  }
+
+  override public void init()
+  {
+    var interp = Interpreter.instance;
+
+    stack_size_before = interp.stack.Count;
+    //NOTE: if it's a method call we need to take into account
+    //      pushed object instance as well
+    if(ast.scope_ntype != 0)
+      --stack_size_before;
+
+    base.init();
+  }
+
+  override public BHS execute()
+  {
+    var interp = Interpreter.instance;
+
+    //var status = base.execute();
+    ////////////////////FORCING CODE INLINE////////////////////////////////
+    BHS status = BHS.SUCCESS;
+    while(currentPosition < children.Count)
+    {
+      var currentTask = children[currentPosition];
+      //status = currentTask.run();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+
+      //NOTE: the last node is actually the func call so
+      //      we push it on to the call stack when it's executed
+      bool is_func_call = currentPosition == children.Count-1;
+      if(is_func_call)
+        interp.call_stack.Push(ast);
+
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.init();
+      status = currentTask.execute();
+      currentTask.currStatus = status;
+      currentTask.lastExecuteStatus = currentTask.currStatus;
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.deinit();
+
+      //NOTE: only when it's actual func call we pop it from the call stack
+      //      and apply required stack cleanups
+      if(is_func_call)
+        interp.call_stack.DecFast();
+      //NOTE: force cleaning of the args.value stack in case of FAILURE while
+      //      we are still processing arguments
+      else if(status == BHS.FAILURE)
+        interp.PopValues(interp.stack.Count - stack_size_before);
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(status == BHS.SUCCESS)
+        ++currentPosition;
+      else
+        break;
+    } 
+    if(status != BHS.RUNNING)
+      currentPosition = 0;
+    ////////////////////FORCING CODE INLINE////////////////////////////////
+
+    return status;
+  }
+
+  override public void deinit()
+  {
+    //NOTE: we don't stop children here because this node behaves NOT like
+    //      a block node but rather emulating a terminal node
+  }
+
+  override public void defer()
+  {
+    stopChildren();
   }
 }
 
@@ -1893,8 +1966,6 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 abstract public class FuncNode : SequentialNode
 {
   public FuncCtx fct;
-
-  public bool has_void_value;
   public int args_num;
 
   public void SetArgs(params DynVal[] args)
@@ -1943,7 +2014,6 @@ public class FuncNodeAST : FuncNode
   {
     this.fct = fct;
     this.decl = decl;
-    this.has_void_value = decl.ntype == SymbolTable._void.name.n;
   }
 
   public override int DeclArgsNum()
@@ -2060,7 +2130,7 @@ public class FuncNodeAST : FuncNode
 
   public override string inspect()
   {
-    return decl.Name() + "(<- x " + this.args_num + ")" + (has_void_value ? "" : "(->)");
+    return decl.Name() + "(<- x " + this.args_num + ")";
   }
 }
 
@@ -2144,9 +2214,6 @@ public class FuncNodeBinding : FuncNode
   {
     this.fct = fct;
     this.symb = symb;
-
-    this.has_void_value = symb.type.Get() == SymbolTable._void;
-
     this.addChild(CreateBindingNode());
   }
 

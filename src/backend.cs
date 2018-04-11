@@ -1288,6 +1288,15 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetMFuncNode(HashedName class_type, HashedName name)
   {
+    var func_symb = ResolveClassMember(class_type, name) as FuncBindSymbol;
+    if(func_symb != null)
+      return new FuncNodeBinding(func_symb, null);
+
+    throw new Exception("Not a func symbol: " + name);
+  }
+
+  Symbol ResolveClassMember(HashedName class_type, HashedName name)
+  {
     var cl = symbols.resolve(class_type) as ClassSymbol;
     if(cl == null)
       throw new Exception("Class binding not found: " + class_type); 
@@ -1295,12 +1304,7 @@ public class Interpreter : AST_Visitor
     var cl_member = cl.ResolveMember(name);
     if(cl_member == null)
       throw new Exception("Member not found: " + name);
-
-    var func_symb = cl_member as FuncBindSymbol;
-    if(func_symb != null)
-      return new FuncNodeBinding(func_symb, null);
-
-    throw new Exception("Not a func symbol: " + name);
+    return cl_member;
   }
 
   //NOTE: usually used in symbols
@@ -1696,10 +1700,12 @@ public class Interpreter : AST_Visitor
 
   void AddFuncCallNode(AST_Call ast)
   {
-    var func_symb = symbols.resolve(ast.nname()) as FuncSymbol;
+    var symb = symbols.resolve(ast.nname());
+    var conf_symb = symb as ConfNodeSymbol;
+    var fbind_symb = symb as FuncBindSymbol;
 
-    var fbind_symb = func_symb as FuncBindSymbol;
-    var conf_symb = func_symb as ConfNodeSymbol;
+    if(ast.type == EnumCall.MFUNC)
+      fbind_symb = ResolveClassMember(ast.scope_ntype, ast.Name()) as FuncBindSymbol;
 
     //special case for config node
     if(conf_symb != null)
@@ -1746,13 +1752,34 @@ public class Interpreter : AST_Visitor
         curr_node.addChild(conf_node);
       }
     }
-    else if(fbind_symb != null && ast.cargs_num == 0 && fbind_symb.def_args_num == 0)
+    //special case if it's bind symbol
+    else if(fbind_symb != null)
     {
-      var node = fbind_symb.func_creator();
-      curr_node.addChild(node);
+      bool has_args = ast.cargs_num > 0 || fbind_symb.def_args_num > 0;
+
+      //special case if it's bind symbol without any args
+      if(has_args)
+        PushNode(new FuncBindCallNode(ast));
+
+      //1. func args
+      for(int i=0;i<ast.cargs_num;++i)
+        Visit(ast.children[i]);
+
+      //TODO: user bind funcs don't support evalulated default args
+      //2. evaluating default args
+      //for(int i=0;i<fbind_symb.def_args_num;++i)
+      //{
+      //}
+
+      curr_node.addChild(fbind_symb.func_creator());
+
+      if(has_args)
+        PopNode();
     }
     else
-      curr_node.addChild(new FuncCallNode(ast));  
+    {
+      curr_node.addChild(new FuncASTCallNode(ast));  
+    }
   }
 
   bool IsCallToSelf(AST_Call ast, uint ntype)
