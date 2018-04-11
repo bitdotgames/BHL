@@ -356,7 +356,7 @@ public class FuncCallNode : FuncBaseCallNode
   const int FUNC_READY    = 1;
   const int FUNC_DETACHED = 2;
 
-  PoolItem pool_item;
+  int idx_in_pool = -1;
   int func_status = FUNC_INIT;
 
   public FuncCallNode(AST_Call ast)
@@ -396,7 +396,7 @@ public class FuncCallNode : FuncBaseCallNode
 
       InitArgs(interp, pi.fnode);
 
-      pool_item = pi;
+      idx_in_pool = pi.idx;
       this.addChild(pi.fnode);
 
       interp.PopNode();
@@ -410,7 +410,7 @@ public class FuncCallNode : FuncBaseCallNode
       pi.fnode.args_num = ast.cargs_num;
 
       children[children.Count-1] = pi.fnode;
-      pool_item = pi;
+      idx_in_pool = pi.idx;
     }
   }
 
@@ -425,12 +425,13 @@ public class FuncCallNode : FuncBaseCallNode
   {
     stopChildren();
 
-    if(!pool_item.IsEmpty() && pool_item.IsCached())
+    if(func_status == FUNC_READY)
     {
-      if(pool_item.fnode.getStatus() != BHS.NONE)
-        throw new Exception("Bad status: " + pool_item.fnode.getStatus());
-      PoolFree(pool_item);
-      pool_item.Clear();
+      var pi = pool[idx_in_pool];
+      if(pi.fnode.getStatus() != BHS.NONE)
+        throw new Exception("Bad status: " + pi.fnode.getStatus());
+      PoolFree(pi);
+      idx_in_pool = -1;
       func_status = FUNC_DETACHED;
     }
   }
@@ -442,8 +443,6 @@ public class FuncCallNode : FuncBaseCallNode
   }
 
   ///////////////////////////////////////////////////////////////////
-  static public bool PoolUse = true;
- 
   static int free_count = 0;
   static int last_pool_id = 0;
   static int valid_pool_id = -1;
@@ -471,11 +470,6 @@ public class FuncCallNode : FuncBaseCallNode
       return ast == null;
     }
 
-    public bool IsCached()
-    {
-      return idx != -1;
-    }
-
     public void Clear()
     {
       idx = -1;
@@ -495,24 +489,21 @@ public class FuncCallNode : FuncBaseCallNode
   {
     ulong pool_id = node.FuncId(); 
 
-    if(PoolUse)
+    int idx_in_pool = -1;
+    if(func2last_free.TryGetValue(pool_id, out idx_in_pool) && idx_in_pool != -1)
     {
-      int pool_idx = -1;
-      if(func2last_free.TryGetValue(pool_id, out pool_idx) && pool_idx != -1)
-      {
-        var pi = pool[pool_idx];
+      var pi = pool[idx_in_pool];
 
-        if(pi.fnode.getStatus() != BHS.NONE)
-          throw new Exception("Bad status: " + pi.fnode.getStatus());
-        ++pool_hit;
-        --free_count;
+      if(pi.fnode.getStatus() != BHS.NONE)
+        throw new Exception("Bad status: " + pi.fnode.getStatus());
+      ++pool_hit;
+      --free_count;
 
-        func2last_free[pool_id] = pi.next_free;
+      func2last_free[pool_id] = pi.next_free;
 
-        pi.next_free = -1;
-        pool[pool_idx] = pi;
-        return pi;
-      }
+      pi.next_free = -1;
+      pool[idx_in_pool] = pi;
+      return pi;
     }
 
     {
@@ -520,13 +511,10 @@ public class FuncCallNode : FuncBaseCallNode
 
       InitPoolItem(ref pi);
 
-      if(PoolUse)
-      {
-        pi.idx = pool.Count;
-        pi.next_free = -1;
-        func2last_free[pool_id] = -1;
-        pool.Add(pi);
-      }
+      pi.idx = pool.Count;
+      pi.next_free = -1;
+      func2last_free[pool_id] = -1;
+      pool.Add(pi);
 
       ++pool_miss;
 
@@ -536,9 +524,6 @@ public class FuncCallNode : FuncBaseCallNode
 
   static void PoolFree(PoolItem pi)
   {
-    if(!PoolUse)
-      return;
-
     //NOTE: in case pool was cleared
     if(pi.id <= valid_pool_id)
       return;
