@@ -363,10 +363,10 @@ public class FuncCallNode : FuncBaseCallNode
     : base(ast)
   {}
 
-  void FillArgs(Interpreter interp, PoolItem pi)
+  void InitArgs(Interpreter interp, FuncNode fnode)
   {
-    pi.fnode.args_num = ast.cargs_num;
-    var default_args_num = pi.fnode.DefaultArgsNum();
+    fnode.args_num = ast.cargs_num;
+    var default_args_num = fnode.DefaultArgsNum();
 
     //1. func args 
     for(int i=0;i<ast.cargs_num;++i)
@@ -375,9 +375,9 @@ public class FuncCallNode : FuncBaseCallNode
     //2. evaluating default args
     for(int i=0;i<default_args_num;++i)
     {
-      var decl_arg = pi.fnode.DeclArg(ast.cargs_num + i);
+      var decl_arg = fnode.DeclArg(ast.cargs_num + i);
       if(decl_arg.children.Count == 0)
-        throw new Exception("Bad default arg at idx " + (ast.cargs_num + i) + " func " + pi.fnode.GetName());
+        throw new Exception("Bad default arg at idx " + (ast.cargs_num + i) + " func " + fnode.GetName());
       interp.Visit(decl_arg.children[0]);
     }
   }
@@ -394,10 +394,10 @@ public class FuncCallNode : FuncBaseCallNode
 
       var pi = PoolRequest(ast);
 
-      FillArgs(interp, pi);
+      InitArgs(interp, pi.fnode);
 
       pool_item = pi;
-      this.addChild(pool_item.fnode);
+      this.addChild(pi.fnode);
 
       interp.PopNode();
     }
@@ -406,6 +406,7 @@ public class FuncCallNode : FuncBaseCallNode
       func_status = FUNC_READY;
 
       var pi = PoolRequest(ast);
+      //setting actual number of passed arguments
       pi.fnode.args_num = ast.cargs_num;
 
       children[children.Count-1] = pi.fnode;
@@ -519,7 +520,6 @@ public class FuncCallNode : FuncBaseCallNode
 
       InitPoolItem(ref pi);
 
-      //NOTE: only userland funcs are put into cache
       if(PoolUse)
       {
         pi.idx = pool.Count;
