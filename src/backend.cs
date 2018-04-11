@@ -715,7 +715,14 @@ public class FuncCtx : DynValRefcounted
   public FuncSymbol fs;
   //NOTE: this memory scope used for 'use' variables, it's then
   //      copied to concrete memory scope of the function
-  public MemoryScope mem = new MemoryScope();
+  MemoryScope _mem;
+  public MemoryScope mem {
+    get {
+      if(_mem == null)
+        _mem = new MemoryScope();
+      return _mem;
+    }
+  }
   public FuncNode fnode;
   public bool fnode_busy;
 
