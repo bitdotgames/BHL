@@ -352,12 +352,10 @@ public class GroupNode : SequentialNode
 
 public class FuncCallNode : FuncBaseCallNode
 {
-  const int FUNC_INIT     = 0;
-  const int FUNC_READY    = 1;
-  const int FUNC_DETACHED = 2;
+  const int IDX_FIRST_TIME = -2;
+  const int IDX_DETACHED   = -1;
 
-  int idx_in_pool = -1;
-  int func_status = FUNC_INIT;
+  int idx_in_pool = IDX_FIRST_TIME;
 
   public FuncCallNode(AST_Call ast)
     : base(ast)
@@ -384,11 +382,9 @@ public class FuncCallNode : FuncBaseCallNode
 
   override public void init()
   {
-    if(func_status == FUNC_INIT)
+    if(idx_in_pool == IDX_FIRST_TIME)
     {
       var interp = Interpreter.instance;
-
-      func_status = FUNC_READY;
 
       interp.PushNode(this);
 
@@ -396,20 +392,20 @@ public class FuncCallNode : FuncBaseCallNode
 
       InitArgs(interp, pi.fnode);
 
-      idx_in_pool = pi.idx;
       this.addChild(pi.fnode);
 
       interp.PopNode();
-    }
-    else if(func_status == FUNC_DETACHED)
-    {
-      func_status = FUNC_READY;
 
+      idx_in_pool = pi.idx;
+    }
+    else if(idx_in_pool == IDX_DETACHED)
+    {
       var pi = PoolRequest(ast);
       //setting actual number of passed arguments
       pi.fnode.args_num = ast.cargs_num;
 
       children[children.Count-1] = pi.fnode;
+
       idx_in_pool = pi.idx;
     }
 
@@ -420,14 +416,13 @@ public class FuncCallNode : FuncBaseCallNode
   {
     stopChildren();
 
-    if(func_status == FUNC_READY)
+    if(idx_in_pool >= 0)
     {
       var pi = pool[idx_in_pool];
       if(pi.fnode.getStatus() != BHS.NONE)
         throw new Exception("Bad status: " + pi.fnode.getStatus());
       PoolFree(pi);
-      idx_in_pool = -1;
-      func_status = FUNC_DETACHED;
+      idx_in_pool = IDX_DETACHED;
     }
   }
 
