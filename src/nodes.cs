@@ -565,7 +565,7 @@ public class FuncCallNode : FuncBaseCallNode
 
 public abstract class FuncBaseCallNode : SequentialNode
 {
-  public AST_Call ast;
+  protected AST_Call ast;
   int stack_size_before;
 
   public FuncBaseCallNode(AST_Call ast)
@@ -687,8 +687,8 @@ public class FuncBindCallNode : FuncBaseCallNode
 
 public class CallConfNode : FuncBaseCallNode
 {
-  public BehaviorTreeNode conf_node;
-  public ConfNodeSymbol conf_symb;
+  BehaviorTreeNode conf_node;
+  ConfNodeSymbol conf_symb;
 
   public CallConfNode(AST_Call ast, ConfNodeSymbol conf_symb, BehaviorTreeNode conf_node)
     : base(ast)

@@ -1706,12 +1706,9 @@ public class Interpreter : AST_Visitor
 
   void AddFuncCallNode(AST_Call ast)
   {
-    var symb = symbols.resolve(ast.nname());
+    var symb = ResolveFuncSymbol(ast);
     var conf_symb = symb as ConfNodeSymbol;
     var fbind_symb = symb as FuncBindSymbol;
-
-    if(ast.type == EnumCall.MFUNC)
-      fbind_symb = ResolveClassMember(ast.scope_ntype, ast.Name()) as FuncBindSymbol;
 
     //special case for config node
     if(conf_symb != null)
