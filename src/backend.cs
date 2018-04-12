@@ -706,6 +706,9 @@ public abstract class AST_Visitor
   }
 }
 
+//NOTE: this class represents sort of a 'pointer' to the 
+//      function and it also stores captured variables from
+//      the enclosing context
 public class FuncCtx : DynValRefcounted
 {
   //NOTE: -1 means it's in released state,
