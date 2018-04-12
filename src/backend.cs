@@ -1273,41 +1273,32 @@ public class Interpreter : AST_Visitor
       return null;
   }
 
-  public FuncNode GetFuncNode(AST_Call ast)
+  public FuncNode GetFuncNode(FuncSymbol symb)
   {
-    if(ast.type == EnumCall.FUNC)
-      return GetFuncNode(ast.Name());
-    else if(ast.type == EnumCall.MFUNC)
-      return GetMFuncNode(ast.scope_ntype, ast.Name());
+    if(symb is FuncSymbolAST)
+      return new FuncNodeAST((symb as FuncSymbolAST).decl, null);
+    else if(symb is FuncBindSymbol)
+      return new FuncNodeBind(symb as FuncBindSymbol, null);
     else
       throw new Exception("Bad func call type");
   }
 
+  public FuncNode GetFuncNode(AST_Call ast)
+  {
+    var symb = ResolveFuncSymbol(ast);
+    return GetFuncNode(symb);
+  }
+
   public FuncNode GetFuncNode(HashedName name)
   {
-    var s = symbols.resolve(name);
-
-    if(s is FuncBindSymbol)
-      return new FuncNodeBind(s as FuncBindSymbol, null);
-    else if(s is FuncSymbolAST)
-      return new FuncNodeAST((s as FuncSymbolAST).decl, null);
-    else
-      throw new Exception("Not a func symbol: " + name);
+    var symb = symbols.resolve(name) as FuncSymbol;
+    return GetFuncNode(symb);
   }
 
   public FuncNode GetFuncNode(string module_name, string func_name)
   {
     LoadModule(module_name);
     return GetFuncNode(Util.GetFuncId(module_name, func_name));
-  }
-
-  public FuncNode GetMFuncNode(HashedName class_type, HashedName name)
-  {
-    var func_symb = ResolveClassMember(class_type, name) as FuncBindSymbol;
-    if(func_symb != null)
-      return new FuncNodeBind(func_symb, null);
-
-    throw new Exception("Not a func symbol: " + name);
   }
 
   Symbol ResolveClassMember(HashedName class_type, HashedName name)
