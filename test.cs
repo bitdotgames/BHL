@@ -13373,6 +13373,46 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestConfigNodeWithJsonSubCall()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      ConfigNode({hey: SubCall({r:10})})
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+    BindConfigNode(globs, trace_stream);
+
+    {
+      var fn = new SimpleFuncBindSymbol("SubCall", globs.type("int"),
+          delegate() { 
+            var interp = Interpreter.instance;
+            var c = (Color)interp.PopValue().obj; 
+            interp.PushValue(DynVal.NewNum(c.r));
+            return BHS.SUCCESS; 
+          } 
+      );
+      fn.define(new FuncArgSymbol("c", globs.type("Color")));
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+    //NodeDump(node);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("10:0:0:", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestConfigNodeWithReturnChainCall()
   {
     string bhl = @"

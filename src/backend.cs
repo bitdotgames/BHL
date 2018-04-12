@@ -1263,6 +1263,16 @@ public class Interpreter : AST_Visitor
     LoadModule(Util.GetModuleId(module));
   }
 
+  public FuncSymbol ResolveFuncSymbol(AST_Call ast)
+  {
+    if(ast.type == EnumCall.FUNC)
+      return symbols.resolve(ast.Name()) as FuncSymbol;
+    else if(ast.type == EnumCall.MFUNC)
+      return ResolveClassMember(ast.scope_ntype, ast.Name()) as FuncSymbol;
+    else
+      return null;
+  }
+
   public FuncNode GetFuncNode(AST_Call ast)
   {
     if(ast.type == EnumCall.FUNC)
@@ -1763,7 +1773,7 @@ public class Interpreter : AST_Visitor
       bool has_args = ast.cargs_num > 0 || fbind_symb.def_args_num > 0;
 
       if(has_args)
-        curr_node.addChild(new FuncBindCallNode(ast, fbind_symb));
+        curr_node.addChild(new FuncBindCallNode(ast));
       //special case if it's a simple bind symbol call without any args
       else
         curr_node.addChild(fbind_symb.func_creator());

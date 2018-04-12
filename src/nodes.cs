@@ -642,25 +642,35 @@ public abstract class FuncBaseCallNode : SequentialNode
 
 public class FuncBindCallNode : FuncBaseCallNode
 {
-  public FuncBindCallNode(AST_Call ast, FuncBindSymbol symb)
+  public FuncBindCallNode(AST_Call ast)
     : base(ast)
+  {}
+
+  override public void init()
   {
-    var interp = Interpreter.instance;
-    interp.PushNode(this, attach_as_child: false);
+    //checking if it's a first time
+    if(children.Count == 0)
+    {
+      var interp = Interpreter.instance;
+      var symb = interp.ResolveFuncSymbol(ast) as FuncBindSymbol;
+      interp.PushNode(this);
 
-    //1. func args
-    for(int i=0;i<ast.cargs_num;++i)
-      interp.Visit(ast.children[i]);
+      //1. func args
+      for(int i=0;i<ast.cargs_num;++i)
+        interp.Visit(ast.children[i]);
 
-    //TODO: user bind funcs don't support evalulated default args
-    //2. evaluating default args
-    //for(int i=0;i<fbind_symb.def_args_num;++i)
-    //{
-    //}
+      //TODO: user bind funcs don't support evalulated default args
+      //2. evaluating default args
+      //for(int i=0;i<symb.def_args_num;++i)
+      //{
+      //}
 
-    this.addChild(symb.func_creator());
+      this.addChild(symb.func_creator());
 
-    interp.PopNode();
+      interp.PopNode();
+    }
+
+    base.init();
   }
 
   override public void deinit()
