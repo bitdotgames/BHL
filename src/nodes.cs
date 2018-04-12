@@ -1980,8 +1980,7 @@ public class FuncNodeLambda : FuncNodeAST
 
   public override void init()
   {
-    if(fct.mem != null)
-      this.mem.CopyFrom(fct.mem);
+    this.mem.CopyFrom(fct.mem);
 
     base.init();
   }
