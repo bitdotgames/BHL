@@ -717,9 +717,8 @@ public class FuncCtx : DynValRefcounted
 
   public FuncSymbol fs;
   //NOTE: this memory scope is used for 'use' variables, it's then
-  //      copied to concrete memory scope of the function. It's null
-  //      by default
-  public MemoryScope mem;
+  //      copied to concrete memory scope of the function.
+  public MemoryScope mem = new MemoryScope();
   public FuncNode fnode;
   public bool fnode_busy;
 
@@ -760,8 +759,6 @@ public class FuncCtx : DynValRefcounted
     if(fs is LambdaSymbol)
     {
       var ldecl = (fs as LambdaSymbol).decl as AST_LambdaDecl;
-      if(dup.mem == null && ldecl.useparams.Count > 0)
-        dup.mem = new MemoryScope();
       for(int i=0;i<ldecl.useparams.Count;++i)
       {
         var up = ldecl.useparams[i];
@@ -862,8 +859,7 @@ public class FuncCtx : DynValRefcounted
     }
 
     fct.refs = -1;
-    if(fct.mem != null)
-      fct.mem.Clear();
+    fct.mem.Clear();
     //NOTE: we don't reset fnode on purpose, 
     //      so that it will be reused on the next pool request
     //fct.fnode = null;

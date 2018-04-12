@@ -2053,8 +2053,6 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     if(lmb != null)
     {
       //Console.WriteLine("PUSH LCTX " + this.GetHashCode() + " " + ldecl.useparams.Count);
-      if(fct.mem == null && lmb.decl.useparams.Count > 0)
-        fct.mem = new MemoryScope();
       //setting use params to its own memory scope
       for(int i=0;i<lmb.decl.useparams.Count;++i)
       {
