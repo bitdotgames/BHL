@@ -677,16 +677,14 @@ public class FuncBindCallNode : FuncBaseCallNode
 
 public class CallConfNode : FuncBaseCallNode
 {
-  public bool push = false;
   public BehaviorTreeNode conf_node;
   public ConfNodeSymbol conf_symb;
 
-  public CallConfNode(AST_Call ast, ConfNodeSymbol conf_symb, BehaviorTreeNode conf_node, bool push = false)
+  public CallConfNode(AST_Call ast, ConfNodeSymbol conf_symb, BehaviorTreeNode conf_node)
     : base(ast)
   {
     this.conf_symb = conf_symb;
     this.conf_node = conf_node;
-    this.push = push;
   }
 
   override public void init()
@@ -696,11 +694,8 @@ public class CallConfNode : FuncBaseCallNode
     var dv = DynVal.New();
     conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
 
-    if(push)
-    {
-      var interp = Interpreter.instance;
-      interp.PushValue(dv);
-    }
+    var interp = Interpreter.instance;
+    interp.PushValue(dv);
   }
 
   override public void deinit()
@@ -712,11 +707,6 @@ public class CallConfNode : FuncBaseCallNode
   override public void defer()
   {
     stopChildren();
-  }
-
-  public override string inspect()
-  {
-    return push ? "->" : "";
   }
 }
 

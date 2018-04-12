@@ -1721,7 +1721,7 @@ public class Interpreter : AST_Visitor
       {
         bool can_be_precalculated = CheckIfConfigTweaksAreConstant(ast);
 
-        var call = new CallConfNode(ast, conf_symb, conf_node, true/*push config*/);
+        var call = new CallConfNode(ast, conf_symb, conf_node);
         PushNode(call, attach_as_child: false);
         VisitChildren(ast.children[0] as AST);
 
