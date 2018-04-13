@@ -1318,14 +1318,18 @@ public class Interpreter : AST_Visitor
     return call_stack.Peek().cargs_num;
   }
 
+  //NOTE: caching exceptions for less allocations
+  static ReturnException return_exception = new ReturnException();
+  static BreakException break_exception = new BreakException();
+
   public void JumpReturn()
   {
-    throw new ReturnException();
+    throw return_exception;
   }
 
   public void JumpBreak()
   {
-    throw new BreakException();
+    throw break_exception;
   }
 
   //TODO: implement some day
