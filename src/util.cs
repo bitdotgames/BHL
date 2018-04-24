@@ -234,6 +234,9 @@ public static class Extensions
 
   public static void SetData(this MemoryStream ms, byte[] b, int offset, int blen)
   {
+    if(ms.Capacity < b.Length)
+      ms.Capacity = b.Length;
+
     ms.SetLength(0);
     ms.Write(b, offset, blen);
     ms.Position = 0;
