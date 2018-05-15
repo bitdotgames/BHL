@@ -5753,6 +5753,35 @@ public class BHL_Test
     );
   }
 
+  [IsTested()]
+  public void TestUserEnumItemBadAddressing()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+    }
+
+    func foo(Foo f) 
+    {
+    }
+
+    func test() 
+    {
+      foo(Foo.A)
+    }
+
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"bad chain call"
+    );
+  }
+
   public class StartScriptNode : BehaviorTreeDecoratorNode
   {
     FuncCtx fct;
