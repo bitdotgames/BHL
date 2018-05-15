@@ -5754,7 +5754,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUserEnumItemBadAddressing()
+  public void TestUserEnumItemBadChainCall()
   {
     string bhl = @"
 
