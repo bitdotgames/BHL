@@ -13263,10 +13263,10 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
+    //NodeDump(node);
     var result = node.run();
     AssertEqual(result, BHS.FAILURE);
 
-    //NodeDump(node);
     CommonChecks(intp);
   }
 

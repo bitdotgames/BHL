@@ -2336,4 +2336,47 @@ public class Array_RemoveAtNodeT : BehaviorTreeTerminalNode
   }
 }
 
+public class Array_ClearNode : BehaviorTreeTerminalNode
+{
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+
+    var arr = interp.PopValue();
+
+    var lst = arr.obj as DynValList;
+    if(lst == null)
+      throw new UserError("Not an array");
+    lst.Clear();
+    //NOTE: this can be an operation for the temp. array,
+    //      we need to try del the array if so
+    lst.TryDel();
+  }
+
+  public override string inspect()
+  {
+    return "<-";
+  }
+}
+
+public class Array_ClearNodeT : BehaviorTreeTerminalNode
+{
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+
+    var arr = interp.PopValue();
+
+    var lst = arr.obj as IList;
+    if(lst == null)
+      throw new UserError("Not an array");
+    lst.Clear();
+  }
+
+  public override string inspect()
+  {
+    return "<-";
+  }
+}
+
 } //namespace bhl

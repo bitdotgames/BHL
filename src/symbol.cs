@@ -312,6 +312,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract BehaviorTreeNode Create_At();
   public abstract BehaviorTreeNode Create_SetAt();
   public abstract BehaviorTreeNode Create_RemoveAt();
+  public abstract BehaviorTreeNode Create_Clear();
 }
 
 //NOTE: this one is used as a fallback for all arrays which
@@ -379,6 +380,11 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   {
     return new Array_RemoveAtNode();
   }
+
+  public override BehaviorTreeNode Create_Clear()
+  {
+    return new Array_ClearNode();
+  }
 }
 
 public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
@@ -440,6 +446,11 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public override BehaviorTreeNode Create_RemoveAt()
   {
     return new Array_RemoveAtNodeT();
+  }
+
+  public override BehaviorTreeNode Create_Clear()
+  {
+    return new Array_ClearNodeT();
   }
 }
 
