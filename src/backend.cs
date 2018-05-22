@@ -1912,8 +1912,8 @@ public class Interpreter : AST_Visitor
       if(symbols.resolve(jc.scope_type) is ClassBindSymbol)
       {
         curr_node.addChild(new MVarAccessNode(jc.scope_type, jc.name_or_idx, MVarAccessNode.READ_PUSH_CTX));
+        curr_node.addChild(new DupValueNode());
         curr_node.addChild(bnd.Create_Clear());
-        curr_node.addChild(new MVarAccessNode(jc.scope_type, jc.name_or_idx, MVarAccessNode.READ_PUSH_CTX));
       }
       else
         curr_node.addChild(bnd.Create_New());

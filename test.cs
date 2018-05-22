@@ -3227,11 +3227,21 @@ public class BHL_Test
   {
     public float r;
     public float g;
+
+    public override string ToString()
+    {
+      return "[r="+r+",g="+g+"]";
+    }
   }
 
   public class ColorAlpha : Color
   {
     public float a;
+
+    public override string ToString()
+    {
+      return "[r="+r+",g="+g+",a="+a+"]";
+    }
   }
 
   public class ColorNested
@@ -13004,6 +13014,7 @@ public class BHL_Test
     public int hey;
     public List<Color> colors = new List<Color>();
     public Color sub_color = new Color();
+    public bool set_strs_on_reset;
 
     public void reset()
     {
@@ -13011,6 +13022,11 @@ public class BHL_Test
       colors.Clear();
       sub_color = new Color();
       strs.Clear();
+      if(set_strs_on_reset)
+      {
+        colors.Add(new Color(){g = 42});
+        strs.Add("added_in_reset");
+      }
     }
   }
 
@@ -13032,8 +13048,11 @@ public class BHL_Test
       var sw = new StreamWriter(sm);
       sw.Write(
         conf.hey + 
-        (conf.colors.Count > 0 ? (":" + conf.colors.Count + ":" + conf.colors[0].r + ":" + conf.colors[1].g + ":" + conf.colors[2].g) : "") + 
-        ":" + conf.sub_color.r + ":" + conf.sub_color.g + 
+        (conf.colors.Count > 0 ? (":" + conf.colors.Count) : "") + 
+        (conf.colors.Count >= 1 ? (":" + conf.colors[0]) : "") + 
+        (conf.colors.Count >= 2 ? ("," + conf.colors[1]) : "") + 
+        (conf.colors.Count >= 3 ? ("," + conf.colors[2]) : "") + 
+        ":" + conf.sub_color + 
         ":" + string.Join(",", conf.strs)
       );
 
@@ -13233,7 +13252,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("142:3:2:3:42:10:100:foo,hey", str);
+    AssertEqual("142:3:[r=2,g=0],[r=0,g=3],[r=0,g=42]:[r=10,g=100]:foo,hey", str);
     CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
@@ -13274,30 +13293,33 @@ public class BHL_Test
   public void TestConfigNodeDefaultArrayArgsAreOverriden()
   {
     string bhl = @"
-    func void test(string b) 
+    func void test(string b, int r) 
     {
-      ConfigNode({strs:[b]})
+      ConfigNode({strs:[b], colors:[{r:r}]})
     }
     ";
 
     var globs = SymbolTable.CreateBuiltins();
     var trace_stream = new MemoryStream();
 
+    BindColor(globs);
     BindConfigNode(globs, trace_stream);
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    (node as FuncNodeAST).Inflate();
+
     //let's get to the guts of the warmed up func and change default values
+    (node as FuncNodeAST).Inflate();
     var call_children = (node.children[0] as BehaviorTreeInternalNode).children;
     var conf_node = call_children[call_children.Count-1] as ConfigNode;
-    conf_node.conf.strs.Add("bar");
+    conf_node.conf.set_strs_on_reset = true;
 
-    node.SetArgs(DynVal.NewStr("foo"));
+    node.SetArgs(DynVal.NewStr("foo"), DynVal.NewNum(10));
     intp.ExecNode(node, 0);
+    //NodeDump(node);
 
     var str = GetString(trace_stream);
-    AssertEqual("0:0:0:foo", str);
+    AssertEqual("0:1:[r=10,g=0]:[r=0,g=0]:foo", str);
 
     CommonChecks(intp);
   }
@@ -13327,7 +13349,7 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("142:3:2:3:42:10:100:foo,hey", str);
+    AssertEqual("142:3:[r=2,g=0],[r=0,g=3],[r=0,g=42]:[r=10,g=100]:foo,hey", str);
     CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
@@ -13366,7 +13388,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
 
-    AssertEqual("0:0:0:foo,hey,bar,bla", str);
+    AssertEqual("0:[r=0,g=0]:foo,hey,bar,bla", str);
     CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
@@ -13397,7 +13419,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
 
-    AssertEqual("0:0:0:", str);
+    AssertEqual("0:[r=0,g=0]:", str);
     CommonChecks(intp);
   }
 
@@ -13427,7 +13449,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
 
-    AssertEqual("142:10:100:foo,hey", str);
+    AssertEqual("142:[r=10,g=100]:foo,hey", str);
     CommonChecks(intp);
     AssertTrue(DynValList.PoolCount > 0);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
@@ -13462,7 +13484,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
 
-    AssertEqual("10:0:0:", str);
+    AssertEqual("10:[r=0,g=0]:", str);
     CommonChecks(intp);
   }
 
@@ -13502,7 +13524,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
 
-    AssertEqual("10:0:0:", str);
+    AssertEqual("10:[r=0,g=0]:", str);
     CommonChecks(intp);
   }
 
@@ -13543,7 +13565,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
 
-    AssertEqual("10:0:0:", str);
+    AssertEqual("10:[r=0,g=0]:", str);
     CommonChecks(intp);
   }
 
@@ -13573,7 +13595,7 @@ public class BHL_Test
     AssertEqual(num, 11);
 
     var str = GetString(trace_stream);
-    AssertEqual("0:0:1:foo,bar", str);
+    AssertEqual("0:[r=0,g=1]:foo,bar", str);
     CommonChecks(intp);
   }
 
@@ -13602,7 +13624,7 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
 
-    AssertEqual("142:0:0::10", str);
+    AssertEqual("142:[r=0,g=0]::10", str);
     CommonChecks(intp);
   }
 

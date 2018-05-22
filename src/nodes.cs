@@ -1355,6 +1355,20 @@ public class PushValueNode : BehaviorTreeTerminalNode
   }
 }
 
+public class DupValueNode : BehaviorTreeTerminalNode
+{
+  public override void init() 
+  {
+    var interp = Interpreter.instance;
+    interp.PushValue(interp.PeekValue());
+  }
+
+  public override string inspect()
+  {
+    return "->";
+  }
+}
+
 public class ConstructNode : BehaviorTreeTerminalNode
 {
   HashedName ntype;
