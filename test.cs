@@ -13034,7 +13034,8 @@ public class BHL_Test
         conf.hey + 
         (conf.colors.Count > 0 ? (":" + conf.colors.Count + ":" + conf.colors[0].r + ":" + conf.colors[1].g + ":" + conf.colors[2].g) : "") + 
         ":" + conf.sub_color.r + ":" + conf.sub_color.g + 
-        ":" + string.Join(",", conf.strs));
+        ":" + string.Join(",", conf.strs)
+      );
 
       if(with_ref)
       {
@@ -13135,8 +13136,7 @@ public class BHL_Test
         delegate(ref DynVal ctx, DynVal v)
         {
           var f = (ConfigNode_Conf)ctx.obj;
-          var tmp = f.strs;
-          v.Decode(ref tmp);
+          v.Decode(ref f.strs);
           ctx.obj = f;
           ((DynValList)v.obj).TryDel();
         }
@@ -13266,6 +13266,38 @@ public class BHL_Test
     //NodeDump(node);
     var result = node.run();
     AssertEqual(result, BHS.FAILURE);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestConfigNodeDefaultArrayArgsAreOverriden()
+  {
+    string bhl = @"
+    func void test(string b) 
+    {
+      ConfigNode({strs:[b]})
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindConfigNode(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    (node as FuncNodeAST).Inflate();
+    //let's get to the guts of the warmed up func and change default values
+    var call_children = (node.children[0] as BehaviorTreeInternalNode).children;
+    var conf_node = call_children[call_children.Count-1] as ConfigNode;
+    conf_node.conf.strs.Add("bar");
+
+    node.SetArgs(DynVal.NewStr("foo"));
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("0:0:0:foo", str);
 
     CommonChecks(intp);
   }
