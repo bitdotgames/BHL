@@ -411,10 +411,17 @@ public class FuncCallNode : FuncBaseCallNode
 
     if(idx_in_pool >= 0)
     {
-      var pi = pool[idx_in_pool];
-      if(pi.fnode.getStatus() != BHS.NONE)
-        throw new Exception("Bad status: " + pi.fnode.getStatus());
-      PoolFree(pi);
+      //NOTE: we need to make sure pool was not cleared somewhere in between
+      if(idx_in_pool < pool.Count)
+      {
+        var pi = pool[idx_in_pool];
+        if(pi.fnode == children[children.Count-1])
+        {
+          if(pi.fnode.getStatus() != BHS.NONE)
+            throw new Exception("Bad status: " + pi.fnode.getStatus());
+          PoolFree(pi);
+        }
+      }
       idx_in_pool = IDX_DETACHED;
     }
   }
