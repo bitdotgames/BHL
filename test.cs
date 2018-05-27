@@ -10072,6 +10072,92 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncCachingAndClearingPool()
+  {
+    string bhl = @"
+      
+    func foo()
+    {
+      YIELD()
+    }
+
+    func test() 
+    {
+      foo()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+
+    AssertEqual(FuncCallNode.PoolCount, 0);
+
+    {
+      var node = intp.GetFuncNode("test");
+      var status = node.run();
+      AssertEqual(BHS.RUNNING, status);
+
+      FuncCallNode.PoolClear();
+
+      status = node.run();
+      AssertEqual(BHS.SUCCESS, status);
+    }
+
+    AssertEqual(FuncCallNode.PoolCount, 0);
+  }
+
+  [IsTested()]
+  public void TestFuncCachingAndClearingPoolWithInterleaving()
+  {
+    string bhl = @"
+      
+    func foo()
+    {
+      YIELD()
+    }
+
+    func bar()
+    {
+      YIELD()
+    }
+
+    func test1() 
+    {
+      foo()
+    }
+
+    func test2() 
+    {
+      bar()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+
+    AssertEqual(FuncCallNode.PoolCount, 0);
+
+    var node1 = intp.GetFuncNode("test1");
+    var status = node1.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    FuncCallNode.PoolClear();
+
+    var node2 = intp.GetFuncNode("test2");
+    status = node2.run();
+    AssertEqual(BHS.RUNNING, status);
+    AssertEqual(FuncCallNode.PoolCount, 1);
+
+    //NOTE: at this point the node will try to free the cached pool item,
+    //      however its version of pool item is outdated
+    status = node1.run();
+    AssertEqual(BHS.SUCCESS, status);
+
+    status = node2.run();
+    AssertEqual(BHS.SUCCESS, status);
+
+    AssertEqual(FuncCallNode.PoolCount, 1);
+  }
+
+  [IsTested()]
   public void TestOnlyUserlandFuncsAreCached()
   {
     string bhl = @"

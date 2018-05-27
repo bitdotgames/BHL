@@ -416,11 +416,7 @@ public class FuncCallNode : FuncBaseCallNode
       {
         var pi = pool[idx_in_pool];
         if(pi.fnode == children[children.Count-1])
-        {
-          if(pi.fnode.getStatus() != BHS.NONE)
-            throw new Exception("Bad status: " + pi.fnode.getStatus());
           PoolFree(pi);
-        }
       }
       idx_in_pool = IDX_DETACHED;
     }
@@ -435,7 +431,6 @@ public class FuncCallNode : FuncBaseCallNode
   ///////////////////////////////////////////////////////////////////
   static int free_count = 0;
   static int last_pool_id = 0;
-  static int valid_pool_id = -1;
 
   struct PoolItem
   {
@@ -518,9 +513,8 @@ public class FuncCallNode : FuncBaseCallNode
 
   static void PoolFree(PoolItem pi)
   {
-    //NOTE: in case pool was cleared
-    if(pi.id <= valid_pool_id)
-      return;
+    if(pi.fnode.getStatus() != BHS.NONE)
+      throw new Exception("Bad status: " + pi.fnode.getStatus());
 
     ulong pool_id = pi.ast.FuncId();
     int last_free = func2last_free[pool_id];
@@ -543,7 +537,6 @@ public class FuncCallNode : FuncBaseCallNode
 
   static public void PoolClear()
   {
-    valid_pool_id = last_pool_id;
     free_count = 0;
     func2last_free.Clear();
     pool.Clear();
