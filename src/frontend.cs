@@ -658,7 +658,11 @@ public class Frontend : bhlBaseVisitor<object>
 
         //NOTE: if symbol is from bindings we don't have a source node attached to it
         if(func_arg_symb.node == null)
+        {
+          if(func_arg_symb.type.Get() == null)
+            FireError(Location(ca) +  ": invalid type");
           SymbolTable.CheckAssign(func_arg_symb.type.Get(), wca);
+        }
         else
           SymbolTable.CheckAssign(func_arg_symb.node, wca);
       }
