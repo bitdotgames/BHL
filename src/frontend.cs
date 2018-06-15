@@ -141,6 +141,18 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
+  public static bhlParser.ProgramContext ParseProgram(bhlParser parser, string file_path)
+  {
+    try
+    {
+      return parser.program();
+    }
+    catch(ParseError e)
+    {
+      throw new UserError(file_path, e.Message);
+    }
+  }
+
   public static bhlParser.RetTypeContext ParseType(string type)
   {
     try
@@ -362,6 +374,8 @@ public class Frontend : bhlBaseVisitor<object>
       var name_symb = curr_scope.resolve(root_str_name);
       if(name_symb == null)
         FireError(Location(root_name) + " : symbol not resolved");
+      if(name_symb.type == null)
+        FireError(Location(root_name) + " : bad chain call");
       curr_type = name_symb.type.Get();
     }
 
@@ -656,7 +670,11 @@ public class Frontend : bhlBaseVisitor<object>
 
         //NOTE: if symbol is from bindings we don't have a source node attached to it
         if(func_arg_symb.node == null)
+        {
+          if(func_arg_symb.type.Get() == null)
+            FireError(Location(ca) +  ": invalid type");
           SymbolTable.CheckAssign(func_arg_symb.type.Get(), wca);
+        }
         else
           SymbolTable.CheckAssign(func_arg_symb.node, wca);
       }

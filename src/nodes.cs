@@ -411,10 +411,13 @@ public class FuncCallNode : FuncBaseCallNode
 
     if(idx_in_pool >= 0)
     {
-      var pi = pool[idx_in_pool];
-      if(pi.fnode.getStatus() != BHS.NONE)
-        throw new Exception("Bad status: " + pi.fnode.getStatus());
-      PoolFree(pi);
+      //NOTE: we need to make sure pool was not cleared somewhere in between
+      if(idx_in_pool < pool.Count)
+      {
+        var pi = pool[idx_in_pool];
+        if(pi.fnode == children[children.Count-1])
+          PoolFree(pi);
+      }
       idx_in_pool = IDX_DETACHED;
     }
   }
@@ -428,7 +431,6 @@ public class FuncCallNode : FuncBaseCallNode
   ///////////////////////////////////////////////////////////////////
   static int free_count = 0;
   static int last_pool_id = 0;
-  static int valid_pool_id = -1;
 
   struct PoolItem
   {
@@ -511,9 +513,8 @@ public class FuncCallNode : FuncBaseCallNode
 
   static void PoolFree(PoolItem pi)
   {
-    //NOTE: in case pool was cleared
-    if(pi.id <= valid_pool_id)
-      return;
+    if(pi.fnode.getStatus() != BHS.NONE)
+      throw new Exception("Bad status: " + pi.fnode.getStatus());
 
     ulong pool_id = pi.ast.FuncId();
     int last_free = func2last_free[pool_id];
@@ -536,7 +537,6 @@ public class FuncCallNode : FuncBaseCallNode
 
   static public void PoolClear()
   {
-    valid_pool_id = last_pool_id;
     free_count = 0;
     func2last_free.Clear();
     pool.Clear();
@@ -1347,6 +1347,20 @@ public class PushValueNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
     interp.PushValue(dv);
+  }
+
+  public override string inspect()
+  {
+    return "->";
+  }
+}
+
+public class DupValueNode : BehaviorTreeTerminalNode
+{
+  public override void init() 
+  {
+    var interp = Interpreter.instance;
+    interp.PushValue(interp.PeekValue());
   }
 
   public override string inspect()
@@ -2333,6 +2347,49 @@ public class Array_RemoveAtNodeT : BehaviorTreeTerminalNode
   public override string inspect()
   {
     return "<- <-";
+  }
+}
+
+public class Array_ClearNode : BehaviorTreeTerminalNode
+{
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+
+    var arr = interp.PopValue();
+
+    var lst = arr.obj as DynValList;
+    if(lst == null)
+      throw new UserError("Not an array");
+    lst.Clear();
+    //NOTE: this can be an operation for the temp. array,
+    //      we need to try del the array if so
+    lst.TryDel();
+  }
+
+  public override string inspect()
+  {
+    return "<-";
+  }
+}
+
+public class Array_ClearNodeT : BehaviorTreeTerminalNode
+{
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+
+    var arr = interp.PopValue();
+
+    var lst = arr.obj as IList;
+    if(lst == null)
+      throw new UserError("Not an array");
+    lst.Clear();
+  }
+
+  public override string inspect()
+  {
+    return "<-";
   }
 }
 

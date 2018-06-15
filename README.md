@@ -124,7 +124,7 @@ Unit,float FindTarget(Unit self) {
 Unit u,float dist_to_target = FindTarget(self)
 ```
 
-### **lambda**
+### **Closures**
 
 ```go
 Unit u = FindTarget()
