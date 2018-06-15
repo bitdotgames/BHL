@@ -141,6 +141,18 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
+  public static bhlParser.ProgramContext ParseProgram(bhlParser parser, string file_path)
+  {
+    try
+    {
+      return parser.program();
+    }
+    catch(ParseError e)
+    {
+      throw new UserError(file_path, e.Message);
+    }
+  }
+
   public static bhlParser.RetTypeContext ParseType(string type)
   {
     try

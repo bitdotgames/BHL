@@ -432,7 +432,7 @@ public class BHL
               var parser = Frontend.Source2Parser(sfs);
               parsed = new Parsed();
               parsed.tokens = parser.TokenStream;
-              parsed.prog = parser.program();
+              parsed.prog = Frontend.ParseProgram(parser, file);
             }
 
             w.parsed[file] = parsed;
@@ -466,8 +466,8 @@ public class BHL
     public GlobalScope bindings;
     public int start;
     public int count;
-    public List<AST_Module> result;
-    public List<byte[]> lz4_result;
+    public List<AST_Module> result = new List<AST_Module>();
+    public List<byte[]> lz4_result = new List<byte[]>();
     public List<Symbol2File> symbols = new List<Symbol2File>();
     public PostProcessor postproc;
     public UserError error = null;
@@ -490,8 +490,8 @@ public class BHL
       sw.Start();
 
       var w = (Worker)data;
-      w.result = new List<AST_Module>();
-      w.lz4_result = new List<byte[]>();
+      w.result.Clear();
+      w.lz4_result.Clear();
 
       var mreg = new ModuleRegistry();
       mreg.SetParsedCache(w.parsed);
