@@ -3559,9 +3559,10 @@ public class BHL_Test
     }
   }
 
-  void BindColorAlpha(GlobalScope globs)
+  void BindColorAlpha(GlobalScope globs, bool bind_parent = true)
   {
-    BindColor(globs);
+    if(bind_parent)
+      BindColor(globs);
 
     {
       var cl = new ClassBindSymbol("ColorAlpha", globs.type("Color"),
@@ -4367,6 +4368,19 @@ public class BHL_Test
 
     AssertEqual(res, 1202);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassLazilyNotAllowed()
+  {
+    var globs = SymbolTable.CreateBuiltins();
+    
+    AssertError<UserError>(
+      delegate() { 
+        BindColorAlpha(globs, bind_parent: false);
+      },
+      @"parent class not resolved"
+    );
   }
 
   [IsTested()]
