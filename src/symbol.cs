@@ -53,6 +53,11 @@ public class TypeRef
 #endif
   }
 
+  public bool IsEmpty()
+  {
+    return type == null && name.n == 0;
+  }
+
   public Type Get()
   {
     if(type != null)
@@ -184,7 +189,21 @@ public class BuiltInTypeSymbol : Symbol, Type
 
 public class ClassSymbol : ScopedSymbol, Scope, Type 
 {
-  protected ClassSymbol super_class;
+  TypeRef super_class_ref;
+
+  ClassSymbol super_class_;
+  public ClassSymbol super_class {
+    get {
+      if(super_class_ == null && (super_class_ref != null && !super_class_ref.IsEmpty()))
+      {
+        super_class_ = (ClassSymbol)super_class_ref.Get();
+        if(super_class_ == null)
+          throw new UserError("parent class not resolved for " + GetName()); 
+      }
+      return super_class_;
+    }
+  }
+
   public SymbolsDictionary members = new SymbolsDictionary();
 
   public Interpreter.ClassCreator creator;
@@ -192,13 +211,13 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   public ClassSymbol(
     WrappedNode n, 
     HashedName name, 
-    TypeRef super_class, 
+    TypeRef super_class_ref, 
     Scope enclosing_scope, 
     Interpreter.ClassCreator creator = null
   )
     : base(n, name, enclosing_scope)
   {
-    this.super_class = super_class == null ? null : (ClassSymbol)super_class.Get();
+    this.super_class_ref = super_class_ref;
     this.creator = creator;
   }
 
@@ -1277,7 +1296,7 @@ static public class SymbolTable
     {
       throw new UserError(
         lhs.Location()+", "+
-        rhs.Location()+" have incompatible types "
+        rhs.Location()+" have incompatible types"
       );
     }
   }
@@ -1291,7 +1310,7 @@ static public class SymbolTable
     {
       throw new UserError(
         lhs.GetName().s+", "+
-        rhs.Location()+" have incompatible types"
+        rhs.Location()+" have incompatible types"// + rhs.eval_type + " vs " + lhs
       );
     }
   }
