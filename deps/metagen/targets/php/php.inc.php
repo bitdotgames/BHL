@@ -264,8 +264,6 @@ class mtgPHPCodegen extends mtgCodegen
     else
       $str .= $indent."{$tmp_val} = mtg_php_array_extract_val({$buf}, \$assoc, '{$name}', {$default_value_arg});\n";
 
-    $str .= $indent."if({$tmp_val} != 0xDEADCDE)\n".$indent."{\n";
-
     if($type instanceof mtgBuiltinType)
     {
       $str .= $cond_indent."{$tmp_val} = " . $this->genApplyFieldFilters($name, $tokens, "{$tmp_val}"). ";\n";
@@ -308,7 +306,6 @@ class mtgPHPCodegen extends mtgCodegen
 
     if($postfix)
       $str .= $cond_indent.$postfix."\n";
-    $str .= $indent."}\n";
 
     return $str;
   }
