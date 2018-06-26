@@ -189,20 +189,7 @@ public class BuiltInTypeSymbol : Symbol, Type
 
 public class ClassSymbol : ScopedSymbol, Scope, Type 
 {
-  TypeRef super_class_ref;
-
-  ClassSymbol super_class_;
-  public ClassSymbol super_class {
-    get {
-      if(super_class_ == null && (super_class_ref != null && !super_class_ref.IsEmpty()))
-      {
-        super_class_ = (ClassSymbol)super_class_ref.Get();
-        if(super_class_ == null)
-          throw new UserError("parent class not resolved for " + GetName()); 
-      }
-      return super_class_;
-    }
-  }
+  internal ClassSymbol super_class;
 
   public SymbolsDictionary members = new SymbolsDictionary();
 
@@ -217,7 +204,13 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   )
     : base(n, name, enclosing_scope)
   {
-    this.super_class_ref = super_class_ref;
+    if(super_class_ref != null && !super_class_ref.IsEmpty())
+    {
+      this.super_class = (ClassSymbol)super_class_ref.Get();
+      if(super_class == null)
+        throw new UserError("parent class not resolved for " + GetName()); 
+    }
+
     this.creator = creator;
   }
 
