@@ -722,13 +722,50 @@ public class CallConfNode : FuncBaseCallNode
 
 public class ParallelNode : BehaviorTreeInternalNode
 {
-  private BhvPolicy succeedPolicy;
+  override public void init() 
+  {}
 
-  public ParallelNode(BhvPolicy policy)
+  override public BHS execute()
   {
-    succeedPolicy = policy;
+    for(int i=0;i<children.Count;++i)
+    {
+      var currentTask = children[i];
+
+      if(currentTask.getStatus() == BHS.NONE || currentTask.getStatus() == BHS.RUNNING)
+      {
+        //BHS status = currentTask.run();
+        BHS status;
+        ////////////////////FORCING CODE INLINE////////////////////////////////
+        if(currentTask.currStatus != BHS.RUNNING)
+          currentTask.init();
+        status = currentTask.execute();
+        currentTask.currStatus = status;
+        currentTask.lastExecuteStatus = currentTask.currStatus;
+        if(currentTask.currStatus != BHS.RUNNING)
+          currentTask.deinit();
+        ////////////////////FORCING CODE INLINE////////////////////////////////
+        if(status != BHS.RUNNING)
+          return status;
+      }
+    }
+
+    return BHS.RUNNING;
   }
 
+  override public BehaviorTreeInternalNode addChild(BehaviorTreeNode new_child)
+  {
+    //force DEFER to keep running
+    DeferNode d = new_child as DeferNode;
+    if(d != null)
+      d.result = BHS.RUNNING;
+    
+    children.Add(new_child);
+    return this;
+  }
+}
+
+public class ParallelAllNode : BehaviorTreeInternalNode
+{
   override public void init() 
   {}
 
@@ -755,29 +792,15 @@ public class ParallelNode : BehaviorTreeInternalNode
         if(status == BHS.FAILURE)
           return BHS.FAILURE;
 
-        if(status == BHS.SUCCESS && succeedPolicy == BhvPolicy.SUCCEED_ON_ONE)
-          return BHS.SUCCESS;
-
         if(status == BHS.RUNNING)
           sawAllSuccess = false;
       }
     }
 
-    if(succeedPolicy == BhvPolicy.SUCCEED_ON_ALL && sawAllSuccess)
+    if(sawAllSuccess)
       return BHS.SUCCESS;
 
     return BHS.RUNNING;
-  }
-
-  override public BehaviorTreeInternalNode addChild(BehaviorTreeNode new_child)
-  {
-    //force DEFER to keep running
-    DeferNode d = new_child as DeferNode;
-    if(d != null)
-      d.result = succeedPolicy == BhvPolicy.SUCCEED_ON_ALL ? BHS.SUCCESS : BHS.RUNNING;
-    
-    children.Add(new_child);
-    return this;
   }
 }
 

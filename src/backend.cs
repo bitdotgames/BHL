@@ -1558,13 +1558,13 @@ public class Interpreter : AST_Visitor
     }
     else if(node.type == EnumBlock.PARAL)
     {
-      PushNode(new ParallelNode(BhvPolicy.SUCCEED_ON_ONE));
+      PushNode(new ParallelNode());
       VisitChildren(node);
       PopNode();
     }
     else if(node.type == EnumBlock.PARAL_ALL)
     {
-      PushNode(new ParallelNode(BhvPolicy.SUCCEED_ON_ALL));
+      PushNode(new ParallelAllNode());
       VisitChildren(node);
       PopNode();
     }
