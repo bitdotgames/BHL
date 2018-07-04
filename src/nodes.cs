@@ -479,8 +479,8 @@ public class FuncCallNode : FuncBaseCallNode
     {
       var pi = pool[idx_in_pool];
 
-      if(pi.fnode.getStatus() != BHS.NONE)
-        throw new Exception("Bad status: " + pi.fnode.getStatus());
+      if(pi.fnode.currStatus != BHS.NONE)
+        throw new Exception("Bad status: " + pi.fnode.currStatus);
       ++pool_hit;
       --free_count;
 
@@ -513,8 +513,8 @@ public class FuncCallNode : FuncBaseCallNode
 
   static void PoolFree(PoolItem pi)
   {
-    if(pi.fnode.getStatus() != BHS.NONE)
-      throw new Exception("Bad status: " + pi.fnode.getStatus());
+    if(pi.fnode.currStatus != BHS.NONE)
+      throw new Exception("Bad status: " + pi.fnode.currStatus);
 
     ulong pool_id = pi.ast.FuncId();
     int last_free = func2last_free[pool_id];
@@ -731,7 +731,7 @@ public class ParallelNode : BehaviorTreeInternalNode
     {
       var currentTask = children[i];
 
-      if(currentTask.getStatus() == BHS.NONE || currentTask.getStatus() == BHS.RUNNING)
+      if(currentTask.currStatus == BHS.NONE || currentTask.currStatus == BHS.RUNNING)
       {
         //BHS status = currentTask.run();
         BHS status;
@@ -776,7 +776,7 @@ public class ParallelAllNode : BehaviorTreeInternalNode
     {
       var currentTask = children[i];
 
-      if(currentTask.getStatus() == BHS.NONE || currentTask.getStatus() == BHS.RUNNING)
+      if(currentTask.currStatus == BHS.NONE || currentTask.currStatus == BHS.RUNNING)
       {
         //BHS status = currentTask.run();
         BHS status;
