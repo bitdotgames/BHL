@@ -24,8 +24,10 @@ public class UserError : Exception
 
   public string ToJson()
   {
-    var msg = Message.Replace("\"", "\\\""); 
+    var msg = Message.Replace("\\", " ");
     msg = msg.Replace("\n", " ");
+    msg = msg.Replace("\r", " ");
+    msg = msg.Replace("\"", "\\\""); 
     return "{\"error\": \"" + msg + "\", \"file\": \"" + (file == null ? "<?>" : file.Replace("\\", "/")) + "\"}";
   }
 }
