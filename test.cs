@@ -9810,6 +9810,46 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDeferScopes()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""0"")
+      }
+
+      {
+        defer {
+          trace(""1"")
+        }
+        trace(""2"")
+      }
+
+      trace(""3"")
+
+      defer {
+        trace(""4"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("21340", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestDeferInWhile()
   {
     string bhl = @"
@@ -9840,6 +9880,76 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("WHILE;WHILE;WHILE;AFTER;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestDeferInIf()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      if (true) {
+        defer {
+          trace(""0"")
+        }
+        trace(""1"")
+      } else {
+        defer {
+          trace(""3"")
+        }
+      }
+      trace(""2"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("102", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestDeferInElse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      if (false) {
+        defer {
+          trace(""0"")
+        }
+      } else {
+        defer {
+          trace(""3"")
+        }
+        trace(""1"")
+      }
+      trace(""2"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("132", str);
     CommonChecks(intp);
   }
 
