@@ -184,7 +184,7 @@ EOD;
     $TPL = <<<EOD
 //THIS FILE IS GENERATED AUTOMATICALLY, DON'T TOUCH IT!
 using System.Collections.Generic;
-using game;
+using bhl;
 
 %units_src%
 

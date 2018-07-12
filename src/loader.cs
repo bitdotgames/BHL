@@ -24,10 +24,10 @@ public class ModuleLoader : IModuleLoader
   const byte FMT_LZ4 = 1;
 
   Stream source;
-  game.MsgPackDataReader reader;
+  MsgPackDataReader reader;
   Lz4DecoderStream decoder = new Lz4DecoderStream();
   MemoryStream mod_stream = new MemoryStream();
-  game.MsgPackDataReader mod_reader;
+  MsgPackDataReader mod_reader;
   MemoryStream lz_stream = new MemoryStream();
   MemoryStream lz_dst_stream = new MemoryStream();
   bool strict;
@@ -53,21 +53,21 @@ public class ModuleLoader : IModuleLoader
     source = source_;
     source.Position = 0;
 
-    mod_reader = new game.MsgPackDataReader(mod_stream);
+    mod_reader = new MsgPackDataReader(mod_stream);
 
-    reader = new game.MsgPackDataReader(source);
+    reader = new MsgPackDataReader(source);
 
     int total_modules = 0;
 
-    Util.Verify(reader.ReadI32(ref total_modules) == game.MetaIoError.SUCCESS);
+    Util.Verify(reader.ReadI32(ref total_modules) == MetaIoError.SUCCESS);
     //Util.Debug("Total modules: " + total_modules);
     while(total_modules-- > 0)
     {
       int format = 0;
-      Util.Verify(reader.ReadI32(ref format) == game.MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadI32(ref format) == MetaIoError.SUCCESS);
 
       uint id = 0;
-      Util.Verify(reader.ReadU32(ref id) == game.MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadU32(ref id) == MetaIoError.SUCCESS);
 
       var ent = new Entry();
       ent.format = (byte)format;
@@ -79,7 +79,7 @@ public class ModuleLoader : IModuleLoader
       //skipping binary blob
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
-      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == game.MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
       TempBuffer.Update(tmp_buf);
     }
   }
@@ -101,7 +101,7 @@ public class ModuleLoader : IModuleLoader
 
     var ast = new AST_Module();
 
-    var ok = ast.read(mod_reader) == game.MetaIoError.SUCCESS;
+    var ok = ast.read(mod_reader) == MetaIoError.SUCCESS;
     if(strict && !ok)
       Util.Verify(false, "Can't load module " + id);
 
@@ -117,7 +117,7 @@ public class ModuleLoader : IModuleLoader
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
       reader.setPos(ent.stream_pos);
-      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == game.MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
       TempBuffer.Update(tmp_buf);
       res = tmp_buf;
       res_len = tmp_buf_len;
@@ -127,7 +127,7 @@ public class ModuleLoader : IModuleLoader
       var lz_buf = TempBuffer.Get();
       int lz_buf_len = 0;
       reader.setPos(ent.stream_pos);
-      Util.Verify(reader.ReadRaw(ref lz_buf, ref lz_buf_len) == game.MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadRaw(ref lz_buf, ref lz_buf_len) == MetaIoError.SUCCESS);
       TempBuffer.Update(lz_buf);
 
       var dst_buf = TempBuffer.Get();

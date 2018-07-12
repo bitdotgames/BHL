@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace game {
+namespace bhl {
 
 //NOTE: don't change existing values
 public enum MetaIoError
@@ -985,4 +985,4 @@ public class MsgPackDataReader : IDataReader
   }
 }
 
-} // namespace game
+} // namespace bhl

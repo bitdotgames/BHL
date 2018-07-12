@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.IO;
-using game; //for metagen
 
 namespace bhl {
 
@@ -339,7 +338,7 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static public T File2Meta<T>(string file) where T : game.IMetaStruct, new()
+  static public T File2Meta<T>(string file) where T : IMetaStruct, new()
   {
     using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
     {
@@ -347,46 +346,46 @@ static public class Util
     }
   }
 
-  static game.MetaHelper.CreateByIdCb prev_create_by_id; 
+  static MetaHelper.CreateByIdCb prev_create_by_id; 
 
   static public void SetupAutogenFactory()
   {
-    prev_create_by_id = game.MetaHelper.CreateById;
-    game.MetaHelper.CreateById = AutogenBundle.createById;
+    prev_create_by_id = MetaHelper.CreateById;
+    MetaHelper.CreateById = AutogenBundle.createById;
   }
 
   static public void RestoreAutogenFactory()
   {
-    game.MetaHelper.CreateById = prev_create_by_id;
+    MetaHelper.CreateById = prev_create_by_id;
   }
 
-  static public T Bin2Meta<T>(Stream s) where T : game.IMetaStruct, new()
+  static public T Bin2Meta<T>(Stream s) where T : IMetaStruct, new()
   {
-    var reader = new game.MsgPackDataReader(s);
+    var reader = new MsgPackDataReader(s);
     var ast = new T();
     var err = ast.read(reader);
 
-    if(err != game.MetaIoError.SUCCESS)
+    if(err != MetaIoError.SUCCESS)
       throw new Exception("Could not read: " + err);
 
     return ast;
   }
 
-  static public T Bin2Meta<T>(byte[] bytes) where T : game.IMetaStruct, new()
+  static public T Bin2Meta<T>(byte[] bytes) where T : IMetaStruct, new()
   {
     return Bin2Meta<T>(new MemoryStream(bytes));
   }
 
-  static public void Meta2Bin<T>(T ast, Stream dst) where T : game.IMetaStruct
+  static public void Meta2Bin<T>(T ast, Stream dst) where T : IMetaStruct
   {
-    var writer = new game.MsgPackDataWriter(dst);
+    var writer = new MsgPackDataWriter(dst);
     var err = ast.write(writer);
 
-    if(err != game.MetaIoError.SUCCESS)
+    if(err != MetaIoError.SUCCESS)
       throw new Exception("Could not write: " + err);
   }
 
-  static public void Meta2File<T>(T ast, string file) where T : game.IMetaStruct
+  static public void Meta2File<T>(T ast, string file) where T : IMetaStruct
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {

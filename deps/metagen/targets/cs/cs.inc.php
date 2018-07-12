@@ -5,7 +5,7 @@ require_once(dirname(__FILE__) . '/cs_tpl.inc.php');
 
 class mtgCSCodegen extends mtgCodegen
 {
-  public $namespace = 'game';
+  public $namespace = 'bhl';
 
   function genUnit(mtgMetaInfoUnit $unit)
   {
