@@ -30,7 +30,9 @@ function task_build_back_dll(array $args)
 {
   global $BHL_ROOT;
 
-  $bin = $args ? $args[0] : "/Applications/Unity/Unity.app/Contents/Frameworks/Mono/bin/gmcs"; 
+  $mcs_bin = isset($args[0]) ? $args[0] : "/Applications/Unity/Unity.app/Contents/Frameworks/Mono/bin/gmcs"; 
+  $dll_file = isset($args[1]) ? $args[1] : "$BHL_ROOT/bhl_back.dll";
+  $extra_args = isset($args[2]) ? $args[2] : '-debug';
 
   mcs_build(array(
     "$BHL_ROOT/deps/msgpack/Compiler/*.cs",
@@ -46,9 +48,9 @@ function task_build_back_dll(array $args)
     "$BHL_ROOT/src/util.cs",
     "$BHL_ROOT/src/lz4.cs",
    ), 
-  "$BHL_ROOT/bhl_back.dll",
-  "-debug -target:library",
-  $bin
+  $dll_file,
+  "$extra_args -target:library",
+  $mcs_bin
   );
 }
 
