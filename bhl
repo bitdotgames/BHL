@@ -194,6 +194,8 @@ function mcs_build(array $file_specs, $result, $opts = '', $binary = '')
   $refs = array();
   $binary = $binary ? $binary : mcs_bin();
 
+  $binary = cli_path($binary);
+
   $files = array();
   foreach($file_specs as $file_spec)
   {
@@ -214,8 +216,10 @@ function mcs_build(array $file_specs, $result, $opts = '', $binary = '')
     if(_bhl_str_ends_with($file, '.dll'))
     {
       unset($files[$idx]);
-      $refs[] = $file;
+      $refs[] = cli_path($file);
     }
+    else
+      $files[$idx] = cli_path($file);
   } 
 
   if(!$files)

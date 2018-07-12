@@ -79,6 +79,14 @@ function normalize_path($path, $unix=null/*null means try to guess*/)
   return $res;
 }
 
+function cli_path($path)
+{
+  if(is_win())
+    return '"'.normalize_path($path, !is_win()).'"';
+  else
+    return '\''.normalize_path($path, !is_win()).'\'';
+}
+
 function need_to_regen($file, array $deps, $fmtime_map = null)
 {
   if($fmtime_map === null)
