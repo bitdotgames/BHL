@@ -225,7 +225,7 @@ function mcs_build(array $file_specs, $result, $opts = '', $binary = '')
   if(!$files)
     throw new Exception("No files");
 
-  $cmd = $binary . ($refs ? " -r:" . implode(" -r:", $refs) : "") . " $opts -out:$result " . implode(" ", $files); 
+  $cmd = $binary . ($refs ? " -r:" . implode(" -r:", $refs) : "") . " $opts -out:" . cli_path($result) ." " . implode(" ", $files); 
   $cmd_hash = crc32($cmd);
   $cmd_hash_file = "$BHL_ROOT/build/" . crc32($result) . ".mhash";
   if(!is_file($cmd_hash_file) || file_get_contents($cmd_hash_file) != "$cmd_hash")
@@ -241,7 +241,9 @@ function mcs_build(array $file_specs, $result, $opts = '', $binary = '')
 
 function mono_run($exe, array $args = array(), $opts = '')
 {
-  taskman_shell_ensure(mono_bin() . " $opts $exe " . implode(' ', $args));
+  $cmd = cli_path(mono_bin()) . " $opts $exe " . implode(' ', $args);
+  //var_dump($cmd);
+  taskman_shell_ensure($cmd);
 }
 
 function task_genmeta()
