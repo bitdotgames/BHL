@@ -40,6 +40,8 @@ function task_build_back_dll(array $args)
     "$BHL_ROOT/src/symbol.cs", 
     "$BHL_ROOT/src/scope.cs", 
     "$BHL_ROOT/src/backend.cs", 
+    "$BHL_ROOT/src/loader.cs", 
+    "$BHL_ROOT/src/storage.cs", 
     "$BHL_ROOT/src/nodes.cs", 
     "$BHL_ROOT/src/util.cs",
     "$BHL_ROOT/src/lz4.cs",

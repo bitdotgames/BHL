@@ -13,12 +13,6 @@ public enum BHS
   RUNNING = 3
 }
 
-public enum BhvPolicy 
-{
-  SUCCEED_ON_ONE = 0, 
-  SUCCEED_ON_ALL = 1
-}
-
 public interface BehaviorVisitable
 {
   void accept(BehaviorVisitor v);
@@ -200,7 +194,6 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
       children[0] = node;
   }
 }
-
 
 //////////////////////////////////////////
 
@@ -1883,7 +1876,7 @@ public class FuncNodeAST : FuncNode
 
   bool inflated = false;
 
-  protected MemoryScope mem = new MemoryScope();
+  protected DynValDict mem = new DynValDict();
 
   public FuncNodeAST(AST_FuncDecl decl, FuncCtx fct)
   {
