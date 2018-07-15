@@ -511,13 +511,13 @@ public class FieldSymbolAST : FieldSymbol
 
   void Getter(DynVal ctx, ref DynVal v)
   {
-    var m = (DynValTable)ctx.obj;
+    var m = (DynValDict)ctx.obj;
     v.ValueCopyFrom(m.Get(name));
   }
 
   void Setter(ref DynVal ctx, DynVal v)
   {
-    var m = (DynValTable)ctx.obj;
+    var m = (DynValDict)ctx.obj;
     var tmp = v.ValueClone();
     m.Set(name, tmp);
     tmp.RefMod(RefOp.TRY_DEL);
@@ -525,7 +525,7 @@ public class FieldSymbolAST : FieldSymbol
 
   void Getref(DynVal ctx, out DynVal v)
   {
-    var m = (DynValTable)ctx.obj;
+    var m = (DynValDict)ctx.obj;
     v = m.Get(name);
   }
 }
@@ -973,15 +973,15 @@ public class ClassSymbolAST : ClassSymbol
 
   void ClassCreator(ref DynVal res)
   {
-    DynValTable tb = null;
+    DynValDict tb = null;
     if(super_class != null)
     {
       super_class.creator(ref res);
-      tb = (DynValTable)res.obj;
+      tb = (DynValDict)res.obj;
     }
     else
     {
-      tb = DynValTable.New();
+      tb = DynValDict.New();
       res.SetObj(tb);
     }
 

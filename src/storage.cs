@@ -96,7 +96,7 @@ public class DynVal
   static int pool_hit;
 
   //NOTE: use New() instead
-  private DynVal()
+  internal DynVal()
   {}
 
   static public DynVal New()
@@ -613,7 +613,7 @@ public class DynValList : IList<DynVal>, DynValRefcounted
   static int pool_miss;
 
   //NOTE: use New() instead
-  private DynValList()
+  internal DynValList()
   {}
 
   public static DynValList New()
@@ -678,9 +678,88 @@ public class DynValList : IList<DynVal>, DynValRefcounted
   }
 }
 
-public class DynValDict
+public class DynValDict : DynValRefcounted
 {
   public Dictionary<ulong, DynVal> vars = new Dictionary<ulong, DynVal>();
+
+  //NOTE: -1 means it's in released state,
+  //      public only for inspection
+  public int refs;
+
+  static public Stack<DynValDict> pool = new Stack<DynValDict>();
+  static int pool_hit;
+  static int pool_miss;
+
+  //NOTE: use New() instead
+  internal DynValDict()
+  {}
+
+  public void Retain()
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    ++refs;
+
+    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
+  }
+
+  public void Release(bool can_del = true)
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    if(refs == 0)
+      throw new Exception("Double free");
+
+    --refs;
+
+    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
+
+    if(can_del)
+      TryDel();
+  }
+
+  public bool TryDel()
+  {
+    if(refs != 0)
+      return false;
+    
+    Del(this);
+    return true;
+  }
+
+  public static DynValDict New()
+  {
+    DynValDict tb;
+    if(pool.Count == 0)
+    {
+      ++pool_miss;
+      tb = new DynValDict();
+    }
+    else
+    {
+      ++pool_hit;
+      tb = pool.Pop();
+
+      if(tb.refs != -1)
+        throw new Exception("Expected to be released, refs " + tb.refs);
+      tb.refs = 0;
+    }
+
+    return tb;
+  }
+
+  static public void Del(DynValDict tb)
+  {
+    if(tb.refs != 0)
+      throw new Exception("Freeing invalid object, refs " + tb.refs);
+
+    tb.refs = -1;
+    tb.Clear();
+    pool.Push(tb);
+
+    if(pool.Count > pool_miss)
+      throw new Exception("Unbalanced New/Del");
+  }
 
   public void Clear()
   {
@@ -749,88 +828,6 @@ public class DynValDict
     {
       enm.Dispose();
     }
-  }
-}
-
-public class DynValTable : DynValDict, DynValRefcounted
-{
-  //NOTE: -1 means it's in released state,
-  //      public only for inspection
-  public int refs;
-
-  static public Stack<DynValTable> pool = new Stack<DynValTable>();
-  static int pool_hit;
-  static int pool_miss;
-
-  //NOTE: use New() instead
-  private DynValTable()
-  {}
-
-  public void Retain()
-  {
-    if(refs == -1)
-      throw new Exception("Invalid state");
-    ++refs;
-
-    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
-  }
-
-  public void Release(bool can_del = true)
-  {
-    if(refs == -1)
-      throw new Exception("Invalid state");
-    if(refs == 0)
-      throw new Exception("Double free");
-
-    --refs;
-
-    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
-
-    if(can_del)
-      TryDel();
-  }
-
-  public bool TryDel()
-  {
-    if(refs != 0)
-      return false;
-    
-    Del(this);
-    return true;
-  }
-
-  public static DynValTable New()
-  {
-    DynValTable tb;
-    if(pool.Count == 0)
-    {
-      ++pool_miss;
-      tb = new DynValTable();
-    }
-    else
-    {
-      ++pool_hit;
-      tb = pool.Pop();
-
-      if(tb.refs != -1)
-        throw new Exception("Expected to be released, refs " + tb.refs);
-      tb.refs = 0;
-    }
-
-    return tb;
-  }
-
-  static public void Del(DynValTable tb)
-  {
-    if(tb.refs != 0)
-      throw new Exception("Freeing invalid object, refs " + tb.refs);
-
-    tb.refs = -1;
-    tb.Clear();
-    pool.Push(tb);
-
-    if(pool.Count > pool_miss)
-      throw new Exception("Unbalanced New/Del");
   }
 }
 
