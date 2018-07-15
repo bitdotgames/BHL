@@ -748,6 +748,33 @@ public class DynValDict : DynValRefcounted
     return tb;
   }
 
+  static public void PoolClear()
+  {
+    pool_miss = 0;
+    pool_hit = 0;
+    pool.Clear();
+  }
+
+  static public int PoolHits
+  {
+    get { return pool_hit; } 
+  }
+
+  static public int PoolMisses
+  {
+    get { return pool_miss; } 
+  }
+
+  static public int PoolCount
+  {
+    get { return pool_miss; }
+  }
+
+  static public int PoolCountFree
+  {
+    get { return pool.Count; }
+  }
+
   static public void Del(DynValDict tb)
   {
     if(tb.refs != 0)

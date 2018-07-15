@@ -16955,6 +16955,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     AssertEqual(intp.stack.Count, 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
+    AssertEqual(DynValDict.PoolCount, DynValDict.PoolCountFree);
     AssertEqual(FuncCtx.PoolCount, FuncCtx.PoolCountFree);
   }
 
