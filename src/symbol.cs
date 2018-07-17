@@ -983,6 +983,8 @@ public class ClassSymbolAST : ClassSymbol
     {
       tb = DynValDict.New();
       res.SetObj(tb);
+      //NOTE: storing class name hash in _num attribute
+      res._num = decl.nname; 
     }
 
     for(int i=0;i<members.Count;++i)
