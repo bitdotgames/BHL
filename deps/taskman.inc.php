@@ -237,10 +237,7 @@ function taskman_str($str)
 
   $str = preg_replace_callback(
           '~%\(([^\)]+)\)%~',
-          create_function(
-            '$m',
-            'return taskman_prop($m[1]);'
-          ),
+          function($m) { return taskman_prop($m[1]); },
           $str
         );
   return $str;
