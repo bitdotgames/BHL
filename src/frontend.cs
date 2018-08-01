@@ -573,13 +573,13 @@ public class Frontend : bhlBaseVisitor<object>
   void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call new_ast)
   {     
     var func_args = func_symb.GetArgs();
-    var total_args_num = func_symb.GetTotalArgsNum();
+    int total_args_num = func_symb.GetTotalArgsNum();
     //Console.WriteLine(func_args.Count + " " + total_args_num);
-    var default_args_num = func_symb.GetDefaultArgsNum();
+    int default_args_num = func_symb.GetDefaultArgsNum();
     int required_args_num = total_args_num - default_args_num;
-    int args_passed = 0;
+    var args_info = new FuncArgsInfo();
 
-    var norm_cargs = new List<NormCallArg>();
+    var norm_cargs = new List<NormCallArg>(total_args_num);
     for(int i=0;i<total_args_num;++i)
     {
       var arg = new NormCallArg();
@@ -587,7 +587,7 @@ public class Frontend : bhlBaseVisitor<object>
       norm_cargs.Add(arg); 
     }
 
-    //1. normalizing call args
+    //1. filling normalized call args
     for(int ci=0;ci<cargs.callArg().Length;++ci)
     {
       var ca = cargs.callArg()[ci];
@@ -621,6 +621,7 @@ public class Frontend : bhlBaseVisitor<object>
       //NOTE: if call arg is not specified, try to find the default one
       if(ca == null)
       {
+        //this one is used for proper error reporting
         var next_arg = FindNextCallArg(cargs, prev_ca);
 
         if(i < required_args_num)
@@ -630,10 +631,17 @@ public class Frontend : bhlBaseVisitor<object>
           break;
         else
         {
+          int default_arg_idx = required_args_num - i;
+
           var default_arg = func_symb.GetDefaultArgsExprAt(i);
           if(default_arg != null)
           {
-            ++args_passed;
+            if(!args_info.IncArgsNum())
+              FireError(Location(next_arg) +  ": max arguments reached");
+
+            if(!args_info.SetDefaultArg(default_arg_idx))
+              FireError(Location(next_arg) +  ": max default arguments reached");
+
             PushJsonType(norm_cargs[i].orig.type.Get());
             PushInterimAST();
             Visit(default_arg);
@@ -647,7 +655,8 @@ public class Frontend : bhlBaseVisitor<object>
       else
       {
         prev_ca = ca;
-        ++args_passed;
+        if(!args_info.IncArgsNum())
+          FireError(Location(ca) +  ": max arguments reached");
 
         var func_arg_symb = (Symbol)func_args[i];
         var func_arg_type = func_arg_symb.node == null ? func_arg_symb.type.Get() : func_arg_symb.node.eval_type;  
@@ -681,7 +690,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
     PopAST();
 
-    new_ast.cargs_num = args_passed;
+    new_ast.cargs_bits = args_info.bits;
   }
 
   void AddCallArgs(FuncType func_type, bhlParser.CallArgsContext cargs, ref AST_Call new_ast)
@@ -729,7 +738,10 @@ public class Frontend : bhlBaseVisitor<object>
     if(ca_len != func_args.Count)
       FireError(Location(cargs) +  ": too many arguments");
 
-    new_ast.cargs_num = func_args.Count;
+    var args_info = new FuncArgsInfo();
+    if(!args_info.SetArgsNum(func_args.Count))
+      FireError(Location(cargs) +  ": max arguments reached");
+    new_ast.cargs_bits = args_info.bits;
   }
 
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)

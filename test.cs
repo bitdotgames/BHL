@@ -3059,7 +3059,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 2;
+            var b = interp.GetFuncArgsInfo().CountArgs() > 1 ? interp.PopValue().num : 2;
             var a = interp.PopValue().num;
 
             interp.PushValue(DynVal.NewNum(a + b));
@@ -3106,7 +3106,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 2;
+            var b = interp.GetFuncArgsInfo().CountArgs() > 1 ? interp.PopValue().num : 2;
             var a = interp.PopValue().num;
 
             interp.PushValue(DynVal.NewNum(a + b));
@@ -3148,7 +3148,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var a = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 14;
+            var a = interp.GetFuncArgsInfo().CountArgs() > 1 ? interp.PopValue().num : 14;
 
             interp.PushValue(DynVal.NewNum(a));
 

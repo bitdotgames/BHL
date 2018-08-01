@@ -114,7 +114,7 @@ struct AST_Call extends AST
   nname1      : uint32
   nname2      : uint32 #NOTE: due to msgpack 64 bit error on Windows we have to split nname
   name        : string @default:"" #for debug
-  cargs_num   : int32  #NOTE: signed for convenience in loops
+  cargs_bits  : uint32  #NOTE: bitmask of set/unset args, max 32 args supported for now
   scope_ntype : uint32
   line_num    : uint32
 end

@@ -356,17 +356,20 @@ public class FuncCallNode : FuncBaseCallNode
 
   void VisitCallArgs(Interpreter interp, FuncNode fnode)
   {
+    var args_info = new FuncArgsInfo(ast.cargs_bits);
+    int cargs_num = args_info.CountArgs();
+
     //1. func args 
-    for(int i=0;i<ast.cargs_num;++i)
+    for(int i=0;i<cargs_num;++i)
       interp.Visit(ast.children[i]);
 
     var default_args_num = fnode.DefaultArgsNum();
     //2. evaluating default args
     for(int i=0;i<default_args_num;++i)
     {
-      var decl_arg = fnode.DeclArg(ast.cargs_num + i);
+      var decl_arg = fnode.DeclArg(cargs_num + i);
       if(decl_arg.children.Count == 0)
-        throw new Exception("Bad default arg at idx " + (ast.cargs_num + i) + " func " + fnode.GetName());
+        throw new Exception("Bad default arg at idx " + (cargs_num + i) + " func " + fnode.GetName());
       interp.Visit(decl_arg.children[0]);
     }
   }
@@ -482,7 +485,7 @@ public class FuncCallNode : FuncBaseCallNode
       pi.next_free = -1;
       pool[idx_in_pool] = pi;
       //setting actual number of passed arguments
-      pi.fnode.args_num = ast.cargs_num;
+      pi.fnode.args_info = new FuncArgsInfo(ast.cargs_bits);
       return pi;
     }
 
@@ -499,7 +502,7 @@ public class FuncCallNode : FuncBaseCallNode
       ++pool_miss;
 
       //setting actual number of passed arguments
-      pi.fnode.args_num = ast.cargs_num;
+      pi.fnode.args_info = new FuncArgsInfo(ast.cargs_bits);
       return pi;
     }
   }
@@ -648,15 +651,9 @@ public class FuncBindCallNode : FuncBaseCallNode
       var symb = interp.ResolveFuncSymbol(ast) as FuncBindSymbol;
       interp.PushNode(this);
 
-      //1. func args
-      for(int i=0;i<ast.cargs_num;++i)
+      int cargs_num = new FuncArgsInfo(ast.cargs_bits).CountArgs();
+      for(int i=0;i<cargs_num;++i)
         interp.Visit(ast.children[i]);
-
-      //TODO: user bind funcs don't support evalulated default args
-      //2. evaluating default args
-      //for(int i=0;i<symb.def_args_num;++i)
-      //{
-      //}
 
       this.addChild(symb.func_creator());
 
@@ -1444,7 +1441,8 @@ public class CallFuncPtr : FuncBaseCallNode
     if(children.Count == 0)
     {
       interp.PushNode(this);
-      for(int i=0;i<ast.cargs_num;++i)
+      int cargs_num = new FuncArgsInfo(ast.cargs_bits).CountArgs();
+      for(int i=0;i<cargs_num;++i)
         interp.Visit(ast.children[i]);
       interp.PopNode();
 
@@ -1834,13 +1832,14 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 abstract public class FuncNode : SequentialNode
 {
   public FuncCtx fct;
-  public int args_num;
+  public FuncArgsInfo args_info;
 
   public void SetArgs(params DynVal[] args)
   {
     var interp = Interpreter.instance;
 
-    args_num = args.Length;
+    if(!args_info.SetArgsNum(args.Length))
+      throw new Exception("Too many arguments");
 
     for(int i=0;i<args.Length;++i)
     {
@@ -1861,7 +1860,7 @@ abstract public class FuncNode : SequentialNode
 
   public int DefaultArgsNum()
   {
-    return DeclArgsNum() - args_num;
+    return DeclArgsNum() - args_info.CountArgs();
   }
 
   public virtual HashedName GetName()
@@ -1998,7 +1997,7 @@ public class FuncNodeAST : FuncNode
 
   public override string inspect()
   {
-    return decl.Name() + "(<- x " + this.args_num + ")";
+    return decl.Name() + "(<- x " + this.args_info.CountArgs() + ")";
   }
 }
 
@@ -2039,7 +2038,7 @@ public class FuncNodeBind : FuncNode
 
   public override void init() 
   {
-    if(this.args_num > symb.GetMembers().Count)
+    if(this.args_info.CountArgs() > symb.GetMembers().Count)
       throw new Exception("Too many args for func " + symb.name);
 
     base.init();
@@ -2052,7 +2051,7 @@ public class FuncNodeBind : FuncNode
 
   public override string inspect()
   {
-    return symb.name + "(<- x " + this.args_num + ") ";
+    return symb.name + "(<- x " + this.args_info.CountArgs() + ") ";
   }
 }
 

@@ -414,6 +414,59 @@ static public class Util
   }
 }
 
+public struct FuncArgsInfo
+{
+  //NOTE: 6 bits are used for a total number of args passed (max 63), 
+  //      26 bits are reserved for default args set bits(max 26 default args)
+  const int ARGS_NUM_BITS = 6;
+  const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
+  const int MAX_ARGS = (int)ARGS_NUM_MASK;
+  const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS; 
+
+  public uint bits;
+
+  public FuncArgsInfo(uint bits)
+  {
+    this.bits = bits;
+  }
+
+  public int CountArgs()
+  {
+    return (int)(bits & ARGS_NUM_MASK);
+  }
+
+  public bool SetArgsNum(int num)
+  {
+    if(num > MAX_ARGS)
+      return false;
+    bits |= (uint)num;
+    return true;
+  }
+
+  public bool IncArgsNum()
+  {
+    uint num = bits & ARGS_NUM_MASK; 
+    ++num;
+    if(num > MAX_ARGS)
+      return false;
+    bits |= num;
+    return true;
+  }
+
+  public bool SetDefaultArg(int idx)
+  {
+    if(idx >= MAX_DEFAULT_ARGS)
+      return false;
+    bits |= 1u << (idx + ARGS_NUM_BITS);
+    return true;
+  }
+
+  public bool IsDefaultArgSet(int idx)
+  {
+    return (bits & (1u << (idx + ARGS_NUM_BITS))) != 0;
+  }
+}
+
 static public class AST_Util
 {
   static public List<AST_Base> GetChildren(this AST_Base self)

@@ -482,9 +482,9 @@ public class Interpreter : AST_Visitor
   }
 
   //NOTE: usually used in symbols
-  public int GetFuncArgsNum()
+  public FuncArgsInfo GetFuncArgsInfo()
   {
-    return call_stack.Peek().cargs_num;
+    return new FuncArgsInfo(call_stack.Peek().cargs_bits);
   }
 
   //NOTE: caching exceptions for less allocations
@@ -903,7 +903,8 @@ public class Interpreter : AST_Visitor
           call.addChild(new PopValueNode());
 
         //1.2 processing extra args
-        for(int i=1;i<ast.cargs_num;++i)
+        int cargs_num = new FuncArgsInfo(ast.cargs_bits).CountArgs();
+        for(int i=1;i<cargs_num;++i)
           Visit(ast.children[i]);
         PopNode();
 
@@ -930,7 +931,7 @@ public class Interpreter : AST_Visitor
     //special case if it's bind symbol
     else if(fbind_symb != null)
     {
-      bool has_args = ast.cargs_num > 0 || fbind_symb.def_args_num > 0;
+      bool has_args = ast.cargs_bits > 0 || fbind_symb.def_args_num > 0;
 
       if(has_args)
         curr_node.addChild(new FuncBindCallNode(ast));
