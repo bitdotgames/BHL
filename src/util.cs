@@ -439,7 +439,7 @@ public struct FuncArgsInfo
   {
     if(num > MAX_ARGS)
       return false;
-    bits |= (uint)num;
+    bits = (bits & ~ARGS_NUM_MASK) | (uint)num;
     return true;
   }
 
@@ -449,7 +449,7 @@ public struct FuncArgsInfo
     ++num;
     if(num > MAX_ARGS)
       return false;
-    bits |= num;
+    bits = (bits & ~ARGS_NUM_MASK) | num;
     return true;
   }
 
