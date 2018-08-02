@@ -871,6 +871,63 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncManyDefaultArgs()
+  {
+    string bhl = @"
+
+    func float foo(
+          float k1 = 1, float k2 = 1, float k3 = 1, float k4 = 1, float k5 = 1, float k6 = 1, float k7 = 1, float k8 = 1, float k9 = 1,
+          float k10 = 1, float k11 = 1, float k12 = 1, float k13 = 1, float k14 = 1, float k15 = 1, float k16 = 1, float k17 = 1, float k18 = 1,
+          float k19 = 1, float k20 = 1, float k21 = 1, float k22 = 1, float k23 = 1, float k24 = 1, float k25 = 1, float k26 = 42
+        )
+    {
+      return k26
+    }
+      
+    func float test() 
+    {
+      return foo()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncTooManyDefaultArgs()
+  {
+    string bhl = @"
+
+    func float foo(
+          float k1 = 1, float k2 = 1, float k3 = 1, float k4 = 1, float k5 = 1, float k6 = 1, float k7 = 1, float k8 = 1, float k9 = 1,
+          float k10 = 1, float k11 = 1, float k12 = 1, float k13 = 1, float k14 = 1, float k15 = 1, float k16 = 1, float k17 = 1, float k18 = 1,
+          float k19 = 1, float k20 = 1, float k21 = 1, float k22 = 1, float k23 = 1, float k24 = 1, float k25 = 1, float k26 = 1, float k27 = 1
+        )
+    {
+      return k27
+    }
+      
+    func float test() 
+    {
+      return foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "max default arguments reached"
+    );
+  }
+
+  [IsTested()]
   public void TestFuncNotEnoughArgs()
   {
     string bhl = @"
@@ -3059,7 +3116,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.GetFuncArgsInfo().CountArgs() > 1 ? interp.PopValue().num : 2;
+            var b = interp.GetFuncArgsInfo().IsDefaultArgUsed(0) ? 2 : interp.PopValue().num;
             var a = interp.PopValue().num;
 
             interp.PushValue(DynVal.NewNum(a + b));
@@ -3106,7 +3163,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.GetFuncArgsInfo().CountArgs() > 1 ? interp.PopValue().num : 2;
+            var b = interp.GetFuncArgsInfo().IsDefaultArgUsed(0) ? 2 : interp.PopValue().num;
             var a = interp.PopValue().num;
 
             interp.PushValue(DynVal.NewNum(a + b));
@@ -3148,7 +3205,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var a = interp.GetFuncArgsInfo().CountArgs() > 1 ? interp.PopValue().num : 14;
+            var a = interp.GetFuncArgsInfo().IsDefaultArgUsed(0) ? 14 : interp.PopValue().num;
 
             interp.PushValue(DynVal.NewNum(a));
 
@@ -3166,6 +3223,49 @@ public class BHL_Test
     var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 14);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindFunctionWithDefaultArgsOmittingSome()
+  {
+    string bhl = @"
+      
+    func float test(int k) 
+    {
+      return func_with_def(b : k)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+          delegate()
+          {
+            var interp = Interpreter.instance;
+            var arinfo = interp.GetFuncArgsInfo();
+            var b = arinfo.IsDefaultArgUsed(1) ? 2 : interp.PopValue().num;
+            var a = arinfo.IsDefaultArgUsed(0) ? 10 : interp.PopValue().num;
+
+            interp.PushValue(DynVal.NewNum(a + b));
+
+            return BHS.SUCCESS;
+          },
+          2);
+      fn.define(new FuncArgSymbol("a", globs.type("int")));
+      fn.define(new FuncArgSymbol("b", globs.type("int")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    node.SetArgs(DynVal.NewNum(42));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 52);
     CommonChecks(intp);
   }
 

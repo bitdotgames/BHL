@@ -357,20 +357,29 @@ public class FuncCallNode : FuncBaseCallNode
   void VisitCallArgs(Interpreter interp, FuncNode fnode)
   {
     var args_info = new FuncArgsInfo(ast.cargs_bits);
-    int cargs_num = args_info.CountArgs();
+    int passed_args_num = args_info.CountArgs();
+    int total_args_num = fnode.GetTotalArgsNum();
+    int required_args_num = fnode.GetRequiredArgsNum();
 
-    //1. func args 
-    for(int i=0;i<cargs_num;++i)
-      interp.Visit(ast.children[i]);
-
-    var default_args_num = fnode.DefaultArgsNum();
-    //2. evaluating default args
-    for(int i=0;i<default_args_num;++i)
+    //actually passed args counter
+    int p = 0;
+    for(int i=0;i<total_args_num;++i)
     {
-      var decl_arg = fnode.DeclArg(cargs_num + i);
-      if(decl_arg.children.Count == 0)
-        throw new Exception("Bad default arg at idx " + (cargs_num + i) + " func " + fnode.GetName());
-      interp.Visit(decl_arg.children[0]);
+      int default_arg_idx = i - required_args_num;
+
+      //checking if default argument should be used
+      if(default_arg_idx >= 0 && args_info.IsDefaultArgUsed(default_arg_idx))
+      {
+        var decl_arg = fnode.GetDeclArg(required_args_num + default_arg_idx);
+        if(decl_arg.children.Count == 0)
+          throw new Exception("Bad default arg at idx " + (required_args_num + default_arg_idx) + " func " + fnode.GetName());
+        interp.Visit(decl_arg.children[0]);
+      }
+      else if(p < passed_args_num)
+      {
+        interp.Visit(ast.children[p]);
+        ++p;
+      }
     }
   }
 
@@ -651,7 +660,9 @@ public class FuncBindCallNode : FuncBaseCallNode
       var symb = interp.ResolveFuncSymbol(ast) as FuncBindSymbol;
       interp.PushNode(this);
 
-      int cargs_num = new FuncArgsInfo(ast.cargs_bits).CountArgs();
+      var args_info = new FuncArgsInfo(ast.cargs_bits);
+
+      int cargs_num = args_info.CountArgs();
       for(int i=0;i<cargs_num;++i)
         interp.Visit(ast.children[i]);
 
@@ -1834,6 +1845,7 @@ abstract public class FuncNode : SequentialNode
   public FuncCtx fct;
   public FuncArgsInfo args_info;
 
+  //TODO: add support for default args overriding
   public void SetArgs(params DynVal[] args)
   {
     var interp = Interpreter.instance;
@@ -1848,19 +1860,24 @@ abstract public class FuncNode : SequentialNode
     }
   }
 
-  public virtual int DeclArgsNum()
-  {
-    return 0;
-  }
-
-  public virtual AST DeclArg(int i)
+  public virtual AST GetDeclArg(int i)
   {
     return null;
   }
 
-  public int DefaultArgsNum()
+  public virtual int GetTotalArgsNum()
   {
-    return DeclArgsNum() - args_info.CountArgs();
+    return 0;
+  }
+
+  public virtual int GetDefaultArgsNum()
+  {
+    return 0;
+  }
+
+  public int GetRequiredArgsNum()
+  {
+    return GetTotalArgsNum() - GetDefaultArgsNum();
   }
 
   public virtual HashedName GetName()
@@ -1883,13 +1900,18 @@ public class FuncNodeAST : FuncNode
     this.decl = decl;
   }
 
-  public override int DeclArgsNum()
+  public override int GetTotalArgsNum()
   {
     var fparams = decl.fparams();
-    return fparams.children.Count == 0 ? 0 : fparams.children.Count;
+    return fparams.children.Count;
   }
 
-  public override AST DeclArg(int i)
+  public override int GetDefaultArgsNum()
+  {
+    return decl.GetDefaultArgsNum();
+  }
+
+  public override AST GetDeclArg(int i)
   {
     var children = decl.fparams().GetChildren();
     return children.Count == 0 ? null : children[i] as AST;

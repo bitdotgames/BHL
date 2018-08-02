@@ -453,7 +453,7 @@ public struct FuncArgsInfo
     return true;
   }
 
-  public bool SetDefaultArg(int idx)
+  public bool UseDefaultArg(int idx)
   {
     if(idx >= MAX_DEFAULT_ARGS)
       return false;
@@ -461,7 +461,7 @@ public struct FuncArgsInfo
     return true;
   }
 
-  public bool IsDefaultArgSet(int idx)
+  public bool IsDefaultArgUsed(int idx)
   {
     return (bits & (1u << (idx + ARGS_NUM_BITS))) != 0;
   }

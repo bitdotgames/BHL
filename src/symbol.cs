@@ -931,7 +931,7 @@ public class FuncBindSymbol : FuncSymbol
 public class SimpleFuncBindSymbol : FuncBindSymbol
 {
   public SimpleFuncBindSymbol(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
-    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num )
+    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num)
   {}
 }
 

@@ -625,28 +625,18 @@ public class Frontend : bhlBaseVisitor<object>
         var next_arg = FindNextCallArg(cargs, prev_ca);
 
         if(i < required_args_num)
+        {
           FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name.s + "'");
-        //rest are args by default
-        else if(HasAllDefaultArgsAfter(norm_cargs, i))
-          break;
+        }
         else
         {
-          int default_arg_idx = required_args_num - i;
-
-          var default_arg = func_symb.GetDefaultArgsExprAt(i);
-          if(default_arg != null)
+          //NOTE: for func bind symbols we assume default arguments  
+          //      are specified manually in bindings
+          if(func_symb is FuncBindSymbol || func_symb.GetDefaultArgsExprAt(i) != null)
           {
-            if(!args_info.IncArgsNum())
-              FireError(Location(next_arg) +  ": max arguments reached");
-
-            if(!args_info.SetDefaultArg(default_arg_idx))
+            int default_arg_idx = i - required_args_num;
+            if(!args_info.UseDefaultArg(default_arg_idx))
               FireError(Location(next_arg) +  ": max default arguments reached");
-
-            PushJsonType(norm_cargs[i].orig.type.Get());
-            PushInterimAST();
-            Visit(default_arg);
-            PopInterimAST();
-            PopJsonType();
           }
           else
             FireError(Location(next_arg) +  ": missing argument '" + norm_cargs[i].orig.name.s + "'");
@@ -755,16 +745,6 @@ public class Frontend : bhlBaseVisitor<object>
 
     //NOTE: graceful fallback
     return cargs;
-  }
-
-  bool HasAllDefaultArgsAfter(List<NormCallArg> arr, int idx)
-  {
-    for(int i=idx+1;i<arr.Count;++i)
-    {
-      if(arr[i].ca != null)
-        return false;
-    }
-    return true;
   }
 
   public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
