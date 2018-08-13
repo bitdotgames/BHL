@@ -453,14 +453,22 @@ public struct FuncArgsInfo
     return true;
   }
 
-  public bool UseDefaultArg(int idx)
+  //NOTE: idx starts from 0, it's the idx of the default argument *within* default arguments,
+  //      e.g: func Foo(int a, int b = 1, int c = 2) { .. }  
+  //           b is 0 default arg idx, c is 1 
+  public bool UseDefaultArg(int idx, bool flag)
   {
     if(idx >= MAX_DEFAULT_ARGS)
       return false;
-    bits |= 1u << (idx + ARGS_NUM_BITS);
+    uint mask = 1u << (idx + ARGS_NUM_BITS); 
+    if(flag)
+      bits |= mask;
+    else
+      bits &= ~mask;
     return true;
   }
 
+  //NOTE: idx starts from 0
   public bool IsDefaultArgUsed(int idx)
   {
     return (bits & (1u << (idx + ARGS_NUM_BITS))) != 0;

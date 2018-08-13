@@ -635,7 +635,7 @@ public class Frontend : bhlBaseVisitor<object>
           if(func_symb is FuncBindSymbol || func_symb.GetDefaultArgsExprAt(i) != null)
           {
             int default_arg_idx = i - required_args_num;
-            if(!args_info.UseDefaultArg(default_arg_idx))
+            if(!args_info.UseDefaultArg(default_arg_idx, true))
               FireError(Location(next_arg) +  ": max default arguments reached");
           }
           else
