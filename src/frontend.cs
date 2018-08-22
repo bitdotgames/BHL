@@ -1250,18 +1250,18 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
-    //AND node has exactly two children
-    var tmp0 = new AST_Interim();
-    PushAST(tmp0);
-    Visit(exp_0);
-    PopAST();
-    ast.AddChild(tmp0);
+    PushAST(ast);
 
-    var tmp1 = new AST_Interim();
-    PushAST(tmp1);
+    //AND node mast have exactly two children
+    PushInterimAST();
+    Visit(exp_0);
+    PopInterimAST();
+
+    PushInterimAST();
     Visit(exp_1);
+    PopInterimAST();
+
     PopAST();
-    ast.AddChild(tmp1);
 
     Wrap(ctx).eval_type = SymbolTable.Lop(Wrap(exp_0), Wrap(exp_1));
 
@@ -1276,18 +1276,18 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
-    //OR node has exactly two children
-    var tmp0 = new AST_Interim();
-    PushAST(tmp0);
-    Visit(exp_0);
-    PopAST();
-    ast.AddChild(tmp0);
+    PushAST(ast);
 
-    var tmp1 = new AST_Interim();
-    PushAST(tmp1);
+    //OR node mast have exactly two children
+    PushInterimAST();
+    Visit(exp_0);
+    PopInterimAST();
+
+    PushInterimAST();
     Visit(exp_1);
+    PopInterimAST();
+
     PopAST();
-    ast.AddChild(tmp1);
 
     Wrap(ctx).eval_type = SymbolTable.Lop(Wrap(exp_0), Wrap(exp_1));
 
