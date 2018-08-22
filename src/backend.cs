@@ -1015,7 +1015,7 @@ public class Interpreter : AST_Visitor
   public override void DoVisit(AST_BinaryOpExp node)
   {
     //NOTE: checking if it's a short circuit expression
-    if((int)node.type < 3)
+    if(node.type == EnumBinaryOp.AND || node.type == EnumBinaryOp.OR)
     {
       PushNode(new LogicOpNode(node));
         PushNode(new GroupNode());
