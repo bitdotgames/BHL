@@ -686,41 +686,6 @@ public class FuncBindCallNode : FuncBaseCallNode
   }
 }
 
-public class CallConfNode : FuncBaseCallNode
-{
-  BehaviorTreeNode conf_node;
-  ConfNodeSymbol conf_symb;
-
-  public CallConfNode(AST_Call ast, ConfNodeSymbol conf_symb, BehaviorTreeNode conf_node)
-    : base(ast)
-  {
-    this.conf_symb = conf_symb;
-    this.conf_node = conf_node;
-  }
-
-  override public void init()
-  {
-    base.init();
-
-    var dv = DynVal.New();
-    conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
-
-    var interp = Interpreter.instance;
-    interp.PushValue(dv);
-  }
-
-  override public void deinit()
-  {
-    //NOTE: we don't stop children here because this node behaves NOT like
-    //      a block node but rather emulating a terminal node
-  }
-
-  override public void defer()
-  {
-    stopChildren();
-  }
-}
-
 public class ParallelNode : BehaviorTreeInternalNode
 {
   override public void init() 
