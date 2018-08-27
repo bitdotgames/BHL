@@ -11034,6 +11034,116 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestAndShortCircuitWithBoolNot()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      bool ready = false
+      bool activated = true
+      if(!ready && activated) {
+        trace(""OK;"")
+      } else {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("OK;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestAndShortCircuitWithBoolNotForClassMembers()
+  {
+    string bhl = @"
+
+    class Foo 
+    {
+      bool ready
+      bool activated
+    }
+      
+    func void test() 
+    {
+      Foo foo = {}
+      foo.ready = false
+      foo.activated = true
+      if(!foo.ready && foo.activated) {
+        trace(""OK;"")
+      } else {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("OK;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestOrShortCircuitWithBoolNotForClassMembers()
+  {
+    string bhl = @"
+
+    class Foo 
+    {
+      bool ready
+      bool activated
+    }
+      
+    func void test() 
+    {
+      Foo foo = {}
+      foo.ready = false
+      foo.activated = true
+      if(foo.ready || foo.activated) {
+        trace(""OK;"")
+      } else {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("OK;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestSetNullObjFromUserBinding()
   {
     string bhl = @"
