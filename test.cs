@@ -6765,7 +6765,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl, globs);
       },
-      "type 'bool^(int)' doesn't support member access via '.'"
+      "type doesn't support member access via '.'"
     );
   }
 

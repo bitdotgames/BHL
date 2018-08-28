@@ -409,7 +409,7 @@ public class Frontend : bhlBaseVisitor<object>
 
           curr_class = curr_type as ClassSymbol; 
           if(curr_class == null)
-            FireError(Location(ma) + " : type '" + curr_type.GetName().s + "' doesn't support member access via '.' ");
+            FireError(Location(ma) + " : type doesn't support member access via '.'");
 
           curr_name = ma.NAME();
         }
