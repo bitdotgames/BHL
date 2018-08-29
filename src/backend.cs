@@ -161,15 +161,6 @@ public class FuncCtx : DynValRefcounted
     return this;
   }
 
-  //NOTE: helper useful for cases when FuncCtx is passed 
-  //      as an argument
-  public FuncNode EnsureRetainNode()
-  {
-    var fct = AutoClone();
-    fct.Retain();
-    return fct.EnsureNode();
-  }
-
   public void Retain()
   {
     if(refs == -1)
