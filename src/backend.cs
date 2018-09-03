@@ -962,18 +962,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonObj node)
   {
-    if(jcts.Count > 0 && jcts.Peek().type == JsonCtx.OBJ)
-    {
-      var jc = jcts.Peek();
-      //NOTE: if it's a C# bind symbol we assume the obj is already
-      //      created and just push it onto the stack
-      if(symbols.resolve(jc.scope_type) is ClassBindSymbol)
-        curr_node.addChild(new MVarAccessNode(jc.scope_type, jc.name_or_idx, MVarAccessNode.READ_PUSH_CTX));
-      else
-        curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
-    }
-    else
-      curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
+    curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
 
     VisitChildren(node);
   }
@@ -984,22 +973,7 @@ public class Interpreter : AST_Visitor
     if(bnd == null)
       throw new Exception("Could not find class binding: " + node.ntype);
 
-    if(jcts.Count > 0 && jcts.Peek().type == JsonCtx.OBJ)
-    {
-      var jc = jcts.Peek();
-      //NOTE: if it's a C# bind symbol we assume the array is already
-      //      created and just push it onto the stack
-      if(symbols.resolve(jc.scope_type) is ClassBindSymbol)
-      {
-        curr_node.addChild(new MVarAccessNode(jc.scope_type, jc.name_or_idx, MVarAccessNode.READ_PUSH_CTX));
-        curr_node.addChild(new DupValueNode());
-        curr_node.addChild(bnd.Create_Clear());
-      }
-      else
-        curr_node.addChild(bnd.Create_New());
-    }
-    else
-      curr_node.addChild(bnd.Create_New());
+    curr_node.addChild(bnd.Create_New());
 
     for(int i=0;i<node.children.Count;++i)
     {
