@@ -3845,7 +3845,7 @@ public class BHL_Test
           var f = (DynValContainer)ctx.obj;
           if(f.dv != null)
           {
-            v.RefTryDel();
+            v.TryDel();
             v = f.dv;
           }
           else
@@ -5204,7 +5204,7 @@ public class BHL_Test
 
     AssertEqual(res, 10);
 
-    c.dv.RefDec();
+    c.dv.Release();
 
     CommonChecks(intp);
   }
@@ -5263,7 +5263,7 @@ public class BHL_Test
 
     AssertTrue(res);
 
-    c.dv.RefDec();
+    c.dv.Release();
 
     CommonChecks(intp);
   }

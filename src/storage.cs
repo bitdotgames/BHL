@@ -264,19 +264,29 @@ public class DynVal
     }
   }
 
-  public void RefInc()
+  public void Retain()
   {
     RefMod(RefOp.USR_INC | RefOp.INC);
   }
 
-  public void RefDec()
+  public void Release()
   {
     RefMod(RefOp.USR_DEC | RefOp.DEC);
   }
 
-  public void RefTryDel()
+  public void TryDel()
   {
     RefMod(RefOp.TRY_DEL);
+  }
+
+  public void RetainReference()
+  {
+    RefMod(RefOp.INC);
+  }
+
+  public void ReleaseReference()
+  {
+    RefMod(RefOp.DEC);
   }
 
   static public DynVal NewStr(string s)
