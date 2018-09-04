@@ -13157,161 +13157,6 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  public class ConfigNode_Conf
-  {
-    public List<string> strs = new List<string>();
-    public int hey;
-    public List<Color> colors = new List<Color>();
-    public Color sub_color = new Color();
-    public bool set_strs_on_reset;
-
-    public void reset()
-    {
-      hey = 0;
-      colors.Clear();
-      sub_color = new Color();
-      strs.Clear();
-      if(set_strs_on_reset)
-      {
-        colors.Add(new Color(){g = 42});
-        strs.Add("added_in_reset");
-      }
-    }
-  }
-
-  public class ConfigNode : BehaviorTreeTerminalNode
-  {
-    public ConfigNode_Conf conf = new ConfigNode_Conf();
-    public bool with_ref = false;
-    public bool with_color_return = false;
-
-    Stream sm;
-
-    public ConfigNode(Stream sm)
-    {
-      this.sm = sm;
-    }
-
-    public override void init()
-    {
-      var sw = new StreamWriter(sm);
-      sw.Write(
-        conf.hey + 
-        (conf.colors.Count > 0 ? (":" + conf.colors.Count) : "") + 
-        (conf.colors.Count >= 1 ? (":" + conf.colors[0]) : "") + 
-        (conf.colors.Count >= 2 ? ("," + conf.colors[1]) : "") + 
-        (conf.colors.Count >= 3 ? ("," + conf.colors[2]) : "") + 
-        ":" + conf.sub_color + 
-        ":" + string.Join(",", conf.strs)
-      );
-
-      if(with_ref)
-      {
-        var ref_val = Interpreter.instance.PopRef();
-        sw.Write(":" + ref_val.num);
-      }
-
-      if(with_color_return)
-      {
-        var dv = DynVal.New();
-        dv.obj = conf.sub_color;
-        Interpreter.instance.PushValue(dv);
-      }
-
-      sw.Flush();
-    }
-  }
-
-  public class ConfigNodeLambda : BehaviorTreeDecoratorNode
-  {
-    public FooLambda conf = new FooLambda();
-
-    public override void init()
-    {
-      var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      fct.Retain();
-      var func_node = fct.EnsureNode();
-
-      this.setSlave(func_node);
-
-      base.init();
-    }
-
-    public override void deinit()
-    {
-      var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      fct.Release();
-    }
-  }
-
-  void BindConfigNode_Conf(GlobalScope globs)
-  {
-    {
-      var cl = new ClassBindSymbol( "ConfigNode_Conf",
-        delegate(ref DynVal v) 
-        { 
-          v.obj = new ConfigNode_Conf();
-        }
-      );
-      globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<ConfigNode_Conf>(globs, new TypeRef(cl), delegate() { return new List<ConfigNode_Conf>(); } ));
-
-      cl.define(new FieldSymbol("hey", globs.type("int"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.SetNum(f.hey);
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          f.hey = (int)v.num; 
-          ctx.obj = f;
-        }
-      ));
-      cl.define(new FieldSymbol("colors", globs.type("Color[]"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.obj = f.colors;
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          f.colors = (List<Color>)v.obj; 
-          ctx.obj = f;
-        }
-      ));
-      cl.define(new FieldSymbol("sub_color", globs.type("Color"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.obj = f.sub_color;
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          f.sub_color = (Color)v.obj; 
-          ctx.obj = f;
-        }
-      ));
-      cl.define(new FieldSymbol("strs", globs.type("string[]"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.Encode(f.strs);
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.Decode(ref f.strs);
-          ctx.obj = f;
-          ((DynValList)v.obj).TryDel();
-        }
-      ));
-    }
-  }
-
   public class DummyModuleLoader : IModuleLoader
   {
     public AST_Module LoadModule(HashedName id)
@@ -15628,6 +15473,34 @@ func Unit FindUnit(Vec3 pos, float radius) {
     func int test() 
     {
       foo()
+      return 2
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestReturnNonConsumedInParal()
+  {
+    string bhl = @"
+
+    func float foo() 
+    {
+      return 100
+    }
+      
+    func int test() 
+    {
+      paral {
+        foo()
+        RUNNING()
+      }
       return 2
     }
     ";
