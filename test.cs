@@ -11608,6 +11608,39 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestForeachWithReturnedArr()
+  {
+    string bhl = @"
+
+    func int[] foo()
+    {
+      return [1,2,3]
+    }
+
+    func test() 
+    {
+      foreach(foo() as int it) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestForeachNested()
   {
     string bhl = @"
@@ -11676,6 +11709,33 @@ public class BHL_Test
     func test() 
     {
       foreach([1,2,3] as string it) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachArrBadType()
+  {
+    string bhl = @"
+
+    func float foo()
+    {
+      return 14
+    }
+
+    func test() 
+    {
+      foreach(foo() as float it) {
       }
     }
     ";
