@@ -11639,6 +11639,36 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestForeachNested2()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as int it) {
+        foreach([20,30] as int it2) {
+          trace((string)it + "","" + (string)it2 + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1,20;1,30;2,20;2,30;3,20;3,30;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestForeachIteratorVarBadType()
   {
     string bhl = @"
