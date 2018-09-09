@@ -66,6 +66,10 @@ newExp
   : 'new' type
   ;
 
+foreachExp
+  : '(' callExp 'as' varOrDeclare ')' 
+  ;
+
 varDeclareAssign
   : varDeclare assignExp?
   ;
@@ -77,6 +81,7 @@ statement
   | callExp                                                     #SymbCall
   | mainIf elseIf* else?                                        #If
   | 'while' exp block                                           #While
+  | 'foreach' foreachExp block                                  #Foreach
   | 'break'                                                     #Break
   | 'return' explist?                                           #Return
   | 'seq' block                                                 #Seq
@@ -214,6 +219,10 @@ varsDeclare
 
 varDeclare
   : type NAME
+  ;
+
+varOrDeclare
+  : NAME | varDeclare
   ;
 
 varsDeclareOrCallExps

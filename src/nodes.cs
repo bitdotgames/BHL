@@ -1805,6 +1805,23 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
   }
 }
 
+public class IncNode : BehaviorTreeTerminalNode
+{
+  HashedName name;
+
+  public IncNode(HashedName name)
+  {
+    this.name = name;
+  }
+
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+    var val = interp.GetScopeValue(name);
+    val.num++;
+  }
+}
+
 abstract public class FuncNode : SequentialNode
 {
   public FuncCtx fct;

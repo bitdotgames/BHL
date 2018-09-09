@@ -2135,6 +2135,7 @@ public class Frontend : bhlBaseVisitor<object>
     SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(ctx.exp()));
 
     ast.AddChild(cond);
+
     PushAST(ast);
     CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
     PopAST();
@@ -2146,7 +2147,68 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  void CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope)
+  public override object VisitForeach(bhlParser.ForeachContext ctx)
+  {
+    //NOTE: we're going to generate the following code
+    //
+    //__arr_tmp = arr
+    //__arr_cnt = 0
+    //while(__arr_cnt < __arr_tmp.Count)
+    //{
+    // arr_it = __arr_tmp[__arr_cnt]
+    // ...
+    // __arr_cnt++
+    //}
+    //
+    //declaring array var
+    var cexp = ctx.foreachExp().callExp();
+    Visit(cexp);
+    //var arr_type = Wrap(cexp).eval_type;
+
+    var arr_ntype = (uint)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n;
+
+    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, "__arr_tmp"));
+    //declaring counter var
+    PeekAST().AddChild(AST_Util.New_VarDecl("__arr_cnt", false, 0));
+
+    //declaring iterating var
+    var vd = ctx.foreachExp().varOrDeclare().varDeclare();
+    PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
+
+    var ast = AST_Util.New_Block(EnumBlock.WHILE);
+
+    ++loops_stack;
+
+    //adding while condition
+    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, "__arr_cnt"));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, "__arr_tmp"));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype));
+    cond.AddChild(bin_op);
+    ast.AddChild(cond);
+
+    PushAST(ast);
+    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
+    //prepending filling of the iterator var
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, vd.NAME().GetText()));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, "__arr_cnt"));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, "__arr_tmp"));
+
+    //appending counter increment
+    block.AddChild(AST_Util.New_Inc("__arr_cnt"));
+    PopAST();
+
+    --loops_stack;
+
+    PeekAST().AddChild(ast);
+
+    return null;
+  }
+
+  //NOTE: it returns node which also adds to the current node 
+  AST CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope)
   {
     ++scope_level;
 
@@ -2220,6 +2282,7 @@ public class Frontend : bhlBaseVisitor<object>
       curr_scope = curr_scope.GetEnclosingScope();
 
     PeekAST().AddChild(ast);
+    return ast;
   }
 
 }

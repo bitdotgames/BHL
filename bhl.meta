@@ -48,6 +48,10 @@ struct AST_BinaryOpExp extends AST
   type    : EnumBinaryOp
 end
 
+struct AST_Inc extends AST_Base
+  nname     : uint32
+end
+
 struct AST_New extends AST
   ntype : uint32
   type  : string #for debug

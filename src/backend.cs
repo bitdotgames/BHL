@@ -24,6 +24,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_BinaryOpExp node);
   public abstract void DoVisit(AST_UnaryOpExp node);
   public abstract void DoVisit(AST_New node);
+  public abstract void DoVisit(AST_Inc node);
   public abstract void DoVisit(AST_JsonObj node);
   public abstract void DoVisit(AST_JsonArr node);
   public abstract void DoVisit(AST_JsonPair node);
@@ -66,6 +67,8 @@ public abstract class AST_Visitor
       DoVisit(node as AST_UnaryOpExp);
     else if(node is AST_New)
       DoVisit(node as AST_New);
+    else if(node is AST_Inc)
+      DoVisit(node as AST_Inc);
     else if(node is AST_JsonObj)
       DoVisit(node as AST_JsonObj);
     else if(node is AST_JsonArr)
@@ -808,6 +811,11 @@ public class Interpreter : AST_Visitor
   public override void DoVisit(AST_New node)
   {
     curr_node.addChild(new ConstructNode(node.Name()));
+  }
+
+  public override void DoVisit(AST_Inc node)
+  {
+    curr_node.addChild(new IncNode(node.nname));
   }
 
   public override void DoVisit(AST_Call node)

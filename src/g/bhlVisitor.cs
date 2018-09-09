@@ -246,6 +246,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitNewExp([NotNull] bhlParser.NewExpContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.foreachExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForeachExp([NotNull] bhlParser.ForeachExpContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -286,6 +292,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitWhile([NotNull] bhlParser.WhileContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Foreach</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForeach([NotNull] bhlParser.ForeachContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>Break</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -571,6 +584,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitVarDeclare([NotNull] bhlParser.VarDeclareContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varOrDeclare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarOrDeclare([NotNull] bhlParser.VarOrDeclareContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.varsDeclareOrCallExps"/>.
 	/// </summary>
