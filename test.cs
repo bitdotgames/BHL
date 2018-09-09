@@ -11714,6 +11714,29 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestForeachRedeclareError()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      string it
+      foreach([1,2,3] as int it) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "already defined symbol 'it'"
+    );
+  }
+
+  [IsTested()]
   public void TestBadBreak()
   {
     string bhl = @"
