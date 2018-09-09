@@ -11395,6 +11395,42 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestNestedWhileArrLoopWithVarDecls()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] arr = [1,2]
+      int i = 0
+      while(i < arr.Count) {
+        int tmp = arr[i]
+        int j = 0
+        while(j < arr.Count) {
+          int tmp2 = arr[j]
+          trace((string)tmp + "","" + (string)tmp2 + "";"")
+          j = j + 1
+        }
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1,1;1,2;2,1;2,2;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestWhileManyTimesAtOneRun()
   {
     string bhl = @"
@@ -11511,6 +11547,87 @@ public class BHL_Test
     var str = GetString(trace_stream);
     AssertEqual("123", str);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachWithInPlaceArr()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as int it) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachNested()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] is = [1,2,3]
+      foreach(is as int it) {
+        foreach(is as int it2) {
+          trace((string)it + "","" + (string)it2 + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachIteratorVarBadType()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as string it) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "have incompatible types"
+    );
   }
 
   [IsTested()]
@@ -11740,7 +11857,7 @@ public class BHL_Test
     );
   }
 
-//TODO: continue not supported
+//TODO: continue not supported yet
 //  [IsTested()]
   public void TestWhileContinue()
   {

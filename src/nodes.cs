@@ -1667,8 +1667,13 @@ public class VarAccessNode : BehaviorTreeTerminalNode
     }
     else if(mode == DECL)
     {
-      var val = DynVal.NewNil();
-      interp.SetScopeValue(name, val);
+      //NOTE: declaring new variable only if it wasn't declared before, 
+      //      this may happen in a loop
+      var val = interp.TryGetScopeValue(name);
+      if(val == null)
+        interp.SetScopeValue(name, DynVal.NewNil());
+      else
+        val.SetNil();
     }
     else
       throw new Exception("Unknown mode: " + mode);
@@ -1819,6 +1824,11 @@ public class IncNode : BehaviorTreeTerminalNode
     var interp = Interpreter.instance;
     var val = interp.GetScopeValue(name);
     val.num++;
+  }
+
+  public override string inspect()
+  {
+    return "" + name; 
   }
 }
 

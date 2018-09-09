@@ -67,7 +67,7 @@ newExp
   ;
 
 foreachExp
-  : '(' callExp 'as' varOrDeclare ')' 
+  : '(' exp 'as' varOrDeclare ')' 
   ;
 
 varDeclareAssign

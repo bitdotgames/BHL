@@ -1475,8 +1475,8 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class ForeachExpContext : ParserRuleContext {
-		public CallExpContext callExp() {
-			return GetRuleContext<CallExpContext>(0);
+		public ExpContext exp() {
+			return GetRuleContext<ExpContext>(0);
 		}
 		public VarOrDeclareContext varOrDeclare() {
 			return GetRuleContext<VarOrDeclareContext>(0);
@@ -1509,7 +1509,7 @@ public partial class bhlParser : Parser {
 			EnterOuterAlt(_localctx, 1);
 			{
 			State = 253; Match(T__2);
-			State = 254; callExp();
+			State = 254; exp(0);
 			State = 255; Match(T__10);
 			State = 256; varOrDeclare();
 			State = 257; Match(T__3);
@@ -5395,7 +5395,7 @@ public partial class bhlParser : Parser {
 		'\x15', '\x3', '\x2', '\x2', '\x2', '\xFB', '\xF9', '\x3', '\x2', '\x2', 
 		'\x2', '\xFC', '\xFD', '\a', '\f', '\x2', '\x2', '\xFD', '\xFE', '\x5', 
 		'\x10', '\t', '\x2', '\xFE', '\x17', '\x3', '\x2', '\x2', '\x2', '\xFF', 
-		'\x100', '\a', '\x5', '\x2', '\x2', '\x100', '\x101', '\x5', '$', '\x13', 
+		'\x100', '\a', '\x5', '\x2', '\x2', '\x100', '\x101', '\x5', '\x14', '\v', 
 		'\x2', '\x101', '\x102', '\a', '\r', '\x2', '\x2', '\x102', '\x103', '\x5', 
 		'Z', '.', '\x2', '\x103', '\x104', '\a', '\x6', '\x2', '\x2', '\x104', 
 		'\x19', '\x3', '\x2', '\x2', '\x2', '\x105', '\x107', '\x5', 'X', '-', 

@@ -2159,20 +2159,28 @@ public class Frontend : bhlBaseVisitor<object>
     // ...
     // __arr_cnt++
     //}
-    //
-    //declaring array var
-    var cexp = ctx.foreachExp().callExp();
-    Visit(cexp);
-    //var arr_type = Wrap(cexp).eval_type;
+    
+    //evaluating array expression
+    var vd = ctx.foreachExp().varOrDeclare().varDeclare();
+    var arr_type = locals.type(vd.type().GetText()+"[]").Get();
+
+    PushJsonType(arr_type);
+    var exp = ctx.foreachExp().exp();
+    Visit(exp);
+    //var exp_type = Wrap(exp).eval_type;
+    PopJsonType();
+    SymbolTable.CheckAssign(Wrap(exp), arr_type);
 
     var arr_ntype = (uint)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n;
 
-    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, "__arr_tmp"));
+    var arr_tmp_name = "$foreach_tmp" + loops_stack;
+    var arr_cnt_name = "$foreach_cnt" + loops_stack;
+
+    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, arr_tmp_name));
     //declaring counter var
-    PeekAST().AddChild(AST_Util.New_VarDecl("__arr_cnt", false, 0));
+    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_name, false, 0));
 
     //declaring iterating var
-    var vd = ctx.foreachExp().varOrDeclare().varDeclare();
     PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
 
     var ast = AST_Util.New_Block(EnumBlock.WHILE);
@@ -2182,8 +2190,8 @@ public class Frontend : bhlBaseVisitor<object>
     //adding while condition
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, "__arr_cnt"));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, "__arr_tmp"));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
@@ -2193,11 +2201,11 @@ public class Frontend : bhlBaseVisitor<object>
     //prepending filling of the iterator var
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, vd.NAME().GetText()));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, "__arr_cnt"));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, "__arr_tmp"));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name));
 
     //appending counter increment
-    block.AddChild(AST_Util.New_Inc("__arr_cnt"));
+    block.AddChild(AST_Util.New_Inc(arr_cnt_name));
     PopAST();
 
     --loops_stack;

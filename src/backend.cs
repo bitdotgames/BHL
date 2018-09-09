@@ -538,6 +538,16 @@ public class Interpreter : AST_Visitor
     return val;
   }
 
+  public DynVal TryGetScopeValue(HashedName name)
+  {
+    DynVal val;
+    bool ok = curr_mem.TryGet(name, out val);
+    //NOTE: trying glob_mem if not found
+    if(!ok)
+      glob_mem.TryGet(name, out val);
+    return val;
+  }
+
   public void PushNode(BehaviorTreeInternalNode node, bool attach_as_child = true)
   {
     node_stack.Push(node);
