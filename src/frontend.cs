@@ -487,7 +487,7 @@ public class Frontend : bhlBaseVisitor<object>
             type = func_symb.GetReturnType();
           }
           else
-            FireError(Location(name) +  " : symbol is not not a function");
+            FireError(Location(name) +  " : symbol is not a function");
         }
       }
       //variable or attribute call
@@ -2160,18 +2160,35 @@ public class Frontend : bhlBaseVisitor<object>
     // __arr_cnt++
     //}
     
-    //evaluating array expression
-    var vd = ctx.foreachExp().varOrDeclare().varDeclare();
-    var arr_type = locals.type(vd.type().GetText()+"[]").Get();
+    var vod = ctx.foreachExp().varOrDeclare();
+    var vd = vod.varDeclare();
+    string iter_str_type = "";
+    string iter_str_name = "";
+    if(vod.NAME() != null)
+    {
+      iter_str_name = vod.NAME().GetText();
+      var vs = curr_scope.resolve(iter_str_name) as VariableSymbol;
+      if(vs == null)
+        FireError(Location(vod.NAME()) +  " : symbol is not a valid variable");
+      iter_str_type = vs.type.name.s;
+    }
+    else
+    {
+      iter_str_name = vd.NAME().GetText();
+      iter_str_type = vd.type().GetText();
+    }
+    var arr_type = locals.type(iter_str_type+"[]").Get();
 
     PushJsonType(arr_type);
     var exp = ctx.foreachExp().exp();
+    //evaluating array expression
     Visit(exp);
-    //var exp_type = Wrap(exp).eval_type;
     PopJsonType();
     SymbolTable.CheckAssign(Wrap(exp), arr_type);
 
     var arr_ntype = (uint)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n;
+    //TODO: use for non-generic array types
+    //var arr_ntype = (uint)arr_type.GetName().n;
 
     var arr_tmp_name = "$foreach_tmp" + loops_stack;
     var arr_cnt_name = "$foreach_cnt" + loops_stack;
@@ -2181,7 +2198,8 @@ public class Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_name, false, 0));
 
     //declaring iterating var
-    PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
+    if(vd != null)
+      PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
 
     var ast = AST_Util.New_Block(EnumBlock.WHILE);
 
@@ -2199,7 +2217,7 @@ public class Frontend : bhlBaseVisitor<object>
     PushAST(ast);
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
     //prepending filling of the iterator var
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, vd.NAME().GetText()));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_str_name));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name));
