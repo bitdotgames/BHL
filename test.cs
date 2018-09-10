@@ -11522,6 +11522,36 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestForeachForCustomArrayBinding()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      Color[] cs = [{r:1}, {r:2}, {r:3}]
+      foreach(cs as Color c) {
+        trace((string)c.r)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestForeachUseExternalIteratorVar()
   {
     string bhl = @"

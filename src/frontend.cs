@@ -2186,9 +2186,9 @@ public class Frontend : bhlBaseVisitor<object>
     PopJsonType();
     SymbolTable.CheckAssign(Wrap(exp), arr_type);
 
-    var arr_ntype = (uint)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n;
-    //TODO: use for non-generic array types
-    //var arr_ntype = (uint)arr_type.GetName().n;
+    uint arr_ntype = (uint)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n;
+    if(!(arr_type is GenericArrayTypeSymbol))
+      arr_ntype = (uint)arr_type.GetName().n;
 
     var arr_tmp_name = "$foreach_tmp" + loops_stack;
     var arr_cnt_name = "$foreach_cnt" + loops_stack;
