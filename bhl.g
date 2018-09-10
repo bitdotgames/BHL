@@ -80,7 +80,7 @@ statement
   | varsDeclareOrCallExps assignExp                             #DeclAssign
   | callExp                                                     #SymbCall
   | mainIf elseIf* else?                                        #If
-  | 'while' exp block                                           #While
+  | 'while' '(' exp ')' block                                           #While
   | 'foreach' foreachExp block                                  #Foreach
   | 'break'                                                     #Break
   | 'return' explist?                                           #Return
@@ -100,11 +100,11 @@ statement
   ;
 
 mainIf
-  : 'if' exp block 
+  : 'if' '(' exp ')' block 
   ;
 
 elseIf
-  : 'else' 'if' exp block
+  : 'else' 'if' '(' exp ')' block
   ;
 
 else

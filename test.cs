@@ -1779,7 +1779,7 @@ public class BHL_Test
 
     func float foo(ref float k = null)
     {
-      if (any)k != null  {
+      if((any)k != null) {
         k = k + 1
         return k
       } else {
@@ -10405,34 +10405,6 @@ public class BHL_Test
     func test() 
     {
       if(true) {
-        trace(""OK"")
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    //NodeDump(node);
-    intp.ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-    AssertEqual("OK", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestIfNoBrackets()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      if true  {
         trace(""OK"")
       }
     }
