@@ -11519,6 +11519,224 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  //TODO
+  //[IsTested()]
+  public void TestForSeveralVars()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0, int j = 1; i < 3; i = i + 1, j = j + 2) {
+        trace((string)i*j)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("0310", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForReverse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 2; i >= 0; i = i - 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("210", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForUseExternalVar()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i
+      for(i = 1; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("12", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForNested()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        for(int j = 0; j < 2; j = j + 1) {
+          trace((string)i + "","" + (string)j + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("0,0;0,1;1,0;1,1;2,0;2,1;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForEmptyPreSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("012", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForEmptyPostSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(; i < 3;) {
+        trace((string)i)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("012", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForCondIsRequired()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(;;) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "no viable alternative at input ';'"
+    );
+  }
+
+  [IsTested()]
+  public void TestForNonBoolCond()
+  {
+    string bhl = @"
+
+    func int foo() 
+    {
+      return 14
+    }
+
+    func test() 
+    {
+      for(; foo() ;) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "foo():<int> have incompatible types"
+    );
+  }
+
   [IsTested()]
   public void TestForeach()
   {
