@@ -1791,11 +1791,8 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitDeclAssign(bhlParser.DeclAssignContext ctx)
+  void CommonDeclOrAssign(bhlParser.VarDeclareOrCallExpContext[] vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
-    var vdecls = ctx.varsDeclareOrCallExps().varDeclareOrCallExp();
-    var assign_exp = ctx.assignExp();
-
     var root = PeekAST();
     int root_first_idx = root.children.Count;
 
@@ -1837,7 +1834,7 @@ public class Frontend : bhlBaseVisitor<object>
           wnode = Wrap(vd.NAME());
           wnode.eval_type = curr_type;
 
-          var ast = AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vd_symb.name);
+          var ast = AST_Util.New_Call(EnumCall.VARW, start_line, vd_symb.name);
           root.AddChild(ast);
         }
         else
@@ -1917,6 +1914,15 @@ public class Frontend : bhlBaseVisitor<object>
           SymbolTable.CheckAssign(wnode, Wrap(assign_exp));
       }
     }
+  }
+
+  public override object VisitDeclAssign(bhlParser.DeclAssignContext ctx)
+  {
+    var vdecls = ctx.varsDeclareOrCallExps().varDeclareOrCallExp();
+    var assign_exp = ctx.assignExp();
+
+    CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
+
     return null;
   }
 
@@ -2147,17 +2153,72 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitFor(bhlParser.ForContext ctx)
+  {
+    //NOTE: we're going to generate the following code
+    //
+    //<pre code>
+    //while(<condition>)
+    //{
+    // ...
+    // <post iter code>
+    //}
+    
+    var for_pre = ctx.forExp().forPre();
+    if(for_pre != null)
+    {
+      var pre_vdecls = for_pre.varsDeclareOrCallExps().varDeclareOrCallExp();
+      var pre_assign_exp = for_pre.assignExp();
+      CommonDeclOrAssign(pre_vdecls, pre_assign_exp, ctx.Start.Line);
+    }
+
+    var for_cond = ctx.forExp().forCond();
+    var for_post_iter = ctx.forExp().forPostIter();
+
+    var ast = AST_Util.New_Block(EnumBlock.WHILE);
+
+    ++loops_stack;
+
+    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    PushAST(cond);
+    Visit(for_cond);
+    PopAST();
+
+    SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(for_cond.exp()));
+
+    ast.AddChild(cond);
+
+    PushAST(ast);
+    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
+    //appending post iteration code
+    if(for_post_iter != null)
+    {
+      PushAST(block);
+      var post_vdecls = for_post_iter.varsDeclareOrCallExps().varDeclareOrCallExp();
+      var post_assign_exp = for_post_iter.assignExp();
+      CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
+      PopAST();
+    }
+    PopAST();
+
+    --loops_stack;
+
+    PeekAST().AddChild(ast);
+
+    return null;
+  }
+
   public override object VisitForeach(bhlParser.ForeachContext ctx)
   {
     //NOTE: we're going to generate the following code
     //
-    //__arr_tmp = arr
-    //__arr_cnt = 0
-    //while(__arr_cnt < __arr_tmp.Count)
+    //$foreach_tmp = arr
+    //$foreach_cnt = 0
+    //while($foreach_cnt < $foreach_tmp.Count)
     //{
-    // arr_it = __arr_tmp[__arr_cnt]
+    // arr_it = $foreach_tmp[$foreach_cnt]
     // ...
-    // __arr_cnt++
+    // $foreach_cnt++
     //}
     
     var vod = ctx.foreachExp().varOrDeclare();

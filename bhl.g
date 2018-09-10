@@ -70,6 +70,22 @@ foreachExp
   : '(' exp 'as' varOrDeclare ')' 
   ;
 
+forPre
+  : varsDeclareOrCallExps assignExp?
+  ;
+
+forCond
+  : exp
+  ;
+
+forPostIter
+  : varsDeclareOrCallExps assignExp?
+  ;
+
+forExp
+  : '(' forPre? ';' forCond ';' forPostIter? ')' 
+  ;
+
 varDeclareAssign
   : varDeclare assignExp?
   ;
@@ -80,7 +96,8 @@ statement
   | varsDeclareOrCallExps assignExp                             #DeclAssign
   | callExp                                                     #SymbCall
   | mainIf elseIf* else?                                        #If
-  | 'while' '(' exp ')' block                                           #While
+  | 'while' '(' exp ')' block                                   #While
+  | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
   | 'break'                                                     #Break
   | 'return' explist?                                           #Return

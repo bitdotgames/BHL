@@ -11493,6 +11493,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFor()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("012", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestForeach()
   {
     string bhl = @"
