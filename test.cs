@@ -11697,6 +11697,30 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestForBadPreSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(i ; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "mismatched input ';' expecting '='"
+    );
+  }
+
+  [IsTested()]
   public void TestForEmptyPreSection()
   {
     string bhl = @"
@@ -11751,6 +11775,29 @@ public class BHL_Test
     var str = GetString(trace_stream);
     AssertEqual("012", str);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForBadPostSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0 ; i < 3; i) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "mismatched input ')' expecting '='"
+    );
   }
 
   [IsTested()]

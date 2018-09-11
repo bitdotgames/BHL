@@ -71,7 +71,7 @@ foreachExp
   ;
 
 forStmt
-  : varsDeclareOrCallExps assignExp?
+  : varsDeclareOrCallExps assignExp
   ;
 
 forStmts
