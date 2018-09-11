@@ -475,6 +475,30 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitForeachExp([NotNull] bhlParser.ForeachExpContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.forStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterForStmt([NotNull] bhlParser.ForStmtContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.forStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitForStmt([NotNull] bhlParser.ForStmtContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.forStmts"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterForStmts([NotNull] bhlParser.ForStmtsContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.forStmts"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitForStmts([NotNull] bhlParser.ForStmtsContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.forPre"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

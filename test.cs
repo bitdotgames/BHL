@@ -11519,16 +11519,15 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  //TODO
-  //[IsTested()]
-  public void TestForSeveralVars()
+  [IsTested()]
+  public void TestForMultiExpression()
   {
     string bhl = @"
 
     func test() 
     {
       for(int i = 0, int j = 1; i < 3; i = i + 1, j = j + 2) {
-        trace((string)i*j)
+        trace((string)(i*j) + "";"")
       }
     }
     ";
@@ -11543,7 +11542,7 @@ public class BHL_Test
     intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
-    AssertEqual("0310", str);
+    AssertEqual("0;3;10;", str);
     CommonChecks(intp);
   }
 

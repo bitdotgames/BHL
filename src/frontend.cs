@@ -2167,9 +2167,13 @@ public class Frontend : bhlBaseVisitor<object>
     var for_pre = ctx.forExp().forPre();
     if(for_pre != null)
     {
-      var pre_vdecls = for_pre.varsDeclareOrCallExps().varDeclareOrCallExp();
-      var pre_assign_exp = for_pre.assignExp();
-      CommonDeclOrAssign(pre_vdecls, pre_assign_exp, ctx.Start.Line);
+      for(int i=0;i<for_pre.forStmts().forStmt().Length;++i)
+      {
+        var stmt = for_pre.forStmts().forStmt()[i];
+        var pre_vdecls = stmt.varsDeclareOrCallExps().varDeclareOrCallExp();
+        var pre_assign_exp = stmt.assignExp();
+        CommonDeclOrAssign(pre_vdecls, pre_assign_exp, ctx.Start.Line);
+      }
     }
 
     var for_cond = ctx.forExp().forCond();
@@ -2194,9 +2198,14 @@ public class Frontend : bhlBaseVisitor<object>
     if(for_post_iter != null)
     {
       PushAST(block);
-      var post_vdecls = for_post_iter.varsDeclareOrCallExps().varDeclareOrCallExp();
-      var post_assign_exp = for_post_iter.assignExp();
-      CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
+      for(int i=0;i<for_post_iter.forStmts().forStmt().Length;++i)
+      {
+        var stmt = for_post_iter.forStmts().forStmt()[i];
+        var post_vdecls = stmt.varsDeclareOrCallExps().varDeclareOrCallExp();
+        var post_assign_exp = stmt.assignExp();
+        CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
+      }
+
       PopAST();
     }
     PopAST();

@@ -70,8 +70,16 @@ foreachExp
   : '(' exp 'as' varOrDeclare ')' 
   ;
 
-forPre
+forStmt
   : varsDeclareOrCallExps assignExp?
+  ;
+
+forStmts
+  : forStmt (',' forStmt)*
+  ;
+
+forPre
+  : forStmts
   ;
 
 forCond
@@ -79,7 +87,7 @@ forCond
   ;
 
 forPostIter
-  : varsDeclareOrCallExps assignExp?
+  : forStmts
   ;
 
 forExp

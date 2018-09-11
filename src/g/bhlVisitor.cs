@@ -252,6 +252,18 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitForeachExp([NotNull] bhlParser.ForeachExpContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.forStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForStmt([NotNull] bhlParser.ForStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.forStmts"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForStmts([NotNull] bhlParser.ForStmtsContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.forPre"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
