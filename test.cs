@@ -11631,6 +11631,72 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestForSeveral()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+
+      for(i = 0; i < 30; i = i + 10) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("01201020", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral {
+        for(int i = 0; i < 3; i = i + 1) {
+          trace((string)i)
+          YIELD()
+        }
+        RUNNING()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.SUCCESS == node.run());
+
+    var str = GetString(trace_stream);
+    AssertEqual("012", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestForEmptyPreSection()
   {
     string bhl = @"
