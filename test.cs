@@ -9310,6 +9310,108 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestInvertNode()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        SUCCESS()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.FAILURE == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertFailureNode()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        FAILURE()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.SUCCESS == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertRunningNode()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        RUNNING()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.RUNNING == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertMultipleNodes()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        SUCCESS()
+        SUCCESS()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.FAILURE == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertNodeWithResult()
+  {
+    string bhl = @"
+
+    func int foo() 
+    {
+      FAILURE()
+      return 1
+    }
+
+    func test() 
+    {
+      not {
+        foo()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.SUCCESS == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestDeferMethodIsNotTriggeredTooEarlyInDecorator()
   {
     string bhl = @"

@@ -1291,7 +1291,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpEval(bhlParser.ExpEvalContext ctx)
   {
     //TODO: disallow return statements in eval blocks
-    CommonVisitBlock(EnumBlock.EVAL, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.EVAL, ctx.block().statement(), new_local_scope: false);
 
     Wrap(ctx).eval_type = SymbolTable._boolean;
 
@@ -1990,82 +1990,95 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
   {
-    CommonVisitBlock(EnumBlock.SEQ, ctx.statement(), false);
+    CommonVisitBlock(EnumBlock.SEQ, ctx.statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
-    CommonVisitBlock(EnumBlock.FUNC, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.FUNC, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitParal(bhlParser.ParalContext ctx)
   {
-    CommonVisitBlock(EnumBlock.PARAL, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.PARAL, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitParalAll(bhlParser.ParalAllContext ctx)
   {
-    CommonVisitBlock(EnumBlock.PARAL_ALL, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.PARAL_ALL, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitPrio(bhlParser.PrioContext ctx)
   {
-    CommonVisitBlock(EnumBlock.PRIO, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.PRIO, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitUntilFailure(bhlParser.UntilFailureContext ctx)
   {
-    CommonVisitBlock(EnumBlock.UNTIL_FAILURE, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.UNTIL_FAILURE, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitUntilFailure_(bhlParser.UntilFailure_Context ctx)
   {
-    CommonVisitBlock(EnumBlock.UNTIL_FAILURE_, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.UNTIL_FAILURE_, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitUntilSuccess(bhlParser.UntilSuccessContext ctx)
   {
-    CommonVisitBlock(EnumBlock.UNTIL_SUCCESS, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.UNTIL_SUCCESS, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitNot(bhlParser.NotContext ctx)
   {
-    CommonVisitBlock(EnumBlock.NOT, ctx.block().statement(), false);
+    var not = AST_Util.New_Block(EnumBlock.NOT);
+
+    PushAST(not);
+    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false, auto_add: false);
+    //NOTE: since 'not' is a decorator node which accepts only one child we need to take
+    //      this into account
+    if(block.children.Count > 1)
+      not.AddChild(block);
+    else
+      not.AddChild(block.children[0]); 
+    PopAST();
+
+    PeekAST().AddChild(not);
+
     return null;
   }
 
   public override object VisitForever(bhlParser.ForeverContext ctx)
   {
     ++loops_stack;
-    CommonVisitBlock(EnumBlock.FOREVER, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.FOREVER, ctx.block().statement(), new_local_scope: false);
     --loops_stack;
     return null;
   }
 
   public override object VisitSeq(bhlParser.SeqContext ctx)
   {
-    CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitSeq_(bhlParser.Seq_Context ctx)
   {
-    CommonVisitBlock(EnumBlock.SEQ_, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.SEQ_, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitDefer(bhlParser.DeferContext ctx)
   {
     ++defer_stack;
-    CommonVisitBlock(EnumBlock.DEFER, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.DEFER, ctx.block().statement(), new_local_scope: false);
     --defer_stack;
     return null;
   }
@@ -2085,7 +2098,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     ast.AddChild(main_cond);
     PushAST(ast);
-    CommonVisitBlock(EnumBlock.SEQ, main.block().statement(), false);
+    CommonVisitBlock(EnumBlock.SEQ, main.block().statement(), new_local_scope: false);
     PopAST();
 
     //NOTE: when inside if we reset whethe there was a return statement,
@@ -2106,7 +2119,7 @@ public class Frontend : bhlBaseVisitor<object>
 
       ast.AddChild(item_cond);
       PushAST(ast);
-      CommonVisitBlock(EnumBlock.SEQ, item.block().statement(), false);
+      CommonVisitBlock(EnumBlock.SEQ, item.block().statement(), new_local_scope: false);
       PopAST();
 
       func_symb.return_statement_found = false;
@@ -2118,7 +2131,7 @@ public class Frontend : bhlBaseVisitor<object>
       func_symb.return_statement_found = false;
 
       PushAST(ast);
-      CommonVisitBlock(EnumBlock.SEQ, @else.block().statement(), false);
+      CommonVisitBlock(EnumBlock.SEQ, @else.block().statement(), new_local_scope: false);
       PopAST();
     }
 
@@ -2143,7 +2156,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
+    CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     PopAST();
 
     --loops_stack;
@@ -2193,7 +2206,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
+    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //appending post iteration code
     if(for_post_iter != null)
     {
@@ -2285,7 +2298,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), false);
+    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_str_name));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype));
@@ -2304,7 +2317,7 @@ public class Frontend : bhlBaseVisitor<object>
   }
 
   //NOTE: it returns node which also adds to the current node 
-  AST CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope)
+  AST CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
   {
     ++scope_level;
 
@@ -2377,7 +2390,8 @@ public class Frontend : bhlBaseVisitor<object>
     if(new_local_scope)
       curr_scope = curr_scope.GetEnclosingScope();
 
-    PeekAST().AddChild(ast);
+    if(auto_add)
+      PeekAST().AddChild(ast);
     return ast;
   }
 
