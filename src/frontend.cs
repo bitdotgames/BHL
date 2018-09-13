@@ -1245,7 +1245,6 @@ public class Frontend : bhlBaseVisitor<object>
     //AND node has exactly two children
     var tmp0 = new AST_Interim();
     PushAST(tmp0);
-    PushInterimAST();
     Visit(exp_0);
     PopAST();
     ast.AddChild(tmp0);
@@ -1253,8 +1252,6 @@ public class Frontend : bhlBaseVisitor<object>
     var tmp1 = new AST_Interim();
     PushAST(tmp1);
     Visit(exp_1);
-    PopInterimAST();
-
     PopAST();
     ast.AddChild(tmp1);
 
@@ -1274,7 +1271,6 @@ public class Frontend : bhlBaseVisitor<object>
     //OR node has exactly two children
     var tmp0 = new AST_Interim();
     PushAST(tmp0);
-    PushInterimAST();
     Visit(exp_0);
     PopAST();
     ast.AddChild(tmp0);
@@ -1282,8 +1278,6 @@ public class Frontend : bhlBaseVisitor<object>
     var tmp1 = new AST_Interim();
     PushAST(tmp1);
     Visit(exp_1);
-    PopInterimAST();
-
     PopAST();
     ast.AddChild(tmp1);
 
