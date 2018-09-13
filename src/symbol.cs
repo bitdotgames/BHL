@@ -931,22 +931,8 @@ public class FuncBindSymbol : FuncSymbol
 public class SimpleFuncBindSymbol : FuncBindSymbol
 {
   public SimpleFuncBindSymbol(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
-    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num )
+    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num)
   {}
-}
-
-public class ConfNodeSymbol : FuncBindSymbol
-{
-  public Interpreter.ConfigGetter conf_getter;
-
-  public ConfNodeSymbol(HashedName name, TypeRef ret_type, Interpreter.FuncNodeCreator func_creator, Interpreter.ConfigGetter conf_getter) 
-    : base(name, ret_type, func_creator)
-  {
-    this.conf_getter = conf_getter;
-  }
-
-  //NOTE: very controverse, but makes porting and usage much cleaner
-  public override int GetDefaultArgsNum() { return 1; }
 }
 
 public class ClassBindSymbol : ClassSymbol

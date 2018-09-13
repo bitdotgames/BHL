@@ -24,6 +24,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_BinaryOpExp node);
   public abstract void DoVisit(AST_UnaryOpExp node);
   public abstract void DoVisit(AST_New node);
+  public abstract void DoVisit(AST_Inc node);
   public abstract void DoVisit(AST_JsonObj node);
   public abstract void DoVisit(AST_JsonArr node);
   public abstract void DoVisit(AST_JsonPair node);
@@ -66,6 +67,8 @@ public abstract class AST_Visitor
       DoVisit(node as AST_UnaryOpExp);
     else if(node is AST_New)
       DoVisit(node as AST_New);
+    else if(node is AST_Inc)
+      DoVisit(node as AST_Inc);
     else if(node is AST_JsonObj)
       DoVisit(node as AST_JsonObj);
     else if(node is AST_JsonArr)
@@ -309,7 +312,6 @@ public class Interpreter : AST_Visitor
   public delegate void FieldSetter(ref DynVal v, DynVal nv);
   public delegate void FieldRef(DynVal v, out DynVal res);
   public delegate BehaviorTreeNode FuncNodeCreator(); 
-  public delegate void ConfigGetter(BehaviorTreeNode n, ref DynVal v, bool reset);
 
   FastStack<BehaviorTreeInternalNode> node_stack = new FastStack<BehaviorTreeInternalNode>(128);
   BehaviorTreeInternalNode curr_node;
@@ -482,9 +484,9 @@ public class Interpreter : AST_Visitor
   }
 
   //NOTE: usually used in symbols
-  public int GetFuncArgsNum()
+  public FuncArgsInfo GetFuncArgsInfo()
   {
-    return call_stack.Peek().cargs_num;
+    return new FuncArgsInfo(call_stack.Peek().cargs_bits);
   }
 
   //NOTE: caching exceptions for less allocations
@@ -533,6 +535,16 @@ public class Interpreter : AST_Visitor
       ok = glob_mem.TryGet(name, out val);
     if(!ok)
       throw new Exception("No such variable " + name + " in scope");
+    return val;
+  }
+
+  public DynVal TryGetScopeValue(HashedName name)
+  {
+    DynVal val;
+    bool ok = curr_mem.TryGet(name, out val);
+    //NOTE: trying glob_mem if not found
+    if(!ok)
+      glob_mem.TryGet(name, out val);
     return val;
   }
 
@@ -811,12 +823,9 @@ public class Interpreter : AST_Visitor
     curr_node.addChild(new ConstructNode(node.Name()));
   }
 
-  BehaviorTreeNode CreateConfNode(uint ntype)
+  public override void DoVisit(AST_Inc node)
   {
-    var bnd = symbols.resolve(ntype) as ConfNodeSymbol;
-    if(bnd == null)
-      throw new Exception("Could not find class binding: " + ntype);
-    return bnd.func_creator();
+    curr_node.addChild(new IncNode(node.nname));
   }
 
   public override void DoVisit(AST_Call node)
@@ -879,58 +888,12 @@ public class Interpreter : AST_Visitor
   void AddFuncCallNode(AST_Call ast)
   {
     var symb = ResolveFuncSymbol(ast);
-    var conf_symb = symb as ConfNodeSymbol;
     var fbind_symb = symb as FuncBindSymbol;
 
-    //special case for config node
-    if(conf_symb != null)
-    {
-      var conf_node = conf_symb.func_creator();
-      //1. if there are sub-nodes tweaking config, add them
-      if(ast.children.Count > 0)
-      {
-        bool can_be_precalculated = CheckIfConfigTweaksAreConstant(ast);
-
-        var call = new CallConfNode(ast, conf_symb, conf_node);
-        PushNode(call, attach_as_child: false);
-        VisitChildren(ast.children[0] as AST);
-
-        var last_child = call.children[call.children.Count-1];
-        //1.1. changing write mode or popping config
-        if(last_child is MVarAccessNode)
-          (last_child as MVarAccessNode).mode = MVarAccessNode.WRITE_INV_ARGS;
-        else
-          call.addChild(new PopValueNode());
-
-        //1.2 processing extra args
-        for(int i=1;i<ast.cargs_num;++i)
-          Visit(ast.children[i]);
-        PopNode();
-
-        if(can_be_precalculated)
-        {
-          call.run();
-          curr_node.addChild(conf_node);
-        }
-        else
-        {
-          call.addChild(conf_node);
-          curr_node.addChild(call);
-        }
-      }
-      //2. in a simpler case just reset the config
-      else
-      {
-        var dv = DynVal.New();
-        conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
-        DynVal.Del(dv);
-        curr_node.addChild(conf_node);
-      }
-    }
     //special case if it's bind symbol
-    else if(fbind_symb != null)
+    if(fbind_symb != null)
     {
-      bool has_args = ast.cargs_num > 0 || fbind_symb.def_args_num > 0;
+      bool has_args = ast.cargs_bits > 0 || fbind_symb.def_args_num > 0;
 
       if(has_args)
         curr_node.addChild(new FuncBindCallNode(ast));
@@ -955,39 +918,6 @@ public class Interpreter : AST_Visitor
       return true;
 
     return false;
-  }
-
-  bool CheckIfConfigTweaksAreConstant(AST_Base ast, uint json_ctx_type = 0)
-  {
-    if(ast is AST_JsonObj)
-      json_ctx_type = (ast as AST_JsonObj).ntype;
-    else if(ast is AST_JsonArr)
-      json_ctx_type = (ast as AST_JsonArr).ntype;
-
-    var children = ast.GetChildren();
-
-    for(int i=0;children != null && i<children.Count;++i)
-    {
-      var c = children[i];
-
-      //Console.WriteLine(c.GetType().Name + " " + json_ctx_type);
-
-      if(! (c is AST_JsonObj  ||
-            c is AST_JsonPair ||
-            c is AST_JsonArr ||
-            c is AST_Literal  ||
-            c is AST_Interim  ||
-            (c is AST_Call &&
-              IsCallToSelf((AST_Call)c, json_ctx_type)
-            ) 
-          )
-        )
-        return false;
-
-      if(!CheckIfConfigTweaksAreConstant(c, json_ctx_type))
-        return false;
-    }
-    return true;
   }
 
   public override void DoVisit(AST_Return node)
@@ -1050,18 +980,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonObj node)
   {
-    if(jcts.Count > 0 && jcts.Peek().type == JsonCtx.OBJ)
-    {
-      var jc = jcts.Peek();
-      //NOTE: if it's a C# bind symbol we assume the obj is already
-      //      created and just push it onto the stack
-      if(symbols.resolve(jc.scope_type) is ClassBindSymbol)
-        curr_node.addChild(new MVarAccessNode(jc.scope_type, jc.name_or_idx, MVarAccessNode.READ_PUSH_CTX));
-      else
-        curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
-    }
-    else
-      curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
+    curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
 
     VisitChildren(node);
   }
@@ -1072,22 +991,7 @@ public class Interpreter : AST_Visitor
     if(bnd == null)
       throw new Exception("Could not find class binding: " + node.ntype);
 
-    if(jcts.Count > 0 && jcts.Peek().type == JsonCtx.OBJ)
-    {
-      var jc = jcts.Peek();
-      //NOTE: if it's a C# bind symbol we assume the array is already
-      //      created and just push it onto the stack
-      if(symbols.resolve(jc.scope_type) is ClassBindSymbol)
-      {
-        curr_node.addChild(new MVarAccessNode(jc.scope_type, jc.name_or_idx, MVarAccessNode.READ_PUSH_CTX));
-        curr_node.addChild(new DupValueNode());
-        curr_node.addChild(bnd.Create_Clear());
-      }
-      else
-        curr_node.addChild(bnd.Create_New());
-    }
-    else
-      curr_node.addChild(bnd.Create_New());
+    curr_node.addChild(bnd.Create_New());
 
     for(int i=0;i<node.children.Count;++i)
     {

@@ -414,6 +414,67 @@ static public class Util
   }
 }
 
+public struct FuncArgsInfo
+{
+  //NOTE: 6 bits are used for a total number of args passed (max 63), 
+  //      26 bits are reserved for default args set bits(max 26 default args)
+  const int ARGS_NUM_BITS = 6;
+  const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
+  const int MAX_ARGS = (int)ARGS_NUM_MASK;
+  const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS; 
+
+  public uint bits;
+
+  public FuncArgsInfo(uint bits)
+  {
+    this.bits = bits;
+  }
+
+  public int CountArgs()
+  {
+    return (int)(bits & ARGS_NUM_MASK);
+  }
+
+  public bool SetArgsNum(int num)
+  {
+    if(num > MAX_ARGS)
+      return false;
+    bits = (bits & ~ARGS_NUM_MASK) | (uint)num;
+    return true;
+  }
+
+  public bool IncArgsNum()
+  {
+    uint num = bits & ARGS_NUM_MASK; 
+    ++num;
+    if(num > MAX_ARGS)
+      return false;
+    bits = (bits & ~ARGS_NUM_MASK) | num;
+    return true;
+  }
+
+  //NOTE: idx starts from 0, it's the idx of the default argument *within* default arguments,
+  //      e.g: func Foo(int a, int b = 1, int c = 2) { .. }  
+  //           b is 0 default arg idx, c is 1 
+  public bool UseDefaultArg(int idx, bool flag)
+  {
+    if(idx >= MAX_DEFAULT_ARGS)
+      return false;
+    uint mask = 1u << (idx + ARGS_NUM_BITS); 
+    if(flag)
+      bits |= mask;
+    else
+      bits &= ~mask;
+    return true;
+  }
+
+  //NOTE: idx starts from 0
+  public bool IsDefaultArgUsed(int idx)
+  {
+    return (bits & (1u << (idx + ARGS_NUM_BITS))) != 0;
+  }
+}
+
 static public class AST_Util
 {
   static public List<AST_Base> GetChildren(this AST_Base self)
@@ -654,13 +715,18 @@ static public class AST_Util
 
   static public AST_Call New_Call(EnumCall type, int line_num, HashedName name = new HashedName(), ClassSymbol scope_symb = null)
   {
+    return New_Call(type, line_num, name, scope_symb != null ? (uint)scope_symb.Type().n : 0);
+  }
+
+  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype)
+  {
     var n = new AST_Call();
     n.type = type;
     n.nname1 = name.n1;
     n.nname2 = name.n2;
     if(Util.DEBUG)
       n.name = name.s;
-    n.scope_ntype = scope_symb != null ? (uint)scope_symb.Type().n : 0;
+    n.scope_ntype = scope_ntype;
     n.line_num = (uint)line_num;
 
     return n;
@@ -752,6 +818,16 @@ static public class AST_Util
   static public bool IsRef(this AST_VarDecl n)
   {
     return (n.nname & (1u << 29)) != 0; 
+  }
+
+  ////////////////////////////////////////////////////////
+
+  static public AST_Inc New_Inc(HashedName name)
+  {
+    var n = new AST_Inc();
+    n.nname = (uint)name.n;
+
+    return n;
   }
 
   ////////////////////////////////////////////////////////
@@ -1008,6 +1084,13 @@ public class AST_Dumper : AST_Visitor
     Console.Write("(CALL ");
     Console.Write(node.type + " " + node.name + " " + node.nname());
     VisitChildren(node);
+    Console.Write(")");
+  }
+
+  public override void DoVisit(AST_Inc node)
+  {
+    Console.Write("(INC ");
+    Console.Write(node.nname);
     Console.Write(")");
   }
 

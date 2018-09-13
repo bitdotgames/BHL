@@ -395,6 +395,76 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitNewExp([NotNull] bhlParser.NewExpContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.foreachExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForeachExp([NotNull] bhlParser.ForeachExpContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.foreachExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForeachExp([NotNull] bhlParser.ForeachExpContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.forStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForStmt([NotNull] bhlParser.ForStmtContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.forStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForStmt([NotNull] bhlParser.ForStmtContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.forStmts"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForStmts([NotNull] bhlParser.ForStmtsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.forStmts"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForStmts([NotNull] bhlParser.ForStmtsContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.forPre"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForPre([NotNull] bhlParser.ForPreContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.forPre"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForPre([NotNull] bhlParser.ForPreContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.forCond"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForCond([NotNull] bhlParser.ForCondContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.forCond"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForCond([NotNull] bhlParser.ForCondContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.forPostIter"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForPostIter([NotNull] bhlParser.ForPostIterContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.forPostIter"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForPostIter([NotNull] bhlParser.ForPostIterContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.forExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForExp([NotNull] bhlParser.ForExpContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.forExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForExp([NotNull] bhlParser.ForExpContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -464,6 +534,30 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitWhile([NotNull] bhlParser.WhileContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>For</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFor([NotNull] bhlParser.ForContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>For</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFor([NotNull] bhlParser.ForContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>Foreach</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForeach([NotNull] bhlParser.ForeachContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Foreach</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForeach([NotNull] bhlParser.ForeachContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>Break</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -944,6 +1038,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitVarDeclare([NotNull] bhlParser.VarDeclareContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.varOrDeclare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterVarOrDeclare([NotNull] bhlParser.VarOrDeclareContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.varOrDeclare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitVarOrDeclare([NotNull] bhlParser.VarOrDeclareContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varsDeclareOrCallExps"/>.
 	/// </summary>

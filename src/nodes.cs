@@ -356,18 +356,30 @@ public class FuncCallNode : FuncBaseCallNode
 
   void VisitCallArgs(Interpreter interp, FuncNode fnode)
   {
-    //1. func args 
-    for(int i=0;i<ast.cargs_num;++i)
-      interp.Visit(ast.children[i]);
+    var args_info = new FuncArgsInfo(ast.cargs_bits);
+    int passed_args_num = args_info.CountArgs();
+    int total_args_num = fnode.GetTotalArgsNum();
+    int required_args_num = fnode.GetRequiredArgsNum();
 
-    var default_args_num = fnode.DefaultArgsNum();
-    //2. evaluating default args
-    for(int i=0;i<default_args_num;++i)
+    //actually passed args counter
+    int p = 0;
+    for(int i=0;i<total_args_num;++i)
     {
-      var decl_arg = fnode.DeclArg(ast.cargs_num + i);
-      if(decl_arg.children.Count == 0)
-        throw new Exception("Bad default arg at idx " + (ast.cargs_num + i) + " func " + fnode.GetName());
-      interp.Visit(decl_arg.children[0]);
+      int default_arg_idx = i - required_args_num;
+
+      //checking if default argument should be used
+      if(default_arg_idx >= 0 && args_info.IsDefaultArgUsed(default_arg_idx))
+      {
+        var decl_arg = fnode.GetDeclArg(required_args_num + default_arg_idx);
+        if(decl_arg.children.Count == 0)
+          throw new Exception("Bad default arg at idx " + (required_args_num + default_arg_idx) + " func " + fnode.GetName());
+        interp.Visit(decl_arg.children[0]);
+      }
+      else if(p < passed_args_num)
+      {
+        interp.Visit(ast.children[p]);
+        ++p;
+      }
     }
   }
 
@@ -482,7 +494,7 @@ public class FuncCallNode : FuncBaseCallNode
       pi.next_free = -1;
       pool[idx_in_pool] = pi;
       //setting actual number of passed arguments
-      pi.fnode.args_num = ast.cargs_num;
+      pi.fnode.args_info = new FuncArgsInfo(ast.cargs_bits);
       return pi;
     }
 
@@ -499,7 +511,7 @@ public class FuncCallNode : FuncBaseCallNode
       ++pool_miss;
 
       //setting actual number of passed arguments
-      pi.fnode.args_num = ast.cargs_num;
+      pi.fnode.args_info = new FuncArgsInfo(ast.cargs_bits);
       return pi;
     }
   }
@@ -648,15 +660,11 @@ public class FuncBindCallNode : FuncBaseCallNode
       var symb = interp.ResolveFuncSymbol(ast) as FuncBindSymbol;
       interp.PushNode(this);
 
-      //1. func args
-      for(int i=0;i<ast.cargs_num;++i)
-        interp.Visit(ast.children[i]);
+      var args_info = new FuncArgsInfo(ast.cargs_bits);
 
-      //TODO: user bind funcs don't support evalulated default args
-      //2. evaluating default args
-      //for(int i=0;i<symb.def_args_num;++i)
-      //{
-      //}
+      int cargs_num = args_info.CountArgs();
+      for(int i=0;i<cargs_num;++i)
+        interp.Visit(ast.children[i]);
 
       this.addChild(symb.func_creator());
 
@@ -664,41 +672,6 @@ public class FuncBindCallNode : FuncBaseCallNode
     }
 
     base.init();
-  }
-
-  override public void deinit()
-  {
-    //NOTE: we don't stop children here because this node behaves NOT like
-    //      a block node but rather emulating a terminal node
-  }
-
-  override public void defer()
-  {
-    stopChildren();
-  }
-}
-
-public class CallConfNode : FuncBaseCallNode
-{
-  BehaviorTreeNode conf_node;
-  ConfNodeSymbol conf_symb;
-
-  public CallConfNode(AST_Call ast, ConfNodeSymbol conf_symb, BehaviorTreeNode conf_node)
-    : base(ast)
-  {
-    this.conf_symb = conf_symb;
-    this.conf_node = conf_node;
-  }
-
-  override public void init()
-  {
-    base.init();
-
-    var dv = DynVal.New();
-    conf_symb.conf_getter(conf_node, ref dv, true/*reset*/);
-
-    var interp = Interpreter.instance;
-    interp.PushValue(dv);
   }
 
   override public void deinit()
@@ -1444,7 +1417,8 @@ public class CallFuncPtr : FuncBaseCallNode
     if(children.Count == 0)
     {
       interp.PushNode(this);
-      for(int i=0;i<ast.cargs_num;++i)
+      int cargs_num = new FuncArgsInfo(ast.cargs_bits).CountArgs();
+      for(int i=0;i<cargs_num;++i)
         interp.Visit(ast.children[i]);
       interp.PopNode();
 
@@ -1693,8 +1667,13 @@ public class VarAccessNode : BehaviorTreeTerminalNode
     }
     else if(mode == DECL)
     {
-      var val = DynVal.NewNil();
-      interp.SetScopeValue(name, val);
+      //NOTE: declaring new variable only if it wasn't declared before, 
+      //      this may happen in a loop
+      var val = interp.TryGetScopeValue(name);
+      if(val == null)
+        interp.SetScopeValue(name, DynVal.NewNil());
+      else
+        val.SetNil();
     }
     else
       throw new Exception("Unknown mode: " + mode);
@@ -1831,16 +1810,40 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
   }
 }
 
+public class IncNode : BehaviorTreeTerminalNode
+{
+  HashedName name;
+
+  public IncNode(HashedName name)
+  {
+    this.name = name;
+  }
+
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+    var val = interp.GetScopeValue(name);
+    val.num++;
+  }
+
+  public override string inspect()
+  {
+    return "" + name; 
+  }
+}
+
 abstract public class FuncNode : SequentialNode
 {
   public FuncCtx fct;
-  public int args_num;
+  public FuncArgsInfo args_info;
 
+  //TODO: add support for default args overriding
   public void SetArgs(params DynVal[] args)
   {
     var interp = Interpreter.instance;
 
-    args_num = args.Length;
+    if(!args_info.SetArgsNum(args.Length))
+      throw new Exception("Too many arguments");
 
     for(int i=0;i<args.Length;++i)
     {
@@ -1849,19 +1852,24 @@ abstract public class FuncNode : SequentialNode
     }
   }
 
-  public virtual int DeclArgsNum()
-  {
-    return 0;
-  }
-
-  public virtual AST DeclArg(int i)
+  public virtual AST GetDeclArg(int i)
   {
     return null;
   }
 
-  public int DefaultArgsNum()
+  public virtual int GetTotalArgsNum()
   {
-    return DeclArgsNum() - args_num;
+    return 0;
+  }
+
+  public virtual int GetDefaultArgsNum()
+  {
+    return 0;
+  }
+
+  public int GetRequiredArgsNum()
+  {
+    return GetTotalArgsNum() - GetDefaultArgsNum();
   }
 
   public virtual HashedName GetName()
@@ -1884,13 +1892,18 @@ public class FuncNodeAST : FuncNode
     this.decl = decl;
   }
 
-  public override int DeclArgsNum()
+  public override int GetTotalArgsNum()
   {
     var fparams = decl.fparams();
-    return fparams.children.Count == 0 ? 0 : fparams.children.Count;
+    return fparams.children.Count;
   }
 
-  public override AST DeclArg(int i)
+  public override int GetDefaultArgsNum()
+  {
+    return decl.GetDefaultArgsNum();
+  }
+
+  public override AST GetDeclArg(int i)
   {
     var children = decl.fparams().GetChildren();
     return children.Count == 0 ? null : children[i] as AST;
@@ -1998,7 +2011,7 @@ public class FuncNodeAST : FuncNode
 
   public override string inspect()
   {
-    return decl.Name() + "(<- x " + this.args_num + ")";
+    return decl.Name() + "(<- x " + this.args_info.CountArgs() + ")";
   }
 }
 
@@ -2039,7 +2052,7 @@ public class FuncNodeBind : FuncNode
 
   public override void init() 
   {
-    if(this.args_num > symb.GetMembers().Count)
+    if(this.args_info.CountArgs() > symb.GetMembers().Count)
       throw new Exception("Too many args for func " + symb.name);
 
     base.init();
@@ -2052,7 +2065,7 @@ public class FuncNodeBind : FuncNode
 
   public override string inspect()
   {
-    return symb.name + "(<- x " + this.args_num + ") ";
+    return symb.name + "(<- x " + this.args_info.CountArgs() + ") ";
   }
 }
 

@@ -871,6 +871,63 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncManyDefaultArgs()
+  {
+    string bhl = @"
+
+    func float foo(
+          float k1 = 1, float k2 = 1, float k3 = 1, float k4 = 1, float k5 = 1, float k6 = 1, float k7 = 1, float k8 = 1, float k9 = 1,
+          float k10 = 1, float k11 = 1, float k12 = 1, float k13 = 1, float k14 = 1, float k15 = 1, float k16 = 1, float k17 = 1, float k18 = 1,
+          float k19 = 1, float k20 = 1, float k21 = 1, float k22 = 1, float k23 = 1, float k24 = 1, float k25 = 1, float k26 = 42
+        )
+    {
+      return k26
+    }
+      
+    func float test() 
+    {
+      return foo()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 42);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncTooManyDefaultArgs()
+  {
+    string bhl = @"
+
+    func float foo(
+          float k1 = 1, float k2 = 1, float k3 = 1, float k4 = 1, float k5 = 1, float k6 = 1, float k7 = 1, float k8 = 1, float k9 = 1,
+          float k10 = 1, float k11 = 1, float k12 = 1, float k13 = 1, float k14 = 1, float k15 = 1, float k16 = 1, float k17 = 1, float k18 = 1,
+          float k19 = 1, float k20 = 1, float k21 = 1, float k22 = 1, float k23 = 1, float k24 = 1, float k25 = 1, float k26 = 1, float k27 = 1
+        )
+    {
+      return k27
+    }
+      
+    func float test() 
+    {
+      return foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      "max default arguments reached"
+    );
+  }
+
+  [IsTested()]
   public void TestFuncNotEnoughArgs()
   {
     string bhl = @"
@@ -1722,7 +1779,7 @@ public class BHL_Test
 
     func float foo(ref float k = null)
     {
-      if (any)k != null  {
+      if((any)k != null) {
         k = k + 1
         return k
       } else {
@@ -3059,7 +3116,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 2;
+            var b = interp.GetFuncArgsInfo().IsDefaultArgUsed(0) ? 2 : interp.PopValue().num;
             var a = interp.PopValue().num;
 
             interp.PushValue(DynVal.NewNum(a + b));
@@ -3106,7 +3163,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 2;
+            var b = interp.GetFuncArgsInfo().IsDefaultArgUsed(0) ? 2 : interp.PopValue().num;
             var a = interp.PopValue().num;
 
             interp.PushValue(DynVal.NewNum(a + b));
@@ -3148,7 +3205,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var a = interp.GetFuncArgsNum() > 1 ? interp.PopValue().num : 14;
+            var a = interp.GetFuncArgsInfo().IsDefaultArgUsed(0) ? 14 : interp.PopValue().num;
 
             interp.PushValue(DynVal.NewNum(a));
 
@@ -3166,6 +3223,49 @@ public class BHL_Test
     var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 14);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBindFunctionWithDefaultArgsOmittingSome()
+  {
+    string bhl = @"
+      
+    func float test(int k) 
+    {
+      return func_with_def(b : k)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+          delegate()
+          {
+            var interp = Interpreter.instance;
+            var arinfo = interp.GetFuncArgsInfo();
+            var b = arinfo.IsDefaultArgUsed(1) ? 2 : interp.PopValue().num;
+            var a = arinfo.IsDefaultArgUsed(0) ? 10 : interp.PopValue().num;
+
+            interp.PushValue(DynVal.NewNum(a + b));
+
+            return BHS.SUCCESS;
+          },
+          2);
+      fn.define(new FuncArgSymbol("a", globs.type("int")));
+      fn.define(new FuncArgSymbol("b", globs.type("int")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    node.SetArgs(DynVal.NewNum(42));
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 52);
     CommonChecks(intp);
   }
 
@@ -3644,34 +3744,6 @@ public class BHL_Test
     }
   }
 
-  public class ConfigNodeRefC
-  {
-    public RefC r = null;
-
-    public void reset()
-    {
-      r = null;
-    }
-  }
-
-  public class NodeRefC : BehaviorTreeTerminalNode
-  {
-    Stream sm;
-    public ConfigNodeRefC conf;
-
-    public NodeRefC(Stream sm)
-    {
-      this.sm = sm;
-    }
-
-    public override void init()
-    {
-      var sw = new StreamWriter(sm);
-      sw.Write("NODE!");
-      sw.Flush();
-    }
-  }
-
   void BindRefC(GlobalScope globs, MemoryStream mstream)
   {
     {
@@ -3695,45 +3767,6 @@ public class BHL_Test
       globs.define(cl);
       globs.define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
     }
-
-    {
-      var cl = new ClassBindSymbol("ConfigNodeRefC",
-        delegate(ref DynVal v) 
-        { 
-          v.obj = new ConfigNodeRefC();
-        }
-      );
-      globs.define(cl);
-
-      cl.define(new FieldSymbol("r", globs.type("RefC"),
-          delegate(DynVal ctx, ref DynVal v) {
-            var c = (ConfigNodeRefC)ctx.obj;
-            v.obj = c.r;
-            var sw = new StreamWriter(mstream);
-            sw.Write("READ!");
-            sw.Flush();
-          },
-          delegate(ref DynVal ctx, DynVal v) {
-            var c = (ConfigNodeRefC)ctx.obj;
-            c.r = (RefC)v.obj;
-            ctx.obj = c;
-            var sw = new StreamWriter(mstream);
-            sw.Write("WRITE!");
-            sw.Flush();
-          }
-     ));
-    }
-
-    {
-      var fn = new ConfNodeSymbol("NodeRefC", globs.type("void"),
-          delegate() { var n = new NodeRefC(mstream); n.conf = new ConfigNodeRefC(); n.conf.reset(); return n; }, 
-          delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((NodeRefC)n).conf; v.obj = conf; if(reset) conf.reset(); }
-          );
-      fn.define(new FuncArgSymbol("c", globs.type("ConfigNodeRefC")));
-
-      globs.define(fn);
-    }
-
   }
 
   void BindFoo(GlobalScope globs)
@@ -3812,7 +3845,7 @@ public class BHL_Test
           var f = (DynValContainer)ctx.obj;
           if(f.dv != null)
           {
-            v.RefTryDel();
+            v.TryDel();
             v = f.dv;
           }
           else
@@ -4936,7 +4969,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUsingBultingTypeAsFunc()
+  public void TestUsingBultinTypeAsFunc()
   {
     string bhl = @"
 
@@ -4956,7 +4989,7 @@ public class BHL_Test
       delegate() { 
         Interpret("", bhl, globs);
       },
-      "int : symbol is not not a function"
+      "int : symbol is not a function"
     );
   }
 
@@ -5171,7 +5204,7 @@ public class BHL_Test
 
     AssertEqual(res, 10);
 
-    c.dv.RefDec();
+    c.dv.Release();
 
     CommonChecks(intp);
   }
@@ -5230,7 +5263,7 @@ public class BHL_Test
 
     AssertTrue(res);
 
-    c.dv.RefDec();
+    c.dv.Release();
 
     CommonChecks(intp);
   }
@@ -6732,7 +6765,7 @@ public class BHL_Test
       delegate() {
         Interpret("", bhl, globs);
       },
-      "type 'bool^(int)' doesn't support member access via '.'"
+      "type doesn't support member access via '.'"
     );
   }
 
@@ -9277,6 +9310,108 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestInvertNode()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        SUCCESS()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.FAILURE == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertFailureNode()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        FAILURE()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.SUCCESS == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertRunningNode()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        RUNNING()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.RUNNING == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertMultipleNodes()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        SUCCESS()
+        SUCCESS()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.FAILURE == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertNodeWithResult()
+  {
+    string bhl = @"
+
+    func int foo() 
+    {
+      FAILURE()
+      return 1
+    }
+
+    func test() 
+    {
+      not {
+        foo()
+      }
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    AssertTrue(BHS.SUCCESS == node.run());
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestDeferMethodIsNotTriggeredTooEarlyInDecorator()
   {
     string bhl = @"
@@ -10334,210 +10469,6 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestFuncCachingForConfigNode()
-  {
-    string bhl = @"
-
-    func void foo(void^() fn)
-    {
-      ConfigNodeLambda({script: fn})
-    }
-
-    func void^() mkfn(string msg)
-    {
-      return func() {
-        trace(msg) 
-      }
-    }
-
-      
-    func void test() 
-    {
-      int c = 0
-      paral_all {
-        while(c < 3) {
-          c = c + 1
-          YIELD()
-        }
-        seq {
-          while(c != 1) {
-            RUNNING()
-          }
-          foo(func() {
-            foo(func() { trace("">1"") } )
-          })
-        }
-
-        seq {
-          while(c != 2) {
-            RUNNING()
-          }
-          foo(func() {
-            foo(func() { trace("">2"") } )
-          })
-        }
-
-        seq {
-          while(c != 3) {
-            RUNNING()
-          }
-          foo(func() {
-            foo(mkfn("">3""))
-          })
-        }
-      }
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFooLambda(globs);
-    BindTrace(globs, trace_stream);
-    BindConfigNodeLambda(globs);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    AssertEqual(FuncCallNode.PoolCount, 0);
-    {
-      var s = node.run();
-      AssertEqual(BHS.RUNNING, s);
-    }
-    {
-      var s = node.run();
-      AssertEqual(BHS.RUNNING, s);
-    }
-    {
-      var s = node.run();
-      AssertEqual(BHS.RUNNING, s);
-    }
-    {
-      var s = node.run();
-      AssertEqual(BHS.SUCCESS, s);
-    }
-
-    var str = GetString(trace_stream);
-
-    //NodeDump(node);
-
-    AssertEqual(">1" + ">2" + ">3", str);
-    CommonChecks(intp);
-
-    AssertEqual(FuncCallNode.PoolCount, 3);
-    AssertEqual(FuncCallNode.PoolCountFree, 3);
-  }
-
-  [IsTested()]
-  public void TestReturnFuncToConfigNode()
-  {
-    string bhl = @"
-
-    func void^() mkfn(string msg)
-    {
-      return func() {
-        trace(msg) 
-      }
-    }
-
-      
-    func void test() 
-    {
-      ConfigNodeLambda({script: mkfn("">1"")})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFooLambda(globs);
-    BindTrace(globs, trace_stream);
-    BindConfigNodeLambda(globs);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    var s = node.run();
-    AssertEqual(BHS.SUCCESS, s);
-    var str = GetString(trace_stream);
-
-    AssertEqual(">1", str);
-    CommonChecks(intp);
-
-    AssertEqual(1, FuncCtx.PoolCount);
-    AssertEqual(1, FuncCtx.PoolCountFree);
-  }
-
-  [IsTested()]
-  public void TestPassLambdaFuncToConfigNode()
-  {
-    string bhl = @"
-
-    func void test() 
-    {
-      ConfigNodeLambda({script: func() { trace("">1"")} })
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFooLambda(globs);
-    BindTrace(globs, trace_stream);
-    BindConfigNodeLambda(globs);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    var s = node.run();
-    AssertEqual(BHS.SUCCESS, s);
-    var str = GetString(trace_stream);
-
-    AssertEqual(">1", str);
-    CommonChecks(intp);
-
-    AssertEqual(1, FuncCtx.PoolCount);
-    AssertEqual(1, FuncCtx.PoolCountFree);
-  }
-
-  [IsTested()]
-  public void TestPassLambdaVarToConfigNode()
-  {
-    string bhl = @"
-
-    func void test() 
-    {
-      void^() fn = func() { trace("">1"")} 
-      ConfigNodeLambda({script:  fn})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFooLambda(globs);
-    BindTrace(globs, trace_stream);
-    BindConfigNodeLambda(globs);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    var s = node.run();
-    AssertEqual(BHS.SUCCESS, s);
-    var str = GetString(trace_stream);
-
-    AssertEqual(">1", str);
-    CommonChecks(intp);
-
-    AssertEqual(1, FuncCtx.PoolCount);
-    AssertEqual(1, FuncCtx.PoolCountFree);
-  }
-
-  [IsTested()]
   public void TestBindClassCallMember()
   {
     string bhl = @"
@@ -10576,34 +10507,6 @@ public class BHL_Test
     func test() 
     {
       if(true) {
-        trace(""OK"")
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    //NodeDump(node);
-    intp.ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-    AssertEqual("OK", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestIfNoBrackets()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      if true  {
         trace(""OK"")
       }
     }
@@ -11566,6 +11469,42 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestNestedWhileArrLoopWithVarDecls()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] arr = [1,2]
+      int i = 0
+      while(i < arr.Count) {
+        int tmp = arr[i]
+        int j = 0
+        while(j < arr.Count) {
+          int tmp2 = arr[j]
+          trace((string)tmp + "","" + (string)tmp2 + "";"")
+          j = j + 1
+        }
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1,1;1,2;2,1;2,2;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestWhileManyTimesAtOneRun()
   {
     string bhl = @"
@@ -11653,6 +11592,768 @@ public class BHL_Test
     var str = GetString(trace_stream);
     AssertEqual("", str);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFor()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("012", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForMultiExpression()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0, int j = 1; i < 3; i = i + 1, j = j + 2) {
+        trace((string)(i*j) + "";"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("0;3;10;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForReverse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 2; i >= 0; i = i - 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("210", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForUseExternalVar()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i
+      for(i = 1; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("12", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForNested()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        for(int j = 0; j < 2; j = j + 1) {
+          trace((string)i + "","" + (string)j + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("0,0;0,1;1,0;1,1;2,0;2,1;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForSeveral()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+
+      for(i = 0; i < 30; i = i + 10) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("01201020", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral {
+        for(int i = 0; i < 3; i = i + 1) {
+          trace((string)i)
+          YIELD()
+        }
+        RUNNING()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.SUCCESS == node.run());
+
+    var str = GetString(trace_stream);
+    AssertEqual("012", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForBadPreSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(i ; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "mismatched input ';' expecting '='"
+    );
+  }
+
+  [IsTested()]
+  public void TestForEmptyPreSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("012", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForEmptyPostSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(; i < 3;) {
+        trace((string)i)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("012", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForBadPostSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0 ; i < 3; i) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "mismatched input ')' expecting '='"
+    );
+  }
+
+  [IsTested()]
+  public void TestForCondIsRequired()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(;;) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "no viable alternative at input ';'"
+    );
+  }
+
+  [IsTested()]
+  public void TestForNonBoolCond()
+  {
+    string bhl = @"
+
+    func int foo() 
+    {
+      return 14
+    }
+
+    func test() 
+    {
+      for(; foo() ;) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "foo():<int> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeach()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] is = [1, 2, 3]
+      foreach(is as int it) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachForCustomArrayBinding()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      Color[] cs = [{r:1}, {r:2}, {r:3}]
+      foreach(cs as Color c) {
+        trace((string)c.r)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachUseExternalIteratorVar()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int it
+      int[] is = [1, 2, 3]
+      foreach(is as it) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachWithInPlaceArr()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as int it) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachWithReturnedArr()
+  {
+    string bhl = @"
+
+    func int[] foo()
+    {
+      return [1,2,3]
+    }
+
+    func test() 
+    {
+      foreach(foo() as int it) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral {
+        foreach([1,2,3] as int it) {
+          trace((string)it)
+          YIELD()
+        }
+        RUNNING()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.SUCCESS == node.run());
+
+    var str = GetString(trace_stream);
+    AssertEqual("123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachBreak()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as int it) {
+        if(it == 3) {
+          break
+        }
+        trace((string)it)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("12", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachSeveral()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] is = [1,2,3]
+      foreach(is as int it) {
+        trace((string)it)
+      }
+
+      foreach(is as int it2) {
+        trace((string)it2)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("123123", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachNested()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] is = [1,2,3]
+      foreach(is as int it) {
+        foreach(is as int it2) {
+          trace((string)it + "","" + (string)it2 + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachNested2()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as int it) {
+        foreach([20,30] as int it2) {
+          trace((string)it + "","" + (string)it2 + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1,20;1,30;2,20;2,30;3,20;3,30;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestForeachIteratorVarBadType()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as string it) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachArrBadType()
+  {
+    string bhl = @"
+
+    func float foo()
+    {
+      return 14
+    }
+
+    func test() 
+    {
+      foreach(foo() as float it) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachExternalIteratorVarBadType()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      string it
+      foreach([1,2,3] as it) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachRedeclareError()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      string it
+      foreach([1,2,3] as int it) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl, globs);
+      },
+      "already defined symbol 'it'"
+    );
   }
 
   [IsTested()]
@@ -11882,7 +12583,7 @@ public class BHL_Test
     );
   }
 
-//TODO: continue not supported
+//TODO: continue not supported yet
 //  [IsTested()]
   public void TestWhileContinue()
   {
@@ -13325,626 +14026,6 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("3", str);
-    CommonChecks(intp);
-  }
-
-  public class ConfigNode_Conf
-  {
-    public List<string> strs = new List<string>();
-    public int hey;
-    public List<Color> colors = new List<Color>();
-    public Color sub_color = new Color();
-    public bool set_strs_on_reset;
-
-    public void reset()
-    {
-      hey = 0;
-      colors.Clear();
-      sub_color = new Color();
-      strs.Clear();
-      if(set_strs_on_reset)
-      {
-        colors.Add(new Color(){g = 42});
-        strs.Add("added_in_reset");
-      }
-    }
-  }
-
-  public class ConfigNode : BehaviorTreeTerminalNode
-  {
-    public ConfigNode_Conf conf = new ConfigNode_Conf();
-    public bool with_ref = false;
-    public bool with_color_return = false;
-
-    Stream sm;
-
-    public ConfigNode(Stream sm)
-    {
-      this.sm = sm;
-    }
-
-    public override void init()
-    {
-      var sw = new StreamWriter(sm);
-      sw.Write(
-        conf.hey + 
-        (conf.colors.Count > 0 ? (":" + conf.colors.Count) : "") + 
-        (conf.colors.Count >= 1 ? (":" + conf.colors[0]) : "") + 
-        (conf.colors.Count >= 2 ? ("," + conf.colors[1]) : "") + 
-        (conf.colors.Count >= 3 ? ("," + conf.colors[2]) : "") + 
-        ":" + conf.sub_color + 
-        ":" + string.Join(",", conf.strs)
-      );
-
-      if(with_ref)
-      {
-        var ref_val = Interpreter.instance.PopRef();
-        sw.Write(":" + ref_val.num);
-      }
-
-      if(with_color_return)
-      {
-        var dv = DynVal.New();
-        dv.obj = conf.sub_color;
-        Interpreter.instance.PushValue(dv);
-      }
-
-      sw.Flush();
-    }
-  }
-
-  public class ConfigNodeLambda : BehaviorTreeDecoratorNode
-  {
-    public FooLambda conf = new FooLambda();
-
-    public override void init()
-    {
-      var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      fct.Retain();
-      var func_node = fct.EnsureNode();
-
-      this.setSlave(func_node);
-
-      base.init();
-    }
-
-    public override void deinit()
-    {
-      var fct = (FuncCtx)((BaseLambda)(conf.script[0])).fct.obj;
-      fct.Release();
-    }
-  }
-
-  void BindConfigNode_Conf(GlobalScope globs)
-  {
-    {
-      var cl = new ClassBindSymbol( "ConfigNode_Conf",
-        delegate(ref DynVal v) 
-        { 
-          v.obj = new ConfigNode_Conf();
-        }
-      );
-      globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<ConfigNode_Conf>(globs, new TypeRef(cl), delegate() { return new List<ConfigNode_Conf>(); } ));
-
-      cl.define(new FieldSymbol("hey", globs.type("int"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.SetNum(f.hey);
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          f.hey = (int)v.num; 
-          ctx.obj = f;
-        }
-      ));
-      cl.define(new FieldSymbol("colors", globs.type("Color[]"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.obj = f.colors;
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          f.colors = (List<Color>)v.obj; 
-          ctx.obj = f;
-        }
-      ));
-      cl.define(new FieldSymbol("sub_color", globs.type("Color"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.obj = f.sub_color;
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          f.sub_color = (Color)v.obj; 
-          ctx.obj = f;
-        }
-      ));
-      cl.define(new FieldSymbol("strs", globs.type("string[]"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.Encode(f.strs);
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (ConfigNode_Conf)ctx.obj;
-          v.Decode(ref f.strs);
-          ctx.obj = f;
-          ((DynValList)v.obj).TryDel();
-        }
-      ));
-    }
-  }
-
-  void BindConfigNode(GlobalScope globs, MemoryStream trace_stream)
-  {
-    BindConfigNode_Conf(globs);
-
-    {
-      var fn = new ConfNodeSymbol("ConfigNode", globs.type("void"),
-          delegate() { var n = new ConfigNode(trace_stream); n.conf = new ConfigNode_Conf(); n.conf.reset(); return n; }, 
-          delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNode)n).conf; v.obj = conf; if(reset) conf.reset(); }
-          );
-      fn.define(new FuncArgSymbol("c", globs.type("ConfigNode_Conf")));
-
-      globs.define(fn);
-    }
-
-  }
-
-  void BindConfigNodeLambda(GlobalScope globs)
-  {
-    {
-      var fn = new ConfNodeSymbol("ConfigNodeLambda", globs.type("void"),
-          delegate() { var n = new ConfigNodeLambda(); n.conf = new FooLambda(); n.conf.reset(); return n; }, 
-          delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNodeLambda)n).conf; v.obj = conf; if(reset) conf.reset(); }
-          );
-      fn.define(new FuncArgSymbol("c", globs.type("FooLambda")));
-
-      globs.define(fn);
-    }
-
-  }
-
-  void BindConfigNodeWithRef(GlobalScope globs, MemoryStream trace_stream)
-  {
-    BindConfigNode_Conf(globs);
-
-    {
-      var fn = new ConfNodeSymbol("ConfigNodeWithRef", globs.type("void"),
-          delegate() { var n = new ConfigNode(trace_stream); n.with_ref = true; n.conf = new ConfigNode_Conf(); n.conf.reset(); return n; }, 
-          delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNode)n).conf; v.obj = conf; if(reset) conf.reset(); }
-          );
-      fn.define(new FuncArgSymbol("c", globs.type("ConfigNode_Conf")));
-      fn.define(new FuncArgSymbol("arg", globs.type("float"), true/*ref*/));
-
-      globs.define(fn);
-    }
-  }
-  
-  void BindConfigNodeWithReturn(GlobalScope globs, MemoryStream trace_stream)
-  {
-    BindConfigNode_Conf(globs);
-
-    {
-      var fn = new ConfNodeSymbol("ConfigNodeWithReturn", globs.type("Color"),
-          delegate() { var n = new ConfigNode(trace_stream); n.with_color_return = true; n.conf = new ConfigNode_Conf(); n.conf.reset(); return n; }, 
-          delegate(BehaviorTreeNode n, ref DynVal v, bool reset) { var conf = ((ConfigNode)n).conf; v.obj = conf; if(reset) conf.reset(); }
-          );
-      fn.define(new FuncArgSymbol("c", globs.type("ConfigNode_Conf")));
-
-      globs.define(fn);
-    }
-  }
-
-  [IsTested()]
-  public void TestConfigNodeArrayAsVar()
-  {
-    string bhl = @"
-    func void test(float b) 
-    {
-      string[] strs = new string[]
-      strs.Add(""foo"")
-      strs.Add(""hey"")
-      ConfigNode({hey:142, strs:strs, colors:[{r:2}, {g:3}, {g:b}], sub_color : {r:10, g:100}})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFoo(globs);
-    BindConfigNode(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    node.SetArgs(DynVal.NewNum(42));
-    intp.ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    //NodeDump(node);
-    AssertEqual("142:3:[r=2,g=0],[r=0,g=3],[r=0,g=42]:[r=10,g=100]:foo,hey", str);
-    CommonChecks(intp);
-    AssertTrue(DynValList.PoolCount > 0);
-    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeCleanFuncArgsStack()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      ConfigNode({strs:[""foo"", ""hey""], hey:foo()})
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
-          delegate() { return BHS.FAILURE; } );
-      globs.define(fn);
-    }
-
-    BindColor(globs);
-    BindFoo(globs);
-    BindConfigNode(globs, new MemoryStream());
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    //NodeDump(node);
-    var result = node.run();
-    AssertEqual(result, BHS.FAILURE);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeDefaultArrayArgsAreOverriden()
-  {
-    string bhl = @"
-    func void test(string b, int r) 
-    {
-      ConfigNode({strs:[b], colors:[{r:r}]})
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindColor(globs);
-    BindConfigNode(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    //let's get to the guts of the warmed up func and change default values
-    (node as FuncNodeAST).Inflate();
-    var call_children = (node.children[0] as BehaviorTreeInternalNode).children;
-    var conf_node = call_children[call_children.Count-1] as ConfigNode;
-    conf_node.conf.set_strs_on_reset = true;
-
-    node.SetArgs(DynVal.NewStr("foo"), DynVal.NewNum(10));
-    intp.ExecNode(node, 0);
-    //NodeDump(node);
-
-    var str = GetString(trace_stream);
-    AssertEqual("0:1:[r=10,g=0]:[r=0,g=0]:foo", str);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeArrayAsTemp()
-  {
-    string bhl = @"
-    func void test(float b) 
-    {
-      ConfigNode({hey:142, strs:[""foo"", ""hey""], colors:[{r:2}, {g:3}, {g:b}], sub_color : {r:10, g:100}})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFoo(globs);
-    BindConfigNode(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    node.SetArgs(DynVal.NewNum(42));
-    intp.ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    //NodeDump(node);
-    AssertEqual("142:3:[r=2,g=0],[r=0,g=3],[r=0,g=42]:[r=10,g=100]:foo,hey", str);
-    CommonChecks(intp);
-    AssertTrue(DynValList.PoolCount > 0);
-    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeArrayExpIndex()
-  {
-    string bhl = @"
-    func StringClass mk(string str)
-    {
-      StringClass s = new StringClass
-      s.str = str
-      return s
-    }
-
-    func void test() 
-    {
-      string[] ss = [""hey""] 
-      ConfigNode({strs:[mk(""foo"").str, ss[0], mk(""bar"").str, ""bla""]})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindStringClass(globs);
-    BindColor(globs);
-    BindFoo(globs);
-    BindConfigNode(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    //NodeDump(node);
-    intp.ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("0:[r=0,g=0]:foo,hey,bar,bla", str);
-    CommonChecks(intp);
-    AssertTrue(DynValList.PoolCount > 0);
-    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeWithEmptyConfig()
-  {
-    string bhl = @"
-    func void test(float b) 
-    {
-      ConfigNode()
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFoo(globs);
-    BindConfigNode(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    node.SetArgs(DynVal.NewNum(42));
-    //NodeDump(node);
-    intp.ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("0:[r=0,g=0]:", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeWithConstConfig()
-  {
-    string bhl = @"
-    func void test(float b) 
-    {
-      ConfigNode({hey:142, strs:[""foo"", ""hey""], sub_color : {r:10, g:100}})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFoo(globs);
-    BindConfigNode(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    node.SetArgs(DynVal.NewNum(42));
-    intp.ExecNode(node, 0);
-
-    //NodeDump(node);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("142:[r=10,g=100]:foo,hey", str);
-    CommonChecks(intp);
-    AssertTrue(DynValList.PoolCount > 0);
-    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeWithJsonSubCallAST()
-  {
-    string bhl = @"
-
-    func int SubCall(Color c)
-    {
-      return (int)c.r
-    }
-
-    func void test() 
-    {
-      ConfigNode({hey: SubCall({r:10})})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindConfigNode(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, 0);
-    //NodeDump(node);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("10:[r=0,g=0]:", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeWithJsonSubCallBind()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      ConfigNode({hey: SubCall({r:10})})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindConfigNode(globs, trace_stream);
-
-    {
-      var fn = new SimpleFuncBindSymbol("SubCall", globs.type("int"),
-          delegate() { 
-            var interp = Interpreter.instance;
-            var c = (Color)interp.PopValue().obj; 
-            interp.PushValue(DynVal.NewNum(c.r));
-            return BHS.SUCCESS; 
-          } 
-      );
-      fn.define(new FuncArgSymbol("c", globs.type("Color")));
-      globs.define(fn);
-    }
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, 0);
-    //NodeDump(node);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("10:[r=0,g=0]:", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeWithJsonSubCallFuncPtr()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      int^(Color) ptr = SubCall
-      ConfigNode({hey: ptr({r:10})})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindConfigNode(globs, trace_stream);
-
-    {
-      var fn = new SimpleFuncBindSymbol("SubCall", globs.type("int"),
-          delegate() { 
-            var interp = Interpreter.instance;
-            var c = (Color)interp.PopValue().obj; 
-            interp.PushValue(DynVal.NewNum(c.r));
-            return BHS.SUCCESS; 
-          } 
-      );
-      fn.define(new FuncArgSymbol("c", globs.type("Color")));
-      globs.define(fn);
-    }
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, 0);
-    //NodeDump(node);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("10:[r=0,g=0]:", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeWithReturnChainCall()
-  {
-    string bhl = @"
-    func float test() 
-    {
-      Color c = ConfigNodeWithReturn({sub_color:{g:1}, strs:[""foo"", ""bar""]}).Add(10)
-      return c.g
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFoo(globs);
-    BindConfigNodeWithReturn(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    //NodeDump(node);
-    var num = ExtractNum(intp.ExecNode(node));
-
-    AssertEqual(num, 11);
-
-    var str = GetString(trace_stream);
-    AssertEqual("0:[r=0,g=1]:foo,bar", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestConfigNodeWithRef()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      float b = 10
-      ConfigNodeWithRef({hey:142}, ref b)
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFoo(globs);
-    BindConfigNodeWithRef(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    //NodeDump(node);
-    intp.ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("142:[r=0,g=0]::10", str);
     CommonChecks(intp);
   }
 
@@ -16277,6 +16358,34 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestReturnNonConsumedInParal()
+  {
+    string bhl = @"
+
+    func float foo() 
+    {
+      return 100
+    }
+      
+    func int test() 
+    {
+      paral {
+        foo()
+        RUNNING()
+      }
+      return 2
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestReturnMultipleNonConsumed()
   {
     string bhl = @"
@@ -16740,66 +16849,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var str = GetString(trace_stream);
 
     AssertEqual("INC1;DEC0;INC1;INC2;DEC1;REL1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;DEC2;REL2;DEC1;REL1;DEC0;REL0;", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestRefCountInConfig()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      NodeRefC({r : new RefC})
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindRefC(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, 0);
-
-    //NodeDump(node);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("INC1;DEC0;WRITE!NODE!", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestRefCountInConfigPassReturn()
-  {
-    string bhl = @"
-    func void pass(RefC r)
-    {
-      NodeRefC({r : r})
-    }
-
-    func void test() 
-    {
-      RefC r = new RefC
-      pass(r)
-    }
-    ";
-
-    var trace_stream = new MemoryStream();
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindRefC(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-    intp.ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("INC1;DEC0;INC1;INC2;DEC1;INC2;INC3;DEC2;WRITE!NODE!DEC1;REL1;DEC0;REL0;", str);
     CommonChecks(intp);
   }
 
