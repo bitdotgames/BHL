@@ -42,12 +42,10 @@ func AlphaAppear(int id, float time_to_appear) {
 func Unit FindUnit(Vec3 pos, float radius) {
   Unit[] us = GetUnits()
   int i = 0
-  while(i < us.Count) {
-    Unit u = us.At(i)
+  foreach(us as Unit u) {
     if(u.position.Sub(pos).len < radius) {
      return u
     } 
-    i = i + 1
   }
   return null
 }
@@ -273,11 +271,12 @@ You can run unit tests by executing the following command:
 2. ~~Generic functors support~~
 3. ~~Generic initializers~~
 4. ~~Multiple return values support~~
-5. **while** syntax sugar: **for(...) {}** support
-6. Ternary operator support
-7. ~~User defined structs~~
-8. User defined struct methods
-9. ~~User defined enums~~
+5. ~~**while** syntax sugar: **for(...) {}** support~~
+6. ~~**while** syntax sugar: **foreach(...) {}** support~~
+7. Ternary operator support
+8. ~~User defined structs~~
+9. User defined struct methods
+10. ~~User defined enums~~
 
 
 ## Version ???
