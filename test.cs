@@ -14242,6 +14242,152 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestTypeidForUserClass()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func int test() 
+    {
+      return typeid(Foo)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, (new HashedName("Foo")).n);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTypeidForBuiltinType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(int)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, (new HashedName("int")).n);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTypeidForBuiltinArrType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(int[])
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertEqual(res, (new HashedName("int[]")).n);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTypeidEqual()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func bool test() 
+    {
+      return typeid(Foo) == typeid(Foo)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractBool(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertTrue(res);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTypeidNotEqual()
+  {
+    string bhl = @"
+
+    class Foo { }
+    class Bar { }
+      
+    func bool test() 
+    {
+      return typeid(Foo) == typeid(Bar)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractBool(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertTrue(res == false);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTypeidNotEqualArrType()
+  {
+    string bhl = @"
+
+    func bool test() 
+    {
+      return typeid(int[]) == typeid(float[])
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractBool(intp.ExecNode(node));
+
+    //NodeDump(node);
+    AssertTrue(res == false);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTypeidBadType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(Foo)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret("", bhl);
+      },
+      @"type 'Foo' not found"
+    );
+  }
+
+  [IsTested()]
   public void TestEmptyParenExpression()
   {
     string bhl = @"

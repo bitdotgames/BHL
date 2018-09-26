@@ -385,6 +385,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpParen([NotNull] bhlParser.ExpParenContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpTypeid</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpTypeid</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.newExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -808,6 +820,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitStaticCallItem([NotNull] bhlParser.StaticCallItemContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterTypeid([NotNull] bhlParser.TypeidContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitTypeid([NotNull] bhlParser.TypeidContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// </summary>

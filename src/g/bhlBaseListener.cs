@@ -451,6 +451,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpParen([NotNull] bhlParser.ExpParenContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpTypeid</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpTypeid([NotNull] bhlParser.ExpTypeidContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpTypeid</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpTypeid([NotNull] bhlParser.ExpTypeidContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.newExp"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -950,6 +964,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStaticCallItem([NotNull] bhlParser.StaticCallItemContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterTypeid([NotNull] bhlParser.TypeidContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitTypeid([NotNull] bhlParser.TypeidContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// <para>The default implementation does nothing.</para>

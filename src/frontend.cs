@@ -982,6 +982,22 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
+  {
+    var type = ctx.typeid().type();
+    var tr = locals.type(type);
+    if(tr.type == null)
+      FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
+
+    Wrap(ctx).eval_type = SymbolTable._int;
+
+    var ast = AST_Util.New_Literal(EnumLiteral.NUM);
+    ast.nval = tr.name.n;
+    PeekAST().AddChild(ast);
+
+    return null;
+  }
+
   public override object VisitExpStaticCall(bhlParser.ExpStaticCallContext ctx)
   {
     var exp = ctx.staticCallExp(); 

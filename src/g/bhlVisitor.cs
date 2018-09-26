@@ -240,6 +240,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpParen([NotNull] bhlParser.ExpParenContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpTypeid</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.newExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -489,6 +496,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStaticCallItem([NotNull] bhlParser.StaticCallItemContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTypeid([NotNull] bhlParser.TypeidContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// </summary>
