@@ -14242,6 +14242,53 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestTypeidIsEncodedInUserClass()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func Foo test() 
+    {
+      return {}
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = intp.ExecNode(node);
+
+    AssertEqual(res.val.num, (new HashedName("Foo")).n);
+    //NOTE: returned value must be manually removed
+    DynValDict.Del((res.val.obj as DynValDict));
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestTypeidIsEncodedInUserClassInHierarchy()
+  {
+    string bhl = @"
+
+    class Foo { }
+    class Bar : Foo { }
+      
+    func Bar test() 
+    {
+      return {}
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = intp.ExecNode(node);
+
+    AssertEqual(res.val.num, (new HashedName("Bar")).n);
+    //NOTE: returned value must be manually removed
+    DynValDict.Del((res.val.obj as DynValDict));
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestTypeidForUserClass()
   {
     string bhl = @"
