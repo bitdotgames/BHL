@@ -248,16 +248,23 @@ public struct AST_UnaryOpExp : IFlatbufferObject
   public AST_UnaryOpExp __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public EnumUnaryOp Type { get { int o = __p.__offset(4); return o != 0 ? (EnumUnaryOp)__p.bb.GetSbyte(o + __p.bb_pos) : EnumUnaryOp.NONE; } }
+  public AST_Selector? Children(int j) { int o = __p.__offset(6); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
+  public int ChildrenLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
 
   public static Offset<AST_UnaryOpExp> CreateAST_UnaryOpExp(FlatBufferBuilder builder,
-      EnumUnaryOp type = EnumUnaryOp.NONE) {
-    builder.StartObject(1);
+      EnumUnaryOp type = EnumUnaryOp.NONE,
+      VectorOffset childrenOffset = default(VectorOffset)) {
+    builder.StartObject(2);
+    AST_UnaryOpExp.AddChildren(builder, childrenOffset);
     AST_UnaryOpExp.AddType(builder, type);
     return AST_UnaryOpExp.EndAST_UnaryOpExp(builder);
   }
 
-  public static void StartAST_UnaryOpExp(FlatBufferBuilder builder) { builder.StartObject(1); }
+  public static void StartAST_UnaryOpExp(FlatBufferBuilder builder) { builder.StartObject(2); }
   public static void AddType(FlatBufferBuilder builder, EnumUnaryOp type) { builder.AddSbyte(0, (sbyte)type, 0); }
+  public static void AddChildren(FlatBufferBuilder builder, VectorOffset childrenOffset) { builder.AddOffset(1, childrenOffset.Value, 0); }
+  public static VectorOffset CreateChildrenVector(FlatBufferBuilder builder, Offset<AST_Selector>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
+  public static void StartChildrenVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
   public static Offset<AST_UnaryOpExp> EndAST_UnaryOpExp(FlatBufferBuilder builder) {
     int o = builder.EndObject();
     return new Offset<AST_UnaryOpExp>(o);
@@ -274,16 +281,23 @@ public struct AST_BinaryOpExp : IFlatbufferObject
   public AST_BinaryOpExp __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public EnumBinaryOp Type { get { int o = __p.__offset(4); return o != 0 ? (EnumBinaryOp)__p.bb.GetSbyte(o + __p.bb_pos) : EnumBinaryOp.NONE; } }
+  public AST_Selector? Children(int j) { int o = __p.__offset(6); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
+  public int ChildrenLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
 
   public static Offset<AST_BinaryOpExp> CreateAST_BinaryOpExp(FlatBufferBuilder builder,
-      EnumBinaryOp type = EnumBinaryOp.NONE) {
-    builder.StartObject(1);
+      EnumBinaryOp type = EnumBinaryOp.NONE,
+      VectorOffset childrenOffset = default(VectorOffset)) {
+    builder.StartObject(2);
+    AST_BinaryOpExp.AddChildren(builder, childrenOffset);
     AST_BinaryOpExp.AddType(builder, type);
     return AST_BinaryOpExp.EndAST_BinaryOpExp(builder);
   }
 
-  public static void StartAST_BinaryOpExp(FlatBufferBuilder builder) { builder.StartObject(1); }
+  public static void StartAST_BinaryOpExp(FlatBufferBuilder builder) { builder.StartObject(2); }
   public static void AddType(FlatBufferBuilder builder, EnumBinaryOp type) { builder.AddSbyte(0, (sbyte)type, 0); }
+  public static void AddChildren(FlatBufferBuilder builder, VectorOffset childrenOffset) { builder.AddOffset(1, childrenOffset.Value, 0); }
+  public static VectorOffset CreateChildrenVector(FlatBufferBuilder builder, Offset<AST_Selector>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
+  public static void StartChildrenVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
   public static Offset<AST_BinaryOpExp> EndAST_BinaryOpExp(FlatBufferBuilder builder) {
     int o = builder.EndObject();
     return new Offset<AST_BinaryOpExp>(o);

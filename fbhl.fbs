@@ -53,7 +53,8 @@ table AST_Module {
 }
 
 table AST_UnaryOpExp {
-  type : EnumUnaryOp;
+  type     : EnumUnaryOp;
+  children : [AST_Selector];
 }
 
 enum EnumBinaryOp : byte {
@@ -76,7 +77,8 @@ enum EnumBinaryOp : byte {
 }
 
 table AST_BinaryOpExp {
-  type : EnumBinaryOp;
+  type     : EnumBinaryOp;
+  children : [AST_Selector];
 }
 
 table AST_Inc {

@@ -56,6 +56,8 @@ public class Parsed
 
 public class Frontend : bhlBaseVisitor<object>
 {
+  FlatBuffers.FlatBufferBuilder fbb;
+
   static int lambda_id = 0;
 
   static int NextLambdaId()
@@ -183,6 +185,8 @@ public class Frontend : bhlBaseVisitor<object>
 
   public Frontend(Module module, ITokenStream tokens, GlobalScope globs, ModuleRegistry mreg, bool decls_only = false)
   {
+    this.fbb = new FlatBuffers.FlatBufferBuilder(1);
+
     this.curr_module = module;
 
     this.tokens = tokens;
@@ -197,6 +201,19 @@ public class Frontend : bhlBaseVisitor<object>
 
   Stack<AST> ast_stack = new Stack<AST>();
 
+  struct ChildSelector
+  {
+    internal fbhl.AST_OneOf type;
+    internal int offset;
+
+    public ChildSelector(fbhl.AST_OneOf type, int offset)
+    {
+      this.type = type;
+      this.offset = offset;
+    }
+  }
+  Stack<List<ChildSelector>> child_sel_stack = new Stack<List<ChildSelector>>();
+
   void PushAST(AST ast)
   {
     ast_stack.Push(ast);
@@ -205,6 +222,57 @@ public class Frontend : bhlBaseVisitor<object>
   void PopAST()
   {
     ast_stack.Pop();
+  }
+
+  AST PeekAST()
+  {
+    return ast_stack.Peek();
+  }
+
+  void PushChildrenOffsets()
+  {
+    child_sel_stack.Push(new List<ChildSelector>());
+  }
+
+  FlatBuffers.Offset<fbhl.AST_Selector>[] PopChildrenOffsets()
+  {
+    var selectors = child_sel_stack.Pop();
+
+    var res = new FlatBuffers.Offset<fbhl.AST_Selector>[selectors.Count];
+
+    for(int s=0;s<selectors.Count;++s)
+    {
+      var sel = selectors[s];
+      fbhl.AST_Selector.StartAST_Selector(fbb);
+      fbhl.AST_Selector.AddVType(fbb, sel.type);
+      fbhl.AST_Selector.AddV(fbb, sel.offset);
+
+      res[s] = fbhl.AST_Selector.EndAST_Selector(fbb);
+    }
+
+    return res;
+  }
+
+  void AddChildOffset<T>(FlatBuffers.Offset<T> offset) where T : struct
+  {
+    child_sel_stack.Peek().Add(MatchToSelector(offset));
+  }
+
+  ChildSelector MatchToSelector<T>(FlatBuffers.Offset<T> offset) where T : struct
+  {
+    if(typeof(T) == typeof(fbhl.AST_Literal))
+      return new ChildSelector(fbhl.AST_OneOf.AST_Literal, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_Break))
+      return new ChildSelector(fbhl.AST_OneOf.AST_Break, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_UnaryOpExp))
+      return new ChildSelector(fbhl.AST_OneOf.AST_UnaryOpExp, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_PopValue))
+      return new ChildSelector(fbhl.AST_OneOf.AST_PopValue, offset.Value);
+    else
+      throw new Exception("Unhandled offset type: " + typeof(T).Name);
+
+    //  if(!res)
+    //    throw new Exception("Unhandled offset type: " + offset.GetType().Name);
   }
 
   void PushInterimAST()
@@ -222,11 +290,6 @@ public class Frontend : bhlBaseVisitor<object>
       PeekAST().AddChild(tmp.children[0]);
     else if(tmp.children.Count > 1)
       PeekAST().AddChild(tmp);
-  }
-
-  AST PeekAST()
-  {
-    return ast_stack.Peek();
   }
 
   public string Location(IParseTree t)
@@ -256,9 +319,21 @@ public class Frontend : bhlBaseVisitor<object>
   public AST_Module ParseModule(bhlParser.ProgramContext p)
   {
     var ast = AST_Util.New_Module(curr_module.GetId(), curr_module.norm_path);
+    PushChildrenOffsets();
     PushAST(ast);
     VisitProgram(p);
     PopAST();
+    var offs = PopChildrenOffsets();
+
+    fbhl.AST_Module.CreateAST_Module(
+      fbb, 
+      curr_module.GetId(),
+      fbb.CreateString(curr_module.norm_path),
+      fbhl.AST_Module.CreateChildrenVector(fbb, offs)
+    );
+
+    //Console.WriteLine("FBB SIZE " + fbb.Offset);
+
     return ast;
   }
 
@@ -318,6 +393,12 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
+  FlatBuffers.Offset<fbhl.AST_PopValue> FbNewPopValue()
+  {
+    fbhl.AST_PopValue.StartAST_PopValue(fbb);
+    return fbhl.AST_PopValue.EndAST_PopValue(fbb);
+  }
+
   public override object VisitSymbCall(bhlParser.SymbCallContext ctx)
   {
     var exp = ctx.callExp(); 
@@ -330,10 +411,16 @@ public class Frontend : bhlBaseVisitor<object>
       if(mtype != null)
       {
         for(int i=0;i<mtype.items.Count;++i)
+        {
           PeekAST().AddChild(AST_Util.New_PopValue());
+          AddChildOffset(FbNewPopValue());
+        }
       }
       else
+      {
         PeekAST().AddChild(AST_Util.New_PopValue());
+        AddChildOffset(FbNewPopValue());
+      }
     }
     return null;
   }
@@ -995,6 +1082,8 @@ public class Frontend : bhlBaseVisitor<object>
     ast.nval = tr.name.n;
     PeekAST().AddChild(ast);
 
+    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.NUM, tr.name.n));
+
     return null;
   }
 
@@ -1017,6 +1106,8 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_Literal(EnumLiteral.NUM);
     ast.nval = enum_val.val;
     PeekAST().AddChild(ast);
+
+    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.NUM, enum_val.val));
 
     return null;
   }
@@ -1076,25 +1167,40 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
   {
     EnumUnaryOp type;
+    fbhl.EnumUnaryOp ftype;
     var op = ctx.operatorUnary().GetText(); 
     if(op == "-")
+    {
       type = EnumUnaryOp.NEG;
+      ftype = fbhl.EnumUnaryOp.NEG;
+    }
     else if(op == "!")
+    {
       type = EnumUnaryOp.NOT;
+      ftype = fbhl.EnumUnaryOp.NOT;
+    }
     else
       throw new Exception("Unknown type");
 
     var ast = AST_Util.New_UnaryOpExp(type);
     var exp = ctx.exp(); 
     PushAST(ast);
+    PushChildrenOffsets();
     Visit(exp);
     PopAST();
+    var offs = PopChildrenOffsets();
 
     Wrap(ctx).eval_type = type == EnumUnaryOp.NEG ? 
       SymbolTable.Uminus(Wrap(exp)) : 
       SymbolTable.Unot(Wrap(exp));
 
     PeekAST().AddChild(ast);
+
+    AddChildOffset(fbhl.AST_UnaryOpExp.CreateAST_UnaryOpExp(
+      fbb, 
+      ftype,
+      fbhl.AST_UnaryOpExp.CreateChildrenVector(fbb, offs)
+    ));
 
     return null;
   }
@@ -1339,6 +1445,8 @@ public class Frontend : bhlBaseVisitor<object>
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
     }
 
+    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.NUM, ast.nval));
+
     PeekAST().AddChild(ast);
 
     return null;
@@ -1352,6 +1460,8 @@ public class Frontend : bhlBaseVisitor<object>
     ast.nval = 0;
     PeekAST().AddChild(ast);
 
+    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.BOOL, 0));
+
     return null;
   }
 
@@ -1361,6 +1471,8 @@ public class Frontend : bhlBaseVisitor<object>
 
     var ast = AST_Util.New_Literal(EnumLiteral.NIL);
     PeekAST().AddChild(ast);
+
+    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.NIL));
 
     return null;
   }
@@ -1372,6 +1484,8 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
     ast.nval = 1;
     PeekAST().AddChild(ast);
+
+    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.BOOL, 1));
 
     return null;
   }
@@ -1386,7 +1500,27 @@ public class Frontend : bhlBaseVisitor<object>
     ast.sval = ast.sval.Substring(1, ast.sval.Length-2);
     PeekAST().AddChild(ast);
 
+    AddChildOffset(FbNewLiteral(ast.sval));
+
     return null;
+  }
+
+  FlatBuffers.Offset<fbhl.AST_Literal> FbNewLiteral(fbhl.EnumLiteral type, double v = 0)
+  {
+    fbhl.AST_Literal.StartAST_Literal(fbb);
+    fbhl.AST_Literal.AddType(fbb, type);
+    fbhl.AST_Literal.AddNval(fbb, v);
+    return fbhl.AST_Literal.EndAST_Literal(fbb);
+  }
+
+  FlatBuffers.Offset<fbhl.AST_Literal> FbNewLiteral(string v)
+  {
+    var s = fbb.CreateString(v);
+
+    fbhl.AST_Literal.StartAST_Literal(fbb);
+    fbhl.AST_Literal.AddType(fbb, fbhl.EnumLiteral.STR);
+    fbhl.AST_Literal.AddSval(fbb, s);
+    return fbhl.AST_Literal.EndAST_Literal(fbb);
   }
 
   //a list since it's easier to traverse by index
@@ -1539,6 +1673,12 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  FlatBuffers.Offset<fbhl.AST_Break> FbNewBreak()
+  {
+    fbhl.AST_Break.StartAST_Break(fbb);
+    return fbhl.AST_Break.EndAST_Break(fbb);
+  }
+
   public override object VisitBreak(bhlParser.BreakContext ctx)
   {
     if(defer_stack > 0)
@@ -1548,6 +1688,8 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx) + ": not within loop construct");
 
     PeekAST().AddChild(AST_Util.New_Break());
+
+    AddChildOffset(FbNewBreak());
 
     return null;
   }
