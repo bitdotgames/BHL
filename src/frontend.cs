@@ -229,12 +229,12 @@ public class Frontend : bhlBaseVisitor<object>
     return ast_stack.Peek();
   }
 
-  void PushChildrenOffsets()
+  void DeclChildrenOffsets()
   {
     child_sel_stack.Push(new List<ChildSelector>());
   }
 
-  FlatBuffers.Offset<fbhl.AST_Selector>[] PopChildrenOffsets()
+  FlatBuffers.Offset<fbhl.AST_Selector>[] EndChildrenOffsets()
   {
     var selectors = child_sel_stack.Pop();
 
@@ -266,13 +266,14 @@ public class Frontend : bhlBaseVisitor<object>
       return new ChildSelector(fbhl.AST_OneOf.AST_Break, offset.Value);
     else if(typeof(T) == typeof(fbhl.AST_UnaryOpExp))
       return new ChildSelector(fbhl.AST_OneOf.AST_UnaryOpExp, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_BinaryOpExp))
+      return new ChildSelector(fbhl.AST_OneOf.AST_BinaryOpExp, offset.Value);
     else if(typeof(T) == typeof(fbhl.AST_PopValue))
       return new ChildSelector(fbhl.AST_OneOf.AST_PopValue, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_Interim))
+      return new ChildSelector(fbhl.AST_OneOf.AST_Interim, offset.Value);
     else
       throw new Exception("Unhandled offset type: " + typeof(T).Name);
-
-    //  if(!res)
-    //    throw new Exception("Unhandled offset type: " + offset.GetType().Name);
   }
 
   void PushInterimAST()
@@ -319,11 +320,11 @@ public class Frontend : bhlBaseVisitor<object>
   public AST_Module ParseModule(bhlParser.ProgramContext p)
   {
     var ast = AST_Util.New_Module(curr_module.GetId(), curr_module.norm_path);
-    PushChildrenOffsets();
+    DeclChildrenOffsets();
     PushAST(ast);
     VisitProgram(p);
     PopAST();
-    var offs = PopChildrenOffsets();
+    var offs = EndChildrenOffsets();
 
     fbhl.AST_Module.CreateAST_Module(
       fbb, 
@@ -1167,17 +1168,17 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
   {
     EnumUnaryOp type;
-    fbhl.EnumUnaryOp ftype;
+    fbhl.EnumUnaryOp fbtype;
     var op = ctx.operatorUnary().GetText(); 
     if(op == "-")
     {
       type = EnumUnaryOp.NEG;
-      ftype = fbhl.EnumUnaryOp.NEG;
+      fbtype = fbhl.EnumUnaryOp.NEG;
     }
     else if(op == "!")
     {
       type = EnumUnaryOp.NOT;
-      ftype = fbhl.EnumUnaryOp.NOT;
+      fbtype = fbhl.EnumUnaryOp.NOT;
     }
     else
       throw new Exception("Unknown type");
@@ -1185,10 +1186,10 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_UnaryOpExp(type);
     var exp = ctx.exp(); 
     PushAST(ast);
-    PushChildrenOffsets();
+    DeclChildrenOffsets();
     Visit(exp);
     PopAST();
-    var offs = PopChildrenOffsets();
+    var offs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = type == EnumUnaryOp.NEG ? 
       SymbolTable.Uminus(Wrap(exp)) : 
@@ -1198,7 +1199,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     AddChildOffset(fbhl.AST_UnaryOpExp.CreateAST_UnaryOpExp(
       fbb, 
-      ftype,
+      fbtype,
       fbhl.AST_UnaryOpExp.CreateChildrenVector(fbb, offs)
     ));
 
@@ -1210,6 +1211,7 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = new AST_Interim();
     var exp = ctx.exp(); 
     PushAST(ast);
+    DeclChildrenOffsets();
     Visit(exp);
 
     var curr_type = Wrap(exp).eval_type;
@@ -1221,8 +1223,13 @@ public class Frontend : bhlBaseVisitor<object>
       ProcChainedCall(null, chain, ref curr_type, line, false);
     }
     PopAST();
+    var offs = EndChildrenOffsets();
     
     PeekAST().AddChild(ast);
+    AddChildOffset(fbhl.AST_Interim.CreateAST_Interim(
+      fbb, 
+      fbhl.AST_Interim.CreateChildrenVector(fbb, offs)
+    ));
     
     Wrap(ctx).eval_type = curr_type;
 
@@ -1232,11 +1239,18 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
     EnumBinaryOp type;
+    fbhl.EnumBinaryOp fbtype;
     var op = ctx.operatorAddSub().GetText(); 
     if(op == "+")
+    {
       type = EnumBinaryOp.ADD;
+      fbtype = fbhl.EnumBinaryOp.ADD;
+    }
     else if(op == "-")
+    {
       type = EnumBinaryOp.SUB;
+      fbtype = fbhl.EnumBinaryOp.SUB;
+    }
     else
       throw new Exception("Unknown type");
     
@@ -1244,13 +1258,20 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
     PushAST(ast);
+    DeclChildrenOffsets();
     Visit(exp_0);
     Visit(exp_1);
     PopAST();
+    var offs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = SymbolTable.Bop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
+    AddChildOffset(fbhl.AST_BinaryOpExp.CreateAST_BinaryOpExp(
+      fbb, 
+      fbtype,
+      fbhl.AST_BinaryOpExp.CreateChildrenVector(fbb, offs)
+    ));
 
     return null;
   }
@@ -1260,12 +1281,22 @@ public class Frontend : bhlBaseVisitor<object>
     var op = ctx.operatorMulDivMod().GetText(); 
 
     EnumBinaryOp type;
+    fbhl.EnumBinaryOp fbtype;
     if(op == "*")
+    {
       type = EnumBinaryOp.MUL;
+      fbtype = fbhl.EnumBinaryOp.MUL;
+    }
     else if(op == "/")
+    {
       type = EnumBinaryOp.DIV;
+      fbtype = fbhl.EnumBinaryOp.DIV;
+    }
     else if(op == "%")
+    {
       type = EnumBinaryOp.MOD;
+      fbtype = fbhl.EnumBinaryOp.MOD;
+    }
     else
       throw new Exception("Unknown type");
 
@@ -1273,13 +1304,20 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
     PushAST(ast);
+    DeclChildrenOffsets();
     Visit(exp_0);
     Visit(exp_1);
     PopAST();
+    var offs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = SymbolTable.Bop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
+    AddChildOffset(fbhl.AST_BinaryOpExp.CreateAST_BinaryOpExp(
+      fbb, 
+      fbtype,
+      fbhl.AST_BinaryOpExp.CreateChildrenVector(fbb, offs)
+    ));
 
     return null;
   }
