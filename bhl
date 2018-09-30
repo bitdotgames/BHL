@@ -42,6 +42,7 @@ function task_build_back_dll(array $args)
     "$BHL_ROOT/deps/FlatBuffers/*.cs",
     "$BHL_ROOT/src/fbhl.cs", 
     "$BHL_ROOT/src/autogen.cs", 
+    "$BHL_ROOT/src/ast.cs", 
     "$BHL_ROOT/src/symbol.cs", 
     "$BHL_ROOT/src/scope.cs", 
     "$BHL_ROOT/src/backend.cs", 

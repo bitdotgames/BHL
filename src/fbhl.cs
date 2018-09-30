@@ -121,6 +121,7 @@ public struct AST_Selector : IFlatbufferObject
   public AST_Selector __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public AST_OneOf VType { get { int o = __p.__offset(4); return o != 0 ? (AST_OneOf)__p.bb.Get(o + __p.bb_pos) : AST_OneOf.NONE; } }
+  public bool MutateVType(AST_OneOf v_type) { int o = __p.__offset(4); if (o != 0) { __p.bb.Put(o + __p.bb_pos, (byte)v_type); return true; } else { return false; } }
   public TTable? V<TTable>() where TTable : struct, IFlatbufferObject { int o = __p.__offset(6); return o != 0 ? (TTable?)__p.__union<TTable>(o) : null; }
 
   public static Offset<AST_Selector> CreateAST_Selector(FlatBufferBuilder builder,
@@ -153,6 +154,7 @@ public struct AST_Import : IFlatbufferObject
   public uint Modules(int j) { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(__p.__vector(o) + j * 4) : (uint)0; }
   public int ModulesLength { get { int o = __p.__offset(4); return o != 0 ? __p.__vector_len(o) : 0; } }
   public ArraySegment<byte>? GetModulesBytes() { return __p.__vector_as_arraysegment(4); }
+  public bool MutateModules(int j, uint modules) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(__p.__vector(o) + j * 4, modules); return true; } else { return false; } }
 
   public static Offset<AST_Import> CreateAST_Import(FlatBufferBuilder builder,
       VectorOffset modulesOffset = default(VectorOffset)) {
@@ -210,6 +212,7 @@ public struct AST_Module : IFlatbufferObject
   public AST_Module __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname(uint nname) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname); return true; } else { return false; } }
   public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
   public AST_Selector? Children(int j) { int o = __p.__offset(8); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
@@ -248,6 +251,7 @@ public struct AST_UnaryOpExp : IFlatbufferObject
   public AST_UnaryOpExp __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public EnumUnaryOp Type { get { int o = __p.__offset(4); return o != 0 ? (EnumUnaryOp)__p.bb.GetSbyte(o + __p.bb_pos) : EnumUnaryOp.NONE; } }
+  public bool MutateType(EnumUnaryOp type) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutSbyte(o + __p.bb_pos, (sbyte)type); return true; } else { return false; } }
   public AST_Selector? Children(int j) { int o = __p.__offset(6); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int ChildrenLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -281,6 +285,7 @@ public struct AST_BinaryOpExp : IFlatbufferObject
   public AST_BinaryOpExp __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public EnumBinaryOp Type { get { int o = __p.__offset(4); return o != 0 ? (EnumBinaryOp)__p.bb.GetSbyte(o + __p.bb_pos) : EnumBinaryOp.NONE; } }
+  public bool MutateType(EnumBinaryOp type) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutSbyte(o + __p.bb_pos, (sbyte)type); return true; } else { return false; } }
   public AST_Selector? Children(int j) { int o = __p.__offset(6); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int ChildrenLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -314,6 +319,7 @@ public struct AST_Inc : IFlatbufferObject
   public AST_Inc __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname(uint nname) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname); return true; } else { return false; } }
 
   public static Offset<AST_Inc> CreateAST_Inc(FlatBufferBuilder builder,
       uint nname = 0) {
@@ -340,6 +346,7 @@ public struct AST_New : IFlatbufferObject
   public AST_New __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Ntype { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNtype(uint ntype) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, ntype); return true; } else { return false; } }
   public string Type { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetTypeBytes() { return __p.__vector_as_arraysegment(6); }
   public AST_Selector? Children(int j) { int o = __p.__offset(8); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
@@ -378,10 +385,13 @@ public struct AST_FuncDecl : IFlatbufferObject
   public AST_FuncDecl __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Ntype { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNtype(uint ntype) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, ntype); return true; } else { return false; } }
   public string Type { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetTypeBytes() { return __p.__vector_as_arraysegment(6); }
   public uint Nname1 { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname1(uint nname1) { int o = __p.__offset(8); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname1); return true; } else { return false; } }
   public uint Nname2 { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname2(uint nname2) { int o = __p.__offset(10); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname2); return true; } else { return false; } }
   public string Name { get { int o = __p.__offset(12); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(12); }
   public AST_Selector? Children(int j) { int o = __p.__offset(14); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
@@ -429,9 +439,11 @@ public struct AST_ClassDecl : IFlatbufferObject
   public AST_ClassDecl __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname(uint nname) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname); return true; } else { return false; } }
   public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
   public uint Nparent { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNparent(uint nparent) { int o = __p.__offset(8); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nparent); return true; } else { return false; } }
   public string Parent { get { int o = __p.__offset(10); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetParentBytes() { return __p.__vector_as_arraysegment(10); }
   public AST_Selector? Children(int j) { int o = __p.__offset(12); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
@@ -476,7 +488,9 @@ public struct AST_EnumItem : IFlatbufferObject
   public AST_EnumItem __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname(uint nname) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname); return true; } else { return false; } }
   public int Value { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetInt(o + __p.bb_pos) : (int)0; } }
+  public bool MutateValue(int value) { int o = __p.__offset(6); if (o != 0) { __p.bb.PutInt(o + __p.bb_pos, value); return true; } else { return false; } }
 
   public static Offset<AST_EnumItem> CreateAST_EnumItem(FlatBufferBuilder builder,
       uint nname = 0,
@@ -506,6 +520,7 @@ public struct AST_EnumDecl : IFlatbufferObject
   public AST_EnumDecl __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname(uint nname) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname); return true; } else { return false; } }
   public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
   public AST_Selector? Children(int j) { int o = __p.__offset(8); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
@@ -544,6 +559,7 @@ public struct UseParam : IFlatbufferObject
   public UseParam __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname(uint nname) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname); return true; } else { return false; } }
   public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
 
@@ -608,6 +624,7 @@ public struct AST_TypeCast : IFlatbufferObject
   public AST_TypeCast __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Ntype { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNtype(uint ntype) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, ntype); return true; } else { return false; } }
   public string Type { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetTypeBytes() { return __p.__vector_as_arraysegment(6); }
   public AST_Selector? Children(int j) { int o = __p.__offset(8); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
@@ -646,13 +663,19 @@ public struct AST_Call : IFlatbufferObject
   public AST_Call __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public EnumCall Type { get { int o = __p.__offset(4); return o != 0 ? (EnumCall)__p.bb.GetSbyte(o + __p.bb_pos) : EnumCall.NONE; } }
+  public bool MutateType(EnumCall type) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutSbyte(o + __p.bb_pos, (sbyte)type); return true; } else { return false; } }
   public uint Nname1 { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname1(uint nname1) { int o = __p.__offset(6); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname1); return true; } else { return false; } }
   public uint Nname2 { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname2(uint nname2) { int o = __p.__offset(8); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname2); return true; } else { return false; } }
   public string Name { get { int o = __p.__offset(10); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(10); }
   public uint CargsBits { get { int o = __p.__offset(12); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateCargsBits(uint cargs_bits) { int o = __p.__offset(12); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, cargs_bits); return true; } else { return false; } }
   public uint ScopeNtype { get { int o = __p.__offset(14); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateScopeNtype(uint scope_ntype) { int o = __p.__offset(14); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, scope_ntype); return true; } else { return false; } }
   public uint LineNum { get { int o = __p.__offset(16); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateLineNum(uint line_num) { int o = __p.__offset(16); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, line_num); return true; } else { return false; } }
   public AST_Selector? Children(int j) { int o = __p.__offset(18); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int ChildrenLength { get { int o = __p.__offset(18); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -750,7 +773,9 @@ public struct AST_Literal : IFlatbufferObject
   public AST_Literal __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public EnumLiteral Type { get { int o = __p.__offset(4); return o != 0 ? (EnumLiteral)__p.bb.GetSbyte(o + __p.bb_pos) : EnumLiteral.NONE; } }
+  public bool MutateType(EnumLiteral type) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutSbyte(o + __p.bb_pos, (sbyte)type); return true; } else { return false; } }
   public double Nval { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetDouble(o + __p.bb_pos) : (double)0.0; } }
+  public bool MutateNval(double nval) { int o = __p.__offset(6); if (o != 0) { __p.bb.PutDouble(o + __p.bb_pos, nval); return true; } else { return false; } }
   public string Sval { get { int o = __p.__offset(8); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetSvalBytes() { return __p.__vector_as_arraysegment(8); }
 
@@ -785,9 +810,11 @@ public struct AST_VarDecl : IFlatbufferObject
   public AST_VarDecl __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname(uint nname) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname); return true; } else { return false; } }
   public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
   public uint Ntype { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNtype(uint ntype) { int o = __p.__offset(8); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, ntype); return true; } else { return false; } }
   public AST_Selector? Children(int j) { int o = __p.__offset(10); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int ChildrenLength { get { int o = __p.__offset(10); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -827,6 +854,7 @@ public struct AST_Block : IFlatbufferObject
   public AST_Block __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public EnumBlock Type { get { int o = __p.__offset(4); return o != 0 ? (EnumBlock)__p.bb.GetSbyte(o + __p.bb_pos) : EnumBlock.NONE; } }
+  public bool MutateType(EnumBlock type) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutSbyte(o + __p.bb_pos, (sbyte)type); return true; } else { return false; } }
   public AST_Selector? Children(int j) { int o = __p.__offset(6); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int ChildrenLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -860,6 +888,7 @@ public struct AST_JsonObj : IFlatbufferObject
   public AST_JsonObj __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Ntype { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNtype(uint ntype) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, ntype); return true; } else { return false; } }
   public AST_Selector? Children(int j) { int o = __p.__offset(6); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int ChildrenLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -893,6 +922,7 @@ public struct AST_JsonArr : IFlatbufferObject
   public AST_JsonArr __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Ntype { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNtype(uint ntype) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, ntype); return true; } else { return false; } }
   public AST_Selector? Children(int j) { int o = __p.__offset(6); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int ChildrenLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -943,9 +973,11 @@ public struct AST_JsonPair : IFlatbufferObject
   public AST_JsonPair __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateNname(uint nname) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, nname); return true; } else { return false; } }
   public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
   public uint ScopeNtype { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateScopeNtype(uint scope_ntype) { int o = __p.__offset(8); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, scope_ntype); return true; } else { return false; } }
   public AST_Selector? Children(int j) { int o = __p.__offset(10); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int ChildrenLength { get { int o = __p.__offset(10); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -1003,7 +1035,9 @@ public struct Func2Assets : IFlatbufferObject
   public Func2Assets __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Func1 { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateFunc1(uint func1) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, func1); return true; } else { return false; } }
   public uint Func2 { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateFunc2(uint func2) { int o = __p.__offset(6); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, func2); return true; } else { return false; } }
   public string Assets(int j) { int o = __p.__offset(8); return o != 0 ? __p.__string(__p.__vector(o) + j * 4) : null; }
   public int AssetsLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -1040,7 +1074,9 @@ public struct Func2Crefs : IFlatbufferObject
   public Func2Crefs __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public uint Func1 { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateFunc1(uint func1) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, func1); return true; } else { return false; } }
   public uint Func2 { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateFunc2(uint func2) { int o = __p.__offset(6); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, func2); return true; } else { return false; } }
   public string Crefs(int j) { int o = __p.__offset(8); return o != 0 ? __p.__string(__p.__vector(o) + j * 4) : null; }
   public int CrefsLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
 
@@ -1114,10 +1150,13 @@ public struct ExportItem : IFlatbufferObject
   public ExportItem __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public sbyte Format { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetSbyte(o + __p.bb_pos) : (sbyte)0; } }
+  public bool MutateFormat(sbyte format) { int o = __p.__offset(4); if (o != 0) { __p.bb.PutSbyte(o + __p.bb_pos, format); return true; } else { return false; } }
   public uint ModuleId { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool MutateModuleId(uint module_id) { int o = __p.__offset(6); if (o != 0) { __p.bb.PutUint(o + __p.bb_pos, module_id); return true; } else { return false; } }
   public sbyte Blob(int j) { int o = __p.__offset(8); return o != 0 ? __p.bb.GetSbyte(__p.__vector(o) + j * 1) : (sbyte)0; }
   public int BlobLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
   public ArraySegment<byte>? GetBlobBytes() { return __p.__vector_as_arraysegment(8); }
+  public bool MutateBlob(int j, sbyte blob) { int o = __p.__offset(8); if (o != 0) { __p.bb.PutSbyte(__p.__vector(o) + j * 1, blob); return true; } else { return false; } }
 
   public static Offset<ExportItem> CreateExportItem(FlatBufferBuilder builder,
       sbyte format = 0,
