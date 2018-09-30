@@ -4,292 +4,6 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public abstract class AST_Visitor
-{
-  public abstract void DoVisit(AST_Interim node);
-  public abstract void DoVisit(AST_Import node);
-  public abstract void DoVisit(AST_Module node);
-  public abstract void DoVisit(AST_VarDecl node);
-  public abstract void DoVisit(AST_FuncDecl node);
-  public abstract void DoVisit(AST_LambdaDecl node);
-  public abstract void DoVisit(AST_ClassDecl node);
-  public abstract void DoVisit(AST_EnumDecl node);
-  public abstract void DoVisit(AST_Block node);
-  public abstract void DoVisit(AST_TypeCast node);
-  public abstract void DoVisit(AST_Call node);
-  public abstract void DoVisit(AST_Return node);
-  public abstract void DoVisit(AST_Break node);
-  public abstract void DoVisit(AST_PopValue node);
-  public abstract void DoVisit(AST_Literal node);
-  public abstract void DoVisit(AST_BinaryOpExp node);
-  public abstract void DoVisit(AST_UnaryOpExp node);
-  public abstract void DoVisit(AST_New node);
-  public abstract void DoVisit(AST_Inc node);
-  public abstract void DoVisit(AST_JsonObj node);
-  public abstract void DoVisit(AST_JsonArr node);
-  public abstract void DoVisit(AST_JsonPair node);
-
-  public void Visit(AST_Base node)
-  {
-    if(node == null)
-      throw new Exception("NULL node");
-
-    if(node is AST_Interim)
-      DoVisit(node as AST_Interim);
-    else if(node is AST_Block)
-      DoVisit(node as AST_Block);
-    else if(node is AST_Literal)
-      DoVisit(node as AST_Literal);
-    else if(node is AST_Call)
-      DoVisit(node as AST_Call);
-    else if(node is AST_VarDecl)
-      DoVisit(node as AST_VarDecl);
-    else if(node is AST_LambdaDecl)
-      DoVisit(node as AST_LambdaDecl);
-    //NOTE: base class must be handled after AST_LambdaDecl
-    else if(node is AST_FuncDecl)
-      DoVisit(node as AST_FuncDecl);
-    else if(node is AST_ClassDecl)
-      DoVisit(node as AST_ClassDecl);
-    else if(node is AST_EnumDecl)
-      DoVisit(node as AST_EnumDecl);
-    else if(node is AST_TypeCast)
-      DoVisit(node as AST_TypeCast);
-    else if(node is AST_Return)
-      DoVisit(node as AST_Return);
-    else if(node is AST_Break)
-      DoVisit(node as AST_Break);
-    else if(node is AST_PopValue)
-      DoVisit(node as AST_PopValue);
-    else if(node is AST_BinaryOpExp)
-      DoVisit(node as AST_BinaryOpExp);
-    else if(node is AST_UnaryOpExp)
-      DoVisit(node as AST_UnaryOpExp);
-    else if(node is AST_New)
-      DoVisit(node as AST_New);
-    else if(node is AST_Inc)
-      DoVisit(node as AST_Inc);
-    else if(node is AST_JsonObj)
-      DoVisit(node as AST_JsonObj);
-    else if(node is AST_JsonArr)
-      DoVisit(node as AST_JsonArr);
-    else if(node is AST_JsonPair)
-      DoVisit(node as AST_JsonPair);
-    else if(node is AST_Import)
-      DoVisit(node as AST_Import);
-    else if(node is AST_Module)
-      DoVisit(node as AST_Module);
-    else 
-      throw new Exception("Not known type: " + node.GetType().Name);
-  }
-
-  public void VisitChildren(AST node)
-  {
-    if(node == null)
-      return;
-    var children = node.children;
-    for(int i=0;i<children.Count;++i)
-      Visit(children[i]);
-  }
-}
-
-//NOTE: this class represents sort of a 'pointer' to the 
-//      function and it also stores captured variables from
-//      the enclosing context
-public class FuncCtx : DynValRefcounted
-{
-  //NOTE: -1 means it's in released state,
-  //      public only for inspection
-  public int refs;
-
-  public FuncSymbol fs;
-  //NOTE: this memory scope is used for 'use' variables, it's then
-  //      copied to concrete memory scope of the function.
-  public DynValDict mem = new DynValDict();
-  public FuncNode fnode;
-  public bool fnode_busy;
-
-  private FuncCtx(FuncSymbol fs)
-  {
-    this.fs = fs;
-  }
-
-  public FuncNode EnsureNode()
-  {
-    fnode_busy = true;
-
-    if(fnode != null)
-      return fnode;
-
-    ++nodes_created;
-
-    if(fs is FuncSymbolAST)
-      fnode = new FuncNodeAST((fs as FuncSymbolAST).decl, this);
-    else if(fs is LambdaSymbol)
-      fnode = new FuncNodeLambda(this);
-    else if(fs is FuncBindSymbol)
-      fnode = new FuncNodeBind(fs as FuncBindSymbol, this);
-    else
-      throw new Exception("Unknown symbol type");
-
-    return fnode;
-  }
-
-  public FuncCtx Clone()
-  {
-    if(refs == -1)
-      throw new Exception("Invalid state");
-
-    var dup = FuncCtx.New(fs);
-
-    //NOTE: need to properly set use params
-    if(fs is LambdaSymbol)
-    {
-      var ldecl = (fs as LambdaSymbol).decl as AST_LambdaDecl;
-      for(int i=0;i<ldecl.useparams.Count;++i)
-      {
-        var up = ldecl.useparams[i];
-        var val = mem.Get(up.Name());
-        dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
-      }
-    }
-
-    return dup;
-  }
-
-  public FuncCtx AutoClone()
-  {
-    if(fnode_busy)
-      return Clone(); 
-    return this;
-  }
-
-  public void Retain()
-  {
-    if(refs == -1)
-      throw new Exception("Invalid state");
-    ++refs;
-
-    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
-  }
-
-  public void Release(bool can_del = true)
-  {
-    if(refs == -1)
-      throw new Exception("Invalid state");
-    if(refs == 0)
-      throw new Exception("Double free");
-
-    --refs;
-
-    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
-
-    if(can_del)
-      TryDel();
-  }
-
-  public bool TryDel()
-  {
-    if(refs != 0)
-      return false;
-    
-    Del(this);
-    return true;
-  }
-
-  //////////////////////////////////////////////
-
-  static Dictionary<FuncSymbol, Stack<FuncCtx>> pool = new Dictionary<FuncSymbol, Stack<FuncCtx>>();
-  static int pool_hit;
-  static int pool_miss;
-  static int pool_free;
-  static int nodes_created;
-
-  public static FuncCtx New(FuncSymbol fs)
-  {
-    Stack<FuncCtx> stack;
-    if(!pool.TryGetValue(fs, out stack))
-    {
-      stack = new Stack<FuncCtx>();
-      pool.Add(fs, stack);
-    }
-
-    if(stack.Count == 0)
-    {
-      ++pool_miss;
-      var fct = new FuncCtx(fs);
-      return fct;
-    }
-    else
-    {
-      ++pool_hit;
-      --pool_free;
-      var fct = stack.Pop();
-      if(fct.refs != -1)
-        throw new Exception("Expected to be released, refs " + fct.refs);
-      fct.refs = 0;
-      return fct;
-    }
-  }
-
-  static public void Del(FuncCtx fct)
-  {
-    if(fct.refs != 0)
-      throw new Exception("Freeing invalid object, refs " + fct.refs);
-
-    //NOTE: actually there must be an existing stack, throw an exception if not?
-    Stack<FuncCtx> stack;
-    if(!pool.TryGetValue(fct.fs, out stack))
-    {
-      stack = new Stack<FuncCtx>();
-      pool.Add(fct.fs, stack);
-    }
-
-    fct.refs = -1;
-    fct.mem.Clear();
-    //NOTE: we don't reset fnode on purpose, 
-    //      so that it will be reused on the next pool request
-    //fct.fnode = null;
-    fct.fnode_busy = false;
-    ++pool_free;
-    stack.Push(fct);
-  }
-
-  static public void PoolClear()
-  {
-    nodes_created = 0;
-    pool_free = 0;
-    pool_hit = 0;
-    pool_miss = 0;
-    pool.Clear();
-  }
-
-  static public int PoolHits
-  {
-    get { return pool_hit; } 
-  }
-
-  static public int PoolMisses
-  {
-    get { return pool_miss; } 
-  }
-
-  static public int PoolCount
-  {
-    get { return pool_miss; }
-  }
-
-  static public int PoolCountFree
-  {
-    get { return pool_free; }
-  }
-
-  static public int NodesCreated
-  {
-    get { return nodes_created; }
-  }
-}
-
 public class Interpreter : AST_Visitor
 {
   static Interpreter _instance;
@@ -710,6 +424,9 @@ public class Interpreter : AST_Visitor
     symbols.define(es);
   }
 
+  public override void DoVisit(AST_EnumItem node)
+  {}
+
   public override void DoVisit(AST_Block node)
   {
     if(node.type == EnumBlock.FUNC)
@@ -1021,6 +738,10 @@ public class Interpreter : AST_Visitor
       curr_node.addChild(n);
     }
   }
+  
+  //NOTE: just a dummy, it's actually processed during AST_JsonArr's traversal
+  public override void DoVisit(bhl.AST_JsonArrAddItem node)
+  {}
 
   public override void DoVisit(bhl.AST_JsonPair node)
   {
@@ -1033,5 +754,203 @@ public class Interpreter : AST_Visitor
     jcts.Pop();
   }
 }
+
+//NOTE: this class represents sort of a 'pointer' to the 
+//      function and it also stores captured variables from
+//      the enclosing context
+public class FuncCtx : DynValRefcounted
+{
+  //NOTE: -1 means it's in released state,
+  //      public only for inspection
+  public int refs;
+
+  public FuncSymbol fs;
+  //NOTE: this memory scope is used for 'use' variables, it's then
+  //      copied to concrete memory scope of the function.
+  public DynValDict mem = new DynValDict();
+  public FuncNode fnode;
+  public bool fnode_busy;
+
+  private FuncCtx(FuncSymbol fs)
+  {
+    this.fs = fs;
+  }
+
+  public FuncNode EnsureNode()
+  {
+    fnode_busy = true;
+
+    if(fnode != null)
+      return fnode;
+
+    ++nodes_created;
+
+    if(fs is FuncSymbolAST)
+      fnode = new FuncNodeAST((fs as FuncSymbolAST).decl, this);
+    else if(fs is LambdaSymbol)
+      fnode = new FuncNodeLambda(this);
+    else if(fs is FuncBindSymbol)
+      fnode = new FuncNodeBind(fs as FuncBindSymbol, this);
+    else
+      throw new Exception("Unknown symbol type");
+
+    return fnode;
+  }
+
+  public FuncCtx Clone()
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+
+    var dup = FuncCtx.New(fs);
+
+    //NOTE: need to properly set use params
+    if(fs is LambdaSymbol)
+    {
+      var ldecl = (fs as LambdaSymbol).decl as AST_LambdaDecl;
+      for(int i=0;i<ldecl.useparams.Count;++i)
+      {
+        var up = ldecl.useparams[i];
+        var val = mem.Get(up.Name());
+        dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+      }
+    }
+
+    return dup;
+  }
+
+  public FuncCtx AutoClone()
+  {
+    if(fnode_busy)
+      return Clone(); 
+    return this;
+  }
+
+  public void Retain()
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    ++refs;
+
+    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
+  }
+
+  public void Release(bool can_del = true)
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    if(refs == 0)
+      throw new Exception("Double free");
+
+    --refs;
+
+    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
+
+    if(can_del)
+      TryDel();
+  }
+
+  public bool TryDel()
+  {
+    if(refs != 0)
+      return false;
+    
+    Del(this);
+    return true;
+  }
+
+  //////////////////////////////////////////////
+
+  static Dictionary<FuncSymbol, Stack<FuncCtx>> pool = new Dictionary<FuncSymbol, Stack<FuncCtx>>();
+  static int pool_hit;
+  static int pool_miss;
+  static int pool_free;
+  static int nodes_created;
+
+  public static FuncCtx New(FuncSymbol fs)
+  {
+    Stack<FuncCtx> stack;
+    if(!pool.TryGetValue(fs, out stack))
+    {
+      stack = new Stack<FuncCtx>();
+      pool.Add(fs, stack);
+    }
+
+    if(stack.Count == 0)
+    {
+      ++pool_miss;
+      var fct = new FuncCtx(fs);
+      return fct;
+    }
+    else
+    {
+      ++pool_hit;
+      --pool_free;
+      var fct = stack.Pop();
+      if(fct.refs != -1)
+        throw new Exception("Expected to be released, refs " + fct.refs);
+      fct.refs = 0;
+      return fct;
+    }
+  }
+
+  static public void Del(FuncCtx fct)
+  {
+    if(fct.refs != 0)
+      throw new Exception("Freeing invalid object, refs " + fct.refs);
+
+    //NOTE: actually there must be an existing stack, throw an exception if not?
+    Stack<FuncCtx> stack;
+    if(!pool.TryGetValue(fct.fs, out stack))
+    {
+      stack = new Stack<FuncCtx>();
+      pool.Add(fct.fs, stack);
+    }
+
+    fct.refs = -1;
+    fct.mem.Clear();
+    //NOTE: we don't reset fnode on purpose, 
+    //      so that it will be reused on the next pool request
+    //fct.fnode = null;
+    fct.fnode_busy = false;
+    ++pool_free;
+    stack.Push(fct);
+  }
+
+  static public void PoolClear()
+  {
+    nodes_created = 0;
+    pool_free = 0;
+    pool_hit = 0;
+    pool_miss = 0;
+    pool.Clear();
+  }
+
+  static public int PoolHits
+  {
+    get { return pool_hit; } 
+  }
+
+  static public int PoolMisses
+  {
+    get { return pool_miss; } 
+  }
+
+  static public int PoolCount
+  {
+    get { return pool_miss; }
+  }
+
+  static public int PoolCountFree
+  {
+    get { return pool_free; }
+  }
+
+  static public int NodesCreated
+  {
+    get { return nodes_created; }
+  }
+}
+
 
 } //namespace bhl
