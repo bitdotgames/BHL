@@ -1455,42 +1455,46 @@ public class CallFuncPtr : FuncBaseCallNode
 
 public class LiteralNode : BehaviorTreeTerminalNode
 {
-  AST_Literal node;
+  EnumLiteral type;
+  double nval;
+  string sval;
 
   public LiteralNode(AST_Literal node)
   {
-    this.node = node;
+    this.type = node.type;
+    this.nval = node.nval;
+    this.sval = node.sval;
   }
 
   public override void init() 
   {
     var interp = Interpreter.instance;
 
-    if(node.type == bhl.EnumLiteral.NUM)
-      interp.PushValue(DynVal.NewNum(node.nval));
-    else if(node.type == bhl.EnumLiteral.BOOL)
-      interp.PushValue(DynVal.NewBool(node.nval == 1));
-    else if(node.type == bhl.EnumLiteral.STR)
-      interp.PushValue(DynVal.NewStr(node.sval));
-    else if(node.type == bhl.EnumLiteral.NIL)
+    if(type == bhl.EnumLiteral.NUM)
+      interp.PushValue(DynVal.NewNum(nval));
+    else if(type == bhl.EnumLiteral.BOOL)
+      interp.PushValue(DynVal.NewBool(nval == 1));
+    else if(type == bhl.EnumLiteral.STR)
+      interp.PushValue(DynVal.NewStr(sval));
+    else if(type == bhl.EnumLiteral.NIL)
       interp.PushValue(DynVal.NewNil());
     else
-      throw new Exception("Bad literal:" + node.type);
+      throw new Exception("Bad literal:" + type);
   }
 
   public override string inspect()
   {
-    return "(" + node.nval + "," + node.sval + ") ->";
+    return "(" + nval + "," + sval + ") ->";
   }
 }
 
 public class UnaryOpNode : BehaviorTreeTerminalNode
 {
-  AST_UnaryOpExp node;
+  EnumUnaryOp type;
 
   public UnaryOpNode(AST_UnaryOpExp node)
   {
-    this.node = node;
+    this.type = node.type;
   }
 
   public override void init()
@@ -1498,21 +1502,21 @@ public class UnaryOpNode : BehaviorTreeTerminalNode
     var interp = Interpreter.instance;
     var a = interp.PopValue();
 
-    if(node.type == EnumUnaryOp.NEG)
+    if(type == EnumUnaryOp.NEG)
     {
       interp.PushValue(DynVal.NewNum(-a.num));
     }
-    else if(node.type == EnumUnaryOp.NOT)
+    else if(type == EnumUnaryOp.NOT)
     {
       interp.PushValue(DynVal.NewBool(!a.bval));
     }
     else
-      throw new Exception("Unsupported unary op:" + node.type);
+      throw new Exception("Unsupported unary op:" + type);
   }
 
   public override string inspect()
   {
-    return "(" + node.type + ") <- ->";
+    return "(" + type + ") <- ->";
   }
 }
 
