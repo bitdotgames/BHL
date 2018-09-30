@@ -221,6 +221,232 @@ public class AST_PopValue : AST_Base {}
 
 namespace bhl {
 
+public class AST2FB : AST_Visitor
+{
+  FlatBuffers.FlatBufferBuilder fbb;
+
+  struct ChildSelector
+  {
+    internal fbhl.AST_OneOf type;
+    internal int offset;
+
+    public ChildSelector(fbhl.AST_OneOf type, int offset)
+    {
+      this.type = type;
+      this.offset = offset;
+    }
+  }
+  Stack<List<ChildSelector>> child_sel_stack = new Stack<List<ChildSelector>>();
+
+  public AST2FB()
+  {
+    this.fbb = new FlatBuffers.FlatBufferBuilder(1);
+  }
+
+  public override void DoVisit(AST_Module node)
+  {
+    DeclChildren();
+
+    VisitChildren(node);
+    
+    fbhl.AST_Module.CreateAST_Module(
+      fbb, 
+      node.nname,
+      fbb.CreateString(node.name),
+      fbhl.AST_Module.CreateChildrenVector(fbb, EndChildren())
+    );
+
+    //Console.WriteLine("FBB SIZE " + fbb.Offset);
+  }
+
+  public override void DoVisit(AST_Interim node)
+  {
+    DeclChildren();
+
+    VisitChildren(node);
+
+    NewChild(fbhl.AST_Interim.CreateAST_Interim(
+      fbb, 
+      fbhl.AST_Interim.CreateChildrenVector(fbb, EndChildren())
+    ));
+  }
+
+  public override void DoVisit(AST_Import node)
+  {
+  }
+
+  public override void DoVisit(AST_FuncDecl node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_LambdaDecl node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_ClassDecl node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_EnumDecl node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_Block node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_TypeCast node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_Call node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_Inc node)
+  {
+  }
+
+  public override void DoVisit(AST_Return node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_Break node)
+  {
+    fbhl.AST_Break.StartAST_Break(fbb);
+    NewChild(fbhl.AST_Break.EndAST_Break(fbb));
+  }
+
+  public override void DoVisit(AST_PopValue node)
+  {
+    fbhl.AST_PopValue.StartAST_PopValue(fbb);
+    NewChild(fbhl.AST_PopValue.EndAST_PopValue(fbb));
+  }
+
+  public override void DoVisit(AST_Literal node)
+  {
+    var soff = new FlatBuffers.StringOffset();
+    if(node.type == EnumLiteral.STR)
+      soff = fbb.CreateString(node.sval);
+
+    fbhl.AST_Literal.StartAST_Literal(fbb);
+    fbhl.AST_Literal.AddType(fbb, (fbhl.EnumLiteral)node.type);
+    if(node.type == EnumLiteral.STR)
+      fbhl.AST_Literal.AddNval(fbb, node.nval);
+    else
+      fbhl.AST_Literal.AddSval(fbb, soff);
+    NewChild(fbhl.AST_Literal.EndAST_Literal(fbb));
+  }
+
+  public override void DoVisit(AST_BinaryOpExp node)
+  {
+    DeclChildren();
+
+    VisitChildren(node);
+
+    NewChild(fbhl.AST_BinaryOpExp.CreateAST_BinaryOpExp(
+      fbb, 
+      (fbhl.EnumBinaryOp)node.type,
+      fbhl.AST_BinaryOpExp.CreateChildrenVector(fbb, EndChildren())
+    ));
+  }
+
+  public override void DoVisit(AST_UnaryOpExp node)
+  {
+    DeclChildren();
+
+    VisitChildren(node);
+
+    NewChild(fbhl.AST_UnaryOpExp.CreateAST_UnaryOpExp(
+      fbb, 
+      (fbhl.EnumUnaryOp)node.type,
+      fbhl.AST_UnaryOpExp.CreateChildrenVector(fbb, EndChildren())
+    ));
+  }
+
+  public override void DoVisit(AST_New node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_VarDecl node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_JsonObj node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_JsonArr node)
+  {
+    VisitChildren(node);
+  }
+
+  public override void DoVisit(AST_JsonPair node)
+  {
+    VisitChildren(node);
+  }
+
+  ///////////////////////////////////////////////////////////
+
+  void DeclChildren()
+  {
+    child_sel_stack.Push(new List<ChildSelector>());
+  }
+
+  FlatBuffers.Offset<fbhl.AST_Selector>[] EndChildren()
+  {
+    var selectors = child_sel_stack.Pop();
+
+    var res = new FlatBuffers.Offset<fbhl.AST_Selector>[selectors.Count];
+
+    for(int s=0;s<selectors.Count;++s)
+    {
+      var sel = selectors[s];
+      fbhl.AST_Selector.StartAST_Selector(fbb);
+      fbhl.AST_Selector.AddVType(fbb, sel.type);
+      fbhl.AST_Selector.AddV(fbb, sel.offset);
+
+      res[s] = fbhl.AST_Selector.EndAST_Selector(fbb);
+    }
+
+    return res;
+  }
+
+  void NewChild<T>(FlatBuffers.Offset<T> offset) where T : struct
+  {
+    child_sel_stack.Peek().Add(MatchToSelector(offset));
+  }
+
+  ChildSelector MatchToSelector<T>(FlatBuffers.Offset<T> offset) where T : struct
+  {
+    if(typeof(T) == typeof(fbhl.AST_Literal))
+      return new ChildSelector(fbhl.AST_OneOf.AST_Literal, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_Break))
+      return new ChildSelector(fbhl.AST_OneOf.AST_Break, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_UnaryOpExp))
+      return new ChildSelector(fbhl.AST_OneOf.AST_UnaryOpExp, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_BinaryOpExp))
+      return new ChildSelector(fbhl.AST_OneOf.AST_BinaryOpExp, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_PopValue))
+      return new ChildSelector(fbhl.AST_OneOf.AST_PopValue, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_Interim))
+      return new ChildSelector(fbhl.AST_OneOf.AST_Interim, offset.Value);
+    else
+      throw new Exception("Unhandled offset type: " + typeof(T).Name);
+  }
+}
+
 public class AST_Dumper : AST_Visitor
 {
   public override void DoVisit(AST_Interim node)

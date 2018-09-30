@@ -56,8 +56,6 @@ public class Parsed
 
 public class Frontend : bhlBaseVisitor<object>
 {
-  FlatBuffers.FlatBufferBuilder fbb;
-
   static int lambda_id = 0;
 
   static int NextLambdaId()
@@ -185,8 +183,6 @@ public class Frontend : bhlBaseVisitor<object>
 
   public Frontend(Module module, ITokenStream tokens, GlobalScope globs, ModuleRegistry mreg, bool decls_only = false)
   {
-    this.fbb = new FlatBuffers.FlatBufferBuilder(1);
-
     this.curr_module = module;
 
     this.tokens = tokens;
@@ -201,19 +197,6 @@ public class Frontend : bhlBaseVisitor<object>
 
   Stack<AST> ast_stack = new Stack<AST>();
 
-  struct ChildSelector
-  {
-    internal fbhl.AST_OneOf type;
-    internal int offset;
-
-    public ChildSelector(fbhl.AST_OneOf type, int offset)
-    {
-      this.type = type;
-      this.offset = offset;
-    }
-  }
-  Stack<List<ChildSelector>> child_sel_stack = new Stack<List<ChildSelector>>();
-
   void PushAST(AST ast)
   {
     ast_stack.Push(ast);
@@ -227,53 +210,6 @@ public class Frontend : bhlBaseVisitor<object>
   AST PeekAST()
   {
     return ast_stack.Peek();
-  }
-
-  void DeclChildrenOffsets()
-  {
-    child_sel_stack.Push(new List<ChildSelector>());
-  }
-
-  FlatBuffers.Offset<fbhl.AST_Selector>[] EndChildrenOffsets()
-  {
-    var selectors = child_sel_stack.Pop();
-
-    var res = new FlatBuffers.Offset<fbhl.AST_Selector>[selectors.Count];
-
-    for(int s=0;s<selectors.Count;++s)
-    {
-      var sel = selectors[s];
-      fbhl.AST_Selector.StartAST_Selector(fbb);
-      fbhl.AST_Selector.AddVType(fbb, sel.type);
-      fbhl.AST_Selector.AddV(fbb, sel.offset);
-
-      res[s] = fbhl.AST_Selector.EndAST_Selector(fbb);
-    }
-
-    return res;
-  }
-
-  void AddChildOffset<T>(FlatBuffers.Offset<T> offset) where T : struct
-  {
-    child_sel_stack.Peek().Add(MatchToSelector(offset));
-  }
-
-  ChildSelector MatchToSelector<T>(FlatBuffers.Offset<T> offset) where T : struct
-  {
-    if(typeof(T) == typeof(fbhl.AST_Literal))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Literal, offset.Value);
-    else if(typeof(T) == typeof(fbhl.AST_Break))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Break, offset.Value);
-    else if(typeof(T) == typeof(fbhl.AST_UnaryOpExp))
-      return new ChildSelector(fbhl.AST_OneOf.AST_UnaryOpExp, offset.Value);
-    else if(typeof(T) == typeof(fbhl.AST_BinaryOpExp))
-      return new ChildSelector(fbhl.AST_OneOf.AST_BinaryOpExp, offset.Value);
-    else if(typeof(T) == typeof(fbhl.AST_PopValue))
-      return new ChildSelector(fbhl.AST_OneOf.AST_PopValue, offset.Value);
-    else if(typeof(T) == typeof(fbhl.AST_Interim))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Interim, offset.Value);
-    else
-      throw new Exception("Unhandled offset type: " + typeof(T).Name);
   }
 
   void PushInterimAST()
@@ -320,20 +256,9 @@ public class Frontend : bhlBaseVisitor<object>
   public AST_Module ParseModule(bhlParser.ProgramContext p)
   {
     var ast = AST_Util.New_Module(curr_module.GetId(), curr_module.norm_path);
-    DeclChildrenOffsets();
     PushAST(ast);
     VisitProgram(p);
     PopAST();
-    var coffs = EndChildrenOffsets();
-
-    fbhl.AST_Module.CreateAST_Module(
-      fbb, 
-      curr_module.GetId(),
-      fbb.CreateString(curr_module.norm_path),
-      fbhl.AST_Module.CreateChildrenVector(fbb, coffs)
-    );
-
-    //Console.WriteLine("FBB SIZE " + fbb.Offset);
 
     return ast;
   }
@@ -394,12 +319,6 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
-  FlatBuffers.Offset<fbhl.AST_PopValue> FbNewPopValue()
-  {
-    fbhl.AST_PopValue.StartAST_PopValue(fbb);
-    return fbhl.AST_PopValue.EndAST_PopValue(fbb);
-  }
-
   public override object VisitSymbCall(bhlParser.SymbCallContext ctx)
   {
     var exp = ctx.callExp(); 
@@ -412,16 +331,10 @@ public class Frontend : bhlBaseVisitor<object>
       if(mtype != null)
       {
         for(int i=0;i<mtype.items.Count;++i)
-        {
           PeekAST().AddChild(AST_Util.New_PopValue());
-          AddChildOffset(FbNewPopValue());
-        }
       }
       else
-      {
         PeekAST().AddChild(AST_Util.New_PopValue());
-        AddChildOffset(FbNewPopValue());
-      }
     }
     return null;
   }
@@ -1083,8 +996,6 @@ public class Frontend : bhlBaseVisitor<object>
     ast.nval = tr.name.n;
     PeekAST().AddChild(ast);
 
-    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.NUM, tr.name.n));
-
     return null;
   }
 
@@ -1107,8 +1018,6 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_Literal(EnumLiteral.NUM);
     ast.nval = enum_val.val;
     PeekAST().AddChild(ast);
-
-    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.NUM, enum_val.val));
 
     return null;
   }
@@ -1168,28 +1077,19 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
   {
     EnumUnaryOp type;
-    fbhl.EnumUnaryOp fbtype;
     var op = ctx.operatorUnary().GetText(); 
     if(op == "-")
-    {
       type = EnumUnaryOp.NEG;
-      fbtype = fbhl.EnumUnaryOp.NEG;
-    }
     else if(op == "!")
-    {
       type = EnumUnaryOp.NOT;
-      fbtype = fbhl.EnumUnaryOp.NOT;
-    }
     else
       throw new Exception("Unknown type");
 
     var ast = AST_Util.New_UnaryOpExp(type);
     var exp = ctx.exp(); 
     PushAST(ast);
-    DeclChildrenOffsets();
     Visit(exp);
     PopAST();
-    var coffs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = type == EnumUnaryOp.NEG ? 
       SymbolTable.Uminus(Wrap(exp)) : 
@@ -1197,30 +1097,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PeekAST().AddChild(ast);
 
-    AddChildOffset(fbhl.AST_UnaryOpExp.CreateAST_UnaryOpExp(
-      fbb, 
-      fbtype,
-      fbhl.AST_UnaryOpExp.CreateChildrenVector(fbb, coffs)
-    ));
-
     return null;
-  }
-
-  FlatBuffers.Offset<fbhl.AST_Interim> FbNewInterim(FlatBuffers.Offset<fbhl.AST_Selector>[] coffs)
-  {
-    return fbhl.AST_Interim.CreateAST_Interim(
-      fbb, 
-      fbhl.AST_Interim.CreateChildrenVector(fbb, coffs)
-    );
-  }
-
-  FlatBuffers.Offset<fbhl.AST_BinaryOpExp> FbNewBinaryOpExp(fbhl.EnumBinaryOp fbtype, FlatBuffers.Offset<fbhl.AST_Selector>[] coffs)
-  {
-    return fbhl.AST_BinaryOpExp.CreateAST_BinaryOpExp(
-      fbb, 
-      fbtype,
-      fbhl.AST_BinaryOpExp.CreateChildrenVector(fbb, coffs)
-    );
   }
 
   public override object VisitExpParen(bhlParser.ExpParenContext ctx)
@@ -1228,7 +1105,6 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = new AST_Interim();
     var exp = ctx.exp(); 
     PushAST(ast);
-    DeclChildrenOffsets();
     Visit(exp);
 
     var curr_type = Wrap(exp).eval_type;
@@ -1240,10 +1116,8 @@ public class Frontend : bhlBaseVisitor<object>
       ProcChainedCall(null, chain, ref curr_type, line, false);
     }
     PopAST();
-    var coffs = EndChildrenOffsets();
     
     PeekAST().AddChild(ast);
-    AddChildOffset(FbNewInterim(coffs));
     
     Wrap(ctx).eval_type = curr_type;
 
@@ -1253,18 +1127,11 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
     EnumBinaryOp type;
-    fbhl.EnumBinaryOp fbtype;
     var op = ctx.operatorAddSub().GetText(); 
     if(op == "+")
-    {
       type = EnumBinaryOp.ADD;
-      fbtype = fbhl.EnumBinaryOp.ADD;
-    }
     else if(op == "-")
-    {
       type = EnumBinaryOp.SUB;
-      fbtype = fbhl.EnumBinaryOp.SUB;
-    }
     else
       throw new Exception("Unknown type");
     
@@ -1272,20 +1139,13 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
     PushAST(ast);
-    DeclChildrenOffsets();
     Visit(exp_0);
     Visit(exp_1);
     PopAST();
-    var coffs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = SymbolTable.Bop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
-    AddChildOffset(FbNewBinaryOpExp(
-      fbtype,
-      coffs
-    ));
-
     return null;
   }
 
@@ -1294,22 +1154,12 @@ public class Frontend : bhlBaseVisitor<object>
     var op = ctx.operatorMulDivMod().GetText(); 
 
     EnumBinaryOp type;
-    fbhl.EnumBinaryOp fbtype;
     if(op == "*")
-    {
       type = EnumBinaryOp.MUL;
-      fbtype = fbhl.EnumBinaryOp.MUL;
-    }
     else if(op == "/")
-    {
       type = EnumBinaryOp.DIV;
-      fbtype = fbhl.EnumBinaryOp.DIV;
-    }
     else if(op == "%")
-    {
       type = EnumBinaryOp.MOD;
-      fbtype = fbhl.EnumBinaryOp.MOD;
-    }
     else
       throw new Exception("Unknown type");
 
@@ -1317,19 +1167,13 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
     PushAST(ast);
-    DeclChildrenOffsets();
     Visit(exp_0);
     Visit(exp_1);
     PopAST();
-    var coffs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = SymbolTable.Bop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
-    AddChildOffset(FbNewBinaryOpExp(
-      fbtype,
-      coffs
-    ));
 
     return null;
   }
@@ -1339,37 +1183,18 @@ public class Frontend : bhlBaseVisitor<object>
     var op = ctx.operatorComparison().GetText(); 
 
     EnumBinaryOp type;
-    fbhl.EnumBinaryOp fbtype;
     if(op == ">")
-    {
       type = EnumBinaryOp.GT;
-      fbtype = fbhl.EnumBinaryOp.GT;
-    }
     else if(op == ">=")
-    {
       type = EnumBinaryOp.GTE;
-      fbtype = fbhl.EnumBinaryOp.GTE;
-    }
     else if(op == "<")
-    {
       type = EnumBinaryOp.LT;
-      fbtype = fbhl.EnumBinaryOp.LT;
-    }
     else if(op == "<=")
-    {
       type = EnumBinaryOp.LTE;
-      fbtype = fbhl.EnumBinaryOp.LTE;
-    }
     else if(op == "==")
-    {
       type = EnumBinaryOp.EQ;
-      fbtype = fbhl.EnumBinaryOp.EQ;
-    }
     else if(op == "!=")
-    {
       type = EnumBinaryOp.NQ;
-      fbtype = fbhl.EnumBinaryOp.NQ;
-    }
     else
       throw new Exception("Unknown type");
 
@@ -1377,11 +1202,9 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
     PushAST(ast);
-    DeclChildrenOffsets();
     Visit(exp_0);
     Visit(exp_1);
     PopAST();
-    var coffs = EndChildrenOffsets();
 
     if(type == EnumBinaryOp.EQ || type == EnumBinaryOp.NQ)
       Wrap(ctx).eval_type = SymbolTable.Eqop(Wrap(exp_0), Wrap(exp_1));
@@ -1389,10 +1212,6 @@ public class Frontend : bhlBaseVisitor<object>
       Wrap(ctx).eval_type = SymbolTable.Relop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
-    AddChildOffset(FbNewBinaryOpExp(
-      fbtype,
-      coffs
-    ));
 
     return null;
   }
@@ -1403,20 +1222,14 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
-    DeclChildrenOffsets();
     PushAST(ast);
     Visit(exp_0);
     Visit(exp_1);
     PopAST();
-    var coffs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = SymbolTable.Bitop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
-    AddChildOffset(FbNewBinaryOpExp(
-      fbhl.EnumBinaryOp.BIT_AND,
-      coffs
-    ));
 
     return null;
   }
@@ -1427,20 +1240,14 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
-    DeclChildrenOffsets();
     PushAST(ast);
     Visit(exp_0);
     Visit(exp_1);
     PopAST();
-    var coffs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = SymbolTable.Bitop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
-    AddChildOffset(FbNewBinaryOpExp(
-      fbhl.EnumBinaryOp.BIT_OR,
-      coffs
-    ));
 
     return null;
   }
@@ -1451,32 +1258,22 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
-    DeclChildrenOffsets();
     //AND node has exactly two children
     var tmp0 = new AST_Interim();
     PushAST(tmp0);
-    DeclChildrenOffsets();
     Visit(exp_0);
     PopAST();
     ast.AddChild(tmp0);
-    AddChildOffset(FbNewInterim(EndChildrenOffsets()));
 
     var tmp1 = new AST_Interim();
     PushAST(tmp1);
-    DeclChildrenOffsets();
     Visit(exp_1);
     PopAST();
-    AddChildOffset(FbNewInterim(EndChildrenOffsets()));
     ast.AddChild(tmp1);
-    var coffs = EndChildrenOffsets();
 
     Wrap(ctx).eval_type = SymbolTable.Lop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
-    AddChildOffset(FbNewBinaryOpExp(
-      fbhl.EnumBinaryOp.BIT_AND,
-      coffs
-    ));
 
     return null;
   }
@@ -1542,8 +1339,6 @@ public class Frontend : bhlBaseVisitor<object>
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
     }
 
-    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.NUM, ast.nval));
-
     PeekAST().AddChild(ast);
 
     return null;
@@ -1557,8 +1352,6 @@ public class Frontend : bhlBaseVisitor<object>
     ast.nval = 0;
     PeekAST().AddChild(ast);
 
-    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.BOOL, 0));
-
     return null;
   }
 
@@ -1568,8 +1361,6 @@ public class Frontend : bhlBaseVisitor<object>
 
     var ast = AST_Util.New_Literal(EnumLiteral.NIL);
     PeekAST().AddChild(ast);
-
-    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.NIL));
 
     return null;
   }
@@ -1581,8 +1372,6 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
     ast.nval = 1;
     PeekAST().AddChild(ast);
-
-    AddChildOffset(FbNewLiteral(fbhl.EnumLiteral.BOOL, 1));
 
     return null;
   }
@@ -1597,27 +1386,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast.sval = ast.sval.Substring(1, ast.sval.Length-2);
     PeekAST().AddChild(ast);
 
-    AddChildOffset(FbNewLiteral(ast.sval));
-
     return null;
-  }
-
-  FlatBuffers.Offset<fbhl.AST_Literal> FbNewLiteral(fbhl.EnumLiteral type, double v = 0)
-  {
-    fbhl.AST_Literal.StartAST_Literal(fbb);
-    fbhl.AST_Literal.AddType(fbb, type);
-    fbhl.AST_Literal.AddNval(fbb, v);
-    return fbhl.AST_Literal.EndAST_Literal(fbb);
-  }
-
-  FlatBuffers.Offset<fbhl.AST_Literal> FbNewLiteral(string v)
-  {
-    var s = fbb.CreateString(v);
-
-    fbhl.AST_Literal.StartAST_Literal(fbb);
-    fbhl.AST_Literal.AddType(fbb, fbhl.EnumLiteral.STR);
-    fbhl.AST_Literal.AddSval(fbb, s);
-    return fbhl.AST_Literal.EndAST_Literal(fbb);
   }
 
   //a list since it's easier to traverse by index
@@ -1770,12 +1539,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  FlatBuffers.Offset<fbhl.AST_Break> FbNewBreak()
-  {
-    fbhl.AST_Break.StartAST_Break(fbb);
-    return fbhl.AST_Break.EndAST_Break(fbb);
-  }
-
   public override object VisitBreak(bhlParser.BreakContext ctx)
   {
     if(defer_stack > 0)
@@ -1785,8 +1548,6 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx) + ": not within loop construct");
 
     PeekAST().AddChild(AST_Util.New_Break());
-
-    AddChildOffset(FbNewBreak());
 
     return null;
   }
@@ -2202,10 +1963,8 @@ public class Frontend : bhlBaseVisitor<object>
     {
       exp_ast = new AST_Interim();
       PushAST(exp_ast);
-      //DeclChildrenOffsets();
       Visit(assign_exp);
       PopAST();
-      //exp_offset = FbNewInterim(EndChildrenOffsets());
     }
 
     var ast = CommonDeclVar(name, ctx.type(), is_ref, func_arg: true, write: false);
