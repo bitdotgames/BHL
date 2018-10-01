@@ -319,7 +319,7 @@ public abstract class AST_Visitor
 
 public class AST2FB : AST_Visitor
 {
-  FlatBuffers.FlatBufferBuilder fbb;
+  public FlatBuffers.FlatBufferBuilder fbb;
 
   struct ChildSelector
   {
@@ -351,8 +351,6 @@ public class AST2FB : AST_Visitor
       fbb.CreateString(node.name),
       fbhl.AST_Module.CreateChildrenVector(fbb, EndChildren())
     );
-
-    //Console.WriteLine("FBB SIZE " + fbb.Offset);
   }
 
   public override void DoVisit(AST_Interim node)
@@ -591,12 +589,43 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_New node)
   {
+    DeclChildren();
+
     VisitChildren(node);
+
+    var children = fbhl.AST_New.CreateChildrenVector(fbb, EndChildren());
+
+    var stype = new FlatBuffers.StringOffset();
+    if(!string.IsNullOrEmpty(node.type))
+      stype = fbb.CreateString(node.type);
+
+    fbhl.AST_New.StartAST_New(fbb);
+    fbhl.AST_New.AddNtype(fbb, node.ntype);
+    if(!string.IsNullOrEmpty(node.type))
+      fbhl.AST_New.AddType(fbb, stype);
+    fbhl.AST_New.AddChildren(fbb, children);
+    NewChild(fbhl.AST_New.EndAST_New(fbb));
   }
 
   public override void DoVisit(AST_VarDecl node)
   {
+    DeclChildren();
+
     VisitChildren(node);
+
+    var children = fbhl.AST_VarDecl.CreateChildrenVector(fbb, EndChildren());
+
+    var sname = new FlatBuffers.StringOffset();
+    if(!string.IsNullOrEmpty(node.name))
+      sname = fbb.CreateString(node.name);
+
+    fbhl.AST_VarDecl.StartAST_VarDecl(fbb);
+    fbhl.AST_VarDecl.AddNname(fbb, node.nname);
+    if(!string.IsNullOrEmpty(node.name))
+      fbhl.AST_VarDecl.AddName(fbb, sname);
+    fbhl.AST_VarDecl.AddNtype(fbb, node.ntype);
+    fbhl.AST_VarDecl.AddChildren(fbb, children);
+    NewChild(fbhl.AST_VarDecl.EndAST_VarDecl(fbb));
   }
 
   public override void DoVisit(AST_JsonObj node)
@@ -627,7 +656,23 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_JsonPair node)
   {
+    DeclChildren();
+
     VisitChildren(node);
+
+    var children = fbhl.AST_JsonPair.CreateChildrenVector(fbb, EndChildren());
+
+    var sname = new FlatBuffers.StringOffset();
+    if(!string.IsNullOrEmpty(node.name))
+      sname = fbb.CreateString(node.name);
+
+    fbhl.AST_JsonPair.StartAST_JsonPair(fbb);
+    fbhl.AST_JsonPair.AddNname(fbb, node.nname);
+    if(!string.IsNullOrEmpty(node.name))
+      fbhl.AST_JsonPair.AddName(fbb, sname);
+    fbhl.AST_JsonPair.AddScopeNtype(fbb, node.scope_ntype);
+    fbhl.AST_JsonPair.AddChildren(fbb, children);
+    NewChild(fbhl.AST_JsonPair.EndAST_JsonPair(fbb));
   }
 
   public override void DoVisit(AST_JsonArrAddItem node)
@@ -667,48 +712,39 @@ public class AST2FB : AST_Visitor
     child_sel_stack.Peek().Add(MatchToSelector(offset));
   }
 
+  static Dictionary<System.Type, fbhl.AST_OneOf> type2selector = new Dictionary<System.Type, fbhl.AST_OneOf>() {
+    { typeof(fbhl.AST_Literal),       fbhl.AST_OneOf.AST_Literal},
+    { typeof(fbhl.AST_Break),         fbhl.AST_OneOf.AST_Break},
+    { typeof(fbhl.AST_Block),         fbhl.AST_OneOf.AST_Block},
+    { typeof(fbhl.AST_UnaryOpExp),    fbhl.AST_OneOf.AST_UnaryOpExp},
+    { typeof(fbhl.AST_BinaryOpExp),   fbhl.AST_OneOf.AST_BinaryOpExp},   
+    { typeof(fbhl.AST_PopValue),      fbhl.AST_OneOf.AST_PopValue},      
+    { typeof(fbhl.AST_Interim),       fbhl.AST_OneOf.AST_Interim},       
+    { typeof(fbhl.AST_Call),          fbhl.AST_OneOf.AST_Call},          
+    { typeof(fbhl.AST_New),           fbhl.AST_OneOf.AST_New},           
+    { typeof(fbhl.AST_Return),        fbhl.AST_OneOf.AST_Return},        
+    { typeof(fbhl.AST_Import),        fbhl.AST_OneOf.AST_Import},        
+    { typeof(fbhl.AST_VarDecl),       fbhl.AST_OneOf.AST_VarDecl},       
+    { typeof(fbhl.AST_FuncDecl),      fbhl.AST_OneOf.AST_FuncDecl},      
+    { typeof(fbhl.AST_LambdaDecl),    fbhl.AST_OneOf.AST_LambdaDecl},    
+    { typeof(fbhl.AST_ClassDecl),     fbhl.AST_OneOf.AST_ClassDecl},     
+    { typeof(fbhl.AST_Inc),           fbhl.AST_OneOf.AST_Inc},           
+    { typeof(fbhl.AST_TypeCast),      fbhl.AST_OneOf.AST_TypeCast},      
+    { typeof(fbhl.AST_JsonObj),       fbhl.AST_OneOf.AST_JsonObj},       
+    { typeof(fbhl.AST_JsonArr),       fbhl.AST_OneOf.AST_JsonArr},       
+    { typeof(fbhl.AST_JsonPair),      fbhl.AST_OneOf.AST_JsonPair},      
+    { typeof(fbhl.AST_JsonArrAddItem),fbhl.AST_OneOf.AST_JsonArrAddItem},
+  };
+
   ChildSelector MatchToSelector<T>(FlatBuffers.Offset<T> offset) where T : struct
   {
     var t = typeof(T);
 
-    if(t == typeof(fbhl.AST_Literal))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Literal, offset.Value);
-    else if(t == typeof(fbhl.AST_Break))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Break, offset.Value);
-    else if(t == typeof(fbhl.AST_UnaryOpExp))
-      return new ChildSelector(fbhl.AST_OneOf.AST_UnaryOpExp, offset.Value);
-    else if(t == typeof(fbhl.AST_BinaryOpExp))
-      return new ChildSelector(fbhl.AST_OneOf.AST_BinaryOpExp, offset.Value);
-    else if(t == typeof(fbhl.AST_PopValue))
-      return new ChildSelector(fbhl.AST_OneOf.AST_PopValue, offset.Value);
-    else if(t == typeof(fbhl.AST_Interim))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Interim, offset.Value);
-    else if(t == typeof(fbhl.AST_Call))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Call, offset.Value);
-    else if(t == typeof(fbhl.AST_Block))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Return, offset.Value);
-    else if(t == typeof(fbhl.AST_Return))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Return, offset.Value);
-    else if(t == typeof(fbhl.AST_Import))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Import, offset.Value);
-    else if(t == typeof(fbhl.AST_FuncDecl))
-      return new ChildSelector(fbhl.AST_OneOf.AST_FuncDecl, offset.Value);
-    else if(t == typeof(fbhl.AST_LambdaDecl))
-      return new ChildSelector(fbhl.AST_OneOf.AST_LambdaDecl, offset.Value);
-    else if(t == typeof(fbhl.AST_ClassDecl))
-      return new ChildSelector(fbhl.AST_OneOf.AST_ClassDecl, offset.Value);
-    else if(t == typeof(fbhl.AST_Inc))
-      return new ChildSelector(fbhl.AST_OneOf.AST_Inc, offset.Value);
-    else if(t == typeof(fbhl.AST_TypeCast))
-      return new ChildSelector(fbhl.AST_OneOf.AST_TypeCast, offset.Value);
-    else if(t == typeof(fbhl.AST_JsonObj))
-      return new ChildSelector(fbhl.AST_OneOf.AST_JsonObj, offset.Value);
-    else if(t == typeof(fbhl.AST_JsonArr))
-      return new ChildSelector(fbhl.AST_OneOf.AST_JsonArr, offset.Value);
-    else if(t == typeof(fbhl.AST_JsonArrAddItem))
-      return new ChildSelector(fbhl.AST_OneOf.AST_JsonArrAddItem, offset.Value);
-    else
-      throw new Exception("Unhandled offset type: " + typeof(T).Name);
+    fbhl.AST_OneOf s;
+    if(type2selector.TryGetValue(t, out s))
+      return new ChildSelector(s, offset.Value);
+
+    throw new Exception("Unhandled selector type: " + t.Name);
   }
 }
 

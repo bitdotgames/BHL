@@ -177,6 +177,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast2fb.Visit(ast);
 
     Util.Meta2Bin(ast, dst);
+    //Console.WriteLine("MSG: " + dst.Length + " FB: " + ast2fb.fbb.Offset);
   }
 
   public void FireError(string msg) 
