@@ -14,7 +14,7 @@ public class EmptyUserBindings : UserBindings {}
 
 public interface IModuleLoader
 {
-  //NOTE: must return null if no such module
+  //NOTE: must return null if no such module found
   AST_Module LoadModule(HashedName id);
 }
 

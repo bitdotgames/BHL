@@ -29,7 +29,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret("", bhl, show_ast: true);
     var node = intp.GetFuncNode("test");
     var n = ExtractNum(intp.ExecNode(node));
 

@@ -265,7 +265,7 @@ public abstract class AST_Visitor
       DoVisit(node as AST_VarDecl);
     else if(node is AST_LambdaDecl)
       DoVisit(node as AST_LambdaDecl);
-    //NOTE: base class must be handled after AST_LambdaDecl
+    //NOTE: base class AST_FuncDecl must be handled after AST_LambdaDecl
     else if(node is AST_FuncDecl)
       DoVisit(node as AST_FuncDecl);
     else if(node is AST_ClassDecl)
@@ -336,7 +336,12 @@ public class AST2FB : AST_Visitor
 
   public AST2FB()
   {
-    this.fbb = new FlatBuffers.FlatBufferBuilder(1);
+    fbb = new FlatBuffers.FlatBufferBuilder(1);
+  }
+
+  void DebugStats(AST_Base node)
+  {
+    Console.WriteLine("NODE " + node.GetType().Name + " " + fbb.Offset);
   }
 
   public override void DoVisit(AST_Module node)
@@ -345,12 +350,22 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
     
-    fbhl.AST_Module.CreateAST_Module(
-      fbb, 
-      node.nname,
-      fbb.CreateString(node.name),
-      fbhl.AST_Module.CreateChildrenVector(fbb, EndChildren())
-    );
+    var children = fbb.CreateVectorOfTables(EndChildren());
+
+    var sname = new FlatBuffers.StringOffset();
+    if(!string.IsNullOrEmpty(node.name))
+      sname = fbb.CreateString(node.name);
+
+    fbhl.AST_Module.StartAST_Module(fbb);
+    fbhl.AST_Module.AddNname(fbb, node.nname);
+    if(!string.IsNullOrEmpty(node.name))
+      fbhl.AST_Module.AddName(fbb, sname);
+    fbhl.AST_Module.AddChildren(fbb, children);
+    var end = fbhl.AST_Module.EndAST_Module(fbb);
+
+    fbb.Finish(end.Value);
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_Interim node)
@@ -359,10 +374,17 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    NewChild(fbhl.AST_Interim.CreateAST_Interim(
-      fbb, 
-      fbhl.AST_Interim.CreateChildrenVector(fbb, EndChildren())
-    ));
+    var children = EndChildren();
+    var voff = new FlatBuffers.VectorOffset();
+    if(children.Length > 0)
+      voff = fbb.CreateVectorOfTables(children);
+
+    fbhl.AST_Interim.StartAST_Interim(fbb);
+    if(children.Length > 0)
+      fbhl.AST_Interim.AddChildren(fbb, voff);
+    NewChild(fbhl.AST_Interim.EndAST_Interim(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_Import node)
@@ -371,6 +393,8 @@ public class AST2FB : AST_Visitor
       fbb, 
       fbhl.AST_Import.CreateModulesVector(fbb, node.modules.ToArray())
     ));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_FuncDecl node)
@@ -379,9 +403,11 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbhl.AST_FuncDecl.CreateChildrenVector(fbb, EndChildren());
+    var children = fbb.CreateVectorOfTables(EndChildren());
 
     NewChild(MakeFuncDecl(node, children));
+
+    DebugStats(node);
   }
 
   FlatBuffers.Offset<fbhl.AST_FuncDecl> MakeFuncDecl(AST_FuncDecl node, FlatBuffers.VectorOffset children)
@@ -412,13 +438,15 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbhl.AST_FuncDecl.CreateChildrenVector(fbb, EndChildren());  
+    var children = fbb.CreateVectorOfTables(EndChildren());  
     
     var base_decl = MakeFuncDecl(node, children);
 
     fbhl.AST_LambdaDecl.StartAST_LambdaDecl(fbb);
     fbhl.AST_LambdaDecl.AddBase(fbb, base_decl);
     NewChild(fbhl.AST_LambdaDecl.EndAST_LambdaDecl(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_ClassDecl node)
@@ -427,7 +455,7 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbhl.AST_ClassDecl.CreateChildrenVector(fbb, EndChildren());  
+    var children = fbb.CreateVectorOfTables(EndChildren());  
 
     var sname = new FlatBuffers.StringOffset();
     if(!string.IsNullOrEmpty(node.name))
@@ -446,6 +474,8 @@ public class AST2FB : AST_Visitor
       fbhl.AST_ClassDecl.AddParent(fbb, sparent);
     fbhl.AST_ClassDecl.AddChildren(fbb, children);
     NewChild(fbhl.AST_ClassDecl.EndAST_ClassDecl(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_EnumDecl node)
@@ -463,11 +493,18 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    NewChild(fbhl.AST_Block.CreateAST_Block(
-      fbb, 
-      (fbhl.EnumBlock)node.type,
-      fbhl.AST_Return.CreateChildrenVector(fbb, EndChildren())
-    ));
+    var children = EndChildren();
+    var voff = new FlatBuffers.VectorOffset();
+    if(children.Length > 0)
+      voff = fbb.CreateVectorOfTables(children);
+
+    fbhl.AST_Block.StartAST_Block(fbb);
+    fbhl.AST_Block.AddType(fbb, (fbhl.EnumBlock)node.type);
+    if(children.Length > 0)
+      fbhl.AST_Block.AddChildren(fbb, voff);
+    NewChild(fbhl.AST_Block.EndAST_Block(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_TypeCast node)
@@ -476,7 +513,7 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbhl.AST_TypeCast.CreateChildrenVector(fbb, EndChildren());
+    var children = fbb.CreateVectorOfTables(EndChildren());
 
     var stype = new FlatBuffers.StringOffset();
     if(!string.IsNullOrEmpty(node.type))
@@ -496,7 +533,7 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbhl.AST_Call.CreateChildrenVector(fbb, EndChildren());
+    var children = fbb.CreateVectorOfTables(EndChildren());
 
     var sname = new FlatBuffers.StringOffset();
     if(!string.IsNullOrEmpty(node.name))
@@ -514,6 +551,8 @@ public class AST2FB : AST_Visitor
     fbhl.AST_Call.AddLineNum(fbb, node.line_num);
     fbhl.AST_Call.AddChildren(fbb, children);
     NewChild(fbhl.AST_Call.EndAST_Call(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_Inc node)
@@ -530,8 +569,10 @@ public class AST2FB : AST_Visitor
 
     NewChild(fbhl.AST_Return.CreateAST_Return(
       fbb, 
-      fbhl.AST_Return.CreateChildrenVector(fbb, EndChildren())
+      fbb.CreateVectorOfTables(EndChildren())
     ));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_Break node)
@@ -548,17 +589,25 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_Literal node)
   {
-    var soff = new FlatBuffers.StringOffset();
     if(node.type == EnumLiteral.STR)
-      soff = fbb.CreateString(node.sval);
+    {
+      NewChild(fbhl.AST_LiteralStr.CreateAST_LiteralStr(fbb, fbb.CreateString(node.sval)));
+    }
+    else if(node.type == EnumLiteral.NUM)
+    {
+      NewChild(fbhl.AST_LiteralNum.CreateAST_LiteralNum(fbb, node.nval));
+    }
+    else if(node.type == EnumLiteral.BOOL)
+    {
+      NewChild(fbhl.AST_LiteralBool.CreateAST_LiteralBool(fbb, node.nval == 1));
+    }
+    else if(node.type == EnumLiteral.NIL)
+    {
+      fbhl.AST_LiteralNil.StartAST_LiteralNil(fbb);
+      NewChild(fbhl.AST_LiteralNil.EndAST_LiteralNil(fbb));
+    }
 
-    fbhl.AST_Literal.StartAST_Literal(fbb);
-    fbhl.AST_Literal.AddType(fbb, (fbhl.EnumLiteral)node.type);
-    if(node.type == EnumLiteral.STR)
-      fbhl.AST_Literal.AddNval(fbb, node.nval);
-    else
-      fbhl.AST_Literal.AddSval(fbb, soff);
-    NewChild(fbhl.AST_Literal.EndAST_Literal(fbb));
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_BinaryOpExp node)
@@ -570,7 +619,7 @@ public class AST2FB : AST_Visitor
     NewChild(fbhl.AST_BinaryOpExp.CreateAST_BinaryOpExp(
       fbb, 
       (fbhl.EnumBinaryOp)node.type,
-      fbhl.AST_BinaryOpExp.CreateChildrenVector(fbb, EndChildren())
+      fbb.CreateVectorOfTables(EndChildren())
     ));
   }
 
@@ -583,7 +632,7 @@ public class AST2FB : AST_Visitor
     NewChild(fbhl.AST_UnaryOpExp.CreateAST_UnaryOpExp(
       fbb, 
       (fbhl.EnumUnaryOp)node.type,
-      fbhl.AST_UnaryOpExp.CreateChildrenVector(fbb, EndChildren())
+      fbb.CreateVectorOfTables(EndChildren())
     ));
   }
 
@@ -593,7 +642,7 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbhl.AST_New.CreateChildrenVector(fbb, EndChildren());
+    var children = fbb.CreateVectorOfTables(EndChildren());
 
     var stype = new FlatBuffers.StringOffset();
     if(!string.IsNullOrEmpty(node.type))
@@ -613,7 +662,7 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbhl.AST_VarDecl.CreateChildrenVector(fbb, EndChildren());
+    var children = fbb.CreateVectorOfTables(EndChildren());
 
     var sname = new FlatBuffers.StringOffset();
     if(!string.IsNullOrEmpty(node.name))
@@ -626,6 +675,8 @@ public class AST2FB : AST_Visitor
     fbhl.AST_VarDecl.AddNtype(fbb, node.ntype);
     fbhl.AST_VarDecl.AddChildren(fbb, children);
     NewChild(fbhl.AST_VarDecl.EndAST_VarDecl(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_JsonObj node)
@@ -637,7 +688,7 @@ public class AST2FB : AST_Visitor
     NewChild(fbhl.AST_JsonObj.CreateAST_JsonObj(
       fbb, 
       node.ntype,
-      fbhl.AST_JsonObj.CreateChildrenVector(fbb, EndChildren())
+      fbb.CreateVectorOfTables(EndChildren())
     ));
   }
 
@@ -650,7 +701,7 @@ public class AST2FB : AST_Visitor
     NewChild(fbhl.AST_JsonArr.CreateAST_JsonArr(
       fbb, 
       node.ntype,
-      fbhl.AST_JsonArr.CreateChildrenVector(fbb, EndChildren())
+      fbb.CreateVectorOfTables(EndChildren())
     ));
   }
 
@@ -660,7 +711,7 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbhl.AST_JsonPair.CreateChildrenVector(fbb, EndChildren());
+    var children = fbb.CreateVectorOfTables(EndChildren());
 
     var sname = new FlatBuffers.StringOffset();
     if(!string.IsNullOrEmpty(node.name))
@@ -697,6 +748,7 @@ public class AST2FB : AST_Visitor
     for(int s=0;s<selectors.Count;++s)
     {
       var sel = selectors[s];
+
       fbhl.AST_Selector.StartAST_Selector(fbb);
       fbhl.AST_Selector.AddVType(fbb, sel.type);
       fbhl.AST_Selector.AddV(fbb, sel.offset);
@@ -713,7 +765,10 @@ public class AST2FB : AST_Visitor
   }
 
   static Dictionary<System.Type, fbhl.AST_OneOf> type2selector = new Dictionary<System.Type, fbhl.AST_OneOf>() {
-    { typeof(fbhl.AST_Literal),       fbhl.AST_OneOf.AST_Literal},
+    { typeof(fbhl.AST_LiteralStr),    fbhl.AST_OneOf.AST_LiteralStr},
+    { typeof(fbhl.AST_LiteralNum),    fbhl.AST_OneOf.AST_LiteralNum},
+    { typeof(fbhl.AST_LiteralBool),   fbhl.AST_OneOf.AST_LiteralBool},
+    { typeof(fbhl.AST_LiteralNil),    fbhl.AST_OneOf.AST_LiteralNil},
     { typeof(fbhl.AST_Break),         fbhl.AST_OneOf.AST_Break},
     { typeof(fbhl.AST_Block),         fbhl.AST_OneOf.AST_Block},
     { typeof(fbhl.AST_UnaryOpExp),    fbhl.AST_OneOf.AST_UnaryOpExp},
@@ -752,7 +807,7 @@ public class AST_Dumper : AST_Visitor
 {
   public override void DoVisit(AST_Interim node)
   {
-    Console.Write("(");
+    Console.Write("(I ");
     VisitChildren(node);
     Console.Write(")");
   }
@@ -814,7 +869,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Block node)
   {
-    Console.Write("(BLOCK ");
+    Console.Write("(BLOCK_");
     Console.Write(node.type + " ");
     VisitChildren(node);
     Console.Write(")");
@@ -865,11 +920,11 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Literal node)
   {
     if(node.type == EnumLiteral.NUM)
-      Console.Write(" (" + node.nval + ")");
+      Console.Write(" (LIT " + node.nval + ")");
     else if(node.type == EnumLiteral.BOOL)
-      Console.Write(" (" + node.nval + ")");
+      Console.Write(" (LIT " + node.nval + ")");
     else if(node.type == EnumLiteral.STR)
-      Console.Write(" ('" + node.sval + "')");
+      Console.Write(" (LIT '" + node.sval + "')");
   }
 
   public override void DoVisit(AST_BinaryOpExp node)

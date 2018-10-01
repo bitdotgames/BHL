@@ -18,13 +18,15 @@ union AST_OneOf {
   AST_FuncDecl,
   AST_ClassDecl,
   AST_EnumDecl,
-  AST_EnumItem,
   AST_LambdaDecl,
   AST_TypeCast,
   AST_Call,
   AST_Return,
   AST_Break,
-  AST_Literal,
+  AST_LiteralStr,
+  AST_LiteralNum,
+  AST_LiteralBool,
+  AST_LiteralNil,
   AST_VarDecl,
   AST_Block,
   AST_JsonObj,
@@ -116,7 +118,7 @@ struct EnumItem {
 table AST_EnumDecl {
   nname     : uint32;
   name      : string;//for debug
-  children  : [AST_EnumItem];
+  children  : [EnumItem];
 }
 
 table UseParam {
@@ -170,19 +172,19 @@ table AST_Return {
 table AST_Break {
 }
 
-enum EnumLiteral : byte {
-  NONE  = 0,
-  NUM   = 1,
-  BOOL  = 2,
-  STR   = 3,
-  NIL   = 4,
+table AST_LiteralStr {
+  sval    : string;
 }
 
-//TODO: make it rather a union of different literal types
-table AST_Literal {
-  type    : EnumLiteral;
+table AST_LiteralNum {
   nval    : double;
-  sval    : string;
+}
+
+table AST_LiteralBool {
+  bval    : bool;
+}
+
+table AST_LiteralNil {
 }
 
 table AST_VarDecl {
