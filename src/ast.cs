@@ -476,6 +476,8 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_Inc node)
   {
+    fbhl.AST_Inc.StartAST_Inc(fbb);
+    NewChild(fbhl.AST_Inc.EndAST_Inc(fbb));
   }
 
   public override void DoVisit(AST_Return node)
@@ -563,6 +565,8 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_JsonArrAddItem node)
   {
+    fbhl.AST_JsonArrAddItem.StartAST_JsonArrAddItem(fbb);
+    NewChild(fbhl.AST_JsonArrAddItem.EndAST_JsonArrAddItem(fbb));
   }
 
   ///////////////////////////////////////////////////////////
@@ -618,6 +622,10 @@ public class AST2FB : AST_Visitor
       return new ChildSelector(fbhl.AST_OneOf.AST_LambdaDecl, offset.Value);
     else if(typeof(T) == typeof(fbhl.AST_ClassDecl))
       return new ChildSelector(fbhl.AST_OneOf.AST_ClassDecl, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_Inc))
+      return new ChildSelector(fbhl.AST_OneOf.AST_Inc, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_JsonArrAddItem))
+      return new ChildSelector(fbhl.AST_OneOf.AST_JsonArrAddItem, offset.Value);
     else
       throw new Exception("Unhandled offset type: " + typeof(T).Name);
   }

@@ -108,7 +108,7 @@ table AST_ClassDecl {
   children  : [AST_Selector];
 }
 
-table AST_EnumItem {
+struct EnumItem {
   nname     : uint32;
   value     : int32;
 }
@@ -116,7 +116,7 @@ table AST_EnumItem {
 table AST_EnumDecl {
   nname     : uint32;
   name      : string;//for debug
-  children  : [AST_Selector];
+  children  : [AST_EnumItem];
 }
 
 table UseParam {
