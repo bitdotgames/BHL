@@ -172,7 +172,10 @@ public class Frontend : bhlBaseVisitor<object>
   static public void Source2Bin(Module module, Stream src, Stream dst, GlobalScope globs, ModuleRegistry mr)
   {
     var ast = Source2AST(module, src, globs, mr);
-    new AST2FB().Visit(ast);
+    //TODO: migrate to this one
+    var ast2fb = new AST2FB();
+    ast2fb.Visit(ast);
+
     Util.Meta2Bin(ast, dst);
   }
 

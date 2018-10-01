@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace abhl {
+namespace TODO {
 
 public class AST_Base {}
 
@@ -217,7 +217,7 @@ public class AST_JsonPair : AST
 
 public class AST_PopValue : AST_Base {}
 
-} //namespace abhl
+}
 
 namespace bhl {
 
@@ -369,21 +369,85 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_Import node)
   {
+    NewChild(fbhl.AST_Import.CreateAST_Import(
+      fbb, 
+      fbhl.AST_Import.CreateModulesVector(fbb, node.modules.ToArray())
+    ));
   }
 
   public override void DoVisit(AST_FuncDecl node)
   {
+    DeclChildren();
+
     VisitChildren(node);
+
+    var children = fbhl.AST_FuncDecl.CreateChildrenVector(fbb, EndChildren());
+
+    NewChild(MakeFuncDecl(node, children));
+  }
+
+  FlatBuffers.Offset<fbhl.AST_FuncDecl> MakeFuncDecl(AST_FuncDecl node, FlatBuffers.VectorOffset children)
+  {
+    var stype = new FlatBuffers.StringOffset();
+    if(!string.IsNullOrEmpty(node.type))
+      stype = fbb.CreateString(node.type);
+
+    var sname = new FlatBuffers.StringOffset();
+    if(!string.IsNullOrEmpty(node.name))
+      sname = fbb.CreateString(node.name);
+
+    fbhl.AST_FuncDecl.StartAST_FuncDecl(fbb);
+    fbhl.AST_FuncDecl.AddNtype(fbb, node.ntype);
+    if(!string.IsNullOrEmpty(node.type))
+      fbhl.AST_FuncDecl.AddType(fbb, stype);
+    fbhl.AST_FuncDecl.AddNname1(fbb, node.nname1);
+    fbhl.AST_FuncDecl.AddNname2(fbb, node.nname2);
+    fbhl.AST_FuncDecl.AddChildren(fbb, children);
+    if(!string.IsNullOrEmpty(node.name))
+      fbhl.AST_FuncDecl.AddName(fbb, sname);
+    return fbhl.AST_FuncDecl.EndAST_FuncDecl(fbb);
   }
 
   public override void DoVisit(AST_LambdaDecl node)
   {
+    DeclChildren();
+
     VisitChildren(node);
+
+    var children = fbhl.AST_FuncDecl.CreateChildrenVector(fbb, EndChildren());  
+    
+    var base_decl = MakeFuncDecl(node, children);
+
+    fbhl.AST_LambdaDecl.StartAST_LambdaDecl(fbb);
+    fbhl.AST_LambdaDecl.AddBase(fbb, base_decl);
+    NewChild(fbhl.AST_LambdaDecl.EndAST_LambdaDecl(fbb));
   }
 
   public override void DoVisit(AST_ClassDecl node)
   {
+    DeclChildren();
+
     VisitChildren(node);
+
+    var children = fbhl.AST_ClassDecl.CreateChildrenVector(fbb, EndChildren());  
+
+    var sname = new FlatBuffers.StringOffset();
+    if(!string.IsNullOrEmpty(node.name))
+      sname = fbb.CreateString(node.name);
+
+    var sparent = new FlatBuffers.StringOffset();
+    if(!string.IsNullOrEmpty(node.parent))
+      sparent = fbb.CreateString(node.parent);
+
+    fbhl.AST_ClassDecl.StartAST_ClassDecl(fbb);
+    fbhl.AST_ClassDecl.AddNname(fbb, node.nname);
+    if(!string.IsNullOrEmpty(node.name))
+      fbhl.AST_ClassDecl.AddName(fbb, sname);
+    fbhl.AST_ClassDecl.AddNparent(fbb, node.nparent);
+    if(!string.IsNullOrEmpty(node.parent))
+      fbhl.AST_ClassDecl.AddParent(fbb, sparent);
+    fbhl.AST_ClassDecl.AddChildren(fbb, children);
+    NewChild(fbhl.AST_ClassDecl.EndAST_ClassDecl(fbb));
   }
 
   public override void DoVisit(AST_EnumDecl node)
@@ -546,6 +610,14 @@ public class AST2FB : AST_Visitor
       return new ChildSelector(fbhl.AST_OneOf.AST_PopValue, offset.Value);
     else if(typeof(T) == typeof(fbhl.AST_Interim))
       return new ChildSelector(fbhl.AST_OneOf.AST_Interim, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_Import))
+      return new ChildSelector(fbhl.AST_OneOf.AST_Import, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_FuncDecl))
+      return new ChildSelector(fbhl.AST_OneOf.AST_FuncDecl, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_LambdaDecl))
+      return new ChildSelector(fbhl.AST_OneOf.AST_LambdaDecl, offset.Value);
+    else if(typeof(T) == typeof(fbhl.AST_ClassDecl))
+      return new ChildSelector(fbhl.AST_OneOf.AST_ClassDecl, offset.Value);
     else
       throw new Exception("Unhandled offset type: " + typeof(T).Name);
   }
