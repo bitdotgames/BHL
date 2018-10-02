@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using fbhl;
 
 namespace bhl {
 
@@ -350,13 +351,13 @@ public class FuncCallNode : FuncBaseCallNode
 
   int idx_in_pool = IDX_FIRST_TIME;
 
-  public FuncCallNode(AST_Call ast)
-    : base(ast)
+  public FuncCallNode(AST_Call ast, fbhl.AST_Call fast = default(fbhl.AST_Call))
+    : base(ast, fast)
   {}
 
   void VisitCallArgs(Interpreter interp, FuncNode fnode)
   {
-    var args_info = new FuncArgsInfo(ast.cargs_bits);
+    var args_info = ast != null ? new FuncArgsInfo(ast.cargs_bits) : new FuncArgsInfo(fast.CargsBits);
     int passed_args_num = args_info.CountArgs();
     int total_args_num = fnode.GetTotalArgsNum();
     int required_args_num = fnode.GetRequiredArgsNum();
@@ -370,14 +371,25 @@ public class FuncCallNode : FuncBaseCallNode
       //checking if default argument should be used
       if(default_arg_idx >= 0 && args_info.IsDefaultArgUsed(default_arg_idx))
       {
-        var decl_arg = fnode.GetDeclArg(required_args_num + default_arg_idx);
-        if(decl_arg.children.Count == 0)
-          throw new Exception("Bad default arg at idx " + (required_args_num + default_arg_idx) + " func " + fnode.GetName());
-        interp.Visit(decl_arg.children[0]);
+        if(ast != null)
+        {
+          var decl_arg = fnode.GetDeclArg(required_args_num + default_arg_idx);
+          if(decl_arg.children.Count == 0)
+            throw new Exception("Bad default arg at idx " + (required_args_num + default_arg_idx) + " func " + fnode.GetName());
+          interp.Visit(decl_arg.children[0]);
+        }
+        else
+        {
+          var decl_arg = fnode.GetFDeclArg(required_args_num + default_arg_idx);
+          interp.Visit(decl_arg.Value.V<fbhl.AST_Interim>().Value.Children(0));
+        }
       }
       else if(p < passed_args_num)
       {
-        interp.Visit(ast.children[p]);
+        if(ast != null)
+          interp.Visit(ast.children[p]);
+        else
+          interp.Visit(fast.Children(p));
         ++p;
       }
     }
@@ -389,7 +401,7 @@ public class FuncCallNode : FuncBaseCallNode
     {
       var interp = Interpreter.instance;
 
-      var pi = PoolRequest(ast);
+      var pi = PoolRequest(ast, fast);
 
       interp.PushNode(this);
       VisitCallArgs(interp, pi.fnode);
@@ -400,7 +412,7 @@ public class FuncCallNode : FuncBaseCallNode
     }
     else if(idx_in_pool == IDX_DETACHED)
     {
-      var pi = PoolRequest(ast);
+      var pi = PoolRequest(ast, fast);
 
       children[children.Count-1] = pi.fnode;
 
@@ -444,14 +456,16 @@ public class FuncCallNode : FuncBaseCallNode
     public int next_free;
 
     public AST_Call ast;
+    public fbhl.AST_Call fast;
     public FuncNode fnode;
 
-    public PoolItem(AST_Call _ast)
+    public PoolItem(AST_Call _ast, fbhl.AST_Call _fast)
     {
       id = 0;
       idx = -1;
       next_free = -1;
       ast = _ast;
+      fast = _fast;
       fnode = null;
     }
 
@@ -465,6 +479,7 @@ public class FuncCallNode : FuncBaseCallNode
       idx = -1;
       next_free = -1;
       ast = null;
+      fast = default(fbhl.AST_Call);
       fnode = null;
     }
   }
@@ -475,9 +490,9 @@ public class FuncCallNode : FuncBaseCallNode
   static int pool_hit;
   static int pool_miss;
 
-  static PoolItem PoolRequest(AST_Call ast)
+  static PoolItem PoolRequest(AST_Call ast, fbhl.AST_Call fast)
   {
-    ulong pool_id = ast.FuncId(); 
+    ulong pool_id = ast != null ? ast.FuncId() : fast.FuncId(); 
 
     int idx_in_pool = -1;
     if(func2last_free.TryGetValue(pool_id, out idx_in_pool) && idx_in_pool != -1)
@@ -494,12 +509,12 @@ public class FuncCallNode : FuncBaseCallNode
       pi.next_free = -1;
       pool[idx_in_pool] = pi;
       //setting actual number of passed arguments
-      pi.fnode.args_info = new FuncArgsInfo(ast.cargs_bits);
+      pi.fnode.args_info = ast != null ? new FuncArgsInfo(ast.cargs_bits) : new FuncArgsInfo(fast.CargsBits);
       return pi;
     }
 
     {
-      var pi = new PoolItem(ast);
+      var pi = new PoolItem(ast, fast);
 
       InitPoolItem(ref pi);
 
@@ -511,7 +526,7 @@ public class FuncCallNode : FuncBaseCallNode
       ++pool_miss;
 
       //setting actual number of passed arguments
-      pi.fnode.args_info = new FuncArgsInfo(ast.cargs_bits);
+      pi.fnode.args_info = ast != null ? new FuncArgsInfo(ast.cargs_bits) : new FuncArgsInfo(fast.CargsBits);
       return pi;
     }
   }
@@ -521,7 +536,7 @@ public class FuncCallNode : FuncBaseCallNode
     if(pi.fnode.currStatus != BHS.NONE)
       throw new Exception("Bad status: " + pi.fnode.currStatus);
 
-    ulong pool_id = pi.ast.FuncId();
+    ulong pool_id = pi.ast != null ? pi.ast.FuncId() : pi.fast.FuncId();
     int last_free = func2last_free[pool_id];
     pi.next_free = last_free;
     pool[pi.idx] = pi;
@@ -534,7 +549,7 @@ public class FuncCallNode : FuncBaseCallNode
     var interp = Interpreter.instance;
 
     pi.id = ++last_pool_id;
-    var fnode = interp.GetFuncNode(pi.ast);
+    var fnode = interp.GetFuncNode(pi.ast, pi.fast);
     if(!(fnode is FuncNodeAST))
       throw new Exception("Not expected type of node");
     pi.fnode = fnode;
@@ -571,11 +586,13 @@ public class FuncCallNode : FuncBaseCallNode
 public abstract class FuncBaseCallNode : SequentialNode
 {
   protected AST_Call ast;
+  protected fbhl.AST_Call fast;
   int stack_size_before;
 
-  public FuncBaseCallNode(AST_Call ast)
+  public FuncBaseCallNode(AST_Call ast, fbhl.AST_Call fast = default(fbhl.AST_Call))
   {
     this.ast = ast;
+    this.fast = fast;
   }
 
   override public void init()
@@ -585,8 +602,16 @@ public abstract class FuncBaseCallNode : SequentialNode
     stack_size_before = interp.stack.Count;
     //NOTE: if it's a method call we need to take into account
     //      pushed object instance as well
-    if(ast.scope_ntype != 0)
-      --stack_size_before;
+    if(ast != null)
+    {
+      if(ast.scope_ntype != 0)
+        --stack_size_before;
+    }
+    else
+    {
+      if(fast.ScopeNtype != 0)
+        --stack_size_before;
+    }
 
     base.init();
   }
@@ -608,7 +633,12 @@ public abstract class FuncBaseCallNode : SequentialNode
       //      we push it on to the call stack when it's executed
       bool is_func_call = currentPosition == children.Count-1;
       if(is_func_call)
-        interp.call_stack.Push(ast);
+      {
+        if(ast != null)
+          interp.call_stack.Push(ast);
+        else
+          interp.call_fstack.Push(fast);
+      }
 
       if(currentTask.currStatus != BHS.RUNNING)
         currentTask.init();
@@ -641,14 +671,17 @@ public abstract class FuncBaseCallNode : SequentialNode
 
   override public string inspect() 
   {
-    return "" + ast.Name();
+    if(ast != null)
+      return "" + ast.Name();
+    else
+      return "" + fast.Name;
   }
 }
 
 public class FuncBindCallNode : FuncBaseCallNode
 {
-  public FuncBindCallNode(AST_Call ast)
-    : base(ast)
+  public FuncBindCallNode(AST_Call ast, fbhl.AST_Call fast)
+    : base(ast, fast)
   {}
 
   override public void init()
@@ -657,14 +690,22 @@ public class FuncBindCallNode : FuncBaseCallNode
     if(children.Count == 0)
     {
       var interp = Interpreter.instance;
-      var symb = interp.ResolveFuncSymbol(ast) as FuncBindSymbol;
+      var symb = interp.ResolveFuncSymbol(ast, fast) as FuncBindSymbol;
       interp.PushNode(this);
 
-      var args_info = new FuncArgsInfo(ast.cargs_bits);
+      var args_info = ast != null ? new FuncArgsInfo(ast.cargs_bits) : new FuncArgsInfo(fast.CargsBits);
 
       int cargs_num = args_info.CountArgs();
-      for(int i=0;i<cargs_num;++i)
-        interp.Visit(ast.children[i]);
+      if(ast != null)
+      {
+        for(int i=0;i<cargs_num;++i)
+          interp.Visit(ast.children[i]);
+      }
+      else
+      {
+        for(int i=0;i<cargs_num;++i)
+          interp.Visit(fast.Children(i));
+      }
 
       this.addChild(symb.func_creator());
 
@@ -1083,9 +1124,9 @@ public class LogicOpNode : BehaviorTreeInternalNode
   EnumBinaryOp type;
   int curr_pos = -1;
 
-  public LogicOpNode(AST_BinaryOpExp node)
+  public LogicOpNode(EnumBinaryOp type)
   {
-    this.type = node.type;
+    this.type = type;
   }
 
   public override void init()
@@ -1572,9 +1613,9 @@ public class UnaryOpNode : BehaviorTreeTerminalNode
 {
   EnumUnaryOp type;
 
-  public UnaryOpNode(AST_UnaryOpExp node)
+  public UnaryOpNode(EnumUnaryOp type)
   {
-    this.type = node.type;
+    this.type = type;
   }
 
   public override void init()
@@ -1604,9 +1645,9 @@ public class BinaryOpNode : BehaviorTreeTerminalNode
 {
   EnumBinaryOp type;
 
-  public BinaryOpNode(AST_BinaryOpExp node)
+  public BinaryOpNode(EnumBinaryOp type)
   {
-    this.type = node.type;
+    this.type = type;
   }
 
   public override void init()
@@ -1941,6 +1982,12 @@ abstract public class FuncNode : SequentialNode
     return null;
   }
 
+  public virtual fbhl.AST_Selector? GetFDeclArg(int i)
+  {
+    return null;
+  }
+
+
   public virtual int GetTotalArgsNum()
   {
     return 0;
@@ -1980,19 +2027,35 @@ public class FuncNodeAST : FuncNode
 
   public override int GetTotalArgsNum()
   {
-    var fparams = decl.fparams();
-    return fparams.children.Count;
+    if(decl != null) 
+    {
+      var fparams = decl.fparams();
+      return fparams.children.Count;
+    }
+    else 
+    {
+      return fdecl.Children(0).Value.V<fbhl.AST_Interim>().Value.ChildrenLength;
+    }
   }
 
   public override int GetDefaultArgsNum()
   {
-    return decl.GetDefaultArgsNum();
+    if(decl != null)
+      return decl.GetDefaultArgsNum();
+    else
+      return fdecl.GetDefaultArgsNum();
   }
 
   public override AST GetDeclArg(int i)
   {
     var children = decl.fparams().GetChildren();
     return children.Count == 0 ? null : children[i] as AST;
+  }
+
+  public override fbhl.AST_Selector? GetFDeclArg(int i)
+  {
+    var fparams = fdecl.Children(0).Value.V<fbhl.AST_Interim>().Value;
+    return fparams.Children(i);
   }
 
   public override HashedName GetName()
@@ -2021,20 +2084,41 @@ public class FuncNodeAST : FuncNode
 
     Inflate();
 
-    var fparams = decl.fparams();
-    var func_args = fparams.children.Count == 0 ? 0 : fparams.children.Count;
-
-    //NOTE: setting args passed to func
-    for(int i=func_args;i-- > 0;)
+    if(decl != null)
     {
-      var fparam = (AST_VarDecl)fparams.children[i];
-      var fparam_name = fparam.Name();
+      var fparams = decl.fparams();
+      var func_args = fparams.children.Count == 0 ? 0 : fparams.children.Count;
 
-      var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
-      //Console.WriteLine(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
-      mem.Set(fparam_name, fparam_val);
+      //NOTE: setting args passed to func
+      for(int i=func_args;i-- > 0;)
+      {
+        var fparam = (AST_VarDecl)fparams.children[i];
+        var fparam_name = fparam.Name();
 
-      fparam_val.RefMod(RefOp.TRY_DEL);
+        var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
+        //Console.WriteLine(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
+        mem.Set(fparam_name, fparam_val);
+
+        fparam_val.RefMod(RefOp.TRY_DEL);
+      }
+    }
+    else
+    {
+      var fparams = fdecl.Children(0).Value.V<fbhl.AST_Interim>().Value;
+      var func_args = fparams.ChildrenLength;
+      
+      //NOTE: setting args passed to func
+      for(int i=func_args;i-- > 0;)
+      {
+        var fparam = fparams.Children(i).Value.V<fbhl.AST_VarDecl>().Value;
+        var fparam_name = fparam.Name();
+
+        var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
+        ////Console.WriteLine(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
+        mem.Set(fparam_name, fparam_val);
+
+        fparam_val.RefMod(RefOp.TRY_DEL);
+      }
     }
 
     base.init();

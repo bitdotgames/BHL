@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using fbhl;
 
 namespace bhl {
 
@@ -62,6 +63,7 @@ public class Interpreter : AST_Visitor
 
   public FastStack<DynVal> stack = new FastStack<DynVal>(256);
   public FastStack<AST_Call> call_stack = new FastStack<AST_Call>(128);
+  public FastStack<fbhl.AST_Call> call_fstack = new FastStack<fbhl.AST_Call>(128);
 
   public void Init(BaseScope symbols, IModuleLoader module_loader)
   {
@@ -152,12 +154,20 @@ public class Interpreter : AST_Visitor
     LoadModule(Util.GetModuleId(module));
   }
 
-  public FuncSymbol ResolveFuncSymbol(AST_Call ast)
+  public FuncSymbol ResolveFuncSymbol(AST_Call ast, fbhl.AST_Call fast = default(fbhl.AST_Call))
   {
-    if(ast.type == EnumCall.FUNC)
-      return symbols.resolve(ast.Name()) as FuncSymbol;
-    else if(ast.type == EnumCall.MFUNC)
-      return ResolveClassMember(ast.scope_ntype, ast.Name()) as FuncSymbol;
+    if(ast != null)
+      return ResolveFuncSymbol(ast.type, ast.Name(), ast.scope_ntype);
+    else
+      return ResolveFuncSymbol((EnumCall)fast.Type, fast.Name(), fast.ScopeNtype);
+  }
+
+  FuncSymbol ResolveFuncSymbol(EnumCall type, HashedName name, uint scope_ntype)
+  {
+    if(type == EnumCall.FUNC)
+      return symbols.resolve(name) as FuncSymbol;
+    else if(type == EnumCall.MFUNC)
+      return ResolveClassMember(scope_ntype, name) as FuncSymbol;
     else
       return null;
   }
@@ -173,9 +183,9 @@ public class Interpreter : AST_Visitor
       throw new Exception("Bad func call type");
   }
 
-  public FuncNode GetFuncNode(AST_Call ast)
+  public FuncNode GetFuncNode(AST_Call ast, fbhl.AST_Call fast = default(fbhl.AST_Call))
   {
-    var symb = ResolveFuncSymbol(ast);
+    var symb = ResolveFuncSymbol(ast, fast);
     return GetFuncNode(symb);
   }
 
@@ -527,6 +537,105 @@ public class Interpreter : AST_Visitor
     curr_node.addChild(new LiteralNilNode());
   }
 
+  public void Visit(fbhl.AST_VarDecl ast)
+  {
+    //NOTE: expression comes first
+    for(int c=0;c<ast.ChildrenLength;++c)
+      Visit(ast.Children(c));
+    curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.DECL));
+  }
+
+  public void Visit(fbhl.AST_Call ast)
+  {           
+    var type = ast.Type;
+
+    if(type == fbhl.EnumCall.VAR)
+    {
+      curr_node.addChild(new VarAccessNode(ast.Name()));
+    }
+    else if(type == fbhl.EnumCall.VARW)
+    {
+      curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.WRITE));
+    }
+    //else if(type == fbhl.EnumCall.MVAR)
+    //{
+    //  curr_node.addChild(new MVarAccessNode(ast.Scope_ntype, ast.Name()));
+    //}
+    //else if(type == fbhl.EnumCall.MVARW)
+    //{
+    //  curr_node.addChild(new MVarAccessNode(ast.Scope_ntype, ast.Name(), MVarAccessNode.WRITE));
+    //}
+    //else if(type == fbhl.EnumCall.MVARREF)
+    //{
+    //  curr_node.addChild(new MVarAccessNode(ast.Scope_ntype, ast.Name(), MVarAccessNode.READ_REF));
+    //}
+    else if(type == fbhl.EnumCall.FUNC || type == fbhl.EnumCall.MFUNC)
+    {
+      AddFuncCallNode(null, ast);
+    }
+    //else if(type == fbhl.EnumCall.FUNC_PTR || type == fbhl.EnumCall.FUNC_PTR_POP)
+    //{
+    //  curr_node.addChild(new CallFuncPtr(ast));
+    //}
+    //else if(type == fbhl.EnumCall.FUNC2VAR)
+    //{
+    //  var s = symbols.resolve(ast.nname()) as FuncSymbol;
+    //  if(s == null)
+    //    throw new Exception("Could not find func:" + ast.Name());
+    //  curr_node.addChild(new PushFuncCtxNode(s));
+    //}
+    //else if(type == fbhl.EnumCall.ARR_IDX)
+    //{
+    //  var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
+    //  if(bnd == null)
+    //    throw new Exception("Could not find class binding: " + ast.scope_ntype);
+
+    //  curr_node.addChild(bnd.Create_At());
+    //}
+    //else if(type == fbhl.EnumCall.ARR_IDXW)
+    //{
+    //  var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
+    //  if(bnd == null)
+    //    throw new Exception("Could not find class binding: " + ast.scope_ntype);
+
+    //  curr_node.addChild(bnd.Create_SetAt());
+    //}
+    else 
+      throw new Exception("Unsupported call type: " + type);
+  }
+
+  public void Visit(fbhl.AST_Return ast)
+  {
+    //NOTE: expression comes first
+    for(int c=0;c<ast.ChildrenLength;++c)
+      Visit(ast.Children(c));
+    curr_node.addChild(new ReturnNode());
+  }
+
+  public void Visit(fbhl.AST_BinaryOpExp ast)
+  {
+    //NOTE: checking if it's a short circuit expression
+    var type = (EnumBinaryOp)ast.Type;
+    if(type == EnumBinaryOp.AND || type == EnumBinaryOp.OR)
+    {
+      PushNode(new LogicOpNode(type));
+        PushNode(new GroupNode());
+        Visit(ast.Children(0));
+        PopNode();
+        PushNode(new GroupNode());
+        Visit(ast.Children(1));
+        PopNode();
+      PopNode();
+    }
+    else
+    {
+      //NOTE: expression comes first
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      curr_node.addChild(new BinaryOpNode(type));
+    }
+  }
+
   public void Visit(fbhl.AST_Selector? sel)
   {
     if(sel == null)
@@ -543,6 +652,12 @@ public class Interpreter : AST_Visitor
       case fbhl.AST_OneOf.AST_Import:
         Visit(sel.Value.V<fbhl.AST_Import>().Value);
         break;
+      case fbhl.AST_OneOf.AST_Call:
+        Visit(sel.Value.V<fbhl.AST_Call>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_VarDecl:
+        Visit(sel.Value.V<fbhl.AST_VarDecl>().Value);
+        break;
       case fbhl.AST_OneOf.AST_FuncDecl:
         Visit(sel.Value.V<fbhl.AST_FuncDecl>().Value);
         break;
@@ -557,6 +672,12 @@ public class Interpreter : AST_Visitor
         break;
       case fbhl.AST_OneOf.AST_LiteralNil:
         Visit(sel.Value.V<fbhl.AST_LiteralNil>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_Return:
+        Visit(sel.Value.V<fbhl.AST_Return>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_BinaryOpExp:
+        Visit(sel.Value.V<fbhl.AST_BinaryOpExp>().Value);
         break;
       default:
         throw new Exception("Not handled type: " + sel.Value.VType);
@@ -825,25 +946,29 @@ public class Interpreter : AST_Visitor
       throw new Exception("Unsupported call type: " + ast.type);
   }
 
-  void AddFuncCallNode(AST_Call ast)
+  void AddFuncCallNode(AST_Call ast, fbhl.AST_Call fast = default(fbhl.AST_Call))
   {
-    var symb = ResolveFuncSymbol(ast);
+    var symb = ResolveFuncSymbol(ast, fast);
     var fbind_symb = symb as FuncBindSymbol;
 
     //special case if it's bind symbol
     if(fbind_symb != null)
     {
-      bool has_args = ast.cargs_bits > 0 || fbind_symb.def_args_num > 0;
+      bool has_args = false;
+      if(ast != null)
+        has_args = ast.cargs_bits > 0 || fbind_symb.def_args_num > 0;
+      else
+        has_args = fast.CargsBits > 0 || fbind_symb.def_args_num > 0;
 
       if(has_args)
-        curr_node.addChild(new FuncBindCallNode(ast));
+        curr_node.addChild(new FuncBindCallNode(ast, fast));
       //special case if it's a simple bind symbol call without any args
       else
         curr_node.addChild(fbind_symb.func_creator());
     }
     else
     {
-      curr_node.addChild(new FuncCallNode(ast));  
+      curr_node.addChild(new FuncCallNode(ast, fast));  
     }
   }
 
@@ -874,7 +999,7 @@ public class Interpreter : AST_Visitor
     //NOTE: checking if it's a short circuit expression
     if(ast.type == EnumBinaryOp.AND || ast.type == EnumBinaryOp.OR)
     {
-      PushNode(new LogicOpNode(ast));
+      PushNode(new LogicOpNode(ast.type));
         PushNode(new GroupNode());
         Visit(ast.children[0]);
         PopNode();
@@ -887,7 +1012,7 @@ public class Interpreter : AST_Visitor
     {
       //NOTE: expression comes first
       VisitChildren(ast);
-      curr_node.addChild(new BinaryOpNode(ast));
+      curr_node.addChild(new BinaryOpNode(ast.type));
     }
   }
 
@@ -895,7 +1020,7 @@ public class Interpreter : AST_Visitor
   {
     //NOTE: expression comes first
     VisitChildren(ast);
-    curr_node.addChild(new UnaryOpNode(ast));
+    curr_node.addChild(new UnaryOpNode(ast.type));
   }
 
   public override void DoVisit(AST_VarDecl ast)

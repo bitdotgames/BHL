@@ -219,6 +219,69 @@ public class AST_PopValue : AST_Base {}
 
 }
 
+namespace fbhl {
+
+public static class Extensions
+{
+  static public bhl.HashedName Name(this AST_VarDecl n)
+  {
+    return new bhl.HashedName(n.Nname & 0xFFFFFFF, n.Name);
+  }
+
+  static public bool IsRef(this AST_VarDecl n)
+  {
+    return (n.Nname & (1u << 29)) != 0; 
+  }
+
+  static public bhl.HashedName Name(this AST_FuncDecl n)
+  {
+    return new bhl.HashedName(n.Nname1, n.Nname2, n.Name);
+  }
+
+  static public ulong nname(this AST_FuncDecl n)
+  {
+    return ((ulong)n.Nname2 << 31) | ((ulong)n.Nname1);
+  }
+
+  static public bhl.HashedName Name(this AST_Call n)
+  {
+    return new bhl.HashedName(n.nname(), n.Name);
+  }
+
+  static public ulong nname(this AST_Call n)
+  {
+    return ((ulong)n.Nname2 << 31) | ((ulong)n.Nname1);
+  }
+
+  static public ulong FuncId(this AST_Call n)
+  {
+    if(n.Nname2 == 0)
+      return ((ulong)n.ScopeNtype << 31) | ((ulong)n.Nname1);
+    else
+      return ((ulong)n.Nname2 << 31) | ((ulong)n.Nname1);
+  }
+
+  static public int GetDefaultArgsNum(this AST_FuncDecl n)
+  {
+    var fparams = n.Children(0).Value.V<fbhl.AST_Interim>().Value;
+
+    int num = 0;
+    for(int i=0;i<fparams.ChildrenLength;++i)
+    {
+      //var fc = fparams.Children(i).Value.V<fbhl.AST_Interim>();
+      //if(fc != null && fc.Value.ChildrenLength > 0)
+      //  ++num;
+
+      var fc = fparams.Children(i);
+      if(fc != null)
+        ++num;
+    }
+    return num;
+  }
+}
+
+}
+
 namespace bhl {
 
 public abstract class AST_Visitor

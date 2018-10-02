@@ -29,7 +29,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl, use_fb: true);
+    var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     var n = ExtractNum(intp.ExecNode(node));
 
@@ -17260,14 +17260,14 @@ func Unit FindUnit(Vec3 pos, float radius) {
     AssertTrue(idx != -1, "Error message is: " + err.Message);
   }
 
-  static Interpreter Interpret(string fpath, string src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false, bool use_fb = false)
+  static Interpreter Interpret(string fpath, string src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false, bool use_fb = true)
   {
     var dict = new Dictionary<string, string>();
     dict.Add(fpath, src);
     return Interpret(dict, globs, mreg, mloader, show_ast, use_fb);
   }
 
-  static Interpreter Interpret(Dictionary<string, string> fpath2src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false, bool use_fb = false)
+  static Interpreter Interpret(Dictionary<string, string> fpath2src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false, bool use_fb = true)
   {
     Util.DEBUG = true;
 
