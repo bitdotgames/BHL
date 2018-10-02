@@ -552,10 +552,12 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    NewChild(fbhl.AST_Return.CreateAST_Return(
-      fbb, 
-      EndChildrenVector().Value
-    ));
+    var children = EndChildrenVector();
+
+    fbhl.AST_Return.StartAST_Return(fbb);
+    if(children != null)
+      fbhl.AST_Return.AddChildren(fbb, children.Value);
+    NewChild(fbhl.AST_Return.EndAST_Return(fbb));
 
     DebugStats(node);
   }
