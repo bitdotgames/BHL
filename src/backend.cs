@@ -122,6 +122,11 @@ public class Interpreter : AST_Visitor
     Visit(ast);
   }
 
+  public void Interpret(fbhl.AST_Module ast)
+  {
+    Visit(ast);
+  }
+
   public void LoadModule(HashedName mod_id)
   {
     if(mod_id.n == 0)
@@ -159,8 +164,9 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetFuncNode(FuncSymbol symb)
   {
-    if(symb is FuncSymbolAST)
-      return new FuncNodeAST((symb as FuncSymbolAST).decl, null);
+    var fast = symb as FuncSymbolAST;
+    if(fast != null)
+      return new FuncNodeAST(fast.decl, fast.fdecl, null);
     else if(symb is FuncBindSymbol)
       return new FuncNodeBind(symb as FuncBindSymbol, null);
     else
@@ -322,36 +328,6 @@ public class Interpreter : AST_Visitor
     return stack.Peek();
   }
 
-  ///////////////////////////////////////////////////////////
-
-  public override void DoVisit(AST_Interim node)
-  {
-    VisitChildren(node);
-  }
-
-  public override void DoVisit(AST_Module node)
-  {
-    PushScope(glob_mem);
-
-    var g = new GroupNode();
-    PushNode(g, attach_as_child: false);
-    VisitChildren(node);
-    PopNode();
-
-    //NOTE: we need to run it for globals initialization
-    var status = g.run();
-    if(status != BHS.SUCCESS)
-      throw new Exception("Global initialization error: " + status);
-
-    PopScope();
-  }
-
-  public override void DoVisit(AST_Import node)
-  {
-    for(int i=0;i<node.modules.Count;++i)
-      LoadModule(node.modules[i]);
-  }
-
   void CheckFuncIsUnique(HashedName name)
   {
     var s = symbols.resolve(name) as FuncSymbol;
@@ -370,43 +346,290 @@ public class Interpreter : AST_Visitor
       throw new Exception("Enum is already defined: " + name);
   }
 
-  public override void DoVisit(AST_FuncDecl node)
+  ///////////////////////////////////////////////////////////
+
+  public void Visit(fbhl.AST_Interim ast)
   {
-    var name = node.Name(); 
+    for(int c=0;c<ast.ChildrenLength;++c)
+      Visit(ast.Children(c));
+  }
+
+  public void Visit(fbhl.AST_Module ast)
+  {
+    PushScope(glob_mem);
+
+    var g = new GroupNode();
+    PushNode(g, attach_as_child: false);
+    for(int c=0;c<ast.ChildrenLength;++c)
+      Visit(ast.Children(c));
+    PopNode();
+
+    //NOTE: we need to run it for globals initialization
+    var status = g.run();
+    if(status != BHS.SUCCESS)
+      throw new Exception("Global initialization error: " + status);
+
+    PopScope();
+  }
+
+  public void Visit(fbhl.AST_Import ast)
+  {
+    for(int i=0;i<ast.ModulesLength;++i)
+      LoadModule(ast.Modules(i));
+  }
+
+  public void Visit(fbhl.AST_FuncDecl ast)
+  {
+    var name = ast.Name; 
     CheckFuncIsUnique(name);
 
-    var fn = new FuncSymbolAST(symbols, node);
+    var fn = new FuncSymbolAST(symbols, ast);
     symbols.define(fn);
   }
 
-  public override void DoVisit(AST_LambdaDecl node)
+  public void Visit(fbhl.AST_Block ast)
+  {
+    var type = ast.Type;
+
+    if(type == fbhl.EnumBlock.FUNC)
+    {
+      if(!(curr_node is FuncNode))
+        throw new Exception("Current node is not a func");
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+    }
+    else if(type == fbhl.EnumBlock.SEQ)
+    {
+      PushNode(new SequentialNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.GROUP)
+    {
+      PushNode(new GroupNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.SEQ_)
+    {
+      PushNode(new SequentialNode_());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.PARAL)
+    {
+      PushNode(new ParallelNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.PARAL_ALL)
+    {
+      PushNode(new ParallelAllNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.UNTIL_FAILURE)
+    {
+      PushNode(new MonitorFailureNode(BHS.FAILURE));
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.UNTIL_FAILURE_)
+    {
+      PushNode(new MonitorFailureNode(BHS.SUCCESS));
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.UNTIL_SUCCESS)
+    {
+      PushNode(new MonitorSuccessNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.NOT)
+    {
+      PushNode(new InvertNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.PRIO)
+    {
+      PushNode(new PriorityNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.FOREVER)
+    {
+      PushNode(new ForeverNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.DEFER)
+    {
+      PushNode(new DeferNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.IF)
+    {
+      PushNode(new IfNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.WHILE)
+    {
+      PushNode(new LoopNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else if(type == fbhl.EnumBlock.EVAL)
+    {
+      PushNode(new EvalNode());
+      for(int c=0;c<ast.ChildrenLength;++c)
+        Visit(ast.Children(c));
+      PopNode();
+    }
+    else
+      throw new Exception("Unknown block type: " + type);
+  }
+
+  public void Visit(fbhl.AST_LiteralNum ast)
+  {
+    curr_node.addChild(new LiteralNumNode(ast.Nval));
+  }
+
+  public void Visit(fbhl.AST_LiteralStr ast)
+  {
+    curr_node.addChild(new LiteralStrNode(ast.Sval));
+  }
+
+  public void Visit(fbhl.AST_LiteralBool ast)
+  {
+    curr_node.addChild(new LiteralBoolNode(ast.Bval));
+  }
+
+  public void Visit(fbhl.AST_LiteralNil ast)
+  {
+    curr_node.addChild(new LiteralNilNode());
+  }
+
+  public void Visit(fbhl.AST_Selector? sel)
+  {
+    if(sel == null)
+      return;
+
+    switch(sel.Value.VType)
+    {
+      case fbhl.AST_OneOf.AST_Interim:
+        Visit(sel.Value.V<fbhl.AST_Interim>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_Block:
+        Visit(sel.Value.V<fbhl.AST_Block>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_Import:
+        Visit(sel.Value.V<fbhl.AST_Import>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_FuncDecl:
+        Visit(sel.Value.V<fbhl.AST_FuncDecl>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_LiteralNum:
+        Visit(sel.Value.V<fbhl.AST_LiteralNum>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_LiteralStr:
+        Visit(sel.Value.V<fbhl.AST_LiteralStr>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_LiteralBool:
+        Visit(sel.Value.V<fbhl.AST_LiteralBool>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_LiteralNil:
+        Visit(sel.Value.V<fbhl.AST_LiteralNil>().Value);
+        break;
+      default:
+        throw new Exception("Not handled type: " + sel.Value.VType);
+    }
+  }
+
+  ///////////////////////////////////////////////////////////
+
+  public override void DoVisit(AST_Interim ast)
+  {
+    VisitChildren(ast);
+  }
+
+  public override void DoVisit(AST_Module ast)
+  {
+    PushScope(glob_mem);
+
+    var g = new GroupNode();
+    PushNode(g, attach_as_child: false);
+    VisitChildren(ast);
+    PopNode();
+
+    //NOTE: we need to run it for globals initialization
+    var status = g.run();
+    if(status != BHS.SUCCESS)
+      throw new Exception("Global initialization error: " + status);
+
+    PopScope();
+  }
+
+  public override void DoVisit(AST_Import ast)
+  {
+    for(int i=0;i<ast.modules.Count;++i)
+      LoadModule(ast.modules[i]);
+  }
+
+  public override void DoVisit(AST_FuncDecl ast)
+  {
+    var name = ast.Name(); 
+    CheckFuncIsUnique(name);
+
+    var fn = new FuncSymbolAST(symbols, ast);
+    symbols.define(fn);
+  }
+
+  public override void DoVisit(AST_LambdaDecl ast)
   {
     //if there's such a lambda symbol already we re-use it
-    var name = node.Name(); 
+    var name = ast.Name(); 
     var lmb = symbols.resolve(name) as LambdaSymbol;
     if(lmb == null)
     {
       CheckFuncIsUnique(name);
-      lmb = new LambdaSymbol(symbols, node);
+      lmb = new LambdaSymbol(symbols, ast);
       symbols.define(lmb);
     }
 
     curr_node.addChild(new PushFuncCtxNode(lmb));
   }
 
-  public override void DoVisit(AST_ClassDecl node)
+  public override void DoVisit(AST_ClassDecl ast)
   {
-    var name = node.Name();
+    var name = ast.Name();
     CheckNameIsUnique(name);
 
-    var parent = symbols.resolve(node.ParentName()) as ClassSymbol;
+    var parent = symbols.resolve(ast.ParentName()) as ClassSymbol;
 
-    var cl = new ClassSymbolAST(name, node, parent);
+    var cl = new ClassSymbolAST(name, ast, parent);
     symbols.define(cl);
 
-    for(int i=0;i<node.children.Count;++i)
+    for(int i=0;i<ast.children.Count;++i)
     {
-      var child = node.children[i];
+      var child = ast.children[i];
       var vd = child as AST_VarDecl;
       if(vd != null)
       {
@@ -415,191 +638,191 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  public override void DoVisit(AST_EnumDecl node)
+  public override void DoVisit(AST_EnumDecl ast)
   {
-    var name = node.Name();
+    var name = ast.Name();
     CheckNameIsUnique(name);
 
     var es = new EnumSymbolAST(name);
     symbols.define(es);
   }
 
-  public override void DoVisit(AST_EnumItem node)
+  public override void DoVisit(AST_EnumItem ast)
   {}
 
-  public override void DoVisit(AST_Block node)
+  public override void DoVisit(AST_Block ast)
   {
-    if(node.type == EnumBlock.FUNC)
+    if(ast.type == EnumBlock.FUNC)
     {
       if(!(curr_node is FuncNode))
         throw new Exception("Current node is not a func");
-      VisitChildren(node);
+      VisitChildren(ast);
     }
-    else if(node.type == EnumBlock.SEQ)
+    else if(ast.type == EnumBlock.SEQ)
     {
       PushNode(new SequentialNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.GROUP)
+    else if(ast.type == EnumBlock.GROUP)
     {
       PushNode(new GroupNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.SEQ_)
+    else if(ast.type == EnumBlock.SEQ_)
     {
       PushNode(new SequentialNode_());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.PARAL)
+    else if(ast.type == EnumBlock.PARAL)
     {
       PushNode(new ParallelNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.PARAL_ALL)
+    else if(ast.type == EnumBlock.PARAL_ALL)
     {
       PushNode(new ParallelAllNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.UNTIL_FAILURE)
+    else if(ast.type == EnumBlock.UNTIL_FAILURE)
     {
       PushNode(new MonitorFailureNode(BHS.FAILURE));
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.UNTIL_FAILURE_)
+    else if(ast.type == EnumBlock.UNTIL_FAILURE_)
     {
       PushNode(new MonitorFailureNode(BHS.SUCCESS));
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.UNTIL_SUCCESS)
+    else if(ast.type == EnumBlock.UNTIL_SUCCESS)
     {
       PushNode(new MonitorSuccessNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.NOT)
+    else if(ast.type == EnumBlock.NOT)
     {
       PushNode(new InvertNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.PRIO)
+    else if(ast.type == EnumBlock.PRIO)
     {
       PushNode(new PriorityNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.FOREVER)
+    else if(ast.type == EnumBlock.FOREVER)
     {
       PushNode(new ForeverNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.DEFER)
+    else if(ast.type == EnumBlock.DEFER)
     {
       PushNode(new DeferNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.IF)
+    else if(ast.type == EnumBlock.IF)
     {
       PushNode(new IfNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.WHILE)
+    else if(ast.type == EnumBlock.WHILE)
     {
       PushNode(new LoopNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
-    else if(node.type == EnumBlock.EVAL)
+    else if(ast.type == EnumBlock.EVAL)
     {
       PushNode(new EvalNode());
-      VisitChildren(node);
+      VisitChildren(ast);
       PopNode();
     }
     else
-      throw new Exception("Unknown block type: " + node.type);
+      throw new Exception("Unknown block type: " + ast.type);
   }
 
-  public override void DoVisit(AST_TypeCast node)
+  public override void DoVisit(AST_TypeCast ast)
   {
-    VisitChildren(node);
-    curr_node.addChild(new TypeCastNode(node));
+    VisitChildren(ast);
+    curr_node.addChild(new TypeCastNode(ast));
   }
 
-  public override void DoVisit(AST_New node)
+  public override void DoVisit(AST_New ast)
   {
-    curr_node.addChild(new ConstructNode(node.Name()));
+    curr_node.addChild(new ConstructNode(ast.Name()));
   }
 
-  public override void DoVisit(AST_Inc node)
+  public override void DoVisit(AST_Inc ast)
   {
-    curr_node.addChild(new IncNode(node.nname));
+    curr_node.addChild(new IncNode(ast.nname));
   }
 
-  public override void DoVisit(AST_Call node)
+  public override void DoVisit(AST_Call ast)
   {           
-    if(node.type == EnumCall.VAR)
+    if(ast.type == EnumCall.VAR)
     {
-      curr_node.addChild(new VarAccessNode(node.Name()));
+      curr_node.addChild(new VarAccessNode(ast.Name()));
     }
-    else if(node.type == EnumCall.VARW)
+    else if(ast.type == EnumCall.VARW)
     {
-      curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.WRITE));
+      curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.WRITE));
     }
-    else if(node.type == EnumCall.MVAR)
+    else if(ast.type == EnumCall.MVAR)
     {
-      curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name()));
+      curr_node.addChild(new MVarAccessNode(ast.scope_ntype, ast.Name()));
     }
-    else if(node.type == EnumCall.MVARW)
+    else if(ast.type == EnumCall.MVARW)
     {
-      curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE));
+      curr_node.addChild(new MVarAccessNode(ast.scope_ntype, ast.Name(), MVarAccessNode.WRITE));
     }
-    else if(node.type == EnumCall.MVARREF)
+    else if(ast.type == EnumCall.MVARREF)
     {
-      curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.READ_REF));
+      curr_node.addChild(new MVarAccessNode(ast.scope_ntype, ast.Name(), MVarAccessNode.READ_REF));
     }
-    else if(node.type == EnumCall.FUNC || node.type == EnumCall.MFUNC)
+    else if(ast.type == EnumCall.FUNC || ast.type == EnumCall.MFUNC)
     {
-      AddFuncCallNode(node);
+      AddFuncCallNode(ast);
     }
-    else if(node.type == EnumCall.FUNC_PTR || node.type == EnumCall.FUNC_PTR_POP)
+    else if(ast.type == EnumCall.FUNC_PTR || ast.type == EnumCall.FUNC_PTR_POP)
     {
-      curr_node.addChild(new CallFuncPtr(node));
+      curr_node.addChild(new CallFuncPtr(ast));
     }
-    else if(node.type == EnumCall.FUNC2VAR)
+    else if(ast.type == EnumCall.FUNC2VAR)
     {
-      var s = symbols.resolve(node.nname()) as FuncSymbol;
+      var s = symbols.resolve(ast.nname()) as FuncSymbol;
       if(s == null)
-        throw new Exception("Could not find func:" + node.Name());
+        throw new Exception("Could not find func:" + ast.Name());
       curr_node.addChild(new PushFuncCtxNode(s));
     }
-    else if(node.type == EnumCall.ARR_IDX)
+    else if(ast.type == EnumCall.ARR_IDX)
     {
-      var bnd = symbols.resolve(node.scope_ntype) as ArrayTypeSymbol;
+      var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
-        throw new Exception("Could not find class binding: " + node.scope_ntype);
+        throw new Exception("Could not find class binding: " + ast.scope_ntype);
 
       curr_node.addChild(bnd.Create_At());
     }
-    else if(node.type == EnumCall.ARR_IDXW)
+    else if(ast.type == EnumCall.ARR_IDXW)
     {
-      var bnd = symbols.resolve(node.scope_ntype) as ArrayTypeSymbol;
+      var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
-        throw new Exception("Could not find class binding: " + node.scope_ntype);
+        throw new Exception("Could not find class binding: " + ast.scope_ntype);
 
       curr_node.addChild(bnd.Create_SetAt());
     }
     else 
-      throw new Exception("Unsupported call type: " + node.type);
+      throw new Exception("Unsupported call type: " + ast.type);
   }
 
   void AddFuncCallNode(AST_Call ast)
@@ -624,82 +847,82 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  public override void DoVisit(AST_Return node)
+  public override void DoVisit(AST_Return ast)
   {
     //NOTE: expression comes first
-    VisitChildren(node);
+    VisitChildren(ast);
     curr_node.addChild(new ReturnNode());
   }
 
-  public override void DoVisit(AST_Break node)
+  public override void DoVisit(AST_Break ast)
   {
     curr_node.addChild(new BreakNode());
   }
 
-  public override void DoVisit(AST_PopValue node)
+  public override void DoVisit(AST_PopValue ast)
   {
     curr_node.addChild(new PopValueNode());
   }
 
-  public override void DoVisit(AST_Literal node)
+  public override void DoVisit(AST_Literal ast)
   {
-    curr_node.addChild(new LiteralNode(node));
+    curr_node.addChild(new LiteralNode(ast));
   }
 
-  public override void DoVisit(AST_BinaryOpExp node)
+  public override void DoVisit(AST_BinaryOpExp ast)
   {
     //NOTE: checking if it's a short circuit expression
-    if(node.type == EnumBinaryOp.AND || node.type == EnumBinaryOp.OR)
+    if(ast.type == EnumBinaryOp.AND || ast.type == EnumBinaryOp.OR)
     {
-      PushNode(new LogicOpNode(node));
+      PushNode(new LogicOpNode(ast));
         PushNode(new GroupNode());
-        Visit(node.children[0]);
+        Visit(ast.children[0]);
         PopNode();
         PushNode(new GroupNode());
-        Visit(node.children[1]);
+        Visit(ast.children[1]);
         PopNode();
       PopNode();
     }
     else
     {
       //NOTE: expression comes first
-      VisitChildren(node);
-      curr_node.addChild(new BinaryOpNode(node));
+      VisitChildren(ast);
+      curr_node.addChild(new BinaryOpNode(ast));
     }
   }
 
-  public override void DoVisit(AST_UnaryOpExp node)
+  public override void DoVisit(AST_UnaryOpExp ast)
   {
     //NOTE: expression comes first
-    VisitChildren(node);
-    curr_node.addChild(new UnaryOpNode(node));
+    VisitChildren(ast);
+    curr_node.addChild(new UnaryOpNode(ast));
   }
 
-  public override void DoVisit(AST_VarDecl node)
+  public override void DoVisit(AST_VarDecl ast)
   {
     //NOTE: expression comes first
-    VisitChildren(node);
-    curr_node.addChild(new VarAccessNode(node.Name(), VarAccessNode.DECL));
+    VisitChildren(ast);
+    curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.DECL));
   }
 
-  public override void DoVisit(bhl.AST_JsonObj node)
+  public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    curr_node.addChild(new ConstructNode(new HashedName(node.ntype)));
+    curr_node.addChild(new ConstructNode(new HashedName(ast.ntype)));
 
-    VisitChildren(node);
+    VisitChildren(ast);
   }
 
-  public override void DoVisit(bhl.AST_JsonArr node)
+  public override void DoVisit(bhl.AST_JsonArr ast)
   {
-    var bnd = symbols.resolve(node.ntype) as ArrayTypeSymbol;
+    var bnd = symbols.resolve(ast.ntype) as ArrayTypeSymbol;
     if(bnd == null)
-      throw new Exception("Could not find class binding: " + node.ntype);
+      throw new Exception("Could not find class binding: " + ast.ntype);
 
     curr_node.addChild(bnd.Create_New());
 
-    for(int i=0;i<node.children.Count;++i)
+    for(int i=0;i<ast.children.Count;++i)
     {
-      var c = node.children[i];
+      var c = ast.children[i];
 
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
@@ -710,7 +933,7 @@ public class Interpreter : AST_Visitor
       }
       else
       {
-        var jc = new JsonCtx(JsonCtx.ARR, node.ntype, (uint)i);
+        var jc = new JsonCtx(JsonCtx.ARR, ast.ntype, (uint)i);
         jcts.Push(jc);
         Visit(c);
         jcts.Pop();
@@ -718,7 +941,7 @@ public class Interpreter : AST_Visitor
     }
 
     //adding last item item
-    if(node.children.Count > 0)
+    if(ast.children.Count > 0)
     {
       var n = (Array_AddNode)bnd.Create_Add(); 
       n.push_arr = true;
@@ -727,16 +950,16 @@ public class Interpreter : AST_Visitor
   }
   
   //NOTE: just a dummy, it's actually processed during AST_JsonArr's traversal
-  public override void DoVisit(bhl.AST_JsonArrAddItem node)
+  public override void DoVisit(bhl.AST_JsonArrAddItem ast)
   {}
 
-  public override void DoVisit(bhl.AST_JsonPair node)
+  public override void DoVisit(bhl.AST_JsonPair ast)
   {
-    var jc = new JsonCtx(JsonCtx.OBJ, node.scope_ntype, node.nname);
+    var jc = new JsonCtx(JsonCtx.OBJ, ast.scope_ntype, ast.nname);
     jcts.Push(jc);
 
-    VisitChildren(node);
-    curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE_PUSH_CTX));
+    VisitChildren(ast);
+    curr_node.addChild(new MVarAccessNode(ast.scope_ntype, ast.Name(), MVarAccessNode.WRITE_PUSH_CTX));
 
     jcts.Pop();
   }
@@ -772,8 +995,9 @@ public class FuncCtx : DynValRefcounted
 
     ++nodes_created;
 
-    if(fs is FuncSymbolAST)
-      fnode = new FuncNodeAST((fs as FuncSymbolAST).decl, this);
+    var fast = fs as FuncSymbolAST;
+    if(fast != null)
+      fnode = new FuncNodeAST(fast.decl, fast.fdecl, this);
     else if(fs is LambdaSymbol)
       fnode = new FuncNodeLambda(this);
     else if(fs is FuncBindSymbol)
@@ -938,6 +1162,5 @@ public class FuncCtx : DynValRefcounted
     get { return nodes_created; }
   }
 }
-
 
 } //namespace bhl

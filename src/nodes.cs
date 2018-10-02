@@ -1488,6 +1488,86 @@ public class LiteralNode : BehaviorTreeTerminalNode
   }
 }
 
+public class LiteralNumNode : BehaviorTreeTerminalNode
+{
+  double nval;
+
+  public LiteralNumNode(double nval)
+  {
+    this.nval = nval;
+  }
+
+  public override void init() 
+  {
+    var interp = Interpreter.instance;
+    interp.PushValue(DynVal.NewNum(nval));
+  }
+
+  public override string inspect()
+  {
+    return "(" + nval + ") ->";
+  }
+}
+
+public class LiteralStrNode : BehaviorTreeTerminalNode
+{
+  string sval;
+
+  public LiteralStrNode(string sval)
+  {
+    this.sval = sval;
+  }
+
+  public override void init() 
+  {
+    var interp = Interpreter.instance;
+    interp.PushValue(DynVal.NewStr(sval));
+  }
+
+  public override string inspect()
+  {
+    return "(" + sval + ") ->";
+  }
+}
+
+public class LiteralBoolNode : BehaviorTreeTerminalNode
+{
+  bool bval;
+
+  public LiteralBoolNode(bool bval)
+  {
+    this.bval = bval;
+  }
+
+  public override void init() 
+  {
+    var interp = Interpreter.instance;
+    interp.PushValue(DynVal.NewBool(bval));
+  }
+
+  public override string inspect()
+  {
+    return "(" + bval + ") ->";
+  }
+}
+
+public class LiteralNilNode : BehaviorTreeTerminalNode
+{
+  public LiteralNilNode()
+  {}
+
+  public override void init() 
+  {
+    var interp = Interpreter.instance;
+    interp.PushValue(DynVal.NewNil());
+  }
+
+  public override string inspect()
+  {
+    return "(null) ->";
+  }
+}
+
 public class UnaryOpNode : BehaviorTreeTerminalNode
 {
   EnumUnaryOp type;
@@ -1885,15 +1965,17 @@ abstract public class FuncNode : SequentialNode
 public class FuncNodeAST : FuncNode
 {
   public AST_FuncDecl decl;
+  public fbhl.AST_FuncDecl fdecl;
 
   bool inflated = false;
 
   protected DynValDict mem = new DynValDict();
 
-  public FuncNodeAST(AST_FuncDecl decl, FuncCtx fct)
+  public FuncNodeAST(AST_FuncDecl decl, fbhl.AST_FuncDecl fdecl, FuncCtx fct)
   {
     this.fct = fct;
     this.decl = decl;
+    this.fdecl = fdecl;
   }
 
   public override int GetTotalArgsNum()
@@ -1925,7 +2007,10 @@ public class FuncNodeAST : FuncNode
 
     var interp = Interpreter.instance;
     interp.PushNode(this, attach_as_child: false);
-    interp.VisitChildren(decl.block());
+    if(decl != null)
+      interp.VisitChildren(decl.block());
+    else
+      interp.Visit(fdecl.Children(1));
     interp.PopNode();
     inflated = true;
   }
@@ -2022,7 +2107,7 @@ public class FuncNodeAST : FuncNode
 public class FuncNodeLambda : FuncNodeAST
 {
   public FuncNodeLambda(FuncCtx fct)
-    : base((fct.fs as LambdaSymbol).decl, fct)
+    : base((fct.fs as LambdaSymbol).decl, (fct.fs as LambdaSymbol).fdecl.Base.Value, fct)
   {}
 
   public override void init()

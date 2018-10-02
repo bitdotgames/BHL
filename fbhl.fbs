@@ -242,6 +242,8 @@ table AST_JsonPair {
 table AST_PopValue {
 }
 
+root_type AST_Module;
+
 ///////////////////////////////////////////////////////
 
 table Func2Assets {

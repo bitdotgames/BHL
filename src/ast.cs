@@ -339,6 +339,16 @@ public class AST2FB : AST_Visitor
     fbb = new FlatBuffers.FlatBufferBuilder(128);
   }
 
+  public MemoryStream GetStream()
+  {
+    return fbb.DataBuffer.ToMemoryStream(0, fbb.Offset);
+  }
+
+  public byte[] GetBytes()
+  {
+    return fbb.DataBuffer.ToSizedArray();
+  }
+
   void DebugStats(AST_Base node)
   {
     //Console.WriteLine("NODE " + node.GetType().Name + " " + fbb.Offset);
@@ -358,9 +368,9 @@ public class AST2FB : AST_Visitor
       fbhl.AST_Module.AddName(fbb, name.Value);
     if(children != null)
       fbhl.AST_Module.AddChildren(fbb, children.Value);
-    var end = fbhl.AST_Module.EndAST_Module(fbb);
+    var m = fbhl.AST_Module.EndAST_Module(fbb);
 
-    fbb.Finish(end.Value);
+    fbhl.AST_Module.FinishAST_ModuleBuffer(fbb, m);
 
     DebugStats(node);
   }

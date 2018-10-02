@@ -229,6 +229,8 @@ public struct AST_Module : IFlatbufferObject
     int o = builder.EndObject();
     return new Offset<AST_Module>(o);
   }
+  public static void FinishAST_ModuleBuffer(FlatBufferBuilder builder, Offset<AST_Module> offset) { builder.Finish(offset.Value); }
+  public static void FinishSizePrefixedAST_ModuleBuffer(FlatBufferBuilder builder, Offset<AST_Module> offset) { builder.FinishSizePrefixed(offset.Value); }
 };
 
 public struct AST_UnaryOpExp : IFlatbufferObject

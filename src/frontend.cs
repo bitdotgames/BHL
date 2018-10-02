@@ -169,14 +169,19 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
-  static public void Source2Bin(Module module, Stream src, Stream dst, GlobalScope globs, ModuleRegistry mr)
+  static public void Source2Bin(Module module, Stream src, Stream dst, GlobalScope globs, ModuleRegistry mr, bool use_fb = false)
   {
     var ast = Source2AST(module, src, globs, mr);
-    //TODO: migrate to this one
-    var ast2fb = new AST2FB();
-    ast2fb.Visit(ast);
+    if(use_fb)
+    {
+      var ast2fb = new AST2FB();
+      ast2fb.Visit(ast);
+      var bytes = ast2fb.GetBytes();
+      dst.Write(bytes, 0, bytes.Length);
+    }
+    else
+      Util.Meta2Bin(ast, dst);
 
-    Util.Meta2Bin(ast, dst);
     //Console.WriteLine("MSG: " + dst.Length + " FB: " + ast2fb.fbb.Offset);
   }
 

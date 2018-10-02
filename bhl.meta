@@ -18,6 +18,7 @@ struct AST_Module extends AST
 end
 
 enum EnumUnaryOp
+  NONE = 0
   NEG  = 1
   NOT  = 2
 end
@@ -27,6 +28,7 @@ struct AST_UnaryOpExp extends AST
 end
 
 enum EnumBinaryOp
+  NONE    = 0
   AND     = 1
   OR      = 2
   ADD     = 3
@@ -97,18 +99,19 @@ struct AST_TypeCast extends AST
 end
 
 enum EnumCall
+  NONE          = 0
   VAR           = 1
   VARW          = 2
-  MVAR          = 10
-  MVARW         = 11
-  MVARREF       = 12
-  FUNC          = 3
-  MFUNC         = 30
-  ARR_IDX       = 4
-  ARR_IDXW      = 40
-  FUNC2VAR      = 5
-  FUNC_PTR      = 6
-  FUNC_PTR_POP  = 7
+  MVAR          = 3
+  MVARW         = 4
+  MVARREF       = 5
+  FUNC          = 6
+  MFUNC         = 7
+  ARR_IDX       = 8
+  ARR_IDXW      = 9
+  FUNC2VAR      = 10
+  FUNC_PTR      = 11
+  FUNC_PTR_POP  = 12
 end
 
 #TODO: this one is too generic? but on ther other side bulk processing 
@@ -130,6 +133,7 @@ struct AST_Break extends AST_Base
 end
 
 enum EnumLiteral
+  NONE  = 0
   NUM   = 1
   BOOL  = 2
   STR   = 3
@@ -149,7 +153,7 @@ struct AST_VarDecl extends AST
 end
 
 enum EnumBlock
-  FUNC            = 0 
+  NONE            = 0 
   SEQ             = 1 
   DEFER           = 2 
   PARAL           = 3 
@@ -158,7 +162,7 @@ enum EnumBlock
   FOREVER         = 6 
   IF              = 7 
   WHILE           = 8 
-  FOR             = 9 
+  FUNC            = 9
   UNTIL_FAILURE   = 10
   UNTIL_FAILURE_  = 11 #always returns success
   UNTIL_SUCCESS   = 12

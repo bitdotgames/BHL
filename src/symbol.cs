@@ -720,6 +720,7 @@ public class FuncSymbol : ScopedSymbol
 public class LambdaSymbol : FuncSymbol
 {
   public AST_LambdaDecl decl;
+  public fbhl.AST_LambdaDecl fdecl;
 
   List<FuncSymbol> fdecl_stack;
 
@@ -757,6 +758,13 @@ public class LambdaSymbol : FuncSymbol
     : base(null, decl.Name(), new FuncType(), parent)
   {
     this.decl = decl;
+    this.fdecl_stack = null;
+  }
+
+  public LambdaSymbol(BaseScope parent, fbhl.AST_LambdaDecl fdecl) 
+    : base(null, fdecl.Base.Value.Name, new FuncType(), parent)
+  {
+    this.fdecl = fdecl;
     this.fdecl_stack = null;
   }
 
@@ -834,6 +842,8 @@ public class LambdaSymbol : FuncSymbol
 public class FuncSymbolAST : FuncSymbol
 {
   public AST_FuncDecl decl;
+  public fbhl.AST_FuncDecl fdecl;
+
 #if BHL_FRONT
   //NOTE: storing fparams so it can be accessed later for misc things, e.g. default args
   public bhlParser.FuncParamsContext fparams;
@@ -877,6 +887,12 @@ public class FuncSymbolAST : FuncSymbol
     : base(null, decl.Name(), new FuncType(), parent)
   {
     this.decl = decl;
+  }
+
+  public FuncSymbolAST(BaseScope parent, fbhl.AST_FuncDecl fdecl)
+    : base(null, fdecl.Name, new FuncType(), parent)
+  {
+    this.fdecl = fdecl;
   }
 
   public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }

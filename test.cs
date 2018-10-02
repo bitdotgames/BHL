@@ -29,7 +29,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret("", bhl, use_fb: true);
     var node = intp.GetFuncNode("test");
     var n = ExtractNum(intp.ExecNode(node));
 
@@ -17260,14 +17260,14 @@ func Unit FindUnit(Vec3 pos, float radius) {
     AssertTrue(idx != -1, "Error message is: " + err.Message);
   }
 
-  static Interpreter Interpret(string fpath, string src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false)
+  static Interpreter Interpret(string fpath, string src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false, bool use_fb = false)
   {
     var dict = new Dictionary<string, string>();
     dict.Add(fpath, src);
-    return Interpret(dict, globs, mreg, mloader, show_ast);
+    return Interpret(dict, globs, mreg, mloader, show_ast, use_fb);
   }
 
-  static Interpreter Interpret(Dictionary<string, string> fpath2src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false)
+  static Interpreter Interpret(Dictionary<string, string> fpath2src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false, bool use_fb = false)
   {
     Util.DEBUG = true;
 
@@ -17292,14 +17292,22 @@ func Unit FindUnit(Vec3 pos, float radius) {
     {
       var bin = new MemoryStream();
       var mod = new bhl.Module(item.Key, item.Key);
-      Frontend.Source2Bin(mod, item.Value.ToStream(), bin, globs, mreg);
+      Frontend.Source2Bin(mod, item.Value.ToStream(), bin, globs, mreg, use_fb);
       bin.Position = 0;
 
-      var ast = Util.Bin2Meta<AST_Module>(bin);
-      if(show_ast)
-        ASTDump(ast);
-
-      intp.Interpret(ast);
+      if(!use_fb)
+      {
+        var ast = Util.Bin2Meta<AST_Module>(bin);
+        if(show_ast)
+          ASTDump(ast);
+        intp.Interpret(ast);
+      }
+      else
+      {
+        var bb = new FlatBuffers.ByteBuffer(bin.ToArray());
+        var ast = fbhl.AST_Module.GetRootAsAST_Module(bb);
+        intp.Interpret(ast);
+      }
     }
 
     return intp;
