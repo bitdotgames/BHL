@@ -489,15 +489,15 @@ public struct AST_EnumDecl : IFlatbufferObject
   public uint Nname { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
   public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
-  public EnumItem? Children(int j) { int o = __p.__offset(8); return o != 0 ? (EnumItem?)(new EnumItem()).__assign(__p.__vector(o) + j * 8, __p.bb) : null; }
-  public int ChildrenLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public EnumItem? Items(int j) { int o = __p.__offset(8); return o != 0 ? (EnumItem?)(new EnumItem()).__assign(__p.__vector(o) + j * 8, __p.bb) : null; }
+  public int ItemsLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
 
   public static Offset<AST_EnumDecl> CreateAST_EnumDecl(FlatBufferBuilder builder,
       uint nname = 0,
       StringOffset nameOffset = default(StringOffset),
-      VectorOffset childrenOffset = default(VectorOffset)) {
+      VectorOffset itemsOffset = default(VectorOffset)) {
     builder.StartObject(3);
-    AST_EnumDecl.AddChildren(builder, childrenOffset);
+    AST_EnumDecl.AddItems(builder, itemsOffset);
     AST_EnumDecl.AddName(builder, nameOffset);
     AST_EnumDecl.AddNname(builder, nname);
     return AST_EnumDecl.EndAST_EnumDecl(builder);
@@ -506,8 +506,8 @@ public struct AST_EnumDecl : IFlatbufferObject
   public static void StartAST_EnumDecl(FlatBufferBuilder builder) { builder.StartObject(3); }
   public static void AddNname(FlatBufferBuilder builder, uint nname) { builder.AddUint(0, nname, 0); }
   public static void AddName(FlatBufferBuilder builder, StringOffset nameOffset) { builder.AddOffset(1, nameOffset.Value, 0); }
-  public static void AddChildren(FlatBufferBuilder builder, VectorOffset childrenOffset) { builder.AddOffset(2, childrenOffset.Value, 0); }
-  public static void StartChildrenVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(8, numElems, 4); }
+  public static void AddItems(FlatBufferBuilder builder, VectorOffset itemsOffset) { builder.AddOffset(2, itemsOffset.Value, 0); }
+  public static void StartItemsVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(8, numElems, 4); }
   public static Offset<AST_EnumDecl> EndAST_EnumDecl(FlatBufferBuilder builder) {
     int o = builder.EndObject();
     return new Offset<AST_EnumDecl>(o);

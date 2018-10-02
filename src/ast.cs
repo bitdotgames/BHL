@@ -336,7 +336,7 @@ public class AST2FB : AST_Visitor
 
   public AST2FB()
   {
-    fbb = new FlatBuffers.FlatBufferBuilder(1);
+    fbb = new FlatBuffers.FlatBufferBuilder(128);
   }
 
   void DebugStats(AST_Base node)
@@ -346,11 +346,9 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_Module node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-    
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     var name = MakeString(node.name);
 
@@ -369,23 +367,21 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_Interim node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     fbhl.AST_Interim.StartAST_Interim(fbb);
     if(children != null)
       fbhl.AST_Interim.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_Interim.EndAST_Interim(fbb));
+    AddSelector(fbhl.AST_Interim.EndAST_Interim(fbb));
 
     DebugStats(node);
   }
 
   public override void DoVisit(AST_Import node)
   {
-    NewChild(fbhl.AST_Import.CreateAST_Import(
+    AddSelector(fbhl.AST_Import.CreateAST_Import(
       fbb, 
       fbhl.AST_Import.CreateModulesVector(fbb, node.modules.ToArray())
     ));
@@ -395,13 +391,11 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
+    var children = EndSelectorVector();
 
-    var children = EndChildrenVector();
-
-    NewChild(MakeFuncDecl(node, children));
+    AddSelector(MakeFuncDecl(node, children));
 
     DebugStats(node);
   }
@@ -427,28 +421,48 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_LambdaDecl node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
+    var children = EndSelectorVector();  
 
-    var children = EndChildrenVector();  
+    FlatBuffers.VectorOffset? useparams = null;
+    if(node.useparams.Count > 0)
+    {
+      var tmp = new List<FlatBuffers.Offset<fbhl.UseParam>>();
+      for(int i=0;i<node.useparams.Count;++i)
+        tmp.Add(MakeUseParam(node.useparams[i]));
+
+      useparams = fbhl.AST_LambdaDecl.CreateUseparamsVector(fbb, tmp.ToArray());
+    }
     
     var base_decl = MakeFuncDecl(node, children);
 
     fbhl.AST_LambdaDecl.StartAST_LambdaDecl(fbb);
     fbhl.AST_LambdaDecl.AddBase(fbb, base_decl);
-    NewChild(fbhl.AST_LambdaDecl.EndAST_LambdaDecl(fbb));
+    if(useparams != null)
+      fbhl.AST_LambdaDecl.AddUseparams(fbb, useparams.Value);
+    AddSelector(fbhl.AST_LambdaDecl.EndAST_LambdaDecl(fbb));
 
     DebugStats(node);
   }
 
+  FlatBuffers.Offset<fbhl.UseParam> MakeUseParam(AST_UseParam up)
+  {
+    var name = MakeString(up.name);
+
+    fbhl.UseParam.StartUseParam(fbb);
+    fbhl.UseParam.AddNname(fbb, up.nname);
+    if(name != null)
+      fbhl.UseParam.AddName(fbb, name.Value);
+
+    return fbhl.UseParam.EndUseParam(fbb);
+  }
+
   public override void DoVisit(AST_ClassDecl node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();  
+    var children = EndSelectorVector();  
 
     var name = MakeString(node.name);
 
@@ -463,44 +477,59 @@ public class AST2FB : AST_Visitor
       fbhl.AST_ClassDecl.AddParent(fbb, parent.Value);
     if(children != null)
       fbhl.AST_ClassDecl.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_ClassDecl.EndAST_ClassDecl(fbb));
+    AddSelector(fbhl.AST_ClassDecl.EndAST_ClassDecl(fbb));
 
     DebugStats(node);
   }
 
   public override void DoVisit(AST_EnumDecl node)
   {
-    VisitChildren(node);
+    var name = MakeString(node.name);
+
+    //EnumItem is a struct not a table so it's inlined
+    fbhl.AST_EnumDecl.StartItemsVector(fbb, node.children.Count);
+    for(int i=0;i<node.children.Count;++i)
+    {
+      var tmp = (AST_EnumItem)node.children[i];
+      fbhl.EnumItem.CreateEnumItem(fbb, tmp.nname, tmp.value);
+    }
+    var items = fbb.EndVector();
+
+    fbhl.AST_EnumDecl.StartAST_EnumDecl(fbb);
+    fbhl.AST_EnumDecl.AddNname(fbb, node.nname);
+    if(name != null)
+      fbhl.AST_EnumDecl.AddName(fbb, name.Value);
+    fbhl.AST_EnumDecl.AddItems(fbb, items);
+    AddSelector(fbhl.AST_EnumDecl.EndAST_EnumDecl(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_EnumItem node)
   {
+    //doing nothing here, it's handled above
   }
 
   public override void DoVisit(AST_Block node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     fbhl.AST_Block.StartAST_Block(fbb);
     fbhl.AST_Block.AddType(fbb, (fbhl.EnumBlock)node.type);
     if(children != null)
       fbhl.AST_Block.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_Block.EndAST_Block(fbb));
+    AddSelector(fbhl.AST_Block.EndAST_Block(fbb));
 
     DebugStats(node);
   }
 
   public override void DoVisit(AST_TypeCast node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     var type = MakeString(node.type);
 
@@ -510,16 +539,14 @@ public class AST2FB : AST_Visitor
       fbhl.AST_TypeCast.AddType(fbb, type.Value);
     if(children != null)
       fbhl.AST_TypeCast.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_TypeCast.EndAST_TypeCast(fbb));
+    AddSelector(fbhl.AST_TypeCast.EndAST_TypeCast(fbb));
   }
 
   public override void DoVisit(AST_Call node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     var name = MakeString(node.name);
 
@@ -535,7 +562,7 @@ public class AST2FB : AST_Visitor
     fbhl.AST_Call.AddLineNum(fbb, node.line_num);
     if(children != null)
       fbhl.AST_Call.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_Call.EndAST_Call(fbb));
+    AddSelector(fbhl.AST_Call.EndAST_Call(fbb));
 
     DebugStats(node);
   }
@@ -543,21 +570,19 @@ public class AST2FB : AST_Visitor
   public override void DoVisit(AST_Inc node)
   {
     fbhl.AST_Inc.StartAST_Inc(fbb);
-    NewChild(fbhl.AST_Inc.EndAST_Inc(fbb));
+    AddSelector(fbhl.AST_Inc.EndAST_Inc(fbb));
   }
 
   public override void DoVisit(AST_Return node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     fbhl.AST_Return.StartAST_Return(fbb);
     if(children != null)
       fbhl.AST_Return.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_Return.EndAST_Return(fbb));
+    AddSelector(fbhl.AST_Return.EndAST_Return(fbb));
 
     DebugStats(node);
   }
@@ -565,33 +590,33 @@ public class AST2FB : AST_Visitor
   public override void DoVisit(AST_Break node)
   {
     fbhl.AST_Break.StartAST_Break(fbb);
-    NewChild(fbhl.AST_Break.EndAST_Break(fbb));
+    AddSelector(fbhl.AST_Break.EndAST_Break(fbb));
   }
 
   public override void DoVisit(AST_PopValue node)
   {
     fbhl.AST_PopValue.StartAST_PopValue(fbb);
-    NewChild(fbhl.AST_PopValue.EndAST_PopValue(fbb));
+    AddSelector(fbhl.AST_PopValue.EndAST_PopValue(fbb));
   }
 
   public override void DoVisit(AST_Literal node)
   {
     if(node.type == EnumLiteral.STR)
     {
-      NewChild(fbhl.AST_LiteralStr.CreateAST_LiteralStr(fbb, fbb.CreateString(node.sval)));
+      AddSelector(fbhl.AST_LiteralStr.CreateAST_LiteralStr(fbb, fbb.CreateString(node.sval)));
     }
     else if(node.type == EnumLiteral.NUM)
     {
-      NewChild(fbhl.AST_LiteralNum.CreateAST_LiteralNum(fbb, node.nval));
+      AddSelector(fbhl.AST_LiteralNum.CreateAST_LiteralNum(fbb, node.nval));
     }
     else if(node.type == EnumLiteral.BOOL)
     {
-      NewChild(fbhl.AST_LiteralBool.CreateAST_LiteralBool(fbb, node.nval == 1));
+      AddSelector(fbhl.AST_LiteralBool.CreateAST_LiteralBool(fbb, node.nval == 1));
     }
     else if(node.type == EnumLiteral.NIL)
     {
       fbhl.AST_LiteralNil.StartAST_LiteralNil(fbb);
-      NewChild(fbhl.AST_LiteralNil.EndAST_LiteralNil(fbb));
+      AddSelector(fbhl.AST_LiteralNil.EndAST_LiteralNil(fbb));
     }
 
     DebugStats(node);
@@ -599,37 +624,35 @@ public class AST2FB : AST_Visitor
 
   public override void DoVisit(AST_BinaryOpExp node)
   {
-    DeclChildren();
+    StartSelectorVector();
 
     VisitChildren(node);
 
-    NewChild(fbhl.AST_BinaryOpExp.CreateAST_BinaryOpExp(
+    AddSelector(fbhl.AST_BinaryOpExp.CreateAST_BinaryOpExp(
       fbb, 
       (fbhl.EnumBinaryOp)node.type,
-      EndChildrenVector().Value
+      EndSelectorVector().Value
     ));
   }
 
   public override void DoVisit(AST_UnaryOpExp node)
   {
-    DeclChildren();
+    StartSelectorVector();
 
     VisitChildren(node);
 
-    NewChild(fbhl.AST_UnaryOpExp.CreateAST_UnaryOpExp(
+    AddSelector(fbhl.AST_UnaryOpExp.CreateAST_UnaryOpExp(
       fbb, 
       (fbhl.EnumUnaryOp)node.type,
-      EndChildrenVector().Value
+      EndSelectorVector().Value
     ));
   }
 
   public override void DoVisit(AST_New node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     var type = MakeString(node.type);
 
@@ -639,16 +662,14 @@ public class AST2FB : AST_Visitor
       fbhl.AST_New.AddType(fbb, type.Value);
     if(children != null)
       fbhl.AST_New.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_New.EndAST_New(fbb));
+    AddSelector(fbhl.AST_New.EndAST_New(fbb));
   }
 
   public override void DoVisit(AST_VarDecl node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     var name = MakeString(node.name);
 
@@ -659,52 +680,46 @@ public class AST2FB : AST_Visitor
     fbhl.AST_VarDecl.AddNtype(fbb, node.ntype);
     if(children != null)
       fbhl.AST_VarDecl.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_VarDecl.EndAST_VarDecl(fbb));
+    AddSelector(fbhl.AST_VarDecl.EndAST_VarDecl(fbb));
 
     DebugStats(node);
   }
 
   public override void DoVisit(AST_JsonObj node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     fbhl.AST_JsonObj.StartAST_JsonObj(fbb);
     fbhl.AST_JsonObj.AddNtype(fbb, node.ntype);
     if(children != null)
       fbhl.AST_JsonObj.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_JsonObj.EndAST_JsonObj(fbb));
+    AddSelector(fbhl.AST_JsonObj.EndAST_JsonObj(fbb));
 
     DebugStats(node);
   }
 
   public override void DoVisit(AST_JsonArr node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     fbhl.AST_JsonArr.StartAST_JsonArr(fbb);
     fbhl.AST_JsonArr.AddNtype(fbb, node.ntype);
     if(children != null)
       fbhl.AST_JsonArr.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_JsonArr.EndAST_JsonArr(fbb));
+    AddSelector(fbhl.AST_JsonArr.EndAST_JsonArr(fbb));
 
     DebugStats(node);
   }
 
   public override void DoVisit(AST_JsonPair node)
   {
-    DeclChildren();
-
+    StartSelectorVector();
     VisitChildren(node);
-
-    var children = EndChildrenVector();
+    var children = EndSelectorVector();
 
     var name = MakeString(node.name);
 
@@ -715,18 +730,18 @@ public class AST2FB : AST_Visitor
     fbhl.AST_JsonPair.AddScopeNtype(fbb, node.scope_ntype);
     if(children != null)
       fbhl.AST_JsonPair.AddChildren(fbb, children.Value);
-    NewChild(fbhl.AST_JsonPair.EndAST_JsonPair(fbb));
+    AddSelector(fbhl.AST_JsonPair.EndAST_JsonPair(fbb));
   }
 
   public override void DoVisit(AST_JsonArrAddItem node)
   {
     fbhl.AST_JsonArrAddItem.StartAST_JsonArrAddItem(fbb);
-    NewChild(fbhl.AST_JsonArrAddItem.EndAST_JsonArrAddItem(fbb));
+    AddSelector(fbhl.AST_JsonArrAddItem.EndAST_JsonArrAddItem(fbb));
   }
 
   ///////////////////////////////////////////////////////////
 
-  void DeclChildren()
+  void StartSelectorVector()
   {
     child_sel_stack.Push(new List<ChildSelector>());
   }
@@ -739,7 +754,7 @@ public class AST2FB : AST_Visitor
     return fbb.CreateString(str);
   }
 
-  FlatBuffers.VectorOffset? EndChildrenVector()
+  FlatBuffers.VectorOffset? EndSelectorVector()
   {
     var selectors = child_sel_stack.Pop();
     if(selectors.Count == 0)
@@ -761,7 +776,7 @@ public class AST2FB : AST_Visitor
     return fbb.CreateVectorOfTables(res);
   }
 
-  void NewChild<T>(FlatBuffers.Offset<T> offset) where T : struct
+  void AddSelector<T>(FlatBuffers.Offset<T> offset) where T : struct
   {
     child_sel_stack.Peek().Add(MatchToSelector(offset));
   }
@@ -785,6 +800,7 @@ public class AST2FB : AST_Visitor
     { typeof(fbhl.AST_FuncDecl),      fbhl.AST_OneOf.AST_FuncDecl},      
     { typeof(fbhl.AST_LambdaDecl),    fbhl.AST_OneOf.AST_LambdaDecl},    
     { typeof(fbhl.AST_ClassDecl),     fbhl.AST_OneOf.AST_ClassDecl},     
+    { typeof(fbhl.AST_EnumDecl),      fbhl.AST_OneOf.AST_EnumDecl},     
     { typeof(fbhl.AST_Inc),           fbhl.AST_OneOf.AST_Inc},           
     { typeof(fbhl.AST_TypeCast),      fbhl.AST_OneOf.AST_TypeCast},      
     { typeof(fbhl.AST_JsonObj),       fbhl.AST_OneOf.AST_JsonObj},       

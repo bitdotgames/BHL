@@ -118,7 +118,7 @@ struct EnumItem {
 table AST_EnumDecl {
   nname     : uint32;
   name      : string;//for debug
-  children  : [EnumItem];
+  items     : [EnumItem];
 }
 
 table UseParam {

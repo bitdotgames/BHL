@@ -624,19 +624,6 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  bool IsCallToSelf(AST_Call ast, uint ntype)
-  {
-    //Console.WriteLine("CALL TYPE: " + ast.type + " " + ast.Name());
-
-    if(ast.type == EnumCall.MVAR && ast.scope_ntype == ntype)
-      return true;
-
-    if(ast.type == EnumCall.MFUNC && ast.scope_ntype == ntype)
-      return true;
-
-    return false;
-  }
-
   public override void DoVisit(AST_Return node)
   {
     //NOTE: expression comes first
