@@ -1665,7 +1665,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var ast = AST_Util.New_ClassDecl(class_name, parent == null ? new HashedName() : parent.name);
 
-    var symb = new ClassSymbolAST(class_name, ast, parent);
+    var symb = new ClassSymbolAST(class_name, parent);
     if(decls_only)
       curr_module.symbols.define(symb);
     locals.define(symb);

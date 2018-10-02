@@ -381,7 +381,7 @@ public class FuncCallNode : FuncBaseCallNode
         else
         {
           var decl_arg = fnode.GetFDeclArg(required_args_num + default_arg_idx);
-          interp.Visit(decl_arg.Value.V<fbhl.AST_Interim>().Value.Children(0));
+          interp.Visit(decl_arg.Value.V<fbhl.AST_VarDecl>().Value.Children(0));
         }
       }
       else if(p < passed_args_num)
@@ -1432,14 +1432,18 @@ public class ConstructNode : BehaviorTreeTerminalNode
 
 public class CallFuncPtr : FuncBaseCallNode
 {
-  public CallFuncPtr(AST_Call ast)
-    : base(ast)
+  public CallFuncPtr(AST_Call ast, fbhl.AST_Call fast = default(fbhl.AST_Call))
+    : base(ast, fast)
   {}
 
   public override void init() 
   {
     var interp = Interpreter.instance;
-    var val = ast.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(ast.Name()); 
+    DynVal val;
+    if(ast != null)
+      val = ast.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(ast.Name()); 
+    else
+      val = fast.Type == fbhl.EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(fast.Name()); 
 
     var fct = ((FuncCtx)val.obj);
     //NOTE: Func ctx may be shared and we need to make sure 
@@ -1458,9 +1462,18 @@ public class CallFuncPtr : FuncBaseCallNode
     if(children.Count == 0)
     {
       interp.PushNode(this);
-      int cargs_num = new FuncArgsInfo(ast.cargs_bits).CountArgs();
-      for(int i=0;i<cargs_num;++i)
-        interp.Visit(ast.children[i]);
+      if(ast != null)
+      {
+        int cargs_num = new FuncArgsInfo(ast.cargs_bits).CountArgs();
+        for(int i=0;i<cargs_num;++i)
+          interp.Visit(ast.children[i]);
+      }
+      else
+      {
+        int cargs_num = new FuncArgsInfo(fast.CargsBits).CountArgs();
+        for(int i=0;i<cargs_num;++i)
+          interp.Visit(fast.Children(i));
+      }
       interp.PopNode();
 
       children.Add(func_node);
@@ -1487,10 +1500,20 @@ public class CallFuncPtr : FuncBaseCallNode
 
   public override string inspect()
   {
-    if(ast.type == EnumCall.FUNC_PTR_POP)
-      return "<-";
+    if(ast != null)
+    {
+      if(ast.type == EnumCall.FUNC_PTR_POP)
+        return "<-";
+      else
+        return ""+ast.name;
+    }
     else
-      return ""+ast.name;
+    {
+      if(fast.Type == fbhl.EnumCall.FUNC_PTR_POP)
+        return "<-";
+      else
+        return ""+fast.Name;
+    }
   }
 }
 
@@ -1725,11 +1748,11 @@ public class BinaryOpNode : BehaviorTreeTerminalNode
 
 public class TypeCastNode : BehaviorTreeTerminalNode
 {
-  AST_TypeCast node;
+  uint ntype;
 
-  public TypeCastNode(AST_TypeCast node)
+  public TypeCastNode(uint ntype)
   {
-    this.node = node;
+    this.ntype = ntype;
   }
 
   public override void init()
@@ -1740,11 +1763,12 @@ public class TypeCastNode : BehaviorTreeTerminalNode
     var res = val.ValueClone();
 
     //TODO: add better casting support
-    if(node.ntype == SymbolTable._int.name.n)
+    if(ntype == SymbolTable._int.name.n)
     {
       res.SetNum((int)val.num);
     }
-    else if(node.ntype == SymbolTable._string.name.n && val.type != DynVal.STRING)
+    else if(ntype == SymbolTable._string.name.n && 
+            val.type != DynVal.STRING)
     {
       res.SetStr("" + val.num);
     }
@@ -1754,7 +1778,7 @@ public class TypeCastNode : BehaviorTreeTerminalNode
 
   public override string inspect()
   {
-    return "(" + node.type + ") <- ->";
+    return "(" + ntype + ") <- ->";
   }
 }
 
@@ -2034,7 +2058,8 @@ public class FuncNodeAST : FuncNode
     }
     else 
     {
-      return fdecl.Children(0).Value.V<fbhl.AST_Interim>().Value.ChildrenLength;
+      var fparams = fdecl.Children(0).Value.V<fbhl.AST_Interim>().Value;
+      return fparams.ChildrenLength;
     }
   }
 
@@ -2191,7 +2216,7 @@ public class FuncNodeAST : FuncNode
 public class FuncNodeLambda : FuncNodeAST
 {
   public FuncNodeLambda(FuncCtx fct)
-    : base((fct.fs as LambdaSymbol).decl, (fct.fs as LambdaSymbol).fdecl.Base.Value, fct)
+    : base((fct.fs as LambdaSymbol).decl, (fct.fs as LambdaSymbol).fdecl, fct)
   {}
 
   public override void init()
@@ -2203,7 +2228,10 @@ public class FuncNodeLambda : FuncNodeAST
 
   public override string inspect()
   {
-    return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).useparams.Count + "x =";
+    if(this.decl != null)
+      return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).useparams.Count + "x =";
+    else
+      return this.fdecl.Name() + " use " + this.fdecl.UseparamsLength + "x =";
   }
 }
 
@@ -2269,11 +2297,25 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     {
       //Console.WriteLine("PUSH LCTX " + this.GetHashCode() + " " + ldecl.useparams.Count);
       //setting use params to its own memory scope
-      for(int i=0;i<lmb.decl.useparams.Count;++i)
+      if(lmb.decl != null)
       {
-        var up = lmb.decl.useparams[i];
-        var val = interp.GetScopeValue(up.Name());
-        fct.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        for(int i=0;i<lmb.decl.useparams.Count;++i)
+        {
+          var up = lmb.decl.useparams[i];
+          var upname = up.Name();
+          var val = interp.GetScopeValue(upname);
+          fct.mem.Set(upname, up.IsRef() ? val : val.ValueClone());
+        }
+      }
+      else
+      {
+        for(int i=0;i<lmb.fdecl.UseparamsLength;++i)
+        {
+          var up = lmb.fdecl.Useparams(i).Value;
+          var upname = up.Name();
+          var val = interp.GetScopeValue(upname);
+          fct.mem.Set(upname, up.IsRef() ? val : val.ValueClone());
+        }
       }
     }
 

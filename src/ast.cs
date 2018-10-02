@@ -268,19 +268,45 @@ public static class Extensions
     int num = 0;
     for(int i=0;i<fparams.ChildrenLength;++i)
     {
-      //var fc = fparams.Children(i).Value.V<fbhl.AST_Interim>();
-      //if(fc != null && fc.Value.ChildrenLength > 0)
-      //  ++num;
-
-      var fc = fparams.Children(i);
-      if(fc != null)
+      var fc = fparams.Children(i).Value.V<fbhl.AST_VarDecl>();
+      if(fc != null && fc.Value.ChildrenLength > 0)
         ++num;
     }
     return num;
   }
+
+  static public bhl.HashedName Name(this AST_New n)
+  {
+    return new bhl.HashedName(n.Ntype, n.Type);
+  }
+
+  static public bhl.HashedName Name(this AST_ClassDecl n)
+  {
+    return new bhl.HashedName(n.Nname, n.Name);
+  }
+
+  static public bhl.HashedName ParentName(this AST_ClassDecl n)
+  {
+    return new bhl.HashedName(n.Nparent, n.Parent);
+  }
+
+  static public bhl.HashedName Name(this AST_JsonPair n)
+  {
+    return new bhl.HashedName(n.Nname, n.Name);
+  }
+
+  static public bool IsRef(this UseParam n)
+  {
+    return (n.Nname & (1u << 29)) != 0; 
+  }
+
+  static public bhl.HashedName Name(this UseParam n)
+  {
+    return new bhl.HashedName(n.Nname & 0xFFFFFFF, n.Name);
+  }
 }
 
-}
+} //namespace fbhl
 
 namespace bhl {
 
@@ -473,7 +499,7 @@ public class AST2FB : AST_Visitor
     DebugStats(node);
   }
 
-  FlatBuffers.Offset<fbhl.AST_FuncDecl> MakeFuncDecl(AST_FuncDecl node, FlatBuffers.VectorOffset? children)
+  FlatBuffers.Offset<fbhl.AST_FuncDecl> MakeFuncDecl(AST_FuncDecl node, FlatBuffers.VectorOffset? children, FlatBuffers.VectorOffset? useparams = null)
   {
     var type = MakeString(node.type);
 
@@ -489,6 +515,8 @@ public class AST2FB : AST_Visitor
       fbhl.AST_FuncDecl.AddChildren(fbb, children.Value);
     if(name != null)
       fbhl.AST_FuncDecl.AddName(fbb, name.Value);
+    if(useparams != null)
+      fbhl.AST_FuncDecl.AddUseparams(fbb, useparams.Value);
     return fbhl.AST_FuncDecl.EndAST_FuncDecl(fbb);
   }
 
@@ -505,16 +533,12 @@ public class AST2FB : AST_Visitor
       for(int i=0;i<node.useparams.Count;++i)
         tmp.Add(MakeUseParam(node.useparams[i]));
 
-      useparams = fbhl.AST_LambdaDecl.CreateUseparamsVector(fbb, tmp.ToArray());
+      useparams = fbhl.AST_FuncDecl.CreateUseparamsVector(fbb, tmp.ToArray());
     }
     
-    var base_decl = MakeFuncDecl(node, children);
+    var func_decl = MakeFuncDecl(node, children, useparams);
 
-    fbhl.AST_LambdaDecl.StartAST_LambdaDecl(fbb);
-    fbhl.AST_LambdaDecl.AddBase(fbb, base_decl);
-    if(useparams != null)
-      fbhl.AST_LambdaDecl.AddUseparams(fbb, useparams.Value);
-    AddSelector(fbhl.AST_LambdaDecl.EndAST_LambdaDecl(fbb));
+    AddSelector(func_decl);
 
     DebugStats(node);
   }
@@ -871,7 +895,6 @@ public class AST2FB : AST_Visitor
     { typeof(fbhl.AST_Import),        fbhl.AST_OneOf.AST_Import},        
     { typeof(fbhl.AST_VarDecl),       fbhl.AST_OneOf.AST_VarDecl},       
     { typeof(fbhl.AST_FuncDecl),      fbhl.AST_OneOf.AST_FuncDecl},      
-    { typeof(fbhl.AST_LambdaDecl),    fbhl.AST_OneOf.AST_LambdaDecl},    
     { typeof(fbhl.AST_ClassDecl),     fbhl.AST_OneOf.AST_ClassDecl},     
     { typeof(fbhl.AST_EnumDecl),      fbhl.AST_OneOf.AST_EnumDecl},     
     { typeof(fbhl.AST_Inc),           fbhl.AST_OneOf.AST_Inc},           

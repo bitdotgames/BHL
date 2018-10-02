@@ -720,7 +720,7 @@ public class FuncSymbol : ScopedSymbol
 public class LambdaSymbol : FuncSymbol
 {
   public AST_LambdaDecl decl;
-  public fbhl.AST_LambdaDecl fdecl;
+  public fbhl.AST_FuncDecl fdecl;
 
   List<FuncSymbol> fdecl_stack;
 
@@ -761,8 +761,8 @@ public class LambdaSymbol : FuncSymbol
     this.fdecl_stack = null;
   }
 
-  public LambdaSymbol(BaseScope parent, fbhl.AST_LambdaDecl fdecl) 
-    : base(null, fdecl.Base.Value.Name, new FuncType(), parent)
+  public LambdaSymbol(BaseScope parent, fbhl.AST_FuncDecl fdecl) 
+    : base(null, fdecl.Name, new FuncType(), parent)
   {
     this.fdecl = fdecl;
     this.fdecl_stack = null;
@@ -964,12 +964,9 @@ public class ClassBindSymbol : ClassSymbol
 
 public class ClassSymbolAST : ClassSymbol
 {
-  public AST_ClassDecl decl;
-
-  public ClassSymbolAST(HashedName name, AST_ClassDecl decl, ClassSymbol parent = null)
+  public ClassSymbolAST(HashedName name, ClassSymbol parent = null)
     : base(null, name, parent == null ? null : new TypeRef(parent), null, null)
   {
-    this.decl = decl;
     this.creator = ClassCreator;
   }
 
@@ -987,7 +984,7 @@ public class ClassSymbolAST : ClassSymbol
       res.SetObj(tb);
     }
     //NOTE: storing class name hash in _num attribute
-    res._num = decl.nname; 
+    res._num = this.name.n; 
 
     for(int i=0;i<members.Count;++i)
     {
@@ -1496,7 +1493,8 @@ public class SymbolsDictionary
   {
     if(hash2symb.TryGetValue(key.n, out val))
       return true;
-    return str2symb.TryGetValue(key.s, out val);
+    return string.IsNullOrEmpty(key.s) ? 
+      false : str2symb.TryGetValue(key.s, out val);
   }
 
   public Symbol Find(HashedName key)

@@ -391,10 +391,27 @@ public class Interpreter : AST_Visitor
   public void Visit(fbhl.AST_FuncDecl ast)
   {
     var name = ast.Name; 
-    CheckFuncIsUnique(name);
+    //regular func
+    if(ast.UseparamsLength == 0)
+    {
+      CheckFuncIsUnique(name);
 
-    var fn = new FuncSymbolAST(symbols, ast);
-    symbols.define(fn);
+      var fn = new FuncSymbolAST(symbols, ast);
+      symbols.define(fn);
+    }
+    //lambda
+    else
+    {
+      var lmb = symbols.resolve(name) as LambdaSymbol;
+      if(lmb == null)
+      {
+        CheckFuncIsUnique(name);
+        lmb = new LambdaSymbol(symbols, ast);
+        symbols.define(lmb);
+      }
+
+      curr_node.addChild(new PushFuncCtxNode(lmb));
+    }
   }
 
   public void Visit(fbhl.AST_Block ast)
@@ -557,49 +574,49 @@ public class Interpreter : AST_Visitor
     {
       curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.WRITE));
     }
-    //else if(type == fbhl.EnumCall.MVAR)
-    //{
-    //  curr_node.addChild(new MVarAccessNode(ast.Scope_ntype, ast.Name()));
-    //}
-    //else if(type == fbhl.EnumCall.MVARW)
-    //{
-    //  curr_node.addChild(new MVarAccessNode(ast.Scope_ntype, ast.Name(), MVarAccessNode.WRITE));
-    //}
-    //else if(type == fbhl.EnumCall.MVARREF)
-    //{
-    //  curr_node.addChild(new MVarAccessNode(ast.Scope_ntype, ast.Name(), MVarAccessNode.READ_REF));
-    //}
+    else if(type == fbhl.EnumCall.MVAR)
+    {
+      curr_node.addChild(new MVarAccessNode(ast.ScopeNtype, ast.Name()));
+    }
+    else if(type == fbhl.EnumCall.MVARW)
+    {
+      curr_node.addChild(new MVarAccessNode(ast.ScopeNtype, ast.Name(), MVarAccessNode.WRITE));
+    }
+    else if(type == fbhl.EnumCall.MVARREF)
+    {
+      curr_node.addChild(new MVarAccessNode(ast.ScopeNtype, ast.Name(), MVarAccessNode.READ_REF));
+    }
     else if(type == fbhl.EnumCall.FUNC || type == fbhl.EnumCall.MFUNC)
     {
       AddFuncCallNode(null, ast);
     }
-    //else if(type == fbhl.EnumCall.FUNC_PTR || type == fbhl.EnumCall.FUNC_PTR_POP)
-    //{
-    //  curr_node.addChild(new CallFuncPtr(ast));
-    //}
-    //else if(type == fbhl.EnumCall.FUNC2VAR)
-    //{
-    //  var s = symbols.resolve(ast.nname()) as FuncSymbol;
-    //  if(s == null)
-    //    throw new Exception("Could not find func:" + ast.Name());
-    //  curr_node.addChild(new PushFuncCtxNode(s));
-    //}
-    //else if(type == fbhl.EnumCall.ARR_IDX)
-    //{
-    //  var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
-    //  if(bnd == null)
-    //    throw new Exception("Could not find class binding: " + ast.scope_ntype);
+    else if(type == fbhl.EnumCall.FUNC_PTR || type == fbhl.EnumCall.FUNC_PTR_POP)
+    {
+      curr_node.addChild(new CallFuncPtr(null, ast));
+    }
+    else if(type == fbhl.EnumCall.FUNC2VAR)
+    {
+      var s = symbols.resolve(ast.nname()) as FuncSymbol;
+      if(s == null)
+        throw new Exception("Could not find func:" + ast.Name());
+      curr_node.addChild(new PushFuncCtxNode(s));
+    }
+    else if(type == fbhl.EnumCall.ARR_IDX)
+    {
+      var bnd = symbols.resolve(ast.ScopeNtype) as ArrayTypeSymbol;
+      if(bnd == null)
+        throw new Exception("Could not find class binding: " + ast.ScopeNtype);
 
-    //  curr_node.addChild(bnd.Create_At());
-    //}
-    //else if(type == fbhl.EnumCall.ARR_IDXW)
-    //{
-    //  var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
-    //  if(bnd == null)
-    //    throw new Exception("Could not find class binding: " + ast.scope_ntype);
+      curr_node.addChild(bnd.Create_At());
+    }
+    else if(type == fbhl.EnumCall.ARR_IDXW)
+    {
+      var bnd = symbols.resolve(ast.ScopeNtype) as ArrayTypeSymbol;
+      if(bnd == null)
+        throw new Exception("Could not find class binding: " + ast.ScopeNtype);
 
-    //  curr_node.addChild(bnd.Create_SetAt());
-    //}
+      curr_node.addChild(bnd.Create_SetAt());
+    }
     else 
       throw new Exception("Unsupported call type: " + type);
   }
@@ -636,6 +653,96 @@ public class Interpreter : AST_Visitor
     }
   }
 
+  public void Visit(fbhl.AST_TypeCast ast)
+  {
+    for(int c=0;c<ast.ChildrenLength;++c)
+      Visit(ast.Children(c));
+    curr_node.addChild(new TypeCastNode(ast.Ntype));
+  }
+
+  public void Visit(fbhl.AST_New ast)
+  {
+    curr_node.addChild(new ConstructNode(ast.Name()));
+  }
+
+  public void Visit(fbhl.AST_ClassDecl ast)
+  {
+    var name = ast.Name();
+    CheckNameIsUnique(name);
+
+    var parent = symbols.resolve(ast.ParentName()) as ClassSymbol;
+
+    var cl = new ClassSymbolAST(name, parent);
+    symbols.define(cl);
+
+    for(int i=0;i<ast.ChildrenLength;++i)
+    {
+      var child = ast.Children(i);
+      var vd = child.Value.V<fbhl.AST_VarDecl>();
+      if(vd != null)
+      {
+        cl.define(new FieldSymbolAST(vd.Value.Name, vd.Value.Ntype));
+      }
+    }
+  }
+
+  public void Visit(fbhl.AST_JsonObj ast)
+  {
+    curr_node.addChild(new ConstructNode(ast.Ntype));
+
+    for(int c=0;c<ast.ChildrenLength;++c)
+      Visit(ast.Children(c));
+  }
+
+  public void Visit(fbhl.AST_JsonArr ast)
+  {
+    var bnd = symbols.resolve(ast.Ntype) as ArrayTypeSymbol;
+    if(bnd == null)
+      throw new Exception("Could not find class binding: " + ast.Ntype);
+
+    curr_node.addChild(bnd.Create_New());
+
+    for(int i=0;i<ast.ChildrenLength;++i)
+    {
+      var c = ast.Children(i);
+
+      //checking if there's an explicit add to array operand
+      if(c.Value.VType == fbhl.AST_OneOf.AST_JsonArrAddItem)
+      {
+        var n = (Array_AddNode)bnd.Create_Add(); 
+        n.push_arr = true;
+        curr_node.addChild(n);
+      }
+      else
+      {
+        var jc = new JsonCtx(JsonCtx.ARR, ast.Ntype, (uint)i);
+        jcts.Push(jc);
+        Visit(c);
+        jcts.Pop();
+      }
+    }
+
+    //adding last item item
+    if(ast.ChildrenLength > 0)
+    {
+      var n = (Array_AddNode)bnd.Create_Add(); 
+      n.push_arr = true;
+      curr_node.addChild(n);
+    }
+  }
+
+  public void Visit(fbhl.AST_JsonPair ast)
+  {
+    var jc = new JsonCtx(JsonCtx.OBJ, ast.ScopeNtype, ast.Nname);
+    jcts.Push(jc);
+
+    for(int c=0;c<ast.ChildrenLength;++c)
+      Visit(ast.Children(c));
+    curr_node.addChild(new MVarAccessNode(ast.ScopeNtype, ast.Name(), MVarAccessNode.WRITE_PUSH_CTX));
+
+    jcts.Pop();
+  }
+
   public void Visit(fbhl.AST_Selector? sel)
   {
     if(sel == null)
@@ -661,6 +768,9 @@ public class Interpreter : AST_Visitor
       case fbhl.AST_OneOf.AST_FuncDecl:
         Visit(sel.Value.V<fbhl.AST_FuncDecl>().Value);
         break;
+      case fbhl.AST_OneOf.AST_ClassDecl:
+        Visit(sel.Value.V<fbhl.AST_ClassDecl>().Value);
+        break;
       case fbhl.AST_OneOf.AST_LiteralNum:
         Visit(sel.Value.V<fbhl.AST_LiteralNum>().Value);
         break;
@@ -678,6 +788,21 @@ public class Interpreter : AST_Visitor
         break;
       case fbhl.AST_OneOf.AST_BinaryOpExp:
         Visit(sel.Value.V<fbhl.AST_BinaryOpExp>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_New:
+        Visit(sel.Value.V<fbhl.AST_New>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_TypeCast:
+        Visit(sel.Value.V<fbhl.AST_TypeCast>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_JsonObj:
+        Visit(sel.Value.V<fbhl.AST_JsonObj>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_JsonArr:
+        Visit(sel.Value.V<fbhl.AST_JsonArr>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_JsonPair:
+        Visit(sel.Value.V<fbhl.AST_JsonPair>().Value);
         break;
       default:
         throw new Exception("Not handled type: " + sel.Value.VType);
@@ -745,7 +870,7 @@ public class Interpreter : AST_Visitor
 
     var parent = symbols.resolve(ast.ParentName()) as ClassSymbol;
 
-    var cl = new ClassSymbolAST(name, ast, parent);
+    var cl = new ClassSymbolAST(name, parent);
     symbols.define(cl);
 
     for(int i=0;i<ast.children.Count;++i)
@@ -876,7 +1001,7 @@ public class Interpreter : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-    curr_node.addChild(new TypeCastNode(ast));
+    curr_node.addChild(new TypeCastNode(ast.ntype));
   }
 
   public override void DoVisit(AST_New ast)
@@ -1030,14 +1155,14 @@ public class Interpreter : AST_Visitor
     curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.DECL));
   }
 
-  public override void DoVisit(bhl.AST_JsonObj ast)
+  public override void DoVisit(AST_JsonObj ast)
   {
     curr_node.addChild(new ConstructNode(new HashedName(ast.ntype)));
 
     VisitChildren(ast);
   }
 
-  public override void DoVisit(bhl.AST_JsonArr ast)
+  public override void DoVisit(AST_JsonArr ast)
   {
     var bnd = symbols.resolve(ast.ntype) as ArrayTypeSymbol;
     if(bnd == null)
@@ -1075,10 +1200,10 @@ public class Interpreter : AST_Visitor
   }
   
   //NOTE: just a dummy, it's actually processed during AST_JsonArr's traversal
-  public override void DoVisit(bhl.AST_JsonArrAddItem ast)
+  public override void DoVisit(AST_JsonArrAddItem ast)
   {}
 
-  public override void DoVisit(bhl.AST_JsonPair ast)
+  public override void DoVisit(AST_JsonPair ast)
   {
     var jc = new JsonCtx(JsonCtx.OBJ, ast.scope_ntype, ast.nname);
     jcts.Push(jc);
