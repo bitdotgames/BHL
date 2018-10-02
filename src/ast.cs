@@ -350,17 +350,16 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
     
-    var children = fbb.CreateVectorOfTables(EndChildren());
+    var children = EndChildrenVector();
 
-    var sname = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.name))
-      sname = fbb.CreateString(node.name);
+    var name = MakeString(node.name);
 
     fbhl.AST_Module.StartAST_Module(fbb);
     fbhl.AST_Module.AddNname(fbb, node.nname);
-    if(!string.IsNullOrEmpty(node.name))
-      fbhl.AST_Module.AddName(fbb, sname);
-    fbhl.AST_Module.AddChildren(fbb, children);
+    if(name != null)
+      fbhl.AST_Module.AddName(fbb, name.Value);
+    if(children != null)
+      fbhl.AST_Module.AddChildren(fbb, children.Value);
     var end = fbhl.AST_Module.EndAST_Module(fbb);
 
     fbb.Finish(end.Value);
@@ -374,14 +373,11 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = EndChildren();
-    var voff = new FlatBuffers.VectorOffset();
-    if(children.Length > 0)
-      voff = fbb.CreateVectorOfTables(children);
+    var children = EndChildrenVector();
 
     fbhl.AST_Interim.StartAST_Interim(fbb);
-    if(children.Length > 0)
-      fbhl.AST_Interim.AddChildren(fbb, voff);
+    if(children != null)
+      fbhl.AST_Interim.AddChildren(fbb, children.Value);
     NewChild(fbhl.AST_Interim.EndAST_Interim(fbb));
 
     DebugStats(node);
@@ -403,32 +399,29 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbb.CreateVectorOfTables(EndChildren());
+    var children = EndChildrenVector();
 
     NewChild(MakeFuncDecl(node, children));
 
     DebugStats(node);
   }
 
-  FlatBuffers.Offset<fbhl.AST_FuncDecl> MakeFuncDecl(AST_FuncDecl node, FlatBuffers.VectorOffset children)
+  FlatBuffers.Offset<fbhl.AST_FuncDecl> MakeFuncDecl(AST_FuncDecl node, FlatBuffers.VectorOffset? children)
   {
-    var stype = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.type))
-      stype = fbb.CreateString(node.type);
+    var type = MakeString(node.type);
 
-    var sname = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.name))
-      sname = fbb.CreateString(node.name);
+    var name = MakeString(node.name);
 
     fbhl.AST_FuncDecl.StartAST_FuncDecl(fbb);
     fbhl.AST_FuncDecl.AddNtype(fbb, node.ntype);
-    if(!string.IsNullOrEmpty(node.type))
-      fbhl.AST_FuncDecl.AddType(fbb, stype);
+    if(type != null)
+      fbhl.AST_FuncDecl.AddType(fbb, type.Value);
     fbhl.AST_FuncDecl.AddNname1(fbb, node.nname1);
     fbhl.AST_FuncDecl.AddNname2(fbb, node.nname2);
-    fbhl.AST_FuncDecl.AddChildren(fbb, children);
-    if(!string.IsNullOrEmpty(node.name))
-      fbhl.AST_FuncDecl.AddName(fbb, sname);
+    if(children != null)
+      fbhl.AST_FuncDecl.AddChildren(fbb, children.Value);
+    if(name != null)
+      fbhl.AST_FuncDecl.AddName(fbb, name.Value);
     return fbhl.AST_FuncDecl.EndAST_FuncDecl(fbb);
   }
 
@@ -438,7 +431,7 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbb.CreateVectorOfTables(EndChildren());  
+    var children = EndChildrenVector();  
     
     var base_decl = MakeFuncDecl(node, children);
 
@@ -455,24 +448,21 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbb.CreateVectorOfTables(EndChildren());  
+    var children = EndChildrenVector();  
 
-    var sname = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.name))
-      sname = fbb.CreateString(node.name);
+    var name = MakeString(node.name);
 
-    var sparent = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.parent))
-      sparent = fbb.CreateString(node.parent);
+    var parent = MakeString(node.parent);
 
     fbhl.AST_ClassDecl.StartAST_ClassDecl(fbb);
     fbhl.AST_ClassDecl.AddNname(fbb, node.nname);
-    if(!string.IsNullOrEmpty(node.name))
-      fbhl.AST_ClassDecl.AddName(fbb, sname);
+    if(name != null)
+      fbhl.AST_ClassDecl.AddName(fbb, name.Value);
     fbhl.AST_ClassDecl.AddNparent(fbb, node.nparent);
-    if(!string.IsNullOrEmpty(node.parent))
-      fbhl.AST_ClassDecl.AddParent(fbb, sparent);
-    fbhl.AST_ClassDecl.AddChildren(fbb, children);
+    if(parent != null)
+      fbhl.AST_ClassDecl.AddParent(fbb, parent.Value);
+    if(children != null)
+      fbhl.AST_ClassDecl.AddChildren(fbb, children.Value);
     NewChild(fbhl.AST_ClassDecl.EndAST_ClassDecl(fbb));
 
     DebugStats(node);
@@ -493,15 +483,12 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = EndChildren();
-    var voff = new FlatBuffers.VectorOffset();
-    if(children.Length > 0)
-      voff = fbb.CreateVectorOfTables(children);
+    var children = EndChildrenVector();
 
     fbhl.AST_Block.StartAST_Block(fbb);
     fbhl.AST_Block.AddType(fbb, (fbhl.EnumBlock)node.type);
-    if(children.Length > 0)
-      fbhl.AST_Block.AddChildren(fbb, voff);
+    if(children != null)
+      fbhl.AST_Block.AddChildren(fbb, children.Value);
     NewChild(fbhl.AST_Block.EndAST_Block(fbb));
 
     DebugStats(node);
@@ -513,17 +500,16 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbb.CreateVectorOfTables(EndChildren());
+    var children = EndChildrenVector();
 
-    var stype = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.type))
-      stype = fbb.CreateString(node.type);
+    var type = MakeString(node.type);
 
     fbhl.AST_TypeCast.StartAST_TypeCast(fbb);
     fbhl.AST_TypeCast.AddNtype(fbb, node.ntype);
-    if(!string.IsNullOrEmpty(node.type))
-      fbhl.AST_TypeCast.AddType(fbb, stype);
-    fbhl.AST_TypeCast.AddChildren(fbb, children);
+    if(type != null)
+      fbhl.AST_TypeCast.AddType(fbb, type.Value);
+    if(children != null)
+      fbhl.AST_TypeCast.AddChildren(fbb, children.Value);
     NewChild(fbhl.AST_TypeCast.EndAST_TypeCast(fbb));
   }
 
@@ -533,23 +519,22 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbb.CreateVectorOfTables(EndChildren());
+    var children = EndChildrenVector();
 
-    var sname = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.name))
-      sname = fbb.CreateString(node.name);
+    var name = MakeString(node.name);
 
     fbhl.AST_Call.StartAST_Call(fbb);
     fbhl.AST_Call.AddType(fbb, (fbhl.EnumCall)node.type);
     fbhl.AST_Call.AddNname1(fbb, node.nname1);
     fbhl.AST_Call.AddNname2(fbb, node.nname2);
-    if(!string.IsNullOrEmpty(node.name))
-      fbhl.AST_Call.AddName(fbb, sname);
+    if(name != null)
+      fbhl.AST_Call.AddName(fbb, name.Value);
     fbhl.AST_Call.AddCargsBits(fbb, node.cargs_bits);
     if(node.scope_ntype != 0)
       fbhl.AST_Call.AddScopeNtype(fbb, node.scope_ntype);
     fbhl.AST_Call.AddLineNum(fbb, node.line_num);
-    fbhl.AST_Call.AddChildren(fbb, children);
+    if(children != null)
+      fbhl.AST_Call.AddChildren(fbb, children.Value);
     NewChild(fbhl.AST_Call.EndAST_Call(fbb));
 
     DebugStats(node);
@@ -569,7 +554,7 @@ public class AST2FB : AST_Visitor
 
     NewChild(fbhl.AST_Return.CreateAST_Return(
       fbb, 
-      fbb.CreateVectorOfTables(EndChildren())
+      EndChildrenVector().Value
     ));
 
     DebugStats(node);
@@ -619,7 +604,7 @@ public class AST2FB : AST_Visitor
     NewChild(fbhl.AST_BinaryOpExp.CreateAST_BinaryOpExp(
       fbb, 
       (fbhl.EnumBinaryOp)node.type,
-      fbb.CreateVectorOfTables(EndChildren())
+      EndChildrenVector().Value
     ));
   }
 
@@ -632,7 +617,7 @@ public class AST2FB : AST_Visitor
     NewChild(fbhl.AST_UnaryOpExp.CreateAST_UnaryOpExp(
       fbb, 
       (fbhl.EnumUnaryOp)node.type,
-      fbb.CreateVectorOfTables(EndChildren())
+      EndChildrenVector().Value
     ));
   }
 
@@ -642,17 +627,16 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbb.CreateVectorOfTables(EndChildren());
+    var children = EndChildrenVector();
 
-    var stype = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.type))
-      stype = fbb.CreateString(node.type);
+    var type = MakeString(node.type);
 
     fbhl.AST_New.StartAST_New(fbb);
     fbhl.AST_New.AddNtype(fbb, node.ntype);
-    if(!string.IsNullOrEmpty(node.type))
-      fbhl.AST_New.AddType(fbb, stype);
-    fbhl.AST_New.AddChildren(fbb, children);
+    if(type != null)
+      fbhl.AST_New.AddType(fbb, type.Value);
+    if(children != null)
+      fbhl.AST_New.AddChildren(fbb, children.Value);
     NewChild(fbhl.AST_New.EndAST_New(fbb));
   }
 
@@ -662,18 +646,17 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbb.CreateVectorOfTables(EndChildren());
+    var children = EndChildrenVector();
 
-    var sname = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.name))
-      sname = fbb.CreateString(node.name);
+    var name = MakeString(node.name);
 
     fbhl.AST_VarDecl.StartAST_VarDecl(fbb);
     fbhl.AST_VarDecl.AddNname(fbb, node.nname);
-    if(!string.IsNullOrEmpty(node.name))
-      fbhl.AST_VarDecl.AddName(fbb, sname);
+    if(name != null)
+      fbhl.AST_VarDecl.AddName(fbb, name.Value);
     fbhl.AST_VarDecl.AddNtype(fbb, node.ntype);
-    fbhl.AST_VarDecl.AddChildren(fbb, children);
+    if(children != null)
+      fbhl.AST_VarDecl.AddChildren(fbb, children.Value);
     NewChild(fbhl.AST_VarDecl.EndAST_VarDecl(fbb));
 
     DebugStats(node);
@@ -685,11 +668,15 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    NewChild(fbhl.AST_JsonObj.CreateAST_JsonObj(
-      fbb, 
-      node.ntype,
-      fbb.CreateVectorOfTables(EndChildren())
-    ));
+    var children = EndChildrenVector();
+
+    fbhl.AST_JsonObj.StartAST_JsonObj(fbb);
+    fbhl.AST_JsonObj.AddNtype(fbb, node.ntype);
+    if(children != null)
+      fbhl.AST_JsonObj.AddChildren(fbb, children.Value);
+    NewChild(fbhl.AST_JsonObj.EndAST_JsonObj(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_JsonArr node)
@@ -698,11 +685,15 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    NewChild(fbhl.AST_JsonArr.CreateAST_JsonArr(
-      fbb, 
-      node.ntype,
-      fbb.CreateVectorOfTables(EndChildren())
-    ));
+    var children = EndChildrenVector();
+
+    fbhl.AST_JsonArr.StartAST_JsonArr(fbb);
+    fbhl.AST_JsonArr.AddNtype(fbb, node.ntype);
+    if(children != null)
+      fbhl.AST_JsonArr.AddChildren(fbb, children.Value);
+    NewChild(fbhl.AST_JsonArr.EndAST_JsonArr(fbb));
+
+    DebugStats(node);
   }
 
   public override void DoVisit(AST_JsonPair node)
@@ -711,18 +702,17 @@ public class AST2FB : AST_Visitor
 
     VisitChildren(node);
 
-    var children = fbb.CreateVectorOfTables(EndChildren());
+    var children = EndChildrenVector();
 
-    var sname = new FlatBuffers.StringOffset();
-    if(!string.IsNullOrEmpty(node.name))
-      sname = fbb.CreateString(node.name);
+    var name = MakeString(node.name);
 
     fbhl.AST_JsonPair.StartAST_JsonPair(fbb);
     fbhl.AST_JsonPair.AddNname(fbb, node.nname);
-    if(!string.IsNullOrEmpty(node.name))
-      fbhl.AST_JsonPair.AddName(fbb, sname);
+    if(name != null)
+      fbhl.AST_JsonPair.AddName(fbb, name.Value);
     fbhl.AST_JsonPair.AddScopeNtype(fbb, node.scope_ntype);
-    fbhl.AST_JsonPair.AddChildren(fbb, children);
+    if(children != null)
+      fbhl.AST_JsonPair.AddChildren(fbb, children.Value);
     NewChild(fbhl.AST_JsonPair.EndAST_JsonPair(fbb));
   }
 
@@ -739,9 +729,19 @@ public class AST2FB : AST_Visitor
     child_sel_stack.Push(new List<ChildSelector>());
   }
 
-  FlatBuffers.Offset<fbhl.AST_Selector>[] EndChildren()
+  FlatBuffers.StringOffset? MakeString(string str)
+  {
+    if(string.IsNullOrEmpty(str))
+      return null;
+
+    return fbb.CreateString(str);
+  }
+
+  FlatBuffers.VectorOffset? EndChildrenVector()
   {
     var selectors = child_sel_stack.Pop();
+    if(selectors.Count == 0)
+      return null;
 
     var res = new FlatBuffers.Offset<fbhl.AST_Selector>[selectors.Count];
 
@@ -756,7 +756,7 @@ public class AST2FB : AST_Visitor
       res[s] = fbhl.AST_Selector.EndAST_Selector(fbb);
     }
 
-    return res;
+    return fbb.CreateVectorOfTables(res);
   }
 
   void NewChild<T>(FlatBuffers.Offset<T> offset) where T : struct

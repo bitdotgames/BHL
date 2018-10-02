@@ -118,6 +118,7 @@ namespace FlatBuffers
                 ((~((int)_bb.Length - _space + additionalBytes)) + 1) &
                 (size - 1);
             // Reallocate the buffer if needed.
+            //Console.WriteLine("=========== SPACE " + _space + " NEED " + (alignSize + size + additionalBytes) + " " + System.Environment.StackTrace);
             while (_space < alignSize + size + additionalBytes)
             {
                 var oldBufSize = (int)_bb.Length;
