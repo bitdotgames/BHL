@@ -393,6 +393,35 @@ public struct UseParam : IFlatbufferObject
   }
 };
 
+public struct Lambda : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static Lambda GetRootAsLambda(ByteBuffer _bb) { return GetRootAsLambda(_bb, new Lambda()); }
+  public static Lambda GetRootAsLambda(ByteBuffer _bb, Lambda obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p.bb_pos = _i; __p.bb = _bb; }
+  public Lambda __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public UseParam? Useparams(int j) { int o = __p.__offset(4); return o != 0 ? (UseParam?)(new UseParam()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
+  public int UseparamsLength { get { int o = __p.__offset(4); return o != 0 ? __p.__vector_len(o) : 0; } }
+
+  public static Offset<Lambda> CreateLambda(FlatBufferBuilder builder,
+      VectorOffset useparamsOffset = default(VectorOffset)) {
+    builder.StartObject(1);
+    Lambda.AddUseparams(builder, useparamsOffset);
+    return Lambda.EndLambda(builder);
+  }
+
+  public static void StartLambda(FlatBufferBuilder builder) { builder.StartObject(1); }
+  public static void AddUseparams(FlatBufferBuilder builder, VectorOffset useparamsOffset) { builder.AddOffset(0, useparamsOffset.Value, 0); }
+  public static VectorOffset CreateUseparamsVector(FlatBufferBuilder builder, Offset<UseParam>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
+  public static void StartUseparamsVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
+  public static Offset<Lambda> EndLambda(FlatBufferBuilder builder) {
+    int o = builder.EndObject();
+    return new Offset<Lambda>(o);
+  }
+};
+
 public struct AST_FuncDecl : IFlatbufferObject
 {
   private Table __p;
@@ -409,10 +438,9 @@ public struct AST_FuncDecl : IFlatbufferObject
   public uint Nname2 { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
   public string Name { get { int o = __p.__offset(12); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(12); }
-  public AST_Selector? Children(int j) { int o = __p.__offset(14); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
-  public int ChildrenLength { get { int o = __p.__offset(14); return o != 0 ? __p.__vector_len(o) : 0; } }
-  public UseParam? Useparams(int j) { int o = __p.__offset(16); return o != 0 ? (UseParam?)(new UseParam()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
-  public int UseparamsLength { get { int o = __p.__offset(16); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public Lambda? Lambda { get { int o = __p.__offset(14); return o != 0 ? (Lambda?)(new Lambda()).__assign(__p.__indirect(o + __p.bb_pos), __p.bb) : null; } }
+  public AST_Selector? Children(int j) { int o = __p.__offset(16); return o != 0 ? (AST_Selector?)(new AST_Selector()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
+  public int ChildrenLength { get { int o = __p.__offset(16); return o != 0 ? __p.__vector_len(o) : 0; } }
 
   public static Offset<AST_FuncDecl> CreateAST_FuncDecl(FlatBufferBuilder builder,
       uint ntype = 0,
@@ -420,11 +448,11 @@ public struct AST_FuncDecl : IFlatbufferObject
       uint nname1 = 0,
       uint nname2 = 0,
       StringOffset nameOffset = default(StringOffset),
-      VectorOffset childrenOffset = default(VectorOffset),
-      VectorOffset useparamsOffset = default(VectorOffset)) {
+      Offset<Lambda> lambdaOffset = default(Offset<Lambda>),
+      VectorOffset childrenOffset = default(VectorOffset)) {
     builder.StartObject(7);
-    AST_FuncDecl.AddUseparams(builder, useparamsOffset);
     AST_FuncDecl.AddChildren(builder, childrenOffset);
+    AST_FuncDecl.AddLambda(builder, lambdaOffset);
     AST_FuncDecl.AddName(builder, nameOffset);
     AST_FuncDecl.AddNname2(builder, nname2);
     AST_FuncDecl.AddNname1(builder, nname1);
@@ -439,12 +467,10 @@ public struct AST_FuncDecl : IFlatbufferObject
   public static void AddNname1(FlatBufferBuilder builder, uint nname1) { builder.AddUint(2, nname1, 0); }
   public static void AddNname2(FlatBufferBuilder builder, uint nname2) { builder.AddUint(3, nname2, 0); }
   public static void AddName(FlatBufferBuilder builder, StringOffset nameOffset) { builder.AddOffset(4, nameOffset.Value, 0); }
-  public static void AddChildren(FlatBufferBuilder builder, VectorOffset childrenOffset) { builder.AddOffset(5, childrenOffset.Value, 0); }
+  public static void AddLambda(FlatBufferBuilder builder, Offset<Lambda> lambdaOffset) { builder.AddOffset(5, lambdaOffset.Value, 0); }
+  public static void AddChildren(FlatBufferBuilder builder, VectorOffset childrenOffset) { builder.AddOffset(6, childrenOffset.Value, 0); }
   public static VectorOffset CreateChildrenVector(FlatBufferBuilder builder, Offset<AST_Selector>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
   public static void StartChildrenVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
-  public static void AddUseparams(FlatBufferBuilder builder, VectorOffset useparamsOffset) { builder.AddOffset(6, useparamsOffset.Value, 0); }
-  public static VectorOffset CreateUseparamsVector(FlatBufferBuilder builder, Offset<UseParam>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
-  public static void StartUseparamsVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
   public static Offset<AST_FuncDecl> EndAST_FuncDecl(FlatBufferBuilder builder) {
     int o = builder.EndObject();
     return new Offset<AST_FuncDecl>(o);

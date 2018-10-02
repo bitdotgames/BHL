@@ -2231,7 +2231,7 @@ public class FuncNodeLambda : FuncNodeAST
     if(this.decl != null)
       return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).useparams.Count + "x =";
     else
-      return this.fdecl.Name() + " use " + this.fdecl.UseparamsLength + "x =";
+      return this.fdecl.Name() + " use " + this.fdecl.Lambda.Value.UseparamsLength + "x =";
   }
 }
 
@@ -2309,9 +2309,10 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
       }
       else
       {
-        for(int i=0;i<lmb.fdecl.UseparamsLength;++i)
+        var flmb = lmb.fdecl.Lambda.Value;
+        for(int i=0;i<flmb.UseparamsLength;++i)
         {
-          var up = lmb.fdecl.Useparams(i).Value;
+          var up = flmb.Useparams(i).Value;
           var upname = up.Name();
           var val = interp.GetScopeValue(upname);
           fct.mem.Set(upname, up.IsRef() ? val : val.ValueClone());

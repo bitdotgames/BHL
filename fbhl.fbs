@@ -97,14 +97,18 @@ table UseParam {
   name      : string; //for debug
 }
 
+table Lambda {
+  useparams: [UseParam]; //lambda's use params
+}
+
 table AST_FuncDecl {
   ntype    : uint32;
   type     : string; //for debug
   nname1   : uint32;
   nname2   : uint32; //NOTE: due to msgpack 64 bit error on Windows we have to split nname
   name     : string; //for debug
+  lambda   : Lambda;
   children : [AST_Selector];
-  useparams : [UseParam]; //lambda's use params
 }
 
 table AST_ClassDecl {

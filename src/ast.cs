@@ -499,7 +499,7 @@ public class AST2FB : AST_Visitor
     DebugStats(node);
   }
 
-  FlatBuffers.Offset<fbhl.AST_FuncDecl> MakeFuncDecl(AST_FuncDecl node, FlatBuffers.VectorOffset? children, FlatBuffers.VectorOffset? useparams = null)
+  FlatBuffers.Offset<fbhl.AST_FuncDecl> MakeFuncDecl(AST_FuncDecl node, FlatBuffers.VectorOffset? children, FlatBuffers.Offset<fbhl.Lambda>? lambda = null)
   {
     var type = MakeString(node.type);
 
@@ -515,8 +515,8 @@ public class AST2FB : AST_Visitor
       fbhl.AST_FuncDecl.AddChildren(fbb, children.Value);
     if(name != null)
       fbhl.AST_FuncDecl.AddName(fbb, name.Value);
-    if(useparams != null)
-      fbhl.AST_FuncDecl.AddUseparams(fbb, useparams.Value);
+    if(lambda != null)
+      fbhl.AST_FuncDecl.AddLambda(fbb, lambda.Value);
     return fbhl.AST_FuncDecl.EndAST_FuncDecl(fbb);
   }
 
@@ -533,10 +533,15 @@ public class AST2FB : AST_Visitor
       for(int i=0;i<node.useparams.Count;++i)
         tmp.Add(MakeUseParam(node.useparams[i]));
 
-      useparams = fbhl.AST_FuncDecl.CreateUseparamsVector(fbb, tmp.ToArray());
+      useparams = fbhl.Lambda.CreateUseparamsVector(fbb, tmp.ToArray());
     }
-    
-    var func_decl = MakeFuncDecl(node, children, useparams);
+
+    fbhl.Lambda.StartLambda(fbb);
+    if(useparams != null)
+      fbhl.Lambda.AddUseparams(fbb, useparams.Value);
+    var lambda = fbhl.Lambda.EndLambda(fbb);
+
+    var func_decl = MakeFuncDecl(node, children, lambda);
 
     AddSelector(func_decl);
 

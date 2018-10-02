@@ -392,10 +392,9 @@ public class Interpreter : AST_Visitor
   {
     var name = ast.Name; 
     //regular func
-    if(ast.UseparamsLength == 0)
+    if(ast.Lambda == null)
     {
       CheckFuncIsUnique(name);
-
       var fn = new FuncSymbolAST(symbols, ast);
       symbols.define(fn);
     }
