@@ -651,7 +651,12 @@ public abstract class FuncBaseCallNode : SequentialNode
       //NOTE: only when it's actual func call we pop it from the call stack
       //      and apply required stack cleanups
       if(is_func_call)
-        interp.call_stack.DecFast();
+      {
+        if(ast != null)
+          interp.call_stack.DecFast();
+        else
+          interp.call_fstack.DecFast();
+      }
       //NOTE: force cleaning of the args.value stack in case of FAILURE while
       //      we are still processing arguments
       else if(status == BHS.FAILURE)

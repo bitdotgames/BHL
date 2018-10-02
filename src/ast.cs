@@ -677,6 +677,7 @@ public class AST2FB : AST_Visitor
   public override void DoVisit(AST_Inc node)
   {
     fbhl.AST_Inc.StartAST_Inc(fbb);
+    fbhl.AST_Inc.AddNname(fbb, node.nname);
     AddSelector(fbhl.AST_Inc.EndAST_Inc(fbb));
   }
 

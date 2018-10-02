@@ -641,6 +641,16 @@ public class Interpreter : AST_Visitor
     curr_node.addChild(new ReturnNode());
   }
 
+  public void Visit(fbhl.AST_Break ast)
+  {
+    curr_node.addChild(new BreakNode());
+  }
+
+  public void Visit(fbhl.AST_PopValue ast)
+  {
+    curr_node.addChild(new PopValueNode());
+  }
+
   public void Visit(fbhl.AST_BinaryOpExp ast)
   {
     //NOTE: checking if it's a short circuit expression
@@ -665,6 +675,14 @@ public class Interpreter : AST_Visitor
     }
   }
 
+  public void Visit(fbhl.AST_UnaryOpExp ast)
+  {
+    //NOTE: expression comes first
+    for(int c=0;c<ast.ChildrenLength;++c)
+      Visit(ast.Children(c));
+    curr_node.addChild(new UnaryOpNode((EnumUnaryOp)ast.Type));
+  }
+
   public void Visit(fbhl.AST_TypeCast ast)
   {
     for(int c=0;c<ast.ChildrenLength;++c)
@@ -675,6 +693,11 @@ public class Interpreter : AST_Visitor
   public void Visit(fbhl.AST_New ast)
   {
     curr_node.addChild(new ConstructNode(ast.Name()));
+  }
+
+  public void Visit(fbhl.AST_Inc ast)
+  {
+    curr_node.addChild(new IncNode(ast.Nname));
   }
 
   public void Visit(fbhl.AST_ClassDecl ast)
@@ -801,11 +824,23 @@ public class Interpreter : AST_Visitor
       case fbhl.AST_OneOf.AST_Return:
         Visit(sel.Value.V<fbhl.AST_Return>().Value);
         break;
+      case fbhl.AST_OneOf.AST_Break:
+        Visit(sel.Value.V<fbhl.AST_Break>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_PopValue:
+        Visit(sel.Value.V<fbhl.AST_PopValue>().Value);
+        break;
       case fbhl.AST_OneOf.AST_BinaryOpExp:
         Visit(sel.Value.V<fbhl.AST_BinaryOpExp>().Value);
         break;
+      case fbhl.AST_OneOf.AST_UnaryOpExp:
+        Visit(sel.Value.V<fbhl.AST_UnaryOpExp>().Value);
+        break;
       case fbhl.AST_OneOf.AST_New:
         Visit(sel.Value.V<fbhl.AST_New>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_Inc:
+        Visit(sel.Value.V<fbhl.AST_Inc>().Value);
         break;
       case fbhl.AST_OneOf.AST_TypeCast:
         Visit(sel.Value.V<fbhl.AST_TypeCast>().Value);
@@ -1280,15 +1315,31 @@ public class FuncCtx : DynValRefcounted
 
     var dup = FuncCtx.New(fs);
 
+    var fsl = fs as LambdaSymbol;
     //NOTE: need to properly set use params
-    if(fs is LambdaSymbol)
+    if(fsl != null)
     {
-      var ldecl = (fs as LambdaSymbol).decl as AST_LambdaDecl;
-      for(int i=0;i<ldecl.useparams.Count;++i)
+      var ldecl = fsl.decl as AST_LambdaDecl;
+      if(ldecl != null)
       {
-        var up = ldecl.useparams[i];
-        var val = mem.Get(up.Name());
-        dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        for(int i=0;i<ldecl.useparams.Count;++i)
+        {
+          var up = ldecl.useparams[i];
+          var upname = up.Name();
+          var val = mem.Get(upname);
+          dup.mem.Set(upname, up.IsRef() ? val : val.ValueClone());
+        }
+      }
+      else
+      {
+        var flmb = fsl.fdecl.Lambda.Value;
+        for(int i=0;i<flmb.UseparamsLength;++i)
+        {
+          var up = flmb.Useparams(i).Value;
+          var upname = up.Name();
+          var val = mem.Get(upname);
+          dup.mem.Set(upname, up.IsRef() ? val : val.ValueClone());
+        }
       }
     }
 
