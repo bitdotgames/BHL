@@ -341,7 +341,7 @@ public class AST2FB : AST_Visitor
 
   void DebugStats(AST_Base node)
   {
-    Console.WriteLine("NODE " + node.GetType().Name + " " + fbb.Offset);
+    //Console.WriteLine("NODE " + node.GetType().Name + " " + fbb.Offset);
   }
 
   public override void DoVisit(AST_Module node)
