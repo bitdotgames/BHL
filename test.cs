@@ -6361,6 +6361,7 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
+    //NodeDump(node);
 
     {
       var status = node.run();

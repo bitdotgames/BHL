@@ -76,6 +76,7 @@ public class Interpreter : AST_Visitor
     loaded_modules.Clear();
     stack.Clear();
     call_stack.Clear();
+    call_fstack.Clear();
 
     this.symbols = symbols;
     this.module_loader = module_loader;
@@ -174,9 +175,9 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetFuncNode(FuncSymbol symb)
   {
-    var fast = symb as FuncSymbolAST;
-    if(fast != null)
-      return new FuncNodeAST(fast.decl, fast.fdecl, null);
+    var fsast = symb as FuncSymbolAST;
+    if(fsast != null)
+      return new FuncNodeAST(fsast.decl, fsast.fdecl, null);
     else if(symb is FuncBindSymbol)
       return new FuncNodeBind(symb as FuncBindSymbol, null);
     else
@@ -216,7 +217,10 @@ public class Interpreter : AST_Visitor
   //NOTE: usually used in symbols
   public FuncArgsInfo GetFuncArgsInfo()
   {
-    return new FuncArgsInfo(call_stack.Peek().cargs_bits);
+    if(call_stack.Count > 0)
+      return new FuncArgsInfo(call_stack.Peek().cargs_bits);
+    else
+      return new FuncArgsInfo(call_fstack.Peek().CargsBits);
   }
 
   //NOTE: caching exceptions for less allocations
@@ -411,6 +415,15 @@ public class Interpreter : AST_Visitor
 
       curr_node.addChild(new PushFuncCtxNode(lmb));
     }
+  }
+
+  public void Visit(fbhl.AST_EnumDecl ast)
+  {
+    var name = ast.Name();
+    CheckNameIsUnique(name);
+
+    var es = new EnumSymbolAST(name);
+    symbols.define(es);
   }
 
   public void Visit(fbhl.AST_Block ast)
@@ -769,6 +782,9 @@ public class Interpreter : AST_Visitor
         break;
       case fbhl.AST_OneOf.AST_ClassDecl:
         Visit(sel.Value.V<fbhl.AST_ClassDecl>().Value);
+        break;
+      case fbhl.AST_OneOf.AST_EnumDecl:
+        Visit(sel.Value.V<fbhl.AST_EnumDecl>().Value);
         break;
       case fbhl.AST_OneOf.AST_LiteralNum:
         Visit(sel.Value.V<fbhl.AST_LiteralNum>().Value);

@@ -304,6 +304,11 @@ public static class Extensions
   {
     return new bhl.HashedName(n.Nname & 0xFFFFFFF, n.Name);
   }
+
+  static public bhl.HashedName Name(this AST_EnumDecl n)
+  {
+    return new bhl.HashedName(n.Nname, n.Name);
+  }
 }
 
 } //namespace fbhl
