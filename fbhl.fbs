@@ -315,17 +315,14 @@ table AST {
   selector    : AST_Type;
   nname1      : uint32;
   nname2      : uint32;
-  name        : string;//for debug
-  ntype       : uint32;
+  name        : string;//for debug, also serves as: sval
+  ntype       : uint32;//also serves as: nparent, scope_ntype
   type        : string;//for debug
-  nparent     : uint32;
-  parent      : string;//for debug
-  modules     : [uint32];//make it more fine-grained?
-  useparams   : [UseParam];//lambda's use params
-  items       : [EnumItem];
   cargs_bits  : uint32; //NOTE: bitmask of set/unset args, max 32 args supported for now
-  scope_ntype : uint32;
   line_num    : uint32;
+  modules     : [uint32];//TODO: import modules
+  useparams   : [UseParam];//TODO: lambda's use params
+  items       : [EnumItem];//TODO: enum items
   children    : [AST];
 }
 

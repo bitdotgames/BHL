@@ -1120,9 +1120,8 @@ public struct AST : IFlatbufferObject
   public uint Ntype { get { int o = __p.__offset(12); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
   public string Type { get { int o = __p.__offset(14); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
   public ArraySegment<byte>? GetTypeBytes() { return __p.__vector_as_arraysegment(14); }
-  public uint Nparent { get { int o = __p.__offset(16); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
-  public string Parent { get { int o = __p.__offset(18); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
-  public ArraySegment<byte>? GetParentBytes() { return __p.__vector_as_arraysegment(18); }
+  public uint CargsBits { get { int o = __p.__offset(16); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public uint LineNum { get { int o = __p.__offset(18); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
   public uint Modules(int j) { int o = __p.__offset(20); return o != 0 ? __p.bb.GetUint(__p.__vector(o) + j * 4) : (uint)0; }
   public int ModulesLength { get { int o = __p.__offset(20); return o != 0 ? __p.__vector_len(o) : 0; } }
   public ArraySegment<byte>? GetModulesBytes() { return __p.__vector_as_arraysegment(20); }
@@ -1130,11 +1129,8 @@ public struct AST : IFlatbufferObject
   public int UseparamsLength { get { int o = __p.__offset(22); return o != 0 ? __p.__vector_len(o) : 0; } }
   public EnumItem? Items(int j) { int o = __p.__offset(24); return o != 0 ? (EnumItem?)(new EnumItem()).__assign(__p.__vector(o) + j * 8, __p.bb) : null; }
   public int ItemsLength { get { int o = __p.__offset(24); return o != 0 ? __p.__vector_len(o) : 0; } }
-  public uint CargsBits { get { int o = __p.__offset(26); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
-  public uint ScopeNtype { get { int o = __p.__offset(28); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
-  public uint LineNum { get { int o = __p.__offset(30); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
-  public AST? Children(int j) { int o = __p.__offset(32); return o != 0 ? (AST?)(new AST()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
-  public int ChildrenLength { get { int o = __p.__offset(32); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public AST? Children(int j) { int o = __p.__offset(26); return o != 0 ? (AST?)(new AST()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
+  public int ChildrenLength { get { int o = __p.__offset(26); return o != 0 ? __p.__vector_len(o) : 0; } }
 
   public static Offset<AST> CreateAST(FlatBufferBuilder builder,
       AST_Type selector = AST_Type.None,
@@ -1143,25 +1139,19 @@ public struct AST : IFlatbufferObject
       StringOffset nameOffset = default(StringOffset),
       uint ntype = 0,
       StringOffset typeOffset = default(StringOffset),
-      uint nparent = 0,
-      StringOffset parentOffset = default(StringOffset),
+      uint cargs_bits = 0,
+      uint line_num = 0,
       VectorOffset modulesOffset = default(VectorOffset),
       VectorOffset useparamsOffset = default(VectorOffset),
       VectorOffset itemsOffset = default(VectorOffset),
-      uint cargs_bits = 0,
-      uint scope_ntype = 0,
-      uint line_num = 0,
       VectorOffset childrenOffset = default(VectorOffset)) {
-    builder.StartObject(15);
+    builder.StartObject(12);
     AST.AddChildren(builder, childrenOffset);
-    AST.AddLineNum(builder, line_num);
-    AST.AddScopeNtype(builder, scope_ntype);
-    AST.AddCargsBits(builder, cargs_bits);
     AST.AddItems(builder, itemsOffset);
     AST.AddUseparams(builder, useparamsOffset);
     AST.AddModules(builder, modulesOffset);
-    AST.AddParent(builder, parentOffset);
-    AST.AddNparent(builder, nparent);
+    AST.AddLineNum(builder, line_num);
+    AST.AddCargsBits(builder, cargs_bits);
     AST.AddType(builder, typeOffset);
     AST.AddNtype(builder, ntype);
     AST.AddName(builder, nameOffset);
@@ -1171,15 +1161,15 @@ public struct AST : IFlatbufferObject
     return AST.EndAST(builder);
   }
 
-  public static void StartAST(FlatBufferBuilder builder) { builder.StartObject(15); }
+  public static void StartAST(FlatBufferBuilder builder) { builder.StartObject(12); }
   public static void AddSelector(FlatBufferBuilder builder, AST_Type selector) { builder.AddSbyte(0, (sbyte)selector, 0); }
   public static void AddNname1(FlatBufferBuilder builder, uint nname1) { builder.AddUint(1, nname1, 0); }
   public static void AddNname2(FlatBufferBuilder builder, uint nname2) { builder.AddUint(2, nname2, 0); }
   public static void AddName(FlatBufferBuilder builder, StringOffset nameOffset) { builder.AddOffset(3, nameOffset.Value, 0); }
   public static void AddNtype(FlatBufferBuilder builder, uint ntype) { builder.AddUint(4, ntype, 0); }
   public static void AddType(FlatBufferBuilder builder, StringOffset typeOffset) { builder.AddOffset(5, typeOffset.Value, 0); }
-  public static void AddNparent(FlatBufferBuilder builder, uint nparent) { builder.AddUint(6, nparent, 0); }
-  public static void AddParent(FlatBufferBuilder builder, StringOffset parentOffset) { builder.AddOffset(7, parentOffset.Value, 0); }
+  public static void AddCargsBits(FlatBufferBuilder builder, uint cargsBits) { builder.AddUint(6, cargsBits, 0); }
+  public static void AddLineNum(FlatBufferBuilder builder, uint lineNum) { builder.AddUint(7, lineNum, 0); }
   public static void AddModules(FlatBufferBuilder builder, VectorOffset modulesOffset) { builder.AddOffset(8, modulesOffset.Value, 0); }
   public static VectorOffset CreateModulesVector(FlatBufferBuilder builder, uint[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddUint(data[i]); return builder.EndVector(); }
   public static void StartModulesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
@@ -1188,10 +1178,7 @@ public struct AST : IFlatbufferObject
   public static void StartUseparamsVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
   public static void AddItems(FlatBufferBuilder builder, VectorOffset itemsOffset) { builder.AddOffset(10, itemsOffset.Value, 0); }
   public static void StartItemsVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(8, numElems, 4); }
-  public static void AddCargsBits(FlatBufferBuilder builder, uint cargsBits) { builder.AddUint(11, cargsBits, 0); }
-  public static void AddScopeNtype(FlatBufferBuilder builder, uint scopeNtype) { builder.AddUint(12, scopeNtype, 0); }
-  public static void AddLineNum(FlatBufferBuilder builder, uint lineNum) { builder.AddUint(13, lineNum, 0); }
-  public static void AddChildren(FlatBufferBuilder builder, VectorOffset childrenOffset) { builder.AddOffset(14, childrenOffset.Value, 0); }
+  public static void AddChildren(FlatBufferBuilder builder, VectorOffset childrenOffset) { builder.AddOffset(11, childrenOffset.Value, 0); }
   public static VectorOffset CreateChildrenVector(FlatBufferBuilder builder, Offset<AST>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
   public static void StartChildrenVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
   public static Offset<AST> EndAST(FlatBufferBuilder builder) {
