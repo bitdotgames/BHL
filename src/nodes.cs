@@ -247,6 +247,19 @@ public class AlwaysFailure : BehaviorTreeNode
   override public void defer(){}
 }
 
+/////////////////////////////////////////////////////////////
+
+public class Check : BehaviorTreeNode
+{
+  override public BHS execute()
+  {
+    var val = Interpreter.instance.PopValue();
+    return val._num == 0 ? BHS.FAILURE : BHS.SUCCESS;
+  }
+  override public void init(){}
+  override public void deinit(){}
+  override public void defer(){}
+}
 
 /////////////////////////////////////////////////////////////
 

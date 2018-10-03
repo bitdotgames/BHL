@@ -1243,6 +1243,15 @@ static public class SymbolTable
 
       globals.define(fn);
     }
+
+    {
+      var fn = new FuncBindSymbol("check", globals.type("void"),
+        delegate() { return new Check(); } 
+      );
+      fn.define(new FuncArgSymbol("cond", globals.type("bool")));
+
+      globals.define(fn);
+    }
   }
 
   static public Type GetResultType(Type[,] typeTable, WrappedNode a, WrappedNode b) 

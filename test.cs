@@ -8408,6 +8408,50 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCheckTrue()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      check(true)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertEqual(BHS.SUCCESS, status);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCheckFalse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      check(false)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertEqual(BHS.FAILURE, status);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestParalAnySuccess()
   {
     string bhl = @"
