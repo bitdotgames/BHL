@@ -241,7 +241,93 @@ table AST_JsonPair {
 table AST_PopValue {
 }
 
-root_type AST_Module;
+enum AST_Type : byte {
+  None = 0,
+  Import,
+  Interim,
+  Module,
+  UnaryOp_NEG,
+  UnaryOp_NOT,
+  BinaryOp_AND,
+  BinaryOp_OR,
+  BinaryOp_ADD,
+  BinaryOp_SUB,
+  BinaryOp_MUL,
+  BinaryOp_DIV,
+  BinaryOp_MOD,
+  BinaryOp_GT,
+  BinaryOp_LT,
+  BinaryOp_GTE,
+  BinaryOp_LTE,
+  BinaryOp_EQ,
+  BinaryOp_NQ,
+  BinaryOp_BIT_OR,
+  BinaryOp_BIT_AND,
+  Inc,
+  New,
+  FuncDecl,
+  LambdaDecl,
+  ClassDecl,
+  EnumDecl,
+  TypeCast,
+  Call_VAR,
+  Call_VARW,
+  Call_MVAR,
+  Call_MVARW,
+  Call_MVARREF,
+  Call_FUNC,
+  Call_MFUNC,
+  Call_ARR_IDX,
+  Call_ARR_IDXW,
+  Call_FUNC2VAR,
+  Call_FUNC_PTR,
+  Call_FUNC_PTR_POP,
+  Return,
+  Break,
+  Literal_Str,
+  Literal_Num,
+  Literal_Bool,
+  Literal_Nil,
+  VarDecl,
+  Block_SEQ, 
+  Block_DEFER,
+  Block_PARAL,
+  Block_PARAL_ALL,
+  Block_PRIO,
+  Block_FOREVER,
+  Block_IF,
+  Block_WHILE,
+  Block_FUNC,
+  Block_UNTIL_FAILURE,
+  Block_UNTIL_FAILURE_,
+  Block_UNTIL_SUCCESS,
+  Block_NOT,
+  Block_SEQ_,
+  Block_EVAL,
+  Block_GROUP,
+  JsonObj,
+  JsonArr,
+  JsonPair,
+  PopValue,
+}
+
+table AST {
+  selector    : AST_Type;
+  nname1      : uint32;
+  nname2      : uint32;
+  name        : string;//for debug
+  ntype       : uint32;
+  type        : string;//for debug
+  nparent     : uint32;
+  parent      : string;//for debug
+  modules     : [uint32];//make it more fine-grained?
+  useparams   : [UseParam];//lambda's use params
+  items       : [EnumItem];
+  cargs_bits  : uint32; //NOTE: bitmask of set/unset args, max 32 args supported for now
+  scope_ntype : uint32;
+  line_num    : uint32;
+  children    : [AST];
+}
 
 ///////////////////////////////////////////////////////
 

@@ -464,7 +464,7 @@ public class AST2FB : AST_Visitor
       fbhl.AST_Module.AddChildren(fbb, children.Value);
     var m = fbhl.AST_Module.EndAST_Module(fbb);
 
-    fbhl.AST_Module.FinishAST_ModuleBuffer(fbb, m);
+    fbb.Finish(m.Value);
 
     DebugStats(node);
   }
