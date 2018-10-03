@@ -197,7 +197,7 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
 //////////////////////////////////////////
 
-public class AlwaysRunning : BehaviorTreeNode
+public class suspend : BehaviorTreeNode
 {
   override public BHS execute()
   {
@@ -210,7 +210,7 @@ public class AlwaysRunning : BehaviorTreeNode
 
 //////////////////////////////////////////
 
-public class YieldOnce : BehaviorTreeNode
+public class yield : BehaviorTreeNode
 {
   override public BHS execute()
   {
@@ -222,8 +222,8 @@ public class YieldOnce : BehaviorTreeNode
 }
 
 //////////////////////////////////////////
-
-public class AlwaysSuccess : BehaviorTreeNode
+               
+public class nop : BehaviorTreeNode
 {
   override public BHS execute()
   {
@@ -236,7 +236,7 @@ public class AlwaysSuccess : BehaviorTreeNode
 
 //////////////////////////////////////////
 
-public class AlwaysFailure : BehaviorTreeNode
+public class fail : BehaviorTreeNode
 {
   override public BHS execute()
   {
@@ -249,7 +249,7 @@ public class AlwaysFailure : BehaviorTreeNode
 
 /////////////////////////////////////////////////////////////
 
-public class Check : BehaviorTreeNode
+public class check : BehaviorTreeNode
 {
   override public BHS execute()
   {

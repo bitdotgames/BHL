@@ -1180,57 +1180,23 @@ static public class SymbolTable
     //for all generic arrays
     globals.define(new GenericArrayTypeSymbol(globals));
 
-    //deprecated
-    {
-      var fn = new FuncBindSymbol("RUNNING", globals.type("void"),
-        delegate() { return new AlwaysRunning(); } 
-      );
-      globals.define(fn);
-    }
-
     {
       var fn = new FuncBindSymbol("suspend", globals.type("void"),
-        delegate() { return new AlwaysRunning(); } 
-      );
-      globals.define(fn);
-    }
-
-    //deprecated
-    {
-      var fn = new FuncBindSymbol("YIELD", globals.type("void"),
-        delegate() { return new YieldOnce(); } 
+        delegate() { return new suspend(); } 
       );
       globals.define(fn);
     }
 
     {
       var fn = new FuncBindSymbol("yield", globals.type("void"),
-        delegate() { return new YieldOnce(); } 
+        delegate() { return new yield(); } 
       );
-      globals.define(fn);
-    }
-
-    //deprecated
-    {
-      var fn = new FuncBindSymbol("SUCCESS", globals.type("void"),
-        delegate() { return new AlwaysSuccess(); } 
-      );
-
       globals.define(fn);
     }
 
     {
       var fn = new FuncBindSymbol("nop", globals.type("void"),
-        delegate() { return new AlwaysSuccess(); } 
-      );
-
-      globals.define(fn);
-    }
-
-    //deprecated
-    {
-      var fn = new FuncBindSymbol("FAILURE", globals.type("void"),
-        delegate() { return new AlwaysFailure(); } 
+        delegate() { return new nop(); } 
       );
 
       globals.define(fn);
@@ -1238,7 +1204,7 @@ static public class SymbolTable
 
     {
       var fn = new FuncBindSymbol("fail", globals.type("void"),
-        delegate() { return new AlwaysFailure(); } 
+        delegate() { return new fail(); } 
       );
 
       globals.define(fn);
@@ -1246,7 +1212,7 @@ static public class SymbolTable
 
     {
       var fn = new FuncBindSymbol("check", globals.type("void"),
-        delegate() { return new Check(); } 
+        delegate() { return new check(); } 
       );
       fn.define(new FuncArgSymbol("cond", globals.type("bool")));
 
