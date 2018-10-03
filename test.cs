@@ -10396,6 +10396,45 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestYieldWhileInParal()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      paral {
+        yield while(i < 3)
+        forever {
+          i = i + 1
+        }
+      }
+      return i
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = node.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = node.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = node.run();
+    AssertEqual(BHS.SUCCESS, status);
+
+    var val = intp.PopValue();
+    AssertEqual(3, val.num);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestFuncCaching()
   {
     string bhl = @"

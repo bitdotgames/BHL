@@ -2240,6 +2240,43 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitYield(bhlParser.YieldContext ctx)
+  {
+     int line = ctx.Start.Line;
+     var ast = AST_Util.New_Call(EnumCall.FUNC, line, "yield");
+     PeekAST().AddChild(ast);
+     return null;
+  }
+
+  public override object VisitYieldWhile(bhlParser.YieldWhileContext ctx)
+  {
+    //NOTE: we're going to generate the following code
+    //while(cond) { yield() }
+
+    var ast = AST_Util.New_Block(EnumBlock.WHILE);
+
+    ++loops_stack;
+
+    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    PushAST(cond);
+    Visit(ctx.exp());
+    PopAST();
+
+    SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(ctx.exp()));
+
+    ast.AddChild(cond);
+
+    var body = AST_Util.New_Block(EnumBlock.SEQ);
+    int line = ctx.Start.Line;
+    body.AddChild(AST_Util.New_Call(EnumCall.FUNC, line, "yield"));
+    ast.AddChild(body);
+
+    --loops_stack;
+
+    PeekAST().AddChild(ast);
+    return null;
+  }
+
   public override object VisitForeach(bhlParser.ForeachContext ctx)
   {
     //NOTE: we're going to generate the following code

@@ -108,6 +108,8 @@ statement
   | 'while' '(' exp ')' block                                   #While
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
+  | 'yield' '(' ')'                                             #Yield //we need this one because of 'yield while()' special case
+  | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'return' explist?                                           #Return
   | 'seq' block                                                 #Seq

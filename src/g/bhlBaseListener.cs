@@ -671,6 +671,34 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitForeach([NotNull] bhlParser.ForeachContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Yield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterYield([NotNull] bhlParser.YieldContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Yield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitYield([NotNull] bhlParser.YieldContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>YieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterYieldWhile([NotNull] bhlParser.YieldWhileContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>YieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitYieldWhile([NotNull] bhlParser.YieldWhileContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Break</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -810,20 +838,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitUntilFailure([NotNull] bhlParser.UntilFailureContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by the <c>UntilFailure_</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterUntilFailure_([NotNull] bhlParser.UntilFailure_Context context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>UntilFailure_</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitUntilFailure_([NotNull] bhlParser.UntilFailure_Context context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>UntilSuccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
