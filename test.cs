@@ -10286,6 +10286,35 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestYieldAfterNodeStop()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      YIELD()
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+
+    var status = node.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = node.run();
+    AssertEqual(BHS.SUCCESS, status);
+
+    status = node.run();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = node.run();
+    AssertEqual(BHS.SUCCESS, status);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestYieldInParal()
   {
     string bhl = @"

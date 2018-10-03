@@ -212,22 +212,11 @@ public class AlwaysRunning : BehaviorTreeNode
 
 public class YieldOnce : BehaviorTreeNode
 {
-  bool yielded = false;
-
   override public BHS execute()
   {
-    if(!yielded)
-    {
-      yielded = true;
-      return BHS.RUNNING;
-    }
-    else
-      return BHS.SUCCESS;
+    return currStatus == BHS.NONE ? BHS.RUNNING : BHS.SUCCESS;
   }
-  override public void init()
-  {
-    yielded = false;
-  }
+  override public void init(){}
   override public void deinit(){}
   override public void defer(){}
 }
