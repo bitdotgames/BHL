@@ -1180,6 +1180,7 @@ static public class SymbolTable
     //for all generic arrays
     globals.define(new GenericArrayTypeSymbol(globals));
 
+    //deprecated
     {
       var fn = new FuncBindSymbol("RUNNING", globals.type("void"),
         delegate() { return new AlwaysRunning(); } 
@@ -1188,12 +1189,28 @@ static public class SymbolTable
     }
 
     {
+      var fn = new FuncBindSymbol("suspend", globals.type("void"),
+        delegate() { return new AlwaysRunning(); } 
+      );
+      globals.define(fn);
+    }
+
+    //deprecated
+    {
       var fn = new FuncBindSymbol("YIELD", globals.type("void"),
         delegate() { return new YieldOnce(); } 
       );
       globals.define(fn);
     }
 
+    {
+      var fn = new FuncBindSymbol("yield", globals.type("void"),
+        delegate() { return new YieldOnce(); } 
+      );
+      globals.define(fn);
+    }
+
+    //deprecated
     {
       var fn = new FuncBindSymbol("SUCCESS", globals.type("void"),
         delegate() { return new AlwaysSuccess(); } 
@@ -1203,7 +1220,24 @@ static public class SymbolTable
     }
 
     {
+      var fn = new FuncBindSymbol("nop", globals.type("void"),
+        delegate() { return new AlwaysSuccess(); } 
+      );
+
+      globals.define(fn);
+    }
+
+    //deprecated
+    {
       var fn = new FuncBindSymbol("FAILURE", globals.type("void"),
+        delegate() { return new AlwaysFailure(); } 
+      );
+
+      globals.define(fn);
+    }
+
+    {
+      var fn = new FuncBindSymbol("fail", globals.type("void"),
         delegate() { return new AlwaysFailure(); } 
       );
 

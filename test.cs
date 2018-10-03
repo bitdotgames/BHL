@@ -3314,7 +3314,7 @@ public class BHL_Test
 
     func float foo()
     {
-      FAILURE()
+      fail()
       return 100
     }
       
@@ -5220,7 +5220,7 @@ public class BHL_Test
 
       DynValContainer c = get_dv_container()
       if(c.dv != null) {
-        FAILURE()
+        fail()
       }
       c.dv = f1
       c.dv = f2
@@ -6383,7 +6383,7 @@ public class BHL_Test
     {
       void^(string) ptr = func(string arg) {
         trace(arg)
-        YIELD()
+        yield()
       }
       paral {
         ptr(""FOO"")
@@ -7363,7 +7363,7 @@ public class BHL_Test
         StartScriptInMgr(
           script: func() { 
             trace(""HERE;"") 
-            RUNNING()
+            suspend()
           },
           num : 1,
           now : false
@@ -7426,7 +7426,7 @@ public class BHL_Test
     {
       StartScriptInMgr(
         script: func() { 
-          RUNNING()
+          suspend()
         },
         num : 3,
         now : false
@@ -7470,7 +7470,7 @@ public class BHL_Test
     {
       void^() fn = func() {
         trace(""HERE;"")
-        RUNNING()
+        suspend()
       }
 
       StartScriptInMgr(
@@ -7571,7 +7571,7 @@ public class BHL_Test
     {
       void^() fn = func() {
         trace(""HERE;"")
-        RUNNING()
+        suspend()
       }
 
       StartScriptInMgr(
@@ -7657,7 +7657,7 @@ public class BHL_Test
         script: func() { 
           a = a + 1
           trace((string) a + "";"") 
-          RUNNING()
+          suspend()
         },
         num : 3,
         now : false
@@ -7712,7 +7712,7 @@ public class BHL_Test
           b = b + 1
           fs.Add(b)
           trace((string) a + "","" + (string) b + "","" + (string) fs.Count + "";"") 
-          RUNNING()
+          suspend()
         },
         num : 3,
         now : false
@@ -8239,7 +8239,7 @@ public class BHL_Test
     func foo()
     {
       trace(""FOO"")
-      FAILURE()
+      fail()
     }
 
     func bar()
@@ -8327,7 +8327,7 @@ public class BHL_Test
     func foo()
     {
       trace(""FOO"")
-      FAILURE()
+      fail()
     }
 
     func bar()
@@ -8372,7 +8372,7 @@ public class BHL_Test
     func foo()
     {
       trace(""FOO"")
-      FAILURE()
+      fail()
     }
 
     func bar()
@@ -8762,7 +8762,7 @@ public class BHL_Test
     {
       paral_all {
         NodeWithDefer()
-        RUNNING()
+        suspend()
       }
     }
     ";
@@ -8851,19 +8851,18 @@ public class BHL_Test
     func foo()
     {
       trace(""FOO"")
-      FAILURE()
+      fail()
     }
 
     func hey()
     {
       trace(""HEY"")
-      SUCCESS()
     }
 
     func bar()
     {
       trace(""BAR"")
-      FAILURE()
+      fail()
     }
 
     func test() 
@@ -8904,7 +8903,7 @@ public class BHL_Test
     func bar()
     {
       trace(""BAR"")
-      FAILURE()
+      fail()
     }
 
     func hey()
@@ -8919,7 +8918,6 @@ public class BHL_Test
     func foo()
     {
       trace(""FOO"")
-      SUCCESS()
     }
 
     func test() 
@@ -8965,7 +8963,7 @@ public class BHL_Test
     {
       Color c = new Color
       prio {
-        FAILURE()
+        fail()
         c.r = 142
       }
       return c.r
@@ -9216,7 +9214,7 @@ public class BHL_Test
     func bar()
     {
       trace(""BAR"")
-      FAILURE()
+      fail()
     }
 
     func hey()
@@ -9325,7 +9323,7 @@ public class BHL_Test
     func test() 
     {
       NodeWithDefer()
-      RUNNING()
+      suspend()
     }
     ";
 
@@ -9355,7 +9353,7 @@ public class BHL_Test
     func test() 
     {
       not {
-        SUCCESS()
+        nop()
       }
     }
     ";
@@ -9374,7 +9372,7 @@ public class BHL_Test
     func test() 
     {
       not {
-        FAILURE()
+        fail()
       }
     }
     ";
@@ -9393,7 +9391,7 @@ public class BHL_Test
     func test() 
     {
       not {
-        RUNNING()
+        suspend()
       }
     }
     ";
@@ -9412,8 +9410,8 @@ public class BHL_Test
     func test() 
     {
       not {
-        SUCCESS()
-        SUCCESS()
+        nop()
+        nop()
       }
     }
     ";
@@ -9431,7 +9429,7 @@ public class BHL_Test
 
     func int foo() 
     {
-      FAILURE()
+      fail()
       return 1
     }
 
@@ -9458,7 +9456,7 @@ public class BHL_Test
     {
       //double not in order no to interrupt the execution
       not { not { NodeWithDefer() } }
-      RUNNING()
+      suspend()
     }
     ";
 
@@ -9548,7 +9546,7 @@ public class BHL_Test
     func bool test() 
     {
       bool res = eval {
-        SUCCESS()
+        nop()
       }
       return res
     }
@@ -9570,7 +9568,7 @@ public class BHL_Test
     func bool test() 
     {
       bool res = eval {
-        FAILURE()
+        fail()
       }
       return res
     }
@@ -9592,7 +9590,7 @@ public class BHL_Test
     func bool test() 
     {
       bool res = eval {
-        RUNNING()
+        suspend()
       }
       return res
     }
@@ -9612,7 +9610,7 @@ public class BHL_Test
     func void test() 
     {
       eval { 
-        SUCCESS() 
+        nop()
       }
     }
     ";
@@ -9633,7 +9631,7 @@ public class BHL_Test
     func void test() 
     {
       int k = eval { 
-        SUCCESS() 
+        nop()
       }
     }
     ";
@@ -9655,9 +9653,9 @@ public class BHL_Test
     {
       bool res = eval {
         if(false) {
-          SUCCESS()
+          nop()
         } else {
-          FAILURE()
+          fail()
         }
       }
       return res
@@ -9679,7 +9677,7 @@ public class BHL_Test
 
     func int test(int k) 
     {
-      if(eval { SUCCESS() })
+      if(eval { nop() })
       {
         return k
       }
@@ -9709,7 +9707,7 @@ public class BHL_Test
 
     func int test(int k) 
     {
-      if(eval { FAILURE() })
+      if(eval { fail() })
       {
         return k
       }
@@ -9789,13 +9787,13 @@ public class BHL_Test
     func bar()
     {
       trace(""B"")
-      FAILURE()
+      fail()
     }
 
     func foo()
     {
       trace(""A"")
-      FAILURE()
+      fail()
     }
 
     func test() 
@@ -10136,7 +10134,7 @@ public class BHL_Test
       defer {
         trace(""FOO;"")
       }
-      FAILURE()
+      fail()
     }
 
     func bar()
@@ -10195,7 +10193,7 @@ public class BHL_Test
         i = i + 1
         if(i <= 3) {
           trace((string)i)
-          FAILURE()
+          fail()
         }
       }
     }
@@ -10235,7 +10233,7 @@ public class BHL_Test
         if(i <= 3) {
           trace((string)i)
         } else {
-          FAILURE()
+          fail()
         }
       }
     }
@@ -10269,7 +10267,7 @@ public class BHL_Test
 
     func test() 
     {
-      YIELD()
+      yield()
     }
     ";
 
@@ -10292,7 +10290,7 @@ public class BHL_Test
 
     func test() 
     {
-      YIELD()
+      yield()
     }
     ";
 
@@ -10323,7 +10321,7 @@ public class BHL_Test
     {
       int i = 0
       paral {
-        while(i < 3) { YIELD() }
+        while(i < 3) { yield() }
         forever {
           i = i + 1
         }
@@ -10403,7 +10401,7 @@ public class BHL_Test
       
     func foo()
     {
-      YIELD()
+      yield()
     }
 
     func test() 
@@ -10437,12 +10435,12 @@ public class BHL_Test
       
     func foo()
     {
-      YIELD()
+      yield()
     }
 
     func bar()
     {
-      YIELD()
+      yield()
     }
 
     func test1() 
@@ -10497,7 +10495,7 @@ public class BHL_Test
       forever
       {
         foo(k)
-        RUNNING()
+        suspend()
       }
     }
     ";
@@ -11839,9 +11837,9 @@ public class BHL_Test
       paral {
         for(int i = 0; i < 3; i = i + 1) {
           trace((string)i)
-          YIELD()
+          yield()
         }
-        RUNNING()
+        suspend()
       }
     }
     ";
@@ -12177,9 +12175,9 @@ public class BHL_Test
       paral {
         foreach([1,2,3] as int it) {
           trace((string)it)
-          YIELD()
+          yield()
         }
-        RUNNING()
+        suspend()
       }
     }
     ";
@@ -12512,7 +12510,7 @@ public class BHL_Test
         trace((string)i)
         i = i + 1
         if(i == 2) {
-          FAILURE()
+          fail()
         }
       }
     }
@@ -12632,7 +12630,7 @@ public class BHL_Test
         }
         seq {
           if(i == 2) {
-            RUNNING()
+            suspend()
           }
         }
       }
@@ -13518,7 +13516,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int v) 
     {
-      FAILURE()
+      fail()
       return v
     }
 
@@ -13568,7 +13566,7 @@ public class BHL_Test
 
     func int foo()
     {
-      FAILURE()
+      fail()
       return 100
     }
 
@@ -13599,7 +13597,7 @@ public class BHL_Test
 
     func int foo()
     {
-      FAILURE()
+      fail()
       return 100
     }
 
@@ -13634,13 +13632,13 @@ public class BHL_Test
 
     func float bar()
     {
-      FAILURE()
+      fail()
       return 1
     }
 
     func int foo(float b, float c)
     {
-      FAILURE()
+      fail()
       return 100
     }
 
@@ -13675,7 +13673,7 @@ public class BHL_Test
 
     func float foo()
     {
-      FAILURE()
+      fail()
       return 10
     }
 
@@ -13704,7 +13702,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int v) 
     {
-      FAILURE()
+      fail()
       return v
     }
 
@@ -13756,7 +13754,7 @@ public class BHL_Test
     {
       Foo f = MakeFoo({hey:1, colors:[{r:
           func int (int v) { 
-            FAILURE()
+            fail()
             return v
           }(42) 
         }]})
@@ -13934,7 +13932,7 @@ public class BHL_Test
               func int (int ticks) 
               { 
                 WaitTicks(ticks, false)
-                FAILURE()
+                fail()
                 return ticks
               }(2) 
               }]})
@@ -13944,7 +13942,7 @@ public class BHL_Test
               func int (int ticks) 
               { 
                 WaitTicks(ticks, false)
-                FAILURE()
+                fail()
                 return ticks
               }(3) 
               }]})
@@ -14752,7 +14750,7 @@ public class BHL_Test
 
     func int foo()
     {
-      FAILURE()
+      fail()
       return 10
     }
 
@@ -14840,7 +14838,7 @@ public class BHL_Test
 
     func int bar()
     {
-      FAILURE()
+      fail()
       return 1
     }
       
@@ -16631,7 +16629,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     {
       paral {
         foo()
-        RUNNING()
+        suspend()
       }
       return 2
     }
