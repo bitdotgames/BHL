@@ -159,13 +159,12 @@ enum EnumBlock
   IF              = 7 
   WHILE           = 8 
   FOR             = 9 
-  UNTIL_FAILURE   = 10
-  UNTIL_FAILURE_  = 11 #always returns success
+  GROUP           = 10 
+  UNTIL_FAILURE   = 11
   UNTIL_SUCCESS   = 12
   NOT             = 13
   SEQ_            = 14 #always returns success 
   EVAL            = 15
-  GROUP           = 16 
 end
 
 struct AST_Block extends AST

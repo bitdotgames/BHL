@@ -10255,46 +10255,6 @@ public class BHL_Test
       var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
-    AssertEqual(BHS.FAILURE, node.run());
-
-    var str = GetString(trace_stream);
-    AssertEqual("123", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestUntilFailure_()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int i = 0
-      until_failure_ {
-        i = i + 1
-        if(i <= 3) {
-          trace((string)i)
-        } else {
-          FAILURE()
-        }
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindWaitTicks(globs);
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret("", bhl, globs);
-    var node = intp.GetFuncNode("test");
-
-    for(int i=0;i<3;++i)
-    {
-      var status = node.run();
-      AssertEqual(BHS.RUNNING, status);
-    }
     AssertEqual(BHS.SUCCESS, node.run());
 
     var str = GetString(trace_stream);

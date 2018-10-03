@@ -118,7 +118,6 @@ statement
   | 'defer' block                                               #Defer
   | 'prio' block                                                #Prio
   | 'until_failure' block                                       #UntilFailure
-  | 'until_failure_' block                                      #UntilFailure_
   | 'until_success' block                                       #UntilSuccess
   | 'not' block                                                 #Not
   | block                                                       #BlockNested

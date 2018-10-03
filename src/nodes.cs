@@ -1008,13 +1008,6 @@ public class MonitorSuccessNode : SequentialNode
 
 public class MonitorFailureNode : SequentialNode
 {
-  private BHS status_on_failure;
-
-  public MonitorFailureNode(BHS _status_on_failure = BHS.FAILURE)
-  {
-    status_on_failure = _status_on_failure;
-  }
-  
   override public BHS execute()
   {
     //var status = base.execute();
@@ -1042,7 +1035,7 @@ public class MonitorFailureNode : SequentialNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
     if(status == BHS.FAILURE)
-      return status_on_failure;
+      return BHS.SUCCESS;
 
     //NOTE: we need to stop children in order to make them 
     //      reset its status and re-init on the next run
