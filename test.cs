@@ -124,6 +124,44 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestReturnBoolFalseNegated()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      return !false
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 1);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestReturnBoolTrueNegated()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      return !true
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestReturnDefaultVar()
   {
     string bhl = @"
@@ -16584,6 +16622,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
 
     AssertEqual(res, 2);
     CommonChecks(intp);
