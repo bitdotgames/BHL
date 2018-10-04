@@ -1694,7 +1694,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.PopValueNoDel();
+            var b = interp.PopRef();
             var a = interp.PopValue().num;
 
             b.num = a * 2;
@@ -6338,6 +6338,37 @@ public class BHL_Test
     var str = GetString(trace_stream);
 
     AssertEqual("FOO", str);
+    AssertEqual(1, FuncCtx.NodesCreated);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrReturningArrLambda()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      int[]^() ptr = func int[]() {
+        return [1,2]
+      }
+      trace((string)ptr()[1])
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("2", str);
     AssertEqual(1, FuncCtx.NodesCreated);
     CommonChecks(intp);
   }
@@ -16641,6 +16672,54 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrReturnNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int^() ptr = func int() {
+        return 1
+      }
+      ptr()
+      return 2
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrArrReturnNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int[]^() ptr = func int[]() {
+        return [1,2]
+      }
+      ptr()
+      return 2
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 2);

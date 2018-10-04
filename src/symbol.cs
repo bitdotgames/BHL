@@ -624,8 +624,15 @@ public class FuncType : Type
 #if BHL_FRONT
   public FuncType(BaseScope scope, bhlParser.TypeContext node)
   {
-    ret_type = scope.type(node.NAME().GetText());
-    var fnames = node.fnargs().names();
+    var fnargs = node.fnargs();
+
+    string ret_type_str = node.NAME().GetText();
+    if(fnargs.ARR() != null)
+      ret_type_str += "[]";
+    
+    ret_type = scope.type(ret_type_str);
+
+    var fnames = fnargs.names();
     if(fnames != null)
     {
       for(int i=0;i<fnames.refName().Length;++i)

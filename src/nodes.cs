@@ -1309,7 +1309,7 @@ public class PopValueNode : BehaviorTreeTerminalNode
   public override void init() 
   {
     var interp = Interpreter.instance;
-    interp.PopValue();
+    interp.PopValueEx(RefOp.USR_DEC | RefOp.DEC);
   }
 
   public override string inspect()
@@ -1765,13 +1765,13 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       if(mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
       {
-        val = interp.PopValueNoDel();
+        val = interp.PopRef();
         ctx = mode == WRITE_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
       }
       else
       {
         ctx = interp.PopValue();
-        val = interp.PopValueNoDel();
+        val = interp.PopRef();
       }
 
       if(var_symb is FieldSymbol)
