@@ -190,34 +190,3 @@ end
 
 struct AST_PopValue extends AST_Base
 end
-
-///////////////////////////////////////////////////////
-
-struct AST_Func2Assets
-  func1  : uint32 #splitting uint64 due to windows msgpack issues
-  func2  : uint32
-  assets : string[] 
-end
-
-struct AST_Func2Crefs
-  func1  : uint32  #splitting uint64 due to windows msgpack issues
-  func2  : uint32
-  crefs  : string[] 
-end
-
-//NOTE: currently result is written in a more low-level fashion 
-//      since metagen doesn't support binary blobs
-//struct AST_ExportItem
-// format    : int32  #0 - binary, 1 - lz4
-// module_id : uint32 
-// module    : binary
-//end
-//
-//struct AST_Result
-//  items   : AST_ExportItem[]
-//end
-
-struct AST_PostProcResult
-  func2assets : AST_Func2Assets[]
-  func2crefs  : AST_Func2Crefs[]
-end
