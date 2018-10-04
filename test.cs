@@ -6305,6 +6305,37 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncPtrReturningArrLambda()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      int[]^() ptr = func int[]() {
+        return [1,2]
+      }
+      trace((string)ptr()[1])
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("2", str);
+    AssertEqual(1, FuncCtx.NodesCreated);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestFuncPtrSeveralLambda()
   {
     string bhl = @"

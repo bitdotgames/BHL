@@ -24,8 +24,9 @@ decl
   : (classDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
+//NOTE: ARR hack is here for types like int[]^(..) 
 fnargs
-  : '^' '(' names? ')'
+  : ARR? '^' '(' names? ')'
   ;
 
 type 
