@@ -1656,7 +1656,7 @@ public class BHL_Test
           delegate()
           {
             var interp = Interpreter.instance;
-            var b = interp.PopValueNoDel();
+            var b = interp.PopRef();
             var a = interp.PopValue().num;
 
             b.num = a * 2;
@@ -16564,6 +16564,54 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var intp = Interpret("", bhl);
     var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrReturnNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int^() ptr = func int() {
+        return 1
+      }
+      ptr()
+      return 2
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrArrReturnNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int[]^() ptr = func int[]() {
+        return [1,2]
+      }
+      ptr()
+      return 2
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
 
     AssertEqual(res, 2);
