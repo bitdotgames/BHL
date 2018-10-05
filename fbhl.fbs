@@ -204,13 +204,12 @@ enum EnumBlock : byte {
   IF              = 7, 
   WHILE           = 8, 
   FUNC            = 9, 
-  UNTIL_FAILURE   = 10,
-  UNTIL_FAILURE_  = 11,
+  GROUP           = 10, 
+  UNTIL_FAILURE   = 11,
   UNTIL_SUCCESS   = 12,
   NOT             = 13,
   SEQ_            = 14,
   EVAL            = 15,
-  GROUP           = 16, 
 }
 
 table AST_Block {
@@ -283,35 +282,4 @@ table AST {
   useparams   : [UseParam];//TODO: lambda's use params
   items       : [EnumItem];//TODO: enum items
   children    : [AST];
-}
-
-///////////////////////////////////////////////////////
-
-table Func2Assets {
-  func1  : uint32; //splitted uint64 
-  func2  : uint32;
-  assets : [string]; 
-}
-
-table Func2Crefs {
-  func1  : uint32; //splitted uint64
-  func2  : uint32;
-  crefs  : [string]; 
-}
-
-table PostProcResult {
-  func2assets : [Func2Assets];
-  func2crefs  : [Func2Crefs];
-}
-
-///////////////////////////////////////////////////////
-
-table ExportItem {
- format    : byte;  //0 - binary, 1 - lz4
- module_id : uint32; 
- blob      : [byte];
-}
-
-table ExportResult {
-  items : [ExportItem];
 }

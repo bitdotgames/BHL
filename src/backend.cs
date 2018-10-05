@@ -310,16 +310,18 @@ public class Interpreter : AST_Visitor
     return v;
   }
 
-  public DynVal PopValueNoDel()
+  public DynVal PopRef()
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
     return v;
   }
 
-  public DynVal PopRef()
+  public DynVal PopValueEx(int mode)
   {
-    return PopValueNoDel();
+    var v = stack.PopFast();
+    v.RefMod(mode);
+    return v;
   }
 
   public void PopValues(int amount)
@@ -474,14 +476,7 @@ public class Interpreter : AST_Visitor
     }
     else if(type == fbhl.EnumBlock.UNTIL_FAILURE)
     {
-      PushNode(new MonitorFailureNode(BHS.FAILURE));
-      for(int c=0;c<ast.ChildrenLength;++c)
-        Visit(ast.Children(c));
-      PopNode();
-    }
-    else if(type == fbhl.EnumBlock.UNTIL_FAILURE_)
-    {
-      PushNode(new MonitorFailureNode(BHS.SUCCESS));
+      PushNode(new MonitorFailureNode());
       for(int c=0;c<ast.ChildrenLength;++c)
         Visit(ast.Children(c));
       PopNode();
@@ -986,13 +981,7 @@ public class Interpreter : AST_Visitor
     }
     else if(ast.type == EnumBlock.UNTIL_FAILURE)
     {
-      PushNode(new MonitorFailureNode(BHS.FAILURE));
-      VisitChildren(ast);
-      PopNode();
-    }
-    else if(ast.type == EnumBlock.UNTIL_FAILURE_)
-    {
-      PushNode(new MonitorFailureNode(BHS.SUCCESS));
+      PushNode(new MonitorFailureNode());
       VisitChildren(ast);
       PopNode();
     }

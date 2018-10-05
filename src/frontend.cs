@@ -2050,12 +2050,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitUntilFailure_(bhlParser.UntilFailure_Context ctx)
-  {
-    CommonVisitBlock(EnumBlock.UNTIL_FAILURE_, ctx.block().statement(), new_local_scope: false);
-    return null;
-  }
-
   public override object VisitUntilSuccess(bhlParser.UntilSuccessContext ctx)
   {
     CommonVisitBlock(EnumBlock.UNTIL_SUCCESS, ctx.block().statement(), new_local_scope: false);
@@ -2253,6 +2247,43 @@ public class Frontend : bhlBaseVisitor<object>
 
     PeekAST().AddChild(ast);
 
+    return null;
+  }
+
+  public override object VisitYield(bhlParser.YieldContext ctx)
+  {
+     int line = ctx.Start.Line;
+     var ast = AST_Util.New_Call(EnumCall.FUNC, line, "yield");
+     PeekAST().AddChild(ast);
+     return null;
+  }
+
+  public override object VisitYieldWhile(bhlParser.YieldWhileContext ctx)
+  {
+    //NOTE: we're going to generate the following code
+    //while(cond) { yield() }
+
+    var ast = AST_Util.New_Block(EnumBlock.WHILE);
+
+    ++loops_stack;
+
+    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    PushAST(cond);
+    Visit(ctx.exp());
+    PopAST();
+
+    SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(ctx.exp()));
+
+    ast.AddChild(cond);
+
+    var body = AST_Util.New_Block(EnumBlock.SEQ);
+    int line = ctx.Start.Line;
+    body.AddChild(AST_Util.New_Call(EnumCall.FUNC, line, "yield"));
+    ast.AddChild(body);
+
+    --loops_stack;
+
+    PeekAST().AddChild(ast);
     return null;
   }
 
