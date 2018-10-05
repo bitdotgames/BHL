@@ -6335,6 +6335,48 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  //TODO:?
+  //[IsTested()]
+  public void TestFuncPtrReturningArrOfArrLambda()
+  {
+    string bhl = @"
+
+    typedef string[]^()[] arr_of_funcs
+
+    func arr_of_func^() hey() {
+      return func() {
+        func string[]() { return [""a"",""b""] },
+        func string[]() { return [""c"",""d""] }
+      }
+    }
+
+    func void test() 
+    {
+      string[]^()[] ptr = [
+        func string[]() { return [""a"",""b""] },
+        func string[]() { return [""c"",""d""] }
+      ]
+      trace(ptr[1]()[0])
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    //NodeDump(node);
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("c", str);
+    AssertEqual(1, FuncCtx.NodesCreated);
+    CommonChecks(intp);
+  }
+
   [IsTested()]
   public void TestFuncPtrSeveralLambda()
   {
