@@ -385,6 +385,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpParen([NotNull] bhlParser.ExpParenContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpTypeid</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpTypeid</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.newExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -559,6 +571,30 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitForeach([NotNull] bhlParser.ForeachContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Yield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterYield([NotNull] bhlParser.YieldContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Yield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitYield([NotNull] bhlParser.YieldContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>YieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterYieldWhile([NotNull] bhlParser.YieldWhileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>YieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitYieldWhile([NotNull] bhlParser.YieldWhileContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Break</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -679,18 +715,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitUntilFailure([NotNull] bhlParser.UntilFailureContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>UntilFailure_</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterUntilFailure_([NotNull] bhlParser.UntilFailure_Context context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>UntilFailure_</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitUntilFailure_([NotNull] bhlParser.UntilFailure_Context context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>UntilSuccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -808,6 +832,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitStaticCallItem([NotNull] bhlParser.StaticCallItemContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterTypeid([NotNull] bhlParser.TypeidContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitTypeid([NotNull] bhlParser.TypeidContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// </summary>

@@ -240,6 +240,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpParen([NotNull] bhlParser.ExpParenContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpTypeid</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.newExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -343,6 +350,20 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitForeach([NotNull] bhlParser.ForeachContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>Yield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitYield([NotNull] bhlParser.YieldContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>YieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitYieldWhile([NotNull] bhlParser.YieldWhileContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Break</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -413,13 +434,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitUntilFailure([NotNull] bhlParser.UntilFailureContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>UntilFailure_</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitUntilFailure_([NotNull] bhlParser.UntilFailure_Context context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>UntilSuccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -489,6 +503,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStaticCallItem([NotNull] bhlParser.StaticCallItemContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTypeid([NotNull] bhlParser.TypeidContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// </summary>

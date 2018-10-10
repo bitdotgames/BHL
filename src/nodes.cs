@@ -197,7 +197,7 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
 //////////////////////////////////////////
 
-public class AlwaysRunning : BehaviorTreeNode
+public class suspend : BehaviorTreeNode
 {
   override public BHS execute()
   {
@@ -210,31 +210,20 @@ public class AlwaysRunning : BehaviorTreeNode
 
 //////////////////////////////////////////
 
-public class YieldOnce : BehaviorTreeNode
+public class yield : BehaviorTreeNode
 {
-  bool yielded = false;
-
   override public BHS execute()
   {
-    if(!yielded)
-    {
-      yielded = true;
-      return BHS.RUNNING;
-    }
-    else
-      return BHS.SUCCESS;
+    return currStatus == BHS.NONE ? BHS.RUNNING : BHS.SUCCESS;
   }
-  override public void init()
-  {
-    yielded = false;
-  }
+  override public void init(){}
   override public void deinit(){}
   override public void defer(){}
 }
 
 //////////////////////////////////////////
-
-public class AlwaysSuccess : BehaviorTreeNode
+               
+public class nop : BehaviorTreeNode
 {
   override public BHS execute()
   {
@@ -247,7 +236,7 @@ public class AlwaysSuccess : BehaviorTreeNode
 
 //////////////////////////////////////////
 
-public class AlwaysFailure : BehaviorTreeNode
+public class fail : BehaviorTreeNode
 {
   override public BHS execute()
   {
@@ -258,6 +247,19 @@ public class AlwaysFailure : BehaviorTreeNode
   override public void defer(){}
 }
 
+/////////////////////////////////////////////////////////////
+
+public class check : BehaviorTreeNode
+{
+  override public BHS execute()
+  {
+    var val = Interpreter.instance.PopValue();
+    return val._num == 0 ? BHS.FAILURE : BHS.SUCCESS;
+  }
+  override public void init(){}
+  override public void deinit(){}
+  override public void defer(){}
+}
 
 /////////////////////////////////////////////////////////////
 
@@ -1008,13 +1010,6 @@ public class MonitorSuccessNode : SequentialNode
 
 public class MonitorFailureNode : SequentialNode
 {
-  private BHS status_on_failure;
-
-  public MonitorFailureNode(BHS _status_on_failure = BHS.FAILURE)
-  {
-    status_on_failure = _status_on_failure;
-  }
-  
   override public BHS execute()
   {
     //var status = base.execute();
@@ -1042,7 +1037,7 @@ public class MonitorFailureNode : SequentialNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
     if(status == BHS.FAILURE)
-      return status_on_failure;
+      return BHS.SUCCESS;
 
     //NOTE: we need to stop children in order to make them 
     //      reset its status and re-init on the next run
@@ -1314,7 +1309,7 @@ public class PopValueNode : BehaviorTreeTerminalNode
   public override void init() 
   {
     var interp = Interpreter.instance;
-    interp.PopValue();
+    interp.PopValueEx(RefOp.USR_DEC | RefOp.DEC);
   }
 
   public override string inspect()
@@ -1770,13 +1765,13 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       if(mode == WRITE_PUSH_CTX || mode == WRITE_INV_ARGS)
       {
-        val = interp.PopValueNoDel();
+        val = interp.PopRef();
         ctx = mode == WRITE_PUSH_CTX ? interp.PeekValue() : interp.PopValue();
       }
       else
       {
         ctx = interp.PopValue();
-        val = interp.PopValueNoDel();
+        val = interp.PopRef();
       }
 
       if(var_symb is FieldSymbol)

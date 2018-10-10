@@ -624,8 +624,15 @@ public class FuncType : Type
 #if BHL_FRONT
   public FuncType(BaseScope scope, bhlParser.TypeContext node)
   {
-    ret_type = scope.type(node.NAME().GetText());
-    var fnames = node.fnargs().names();
+    var fnargs = node.fnargs();
+
+    string ret_type_str = node.NAME().GetText();
+    if(fnargs.ARR() != null)
+      ret_type_str += "[]";
+    
+    ret_type = scope.type(ret_type_str);
+
+    var fnames = fnargs.names();
     if(fnames != null)
     {
       for(int i=0;i<fnames.refName().Length;++i)
@@ -969,9 +976,9 @@ public class ClassSymbolAST : ClassSymbol
     {
       tb = DynValDict.New();
       res.SetObj(tb);
-      //NOTE: storing class name hash in _num attribute
-      res._num = decl.nname; 
     }
+    //NOTE: storing class name hash in _num attribute
+    res._num = decl.nname; 
 
     for(int i=0;i<members.Count;++i)
     {
@@ -1181,31 +1188,40 @@ static public class SymbolTable
     globals.define(new GenericArrayTypeSymbol(globals));
 
     {
-      var fn = new FuncBindSymbol("RUNNING", globals.type("void"),
-        delegate() { return new AlwaysRunning(); } 
+      var fn = new FuncBindSymbol("suspend", globals.type("void"),
+        delegate() { return new suspend(); } 
       );
       globals.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("YIELD", globals.type("void"),
-        delegate() { return new YieldOnce(); } 
+      var fn = new FuncBindSymbol("yield", globals.type("void"),
+        delegate() { return new yield(); } 
       );
       globals.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("SUCCESS", globals.type("void"),
-        delegate() { return new AlwaysSuccess(); } 
+      var fn = new FuncBindSymbol("nop", globals.type("void"),
+        delegate() { return new nop(); } 
       );
 
       globals.define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("FAILURE", globals.type("void"),
-        delegate() { return new AlwaysFailure(); } 
+      var fn = new FuncBindSymbol("fail", globals.type("void"),
+        delegate() { return new fail(); } 
       );
+
+      globals.define(fn);
+    }
+
+    {
+      var fn = new FuncBindSymbol("check", globals.type("void"),
+        delegate() { return new check(); } 
+      );
+      fn.define(new FuncArgSymbol("cond", globals.type("bool")));
 
       globals.define(fn);
     }

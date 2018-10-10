@@ -26,7 +26,7 @@ func FindTarget(ref int target_id)
 
   if(Rand() < 0.6) {
     Trace("No target in range")
-    FAILURE()
+    fail()
   }
 
   int tmp_target_id = (int)(Rand() * 1000)
@@ -40,7 +40,7 @@ func FindTarget(ref int target_id)
 func AttackTarget(ref int target_id)
 {
   if(target_id == 0) {
-    FAILURE()
+    fail()
   }
 
   Trace("Attacking target " + (string)target_id + "")
@@ -53,7 +53,7 @@ func StateChanged(ref int state)
 {
   int last_state = state
   while(last_state == state) {
-    RUNNING()
+    yield()
   }
   Trace("State changed!")
 }

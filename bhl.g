@@ -24,8 +24,9 @@ decl
   : (classDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
+//NOTE: ARR hack is here for types like int[]^(..) 
 fnargs
-  : '^' '(' names? ')'
+  : ARR? '^' '(' names? ')'
   ;
 
 type 
@@ -45,6 +46,7 @@ exp
   | string                                                  #ExpLiteralStr
   | callExp                                                 #ExpCall
   | staticCallExp                                           #ExpStaticCall
+  | typeid                                                  #ExpTypeid
   | jsonObject                                              #ExpJsonObj
   | jsonArray                                               #ExpJsonArr
   | funcLambda                                              #ExpLambda
@@ -107,6 +109,8 @@ statement
   | 'while' '(' exp ')' block                                   #While
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
+  | 'yield' '(' ')'                                             #Yield //we need this one because of 'yield while()' special case
+  | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'return' explist?                                           #Return
   | 'seq' block                                                 #Seq
@@ -117,7 +121,6 @@ statement
   | 'defer' block                                               #Defer
   | 'prio' block                                                #Prio
   | 'until_failure' block                                       #UntilFailure
-  | 'until_failure_' block                                      #UntilFailure_
   | 'until_success' block                                       #UntilSuccess
   | 'not' block                                                 #Not
   | block                                                       #BlockNested
@@ -152,6 +155,10 @@ staticCallExp
 
 staticCallItem
   : '::' NAME
+  ;
+
+typeid 
+  : 'typeid' '(' type ')'
   ;
 
 arrAccess
