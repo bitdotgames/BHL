@@ -2850,6 +2850,31 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestClosure()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      //TODO: need more flexible types support for this:
+      //float^(float)^(float)
+      
+      return func float^(float) (float a) {
+        return func float (float b) { return a + b }
+      }(2)(3)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(num, 5);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestSimpleExpression()
   {
     string bhl = @"
