@@ -1,8 +1,7 @@
 <?php
+namespace bhl;
 
-define('METAGEN_LIB', dirname(__FILE__));
-
-$GLOBALS['METAGEN_CONFIG'] = array();
+$GLOBALS['BHL_METAGEN_CONFIG'] = array();
 
 /**
 * -e
@@ -85,7 +84,7 @@ function mtg_split_and_process($string, $regex = '~\s+~', $proc = '')
 
 function mtg_argv2conf($argv)
 {
-  global $METAGEN_CONFIG;
+  global $BHL_METAGEN_CONFIG;
 
   $parsed = mtg_parse_argv($argv);
   foreach($parsed as $key => $value)
@@ -93,15 +92,15 @@ function mtg_argv2conf($argv)
     if(!is_string($key))
       continue;
 
-    $METAGEN_CONFIG[preg_replace('~^-+~', '', $key)] = $value;
+    $BHL_METAGEN_CONFIG[preg_replace('~^-+~', '', $key)] = $value;
   }
 }
 
 function mtg_conf($key)
 {
-  global $METAGEN_CONFIG;
+  global $BHL_METAGEN_CONFIG;
 
-  if(!isset($METAGEN_CONFIG[$key]))
+  if(!isset($BHL_METAGEN_CONFIG[$key]))
   {
     if(func_num_args() == 1)
       throw new Exception("Config option '$key' is not set");
@@ -109,13 +108,13 @@ function mtg_conf($key)
       return func_get_arg(1);
   }
 
-  return $METAGEN_CONFIG[$key];
+  return $BHL_METAGEN_CONFIG[$key];
 }
 
 function mtg_conf_set($key, $val)
 {
-  global $METAGEN_CONFIG;
-  $METAGEN_CONFIG[$key] = $val;
+  global $BHL_METAGEN_CONFIG;
+  $BHL_METAGEN_CONFIG[$key] = $val;
 }
 
 interface mtgType
@@ -1928,11 +1927,11 @@ function mtg_parse_meta(array $meta_srcs)
 
 function mtg_run(mtgGenerator $gen, array $config)
 {
-  global $METAGEN_CONFIG;
+  global $BHL_METAGEN_CONFIG;
 
-  $METAGEN_CONFIG = array();
+  $BHL_METAGEN_CONFIG = array();
   foreach($config as $k => $v)
-    $METAGEN_CONFIG[$k] = $v;
+    $BHL_METAGEN_CONFIG[$k] = $v;
 
   $meta = mtg_conf('meta', null);
   if(!($meta instanceof mtgMetaInfo)) 

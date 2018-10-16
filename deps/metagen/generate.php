@@ -1,4 +1,5 @@
 <?php
+namespace bhl;
 
 require_once(dirname(__FILE__) . '/metagen.inc.php');
 

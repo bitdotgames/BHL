@@ -251,12 +251,12 @@ function task_genmeta()
   include_once("$BHL_ROOT/deps/metagen/metagen.inc.php");
   include_once("$BHL_ROOT/deps/metagen/targets/cs/cs_generator.inc.php");
 
-  $meta = mtg_parse_meta(array($BHL_ROOT));
+  $meta = bhl\mtg_parse_meta(array($BHL_ROOT));
 
-  $codegen = new mtgCsCodegen();
+  $codegen = new bhl\mtgCsCodegen();
   $codegen->namespace = 'bhl';
 
-  mtg_run(new mtgCsGenerator(), array( 
+  bhl\mtg_run(new bhl\mtgCsGenerator(), array( 
     "codegen" => $codegen,
     "meta" => $meta,
     "out-dir" => "$BHL_ROOT/autogen" , 

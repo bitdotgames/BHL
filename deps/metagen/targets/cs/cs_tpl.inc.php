@@ -1,5 +1,7 @@
 <?php
 
+namespace bhl;
+
 class mtg_cs_templater
 {
   function tpl_struct()
