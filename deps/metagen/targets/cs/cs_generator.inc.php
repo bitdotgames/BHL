@@ -1,4 +1,6 @@
 <?php
+namespace bhl;
+
 require_once(dirname(__FILE__) . '/cs.inc.php');
 
 class mtgCsGenerator extends mtgGenerator
@@ -14,7 +16,7 @@ class mtgCsGenerator extends mtgGenerator
       $codegen = new mtgCsCodegen();
     $codegen->setMetaInfo($meta);
 
-    $refl = new ReflectionClass($codegen);
+    $refl = new \ReflectionClass($codegen);
     $SHARED_DEPS = array(
       dirname(__FILE__) . '/cs.inc.php', 
       dirname(__FILE__) . '/cs_tpl.inc.php',
