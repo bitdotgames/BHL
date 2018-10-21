@@ -17460,6 +17460,65 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
   }
 
+  static int Fib(int x)
+  {
+    if(x == 0)
+      return 0;
+    else 
+    {
+      if(x == 1) 
+        return 1;
+      else
+        return Fib(x-1) + Fib(x-2);
+    }
+  }
+
+  [IsTested()]
+  public void TestFib()
+  {
+    string bhl = @"
+
+    func int fib(int x)
+    {
+      if(x == 0) {
+        return 0
+      } else {
+        if(x == 1) {
+          return 1
+        } else {
+          return fib(x - 1) + fib(x - 2)
+        }
+      }
+    }
+      
+    func int test(int x) 
+    {
+      return fib(x)
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+
+    const int x = 15;
+
+    {
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      node.SetArgs(DynVal.NewNum(x));
+      ExtractNum(intp.ExecNode(node));
+      stopwatch.Stop();
+      Console.WriteLine("bhl fib ticks: {0}", stopwatch.ElapsedTicks);
+    }
+    CommonChecks(intp);
+
+    {
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      Fib(x);
+      stopwatch.Stop();
+      Console.WriteLine("C# fib ticks: {0}", stopwatch.ElapsedTicks);
+    }
+  }
+
   ////////////////////////////////////////////////
 
   static void Assert(bool condition, string msg = null)
