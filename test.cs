@@ -17509,6 +17509,14 @@ func Unit FindUnit(Vec3 pos, float radius) {
       stopwatch.Stop();
       Console.WriteLine("bhl fib ticks: {0}", stopwatch.ElapsedTicks);
     }
+
+    {
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      node.SetArgs(DynVal.NewNum(x));
+      ExtractNum(intp.ExecNode(node));
+      stopwatch.Stop();
+      Console.WriteLine("bhl fib ticks2: {0}", stopwatch.ElapsedTicks);
+    }
     CommonChecks(intp);
 
     {
