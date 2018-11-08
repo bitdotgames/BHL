@@ -15661,6 +15661,69 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestGlobalVariableInitWithSubcall()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    func float bar() {
+      return 100
+    }
+
+    Foo foo = {b : bar()}
+      
+    func float test() 
+    {
+      return foo.b
+    }
+    ";
+
+    var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 100);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestGlobalVariableInitWithSubcallFail()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    func float bar() {
+      fail()
+      return 100
+    }
+
+    Foo foo = {b : bar()}
+      
+    func float test() 
+    {
+      return foo.b
+    }
+    ";
+
+    var error = false;
+    try
+    {
+      Interpret("", bhl);
+    }
+    catch(Exception)
+    {
+      error = true;
+    }
+    AssertTrue(error);
+  }
+
+  [IsTested()]
   public void TestImport()
   {
     string bhl1 = @"
@@ -17595,6 +17658,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     DynVal.PoolClear();
     DynValList.PoolClear();
+    DynValDict.PoolClear();
     FuncCallNode.PoolClear();
     FuncCtx.PoolClear();
 

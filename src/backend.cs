@@ -629,7 +629,7 @@ public class Interpreter : AST_Visitor
     //NOTE: we need to run it for globals initialization
     var status = g.run();
     if(status != BHS.SUCCESS)
-      throw new Exception("Global initialization error: " + status);
+      throw new Exception("Global initialization bad status: " + status);
 
     PopScope();
   }
