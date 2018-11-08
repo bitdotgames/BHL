@@ -15696,11 +15696,11 @@ public class BHL_Test
       float b
     }
 
-    func float bar() {
-      return 100
+    func float bar(float f) {
+      return f
     }
 
-    Foo foo = {b : bar()}
+    Foo foo = {b : bar(100)}
       
     func float test() 
     {
