@@ -13471,6 +13471,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestJsonArrEmptyDefaultArg()
+  {
+    string bhl = @"
+    func int foo(Color[] c = [])
+    {
+      return c.Count
+    }
+
+    func int test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var num = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(num, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestJsonObjReAssign()
   {
     string bhl = @"
@@ -15661,7 +15688,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestGlobalVariableInitWithSubcall()
+  public void TestGlobalVariableInitWithSubCall()
   {
     string bhl = @"
 
@@ -15682,6 +15709,39 @@ public class BHL_Test
     ";
 
     var intp = Interpret("", bhl);
+    var node = intp.GetFuncNode("test");
+    var res = ExtractNum(intp.ExecNode(node));
+
+    AssertEqual(res, 100);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestGlobalVariableInitWithComplexSubCall()
+  {
+    string bhl = @"
+
+    class Foo { 
+      Color c
+    }
+
+    func any col() {
+      Color c = {r: 100}
+      return c
+    }
+
+    Foo foo = {c : (Color)col()}
+      
+    func float test() 
+    {
+      return foo.c.r
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
