@@ -3419,12 +3419,7 @@ public class BHL_Test
 
   public class CustomNull
   {
-    public override bool Equals(System.Object obj)
-    {
-      if(obj == null)
-        return true;
-      return false;
-    }
+    public bool is_null;
 
     public static bool operator ==(CustomNull b1, CustomNull b2)
     {
@@ -3434,6 +3429,13 @@ public class BHL_Test
     public static bool operator !=(CustomNull b1, CustomNull b2)
     {
       return !(b1 == b2);
+    }
+
+    public override bool Equals(System.Object obj)
+    {
+      if(obj == null && is_null)
+        return true;
+      return false;
     }
 
     public override int GetHashCode()
@@ -11405,10 +11407,19 @@ public class BHL_Test
     func void test(CustomNull c) 
     {
       if(c != null) {
-        trace(""NEVER;"")
+        trace(""NOTNULL;"")
       }
       if(c == null) {
         trace(""NULL;"")
+      }
+
+      yield()
+
+      if(c != null) {
+        trace(""NOTNULL2;"")
+      }
+      if(c == null) {
+        trace(""NULL2;"")
       }
     }
     ";
@@ -11421,11 +11432,17 @@ public class BHL_Test
 
     var intp = Interpret("", bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.SetArgs(DynVal.NewObj(new CustomNull()));
-    intp.ExecNode(node, 0);
+    var cn = new CustomNull();
+    node.SetArgs(DynVal.NewObj(cn));
+
+    cn.is_null = false;
+    node.run();
+
+    cn.is_null = true;
+    node.run();
 
     var str = GetString(trace_stream);
-    AssertEqual("NULL;", str);
+    AssertEqual("NOTNULL;NULL2;", str);
     CommonChecks(intp);
   }
 

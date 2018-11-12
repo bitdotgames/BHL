@@ -355,9 +355,8 @@ public class DynVal
   public void SetObj(object o)
   {
     Reset();
-    //NOTE: also checking the case when object overrides Equals
-    _type = o == null || o.Equals(null) ? NIL : OBJ;
-    _obj = _type == NIL ? null : o;
+    _type = o == null ? NIL : OBJ;
+    _obj = o;
     _refc = _obj as DynValRefcounted;
   }
 
@@ -376,7 +375,7 @@ public class DynVal
 
   public bool IsEqual(DynVal o)
   {
-    return
+    bool res =
       _type == o.type &&
       _num == o._num &&
       _num2 == o._num2 &&
@@ -386,6 +385,17 @@ public class DynVal
       _str == o._str &&
       _obj == o._obj
       ;
+
+    //NOTE: null special case for overriden Equals
+    if(!res)
+    {
+      if(_type == NIL && o._obj != null)
+        res = o._obj.Equals(null); 
+      else if(o._type == NIL && _obj != null)
+        res = _obj.Equals(null); 
+    }
+
+    return res;
   }
 
   public override string ToString() 
