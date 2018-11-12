@@ -3417,6 +3417,31 @@ public class BHL_Test
     public string str;
   }
 
+  public class CustomNull
+  {
+    public override bool Equals(System.Object obj)
+    {
+      if(obj == null)
+        return true;
+      return false;
+    }
+
+    public static bool operator ==(CustomNull b1, CustomNull b2)
+    {
+      return b1.Equals(b2);
+    }
+
+    public static bool operator !=(CustomNull b1, CustomNull b2)
+    {
+      return !(b1 == b2);
+    }
+
+    public override int GetHashCode()
+    {
+      return 0;
+    }
+  }
+
   public struct IntStruct
   {
     public int n;
@@ -3591,6 +3616,20 @@ public class BHL_Test
           ctx.obj = c;
         }
       ));
+    }
+  }
+
+  void BindCustomNull(GlobalScope globs)
+  {
+    {
+      var cl = new ClassBindSymbol("CustomNull",
+        delegate(ref DynVal v) 
+        { 
+          v.obj = new CustomNull();
+        }
+      );
+
+      globs.define(cl);
     }
   }
 
@@ -11214,11 +11253,14 @@ public class BHL_Test
       if(c == null) {
         trace(""NULL;"")
       }
+      if(c != null) {
+        trace(""NEVER;"")
+      }
       if(c2 == null) {
-        trace(""NULL2;"")
+        trace(""NEVER;"")
       }
       if(c2 != null) {
-        trace(""NOT NULL;"")
+        trace(""NOTNULL;"")
       }
       c = c2
       if(c2 == c) {
@@ -11226,6 +11268,9 @@ public class BHL_Test
       }
       if(c2 == null) {
         trace(""NEVER;"")
+      }
+      if(c != null) {
+        trace(""NOTNULL;"")
       }
     }
     ";
@@ -11241,7 +11286,7 @@ public class BHL_Test
     intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
-    AssertEqual("NULL;NOT NULL;EQ;", str);
+    AssertEqual("NULL;NOTNULL;EQ;NOTNULL;", str);
     CommonChecks(intp);
   }
 
@@ -11258,10 +11303,10 @@ public class BHL_Test
         trace(""NULL;"")
       }
       if(c2 == null) {
-        trace(""NULL2;"")
+        trace(""NEVER;"")
       }
       if(c2 != null) {
-        trace(""NOT NULL;"")
+        trace(""NOTNULL;"")
       }
       c = c2
       if(c2 == c) {
@@ -11284,7 +11329,103 @@ public class BHL_Test
     intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
-    AssertEqual("NULL;NOT NULL;EQ;", str);
+    AssertEqual("NULL;NOTNULL;EQ;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestNullPassedAsNullObj()
+  {
+    string bhl = @"
+      
+    func void test(StringClass c) 
+    {
+      if(c != null) {
+        trace(""NEVER;"")
+      }
+      if(c == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStringClass(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewObj(null));
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("NULL;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestNullPassedAsNewNil()
+  {
+    string bhl = @"
+      
+    func void test(StringClass c) 
+    {
+      if(c != null) {
+        trace(""NEVER;"")
+      }
+      if(c == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStringClass(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewNil());
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("NULL;", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestNullPassedAsCustomNull()
+  {
+    string bhl = @"
+      
+    func void test(CustomNull c) 
+    {
+      if(c != null) {
+        trace(""NEVER;"")
+      }
+      if(c == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindCustomNull(globs);
+
+    var intp = Interpret("", bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.SetArgs(DynVal.NewObj(new CustomNull()));
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("NULL;", str);
     CommonChecks(intp);
   }
 
