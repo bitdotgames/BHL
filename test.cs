@@ -16420,6 +16420,57 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestImportGlobalExecutionOnlyOnceNested()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    func test1() { }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+
+    func int dummy()
+    {
+      trace(""once"")
+      return 1
+    }
+
+    class Foo {
+      int a
+    }
+
+    Foo foo = { a : dummy() }
+
+    func test2() { }
+    ";
+
+    string bhl3 = @"
+    func test3() { }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var mreg = new ModuleRegistry();
+
+    var fp2src = new Dictionary<string, string>();
+    fp2src.Add("bhl1", bhl1);
+    fp2src.Add("bhl2", bhl2);
+    fp2src.Add("bhl3", bhl3);
+    mreg.test_sources = fp2src;
+
+    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+
+    var str = GetString(trace_stream);
+    AssertEqual("once", str);
+
+    CommonChecks(intp);
+  }
+
   void BindForSlides(GlobalScope globs)
   {
     {

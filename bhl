@@ -20,6 +20,7 @@ function task_build_front_dll()
     "$BHL_ROOT/src/g/*.cs",
     "$BHL_ROOT/src/*.cs",
     "$BHL_ROOT/Antlr4.Runtime.Standard.dll", 
+    "$BHL_ROOT/lz4.dll", 
   ),
   "$BHL_ROOT/bhl_front.dll",
   "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library"
@@ -103,7 +104,6 @@ function build_bin(&$runtime_args)
   $sources = array(
     "$BHL_ROOT/bhl.cs",
     "$BHL_ROOT/bhl_front.dll", 
-    "$BHL_ROOT/lz4.dll", 
     "$BHL_ROOT/mono_opts.dll",
     "$BHL_ROOT/Antlr4.Runtime.Standard.dll", 
   );
