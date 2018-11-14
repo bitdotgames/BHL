@@ -11401,7 +11401,8 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  [IsTested()]
+  //TODO: do we really need this behavior supported?
+  //[IsTested()]
   public void TestNullPassedAsCustomNull()
   {
     string bhl = @"

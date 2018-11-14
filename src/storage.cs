@@ -386,14 +386,15 @@ public class DynVal
       _obj == o._obj
       ;
 
-    //NOTE: null special case for overriden Equals
-    if(!res)
-    {
-      if(_type == NIL && o._obj != null)
-        res = o._obj.Equals(null); 
-      else if(o._type == NIL && _obj != null)
-        res = _obj.Equals(null); 
-    }
+    //TODO: not sure if we need to support such an ill behavior
+    ////NOTE: null special case for overriden Equals
+    //if(!res)
+    //{
+    //  if(_type == NIL && o._obj != null)
+    //    res = o._obj.Equals(null); 
+    //  else if(o._type == NIL && _obj != null)
+    //    res = _obj.Equals(null); 
+    //}
 
     return res;
   }
