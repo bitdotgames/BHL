@@ -2472,9 +2472,6 @@ public class Module
 
 public class ModuleRegistry
 {
-  //NOTE: used for tests only
-  public Dictionary<string, string> test_sources = new Dictionary<string, string>(); 
-
   List<string> include_path = new List<string>();
   Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
   Dictionary<string, Parsed> parsed_cache = null;
@@ -2545,16 +2542,7 @@ public class ModuleRegistry
     }
     else
     {
-      Stream stream;
-
-      //for tests only
-      if(test_sources.Count > 0)
-      {
-        var src = test_sources[full_path];
-        stream = src.ToStream();
-      }
-      else
-        stream = File.OpenRead(full_path);
+      var stream = File.OpenRead(full_path);
 
       //Console.WriteLine("MISS " + full_path);
       Frontend.Source2AST(m, stream, globals, this, decls_only: true);
@@ -2572,14 +2560,6 @@ public class ModuleRegistry
 
     if(path.Length == 0)
       throw new Exception("Bad path");
-
-    //NOTE: special case for tests
-    if(test_sources.Count > 0)
-    {
-      norm_path = path;
-      full_path = path;
-      return;
-    }
 
     full_path = Util.ResolveImportPath(include_path, self_path, path);
     norm_path = FilePath2ModulePath(full_path);

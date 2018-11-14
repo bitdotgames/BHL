@@ -29,7 +29,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var n = ExtractNum(intp.ExecNode(node));
 
@@ -57,7 +57,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -77,7 +77,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var str = ExtractStr(intp.ExecNode(node));
 
@@ -96,7 +96,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -115,7 +115,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -134,7 +134,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -153,7 +153,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -173,7 +173,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -194,7 +194,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -217,7 +217,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "symbol not resolved"
     );
@@ -238,7 +238,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -260,7 +260,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -279,7 +279,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -299,7 +299,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     node.SetArgs(DynVal.NewNum(3));
@@ -324,7 +324,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -345,7 +345,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -365,7 +365,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -385,7 +385,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -405,7 +405,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -425,7 +425,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(4));
     var num = ExtractNum(intp.ExecNode(node));
@@ -445,7 +445,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(4));
     var num = ExtractNum(intp.ExecNode(node));
@@ -465,7 +465,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(4));
     var num = ExtractNum(intp.ExecNode(node));
@@ -485,7 +485,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(4));
     var num = ExtractNum(intp.ExecNode(node));
@@ -505,7 +505,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(4));
     var num = ExtractNum(intp.ExecNode(node));
@@ -525,7 +525,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(4));
     var num = ExtractNum(intp.ExecNode(node));
@@ -545,7 +545,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     var num = ExtractNum(intp.ExecNode(node));
@@ -565,7 +565,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     var num = ExtractNum(intp.ExecNode(node));
@@ -585,7 +585,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewStr("b"));
     var num = ExtractNum(intp.ExecNode(node));
@@ -605,7 +605,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(20));
     var num = ExtractNum(intp.ExecNode(node));
@@ -625,7 +625,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewStr("b"));
     var num = ExtractNum(intp.ExecNode(node));
@@ -645,7 +645,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewStr("b"));
     var num = ExtractNum(intp.ExecNode(node));
@@ -665,7 +665,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(20));
     var num = ExtractNum(intp.ExecNode(node));
@@ -685,7 +685,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(20));
     var num = ExtractNum(intp.ExecNode(node));
@@ -705,7 +705,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3), DynVal.NewNum(7));
     var num = ExtractNum(intp.ExecNode(node));
@@ -725,7 +725,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3), DynVal.NewNum(7));
     var num = ExtractNum(intp.ExecNode(node));
@@ -750,7 +750,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -775,7 +775,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     //NodeDump(node);
@@ -802,7 +802,7 @@ public class BHL_Test
 
     BindAnswer42(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -828,7 +828,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "already defined symbol 'trace'"
     );
@@ -850,7 +850,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -875,7 +875,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -899,7 +899,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -928,7 +928,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -959,7 +959,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "max default arguments reached"
     );
@@ -983,7 +983,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "missing argument 'k'"
     );
@@ -1007,7 +1007,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "missing argument 'radius'"
     );
@@ -1029,7 +1029,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -1054,7 +1054,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -1084,7 +1084,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -1114,7 +1114,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -1141,7 +1141,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "missing default argument expression"
     );
@@ -1166,7 +1166,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "f: no such named argument"
     );
@@ -1188,7 +1188,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -1213,7 +1213,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -1234,7 +1234,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -1261,7 +1261,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -1285,7 +1285,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = intp.ExecNode(node).val;
@@ -1316,7 +1316,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = ExtractStr(intp.ExecNode(node));
@@ -1343,7 +1343,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     //NodeDump(node);
@@ -1374,7 +1374,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = intp.ExecNode(node).val;
@@ -1409,7 +1409,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = ExtractNum(intp.ExecNode(node));
@@ -1440,7 +1440,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = ExtractNum(intp.ExecNode(node));
@@ -1471,7 +1471,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     intp.ExecNode(node, 0);
@@ -1500,7 +1500,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     intp.ExecNode(node, 0);
@@ -1525,7 +1525,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -1553,7 +1553,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -1581,7 +1581,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "already defined symbol 'a'"
     );
@@ -1605,7 +1605,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -1638,7 +1638,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -1665,7 +1665,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -1708,7 +1708,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
 
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
@@ -1736,7 +1736,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -1763,7 +1763,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -1786,7 +1786,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "mismatched input 'ref'"
     );
@@ -1804,7 +1804,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "'ref' is not allowed to have a default value"
     );
@@ -1835,7 +1835,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = intp.ExecNode(node, 2); 
     //NodeDump(node);
@@ -1862,7 +1862,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "mismatched input '('"
     );
@@ -1892,7 +1892,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -1920,7 +1920,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -1953,7 +1953,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -1984,7 +1984,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2022,7 +2022,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2065,7 +2065,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2099,7 +2099,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "getting field by 'ref' not supported"
     );
@@ -2123,7 +2123,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2150,7 +2150,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2177,7 +2177,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2212,7 +2212,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -2241,7 +2241,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
 
@@ -2272,7 +2272,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
 
@@ -2304,7 +2304,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var num = ExtractNum(intp.ExecNode(node));
@@ -2336,7 +2336,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -2368,7 +2368,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -2402,7 +2402,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -2436,7 +2436,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -2468,7 +2468,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -2500,7 +2500,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var num = ExtractNum(intp.ExecNode(node));
@@ -2527,7 +2527,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2560,7 +2560,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2596,7 +2596,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2632,7 +2632,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2659,7 +2659,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "symbol 'a' not defined in parent scope"
     );
@@ -2684,7 +2684,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "already defined symbol 'a'"
     );
@@ -2709,7 +2709,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "already defined symbol 'a'"
     );
@@ -2745,7 +2745,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -2792,7 +2792,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -2840,7 +2840,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2865,7 +2865,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -2885,7 +2885,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -2912,7 +2912,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractNum(intp.ExecNode(node));
@@ -2932,7 +2932,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     node.SetArgs(DynVal.NewNum(3));
@@ -2953,7 +2953,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     node.SetArgs(DynVal.NewNum(3));
@@ -2974,7 +2974,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     node.SetArgs(DynVal.NewNum(3.9));
@@ -2995,7 +2995,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -3019,7 +3019,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -3038,7 +3038,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractStr(intp.ExecNode(node));
 
@@ -3057,7 +3057,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
 
@@ -3084,7 +3084,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -3111,7 +3111,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindMin(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = ExtractNum(intp.ExecNode(node));
@@ -3151,7 +3151,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     node.SetArgs(DynVal.NewNum(42));
@@ -3193,7 +3193,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     node.SetArgs(DynVal.NewNum(42));
@@ -3240,7 +3240,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     node.SetArgs(DynVal.NewNum(42));
@@ -3280,7 +3280,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = ExtractNum(intp.ExecNode(node));
@@ -3322,7 +3322,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     node.SetArgs(DynVal.NewNum(42));
@@ -3350,7 +3350,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = intp.ExecNode(node, 0);
 
@@ -3378,7 +3378,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = intp.ExecNode(node, 0);
 
@@ -4019,7 +4019,7 @@ public class BHL_Test
     
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     //NodeDump(node);
@@ -4047,7 +4047,7 @@ public class BHL_Test
     
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     var res = ExtractNum(intp.ExecNode(node));
@@ -4077,7 +4077,7 @@ public class BHL_Test
     
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -4106,7 +4106,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"operator is not overloaded"
     );
@@ -4131,7 +4131,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"operator is not overloaded"
     );
@@ -4156,7 +4156,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"operator is not overloaded"
     );
@@ -4181,7 +4181,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"operator is not overloaded"
     );
@@ -4206,7 +4206,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"operator is not overloaded"
     );
@@ -4231,7 +4231,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"operator is not overloaded"
     );
@@ -4256,7 +4256,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"operator is not overloaded"
     );
@@ -4281,7 +4281,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"operator is not overloaded"
     );
@@ -4305,7 +4305,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"must be numeric type"
     );
@@ -4330,7 +4330,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"must be int type"
     );
@@ -4355,7 +4355,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"must be int type"
     );
@@ -4380,7 +4380,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"must be bool type"
     );
@@ -4405,7 +4405,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"must be bool type"
     );
@@ -4429,7 +4429,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"must be bool type"
     );
@@ -4447,7 +4447,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractBool(intp.ExecNode(node));
@@ -4468,7 +4468,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractBool(intp.ExecNode(node));
@@ -4496,7 +4496,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     var res = ExtractNum(intp.ExecNode(node));
@@ -4538,7 +4538,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     var res = ExtractNum(intp.ExecNode(node));
@@ -4568,7 +4568,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -4596,7 +4596,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     var res = ExtractNum(intp.ExecNode(node));
@@ -4625,7 +4625,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     var res = ExtractNum(intp.ExecNode(node));
@@ -4657,7 +4657,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -4686,7 +4686,7 @@ public class BHL_Test
 
     AssertError<UserError>(
        delegate() {
-         Interpret("", bhl, globs);
+         Interpret(bhl, globs);
        },
       "have incompatible types"
     );
@@ -4710,7 +4710,7 @@ public class BHL_Test
 
     AssertError<UserError>(
        delegate() {
-         Interpret("", bhl, globs);
+         Interpret(bhl, globs);
        },
       "have incompatible types for casting"
     );
@@ -4758,7 +4758,7 @@ public class BHL_Test
       ));
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -4789,7 +4789,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(2));
     var res = ExtractNum(intp.ExecNode(node));
@@ -4819,7 +4819,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -4850,7 +4850,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -4881,7 +4881,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -4912,7 +4912,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -4956,7 +4956,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -4991,7 +4991,7 @@ public class BHL_Test
 
     BindEnum(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -5015,7 +5015,7 @@ public class BHL_Test
 
     BindEnum(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = ExtractNum(intp.ExecNode(node));
@@ -5039,7 +5039,7 @@ public class BHL_Test
 
     BindEnum(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = ExtractNum(intp.ExecNode(node));
@@ -5063,7 +5063,7 @@ public class BHL_Test
 
     BindEnum(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = intp.ExecNode(node).val;
@@ -5091,7 +5091,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "int : symbol is not a function"
     );
@@ -5112,7 +5112,7 @@ public class BHL_Test
 
     BindEnum(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(20));
     //NodeDump(node);
@@ -5137,7 +5137,7 @@ public class BHL_Test
 
     BindEnum(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(20));
     //NodeDump(node);
@@ -5166,7 +5166,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     //NodeDump(node);
@@ -5215,7 +5215,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.run();
 
@@ -5254,7 +5254,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     //NodeDump(node);
@@ -5302,7 +5302,7 @@ public class BHL_Test
 
     BindDynValContainer(globs, c);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -5332,7 +5332,7 @@ public class BHL_Test
 
     BindDynValContainer(globs, c);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -5360,7 +5360,7 @@ public class BHL_Test
 
     BindDynValContainer(globs, c);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractBool(intp.ExecNode(node));
@@ -5448,7 +5448,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = intp.ExecNode(node).val;
@@ -5486,7 +5486,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -5514,7 +5514,7 @@ public class BHL_Test
 
     BindEnum(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var res = intp.ExecNode(node).val;
@@ -5558,7 +5558,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -5594,7 +5594,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -5664,7 +5664,7 @@ public class BHL_Test
     BindColor(globs);
     BindFoo(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
@@ -5697,7 +5697,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "symbol is not a function"
     );
@@ -5736,7 +5736,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = intp.ExecNode(node, 0);
@@ -5761,7 +5761,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -5787,7 +5787,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -5814,7 +5814,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -5838,7 +5838,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"duplicate key 'A'"
     );
@@ -5859,7 +5859,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"duplicate value '1'"
     );
@@ -5884,7 +5884,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"already defined symbol 'Foo'"
     );
@@ -5908,7 +5908,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"already defined symbol 'Foo'"
     );
@@ -5937,7 +5937,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"bad chain call"
     );
@@ -5982,6 +5982,8 @@ public class BHL_Test
     {
       var interp = Interpreter.instance;
       var s = interp.PopValue();
+
+      //Console.WriteLine("==============\n" + s.str + "\n" + Environment.StackTrace);
 
       var sw = new StreamWriter(sm);
       sw.Write(s.str);
@@ -6137,7 +6139,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     //NodeDump(node);
@@ -6212,7 +6214,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -6245,7 +6247,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -6365,7 +6367,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -6396,7 +6398,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -6427,7 +6429,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -6469,7 +6471,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -6501,7 +6503,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -6536,7 +6538,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -6578,7 +6580,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractBool(intp.ExecNode(node));
@@ -6612,7 +6614,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractBool(intp.ExecNode(node));
@@ -6646,7 +6648,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     {
       var node = intp.GetFuncNode("test");
       node.SetArgs(DynVal.NewNum(3));
@@ -6680,7 +6682,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     {
       var node = intp.GetFuncNode("test");
       node.SetArgs(DynVal.NewNum(3));
@@ -6727,7 +6729,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     {
       var node = intp.GetFuncNode("test");
       node.SetArgs(DynVal.NewNum(3));
@@ -6764,7 +6766,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     {
       var node = intp.GetFuncNode("test");
       node.SetArgs(DynVal.NewNum(3));
@@ -6808,7 +6810,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractNum(intp.ExecNode(node));
@@ -6838,7 +6840,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractBool(intp.ExecNode(node));
@@ -6865,7 +6867,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractBool(intp.ExecNode(node));
@@ -6888,7 +6890,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractBool(intp.ExecNode(node));
@@ -6916,7 +6918,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     //NodeDump(node);
@@ -6940,7 +6942,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "type doesn't support member access via '.'"
     );
@@ -6961,7 +6963,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "accessing not an array type 'bool^(int)'"
     );
@@ -6991,7 +6993,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractBool(intp.ExecNode(node));
@@ -7023,7 +7025,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractBool(intp.ExecNode(node));
@@ -7059,7 +7061,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     var str = GetString(trace_stream);
@@ -7084,7 +7086,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "@(6,17) ptr:<bool^(int)>, @(6,21) =foo:<void^(int)> have incompatible types"
     );
@@ -7106,7 +7108,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "@(6,19) ptr:<void^(float)>, @(6,23) =foo:<void^(int)> have incompatible types"
     );
@@ -7129,7 +7131,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"int, @(7,10) ""hey"":<string> have incompatible types"
     );
@@ -7153,7 +7155,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"b:<float>: 'ref' is missing"
     );
@@ -7177,7 +7179,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "ptr:<void^(int,float)>, @(7,28) =foo:<void^(int,ref float)> have incompatible types"
     );
@@ -7216,7 +7218,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "have incompatible types"
     );
@@ -7239,7 +7241,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "missing argument of type 'int'"
     );
@@ -7262,7 +7264,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "missing argument of type 'float'"
     );
@@ -7285,7 +7287,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() {
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "too many arguments"
     );
@@ -7319,7 +7321,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -7453,7 +7455,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScriptInMgr(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -7517,7 +7519,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScriptInMgr(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -7577,7 +7579,7 @@ public class BHL_Test
 
     BindStartScriptInMgr(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -7626,7 +7628,7 @@ public class BHL_Test
     BindStartScriptInMgr(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -7680,7 +7682,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -7729,7 +7731,7 @@ public class BHL_Test
     BindStartScriptInMgr(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -7774,7 +7776,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScriptInMgr(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -7810,7 +7812,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScriptInMgr(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -7865,7 +7867,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScriptInMgr(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -7912,7 +7914,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -7950,7 +7952,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -7985,7 +7987,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -8017,7 +8019,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node1 = intp.GetFuncNode("test");
     var node2 = intp.GetFuncNode("test");
     //NodeDump(node);
@@ -8061,7 +8063,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     intp.ExecNode(intp.GetFuncNode("test"), 0);
     intp.ExecNode(intp.GetFuncNode("test2"), 0);
 
@@ -8095,7 +8097,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -8137,7 +8139,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -8174,7 +8176,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "already defined symbol 'a'"
     );
@@ -8210,7 +8212,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -8256,7 +8258,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -8316,7 +8318,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStartScript(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
 
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
@@ -8357,7 +8359,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -8402,7 +8404,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -8445,7 +8447,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -8490,7 +8492,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -8533,7 +8535,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -8559,7 +8561,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -8581,7 +8583,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -8622,7 +8624,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
@@ -8672,7 +8674,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
@@ -8721,7 +8723,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
@@ -8770,7 +8772,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -8811,7 +8813,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
@@ -8866,7 +8868,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
@@ -8927,7 +8929,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -8956,7 +8958,7 @@ public class BHL_Test
     BindNodeWithDefer(globs, trace_stream);
     BindTrace(globs, trace_stream);
    
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
    
     var status = node.run();
@@ -9003,7 +9005,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
@@ -9064,7 +9066,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9119,7 +9121,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9160,7 +9162,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -9205,7 +9207,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9243,7 +9245,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -9287,7 +9289,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9327,7 +9329,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9374,7 +9376,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9426,7 +9428,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9479,7 +9481,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
 
@@ -9515,7 +9517,7 @@ public class BHL_Test
 
     BindNodeWithDefer(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9541,7 +9543,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     AssertTrue(BHS.FAILURE == node.run());
     CommonChecks(intp);
@@ -9560,7 +9562,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     AssertTrue(BHS.SUCCESS == node.run());
     CommonChecks(intp);
@@ -9579,7 +9581,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     AssertTrue(BHS.RUNNING == node.run());
     CommonChecks(intp);
@@ -9599,7 +9601,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     AssertTrue(BHS.FAILURE == node.run());
     CommonChecks(intp);
@@ -9624,7 +9626,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     AssertTrue(BHS.SUCCESS == node.run());
     CommonChecks(intp);
@@ -9648,7 +9650,7 @@ public class BHL_Test
 
     BindNodeWithDefer(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9677,7 +9679,7 @@ public class BHL_Test
 
     BindNodeWithDefer(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9708,7 +9710,7 @@ public class BHL_Test
 
     BindNodeWithDefer(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -9735,7 +9737,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -9757,7 +9759,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -9779,7 +9781,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var status = node.run();
     AssertEqual(BHS.RUNNING, status);
@@ -9800,7 +9802,7 @@ public class BHL_Test
 
     AssertError<Exception>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "mismatched input 'eval'"
     );
@@ -9821,7 +9823,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "have incompatible types"
     );
@@ -9845,7 +9847,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -9872,7 +9874,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractNum(intp.ExecNode(node));
@@ -9902,7 +9904,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var res = ExtractNum(intp.ExecNode(node));
@@ -9932,7 +9934,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(3));
     var num = ExtractNum(intp.ExecNode(node));
@@ -9952,7 +9954,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     AssertError<IndexOutOfRangeException>(
       delegate() { 
@@ -9994,7 +9996,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     for(int i=0;i<5;++i)
@@ -10033,7 +10035,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     for(int i=0;i<3;++i)
@@ -10068,7 +10070,7 @@ public class BHL_Test
     ";
 
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -10114,7 +10116,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     for(int i=0;i<2;++i)
@@ -10147,7 +10149,7 @@ public class BHL_Test
     BindNodeWithDefer(globs, trace_stream);
     BindTrace(globs, trace_stream);
    
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     for(int i=0;i<3;++i)
@@ -10194,7 +10196,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -10228,7 +10230,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -10263,7 +10265,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -10298,7 +10300,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -10355,7 +10357,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -10388,7 +10390,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     for(int i=0;i<3;++i)
@@ -10428,7 +10430,7 @@ public class BHL_Test
     BindWaitTicks(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     for(int i=0;i<3;++i)
@@ -10454,7 +10456,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -10477,7 +10479,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -10513,7 +10515,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -10552,7 +10554,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -10589,7 +10591,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
 
     AssertEqual(FuncCallNode.PoolCount, 0);
 
@@ -10632,7 +10634,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
 
     AssertEqual(FuncCallNode.PoolCount, 0);
 
@@ -10676,7 +10678,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
 
     AssertEqual(FuncCallNode.PoolCount, 0);
 
@@ -10722,7 +10724,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
 
     AssertEqual(FuncCallNode.PoolCount, 0);
     AssertEqual(FuncCallNode.PoolCountFree, 0);
@@ -10771,7 +10773,7 @@ public class BHL_Test
     BindColor(globs);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
 
     var foo = intp.GetFuncNode("foo");
     foo.SetArgs(DynVal.NewNum(10));
@@ -10803,7 +10805,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -10826,7 +10828,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "mismatched input '(' expecting '}'"
     );
@@ -10849,7 +10851,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "no func to call"
     );
@@ -10875,7 +10877,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "matching 'return' statement not found"
     );
@@ -10903,7 +10905,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "matching 'return' statement not found"
     );
@@ -10931,7 +10933,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -10958,7 +10960,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -10986,7 +10988,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11012,7 +11014,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(1));
     var res = ExtractNum(intp.ExecNode(node));
@@ -11045,7 +11047,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -11077,7 +11079,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11108,7 +11110,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11137,7 +11139,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11169,7 +11171,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11199,7 +11201,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = intp.ExecNode(node).val;
 
@@ -11235,7 +11237,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = intp.ExecNode(node).val;
 
@@ -11283,7 +11285,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11326,7 +11328,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindIntStruct(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11357,7 +11359,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStringClass(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewObj(null));
     intp.ExecNode(node, 0);
@@ -11389,7 +11391,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindStringClass(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNil());
     intp.ExecNode(node, 0);
@@ -11430,7 +11432,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindCustomNull(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var cn = new CustomNull();
     node.SetArgs(DynVal.NewObj(cn));
@@ -11468,7 +11470,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -11500,7 +11502,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -11532,7 +11534,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -11571,7 +11573,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -11610,7 +11612,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -11640,7 +11642,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -11663,7 +11665,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "have incompatible types"
     );
@@ -11703,7 +11705,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11732,7 +11734,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11771,7 +11773,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11800,7 +11802,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11831,7 +11833,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11862,7 +11864,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11898,7 +11900,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11927,7 +11929,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     {
       var status = node.run();
@@ -11959,7 +11961,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -11988,7 +11990,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12015,7 +12017,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12042,7 +12044,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12069,7 +12071,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12097,7 +12099,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12126,7 +12128,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12157,7 +12159,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12188,7 +12190,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     AssertTrue(BHS.RUNNING == node.run());
@@ -12219,7 +12221,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "mismatched input ';' expecting '='"
     );
@@ -12244,7 +12246,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12273,7 +12275,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12299,7 +12301,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "mismatched input ')' expecting '='"
     );
@@ -12321,7 +12323,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "no viable alternative at input ';'"
     );
@@ -12348,7 +12350,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "foo():<int> have incompatible types"
     );
@@ -12373,7 +12375,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12403,7 +12405,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12433,7 +12435,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12461,7 +12463,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12494,7 +12496,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12526,7 +12528,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     AssertTrue(BHS.RUNNING == node.run());
@@ -12560,7 +12562,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12593,7 +12595,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12624,7 +12626,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12654,7 +12656,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -12680,7 +12682,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "have incompatible types"
     );
@@ -12707,7 +12709,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "have incompatible types"
     );
@@ -12730,7 +12732,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "have incompatible types"
     );
@@ -12753,7 +12755,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "already defined symbol 'it'"
     );
@@ -12774,7 +12776,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "not within loop construct"
     );
@@ -12799,7 +12801,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "not within loop construct"
     );
@@ -12828,7 +12830,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -12860,7 +12862,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     {
@@ -12891,7 +12893,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "already defined symbol 'i'"
     );
@@ -12919,7 +12921,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "already defined symbol 'i'"
     );
@@ -12947,7 +12949,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "i : symbol not resolved"
     );
@@ -12980,7 +12982,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "i : symbol not resolved"
     );
@@ -13010,7 +13012,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, 0);
@@ -13040,7 +13042,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -13074,7 +13076,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -13098,7 +13100,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13121,7 +13123,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13145,7 +13147,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"no such attribute 'b' in class 'Color"
     );
@@ -13167,7 +13169,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"float, @(4,20) ""what"":<string> have incompatible types"
     );
@@ -13189,7 +13191,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13213,7 +13215,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"type 'Foo' not found"
     );
@@ -13235,7 +13237,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13263,7 +13265,7 @@ public class BHL_Test
     
     BindMasterStruct(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractStr(intp.ExecNode(node));
@@ -13291,7 +13293,7 @@ public class BHL_Test
     
     BindMasterStruct(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13317,7 +13319,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13343,7 +13345,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"have incompatible types"
     );
@@ -13370,7 +13372,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13390,7 +13392,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -13410,7 +13412,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13433,7 +13435,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13460,7 +13462,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13487,7 +13489,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13514,7 +13516,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13543,7 +13545,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"have incompatible types"
     );
@@ -13568,7 +13570,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"can't be specified with {..}"
     );
@@ -13593,7 +13595,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13620,7 +13622,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13647,7 +13649,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
 
@@ -13671,7 +13673,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -13692,7 +13694,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var num = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -13718,7 +13720,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13749,7 +13751,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13779,7 +13781,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13806,7 +13808,7 @@ public class BHL_Test
     
     BindColorAlpha(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -13832,7 +13834,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"have incompatible types"
     );
@@ -13864,7 +13866,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(42));
     intp.ExecNode(node, 0);
@@ -13913,7 +13915,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -13948,7 +13950,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     //NodeDump(node);
@@ -13983,7 +13985,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     //NodeDump(node);
@@ -14022,7 +14024,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     intp.ExecNode(node, ret_vals: 0, keep_running: false);
@@ -14054,7 +14056,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     //NodeDump(node);
@@ -14100,7 +14102,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -14148,7 +14150,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -14206,7 +14208,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -14269,7 +14271,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -14339,7 +14341,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -14404,7 +14406,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
@@ -14447,7 +14449,7 @@ public class BHL_Test
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     node.SetArgs(DynVal.NewNum(42));
     intp.ExecNode(node, 0);
@@ -14457,14 +14459,6 @@ public class BHL_Test
     //NodeDump(node);
     AssertEqual("3", str);
     CommonChecks(intp);
-  }
-
-  public class DummyModuleLoader : IModuleLoader
-  {
-    public AST_Module LoadModule(HashedName id)
-    {
-      return new AST_Module();
-    }
   }
 
   [IsTested()]
@@ -14481,7 +14475,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     bool res = ExtractBool(intp.ExecNode(node));
 
@@ -14509,7 +14503,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       "already defined symbol 'Foo'"
     );
@@ -14531,7 +14525,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     bool res = ExtractBool(intp.ExecNode(node));
 
@@ -14563,7 +14557,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -14592,7 +14586,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -14615,7 +14609,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -14639,7 +14633,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -14665,7 +14659,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"mismatched input '(' expecting '}'"
     );
@@ -14684,7 +14678,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = intp.ExecNode(node);
 
@@ -14708,7 +14702,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = intp.ExecNode(node);
 
@@ -14731,7 +14725,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -14751,7 +14745,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -14771,7 +14765,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -14793,7 +14787,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -14816,7 +14810,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -14836,7 +14830,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -14858,7 +14852,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"type 'Foo' not found"
     );
@@ -14877,7 +14871,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"mismatched input '(' expecting '}'"
     );
@@ -14901,7 +14895,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -14927,7 +14921,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -14953,7 +14947,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -14984,7 +14978,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -15010,7 +15004,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -15036,7 +15030,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -15063,7 +15057,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractBool(intp.ExecNode(node));
 
@@ -15095,7 +15089,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -15136,7 +15130,7 @@ public class BHL_Test
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     //NodeDump(node);
@@ -15174,7 +15168,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -15219,7 +15213,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
 
@@ -15251,7 +15245,7 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -15283,7 +15277,7 @@ public class BHL_Test
 
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -15311,7 +15305,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15335,7 +15329,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     bool res = ExtractBool(intp.ExecNode(node));
 
@@ -15360,7 +15354,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15387,7 +15381,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15419,7 +15413,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15447,7 +15441,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15474,7 +15468,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15500,7 +15494,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15526,7 +15520,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -15552,7 +15546,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -15582,7 +15576,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15613,7 +15607,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15645,7 +15639,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15675,7 +15669,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15707,7 +15701,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"already defined symbol 'x'"
     );
@@ -15735,7 +15729,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl, globs);
+        Interpret(bhl, globs);
       },
       @"extending C# bound classes not currently supported"
     );
@@ -15758,7 +15752,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15789,7 +15783,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15813,7 +15807,7 @@ public class BHL_Test
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"already defined symbol 'foo'"
     );
@@ -15837,7 +15831,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15866,7 +15860,7 @@ public class BHL_Test
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15899,7 +15893,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -15932,7 +15926,7 @@ public class BHL_Test
     var error = false;
     try
     {
-      Interpret("", bhl);
+      Interpret(bhl);
     }
     catch(Exception)
     {
@@ -15970,14 +15964,13 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    TestNewFile("bhl3.bhl", bhl3, files);
 
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    fp2src.Add("bhl3", bhl3);
-    mreg.test_sources = fp2src;
-    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+    var intp = CompileFiles(files, globs);
 
     var node = intp.GetFuncNode("bhl1", "test");
     node.SetArgs(DynVal.NewNum(23));
@@ -16022,14 +16015,13 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
-
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    fp2src.Add("bhl3", bhl3);
-    mreg.test_sources = fp2src;
-    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    TestNewFile("bhl3.bhl", bhl3, files);
+    
+    var intp = CompileFiles(files, globs);
 
     var node = intp.GetFuncNode("bhl1", "test");
     node.SetArgs(DynVal.NewNum(2));
@@ -16073,15 +16065,13 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    TestNewFile("bhl3.bhl", bhl3, files);
 
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    fp2src.Add("bhl3", bhl3);
-    mreg.test_sources = fp2src;
-
-    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+    var intp = CompileFiles(files, globs);
 
     var node = intp.GetFuncNode("bhl1", "test");
     node.SetArgs(DynVal.NewNum(23));
@@ -16118,15 +16108,14 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
-
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    mreg.test_sources = fp2src;
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    
     AssertError<UserError>(
       delegate() { 
-        Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+        CompileFiles(files, globs);
       },
       @"already defined symbol 'bar'"
     );
@@ -16167,14 +16156,13 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
-
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    fp2src.Add("bhl3", bhl3);
-    mreg.test_sources = fp2src;
-    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    TestNewFile("bhl3.bhl", bhl3, files);
+    
+    var intp = CompileFiles(files, globs);
 
     var node = intp.GetFuncNode("bhl1", "test");
     node.SetArgs(DynVal.NewNum(42));
@@ -16202,15 +16190,14 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
-
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    mreg.test_sources = fp2src;
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    
     AssertError<UserError>(
       delegate() { 
-        Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+        CompileFiles(files, globs);
       },
       @"already defined symbol 'Bar'"
     );
@@ -16244,13 +16231,12 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
-
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    mreg.test_sources = fp2src;
-    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    
+    var intp = CompileFiles(files, globs);
 
     var node = intp.GetFuncNode("bhl1", "test");
     //NodeDump(node);
@@ -16281,15 +16267,14 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
-
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    mreg.test_sources = fp2src;
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    
     AssertError<UserError>(
       delegate() { 
-        Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+        CompileFiles(files, globs);
       },
       @"already defined symbol 'Bar'"
     );
@@ -16324,14 +16309,13 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
-
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    fp2src.Add("bhl3", bhl3);
-    mreg.test_sources = fp2src;
-    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    TestNewFile("bhl3.bhl", bhl3, files);
+    
+    var intp = CompileFiles(files, globs);
 
     var node = intp.GetFuncNode("bhl1", "test");
     //NodeDump(node);
@@ -16358,15 +16342,14 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
-    var mreg = new ModuleRegistry();
-
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    mreg.test_sources = fp2src;
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    
     AssertError<UserError>(
       delegate() { 
-        Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+        CompileFiles(files, globs);
       },
       @"already defined symbol 'foo'"
     );
@@ -16393,26 +16376,17 @@ public class BHL_Test
 
     ";
 
-    string bhl3 = @"
-    import ""bhl2""
-    import ""bhl2""
-
-    func test2() { }
-    ";
-
     var globs = SymbolTable.CreateBuiltins();
     var trace_stream = new MemoryStream();
     BindTrace(globs, trace_stream);
 
-    var mreg = new ModuleRegistry();
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
 
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    fp2src.Add("bhl3", bhl3);
-    mreg.test_sources = fp2src;
-
-    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+    var intp = CompileFiles(files, globs);
+    intp.LoadModule("bhl1");
 
     var str = GetString(trace_stream);
     AssertEqual("once", str);
@@ -16455,15 +16429,14 @@ public class BHL_Test
     var trace_stream = new MemoryStream();
     BindTrace(globs, trace_stream);
 
-    var mreg = new ModuleRegistry();
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    TestNewFile("bhl3.bhl", bhl3, files);
 
-    var fp2src = new Dictionary<string, string>();
-    fp2src.Add("bhl1", bhl1);
-    fp2src.Add("bhl2", bhl2);
-    fp2src.Add("bhl3", bhl3);
-    mreg.test_sources = fp2src;
-
-    var intp = Interpret(fp2src, globs, mreg, new DummyModuleLoader());
+    var intp = CompileFiles(files, globs);
+    intp.LoadModule("bhl1");
 
     var str = GetString(trace_stream);
     AssertEqual("once", str);
@@ -16552,7 +16525,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindForSlides(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("FindUnit");
     if(node == null)
       throw new Exception("???");
@@ -16672,7 +16645,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
@@ -16693,7 +16666,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 3).vals;
@@ -16717,7 +16690,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"float, @(5,13) ""bar"":<string> have incompatible types"
     );
@@ -16736,7 +16709,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       @"<float,string>, @(5,13) ""bar"":<string> have incompatible types"
     );
@@ -16755,7 +16728,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "multi return size doesn't match destination"
     );
@@ -16781,7 +16754,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var globs = SymbolTable.CreateBuiltins();
     BindLog(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var vals = intp.ExecNode(node, 2).vals;
     //NodeDump(node);
@@ -16809,7 +16782,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
@@ -16841,7 +16814,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
@@ -16872,7 +16845,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
@@ -16904,7 +16877,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
@@ -16933,7 +16906,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "s : symbol not resolved"
     );
@@ -16951,7 +16924,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
@@ -16974,7 +16947,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
@@ -17002,7 +16975,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "a:<string>, float have incompatible types"
     );
@@ -17026,7 +16999,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "multi return size doesn't match destination"
     );
@@ -17050,7 +17023,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertError<UserError>(
       delegate() { 
-        Interpret("", bhl);
+        Interpret(bhl);
       },
       "multi return size doesn't match destination"
     );
@@ -17069,7 +17042,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -17092,7 +17065,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -17116,7 +17089,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var res = ExtractNum(intp.ExecNode(node));
@@ -17142,7 +17115,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindColor(globs);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -17167,7 +17140,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
     //NodeDump(node);
@@ -17196,7 +17169,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -17221,7 +17194,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     var res = ExtractNum(intp.ExecNode(node));
 
@@ -17256,7 +17229,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     var vals = intp.ExecNode(node, 2).vals;
@@ -17296,7 +17269,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       globs.define(fn);
     }
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     var vals = intp.ExecNode(node, 4).vals;
     //NodeDump(node);
@@ -17324,7 +17297,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17350,7 +17323,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node);
 
@@ -17378,7 +17351,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17406,7 +17379,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17435,7 +17408,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17463,7 +17436,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17499,7 +17472,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     BindRefC(globs, trace_stream);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17527,7 +17500,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17556,7 +17529,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17589,7 +17562,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17622,7 +17595,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     BindRefC(globs, trace_stream);
     BindTrace(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17661,7 +17634,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     BindRefC(globs, trace_stream);
 
-    var intp = Interpret("", bhl, globs);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
 
@@ -17829,7 +17802,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
-    var intp = Interpret("", bhl);
+    var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
     const int x = 15;
@@ -17914,14 +17887,28 @@ func Unit FindUnit(Vec3 pos, float radius) {
     AssertTrue(idx != -1, "Error message is: " + err.Message);
   }
 
-  static Interpreter Interpret(string fpath, string src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false)
+  static string TestDirPath()
   {
-    var dict = new Dictionary<string, string>();
-    dict.Add(fpath, src);
-    return Interpret(dict, globs, mreg, mloader, show_ast);
+    string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
+    return Path.GetDirectoryName(self_bin) + "/tmp/tests";
   }
 
-  static Interpreter Interpret(Dictionary<string, string> fpath2src, GlobalScope globs = null, ModuleRegistry mreg = null, IModuleLoader mloader = null, bool show_ast = false)
+  static void TestCleanDir()
+  {
+    string dir = TestDirPath();
+    if(Directory.Exists(dir))
+      Directory.Delete(dir, true/*recursive*/);
+  }
+
+  static void TestNewFile(string path, string text, List<string> files)
+  {
+    string full_path = TestDirPath() + "/" + path;
+    Directory.CreateDirectory(Path.GetDirectoryName(full_path));
+    File.WriteAllText(full_path, text);
+    files.Add(full_path);
+  }
+
+  static void SharedInit()
   {
     Util.DEBUG = true;
 
@@ -17930,67 +17917,71 @@ func Unit FindUnit(Vec3 pos, float radius) {
     DynValDict.PoolClear();
     FuncCallNode.PoolClear();
     FuncCtx.PoolClear();
+  }
 
-    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
-    //creating local copy before interpreting anything
-    var local_globs = new GlobalScope();
+  static GlobalScope Clone(GlobalScope globs)
+  {
+    var globs_copy = new GlobalScope();
     var ms = globs.GetMembers();
     for(int i=0;i<ms.Count;++i)
-      local_globs.define(ms[i]);
+      globs_copy.define(ms[i]);
+    return globs_copy;
+  }
+
+  static Interpreter CompileFiles(List<string> test_files, GlobalScope globs = null)
+  {
+    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
+    //NOTE: we want interpreter to work with original globs
+    var globs_copy = Clone(globs);
+    SharedInit();
+
+    var conf = new CLIConf();
+    conf.files = test_files;
+    conf.res_file = TestDirPath() + "/result.bin";
+    conf.inc_dir = TestDirPath();
+    conf.cache_dir = TestDirPath() + "/cache";
+    conf.err_file = TestDirPath() + "/error.log";
+    conf.use_cache = false;
+    conf.debug = true;
+
+    var cli = new CLI();
+    int res = cli.Exec(conf, globs);
+    if(res != 0)
+      throw new UserError(File.ReadAllText(conf.err_file));
 
     var intp = Interpreter.instance;
-    intp.Init(local_globs, mloader);
+    var bin = new MemoryStream(File.ReadAllBytes(conf.res_file));
+    var mloader = new ModuleLoader(bin);
 
-    mreg = mreg == null ? new ModuleRegistry() : mreg;
-
-    foreach(var item in fpath2src)
-    {
-      var bin = new MemoryStream();
-      var mod = new bhl.Module(item.Key, item.Key);
-      Frontend.Source2Bin(mod, item.Value.ToStream(), bin, globs, mreg);
-      bin.Position = 0;
-
-      var ast = Util.Bin2Meta<AST_Module>(bin);
-      if(show_ast)
-        ASTDump(ast);
-
-      intp.Interpret(ast);
-    }
+    intp.Init(globs_copy, mloader);
 
     return intp;
   }
 
-  public static void ASTDump(AST ast)
+  static Interpreter Interpret(string src, GlobalScope globs = null, bool show_ast = false)
   {
-    new AST_Dumper().Visit(ast);
-    Console.WriteLine("\n=============");
-  }
+    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
+    //NOTE: we want interpreter to work with original globs
+    var globs_copy = Clone(globs);
+    SharedInit();
 
-  public static void NodeDump(BehaviorTreeNode node, bool only_running = false, int level = 0, bool is_term = true)
-  {
-    var fnode = node as FuncNodeAST;
-    if(fnode != null)
-      fnode.Inflate();
+    var intp = Interpreter.instance;
+    intp.Init(globs_copy, null/*empty module loader*/);
 
-    var name = node.GetType().Name;
-    var status = node.getStatus();
+    var mreg = new ModuleRegistry();
+    //fake module for this specific case
+    var mod = new bhl.Module("", "");
+    var bin = new MemoryStream();
+    Frontend.Source2Bin(mod, src.ToStream(), bin, globs, mreg);
+    bin.Position = 0;
 
-    var spaces = new String('_', level);
-    var indent_str = spaces + (is_term ? "`" : "|");
-    Console.WriteLine(indent_str + "-" + name + " (" + status + ") " + node.inspect());
+    var ast = Util.Bin2Meta<AST_Module>(bin);
+    if(show_ast)
+      Util.ASTDump(ast);
 
-    if(!only_running || (only_running && status == BHS.RUNNING))
-    {
-      var inode = node as BehaviorTreeInternalNode;
-      if(inode != null)
-      {
-        for(int i=0;i<inode.children.Count;++i)
-        {
-          var child = inode.children[i]; 
-          NodeDump(child, only_running, level + 1, i == inode.children.Count-1);
-        }
-      }
-    }
+    intp.Interpret(ast);
+  
+    return intp;
   }
 
   void CommonChecks(Interpreter intp)

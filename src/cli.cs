@@ -11,7 +11,7 @@ namespace bhl {
 public class CLIConf
 {
   public List<string> files = new List<string>();
-  public string self_file;
+  public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
   public string cache_dir = "";
@@ -21,13 +21,14 @@ public class CLIConf
   public UserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
+  public bool debug = false;
 }
  
 public class CLI
 {
   UniqueSymbols uniq_symbols = new UniqueSymbols();
 
-  public int Exec(CLIConf conf)
+  public int Exec(CLIConf conf, GlobalScope globs = null)
   {
     var res_dir = Path.GetDirectoryName(conf.res_file); 
     if(res_dir.Length > 0)
@@ -38,9 +39,11 @@ public class CLI
     if(conf.use_cache && !Util.NeedToRegen(conf.res_file, conf.files) && (conf.postproc != null && !conf.postproc.NeedToRegen(conf.files)))
       return 0;
 
-    var globs = SymbolTable.CreateBuiltins();
+    if(globs == null)
+      globs = SymbolTable.CreateBuiltins();
     conf.userbindings.Register(globs);
 
+    Util.DEBUG = conf.debug;
     Util.SetupAutogenFactory();
 
     var parse_workers = new List<ParseWorker>();
@@ -247,7 +250,6 @@ public class CLI
     }
   }
 
-
   public class ParseWorker
   {
     public int id;
@@ -305,7 +307,8 @@ public class CLI
               new List<string>();
             deps.Add(file);
             //NOTE: adding self binary as a dep
-            deps.Add(self_bin_file);
+            if(self_bin_file.Length > 0)
+              deps.Add(self_bin_file);
 
             var cache_file = GetCacheFile(w.cache_dir, file);
 

@@ -1915,7 +1915,7 @@ public class FuncNodeAST : FuncNode
       return;
 
     var interp = Interpreter.instance;
-    interp.PushNode(this, attach_as_child: false);
+    interp.PushNode(this);
     interp.VisitChildren(decl.block());
     interp.PopNode();
     inflated = true;

@@ -30,6 +30,7 @@ public class BHL
     string userbindings_dll_path = "";
     int max_threads = 1;
     bool check_deps = true;
+    bool debug = false;
 
     var p = new OptionSet () {
       { "dir=", "source dir",
@@ -53,7 +54,7 @@ public class BHL
       { "threads=", "number of threads",
           v => max_threads = int.Parse(v) },
       { "d", "debug version",
-        v => Util.DEBUG = v != null }
+        v => debug = v != null }
      };
 
     var extra = new List<string>();
@@ -118,6 +119,7 @@ public class BHL
     conf.err_file = err_file;
     conf.userbindings = userbindings;
     conf.postproc = postproc;
+    conf.debug = debug;
 
     var cli = new CLI();
     int err = cli.Exec(conf);
