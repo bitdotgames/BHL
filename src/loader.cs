@@ -20,8 +20,8 @@ public interface IModuleLoader
 
 public class ModuleLoader : IModuleLoader
 {
-  const byte FMT_BIN = 0;
-  const byte FMT_LZ4 = 1;
+  public const byte FMT_BIN = 0;
+  public const byte FMT_LZ4 = 1;
 
   Stream source;
   MsgPackDataReader reader;

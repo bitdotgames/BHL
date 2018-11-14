@@ -150,7 +150,7 @@ public class CLI
           var m = w.result[i];
           var lz4 = w.lz4_result[i];
 
-          mwriter.Write(1/*lz4*/);
+          mwriter.Write(ModuleLoader.FMT_LZ4);
           mwriter.Write(m.nname);
           mwriter.Write(lz4);
         }
