@@ -8,9 +8,10 @@ using Antlr4.Runtime.Misc;
 
 namespace bhl {
 
-public class CLIConf
+public class BuildConf
 {
   public List<string> files = new List<string>();
+  public GlobalScope globs;
   public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
@@ -24,11 +25,11 @@ public class CLIConf
   public bool debug = false;
 }
  
-public class CLI
+public class Build
 {
   UniqueSymbols uniq_symbols = new UniqueSymbols();
 
-  public int Exec(CLIConf conf, GlobalScope globs = null)
+  public int Exec(BuildConf conf)
   {
     var res_dir = Path.GetDirectoryName(conf.res_file); 
     if(res_dir.Length > 0)
@@ -39,6 +40,7 @@ public class CLI
     if(conf.use_cache && !Util.NeedToRegen(conf.res_file, conf.files) && (conf.postproc != null && !conf.postproc.NeedToRegen(conf.files)))
       return 0;
 
+    var globs = conf.globs;
     if(globs == null)
       globs = SymbolTable.CreateBuiltins();
     conf.userbindings.Register(globs);

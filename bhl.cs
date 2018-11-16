@@ -104,10 +104,10 @@ public class BHL
     }
 
     if(files.Count == 0)
-      CLI.AddFilesFromDir(src_dir, files);
+      Build.AddFilesFromDir(src_dir, files);
 
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
-    var conf = new CLIConf();
+    var conf = new BuildConf();
     conf.use_cache = use_cache;
     conf.self_file = GetSelfFile();
     conf.check_deps = check_deps;
@@ -121,8 +121,8 @@ public class BHL
     conf.postproc = postproc;
     conf.debug = debug;
 
-    var cli = new CLI();
-    int err = cli.Exec(conf);
+    var build = new Build();
+    int err = build.Exec(conf);
     if(err != 0)
       Environment.Exit(err);
   }

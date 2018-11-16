@@ -17936,7 +17936,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var globs_copy = Clone(globs);
     SharedInit();
 
-    var conf = new CLIConf();
+    var conf = new BuildConf();
+    conf.globs = globs;
     conf.files = test_files;
     conf.res_file = TestDirPath() + "/result.bin";
     conf.inc_dir = TestDirPath();
@@ -17945,8 +17946,8 @@ func Unit FindUnit(Vec3 pos, float radius) {
     conf.use_cache = false;
     conf.debug = true;
 
-    var cli = new CLI();
-    int res = cli.Exec(conf, globs);
+    var bld = new Build();
+    int res = bld.Exec(conf);
     if(res != 0)
       throw new UserError(File.ReadAllText(conf.err_file));
 
