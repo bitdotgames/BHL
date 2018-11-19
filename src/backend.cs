@@ -202,6 +202,41 @@ public class Interpreter : AST_Visitor
     return new FuncArgsInfo(call_stack.Peek().cargs_bits);
   }
 
+  public struct CallStackInfo
+  {
+    public uint module_id;
+    public string module_name;
+
+    public string func_name;
+    public uint func_id;
+
+    public uint line_num;
+  }
+
+  public void GetCallStackInfo(List<CallStackInfo> result)
+  {
+    //NOTE: we transform call stack into more convenient for the user format
+    for(int i=call_stack.Count;i-- > 1;)
+    {
+      var cs = call_stack[i-1]; 
+
+      string module_name = "";
+      loaded_modules.TryGetValue(cs.nname2, out module_name);
+
+      var item = new CallStackInfo() 
+      {
+        module_id = cs.nname2,
+        module_name = module_name,
+
+        func_id = cs.nname1,
+        func_name = cs.name, 
+
+        line_num = call_stack[i].line_num
+      };
+      result.Add(item);
+    }
+  }
+
   //NOTE: caching exceptions for less allocations
   static ReturnException return_exception = new ReturnException();
   static BreakException break_exception = new BreakException();
