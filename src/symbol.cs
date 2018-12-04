@@ -951,6 +951,11 @@ public class ClassBindSymbol : ClassSymbol
   public ClassBindSymbol(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator)
     : base(null, name, super_class, null, creator)
   {}
+
+  public void defineBinaryOperator(FuncSymbol s)
+  {
+    define(s);
+  }
 }
 
 public class ClassSymbolAST : ClassSymbol

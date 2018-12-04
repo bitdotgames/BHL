@@ -3486,87 +3486,85 @@ public class BHL_Test
     }
   }
 
-  void BindColor(GlobalScope globs)
+  ClassBindSymbol BindColor(GlobalScope globs)
   {
+    var cl = new ClassBindSymbol("Color",
+      delegate(ref DynVal v) 
+      { 
+        v.obj = new Color();
+      }
+    );
+
+    globs.define(cl);
+    globs.define(new ArrayTypeSymbolT<Color>(globs, new TypeRef(cl), delegate() { return new List<Color>(); } ));
+    cl.define(new FieldSymbol("r", globs.type("float"),
+      delegate(DynVal ctx, ref DynVal v)
+      {
+        var c = (Color)ctx.obj;
+        v.SetNum(c.r);
+      },
+      delegate(ref DynVal ctx, DynVal v)
+      {
+        var c = (Color)ctx.obj;
+        c.r = (float)v.num; 
+        ctx.obj = c;
+      }
+    ));
+    cl.define(new FieldSymbol("g", globs.type("float"),
+      delegate(DynVal ctx, ref DynVal v)
+      {
+        var c = (Color)ctx.obj;
+        v.SetNum(c.g);
+      },
+      delegate(ref DynVal ctx, DynVal v)
+      {
+        var c = (Color)ctx.obj;
+        c.g = (float)v.num; 
+        ctx.obj = c;
+      }
+    ));
+
     {
-      var cl = new ClassBindSymbol("Color",
-        delegate(ref DynVal v) 
-        { 
-          v.obj = new Color();
+      var m = new SimpleFuncBindSymbol("Add", globs.type("Color"),
+        delegate()
+        {
+          var interp = Interpreter.instance;
+
+          var k = (float)interp.PopValue().num;
+          var c = (Color)interp.PopValue().obj;
+
+          var newc = new Color();
+          newc.r = c.r + k;
+          newc.g = c.g + k;
+
+          var dv = DynVal.NewObj(newc);
+          interp.PushValue(dv);
+
+          return BHS.SUCCESS;
         }
       );
-      globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Color>(globs, new TypeRef(cl), delegate() { return new List<Color>(); } ));
+      m.define(new FuncArgSymbol("k", globs.type("float")));
 
-      cl.define(new FieldSymbol("r", globs.type("float"),
-        delegate(DynVal ctx, ref DynVal v)
+      cl.define(m);
+    }
+
+    {
+      var m = new SimpleFuncBindSymbol("mult_summ", globs.type("float"),
+        delegate()
         {
-          var c = (Color)ctx.obj;
-          v.SetNum(c.r);
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var c = (Color)ctx.obj;
-          c.r = (float)v.num; 
-          ctx.obj = c;
+          var interp = Interpreter.instance;
+
+          var k = interp.PopValue().num;
+          var c = (Color)interp.PopValue().obj;
+
+          interp.PushValue(DynVal.NewNum((c.r * k) + (c.g * k)));
+
+          return BHS.SUCCESS;
         }
-      ));
-      cl.define(new FieldSymbol("g", globs.type("float"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var c = (Color)ctx.obj;
-          v.SetNum(c.g);
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var c = (Color)ctx.obj;
-          c.g = (float)v.num; 
-          ctx.obj = c;
-        }
-      ));
+      );
+      m.define(new FuncArgSymbol("k", globs.type("float")));
 
-      {
-        var m = new SimpleFuncBindSymbol("Add", globs.type("Color"),
-          delegate()
-          {
-            var interp = Interpreter.instance;
-
-            var k = (float)interp.PopValue().num;
-            var c = (Color)interp.PopValue().obj;
-
-            var newc = new Color();
-            newc.r = c.r + k;
-            newc.g = c.g + k;
-
-            var dv = DynVal.NewObj(newc);
-            interp.PushValue(dv);
-
-            return BHS.SUCCESS;
-          }
-        );
-        m.define(new FuncArgSymbol("k", globs.type("float")));
-
-        cl.define(m);
-      }
-
-      {
-        var m = new SimpleFuncBindSymbol("mult_summ", globs.type("float"),
-          delegate()
-          {
-            var interp = Interpreter.instance;
-
-            var k = interp.PopValue().num;
-            var c = (Color)interp.PopValue().obj;
-
-            interp.PushValue(DynVal.NewNum((c.r * k) + (c.g * k)));
-
-            return BHS.SUCCESS;
-          }
-        );
-        m.define(new FuncArgSymbol("k", globs.type("float")));
-
-        cl.define(m);
-      }
+      cl.define(m);
     }
 
     {
@@ -3591,6 +3589,8 @@ public class BHL_Test
 
       globs.define(fn);
     }
+
+    return cl;
   }
 
   void BindStringClass(GlobalScope globs)
@@ -4433,6 +4433,52 @@ public class BHL_Test
       },
       @"must be bool type"
     );
+  }
+
+  //[IsTested()]
+  public void TestPlusOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func Color test() 
+    {
+      Color c1 = {r:1,g:2}
+      Color c2 = {r:20,g:30}
+      Color c3 = c1 + c2
+      return c3
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    var cl = BindColor(globs);
+    var op = new SimpleFuncBindSymbol("+", globs.type("Color"),
+      delegate()
+      {
+        var interp = Interpreter.instance;
+
+        var r = (Color)interp.PopValue().obj;
+        var c = (Color)interp.PopValue().obj;
+
+        var newc = new Color();
+        newc.r = c.r + r.r;
+        newc.g = c.g + r.g;
+
+        var dv = DynVal.NewObj(newc);
+        interp.PushValue(dv);
+
+        return BHS.SUCCESS;
+      }
+    );
+    op.define(new FuncArgSymbol("r", globs.type("Color")));
+    cl.defineBinaryOperator(op);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = (Color)ExtractObj(intp.ExecNode(node));
+
+    AssertEqual(21, res.r);
+    AssertEqual(32, res.g);
   }
 
   [IsTested()]
@@ -18079,6 +18125,11 @@ func Unit FindUnit(Vec3 pos, float radius) {
   static string ExtractStr(Interpreter.Result res)
   {
     return res.val.str;
+  }
+
+  static object ExtractObj(Interpreter.Result res)
+  {
+    return res.val.obj;
   }
 }
 
