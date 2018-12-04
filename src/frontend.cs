@@ -1127,7 +1127,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var op = ctx.operatorAddSub().GetText(); 
 
-    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
+    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1), SymbolTable.Bop);
 
     return null;
   }
@@ -1136,12 +1136,30 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var op = ctx.operatorMulDivMod().GetText(); 
 
-    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
+    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1), SymbolTable.Bop);
 
     return null;
   }
 
-  void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree exp_0, IParseTree exp_1)
+  public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
+  {
+    var op = ctx.operatorComparison().GetText(); 
+
+    if(op == "==" || op == "!=")
+      CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1), SymbolTable.Eqop);
+    else
+      CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1), SymbolTable.Relop);
+
+    return null;
+  }
+
+  void CommonVisitBinOp(
+     ParserRuleContext ctx, 
+     string op, 
+     IParseTree exp_0, 
+     IParseTree exp_1, 
+     Func<WrappedNode, WrappedNode, Type> type_func
+    )
   {
     EnumBinaryOp type;
     if(op == "+")
@@ -1154,27 +1172,7 @@ public class Frontend : bhlBaseVisitor<object>
       type = EnumBinaryOp.DIV;
     else if(op == "%")
       type = EnumBinaryOp.MOD;
-    else
-      throw new Exception("Unknown type");
-    
-    var ast = AST_Util.New_BinaryOpExp(type);
-    PushAST(ast);
-    Visit(exp_0);
-    Visit(exp_1);
-    PopAST();
-
-    Wrap(ctx).eval_type = SymbolTable.Bop(Wrap(exp_0), Wrap(exp_1));
-
-    PeekAST().AddChild(ast);
-  }
-
-
-  public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
-  {
-    var op = ctx.operatorComparison().GetText(); 
-
-    EnumBinaryOp type;
-    if(op == ">")
+    else if(op == ">")
       type = EnumBinaryOp.GT;
     else if(op == ">=")
       type = EnumBinaryOp.GTE;
@@ -1188,23 +1186,16 @@ public class Frontend : bhlBaseVisitor<object>
       type = EnumBinaryOp.NQ;
     else
       throw new Exception("Unknown type");
-
+    
     var ast = AST_Util.New_BinaryOpExp(type);
-    var exp_0 = ctx.exp(0);
-    var exp_1 = ctx.exp(1);
     PushAST(ast);
     Visit(exp_0);
     Visit(exp_1);
     PopAST();
 
-    if(type == EnumBinaryOp.EQ || type == EnumBinaryOp.NQ)
-      Wrap(ctx).eval_type = SymbolTable.Eqop(Wrap(exp_0), Wrap(exp_1));
-    else
-      Wrap(ctx).eval_type = SymbolTable.Relop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = type_func(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
-
-    return null;
   }
 
   public override object VisitExpBitAnd(bhlParser.ExpBitAndContext ctx)
