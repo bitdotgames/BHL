@@ -1125,26 +1125,9 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
-    EnumBinaryOp type;
     var op = ctx.operatorAddSub().GetText(); 
-    if(op == "+")
-      type = EnumBinaryOp.ADD;
-    else if(op == "-")
-      type = EnumBinaryOp.SUB;
-    else
-      throw new Exception("Unknown type");
-    
-    var ast = AST_Util.New_BinaryOpExp(type);
-    var exp_0 = ctx.exp(0);
-    var exp_1 = ctx.exp(1);
-    PushAST(ast);
-    Visit(exp_0);
-    Visit(exp_1);
-    PopAST();
 
-    Wrap(ctx).eval_type = SymbolTable.Bop(Wrap(exp_0), Wrap(exp_1));
-
-    PeekAST().AddChild(ast);
+    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
     return null;
   }
@@ -1153,8 +1136,19 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var op = ctx.operatorMulDivMod().GetText(); 
 
+    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
+
+    return null;
+  }
+
+  void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree exp_0, IParseTree exp_1)
+  {
     EnumBinaryOp type;
-    if(op == "*")
+    if(op == "+")
+      type = EnumBinaryOp.ADD;
+    else if(op == "-")
+      type = EnumBinaryOp.SUB;
+    else if(op == "*")
       type = EnumBinaryOp.MUL;
     else if(op == "/")
       type = EnumBinaryOp.DIV;
@@ -1162,10 +1156,8 @@ public class Frontend : bhlBaseVisitor<object>
       type = EnumBinaryOp.MOD;
     else
       throw new Exception("Unknown type");
-
+    
     var ast = AST_Util.New_BinaryOpExp(type);
-    var exp_0 = ctx.exp(0);
-    var exp_1 = ctx.exp(1);
     PushAST(ast);
     Visit(exp_0);
     Visit(exp_1);
@@ -1174,9 +1166,8 @@ public class Frontend : bhlBaseVisitor<object>
     Wrap(ctx).eval_type = SymbolTable.Bop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
-
-    return null;
   }
+
 
   public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
   {
