@@ -4578,6 +4578,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCustomOverloadTypeMismatchForBindClass()
+  {
+    string bhl = @"
+      
+    func Color test() 
+    {
+      Color c1 = {r:1,g:2}
+      return c1 * ""hey""
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    var cl = BindColor(globs);
+    var op = new SimpleFuncBindSymbol("*", globs.type("Color"), null);
+    op.define(new FuncArgSymbol("k", globs.type("float")));
+    cl.OverrideBinaryOperator(op);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl, globs);
+      },
+      @"<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
   public void TestAnyNullEquality()
   {
     string bhl = @"
