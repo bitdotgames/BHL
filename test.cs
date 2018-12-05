@@ -4435,7 +4435,7 @@ public class BHL_Test
     );
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestPlusOverloadedForBindClass()
   {
     string bhl = @"
@@ -4471,7 +4471,7 @@ public class BHL_Test
       }
     );
     op.define(new FuncArgSymbol("r", globs.type("Color")));
-    cl.defineBinaryOperator(op);
+    cl.OverrideBinaryOperator(op);
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");

@@ -952,7 +952,7 @@ public class ClassBindSymbol : ClassSymbol
     : base(null, name, super_class, null, creator)
   {}
 
-  public void defineBinaryOperator(FuncSymbol s)
+  public void OverrideBinaryOperator(FuncSymbol s)
   {
     define(s);
   }
@@ -1381,6 +1381,13 @@ static public class SymbolTable
       );
 
     return GetResultType(arithmeticResultType, a, b);
+  }
+
+  static public Type BopOverride(WrappedNode a, WrappedNode b, FuncSymbol op_func) 
+  {
+    var op_func_arg = op_func.GetArgs()[0];
+    CheckAssign(a, op_func_arg.type.Get());
+    return op_func.GetReturnType();
   }
 
   static public bool IsRelopCompatibleType(Type type)

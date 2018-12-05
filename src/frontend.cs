@@ -1127,7 +1127,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var op = ctx.operatorAddSub().GetText(); 
 
-    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1), SymbolTable.Bop);
+    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
     return null;
   }
@@ -1136,7 +1136,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var op = ctx.operatorMulDivMod().GetText(); 
 
-    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1), SymbolTable.Bop);
+    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
     return null;
   }
@@ -1145,55 +1145,78 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var op = ctx.operatorComparison().GetText(); 
 
-    if(op == "==" || op == "!=")
-      CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1), SymbolTable.Eqop);
-    else
-      CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1), SymbolTable.Relop);
+    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
     return null;
   }
 
-  void CommonVisitBinOp(
-     ParserRuleContext ctx, 
-     string op, 
-     IParseTree exp_0, 
-     IParseTree exp_1, 
-     Func<WrappedNode, WrappedNode, Type> type_func
-    )
+  void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
   {
-    EnumBinaryOp type;
+    EnumBinaryOp op_type;
     if(op == "+")
-      type = EnumBinaryOp.ADD;
+      op_type = EnumBinaryOp.ADD;
     else if(op == "-")
-      type = EnumBinaryOp.SUB;
-    else if(op == "*")
-      type = EnumBinaryOp.MUL;
-    else if(op == "/")
-      type = EnumBinaryOp.DIV;
-    else if(op == "%")
-      type = EnumBinaryOp.MOD;
-    else if(op == ">")
-      type = EnumBinaryOp.GT;
-    else if(op == ">=")
-      type = EnumBinaryOp.GTE;
-    else if(op == "<")
-      type = EnumBinaryOp.LT;
-    else if(op == "<=")
-      type = EnumBinaryOp.LTE;
+      op_type = EnumBinaryOp.SUB;
     else if(op == "==")
-      type = EnumBinaryOp.EQ;
+      op_type = EnumBinaryOp.EQ;
     else if(op == "!=")
-      type = EnumBinaryOp.NQ;
+      op_type = EnumBinaryOp.NQ;
+    else if(op == "*")
+      op_type = EnumBinaryOp.MUL;
+    else if(op == "/")
+      op_type = EnumBinaryOp.DIV;
+    else if(op == "%")
+      op_type = EnumBinaryOp.MOD;
+    else if(op == ">")
+      op_type = EnumBinaryOp.GT;
+    else if(op == ">=")
+      op_type = EnumBinaryOp.GTE;
+    else if(op == "<")
+      op_type = EnumBinaryOp.LT;
+    else if(op == "<=")
+      op_type = EnumBinaryOp.LTE;
     else
       throw new Exception("Unknown type");
-    
-    var ast = AST_Util.New_BinaryOpExp(type);
+
+    AST ast = AST_Util.New_BinaryOpExp(op_type);
     PushAST(ast);
-    Visit(exp_0);
-    Visit(exp_1);
+    Visit(lhs);
+    Visit(rhs);
     PopAST();
 
-    Wrap(ctx).eval_type = type_func(Wrap(exp_0), Wrap(exp_1));
+    var wlhs = Wrap(lhs);
+    var wrhs = Wrap(rhs);
+
+    var class_symb = wlhs.eval_type as ClassSymbol;
+    //checking if there's an operator override
+    if(class_symb != null && class_symb.resolve(op) is FuncSymbol)
+    {
+      var op_func = class_symb.resolve(op) as FuncSymbol;
+
+      Wrap(ctx).eval_type = SymbolTable.BopOverride(wlhs, wrhs, op_func);
+
+      //NOTE: replacing original ast, a bit 'dirty' but works
+      ast = AST_Util.New_Block(EnumBlock.GROUP);
+      PushAST(ast);
+      Visit(rhs);
+      Visit(lhs);
+      PopAST();
+      ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, class_symb));
+    }
+    else if(
+      op_type == EnumBinaryOp.EQ || 
+      op_type == EnumBinaryOp.NQ
+    )
+      Wrap(ctx).eval_type = SymbolTable.Eqop(wlhs, wrhs);
+    else if(
+      op_type == EnumBinaryOp.GT || 
+      op_type == EnumBinaryOp.GTE ||
+      op_type == EnumBinaryOp.LT || 
+      op_type == EnumBinaryOp.LTE
+    )
+      Wrap(ctx).eval_type = SymbolTable.Relop(wlhs, wrhs);
+    else
+      Wrap(ctx).eval_type = SymbolTable.Bop(wlhs, wrhs);
 
     PeekAST().AddChild(ast);
   }
@@ -2345,7 +2368,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  //NOTE: it returns node which also adds to the current node 
   AST CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
   {
     ++scope_level;
