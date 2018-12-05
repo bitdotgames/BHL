@@ -952,13 +952,13 @@ public class ClassBindSymbol : ClassSymbol
     : base(null, name, super_class, null, creator)
   {}
 
-  public void OverrideBinaryOperator(FuncSymbol s)
+  public void OverloadBinaryOperator(FuncSymbol s)
   {
     if(s.GetArgs().Count != 1)
-      throw new UserError("Operator override must have exactly one argument");
+      throw new UserError("Operator overload must have exactly one argument");
 
     if(s.GetReturnType() == SymbolTable._void)
-      throw new UserError("Operator override return value can't be void");
+      throw new UserError("Operator overload return value can't be void");
 
     define(s);
   }
@@ -1389,7 +1389,7 @@ static public class SymbolTable
     return GetResultType(arithmeticResultType, a, b);
   }
 
-  static public Type BopOverride(WrappedNode a, WrappedNode b, FuncSymbol op_func) 
+  static public Type BopOverload(WrappedNode a, WrappedNode b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
     CheckAssign(op_func_arg.type.Get(), b);

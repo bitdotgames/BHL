@@ -4471,7 +4471,7 @@ public class BHL_Test
       }
     );
     op.define(new FuncArgSymbol("r", globs.type("Color")));
-    cl.OverrideBinaryOperator(op);
+    cl.OverloadBinaryOperator(op);
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
@@ -4516,7 +4516,7 @@ public class BHL_Test
       }
     );
     op.define(new FuncArgSymbol("k", globs.type("float")));
-    cl.OverrideBinaryOperator(op);
+    cl.OverloadBinaryOperator(op);
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
@@ -4566,7 +4566,7 @@ public class BHL_Test
       }
     );
     op.define(new FuncArgSymbol("arg", globs.type("Color")));
-    cl.OverrideBinaryOperator(op);
+    cl.OverloadBinaryOperator(op);
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
@@ -4578,7 +4578,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCustomOverloadTypeMismatchForBindClass()
+  public void TestCustomOperatorOverloadTypeMismatchForBindClass()
   {
     string bhl = @"
       
@@ -4594,7 +4594,7 @@ public class BHL_Test
     var cl = BindColor(globs);
     var op = new SimpleFuncBindSymbol("*", globs.type("Color"), null);
     op.define(new FuncArgSymbol("k", globs.type("float")));
-    cl.OverrideBinaryOperator(op);
+    cl.OverloadBinaryOperator(op);
 
     AssertError<UserError>(
       delegate() { 

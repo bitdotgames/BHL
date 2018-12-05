@@ -1188,14 +1188,14 @@ public class Frontend : bhlBaseVisitor<object>
     var wrhs = Wrap(rhs);
 
     var class_symb = wlhs.eval_type as ClassSymbol;
-    //checking if there's an operator override
+    //checking if there's an operator overload
     if(class_symb != null && class_symb.resolve(op) is FuncSymbol)
     {
       var op_func = class_symb.resolve(op) as FuncSymbol;
 
-      Wrap(ctx).eval_type = SymbolTable.BopOverride(wlhs, wrhs, op_func);
+      Wrap(ctx).eval_type = SymbolTable.BopOverload(wlhs, wrhs, op_func);
 
-      //NOTE: replacing original ast, a bit 'dirty' but works
+      //NOTE: replacing original ast, a bit 'dirty' but kinda OK
       var over_ast = AST_Util.New_Block(EnumBlock.GROUP);
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
