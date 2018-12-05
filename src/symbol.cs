@@ -954,6 +954,12 @@ public class ClassBindSymbol : ClassSymbol
 
   public void OverrideBinaryOperator(FuncSymbol s)
   {
+    if(s.GetArgs().Count != 1)
+      throw new UserError("Operator override must have exactly one argument");
+
+    if(s.GetReturnType() == SymbolTable._void)
+      throw new UserError("Operator override return value can't be void");
+
     define(s);
   }
 }
