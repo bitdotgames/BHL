@@ -1386,7 +1386,7 @@ static public class SymbolTable
   static public Type BopOverride(WrappedNode a, WrappedNode b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
-    CheckAssign(a, op_func_arg.type.Get());
+    CheckAssign(op_func_arg.type.Get(), b);
     return op_func.GetReturnType();
   }
 

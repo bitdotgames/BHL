@@ -4482,6 +4482,102 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestMultOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func Color test() 
+    {
+      Color c1 = {r:1,g:2}
+      Color c2 = c1 * 2
+      return c2
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    var cl = BindColor(globs);
+    var op = new SimpleFuncBindSymbol("*", globs.type("Color"),
+      delegate()
+      {
+        var interp = Interpreter.instance;
+
+        var k = (float)interp.PopValue().num;
+        var c = (Color)interp.PopValue().obj;
+
+        var newc = new Color();
+        newc.r = c.r * k;
+        newc.g = c.g * k;
+
+        var dv = DynVal.NewObj(newc);
+        interp.PushValue(dv);
+
+        return BHS.SUCCESS;
+      }
+    );
+    op.define(new FuncArgSymbol("k", globs.type("float")));
+    cl.OverrideBinaryOperator(op);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = (Color)ExtractObj(intp.ExecNode(node));
+
+    AssertEqual(2, res.r);
+    AssertEqual(4, res.g);
+  }
+
+  [IsTested()]
+  public void TestEqualityOverloadedForBindClass()
+  {
+    string bhl = @"
+      
+    func test() 
+    {
+      Color c1 = {r:1,g:2}
+      Color c2 = {r:1,g:2}
+      Color c3 = {r:10,g:20}
+      if(c1 == c2) {
+        trace(""YES"")
+      }
+      if(c1 == c3) {
+        trace(""NO"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    
+    var cl = BindColor(globs);
+    var op = new SimpleFuncBindSymbol("==", globs.type("bool"),
+      delegate()
+      {
+        var interp = Interpreter.instance;
+
+        var arg = (Color)interp.PopValue().obj;
+        var c = (Color)interp.PopValue().obj;
+
+        var dv = DynVal.NewBool(c.r == arg.r && c.g == arg.g);
+        interp.PushValue(dv);
+
+        return BHS.SUCCESS;
+      }
+    );
+    op.define(new FuncArgSymbol("arg", globs.type("Color")));
+    cl.OverrideBinaryOperator(op);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+
+    AssertEqual(str, "YES");
+  }
+
+  [IsTested()]
   public void TestAnyNullEquality()
   {
     string bhl = @"

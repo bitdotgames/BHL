@@ -1196,12 +1196,11 @@ public class Frontend : bhlBaseVisitor<object>
       Wrap(ctx).eval_type = SymbolTable.BopOverride(wlhs, wrhs, op_func);
 
       //NOTE: replacing original ast, a bit 'dirty' but works
-      ast = AST_Util.New_Block(EnumBlock.GROUP);
-      PushAST(ast);
-      Visit(rhs);
-      Visit(lhs);
-      PopAST();
-      ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, class_symb));
+      var over_ast = AST_Util.New_Block(EnumBlock.GROUP);
+      for(int i=0;i<ast.children.Count;++i)
+        over_ast.AddChild(ast.children[i]);
+      over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, class_symb));
+      ast = over_ast;
     }
     else if(
       op_type == EnumBinaryOp.EQ || 
