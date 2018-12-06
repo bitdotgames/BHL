@@ -10607,39 +10607,6 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestDanglingStackValueDueToYield()
-  {
-    string bhl = @"
-
-    func int sub_sub_call()
-    {
-      yield()
-      return 2
-    }
-
-    func int sub_call()
-    {
-      return 1 + 10 + 12 + sub_sub_call()
-    }
-
-    func test() 
-    {
-      int cost = 1 + sub_call()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = new FuncFakeCallNode(intp.GetFuncNode("test"));
-    AssertEqual(node.run(), BHS.RUNNING);
-    node.stop();
-    //NodeDump(node);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestUntilSuccess()
   {
     string bhl = @"
@@ -14202,7 +14169,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncArgsOnStack()
+  public void TestCleanFuncArgsOnStackForFail()
   {
     string bhl = @"
 
@@ -14229,6 +14196,37 @@ public class BHL_Test
     intp.ExecNode(node, 0);
     //NodeDump(node);
     AssertEqual(intp.stack.Count, 0);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForStop()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      yield()
+      return 100
+    }
+
+    func hey(string b, int a)
+    {
+    }
+
+    func test() 
+    {
+      hey(""bar"", foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+    node.run();
+    node.stop();
+    //NodeDump(node);
     CommonChecks(intp);
   }
 
@@ -14263,7 +14261,6 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     //NodeDump(node);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -14304,7 +14301,6 @@ public class BHL_Test
     intp.ExecNode(node, ret_vals: 0, keep_running: false);
     AssertEqual(intp.stack.Count, 0);
     intp.ExecNode(node, ret_vals: 0, keep_running: false);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -14334,7 +14330,6 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     intp.ExecNode(node, 0);
     //NodeDump(node);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -14384,7 +14379,6 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -14432,7 +14426,6 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -14494,7 +14487,6 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -14557,7 +14549,6 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -14627,7 +14618,6 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("", str);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 
@@ -14694,9 +14684,42 @@ public class BHL_Test
 
     //NodeDump(node);
     AssertEqual("233", str);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
+
+  [IsTested()]
+  public void TestCleanFuncStackInExpressionForYield()
+  {
+    string bhl = @"
+
+    func int sub_sub_call()
+    {
+      yield()
+      return 2
+    }
+
+    func int sub_call()
+    {
+      return 1 + 10 + 12 + sub_sub_call()
+    }
+
+    func test() 
+    {
+      int cost = 1 + sub_call()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = new FuncFakeCallNode(intp.GetFuncNode("test"));
+    AssertEqual(node.run(), BHS.RUNNING);
+    node.stop();
+    //NodeDump(node);
+
+    CommonChecks(intp);
+  }
+
 
   [IsTested()]
   public void TestJsonFuncArgChainCall()
