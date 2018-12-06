@@ -4527,6 +4527,77 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestOverloadedBinOpsPriorityForBindClass()
+  {
+    string bhl = @"
+      
+    func Color test() 
+    {
+      Color c1 = {r:1,g:2}
+      Color c2 = {r:10,g:20}
+      Color c3 = c1 + c2 * 2
+      return c3
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    var cl = BindColor(globs);
+    {
+      var op = new SimpleFuncBindSymbol("*", globs.type("Color"),
+        delegate()
+        {
+          var interp = Interpreter.instance;
+
+          var k = (float)interp.PopValue().num;
+          var c = (Color)interp.PopValue().obj;
+
+          var newc = new Color();
+          newc.r = c.r * k;
+          newc.g = c.g * k;
+
+          var dv = DynVal.NewObj(newc);
+          interp.PushValue(dv);
+
+          return BHS.SUCCESS;
+        }
+      );
+      op.define(new FuncArgSymbol("k", globs.type("float")));
+      cl.OverloadBinaryOperator(op);
+    }
+    
+    {
+      var op = new SimpleFuncBindSymbol("+", globs.type("Color"),
+        delegate()
+        {
+          var interp = Interpreter.instance;
+
+          var r = (Color)interp.PopValue().obj;
+          var c = (Color)interp.PopValue().obj;
+
+          var newc = new Color();
+          newc.r = c.r + r.r;
+          newc.g = c.g + r.g;
+
+          var dv = DynVal.NewObj(newc);
+          interp.PushValue(dv);
+
+          return BHS.SUCCESS;
+        }
+      );
+      op.define(new FuncArgSymbol("r", globs.type("Color")));
+      cl.OverloadBinaryOperator(op);
+    }
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+    var res = (Color)ExtractObj(intp.ExecNode(node));
+
+    AssertEqual(21, res.r);
+    AssertEqual(42, res.g);
+  }
+
+  [IsTested()]
   public void TestEqualityOverloadedForBindClass()
   {
     string bhl = @"
