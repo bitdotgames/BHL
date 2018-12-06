@@ -14200,7 +14200,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncArgsOnStackForStop()
+  public void TestCleanFuncArgsOnStackForYield()
   {
     string bhl = @"
 
@@ -14216,7 +14216,7 @@ public class BHL_Test
 
     func test() 
     {
-      hey(""bar"", foo())
+      hey(""bar"", 1 + foo())
     }
     ";
 
@@ -14224,7 +14224,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
-    node.run();
+    AssertEqual(node.run(), BHS.RUNNING);
     node.stop();
     //NodeDump(node);
     CommonChecks(intp);
