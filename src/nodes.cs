@@ -347,7 +347,7 @@ public class GroupNode : SequentialNode
 
 public class FuncFakeCallNode : FuncBaseCallNode
 {
-  public FuncSimpleCallNode(BehaviorTreeNode node)
+  public FuncFakeCallNode(BehaviorTreeNode node)
     : base(new AST_Call())
   {
     this.addChild(node);
