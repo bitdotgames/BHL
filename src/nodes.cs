@@ -656,11 +656,11 @@ public abstract class FuncBaseCallNode : SequentialNode
 
     //NOTE: checking if we were interrupted while running and 
     //      in this case cleaning the stack
-    if(lastExecuteStatus == BHS.RUNNING)
-    {
-      var interp = Interpreter.instance;
-      interp.PopValues(interp.stack.Count - stack_size_before);
-    }
+    //if(lastExecuteStatus == BHS.RUNNING)
+    //{
+    //  var interp = Interpreter.instance;
+    //  interp.PopValues(interp.stack.Count - stack_size_before);
+    //}
   }
 
   override public string inspect() 
