@@ -345,9 +345,9 @@ public class GroupNode : SequentialNode
   }
 }
 
-public class FuncFakeCallNode : FuncBaseCallNode
+public class FuncUserCallNode : FuncBaseCallNode
 {
-  public FuncFakeCallNode(BehaviorTreeNode node)
+  public FuncUserCallNode(BehaviorTreeNode node)
     : base(new AST_Call())
   {
     this.addChild(node);
@@ -633,10 +633,6 @@ public abstract class FuncBaseCallNode : SequentialNode
       //      and apply required stack cleanups
       if(is_func_call)
         interp.call_stack.DecFast();
-      //NOTE: force cleaning of the args.value stack in case of FAILURE while
-      //      we are still processing arguments
-      else if(status == BHS.FAILURE)
-        interp.PopValues(interp.stack.Count - stack_size_before);
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -650,15 +646,15 @@ public abstract class FuncBaseCallNode : SequentialNode
     return status;
   }
 
-  override public void stop()
+  override public void deinit()
   {
-    bool was_running = currStatus == BHS.RUNNING;
+    bool need_cleanup = currStatus != BHS.SUCCESS;
 
-    base.stop();
+    base.deinit();
 
-    //NOTE: checking if we were interrupted while running and 
-    //      in this case cleaning the stack
-    if(was_running)
+    //NOTE: checking if we need to clean the values stack due to 
+    //      non successul completion 
+    if(need_cleanup)
     {
       var interp = Interpreter.instance;
       interp.PopValues(interp.stack.Count - stack_size_before);

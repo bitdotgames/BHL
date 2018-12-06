@@ -14157,7 +14157,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
@@ -14192,7 +14192,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     intp.ExecNode(node, 0);
     //NodeDump(node);
     AssertEqual(intp.stack.Count, 0);
@@ -14223,7 +14223,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     AssertEqual(node.run(), BHS.RUNNING);
     node.stop();
     //NodeDump(node);
@@ -14258,7 +14258,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     intp.ExecNode(node, 0);
     //NodeDump(node);
     CommonChecks(intp);
@@ -14296,11 +14296,10 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     //NodeDump(node);
-    intp.ExecNode(node, ret_vals: 0, keep_running: false);
-    AssertEqual(intp.stack.Count, 0);
-    intp.ExecNode(node, ret_vals: 0, keep_running: false);
+    node.run();
+    node.stop();
     CommonChecks(intp);
   }
 
@@ -14327,7 +14326,7 @@ public class BHL_Test
     BindColor(globs);
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     intp.ExecNode(node, 0);
     //NodeDump(node);
     CommonChecks(intp);
@@ -14372,7 +14371,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
@@ -14419,7 +14418,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     intp.ExecNode(node, 0);
 
     var str = GetString(trace_stream);
@@ -14476,7 +14475,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
     var status = node.run();
     AssertTrue(status == BHS.RUNNING);
@@ -14538,7 +14537,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
     var status = node.run();
     AssertTrue(status == BHS.RUNNING);
@@ -14607,7 +14606,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
     var status = node.run();
     AssertTrue(status == BHS.RUNNING);
@@ -14712,7 +14711,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     var intp = Interpret(bhl, globs);
-    var node = new FuncFakeCallNode(intp.GetFuncNode("test"));
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     AssertEqual(node.run(), BHS.RUNNING);
     node.stop();
     //NodeDump(node);
@@ -15428,7 +15427,7 @@ public class BHL_Test
     BindColor(globs);
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     intp.ExecNode(node, 0);
     //NodeDump(node);
     AssertEqual(intp.stack.Count, 0);
@@ -15511,7 +15510,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncNode("test");
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     //NodeDump(node);
 
     intp.ExecNode(node, 0);
