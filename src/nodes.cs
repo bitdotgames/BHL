@@ -652,15 +652,17 @@ public abstract class FuncBaseCallNode : SequentialNode
 
   override public void stop()
   {
+    bool was_running = currStatus == BHS.RUNNING;
+
     base.stop();
 
     //NOTE: checking if we were interrupted while running and 
     //      in this case cleaning the stack
-    //if(lastExecuteStatus == BHS.RUNNING)
-    //{
-    //  var interp = Interpreter.instance;
-    //  interp.PopValues(interp.stack.Count - stack_size_before);
-    //}
+    if(was_running)
+    {
+      var interp = Interpreter.instance;
+      interp.PopValues(interp.stack.Count - stack_size_before);
+    }
   }
 
   override public string inspect() 
