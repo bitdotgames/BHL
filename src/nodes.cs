@@ -345,6 +345,15 @@ public class GroupNode : SequentialNode
   }
 }
 
+public class FuncFakeCallNode : FuncBaseCallNode
+{
+  public FuncSimpleCallNode(BehaviorTreeNode node)
+    : base(new AST_Call())
+  {
+    this.addChild(node);
+  }
+}
+
 public class FuncCallNode : FuncBaseCallNode
 {
   const int IDX_FIRST_TIME = -2;
@@ -639,6 +648,19 @@ public abstract class FuncBaseCallNode : SequentialNode
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
     return status;
+  }
+
+  override public void stop()
+  {
+    base.stop();
+
+    //NOTE: checking if we were interrupted while running and 
+    //      in this case cleaning the stack
+    if(lastExecuteStatus == BHS.RUNNING)
+    {
+      var interp = Interpreter.instance;
+      interp.PopValues(interp.stack.Count - stack_size_before);
+    }
   }
 
   override public string inspect() 

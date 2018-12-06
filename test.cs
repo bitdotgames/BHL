@@ -10607,6 +10607,39 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDanglingStackValueDueToYield()
+  {
+    string bhl = @"
+
+    func int sub_sub_call()
+    {
+      yield()
+      return 2
+    }
+
+    func int sub_call()
+    {
+      return 1 + 10 + 12 + sub_sub_call()
+    }
+
+    func test() 
+    {
+      int cost = 1 + sub_call()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = new FuncFakeCallNode(intp.GetFuncNode("test"));
+    AssertEqual(node.run(), BHS.RUNNING);
+    node.stop();
+    //NodeDump(node);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestUntilSuccess()
   {
     string bhl = @"
@@ -18266,6 +18299,11 @@ func Unit FindUnit(Vec3 pos, float radius) {
     intp.Init(globs_copy, mloader);
 
     return intp;
+  }
+
+  static void NodeDump(BehaviorTreeNode node)
+  {
+    Util.NodeDump(node);
   }
 
   static Interpreter Interpret(string src, GlobalScope globs = null, bool show_ast = false)
