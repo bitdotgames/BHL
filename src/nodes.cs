@@ -630,7 +630,6 @@ public abstract class FuncBaseCallNode : SequentialNode
         currentTask.deinit();
 
       //NOTE: only when it's actual func call we pop it from the call stack
-      //      and apply required stack cleanups
       if(is_func_call)
         interp.call_stack.DecFast();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -653,7 +652,7 @@ public abstract class FuncBaseCallNode : SequentialNode
     base.deinit();
 
     //NOTE: checking if we need to clean the values stack due to 
-    //      non successul completion 
+    //      non successul execution of the node
     if(need_cleanup)
     {
       var interp = Interpreter.instance;
