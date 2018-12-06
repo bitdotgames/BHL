@@ -656,6 +656,7 @@ public abstract class FuncBaseCallNode : SequentialNode
     if(need_cleanup)
     {
       var interp = Interpreter.instance;
+      //Console.WriteLine(interp.stack.Count + " " +  stack_size_before);
       interp.PopValues(interp.stack.Count - stack_size_before);
     }
   }

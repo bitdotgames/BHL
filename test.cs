@@ -14231,6 +14231,50 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStackForYieldInWhile()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      yield()
+      return 1
+    }
+
+    func doer(ref int c)
+    {
+      while(c < 2) {
+        c = c + foo()
+      }
+    }
+
+    func test() 
+    {
+      int c = 0
+      doer(ref c)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
+    //NOTE: making several runs
+    AssertEqual(node.run(), BHS.RUNNING);
+    node.stop();
+
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.SUCCESS);
+
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.SUCCESS);
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestCleanFuncArgsOnStackUserBind()
   {
     string bhl = @"
