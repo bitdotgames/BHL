@@ -352,12 +352,6 @@ public class Interpreter : AST_Visitor
     return v;
   }
 
-  public void PopValues(int amount)
-  {
-    for(int i=0;i<amount;++i)
-      PopValue();
-  }
-
   public void PopFuncValues(FuncBaseCallNode fn)
   {
     for(int i=stack_marks.Count;i-- > 0;)
