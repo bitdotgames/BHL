@@ -14118,7 +14118,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncStack()
+  public void TestCleanFuncArgsStack()
   {
     string bhl = @"
     func int foo(int v) 
@@ -14127,42 +14127,23 @@ public class BHL_Test
       return v
     }
 
-    func bar()
+    func hey(int a, int b)
     {
-      Foo f = MakeFoo({hey:1, colors:[{r:foo(10)}]})
-      trace((string)f.hey)
     }
 
     func void test() 
     {
-      bar()
+      hey(1, foo(10))
     }
     ";
 
-    var trace_stream = new MemoryStream();
     var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFoo(globs);
-    BindTrace(globs, trace_stream);
-
-    {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
-          delegate() { return new MakeFooNode(); });
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
-
-      globs.define(fn);
-    }
 
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     intp.ExecNode(node, 0);
 
-    var str = GetString(trace_stream);
-
     //NodeDump(node);
-    AssertEqual("", str);
-    AssertEqual(intp.stack.Count, 0);
     CommonChecks(intp);
   }
 

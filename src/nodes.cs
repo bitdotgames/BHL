@@ -656,8 +656,8 @@ public abstract class FuncBaseCallNode : SequentialNode
     //      non successul execution of the node
     if(was_interrupted)
     {
-      //Console.WriteLine("STACK CLEANUP " + currStatus + " (" + interp.stack.Count + " - " +  stack_size_before + ") " + GetHashCode());
       var interp = Interpreter.instance;
+      //Console.WriteLine("STACK CLEANUP " + currStatus + " (" + interp.stack.Count + " - " +  stack_size_before + ") " + GetHashCode());
       interp.PopFuncValues(this);
     }
   } 

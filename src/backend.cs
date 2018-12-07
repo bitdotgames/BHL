@@ -365,6 +365,7 @@ public class Interpreter : AST_Visitor
       if(stack_marks[i] == fn)
       {
         stack_marks.RemoveAtFast(i);
+        stack[i].RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
         stack.RemoveAtFast(i);
       }
     }
