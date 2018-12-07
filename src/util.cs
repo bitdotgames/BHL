@@ -426,7 +426,7 @@ static public class Util
       fnode.Inflate();
 
     var name = node.GetType().Name;
-    var status = node.getStatus();
+    var status = node.currStatus;
 
     var spaces = new String('_', level);
     var indent_str = spaces + (is_term ? "`" : "|");

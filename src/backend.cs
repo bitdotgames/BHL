@@ -59,7 +59,9 @@ public class Interpreter : AST_Visitor
   public BaseScope symbols;
 
   public FastStack<DynVal> stack = new FastStack<DynVal>(256);
-  public FastStack<AST_Call> call_stack = new FastStack<AST_Call>(128);
+  //TODO: this must be reimplemented with function stack frames
+  public FastStack<FuncBaseCallNode> stack_marks = new FastStack<FuncBaseCallNode>(256);
+  public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
 
   public void Init(BaseScope symbols, IModuleLoader module_loader)
   {
@@ -69,6 +71,7 @@ public class Interpreter : AST_Visitor
     glob_mem.Clear();
     curr_mem = null;
     loaded_modules.Clear();
+    stack_marks.Clear();
     stack.Clear();
     call_stack.Clear();
 
@@ -97,7 +100,7 @@ public class Interpreter : AST_Visitor
     res.status = BHS.NONE;
     while(true)
     {
-      res.status = node.run();
+      res.status = BehaviorTreeNode.run(node);
       if(res.status != BHS.RUNNING)
         break;
 
@@ -200,7 +203,7 @@ public class Interpreter : AST_Visitor
   //NOTE: usually used in symbols
   public FuncArgsInfo GetFuncArgsInfo()
   {
-    return new FuncArgsInfo(call_stack.Peek().cargs_bits);
+    return new FuncArgsInfo(call_stack.Peek().ast.cargs_bits);
   }
 
   public struct CallStackInfo
@@ -219,7 +222,7 @@ public class Interpreter : AST_Visitor
     //NOTE: we transform call stack into more convenient for the user format
     for(int i=call_stack.Count;i-- > 1;)
     {
-      var cs = call_stack[i-1]; 
+      var cs = call_stack[i-1].ast; 
 
       string module_name = "";
       loaded_modules.TryGetValue(cs.nname2, out module_name);
@@ -232,7 +235,7 @@ public class Interpreter : AST_Visitor
         func_id = cs.nname1,
         func_name = cs.name, 
 
-        line_num = call_stack[i].line_num
+        line_num = call_stack[i].ast.line_num
       };
       result.Add(item);
     }
@@ -322,12 +325,14 @@ public class Interpreter : AST_Visitor
   {
     v.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(v);
+    stack_marks.Push(call_stack.Count > 0 ? call_stack.Peek() : null);
   }
 
   public DynVal PopValue()
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+    stack_marks.PopFast();
     return v;
   }
 
@@ -335,6 +340,7 @@ public class Interpreter : AST_Visitor
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
+    stack_marks.PopFast();
     return v;
   }
 
@@ -342,6 +348,7 @@ public class Interpreter : AST_Visitor
   {
     var v = stack.PopFast();
     v.RefMod(mode);
+    stack_marks.PopFast();
     return v;
   }
 
@@ -349,6 +356,18 @@ public class Interpreter : AST_Visitor
   {
     for(int i=0;i<amount;++i)
       PopValue();
+  }
+
+  public void PopFuncValues(FuncBaseCallNode fn)
+  {
+    for(int i=stack_marks.Count;i-- > 0;)
+    {
+      if(stack_marks[i] == fn)
+      {
+        stack_marks.RemoveAtFast(i);
+        stack.RemoveAtFast(i);
+      }
+    }
   }
 
   public bool PeekValue(ref DynVal res)
@@ -381,7 +400,7 @@ public class Interpreter : AST_Visitor
     VisitChildren(ast);
     PopNode();
 
-    var status = g.run();
+    var status = BehaviorTreeNode.run(g);
     if(status != BHS.SUCCESS)
       throw new Exception("Global initialization bad status: " + status);
 

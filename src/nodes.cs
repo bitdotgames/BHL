@@ -30,7 +30,7 @@ public interface BehaviorVisitor
 //      and efficiency reasons it is not
 public abstract class BehaviorTreeNode : BehaviorVisitable
 {
-  //NOTE: semi-private, public for inlining
+  //NOTE: semi-private, public for fast access
   public BHS currStatus; 
   //TODO: this one is for inspecting purposes only
   public BHS lastExecuteStatus; 
@@ -48,15 +48,22 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
 
   //NOTE: this method is heavily used for inlining, 
   //      don't change its contents if you are not sure
+  //TODO: in the future it should use an interface
+  static public BHS run(BehaviorTreeNode node)
+  {
+    if(node.currStatus != BHS.RUNNING)
+      node.init();
+    node.currStatus = node.execute();
+    node.lastExecuteStatus = node.currStatus;
+    if(node.currStatus != BHS.RUNNING)
+      node.deinit();
+    return node.currStatus;
+  }
+
+  //NOTE: just a convenience method
   public BHS run()
   {
-    if(currStatus != BHS.RUNNING)
-      init();
-    currStatus = execute();
-    lastExecuteStatus = currStatus;
-    if(currStatus != BHS.RUNNING)
-      deinit();
-    return currStatus;
+    return BehaviorTreeNode.run(this);
   }
 
   public virtual void stop()
@@ -70,9 +77,6 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
 
   public virtual string inspect() { return ""; }
 
-  public BHS getStatus() { return currStatus; }
-  //TODO: these two below are for inspecting purposes only
-  public BHS getExecuteStatus() { return lastExecuteStatus; }
   public void resetExecuteStatus() { lastExecuteStatus = currStatus; }
 
   //NOTE: methods below should never be called directly
@@ -145,7 +149,24 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
   {
     //NOTE: stopping children in the reverse order
     for(int i=children.Count;i-- > 0;)
-      children[i].stop();
+    {
+      var c = children[i];
+      c.stop();
+    }
+  }
+
+  protected void deferChildren()
+  {
+    //NOTE: deferring children in the reverse order
+    for(int i=children.Count;i-- > 0;)
+    {
+      var c = children[i];
+      if(c.currStatus != BHS.NONE)
+      {
+        c.defer();
+        c.currStatus = BHS.NONE;
+      }
+    }
   }
 }
 
@@ -176,13 +197,13 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
   override public void deinit()
   {
-    //NOTE: we don't stop children here because this node behaves NOT like
-    //      a block node but rather emulating a terminal node
+    //NOTE: we don't stop/defer children here because this node behaves NOT like
+    //      a block node but rather a terminal node
   } 
 
   override public void defer()
   {
-    stopChildren();
+    deferChildren();
   }
 
   public void setSlave(BehaviorTreeNode node)
@@ -335,13 +356,13 @@ public class GroupNode : SequentialNode
 {
   override public void deinit()
   {
-    //NOTE: we don't stop children here because this node behaves NOT like
-    //      a block node but rather emulating a terminal node
+    //NOTE: we don't stop/defer children here because this node behaves NOT like
+    //      a block node but rather a terminal node
   }
 
   override public void defer()
   {
-    stopChildren();
+    deferChildren();
   }
 }
 
@@ -423,7 +444,7 @@ public class FuncCallNode : FuncBaseCallNode
 
   override public void deinit()
   {
-    stopChildren();
+    base.deinit();
 
     if(idx_in_pool >= 0)
     {
@@ -436,12 +457,6 @@ public class FuncCallNode : FuncBaseCallNode
       }
       idx_in_pool = IDX_DETACHED;
     }
-  }
-
-  override public void defer()
-  {
-    //NOTE: this node intentionally calls defer for its children upon deinit,
-    //      not here
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -495,7 +510,7 @@ public class FuncCallNode : FuncBaseCallNode
     {
       var pi = pool[idx_in_pool];
 
-      if(pi.fnode.currStatus != BHS.NONE)
+      if(pi.fnode.currStatus == BHS.RUNNING)
         throw new Exception("Bad status: " + pi.fnode.currStatus);
       ++pool_hit;
       --free_count;
@@ -529,7 +544,7 @@ public class FuncCallNode : FuncBaseCallNode
 
   static void PoolFree(PoolItem pi)
   {
-    if(pi.fnode.currStatus != BHS.NONE)
+    if(pi.fnode.currStatus == BHS.RUNNING)
       throw new Exception("Bad status: " + pi.fnode.currStatus);
 
     ulong pool_id = pi.ast.FuncId();
@@ -581,25 +596,11 @@ public class FuncCallNode : FuncBaseCallNode
 
 public abstract class FuncBaseCallNode : SequentialNode
 {
-  protected AST_Call ast;
-  int stack_size_before;
+  public AST_Call ast;
 
   public FuncBaseCallNode(AST_Call ast)
   {
     this.ast = ast;
-  }
-
-  override public void init()
-  {
-    var interp = Interpreter.instance;
-
-    stack_size_before = interp.stack.Count;
-    //NOTE: if it's a method call we need to take into account
-    //      pushed object instance as well
-    if(ast.scope_ntype != 0)
-      --stack_size_before;
-
-    base.init();
   }
 
   override public BHS execute()
@@ -619,7 +620,7 @@ public abstract class FuncBaseCallNode : SequentialNode
       //      we push it on to the call stack when it's executed
       bool is_func_call = currentPosition == children.Count-1;
       if(is_func_call)
-        interp.call_stack.Push(ast);
+        interp.call_stack.Push(this);
 
       if(currentTask.currStatus != BHS.RUNNING)
         currentTask.init();
@@ -647,19 +648,19 @@ public abstract class FuncBaseCallNode : SequentialNode
 
   override public void deinit()
   {
-    bool need_cleanup = currStatus != BHS.SUCCESS;
+    bool was_interrupted = currStatus != BHS.SUCCESS;
 
     base.deinit();
 
     //NOTE: checking if we need to clean the values stack due to 
     //      non successul execution of the node
-    if(need_cleanup)
+    if(was_interrupted)
     {
+      //Console.WriteLine("STACK CLEANUP " + currStatus + " (" + interp.stack.Count + " - " +  stack_size_before + ") " + GetHashCode());
       var interp = Interpreter.instance;
-      //Console.WriteLine(interp.stack.Count + " " +  stack_size_before);
-      interp.PopValues(interp.stack.Count - stack_size_before);
+      interp.PopFuncValues(this);
     }
-  }
+  } 
 
   override public string inspect() 
   {
@@ -694,17 +695,6 @@ public class FuncBindCallNode : FuncBaseCallNode
     }
 
     base.init();
-  }
-
-  override public void deinit()
-  {
-    //NOTE: we don't stop children here because this node behaves NOT like
-    //      a block node but rather emulating a terminal node
-  }
-
-  override public void defer()
-  {
-    stopChildren();
   }
 }
 
@@ -1082,9 +1072,9 @@ public class DeferNode : BehaviorTreeInternalNode
   override public void defer()
   {
     for(int i=0;i<children.Count;++i)
-      children[i].run();
+      BehaviorTreeNode.run(children[i]);
 
-    stopChildren();
+    deferChildren();
   }
 
   override public BHS execute()
@@ -1195,7 +1185,7 @@ public class IfNode : BehaviorTreeInternalNode
     while(selected == null)
     {
       var cond = children[curr_pos];
-      var status = cond.run();
+      var status = BehaviorTreeNode.run(cond);
 
       if(status == BHS.RUNNING || status == BHS.FAILURE)
         return status;
@@ -1255,7 +1245,7 @@ public class LoopNode : BehaviorTreeInternalNode
 
     while(true)
     {
-      var status = cond.run();
+      var status = BehaviorTreeNode.run(cond);
       if(status == BHS.RUNNING || status == BHS.FAILURE)
         return status;
 
@@ -1266,7 +1256,7 @@ public class LoopNode : BehaviorTreeInternalNode
 
       try
       {
-        var body_status = body.run();
+        var body_status = BehaviorTreeNode.run(body);
         if(body_status == BHS.RUNNING || body_status == BHS.FAILURE)
           return body_status;
       }
@@ -1447,17 +1437,11 @@ public class CallFuncPtr : FuncBaseCallNode
 
   override public void deinit()
   {
+    base.deinit();
+
     var func_node = ((FuncNode)children[children.Count-1]);
     func_node.fct.Release();
-
-    //NOTE: we don't stop children here because this node behaves NOT like
-    //      a block node but rather emulating a terminal node
   } 
-
-  override public void defer()
-  {
-    stopChildren();
-  }
 
   public override string inspect()
   {
