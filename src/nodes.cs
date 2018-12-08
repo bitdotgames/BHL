@@ -154,20 +154,6 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
       c.stop();
     }
   }
-
-  protected void deferChildren()
-  {
-    //NOTE: deferring children in the reverse order
-    for(int i=children.Count;i-- > 0;)
-    {
-      var c = children[i];
-      if(c.currStatus != BHS.NONE)
-      {
-        c.defer();
-        c.currStatus = BHS.NONE;
-      }
-    }
-  }
 }
 
 public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
@@ -203,7 +189,7 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
   override public void defer()
   {
-    deferChildren();
+    stopChildren();
   }
 
   public void setSlave(BehaviorTreeNode node)
@@ -362,7 +348,7 @@ public class GroupNode : SequentialNode
 
   override public void defer()
   {
-    deferChildren();
+    stopChildren();
   }
 }
 
@@ -1065,7 +1051,8 @@ public class DeferNode : BehaviorTreeInternalNode
   override public void init()
   {}
 
-  //NOTE: does nothing on purpose
+  //NOTE: does nothing on purpose because 
+  //      deferring happens actually in its defer
   override public void deinit()
   {}
 
@@ -1074,7 +1061,16 @@ public class DeferNode : BehaviorTreeInternalNode
     for(int i=0;i<children.Count;++i)
       BehaviorTreeNode.run(children[i]);
 
-    deferChildren();
+    //NOTE: deferring children in the reverse order
+    for(int i=children.Count;i-- > 0;)
+    {
+      var c = children[i];
+      if(c.currStatus != BHS.NONE)
+      {
+        c.defer();
+        c.currStatus = BHS.NONE;
+      }
+    }
   }
 
   override public BHS execute()

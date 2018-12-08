@@ -6303,6 +6303,58 @@ public class BHL_Test
     }
   }
 
+  public class NodeWithLog : BehaviorTreeTerminalNode
+  {
+    public BHS result = BHS.SUCCESS;
+    Stream sm;
+
+    public NodeWithLog(Stream sm)
+    {
+      this.sm = sm;
+    }
+
+    public override void init()
+    {
+      var sw = new StreamWriter(sm);
+      sw.Write("INIT;");
+      sw.Flush();
+    }
+
+    public override void deinit()
+    {
+      var sw = new StreamWriter(sm);
+      sw.Write("DEINIT;");
+      sw.Flush();
+    }
+
+    public override BHS execute()
+    {
+      var sw = new StreamWriter(sm);
+      sw.Write("EXECUTE;");
+      sw.Flush();
+      return result;
+    }
+
+    public override void defer()
+    {
+      var sw = new StreamWriter(sm);
+      sw.Write("DEFER;");
+      sw.Flush();
+    }
+  }
+
+  NodeWithLog BindNodeWithLog(GlobalScope globs, MemoryStream s)
+  {
+    var node = new NodeWithLog(s);
+    {
+      var fn = new FuncBindSymbol("NodeWithLog", globs.type("void"),
+          delegate() { return node; } );
+
+      globs.define(fn);
+    }
+    return node;
+  }
+
   public class NodeWithDefer : BehaviorTreeTerminalNode
   {
     Stream sm;
@@ -9824,6 +9876,37 @@ public class BHL_Test
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
     AssertTrue(BHS.RUNNING == BehaviorTreeNode.run(node));
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInvertStopRunningNode()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      not {
+        NodeWithLog()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    var log = BindNodeWithLog(globs, trace_stream);
+    log.result = BHS.RUNNING;
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    node.stop();
+
+    var str = GetString(trace_stream);
+    AssertEqual("INIT;EXECUTE;EXECUTE;DEINIT;DEFER;", str);
+
     CommonChecks(intp);
   }
 
