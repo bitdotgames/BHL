@@ -160,7 +160,7 @@ function task_test(array $args = array())
   global $BHL_ROOT;
 
   mcs_build(array(
-    "$BHL_ROOT/test.cs",
+    "$BHL_ROOT/tests/*.cs",
     "$BHL_ROOT/bhl_front.dll",
     "$BHL_ROOT/Antlr4.Runtime.Standard.dll", 
   ),
