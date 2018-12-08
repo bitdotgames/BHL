@@ -176,7 +176,10 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
     {
       var c = children[i];
       if(c.currStatus == BHS.RUNNING)
+      {
         c.deinit();
+        c.currStatus = BHS.SUCCESS;
+      }
     }
   }
 }
@@ -659,7 +662,7 @@ public abstract class FuncBaseCallNode : SequentialNode
   {
     bool was_interrupted = currStatus != BHS.SUCCESS;
 
-    base.deinit();
+    deinitChildren();
 
     //NOTE: checking if we need to clean the values stack due to 
     //      non successul execution of the node
@@ -670,6 +673,11 @@ public abstract class FuncBaseCallNode : SequentialNode
       interp.PopFuncValues(this);
     }
   } 
+
+  override public void defer()
+  {
+    deferChildren();
+  }
 
   override public string inspect() 
   {
@@ -704,16 +712,6 @@ public class FuncBindCallNode : FuncBaseCallNode
     }
 
     base.init();
-  }
-
-  override public void deinit()
-  {
-    deinitChildren();
-  }
-
-  override public void defer()
-  {
-    deferChildren();
   }
 }
 
