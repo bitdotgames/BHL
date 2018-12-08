@@ -9950,7 +9950,7 @@ public class BHL_Test
     AssertEqual(BHS.SUCCESS, node.run());
 
     var str = GetString(trace_stream);
-    AssertEqual("1 INIT;1 EXEC;1 DEINIT;1 DEFER;2 INIT;2 EXEC;2 DEINIT;2 DEFER;", str);
+    AssertEqual("1 INIT;1 EXEC;1 DEINIT;2 INIT;2 EXEC;2 DEINIT;2 DEFER;1 DEFER;", str);
 
     CommonChecks(intp);
   }
@@ -10007,27 +10007,27 @@ public class BHL_Test
 
     func test() 
     {
-      //double not in order not to interrupt the execution
-      not { not { NodeWithDefer() } }
-      suspend()
+      not { NodeWithLog(1) }
+      NodeWithLog(2)
     }
     ";
 
     var globs = SymbolTable.CreateBuiltins();
     var trace_stream = new MemoryStream();
 
-    BindNodeWithDefer(globs, trace_stream);
+    var ctl = new Dictionary<int, BHS>();
+    ctl[1] = BHS.FAILURE;
+    ctl[2] = BHS.RUNNING;
+
+    BindNodeWithLog(globs, trace_stream, ctl);
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    {
-      var status = BehaviorTreeNode.run(node);
-      AssertEqual(BHS.RUNNING, status);
-    }
+    AssertEqual(BHS.RUNNING, node.run());
 
     var str = GetString(trace_stream);
-    AssertEqual("", str);
+    AssertEqual("1 INIT;1 EXEC;1 DEINIT;2 INIT;2 EXEC;", str);
     CommonChecks(intp);
   }
 

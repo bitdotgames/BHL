@@ -63,7 +63,7 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
   //NOTE: just a convenience method
   public BHS run()
   {
-    return BehaviorTreeNode.run(this);
+    return run(this);
   }
 
   public virtual void stop()
@@ -704,6 +704,16 @@ public class FuncBindCallNode : FuncBaseCallNode
     }
 
     base.init();
+  }
+
+  override public void deinit()
+  {
+    deinitChildren();
+  }
+
+  override public void defer()
+  {
+    deferChildren();
   }
 }
 
