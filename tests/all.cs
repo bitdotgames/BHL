@@ -9921,6 +9921,41 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestInvertInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral_all {
+        not {
+          NodeWithLog(1)
+        }
+        NodeWithLog(2)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    var ctl = new Dictionary<int, BHS>();
+    ctl[1] = BHS.FAILURE;
+    ctl[2] = BHS.SUCCESS;
+
+    BindNodeWithLog(globs, trace_stream, ctl);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+    AssertEqual(BHS.SUCCESS, node.run());
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 INIT;1 EXEC;1 DEINIT;1 DEFER;2 INIT;2 EXEC;2 DEINIT;2 DEFER;", str);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestInvertMultipleNodes()
   {
     string bhl = @"
