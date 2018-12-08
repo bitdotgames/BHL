@@ -147,11 +147,36 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
 
   protected void stopChildren()
   {
-    //NOTE: stopping children in the reverse order
+    //NOTE: traversing children in the reverse order
     for(int i=children.Count;i-- > 0;)
     {
       var c = children[i];
       c.stop();
+    }
+  }
+
+  protected void deferChildren()
+  {
+    //NOTE: traversing children in the reverse order
+    for(int i=children.Count;i-- > 0;)
+    {
+      var c = children[i];
+      if(c.currStatus != BHS.NONE)
+      {
+        c.defer();
+        c.currStatus = BHS.NONE;
+      }
+    }
+  }
+
+  protected void deinitChildren()
+  {
+    //NOTE: traversing children in the reverse order
+    for(int i=children.Count;i-- > 0;)
+    {
+      var c = children[i];
+      if(c.currStatus == BHS.RUNNING)
+        c.deinit();
     }
   }
 }
@@ -183,13 +208,12 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
   override public void deinit()
   {
-    //NOTE: we don't stop/defer children here because this node behaves NOT like
-    //      a block node but rather a terminal node
+    deinitChildren();
   } 
 
   override public void defer()
   {
-    stopChildren();
+    deferChildren();
   }
 
   public void setSlave(BehaviorTreeNode node)
@@ -342,13 +366,12 @@ public class GroupNode : SequentialNode
 {
   override public void deinit()
   {
-    //NOTE: we don't stop/defer children here because this node behaves NOT like
-    //      a block node but rather a terminal node
+    deinitChildren();
   }
 
   override public void defer()
   {
-    stopChildren();
+    deferChildren();
   }
 }
 
@@ -1052,7 +1075,7 @@ public class DeferNode : BehaviorTreeInternalNode
   {}
 
   //NOTE: does nothing on purpose because 
-  //      deferring happens actually in its defer
+  //      action happens in its defer
   override public void deinit()
   {}
 
@@ -1061,16 +1084,7 @@ public class DeferNode : BehaviorTreeInternalNode
     for(int i=0;i<children.Count;++i)
       BehaviorTreeNode.run(children[i]);
 
-    //NOTE: deferring children in the reverse order
-    for(int i=children.Count;i-- > 0;)
-    {
-      var c = children[i];
-      if(c.currStatus != BHS.NONE)
-      {
-        c.defer();
-        c.currStatus = BHS.NONE;
-      }
-    }
+    deferChildren();
   }
 
   override public BHS execute()
