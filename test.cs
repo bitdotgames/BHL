@@ -9962,7 +9962,7 @@ public class BHL_Test
 
     func test() 
     {
-      //double not in order no to interrupt the execution
+      //double not in order not to interrupt the execution
       not { not { NodeWithDefer() } }
       suspend()
     }
