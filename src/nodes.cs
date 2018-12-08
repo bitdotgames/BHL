@@ -48,22 +48,15 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
 
   //NOTE: this method is heavily used for inlining, 
   //      don't change its contents if you are not sure
-  //TODO: in the future it should use an interface
-  static public BHS run(BehaviorTreeNode node)
-  {
-    if(node.currStatus != BHS.RUNNING)
-      node.init();
-    node.currStatus = node.execute();
-    node.lastExecuteStatus = node.currStatus;
-    if(node.currStatus != BHS.RUNNING)
-      node.deinit();
-    return node.currStatus;
-  }
-
-  //NOTE: just a convenience method
   public BHS run()
   {
-    return run(this);
+    if(currStatus != BHS.RUNNING)
+      init();
+    currStatus = execute();
+    lastExecuteStatus = currStatus;
+    if(currStatus != BHS.RUNNING)
+      deinit();
+    return currStatus;
   }
 
   public virtual void stop()
@@ -1090,7 +1083,7 @@ public class DeferNode : BehaviorTreeInternalNode
   override public void defer()
   {
     for(int i=0;i<children.Count;++i)
-      BehaviorTreeNode.run(children[i]);
+      children[i].run();
 
     deferChildren();
   }
@@ -1203,7 +1196,7 @@ public class IfNode : BehaviorTreeInternalNode
     while(selected == null)
     {
       var cond = children[curr_pos];
-      var status = BehaviorTreeNode.run(cond);
+      var status = cond.run();
 
       if(status == BHS.RUNNING || status == BHS.FAILURE)
         return status;
@@ -1263,7 +1256,7 @@ public class LoopNode : BehaviorTreeInternalNode
 
     while(true)
     {
-      var status = BehaviorTreeNode.run(cond);
+      var status = cond.run();
       if(status == BHS.RUNNING || status == BHS.FAILURE)
         return status;
 
@@ -1274,7 +1267,7 @@ public class LoopNode : BehaviorTreeInternalNode
 
       try
       {
-        var body_status = BehaviorTreeNode.run(body);
+        var body_status = body.run();
         if(body_status == BHS.RUNNING || body_status == BHS.FAILURE)
           return body_status;
       }

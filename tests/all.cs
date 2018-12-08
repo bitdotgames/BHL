@@ -2749,12 +2749,12 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -2796,12 +2796,12 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -5412,7 +5412,7 @@ public class BHL_Test
     //NodeDump(node);
     
     for(int i=0;i<5;++i)
-      BehaviorTreeNode.run(node);
+      node.run();
     AssertEqual(DynVal.PoolCount, 4);
     AssertEqual(DynVal.PoolCountFree, 3);
 
@@ -5421,7 +5421,7 @@ public class BHL_Test
     AssertEqual("1;1;1;1;1;", str);
 
     for(int i=0;i<5;++i)
-      BehaviorTreeNode.run(node);
+      node.run();
     AssertEqual(DynVal.PoolCount, 4);
     AssertEqual(DynVal.PoolCountFree, 3);
 
@@ -5457,12 +5457,12 @@ public class BHL_Test
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
-    BehaviorTreeNode.run(node);
+    node.run();
 
     //NodeDump(node);
     
     for(int i=0;i<2;++i)
-      BehaviorTreeNode.run(node);
+      node.run();
 
     node.stop();
 
@@ -5500,7 +5500,7 @@ public class BHL_Test
     //NodeDump(node);
     
     for(int i=0;i<5;++i)
-      BehaviorTreeNode.run(node);
+      node.run();
     AssertEqual(intp.stack.Count, 0);
     AssertEqual(DynVal.PoolCount, 2);
     AssertEqual(DynVal.PoolCountFree, 2);
@@ -6838,12 +6838,12 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(status, BHS.RUNNING);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(status, BHS.SUCCESS);
     }
 
@@ -7683,7 +7683,7 @@ public class BHL_Test
       if(pending_removed.Count > 0 && pending_removed.Contains(node))
         return;
 
-      var result = BehaviorTreeNode.run(node);
+      var result = node.run();
 
       if(result != BHS.RUNNING)
         doDel(node);
@@ -7755,7 +7755,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(status, BHS.RUNNING);
 
       ScriptMgr.instance.run();
@@ -7770,7 +7770,7 @@ public class BHL_Test
     //NodeDump(node);
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(status, BHS.RUNNING);
 
       ScriptMgr.instance.run();
@@ -7819,7 +7819,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(status, BHS.RUNNING);
 
       ScriptMgr.instance.run();
@@ -7834,7 +7834,7 @@ public class BHL_Test
     //NodeDump(node);
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(status, BHS.RUNNING);
 
       ScriptMgr.instance.run();
@@ -7878,7 +7878,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(status, BHS.SUCCESS);
 
     ScriptMgr.instance.run();
@@ -7927,7 +7927,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(status, BHS.SUCCESS);
 
     var cs = ScriptMgr.instance.getChildren();
@@ -7981,7 +7981,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(status, BHS.SUCCESS);
 
     var cs = ScriptMgr.instance.getChildren();
@@ -8030,7 +8030,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(status, BHS.SUCCESS);
 
     var cs = ScriptMgr.instance.getChildren();
@@ -8075,7 +8075,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(status, BHS.SUCCESS);
     AssertTrue(!ScriptMgr.instance.busy());
 
@@ -8111,7 +8111,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(status, BHS.SUCCESS);
 
     ScriptMgr.instance.run();
@@ -8166,7 +8166,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(status, BHS.SUCCESS);
 
     ScriptMgr.instance.run();
@@ -8659,7 +8659,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -8704,7 +8704,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.FAILURE, status);
     }
 
@@ -8747,7 +8747,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -8792,7 +8792,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -8835,7 +8835,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.FAILURE, status);
     }
 
@@ -8860,7 +8860,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.SUCCESS, status);
 
     CommonChecks(intp);
@@ -8882,7 +8882,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.FAILURE, status);
 
     CommonChecks(intp);
@@ -8924,12 +8924,12 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -8974,12 +8974,12 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.FAILURE, status);
     }
 
@@ -9023,12 +9023,12 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9113,17 +9113,17 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9168,12 +9168,12 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.FAILURE, status);
     }
 
@@ -9257,7 +9257,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
    
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.RUNNING, status);
     //NodeDump(node);
     
@@ -9305,17 +9305,17 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9366,7 +9366,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9421,12 +9421,12 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9507,7 +9507,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9589,7 +9589,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9629,7 +9629,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9676,7 +9676,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9728,7 +9728,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.FAILURE, status);
     }
 
@@ -9782,12 +9782,12 @@ public class BHL_Test
     //NodeDump(node);
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -9817,7 +9817,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
@@ -9841,7 +9841,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.FAILURE == BehaviorTreeNode.run(node));
+    AssertTrue(BHS.FAILURE == node.run());
     CommonChecks(intp);
   }
 
@@ -9860,7 +9860,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.SUCCESS == BehaviorTreeNode.run(node));
+    AssertTrue(BHS.SUCCESS == node.run());
     CommonChecks(intp);
   }
 
@@ -9879,7 +9879,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.RUNNING == BehaviorTreeNode.run(node));
+    AssertTrue(BHS.RUNNING == node.run());
     CommonChecks(intp);
   }
 
@@ -9971,7 +9971,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.FAILURE == BehaviorTreeNode.run(node));
+    AssertTrue(BHS.FAILURE == node.run());
     CommonChecks(intp);
   }
 
@@ -9996,7 +9996,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.SUCCESS == BehaviorTreeNode.run(node));
+    AssertTrue(BHS.SUCCESS == node.run());
     CommonChecks(intp);
   }
 
@@ -10051,7 +10051,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -10082,7 +10082,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.FAILURE, status);
     }
 
@@ -10151,7 +10151,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.RUNNING, status);
   }
 
@@ -10369,7 +10369,7 @@ public class BHL_Test
 
     for(int i=0;i<5;++i)
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
@@ -10408,7 +10408,7 @@ public class BHL_Test
 
     for(int i=0;i<3;++i)
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
@@ -10441,13 +10441,13 @@ public class BHL_Test
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.SUCCESS, status);
 
     var res = intp.PopValue();
@@ -10488,7 +10488,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     for(int i=0;i<2;++i)
-      BehaviorTreeNode.run(node);
+      node.run();
 
     var str = GetString(trace_stream);
     AssertEqual("HEY;HEY;YOU;", str);
@@ -10522,7 +10522,7 @@ public class BHL_Test
 
     for(int i=0;i<3;++i)
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
 
@@ -10763,10 +10763,10 @@ public class BHL_Test
 
     for(int i=0;i<3;++i)
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
-    AssertEqual(BHS.SUCCESS, BehaviorTreeNode.run(node));
+    AssertEqual(BHS.SUCCESS, node.run());
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
@@ -10803,10 +10803,10 @@ public class BHL_Test
 
     for(int i=0;i<3;++i)
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
     }
-    AssertEqual(BHS.SUCCESS, BehaviorTreeNode.run(node));
+    AssertEqual(BHS.SUCCESS, node.run());
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
@@ -10827,10 +10827,10 @@ public class BHL_Test
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.SUCCESS, status);
 
     CommonChecks(intp);
@@ -10850,16 +10850,16 @@ public class BHL_Test
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.SUCCESS, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.SUCCESS, status);
 
     CommonChecks(intp);
@@ -10886,16 +10886,16 @@ public class BHL_Test
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.SUCCESS, status);
 
     var val = intp.PopValue();
@@ -10925,16 +10925,16 @@ public class BHL_Test
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.RUNNING, status);
 
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertEqual(BHS.SUCCESS, status);
 
     var val = intp.PopValue();
@@ -11008,12 +11008,12 @@ public class BHL_Test
 
     {
       var node = intp.GetFuncNode("test");
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.RUNNING, status);
 
       FuncCallNode.PoolClear();
 
-      status = BehaviorTreeNode.run(node);
+      status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
 
@@ -11051,22 +11051,22 @@ public class BHL_Test
     AssertEqual(FuncCallNode.PoolCount, 0);
 
     var node1 = intp.GetFuncNode("test1");
-    var status = BehaviorTreeNode.run(node1);
+    var status = node1.run();
     AssertEqual(BHS.RUNNING, status);
 
     FuncCallNode.PoolClear();
 
     var node2 = intp.GetFuncNode("test2");
-    status = BehaviorTreeNode.run(node2);
+    status = node2.run();
     AssertEqual(BHS.RUNNING, status);
     AssertEqual(FuncCallNode.PoolCount, 1);
 
     //NOTE: at this point the node will try to free the cached pool item,
     //      however its version of pool item is outdated
-    status = BehaviorTreeNode.run(node1);
+    status = node1.run();
     AssertEqual(BHS.SUCCESS, status);
 
-    status = BehaviorTreeNode.run(node2);
+    status = node2.run();
     AssertEqual(BHS.SUCCESS, status);
 
     AssertEqual(FuncCallNode.PoolCount, 1);
@@ -11097,7 +11097,7 @@ public class BHL_Test
 
     var node1 = intp.GetFuncNode("test");
     node1.SetArgs(DynVal.NewNum(3));
-    var status = BehaviorTreeNode.run(node1);
+    var status = node1.run();
     AssertEqual(BHS.RUNNING, status);
     
     AssertEqual(FuncCallNode.PoolCount, 1);
@@ -11105,7 +11105,7 @@ public class BHL_Test
 
     var node2 = intp.GetFuncNode("test");
     node2.SetArgs(DynVal.NewNum(30));
-    status = BehaviorTreeNode.run(node2);
+    status = node2.run();
     AssertEqual(BHS.RUNNING, status);
 
     AssertEqual(FuncCallNode.PoolCount, 1);
@@ -11805,10 +11805,10 @@ public class BHL_Test
     node.SetArgs(DynVal.NewObj(cn));
 
     cn.is_null = false;
-    BehaviorTreeNode.run(node);
+    node.run();
 
     cn.is_null = true;
-    BehaviorTreeNode.run(node);
+    node.run();
 
     var str = GetString(trace_stream);
     AssertEqual("NOTNULL;NULL2;", str);
@@ -12299,7 +12299,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.SUCCESS, status);
     }
     var res = intp.PopValue();
@@ -12560,10 +12560,10 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    AssertTrue(BHS.RUNNING == BehaviorTreeNode.run(node));
-    AssertTrue(BHS.RUNNING == BehaviorTreeNode.run(node));
-    AssertTrue(BHS.RUNNING == BehaviorTreeNode.run(node));
-    AssertTrue(BHS.SUCCESS == BehaviorTreeNode.run(node));
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.SUCCESS == node.run());
 
     var str = GetString(trace_stream);
     AssertEqual("012", str);
@@ -12898,10 +12898,10 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    AssertTrue(BHS.RUNNING == BehaviorTreeNode.run(node));
-    AssertTrue(BHS.RUNNING == BehaviorTreeNode.run(node));
-    AssertTrue(BHS.RUNNING == BehaviorTreeNode.run(node));
-    AssertTrue(BHS.SUCCESS == BehaviorTreeNode.run(node));
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.RUNNING == node.run());
+    AssertTrue(BHS.SUCCESS == node.run());
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
@@ -13233,7 +13233,7 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     {
-      var status = BehaviorTreeNode.run(node);
+      var status = node.run();
       AssertEqual(BHS.FAILURE, status);
     }
 
@@ -14331,7 +14331,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.RUNNING);
     node.stop();
     //NodeDump(node);
     CommonChecks(intp);
@@ -14375,9 +14375,9 @@ public class BHL_Test
 
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
-    AssertEqual(BehaviorTreeNode.run(node), BHS.SUCCESS);
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.SUCCESS);
     //NodeDump(node);
     CommonChecks(intp);
   }
@@ -14412,16 +14412,16 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     //NOTE: making several runs
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.RUNNING);
     node.stop();
 
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
-    AssertEqual(BehaviorTreeNode.run(node), BHS.SUCCESS);
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.SUCCESS);
 
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
-    AssertEqual(BehaviorTreeNode.run(node), BHS.SUCCESS);
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.SUCCESS);
     //NodeDump(node);
     CommonChecks(intp);
   }
@@ -14494,7 +14494,7 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
     //NodeDump(node);
-    BehaviorTreeNode.run(node);
+    node.run();
     node.stop();
     CommonChecks(intp);
   }
@@ -14673,9 +14673,9 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertTrue(status == BHS.RUNNING);
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertTrue(status == BHS.FAILURE);
 
     var str = GetString(trace_stream);
@@ -14735,9 +14735,9 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertTrue(status == BHS.RUNNING);
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertTrue(status == BHS.FAILURE);
 
     var str = GetString(trace_stream);
@@ -14804,9 +14804,9 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertTrue(status == BHS.RUNNING);
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertTrue(status == BHS.FAILURE);
 
     var str = GetString(trace_stream);
@@ -14868,11 +14868,11 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
 
-    var status = BehaviorTreeNode.run(node);
+    var status = node.run();
     AssertTrue(status == BHS.RUNNING);
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertTrue(status == BHS.RUNNING);
-    status = BehaviorTreeNode.run(node);
+    status = node.run();
     AssertTrue(status == BHS.SUCCESS);
 
     var str = GetString(trace_stream);
@@ -14908,7 +14908,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl, globs);
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
-    AssertEqual(BehaviorTreeNode.run(node), BHS.RUNNING);
+    AssertEqual(node.run(), BHS.RUNNING);
     node.stop();
     //NodeDump(node);
 
@@ -17141,7 +17141,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     t1.status = BHS.RUNNING;
 
-    AssertTrue(BehaviorTreeNode.run(s) == BHS.RUNNING);
+    AssertTrue(s.run() == BHS.RUNNING);
     AssertEqual(t1.inits, 1);
     AssertEqual(t1.execs, 1);
     AssertEqual(t1.deinits, 0);
@@ -17153,7 +17153,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     t1.status = BHS.SUCCESS;
 
-    AssertTrue(BehaviorTreeNode.run(s) == BHS.SUCCESS);
+    AssertTrue(s.run() == BHS.SUCCESS);
     AssertEqual(t1.inits, 1);
     AssertEqual(t1.execs, 2);
     AssertEqual(t1.deinits, 1);
@@ -17177,14 +17177,14 @@ func Unit FindUnit(Vec3 pos, float radius) {
     t.status = BHS.RUNNING;
     var d = new DecoratorTestNode(t);
 
-    AssertTrue(BehaviorTreeNode.run(d) == BHS.RUNNING);
+    AssertTrue(d.run() == BHS.RUNNING);
     AssertEqual(t.inits, 1);
     AssertEqual(t.execs, 1);
     AssertEqual(t.deinits, 0);
     AssertEqual(t.defers, 0);
 
     t.status = BHS.SUCCESS;
-    AssertTrue(BehaviorTreeNode.run(d) == BHS.SUCCESS);
+    AssertTrue(d.run() == BHS.SUCCESS);
     AssertEqual(t.inits, 1);
     AssertEqual(t.execs, 2);
     AssertEqual(t.deinits, 1);

@@ -100,7 +100,7 @@ public class Interpreter : AST_Visitor
     res.status = BHS.NONE;
     while(true)
     {
-      res.status = BehaviorTreeNode.run(node);
+      res.status = node.run();
       if(res.status != BHS.RUNNING)
         break;
 
@@ -395,7 +395,7 @@ public class Interpreter : AST_Visitor
     VisitChildren(ast);
     PopNode();
 
-    var status = BehaviorTreeNode.run(g);
+    var status = g.run();
     if(status != BHS.SUCCESS)
       throw new Exception("Global initialization bad status: " + status);
 
