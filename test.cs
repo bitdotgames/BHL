@@ -6305,54 +6305,58 @@ public class BHL_Test
 
   public class NodeWithLog : BehaviorTreeTerminalNode
   {
-    public BHS result = BHS.SUCCESS;
+    Dictionary<int, BHS> ctl;
     Stream sm;
+    int id;
 
-    public NodeWithLog(Stream sm)
+    public NodeWithLog(Stream sm, Dictionary<int, BHS> ctl)
     {
+      this.ctl = ctl;
       this.sm = sm;
     }
 
     public override void init()
     {
+      var interp = Interpreter.instance;
+      id = (int)interp.PopValue().num;
+
       var sw = new StreamWriter(sm);
-      sw.Write("INIT;");
+      sw.Write(id + " INIT;");
       sw.Flush();
     }
 
     public override void deinit()
     {
       var sw = new StreamWriter(sm);
-      sw.Write("DEINIT;");
+      sw.Write(id + " DEINIT;");
       sw.Flush();
     }
 
     public override BHS execute()
     {
       var sw = new StreamWriter(sm);
-      sw.Write("EXECUTE;");
+      sw.Write(id + " EXEC;");
       sw.Flush();
-      return result;
+      return ctl[id];
     }
 
     public override void defer()
     {
       var sw = new StreamWriter(sm);
-      sw.Write("DEFER;");
+      sw.Write(id + " DEFER;");
       sw.Flush();
     }
   }
 
-  NodeWithLog BindNodeWithLog(GlobalScope globs, MemoryStream s)
+  void BindNodeWithLog(GlobalScope globs, MemoryStream s, Dictionary<int, BHS> ctl)
   {
-    var node = new NodeWithLog(s);
     {
       var fn = new FuncBindSymbol("NodeWithLog", globs.type("void"),
-          delegate() { return node; } );
+          delegate() { return new NodeWithLog(s, ctl); } );
 
+      fn.define(new FuncArgSymbol("id", globs.type("int")));
       globs.define(fn);
     }
-    return node;
   }
 
   public class NodeWithDefer : BehaviorTreeTerminalNode
@@ -9886,8 +9890,11 @@ public class BHL_Test
 
     func test() 
     {
-      not {
-        NodeWithLog()
+      paral_all {
+        not {
+          NodeWithLog(1)
+        }
+        NodeWithLog(2)
       }
     }
     ";
@@ -9895,8 +9902,11 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     var trace_stream = new MemoryStream();
 
-    var log = BindNodeWithLog(globs, trace_stream);
-    log.result = BHS.RUNNING;
+    var ctl = new Dictionary<int, BHS>();
+    ctl[1] = BHS.RUNNING;
+    ctl[2] = BHS.RUNNING;
+
+    BindNodeWithLog(globs, trace_stream, ctl);
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
@@ -9905,7 +9915,7 @@ public class BHL_Test
     node.stop();
 
     var str = GetString(trace_stream);
-    AssertEqual("INIT;EXECUTE;EXECUTE;DEINIT;DEFER;", str);
+    AssertEqual("1 INIT;1 EXEC;2 INIT;2 EXEC;1 EXEC;2 EXEC;2 DEINIT;2 DEFER;1 DEINIT;1 DEFER;", str);
 
     CommonChecks(intp);
   }
