@@ -9841,7 +9841,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.FAILURE == node.run());
+    AssertEqual(BHS.FAILURE, node.run());
     CommonChecks(intp);
   }
 
@@ -9860,7 +9860,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.SUCCESS == node.run());
+    AssertEqual(BHS.SUCCESS, node.run());
     CommonChecks(intp);
   }
 
@@ -9879,7 +9879,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.RUNNING == node.run());
+    AssertEqual(BHS.RUNNING, node.run());
     CommonChecks(intp);
   }
 
@@ -9971,7 +9971,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.FAILURE == node.run());
+    AssertEqual(BHS.FAILURE, node.run());
     CommonChecks(intp);
   }
 
@@ -9996,7 +9996,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl);
     var node = intp.GetFuncNode("test");
-    AssertTrue(BHS.SUCCESS == node.run());
+    AssertEqual(BHS.SUCCESS, node.run());
     CommonChecks(intp);
   }
 
@@ -12560,10 +12560,10 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    AssertTrue(BHS.RUNNING == node.run());
-    AssertTrue(BHS.RUNNING == node.run());
-    AssertTrue(BHS.RUNNING == node.run());
-    AssertTrue(BHS.SUCCESS == node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.SUCCESS, node.run());
 
     var str = GetString(trace_stream);
     AssertEqual("012", str);
@@ -12898,10 +12898,10 @@ public class BHL_Test
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncNode("test");
     //NodeDump(node);
-    AssertTrue(BHS.RUNNING == node.run());
-    AssertTrue(BHS.RUNNING == node.run());
-    AssertTrue(BHS.RUNNING == node.run());
-    AssertTrue(BHS.SUCCESS == node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.SUCCESS, node.run());
 
     var str = GetString(trace_stream);
     AssertEqual("123", str);
@@ -14674,9 +14674,9 @@ public class BHL_Test
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
     var status = node.run();
-    AssertTrue(status == BHS.RUNNING);
+    AssertEqual(status, BHS.RUNNING);
     status = node.run();
-    AssertTrue(status == BHS.FAILURE);
+    AssertEqual(status, BHS.FAILURE);
 
     var str = GetString(trace_stream);
 
@@ -14736,9 +14736,9 @@ public class BHL_Test
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
     var status = node.run();
-    AssertTrue(status == BHS.RUNNING);
+    AssertEqual(status, BHS.RUNNING);
     status = node.run();
-    AssertTrue(status == BHS.FAILURE);
+    AssertEqual(status, BHS.FAILURE);
 
     var str = GetString(trace_stream);
 
@@ -14805,9 +14805,9 @@ public class BHL_Test
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
     var status = node.run();
-    AssertTrue(status == BHS.RUNNING);
+    AssertEqual(status, BHS.RUNNING);
     status = node.run();
-    AssertTrue(status == BHS.FAILURE);
+    AssertEqual(status, BHS.FAILURE);
 
     var str = GetString(trace_stream);
 
@@ -14869,11 +14869,11 @@ public class BHL_Test
     var node = intp.GetFuncNode("test");
 
     var status = node.run();
-    AssertTrue(status == BHS.RUNNING);
+    AssertEqual(status, BHS.RUNNING);
     status = node.run();
-    AssertTrue(status == BHS.RUNNING);
+    AssertEqual(status, BHS.RUNNING);
     status = node.run();
-    AssertTrue(status == BHS.SUCCESS);
+    AssertEqual(status, BHS.SUCCESS);
 
     var str = GetString(trace_stream);
 
@@ -17141,7 +17141,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     t1.status = BHS.RUNNING;
 
-    AssertTrue(s.run() == BHS.RUNNING);
+    AssertEqual(s.run(), BHS.RUNNING);
     AssertEqual(t1.inits, 1);
     AssertEqual(t1.execs, 1);
     AssertEqual(t1.deinits, 0);
@@ -17153,7 +17153,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     t1.status = BHS.SUCCESS;
 
-    AssertTrue(s.run() == BHS.SUCCESS);
+    AssertEqual(s.run(), BHS.SUCCESS);
     AssertEqual(t1.inits, 1);
     AssertEqual(t1.execs, 2);
     AssertEqual(t1.deinits, 1);
@@ -17177,21 +17177,120 @@ func Unit FindUnit(Vec3 pos, float radius) {
     t.status = BHS.RUNNING;
     var d = new DecoratorTestNode(t);
 
-    AssertTrue(d.run() == BHS.RUNNING);
+    AssertEqual(d.run(), BHS.RUNNING);
     AssertEqual(t.inits, 1);
     AssertEqual(t.execs, 1);
     AssertEqual(t.deinits, 0);
     AssertEqual(t.defers, 0);
 
     t.status = BHS.SUCCESS;
-    AssertTrue(d.run() == BHS.SUCCESS);
+    AssertEqual(d.run(), BHS.SUCCESS);
     AssertEqual(t.inits, 1);
     AssertEqual(t.execs, 2);
     AssertEqual(t.deinits, 1);
     AssertEqual(t.defers, 0);
 
-    d.stop();
+    d.defer();
     AssertEqual(t.defers, 1);
+  }
+
+  [IsTested()]
+  public void TestGroupNode()
+  {
+    var t = new TestNode();
+    t.status = BHS.RUNNING;
+    var g = new GroupNode();
+    g.addChild(t);
+
+    AssertEqual(g.run(), BHS.RUNNING);
+    AssertEqual(t.inits, 1);
+    AssertEqual(t.execs, 1);
+    AssertEqual(t.deinits, 0);
+    AssertEqual(t.defers, 0);
+
+    t.status = BHS.SUCCESS;
+    AssertEqual(g.run(), BHS.SUCCESS);
+    AssertEqual(t.inits, 1);
+    AssertEqual(t.execs, 2);
+    AssertEqual(t.deinits, 1);
+    AssertEqual(t.defers, 0);
+
+    g.defer();
+    AssertEqual(t.defers, 1);
+  }
+
+  [IsTested()]
+  public void TestRunNodeWithSuccess()
+  {
+    var t = new TestNode();
+    t.status = BHS.RUNNING;
+
+    AssertEqual(t.run(), BHS.RUNNING);
+    AssertEqual(t.inits, 1);
+    AssertEqual(t.execs, 1);
+    AssertEqual(t.deinits, 0);
+    AssertEqual(t.defers, 0);
+
+    t.status = BHS.SUCCESS;
+    AssertEqual(t.run(), BHS.SUCCESS);
+    AssertEqual(t.inits, 1);
+    AssertEqual(t.execs, 2);
+    AssertEqual(t.deinits, 1);
+    AssertEqual(t.defers, 0);
+
+    //run again
+    AssertEqual(t.run(), BHS.SUCCESS);
+    AssertEqual(t.inits, 2);
+    AssertEqual(t.execs, 3);
+    AssertEqual(t.deinits, 2);
+    AssertEqual(t.defers, 0);
+  }
+
+  [IsTested()]
+  public void TestRunNodeWithFailure()
+  {
+    var t = new TestNode();
+    t.status = BHS.RUNNING;
+
+    AssertEqual(t.run(), BHS.RUNNING);
+    AssertEqual(t.inits, 1);
+    AssertEqual(t.execs, 1);
+    AssertEqual(t.deinits, 0);
+    AssertEqual(t.defers, 0);
+
+    t.status = BHS.FAILURE;
+    AssertEqual(t.run(), BHS.FAILURE);
+    AssertEqual(t.inits, 1);
+    AssertEqual(t.execs, 2);
+    AssertEqual(t.deinits, 1);
+    AssertEqual(t.defers, 0);
+
+    //run again
+    AssertEqual(t.run(), BHS.FAILURE);
+    AssertEqual(t.inits, 2);
+    AssertEqual(t.execs, 3);
+    AssertEqual(t.deinits, 2);
+    AssertEqual(t.defers, 0);
+  }
+
+  [IsTested()]
+  public void TestStopNode()
+  {
+    var t = new TestNode();
+    t.status = BHS.RUNNING;
+
+    AssertEqual(t.run(), BHS.RUNNING);
+    AssertEqual(t.inits, 1);
+    AssertEqual(t.execs, 1);
+    AssertEqual(t.deinits, 0);
+    AssertEqual(t.defers, 0);
+
+    t.stop();
+    AssertEqual(t.inits, 1);
+    AssertEqual(t.execs, 1);
+    AssertEqual(t.deinits, 1);
+    AssertEqual(t.defers, 1);
+    AssertEqual(t.currStatus, BHS.NONE);
   }
 
   [IsTested()]
