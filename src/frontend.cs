@@ -1217,7 +1217,68 @@ public class Frontend : bhlBaseVisitor<object>
     else
       Wrap(ctx).eval_type = SymbolTable.Bop(wlhs, wrhs);
 
+    ast = RewriteTemporaryValuesIfNeccessary(ast);
+    
     PeekAST().AddChild(ast);
+  }
+
+  int temp_vars_counter = 0;
+
+  static bool HasFuncCalls(AST ast)
+  {
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var c = ast.children[i];
+
+      if(c is AST_LambdaDecl)
+        continue;
+
+      var call = c as AST_Call;
+      if(call != null && 
+          (call.type == EnumCall.FUNC || 
+           call.type == EnumCall.MFUNC || 
+           call.type == EnumCall.FUNC_PTR))
+        return true;
+
+      if((c is AST) && HasFuncCalls(c as AST))
+        return true;
+    }
+    return false;
+  }
+
+  AST RewriteTemporaryValuesIfNeccessary(AST ast)
+  {
+    if(!HasFuncCalls(ast))
+      return ast;
+    
+    var before = AST_Util.New_Block(EnumBlock.GROUP);
+    _RewriteTemporaryValuesIfNeccessary(ast, before);
+
+    before.AddChild(ast);
+    return before;
+  }
+
+  void _RewriteTemporaryValuesIfNeccessary(AST ast, AST before)
+  {
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var c = ast.children[i];
+
+      if(c is AST_LambdaDecl)
+        continue;
+
+      if(c is AST)
+        _RewriteTemporaryValuesIfNeccessary(c as AST, before);
+
+      if(c is AST_Literal)
+      {
+        ++temp_vars_counter;
+        var tmp_name = "$tmp_" + temp_vars_counter;
+        before.AddChild(c);
+        before.AddChild(AST_Util.New_Call(EnumCall.VARW, 0, tmp_name));
+        ast.children[i] = AST_Util.New_Call(EnumCall.VAR, 0, tmp_name);
+      }
+    }
   }
 
   public override object VisitExpBitAnd(bhlParser.ExpBitAndContext ctx)

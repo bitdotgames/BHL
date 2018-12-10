@@ -7319,7 +7319,7 @@ public class BHL_Test
     func int test(int a) 
     {
       return foo(func int(int a) { return a }, a) + 
-             foo(func int(int a) { return a * 2 }, a+1)
+             foo(func int(int a) { return a * 2 }, a + 1)
     }
     ";
 
@@ -14508,7 +14508,6 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  //TODO:
   //[IsTested()]
   public void TestFundamentalStackProblem()
   {

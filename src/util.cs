@@ -1098,10 +1098,10 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Block node)
   {
-    Console.Write("(BLOCK ");
-    Console.Write(node.type + " ");
+    Console.Write("(");
+    Console.Write(node.type + " {");
     VisitChildren(node);
-    Console.Write(")");
+    Console.Write("})");
   }
 
   public override void DoVisit(AST_TypeCast node)
