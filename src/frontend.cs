@@ -80,6 +80,9 @@ public class Frontend : bhlBaseVisitor<object>
   Scope curr_scope;
   int scope_level;
 
+  List<AST> stackfn2vars = new List<AST>();
+  int stackfn2vars_counter = 0;
+
   public static CommonTokenStream Source2Tokens(Stream s)
   {
     var ais = new AntlrInputStream(s);
@@ -363,6 +366,10 @@ public class Frontend : bhlBaseVisitor<object>
     bool write
    )
   {
+    int s2v = BeginStackFn2Vars();
+    var ast_root = PeekAST();
+    int s2v_child_idx = ast_root.children.Count - 1;
+
     var orig_scope = curr_scope;
 
     ITerminalNode curr_name = root_name;
@@ -420,6 +427,12 @@ public class Frontend : bhlBaseVisitor<object>
     if(curr_name != null)
       ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, write);
 
+    //if there were added new children we convert the first added one
+    if((s2v_child_idx + 1) < ast_root.children.Count)
+      ++s2v_child_idx;
+
+    ast_root.children[s2v_child_idx] = ConvertStackFn2Vars(s2v, ast_root.children[s2v_child_idx] as AST);
+
     curr_scope = orig_scope;
   }
 
@@ -438,6 +451,8 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(name != null)
     {
+      s2v = BeginStackFn2Vars();
+
       string str_name = name.GetText();
       var name_symb = class_scope == null ? curr_scope.resolve(str_name) : class_scope.resolve(str_name);
       if(name_symb == null)
@@ -449,8 +464,6 @@ public class Frontend : bhlBaseVisitor<object>
       //func or method call
       if(cargs != null)
       {
-        s2v = BeginStack2Vars();
-
         if(name_symb is FieldSymbol)
           FireError(Location(name) + " : symbol is not a function");
 
@@ -531,6 +544,8 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else if(cargs != null)
     {
+      s2v = BeginStackFn2Vars();
+
       var ftype = type as FuncType;
       if(ftype == null)
         FireError(Location(cargs) +  " : no func to call");
@@ -543,7 +558,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(ast != null)
     {
       if(s2v != -1)
-        PeekAST().AddChild(ConvertStack2Vars(s2v, ast));
+        PeekAST().AddChild(ConvertStackFn2Vars(s2v, ast));
       else
         PeekAST().AddChild(ast);
     }
@@ -823,6 +838,7 @@ public class Frontend : bhlBaseVisitor<object>
     var chain = funcLambda.chainExp(); 
     if(chain != null)
     {
+      int s2v = BeginStackFn2Vars();
       var interim = new AST_Interim();
       interim.AddChild(ast);
       int line = funcLambda.Start.Line;
@@ -830,7 +846,7 @@ public class Frontend : bhlBaseVisitor<object>
       ProcChainedCall(null, chain, ref curr_type, line, false);
       PopAST();
       Wrap(ctx).eval_type = curr_type;
-      PeekAST().AddChild(interim);
+      PeekAST().AddChild(ConvertStackFn2Vars(s2v, interim));
     }
     else
       PeekAST().AddChild(ast);
@@ -886,8 +902,6 @@ public class Frontend : bhlBaseVisitor<object>
 
     var ast = AST_Util.New_JsonObj(root_type_name);
 
-    int s2v = BeginStack2Vars();
-
     PushAST(ast);
     var pairs = ctx.jsonPair();
     for(int i=0;i<pairs.Length;++i)
@@ -900,7 +914,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(new_exp != null)
       PopJsonType();
 
-    PeekAST().AddChild(ConvertStack2Vars(s2v, ast));
+    PeekAST().AddChild(ast);
     return null;
   }
 
@@ -921,7 +935,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var ast = AST_Util.New_JsonArr(arr_type);
 
-    int s2v = BeginStack2Vars();
+    int s2v = BeginStackFn2Vars();
 
     PushAST(ast);
     var vals = ctx.jsonValue();
@@ -938,7 +952,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = arr_type;
 
-    PeekAST().AddChild(ConvertStack2Vars(s2v, ast));
+    PeekAST().AddChild(ConvertStackFn2Vars(s2v, ast));
 
     return null;
   }
@@ -960,7 +974,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PushJsonType(member.type.Get());
 
-    int s2v = BeginStack2Vars();
+    int s2v = BeginStackFn2Vars();
 
     var jval = ctx.jsonValue(); 
     PushAST(ast);
@@ -971,7 +985,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = member.type.Get();
 
-    PeekAST().AddChild(ConvertStack2Vars(s2v, ast));
+    PeekAST().AddChild(ConvertStackFn2Vars(s2v, ast));
     return null;
   }
 
@@ -1193,7 +1207,7 @@ public class Frontend : bhlBaseVisitor<object>
     else
       throw new Exception("Unknown type");
 
-    int s2v = BeginStack2Vars();
+    int s2v = BeginStackFn2Vars();
 
     AST ast = AST_Util.New_BinaryOpExp(op_type);
     PushAST(ast);
@@ -1201,7 +1215,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(rhs);
     PopAST();
 
-    ast = ConvertStack2Vars(s2v, ast);
+    ast = ConvertStackFn2Vars(s2v, ast);
 
     var wlhs = Wrap(lhs);
     var wrhs = Wrap(rhs);
@@ -1239,56 +1253,30 @@ public class Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
   }
 
-  List<AST> stack2vars = new List<AST>();
-  int s2v_counter = 0;
-
-  static bool HasFuncCalls(AST ast)
+  int BeginStackFn2Vars()
   {
-    for(int i=0;i<ast.children.Count;++i)
-    {
-      var c = ast.children[i];
-
-      var call = c as AST_Call;
-      if(IsFuncCall(call))
-        return true;
-      //else if(c is AST && HasFuncCalls(c as AST))
-      //  return true;
-    }
-    return false;
+    stackfn2vars.Add(null);
+    int s2v = stackfn2vars.Count-1;
+    //Console.WriteLine(new String(' ', s2v) + "BEGIN " + s2v);
+    return s2v;
   }
 
-  static bool IsFuncCall(AST_Call call)
+  AST ConvertStackFn2Vars(int s2v, AST ast)
   {
-    return (call != null && 
-            (call.type == EnumCall.FUNC || 
-             //NOTE: ignoring for now
-             //call.type == EnumCall.MFUNC || 
-             call.type == EnumCall.FUNC_PTR));
-  }
+    //Console.WriteLine(new String(' ', s2v) + "CONVERT " + s2v + " " + ast.GetType().Name);
 
-  int BeginStack2Vars()
-  {
-    stack2vars.Add(null);
-    return stack2vars.Count-1;
-  }
-
-  AST ConvertStack2Vars(int s2v, AST ast)
-  {
-    if(HasFuncCalls(ast))
-    {
-      var header = new AST();
-      _Stack2Vars(ast, header);
-      stack2vars[s2v] = header;
-    }
+    stackfn2vars[s2v] = Stack2Vars(ast);
 
     //NOTE: we are in the root, let's add the header
-    //      with all the vars
+    //      with all the converted func calls if any
     if(s2v == 0)
     {
       AST group = null;
-      for(int i = stack2vars.Count; i-- > 0;)
+      //traversing in the reverse order so that the deepest expressions 
+      //are calculated first
+      for(int i = stackfn2vars.Count; i-- > 0;)
       {
-        var header = stack2vars[i];
+        var header = stackfn2vars[i];
         if(header != null)
         {
           if(group == null)
@@ -1302,35 +1290,57 @@ public class Frontend : bhlBaseVisitor<object>
         group.AddChild(ast);
         ast = group;
       }
-      stack2vars.Clear();
+      stackfn2vars.Clear();
     }
 
     return ast;
   }
 
-  void _Stack2Vars(AST ast, AST header)
+  AST Stack2Vars(AST ast)
   {
-    for(int i=0;i<ast.children.Count;++i)
-    {
-      var c = ast.children[i];
+    AST header = null;
 
-      //if(c is AST_Literal)
-      //{
-      //  ++s2v_counter;
-      //  var tmp_name = "$tmp_" + s2v_counter;
-      //  header.AddChild(c);
-      //  header.AddChild(AST_Util.New_Call(EnumCall.VARW, 0, tmp_name));
-      //  ast.children[i] = AST_Util.New_Call(EnumCall.VAR, 0, tmp_name);
-      //}
-      if(c is AST_Call && IsFuncCall(c as AST_Call))
+    //checking lambda immediate call
+    var itr = ast as AST_Interim;
+    if(itr != null && 
+       itr.children.Count == 2 && 
+       (itr.children[0] is AST_LambdaDecl) && 
+       (itr.children[1] is AST_Call)) 
+    {
+      if(header == null)
+        header = new AST();
+      
+      ++stackfn2vars_counter;
+      var tmp_name = "$tmp_" + stackfn2vars_counter;
+      header.AddChild(itr.children[0]);
+      header.AddChild(itr.children[1]);
+      header.AddChild(AST_Util.New_Call(EnumCall.VARW, 0, tmp_name));
+      ast.children.Clear();
+      ast.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, tmp_name));
+    }
+    else
+    {
+      //checking regular calls
+      for(int i=0;i<ast.children.Count;++i)
       {
-        ++s2v_counter;
-        var tmp_name = "$tmp_" + s2v_counter;
-        header.AddChild(c);
-        header.AddChild(AST_Util.New_Call(EnumCall.VARW, 0, tmp_name));
-        ast.children[i] = AST_Util.New_Call(EnumCall.VAR, 0, tmp_name);
+        var c = ast.children[i];
+
+        var call = c as AST_Call;
+        if(call != null && (call.type == EnumCall.FUNC || call.type == EnumCall.FUNC_PTR))
+        {
+          if(header == null)
+            header = new AST();
+
+          ++stackfn2vars_counter;
+          var tmp_name = "$tmp_" + stackfn2vars_counter;
+          header.AddChild(c);
+          header.AddChild(AST_Util.New_Call(EnumCall.VARW, 0, tmp_name));
+          ast.children[i] = AST_Util.New_Call(EnumCall.VAR, 0, tmp_name);
+        }
       }
     }
+
+    return header;
   }
 
   public override object VisitExpBitAnd(bhlParser.ExpBitAndContext ctx)
