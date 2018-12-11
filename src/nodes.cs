@@ -653,19 +653,24 @@ public abstract class FuncBaseCallNode : SequentialNode
 
   override public void deinit()
   {
-    bool was_interrupted = currStatus != BHS.SUCCESS;
-
     deinitChildren();
+  }
 
-    //NOTE: checking if we need to clean the values stack due to 
-    //      non successul execution of the node
-    if(was_interrupted)
-    {
-      var interp = Interpreter.instance;
-      //Console.WriteLine("STACK CLEANUP " + currStatus + " (" + interp.stack.Count + " - " +  stack_size_before + ") " + GetHashCode());
-      interp.PopFuncValues(this);
-    }
-  } 
+  //override public void deinit()
+  //{
+  //  bool was_interrupted = currStatus != BHS.SUCCESS;
+
+  //  deinitChildren();
+
+  //  //NOTE: checking if we need to clean the values stack due to 
+  //  //      non successul execution of the node
+  //  if(was_interrupted)
+  //  {
+  //    var interp = Interpreter.instance;
+  //    //Console.WriteLine("STACK CLEANUP " + currStatus + " (" + interp.stack.Count + " - " +  stack_size_before + ") " + GetHashCode());
+  //    interp.PopFuncValues(this);
+  //  }
+  //} 
 
   override public void defer()
   {

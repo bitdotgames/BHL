@@ -434,6 +434,7 @@ public class Frontend : bhlBaseVisitor<object>
     )
   {
     AST_Call ast = null;
+    int rv = -1;
 
     if(name != null)
     {
@@ -448,6 +449,8 @@ public class Frontend : bhlBaseVisitor<object>
       //func or method call
       if(cargs != null)
       {
+        rv = BeginRewriteVars();
+
         if(name_symb is FieldSymbol)
           FireError(Location(name) + " : symbol is not a function");
 
@@ -538,7 +541,12 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     if(ast != null)
-      PeekAST().AddChild(ast);
+    {
+      if(rv != -1)
+        PeekAST().AddChild(TryRewriteVars(rv, ast));
+      else
+        PeekAST().AddChild(ast);
+    }
 
     if(arracc != null)
       AddArrIndex(arracc, ref type, line, write);
@@ -1178,11 +1186,15 @@ public class Frontend : bhlBaseVisitor<object>
     else
       throw new Exception("Unknown type");
 
+    int rv = BeginRewriteVars();
+
     AST ast = AST_Util.New_BinaryOpExp(op_type);
     PushAST(ast);
     Visit(lhs);
     Visit(rhs);
     PopAST();
+
+    ast = TryRewriteVars(rv, ast);
 
     var wlhs = Wrap(lhs);
     var wrhs = Wrap(rhs);
@@ -1217,11 +1229,10 @@ public class Frontend : bhlBaseVisitor<object>
     else
       Wrap(ctx).eval_type = SymbolTable.Bop(wlhs, wrhs);
 
-    ast = RewriteTemporaryValuesIfNeccessary(ast);
-    
     PeekAST().AddChild(ast);
   }
 
+  List<AST> rewrite_vars_stack = new List<AST>();
   int temp_vars_counter = 0;
 
   static bool HasFuncCalls(AST ast)
@@ -1230,32 +1241,62 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var c = ast.children[i];
 
-      if(c is AST_LambdaDecl)
-        continue;
-
       var call = c as AST_Call;
-      if(call != null && 
-          (call.type == EnumCall.FUNC || 
-           call.type == EnumCall.MFUNC || 
-           call.type == EnumCall.FUNC_PTR))
+      if(IsFuncCall(call))
         return true;
-
-      if((c is AST) && HasFuncCalls(c as AST))
-        return true;
+      //else if(c is AST && HasFuncCalls(c as AST))
+      //  return true;
     }
     return false;
   }
 
-  AST RewriteTemporaryValuesIfNeccessary(AST ast)
+  static bool IsFuncCall(AST_Call call)
   {
-    if(!HasFuncCalls(ast))
-      return ast;
-    
-    var before = AST_Util.New_Block(EnumBlock.GROUP);
-    _RewriteTemporaryValuesIfNeccessary(ast, before);
+    return (call != null && 
+            (call.type == EnumCall.FUNC || 
+             //NOTE: ignoring for now
+             //call.type == EnumCall.MFUNC || 
+             call.type == EnumCall.FUNC_PTR));
+  }
 
-    before.AddChild(ast);
-    return before;
+  int BeginRewriteVars()
+  {
+    rewrite_vars_stack.Add(null);
+    return rewrite_vars_stack.Count-1;
+  }
+
+  AST TryRewriteVars(int rv, AST ast)
+  {
+    if(HasFuncCalls(ast))
+    {
+      var before = new AST();
+      _RewriteTemporaryValuesIfNeccessary(ast, before);
+      rewrite_vars_stack[rv] = before;
+    }
+
+    if(rv == 0)
+    {
+      AST group = null;
+      for(int i = rewrite_vars_stack.Count; i-- > 0;)
+      {
+        var before = rewrite_vars_stack[i];
+        if(before != null)
+        {
+          if(group == null)
+            group = AST_Util.New_Block(EnumBlock.GROUP); 
+          for(int j=0; j<before.children.Count; ++j)
+            group.AddChild(before.children[j]);
+        }
+      }
+      if(group != null)
+      {
+        group.AddChild(ast);
+        ast = group;
+      }
+      rewrite_vars_stack.Clear();
+    }
+
+    return ast;
   }
 
   void _RewriteTemporaryValuesIfNeccessary(AST ast, AST before)
@@ -1264,13 +1305,15 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var c = ast.children[i];
 
-      if(c is AST_LambdaDecl)
-        continue;
-
-      if(c is AST)
-        _RewriteTemporaryValuesIfNeccessary(c as AST, before);
-
-      if(c is AST_Literal)
+      //if(c is AST_Literal)
+      //{
+      //  ++temp_vars_counter;
+      //  var tmp_name = "$tmp_" + temp_vars_counter;
+      //  before.AddChild(c);
+      //  before.AddChild(AST_Util.New_Call(EnumCall.VARW, 0, tmp_name));
+      //  ast.children[i] = AST_Util.New_Call(EnumCall.VAR, 0, tmp_name);
+      //}
+      if(c is AST_Call && IsFuncCall(c as AST_Call))
       {
         ++temp_vars_counter;
         var tmp_name = "$tmp_" + temp_vars_counter;
