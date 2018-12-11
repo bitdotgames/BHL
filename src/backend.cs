@@ -59,8 +59,6 @@ public class Interpreter : AST_Visitor
   public BaseScope symbols;
 
   public FastStack<DynVal> stack = new FastStack<DynVal>(256);
-  //TODO: this must be reimplemented with function stack frames
-  public FastStack<FuncBaseCallNode> stack_marks = new FastStack<FuncBaseCallNode>(256);
   public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
 
   public void Init(BaseScope symbols, IModuleLoader module_loader)
@@ -71,7 +69,6 @@ public class Interpreter : AST_Visitor
     glob_mem.Clear();
     curr_mem = null;
     loaded_modules.Clear();
-    stack_marks.Clear();
     stack.Clear();
     call_stack.Clear();
 
@@ -325,14 +322,12 @@ public class Interpreter : AST_Visitor
   {
     v.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(v);
-    stack_marks.Push(call_stack.Count > 0 ? call_stack.Peek() : null);
   }
 
   public DynVal PopValue()
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-    stack_marks.PopFast();
     return v;
   }
 
@@ -340,7 +335,6 @@ public class Interpreter : AST_Visitor
   {
     var v = stack.PopFast();
     v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
-    stack_marks.PopFast();
     return v;
   }
 
@@ -348,21 +342,7 @@ public class Interpreter : AST_Visitor
   {
     var v = stack.PopFast();
     v.RefMod(mode);
-    stack_marks.PopFast();
     return v;
-  }
-
-  public void PopFuncValues(FuncBaseCallNode fn)
-  {
-    for(int i=stack_marks.Count;i-- > 0;)
-    {
-      if(stack_marks[i] == fn)
-      {
-        stack_marks.RemoveAtFast(i);
-        stack[i].RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-        stack.RemoveAtFast(i);
-      }
-    }
   }
 
   public bool PeekValue(ref DynVal res)
