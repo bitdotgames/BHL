@@ -5765,8 +5765,7 @@ public class BHL_Test
     for(int i=0;i<5;++i)
       node.run();
     AssertEqual(intp.stack.Count, 0);
-    //NOTE: +1 since there is a hidden var for this case
-    AssertEqual(DynVal.PoolCount, 2+1);
+    AssertEqual(DynVal.PoolCount, 2);
     AssertEqual(DynVal.PoolCountFree, 2);
 
     node.stop();
