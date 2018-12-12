@@ -18544,6 +18544,63 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestWeird()
+  {
+    string bhl = @"
+
+    func A()
+    {
+      trace(""A"")
+      suspend()
+    }
+
+    func B()
+    {
+      trace(""B"")
+    }
+
+    func Unit()
+    {
+      forever {
+        paral_all {
+          prio {
+            A() 
+            B()
+          }
+        }
+      }
+    }
+
+    func test() 
+    {
+      paral_all {
+        StartScript(Unit) 
+        StartScript(Unit) 
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindStartScript(globs);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    node.run();
+    node.run();
+    node.run();
+    node.stop();
+
+    var str = GetString(trace_stream);
+
+    AssertEqual("AA", str);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestFib()
   {
     string bhl = @"

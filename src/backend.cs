@@ -329,13 +329,14 @@ public class Interpreter : AST_Visitor
   public void PushValueNodeCtx(BehaviorTreeNode n)
   {
     node_ctx_stack.Push(n);
-    SortStackByNodeCtx(n);
+    if(stack.Count > 0)
+      SortStackByNodeCtx(n);
   }
 
   public void PopValueNodeCtx()
   {
     node_ctx_stack.Pop();
-    if(node_ctx_stack.Count > 0)
+    if(node_ctx_stack.Count > 0 && stack.Count > 0)
       SortStackByNodeCtx(node_ctx_stack.Peek());
   }
 
