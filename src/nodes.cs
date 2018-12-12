@@ -370,6 +370,82 @@ public class GroupNode : SequentialNode
   }
 }
 
+public abstract class FuncBaseCallNode : SequentialNode
+{
+  public AST_Call ast;
+
+  public FuncBaseCallNode(AST_Call ast)
+  {
+    this.ast = ast;
+  }
+
+  override public BHS execute()
+  {
+    var interp = Interpreter.instance;
+
+    //var status = base.execute();
+    ////////////////////FORCING CODE INLINE////////////////////////////////
+    BHS status = BHS.SUCCESS;
+    while(currentPosition < children.Count)
+    {
+      var currentTask = children[currentPosition];
+      //status = currentTask.run();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+
+      //NOTE: the last node is actually the func call so
+      //      we push it on to the call stack when it's executed
+      bool is_func_call = currentPosition == children.Count-1;
+      if(is_func_call)
+        interp.call_stack.Push(this);
+
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.init();
+      status = currentTask.execute();
+      currentTask.currStatus = status;
+      currentTask.lastExecuteStatus = currentTask.currStatus;
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.deinit();
+
+      //NOTE: only when it's actual func call we pop it from the call stack
+      if(is_func_call)
+        interp.call_stack.DecFast();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(status == BHS.SUCCESS)
+        ++currentPosition;
+      else
+        break;
+    } 
+    if(status != BHS.RUNNING)
+      currentPosition = 0;
+    ////////////////////FORCING CODE INLINE////////////////////////////////
+
+    return status;
+  }
+
+  override public void deinit()
+  {
+    deinitChildren();
+
+    //NOTE: checking if we need to clean the values stack due to 
+    //      non successul execution of the node
+    if(currStatus != BHS.SUCCESS)
+    {
+      var interp = Interpreter.instance;
+      interp.PopFuncValues(this);
+    }
+  } 
+
+  override public void defer()
+  {
+    deferChildren();
+  }
+
+  override public string inspect() 
+  {
+    return "" + ast.Name();
+  }
+}
+
 public class FuncUserCallNode : FuncBaseCallNode
 {
   public FuncUserCallNode(BehaviorTreeNode node)
@@ -448,7 +524,14 @@ public class FuncCallNode : FuncBaseCallNode
 
   override public void deinit()
   {
-    base.deinit();
+    //base.deinit();
+    stopChildren();
+
+    if(currStatus != BHS.SUCCESS)
+    {
+      var interp = Interpreter.instance;
+      interp.PopFuncValues(this);
+    }
 
     if(idx_in_pool >= 0)
     {
@@ -462,6 +545,9 @@ public class FuncCallNode : FuncBaseCallNode
       idx_in_pool = IDX_DETACHED;
     }
   }
+
+  override public void defer()
+  {}
 
   ///////////////////////////////////////////////////////////////////
   static int free_count = 0;
@@ -595,85 +681,6 @@ public class FuncCallNode : FuncBaseCallNode
   static public int PoolCountFree
   {
     get { return free_count; }
-  }
-}
-
-public abstract class FuncBaseCallNode : SequentialNode
-{
-  public AST_Call ast;
-
-  public FuncBaseCallNode(AST_Call ast)
-  {
-    this.ast = ast;
-  }
-
-  override public BHS execute()
-  {
-    var interp = Interpreter.instance;
-
-    //var status = base.execute();
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    BHS status = BHS.SUCCESS;
-    while(currentPosition < children.Count)
-    {
-      var currentTask = children[currentPosition];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-
-      //NOTE: the last node is actually the func call so
-      //      we push it on to the call stack when it's executed
-      bool is_func_call = currentPosition == children.Count-1;
-      if(is_func_call)
-        interp.call_stack.Push(this);
-
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init();
-      status = currentTask.execute();
-      currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = currentTask.currStatus;
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.deinit();
-
-      //NOTE: only when it's actual func call we pop it from the call stack
-      if(is_func_call)
-        interp.call_stack.DecFast();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++currentPosition;
-      else
-        break;
-    } 
-    if(status != BHS.RUNNING)
-      currentPosition = 0;
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-
-    return status;
-  }
-
-  override public void deinit()
-  {
-    bool was_interrupted = currStatus != BHS.SUCCESS;
-
-    deinitChildren();
-
-    //NOTE: checking if we need to clean the values stack due to 
-    //      non successul execution of the node
-    if(was_interrupted)
-    {
-      var interp = Interpreter.instance;
-      //Console.WriteLine("STACK CLEANUP " + currStatus + " (" + interp.stack.Count + " - " +  stack_size_before + ") " + GetHashCode());
-      interp.PopFuncValues(this);
-    }
-  } 
-
-  override public void defer()
-  {
-    deferChildren();
-  }
-
-  override public string inspect() 
-  {
-    return "" + ast.Name();
   }
 }
 
