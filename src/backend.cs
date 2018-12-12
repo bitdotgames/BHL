@@ -326,6 +326,16 @@ public class Interpreter : AST_Visitor
     return node;
   }
 
+  public void PushValueNodeCtx(BehaviorTreeNode n)
+  {
+    node_ctx_stack.Push(n);
+  }
+
+  public void PopValueNodeCtx()
+  {
+    node_ctx_stack.Pop();
+  }
+
   public void PushValue(DynVal v)
   {
     v.RefMod(RefOp.INC | RefOp.USR_INC);
