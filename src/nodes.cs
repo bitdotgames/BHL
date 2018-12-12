@@ -164,8 +164,7 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
 
   protected void deinitChildren()
   {
-    //NOTE: traversing children in the reverse order
-    for(int i=children.Count;i-- > 0;)
+    for(int i=0;i<children.Count;++i)
     {
       var c = children[i];
       if(c.currStatus == BHS.RUNNING)

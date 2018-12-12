@@ -26,24 +26,34 @@ public class BHL_Test
     public int deinits;
     public int defers;
 
+    public TestEvents events;
+
     public override BHS execute()
     {
+      if(events != null)
+        events.Add("E", this);
       ++execs;
       return status;
     }
 
     public override void init()
     {
+      if(events != null)
+        events.Add("I", this);
       ++inits;
     }
 
     public override void deinit()
     {
+      if(events != null)
+        events.Add("D", this);
       ++deinits;
     }
 
     public override void defer()
     {
+      if(events != null)
+        events.Add("F", this);
       ++defers;
     }
   }
@@ -175,29 +185,68 @@ public class BHL_Test
     AssertEqual(t.defers, 1);
   }
 
+  public class TestEvents
+  {
+    public class Event
+    {
+      public string type;
+      public BehaviorTreeNode node;
+    }
+    public List<Event> events = new List<Event>();
+
+    public int Count {
+      get {
+        return events.Count;
+      }
+    }
+
+    public Event this[int i]
+    {
+      get {
+        return events[i];
+      }
+    }
+
+    public void Add(string type, BehaviorTreeNode n)
+    {
+      var e = new Event();
+      e.type = type;
+      e.node = n;
+      events.Add(e);
+    }
+  }
+
   [IsTested()]
   public void TestGroupNode()
   {
+    var events = new TestEvents();
+
     var t = new TestNode();
+    t.events = events;
     t.status = BHS.RUNNING;
     var g = new GroupNode();
     g.addChild(t);
 
     AssertEqual(g.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
+    AssertEqual(events.Count, 2);
+    AssertEqual(events[0].type, "I");
+    AssertEqual(events[1].type, "E");
 
     t.status = BHS.SUCCESS;
     AssertEqual(g.run(), BHS.SUCCESS);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 2);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 0);
+    AssertEqual(events.Count, 4);
+    AssertEqual(events[0].type, "I");
+    AssertEqual(events[1].type, "E");
+    AssertEqual(events[2].type, "E");
+    AssertEqual(events[3].type, "D");
 
     g.defer();
-    AssertEqual(t.defers, 1);
+    AssertEqual(events.Count, 5);
+    AssertEqual(events[0].type, "I");
+    AssertEqual(events[1].type, "E");
+    AssertEqual(events[2].type, "E");
+    AssertEqual(events[3].type, "D");
+    AssertEqual(events[4].type, "F");
   }
 
   [IsTested()]
@@ -18548,34 +18597,25 @@ func Unit FindUnit(Vec3 pos, float radius) {
   {
     string bhl = @"
 
-    func A()
+    func A(int b = 1)
     {
-      trace(""A"")
+      trace(""A"" + (string)b)
       suspend()
-    }
-
-    func B()
-    {
-      trace(""B"")
-    }
-
-    func Unit()
-    {
-      forever {
-        paral_all {
-          prio {
-            A() 
-            B()
-          }
-        }
-      }
     }
 
     func test() 
     {
-      paral_all {
-        StartScript(Unit) 
-        StartScript(Unit) 
+      forever {
+        int i = 0
+        paral {
+          A()
+          seq {
+            while(i < 1) {
+              yield()
+              i = i + 1
+            }
+          }
+        }
       }
     }
     ";
@@ -18596,7 +18636,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var str = GetString(trace_stream);
 
-    AssertEqual("AA", str);
+    AssertEqual("A1A1", str);
     CommonChecks(intp);
   }
 
