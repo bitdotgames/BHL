@@ -58,7 +58,15 @@ public class Interpreter : AST_Visitor
 
   public BaseScope symbols;
 
-  public FastStack<DynVal> stack = new FastStack<DynVal>(256);
+  public struct StackValue
+  {
+    public DynVal dv;
+    public FuncBaseCallNode func_ctx;
+    public BehaviorTreeNode node_ctx;
+  }
+
+  public FastStack<StackValue> stack = new FastStack<StackValue>(256);
+  public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(128);
   public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
 
   public void Init(BaseScope symbols, IModuleLoader module_loader)
@@ -314,35 +322,41 @@ public class Interpreter : AST_Visitor
   public BehaviorTreeInternalNode PopNode()
   {
     var node = node_stack.Pop();
-    curr_node = (node_stack.Count > 0 ? node_stack.Peek() : null); 
+    curr_node = node_stack.Count > 0 ? node_stack.Peek() : null; 
     return node;
   }
 
   public void PushValue(DynVal v)
   {
     v.RefMod(RefOp.INC | RefOp.USR_INC);
-    stack.Push(v);
+
+    var sv = new StackValue();
+    sv.dv = v;
+    sv.func_ctx = call_stack.Count > 0 ? call_stack.Peek() : null; 
+    sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
+
+    stack.Push(sv);
   }
 
   public DynVal PopValue()
   {
-    var v = stack.PopFast();
-    v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-    return v;
+    var sv = stack.PopFast();
+    sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+    return sv.dv;
   }
 
   public DynVal PopRef()
   {
-    var v = stack.PopFast();
-    v.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
-    return v;
+    var sv = stack.PopFast();
+    sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
+    return sv.dv;
   }
 
   public DynVal PopValueEx(int mode)
   {
-    var v = stack.PopFast();
-    v.RefMod(mode);
-    return v;
+    var sv = stack.PopFast();
+    sv.dv.RefMod(mode);
+    return sv.dv;
   }
 
   public bool PeekValue(ref DynVal res)
@@ -350,13 +364,13 @@ public class Interpreter : AST_Visitor
     if(stack.Count == 0)
       return false;
 
-    res = stack.Peek();
+    res = stack.Peek().dv;
     return true;
   }
 
   public DynVal PeekValue()
   {
-    return stack.Peek();
+    return stack.Peek().dv;
   }
 
   ///////////////////////////////////////////////////////////
