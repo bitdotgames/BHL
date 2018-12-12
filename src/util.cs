@@ -1261,77 +1261,92 @@ public class FastStackDynamic<T> : List<T>
 
 public class FastStack<T>
 {
-  T[] m_Storage;
-  int m_HeadIdx = 0;
+  T[] storage;
+  int head_idx = 0;
 
   public FastStack(int maxCapacity)
   {
-    m_Storage = new T[maxCapacity];
+    storage = new T[maxCapacity];
   }
 
   public T this[int index]
   {
-    get { return m_Storage[index]; }
-    set { m_Storage[index] = value; }
+    get { return storage[index]; }
+    set { storage[index] = value; }
   }
 
   public T Push(T item)
   {
-    m_Storage[m_HeadIdx++] = item;
+    storage[head_idx++] = item;
     return item;
   }
 
   public T Peek()
   {
-    return m_Storage[m_HeadIdx - 1];
+    return storage[head_idx - 1];
   }
 
-  public void Set(int idxofs, T item)
+  public void SetRelative(int offset, T item)
   {
-    m_Storage[m_HeadIdx - 1 - idxofs] = item;
+    storage[head_idx - 1 - offset] = item;
   }
 
   public void RemoveAtFast(int idx)
   {
-    if(idx == (m_HeadIdx-1))
+    if(idx == (head_idx-1))
     {
       DecFast();
     }
     else
     {
-      --m_HeadIdx;
-      Array.Copy(m_Storage, idx+1, m_Storage, idx, m_Storage.Length-idx-1);
+      --head_idx;
+      Array.Copy(storage, idx+1, storage, idx, storage.Length-idx-1);
     }
+  }
+
+  public void MoveTo(int src, int dst)
+  {
+    if(src == dst)
+      return;
+
+    var tmp = storage[src];
+
+    if(src > dst)
+      Array.Copy(storage, dst, storage, dst + 1, src - dst);
+    else
+      Array.Copy(storage, src + 1, storage, src, dst - src);
+
+    storage[dst] = tmp;
   }
 
   public T Pop()
   {
-    --m_HeadIdx;
-    T retval = m_Storage[m_HeadIdx];
-    m_Storage[m_HeadIdx] = default(T);
+    --head_idx;
+    T retval = storage[head_idx];
+    storage[head_idx] = default(T);
     return retval;
   }
 
   public T PopFast()
   {
-    --m_HeadIdx;
-    return m_Storage[m_HeadIdx];
+    --head_idx;
+    return storage[head_idx];
   }
 
   public void DecFast()
   {
-    --m_HeadIdx;
+    --head_idx;
   }
 
   public void Clear()
   {
-    Array.Clear(m_Storage, 0, m_Storage.Length);
-    m_HeadIdx = 0;
+    Array.Clear(storage, 0, storage.Length);
+    head_idx = 0;
   }
 
   public int Count
   {
-    get { return m_HeadIdx; }
+    get { return head_idx; }
   }
 }
 

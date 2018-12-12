@@ -653,24 +653,19 @@ public abstract class FuncBaseCallNode : SequentialNode
 
   override public void deinit()
   {
+    bool was_interrupted = currStatus != BHS.SUCCESS;
+
     deinitChildren();
-  }
 
-  //override public void deinit()
-  //{
-  //  bool was_interrupted = currStatus != BHS.SUCCESS;
-
-  //  deinitChildren();
-
-  //  //NOTE: checking if we need to clean the values stack due to 
-  //  //      non successul execution of the node
-  //  if(was_interrupted)
-  //  {
-  //    var interp = Interpreter.instance;
-  //    //Console.WriteLine("STACK CLEANUP " + currStatus + " (" + interp.stack.Count + " - " +  stack_size_before + ") " + GetHashCode());
-  //    interp.PopFuncValues(this);
-  //  }
-  //} 
+    //NOTE: checking if we need to clean the values stack due to 
+    //      non successul execution of the node
+    if(was_interrupted)
+    {
+      var interp = Interpreter.instance;
+      //Console.WriteLine("STACK CLEANUP " + currStatus + " (" + interp.stack.Count + " - " +  stack_size_before + ") " + GetHashCode());
+      interp.PopFuncValues(this);
+    }
+  } 
 
   override public void defer()
   {
@@ -720,12 +715,16 @@ public class ParallelNode : BehaviorTreeInternalNode
 
   override public BHS execute()
   {
+    var interp = Interpreter.instance;
+
     for(int i=0;i<children.Count;++i)
     {
       var currentTask = children[i];
 
       if(currentTask.currStatus == BHS.NONE || currentTask.currStatus == BHS.RUNNING)
       {
+        interp.PushValueNodeCtx(currentTask);
+
         //BHS status = currentTask.run();
         BHS status;
         ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -737,6 +736,9 @@ public class ParallelNode : BehaviorTreeInternalNode
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
+
+        interp.PopValueNodeCtx();
+
         if(status != BHS.RUNNING)
           return status;
       }
@@ -764,6 +766,8 @@ public class ParallelAllNode : BehaviorTreeInternalNode
 
   override public BHS execute()
   {
+    var interp = Interpreter.instance;
+
     bool sawAllSuccess = true;
     for(int i=0;i<children.Count;++i)
     {
@@ -771,6 +775,8 @@ public class ParallelAllNode : BehaviorTreeInternalNode
 
       if(currentTask.currStatus == BHS.NONE || currentTask.currStatus == BHS.RUNNING)
       {
+        interp.PushValueNodeCtx(currentTask);
+
         //BHS status = currentTask.run();
         BHS status;
         ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -782,6 +788,9 @@ public class ParallelAllNode : BehaviorTreeInternalNode
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
+        
+        interp.PopValueNodeCtx();
+
         if(status == BHS.FAILURE)
           return BHS.FAILURE;
 

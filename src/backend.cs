@@ -329,11 +329,33 @@ public class Interpreter : AST_Visitor
   public void PushValueNodeCtx(BehaviorTreeNode n)
   {
     node_ctx_stack.Push(n);
+    SortStackByNodeCtx(n);
+  }
+
+  void SortStackByNodeCtx(BehaviorTreeNode n)
+  {
+    int candidate_slot_idx = -1;
+    //NOTE: moving ctx marked stack values to the end
+    for(int i=stack.Count;i-- > 0;)
+    {
+      var sv = stack[i];
+
+      if(sv.node_ctx != n && candidate_slot_idx == -1)
+        candidate_slot_idx = i;
+      
+      if(sv.node_ctx == n && candidate_slot_idx != -1)
+      {
+        stack.MoveTo(i, candidate_slot_idx);
+        --candidate_slot_idx;
+      }
+    }
   }
 
   public void PopValueNodeCtx()
   {
     node_ctx_stack.Pop();
+    if(node_ctx_stack.Count > 0)
+      SortStackByNodeCtx(node_ctx_stack.Peek());
   }
 
   public void PushValue(DynVal v)
@@ -368,6 +390,19 @@ public class Interpreter : AST_Visitor
     sv.dv.RefMod(mode);
     return sv.dv;
   }
+
+	public void PopFuncValues(FuncBaseCallNode fn)
+	{
+		for(int i=stack.Count;i-- > 0;)
+		{
+			var sv = stack[i];
+			if(sv.func_ctx == fn)
+			{
+				sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+				stack.RemoveAtFast(i);
+			}
+		}
+	}
 
   public bool PeekValue(ref DynVal res)
   {
