@@ -332,6 +332,13 @@ public class Interpreter : AST_Visitor
     SortStackByNodeCtx(n);
   }
 
+  public void PopValueNodeCtx()
+  {
+    node_ctx_stack.Pop();
+    if(node_ctx_stack.Count > 0)
+      SortStackByNodeCtx(node_ctx_stack.Peek());
+  }
+
   void SortStackByNodeCtx(BehaviorTreeNode n)
   {
     int candidate_slot_idx = -1;
@@ -349,13 +356,6 @@ public class Interpreter : AST_Visitor
         --candidate_slot_idx;
       }
     }
-  }
-
-  public void PopValueNodeCtx()
-  {
-    node_ctx_stack.Pop();
-    if(node_ctx_stack.Count > 0)
-      SortStackByNodeCtx(node_ctx_stack.Peek());
   }
 
   public void PushValue(DynVal v)
