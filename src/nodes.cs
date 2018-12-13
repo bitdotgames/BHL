@@ -59,7 +59,7 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
     return currStatus;
   }
 
-  public virtual void stop()
+  public void stop()
   {
     if(currStatus == BHS.RUNNING)
       deinit();

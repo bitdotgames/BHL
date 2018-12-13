@@ -7985,7 +7985,7 @@ public class BHL_Test
       return BHS.RUNNING;
     }
 
-    public override void stop()
+    new public void stop()
     {
       for(int i=children.Count;i-- > 0;)
       {
