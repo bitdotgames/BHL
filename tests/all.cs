@@ -6693,12 +6693,49 @@ public class BHL_Test
     }
   }
 
+  public class NodeWithDeferRetInt : BehaviorTreeTerminalNode
+  {
+    Stream sm;
+    int n;
+
+    public NodeWithDeferRetInt(Stream sm)
+    {
+      this.sm = sm;
+    }
+
+    public override void init()
+    {
+      n = (int)Interpreter.instance.PopValue().num;
+    }
+
+    public override BHS execute()
+    {
+      Interpreter.instance.PushValue(DynVal.NewNum(n));
+      return BHS.SUCCESS;
+    }
+
+    public override void defer()
+    {
+      var sw = new StreamWriter(sm);
+      sw.Write("DEFER " + n + "!!!");
+      sw.Flush();
+    }
+  }
+
   void BindNodeWithDefer(GlobalScope globs, MemoryStream s)
   {
     {
       var fn = new FuncBindSymbol("NodeWithDefer", globs.type("void"),
           delegate() { return new NodeWithDefer(s); } );
 
+      globs.define(fn);
+    }
+
+    {
+      var fn = new FuncBindSymbol("NodeWithDeferRetInt", globs.type("int"),
+          delegate() { return new NodeWithDeferRetInt(s); } );
+
+      fn.define(new FuncArgSymbol("n", globs.type("int")));
       globs.define(fn);
     }
   }
@@ -10149,17 +10186,25 @@ public class BHL_Test
   {
     string bhl = @"
 
-    func foo()
+    func int hey()
     {
       defer {
         trace(""hey"")
+      }
+      return 1
+    }
+
+    func foo(int h, int w)
+    {
+      defer {
+        trace(""foo "" + (string)w)
       }
       NodeWithDefer()
     }
 
     func test() 
     {
-      foo()
+      foo(hey(), NodeWithDeferRetInt(42))
       suspend()
     }
     ";
@@ -10178,7 +10223,7 @@ public class BHL_Test
     AssertEqual(BHS.RUNNING, node.run());
 
     var str = GetString(trace_stream);
-    AssertEqual("DEFER!!!hey", str);
+    AssertEqual("heyDEFER!!!foo 42", str);
     node.stop();
     CommonChecks(intp);
   }
@@ -10188,18 +10233,26 @@ public class BHL_Test
   {
     string bhl = @"
 
-    func foo()
+    func int hey()
     {
       defer {
         trace(""hey"")
+      }
+      return 1
+    }
+
+    func foo(int h, int w)
+    {
+      defer {
+        trace(""foo "" + (string)w)
       }
       NodeWithDefer()
     }
 
     func test() 
     {
-      void^() p = foo
-      p()
+      void^(int,int) p = foo
+      p(hey(), NodeWithDeferRetInt(42))
       suspend()
     }
     ";
@@ -10218,7 +10271,7 @@ public class BHL_Test
     AssertEqual(BHS.RUNNING, node.run());
 
     var str = GetString(trace_stream);
-    AssertEqual("DEFER!!!hey", str);
+    AssertEqual("heyDEFER!!!foo 42", str);
     node.stop();
     CommonChecks(intp);
   }

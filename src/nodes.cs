@@ -581,16 +581,16 @@ public class FuncCallNode : FuncBaseCallNode
 
   override public void deinit()
   {
-    //base.deinit();
-    stopChildren();
+    base.deinit();
+    //stopChildren();
 
-    //NOTE: checking if we need to clean the values stack due to 
-    //      non successul execution of the node
-    if(currStatus != BHS.SUCCESS)
-    {
-      var interp = Interpreter.instance;
-      interp.PopFuncValues(this);
-    }
+    ////NOTE: checking if we need to clean the values stack due to 
+    ////      non successul execution of the node
+    //if(currStatus != BHS.SUCCESS)
+    //{
+    //  var interp = Interpreter.instance;
+    //  interp.PopFuncValues(this);
+    //}
 
     if(idx_in_pool >= 0)
     {
@@ -605,9 +605,9 @@ public class FuncCallNode : FuncBaseCallNode
     }
   }
 
-  override public void defer()
-  {
-  }
+  //override public void defer()
+  //{
+  //}
 
   ///////////////////////////////////////////////////////////////////
   static int free_count = 0;
