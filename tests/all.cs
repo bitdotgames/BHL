@@ -10312,7 +10312,8 @@ public class BHL_Test
     node.stop();
 
     var str = GetString(trace_stream);
-    AssertEqual("1 INIT;1 EXEC;2 INIT;2 EXEC;1 EXEC;2 EXEC;1 DEINIT;2 DEINIT;2 DEFER;1 DEFER;", str);
+    //AssertEqual("1 INIT;1 EXEC;2 INIT;2 EXEC;1 EXEC;2 EXEC;1 DEINIT;2 DEINIT;2 DEFER;1 DEFER;", str);
+    AssertEqual("1 INIT;1 EXEC;2 INIT;2 EXEC;1 EXEC;2 EXEC;2 DEINIT;2 DEFER;1 DEINIT;1 DEFER;", str);
 
     CommonChecks(intp);
   }

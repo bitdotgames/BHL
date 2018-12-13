@@ -67,11 +67,14 @@ public class Interpreter : AST_Visitor
 
   public FastStack<StackValue> stack = new FastStack<StackValue>(256);
   public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(128);
+  public FastStack<FuncBaseCallNode> func_ctx_stack = new FastStack<FuncBaseCallNode>(128);
   public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
 
   public void Init(BaseScope symbols, IModuleLoader module_loader)
   {
     node_stack.Clear();
+    node_ctx_stack.Clear();
+    func_ctx_stack.Clear();
     curr_node = null;
     mstack.Clear();
     glob_mem.Clear();
@@ -365,7 +368,7 @@ public class Interpreter : AST_Visitor
 
     var sv = new StackValue();
     sv.dv = v;
-    sv.func_ctx = call_stack.Count > 0 ? call_stack.Peek() : null; 
+    sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
     sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
 
     stack.Push(sv);

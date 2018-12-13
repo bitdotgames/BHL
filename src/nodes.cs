@@ -168,6 +168,16 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
       }
     }
   }
+
+  protected void stopChildren()
+  {
+    //NOTE: traversing children in the reverse order
+    for(int i=children.Count;i-- > 0;)
+    {
+      var c = children[i];
+      c.stop();
+    }
+  }
 }
 
 //NOTE: Scope node is a base building block for nodes with scope, e.g seq { .. }.
@@ -432,6 +442,7 @@ public abstract class FuncBaseCallNode : GroupNode
   override public BHS execute()
   {
     var interp = Interpreter.instance;
+    interp.func_ctx_stack.Push(this);
 
     //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -469,6 +480,7 @@ public abstract class FuncBaseCallNode : GroupNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
+    interp.func_ctx_stack.DecFast();
     return status;
   }
 
@@ -569,7 +581,16 @@ public class FuncCallNode : FuncBaseCallNode
 
   override public void deinit()
   {
-    base.deinit();
+    //base.deinit();
+    stopChildren();
+
+    //NOTE: checking if we need to clean the values stack due to 
+    //      non successul execution of the node
+    if(currStatus != BHS.SUCCESS)
+    {
+      var interp = Interpreter.instance;
+      interp.PopFuncValues(this);
+    }
 
     if(idx_in_pool >= 0)
     {
@@ -582,6 +603,10 @@ public class FuncCallNode : FuncBaseCallNode
       }
       idx_in_pool = IDX_DETACHED;
     }
+  }
+
+  override public void defer()
+  {
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -746,6 +771,20 @@ public class FuncBindCallNode : FuncBaseCallNode
     }
 
     base.init();
+  }
+
+  override public void deinit() 
+  {
+    if(currStatus != BHS.SUCCESS)
+    {
+      var interp = Interpreter.instance;
+      interp.PopFuncValues(this);
+    }
+  }
+
+  override public void defer()
+  {
+    stopChildren();
   }
 }
 
@@ -1501,11 +1540,24 @@ public class CallFuncPtr : FuncBaseCallNode
 
   override public void deinit()
   {
-    base.deinit();
+    //base.deinit();
 
     var func_node = ((FuncNode)children[children.Count-1]);
     func_node.fct.Release();
+
+    //NOTE: checking if we need to clean the values stack due to 
+    //      non successul execution of the node
+    if(currStatus != BHS.SUCCESS)
+    {
+      var interp = Interpreter.instance;
+      interp.PopFuncValues(this);
+    }
   } 
+
+  override public void defer()
+  {
+    stopChildren();
+  }
 
   public override string inspect()
   {
