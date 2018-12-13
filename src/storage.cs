@@ -456,8 +456,11 @@ public class DynVal
   {
     string res = "=== POOL ===\n";
     res += "total:" + PoolCount + " free:" + PoolCountFree + "\n";
-    foreach(var v in pool)
+    var dvs = new DynVal[pool.Count];
+    pool.CopyTo(dvs, 0);
+    for(int i=dvs.Length;i-- > 0;)
     {
+      var v = dvs[i];
       res += v + " " + v.GetHashCode() + "\n"; 
     }
     return res;

@@ -104,12 +104,6 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
 {
   public List<BehaviorTreeNode> children = new List<BehaviorTreeNode>();
 
-  public BehaviorTreeInternalNode()
-  {}
-
-  ~BehaviorTreeInternalNode()
-  {}
-
   public override void accept(BehaviorVisitor v)
   {
     v.visit(this);
@@ -128,23 +122,25 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
     return this;
   }
 
-  //NOTE: normally you never really want to override this one
-  override public void deinit()
+  protected void deinitAndDeferChildren(int start, int len)
   {
-    stopChildren();
-  }
+    for(int i=start;i >= 0 && i < (start+len) && i < children.Count; ++i)
+    {
+      var c = children[i];
+      if(c.currStatus == BHS.RUNNING)
+      {
+        c.deinit();
+        c.currStatus = BHS.SUCCESS;
+      }
+    }
 
-  //NOTE: normally you never really want to override this one
-  override public void defer()
-  {}
-
-  protected void stopChildren()
-  {
     //NOTE: traversing children in the reverse order
     for(int i=children.Count;i-- > 0;)
     {
       var c = children[i];
-      c.stop();
+      if(c.currStatus != BHS.NONE)
+        c.defer();
+      c.currStatus = BHS.NONE;
     }
   }
 
@@ -155,16 +151,14 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
     {
       var c = children[i];
       if(c.currStatus != BHS.NONE)
-      {
         c.defer();
-        c.currStatus = BHS.NONE;
-      }
+      c.currStatus = BHS.NONE;
     }
   }
 
-  protected void deinitChildren()
+  protected void deinitChildren(int start, int len)
   {
-    for(int i=0;i<children.Count;++i)
+    for(int i=start;i >= 0 && i < (start+len) && i < children.Count; ++i)
     {
       var c = children[i];
       if(c.currStatus == BHS.RUNNING)
@@ -173,6 +167,70 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
         c.currStatus = BHS.SUCCESS;
       }
     }
+  }
+}
+
+//NOTE: Scope node is a base building block for nodes with scope, e.g seq { .. }.
+//      Once the node is deinited it stops all its children in reverse order. 
+//      Stop invokes deinit and defer.
+public abstract class ScopeNode : BehaviorTreeInternalNode
+{
+  //NOTE: normally you never really want to override this one
+  override public void deinit()
+  {
+    //NOTE: Trying to deinit all of its children may be suboptimal, so
+    //      it makes sense to override it for specific cases
+    deinitAndDeferChildren(0, children.Count);
+  }
+
+  //NOTE: normally you never really want to override this one
+  override public void defer()
+  {}
+}
+
+//NOTE: Group node is a node which behaves like a terminal node however
+//      contains multiple children. 
+public class GroupNode : BehaviorTreeInternalNode
+{
+  protected int currentPosition = 0;
+
+  override public void init()
+  {
+    currentPosition = 0;
+  }
+
+  override public BHS execute()
+  {
+    BHS status = BHS.SUCCESS;
+    while(currentPosition < children.Count)
+    {
+      var currentTask = children[currentPosition];
+      //status = currentTask.run();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.init();
+      status = currentTask.execute();
+      currentTask.currStatus = status;
+      currentTask.lastExecuteStatus = currentTask.currStatus;
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.deinit();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(status == BHS.SUCCESS)
+        ++currentPosition;
+      else
+        break;
+    } 
+    return status;
+  }
+
+  override public void deinit()
+  {
+    deinitChildren(currentPosition, 1);
+  }
+
+  override public void defer()
+  {
+    deferChildren();
   }
 }
 
@@ -203,7 +261,7 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
   override public void deinit()
   {
-    deinitChildren();
+    deinitChildren(0, 1);
   } 
 
   override public void defer()
@@ -289,13 +347,18 @@ public class check : BehaviorTreeNode
 
 /////////////////////////////////////////////////////////////
 
-public class SequentialNode : BehaviorTreeInternalNode
+public class SequentialNode : ScopeNode
 {
   protected int currentPosition = 0;
 
   override public void init()
   {
     currentPosition = 0;
+  }
+
+  override public void deinit()
+  {
+    deinitAndDeferChildren(currentPosition, 1);
   }
 
   override public BHS execute()
@@ -357,20 +420,7 @@ public class SequentialNode_ : SequentialNode
   }
 }
 
-public class GroupNode : SequentialNode
-{
-  override public void deinit()
-  {
-    deinitChildren();
-  }
-
-  override public void defer()
-  {
-    deferChildren();
-  }
-}
-
-public abstract class FuncBaseCallNode : SequentialNode
+public abstract class FuncBaseCallNode : GroupNode
 {
   public AST_Call ast;
 
@@ -424,7 +474,7 @@ public abstract class FuncBaseCallNode : SequentialNode
 
   override public void deinit()
   {
-    deinitChildren();
+    deinitChildren(currentPosition, 1);
 
     //NOTE: checking if we need to clean the values stack due to 
     //      non successul execution of the node
@@ -434,11 +484,6 @@ public abstract class FuncBaseCallNode : SequentialNode
       interp.PopFuncValues(this);
     }
   } 
-
-  override public void defer()
-  {
-    deferChildren();
-  }
 
   override public string inspect() 
   {
@@ -524,14 +569,7 @@ public class FuncCallNode : FuncBaseCallNode
 
   override public void deinit()
   {
-    //base.deinit();
-    stopChildren();
-
-    if(currStatus != BHS.SUCCESS)
-    {
-      var interp = Interpreter.instance;
-      interp.PopFuncValues(this);
-    }
+    base.deinit();
 
     if(idx_in_pool >= 0)
     {
@@ -545,9 +583,6 @@ public class FuncCallNode : FuncBaseCallNode
       idx_in_pool = IDX_DETACHED;
     }
   }
-
-  override public void defer()
-  {}
 
   ///////////////////////////////////////////////////////////////////
   static int free_count = 0;
@@ -714,7 +749,7 @@ public class FuncBindCallNode : FuncBaseCallNode
   }
 }
 
-public class ParallelNode : BehaviorTreeInternalNode
+public class ParallelNode : ScopeNode
 {
   override public void init() 
   {}
@@ -765,7 +800,7 @@ public class ParallelNode : BehaviorTreeInternalNode
   }
 }
 
-public class ParallelAllNode : BehaviorTreeInternalNode
+public class ParallelAllNode : ScopeNode
 {
   override public void init() 
   {}
@@ -812,7 +847,7 @@ public class ParallelAllNode : BehaviorTreeInternalNode
   }
 }
 
-public class PriorityNode : BehaviorTreeInternalNode
+public class PriorityNode : ScopeNode
 {
   private int currentPosition = -1;
 
@@ -1114,10 +1149,9 @@ public class DeferNode : BehaviorTreeInternalNode
   }
 }
 
-public class LogicOpNode : BehaviorTreeInternalNode
+public class LogicOpNode : GroupNode
 {
   EnumBinaryOp type;
-  int curr_pos = -1;
 
   public LogicOpNode(AST_BinaryOpExp node)
   {
@@ -1129,7 +1163,7 @@ public class LogicOpNode : BehaviorTreeInternalNode
     if(children.Count != 2)
       throw new Exception("Bad children count: " + children.Count);
 
-    curr_pos = 0;
+    currentPosition = 0;
   }
 
   override public BHS execute()
@@ -1138,7 +1172,7 @@ public class LogicOpNode : BehaviorTreeInternalNode
 
     while(true)
     {
-      var selected = children[curr_pos];
+      var selected = children[currentPosition];
 
       //return selected.run();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1164,8 +1198,8 @@ public class LogicOpNode : BehaviorTreeInternalNode
           return BHS.SUCCESS;
         }
 
-        if(curr_pos == 0)
-          ++curr_pos;
+        if(currentPosition == 0)
+          ++currentPosition;
         else
         {
           interp.PushValue(DynVal.NewBool(false));
@@ -1180,8 +1214,8 @@ public class LogicOpNode : BehaviorTreeInternalNode
           return BHS.SUCCESS;
         }
 
-        if(curr_pos == 0)
-          ++curr_pos;
+        if(currentPosition == 0)
+          ++currentPosition;
         else 
         {
           interp.PushValue(DynVal.NewBool(true));
@@ -1194,10 +1228,10 @@ public class LogicOpNode : BehaviorTreeInternalNode
   }
 }
 
-public class IfNode : BehaviorTreeInternalNode
+public class IfNode : ScopeNode
 {
   int curr_pos = -1;
-  BehaviorTreeNode  selected;
+  BehaviorTreeNode selected;
 
   override public void init()
   {
@@ -1260,7 +1294,7 @@ public class IfNode : BehaviorTreeInternalNode
   }
 }
 
-public class LoopNode : BehaviorTreeInternalNode
+public class LoopNode : ScopeNode
 {
   override public void init()
   {
@@ -1315,7 +1349,6 @@ public class InvertNode : BehaviorTreeDecoratorNode
     return status;
   }
 }
-
 
 public class ReturnNode : BehaviorTreeTerminalNode
 {

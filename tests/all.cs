@@ -7963,6 +7963,12 @@ public class BHL_Test
     public override void init()
     {}
 
+    public override void deinit()
+    {}
+
+    public override void defer()
+    {}
+
     public override BHS execute()
     {
       in_exec = true;
@@ -10139,6 +10145,85 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDeferInFuncCall()
+  {
+    string bhl = @"
+
+    func foo()
+    {
+      defer {
+        trace(""hey"")
+      }
+      NodeWithDefer()
+    }
+
+    func test() 
+    {
+      foo()
+      suspend()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindNodeWithDefer(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+
+    var str = GetString(trace_stream);
+    AssertEqual("DEFER!!!hey", str);
+    node.stop();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestDeferInFuncPtrCall()
+  {
+    string bhl = @"
+
+    func foo()
+    {
+      defer {
+        trace(""hey"")
+      }
+      NodeWithDefer()
+    }
+
+    func test() 
+    {
+      void^() p = foo
+      p()
+      suspend()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindNodeWithDefer(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+
+    var str = GetString(trace_stream);
+    AssertEqual("DEFER!!!hey", str);
+    node.stop();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestInvertNode()
   {
     string bhl = @"
@@ -10227,7 +10312,7 @@ public class BHL_Test
     node.stop();
 
     var str = GetString(trace_stream);
-    AssertEqual("1 INIT;1 EXEC;2 INIT;2 EXEC;1 EXEC;2 EXEC;2 DEINIT;2 DEFER;1 DEINIT;1 DEFER;", str);
+    AssertEqual("1 INIT;1 EXEC;2 INIT;2 EXEC;1 EXEC;2 EXEC;1 DEINIT;2 DEINIT;2 DEFER;1 DEFER;", str);
 
     CommonChecks(intp);
   }
@@ -18856,7 +18941,9 @@ func Unit FindUnit(Vec3 pos, float radius) {
   {
     intp.glob_mem.Clear();
 
+    //for extra debug
     //Console.WriteLine(DynVal.PoolDump());
+
     AssertEqual(intp.stack.Count, 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
