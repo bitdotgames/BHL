@@ -6633,21 +6633,21 @@ public class BHL_Test
       id = (int)interp.PopValue().num;
 
       var sw = new StreamWriter(sm);
-      sw.Write(id + " INIT;");
+      sw.Write("INIT(" + id + ");");
       sw.Flush();
     }
 
     public override void deinit()
     {
       var sw = new StreamWriter(sm);
-      sw.Write(id + " DEINIT;");
+      sw.Write("DEINIT(" + id + ");");
       sw.Flush();
     }
 
     public override BHS execute()
     {
       var sw = new StreamWriter(sm);
-      sw.Write(id + " EXEC;");
+      sw.Write("EXEC(" + id + ");");
       sw.Flush();
       return ctl[id];
     }
@@ -6655,7 +6655,7 @@ public class BHL_Test
     public override void defer()
     {
       var sw = new StreamWriter(sm);
-      sw.Write(id + " DEFER;");
+      sw.Write("DEFER(" + id + ");");
       sw.Flush();
     }
   }
@@ -10229,6 +10229,45 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDeferInBindCall()
+  {
+    string bhl = @"
+
+    func int hey()
+    {
+      defer {
+        trace(""hey"")
+      }
+      return 1
+    }
+
+    func test() 
+    {
+      NodeWithDeferRetInt(NodeWithDeferRetInt(hey()))
+      suspend()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+    BindNodeWithDefer(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncNode("test");
+
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+    AssertEqual(BHS.RUNNING, node.run());
+
+    var str = GetString(trace_stream);
+    AssertEqual("hey", str);
+    node.stop();
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestDeferInFuncPtrCall()
   {
     string bhl = @"
@@ -10365,8 +10404,7 @@ public class BHL_Test
     node.stop();
 
     var str = GetString(trace_stream);
-    //AssertEqual("1 INIT;1 EXEC;2 INIT;2 EXEC;1 EXEC;2 EXEC;1 DEINIT;2 DEINIT;2 DEFER;1 DEFER;", str);
-    AssertEqual("1 INIT;1 EXEC;2 INIT;2 EXEC;1 EXEC;2 EXEC;2 DEINIT;2 DEFER;1 DEINIT;1 DEFER;", str);
+    AssertEqual("INIT(1);EXEC(1);INIT(2);EXEC(2);EXEC(1);EXEC(2);DEINIT(1);DEINIT(2);DEFER(2);DEFER(1);", str);
 
     CommonChecks(intp);
   }
@@ -10401,7 +10439,7 @@ public class BHL_Test
     AssertEqual(BHS.SUCCESS, node.run());
 
     var str = GetString(trace_stream);
-    AssertEqual("1 INIT;1 EXEC;1 DEINIT;2 INIT;2 EXEC;2 DEINIT;2 DEFER;1 DEFER;", str);
+    AssertEqual("INIT(1);EXEC(1);DEINIT(1);INIT(2);EXEC(2);DEINIT(2);DEFER(2);DEFER(1);", str);
 
     CommonChecks(intp);
   }
@@ -10478,7 +10516,7 @@ public class BHL_Test
     AssertEqual(BHS.RUNNING, node.run());
 
     var str = GetString(trace_stream);
-    AssertEqual("1 INIT;1 EXEC;1 DEINIT;2 INIT;2 EXEC;", str);
+    AssertEqual("INIT(1);EXEC(1);DEINIT(1);INIT(2);EXEC(2);", str);
     CommonChecks(intp);
   }
 

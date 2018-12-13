@@ -583,7 +583,6 @@ public class FuncCallNode : FuncBaseCallNode
   {
     base.deinit();
     //stopChildren();
-
     ////NOTE: checking if we need to clean the values stack due to 
     ////      non successul execution of the node
     //if(currStatus != BHS.SUCCESS)
@@ -773,19 +772,19 @@ public class FuncBindCallNode : FuncBaseCallNode
     base.init();
   }
 
-  override public void deinit() 
-  {
-    if(currStatus != BHS.SUCCESS)
-    {
-      var interp = Interpreter.instance;
-      interp.PopFuncValues(this);
-    }
-  }
+  //override public void deinit() 
+  //{
+  //  if(currStatus != BHS.SUCCESS)
+  //  {
+  //    var interp = Interpreter.instance;
+  //    interp.PopFuncValues(this);
+  //  }
+  //}
 
-  override public void defer()
-  {
-    stopChildren();
-  }
+  //override public void defer()
+  //{
+  //  stopChildren();
+  //}
 }
 
 public class ParallelNode : ScopeNode
@@ -1540,24 +1539,24 @@ public class CallFuncPtr : FuncBaseCallNode
 
   override public void deinit()
   {
-    //base.deinit();
+    base.deinit();
 
     var func_node = ((FuncNode)children[children.Count-1]);
     func_node.fct.Release();
 
-    //NOTE: checking if we need to clean the values stack due to 
-    //      non successul execution of the node
-    if(currStatus != BHS.SUCCESS)
-    {
-      var interp = Interpreter.instance;
-      interp.PopFuncValues(this);
-    }
+    ////NOTE: checking if we need to clean the values stack due to 
+    ////      non successul execution of the node
+    //if(currStatus != BHS.SUCCESS)
+    //{
+    //  var interp = Interpreter.instance;
+    //  interp.PopFuncValues(this);
+    //}
   } 
 
-  override public void defer()
-  {
-    stopChildren();
-  }
+  //override public void defer()
+  //{
+  //  stopChildren();
+  //}
 
   public override string inspect()
   {
