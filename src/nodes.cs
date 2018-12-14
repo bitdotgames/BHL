@@ -144,10 +144,10 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
     }
   }
 
-  protected void deferChildren()
+  protected void deferChildren(int start)
   {
     //NOTE: traversing children in the reverse order
-    for(int i=children.Count;i-- > 0;)
+    for(int i=start;i-- > 0;)
     {
       var c = children[i];
       if(c.currStatus != BHS.NONE)
@@ -240,7 +240,7 @@ public class GroupNode : BehaviorTreeInternalNode
 
   override public void defer()
   {
-    deferChildren();
+    deferChildren(children.Count);
   }
 }
 
@@ -276,7 +276,7 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
   override public void defer()
   {
-    deferChildren();
+    deferChildren(children.Count);
   }
 
   public void setSlave(BehaviorTreeNode node)
@@ -582,14 +582,6 @@ public class FuncCallNode : FuncBaseCallNode
   override public void deinit()
   {
     base.deinit();
-    //stopChildren();
-    ////NOTE: checking if we need to clean the values stack due to 
-    ////      non successul execution of the node
-    //if(currStatus != BHS.SUCCESS)
-    //{
-    //  var interp = Interpreter.instance;
-    //  interp.PopFuncValues(this);
-    //}
 
     if(idx_in_pool >= 0)
     {
@@ -604,9 +596,12 @@ public class FuncCallNode : FuncBaseCallNode
     }
   }
 
-  //override public void defer()
-  //{
-  //}
+  override public void defer()
+  {
+    //NOTE: we don't take into account the last node, since
+    //      it may be already detached
+    deferChildren(children.Count-1);
+  }
 
   ///////////////////////////////////////////////////////////////////
   static int free_count = 0;
@@ -771,20 +766,6 @@ public class FuncBindCallNode : FuncBaseCallNode
 
     base.init();
   }
-
-  //override public void deinit() 
-  //{
-  //  if(currStatus != BHS.SUCCESS)
-  //  {
-  //    var interp = Interpreter.instance;
-  //    interp.PopFuncValues(this);
-  //  }
-  //}
-
-  //override public void defer()
-  //{
-  //  stopChildren();
-  //}
 }
 
 public class ParallelNode : ScopeNode
@@ -898,7 +879,8 @@ public class PriorityNode : ScopeNode
   {
     BHS status;
 
-    if(currentPosition != -1) //there's one still running
+    //there's one still running
+    if(currentPosition != -1)
     {
       var currentTask = children[currentPosition];
       //status = currentTask.run();
@@ -937,6 +919,7 @@ public class PriorityNode : ScopeNode
     if(children.Count == 0)
       return BHS.SUCCESS;
 
+    //first run
     {
       BehaviorTreeNode currentTask = children[currentPosition];
        //keep trying children until one doesn't fail
@@ -1178,7 +1161,7 @@ public class DeferNode : BehaviorTreeInternalNode
     for(int i=0;i<children.Count;++i)
       children[i].run();
 
-    deferChildren();
+    deferChildren(children.Count);
   }
 
   override public BHS execute()
@@ -1543,20 +1526,7 @@ public class CallFuncPtr : FuncBaseCallNode
 
     var func_node = ((FuncNode)children[children.Count-1]);
     func_node.fct.Release();
-
-    ////NOTE: checking if we need to clean the values stack due to 
-    ////      non successul execution of the node
-    //if(currStatus != BHS.SUCCESS)
-    //{
-    //  var interp = Interpreter.instance;
-    //  interp.PopFuncValues(this);
-    //}
   } 
-
-  //override public void defer()
-  //{
-  //  stopChildren();
-  //}
 
   public override string inspect()
   {
