@@ -11612,6 +11612,57 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDetachedUserlandFuncsAreNotDoubleDeferred()
+  {
+    string bhl = @"
+      
+    func void foo(int n, bool keep_running)
+    { 
+      if(keep_running) {
+        suspend()
+      }
+      NodeWithDeferRetInt(n)
+    }
+
+    func void test() 
+    {
+      paral_all {
+        seq {
+          foo(10, false)  //1st time, cached
+          yield()
+          yield()         //defer is triggered for parent seq, but MUST not be triggered for cached foo()
+        }
+        seq {
+          yield()         //wait one tick
+          paral {
+            foo(20, true) //userland func is taken from cache
+            seq {         //let's interrupt paral after two ticks
+              yield()
+              yield()
+            }
+          }
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+    BindNodeWithDefer(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+
+    var node = intp.GetFuncNode("test");
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("DEFER 10!!!", str);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestBindClassCallMember()
   {
     string bhl = @"
@@ -11623,10 +11674,8 @@ public class BHL_Test
     ";
 
     var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
     
     BindColor(globs);
-    BindTrace(globs, trace_stream);
 
     var intp = Interpret(bhl, globs);
 
