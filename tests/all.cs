@@ -11630,12 +11630,16 @@ public class BHL_Test
         seq {
           foo(10, false)  //1st time, cached
           yield()
-          yield()         //defer is triggered for parent seq, but MUST not be triggered for cached foo()
+          yield()         
+          //defer is triggered for parent seq, but MUST not be triggered for cached foo(),
+          //at this moment cached foo() is already running in the block below, if we call
+          //defer on it, it will invalidate its state and on the next run there will be
+          //exception (it will try to pop the passed arguments again)
         }
         seq {
           yield()         //wait one tick
           paral {
-            foo(20, true) //userland func is taken from cache
+            foo(20, true) //userland func is taken from cache, keeps ticking
             seq {         //let's interrupt paral after two ticks
               yield()
               yield()
