@@ -87,45 +87,6 @@ public class Interpreter : AST_Visitor
     this.module_loader = module_loader;
   }
 
-  public struct Result
-  {
-    public BHS status;
-    public DynVal[] vals;
-
-    public DynVal val 
-    {
-      get {
-        return vals != null ? vals[0] : null;
-      }
-    }
-  }
-
-  //TODO: this one really should not be here
-  public Result ExecNode(BehaviorTreeNode node, int ret_vals = 1, bool keep_running = true)
-  {
-    Result res = new Result();
-
-    res.status = BHS.NONE;
-    while(true)
-    {
-      res.status = node.run();
-      if(res.status != BHS.RUNNING)
-        break;
-
-      if(!keep_running)
-        break;
-    }
-    if(ret_vals > 0)
-    {
-      res.vals = new DynVal[ret_vals];
-      for(int i=0;i<ret_vals;++i)
-        res.vals[i] = PopValue();
-    }
-    else
-      res.vals = null;
-    return res;
-  }
-
   public void Interpret(AST_Module ast)
   {
     Visit(ast);
