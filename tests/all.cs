@@ -14808,6 +14808,53 @@ public class BHL_Test
 
     func void test() 
     {
+      paral {
+        seq {
+          foo(1, ret_int(val: 2, ticks: 1))
+          suspend()
+        }
+        foo(10, ret_int(val: 20, ticks: 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
+    intp.ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalAll()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
       paral_all {
         foo(1, ret_int(val: 2, ticks: 1))
         foo(10, ret_int(val: 20, ticks: 2))
