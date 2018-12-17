@@ -15210,12 +15210,12 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  public class RunningNodeTakingFunc : BehaviorTreeTerminalNode
+  public class NodeTakingFunc : BehaviorTreeTerminalNode
   {
     MemoryStream stream;
     FuncCtx fct;
 
-    public RunningNodeTakingFunc(MemoryStream stream)
+    public NodeTakingFunc(MemoryStream stream)
     {
       this.stream = stream;
     }
@@ -15239,17 +15239,19 @@ public class BHL_Test
       var interp = Interpreter.instance;
 
       var node = fct.EnsureNode();
-      node.run();
-      var lst = interp.PopValue().obj as DynValList;
+      var status = node.run();
+      if(status == BHS.SUCCESS)
+      {
+        var lst = interp.PopValue().obj as DynValList;
 
-      var sw = new StreamWriter(stream);
-      for(int i=0;i<lst.Count;++i)
-        sw.Write(lst[i].num + ";");
-      sw.Flush();
+        var sw = new StreamWriter(stream);
+        for(int i=0;i<lst.Count;++i)
+          sw.Write(lst[i].num + ";");
+        sw.Flush();
 
-      lst.TryDel();
-
-      return BHS.RUNNING;
+        lst.TryDel();
+      }
+      return BHS.SUCCESS;
     }
   }
 
@@ -15258,7 +15260,7 @@ public class BHL_Test
   {
     string bhl = @"
 
-    func int[] make_ints(int n)
+    func int[] make_ints(int n, int k)
     {
       int[] res = []
       for(int i=0;i<n;i=i+1) {
@@ -15267,19 +15269,32 @@ public class BHL_Test
       return res
     }
 
-    func int[] return_ints()
+    func int may_fail()
     {
-      return make_ints(2)
+      fail()
+      return 10
     }
 
-    func doer()
+    func int[] return_ints()
     {
-      RunningNodeTakingFunc(fn: return_ints)
+      return make_ints(2, may_fail())
+    }
+
+    func doer(void^() fn)
+    {
+      seq_ {
+        fn()
+      }
+
+      trace(""HERE"")
+      suspend()
     }
 
     func void test() 
     {
-      doer()
+      doer(fn : func() {
+        NodeTakingFunc(fn: func int[] () { return make_ints(2, may_fail()) } )
+      })
     }
     ";
 
@@ -15289,9 +15304,9 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("RunningNodeTakingFunc", globs.type("Foo"),
+      var fn = new FuncBindSymbol("NodeTakingFunc", globs.type("Foo"),
         delegate() { 
-          return new RunningNodeTakingFunc(trace_stream);
+          return new NodeTakingFunc(trace_stream);
         }
       );
       fn.define(new FuncArgSymbol("fn", globs.type("int[]^()")));
@@ -15303,13 +15318,12 @@ public class BHL_Test
     var node = new FuncUserCallNode(intp.GetFuncNode("test"));
 
     node.run();
-    node.run();
     node.stop();
 
     var str = GetString(trace_stream);
 
     //NodeDump(node);
-    AssertEqual("0;1;0;1;", str);
+    AssertEqual("HERE", str);
     CommonChecks(intp);
   }
 

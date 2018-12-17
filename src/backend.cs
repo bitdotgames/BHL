@@ -63,6 +63,13 @@ public class Interpreter : AST_Visitor
     public DynVal dv;
     public FuncBaseCallNode func_ctx;
     public BehaviorTreeNode node_ctx;
+
+    public override string ToString() 
+    {
+      return dv + " " + dv.GetHashCode() + 
+        ", func: " + (func_ctx != null ? "" + func_ctx.GetHashCode() : "null") +
+        ", node: " + (node_ctx != null ? "" + node_ctx.GetHashCode() : "null");
+    }
   }
 
   public FastStack<StackValue> stack = new FastStack<StackValue>(256);
@@ -182,6 +189,7 @@ public class Interpreter : AST_Visitor
 
     public string func_name;
     public uint func_id;
+    public int func_hash;
 
     public uint line_num;
   }
@@ -203,6 +211,7 @@ public class Interpreter : AST_Visitor
 
         func_id = cs.nname1,
         func_name = cs.name, 
+        func_hash = cs.GetHashCode(),
 
         line_num = call_stack[i].ast.line_num
       };
@@ -329,8 +338,7 @@ public class Interpreter : AST_Visitor
 
     var sv = new StackValue();
     sv.dv = v;
-    sv.func_ctx = call_stack.Count > 0 ? call_stack.Peek() : null; 
-    //sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
+    sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
     sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
 
     stack.Push(sv);
