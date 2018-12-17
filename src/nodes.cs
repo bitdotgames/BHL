@@ -448,7 +448,6 @@ public abstract class FuncBaseCallNode : GroupNode
   override public BHS execute()
   {
     var interp = Interpreter.instance;
-    interp.func_ctx_stack.Push(this);
 
     //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -486,7 +485,6 @@ public abstract class FuncBaseCallNode : GroupNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
-    interp.func_ctx_stack.DecFast();
     return status;
   }
 
@@ -511,10 +509,32 @@ public abstract class FuncBaseCallNode : GroupNode
 
 public class FuncUserCallNode : FuncBaseCallNode
 {
-  public FuncUserCallNode(BehaviorTreeNode node)
+  public FuncUserCallNode(FuncNode node)
     : base(null)
   {
     this.addChild(node);
+  }
+
+  //TODO: add support for default args overriding
+  public void SetArgs(params DynVal[] args)
+  {
+    var interp = Interpreter.instance;
+
+    var fn = children[0] as FuncNode;
+
+    if(!fn.args_info.SetArgsNum(args.Length))
+      throw new Exception("Too many arguments");
+
+    for(int i=0;i<args.Length;++i)
+    {
+      var arg = args[i];
+      interp.PushValue(arg);
+    }
+  }
+
+  public FuncNode GetFuncNode()
+  {
+    return children[0] as FuncNode;
   }
 }
 
@@ -710,7 +730,7 @@ public class FuncCallNode : FuncBaseCallNode
     var interp = Interpreter.instance;
 
     pi.id = ++last_pool_id;
-    var fnode = interp.GetFuncNode(pi.ast);
+    FuncNode fnode = interp.GetFuncNode(pi.ast);
     if(!(fnode is FuncNodeAST))
       throw new Exception("Not expected type of node");
     pi.fnode = fnode;
@@ -1507,7 +1527,7 @@ public class CallFuncPtr : FuncBaseCallNode
     if(fct.fnode != null && fct.fnode.currStatus == BHS.RUNNING)
       fct = fct.Clone();
     fct.Retain();
-    var func_node = fct.EnsureNode();
+    var func_node = fct.GetNode();
 
     //NOTE: traversing arg.nodes only for the first time
     if(children.Count == 0)
@@ -1926,21 +1946,6 @@ abstract public class FuncNode : SequentialNode
 {
   public FuncCtx fct;
   public FuncArgsInfo args_info;
-
-  //TODO: add support for default args overriding
-  public void SetArgs(params DynVal[] args)
-  {
-    var interp = Interpreter.instance;
-
-    if(!args_info.SetArgsNum(args.Length))
-      throw new Exception("Too many arguments");
-
-    for(int i=0;i<args.Length;++i)
-    {
-      var arg = args[i];
-      interp.PushValue(arg);
-    }
-  }
 
   public virtual AST GetDeclArg(int i)
   {

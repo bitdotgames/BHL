@@ -74,14 +74,12 @@ public class Interpreter : AST_Visitor
 
   public FastStack<StackValue> stack = new FastStack<StackValue>(256);
   public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(128);
-  public FastStack<FuncBaseCallNode> func_ctx_stack = new FastStack<FuncBaseCallNode>(128);
   public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
 
   public void Init(BaseScope symbols, IModuleLoader module_loader)
   {
     node_stack.Clear();
     node_ctx_stack.Clear();
-    func_ctx_stack.Clear();
     curr_node = null;
     mstack.Clear();
     glob_mem.Clear();
@@ -154,6 +152,16 @@ public class Interpreter : AST_Visitor
     return GetFuncNode(Util.GetFuncId(module_name, func_name));
   }
 
+  public FuncUserCallNode GetFuncCallNode(HashedName name)
+  {
+    return new FuncUserCallNode(GetFuncNode(name));
+  }
+
+  public FuncUserCallNode GetFuncCallNode(string module_name, string func_name)
+  {
+    return new FuncUserCallNode(GetFuncNode(module_name, func_name));
+  }
+
   Symbol ResolveClassMember(HashedName class_type, HashedName name)
   {
     var cl = symbols.resolve(class_type) as ClassSymbol;
@@ -191,7 +199,7 @@ public class Interpreter : AST_Visitor
     {
       var cs = call_stack[i-1].ast; 
 
-      string module_name = "";
+      string module_name = "?";
       if(cs != null)
         loaded_modules.TryGetValue(cs.nname2, out module_name);
 
@@ -203,7 +211,7 @@ public class Interpreter : AST_Visitor
         module_name = module_name,
 
         func_id = cs == null ? 0 : cs.nname1,
-        func_name = cs == null ? "" : cs.name, 
+        func_name = cs == null ? "?" : cs.name, 
         func_hash = cs == null ? 0 : cs.GetHashCode(),
 
         line_num = cs_prev == null ? 0 : cs_prev.line_num
@@ -331,7 +339,7 @@ public class Interpreter : AST_Visitor
 
     var sv = new StackValue();
     sv.dv = v;
-    sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
+    sv.func_ctx = call_stack.Count > 0 ? call_stack.Peek() : null; 
     sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
 
     stack.Push(sv);
@@ -907,6 +915,7 @@ public class FuncCtx : DynValRefcounted
   //      copied to concrete memory scope of the function.
   public DynValDict mem = new DynValDict();
   public FuncNode fnode;
+  public FuncUserCallNode fcall_node;
   public bool fnode_busy;
 
   private FuncCtx(FuncSymbol fs)
@@ -914,18 +923,32 @@ public class FuncCtx : DynValRefcounted
     this.fs = fs;
   }
 
-  public FuncNode EnsureNode()
+  public FuncNode GetNode()
   {
     fnode_busy = true;
 
     if(fnode != null)
       return fnode;
 
+    //NOTE: it creates both fcall_node and fnode
+    GetCallNode();
+
+    return fnode;
+  }
+
+  public FuncUserCallNode GetCallNode()
+  {
+    fnode_busy = true;
+
+    if(fcall_node != null)
+      return fcall_node;
+
     ++nodes_created;
 
     fnode = MakeFuncNode(fs, this);
+    fcall_node = new FuncUserCallNode(fnode);
 
-    return fnode;
+    return fcall_node;
   }
 
   public static FuncNode MakeFuncNode(FuncSymbol fs, FuncCtx fct = null)
