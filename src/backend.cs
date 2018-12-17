@@ -368,7 +368,8 @@ public class Interpreter : AST_Visitor
 
     var sv = new StackValue();
     sv.dv = v;
-    sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
+    sv.func_ctx = call_stack.Count > 0 ? call_stack.Peek() : null; 
+    //sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
     sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
 
     stack.Push(sv);

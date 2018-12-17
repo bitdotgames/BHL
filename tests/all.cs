@@ -15163,6 +15163,109 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
+  public class RunningNodeTakingFunc : BehaviorTreeTerminalNode
+  {
+    MemoryStream stream;
+    FuncCtx fct;
+
+    public RunningNodeTakingFunc(MemoryStream stream)
+    {
+      this.stream = stream;
+    }
+
+    public override void init()
+    {
+      var interp = Interpreter.instance;
+      fct = (FuncCtx)interp.PopValue().obj;
+      fct = fct.AutoClone();
+      fct.Retain();
+    }
+
+    public override void deinit()
+    {
+      fct.Release();
+      fct = null;
+    }
+
+    public override BHS execute()
+    {
+      var interp = Interpreter.instance;
+
+      var node = fct.EnsureNode();
+      node.run();
+      var lst = interp.PopValue().obj as DynValList;
+
+      var sw = new StreamWriter(stream);
+      for(int i=0;i<lst.Count;++i)
+        sw.Write(lst[i].num + ";");
+      sw.Flush();
+
+      lst.TryDel();
+
+      return BHS.RUNNING;
+    }
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForFuncPtrPassedAsArg()
+  {
+    string bhl = @"
+
+    func int[] make_ints(int n)
+    {
+      int[] res = []
+      for(int i=0;i<n;i=i+1) {
+        res.Add(i)
+      }
+      return res
+    }
+
+    func int[] return_ints()
+    {
+      return make_ints(2)
+    }
+
+    func doer()
+    {
+      RunningNodeTakingFunc(fn: return_ints)
+    }
+
+    func void test() 
+    {
+      doer()
+    }
+    ";
+
+    var trace_stream = new MemoryStream();
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindTrace(globs, trace_stream);
+
+    {
+      var fn = new FuncBindSymbol("RunningNodeTakingFunc", globs.type("Foo"),
+        delegate() { 
+          return new RunningNodeTakingFunc(trace_stream);
+        }
+      );
+      fn.define(new FuncArgSymbol("fn", globs.type("int[]^()")));
+
+      globs.define(fn);
+    }
+
+    var intp = Interpret(bhl, globs);
+    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
+
+    node.run();
+    node.run();
+    node.stop();
+
+    var str = GetString(trace_stream);
+
+    //NodeDump(node);
+    AssertEqual("0;1;0;1;", str);
+    CommonChecks(intp);
+  }
+
   [IsTested()]
   public void TestCleanFuncArgsOnStackForLambda()
   {
