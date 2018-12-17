@@ -512,7 +512,7 @@ public abstract class FuncBaseCallNode : GroupNode
 public class FuncUserCallNode : FuncBaseCallNode
 {
   public FuncUserCallNode(BehaviorTreeNode node)
-    : base(new AST_Call())
+    : base(null)
   {
     this.addChild(node);
   }

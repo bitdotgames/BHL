@@ -136,26 +136,16 @@ public class Interpreter : AST_Visitor
       return null;
   }
 
-  public FuncNode GetFuncNode(FuncSymbol symb)
-  {
-    if(symb is FuncSymbolAST)
-      return new FuncNodeAST((symb as FuncSymbolAST).decl, null);
-    else if(symb is FuncBindSymbol)
-      return new FuncNodeBind(symb as FuncBindSymbol, null);
-    else
-      throw new Exception("Bad func call type");
-  }
-
   public FuncNode GetFuncNode(AST_Call ast)
   {
     var symb = ResolveFuncSymbol(ast);
-    return GetFuncNode(symb);
+    return FuncCtx.MakeFuncNode(symb);
   }
 
   public FuncNode GetFuncNode(HashedName name)
   {
     var symb = symbols.resolve(name) as FuncSymbol;
-    return GetFuncNode(symb);
+    return FuncCtx.MakeFuncNode(symb);
   }
 
   public FuncNode GetFuncNode(string module_name, string func_name)
@@ -202,18 +192,21 @@ public class Interpreter : AST_Visitor
       var cs = call_stack[i-1].ast; 
 
       string module_name = "";
-      loaded_modules.TryGetValue(cs.nname2, out module_name);
+      if(cs != null)
+        loaded_modules.TryGetValue(cs.nname2, out module_name);
+
+      var cs_prev = call_stack[i].ast;
 
       var item = new CallStackInfo() 
       {
-        module_id = cs.nname2,
+        module_id = cs == null ? 0 : cs.nname2,
         module_name = module_name,
 
-        func_id = cs.nname1,
-        func_name = cs.name, 
-        func_hash = cs.GetHashCode(),
+        func_id = cs == null ? 0 : cs.nname1,
+        func_name = cs == null ? "" : cs.name, 
+        func_hash = cs == null ? 0 : cs.GetHashCode(),
 
-        line_num = call_stack[i].ast.line_num
+        line_num = cs_prev == null ? 0 : cs_prev.line_num
       };
       result.Add(item);
     }
@@ -930,16 +923,21 @@ public class FuncCtx : DynValRefcounted
 
     ++nodes_created;
 
-    if(fs is FuncSymbolAST)
-      fnode = new FuncNodeAST((fs as FuncSymbolAST).decl, this);
-    else if(fs is LambdaSymbol)
-      fnode = new FuncNodeLambda(this);
-    else if(fs is FuncBindSymbol)
-      fnode = new FuncNodeBind(fs as FuncBindSymbol, this);
-    else
-      throw new Exception("Unknown symbol type");
+    fnode = MakeFuncNode(fs, this);
 
     return fnode;
+  }
+
+  public static FuncNode MakeFuncNode(FuncSymbol fs, FuncCtx fct = null)
+  {
+    if(fs is FuncSymbolAST)
+      return new FuncNodeAST((fs as FuncSymbolAST).decl, fct);
+    else if(fs is LambdaSymbol)
+      return new FuncNodeLambda(fct);
+    else if(fs is FuncBindSymbol)
+      return new FuncNodeBind(fs as FuncBindSymbol, fct);
+    else
+      throw new Exception("Unknown symbol type");
   }
 
   public FuncCtx Clone()

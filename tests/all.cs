@@ -15263,9 +15263,6 @@ public class BHL_Test
     func int[] make_ints(int n, int k)
     {
       int[] res = []
-      for(int i=0;i<n;i=i+1) {
-        res.Add(i)
-      }
       return res
     }
 
@@ -15275,26 +15272,10 @@ public class BHL_Test
       return 10
     }
 
-    func int[] return_ints()
-    {
-      return make_ints(2, may_fail())
-    }
-
-    func doer(void^() fn)
-    {
-      seq_ {
-        fn()
-      }
-
-      trace(""HERE"")
-      suspend()
-    }
-
     func void test() 
     {
-      doer(fn : func() {
-        NodeTakingFunc(fn: func int[] () { return make_ints(2, may_fail()) } )
-      })
+      NodeTakingFunc(fn: func int[] () { return make_ints(2, may_fail()) } )
+      trace(""HERE"")
     }
     ";
 
@@ -15315,10 +15296,9 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
+    var node = intp.GetFuncNode("test");
 
-    node.run();
-    node.stop();
+    AssertEqual(node.run(), BHS.SUCCESS);
 
     var str = GetString(trace_stream);
 
@@ -15364,7 +15344,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
+    var node = intp.GetFuncNode("test");
     ExecNode(node, 0);
 
     var str = GetString(trace_stream);
@@ -15421,7 +15401,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
+    var node = intp.GetFuncNode("test");
 
     var status = node.run();
     AssertEqual(status, BHS.RUNNING);
@@ -15483,7 +15463,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
+    var node = intp.GetFuncNode("test");
 
     var status = node.run();
     AssertEqual(status, BHS.RUNNING);
@@ -15552,7 +15532,7 @@ public class BHL_Test
     }
 
     var intp = Interpret(bhl, globs);
-    var node = new FuncUserCallNode(intp.GetFuncNode("test"));
+    var node = intp.GetFuncNode("test");
 
     var status = node.run();
     AssertEqual(status, BHS.RUNNING);
