@@ -930,8 +930,9 @@ public class FuncCtx : DynValRefcounted
     if(fnode != null)
       return fnode;
 
-    //NOTE: it creates both fcall_node and fnode
-    GetCallNode();
+    ++nodes_created;
+
+    fnode = MakeFuncNode(fs, this);
 
     return fnode;
   }
@@ -943,10 +944,7 @@ public class FuncCtx : DynValRefcounted
     if(fcall_node != null)
       return fcall_node;
 
-    ++nodes_created;
-
-    fnode = MakeFuncNode(fs, this);
-    fcall_node = new FuncUserCallNode(fnode);
+    fcall_node = new FuncUserCallNode(GetNode());
 
     return fcall_node;
   }
@@ -1075,9 +1073,8 @@ public class FuncCtx : DynValRefcounted
 
     fct.refs = -1;
     fct.mem.Clear();
-    //NOTE: we don't reset fnode on purpose, 
+    //NOTE: we don't reset cached func node on purpose, 
     //      so that it will be reused on the next pool request
-    //fct.fnode = null;
     fct.fnode_busy = false;
     ++pool_free;
     stack.Push(fct);
