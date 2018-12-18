@@ -906,6 +906,8 @@ public abstract class AST_Visitor
 //      the enclosing context
 public class FuncCtx : DynValRefcounted
 {
+  //NOTE: fields public below only for inspection
+
   //NOTE: -1 means it's in released state,
   //      public only for inspection
   public int refs;
