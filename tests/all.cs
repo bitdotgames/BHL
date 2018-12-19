@@ -17737,6 +17737,71 @@ public class BHL_Test
     AssertEqual(12, info[2].line_num);
   }
 
+  [IsTested()]
+  public void TestGetCallstackInfoFromFuncAsArg()
+  {
+    string bhl2 = @"
+    func float bar(float b)
+    {
+      return b
+    }
+
+    func float wow(float b)
+    {
+      record_callstack()
+      return b
+    }
+
+    func float foo(float k)
+    {
+      return bar(
+          wow(k)
+      )
+    }
+
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+
+    func float test(float k) 
+    {
+      return foo(k)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var info = new List<Interpreter.CallStackInfo>();
+    {
+      var fn = new SimpleFuncBindSymbol("record_callstack", globs.type("void"),
+        delegate() { 
+          Interpreter.instance.GetCallStackInfo(info); 
+          return BHS.SUCCESS; 
+        });
+      globs.define(fn);
+    }
+
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+
+    var intp = CompileFiles(files, globs);
+    
+    var node = intp.GetFuncCallNode("bhl1", "test");
+    node.SetArgs(DynVal.NewNum(3));
+    var res = ExtractNum(ExecNode(node));
+
+    AssertEqual(3, res);
+    AssertEqual(2, info.Count);
+    AssertEqual("foo", info[0].func_name);
+    AssertEqual("bhl2", info[0].module_name);
+    AssertEqual(16, info[0].line_num);
+    AssertEqual("?", info[1].func_name);
+    AssertEqual("?", info[1].module_name);
+    AssertEqual(6, info[1].line_num);
+  }
+
   void BindForSlides(GlobalScope globs)
   {
     {
