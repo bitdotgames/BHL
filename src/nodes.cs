@@ -135,6 +135,7 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
     }
 
     //NOTE: traversing children in the reverse order
+    //TODO: traverse from start+len index
     for(int i=children.Count;i-- > 0;)
     {
       var c = children[i];
