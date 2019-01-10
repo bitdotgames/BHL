@@ -106,6 +106,12 @@ public class BHL
     if(files.Count == 0)
       Build.AddFilesFromDir(src_dir, files);
 
+    for(int i=files.Count;i-- > 0;)
+    {
+      if(string.IsNullOrEmpty(files[i]))
+        files.RemoveAt(i);
+    }
+
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
     var conf = new BuildConf();
     conf.use_cache = use_cache;
