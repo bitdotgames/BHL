@@ -78,7 +78,7 @@ public struct HashedName
 
   public uint n2 {
     get {
-      return (uint)(n >> 31);
+      return (uint)(n >> 32);
     }
   }
 
@@ -93,7 +93,7 @@ public struct HashedName
   {}
 
   public HashedName(uint n1, uint n2, string s = "")
-    : this(((ulong)n2 << 31) | ((ulong)n1), s)
+    : this(((ulong)n2 << 32) | ((ulong)n1), s)
   {}
 
   public HashedName(string n1, uint n2)
@@ -103,13 +103,13 @@ public struct HashedName
   static public void Split(ulong n, out uint n1, out uint n2)
   {
     n1 = (uint)(n & 0xFFFFFFFF);
-    n2 = (uint)(n >> 31);
+    n2 = (uint)(n >> 32);
   }
 
   public void Split(out uint n1, out uint n2)
   {
     n1 = (uint)(n & 0xFFFFFFFF);
-    n2 = (uint)(n >> 31);
+    n2 = (uint)(n >> 32);
   }
 
   public static implicit operator HashedName(ulong n)
@@ -627,7 +627,7 @@ static public class AST_Util
 
   static public ulong nname(this AST_FuncDecl n)
   {
-    return ((ulong)n.nname2 << 31) | ((ulong)n.nname1);
+    return ((ulong)n.nname2 << 32) | ((ulong)n.nname1);
   }
 
   ////////////////////////////////////////////////////////
@@ -772,15 +772,15 @@ static public class AST_Util
 
   static public ulong nname(this AST_Call n)
   {
-    return ((ulong)n.nname2 << 31) | ((ulong)n.nname1);
+    return ((ulong)n.nname2 << 32) | ((ulong)n.nname1);
   }
 
   static public ulong FuncId(this AST_Call n)
   {
     if(n.nname2 == 0)
-      return ((ulong)n.scope_ntype << 31) | ((ulong)n.nname1);
+      return ((ulong)n.scope_ntype << 32) | ((ulong)n.nname1);
     else
-      return ((ulong)n.nname2 << 31) | ((ulong)n.nname1);
+      return ((ulong)n.nname2 << 32) | ((ulong)n.nname1);
   }
 
   ////////////////////////////////////////////////////////
