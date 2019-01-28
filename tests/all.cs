@@ -18901,6 +18901,42 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestHashedName()
+  {
+    {
+      var hn = new HashedName(0xBEAFDEADDEADBEAF);
+      AssertEqual(0xDEADBEAF, hn.n1);
+      AssertEqual(0xBEAFDEAD, hn.n2);
+      AssertEqual(0xBEAFDEADDEADBEAF, hn.n);
+      AssertEqual("", hn.s);
+    }
+
+    {
+      var hn = new HashedName("Foo");
+      AssertEqual(Hash.CRC28("Foo"), hn.n1);
+      AssertEqual(0, hn.n2);
+      AssertEqual(Hash.CRC28("Foo"), hn.n);
+      AssertEqual("Foo", hn.s);
+    }
+
+    {
+      var hn = new HashedName(0xBEAFDEADDEADBEAF, "Foo");
+      AssertEqual(0xDEADBEAF, hn.n1);
+      AssertEqual(0xBEAFDEAD, hn.n2);
+      AssertEqual(0xBEAFDEADDEADBEAF, hn.n);
+      AssertEqual("Foo", hn.s);
+    }
+
+    {
+      var hn = new HashedName("Foo", 0xDEADBEAF);
+      AssertEqual(Hash.CRC28("Foo"), hn.n1);
+      AssertEqual(0xDEADBEAF, hn.n2);
+      AssertEqual((ulong)0xDEADBEAF << 32 | (ulong)(Hash.CRC28("Foo")), hn.n);
+      AssertEqual("Foo", hn.s);
+    }
+  }
+
+  [IsTested()]
   public void TestStack()
   {
     //Push/Pop
@@ -19145,6 +19181,18 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
   
   static void AssertEqual(double a, double b)
+  {
+    if(!(a == b))
+      throw new Exception("Assertion failed: " + a + " != " + b);
+  }
+
+  static void AssertEqual(uint a, uint b)
+  {
+    if(!(a == b))
+      throw new Exception("Assertion failed: " + a + " != " + b);
+  }
+
+  static void AssertEqual(ulong a, ulong b)
   {
     if(!(a == b))
       throw new Exception("Assertion failed: " + a + " != " + b);
