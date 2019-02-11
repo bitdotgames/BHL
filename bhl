@@ -59,12 +59,17 @@ function task_clean()
 {
   global $BHL_ROOT;
 
-  ensure_rm("$BHL_ROOT/bhl_front.dll");
-  ensure_rm("$BHL_ROOT/bhl_front.dll.mdb");
-  ensure_rm("$BHL_ROOT/bhl.exe");
-  ensure_rm("$BHL_ROOT/bhl.exe.mdb");
-  ensure_rm("$BHL_ROOT/text.exe");
-  ensure_rm("$BHL_ROOT/text.exe.mdb");
+  foreach(glob("$BHL_ROOT/bhl_*.dll") as $dll)
+  {
+    ensure_rm($dll);
+    ensure_rm("$dll.mdb");
+  }
+
+  foreach(glob("$BHL_ROOT/*.exe") as $exe)
+  {
+    ensure_rm($exe);
+    ensure_rm("$exe.mdb");
+  }
 }
 
 /**
