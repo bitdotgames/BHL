@@ -139,9 +139,14 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
     for(int i=children.Count;i-- > 0;)
     {
       var c = children[i];
-      //TODO: assert here we are not RUNNING?
       if(c.currStatus != BHS.NONE)
       {
+        if(Util.DEBUG)
+        {
+          if(c.currStatus == BHS.RUNNING)
+            Util.Debug("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
+        }
+
         c.defer();
         c.currStatus = BHS.NONE;
       }
@@ -154,9 +159,15 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
     for(int i=start;i-- > 0;)
     {
       var c = children[i];
-      //TODO: assert here we are not RUNNING?
+
       if(c.currStatus != BHS.NONE)
       {
+        if(Util.DEBUG)
+        {
+          if(c.currStatus == BHS.RUNNING)
+            Util.Debug("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
+        }
+
         c.defer();
         c.currStatus = BHS.NONE;
       }

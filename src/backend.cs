@@ -220,6 +220,20 @@ public class Interpreter : AST_Visitor
     }
   }
 
+  public string GetStackTrace()
+  {
+    var info = new List<Interpreter.CallStackInfo>();
+    GetCallStackInfo(info);
+
+    string bhl_stack = "";
+    for(int i=0;i<info.Count;++i)
+    {
+      var item = info[i];
+      bhl_stack += (string.IsNullOrEmpty(item.func_name) ? item.func_id.ToString() : item.func_name) + " () (at "  + (string.IsNullOrEmpty(item.module_name) ? item.module_id.ToString() : item.module_name + ".bhl") + ":" + item.line_num + ") " + item.func_hash + "\n"; 
+    }
+    return bhl_stack;
+  }
+
   //NOTE: caching exceptions for less allocations
   static ReturnException return_exception = new ReturnException();
   static BreakException break_exception = new BreakException();
