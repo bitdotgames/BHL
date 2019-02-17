@@ -141,12 +141,6 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
       var c = children[i];
       if(c.currStatus != BHS.NONE)
       {
-        if(Util.DEBUG)
-        {
-          if(c.currStatus == BHS.RUNNING)
-            Util.Debug("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
-        }
-
         c.defer();
         c.currStatus = BHS.NONE;
       }
@@ -165,7 +159,7 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
         if(Util.DEBUG)
         {
           if(c.currStatus == BHS.RUNNING)
-            Util.Debug("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
+            throw new Exception("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
         }
 
         c.defer();
