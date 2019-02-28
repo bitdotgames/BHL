@@ -449,6 +449,14 @@ public abstract class FuncBaseCallNode : GroupNode
     this.ast = ast;
   }
 
+  override public void init()
+  {
+    base.init();
+
+    var interp = Interpreter.instance;
+    interp.func_stack.Push(this);
+  }
+
   override public BHS execute()
   {
     var interp = Interpreter.instance;
@@ -494,15 +502,14 @@ public abstract class FuncBaseCallNode : GroupNode
 
   override public void deinit()
   {
+    var interp = Interpreter.instance;
     deinitChildren(currentPosition, 1);
 
     //NOTE: checking if we need to clean the values stack due to 
     //      non successul execution of the node
     if(currStatus != BHS.SUCCESS)
-    {
-      var interp = Interpreter.instance;
       interp.PopFuncValues(this);
-    }
+    interp.func_stack.DecFast();
   } 
 
   override public string inspect() 
