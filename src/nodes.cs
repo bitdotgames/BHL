@@ -433,8 +433,6 @@ public class SequentialNode_ : SequentialNode
       else
         break;
     } 
-    if(status != BHS.RUNNING)
-      currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
     if(status == BHS.FAILURE)
       status = BHS.SUCCESS;
@@ -1020,8 +1018,6 @@ public class EvalNode : SequentialNode
       else
         break;
     } 
-    if(status != BHS.RUNNING)
-      currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
     if(status != BHS.RUNNING)

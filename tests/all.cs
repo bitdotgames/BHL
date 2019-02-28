@@ -15094,18 +15094,15 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncArgsOnStackUserBind2()
+  public void TestCleanFuncArgsOnStackUserBindInSafeSeq()
   {
     string bhl = @"
     
-    func bar(string s, int a)
-    {
-      hey(foo(), s, a)
-    }
-
     func test() 
     {
-      bar(""bar"", 1)
+      seq_ {
+        hey(1, foo())
+      }
     }
     ";
 
@@ -15121,16 +15118,15 @@ public class BHL_Test
       var fn = new SimpleFuncBindSymbol("hey", globs.type("void"),
           delegate() { return BHS.SUCCESS; } );
       fn.define(new FuncArgSymbol("i", globs.type("int")));
-      fn.define(new FuncArgSymbol("s", globs.type("string")));
       fn.define(new FuncArgSymbol("b", globs.type("int")));
       globs.define(fn);
     }
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
     var res = ExecNode(node, 0);
-    AssertEqual(BHS.FAILURE, res.status);
+    AssertEqual(BHS.SUCCESS, res.status);
+    //NodeDump(node);
     CommonChecks(intp);
   }
 
