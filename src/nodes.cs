@@ -509,7 +509,7 @@ public abstract class FuncBaseCallNode : GroupNode
 
   override public string inspect() 
   {
-    return "" + ast.Name();
+    return "" + (ast != null ? ast.Name() : "");
   }
 }
 

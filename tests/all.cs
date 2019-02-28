@@ -15094,6 +15094,47 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStackUserBind2()
+  {
+    string bhl = @"
+    
+    func bar(string s, int a)
+    {
+      hey(foo(), s, a)
+    }
+
+    func test() 
+    {
+      bar(""bar"", 1)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
+          delegate() { return BHS.FAILURE; } );
+      globs.define(fn);
+    }
+
+    {
+      var fn = new SimpleFuncBindSymbol("hey", globs.type("void"),
+          delegate() { return BHS.SUCCESS; } );
+      fn.define(new FuncArgSymbol("i", globs.type("int")));
+      fn.define(new FuncArgSymbol("s", globs.type("string")));
+      fn.define(new FuncArgSymbol("b", globs.type("int")));
+      globs.define(fn);
+    }
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    //NodeDump(node);
+    var res = ExecNode(node, 0);
+    AssertEqual(BHS.FAILURE, res.status);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestCleanFuncArgsOnStackInUntilSuccess()
   {
     string bhl = @"
