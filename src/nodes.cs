@@ -454,7 +454,7 @@ public abstract class FuncBaseCallNode : GroupNode
     base.init();
 
     var interp = Interpreter.instance;
-    interp.func_stack.Push(this);
+    interp.func_ctx_stack.Push(this);
   }
 
   override public BHS execute()
@@ -509,7 +509,7 @@ public abstract class FuncBaseCallNode : GroupNode
     //      non successul execution of the node
     if(currStatus != BHS.SUCCESS)
       interp.PopFuncValues(this);
-    interp.func_stack.DecFast();
+    interp.func_ctx_stack.DecFast();
   } 
 
   override public string inspect() 

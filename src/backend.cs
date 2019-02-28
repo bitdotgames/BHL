@@ -76,7 +76,7 @@ public class Interpreter : AST_Visitor
   public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
   //NOTE: this one is used for marking stack values with proper func ctx so that 
   //      dangling stack values can be cleaned up
-  public FastStack<FuncBaseCallNode> func_stack = new FastStack<FuncBaseCallNode>(128);
+  public FastStack<FuncBaseCallNode> func_ctx_stack = new FastStack<FuncBaseCallNode>(128);
   //NOTE: this one is used for marking stack values with proper node ctx, 
   //      this is used in paral nodes where stack values interleaving may happen
   public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(128);
@@ -92,7 +92,7 @@ public class Interpreter : AST_Visitor
     loaded_modules.Clear();
     stack.Clear();
     call_stack.Clear();
-    func_stack.Clear();
+    func_ctx_stack.Clear();
 
     this.symbols = symbols;
     this.module_loader = module_loader;
@@ -359,7 +359,7 @@ public class Interpreter : AST_Visitor
 
     var sv = new StackValue();
     sv.dv = v;
-    sv.func_ctx = func_stack.Count > 0 ? func_stack.Peek() : null; 
+    sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
     sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
 
     stack.Push(sv);
