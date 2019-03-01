@@ -32,13 +32,10 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
 {
   //NOTE: semi-private, public for fast access
   public BHS currStatus; 
-  //TODO: this one is for inspecting purposes only
-  public BHS lastExecuteStatus; 
   
   public BehaviorTreeNode()
   {
     currStatus = BHS.NONE;
-    lastExecuteStatus = currStatus;
   }
 
   public virtual void accept(BehaviorVisitor v)
@@ -53,7 +50,6 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
     if(currStatus != BHS.RUNNING)
       init();
     currStatus = execute();
-    lastExecuteStatus = currStatus;
     if(currStatus != BHS.RUNNING)
       deinit();
     return currStatus;
@@ -69,8 +65,6 @@ public abstract class BehaviorTreeNode : BehaviorVisitable
   }
 
   public virtual string inspect() { return ""; }
-
-  public void resetExecuteStatus() { lastExecuteStatus = currStatus; }
 
   //NOTE: methods below should never be called directly
   // This method will be invoked before the node is executed for the first time.
@@ -233,7 +227,6 @@ public class GroupNode : BehaviorTreeInternalNode
         currentTask.init();
       status = currentTask.execute();
       currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = status;
       if(status != BHS.RUNNING)
         currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -274,7 +267,6 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
       currentTask.init();
     status = currentTask.execute();
     currentTask.currStatus = status;
-    currentTask.lastExecuteStatus = status;
     if(status != BHS.RUNNING)
       currentTask.deinit();
     ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -395,7 +387,6 @@ public class SequentialNode : ScopeNode
         currentTask.init();
       status = currentTask.execute();
       currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = status;
       if(status != BHS.RUNNING)
         currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -424,7 +415,6 @@ public class SequentialNode_ : SequentialNode
         currentTask.init();
       status = currentTask.execute();
       currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = status;
       if(status != BHS.RUNNING)
         currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -444,6 +434,9 @@ public abstract class FuncBaseCallNode : GroupNode
 {
   public AST_Call ast;
 
+  //TODO: this one is for inspecting purposes only
+  public BHS lastExecuteStatus;
+
   public FuncBaseCallNode(AST_Call ast)
   {
     this.ast = ast;
@@ -451,7 +444,7 @@ public abstract class FuncBaseCallNode : GroupNode
 
   override public void init()
   {
-    base.init();
+    currentPosition = 0;
 
     var interp = Interpreter.instance;
     interp.func_ctx_stack.Push(this);
@@ -480,7 +473,6 @@ public abstract class FuncBaseCallNode : GroupNode
         currentTask.init();
       status = currentTask.execute();
       currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = status;
       if(status != BHS.RUNNING)
         currentTask.deinit();
 
@@ -497,6 +489,7 @@ public abstract class FuncBaseCallNode : GroupNode
       currentPosition = 0;
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
+    lastExecuteStatus = status;
     return status;
   }
 
@@ -829,7 +822,6 @@ public class ParallelNode : ScopeNode
           currentTask.init();
         status = currentTask.execute();
         currentTask.currStatus = status;
-        currentTask.lastExecuteStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -881,7 +873,6 @@ public class ParallelAllNode : ScopeNode
           currentTask.init();
         status = currentTask.execute();
         currentTask.currStatus = status;
-        currentTask.lastExecuteStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -926,7 +917,6 @@ public class PriorityNode : ScopeNode
         currentTask.init();
       status = currentTask.execute();
       currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = status;
       if(status != BHS.RUNNING)
         currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -968,7 +958,6 @@ public class PriorityNode : ScopeNode
           currentTask.init();
         status = currentTask.execute();
         currentTask.currStatus = status;
-        currentTask.lastExecuteStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1016,7 +1005,6 @@ public class EvalNode : SequentialNode
         currentTask.init();
       status = currentTask.execute();
       currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = status;
       if(status != BHS.RUNNING)
         currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1064,7 +1052,6 @@ public class ForeverNode : SequentialNode
           currentTask.init();
         status = currentTask.execute();
         currentTask.currStatus = status;
-        currentTask.lastExecuteStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1114,7 +1101,6 @@ public class MonitorSuccessNode : SequentialNode
         currentTask.init();
       status = currentTask.execute();
       currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = status;
       if(status != BHS.RUNNING)
         currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1155,7 +1141,6 @@ public class MonitorFailureNode : SequentialNode
         currentTask.init();
       status = currentTask.execute();
       currentTask.currStatus = status;
-      currentTask.lastExecuteStatus = status;
       if(status != BHS.RUNNING)
         currentTask.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1236,7 +1221,6 @@ public class LogicOpNode : GroupNode
         selected.init();
       BHS status = selected.execute();
       selected.currStatus = status;
-      selected.lastExecuteStatus = selected.currStatus;
       if(selected.currStatus != BHS.RUNNING)
         selected.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -1336,7 +1320,6 @@ public class IfNode : ScopeNode
         selected.init();
       BHS status = selected.execute();
       selected.currStatus = status;
-      selected.lastExecuteStatus = selected.currStatus;
       if(selected.currStatus != BHS.RUNNING)
         selected.deinit();
       ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -2088,7 +2071,6 @@ public class FuncNodeAST : FuncNode
           currentTask.init();
         status = currentTask.execute();
         currentTask.currStatus = status;
-        currentTask.lastExecuteStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
