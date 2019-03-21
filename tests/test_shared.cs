@@ -81,7 +81,6 @@ public class BHL_TestRunner
 {
   public static void Main(string[] args)
   {
-
     Run(args, new BHL_TestNodes());
     Run(args, new BHL_TestInterpreter());
     Run(args, new BHL_TestVM());
