@@ -43,6 +43,31 @@ public class BHL_TestVM : BHL_TestBase
     //CommonChecks(vm);
   }
 
+  byte[] Compile(string bhl)
+  {
+    var ast = Src2AST(bhl);
+    return Compile(ast);
+  }
+
+  byte[] Compile(AST ast)
+  {
+    return null;
+  }
+
+  AST Src2AST(string src, GlobalScope globs = null)
+  {
+    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
+
+    var mreg = new ModuleRegistry();
+    //fake module for this specific case
+    var mod = new bhl.Module("", "");
+    var ms = new MemoryStream();
+    Frontend.Source2Bin(mod, src.ToStream(), ms, globs, mreg);
+    ms.Position = 0;
+
+    return Util.Bin2Meta<AST_Module>(ms);
+  }
+
   void CommonChecks(VM vm)
   {
     //for extra debug
