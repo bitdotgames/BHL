@@ -21,6 +21,8 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var bytecode = Compile(bhl);
+    AssertTrue(bytecode != null);
+    AssertTrue(bytecode.Length > 0);
   }
 
   ///////////////////////////////////////

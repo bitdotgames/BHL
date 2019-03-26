@@ -19,6 +19,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Module ast)
   {
+    VisitChildren(ast);
   }
 
   public override void DoVisit(AST_Import ast)
@@ -27,6 +28,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
+    VisitChildren(ast);
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
@@ -43,6 +45,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Block ast)
   {
+    VisitChildren(ast);
   }
 
   public override void DoVisit(AST_TypeCast ast)
@@ -63,6 +66,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Return node)
   {
+    VisitChildren(node);
   }
 
   public override void DoVisit(AST_Break node)
@@ -75,10 +79,13 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Literal node)
   {
+    Console.WriteLine("LITERAL " + node.nval);
   }
 
   public override void DoVisit(AST_BinaryOpExp node)
   {
+    Console.WriteLine("BIN OP " + node.type);
+    VisitChildren(node);
   }
 
   public override void DoVisit(AST_UnaryOpExp node)
