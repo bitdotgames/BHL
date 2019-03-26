@@ -11,38 +11,19 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
-  public void TestCompile()
+  public void TestCompileSimpleExpression()
   {
-    //string bhl = @"
-    //  
-    //func int test() 
-    //{
-    //  return 100
-    //}
-    //";
+    string bhl = @"
+    func int test() 
+    {
+      return 1 + 2
+    }
+    ";
 
-    //var bc = Compile(bhl);
+    var bytecode = Compile(bhl);
   }
 
-  [IsTested()]
-  public void TestReturnNum()
-  {
-    //string bhl = @"
-    //  
-    //func int test() 
-    //{
-    //  return 100
-    //}
-    //";
-
-    //var vm = Compile(bhl);
-    //var node = vm.GetFuncCallNode("test");
-    //var n = ExtractNum(ExecNode(node));
-
-    //AssertEqual(n, 100);
-    //CommonChecks(vm);
-  }
-
+  ///////////////////////////////////////
   byte[] Compile(string bhl)
   {
     var ast = Src2AST(bhl);
@@ -51,7 +32,8 @@ public class BHL_TestVM : BHL_TestBase
 
   byte[] Compile(AST ast)
   {
-    return null;
+    var c = new Compiler();
+    return c.Compile(ast);
   }
 
   AST Src2AST(string src, GlobalScope globs = null)
