@@ -521,7 +521,7 @@ public static class MetaHelper
     syncEndArray(ctx, ref v);
   }
 
-  static public void syncVirtual<T>(MetaSyncContext ctx, ref T v) where T : IMetaStruct
+  static public void syncVirtual(MetaSyncContext ctx, ref IMetaStruct v)
   {
     if(ctx.is_read)
     {
@@ -531,7 +531,7 @@ public static class MetaHelper
       ensure(ctx.reader.ReadU32(ref clid));
       
       //TODO: why CreateById uses int ? 
-      v = (T)CreateById((int)clid);
+      v = CreateById((int)clid);
       if(v == null) 
       {
         LogError("Could not create struct: " + clid);
@@ -555,10 +555,10 @@ public static class MetaHelper
     int size = syncBeginArray(ctx, ref v);
     for(int i = 0; i < size; ++i)
     {
-      var tmp = ctx.is_read ? new T() : v[i];
+      var tmp = (IMetaStruct)(ctx.is_read ? new T() : v[i]);
       syncVirtual(ctx, ref tmp);
       if(ctx.is_read)
-        v.Add(tmp);
+        v.Add((T)tmp);
     }
     syncEndArray(ctx, ref v);
   }

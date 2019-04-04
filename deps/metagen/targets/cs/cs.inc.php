@@ -253,9 +253,9 @@ class mtgCSCodegen extends mtgCodegen
     else if($type instanceof mtgArrType)
     {
       if(array_key_exists('virtual', $tokens))
-        $str .= "MetaHelper.syncVirtual({$buf}, ref $fname);\n";
+        $str .= "MetaHelper.syncVirtual({$buf}, ref {$fname});\n";
       else
-        $str .= "MetaHelper.sync({$buf}, ref $fname);\n";
+        $str .= "MetaHelper.sync({$buf}, ref {$fname});\n";
     }
     else
       throw new Exception("Unknown type '$type'");
