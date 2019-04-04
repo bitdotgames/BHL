@@ -322,7 +322,7 @@ public static class MetaHelper
       ensure(ctx.writer.WriteDouble(v));
   }
 
-  static int syncBeginArray<T>(MetaSyncContext ctx, ref List<T> v)
+  static int syncBeginArray<T>(MetaSyncContext ctx, List<T> v)
   {
     if(ctx.is_read)
     {
@@ -344,7 +344,7 @@ public static class MetaHelper
     }
   }
 
-  static void syncEndArray<T>(MetaSyncContext ctx, ref List<T> v)
+  static void syncEndArray(MetaSyncContext ctx, IList v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.EndArray());
@@ -352,9 +352,23 @@ public static class MetaHelper
       ensure(ctx.writer.EndArray());
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<string> v)
+  //TODO: this one should be used for all builtin types
+  //static public void sync<T>(MetaSyncContext ctx, List<T> v) where T : struct
+  //{
+  //  int size = syncBeginArray(ctx, v);
+  //  for(int i = 0; i < size; ++i)
+  //  {
+  //    var tmp = ctx.is_read ? default(T) : v[i];
+  //    sync(ctx, ref tmp);
+  //    if(ctx.is_read)
+  //      v.Add(tmp);
+  //  }
+  //  syncEndArray(ctx, v);
+  //}
+
+  static public void sync(MetaSyncContext ctx, List<string> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? "" : v[i];
@@ -362,12 +376,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<long> v)
+  static public void sync(MetaSyncContext ctx, List<long> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(long) : v[i];
@@ -375,12 +389,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<int> v)
+  static public void sync(MetaSyncContext ctx, List<int> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(int) : v[i];
@@ -388,12 +402,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<short> v)
+  static public void sync(MetaSyncContext ctx, List<short> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(short) : v[i];
@@ -401,12 +415,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<sbyte> v)
+  static public void sync(MetaSyncContext ctx, List<sbyte> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(sbyte) : v[i];
@@ -414,12 +428,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<ulong> v)
+  static public void sync(MetaSyncContext ctx, List<ulong> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(ulong) : v[i];
@@ -427,12 +441,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<uint> v)
+  static public void sync(MetaSyncContext ctx, List<uint> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(uint) : v[i];
@@ -440,12 +454,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<ushort> v)
+  static public void sync(MetaSyncContext ctx, List<ushort> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(ushort) : v[i];
@@ -453,12 +467,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<byte> v)
+  static public void sync(MetaSyncContext ctx, List<byte> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(byte) : v[i];
@@ -466,12 +480,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<bool> v)
+  static public void sync(MetaSyncContext ctx, List<bool> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(bool) : v[i];
@@ -479,12 +493,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<float> v)
+  static public void sync(MetaSyncContext ctx, List<float> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(float) : v[i];
@@ -492,12 +506,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, ref List<double> v)
+  static public void sync(MetaSyncContext ctx, List<double> v)
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(double) : v[i];
@@ -505,12 +519,12 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
   
-  static public void sync<T>(MetaSyncContext ctx, ref List<T> v) where T : IMetaStruct, new()
+  static public void sync<T>(MetaSyncContext ctx, List<T> v) where T : IMetaStruct, new()
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? new T() : v[i];
@@ -518,7 +532,7 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
   static public void syncVirtual(MetaSyncContext ctx, ref IMetaStruct v)
@@ -550,9 +564,9 @@ public static class MetaHelper
     }
   }
 
-  static public void syncVirtual<T>(MetaSyncContext ctx, ref List<T> v) where T : IMetaStruct, new()
+  static public void syncVirtual<T>(MetaSyncContext ctx, List<T> v) where T : IMetaStruct, new()
   {
-    int size = syncBeginArray(ctx, ref v);
+    int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = (IMetaStruct)(ctx.is_read ? new T() : v[i]);
@@ -560,7 +574,7 @@ public static class MetaHelper
       if(ctx.is_read)
         v.Add((T)tmp);
     }
-    syncEndArray(ctx, ref v);
+    syncEndArray(ctx, v);
   }
 
   static public void sync<T>(MetaSyncContext ctx, ref T v) where T : IMetaStruct
