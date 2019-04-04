@@ -63,14 +63,8 @@ public struct MetaSyncContext
 public interface IMetaStruct 
 {
   uint CLASS_ID();
-
   int getFieldsCount();
-
   void syncFields(MetaSyncContext ctx);
-
-  void copy(IMetaStruct source);
-  IMetaStruct clone();
-
   void reset();
 }
 
@@ -79,9 +73,6 @@ public abstract class BaseMetaStruct : IMetaStruct
   public virtual uint CLASS_ID() { return 0; }
 
   public virtual int getFieldsCount() { return 0; }
-
-  public virtual void copy(IMetaStruct source) {}
-  public virtual IMetaStruct clone() { return null; }
 
   public virtual void reset() {}
 
@@ -102,46 +93,6 @@ public abstract class BaseMetaStruct : IMetaStruct
   }
 
   public virtual void syncFields(MetaSyncContext ctx) {}
-}
-
-public interface IRpcError
-{
-  bool isOk();
-  int getServerError();
-}
-
-public interface IRpc
-{
-  int getCode();
-  IMetaStruct getRequest();
-  IMetaStruct getResponse();
-  IRpcError getError();
-  void setError(IRpcError err);
-}
-
-public static class MetagenExtensions
-{
-  static public bool isDone(this IRpc r)
-  {
-    return r.getError() != null;
-  }
-
-  static public bool isSuccess(this IRpc r)
-  {
-    return r.getError() == null || r.getError().isOk();
-  }
-
-  static public bool isFailed(this IRpc r)
-  {
-    return r.isDone() && !r.isSuccess();
-  }
-
-  static public void reset(this IRpc r) 
-  {
-    r.setError(null);
-    r.getRequest().reset();
-    r.getResponse().reset();
-  }
 }
 
 public interface IDataReader 

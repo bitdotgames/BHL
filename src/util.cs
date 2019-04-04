@@ -346,17 +346,17 @@ static public class Util
     }
   }
 
-  static MetaHelper.CreateByIdCb prev_create_by_id; 
+  static MetaHelper.CreateByIdCb prev_create_factory; 
 
   static public void SetupASTFactory()
   {
-    prev_create_by_id = MetaHelper.CreateById;
-    MetaHelper.CreateById = AutogenBundle.createById;
+    prev_create_factory = MetaHelper.CreateById;
+    MetaHelper.CreateById = AST_Factory.createById;
   }
 
   static public void RestoreASTFactory()
   {
-    MetaHelper.CreateById = prev_create_by_id;
+    MetaHelper.CreateById = prev_create_factory;
   }
 
   static public T Bin2Meta<T>(Stream s) where T : IMetaStruct, new()
