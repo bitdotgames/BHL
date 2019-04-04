@@ -56,6 +56,8 @@ function task_clean()
 {
   global $BHL_ROOT;
 
+  ensure_rm("$BHL_ROOT/src/autogen.cs");
+
   foreach(glob("$BHL_ROOT/bhl_*.dll") as $dll)
   {
     ensure_rm($dll);
