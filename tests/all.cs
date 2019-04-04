@@ -19586,7 +19586,7 @@ public class BHL_TestRunner
     {
       if(IsMemberTested(method))
       {
-        Util.SetupAutogenFactory();
+        Util.SetupASTFactory();
         if(IsAllowedToRun(args, method))
         {
           ++c;

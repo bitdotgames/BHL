@@ -6,9 +6,6 @@ require_once($BHL_ROOT . '/deps/helpers.inc.php');
 
 taskman_run($argv);
 
-/**
- * @deps genmeta
- */
 function task_build_front_dll()
 {
   global $BHL_ROOT;
@@ -16,7 +13,7 @@ function task_build_front_dll()
   mcs_build(array(
     "$BHL_ROOT/deps/msgpack/Compiler/*.cs",
     "$BHL_ROOT/deps/msgpack/*.cs",
-    "$BHL_ROOT/deps/metagen/metagen.cs",
+    "$BHL_ROOT/deps/metagen.cs",
     "$BHL_ROOT/src/g/*.cs",
     "$BHL_ROOT/src/*.cs",
     "$BHL_ROOT/Antlr4.Runtime.Standard.dll", 
@@ -38,7 +35,7 @@ function task_build_back_dll(array $args)
   mcs_build(array(
     "$BHL_ROOT/deps/msgpack/Compiler/*.cs",
     "$BHL_ROOT/deps/msgpack/*.cs",
-    "$BHL_ROOT/deps/metagen/metagen.cs",
+    "$BHL_ROOT/deps/metagen.cs",
     "$BHL_ROOT/src/autogen.cs", 
     "$BHL_ROOT/src/symbol.cs", 
     "$BHL_ROOT/src/scope.cs", 
@@ -73,7 +70,7 @@ function task_clean()
 }
 
 /**
- * @deps genmeta,geng
+ * @deps geng
  */
 function task_regen()
 {}
@@ -247,26 +244,6 @@ function mono_run($exe, array $args = array(), $opts = '')
   $cmd = cli_path(mono_bin()) . " $opts $exe " . implode(' ', $args);
   //var_dump($cmd);
   taskman_shell_ensure($cmd);
-}
-
-function task_genmeta()
-{
-  global $BHL_ROOT;
-
-  include_once("$BHL_ROOT/deps/metagen/metagen.inc.php");
-  include_once("$BHL_ROOT/deps/metagen/targets/cs/cs_generator.inc.php");
-
-  $meta = bhl\mtg_parse_meta(array($BHL_ROOT));
-
-  $codegen = new bhl\mtgCsCodegen();
-  $codegen->namespace = 'bhl';
-
-  bhl\mtg_run(new bhl\mtgCsGenerator(), array( 
-    "codegen" => $codegen,
-    "meta" => $meta,
-    "out-dir" => "$BHL_ROOT/autogen" , 
-    "bundle" => "$BHL_ROOT/src/autogen.cs", 
-  ));
 }
 
 function task_ast_dump(array $args)

@@ -185,7 +185,7 @@ public interface IDataWriter
 
 public static class MetaHelper 
 {
-  public delegate IMetaStruct CreateByIdCb(int id); 
+  public delegate IMetaStruct CreateByIdCb(uint id); 
   static public CreateByIdCb CreateById;
 
   public delegate string L_TCb(string text);
@@ -544,8 +544,7 @@ public static class MetaHelper
       uint clid = 0;
       ensure(ctx.reader.ReadU32(ref clid));
       
-      //TODO: why CreateById uses int ? 
-      v = CreateById((int)clid);
+      v = CreateById(clid);
       if(v == null) 
       {
         LogError("Could not create struct: " + clid);
