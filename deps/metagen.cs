@@ -139,36 +139,12 @@ public static class MetaHelper
   public delegate IMetaStruct CreateByIdCb(uint id); 
   static public CreateByIdCb CreateById;
 
-  public delegate string L_TCb(string text);
-  static public L_TCb L_T;
+  public delegate void LogCb(string text);
+  static public LogCb LogError = DefaultLog;
+  static public LogCb LogWarn = DefaultLog;
+  static public LogCb LogDebug = DefaultLog;
 
-  public delegate string L_FromListCb(IList<string> list);
-  static public L_FromListCb L_FromList;
-
-  public delegate string L_PFromListCb(IList<string> list, double force_n = double.NaN);
-  static public L_PFromListCb L_Pluralize;
-
-  public delegate bool L_PListCheckCb(IList<string> list, string plural_mark);
-  static public L_PListCheckCb L_IsPlural;
-
-  public delegate void LogWarnCb(string text);
-  static public LogWarnCb LogWarn = DefaultWarn;
-
-  public delegate void LogErrorCb(string text);
-  static public LogErrorCb LogError = DefaultError;
-
-  public delegate void LogDebugCb(string text);
-  static public LogDebugCb LogDebug = DefaultDebug;
-
-  static void DefaultError(string s)
-  {
-    throw new Exception(s);
-  }
-
-  static void DefaultWarn(string s)
-  {}
-
-  static void DefaultDebug(string s)
+  static void DefaultLog(string s)
   {}
 
   static public void ensure(MetaIoError err)
@@ -551,10 +527,12 @@ public static class MetaHelper
     }
     catch(MetaException e)
     {
+      LogError(e.Message + " " + e.StackTrace);
       return e.err;
     }
-    catch(Exception)
+    catch(Exception e)
     {
+      LogError(e.Message + " " + e.StackTrace);
       return MetaIoError.GENERIC;
     }
     return MetaIoError.SUCCESS;
