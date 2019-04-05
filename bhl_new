@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mcs bhl_new.cs -out:bhl_new.exe && mono bhl_new.exe $*
