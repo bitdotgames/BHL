@@ -10,18 +10,6 @@ using System.Text;
 
 public static class Tasks
 {
-  public static string BHL_ROOT {
-    get {
-      return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-    }
-  }
-
-  public static bool IsWin {
-    get {
-      return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-    }
-  }
-
   [Task()]
   public static void build_front_dll(Taskman tm, string[] args)
   {
@@ -66,21 +54,44 @@ public static class Tasks
     );
   }
 
+  [Task()]
+  public static void clean(Taskman tm, string[] args)
+  {
+    tm.Rm("$BHL_ROOT/src/autogen.cs");
+
+    foreach(var dll in tm.Glob($"{BHL_ROOT}/bhl_*.dll"))
+    {
+      tm.Rm(dll);
+      tm.Rm($"{dll}.mdb");
+    }
+
+    foreach(var exe in tm.Glob($"{BHL_ROOT}/*.exe"))
+    {
+      tm.Rm(exe);
+      tm.Rm($"{exe}.mdb");
+    }
+  }
+
+  /////////////////////////////////////////////////
+
+  public static string BHL_ROOT {
+    get {
+      return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+    }
+  }
+
+  public static bool IsWin {
+    get {
+      return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    }
+  }
+
+
   public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "", string binary = "mcs")
   {
     var files = new List<string>();
     foreach(var s in srcs)
-    {
-      int idx = s.IndexOf('*');
-      if(idx != -1)
-      {
-        string dir = Path.GetDirectoryName(s);
-        string mask = s.Substring(idx);
-        files.AddRange(Directory.GetFiles(dir, mask));
-      }
-      else
-        files.Add(s);
-    }
+      files.AddRange(tm.Glob(s));
 
     foreach(var f in files)
       if(!File.Exists(f))
@@ -102,12 +113,12 @@ public static class Tasks
     uint cmd_hash = Hash.CRC32(cmd);
     string cmd_hash_file = $"{BHL_ROOT}/build/" + Hash.CRC32(result) + ".mhash";
     if(!File.Exists(cmd_hash_file) || File.ReadAllText(cmd_hash_file) != cmd_hash.ToString()) 
-      tm.EnsureWrite(cmd_hash_file, cmd_hash.ToString());
+      tm.Write(cmd_hash_file, cmd_hash.ToString());
 
     files.Add(cmd_hash_file);
 
     if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
-      tm.ShellEnsure(cmd);
+      tm.Shell(cmd);
   }
 
   public static string CLIPath(string p)
@@ -196,7 +207,7 @@ public class Taskman
     Console.WriteLine(s);
   }
 
-  public void ShellEnsure(string cmd)
+  public void Shell(string cmd)
   {
     Echo($"shell: {cmd}");
 
@@ -236,7 +247,30 @@ public class Taskman
     }
   }
 
-  public void EnsureWrite(string path, string text)
+  public string[] Glob(string s)
+  {
+    var files = new List<string>();
+    int idx = s.IndexOf('*');
+    if(idx != -1)
+    {
+      string dir = Path.GetDirectoryName(s);
+      string mask = s.Substring(idx);
+      files.AddRange(Directory.GetFiles(dir, mask));
+    }
+    else
+      files.Add(s);
+    return files.ToArray();
+  }
+
+  public void Rm(string path)
+  {
+    if(Directory.Exists(path))
+      Directory.Delete(path, true);
+    else
+      File.Delete(path);
+  }
+
+  public void Write(string path, string text)
   {
     if(!Directory.Exists(Path.GetDirectoryName(path)))
       Directory.CreateDirectory(Path.GetDirectoryName(path));
