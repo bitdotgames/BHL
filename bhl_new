@@ -1,3 +1,12 @@
 #!/bin/bash
 
-mcs bhl_new.cs -debug -out:bhl_new.exe && mono --debug bhl_new.exe $*
+set -e
+
+SRC=bhl_new.cs
+EXE=bhl_new.exe
+
+if [ $EXE -ot $SRC ]; then 
+  mcs $SRC -debug -out:$EXE
+fi
+
+mono --debug $EXE $*
