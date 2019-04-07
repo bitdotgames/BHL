@@ -6,7 +6,7 @@ SRC=bhl_new.cs
 EXE=bhl_new.exe
 
 if [ $EXE -ot $SRC ]; then 
-  mcs $SRC -debug -out:$EXE
+  mcs $SRC -debug -r:mono_opts.dll -out:$EXE
 fi
 
 mono --debug $EXE $*

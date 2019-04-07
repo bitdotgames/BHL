@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using Mono.Options;
 
 public static class Tasks
 {
@@ -90,9 +91,12 @@ public static class Tasks
   [Task(deps: "build_front_dll")]
   public static void run(Taskman tm, string[] args)
   {
-    var runtime_args = new List<string>();
-    runtime_args.AddRange(args);
-    var bin = BuildBin(tm, ref runtime_args);
+    List<string> postproc_sources;
+    List<string> user_sources;
+
+    var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
+
+    var bin = BuildBin(tm, user_sources, postproc_sources, ref runtime_args);
     MonoRun(tm, bin, runtime_args.ToArray(), "--debug");
   }
 
@@ -100,7 +104,7 @@ public static class Tasks
   public static void build(Taskman tm, string[] args)
   {
     var runtime_args = new List<string>();
-    BuildBin(tm, ref runtime_args);
+    BuildBin(tm, new List<string>(), new List<string>(), ref runtime_args);
   }
 
   [Task(deps: "build_front_dll")]
@@ -133,7 +137,26 @@ public static class Tasks
     }
   }
 
-  public static string BuildBin(Taskman tm, ref List<string> runtime_args)
+  public static List<string> ExtractBinArgs(string[] args, out List<string> user_sources, out List<string> postproc_sources)
+  {
+    var _postproc_sources = new List<string>();
+    var _user_sources = new List<string>(); 
+
+    var p = new OptionSet() {
+      { "postproc-sources=", "Postprocessing sources",
+        v => _postproc_sources.AddRange(v.Split(",")) },
+      { "user-sources=", "User sources",
+        v => _user_sources.AddRange(v.Split(",")) },
+     };
+
+    postproc_sources = _postproc_sources;
+    user_sources = _user_sources;
+
+    var left = p.Parse(args);
+    return left;
+  }
+
+  public static string BuildBin(Taskman tm, List<string> user_sources, List<string> postproc_sources, ref List<string> runtime_args)
   {
     var sources = new string[] {
       $"{BHL_ROOT}/bhl.cs",
@@ -142,29 +165,31 @@ public static class Tasks
       $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
     };
 
-    //if(taskman_propor('USER_SOURCES', ''))
-    //{
+    if(user_sources.Count > 0)
+    {
     //  $user_sources = explode(',', taskman_prop('USER_SOURCES', ''));
-    //  $user_sources[] = $"{BHL_ROOT}/bhl_front.dll";
-    //  $user_sources[] = $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"; 
-    //  mcs_build($user_sources,
-    //    $"{BHL_ROOT}/bhl_user.dll",
-    //    "-define:BHL_FRONT -debug -target:library"
-    //  );
-    //  $runtime_args[] = "--bindings_dll=$BHL_ROOT/bhl_user.dll";
-    //}
+      user_sources.Add($"{BHL_ROOT}/bhl_front.dll");
+      user_sources.Add($"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"); 
+      MCSBuild(tm, 
+        user_sources.ToArray(),
+        $"{BHL_ROOT}/bhl_user.dll",
+        "-define:BHL_FRONT -debug -target:library"
+      );
+      runtime_args.Add($"--bindings_dll={BHL_ROOT}/bhl_user.dll");
+    }
 
-    //if(taskman_propor('POSTPROC_SOURCES', ''))
-    //{
+    if(postproc_sources.Count > 0)
+    {
     //  $postproc_sources = explode(',', taskman_prop('POSTPROC_SOURCES', ''));
-    //  $postproc_sources[] = $"{BHL_ROOT}/bhl_front.dll";
-    //  $postproc_sources[] = $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"; 
-    //  mcs_build($postproc_sources,
-    //    $"{BHL_ROOT}/bhl_postproc.dll",
-    //    "-define:BHL_FRONT -debug -target:library"
-    //  );
-    //  $runtime_args[] = "--postproc_dll=$BHL_ROOT/bhl_postproc.dll";
-    //}
+      postproc_sources.Add($"{BHL_ROOT}/bhl_front.dll");
+      postproc_sources.Add($"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"); 
+      MCSBuild(tm, 
+        postproc_sources.ToArray(),
+        $"{BHL_ROOT}/bhl_postproc.dll",
+        "-define:BHL_FRONT -debug -target:library"
+      );
+      runtime_args.Add($"--postproc_dll={BHL_ROOT}/bhl_postproc.dll");
+    }
 
     MCSBuild(tm, sources, $"{BHL_ROOT}/bhl.exe", "-define:BHL_FRONT -debug");
 
@@ -196,6 +221,9 @@ public static class Tasks
         files.RemoveAt(i);
       }
     }
+
+    if(files.Count == 0)
+      throw new Exception("No files");
 
     string args = (refs.Count > 0 ? " -r:" + String.Join(" -r:", refs.Select(r => CLIPath(r))) : "") + $" {opts} -out:{CLIPath(result)} " + String.Join(" ", files.Select(f => CLIPath(f)));
     string cmd = binary + " " + args; 
