@@ -23,7 +23,7 @@ public static class Tasks
   }
 
   [Task()]
-  public static void build_front_dll(Taskman tm)
+  public static void build_front_dll(Taskman tm, string[] args)
   {
     MCSBuild(tm, new string[] {
       $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
@@ -39,7 +39,34 @@ public static class Tasks
     );
   }
 
-  public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "")
+  [Task()]
+  public static void build_back_dll(Taskman tm, string[] args)
+  {
+    var mcs_bin = args.Length > 0 ? args[0] : "/Applications/Unity/Unity.app/Contents/Frameworks/Mono/bin/gmcs"; 
+    var dll_file = args.Length > 1 ? args[1] : $"{BHL_ROOT}/bhl_back.dll";
+    var extra_args = args.Length > 2 ? args[2] : "-debug";
+
+    MCSBuild(tm, new string[] {
+      $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
+      $"{BHL_ROOT}/deps/msgpack/*.cs",
+      $"{BHL_ROOT}/deps/metagen.cs",
+      $"{BHL_ROOT}/src/ast.cs", 
+      $"{BHL_ROOT}/src/symbol.cs", 
+      $"{BHL_ROOT}/src/scope.cs", 
+      $"{BHL_ROOT}/src/backend.cs", 
+      $"{BHL_ROOT}/src/loader.cs", 
+      $"{BHL_ROOT}/src/storage.cs", 
+      $"{BHL_ROOT}/src/nodes.cs", 
+      $"{BHL_ROOT}/src/util.cs",
+      $"{BHL_ROOT}/src/lz4.cs",
+     }, 
+      dll_file,
+      $"{extra_args} -target:library",
+      mcs_bin
+    );
+  }
+
+  public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "", string binary = "mcs")
   {
     var files = new List<string>();
     foreach(var s in srcs)
@@ -69,7 +96,6 @@ public static class Tasks
       }
     }
 
-    string binary = "mcs";
     string args = (refs.Count > 0 ? " -r:" + String.Join(" -r:", refs.Select(r => CLIPath(r))) : "") + $" {opts} -out:{CLIPath(result)} " + String.Join(" ", files.Select(f => CLIPath(f)));
     string cmd = binary + " " + args; 
 
@@ -143,10 +169,14 @@ public class Taskman
     if(task == null)
       return;
 
+    var task_args = new string[args.Length-1];
+    for(int i=1;i<args.Length;++i)
+      task_args[i-1] = args[i];
+
     Echo($"************************ Running task '{task.Name}' ************************");
     var sw = new Stopwatch();
     sw.Start();
-    task.Invoke(null, new object[] { this });
+    task.Invoke(null, new object[] { this, task_args });
     var elapsed = Math.Round(sw.ElapsedMilliseconds/1000.0f,2);
     Echo($"************************ '{task.Name}' done({elapsed} sec.)  ************************");
   }
@@ -176,7 +206,34 @@ public class Taskman
 
     string binary = cmd.Substring(0, idx);
     string args = cmd.Substring(idx);
-    Process.Start(binary, args);
+
+    var p = new System.Diagnostics.Process();
+    p.StartInfo.FileName = binary;
+    p.StartInfo.Arguments = args;
+    p.StartInfo.UseShellExecute = false;
+    p.StartInfo.RedirectStandardOutput = true;
+    p.StartInfo.RedirectStandardError = true;
+
+    p.Start();
+
+    var lines = p.StandardOutput.ReadToEnd().Split(new [] { '\r', '\n' });
+    foreach(string line in lines)
+    {
+      if(line != "")
+        Echo(line);
+    }
+
+    p.WaitForExit();
+    if(p.ExitCode != 0)
+    {
+      lines = p.StandardError.ReadToEnd().Split(new [] { '\r', '\n' });
+      foreach(string line in lines)
+      {
+        if(line != "")
+          Echo(line);
+      }
+      throw new Exception("$Error exit code: {p.ExitCode}");
+    }
   }
 
   public void EnsureWrite(string path, string text)
