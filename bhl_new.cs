@@ -93,7 +93,6 @@ public static class Tasks
   {
     List<string> postproc_sources;
     List<string> user_sources;
-
     var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
 
     var bin = BuildBin(tm, user_sources, postproc_sources, ref runtime_args);
@@ -103,8 +102,10 @@ public static class Tasks
   [Task(deps: "build_front_dll")]
   public static void build(Taskman tm, string[] args)
   {
-    var runtime_args = new List<string>();
-    BuildBin(tm, new List<string>(), new List<string>(), ref runtime_args);
+    List<string> postproc_sources;
+    List<string> user_sources;
+    var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
+    BuildBin(tm, user_sources, postproc_sources, ref runtime_args);
   }
 
   [Task(deps: "build_front_dll")]
