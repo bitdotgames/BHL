@@ -57,7 +57,7 @@ public static class Tasks
   [Task()]
   public static void clean(Taskman tm, string[] args)
   {
-    tm.Rm("$BHL_ROOT/src/autogen.cs");
+    tm.Rm($"{BHL_ROOT}/src/autogen.cs");
 
     foreach(var dll in tm.Glob($"{BHL_ROOT}/bhl_*.dll"))
     {
@@ -70,6 +70,53 @@ public static class Tasks
       tm.Rm(exe);
       tm.Rm($"{exe}.mdb");
     }
+  }
+
+  [Task(deps: "geng")]
+  public static void regen(Taskman tm, string[] args)
+  {}
+
+  [Task()]
+  public static void geng(Taskman tm, string[] args)
+  {
+    tm.Mkdir($"{BHL_ROOT}/tmp");
+
+    tm.Copy($"{BHL_ROOT}/bhl.g", $"{BHL_ROOT}/tmp/bhl.g");
+    tm.Copy($"{BHL_ROOT}/bin/g4sharp", $"{BHL_ROOT}/tmp/g4sharp");
+
+    tm.Shell($"cd {BHL_ROOT}/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/ ");
+  }
+
+  [Task(deps: "build_front_dll")]
+  public static void run(Taskman tm, string[] args)
+  {
+    var runtime_args = new List<string>();
+    runtime_args.AddRange(args);
+    var bin = BuildBin(tm, ref runtime_args);
+    MonoRun(tm, bin, runtime_args.ToArray(), "--debug");
+  }
+
+  [Task(deps: "build_front_dll")]
+  public static void build(Taskman tm, string[] args)
+  {
+    var runtime_args = new List<string>();
+    BuildBin(tm, ref runtime_args);
+  }
+
+  [Task(deps: "build_front_dll")]
+  public static void test(Taskman tm, string[] args)
+  {
+    MCSBuild(tm, 
+     new string[] {
+        $"{BHL_ROOT}/tests/*.cs",
+        $"{BHL_ROOT}/bhl_front.dll",
+        $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
+      },
+      $"{BHL_ROOT}/test.exe",
+      "-define:BHL_FRONT -debug"
+    );
+
+    MonoRun(tm, $"{BHL_ROOT}/test.exe", args, "--debug ");
   }
 
   /////////////////////////////////////////////////
@@ -86,6 +133,49 @@ public static class Tasks
     }
   }
 
+  public static string BuildBin(Taskman tm, ref List<string> runtime_args)
+  {
+    var sources = new string[] {
+      $"{BHL_ROOT}/bhl.cs",
+      $"{BHL_ROOT}/bhl_front.dll", 
+      $"{BHL_ROOT}/mono_opts.dll",
+      $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
+    };
+
+    //if(taskman_propor('USER_SOURCES', ''))
+    //{
+    //  $user_sources = explode(',', taskman_prop('USER_SOURCES', ''));
+    //  $user_sources[] = $"{BHL_ROOT}/bhl_front.dll";
+    //  $user_sources[] = $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"; 
+    //  mcs_build($user_sources,
+    //    $"{BHL_ROOT}/bhl_user.dll",
+    //    "-define:BHL_FRONT -debug -target:library"
+    //  );
+    //  $runtime_args[] = "--bindings_dll=$BHL_ROOT/bhl_user.dll";
+    //}
+
+    //if(taskman_propor('POSTPROC_SOURCES', ''))
+    //{
+    //  $postproc_sources = explode(',', taskman_prop('POSTPROC_SOURCES', ''));
+    //  $postproc_sources[] = $"{BHL_ROOT}/bhl_front.dll";
+    //  $postproc_sources[] = $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"; 
+    //  mcs_build($postproc_sources,
+    //    $"{BHL_ROOT}/bhl_postproc.dll",
+    //    "-define:BHL_FRONT -debug -target:library"
+    //  );
+    //  $runtime_args[] = "--postproc_dll=$BHL_ROOT/bhl_postproc.dll";
+    //}
+
+    MCSBuild(tm, sources, $"{BHL_ROOT}/bhl.exe", "-define:BHL_FRONT -debug");
+
+    return $"{BHL_ROOT}/bhl.exe";
+  }
+
+  public static void MonoRun(Taskman tm, string exe, string[] args = null, string opts = "")
+  {
+    var cmd = $"mono {opts} {exe} " + String.Join(" ", args);
+    tm.Shell(cmd);
+  }
 
   public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "", string binary = "mcs")
   {
@@ -147,25 +237,57 @@ public static class BHL
 
 public class Taskman
 {
-  List<MethodInfo> tasks = new List<MethodInfo>();
+  public class Task
+  {
+    public TaskAttribute attr;
+    public MethodInfo func;
+
+    public string Name {
+      get {
+        return func.Name;
+      }
+    }
+
+    public List<Task> Deps = new List<Task>();
+  }
+
+  List<Task> tasks = new List<Task>();
+  HashSet<Task> invoked = new HashSet<Task>();
 
   public Taskman(Type tasks_class)
   {
     foreach(var method in tasks_class.GetMethods())
     {
-      if(IsTask(method))
-        tasks.Add(method);
+      var attr = GetAttribute<TaskAttribute>(method);
+      if(attr == null)
+        continue;
+      var task = new Task() {
+        attr = attr,
+        func = method
+      };
+      tasks.Add(task);
+    }
+
+    foreach(var task in tasks)
+    {
+      foreach(var dep_name in task.attr.deps)
+      {
+        var dep = FindTask(dep_name);
+        if(dep == null)
+          throw new Exception($"No such dependency '{dep_name}' for task '{task.Name}'");
+        task.Deps.Add(dep);
+      }
     }
   }
 
-  static bool IsTask(MemberInfo member)
+  static T GetAttribute<T>(MemberInfo member) where T : Attribute
   {
     foreach(var attribute in member.GetCustomAttributes(true))
     {
       if(attribute is TaskAttribute)
-        return true;
+        return (T)attribute;
     }
-    return false;
+    return null;
   }
 
   public void Run(string[] args)
@@ -184,15 +306,27 @@ public class Taskman
     for(int i=1;i<args.Length;++i)
       task_args[i-1] = args[i];
 
+    Invoke(task, task_args);
+  }
+
+  public void Invoke(Task task, string[] task_args)
+  {
+    if(invoked.Contains(task))
+      return;
+    invoked.Add(task);
+
+    foreach(var dep in task.Deps)
+      Invoke(dep, new string[] {});
+
     Echo($"************************ Running task '{task.Name}' ************************");
     var sw = new Stopwatch();
     sw.Start();
-    task.Invoke(null, new object[] { this, task_args });
+    task.func.Invoke(null, new object[] { this, task_args });
     var elapsed = Math.Round(sw.ElapsedMilliseconds/1000.0f,2);
     Echo($"************************ '{task.Name}' done({elapsed} sec.)  ************************");
   }
 
-  public MethodInfo FindTask(string name)
+  public Task FindTask(string name)
   {
     foreach(var t in tasks)
     {
@@ -205,6 +339,20 @@ public class Taskman
   public void Echo(string s)
   {
     Console.WriteLine(s);
+  }
+
+  public void Mkdir(string path)
+  {
+    if(!Directory.Exists(path))
+      Directory.CreateDirectory(path);
+  }
+
+  public void Copy(string src, string dst)
+  {
+    if(File.Exists(dst))
+      File.Delete(dst);
+    Mkdir(Path.GetDirectoryName(dst));
+    File.Copy(src, dst);
   }
 
   public void Shell(string cmd)
@@ -272,8 +420,7 @@ public class Taskman
 
   public void Write(string path, string text)
   {
-    if(!Directory.Exists(Path.GetDirectoryName(path)))
-      Directory.CreateDirectory(Path.GetDirectoryName(path));
+    Mkdir(Path.GetDirectoryName(path));
     File.WriteAllText(path, text);
   }
 
@@ -294,7 +441,14 @@ public class Taskman
 }
 
 public class TaskAttribute : Attribute
-{}
+{
+  public string[] deps;
+
+  public TaskAttribute(params string[] deps)
+  {
+    this.deps = deps;
+  }
+}
 
 public static class Hash
 {
