@@ -70,11 +70,14 @@ public static class Tasks
 
     foreach(var exe in tm.Glob($"{BHL_ROOT}/*.exe"))
     {
-      //NOTE: when removing itself under Windows we can get an exception
+      //NOTE: when removing itself under Windows we can get an exception, so let's force its staleness
       if(exe.EndsWith("bhlb.exe"))
-        tm.Touch(exe, DateTime.MinValue);
-      else
-        tm.Rm(exe);
+      {
+        tm.Touch(exe, new DateTime(1970, 3, 1, 7, 0, 0)/*some random date in the past*/);
+        continue;
+      }
+      
+      tm.Rm(exe);
       tm.Rm($"{exe}.mdb");
     }
   }
