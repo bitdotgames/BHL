@@ -60,15 +60,21 @@ public static class Tasks
   {
     tm.Rm($"{BHL_ROOT}/src/autogen.cs");
 
-    foreach(var dll in tm.Glob($"{BHL_ROOT}/bhl_*.dll"))
+    foreach(var dll in tm.Glob($"{BHL_ROOT}/*.dll"))
     {
+      if(!dll.StartsWith("bhl_"))
+        continue;
       tm.Rm(dll);
       tm.Rm($"{dll}.mdb");
     }
 
     foreach(var exe in tm.Glob($"{BHL_ROOT}/*.exe"))
     {
-      tm.Rm(exe);
+      //NOTE: when removing itself under Windows we can get an exception
+      if(exe.EndsWith("bhlb.exe"))
+        tm.Touch(exe, DateTime.MinValue);
+      else
+        tm.Rm(exe);
       tm.Rm($"{exe}.mdb");
     }
   }
@@ -463,6 +469,13 @@ public class Taskman
   {
     Mkdir(Path.GetDirectoryName(path));
     File.WriteAllText(path, text);
+  }
+
+  public void Touch(string path, DateTime dt)
+  {
+    if(!File.Exists(path))
+      File.WriteAllText(path, "");
+    File.SetLastWriteTime(path, dt);
   }
 
   public bool NeedToRegen(string file, IList<string> deps)
