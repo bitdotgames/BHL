@@ -5,7 +5,7 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 SRC=$DIR/bhl.cs
-EXE=$DIR/bhl.exe
+EXE=$DIR/bhlb.exe
 
 if [ $EXE -ot $SRC ]; then 
   mcs $SRC -debug -r:$DIR/mono_opts.dll -out:$EXE

@@ -132,19 +132,6 @@ public static class Tasks
     }
   }
 
-  public static bool IsWin {
-    get {
-      return !IsUnix;
-    }
-  }
-
-  public static bool IsUnix {
-    get {
-      int p = (int)Environment.OSVersion.Platform;
-      return (p == 4) || (p == 6) || (p == 128);
-    }
-  }
-
   public static List<string> ExtractBinArgs(string[] args, out List<string> user_sources, out List<string> postproc_sources)
   {
     var _postproc_sources = new List<string>();
@@ -231,7 +218,7 @@ public static class Tasks
     if(files.Count == 0)
       throw new Exception("No files");
 
-    string args = (refs.Count > 0 ? " -r:" + String.Join(" -r:", refs.Select(r => CLIPath(r))) : "") + $" {opts} -out:{CLIPath(result)} " + String.Join(" ", files.Select(f => CLIPath(f)));
+    string args = (refs.Count > 0 ? " -r:" + String.Join(" -r:", refs.Select(r => tm.CLIPath(r))) : "") + $" {opts} -out:{tm.CLIPath(result)} " + String.Join(" ", files.Select(f => tm.CLIPath(f)));
     string cmd = binary + " " + args; 
 
     uint cmd_hash = Hash.CRC32(cmd);
@@ -243,20 +230,6 @@ public static class Tasks
 
     if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
       tm.Shell(cmd);
-  }
-
-  public static string CLIPath(string p)
-  {
-    if(IsWin)
-    {
-      p = "\"" + Path.GetFullPath(p.Trim(new char[]{'"'})) + "\"";
-      return p;
-    }
-    else
-    {
-      p = "'" + Path.GetFullPath(p.Trim(new char[]{'\''})) + "'";
-      return p;
-    }
   }
 }
 
@@ -287,6 +260,19 @@ public class Taskman
 
   List<Task> tasks = new List<Task>();
   HashSet<Task> invoked = new HashSet<Task>();
+
+  public bool IsWin {
+    get {
+      return !IsUnix;
+    }
+  }
+
+  public bool IsUnix {
+    get {
+      int p = (int)Environment.OSVersion.Platform;
+      return (p == 4) || (p == 6) || (p == 128);
+    }
+  }
 
   public Taskman(Type tasks_class)
   {
@@ -370,6 +356,20 @@ public class Taskman
     return null;
   }
 
+  public string CLIPath(string p)
+  {
+    if(IsWin)
+    {
+      p = "\"" + Path.GetFullPath(p.Trim(new char[]{'"'})) + "\"";
+      return p;
+    }
+    else
+    {
+      p = "'" + Path.GetFullPath(p.Trim(new char[]{'\''})) + "'";
+      return p;
+    }
+  }
+
   public void Echo(string s)
   {
     Console.WriteLine(s);
@@ -397,17 +397,25 @@ public class Taskman
     if(idx == -1)
       throw new Exception($"Bad cmd: {cmd}");
 
-    string binary = cmd.Substring(0, idx);
-    string args = cmd.Substring(idx);
-
     var p = new System.Diagnostics.Process();
-    p.StartInfo.FileName = binary;
-    p.StartInfo.Arguments = args;
+    if(IsWin)
+    {
+      p.StartInfo.FileName = "cmd.exe";
+      p.StartInfo.Arguments = "/C " + cmd;
+    }
+    else
+    {
+      string binary = cmd.Substring(0, idx);
+      string args = cmd.Substring(idx);
+      p.StartInfo.FileName = binary;
+      p.StartInfo.Arguments = args;
+    }
     p.StartInfo.UseShellExecute = false;
     p.StartInfo.RedirectStandardOutput = true;
     p.StartInfo.RedirectStandardError = true;
-
     p.Start();
+    
+    p.WaitForExit();
 
     var lines = p.StandardOutput.ReadToEnd().Split(new [] { '\r', '\n' });
     foreach(string line in lines)
@@ -416,7 +424,6 @@ public class Taskman
         Echo(line);
     }
 
-    p.WaitForExit();
     if(p.ExitCode != 0)
     {
       lines = p.StandardError.ReadToEnd().Split(new [] { '\r', '\n' });
@@ -425,7 +432,7 @@ public class Taskman
         if(line != "")
           Echo(line);
       }
-      throw new Exception("$Error exit code: {p.ExitCode}");
+      throw new Exception($"Error exit code: {p.ExitCode}");
     }
   }
 
