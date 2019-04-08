@@ -94,7 +94,7 @@ public static class Tasks
     tm.Copy($"{BHL_ROOT}/bhl.g", $"{BHL_ROOT}/tmp/bhl.g");
     tm.Copy($"{BHL_ROOT}/bin/g4sharp", $"{BHL_ROOT}/tmp/g4sharp");
 
-    tm.Shell($"cd {BHL_ROOT}/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/ ");
+    tm.Shell("sh", $"cd {BHL_ROOT}/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/ ");
   }
 
   [Task(deps: "build_front_dll")]
@@ -200,8 +200,8 @@ public static class Tasks
 
   public static void MonoRun(Taskman tm, string exe, string[] args = null, string opts = "")
   {
-    var cmd = $"mono {opts} {exe} " + String.Join(" ", args);
-    tm.Shell(cmd);
+    var mono_args = $"{opts} {exe} " + String.Join(" ", args);
+    tm.Shell("mono", mono_args);
   }
 
   public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "", string binary = "mcs")
@@ -228,8 +228,8 @@ public static class Tasks
       throw new Exception("No files");
 
     string args = (refs.Count > 0 ? " -r:" + String.Join(" -r:", refs.Select(r => tm.CLIPath(r))) : "") + $" {opts} -out:{tm.CLIPath(result)} " + String.Join(" ", files.Select(f => tm.CLIPath(f)));
-    string cmd = binary + " " + args; 
-
+    string cmd = binary + " " + args;
+	
     uint cmd_hash = Hash.CRC32(cmd);
     string cmd_hash_file = $"{BHL_ROOT}/build/" + Hash.CRC32(result) + ".mhash";
     if(!File.Exists(cmd_hash_file) || File.ReadAllText(cmd_hash_file) != cmd_hash.ToString()) 
@@ -238,7 +238,7 @@ public static class Tasks
     files.Add(cmd_hash_file);
 
     if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
-      tm.Shell(cmd);
+      tm.Shell(binary, args);
   }
 }
 
@@ -367,14 +367,17 @@ public class Taskman
 
   public string CLIPath(string p)
   {
+  	if(p.IndexOf(" ") == -1)
+	  return p;
+	  
     if(IsWin)
     {
-      p = "\"" + Path.GetFullPath(p.Trim(new char[]{'"'})) + "\"";
+      p = "\"" + p.Trim(new char[]{'"'}) + "\"";
       return p;
     }
     else
     {
-      p = "'" + Path.GetFullPath(p.Trim(new char[]{'\''})) + "'";
+      p = "'" + p.Trim(new char[]{'\''}) + "'";
       return p;
     }
   }
@@ -398,28 +401,31 @@ public class Taskman
     File.Copy(src, dst);
   }
 
-  public void Shell(string cmd)
+  public void Shell(string binary, string args)
   {
-    Echo($"shell: {cmd}");
-
-    int idx = cmd.IndexOf(" ");
-    if(idx == -1)
-      throw new Exception($"Bad cmd: {cmd}");
+    binary = CLIPath(binary);
+    Echo($"shell: {binary} {args}");
 
     var p = new System.Diagnostics.Process();
-    if(IsWin)
-    {
-      p.StartInfo.FileName = "cmd.exe";
-      p.StartInfo.Arguments = "/C " + cmd;
-    }
-    else
-    {
-      string binary = cmd.Substring(0, idx);
-      string args = cmd.Substring(idx);
-      p.StartInfo.FileName = binary;
-      p.StartInfo.Arguments = args;
-    }
-    p.StartInfo.UseShellExecute = false;
+
+	if(IsWin)
+	{
+	  string tmp_path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/build/";
+	  //string tmp_path = Path.GetTempPath();
+	  string cmd = binary + " " + args;
+	  var bat_file = tmp_path + Hash.CRC32(cmd) + ".bat";    
+	  Write(bat_file, cmd);
+	  
+	  p.StartInfo.FileName = "cmd.exe";
+	  p.StartInfo.Arguments = "/c " + bat_file;
+	}
+	else
+	{
+	  p.StartInfo.FileName = binary;
+	  p.StartInfo.Arguments = args;
+	}
+    
+	p.StartInfo.UseShellExecute = false;
     p.StartInfo.RedirectStandardOutput = true;
     p.StartInfo.RedirectStandardError = true;
     p.Start();
