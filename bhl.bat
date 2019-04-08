@@ -8,9 +8,8 @@ FOR /F %%i IN ('DIR /B /O:D %SRC% %EXE%') DO SET NEWEST=%%i
 IF NOT x%NEWEST:.exe=% == x%NEWEST% GOTO RUN
 
 mcs %SRC% -debug -r:%DIR%\mono_opts.dll -out:%EXE% && mono --debug %EXE% %*
-GOTO END
+EXIT /b %errorlevel%
 
 :RUN
 mono --debug %EXE% %*
-
-:END
+EXIT /b %errorlevel%
