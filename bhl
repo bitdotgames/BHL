@@ -3,13 +3,12 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-cd $DIR
 
-SRC=bhl.cs
-EXE=bhl.exe
+SRC=$DIR/bhl.cs
+EXE=$DIR/bhl.exe
 
 if [ $EXE -ot $SRC ]; then 
-  mcs $SRC -debug -r:mono_opts.dll -out:$EXE
+  mcs $SRC -debug -r:$DIR/mono_opts.dll -out:$EXE
 fi
 
 mono --debug $EXE $*
