@@ -15155,6 +15155,57 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStackUserBindInForever()
+  {
+    string bhl = @"
+    
+    func test() 
+    {
+      forever {
+        assert(foo() != bar())
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
+          delegate() { 
+            Interpreter.instance.PushValue(DynVal.NewNum(42));
+            return BHS.SUCCESS; 
+          } );
+      globs.define(fn);
+    }
+
+    {
+      var fn = new SimpleFuncBindSymbol("bar", globs.type("int"),
+          delegate() { 
+            return BHS.FAILURE; 
+          } );
+      globs.define(fn);
+    }
+
+    {
+      var fn = new SimpleFuncBindSymbol("assert", globs.type("void"),
+          delegate() { 
+            var dv = Interpreter.instance.PopValue();
+            return dv.bval ? BHS.SUCCESS : BHS.FAILURE; 
+          } );
+      fn.define(new FuncArgSymbol("cond", globs.type("bool")));
+      globs.define(fn);
+    }
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    node.run();
+    node.run();
+    node.run();
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestCleanFuncArgsOnStackUserBindInEval()
   {
     string bhl = @"
