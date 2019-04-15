@@ -362,6 +362,9 @@ public class Interpreter : AST_Visitor
     sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
     sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
 
+    //for debug
+    //v.func_ctx = sv.func_ctx;
+
     stack.Push(sv);
   }
 

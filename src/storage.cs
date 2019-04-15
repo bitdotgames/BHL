@@ -91,6 +91,9 @@ public class DynVal
   public string _str;
   public object _obj;
 
+  //for debug
+  //public FuncBaseCallNode func_ctx;
+
   static Queue<DynVal> pool = new Queue<DynVal>(64);
   static int pool_miss;
   static int pool_hit;
@@ -401,20 +404,26 @@ public class DynVal
 
   public override string ToString() 
   {
+    string str = "";
     if(type == NUMBER)
-      return _num + ":<NUMBER>";
+      str = _num + ":<NUMBER>";
     else if(type == BOOL)
-      return bval + ":<BOOL>";
+      str = bval + ":<BOOL>";
     else if(type == STRING)
-      return _str + ":<STRING>";
+      str = _str + ":<STRING>";
     else if(type == OBJ)
-      return _obj.GetType().Name + ":<OBJ>";
+      str = _obj.GetType().Name + ":<OBJ>";
     else if(type == NIL)
-      return "<NIL>";
+      str = "<NIL>";
     else if(type == ENCODED)
-      return "<ENCODED>";
+      str = "<ENCODED>";
     else
-      return "DYNVAL: type:"+type;
+      str = "DYNVAL: type:"+type;
+
+    //for debug
+    //str += func_ctx != null ? " " + func_ctx.ast.name : "";
+
+    return str;
   }
 
   public object ToAny() 
