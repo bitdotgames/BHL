@@ -15158,11 +15158,10 @@ public class BHL_Test
   public void TestCleanFuncArgsOnStackUserBindInForever()
   {
     string bhl = @"
-    
     func test() 
     {
       forever {
-        assert(foo() != bar())
+        bool res = foo(false) != bar(4)
       }
     }
     ";
@@ -15172,35 +15171,28 @@ public class BHL_Test
     {
       var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
           delegate() { 
+            Interpreter.instance.PopValue();
             Interpreter.instance.PushValue(DynVal.NewNum(42));
             return BHS.SUCCESS; 
           } );
+      fn.define(new FuncArgSymbol("b", globs.type("bool")));
       globs.define(fn);
     }
 
     {
       var fn = new SimpleFuncBindSymbol("bar", globs.type("int"),
           delegate() { 
+            Interpreter.instance.PopValue();
             return BHS.FAILURE; 
           } );
-      globs.define(fn);
-    }
-
-    {
-      var fn = new SimpleFuncBindSymbol("assert", globs.type("void"),
-          delegate() { 
-            var dv = Interpreter.instance.PopValue();
-            return dv.bval ? BHS.SUCCESS : BHS.FAILURE; 
-          } );
-      fn.define(new FuncArgSymbol("cond", globs.type("bool")));
+      fn.define(new FuncArgSymbol("n", globs.type("int")));
       globs.define(fn);
     }
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncCallNode("test");
-    node.run();
-    node.run();
-    node.run();
+    for(int i=0;i<3;++i)
+      node.run();
     //NodeDump(node);
     CommonChecks(intp);
   }
