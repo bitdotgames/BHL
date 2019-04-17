@@ -67,8 +67,8 @@ public class Interpreter : AST_Visitor
     public override string ToString() 
     {
       return dv + " " + dv.GetHashCode() + 
-        ", func: " + (func_ctx != null ? "" + func_ctx.GetHashCode() : "null") +
-        ", node: " + (node_ctx != null ? "" + node_ctx.GetHashCode() : "null");
+        ", func: " + (func_ctx != null ? "" + func_ctx.ast.Name() : "null") +
+        ", node: " + (node_ctx != null ? "" + node_ctx.GetType().Name  : "null");
     }
   }
 
@@ -386,18 +386,19 @@ public class Interpreter : AST_Visitor
     return sv.dv;
   }
 
-	public void PopFuncValues(FuncBaseCallNode fn)
-	{
-		for(int i=stack.Count;i-- > 0;)
-		{
-			var sv = stack[i];
-			if(sv.func_ctx == fn)
-			{
-				sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-				stack.RemoveAtFast(i);
-			}
-		}
-	}
+  public void PopFuncDanglingValues(int n)
+  {
+    //NOTE: skipping values popping if there's any node ctx present
+    if(n == 0 || stack.Count == 0 || node_ctx_stack.Count > 0)
+      return;
+
+    for(int i=stack.Count;i-- > 0 && n-- > 0;)
+    {
+      var sv = stack[i];
+      sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+      stack.RemoveAtFast(i);
+    }
+  }
 
   public bool PeekValue(ref DynVal res)
   {

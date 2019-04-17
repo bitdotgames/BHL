@@ -401,20 +401,23 @@ public class DynVal
 
   public override string ToString() 
   {
+    string str = "";
     if(type == NUMBER)
-      return _num + ":<NUMBER>";
+      str = _num + ":<NUMBER>";
     else if(type == BOOL)
-      return bval + ":<BOOL>";
+      str = bval + ":<BOOL>";
     else if(type == STRING)
-      return _str + ":<STRING>";
+      str = _str + ":<STRING>";
     else if(type == OBJ)
-      return _obj.GetType().Name + ":<OBJ>";
+      str = _obj.GetType().Name + ":<OBJ>";
     else if(type == NIL)
-      return "<NIL>";
+      str = "<NIL>";
     else if(type == ENCODED)
-      return "<ENCODED>";
+      str = "<ENCODED>";
     else
-      return "DYNVAL: type:"+type;
+      str = "DYNVAL: type:"+type;
+
+    return str;
   }
 
   public object ToAny() 
