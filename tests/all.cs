@@ -15084,6 +15084,42 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStack()
+  {
+    string bhl = @"
+
+    func hey(int n, int m)
+    {
+    }
+
+    func int bar()
+    {
+      return 1
+    }
+
+    func int foo()
+    {
+      fail()
+      return 100
+    }
+
+    func test() 
+    {
+      hey(bar(), foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+
+  [IsTested()]
   public void TestCleanFuncArgsOnStackUserBind()
   {
     string bhl = @"
@@ -15155,14 +15191,12 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCleanFuncArgsOnStackUserBindInForever()
+  public void TestCleanFuncArgsOnStackUserBindInBinOp()
   {
     string bhl = @"
     func test() 
     {
-      forever {
-        bool res = foo(false) != bar(4)
-      }
+      bool res = foo(false) != bar(4)
     }
     ";
 
@@ -15191,8 +15225,7 @@ public class BHL_Test
 
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncCallNode("test");
-    for(int i=0;i<3;++i)
-      node.run();
+    AssertEqual(BHS.FAILURE, node.run());
     //NodeDump(node);
     CommonChecks(intp);
   }
@@ -19528,6 +19561,12 @@ func Unit FindUnit(Vec3 pos, float radius) {
     //for extra debug
     //Console.WriteLine(DynVal.PoolDump());
 
+    if(intp.stack.Count > 0)
+    {
+      Console.WriteLine("=== Dangling stack values ===");
+      for(int i=0;i<intp.stack.Count;++i)
+        Console.WriteLine("Stack value #" + i + " " + intp.stack[i]);
+    }
     AssertEqual(intp.stack.Count, 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);

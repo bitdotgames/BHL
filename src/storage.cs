@@ -91,9 +91,6 @@ public class DynVal
   public string _str;
   public object _obj;
 
-  //for debug
-  //public FuncBaseCallNode func_ctx;
-
   static Queue<DynVal> pool = new Queue<DynVal>(64);
   static int pool_miss;
   static int pool_hit;
@@ -419,9 +416,6 @@ public class DynVal
       str = "<ENCODED>";
     else
       str = "DYNVAL: type:"+type;
-
-    //for debug
-    //str += func_ctx != null ? " " + func_ctx.ast.name : "";
 
     return str;
   }

@@ -436,6 +436,7 @@ public abstract class FuncBaseCallNode : GroupNode
 
   //TODO: this one is for inspecting purposes only
   public BHS lastExecuteStatus;
+  short init_stack_size;
 
   public FuncBaseCallNode(AST_Call ast)
   {
@@ -487,6 +488,12 @@ public abstract class FuncBaseCallNode : GroupNode
     return status;
   }
 
+  override public void init()
+  {
+    init_stack_size = (short)Interpreter.instance.stack.Count;
+    base.init();
+  }
+
   override public void deinit()
   {
     deinitChildren(currentPosition, 1);
@@ -496,7 +503,7 @@ public abstract class FuncBaseCallNode : GroupNode
     if(currStatus != BHS.SUCCESS)
     {
       var interp = Interpreter.instance;
-      interp.PopFuncValues(this);
+      interp.PopFuncDanglingValues(interp.stack.Count - init_stack_size);
     }
   } 
 
