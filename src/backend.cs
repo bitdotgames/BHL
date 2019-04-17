@@ -1,3 +1,4 @@
+//#define DEBUG_STACK
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,22 +62,28 @@ public class Interpreter : AST_Visitor
   public struct StackValue
   {
     public DynVal dv;
+#if DEBUG_STACK
     public FuncBaseCallNode func_ctx;
+#endif
     public BehaviorTreeNode node_ctx;
 
     public override string ToString() 
     {
       return dv + " " + dv.GetHashCode() + 
+#if DEBUG_STACK
         ", func: " + (func_ctx != null ? "" + func_ctx.ast.Name() : "null") +
+#endif
         ", node: " + (node_ctx != null ? "" + node_ctx.GetType().Name  : "null");
     }
   }
 
   public FastStack<StackValue> stack = new FastStack<StackValue>(256);
   public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
+#if DEBUG_STACK
   //NOTE: this one is used for marking stack values with proper func ctx so that 
-  //      dangling stack values can be cleaned up
+  //      this info can be retrieved for debug purposes
   public FastStack<FuncBaseCallNode> func_ctx_stack = new FastStack<FuncBaseCallNode>(128);
+#endif
   //NOTE: this one is used for marking stack values with proper node ctx, 
   //      this is used in paral nodes where stack values interleaving may happen
   public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(128);
@@ -92,7 +99,9 @@ public class Interpreter : AST_Visitor
     loaded_modules.Clear();
     stack.Clear();
     call_stack.Clear();
+#if DEBUG_STACK
     func_ctx_stack.Clear();
+#endif
 
     this.symbols = symbols;
     this.module_loader = module_loader;
@@ -359,7 +368,9 @@ public class Interpreter : AST_Visitor
 
     var sv = new StackValue();
     sv.dv = v;
+#if DEBUG_STACK
     sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
+#endif
     sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
 
     stack.Push(sv);

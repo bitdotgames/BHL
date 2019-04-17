@@ -1,3 +1,4 @@
+//#define DEBUG_STACK
 using System;
 using System.IO;
 using System.Collections;
@@ -447,7 +448,9 @@ public abstract class FuncBaseCallNode : GroupNode
   {
     var interp = Interpreter.instance;
 
+#if DEBUG_STACK
     interp.func_ctx_stack.Push(this);
+#endif
 
     //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
@@ -482,7 +485,9 @@ public abstract class FuncBaseCallNode : GroupNode
     } 
     ////////////////////FORCING CODE INLINE////////////////////////////////
 
+#if DEBUG_STACK
     interp.func_ctx_stack.DecFast();
+#endif
 
     lastExecuteStatus = status;
     return status;
