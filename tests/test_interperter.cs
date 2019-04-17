@@ -14764,6 +14764,41 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStack()
+  {
+    string bhl = @"
+
+    func hey(int n, int m)
+    {
+    }
+
+    func int bar()
+    {
+      return 1
+    }
+
+    func int foo()
+    {
+      fail()
+      return 100
+    }
+
+    func test() 
+    {
+      hey(bar(), foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestCleanFuncArgsOnStackUserBind()
   {
     string bhl = @"
@@ -14830,6 +14865,46 @@ public class BHL_TestInterpreter : BHL_TestBase
     var node = intp.GetFuncCallNode("test");
     var res = ExecNode(node, 0);
     AssertEqual(BHS.SUCCESS, res.status);
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackUserBindInBinOp()
+  {
+    string bhl = @"
+    func test() 
+    {
+      bool res = foo(false) != bar(4)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
+          delegate() { 
+            Interpreter.instance.PopValue();
+            Interpreter.instance.PushValue(DynVal.NewNum(42));
+            return BHS.SUCCESS; 
+          } );
+      fn.define(new FuncArgSymbol("b", globs.type("bool")));
+      globs.define(fn);
+    }
+
+    {
+      var fn = new SimpleFuncBindSymbol("bar", globs.type("int"),
+          delegate() { 
+            Interpreter.instance.PopValue();
+            return BHS.FAILURE; 
+          } );
+      fn.define(new FuncArgSymbol("n", globs.type("int")));
+      globs.define(fn);
+    }
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    AssertEqual(BHS.FAILURE, node.run());
     //NodeDump(node);
     CommonChecks(intp);
   }
@@ -19100,6 +19175,12 @@ func Unit FindUnit(Vec3 pos, float radius) {
     //for extra debug
     //Console.WriteLine(DynVal.PoolDump());
 
+    if(intp.stack.Count > 0)
+    {
+      Console.WriteLine("=== Dangling stack values ===");
+      for(int i=0;i<intp.stack.Count;++i)
+        Console.WriteLine("Stack value #" + i + " " + intp.stack[i]);
+    }
     AssertEqual(intp.stack.Count, 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);

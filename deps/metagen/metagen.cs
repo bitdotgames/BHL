@@ -17,63 +17,91 @@ public enum MetaIoError
   FAIL_READ              = 4,
   TYPE_DONT_MATCH        = 5,
   DATA_MISSING           = 7,
-  DATA_MISSING0          = 8, //means start of the struct is missing
+  GENERIC                = 10,
+}
+
+public class MetaException : Exception
+{
+  public MetaIoError err;
+
+  public MetaException(MetaIoError err)
+  {
+    this.err = err;
+  }
+}
+
+public struct MetaSyncContext
+{
+  public bool is_read;
+  public IDataReader reader;
+  public IDataWriter writer;
+  public uint opts;
+
+  public static MetaSyncContext NewForRead(IDataReader reader, uint opts = 0)
+  {
+    var ctx = new MetaSyncContext() {
+      is_read = true,
+      reader = reader,
+      writer = null,
+      opts = opts
+    };
+    return ctx;
+  }
+
+  public static MetaSyncContext NewForWrite(IDataWriter writer, uint opts = 0)
+  {
+    var ctx = new MetaSyncContext() {
+      is_read = false,
+      reader = null,
+      writer = writer,
+      opts = opts
+    };
+    return ctx;
+  }
 }
 
 public interface IMetaStruct 
 {
   uint CLASS_ID();
-  MetaIoError write(IDataWriter writer);  //could be moved to extension if we did't use structs
-  MetaIoError read(IDataReader reader);   //could be moved to extension if we did't use structs
-  MetaIoError writeFields(IDataWriter writer); //write fields ONLY, without struct meta info
-  MetaIoError readFields(IDataReader reader); //read fields ONLY, without struct meta info
+
   int getFieldsCount();
+
+  void syncFields(MetaSyncContext ctx);
+
   void copy(IMetaStruct source);
   IMetaStruct clone();
+
   void reset();
 }
 
 public abstract class BaseMetaStruct : IMetaStruct
 {
   public virtual uint CLASS_ID() { return 0; }
-  public virtual MetaIoError writeFields(IDataWriter writer) { return MetaIoError.SUCCESS; }
-  public virtual MetaIoError readFields(IDataReader reader) { return MetaIoError.SUCCESS; }
+
   public virtual int getFieldsCount() { return 0; }
+
   public virtual void copy(IMetaStruct source) {}
   public virtual IMetaStruct clone() { return null; }
+
   public virtual void reset() {}
 
-  public virtual MetaIoError write(IDataWriter writer) 
+  public virtual void sync(MetaSyncContext ctx)
   {
-    MetaIoError err = writer.BeginArray(getFieldsCount());
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    err = writeFields(writer);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    return writer.EndArray();
+    if(ctx.is_read)
+    {
+      MetaHelper.ensure(ctx.reader.BeginArray());
+      syncFields(ctx);
+      MetaHelper.ensure(ctx.reader.EndArray());  
+    }
+    else
+    {
+      MetaHelper.ensure(ctx.writer.BeginArray(getFieldsCount()));
+      syncFields(ctx);
+      MetaHelper.ensure(ctx.writer.EndArray());
+    }
   }
 
-  public virtual MetaIoError read(IDataReader reader) 
-  {
-    MetaIoError err = MetaIoError.SUCCESS;
-
-    err = reader.BeginArray();
-    if(err != MetaIoError.SUCCESS)
-      return err == MetaIoError.DATA_MISSING ? MetaIoError.DATA_MISSING0 : err;
-    
-    err = readFields(reader);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    err = reader.EndArray();
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    return err;
-  }
+  public virtual void syncFields(MetaSyncContext ctx) {}
 }
 
 public interface IRpcError
@@ -192,213 +220,394 @@ public static class MetaHelper
   static void DefaultDebug(string s)
   {}
 
-  public static MetaIoError writeClass(IDataWriter writer, IMetaStruct mstruct) 
+  static public void ensure(MetaIoError err)
   {
-    MetaIoError err = writer.BeginArray(mstruct.getFieldsCount());
     if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    err = mstruct.writeFields(writer);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    return writer.EndArray();
+      throw new MetaException(err);
+  }
+
+  static public void sync(MetaSyncContext ctx, ref string v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadString(ref v));
+    else
+      ensure(ctx.writer.WriteString(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref long v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadI64(ref v));
+    else
+      ensure(ctx.writer.WriteI64(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref int v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadI32(ref v));
+    else
+      ensure(ctx.writer.WriteI32(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref short v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadI16(ref v));
+    else
+      ensure(ctx.writer.WriteI16(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref sbyte v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadI8(ref v));
+    else
+      ensure(ctx.writer.WriteI8(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref ulong v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadU64(ref v));
+    else
+      ensure(ctx.writer.WriteU64(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref ushort v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadU16(ref v));
+    else
+      ensure(ctx.writer.WriteU16(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref uint v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadU32(ref v));
+    else
+      ensure(ctx.writer.WriteU32(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref byte v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadU8(ref v));
+    else
+      ensure(ctx.writer.WriteU8(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref bool v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadBool(ref v));
+    else
+      ensure(ctx.writer.WriteBool(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref float v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadFloat(ref v));
+    else
+      ensure(ctx.writer.WriteFloat(v));
+  }
+
+  static public void sync(MetaSyncContext ctx, ref double v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.ReadDouble(ref v));
+    else
+      ensure(ctx.writer.WriteDouble(v));
+  }
+
+  static int syncBeginArray<T>(MetaSyncContext ctx, List<T> v)
+  {
+    if(ctx.is_read)
+    {
+      ensure(ctx.reader.BeginArray());
+
+      int size = 0;
+      ensure(ctx.reader.GetArraySize(ref size));
+
+      if(v.Capacity < size) 
+        v.Capacity = size;
+
+      return size;
+    }
+    else
+    {
+      int size = v == null ? 0 : v.Count;
+      ensure(ctx.writer.BeginArray(size));
+      return size;
+    }
+  }
+
+  static void syncEndArray(MetaSyncContext ctx, IList v)
+  {
+    if(ctx.is_read)
+      ensure(ctx.reader.EndArray());
+    else
+      ensure(ctx.writer.EndArray());
+  }
+
+  //TODO: this one should be used for all builtin types
+  //static public void sync<T>(MetaSyncContext ctx, List<T> v) where T : struct
+  //{
+  //  int size = syncBeginArray(ctx, v);
+  //  for(int i = 0; i < size; ++i)
+  //  {
+  //    var tmp = ctx.is_read ? default(T) : v[i];
+  //    sync(ctx, ref tmp);
+  //    if(ctx.is_read)
+  //      v.Add(tmp);
+  //  }
+  //  syncEndArray(ctx, v);
+  //}
+
+  static public void sync(MetaSyncContext ctx, List<string> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? "" : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<long> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(long) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<int> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(int) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<short> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(short) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<sbyte> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(sbyte) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<ulong> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(ulong) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<uint> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(uint) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<ushort> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(ushort) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<byte> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(byte) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<bool> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(bool) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<float> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(float) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
+  }
+
+  static public void sync(MetaSyncContext ctx, List<double> v)
+  {
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? default(double) : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    syncEndArray(ctx, v);
   }
   
-  public static MetaIoError writeGeneric(IDataWriter writer, IMetaStruct mstruct) 
+  static public void sync<T>(MetaSyncContext ctx, List<T> v) where T : IMetaStruct, new()
   {
-    MetaIoError err = writer.BeginArray(mstruct.getFieldsCount() + 1);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    //NOTE: Storing class names is not space effective
-    //err = writer.WriteString(mstruct.CLASS_NAME());
-    err = writer.WriteU32(mstruct.CLASS_ID());
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    err = mstruct.writeFields(writer);
-    if(err != MetaIoError.SUCCESS)
-      return err;
-    
-    return writer.EndArray();
-  }
-
-  public static IMetaStruct readClass(IDataReader reader, IMetaStruct mstruct, ref MetaIoError err)
-  {
-    err = reader.BeginArray();
-    if(err != MetaIoError.SUCCESS)
-      return null;
-    
-    err = mstruct.readFields(reader);
-    if(err != MetaIoError.SUCCESS)
-      return null;
-    
-    err = reader.EndArray();
-    if(err != MetaIoError.SUCCESS)
-      return null;
-    
-    return mstruct;
-  }
-  
-  public static IMetaStruct readGeneric(IDataReader reader, ref MetaIoError err) 
-  {
-    err = reader.BeginArray();
-    if(err != MetaIoError.SUCCESS)
-      return null;
-
-    uint clid = 0;
-    err = reader.ReadU32(ref clid);
-    if(err != MetaIoError.SUCCESS)
-      return null;
-    
-    //NOTE: createById accepts int since it thinks a normal crc is used
-    //      while we are actually using crc28 which is unsigned
-    IMetaStruct mstruct = CreateById((int)clid);
-    if(mstruct == null) 
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
     {
-      MetaHelper.LogWarn("Could not create struct: " + clid);
-      err = MetaIoError.TYPE_DONT_MATCH;
-      return null;
+      var tmp = ctx.is_read ? new T() : v[i];
+      sync(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
     }
-
-    err = mstruct.readFields(reader);
-    if(err != MetaIoError.SUCCESS)
-      return null;
-    
-    err = reader.EndArray();
-    return mstruct;
-  }
-}
-
-//NOTE: it implements IList interface partially! 
-public class AutoArray<T> : IList<T>
-{
-  //for speed you can access directly the guts
-  public T[] Data;
-  public int Length;
-
-  public int Capacity 
-  {
-    get {
-      return Data == null ? 0 : Data.Length;
-    }
-
-    set {
-      Grow(value);
-    }
+    syncEndArray(ctx, v);
   }
 
-  public int Count { get { return Length; }  }
-  public bool IsFixedSize { get { return false; } }
-  public bool IsReadOnly { get { return false; } }
-
-  public AutoArray(int capacity = 0)
+  static public void syncVirtual(MetaSyncContext ctx, ref IMetaStruct v)
   {
-    if(capacity <= 0)
-      capacity = 1;
-
-    Length = 0;
-    Capacity = capacity;
-  }
-
-  public AutoArray(IList<T> list)
-  {
-    Capacity = list.Count;
-    AddRange(list);
-  }
-
-  public void AddRange(IList<T> list)
-  {
-    for(int i=0; i<list.Count; ++i)
-      Add(list[i]);
-  }
-
-  public void Clear()
-  {
-    Array.Clear(Data, 0, Length);
-    Length = 0;
-  }
-
-  public T this[int i]
-  {
-    get {
-      return Data[i];
-    }
-    set {
-      Data[i] = value;
-    }
-  }
-
-  public void Add(T val)
-  {
-    if((Length+1) > Data.Length)
-      Grow(Data.Length*2);
-    Data[Length] = val;
-    Length++;
-  }
-
-  public void RemoveAt(int index)
-  {
-    Array.Copy(Data, index+1, Data, index, Length-index-1);
-    //nullifying last element
-    Data[Length-1] = default(T);
-    Length--;
-  }
-
-  public void Grow(int capacity)
-  {
-    if(capacity < Length)
-      return;
-
-    var tmp = new T[capacity];
-    for(int i=0;i<Length;++i)
-      tmp[i] = Data[i];
-    Data = tmp;
-  }
-
-  public int IndexOf(T o)
-  {
-    for(int i=0;i<Length;++i)
+    if(ctx.is_read)
     {
-      if(Data[i].Equals(o))
-        return i;
+      ensure(ctx.reader.BeginArray());
+
+      uint clid = 0;
+      ensure(ctx.reader.ReadU32(ref clid));
+      
+      //TODO: why CreateById uses int ? 
+      v = CreateById((int)clid);
+      if(v == null) 
+      {
+        LogError("Could not create struct: " + clid);
+        ensure(MetaIoError.TYPE_DONT_MATCH);
+      }
+
+      v.syncFields(ctx);
+      ensure(ctx.reader.EndArray());
     }
-    return -1;
+    else
+    {
+      ensure(ctx.writer.BeginArray(v.getFieldsCount() + 1));
+      ensure(ctx.writer.WriteU32(v.CLASS_ID()));
+      v.syncFields(ctx);
+      ensure(ctx.writer.EndArray());
+    }
   }
 
-  public bool Contains(T o)
+  static public void syncVirtual<T>(MetaSyncContext ctx, List<T> v) where T : IMetaStruct, new()
   {
-    return IndexOf(o) >= 0;
+    int size = syncBeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = (IMetaStruct)(ctx.is_read ? new T() : v[i]);
+      syncVirtual(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add((T)tmp);
+    }
+    syncEndArray(ctx, v);
   }
 
-  public bool Remove(T o)
+  static public void sync<T>(MetaSyncContext ctx, ref T v) where T : IMetaStruct
   {
-    int idx = IndexOf(o);
-    if(idx < 0)
-      return false;
-    RemoveAt(idx);
-    return true;
+    if(ctx.is_read)
+    {
+      MetaHelper.ensure(ctx.reader.BeginArray());
+      v.syncFields(ctx);
+      MetaHelper.ensure(ctx.reader.EndArray());  
+    }
+    else
+    {
+      MetaHelper.ensure(ctx.writer.BeginArray(v.getFieldsCount()));
+      v.syncFields(ctx);
+      MetaHelper.ensure(ctx.writer.EndArray());
+    }
   }
 
-  ///////////////// not implemented IList interface methods
-  public void Remove(object v)
-  {}
-
-  public void CopyTo(T[] arr, int len)
-  {}
-
-  public void Insert(int pos, T o)
-  {}
-
-  public IEnumerator<T> GetEnumerator()
+  static public MetaIoError syncSafe<T>(MetaSyncContext ctx, ref T v) where T : IMetaStruct
   {
-    return null;
-  }
-
-  IEnumerator IEnumerable.GetEnumerator()
-  {
-    return null;
+    try 
+    {
+      MetaHelper.sync(ctx, ref v);
+    }
+    catch(MetaException e)
+    {
+      return e.err;
+    }
+    catch(Exception)
+    {
+      return MetaIoError.GENERIC;
+    }
+    return MetaIoError.SUCCESS;
   }
 }
 
@@ -541,6 +750,13 @@ public class MsgPackDataWriter : IDataWriter
     
     return decSpace();
   }
+
+  public MetaIoError WriteNil()
+  {
+    io.WriteNil();
+    
+    return decSpace();
+  }
 }
 
 public class MsgPackDataReader : IDataReader 
@@ -633,6 +849,36 @@ public class MsgPackDataReader : IDataReader
       MetaHelper.LogWarn("Got type: " + io.Type);
       err = MetaIoError.TYPE_DONT_MATCH; 
       return 0;
+    }
+  }
+
+  bool nextBool(ref MetaIoError err) 
+  {
+    if(!ArrayPositionValid())
+    {
+      err = MetaIoError.DATA_MISSING;
+      return false;
+    }
+
+    if(!io.Read()) 
+    {
+      err = MetaIoError.FAIL_READ;
+      return false;
+    }
+    
+    MoveNext();
+    
+    if(io.IsUnsigned())
+      return io.ValueUnsigned != 0;
+    else if(io.IsSigned())
+      return (uint)io.ValueSigned != 0;
+    else if(io.IsBoolean())
+      return (bool)io.ValueBoolean;
+    else
+    {
+      MetaHelper.LogWarn("Got type: " + io.Type);
+      err = MetaIoError.TYPE_DONT_MATCH; 
+      return false;
     }
   }
 
@@ -759,8 +1005,7 @@ public class MsgPackDataReader : IDataReader
   public MetaIoError ReadBool(ref bool v) 
   {
     MetaIoError err = 0;
-    uint tmp = nextUint(ref err);
-    v = tmp == 1 ? true : false;
+    v = nextBool(ref err);
     return err;
   }
 

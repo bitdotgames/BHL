@@ -97,8 +97,7 @@ class mtgCSCodegen extends mtgCodegen
     $repl['%fields%'] = '';
     $repl['%fields_reset%'] = '';
     
-    $repl['%read_buffer%'] = '';
-    $repl['%write_buffer%'] = '';
+    $repl['%sync_buffer%'] = '';
     $repl['%fields_count%'] = count($all_fields);
     $repl["%ext_methods%"] = "";
   
@@ -109,7 +108,6 @@ class mtgCSCodegen extends mtgCodegen
     $repl['%commented_in_pod_begin%'] = '';
     $repl['%commented_in_pod_end%'] = '';
 
-    $repl['%read_buffer%'] .= "\n";
 
     if($struct->hasToken('POD'))
     {
@@ -124,8 +122,7 @@ class mtgCSCodegen extends mtgCodegen
     {
       $repl['%type_name%'] = 'class';
       $repl['%parent%'] = " : " . ($struct->getParent() ? $struct->getParent() : " BaseMetaStruct");
-      $repl['%read_buffer%'] .= "\n    if ((err = base.readFields(reader)) != MetaIoError.SUCCESS) { return err; }";
-      $repl['%write_buffer%'] .= "\n    if ((err = base.writeFields(writer)) != MetaIoError.SUCCESS) { return err; }";
+      $repl['%sync_buffer%'] .= "\n    base.syncFields(ctx);\n";
       $repl['%commented_in_child_begin%'] = '/*';
       $repl['%commented_in_child_end%'] = '*/';
       $repl['%virt_method%'] = " override ";
@@ -146,8 +143,7 @@ class mtgCSCodegen extends mtgCodegen
     {
       $repl['%fields%'] .= "\n  " . $this->genFieldDecl($struct, $field);
       $repl['%fields_reset%'] .= "\n  " . $this->genFieldReset($field);
-      $repl['%read_buffer%'] .=  $this->genBufRead($field->getName(), $struct->getName().'.'.$field->getName(), $field->getType(), "reader", $field->getTokens());
-      $repl['%write_buffer%'] .= "\n      " . $this->genBufWrite($field, "writer");
+      $repl['%sync_buffer%'] .= "\n  " . $this->genBufSync($field, "ctx", "opts")."\n";
       $repl['%copy_fields%'] .= "\n    " . $this->genFieldCopy($field);
     }
 
@@ -229,36 +225,37 @@ class mtgCSCodegen extends mtgCodegen
     }
   }
 
-  function genBufWrite(mtgMetaField $field, $buf)
+  function genBufSync(mtgMetaField $field, $buf, $opts = "")
   {
-    return $this->genBufWriteEx($field->getName(), $field->getType(), $buf, $field->getTokens());
+    return $this->genBufSyncEx($field->getName(), $field->getType(), $buf, $field->getTokens(), $opts);
   }
 
-  function genBufWriteEx($fname, mtgType $type, $buf, array $tokens = array())
+  function genBufSyncEx($fname, mtgType $type, $buf, array $tokens = array(), $opts = "")
   {
     $str = '';
     if($type instanceof mtgBuiltinType)
     {
-      $str .= $this->genWrite("{$buf}.Write".$this->genTypePrefix($type)."($fname)");
+      $str .= "MetaHelper.sync({$buf}, ref {$fname});\n";
     }
     else if($type instanceof mtgMetaStruct)
     {
       if(array_key_exists('virtual', $tokens))
-        $str .= $this->genWrite("MetaHelper.writeGeneric($buf, $fname)");
+        $str .= "MetaHelper.syncVirtual({$buf}, ref {$fname});\n";
       else
-        $str .= $this->genWrite("$fname.write($buf)");
+        $str .= "MetaHelper.sync({$buf}, ref {$fname});\n";
     }
     else if($type instanceof mtgMetaEnum)
     {
-      $str .= $this->genWrite("{$buf}.WriteI32((int) ($fname))");
+      $str .= "int __tmp_{$fname} = (int)$fname;\n";
+      $str .= "MetaHelper.sync({$buf}, ref __tmp_{$fname});\n";
+      $str .= "if($buf.is_read) {$fname} = ({$type->getName()})__tmp_{$fname};\n";
     }
     else if($type instanceof mtgArrType)
     {
-      $str .= "\n    ".$this->genWrite("{$buf}.BeginArray({$fname} == null ? 0 : {$fname}.Count)");
-      $str .= "\n    for (int i = 0; {$fname} != null && i < {$fname}.Count; i++) {";
-      $str .= "\n      ".$this->genBufWriteEx("{$fname}[i]", $type->getValue(), $buf, $tokens)."";
-      $str .= "\n    }";
-      $str .= "\n    ".$this->genWrite("{$buf}.EndArray()")."\n"; 
+      if(array_key_exists('virtual', $tokens))
+        $str .= "MetaHelper.syncVirtual({$buf}, {$fname});\n";
+      else
+        $str .= "MetaHelper.sync({$buf}, {$fname});\n";
     }
     else
       throw new Exception("Unknown type '$type'");
@@ -266,80 +263,6 @@ class mtgCSCodegen extends mtgCodegen
     return $str;
   }
 
-  function genWrite($op)
-  {
-    return "if ((err = $op) != MetaIoError.SUCCESS) { return err; }";
-  }
-
-  function genBufRead($fname, $fpath, mtgType $type, $buf, array $tokens = array())
-  {
-    $str = '';
-    $name = "i".$this->nextId();
-    $offset = "\n    ";
-
-    if($type instanceof mtgBuiltinType)
-    {
-      $str .= $this->genRead("{$buf}.Read".$this->genTypePrefix($type)."(ref $fname)", $fpath, $tokens, $offset);
-    }
-    else if($type instanceof mtgMetaStruct)
-    {
-      if(array_key_exists('virtual', $tokens))
-        $str .= $offset . "if(({$fname} = ({$type}) MetaHelper.readGeneric(reader, ref err)) == null || err != MetaIoError.SUCCESS) { return err; };";
-      else
-        $str .= $this->genRead("{$fname}.read($buf)", $fpath, $tokens, $offset, true);
-    }
-    else if($type instanceof mtgMetaEnum)
-    {
-      $str .= $offset . "int {$name}v = 0;";
-      $str .= $this->genRead("{$buf}.ReadI32(ref {$name}v)", $fpath, $tokens, $offset);
-      $str .= $offset . "{$fname} = ($type) {$name}v;";
-    }
-    else if($type instanceof mtgArrType)
-    {
-      $native_type = $this->genNativeType($type->getValue(), $tokens);
-      $offset = "\n    ";
-      $str .= "/*"."[]{$fname}"."*/";
-      $str .= $this->genRead("{$buf}.BeginArray()", $fpath.".BeginArray", $tokens, $offset);
-      //NOTE: only the beginning of array can be optional, don't pass 'optionalness' to other reads
-      unset($tokens['optional']);
-      $str .= $offset . "int {$name}_size = 0;";
-      $str .= $offset . "err = {$buf}.GetArraySize(ref {$name}_size);";
-      $str .= $offset . "if (err != MetaIoError.SUCCESS) { return err; };";
-      $str .= $offset . "if ({$fname}.Capacity < {$name}_size) {$fname}.Capacity = {$name}_size;";
-      $str .= $offset . "for (; {$name}_size > 0; {$name}_size--) {";
-      $offset = "\n      ";
-      $str .= $offset . "{$native_type} tmp_{$name} = ".$this->genConstructArgs($native_type).";";
-      $str .= $offset . $this->genBufRead("tmp_{$name}", $fpath.".[]", $type->getValue(), $buf, $tokens);
-      $str .= $offset . "{$fname}.Add(tmp_{$name});";
-      $offset = "\n    ";
-      $str .= $offset . "}";
-      $str .= $this->genRead("{$buf}.EndArray()", $fpath.".EndArray", $tokens, $offset);
-      $str .= "\n";
-    }
-    else
-      throw new Exception("Unknown type '{$type}'");
-
-    return $str;
-  }
-
-  function genRead($op, $field, $tokens, $offset, $is_struct = false)
-  {
-    $warn_optional = "{ \n#if DEBUG\n MetaHelper.LogWarn(\"Missing optional field\" + \"'{$field}'\");\n#endif\n return MetaIoError.SUCCESS; }";
-    $optional = array_key_exists('optional', $tokens);
-
-    $fail = "{ \n#if DEBUG\n MetaHelper.LogError(\"Failed read \" + \"'{$field}', \" + err);\n#endif\n return err; }";
-    if($optional)
-    {
-      $offset = str_replace("\n", "", $offset);
-      return "\n{$offset}if((err = $op) != MetaIoError.SUCCESS) {\n".
-        "{$offset}    if(err == MetaIoError.DATA_MISSING" . ($is_struct ? '0' : '') . ") $warn_optional\n".
-        "{$offset}    else $fail;\n".
-        "{$offset}};\n";
-    }
-    else
-      return "{$offset}if((err = $op) != MetaIoError.SUCCESS) $fail;\n";
-  }
-  
   function genConstructArgs($type)
   {
     if($type == "string")  

@@ -101,7 +101,7 @@ public class ModuleLoader : IModuleLoader
 
     var ast = new AST_Module();
 
-    var ok = ast.read(mod_reader) == MetaIoError.SUCCESS;
+    var ok = MetaHelper.syncSafe(MetaSyncContext.NewForRead(mod_reader), ref ast) == MetaIoError.SUCCESS;
     if(strict && !ok)
       Util.Verify(false, "Can't load module " + id);
 

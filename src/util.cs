@@ -363,7 +363,7 @@ static public class Util
   {
     var reader = new MsgPackDataReader(s);
     var ast = new T();
-    var err = ast.read(reader);
+    var err = MetaHelper.syncSafe(MetaSyncContext.NewForRead(reader), ref ast);
 
     if(err != MetaIoError.SUCCESS)
       throw new Exception("Could not read: " + err);
@@ -379,7 +379,7 @@ static public class Util
   static public void Meta2Bin<T>(T ast, Stream dst) where T : IMetaStruct
   {
     var writer = new MsgPackDataWriter(dst);
-    var err = ast.write(writer);
+    var err = MetaHelper.syncSafe(MetaSyncContext.NewForWrite(writer), ref ast);
 
     if(err != MetaIoError.SUCCESS)
       throw new Exception("Could not write: " + err);
