@@ -79,11 +79,9 @@ public class Interpreter : AST_Visitor
 
   public FastStack<StackValue> stack = new FastStack<StackValue>(256);
   public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
-#if DEBUG_STACK
   //NOTE: this one is used for marking stack values with proper func ctx so that 
   //      this info can be retrieved for debug purposes
   public FastStack<FuncBaseCallNode> func_ctx_stack = new FastStack<FuncBaseCallNode>(128);
-#endif
   //NOTE: this one is used for marking stack values with proper node ctx, 
   //      this is used in paral nodes where stack values interleaving may happen
   public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(128);
