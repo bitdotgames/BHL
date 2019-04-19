@@ -15288,9 +15288,7 @@ public class BHL_Test
         intp.PopValueNodeCtx();
 
         if(res != bhl.BHS.RUNNING)
-        {
           tasks.RemoveAt(i);
-        }
         else
           ++i;
       }
@@ -15323,6 +15321,7 @@ public class BHL_Test
     func bar()
     {
       int i = 10 + calc()
+      trace((string)i)
     }
 
     func test1() 
@@ -15338,6 +15337,9 @@ public class BHL_Test
 
     var globs = SymbolTable.CreateBuiltins();
 
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
     var intp = Interpret(bhl, globs);
     var tm = new TestTaskManager();
     var node1 = intp.GetFuncCallNode("test1");
@@ -15346,6 +15348,10 @@ public class BHL_Test
     tm.Add(node2);
     while(tm.IsBusy)
       tm.Tick();
+
+    var str = GetString(trace_stream);
+    AssertEqual("110", str);
+
     CommonChecks(intp);
   }
 
