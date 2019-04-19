@@ -395,15 +395,16 @@ public class Interpreter : AST_Visitor
     return sv.dv;
   }
 
-  public void PopFuncDanglingValues(int n)
+  public void PopFuncDanglingValues(int stack_mark, BehaviorTreeNode node_ctx)
   {
-    //NOTE: skipping values popping if there's any node ctx present
-    if(n == 0 || stack.Count == 0 || node_ctx_stack.Count > 0)
+    if(stack.Count == 0)
       return;
 
-    for(int i=stack.Count;i-- > 0 && n-- > 0;)
+    for(int i=stack.Count;i != stack_mark && i-- > 0;)
     {
       var sv = stack[i];
+      if(sv.node_ctx != node_ctx)
+        continue;
       sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
       stack.RemoveAtFast(i);
     }

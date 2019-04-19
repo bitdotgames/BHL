@@ -437,7 +437,8 @@ public abstract class FuncBaseCallNode : GroupNode
 
   //TODO: this one is for inspecting purposes only
   public BHS lastExecuteStatus;
-  short init_stack_size;
+  short stack_mark;
+  BehaviorTreeNode stack_node_ctx;
 
   public FuncBaseCallNode(AST_Call ast)
   {
@@ -495,7 +496,9 @@ public abstract class FuncBaseCallNode : GroupNode
 
   override public void init()
   {
-    init_stack_size = (short)Interpreter.instance.stack.Count;
+    var interp = Interpreter.instance;
+    stack_node_ctx = interp.node_ctx_stack.Count > 0 ? interp.node_ctx_stack.Peek() : null;
+    stack_mark = (short)interp.stack.Count;
     base.init();
   }
 
@@ -508,8 +511,10 @@ public abstract class FuncBaseCallNode : GroupNode
     if(currStatus != BHS.SUCCESS)
     {
       var interp = Interpreter.instance;
-      interp.PopFuncDanglingValues(interp.stack.Count - init_stack_size);
+      interp.PopFuncDanglingValues(stack_mark, stack_node_ctx);
     }
+
+    stack_node_ctx = null;
   } 
 
   override public string inspect() 

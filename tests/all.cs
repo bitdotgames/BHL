@@ -15356,6 +15356,54 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStackForTaskMgrInterleaved()
+  {
+    string bhl = @"
+
+    func int calc_fail()
+    {
+      yield()
+      fail()
+      return 2
+    }
+
+    func test1() 
+    {
+      yield()
+      int i = 100 + calc_fail()
+    }
+
+    func int calc()
+    {
+      yield()
+      yield()
+      return 100
+    }
+
+    func test2()
+    {
+      int i = 10 + calc()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var tm = new TestTaskManager();
+    var node1 = intp.GetFuncCallNode("test1");
+    tm.Add(node1);
+    tm.Tick();
+
+    var node2 = intp.GetFuncCallNode("test2");
+    tm.Add(node2);
+
+    while(tm.IsBusy)
+      tm.Tick();
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestCleanFuncArgsOnStackInUntilSuccess()
   {
     string bhl = @"
