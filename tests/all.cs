@@ -15118,7 +15118,6 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-
   [IsTested()]
   public void TestCleanFuncArgsOnStackUserBind()
   {
@@ -15264,6 +15263,143 @@ public class BHL_Test
     var res = ExecNode(node, 0);
     AssertEqual(BHS.SUCCESS, res.status);
     //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  class TestTaskManager
+  {
+    List<BehaviorTreeNode> tasks = new List<BehaviorTreeNode>(); 
+
+    public bool IsBusy {
+      get {
+        return tasks.Count > 0;
+      }
+    }
+
+    public void Tick()
+    {
+      var intp = Interpreter.instance;
+      for(int i=0;i<tasks.Count;)
+      {
+        var t = tasks[i];
+
+        intp.PushStackParalCtx(t);
+        var res = t.run();
+        intp.PopStackParalCtx();
+
+        if(res != bhl.BHS.RUNNING)
+          tasks.RemoveAt(i);
+        else
+          ++i;
+      }
+    }
+
+    public void Add(BehaviorTreeNode task)
+    {
+      tasks.Add(task);
+    }
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForTaskMgr()
+  {
+    string bhl = @"
+
+    func int calc()
+    {
+      yield()
+      yield()
+      return 100
+    }
+
+    func foo()
+    {
+      yield()
+      fail()
+    }
+
+    func bar()
+    {
+      int i = 10 + calc()
+      trace((string)i)
+    }
+
+    func test1() 
+    {
+      foo()
+    }
+
+    func test2()
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var tm = new TestTaskManager();
+    var node1 = intp.GetFuncCallNode("test1");
+    var node2 = intp.GetFuncCallNode("test2");
+    tm.Add(node1);
+    tm.Add(node2);
+    while(tm.IsBusy)
+      tm.Tick();
+
+    var str = GetString(trace_stream);
+    AssertEqual("110", str);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForTaskMgrInterleaved()
+  {
+    string bhl = @"
+
+    func int calc_fail()
+    {
+      yield()
+      fail()
+      return 2
+    }
+
+    func test1() 
+    {
+      yield()
+      int i = 100 + calc_fail()
+    }
+
+    func int calc()
+    {
+      yield()
+      yield()
+      return 100
+    }
+
+    func test2()
+    {
+      int i = 10 + calc()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var tm = new TestTaskManager();
+    var node1 = intp.GetFuncCallNode("test1");
+    tm.Add(node1);
+    tm.Tick();
+
+    var node2 = intp.GetFuncCallNode("test2");
+    tm.Add(node2);
+
+    while(tm.IsBusy)
+      tm.Tick();
+
     CommonChecks(intp);
   }
 

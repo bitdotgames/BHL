@@ -1,3 +1,4 @@
+//#define DEBUG_STACK
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,13 +62,17 @@ public class Interpreter : AST_Visitor
   public struct StackValue
   {
     public DynVal dv;
+#if DEBUG_STACK
     public FuncBaseCallNode func_ctx;
+#endif
     public BehaviorTreeNode node_ctx;
 
     public override string ToString() 
     {
       return dv + " " + dv.GetHashCode() + 
+#if DEBUG_STACK
         ", func: " + (func_ctx != null ? "" + func_ctx.ast.Name() : "null") +
+#endif
         ", node: " + (node_ctx != null ? "" + node_ctx.GetType().Name  : "null");
     }
   }
@@ -75,7 +80,7 @@ public class Interpreter : AST_Visitor
   public FastStack<StackValue> stack = new FastStack<StackValue>(256);
   public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
   //NOTE: this one is used for marking stack values with proper func ctx so that 
-  //      dangling stack values can be cleaned up
+  //      this info can be retrieved for debug purposes
   public FastStack<FuncBaseCallNode> func_ctx_stack = new FastStack<FuncBaseCallNode>(128);
   //NOTE: this one is used for marking stack values with proper node ctx, 
   //      this is used in paral nodes where stack values interleaving may happen
@@ -92,7 +97,9 @@ public class Interpreter : AST_Visitor
     loaded_modules.Clear();
     stack.Clear();
     call_stack.Clear();
+#if DEBUG_STACK
     func_ctx_stack.Clear();
+#endif
 
     this.symbols = symbols;
     this.module_loader = module_loader;
@@ -320,14 +327,14 @@ public class Interpreter : AST_Visitor
     return node;
   }
 
-  public void PushValueNodeCtx(BehaviorTreeNode n)
+  public void PushStackParalCtx(BehaviorTreeNode n)
   {
     node_ctx_stack.Push(n);
     if(stack.Count > 0)
       SortStackByNodeCtx(n);
   }
 
-  public void PopValueNodeCtx()
+  public void PopStackParalCtx()
   {
     node_ctx_stack.Pop();
     if(node_ctx_stack.Count > 0 && stack.Count > 0)
@@ -359,7 +366,9 @@ public class Interpreter : AST_Visitor
 
     var sv = new StackValue();
     sv.dv = v;
+#if DEBUG_STACK
     sv.func_ctx = func_ctx_stack.Count > 0 ? func_ctx_stack.Peek() : null; 
+#endif
     sv.node_ctx = node_ctx_stack.Count > 0 ? node_ctx_stack.Peek() : null;
 
     stack.Push(sv);
@@ -386,15 +395,16 @@ public class Interpreter : AST_Visitor
     return sv.dv;
   }
 
-  public void PopFuncDanglingValues(int n)
+  public void PopFuncValues(int stack_mark, BehaviorTreeNode paral_ctx)
   {
-    //NOTE: skipping values popping if there's any node ctx present
-    if(n == 0 || stack.Count == 0 || node_ctx_stack.Count > 0)
+    if(stack.Count == 0)
       return;
 
-    for(int i=stack.Count;i-- > 0 && n-- > 0;)
+    for(int i=stack.Count;i != stack_mark && i-- > 0;)
     {
       var sv = stack[i];
+      if(sv.node_ctx != paral_ctx)
+        continue;
       sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
       stack.RemoveAtFast(i);
     }
