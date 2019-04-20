@@ -327,14 +327,14 @@ public class Interpreter : AST_Visitor
     return node;
   }
 
-  public void PushValueNodeCtx(BehaviorTreeNode n)
+  public void PushStackParalCtx(BehaviorTreeNode n)
   {
     node_ctx_stack.Push(n);
     if(stack.Count > 0)
       SortStackByNodeCtx(n);
   }
 
-  public void PopValueNodeCtx()
+  public void PopStackParalCtx()
   {
     node_ctx_stack.Pop();
     if(node_ctx_stack.Count > 0 && stack.Count > 0)
@@ -395,7 +395,7 @@ public class Interpreter : AST_Visitor
     return sv.dv;
   }
 
-  public void PopFuncDanglingValues(int stack_mark, BehaviorTreeNode node_ctx)
+  public void PopFuncValues(int stack_mark, BehaviorTreeNode paral_ctx)
   {
     if(stack.Count == 0)
       return;
@@ -403,7 +403,7 @@ public class Interpreter : AST_Visitor
     for(int i=stack.Count;i != stack_mark && i-- > 0;)
     {
       var sv = stack[i];
-      if(sv.node_ctx != node_ctx)
+      if(sv.node_ctx != paral_ctx)
         continue;
       sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
       stack.RemoveAtFast(i);

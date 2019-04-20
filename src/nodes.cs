@@ -438,7 +438,7 @@ public abstract class FuncBaseCallNode : GroupNode
   //TODO: this one is for inspecting purposes only
   public BHS lastExecuteStatus;
   short stack_mark;
-  BehaviorTreeNode stack_node_ctx;
+  BehaviorTreeNode stack_paral_ctx;
 
   public FuncBaseCallNode(AST_Call ast)
   {
@@ -497,8 +497,8 @@ public abstract class FuncBaseCallNode : GroupNode
   override public void init()
   {
     var interp = Interpreter.instance;
-    stack_node_ctx = interp.node_ctx_stack.Count > 0 ? interp.node_ctx_stack.Peek() : null;
-    stack_mark = (short)interp.stack.Count;
+    stack_paral_ctx = interp.node_ctx_stack.Count > 0 ? interp.node_ctx_stack.Peek() : null;
+    stack_mark = (short)(interp.stack.Count-1);
     base.init();
   }
 
@@ -511,10 +511,10 @@ public abstract class FuncBaseCallNode : GroupNode
     if(currStatus != BHS.SUCCESS)
     {
       var interp = Interpreter.instance;
-      interp.PopFuncDanglingValues(stack_mark, stack_node_ctx);
+      interp.PopFuncValues(stack_mark, stack_paral_ctx);
     }
 
-    stack_node_ctx = null;
+    stack_paral_ctx = null;
   } 
 
   override public string inspect() 
@@ -825,7 +825,7 @@ public class ParallelNode : ScopeNode
 
       if(currentTask.currStatus == BHS.NONE || currentTask.currStatus == BHS.RUNNING)
       {
-        interp.PushValueNodeCtx(currentTask);
+        interp.PushStackParalCtx(currentTask);
 
         //BHS status = currentTask.run();
         BHS status;
@@ -838,7 +838,7 @@ public class ParallelNode : ScopeNode
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
 
-        interp.PopValueNodeCtx();
+        interp.PopStackParalCtx();
 
         if(status != BHS.RUNNING)
           return status;
@@ -876,7 +876,7 @@ public class ParallelAllNode : ScopeNode
 
       if(currentTask.currStatus == BHS.NONE || currentTask.currStatus == BHS.RUNNING)
       {
-        interp.PushValueNodeCtx(currentTask);
+        interp.PushStackParalCtx(currentTask);
 
         //BHS status = currentTask.run();
         BHS status;
@@ -889,7 +889,7 @@ public class ParallelAllNode : ScopeNode
           currentTask.deinit();
         ////////////////////FORCING CODE INLINE////////////////////////////////
         
-        interp.PopValueNodeCtx();
+        interp.PopStackParalCtx();
 
         if(status == BHS.FAILURE)
           return BHS.FAILURE;

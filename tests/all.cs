@@ -15283,9 +15283,9 @@ public class BHL_Test
       {
         var t = tasks[i];
 
-        intp.PushValueNodeCtx(t);
+        intp.PushStackParalCtx(t);
         var res = t.run();
-        intp.PopValueNodeCtx();
+        intp.PopStackParalCtx();
 
         if(res != bhl.BHS.RUNNING)
           tasks.RemoveAt(i);
