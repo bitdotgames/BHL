@@ -397,9 +397,6 @@ public class Interpreter : AST_Visitor
 
   public void PopFuncValues(int stack_mark, BehaviorTreeNode paral_ctx)
   {
-    if(stack.Count == 0)
-      return;
-
     for(int i=stack.Count;i != stack_mark && i-- > 0;)
     {
       var sv = stack[i];

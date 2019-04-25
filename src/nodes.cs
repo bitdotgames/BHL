@@ -511,7 +511,8 @@ public abstract class FuncBaseCallNode : GroupNode
     if(currStatus != BHS.SUCCESS)
     {
       var interp = Interpreter.instance;
-      interp.PopFuncValues(stack_mark, stack_paral_ctx);
+      if(interp.stack.Count > 0)
+        interp.PopFuncValues(stack_mark, stack_paral_ctx);
     }
 
     stack_paral_ctx = null;
