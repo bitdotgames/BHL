@@ -46,7 +46,7 @@ public class Build
     conf.userbindings.Register(globs);
 
     Util.DEBUG = conf.debug;
-    Util.SetupAutogenFactory();
+    Util.SetupASTFactory();
 
     var parse_workers = new List<ParseWorker>();
     var workers = new List<Worker>();

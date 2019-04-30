@@ -97,7 +97,7 @@ public class ModuleLoader : IModuleLoader
     mod_stream.SetData(res, 0, res_len);
     mod_reader.setPos(0);
 
-    Util.SetupAutogenFactory();
+    Util.SetupASTFactory();
 
     var ast = new AST_Module();
 
@@ -105,7 +105,7 @@ public class ModuleLoader : IModuleLoader
     if(strict && !ok)
       Util.Verify(false, "Can't load module " + id);
 
-    Util.RestoreAutogenFactory();
+    Util.RestoreASTFactory();
 
     return ast;
   }

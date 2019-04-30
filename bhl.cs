@@ -1,140 +1,645 @@
 using System;
 using System.IO;
-using System.Collections;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Antlr4.Runtime.Misc;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using Mono.Options;
-using bhl;
 
-public class BHL
+public static class Tasks
 {
-  public static void Usage(string msg = "")
+  [Task()]
+  public static void build_front_dll(Taskman tm, string[] args)
   {
-    Console.WriteLine("Usage:");
-    Console.WriteLine("./bhl --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d]");
-    Console.WriteLine(msg);
-    Environment.Exit(1);
+    MCSBuild(tm, new string[] {
+      $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
+      $"{BHL_ROOT}/deps/msgpack/*.cs",
+      $"{BHL_ROOT}/deps/metagen.cs",
+      $"{BHL_ROOT}/src/g/*.cs",
+      $"{BHL_ROOT}/src/*.cs",
+      $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
+      $"{BHL_ROOT}/lz4.dll", 
+     },
+     $"{BHL_ROOT}/bhl_front.dll",
+     "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library"
+    );
   }
 
-  public static void Main(string[] args)
+  [Task()]
+  public static void build_back_dll(Taskman tm, string[] args)
   {
-    var files = new List<string>();
+    var mcs_bin = args.Length > 0 ? args[0] : "/Applications/Unity/Unity.app/Contents/Frameworks/Mono/bin/gmcs"; 
+    var dll_file = args.Length > 1 ? args[1] : $"{BHL_ROOT}/bhl_back.dll";
+    var extra_args = args.Length > 2 ? args[2] : "-debug";
 
-    string src_dir = "";
-    string res_file = "";
-    string cache_dir = "";
-    bool use_cache = true;
-    string err_file = "";
-    string postproc_dll_path = "";
-    string userbindings_dll_path = "";
-    int max_threads = 1;
-    bool check_deps = true;
-    bool debug = false;
+    MCSBuild(tm, new string[] {
+      $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
+      $"{BHL_ROOT}/deps/msgpack/*.cs",
+      $"{BHL_ROOT}/deps/metagen.cs",
+      $"{BHL_ROOT}/src/ast.cs", 
+      $"{BHL_ROOT}/src/symbol.cs", 
+      $"{BHL_ROOT}/src/scope.cs", 
+      $"{BHL_ROOT}/src/backend.cs", 
+      $"{BHL_ROOT}/src/loader.cs", 
+      $"{BHL_ROOT}/src/storage.cs", 
+      $"{BHL_ROOT}/src/nodes.cs", 
+      $"{BHL_ROOT}/src/util.cs",
+      $"{BHL_ROOT}/src/lz4.cs",
+     }, 
+      dll_file,
+      $"{extra_args} -target:library",
+      mcs_bin
+    );
+  }
 
-    var p = new OptionSet () {
-      { "dir=", "source dir",
-        v => src_dir = v },
-      { "files=", "source files list",
-        v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
-      { "result=", "result file",
-        v => res_file = v },
-      { "cache_dir=", "cache dir",
-        v => cache_dir = v },
-      { "C", "don't use cache",
-        v => use_cache = v == null },
-      { "N", "don't check import deps",
-        v => check_deps = v == null },
-      { "postproc_dll=", "posprocess dll path",
-        v => postproc_dll_path = v },
-      { "bindings_dll=", "bindings dll path",
-        v => userbindings_dll_path = v },
-      { "error=", "error file",
-        v => err_file = v },
-      { "threads=", "number of threads",
-          v => max_threads = int.Parse(v) },
-      { "d", "debug version",
-        v => debug = v != null }
+  [Task()]
+  public static void clean(Taskman tm, string[] args)
+  {
+    tm.Rm($"{BHL_ROOT}/src/autogen.cs");
+
+    foreach(var dll in tm.Glob($"{BHL_ROOT}/*.dll"))
+    {
+      if(!dll.StartsWith("bhl_"))
+        continue;
+      tm.Rm(dll);
+      tm.Rm($"{dll}.mdb");
+    }
+
+    foreach(var exe in tm.Glob($"{BHL_ROOT}/*.exe"))
+    {
+      //NOTE: when removing itself under Windows we can get an exception, so let's force its staleness
+      if(exe.EndsWith("bhlb.exe"))
+      {
+        tm.Touch(exe, new DateTime(1970, 3, 1, 7, 0, 0)/*some random date in the past*/);
+        continue;
+      }
+      
+      tm.Rm(exe);
+      tm.Rm($"{exe}.mdb");
+    }
+  }
+
+  [Task(deps: "geng")]
+  public static void regen(Taskman tm, string[] args)
+  {}
+
+  [Task()]
+  public static void geng(Taskman tm, string[] args)
+  {
+    tm.Mkdir($"{BHL_ROOT}/tmp");
+
+    tm.Copy($"{BHL_ROOT}/bhl.g", $"{BHL_ROOT}/tmp/bhl.g");
+    tm.Copy($"{BHL_ROOT}/bin/g4sharp", $"{BHL_ROOT}/tmp/g4sharp");
+
+    tm.Shell("sh", $"cd {BHL_ROOT}/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/ ");
+  }
+
+  [Task(deps: "build_front_dll")]
+  public static void run(Taskman tm, string[] args)
+  {
+    List<string> postproc_sources;
+    List<string> user_sources;
+    var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
+
+    var bin = BuildBHLC(tm, user_sources, postproc_sources, ref runtime_args);
+    MonoRun(tm, bin, runtime_args.ToArray(), "--debug");
+  }
+
+  [Task(deps: "build_front_dll")]
+  public static void build(Taskman tm, string[] args)
+  {
+    List<string> postproc_sources;
+    List<string> user_sources;
+    var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
+    BuildBHLC(tm, user_sources, postproc_sources, ref runtime_args);
+  }
+
+  [Task(deps: "build_front_dll")]
+  public static void test(Taskman tm, string[] args)
+  {
+    MCSBuild(tm, 
+     new string[] {
+        $"{BHL_ROOT}/tests/*.cs",
+        $"{BHL_ROOT}/bhl_front.dll",
+        $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
+      },
+      $"{BHL_ROOT}/test.exe",
+      "-define:BHL_FRONT -debug"
+    );
+
+    MonoRun(tm, $"{BHL_ROOT}/test.exe", args, "--debug ");
+  }
+
+  /////////////////////////////////////////////////
+
+  public static string BHL_ROOT {
+    get {
+      return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+    }
+  }
+
+  public static List<string> ExtractBinArgs(string[] args, out List<string> user_sources, out List<string> postproc_sources)
+  {
+    var _postproc_sources = new List<string>();
+    var _user_sources = new List<string>(); 
+
+    var p = new OptionSet() {
+      { "postproc-sources=", "Postprocessing sources",
+        v => _postproc_sources.AddRange(v.Split(',')) },
+      { "user-sources=", "User sources",
+        v => _user_sources.AddRange(v.Split(',')) },
      };
 
-    var extra = new List<string>();
-    try
+    postproc_sources = _postproc_sources;
+    user_sources = _user_sources;
+
+    var left = p.Parse(args);
+    return left;
+  }
+
+  public static string BuildBHLC(Taskman tm, List<string> user_sources, List<string> postproc_sources, ref List<string> runtime_args)
+  {
+    var sources = new string[] {
+      $"{BHL_ROOT}/bhlc.cs",
+      $"{BHL_ROOT}/bhl_front.dll", 
+      $"{BHL_ROOT}/mono_opts.dll",
+      $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
+    };
+
+    if(user_sources.Count > 0)
     {
-      extra = p.Parse(args);
-    }
-    catch(OptionException e)
-    {
-      Usage(e.Message);
-    }
-    files.AddRange(extra);
-
-    if(!Directory.Exists(src_dir))
-      Usage("Root source directory is not valid");
-    src_dir = Path.GetFullPath(src_dir);
-
-    if(res_file == "")
-      Usage("Result file path not set");
-
-    if(cache_dir == "")
-      Usage("Cache dir not set");
-
-    if(err_file == "")
-      Usage("Err file not set");
-    if(File.Exists(err_file))
-      File.Delete(err_file);
-
-    UserBindings userbindings = new EmptyUserBindings();
-    if(userbindings_dll_path != "")
-    {
-      var userbindings_assembly = System.Reflection.Assembly.LoadFrom(userbindings_dll_path);
-      var userbindings_class = userbindings_assembly.GetTypes()[0];
-      userbindings = System.Activator.CreateInstance(userbindings_class) as UserBindings;
-      if(userbindings == null)
-        Usage("User bindings are invalid");
+      user_sources.Add($"{BHL_ROOT}/bhl_front.dll");
+      user_sources.Add($"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"); 
+      MCSBuild(tm, 
+        user_sources.ToArray(),
+        $"{BHL_ROOT}/bhl_user.dll",
+        "-define:BHL_FRONT -debug -target:library"
+      );
+      runtime_args.Add($"--bindings_dll={BHL_ROOT}/bhl_user.dll");
     }
 
-    PostProcessor postproc = new EmptyPostProcessor();
-    if(postproc_dll_path != "")
+    if(postproc_sources.Count > 0)
     {
-      var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll_path);
-      var postproc_class = postproc_assembly.GetTypes()[0];
-      postproc = System.Activator.CreateInstance(postproc_class) as PostProcessor;
-      if(postproc == null)
-        Usage("User postprocessor is invalid");
+      postproc_sources.Add($"{BHL_ROOT}/bhl_front.dll");
+      postproc_sources.Add($"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"); 
+      MCSBuild(tm, 
+        postproc_sources.ToArray(),
+        $"{BHL_ROOT}/bhl_postproc.dll",
+        "-define:BHL_FRONT -debug -target:library"
+      );
+      runtime_args.Add($"--postproc_dll={BHL_ROOT}/bhl_postproc.dll");
+    }
+
+    MCSBuild(tm, sources, $"{BHL_ROOT}/bhlc.exe", "-define:BHL_FRONT -debug");
+
+    return $"{BHL_ROOT}/bhlc.exe";
+  }
+
+  public static void MonoRun(Taskman tm, string exe, string[] args = null, string opts = "")
+  {
+    var mono_args = $"{opts} {exe} " + String.Join(" ", args);
+    tm.Shell("mono", mono_args);
+  }
+
+  public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "", string binary = "mcs")
+  {
+    var files = new List<string>();
+    foreach(var s in srcs)
+      files.AddRange(tm.Glob(s));
+
+    foreach(var f in files)
+      if(!File.Exists(f))
+        throw new Exception($"Bad file {f}");
+
+    var refs = new List<string>();
+    for(int i=files.Count;i-- > 0;)
+    {
+      if(files[i].EndsWith(".dll"))
+      {
+        refs.Add(files[i]);
+        files.RemoveAt(i);
+      }
     }
 
     if(files.Count == 0)
-      Build.AddFilesFromDir(src_dir, files);
+      throw new Exception("No files");
 
-    for(int i=files.Count;i-- > 0;)
-    {
-      if(string.IsNullOrEmpty(files[i]))
-        files.RemoveAt(i);
-    }
+    string args = (refs.Count > 0 ? " -r:" + String.Join(" -r:", refs.Select(r => tm.CLIPath(r))) : "") + $" {opts} -out:{tm.CLIPath(result)} " + String.Join(" ", files.Select(f => tm.CLIPath(f)));
+    string cmd = binary + " " + args;
+	
+    uint cmd_hash = Hash.CRC32(cmd);
+    string cmd_hash_file = $"{BHL_ROOT}/build/" + Hash.CRC32(result) + ".mhash";
+    if(!File.Exists(cmd_hash_file) || File.ReadAllText(cmd_hash_file) != cmd_hash.ToString()) 
+      tm.Write(cmd_hash_file, cmd_hash.ToString());
 
-    Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
-    var conf = new BuildConf();
-    conf.use_cache = use_cache;
-    conf.self_file = GetSelfFile();
-    conf.check_deps = check_deps;
-    conf.files = files;
-    conf.inc_dir = src_dir;
-    conf.max_threads = max_threads;
-    conf.res_file = res_file;
-    conf.cache_dir = cache_dir;
-    conf.err_file = err_file;
-    conf.userbindings = userbindings;
-    conf.postproc = postproc;
-    conf.debug = debug;
+    files.Add(cmd_hash_file);
 
-    var build = new Build();
-    int err = build.Exec(conf);
-    if(err != 0)
-      Environment.Exit(err);
-  }
-
-  public static string GetSelfFile()
-  {
-    return System.Reflection.Assembly.GetExecutingAssembly().Location;
+    if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
+      tm.Shell(binary, args);
   }
 }
+
+public static class BHLBuild
+{
+  public static void Main(string[] args)
+  {
+    var tm = new Taskman(typeof(Tasks));
+    tm.Run(args);
+  }
+}
+
+public class Taskman
+{
+  public class Task
+  {
+    public TaskAttribute attr;
+    public MethodInfo func;
+
+    public string Name {
+      get {
+        return func.Name;
+      }
+    }
+
+    public List<Task> Deps = new List<Task>();
+  }
+
+  List<Task> tasks = new List<Task>();
+  HashSet<Task> invoked = new HashSet<Task>();
+
+  public bool IsWin {
+    get {
+      return !IsUnix;
+    }
+  }
+
+  public bool IsUnix {
+    get {
+      int p = (int)Environment.OSVersion.Platform;
+      return (p == 4) || (p == 6) || (p == 128);
+    }
+  }
+
+  public Taskman(Type tasks_class)
+  {
+    foreach(var method in tasks_class.GetMethods())
+    {
+      var attr = GetAttribute<TaskAttribute>(method);
+      if(attr == null)
+        continue;
+      var task = new Task() {
+        attr = attr,
+        func = method
+      };
+      tasks.Add(task);
+    }
+
+    foreach(var task in tasks)
+    {
+      foreach(var dep_name in task.attr.deps)
+      {
+        var dep = FindTask(dep_name);
+        if(dep == null)
+          throw new Exception($"No such dependency '{dep_name}' for task '{task.Name}'");
+        task.Deps.Add(dep);
+      }
+    }
+  }
+
+  static T GetAttribute<T>(MemberInfo member) where T : Attribute
+  {
+    foreach(var attribute in member.GetCustomAttributes(true))
+    {
+      if(attribute is TaskAttribute)
+        return (T)attribute;
+    }
+    return null;
+  }
+
+  public void Run(string[] args)
+  {
+    if(args.Length == 0)
+      return;
+
+    if(tasks.Count == 0)
+      return;
+    
+    var task = FindTask(args[0]);
+    if(task == null)
+      return;
+
+    var task_args = new string[args.Length-1];
+    for(int i=1;i<args.Length;++i)
+      task_args[i-1] = args[i];
+
+    Invoke(task, task_args);
+  }
+
+  public void Invoke(Task task, string[] task_args)
+  {
+    if(invoked.Contains(task))
+      return;
+    invoked.Add(task);
+
+    foreach(var dep in task.Deps)
+      Invoke(dep, new string[] {});
+
+    Echo($"************************ Running task '{task.Name}' ************************");
+    var sw = new Stopwatch();
+    sw.Start();
+    task.func.Invoke(null, new object[] { this, task_args });
+    var elapsed = Math.Round(sw.ElapsedMilliseconds/1000.0f,2);
+    Echo($"************************ '{task.Name}' done({elapsed} sec.)  ************************");
+  }
+
+  public Task FindTask(string name)
+  {
+    foreach(var t in tasks)
+    {
+      if(t.Name == name)
+        return t;
+    }
+    return null;
+  }
+
+  public string CLIPath(string p)
+  {
+  	if(p.IndexOf(" ") == -1)
+	  return p;
+	  
+    if(IsWin)
+    {
+      p = "\"" + p.Trim(new char[]{'"'}) + "\"";
+      return p;
+    }
+    else
+    {
+      p = "'" + p.Trim(new char[]{'\''}) + "'";
+      return p;
+    }
+  }
+
+  public void Echo(string s)
+  {
+    Console.WriteLine(s);
+  }
+
+  public void Mkdir(string path)
+  {
+    if(!Directory.Exists(path))
+      Directory.CreateDirectory(path);
+  }
+
+  public void Copy(string src, string dst)
+  {
+    if(File.Exists(dst))
+      File.Delete(dst);
+    Mkdir(Path.GetDirectoryName(dst));
+    File.Copy(src, dst);
+  }
+
+  public void Shell(string binary, string args)
+  {
+    binary = CLIPath(binary);
+    Echo($"shell: {binary} {args}");
+
+    var p = new System.Diagnostics.Process();
+
+	if(IsWin)
+	{
+	  string tmp_path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/build/";
+	  //string tmp_path = Path.GetTempPath();
+	  string cmd = binary + " " + args;
+	  var bat_file = tmp_path + Hash.CRC32(cmd) + ".bat";    
+	  Write(bat_file, cmd);
+	  
+	  p.StartInfo.FileName = "cmd.exe";
+	  p.StartInfo.Arguments = "/c " + bat_file;
+	}
+	else
+	{
+	  p.StartInfo.FileName = binary;
+	  p.StartInfo.Arguments = args;
+	}
+    
+	p.StartInfo.UseShellExecute = false;
+    p.StartInfo.RedirectStandardOutput = true;
+    p.StartInfo.RedirectStandardError = true;
+    p.Start();
+    
+    p.WaitForExit();
+
+    var lines = p.StandardOutput.ReadToEnd().Split(new [] { '\r', '\n' });
+    foreach(string line in lines)
+    {
+      if(line != "")
+        Echo(line);
+    }
+
+    if(p.ExitCode != 0)
+    {
+      lines = p.StandardError.ReadToEnd().Split(new [] { '\r', '\n' });
+      foreach(string line in lines)
+      {
+        if(line != "")
+          Echo(line);
+      }
+      throw new Exception($"Error exit code: {p.ExitCode}");
+    }
+  }
+
+  public string[] Glob(string s)
+  {
+    var files = new List<string>();
+    int idx = s.IndexOf('*');
+    if(idx != -1)
+    {
+      string dir = Path.GetDirectoryName(s);
+      string mask = s.Substring(idx);
+      files.AddRange(Directory.GetFiles(dir, mask));
+    }
+    else
+      files.Add(s);
+    return files.ToArray();
+  }
+
+  public void Rm(string path)
+  {
+    if(Directory.Exists(path))
+      Directory.Delete(path, true);
+    else
+      File.Delete(path);
+  }
+
+  public void Write(string path, string text)
+  {
+    Mkdir(Path.GetDirectoryName(path));
+    File.WriteAllText(path, text);
+  }
+
+  public void Touch(string path, DateTime dt)
+  {
+    if(!File.Exists(path))
+      File.WriteAllText(path, "");
+    File.SetLastWriteTime(path, dt);
+  }
+
+  public bool NeedToRegen(string file, IList<string> deps)
+  {
+    if(!File.Exists(file))
+      return true;
+
+    var fmtime = new FileInfo(file).LastWriteTime; 
+    foreach(var dep in deps)
+    {
+      if(File.Exists(dep) && (new FileInfo(dep).LastWriteTime > fmtime))
+        return true;
+    }
+
+    return false;
+  }
+}
+
+public class TaskAttribute : Attribute
+{
+  public string[] deps;
+
+  public TaskAttribute(params string[] deps)
+  {
+    this.deps = deps;
+  }
+}
+
+public static class Hash
+{
+  static public uint CRC32(string id)
+  {
+    var bytes = System.Text.Encoding.ASCII.GetBytes(id);
+    return CRC32(bytes);
+  }
+
+  static public uint CRC32(byte[] bytes)
+  {
+    return Crc32.Compute(bytes, bytes.Length);
+  }
+
+  public sealed class Crc32 : HashAlgorithm
+  {
+    public const UInt32 DefaultPolynomial = 0xedb88320u;
+    public const UInt32 DefaultSeed = 0xffffffffu;
+
+    private static UInt32[] defaultTable;
+
+    private readonly UInt32 seed;
+    private readonly UInt32[] table;
+    private UInt32 hash;
+
+    public Crc32()
+      : this(DefaultPolynomial, DefaultSeed)
+    {
+    }
+
+    public Crc32(UInt32 polynomial, UInt32 seed)
+    {
+      table = InitializeTable(polynomial);
+      this.seed = hash = seed;
+    }
+
+    public override void Initialize()
+    {
+      hash = seed;
+    }
+
+    protected override void HashCore(byte[] buffer, int start, int length)
+    {
+      hash = CalculateHash(table, hash, buffer, start, length);
+    }
+
+    protected override byte[] HashFinal()
+    {
+      var hashBuffer = UInt32ToBigEndianBytes(~hash);
+      HashValue = hashBuffer;
+      return hashBuffer;
+    }
+
+    public override int HashSize { get { return 32; } }
+
+    public static UInt32 Compute(byte[] buffer, int buffer_len)
+    {
+      return Compute(DefaultSeed, buffer, buffer_len);
+    }
+
+    public static UInt32 Compute(UInt32 seed, byte[] buffer, int buffer_len)
+    {
+      return Compute(DefaultPolynomial, seed, buffer, buffer_len);
+    }
+
+    public static UInt32 Compute(UInt32 polynomial, UInt32 seed, byte[] buffer, int buffer_len)
+    {
+      return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, buffer_len);
+    }
+
+    private static UInt32[] InitializeTable(UInt32 polynomial)
+    {
+      if (polynomial == DefaultPolynomial && defaultTable != null)
+        return defaultTable;
+
+      var createTable = new UInt32[256];
+      for (var i = 0; i < 256; i++)
+      {
+        var entry = (UInt32)i;
+        for (var j = 0; j < 8; j++)
+          if ((entry & 1) == 1)
+            entry = (entry >> 1) ^ polynomial;
+          else
+            entry = entry >> 1;
+        createTable[i] = entry;
+      }
+
+      if (polynomial == DefaultPolynomial)
+        defaultTable = createTable;
+
+      return createTable;
+    }
+
+    private static UInt32 CalculateHash(UInt32[] table, UInt32 seed, IList<byte> buffer, int start, int size)
+    {
+      var crc = seed;
+      for (var i = start; i < size - start; i++)
+        crc = (crc >> 8) ^ table[buffer[i] ^ crc & 0xff];
+      return crc;
+    }
+
+    public static UInt32 BeginHash()
+    {
+      var crc = DefaultSeed;
+      return crc;
+    }
+
+    public static UInt32 AddHash(UInt32 crc, byte data)
+    {
+      UInt32[] table = InitializeTable(DefaultPolynomial);
+      crc = (crc >> 8) ^ table[data ^ crc & 0xff];
+      return crc;
+    }
+
+    public static UInt32 FinalizeHash(UInt32 crc)
+    {
+      return ~crc;
+    }
+
+    private static byte[] UInt32ToBigEndianBytes(UInt32 uint32)
+    {
+      var result = BitConverter.GetBytes(uint32);
+
+      if (BitConverter.IsLittleEndian)
+        Array.Reverse(result);
+
+      return result;
+    }
+  }
+}
+
