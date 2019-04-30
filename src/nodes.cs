@@ -437,7 +437,8 @@ public abstract class FuncBaseCallNode : GroupNode
 
   //TODO: this one is for inspecting purposes only
   public BHS lastExecuteStatus;
-  short stack_mark;
+
+  DynVal stack_mark;
   BehaviorTreeNode stack_paral_ctx;
 
   public FuncBaseCallNode(AST_Call ast)
@@ -497,8 +498,10 @@ public abstract class FuncBaseCallNode : GroupNode
   override public void init()
   {
     var interp = Interpreter.instance;
+
     stack_paral_ctx = interp.node_ctx_stack.Count > 0 ? interp.node_ctx_stack.Peek() : null;
-    stack_mark = (short)(interp.stack.Count-1);
+    stack_mark = interp.stack.Count > 0 ? interp.stack.Peek().dv : null;
+
     base.init();
   }
 
@@ -512,10 +515,11 @@ public abstract class FuncBaseCallNode : GroupNode
     {
       var interp = Interpreter.instance;
       if(interp.stack.Count > 0)
-        interp.PopFuncValues(stack_mark, stack_paral_ctx);
+        interp.PopValuesUntilMark(stack_mark, stack_paral_ctx);
     }
 
     stack_paral_ctx = null;
+    stack_mark = null;
   } 
 
   override public string inspect() 

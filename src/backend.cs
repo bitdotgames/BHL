@@ -395,11 +395,13 @@ public class Interpreter : AST_Visitor
     return sv.dv;
   }
 
-  public void PopFuncValues(int stack_mark, BehaviorTreeNode paral_ctx)
+  public void PopValuesUntilMark(DynVal stack_mark, BehaviorTreeNode paral_ctx)
   {
-    for(int i=stack.Count;i != stack_mark && i-- > 0;)
+    for(int i=stack.Count;i-- > 0;)
     {
       var sv = stack[i];
+      if(sv.dv == stack_mark)
+        break;
       if(sv.node_ctx != paral_ctx)
         continue;
       sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);

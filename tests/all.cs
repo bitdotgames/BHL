@@ -3042,7 +3042,7 @@ public class BHL_Test
       float a = 2
       paral_all {
         foo(func() use(a) { 
-          WaitTicks(2, true)
+          WaitTicks(2, is_success: true)
           a = a + 1 
           trace(""A:"" + (string)a)
         } )
@@ -3088,7 +3088,7 @@ public class BHL_Test
       float a = 2
       paral_all {
         StartScript(func() use(a) { 
-          WaitTicks(2, true)
+          WaitTicks(2, is_success: true)
           a = a + 1 
           trace(""A:"" + (string)a)
         } )
@@ -9250,13 +9250,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""B"")
     }
 
@@ -9300,13 +9300,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, false)
+      WaitTicks(ticks, is_success: false)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""B"")
     }
 
@@ -9349,13 +9349,13 @@ public class BHL_Test
     string bhl = @"
     func bar(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""B"")
     }
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, false)
+      WaitTicks(ticks, is_success: false)
       trace(""A"")
     }
 
@@ -9439,13 +9439,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""B"")
     }
 
@@ -9494,13 +9494,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, false)
+      WaitTicks(ticks, is_success: false)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""B"")
     }
 
@@ -9628,13 +9628,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       trace(""B"")
     }
 
@@ -9746,7 +9746,7 @@ public class BHL_Test
     {
       trace(""HEY"")
       //once this one fails prio will switch to 'foo'
-      WaitTicks(2, false)
+      WaitTicks(2, is_success: false)
       //will never run
       trace(""HEY2"")
     }
@@ -10124,13 +10124,13 @@ public class BHL_Test
     func bar()
     {
       trace(""BAR"")
-      WaitTicks(2, true)
+      WaitTicks(2, is_success: true)
     }
 
     func hey()
     {
       trace(""HEY"")
-      WaitTicks(2, true)
+      WaitTicks(2, is_success: true)
     }
 
     func foo()
@@ -15670,7 +15670,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, false)
+      WaitTicks(ticks, is_success: false)
       return 42
     }
 
@@ -15731,7 +15731,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, false)
+      WaitTicks(ticks, is_success: false)
       return 42
     }
 
@@ -15799,7 +15799,7 @@ public class BHL_Test
           f = MakeFoo({hey:10, colors:[{r:
               func int (int ticks) 
               { 
-                WaitTicks(ticks, false)
+                WaitTicks(ticks, is_success: false)
                 fail()
                 return ticks
               }(2) 
@@ -15809,7 +15809,7 @@ public class BHL_Test
           f = MakeFoo({hey:20, colors:[{r:
               func int (int ticks) 
               { 
-                WaitTicks(ticks, false)
+                WaitTicks(ticks, is_success: false)
                 fail()
                 return ticks
               }(3) 
@@ -15862,7 +15862,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, true)
+      WaitTicks(ticks, is_success: true)
       return ticks
     }
 
