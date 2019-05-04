@@ -7,14 +7,36 @@ namespace bhl {
 
 public class Compiler : AST_Visitor
 {
+  List<byte[]> instructions = new List<byte[]>();
+  List<object> constants = new List<object>();
+
+  public struct Opcode
+  {
+    public byte opcode;
+  }
+
+  static readonly Opcode Op_Constant = new Opcode() { opcode = 1 };
+  static readonly Opcode Op_Add = new Opcode() { opcode = 2 };
+
+  struct Definition
+  {
+    public string name;
+    public UInt16[] operand_width;
+  }
+
+  Dictionary<Opcode, Definition> definitions = new Dictionary<Opcode, Definition>();
+
+  public Compiler()
+  {
+    SetDefinitions();
+  }
+
   public byte[] Compile(AST ast)
   {
-    c = NewCodeCompiler();
-    SetDefinitions();
     Visit(ast);
 
     byte[] buff = new byte[0];
-    foreach(var ins in c.instructions.list)
+    foreach(var ins in instructions)
     {
       buff = buff.Concat(ins).ToArray();
     }
@@ -23,79 +45,26 @@ public class Compiler : AST_Visitor
     return buff;
   }
 
-  public struct CodeCompiler
+  int AddConstant(object obj)
   {
-    public Instructions instructions;
-    public List<object> constants;
-
-    public int AddConstatnt(object obj)
-    {
-      constants.Add(obj);
-      return constants.Count-1;
-    }
-    public int AddInstruction(byte[] ins)
-    {
-      var pos_new_instuction = instructions.list.Count;
-      instructions.list.Add(ins);
-      return pos_new_instuction;
-    }
+    constants.Add(obj);
+    return constants.Count-1;
   }
 
-  public struct Bytecode
+  int AddInstruction(byte[] ins)
   {
-    public Instructions instructions;
-    public List<object> constants;
+    instructions.Add(ins);
+    return instructions.Count-1;
   }
 
-  public static CodeCompiler NewCodeCompiler()
-  {
-    return new CodeCompiler(){
-                instructions = new Instructions(){list = new List<byte[]>()},
-                constants = new List<object>()
-              };
-  }
-
-  public Bytecode NewBytecode(CodeCompiler c)
-  {
-    return new Bytecode{
-                instructions = new Instructions(),
-                constants = new List<object>()
-              };
-  }
-
-  public CodeCompiler c;
-
-  public int Emit(Opcode op, UInt16[] operands)
+  int Emit(Opcode op, UInt16[] operands)
   {
     var ins = Make(op,operands);
-    var pos = c.AddInstruction(ins);
+    var pos = AddInstruction(ins);
     return pos;
   }
 
-#region Code_Generator
-
-  public struct Instructions
-  {
-    public List<byte[]> list;
-  }
-
-  public struct Opcode
-  {
-    public byte opcode;
-  }
-
-  private struct Definition
-  {
-    public string name;
-    public UInt16[] operand_width;
-  }
-
-  static readonly Opcode Op_Constant = new Opcode() { opcode = 1 };
-  static readonly Opcode Op_Add = new Opcode() { opcode = 2 };
-
-  private Dictionary<Opcode, Definition> definitions = new Dictionary<Opcode, Definition>();
-
-  public void SetDefinitions()
+  void SetDefinitions()
   {
     definitions.Add(Op_Constant,
                     new Definition()
@@ -159,8 +128,6 @@ public class Compiler : AST_Visitor
     SetDefinitions();
     return Make(new Opcode() { opcode = 1 }, new UInt16[] { 2 });
   }
-
-#endregion
 
 #region Visits
 
@@ -233,7 +200,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_Literal node)
   {
     var e = Emit(Op_Constant, new UInt16[] { Convert.ToUInt16(node.nval) });
-    var res = c.instructions.list[e];
+    var res = instructions[e];
     Console.WriteLine("\tLITERAL " + node.nval + " - " + BitConverter.ToString(res));
   }
 
