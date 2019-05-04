@@ -32,10 +32,7 @@ public class Compiler : AST_Visitor
 
     byte[] buff = new byte[0];
     foreach(var ins in instructions)
-    {
       buff = buff.Concat(ins).ToArray();
-    }
-    Console.WriteLine("code ... " + BitConverter.ToString(buff));
 
     return buff;
   }
@@ -62,18 +59,18 @@ public class Compiler : AST_Visitor
   void SetDefinitions()
   {
     definitions.Add(Op_Constant,
-                    new Definition()
-                    {
-                      name = "Op_Constant",
-                      operand_width = new UInt16[] { 2 }
-                    }
+      new Definition()
+      {
+        name = "Op_Constant",
+        operand_width = new UInt16[] { 2 }
+      }
     );
     definitions.Add(Op_Add,
-                    new Definition()
-                    {
-                      name = "Op_Add",
-                      operand_width = new UInt16[] { 0 }
-                    }
+      new Definition()
+      {
+        name = "Op_Add",
+        operand_width = new UInt16[] { 0 }
+      }
     );
   }
 
@@ -104,7 +101,7 @@ public class Compiler : AST_Visitor
       switch(width)
       {
         case 2:
-         PutUint(instruction, operands[i], offset);// where, what, offset//littlEndian
+          PutUint(instruction, operands[i], offset);// where, what, offset//littlEndian
         break;
       }
       offset += width;
@@ -193,22 +190,18 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Literal node)
   {
-    var e = Emit(Op_Constant, new UInt16[] { Convert.ToUInt16(node.nval) });
-    var res = instructions[e];
-    Console.WriteLine("\tLITERAL " + node.nval + " - " + BitConverter.ToString(res));
+    Emit(Op_Constant, new UInt16[] { Convert.ToUInt16(node.nval) });
   }
 
   public override void DoVisit(AST_BinaryOpExp node)
   {
-    byte[] res = null;
     switch(node.type)
     {
       case EnumBinaryOp.ADD:
-        res = Make(Op_Add, new UInt16[0]);
+        Make(Op_Add, new UInt16[0]);
       break;
     }
 
-    Console.WriteLine("\tBIN OP " + node.type + " - " + BitConverter.ToString(res));
     VisitChildren(node);
   }
 
