@@ -10,13 +10,8 @@ public class Compiler : AST_Visitor
   List<byte[]> instructions = new List<byte[]>();
   List<object> constants = new List<object>();
 
-  public struct Opcode
-  {
-    public byte opcode;
-  }
-
-  static readonly Opcode Op_Constant = new Opcode() { opcode = 1 };
-  static readonly Opcode Op_Add = new Opcode() { opcode = 2 };
+  static readonly byte Op_Constant = 1;
+  static readonly byte Op_Add      = 2;
 
   struct Definition
   {
@@ -24,7 +19,7 @@ public class Compiler : AST_Visitor
     public UInt16[] operand_width;
   }
 
-  Dictionary<Opcode, Definition> definitions = new Dictionary<Opcode, Definition>();
+  Dictionary<byte, Definition> definitions = new Dictionary<byte, Definition>();
 
   public Compiler()
   {
@@ -57,9 +52,9 @@ public class Compiler : AST_Visitor
     return instructions.Count-1;
   }
 
-  int Emit(Opcode op, UInt16[] operands)
+  int Emit(byte op, UInt16[] operands)
   {
-    var ins = Make(op,operands);
+    var ins = Make(op, operands);
     var pos = AddInstruction(ins);
     return pos;
   }
@@ -82,15 +77,15 @@ public class Compiler : AST_Visitor
     );
   }
 
-  Definition Lookup(Opcode op)
+  Definition Lookup(byte op)
   {
-    var def = definitions[op];
-    if(def.Equals(null))
+    Definition def;
+    if(!definitions.TryGetValue(op, out def))
        return new Definition() { name = "Exception", operand_width = null };//looks like shit;
     return def;
   }
 
-  public byte[] Make(Opcode op, UInt16[] operands)//?
+  public byte[] Make(byte op, UInt16[] operands)//?
   {
     var def = Lookup(op);
     if(def.operand_width == null)
@@ -101,7 +96,7 @@ public class Compiler : AST_Visitor
       instruction_length += d;
 
     var instruction = new byte[instruction_length];//dynamic array
-    instruction[0] = op.opcode;
+    instruction[0] = op;
     UInt16 offset = 1;
     for(int i = 0; i < operands.Length; i++)
     {
@@ -117,7 +112,7 @@ public class Compiler : AST_Visitor
     return instruction;
   }
 
-  private void PutUint(byte[] insert, UInt16 ui, UInt16 offset)
+  void PutUint(byte[] insert, UInt16 ui, UInt16 offset)
   {
     var ar = BitConverter.GetBytes(Convert.ToUInt16(ui));
     ar.CopyTo(insert, offset);
@@ -125,8 +120,7 @@ public class Compiler : AST_Visitor
 
   public byte[] GetResult()
   {
-    SetDefinitions();
-    return Make(new Opcode() { opcode = 1 }, new UInt16[] { 2 });
+    return Make(1, new UInt16[] { 2 });
   }
 
 #region Visits
