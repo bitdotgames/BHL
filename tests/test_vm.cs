@@ -12,7 +12,7 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
-  public void TestCompileSimpleExpression()
+  public void TestCompileAdd()
   {
     string bhl = @"
     func int test() 
