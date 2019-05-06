@@ -5,34 +5,29 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+public enum Opcodes
+{
+  Constant = 1,
+  Add      = 2
+}
+
 public class Compiler : AST_Visitor
 {
-  public const byte Op_Constant = 1;
-  public const byte Op_Add      = 2;
-
   class OpDefinition
   {
-    public string name;
+    public Opcodes name;
     public int[] operand_width; //each array item represents the size of the operand in bytes
-
-    public int total_length {
-      get {
-        int length = 1;
-        foreach(int w in operand_width)
-          length += w;
-        return length;
-      }
-    }
   }
 
-  Dictionary<byte, OpDefinition> definitions = new Dictionary<byte, OpDefinition>();
+  Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
 
   List<object> constants = new List<object>();
+
   WriteBuffer bytecode = new WriteBuffer(); 
 
   public Compiler()
   {
-    DeclareOpCodes();
+    DeclareOpcodes();
   }
 
   public void Compile(AST ast)
@@ -46,49 +41,53 @@ public class Compiler : AST_Visitor
     return constants.Count-1;
   }
 
-  void DeclareOpCodes()
+  void DeclareOpcodes()
   {
-    definitions.Add(Op_Constant,
+    DeclareOpcode(
       new OpDefinition()
       {
-        name = "Op_Constant",
+        name = Opcodes.Constant,
         operand_width = new int[] { 2 }
       }
     );
-    definitions.Add(Op_Add,
+    DeclareOpcode(
       new OpDefinition()
       {
-        name = "Op_Add",
-        operand_width = null
+        name = Opcodes.Add
       }
     );
   }
 
-  OpDefinition LookupOpcode(byte op)
+  void DeclareOpcode(OpDefinition def)
+  {
+    opcode_decls.Add((byte)def.name, def);
+  }
+
+  OpDefinition LookupOpcode(Opcodes op)
   {
     OpDefinition def;
-    if(!definitions.TryGetValue(op, out def))
+    if(!opcode_decls.TryGetValue((byte)op, out def))
        throw new Exception("No such opcode definition: " + op);
     return def;
   }
 
   //for testing purposes
-  public Compiler TestEmit(byte op, ushort[] operands = null)
+  public Compiler TestEmit(Opcodes op, ushort[] operands = null)
   {
     Emit(op, operands);
     return this;
   }
 
-  void Emit(byte op, ushort[] operands = null)
+  void Emit(Opcodes op, ushort[] operands = null)
   {
     Emit(bytecode, op, operands);
   }
 
-  void Emit(WriteBuffer buf, byte op, ushort[] operands = null)
+  void Emit(WriteBuffer buf, Opcodes op, ushort[] operands = null)
   {
     var def = LookupOpcode(op);
 
-    buf.Write(op);
+    buf.Write((byte)op);
 
     if(def.operand_width != null && (operands == null || operands.Length != def.operand_width.Length))
       throw new Exception("Invalid number of operands for opcode:" + op + ", expected:" + def.operand_width.Length);
@@ -183,7 +182,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_Literal node)
   {
     //TODO: this is wrong! there should be a record in constants table instead!
-    Emit(Op_Constant, new ushort[] { (ushort)node.nval });
+    Emit(Opcodes.Constant, new ushort[] { (ushort)node.nval });
   }
 
   public override void DoVisit(AST_BinaryOpExp node)
@@ -193,7 +192,7 @@ public class Compiler : AST_Visitor
     switch(node.type)
     {
       case EnumBinaryOp.ADD:
-        Emit(Op_Add);
+        Emit(Opcodes.Add);
       break;
       default:
         throw new Exception("Not supported type: " + node.type);

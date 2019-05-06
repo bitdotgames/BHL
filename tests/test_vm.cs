@@ -25,9 +25,9 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Compiler.Op_Constant, new ushort[] { 1 })
-      .TestEmit(Compiler.Op_Constant, new ushort[] { 2 })
-      .TestEmit(Compiler.Op_Add)
+      .TestEmit(Opcodes.Constant, new ushort[] { 1 })
+      .TestEmit(Opcodes.Constant, new ushort[] { 2 })
+      .TestEmit(Opcodes.Add)
       .GetBytes();
 
     AssertEqual(result, expected);
