@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Collections;
 using System.Threading;
+using System.Text;
 using Antlr4.Runtime;
 using bhl;
 
@@ -20,9 +21,16 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var bytecode = Compile(bhl);
-    AssertTrue(bytecode != null);
-    AssertTrue(bytecode.Length > 0);
+    var result = Compile(bhl);
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Compiler.Op_Constant, new ushort[] { 1 })
+      .TestEmit(Compiler.Op_Constant, new ushort[] { 2 })
+      .TestEmit(Compiler.Op_Add)
+      .GetBytes();
+
+    AssertEqual(result, expected);
   }
 
   ///////////////////////////////////////
@@ -35,7 +43,8 @@ public class BHL_TestVM : BHL_TestBase
   byte[] Compile(AST ast)
   {
     var c = new Compiler();
-    return c.Compile(ast);
+    c.Compile(ast);
+    return c.GetBytes();
   }
 
   AST Src2AST(string src, GlobalScope globs = null)
@@ -62,5 +71,22 @@ public class BHL_TestVM : BHL_TestBase
     //AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
     //AssertEqual(DynValDict.PoolCount, DynValDict.PoolCountFree);
     //AssertEqual(FuncCtx.PoolCount, FuncCtx.PoolCountFree);
+  }
+
+  public static string ByteArrayToString(byte[] ba)
+  {
+    var hex = new StringBuilder(ba.Length * 2);
+    foreach(byte b in ba)
+      hex.AppendFormat("{0:x2}", b);
+    return hex.ToString();
+  }
+
+  public static void AssertEqual(byte[] a, byte[] b)
+  {
+    var ahex = ByteArrayToString(a);
+    var bhex = ByteArrayToString(b);
+
+    if(!(ahex == bhex))
+      throw new Exception("Assertion failed: '" + ahex + "' != '" + bhex + "'");
   }
 }

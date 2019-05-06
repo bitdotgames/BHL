@@ -1,40 +1,43 @@
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace bhl {
 
 public class Compiler : AST_Visitor
 {
-  List<byte[]> instructions = new List<byte[]>();
-  List<object> constants = new List<object>();
+  public const byte Op_Constant = 1;
+  public const byte Op_Add      = 2;
 
-  static readonly byte Op_Constant = 1;
-  static readonly byte Op_Add      = 2;
-
-  struct Definition
+  class OpDefinition
   {
     public string name;
-    public UInt16[] operand_width;
+    public int[] operand_width; //each array item represents the size of the operand in bytes
+
+    public int total_length {
+      get {
+        int length = 1;
+        foreach(int w in operand_width)
+          length += w;
+        return length;
+      }
+    }
   }
 
-  Dictionary<byte, Definition> definitions = new Dictionary<byte, Definition>();
+  Dictionary<byte, OpDefinition> definitions = new Dictionary<byte, OpDefinition>();
+
+  List<object> constants = new List<object>();
+  WriteBuffer bytecode = new WriteBuffer(); 
 
   public Compiler()
   {
-    SetDefinitions();
+    DeclareOpCodes();
   }
 
-  public byte[] Compile(AST ast)
+  public void Compile(AST ast)
   {
     Visit(ast);
-
-    byte[] buff = new byte[0];
-    foreach(var ins in instructions)
-      buff = buff.Concat(ins).ToArray();
-
-    return buff;
   }
 
   int AddConstant(object obj)
@@ -43,81 +46,70 @@ public class Compiler : AST_Visitor
     return constants.Count-1;
   }
 
-  int AddInstruction(byte[] ins)
-  {
-    instructions.Add(ins);
-    return instructions.Count-1;
-  }
-
-  int Emit(byte op, UInt16[] operands)
-  {
-    var ins = Make(op, operands);
-    var pos = AddInstruction(ins);
-    return pos;
-  }
-
-  void SetDefinitions()
+  void DeclareOpCodes()
   {
     definitions.Add(Op_Constant,
-      new Definition()
+      new OpDefinition()
       {
         name = "Op_Constant",
-        operand_width = new UInt16[] { 2 }
+        operand_width = new int[] { 2 }
       }
     );
     definitions.Add(Op_Add,
-      new Definition()
+      new OpDefinition()
       {
         name = "Op_Add",
-        operand_width = new UInt16[] { 0 }
+        operand_width = null
       }
     );
   }
 
-  Definition Lookup(byte op)
+  OpDefinition LookupOpcode(byte op)
   {
-    Definition def;
+    OpDefinition def;
     if(!definitions.TryGetValue(op, out def))
-       return new Definition() { name = "Exception", operand_width = null };//looks like shit;
+       throw new Exception("No such opcode definition: " + op);
     return def;
   }
 
-  public byte[] Make(byte op, UInt16[] operands)//?
+  //for testing purposes
+  public Compiler TestEmit(byte op, ushort[] operands = null)
   {
-    var def = Lookup(op);
-    if(def.operand_width == null)
-      return new byte[0];
+    Emit(op, operands);
+    return this;
+  }
 
-    UInt16 instruction_length = 1;
-    foreach(var d in def.operand_width)
-      instruction_length += d;
+  void Emit(byte op, ushort[] operands = null)
+  {
+    Emit(bytecode, op, operands);
+  }
 
-    var instruction = new byte[instruction_length];//dynamic array
-    instruction[0] = op;
-    UInt16 offset = 1;
-    for(int i = 0; i < operands.Length; i++)
+  void Emit(WriteBuffer buf, byte op, ushort[] operands = null)
+  {
+    var def = LookupOpcode(op);
+
+    buf.Write(op);
+
+    if(def.operand_width != null && (operands == null || operands.Length != def.operand_width.Length))
+      throw new Exception("Invalid number of operands for opcode:" + op + ", expected:" + def.operand_width.Length);
+
+    for(int i = 0; operands != null && i < operands.Length; ++i)
     {
-      var width = def.operand_width[i];
+      int width = def.operand_width[i];
       switch(width)
       {
         case 2:
-          PutUint(instruction, operands[i], offset);// where, what, offset//littlEndian
+          buf.Write((uint)operands[i]);
         break;
+        default:
+          throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
       }
-      offset += width;
     }
-    return instruction;
   }
 
-  void PutUint(byte[] insert, UInt16 ui, UInt16 offset)
+  public byte[] GetBytes()
   {
-    var ar = BitConverter.GetBytes(Convert.ToUInt16(ui));
-    ar.CopyTo(insert, offset);
-  }
-
-  public byte[] GetResult()
-  {
-    return Make(1, new UInt16[] { 2 });
+    return bytecode.GetBytes();
   }
 
 #region Visits
@@ -190,19 +182,22 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Literal node)
   {
-    Emit(Op_Constant, new UInt16[] { Convert.ToUInt16(node.nval) });
+    //TODO: this is wrong! there should be a record in constants table instead!
+    Emit(Op_Constant, new ushort[] { (ushort)node.nval });
   }
 
   public override void DoVisit(AST_BinaryOpExp node)
   {
+    VisitChildren(node);
+
     switch(node.type)
     {
       case EnumBinaryOp.ADD:
-        Make(Op_Add, new UInt16[0]);
+        Emit(Op_Add);
       break;
+      default:
+        throw new Exception("Not supported type: " + node.type);
     }
-
-    VisitChildren(node);
   }
 
   public override void DoVisit(AST_UnaryOpExp node)
@@ -226,6 +221,304 @@ public class Compiler : AST_Visitor
   }
 
 #endregion
+
+}
+
+public class WriteBuffer
+{
+  MemoryStream stream = new MemoryStream();
+  public ushort Position { get { return (ushort)stream.Position; } }
+  public long Length { get { return stream.Length; } }
+
+  //const int MaxStringLength = 1024 * 32;
+  //static Encoding string_encoding = new UTF8Encoding();
+  //static byte[] string_write_buffer = new byte[MaxStringLength];
+
+  public WriteBuffer() {}
+
+  public WriteBuffer(byte[] buffer)
+  {
+    //NOTE: new MemoryStream(buffer) would make it non-resizable so we write it manually
+    stream.Write(buffer, 0, buffer.Length);
+  }
+
+  public void Reset(byte[] buffer, int size)
+  {
+    stream.SetLength(0);
+    stream.Write(buffer, 0, size);
+    stream.Position = 0;
+  }
+
+  public byte[] GetBytes()
+  {
+    //NOTE: documentation: "omits unused bytes"
+    return stream.ToArray();
+  }
+
+  public void Write(byte value)
+  {
+    stream.WriteByte(value);
+  }
+
+  public void Write(sbyte value)
+  {
+    stream.WriteByte((byte)value);
+  }
+
+  // http://sqlite.org/src4/doc/trunk/www/varint.wiki
+  public void Write(uint value)
+  {
+    if(value <= 240)
+    {
+      Write((byte)value);
+      return;
+    }
+    if(value <= 2287)
+    {
+      Write((byte)((value - 240) / 256 + 241));
+      Write((byte)((value - 240) % 256));
+      return;
+    }
+    if(value <= 67823)
+    {
+      Write((byte)249);
+      Write((byte)((value - 2288) / 256));
+      Write((byte)((value - 2288) % 256));
+      return;
+    }
+    if(value <= 16777215)
+    {
+      Write((byte)250);
+      Write((byte)(value & 0xFF));
+      Write((byte)((value >> 8) & 0xFF));
+      Write((byte)((value >> 16) & 0xFF));
+      return;
+    }
+
+    // all other values of uint
+    Write((byte)251);
+    Write((byte)(value & 0xFF));
+    Write((byte)((value >> 8) & 0xFF));
+    Write((byte)((value >> 16) & 0xFF));
+    Write((byte)((value >> 24) & 0xFF));
+  }
+
+  public void Write(ulong value)
+  {
+    if(value <= 240)
+    {
+      Write((byte)value);
+      return;
+    }
+    if(value <= 2287)
+    {
+      Write((byte)((value - 240) / 256 + 241));
+      Write((byte)((value - 240) % 256));
+      return;
+    }
+    if(value <= 67823)
+    {
+      Write((byte)249);
+      Write((byte)((value - 2288) / 256));
+      Write((byte)((value - 2288) % 256));
+      return;
+    }
+    if(value <= 16777215)
+    {
+      Write((byte)250);
+      Write((byte)(value & 0xFF));
+      Write((byte)((value >> 8) & 0xFF));
+      Write((byte)((value >> 16) & 0xFF));
+      return;
+    }
+    if(value <= 4294967295)
+    {
+      Write((byte)251);
+      Write((byte)(value & 0xFF));
+      Write((byte)((value >> 8) & 0xFF));
+      Write((byte)((value >> 16) & 0xFF));
+      Write((byte)((value >> 24) & 0xFF));
+      return;
+    }
+    if(value <= 1099511627775)
+    {
+      Write((byte)252);
+      Write((byte)(value & 0xFF));
+      Write((byte)((value >> 8) & 0xFF));
+      Write((byte)((value >> 16) & 0xFF));
+      Write((byte)((value >> 24) & 0xFF));
+      Write((byte)((value >> 32) & 0xFF));
+      return;
+    }
+    if(value <= 281474976710655)
+    {
+      Write((byte)253);
+      Write((byte)(value & 0xFF));
+      Write((byte)((value >> 8) & 0xFF));
+      Write((byte)((value >> 16) & 0xFF));
+      Write((byte)((value >> 24) & 0xFF));
+      Write((byte)((value >> 32) & 0xFF));
+      Write((byte)((value >> 40) & 0xFF));
+      return;
+    }
+    if(value <= 72057594037927935)
+    {
+      Write((byte)254);
+      Write((byte)(value & 0xFF));
+      Write((byte)((value >> 8) & 0xFF));
+      Write((byte)((value >> 16) & 0xFF));
+      Write((byte)((value >> 24) & 0xFF));
+      Write((byte)((value >> 32) & 0xFF));
+      Write((byte)((value >> 40) & 0xFF));
+      Write((byte)((value >> 48) & 0xFF));
+      return;
+    }
+
+    // all others
+    {
+      Write((byte)255);
+      Write((byte)(value & 0xFF));
+      Write((byte)((value >> 8) & 0xFF));
+      Write((byte)((value >> 16) & 0xFF));
+      Write((byte)((value >> 24) & 0xFF));
+      Write((byte)((value >> 32) & 0xFF));
+      Write((byte)((value >> 40) & 0xFF));
+      Write((byte)((value >> 48) & 0xFF));
+      Write((byte)((value >> 56) & 0xFF));
+    }
+  }
+
+  public void Write(char value)
+  {
+    Write((byte)value);
+  }
+
+  public void Write(short value)
+  {
+    Write((byte)(value & 0xff));
+    Write((byte)((value >> 8) & 0xff));
+  }
+
+  public void Write(ushort value)
+  {
+    Write((byte)(value & 0xff));
+    Write((byte)((value >> 8) & 0xff));
+  }
+
+  //NOTE: do we really need non-packed versions?
+  //public void Write(int value)
+  //{
+  //  // little endian...
+  //  Write((byte)(value & 0xff));
+  //  Write((byte)((value >> 8) & 0xff));
+  //  Write((byte)((value >> 16) & 0xff));
+  //  Write((byte)((value >> 24) & 0xff));
+  //}
+
+  //public void Write(uint value)
+  //{
+  //  Write((byte)(value & 0xff));
+  //  Write((byte)((value >> 8) & 0xff));
+  //  Write((byte)((value >> 16) & 0xff));
+  //  Write((byte)((value >> 24) & 0xff));
+  //}
+
+  //public void Write(long value)
+  //{
+  //  Write((byte)(value & 0xff));
+  //  Write((byte)((value >> 8) & 0xff));
+  //  Write((byte)((value >> 16) & 0xff));
+  //  Write((byte)((value >> 24) & 0xff));
+  //  Write((byte)((value >> 32) & 0xff));
+  //  Write((byte)((value >> 40) & 0xff));
+  //  Write((byte)((value >> 48) & 0xff));
+  //  Write((byte)((value >> 56) & 0xff));
+  //}
+
+  //public void Write(ulong value)
+  //{
+  //  Write((byte)(value & 0xff));
+  //  Write((byte)((value >> 8) & 0xff));
+  //  Write((byte)((value >> 16) & 0xff));
+  //  Write((byte)((value >> 24) & 0xff));
+  //  Write((byte)((value >> 32) & 0xff));
+  //  Write((byte)((value >> 40) & 0xff));
+  //  Write((byte)((value >> 48) & 0xff));
+  //  Write((byte)((value >> 56) & 0xff));
+  //}
+
+  public void Write(float value)
+  {
+    byte[] bytes = BitConverter.GetBytes(value);
+    Write(bytes, bytes.Length);
+  }
+
+  public void Write(double value)
+  {
+    byte[] bytes = BitConverter.GetBytes(value);
+    Write(bytes, bytes.Length);
+  }
+
+  //TODO:
+  //public void Write(string value)
+  //{
+  //  if(value == null)
+  //  {
+  //    Write((ushort)0);
+  //    return;
+  //  }
+
+  //  int len = string_encoding.GetByteCount(value);
+
+  //  if(len >= MaxStringLength)
+  //    throw new IndexOutOfRangeException("Serialize(string) too long: " + value.Length);
+
+  //  Write((ushort)len);
+  //  int numBytes = string_encoding.GetBytes(value, 0, value.Length, string_write_buffer, 0);
+  //  stream.Write(string_write_buffer, 0, numBytes);
+  //}
+
+  public void Write(bool value)
+  {
+    stream.WriteByte((byte)(value ? 1 : 0));
+  }
+
+  public void Write(byte[] buffer, int count)
+  {
+    stream.Write(buffer, 0, count);
+  }
+
+  public void Write(byte[] buffer, int offset, int count)
+  {
+    stream.Write(buffer, offset, count);
+  }
+
+  public void SeekZero()
+  {
+    stream.Seek(0, SeekOrigin.Begin);
+  }
+
+  public void StartMessage(short type)
+  {
+    SeekZero();
+
+    // two bytes for size, will be filled out in FinishMessage
+    Write((ushort)0);
+
+    // two bytes for message type
+    Write(type);
+  }
+
+  public void FinishMessage()
+  {
+    // jump to zero, replace size (short) in header, jump back
+    long oldPosition = stream.Position;
+    ushort sz = (ushort)(Position - (sizeof(ushort) * 2)); // length - header(short,short)
+
+    SeekZero();
+    Write(sz);
+    stream.Position = oldPosition;
+  }
 }
 
 } //namespace bhl
