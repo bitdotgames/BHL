@@ -95,7 +95,7 @@ public class BHL_TestRunner
       if(IsMemberTested(method))
       {
         Util.SetupAutogenFactory();
-        if(IsAllowedToRun(args, method))
+        if(IsAllowedToRun(args, test, method))
         {
           ++c;
           method.Invoke(test, new object[] {});
@@ -105,15 +105,23 @@ public class BHL_TestRunner
     Console.WriteLine("Done running "  + c + " tests");
   }
 
-  static bool IsAllowedToRun(string[] args, MemberInfo member)
+  static bool IsAllowedToRun(string[] args, BHL_TestBase test, MemberInfo member)
   {
     if(args == null || args.Length == 0)
       return true;
 
     for(int i=0;i<args.Length;++i)
     {
-      if(args[i] == member.Name)
-        return true;
+      var parts = args[i].Split(':');
+
+      string test_filter = parts.Length > 1 ? parts[0] : null;
+      string method_filter = parts.Length > 1 ? parts[1] : parts[0];
+
+      if(test_filter == null || (test_filter != null && test.GetType().Name.IndexOf(test_filter) != -1))
+      {
+        if(member.Name.IndexOf(method_filter) != -1)
+          return true;
+      }
     }
 
     return false;
