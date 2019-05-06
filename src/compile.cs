@@ -72,18 +72,18 @@ public class Compiler : AST_Visitor
   }
 
   //for testing purposes
-  public Compiler TestEmit(Opcodes op, ushort[] operands = null)
+  public Compiler TestEmit(Opcodes op, int[] operands = null)
   {
     Emit(op, operands);
     return this;
   }
 
-  void Emit(Opcodes op, ushort[] operands = null)
+  void Emit(Opcodes op, int[] operands = null)
   {
     Emit(bytecode, op, operands);
   }
 
-  void Emit(WriteBuffer buf, Opcodes op, ushort[] operands = null)
+  void Emit(WriteBuffer buf, Opcodes op, int[] operands = null)
   {
     var def = LookupOpcode(op);
 
@@ -129,7 +129,6 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
-    //Console.WriteLine("FUNC " + ast.name + " :");
     VisitChildren(ast);
   }
 
@@ -181,8 +180,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Literal node)
   {
-    //TODO: this is wrong! there should be a record in constants table instead!
-    Emit(Opcodes.Constant, new ushort[] { (ushort)node.nval });
+    Emit(Opcodes.Constant, new int[] { AddConstant(node.nval) });
   }
 
   public override void DoVisit(AST_BinaryOpExp node)

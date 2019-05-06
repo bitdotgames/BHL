@@ -17,7 +17,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test() 
     {
-      return 1 + 2
+      return 10 + 20
     }
     ";
 
@@ -25,8 +25,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new ushort[] { 1 })
-      .TestEmit(Opcodes.Constant, new ushort[] { 2 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
       .TestEmit(Opcodes.Add)
       .GetBytes();
 
