@@ -30,6 +30,7 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Add)
       .GetBytes();
 
+    AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
 
