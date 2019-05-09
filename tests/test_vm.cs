@@ -12,6 +12,24 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
+  public void TestCompileConstant()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 123
+    }
+    ";
+
+    var result = GetConstants(bhl);
+
+    var expected = "123";
+
+    AssertTrue(result.Length > 0);
+    AssertEqual(result[0].ToString(), expected);
+  }
+
+  [IsTested()]
   public void TestCompileAdd()
   {
     string bhl = @"
@@ -21,7 +39,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = Compile(bhl);
+    var result = GetBytes(bhl);
 
     var expected = 
       new Compiler()
@@ -34,18 +52,46 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(result, expected);
   }
 
-  ///////////////////////////////////////
-  byte[] Compile(string bhl)
+  [IsTested()]
+  public void TestCompileAddSameConstants()
   {
-    var ast = Src2AST(bhl);
-    return Compile(ast);
+    string bhl = @"
+    func int test() 
+    {
+      return 10 + 10
+    }
+    ";
+
+    var result = GetBytes(bhl);
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Add)
+      .GetBytes();
+
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
   }
 
-  byte[] Compile(AST ast)
+  ///////////////////////////////////////
+  byte[] GetBytes(string bhl)
   {
-    var c = new Compiler();
+    return Compile(bhl).GetBytes();
+  }
+
+  object[] GetConstants(string bhl)
+  {
+    return Compile(bhl).GetConstants();
+  }
+
+  Compiler Compile(string bhl)
+  {
+    var ast = Src2AST(bhl);
+    var c  = new Compiler();
     c.Compile(ast);
-    return c.GetBytes();
+    return c;
   }
 
   AST Src2AST(string src, GlobalScope globs = null)

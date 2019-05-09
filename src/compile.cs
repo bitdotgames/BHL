@@ -37,6 +37,11 @@ public class Compiler : AST_Visitor
 
   int AddConstant(object obj)
   {
+    for(int i = 0 ; i < constants.Count; ++i)
+    {
+      if(constants[i].Equals(obj))
+        return i;
+    }
     constants.Add(obj);
     return constants.Count-1;
   }
@@ -109,6 +114,11 @@ public class Compiler : AST_Visitor
   public byte[] GetBytes()
   {
     return bytecode.GetBytes();
+  }
+
+  public object[] GetConstants()
+  {
+    return constants.ToArray();
   }
 
 #region Visits
