@@ -8,7 +8,10 @@ namespace bhl {
 public enum Opcodes
 {
   Constant = 1,
-  Add      = 2
+  Add      = 2,
+  Sub      = 3,
+  Div      = 4,
+  Mul      = 5
 }
 
 public class Compiler : AST_Visitor
@@ -59,6 +62,24 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.Add
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Sub
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Div
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Mul
       }
     );
   }
@@ -201,6 +222,15 @@ public class Compiler : AST_Visitor
     {
       case EnumBinaryOp.ADD:
         Emit(Opcodes.Add);
+      break;
+      case EnumBinaryOp.SUB:
+        Emit(Opcodes.Sub);
+      break;
+      case EnumBinaryOp.DIV:
+        Emit(Opcodes.Div);
+      break;
+      case EnumBinaryOp.MUL:
+        Emit(Opcodes.Mul);
       break;
       default:
         throw new Exception("Not supported type: " + node.type);

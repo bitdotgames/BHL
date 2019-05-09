@@ -75,6 +75,75 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(result, expected);
   }
 
+  [IsTested()]
+  public void TestCompileSub()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 20 - 10
+    }
+    ";
+
+    var result = GetBytes(bhl);
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Sub)
+      .GetBytes();
+
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+  }
+
+  [IsTested()]
+  public void TestCompileDiv()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 20 / 10
+    }
+    ";
+
+    var result = GetBytes(bhl);
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Div)
+      .GetBytes();
+
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+  }
+
+  [IsTested()]
+  public void TestCompileMul()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 10 * 20
+    }
+    ";
+
+    var result = GetBytes(bhl);
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Mul)
+      .GetBytes();
+
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+  }
+
   ///////////////////////////////////////
   byte[] GetBytes(string bhl)
   {
