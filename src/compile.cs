@@ -49,6 +49,11 @@ public class Compiler : AST_Visitor
     return constants.Count-1;
   }
 
+  public List<object> GetConstants()
+  {
+    return constants;
+  }
+
   void DeclareOpcodes()
   {
     DeclareOpcode(
@@ -135,11 +140,6 @@ public class Compiler : AST_Visitor
   public byte[] GetBytes()
   {
     return bytecode.GetBytes();
-  }
-
-  public object[] GetConstants()
-  {
-    return constants.ToArray();
   }
 
 #region Visits

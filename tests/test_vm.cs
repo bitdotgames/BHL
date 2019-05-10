@@ -21,12 +21,19 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = GetConstants(bhl);
+    var c = Compile(bhl);
 
-    var expected = "123";
+    var result = c.GetBytes();
 
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 1);
+    AssertEqual((double)c.GetConstants()[0], 123);
     AssertTrue(result.Length > 0);
-    AssertEqual(result[0].ToString(), expected);
+    AssertEqual(result, expected);
   }
 
   [IsTested()]
@@ -39,7 +46,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = GetBytes(bhl);
+    var result = Compile(bhl).GetBytes();
 
     var expected = 
       new Compiler()
@@ -62,7 +69,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = GetBytes(bhl);
+    var result = Compile(bhl).GetBytes();
 
     var expected = 
       new Compiler()
@@ -85,7 +92,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = GetBytes(bhl);
+    var result = Compile(bhl).GetBytes();
 
     var expected = 
       new Compiler()
@@ -108,7 +115,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = GetBytes(bhl);
+    var result = Compile(bhl).GetBytes();
 
     var expected = 
       new Compiler()
@@ -131,7 +138,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = GetBytes(bhl);
+    var result = Compile(bhl).GetBytes();
 
     var expected = 
       new Compiler()
@@ -145,16 +152,6 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   ///////////////////////////////////////
-  byte[] GetBytes(string bhl)
-  {
-    return Compile(bhl).GetBytes();
-  }
-
-  object[] GetConstants(string bhl)
-  {
-    return Compile(bhl).GetConstants();
-  }
-
   Compiler Compile(string bhl)
   {
     var ast = Src2AST(bhl);
