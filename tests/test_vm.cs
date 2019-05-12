@@ -31,7 +31,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0], 123);
+    AssertEqual((double)c.GetConstants()[0].nval, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
@@ -69,7 +69,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = Compile(bhl).GetBytes();
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
 
     var expected = 
       new Compiler()
@@ -78,6 +80,7 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Add)
       .GetBytes();
 
+    AssertEqual(c.GetConstants().Count, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
@@ -144,6 +147,31 @@ public class BHL_TestVM : BHL_TestBase
       new Compiler()
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Mul)
+      .GetBytes();
+
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+  }
+
+  [IsTested()]
+  public void TestCompileParenthesisExpression()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 10 * (20 + 30)
+    }
+    ";
+
+    var result = Compile(bhl).GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.Add)
       .TestEmit(Opcodes.Mul)
       .GetBytes();
 

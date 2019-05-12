@@ -22,9 +22,15 @@ public class Compiler : AST_Visitor
     public int[] operand_width; //each array item represents the size of the operand in bytes
   }
 
+  public struct Constant
+  {
+    public double nval;
+    public string sval;
+  }
+
   Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
 
-  List<object> constants = new List<object>();
+  List<Constant> constants = new List<Constant>();
 
   WriteBuffer bytecode = new WriteBuffer(); 
 
@@ -38,18 +44,29 @@ public class Compiler : AST_Visitor
     Visit(ast);
   }
 
-  int AddConstant(object obj)
+  int AddConstant(double nval)
   {
     for(int i = 0 ; i < constants.Count; ++i)
     {
-      if(constants[i].Equals(obj))
+      if(constants[i].nval == nval)
         return i;
     }
-    constants.Add(obj);
+    constants.Add(new Constant() {nval = nval});
     return constants.Count-1;
   }
 
-  public List<object> GetConstants()
+  int AddConstant(string sval)
+  {
+    for(int i = 0 ; i < constants.Count; ++i)
+    {
+      if(constants[i].sval == sval)
+        return i;
+    }
+    constants.Add(new Constant() {sval = sval});
+    return constants.Count-1;
+  }
+
+  public List<Constant> GetConstants()
   {
     return constants;
   }
