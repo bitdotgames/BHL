@@ -469,13 +469,22 @@ public abstract class FuncBaseCallNode : GroupNode
       if(is_func_call)
         interp.call_stack.Push(this);
 
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init();
-      status = currentTask.execute();
-      currentTask.currStatus = status;
-      if(status != BHS.RUNNING)
-        currentTask.deinit();
+      try
+      {
+        if(currentTask.currStatus != BHS.RUNNING)
+          currentTask.init();
 
+        status = currentTask.execute();
+        currentTask.currStatus = status;  
+        if(status != BHS.RUNNING)
+          currentTask.deinit();
+      }
+      catch(Interpreter.RecoverableError e)
+      {
+        Util.Error("Recovered from error: " + e + ": " + interp.GetStackTrace());
+        status = BHS.FAILURE;
+        currentTask.currStatus = status;
+      }
       //NOTE: only when it's actual func call we pop it from the call stack
       if(is_func_call)
         interp.call_stack.DecFast();

@@ -263,14 +263,19 @@ static public class Util
 {
   static public bool DEBUG = false;
 
-  public delegate void LogDebugCb(string text);
-  static public LogDebugCb Debug = DefaultDebug;
+  public delegate void LogCb(string text);
+  static public LogCb Debug = DefaultDebug;
+  static public LogCb Error = DefaultError;
 
   static public void DefaultDebug(string str)
   {
-    Console.WriteLine("[DEBUG] " + str);
+    Console.WriteLine("[DBG] " + str);
   }
 
+  static public void DefaultError(string str)
+  {
+    Console.WriteLine("[ERR] " + str);
+  }
   ////////////////////////////////////////////////////////
 
   public static void Verify(bool condition)
@@ -1370,7 +1375,7 @@ public static class TempBuffer
     //for debug
     //var curr = tmp_bufs[idx];
     //if(curr != buf)
-    //  Log.Debug(curr.Length + " VS " + buf.Length);
+    //  Util.Debug(curr.Length + " VS " + buf.Length);
     tmp_bufs[idx] = buf;
     stats_max_buf = stats_max_buf < buf.Length ? buf.Length : stats_max_buf;
   }

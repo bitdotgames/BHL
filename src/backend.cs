@@ -253,6 +253,13 @@ public class Interpreter : AST_Visitor
   static ReturnException return_exception = new ReturnException();
   static BreakException break_exception = new BreakException();
 
+  public class RecoverableError : Exception
+  {
+    public RecoverableError(string msg = "")
+      : base(msg)
+    {}
+  }
+
   public void JumpReturn()
   {
     throw return_exception;
