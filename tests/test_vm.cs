@@ -12,6 +12,34 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
+  public void TestCompileVar()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      int a = 123
+      return a
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 1);
+    AssertEqual((double)c.GetConstants()[0].nval, 123);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+  }
+
+  [IsTested()]
   public void TestCompileConstant()
   {
     string bhl = @"

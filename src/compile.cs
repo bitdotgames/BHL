@@ -11,7 +11,46 @@ public enum Opcodes
   Add      = 2,
   Sub      = 3,
   Div      = 4,
-  Mul      = 5
+  Mul      = 5,
+  SetVar   = 6,
+  GetVar   = 7
+}
+
+public enum SymbolScope
+{
+  Global = 1
+}
+
+public struct SymbolView
+{
+  public string name;//change to uint32?
+  public SymbolScope scope;
+  public int index;
+}
+
+public class SymbolViewTable
+{
+  Dictionary<string,SymbolView> store = new Dictionary<string,SymbolView>();
+
+  public SymbolView Define(string name)
+  {
+    var s = new SymbolView()
+            {
+              name = name,
+              index = store.Count,
+              scope  = SymbolScope.Global
+            };
+    store.Add(name, s);
+    return s;
+  }
+
+  public SymbolView Resolve(string name)
+  {
+    SymbolView s;
+    if(!store.TryGetValue(name, out s))
+     throw new Exception("No such symbol in table " + name);
+    return s;
+  }
 }
 
 public class Compiler : AST_Visitor
@@ -32,7 +71,9 @@ public class Compiler : AST_Visitor
 
   List<Constant> constants = new List<Constant>();
 
-  WriteBuffer bytecode = new WriteBuffer(); 
+  WriteBuffer bytecode = new WriteBuffer();
+
+  SymbolViewTable STable = new SymbolViewTable();
 
   public Compiler()
   {
@@ -102,6 +143,20 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.Mul
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.SetVar,
+        operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.GetVar,
+        operand_width = new int[] { 2 }
       }
     );
   }
@@ -210,7 +265,19 @@ public class Compiler : AST_Visitor
   }
 
   public override void DoVisit(AST_Call ast)
-  {           
+  {  
+    SymbolView s;
+    switch(ast.type)
+    {
+      case EnumCall.VARW:
+        s = STable.Define(ast.name);//change to nname ?
+        Emit(Opcodes.SetVar, new int[] { s.index });
+      break;
+      case EnumCall.VAR:
+        s = STable.Resolve(ast.name);
+        Emit(Opcodes.GetVar, new int[] { s.index });
+      break;
+    }
   }
 
   public override void DoVisit(AST_Return node)
