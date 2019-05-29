@@ -30,7 +30,7 @@ public struct SymbolView
 
 public class SymbolViewTable
 {
-  Dictionary<string,SymbolView> store = new Dictionary<string,SymbolView>();
+  Dictionary<string, SymbolView> store = new Dictionary<string, SymbolView>();
 
   public SymbolView Define(string name)
   {
@@ -73,7 +73,7 @@ public class Compiler : AST_Visitor
 
   WriteBuffer bytecode = new WriteBuffer();
 
-  SymbolViewTable STable = new SymbolViewTable();
+  SymbolViewTable symbols = new SymbolViewTable();
 
   public Compiler()
   {
@@ -270,11 +270,11 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case EnumCall.VARW:
-        s = STable.Define(ast.name);//change to nname ?
+        s = symbols.Define(ast.name);
         Emit(Opcodes.SetVar, new int[] { s.index });
       break;
       case EnumCall.VAR:
-        s = STable.Resolve(ast.name);
+        s = symbols.Resolve(ast.name);
         Emit(Opcodes.GetVar, new int[] { s.index });
       break;
     }
