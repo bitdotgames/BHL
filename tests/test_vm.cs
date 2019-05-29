@@ -46,7 +46,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = Compile(bhl).GetBytes();
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
 
     var expected = 
       new Compiler()
@@ -55,6 +57,9 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Add)
       .GetBytes();
 
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual((double)c.GetConstants()[0].nval, 10);
+    AssertEqual((double)c.GetConstants()[1].nval, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
@@ -81,6 +86,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
+    AssertEqual((double)c.GetConstants()[0].nval, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
@@ -95,7 +101,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = Compile(bhl).GetBytes();
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
 
     var expected = 
       new Compiler()
@@ -104,6 +112,9 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Sub)
       .GetBytes();
 
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual((double)c.GetConstants()[0].nval, 20);
+    AssertEqual((double)c.GetConstants()[1].nval, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
@@ -118,7 +129,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = Compile(bhl).GetBytes();
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
 
     var expected = 
       new Compiler()
@@ -127,6 +140,9 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Div)
       .GetBytes();
 
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual((double)c.GetConstants()[0].nval, 20);
+    AssertEqual((double)c.GetConstants()[1].nval, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
@@ -141,6 +157,8 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
+    var c = Compile(bhl);
+
     var result = Compile(bhl).GetBytes();
 
     var expected = 
@@ -150,6 +168,9 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Mul)
       .GetBytes();
 
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual((double)c.GetConstants()[0].nval, 10);
+    AssertEqual((double)c.GetConstants()[1].nval, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
@@ -164,7 +185,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var result = Compile(bhl).GetBytes();
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
 
     var expected = 
       new Compiler()
@@ -176,11 +199,15 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertTrue(result.Length > 0);
+    AssertEqual(c.GetConstants().Count, 3);
+    AssertEqual((double)c.GetConstants()[0].nval, 10);
+    AssertEqual((double)c.GetConstants()[1].nval, 20);
+    AssertEqual((double)c.GetConstants()[2].nval, 30);
     AssertEqual(result, expected);
   }
 
   [IsTested()]
-  public void TestCompileVar()
+  public void TestCompileWriteReadVar()
   {
     string bhl = @"
     func int test() 
