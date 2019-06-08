@@ -7,13 +7,16 @@ namespace bhl {
 
 public enum Opcodes
 {
-  Constant = 1,
-  Add      = 2,
-  Sub      = 3,
-  Div      = 4,
-  Mul      = 5,
-  SetVar   = 6,
-  GetVar   = 7
+  Constant  = 1,
+  Add       = 2,
+  Sub       = 3,
+  Div       = 4,
+  Mul       = 5,
+  SetVar    = 6,
+  GetVar    = 7,
+  FuncCall  = 8,
+  ReturnVal = 9,
+  Return    = 10
 }
 
 public enum SymbolScope
@@ -67,6 +70,8 @@ public class Compiler : AST_Visitor
     public string sval;
   }
 
+  List<WriteBuffer> scopes = new List<WriteBuffer>();
+
   Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
 
   List<Constant> constants = new List<Constant>();
@@ -74,6 +79,28 @@ public class Compiler : AST_Visitor
   WriteBuffer bytecode = new WriteBuffer();
 
   SymbolViewTable symbols = new SymbolViewTable();
+
+  WriteBuffer GetCurrentScope()
+  {
+    if(this.scopes.Count > 0)
+     return this.scopes[this.scopes.Count-1];
+
+    return bytecode;
+  }
+
+  void EnterNewScope()
+  {
+    scopes.Add(new WriteBuffer());
+  }
+ 
+  long LeaveCurrentScope()
+  {
+    var indexScope = bytecode.Length;
+    var curr_scope = GetCurrentScope();
+    bytecode.Write(curr_scope);
+    scopes.Remove(curr_scope);
+    return indexScope;
+  }
 
   public Compiler()
   {
@@ -159,6 +186,25 @@ public class Compiler : AST_Visitor
         operand_width = new int[] { 2 }
       }
     );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.FuncCall,
+        operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Return
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.ReturnVal
+      }
+    );
   }
 
   void DeclareOpcode(OpDefinition def)
@@ -183,7 +229,8 @@ public class Compiler : AST_Visitor
 
   void Emit(Opcodes op, int[] operands = null)
   {
-    Emit(bytecode, op, operands);
+    var curr_scope = GetCurrentScope();
+    Emit(curr_scope, op, operands);
   }
 
   void Emit(WriteBuffer buf, Opcodes op, int[] operands = null)
@@ -232,7 +279,11 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
+    EnterNewScope();
     VisitChildren(ast);
+    Emit(Opcodes.Constant, new int[] {AddConstant(LeaveCurrentScope())}); 
+    var s = symbols.Define(ast.name);
+    Emit(Opcodes.SetVar, new int[] { s.index });
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
@@ -277,12 +328,18 @@ public class Compiler : AST_Visitor
         s = symbols.Resolve(ast.name);
         Emit(Opcodes.GetVar, new int[] { s.index });
       break;
+      case EnumCall.FUNC:
+        s = symbols.Resolve(ast.name);
+        Emit(Opcodes.FuncCall, new int[] { s.index });
+      break;
     }
   }
 
   public override void DoVisit(AST_Return node)
   {
+    //Doesnt visits for some reason
     VisitChildren(node);
+    Emit(Opcodes.ReturnVal);
   }
 
   public override void DoVisit(AST_Break node)
@@ -602,6 +659,16 @@ public class WriteBuffer
   public void Write(bool value)
   {
     stream.WriteByte((byte)(value ? 1 : 0));
+  }
+
+  public void Write(WriteBuffer buffer)
+  {
+    buffer.WriteTo(stream);
+  }
+
+  void WriteTo(MemoryStream buffer_stream)
+  {
+    stream.WriteTo(buffer_stream);
   }
 
   public void Write(byte[] buffer, int count)
