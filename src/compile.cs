@@ -95,11 +95,11 @@ public class Compiler : AST_Visitor
  
   long LeaveCurrentScope()
   {
-    var indexScope = bytecode.Length;
+    var index = bytecode.Length;
     var curr_scope = GetCurrentScope();
     bytecode.Write(curr_scope);
     scopes.Remove(curr_scope);
-    return indexScope;
+    return index;
   }
 
   public Compiler()
@@ -281,7 +281,8 @@ public class Compiler : AST_Visitor
   {
     EnterNewScope();
     VisitChildren(ast);
-    Emit(Opcodes.Constant, new int[] {AddConstant(LeaveCurrentScope())}); 
+    var scope_idx = LeaveCurrentScope();
+    Emit(Opcodes.Constant, new int[] { AddConstant(scope_idx) }); 
     var s = symbols.Define(ast.name);
     Emit(Opcodes.SetVar, new int[] { s.index });
   }

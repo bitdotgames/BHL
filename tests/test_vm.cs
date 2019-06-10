@@ -12,44 +12,6 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
-  public void TestCompileFunctionCall()
-  {
-    string bhl = @"
-    func int test() 
-    {
-      return 1
-    }
-    int res = test()
-    ";
-
-    var c = Compile(bhl);
-
-    var result = c.GetBytes();
-
-    var func_code = 
-      new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .GetBytes();
-
-    var program_code = 
-      new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.FuncCall, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 1 })
-      .GetBytes();
-
-    var expected = new byte[func_code.Length + program_code.Length];
-    Array.Copy(func_code, expected, func_code.Length);
-    Array.Copy(program_code, 0, expected, func_code.Length, program_code.Length);
-
-    AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].nval, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
-  }
-
-  [IsTested()]
   public void TestCompileConstant()
   {
     string bhl = @"
@@ -284,6 +246,44 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertEqual(c.GetConstants().Count, 2);
     AssertEqual((double)c.GetConstants()[0].nval, 123);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+  }
+
+  [IsTested()]
+  public void TestCompileFunctionCall()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 1
+    }
+    int res = test()
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var func_code = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .GetBytes();
+
+    var program_code = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.FuncCall, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 1 })
+      .GetBytes();
+
+    var expected = new byte[func_code.Length + program_code.Length];
+    Array.Copy(func_code, expected, func_code.Length);
+    Array.Copy(program_code, 0, expected, func_code.Length, program_code.Length);
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual((double)c.GetConstants()[0].nval, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
   }
