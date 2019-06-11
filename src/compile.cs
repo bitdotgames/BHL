@@ -26,7 +26,7 @@ public enum SymbolScope
 
 public struct SymbolView
 {
-  public string name;//change to uint32?
+  public string name;
   public SymbolScope scope;
   public int index;
 }
@@ -69,6 +69,8 @@ public class Compiler : AST_Visitor
     public double nval;
     public string sval;
   }
+
+  Dictionary<string, uint> func_offset_buffer = new Dictionary<string, uint>();
 
   List<WriteBuffer> scopes = new List<WriteBuffer>();
 
@@ -190,7 +192,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.FuncCall,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 4 }
       }
     );
     DeclareOpcode(
@@ -248,6 +250,9 @@ public class Compiler : AST_Visitor
       switch(width)
       {
         case 2:
+          buf.Write((uint)operands[i]); //TODO: use ushort
+        break;
+        case 4:
           buf.Write((uint)operands[i]);
         break;
         default:
@@ -281,10 +286,9 @@ public class Compiler : AST_Visitor
   {
     EnterNewScope();
     VisitChildren(ast);
-    var scope_idx = LeaveCurrentScope();
-    Emit(Opcodes.Constant, new int[] { AddConstant(scope_idx) }); 
-    var s = symbols.Define(ast.name);
-    Emit(Opcodes.SetVar, new int[] { s.index });
+    Emit(Opcodes.ReturnVal);
+
+    func_offset_buffer.Add(ast.name, (uint)LeaveCurrentScope());
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
@@ -330,15 +334,15 @@ public class Compiler : AST_Visitor
         Emit(Opcodes.GetVar, new int[] { s.index });
       break;
       case EnumCall.FUNC:
-        s = symbols.Resolve(ast.name);
-        Emit(Opcodes.FuncCall, new int[] { s.index });
+        uint offset;
+        func_offset_buffer.TryGetValue(ast.name, out offset);
+        Emit(Opcodes.FuncCall, new int[] {(int)offset});
       break;
     }
   }
 
   public override void DoVisit(AST_Return node)
   {
-    //Doesnt visits for some reason
     VisitChildren(node);
     Emit(Opcodes.ReturnVal);
   }

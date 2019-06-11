@@ -28,11 +28,10 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants().Count, 1);
     AssertEqual((double)c.GetConstants()[0].nval, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -57,11 +56,10 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.Constant, new int[] { 1 })
       .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 3);
+    AssertEqual(c.GetConstants().Count, 2);
     AssertEqual((double)c.GetConstants()[0].nval, 10);
     AssertEqual((double)c.GetConstants()[1].nval, 20);
     AssertTrue(result.Length > 0);
@@ -87,11 +85,10 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants().Count, 1);
     AssertEqual((double)c.GetConstants()[0].nval, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -116,11 +113,10 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.Constant, new int[] { 1 })
       .TestEmit(Opcodes.Sub)
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 3);
+    AssertEqual(c.GetConstants().Count, 2);
     AssertEqual((double)c.GetConstants()[0].nval, 20);
     AssertEqual((double)c.GetConstants()[1].nval, 10);
     AssertTrue(result.Length > 0);
@@ -146,11 +142,10 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.Constant, new int[] { 1 })
       .TestEmit(Opcodes.Div)
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)   
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 3);
+    AssertEqual(c.GetConstants().Count, 2);
     AssertEqual((double)c.GetConstants()[0].nval, 20);
     AssertEqual((double)c.GetConstants()[1].nval, 10);
     AssertTrue(result.Length > 0);
@@ -176,11 +171,10 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.Constant, new int[] { 1 })
       .TestEmit(Opcodes.Mul)
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 3);
+    AssertEqual(c.GetConstants().Count, 2);
     AssertEqual((double)c.GetConstants()[0].nval, 10);
     AssertEqual((double)c.GetConstants()[1].nval, 20);
     AssertTrue(result.Length > 0);
@@ -208,12 +202,11 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 2 })
       .TestEmit(Opcodes.Add)
       .TestEmit(Opcodes.Mul)
-      .TestEmit(Opcodes.Constant, new int[] { 3 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
     AssertTrue(result.Length > 0);
-    AssertEqual(c.GetConstants().Count, 4);
+    AssertEqual(c.GetConstants().Count, 3);
     AssertEqual((double)c.GetConstants()[0].nval, 10);
     AssertEqual((double)c.GetConstants()[1].nval, 20);
     AssertEqual((double)c.GetConstants()[2].nval, 30);
@@ -240,11 +233,10 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
       .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.SetVar, new int[] { 1 })
+      .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants().Count, 1);
     AssertEqual((double)c.GetConstants()[0].nval, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -254,33 +246,33 @@ public class BHL_TestVM : BHL_TestBase
   public void TestCompileFunctionCall()
   {
     string bhl = @"
-    func int test() 
+    func int test1() 
     {
       return 1
     }
-    int res = test()
+    func int test2() 
+    {
+      return 2
+    }
+    int res = test1()
     ";
 
     var c = Compile(bhl);
 
     var result = c.GetBytes();
 
-    var func_code = 
+    var expected = 
       new Compiler()
+      //1 func code
       .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .GetBytes();
-
-    var program_code = 
-      new Compiler()
+      .TestEmit(Opcodes.ReturnVal)
+      //2 func code
       .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.ReturnVal)
+      //program code
+      .TestEmit(Opcodes.FuncCall, new [] { 0 })
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.FuncCall, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 1 })
       .GetBytes();
-
-    var expected = new byte[func_code.Length + program_code.Length];
-    Array.Copy(func_code, expected, func_code.Length);
-    Array.Copy(program_code, 0, expected, func_code.Length, program_code.Length);
 
     AssertEqual(c.GetConstants().Count, 2);
     AssertEqual((double)c.GetConstants()[0].nval, 1);
@@ -291,6 +283,7 @@ public class BHL_TestVM : BHL_TestBase
   ///////////////////////////////////////
   Compiler Compile(string bhl)
   {
+    Util.DEBUG = true;
     var ast = Src2AST(bhl);
     var c  = new Compiler();
     c.Compile(ast);
