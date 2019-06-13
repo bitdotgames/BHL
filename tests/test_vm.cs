@@ -35,6 +35,10 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[0].nval, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants());
+    vm.Run();
+    AssertEqual(vm.GetStackTop(), 123);
   }
 
   [IsTested()]
@@ -64,6 +68,10 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[1].nval, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants());
+    vm.Run();
+    AssertEqual(vm.GetStackTop(), 30);
   }
 
   [IsTested()]
@@ -92,6 +100,10 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[0].nval, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants());
+    vm.Run();
+    AssertEqual(vm.GetStackTop(), 20);
   }
 
   [IsTested()]
@@ -121,6 +133,10 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[1].nval, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants());
+    vm.Run();
+    AssertEqual(vm.GetStackTop(), 10);
   }
 
   [IsTested()]
@@ -150,6 +166,10 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[1].nval, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants());
+    vm.Run();
+    AssertEqual(vm.GetStackTop(), 2);
   }
 
   [IsTested()]
@@ -179,6 +199,10 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[1].nval, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants());
+    vm.Run();
+    AssertEqual(vm.GetStackTop(), 200);
   }
 
   [IsTested()]
@@ -211,6 +235,10 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[1].nval, 20);
     AssertEqual((double)c.GetConstants()[2].nval, 30);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants());
+    vm.Run();
+    AssertEqual(vm.GetStackTop(), 500);
   }
 
   [IsTested()]
