@@ -141,6 +141,11 @@ public class Compiler : AST_Visitor
     return constants;
   }
 
+  public Dictionary<string, uint> GetFuncBuffer()
+  {
+    return func_offset_buffer;
+  }
+
   void DeclareOpcodes()
   {
     DeclareOpcode(

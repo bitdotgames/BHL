@@ -36,8 +36,8 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
-    var vm = new VM(result, c.GetConstants());
-    vm.Run();
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 123);
   }
 
@@ -69,8 +69,8 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
-    var vm = new VM(result, c.GetConstants());
-    vm.Run();
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 30);
   }
 
@@ -101,8 +101,8 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
-    var vm = new VM(result, c.GetConstants());
-    vm.Run();
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 20);
   }
 
@@ -134,8 +134,8 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
-    var vm = new VM(result, c.GetConstants());
-    vm.Run();
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 10);
   }
 
@@ -167,8 +167,8 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
-    var vm = new VM(result, c.GetConstants());
-    vm.Run();
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 2);
   }
 
@@ -200,8 +200,8 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
-    var vm = new VM(result, c.GetConstants());
-    vm.Run();
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 200);
   }
 
@@ -236,8 +236,8 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[2].nval, 30);
     AssertEqual(result, expected);
 
-    var vm = new VM(result, c.GetConstants());
-    vm.Run();
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 500);
   }
 
@@ -248,7 +248,7 @@ public class BHL_TestVM : BHL_TestBase
     func int test() 
     {
       int a = 123
-      return a
+      return a + a
     }
     ";
 
@@ -261,6 +261,8 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
       .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Add)
       .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
@@ -268,6 +270,10 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual((double)c.GetConstants()[0].nval, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop(), 246);
   }
 
   [IsTested()]
@@ -282,7 +288,11 @@ public class BHL_TestVM : BHL_TestBase
     {
       return 2
     }
-    int res = test1()
+    func int test()
+    {
+      int res = test2()
+      return res
+    }
     ";
 
     var c = Compile(bhl);
@@ -297,15 +307,21 @@ public class BHL_TestVM : BHL_TestBase
       //2 func code
       .TestEmit(Opcodes.Constant, new int[] { 1 })
       .TestEmit(Opcodes.ReturnVal)
-      //program code
-      .TestEmit(Opcodes.FuncCall, new [] { 0 })
+      //test program code
+      .TestEmit(Opcodes.FuncCall, new [] { 3 })
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
     AssertEqual((double)c.GetConstants()[0].nval, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop(), 2);
   }
 
   ///////////////////////////////////////
