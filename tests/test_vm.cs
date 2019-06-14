@@ -290,7 +290,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     func int test()
     {
-      int res = test2()
+      int res = test2() + test1()
       return res
     }
     ";
@@ -309,6 +309,8 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.ReturnVal)
       //test program code
       .TestEmit(Opcodes.FuncCall, new [] { 3 })
+      .TestEmit(Opcodes.FuncCall, new [] { 0 })
+      .TestEmit(Opcodes.Add)
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
       .TestEmit(Opcodes.GetVar, new int[] { 0 })
       .TestEmit(Opcodes.ReturnVal)
@@ -321,7 +323,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 2);
+    AssertEqual(vm.GetStackTop(), 3);
   }
 
   ///////////////////////////////////////

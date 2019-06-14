@@ -4,23 +4,30 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+public class Frame
+{
+	public uint ip;
+	public Stack<double> num_stack;
+	public double[] locals;
+
+	public Frame()
+	{
+		ip = 0;
+		num_stack = new Stack<double>();
+		locals = new double[65000];
+	}
+}	
+
 public class VM
 {
 	List<Compiler.Constant> constants;
 	byte[] instructions;
 	double[] globals;
 	Dictionary<string, uint> func_buff;
-	uint ip;
 
 	Stack<double> vm_stack = new Stack<double>();
 
-	Stack<uint> frames = new Stack<uint>();
-
-	public void ChangeCurrentFrame(uint val)
-	{
-		frames.Pop();
-		frames.Push(val);
-	}
+	Stack<Frame> frames = new Stack<Frame>();
 
 	public VM(byte[] instructions, List<Compiler.Constant> constants, Dictionary<string, uint> func_buff)
 	{
@@ -32,25 +39,25 @@ public class VM
 
 	public void Exec(string func)
 	{
-		ip = func_buff[func];
-		frames.Push(ip);
+		var fr = new Frame();
+		fr.ip = func_buff[func];
+		frames.Push(fr);
 		Run();
 	}
 
 	public void Run()
 	{
 		Opcodes opcode;
-		var frame_ip = frames.Peek() - 1;
+		var curr_frame = frames.Peek();
         while(frames.Count > 0)
 		{
-			frame_ip++;
-			opcode = (Opcodes)instructions[frame_ip];
+			opcode = (Opcodes)instructions[curr_frame.ip];
 
 			switch(opcode)
 			{
 				case Opcodes.Constant:
-				    frame_ip++;
-					int const_idx = instructions[frame_ip];
+				    curr_frame.ip++;
+					int const_idx = instructions[curr_frame.ip];
 
 					if(const_idx >= constants.Count)
 						throw new Exception("Index out of constant pool: " + const_idx);
@@ -65,8 +72,8 @@ public class VM
 				break;
 				case Opcodes.SetVar:
 				case Opcodes.GetVar:
-				    frame_ip++;
-					int glob_idx = instructions[frame_ip];
+				    curr_frame.ip++;
+					int glob_idx = instructions[curr_frame.ip];
 
 					if(glob_idx >= globals.Length)
 						throw new Exception("Index out of globals pool: " + glob_idx);
@@ -84,16 +91,17 @@ public class VM
 				case Opcodes.ReturnVal:
 					frames.Pop();
 					if(frames.Count > 0)
-					 frame_ip = frames.Peek();
+					 curr_frame = frames.Peek();
 				break;
 				case Opcodes.FuncCall:
-					frame_ip++;
-				    uint f_ip = instructions[frame_ip];
-			        ChangeCurrentFrame(frame_ip);
-					frames.Push(f_ip);
-					frame_ip = frames.Peek() - 1;
-				break;
+					curr_frame.ip++;
+					var fr = new Frame();
+				    fr.ip = instructions[curr_frame.ip];
+					frames.Push(fr);
+					curr_frame = frames.Peek();
+				continue;
 			}
+			curr_frame.ip++;
 		}
 	}
 
