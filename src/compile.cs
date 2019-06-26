@@ -16,7 +16,12 @@ public enum Opcodes
   GetVar    = 7,
   FuncCall  = 8,
   ReturnVal = 9,
-  Return    = 10
+  Return    = 10,
+  Equal     = 11,
+  NotEqual  = 12,
+  Greather  = 13,
+  Jump      = 14,
+  CondJump  = 15
 }
 
 public enum SymbolScope
@@ -182,6 +187,24 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.Equal
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.NotEqual
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Greather
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.SetVar,
         operand_width = new int[] { 2 }
       }
@@ -197,7 +220,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.FuncCall,
-        operand_width = new int[] { 4 }
+        operand_width = new int[] { 4, 1 }
       }
     );
     DeclareOpcode(
@@ -210,6 +233,20 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.ReturnVal
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Jump,
+        operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.CondJump,
+        operand_width = new int[] { 2 }
       }
     );
   }
@@ -254,6 +291,9 @@ public class Compiler : AST_Visitor
       int width = def.operand_width[i];
       switch(width)
       {
+        case 1:
+          buf.Write((uint)operands[i]);
+        break;
         case 2:
           buf.Write((uint)operands[i]); //TODO: use ushort
         break;
@@ -310,6 +350,32 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Block ast)
   {
+    // switch(ast.type)
+    // {
+    //   case EnumBlock.IF:
+    //   //foreach(var c in ast.children)
+    //     //Console.WriteLine("call - " + c.GetType().Name);
+    //     switch(ast.children.Count)
+    //     {
+    //       case 2:
+    //         Visit(ast.children[0]);
+    //         Emit(Opcodes.CondJump, new int[] { s.index });
+    //         Visit(ast.children[1]);
+    //       break;
+    //       case 3:
+    //         Visit(ast.children[0]);
+    //         Emit(Opcodes.CondJump, new int[] { s.index });
+    //         Visit(ast.children[1]);
+    //         Emit(Opcodes.Jump, new int[] { s.index });
+    //         Visit(ast.children[2]);
+    //       break;
+    //       default:
+    //         throw new Exception("Not supported condition count: " + ast.children.Count);
+    //     }
+    //   break;
+    //   default:
+    //     VisitChildren(ast);
+    // }
     VisitChildren(ast);
   }
 
@@ -341,7 +407,8 @@ public class Compiler : AST_Visitor
       case EnumCall.FUNC:
         uint offset;
         func_offset_buffer.TryGetValue(ast.name, out offset);
-        Emit(Opcodes.FuncCall, new int[] {(int)offset});
+        VisitChildren(ast);
+        Emit(Opcodes.FuncCall, new int[] {(int)offset, (int)ast.cargs_bits});
       break;
     }
   }
@@ -383,6 +450,15 @@ public class Compiler : AST_Visitor
       case EnumBinaryOp.MUL:
         Emit(Opcodes.Mul);
       break;
+      case EnumBinaryOp.EQ:
+        Emit(Opcodes.Equal);
+      break;
+      case EnumBinaryOp.NQ:
+        Emit(Opcodes.NotEqual);
+      break;
+      case EnumBinaryOp.GT:
+        Emit(Opcodes.Greather);
+      break;
       default:
         throw new Exception("Not supported type: " + node.type);
     }
@@ -394,6 +470,8 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_VarDecl node)
   {
+    SymbolView s = symbols.Define(node.name);
+    Emit(Opcodes.SetVar, new int[] { s.index });
   }
 
   public override void DoVisit(bhl.AST_JsonObj node)

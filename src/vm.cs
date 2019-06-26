@@ -22,19 +22,18 @@ public class VM
 {
 	List<Compiler.Constant> constants;
 	byte[] instructions;
-	double[] globals;
 	Dictionary<string, uint> func_buff;
 
 	Stack<double> vm_stack = new Stack<double>();
 
 	Stack<Frame> frames = new Stack<Frame>();
+	Frame curr_frame;
 
 	public VM(byte[] instructions, List<Compiler.Constant> constants, Dictionary<string, uint> func_buff)
 	{
 		this.instructions = instructions;
 		this.constants = constants;
-		this.func_buff = func_buff;
-		globals = new double[65000];
+		this.func_buff = func_buff;		
 	}
 
 	public void Exec(string func)
@@ -48,7 +47,7 @@ public class VM
 	public void Run()
 	{
 		Opcodes opcode;
-		var curr_frame = frames.Peek();
+		curr_frame = frames.Peek();
         while(frames.Count > 0)
 		{
 			opcode = (Opcodes)instructions[curr_frame.ip];
@@ -62,41 +61,61 @@ public class VM
 					if(const_idx >= constants.Count)
 						throw new Exception("Index out of constant pool: " + const_idx);
 
-					vm_stack.Push(constants[const_idx].nval);
+					curr_frame.num_stack.Push(constants[const_idx].nval);
 				break;
 				case Opcodes.Add:
 				case Opcodes.Sub:
 				case Opcodes.Div:
 				case Opcodes.Mul:
+				case Opcodes.Equal:
+				case Opcodes.NotEqual:
+				case Opcodes.Greather:
 					ExecuteBinaryOperation(opcode);
 				break;
 				case Opcodes.SetVar:
 				case Opcodes.GetVar:
 				    curr_frame.ip++;
-					int glob_idx = instructions[curr_frame.ip];
+					int local_idx = instructions[curr_frame.ip];
 
-					if(glob_idx >= globals.Length)
-						throw new Exception("Index out of globals pool: " + glob_idx);
+					if(local_idx >= curr_frame.locals.Length)
+						throw new Exception("Index out of locals pool: " + local_idx);
 
 				    switch(opcode)
 				    {
 				    	case Opcodes.SetVar:
-				    		globals[glob_idx] = vm_stack.Pop();
+				    		curr_frame.locals[local_idx] = curr_frame.num_stack.Pop();
 				    	break;
 				    	case Opcodes.GetVar:
-				    		vm_stack.Push(globals[glob_idx]);
+				    		curr_frame.num_stack.Push(curr_frame.locals[local_idx]);
 				    	break;
 				    }
 				break;
 				case Opcodes.ReturnVal:
+				    var ret_val = curr_frame.num_stack.Peek();
 					frames.Pop();
 					if(frames.Count > 0)
+					{
 					 curr_frame = frames.Peek();
+					 curr_frame.num_stack.Push(ret_val);
+					}
+					else
+					{
+					 vm_stack.Push(ret_val);
+					}
 				break;
 				case Opcodes.FuncCall:
 					curr_frame.ip++;
 					var fr = new Frame();
 				    fr.ip = instructions[curr_frame.ip];
+				    curr_frame.ip++;
+				    			
+				    if(instructions[curr_frame.ip] != 0)
+				    {
+				    	for(int i = 0; i < instructions[curr_frame.ip]; ++i)
+				    	{
+				    		fr.num_stack.Push(curr_frame.num_stack.Pop());
+				    	}
+				    }
 					frames.Push(fr);
 					curr_frame = frames.Peek();
 				continue;
@@ -107,22 +126,31 @@ public class VM
 
 	void ExecuteBinaryOperation(Opcodes op)
 	{
-		var r_opertand = vm_stack.Pop();
-		var l_opertand = vm_stack.Pop();
+		var r_opertand = curr_frame.num_stack.Pop();
+		var l_opertand = curr_frame.num_stack.Pop();
 
 		switch(op)
 		{
 			case Opcodes.Add:
-				vm_stack.Push(l_opertand + r_opertand);
+				curr_frame.num_stack.Push(l_opertand + r_opertand);
 			break;
 			case Opcodes.Sub:
-				vm_stack.Push(l_opertand - r_opertand);
+				curr_frame.num_stack.Push(l_opertand - r_opertand);
 			break;
 			case Opcodes.Div:
-				vm_stack.Push(l_opertand / r_opertand);
+				curr_frame.num_stack.Push(l_opertand / r_opertand);
 			break;
 			case Opcodes.Mul:
-				vm_stack.Push(l_opertand * r_opertand);
+				curr_frame.num_stack.Push(l_opertand * r_opertand);
+			break;
+			case Opcodes.Equal:
+				curr_frame.num_stack.Push(l_opertand == r_opertand ? 1:0);
+			break;
+			case Opcodes.NotEqual:
+				curr_frame.num_stack.Push(l_opertand != r_opertand ? 1:0);
+			break;
+			case Opcodes.Greather:
+				curr_frame.num_stack.Push(l_opertand > r_opertand ? 1:0);
 			break;
 		}
 	}

@@ -280,18 +280,17 @@ public class BHL_TestVM : BHL_TestBase
   public void TestCompileFunctionCall()
   {
     string bhl = @"
-    func int test1() 
-    {
-      return 1
-    }
     func int test2() 
     {
-      return 2
+      return 100
+    }
+    func int test1(int x1) 
+    {
+      return x1
     }
     func int test()
     {
-      int res = test2() + test1()
-      return res
+      return test2() - test1(5)
     }
     ";
 
@@ -305,25 +304,25 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.ReturnVal)
       //2 func code
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.ReturnVal)
-      //test program code
-      .TestEmit(Opcodes.FuncCall, new [] { 3 })
-      .TestEmit(Opcodes.FuncCall, new [] { 0 })
-      .TestEmit(Opcodes.Add)
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
       .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      //test program code
+      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.FuncCall, new [] { 3,1 })
+      .TestEmit(Opcodes.Sub)
       .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].nval, 1);
+    AssertEqual((double)c.GetConstants()[1].nval, 5);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 3);
+    AssertEqual(vm.GetStackTop(), 95);
   }
 
   ///////////////////////////////////////
