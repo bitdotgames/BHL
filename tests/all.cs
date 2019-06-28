@@ -12178,6 +12178,34 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestOutOfScopeVarCompileErrorInLambda()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      bool some_cond
+      if(some_cond) {
+        int b = 2
+      }
+
+      void^() fn = func() {
+        b = 3
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl, globs);
+      },
+      "b : symbol not resolved"
+    );
+  }
+
+  [IsTested()]
   public void TestNull()
   {
     string bhl = @"

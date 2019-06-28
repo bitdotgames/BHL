@@ -805,7 +805,7 @@ public class LambdaSymbol : FuncSymbol
       //NOTE: only variable symbols are considered
       Symbol res = null;
       decl.GetMembers().TryGetValue(name, out res);
-      if(res != null && res is VariableSymbol)
+      if(res != null && res is VariableSymbol && !res.is_out_of_scope)
       {
         DefineInStack(res, i+1, idx);
         return res;
