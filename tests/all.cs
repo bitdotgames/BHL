@@ -17955,6 +17955,65 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestImportGlobalLazyInit()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    import ""bhl2""
+
+    func test1() { 
+      foo().a = foo().a + 1
+    }
+    ";
+
+    string bhl3 = @"
+    import ""bhl1""  
+    import ""bhl2""  
+
+    func int test2() { 
+      test1()
+      foo().a = foo().a + 1
+      return foo().a
+    }
+    ";
+
+    string bhl2 = @"
+    class Foo {
+      int a
+    }
+    Foo _foo = null
+
+    func Foo foo() {
+      if(_foo == null) {
+        _foo = {
+          a : 1 
+        }
+      }
+      return _foo
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindLog(globs);
+
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    TestNewFile("bhl3.bhl", bhl3, files);
+
+    var intp = CompileFiles(files, globs);
+    intp.LoadModule("bhl3");
+
+    var node = intp.GetFuncCallNode("test2");
+    var n = ExtractNum(ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(n, 3);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestImportGlobalExecutionOnlyOnceNested()
   {
     string bhl1 = @"

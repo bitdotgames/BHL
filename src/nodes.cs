@@ -1766,11 +1766,13 @@ public class VarAccessNode : BehaviorTreeTerminalNode
   public const int READ      = 0;
   public const int WRITE     = 1;
   public const int DECL      = 2;
+  public const int GREAD     = 3;
+  public const int GWRITE    = 4;
 
   HashedName name;
   public int mode = READ;
 
-  public VarAccessNode(HashedName name, int mode = READ)
+  public VarAccessNode(HashedName name, int mode)
   {
     this.name = name;
     this.mode = mode;
@@ -1792,6 +1794,19 @@ public class VarAccessNode : BehaviorTreeTerminalNode
       var val = interp.GetScopeValue(name);
       //Console.WriteLine("READ " + val + " " + val.GetHashCode());
       interp.PushValue(val);
+    }
+    else if(mode == GREAD)
+    {
+      var val = interp.GetGlobalValue(name);
+      //Console.WriteLine("GREAD " + val + " " + val.GetHashCode());
+      interp.PushValue(val);
+    }
+    else if(mode == GWRITE)
+    {
+      var val = interp.PopValue().ValueClone();
+      //Console.WriteLine("GWRITE " + val + " " + val.GetHashCode());
+      interp.SetGlobalValue(name, val);
+      val.RefMod(RefOp.TRY_DEL);
     }
     else if(mode == DECL)
     {

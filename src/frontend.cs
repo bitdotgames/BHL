@@ -496,9 +496,13 @@ public class Frontend : bhlBaseVisitor<object>
         if(var_symb != null)
         {
           bool is_write = write && arracc == null;
+          bool is_global = var_symb.scope.GetParentScope() is GlobalScope;
           ast = AST_Util.New_Call(class_scope != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
-            (is_write ? EnumCall.VARW : EnumCall.VAR), 
+            //NOTE: more conservative version due to the fact we check if variable is available in the global
+            //      scope during read operation
+            //(is_write ? (is_global ? EnumCall.GVARW : EnumCall.VARW) : EnumCall.VAR), 
+            (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, str_name, class_scope
           );
           //handling passing by ref for class fields

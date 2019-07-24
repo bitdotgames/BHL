@@ -305,6 +305,20 @@ public class Interpreter : AST_Visitor
     return val;
   }
 
+  public DynVal GetGlobalValue(HashedName name)
+  {
+    DynVal val;
+    bool ok = glob_mem.TryGet(name, out val);
+    if(!ok)
+      throw new Exception("No such variable " + name + " in global scope");
+    return val;
+  }
+
+  public void SetGlobalValue(HashedName name, DynVal val)
+  {
+    glob_mem.Set(name, val);
+  }
+
   public DynVal TryGetScopeValue(HashedName name)
   {
     DynVal val;
@@ -649,11 +663,19 @@ public class Interpreter : AST_Visitor
   {           
     if(ast.type == EnumCall.VAR)
     {
-      curr_node.addChild(new VarAccessNode(ast.Name()));
+      curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.READ));
     }
     else if(ast.type == EnumCall.VARW)
     {
       curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.WRITE));
+    }
+    else if(ast.type == EnumCall.GVAR)
+    {
+      curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.GREAD));
+    }
+    else if(ast.type == EnumCall.GVARW)
+    {
+      curr_node.addChild(new VarAccessNode(ast.Name(), VarAccessNode.GWRITE));
     }
     else if(ast.type == EnumCall.MVAR)
     {

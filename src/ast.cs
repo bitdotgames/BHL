@@ -622,18 +622,20 @@ public class AST_TypeCast  : AST
 
 public enum EnumCall 
 {
-  VAR = 1,
-  VARW = 2,
-  MVAR = 10,
-  MVARW = 11,
-  MVARREF = 12,
-  FUNC = 3,
-  MFUNC = 30,
-  ARR_IDX = 4,
-  ARR_IDXW = 40,
-  FUNC2VAR = 5,
-  FUNC_PTR = 6,
-  FUNC_PTR_POP = 7,
+  VAR             = 1,
+  VARW            = 2,
+  MVAR            = 10,
+  MVARW           = 11,
+  MVARREF         = 12,
+  FUNC            = 3,
+  MFUNC           = 30,
+  ARR_IDX         = 4,
+  ARR_IDXW        = 40,
+  FUNC2VAR        = 5,
+  FUNC_PTR        = 6,
+  FUNC_PTR_POP    = 7,
+  GVAR            = 50,
+  GVARW           = 51,
 }
 
 public class AST_Call  : AST 
