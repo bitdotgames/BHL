@@ -17955,6 +17955,53 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestGlobalCounter()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    import ""bhl2""
+
+    func test1() { 
+      foo = foo + 1
+    }
+    ";
+
+    string bhl3 = @"
+    import ""bhl1""  
+    import ""bhl2""  
+
+    func int test2() { 
+      test1()
+      foo = foo + 1
+      return foo
+    }
+    ";
+
+    string bhl2 = @"
+    int foo = 0
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindLog(globs);
+
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, files);
+    TestNewFile("bhl2.bhl", bhl2, files);
+    TestNewFile("bhl3.bhl", bhl3, files);
+
+    var intp = CompileFiles(files, globs);
+    intp.LoadModule("bhl3");
+
+    var node = intp.GetFuncCallNode("test2");
+    var n = ExtractNum(ExecNode(node));
+    //NodeDump(node);
+
+    AssertEqual(n, 2);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestImportGlobalLazyInit()
   {
     string bhl1 = @"
