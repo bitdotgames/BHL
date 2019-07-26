@@ -297,9 +297,6 @@ public class Interpreter : AST_Visitor
   {
     DynVal val;
     bool ok = curr_mem.TryGet(name, out val);
-    //NOTE: trying glob_mem if not found
-    if(!ok)
-      ok = glob_mem.TryGet(name, out val);
     if(!ok)
       throw new Exception("No such variable " + name + " in scope");
     return val;
