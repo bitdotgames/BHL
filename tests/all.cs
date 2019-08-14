@@ -12773,6 +12773,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestDontRecomputeConditionWhenYieldingFromWhile()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      while(i == 0) {
+        i = 1
+        yield()
+        i = 2
+      }
+      return i
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+
+    AssertEqual(2, num);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestWhileEmptyArrLoop()
   {
     string bhl = @"

@@ -1361,8 +1361,11 @@ public class IfNode : ScopeNode
 
 public class LoopNode : ScopeNode
 {
+  BHS last_body_status;
+
   override public void init()
   {
+    last_body_status = BHS.NONE;
     if(children.Count != 2)
       throw new Exception("Bad children count: " + children.Count);
   }
@@ -1375,20 +1378,26 @@ public class LoopNode : ScopeNode
 
     while(true)
     {
-      var status = cond.run();
-      if(status == BHS.RUNNING || status == BHS.FAILURE)
-        return status;
+      //NOTE: allowing to recalculate the condition only if loop's body
+      //      is not in RUNNING state (this way we don't recalculate condition
+      //      when yielding from while loop)
+      if(last_body_status != BHS.RUNNING)
+      {
+        var status = cond.run();
+        if(status == BHS.RUNNING || status == BHS.FAILURE)
+          return status;
 
-      var v = interp.PopValue();
+        var v = interp.PopValue();
 
-      if(v.bval == false)
-        return BHS.SUCCESS;
+        if(v.bval == false)
+          return BHS.SUCCESS;
+      }
 
       try
       {
-        var body_status = body.run();
-        if(body_status == BHS.RUNNING || body_status == BHS.FAILURE)
-          return body_status;
+        last_body_status = body.run();
+        if(last_body_status == BHS.RUNNING || last_body_status == BHS.FAILURE)
+          return last_body_status;
       }
       catch(Interpreter.BreakException)
       {
