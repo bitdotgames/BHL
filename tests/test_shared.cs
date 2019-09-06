@@ -114,12 +114,12 @@ public class BHL_TestRunner
     {
       var parts = args[i].Split(':');
 
-      string test_filter = parts.Length > 1 ? parts[0] : null;
-      string method_filter = parts.Length > 1 ? parts[1] : parts[0];
+      string test_filter = parts.Length >= 1 ? parts[0] : null;
+      string method_filter = parts.Length > 1 ? parts[1] : null;
 
       if(test_filter == null || (test_filter != null && test.GetType().Name.IndexOf(test_filter) != -1))
       {
-        if(member.Name.IndexOf(method_filter) != -1)
+        if(method_filter == null || (method_filter != null && member.Name.IndexOf(method_filter) != -1))
           return true;
       }
     }
