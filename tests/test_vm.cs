@@ -291,7 +291,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     func int test()
     {
-      return test2(1+1) - test1(5-0)
+      return test2(1+1) - test1(5-3)
     }
     ";
 
@@ -302,16 +302,24 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       //1 func code
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
       .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Add)
       .TestEmit(Opcodes.ReturnVal)
       //2 func code
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
       .TestEmit(Opcodes.GetVar, new int[] { 0 })
       .TestEmit(Opcodes.ReturnVal)
       //test program code
-      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
       .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.FuncCall, new [] { 3,1 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Add)
+      .TestEmit(Opcodes.FuncCall, new [] { 0,1 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.Constant, new int[] { 3 })
+      .TestEmit(Opcodes.Sub)
+      .TestEmit(Opcodes.FuncCall, new [] { 8,1 })
       .TestEmit(Opcodes.Sub)
       .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
@@ -323,7 +331,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 95);
+    AssertEqual(vm.GetStackTop(), 100);
   }
 
   ///////////////////////////////////////
