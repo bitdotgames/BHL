@@ -17,6 +17,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test() 
     {
+      //TODO: if(1 != 0) {return 100}
       return 123
     }
     ";
@@ -280,9 +281,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestCompileFunctionCall()
   {
     string bhl = @"
-    func int test2() 
+    func int test2(int x) 
     {
-      return 100
+      return 100 + x
     }
     func int test1(int x1) 
     {
@@ -290,7 +291,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     func int test()
     {
-      return test2() - test1(5)
+      return test2(1+1) - test1(5-0)
     }
     ";
 
@@ -315,8 +316,8 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[1].nval, 5);
+    AssertEqual(c.GetConstants().Count, 4);
+    AssertEqual((double)c.GetConstants()[2].nval, 5);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 

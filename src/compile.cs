@@ -85,7 +85,9 @@ public class Compiler : AST_Visitor
 
   WriteBuffer bytecode = new WriteBuffer();
 
-  SymbolViewTable symbols = new SymbolViewTable();
+  SymbolViewTable s_table = new SymbolViewTable();
+
+ List< SymbolViewTable> symbols = new List< SymbolViewTable>();
 
   WriteBuffer GetCurrentScope()
   {
@@ -95,18 +97,39 @@ public class Compiler : AST_Visitor
     return bytecode;
   }
 
+  SymbolViewTable GetCurrentSTable()
+  {
+    if(this.symbols.Count > 0)
+     return this.symbols[this.symbols.Count-1];
+
+    return s_table;
+  }
+
   void EnterNewScope()
   {
     scopes.Add(new WriteBuffer());
+    symbols.Add(new SymbolViewTable());
   }
  
   long LeaveCurrentScope()
   {
     var index = bytecode.Length;
     var curr_scope = GetCurrentScope();
+    var curr_table = GetCurrentSTable();
     bytecode.Write(curr_scope);
     scopes.Remove(curr_scope);
+    symbols.Remove(curr_table);
     return index;
+  }
+
+  long LeaveCurrentCondScope(Opcodes op)
+  {
+    var curr_scope = GetCurrentScope();
+    var offset = 2 + curr_scope.Length;//?
+    Emit(bytecode, op, new int[] {(int)( offset )});
+    bytecode.Write(curr_scope);
+    scopes.Remove(curr_scope);
+    return offset;
   }
 
   public Compiler()
@@ -350,6 +373,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Block ast)
   {
+    //int index = 0;//test how its gonna be
     // switch(ast.type)
     // {
     //   case EnumBlock.IF:
@@ -358,15 +382,25 @@ public class Compiler : AST_Visitor
     //     switch(ast.children.Count)
     //     {
     //       case 2:
+    //         var curr_scope = GetCurrentScope();
     //         Visit(ast.children[0]);
-    //         Emit(Opcodes.CondJump, new int[] { s.index });
+    //         Emit(Opcodes.CondJump, new int[] { index });
+    //         var pointer = curr_scope.Position;
+    //         //EnterNewScope();
     //         Visit(ast.children[1]);
+    //         var scope = curr_scope.GetBytes();
+    //         scope[pointer - 1] = (byte)(curr_scope.Position - pointer);
+    //         curr_scope.Reset(scope,0);
+    //         curr_scope.Write(scope);
+    //         //curr_scope = scope;
+    //         //Console.WriteLine("leave scope - " + LeaveCurrentScope());
+    //        // LeaveCurrentCondScope(Opcodes.CondJump);
     //       break;
     //       case 3:
     //         Visit(ast.children[0]);
-    //         Emit(Opcodes.CondJump, new int[] { s.index });
+    //         Emit(Opcodes.CondJump, new int[] { index });
     //         Visit(ast.children[1]);
-    //         Emit(Opcodes.Jump, new int[] { s.index });
+    //         Emit(Opcodes.Jump, new int[] { index });
     //         Visit(ast.children[2]);
     //       break;
     //       default:
@@ -375,8 +409,15 @@ public class Compiler : AST_Visitor
     //   break;
     //   default:
     //     VisitChildren(ast);
+    //   break;
     // }
     VisitChildren(ast);
+
+    // var index = bytecode.Length;
+    // var curr_scope = GetCurrentScope();
+    // bytecode.Write(curr_scope);
+    // scopes.Remove(curr_scope);
+    // return index;
   }
 
   public override void DoVisit(AST_TypeCast ast)
@@ -397,11 +438,11 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case EnumCall.VARW:
-        s = symbols.Define(ast.name);
+        s = GetCurrentSTable().Define(ast.name);
         Emit(Opcodes.SetVar, new int[] { s.index });
       break;
       case EnumCall.VAR:
-        s = symbols.Resolve(ast.name);
+        s = GetCurrentSTable().Resolve(ast.name);
         Emit(Opcodes.GetVar, new int[] { s.index });
       break;
       case EnumCall.FUNC:
@@ -470,7 +511,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_VarDecl node)
   {
-    SymbolView s = symbols.Define(node.name);
+    SymbolView s = GetCurrentSTable().Define(node.name);
     Emit(Opcodes.SetVar, new int[] { s.index });
   }
 
