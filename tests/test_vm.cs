@@ -17,7 +17,6 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test() 
     {
-      //TODO: if(1 != 0) {return 100}
       return 123
     }
     ";
@@ -332,6 +331,157 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 100);
+  }
+
+  [IsTested()]
+  public void TestCompileIfCondition()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 0
+
+      if( 2 > 1 )
+      {
+        x1 = 10
+      }
+      
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.Greather)
+      .TestEmit(Opcodes.CondJump, new int[] { 5 })
+      .TestEmit(Opcodes.Constant, new int[] { 3 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 4);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    //var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    //vm.Exec("test");
+    //AssertEqual(vm.GetStackTop(), 10);
+  }
+
+  [IsTested()]
+  public void TestCompileIfElseCondition()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 0
+
+      if( 1 > 2 )
+      {
+        x1 = 10
+      }
+      else
+      {
+        x1 = 20
+      }
+      
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.Greather)
+      .TestEmit(Opcodes.CondJump, new int[] { 5 })
+      .TestEmit(Opcodes.Constant, new int[] { 3 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Jump, new int[] { 5 })
+      .TestEmit(Opcodes.Constant, new int[] { 4 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 5);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    //var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    //vm.Exec("test");
+    //AssertEqual(vm.GetStackTop(), 20);
+  }
+
+  [IsTested()]
+  public void TestCompileFunctionCallInCondition()
+  {
+    string bhl = @"
+    func int first()
+    {
+      return 1
+    }
+    func int second()
+    {
+      return 2
+    }
+    func int test()
+    {
+      if( 1 > 0 )
+      {
+        return first()
+      }
+      else
+      {
+        return second()
+      }
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.ReturnVal)
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.Greather)
+      .TestEmit(Opcodes.CondJump, new int[] { 5 })
+      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .TestEmit(Opcodes.Jump, new int[] { 5 })
+      .TestEmit(Opcodes.FuncCall, new [] { 3,0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 3);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    //var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    //vm.Exec("test");
+    //AssertEqual(vm.GetStackTop(), 20);
   }
 
   ///////////////////////////////////////

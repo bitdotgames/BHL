@@ -48,8 +48,16 @@ public class SymbolViewTable
               index = store.Count,
               scope  = SymbolScope.Global
             };
-    store.Add(name, s);
-    return s;
+
+    if(!store.ContainsKey(name))
+    {
+     store[name] = s;
+     return s;
+    }
+    else
+    {
+     return store[name];
+    } 
   }
 
   public SymbolView Resolve(string name)
@@ -87,7 +95,7 @@ public class Compiler : AST_Visitor
 
   SymbolViewTable s_table = new SymbolViewTable();
 
- List< SymbolViewTable> symbols = new List< SymbolViewTable>();
+  List<SymbolViewTable> symbols = new List< SymbolViewTable>();
 
   WriteBuffer GetCurrentScope()
   {
@@ -373,51 +381,52 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Block ast)
   {
-    //int index = 0;//test how its gonna be
-    // switch(ast.type)
-    // {
-    //   case EnumBlock.IF:
-    //   //foreach(var c in ast.children)
-    //     //Console.WriteLine("call - " + c.GetType().Name);
-    //     switch(ast.children.Count)
-    //     {
-    //       case 2:
-    //         var curr_scope = GetCurrentScope();
-    //         Visit(ast.children[0]);
-    //         Emit(Opcodes.CondJump, new int[] { index });
-    //         var pointer = curr_scope.Position;
-    //         //EnterNewScope();
-    //         Visit(ast.children[1]);
-    //         var scope = curr_scope.GetBytes();
-    //         scope[pointer - 1] = (byte)(curr_scope.Position - pointer);
-    //         curr_scope.Reset(scope,0);
-    //         curr_scope.Write(scope);
-    //         //curr_scope = scope;
-    //         //Console.WriteLine("leave scope - " + LeaveCurrentScope());
-    //        // LeaveCurrentCondScope(Opcodes.CondJump);
-    //       break;
-    //       case 3:
-    //         Visit(ast.children[0]);
-    //         Emit(Opcodes.CondJump, new int[] { index });
-    //         Visit(ast.children[1]);
-    //         Emit(Opcodes.Jump, new int[] { index });
-    //         Visit(ast.children[2]);
-    //       break;
-    //       default:
-    //         throw new Exception("Not supported condition count: " + ast.children.Count);
-    //     }
-    //   break;
-    //   default:
-    //     VisitChildren(ast);
-    //   break;
-    // }
-    VisitChildren(ast);
+    int index = 0;//test how its gonna be
+    switch(ast.type)
+    {
+      case EnumBlock.IF:
+        switch(ast.children.Count)
+        {
+          case 2:
 
-    // var index = bytecode.Length;
-    // var curr_scope = GetCurrentScope();
-    // bytecode.Write(curr_scope);
-    // scopes.Remove(curr_scope);
-    // return index;
+            var curr_scope = GetCurrentScope();
+            Visit(ast.children[0]);
+            Emit(Opcodes.CondJump, new int[] { index });
+            var pointer = curr_scope.Position;
+
+            Visit(ast.children[1]);
+            var scope = curr_scope.GetBytes();
+            scope[pointer - 1] = (byte)(curr_scope.Position - (pointer - 1));
+            curr_scope.Reset(scope,0);
+            curr_scope.Write(scope, scope.Length);
+          break;
+          case 3:
+            curr_scope = GetCurrentScope();
+            Visit(ast.children[0]);
+            Emit(Opcodes.CondJump, new int[] { index });
+            pointer = curr_scope.Position;
+
+            Visit(ast.children[1]);
+            scope = curr_scope.GetBytes();
+            scope[pointer - 1] = (byte)(curr_scope.Position - (pointer - 1));
+            curr_scope.Reset(scope,0);
+            curr_scope.Write(scope, scope.Length);
+            Emit(Opcodes.Jump, new int[] { index });
+            pointer = curr_scope.Position;
+            Visit(ast.children[2]);
+            scope = curr_scope.GetBytes();
+            scope[pointer - 1] = (byte)(curr_scope.Position - (pointer - 1));
+            curr_scope.Reset(scope,0);
+            curr_scope.Write(scope, scope.Length);
+          break;
+          default:
+            throw new Exception("Not supported condition count: " + ast.children.Count);
+        }
+      break;
+      default:
+        VisitChildren(ast);
+      break;
+    }
   }
 
   public override void DoVisit(AST_TypeCast ast)
