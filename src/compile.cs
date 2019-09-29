@@ -83,19 +83,19 @@ public class Compiler : AST_Visitor
     public string sval;
   }
 
-  Dictionary<string, uint> func_offset_buffer = new Dictionary<string, uint>();
+  WriteBuffer bytecode = new WriteBuffer();
 
   List<WriteBuffer> scopes = new List<WriteBuffer>();
 
-  Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
-
   List<Constant> constants = new List<Constant>();
 
-  WriteBuffer bytecode = new WriteBuffer();
+  SymbolViewTable sv_table = new SymbolViewTable();
 
-  SymbolViewTable s_table = new SymbolViewTable();
+  List<SymbolViewTable> symbols = new List<SymbolViewTable>();
 
-  List<SymbolViewTable> symbols = new List< SymbolViewTable>();
+  Dictionary<string, uint> func_offset_buffer = new Dictionary<string, uint>();
+  
+  Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
 
   WriteBuffer GetCurrentScope()
   {
@@ -105,12 +105,12 @@ public class Compiler : AST_Visitor
     return bytecode;
   }
 
-  SymbolViewTable GetCurrentSTable()
+  SymbolViewTable GetCurrentSVTable() //TODO: try to reduce similar Geters
   {
     if(this.symbols.Count > 0)
      return this.symbols[this.symbols.Count-1];
 
-    return s_table;
+    return sv_table;
   }
 
   void EnterNewScope()
@@ -123,21 +123,11 @@ public class Compiler : AST_Visitor
   {
     var index = bytecode.Length;
     var curr_scope = GetCurrentScope();
-    var curr_table = GetCurrentSTable();
+    var curr_table = GetCurrentSVTable();
     bytecode.Write(curr_scope);
     scopes.Remove(curr_scope);
     symbols.Remove(curr_table);
     return index;
-  }
-
-  long LeaveCurrentCondScope(Opcodes op)
-  {
-    var curr_scope = GetCurrentScope();
-    var offset = 2 + curr_scope.Length;//?
-    Emit(bytecode, op, new int[] {(int)( offset )});
-    bytecode.Write(curr_scope);
-    scopes.Remove(curr_scope);
-    return offset;
   }
 
   public Compiler()
@@ -257,7 +247,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.Return
+        name = Opcodes.Return //TODO: impl this type of return
       }
     );
     DeclareOpcode(
@@ -337,6 +327,24 @@ public class Compiler : AST_Visitor
     }
   }
 
+  int EmitConditionStatement(AST_Block ast,int index)
+  {
+    Visit(ast.children[0]);
+    Emit(Opcodes.CondJump, new int[] { index });
+    var pointer = GetCurrentScope().Position;
+    Visit(ast.children[1]);
+    return pointer;
+  }
+
+  void InsertIndex(int pointer)
+  {
+    var curr_scope = GetCurrentScope();
+    var scope = curr_scope.GetBytes();
+    scope[pointer - 1] = (byte)(curr_scope.Position - pointer);
+    curr_scope.Reset(scope,0);
+    curr_scope.Write(scope, scope.Length);
+  }
+
   public byte[] GetBytes()
   {
     return bytecode.GetBytes();
@@ -381,46 +389,27 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Block ast)
   {
-    int index = 0;//test how its gonna be
+    int index = 0; //blank placeholder
     switch(ast.type)
     {
       case EnumBlock.IF:
+        var pointer = 0;
         switch(ast.children.Count)
         {
           case 2:
-
-            var curr_scope = GetCurrentScope();
-            Visit(ast.children[0]);
-            Emit(Opcodes.CondJump, new int[] { index });
-            var pointer = curr_scope.Position;
-
-            Visit(ast.children[1]);
-            var scope = curr_scope.GetBytes();
-            scope[pointer - 1] = (byte)(curr_scope.Position - (pointer - 1));
-            curr_scope.Reset(scope,0);
-            curr_scope.Write(scope, scope.Length);
+            pointer = EmitConditionStatement(ast, index);
+            InsertIndex(pointer);
           break;
           case 3:
-            curr_scope = GetCurrentScope();
-            Visit(ast.children[0]);
-            Emit(Opcodes.CondJump, new int[] { index });
-            pointer = curr_scope.Position;
-
-            Visit(ast.children[1]);
-            scope = curr_scope.GetBytes();
-            scope[pointer - 1] = (byte)(curr_scope.Position - (pointer - 1));
-            curr_scope.Reset(scope,0);
-            curr_scope.Write(scope, scope.Length);
+            pointer = EmitConditionStatement(ast, index);
             Emit(Opcodes.Jump, new int[] { index });
-            pointer = curr_scope.Position;
+            InsertIndex(pointer);
+            pointer = GetCurrentScope().Position;
             Visit(ast.children[2]);
-            scope = curr_scope.GetBytes();
-            scope[pointer - 1] = (byte)(curr_scope.Position - (pointer - 1));
-            curr_scope.Reset(scope,0);
-            curr_scope.Write(scope, scope.Length);
+            InsertIndex(pointer);
           break;
           default:
-            throw new Exception("Not supported condition count: " + ast.children.Count);
+            throw new Exception("Not supported conditions count: " + ast.children.Count);
         }
       break;
       default:
@@ -447,11 +436,11 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case EnumCall.VARW:
-        s = GetCurrentSTable().Define(ast.name);
+        s = GetCurrentSVTable().Define(ast.name);
         Emit(Opcodes.SetVar, new int[] { s.index });
       break;
       case EnumCall.VAR:
-        s = GetCurrentSTable().Resolve(ast.name);
+        s = GetCurrentSVTable().Resolve(ast.name);
         Emit(Opcodes.GetVar, new int[] { s.index });
       break;
       case EnumCall.FUNC:
@@ -520,7 +509,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_VarDecl node)
   {
-    SymbolView s = GetCurrentSTable().Define(node.name);
+    SymbolView s = GetCurrentSVTable().Define(node.name);
     Emit(Opcodes.SetVar, new int[] { s.index });
   }
 

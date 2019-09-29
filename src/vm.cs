@@ -60,9 +60,8 @@ public class VM
 
 					if(const_idx >= constants.Count)
 						throw new Exception("Index out of constant pool: " + const_idx);
-
 					curr_frame.num_stack.Push(constants[const_idx].nval);
-				break;
+			    break;
 				case Opcodes.Add:
 				case Opcodes.Sub:
 				case Opcodes.Div:
@@ -105,19 +104,32 @@ public class VM
 				break;
 				case Opcodes.FuncCall:
 					curr_frame.ip++;
+					
 					var fr = new Frame();
 				    fr.ip = instructions[curr_frame.ip];
+				     
 				    curr_frame.ip++;
-				    			
-				    if(instructions[curr_frame.ip] != 0)
+				    
+				    if(instructions[curr_frame.ip] != 0)//has any input variables
 				    {
 				    	for(int i = 0; i < instructions[curr_frame.ip]; ++i)
-				    	{
 				    		fr.num_stack.Push(curr_frame.num_stack.Pop());
-				    	}
 				    }
+				    
 					frames.Push(fr);
 					curr_frame = frames.Peek();
+				continue;
+				case Opcodes.Jump:
+					curr_frame.ip++;
+					var new_jump_ip = curr_frame.ip + instructions[curr_frame.ip];
+						curr_frame.ip = new_jump_ip;
+			    break;
+				case Opcodes.CondJump:
+					curr_frame.ip++;
+					var jump_ip = curr_frame.ip + instructions[curr_frame.ip];
+					if(curr_frame.num_stack.Pop() == 0)
+						curr_frame.ip = jump_ip;
+					curr_frame.ip++;
 				continue;
 			}
 			curr_frame.ip++;
