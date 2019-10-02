@@ -12,7 +12,7 @@ public class BHLC
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d]");
+    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -30,6 +30,7 @@ public class BHLC
     string userbindings_dll_path = "";
     int max_threads = 1;
     bool check_deps = true;
+    bool deterministic = false;
     bool debug = false;
 
     var p = new OptionSet () {
@@ -51,6 +52,8 @@ public class BHLC
         v => userbindings_dll_path = v },
       { "error=", "error file",
         v => err_file = v },
+      { "deterministic=", "deterministic build",
+        v => deterministic = v != null },
       { "threads=", "number of threads",
           v => max_threads = int.Parse(v) },
       { "d", "debug version",
@@ -111,6 +114,9 @@ public class BHLC
       if(string.IsNullOrEmpty(files[i]))
         files.RemoveAt(i);
     }
+
+    if(deterministic)
+      files.Sort();
 
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
     var conf = new BuildConf();

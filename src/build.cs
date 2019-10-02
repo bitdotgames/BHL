@@ -145,16 +145,23 @@ public class Build
 
       mwriter.Write(total_modules);
 
-      foreach(var w in workers)
+      //NOTE: we'd like to write file binary modules in the same order they were added
+      for(int file_idx=0; file_idx < conf.files.Count; ++file_idx)
       {
-        for(int i=0;i<w.result.Count;++i)
-        {
-          var m = w.result[i];
-          var lz4 = w.lz4_result[i];
+        var file = conf.files[file_idx];
 
-          mwriter.Write(ModuleLoader.FMT_LZ4);
-          mwriter.Write(m.nname);
-          mwriter.Write(lz4);
+        foreach(var w in workers)
+        {
+          if(file_idx >= w.start && file_idx < w.start + w.count) 
+          {
+            var m = w.result[file];
+            var lz4 = w.lz4_result[file];
+
+            mwriter.Write(ModuleLoader.FMT_LZ4);
+            mwriter.Write(m.nname);
+            mwriter.Write(lz4);
+            break;
+          }
         }
       }
     }
@@ -166,19 +173,6 @@ public class Build
     conf.postproc.Finish();
 
     return 0;
-  }
-
-  static void Shuffle(List<string> arr)
-  {
-    var rnd = new Random();
-    // Knuth shuffle algorithm - courtesy of Wikipedia :)
-    for (int t = 0; t < arr.Count; ++t)
-    {
-      var tmp = arr[t];
-      int r = rnd.Next(t, arr.Count);
-      arr[t] = arr[r];
-      arr[r] = tmp;
-    }
   }
 
   static byte[] EncodeToLZ4(AST ast)
@@ -391,8 +385,8 @@ public class Build
     public GlobalScope bindings;
     public int start;
     public int count;
-    public List<AST_Module> result = new List<AST_Module>();
-    public List<byte[]> lz4_result = new List<byte[]>();
+    public Dictionary<string, AST_Module> result = new Dictionary<string, AST_Module>();
+    public Dictionary<string, byte[]> lz4_result = new Dictionary<string, byte[]>();
     public List<Symbol2File> symbols = new List<Symbol2File>();
     public PostProcessor postproc;
     public UserError error = null;
@@ -498,8 +492,8 @@ public class Build
           }
 
           w.postproc.PostProc(ref ast);
-          w.result.Add(ast);
-          w.lz4_result.Add(EncodeToLZ4(ast));
+          w.result.Add(file, ast);
+          w.lz4_result.Add(file, EncodeToLZ4(ast));
 
           //sw1.Stop();
           //Console.WriteLine("BHL Builder {0}: file '{1}'({2} sec)", w.id, file, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
