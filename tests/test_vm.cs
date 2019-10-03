@@ -500,6 +500,44 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.GetStackTop(), 1);
   }
 
+  [IsTested()]
+  public void TestFib()
+  {
+    string bhl = @"
+
+    func int fib(int x)
+    {
+      if(x == 0) {
+        return 0
+      } else {
+        if(x == 1) {
+          return 1
+        } else {
+          return fib(x - 1) + fib(x - 2)
+        }
+      }
+    }
+
+    func int test() 
+    {
+      int x = 15
+      return fib(x)
+    }
+    ";
+
+    var c = Compile(bhl);
+    var result = c.GetBytes();
+    AssertTrue(result.Length > 0);
+
+    {
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+      vm.Exec("test");
+      stopwatch.Stop();
+      Console.WriteLine("bhl vm fib ticks: {0}", stopwatch.ElapsedTicks);
+    }
+  }
+
   ///////////////////////////////////////
   Compiler Compile(string bhl)
   {
