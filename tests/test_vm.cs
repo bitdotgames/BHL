@@ -520,7 +520,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test() 
     {
-      int x = 15
+      int x = 15 
       return fib(x)
     }
     ";
@@ -530,10 +530,11 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(result.Length > 0);
 
     {
-      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
       var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
       vm.Exec("test");
       stopwatch.Stop();
+      AssertEqual(vm.GetStackTop(), 610);
       Console.WriteLine("bhl vm fib ticks: {0}", stopwatch.ElapsedTicks);
     }
   }
