@@ -17,11 +17,14 @@ public enum Opcodes
   FuncCall  = 8,
   ReturnVal = 9,
   Return    = 10,
-  Equal     = 11,
-  NotEqual  = 12,
-  Greather  = 13,
-  Jump      = 14,
-  CondJump  = 15
+  Jump      = 11,
+  CondJump  = 12,
+  Equal     = 13,
+  NotEqual  = 14,
+  Less      = 15,
+  Greather  = 16,
+  LessOrEqual = 17,
+  GreatherOrEqual = 18
 }
 
 public enum SymbolScope
@@ -221,6 +224,24 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.Greather
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Less
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.GreatherOrEqual
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.LessOrEqual
       }
     );
     DeclareOpcode(
@@ -497,6 +518,15 @@ public class Compiler : AST_Visitor
       break;
       case EnumBinaryOp.GT:
         Emit(Opcodes.Greather);
+      break;
+      case EnumBinaryOp.LT:
+        Emit(Opcodes.Less);
+      break;
+      case EnumBinaryOp.GTE:
+        Emit(Opcodes.GreatherOrEqual);
+      break;
+      case EnumBinaryOp.LTE:
+        Emit(Opcodes.LessOrEqual);
       break;
       default:
         throw new Exception("Not supported type: " + node.type);

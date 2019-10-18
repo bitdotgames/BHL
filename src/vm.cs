@@ -70,6 +70,9 @@ public class VM
         case Opcodes.Equal:
         case Opcodes.NotEqual:
         case Opcodes.Greather:
+        case Opcodes.Less:
+        case Opcodes.GreatherOrEqual:
+        case Opcodes.LessOrEqual:
           ExecuteBinaryOperation(opcode);
         break;
         case Opcodes.SetVar:
@@ -165,6 +168,15 @@ public class VM
       break;
       case Opcodes.Greather:
         curr_frame.num_stack.Push(l_opertand > r_opertand ? 1:0);
+      break;
+      case Opcodes.Less:
+        curr_frame.num_stack.Push(l_opertand < r_opertand ? 1:0);
+      break;
+      case Opcodes.GreatherOrEqual:
+        curr_frame.num_stack.Push(l_opertand >= r_opertand ? 1:0);
+      break;
+      case Opcodes.LessOrEqual:
+        curr_frame.num_stack.Push(l_opertand <= r_opertand ? 1:0);
       break;
     }
   }
