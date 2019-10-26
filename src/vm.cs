@@ -130,6 +130,10 @@ public class VM
           curr_frame.ip++;
           curr_frame.ip = curr_frame.ip + instructions[curr_frame.ip];
         break;
+        case Opcodes.LoopJump:
+          curr_frame.ip++;
+          curr_frame.ip = curr_frame.ip - instructions[curr_frame.ip];
+        break;
         case Opcodes.CondJump:
           curr_frame.ip++;
           if(curr_frame.num_stack.Pop() == 0)

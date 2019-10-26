@@ -442,6 +442,57 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCompileWhileCondition()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 100
+
+      while( x1 >= 10 )
+      {
+        x1 = x1 - 10
+      }
+
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      //__while statenemt__//
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.GreatherOrEqual)
+      .TestEmit(Opcodes.CondJump, new int[] { 9 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Sub)
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.LoopJump, new int[] { 16 })
+      //__//
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual((double)c.GetConstants()[0].nval, 100);
+    AssertEqual((double)c.GetConstants()[1].nval, 10);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop(), 0);
+  }
+
+  [IsTested()]
   public void TestCompileFunctionCallInCondition()
   {
     string bhl = @"

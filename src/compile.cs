@@ -19,12 +19,13 @@ public enum Opcodes
   Return    = 10,
   Jump      = 11,
   CondJump  = 12,
-  Equal     = 13,
-  NotEqual  = 14,
-  Less      = 15,
-  Greather  = 16,
-  LessOrEqual = 17,
-  GreatherOrEqual = 18
+  LoopJump  = 13,
+  Equal     = 14,
+  NotEqual  = 15,
+  Less      = 16,
+  Greather  = 17,
+  LessOrEqual = 18,
+  GreatherOrEqual = 19
 }
 
 public enum SymbolScope
@@ -287,6 +288,13 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.LoopJump,
+        operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.CondJump,
         operand_width = new int[] { 2 }
       }
@@ -432,6 +440,13 @@ public class Compiler : AST_Visitor
           default:
             throw new Exception("Not supported conditions count: " + ast.children.Count);
         }
+      break;
+      case EnumBlock.WHILE:
+        var block_ip = GetCurrentScope().Position;
+        pointer = EmitConditionStatement(ast, index);
+        Emit(Opcodes.LoopJump, new int[] { GetCurrentScope().Position - block_ip
+                                           + LookupOpcode(Opcodes.LoopJump).operand_width[0]});
+        InsertIndex(pointer);
       break;
       default:
         VisitChildren(ast);
