@@ -12,7 +12,7 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
-  public void TestCompileConstant()
+  public void TestCompileNumConstant()
   {
     string bhl = @"
     func int test()
@@ -39,6 +39,36 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 123);
+  }
+
+  [IsTested()]
+  public void TestCompileBoolConstant()
+  {
+    string bhl = @"
+    func bool test()
+    {
+      return true
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 1);
+    AssertEqual((double)c.GetConstants()[0].nval, 1);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop(), 1);
   }
 
   [IsTested()]
@@ -549,6 +579,62 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 7);
+  }
+
+  [IsTested()]
+  public void TestCompileBooleanInCondition()
+  {
+    string bhl = @"
+    func int first()
+    {
+      return 1
+    }
+    func int second()
+    {
+      return 2
+    }
+    func int test()
+    {
+      if( true )
+      {
+        return first()
+      }
+      else
+      {
+        return second()
+      }
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.ReturnVal)
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.CondJump, new int[] { 6 })
+      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .TestEmit(Opcodes.Jump, new int[] { 4 })
+      .TestEmit(Opcodes.FuncCall, new [] { 3,0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual((double)c.GetConstants()[0].nval, 1);
+    AssertEqual((double)c.GetConstants()[1].nval, 2);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop(), 1);
   }
 
   [IsTested()]
