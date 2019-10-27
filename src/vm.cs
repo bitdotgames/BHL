@@ -63,6 +63,11 @@ public class VM
 
           curr_frame.num_stack.Push(constants[const_idx].nval);
         break;
+        case Opcodes.UnaryNot:
+          var opertand = curr_frame.num_stack.Pop();
+          if((opertand >= 0) && (opertand <= 1))
+            curr_frame.num_stack.Push(opertand < 1 ? 1:0);
+        break;
         case Opcodes.Add:
         case Opcodes.Sub:
         case Opcodes.Div:

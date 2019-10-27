@@ -25,7 +25,8 @@ public enum Opcodes
   Less      = 16,
   Greather  = 17,
   LessOrEqual = 18,
-  GreatherOrEqual = 19
+  GreatherOrEqual = 19,
+  UnaryNot = 20
 }
 
 public enum SymbolScope
@@ -243,6 +244,12 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.LessOrEqual
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.UnaryNot
       }
     );
     DeclareOpcode(
@@ -544,12 +551,22 @@ public class Compiler : AST_Visitor
         Emit(Opcodes.LessOrEqual);
       break;
       default:
-        throw new Exception("Not supported type: " + node.type);
+        throw new Exception("Not supported binary type: " + node.type);
     }
   }
 
   public override void DoVisit(AST_UnaryOpExp node)
   {
+    VisitChildren(node);
+
+    switch(node.type)
+    {
+      case EnumUnaryOp.NOT:
+        Emit(Opcodes.UnaryNot);
+      break;
+      default:
+        throw new Exception("Not supported unary type: " + node.type);
+    }
   }
 
   public override void DoVisit(AST_VarDecl node)
