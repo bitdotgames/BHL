@@ -493,6 +493,65 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCompileForCondition()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 10
+
+      for( int i = 0; i < 3; i = i + 1 )
+      {
+        x1 = x1 - i
+      }
+
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      //__for statenemt__//
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.SetVar, new int[] { 1 })
+      .TestEmit(Opcodes.GetVar, new int[] { 1 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.Less)
+      .TestEmit(Opcodes.CondJump, new int[] { 16 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 1 })
+      .TestEmit(Opcodes.Sub)
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 1 })
+      .TestEmit(Opcodes.Constant, new int[] { 3 })
+      .TestEmit(Opcodes.Add)
+      .TestEmit(Opcodes.SetVar, new int[] { 1 })
+      .TestEmit(Opcodes.LoopJump, new int[] { 23 })
+      //__//
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 4);
+    AssertEqual((double)c.GetConstants()[0].nval, 10);
+    AssertEqual((double)c.GetConstants()[1].nval, 0);
+    AssertEqual((double)c.GetConstants()[2].nval, 3);
+    AssertEqual((double)c.GetConstants()[3].nval, 1);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop(), 7);
+  }
+
+  [IsTested()]
   public void TestCompileFunctionCallInCondition()
   {
     string bhl = @"
