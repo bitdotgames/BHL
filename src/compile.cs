@@ -26,7 +26,8 @@ public enum Opcodes
   Greather  = 17,
   LessOrEqual = 18,
   GreatherOrEqual = 19,
-  UnaryNot = 20
+  UnaryNot = 20,
+  UnaryNeg = 21
 }
 
 public enum SymbolScope
@@ -255,6 +256,12 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.UnaryNeg
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.SetVar,
         operand_width = new int[] { 2 }
       }
@@ -452,7 +459,7 @@ public class Compiler : AST_Visitor
         var block_ip = GetCurrentScope().Position;
         pointer = EmitConditionStatement(ast, index);
         Emit(Opcodes.LoopJump, new int[] { GetCurrentScope().Position - block_ip
-                                           + LookupOpcode(Opcodes.LoopJump).operand_width[0]});
+                                           + LookupOpcode(Opcodes.LoopJump).operand_width[0] });
         InsertIndex(pointer);
       break;
       default:
@@ -563,6 +570,9 @@ public class Compiler : AST_Visitor
     {
       case EnumUnaryOp.NOT:
         Emit(Opcodes.UnaryNot);
+      break;
+      case EnumUnaryOp.NEG:
+        Emit(Opcodes.UnaryNeg);
       break;
       default:
         throw new Exception("Not supported unary type: " + node.type);

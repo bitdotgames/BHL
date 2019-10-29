@@ -71,7 +71,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.GetStackTop(), 1);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestCompileUnaryNot()
   {
     string bhl = @"
@@ -100,6 +100,40 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
     AssertEqual(vm.GetStackTop(), 0);
+  }
+
+  [IsTested()]
+  public void TestCompileUnaryNegVar()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      int x = 1
+      return -x
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.UnaryNeg)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 1);
+    AssertEqual((double)c.GetConstants()[0].nval, 1);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop(), -1);
   }
 
   [IsTested()]

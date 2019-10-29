@@ -64,9 +64,8 @@ public class VM
           curr_frame.num_stack.Push(constants[const_idx].nval);
         break;
         case Opcodes.UnaryNot:
-          var opertand = curr_frame.num_stack.Pop();
-          if((opertand >= 0) && (opertand <= 1))
-            curr_frame.num_stack.Push(opertand < 1 ? 1:0);
+        case Opcodes.UnaryNeg:
+          ExecuteUnaryOperation(opcode);
         break;
         case Opcodes.Add:
         case Opcodes.Sub:
@@ -82,24 +81,7 @@ public class VM
         break;
         case Opcodes.SetVar:
         case Opcodes.GetVar:
-          curr_frame.ip++;
-          int local_idx = instructions[curr_frame.ip];
-
-          switch(opcode)
-          {
-            case Opcodes.SetVar:
-              if(local_idx >= curr_frame.locals.Count)
-                curr_frame.locals.Add(curr_frame.num_stack.Pop());
-              else
-                curr_frame.locals[local_idx] = curr_frame.num_stack.Pop();
-            break;
-            case Opcodes.GetVar:
-              if(local_idx >= curr_frame.locals.Count)
-                throw new Exception("Index out of locals pool: " + local_idx);
-
-              curr_frame.num_stack.Push(curr_frame.locals[local_idx]);
-            break;
-            }
+          ExecuteVariablesOperation(opcode);
         break;
         case Opcodes.ReturnVal:
           var ret_val = curr_frame.num_stack.Peek();
@@ -147,6 +129,41 @@ public class VM
         continue;
       }
       curr_frame.ip++;
+    }
+  }
+
+  void ExecuteVariablesOperation(Opcodes op)
+  {
+    curr_frame.ip++;
+    int local_idx = instructions[curr_frame.ip];
+    switch(op)
+    {
+      case Opcodes.SetVar:
+        if(local_idx >= curr_frame.locals.Count)
+          curr_frame.locals.Add(curr_frame.num_stack.Pop());
+        else
+          curr_frame.locals[local_idx] = curr_frame.num_stack.Pop();
+      break;
+      case Opcodes.GetVar:
+        if(local_idx >= curr_frame.locals.Count)
+          throw new Exception("Index out of locals pool: " + local_idx);
+        curr_frame.num_stack.Push(curr_frame.locals[local_idx]);
+      break;
+    }
+  }
+
+  void ExecuteUnaryOperation(Opcodes op)
+  {
+    var opertand = curr_frame.num_stack.Pop();
+    switch(op)
+    {
+      case Opcodes.UnaryNot:
+        if((opertand >= 0) && (opertand <= 1))
+          curr_frame.num_stack.Push(opertand < 1 ? 1:0);
+      break;
+      case Opcodes.UnaryNeg:
+        curr_frame.num_stack.Push(opertand * -1);
+      break;
     }
   }
 
