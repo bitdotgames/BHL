@@ -160,7 +160,21 @@ public class Compiler : AST_Visitor
         return i;
     }
 
-    constants.Add(DynVal.NewNum(literal.nval));
+    switch(literal.type)
+    {
+      case EnumLiteral.NUM:
+        constants.Add(DynVal.NewNum(literal.nval));
+      break;
+      case EnumLiteral.BOOL:
+        constants.Add(DynVal.NewBool(literal.nval > 0));
+      break;
+      case EnumLiteral.STR:
+        constants.Add(DynVal.NewStr(literal.sval));
+      break;
+      default:
+        throw new Exception("No supported literal type: " + literal.type);
+    }
+
     return constants.Count-1;
   }
 
