@@ -75,6 +75,16 @@ public class SymbolViewTable
   }
 }
 
+public class Constant
+{
+  /*Need to move all constants and variables to Constant struct. 
+    Add pooling for new instances within vm executing(pop will free and push will take from pool). 
+    Pool will be one for Vm and locals vill contain refs to them*/
+  public EnumLiteral type;
+  public double nval;
+  public string sval;
+}
+
 public class Compiler : AST_Visitor
 {
   class OpDefinition
@@ -83,17 +93,11 @@ public class Compiler : AST_Visitor
     public int[] operand_width; //each array item represents the size of the operand in bytes
   }
 
-  public struct Constant
-  {
-    public double nval;
-    public string sval;
-  }
-
   WriteBuffer bytecode = new WriteBuffer();
 
   List<WriteBuffer> scopes = new List<WriteBuffer>();
 
-  List<Constant> constants = new List<Constant>();
+  List<DynVal> constants = new List<DynVal>();
 
   SymbolViewTable sv_table = new SymbolViewTable();
 
@@ -146,29 +150,21 @@ public class Compiler : AST_Visitor
     Visit(ast);
   }
 
-  int AddConstant(double nval)
+  int AddConstant(AST_Literal literal)
   {
     for(int i = 0 ; i < constants.Count; ++i)
     {
-      if(constants[i].nval == nval)
+      if((constants[i].type == (byte)literal.type)
+         && (constants[i].num == literal.nval)
+         && (constants[i].str == literal.sval))
         return i;
     }
-    constants.Add(new Constant() {nval = nval});
+
+    constants.Add(DynVal.NewNum(literal.nval));
     return constants.Count-1;
   }
 
-  int AddConstant(string sval)
-  {
-    for(int i = 0 ; i < constants.Count; ++i)
-    {
-      if(constants[i].sval == sval)
-        return i;
-    }
-    constants.Add(new Constant() {sval = sval});
-    return constants.Count-1;
-  }
-
-  public List<Constant> GetConstants()
+  public List<DynVal> GetConstants()
   {
     return constants;
   }
@@ -518,7 +514,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Literal node)
   {
-    Emit(Opcodes.Constant, new int[] { AddConstant(node.nval) });
+    Emit(Opcodes.Constant, new int[] { AddConstant(node) });
   }
 
   public override void DoVisit(AST_BinaryOpExp node)

@@ -7,29 +7,29 @@ namespace bhl {
 public class Frame
 {
   public uint ip;
-  public Stack<double> num_stack;
-  public List<double> locals;
+  public Stack<DynVal> num_stack;
+  public List<DynVal> locals;
 
   public Frame()
   {
     ip = 0;
-    num_stack = new Stack<double>();
-    locals = new List<double>();
+    num_stack = new Stack<DynVal>();
+    locals = new List<DynVal>();
   }
 }
 
 public class VM
 {
-  List<Compiler.Constant> constants;
+  List<DynVal> constants;
   byte[] instructions;
   Dictionary<string, uint> func_buff;
 
-  Stack<double> vm_stack = new Stack<double>();
+  Stack<DynVal> vm_stack = new Stack<DynVal>();
 
   Stack<Frame> frames = new Stack<Frame>();
   Frame curr_frame;
 
-  public VM(byte[] instructions, List<Compiler.Constant> constants, Dictionary<string, uint> func_buff)
+  public VM(byte[] instructions, List<DynVal> constants, Dictionary<string, uint> func_buff)
   {
     this.instructions = instructions;
     this.constants = constants;
@@ -48,7 +48,7 @@ public class VM
   {
     Opcodes opcode;
     curr_frame = frames.Peek();
-        while(frames.Count > 0)
+    while(frames.Count > 0)
     {
       opcode = (Opcodes)instructions[curr_frame.ip];
 
@@ -61,7 +61,7 @@ public class VM
           if(const_idx >= constants.Count)
             throw new Exception("Index out of constant pool: " + const_idx);
 
-          curr_frame.num_stack.Push(constants[const_idx].nval);
+          curr_frame.num_stack.Push(constants[const_idx]);
         break;
         case Opcodes.UnaryNot:
         case Opcodes.UnaryNeg:
@@ -107,7 +107,7 @@ public class VM
           if(instructions[curr_frame.ip] != 0)//has any input variables
           {
             for(int i = 0; i < instructions[curr_frame.ip]; ++i)
-            fr.num_stack.Push(curr_frame.num_stack.Pop());
+              fr.num_stack.Push(curr_frame.num_stack.Pop());
           }
 
           frames.Push(fr);
@@ -123,7 +123,7 @@ public class VM
         break;
         case Opcodes.CondJump:
           curr_frame.ip++;
-          if(curr_frame.num_stack.Pop() == 0)
+          if(curr_frame.num_stack.Pop().bval == false)
             curr_frame.ip = curr_frame.ip + instructions[curr_frame.ip];
           curr_frame.ip++;
         continue;
@@ -154,60 +154,59 @@ public class VM
 
   void ExecuteUnaryOperation(Opcodes op)
   {
-    var opertand = curr_frame.num_stack.Pop();
+    var operand = curr_frame.num_stack.Pop();
     switch(op)
     {
       case Opcodes.UnaryNot:
-        if((opertand >= 0) && (opertand <= 1))
-          curr_frame.num_stack.Push(opertand < 1 ? 1:0);
+        curr_frame.num_stack.Push(DynVal.NewBool(!operand.bval));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.num_stack.Push(opertand * -1);
+        curr_frame.num_stack.Push(DynVal.NewNum(operand.num * -1));
       break;
     }
   }
 
   void ExecuteBinaryOperation(Opcodes op)
   {
-    var r_opertand = curr_frame.num_stack.Pop();
-    var l_opertand = curr_frame.num_stack.Pop();
+     var r_opertand = curr_frame.num_stack.Pop().num;
+     var l_opertand = curr_frame.num_stack.Pop().num;
 
     switch(op)
     {
       case Opcodes.Add:
-        curr_frame.num_stack.Push(l_opertand + r_opertand);
+        curr_frame.num_stack.Push(DynVal.NewNum(l_opertand + r_opertand));
       break;
       case Opcodes.Sub:
-        curr_frame.num_stack.Push(l_opertand - r_opertand);
+        curr_frame.num_stack.Push(DynVal.NewNum(l_opertand - r_opertand));
       break;
       case Opcodes.Div:
-        curr_frame.num_stack.Push(l_opertand / r_opertand);
+        curr_frame.num_stack.Push(DynVal.NewNum(l_opertand / r_opertand));
       break;
       case Opcodes.Mul:
-        curr_frame.num_stack.Push(l_opertand * r_opertand);
+        curr_frame.num_stack.Push(DynVal.NewNum(l_opertand * r_opertand));
       break;
       case Opcodes.Equal:
-        curr_frame.num_stack.Push(l_opertand == r_opertand ? 1:0);
+        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand == r_opertand));
       break;
       case Opcodes.NotEqual:
-        curr_frame.num_stack.Push(l_opertand != r_opertand ? 1:0);
+        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand != r_opertand));
       break;
       case Opcodes.Greather:
-        curr_frame.num_stack.Push(l_opertand > r_opertand ? 1:0);
+        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand > r_opertand));
       break;
       case Opcodes.Less:
-        curr_frame.num_stack.Push(l_opertand < r_opertand ? 1:0);
+        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand < r_opertand));
       break;
       case Opcodes.GreatherOrEqual:
-        curr_frame.num_stack.Push(l_opertand >= r_opertand ? 1:0);
+        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand >= r_opertand));
       break;
       case Opcodes.LessOrEqual:
-        curr_frame.num_stack.Push(l_opertand <= r_opertand ? 1:0);
+        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand <= r_opertand));
       break;
     }
   }
 
-  public double GetStackTop()//for test purposes
+  public DynVal GetStackTop()//for test purposes
   {
     return vm_stack.Peek();
   }

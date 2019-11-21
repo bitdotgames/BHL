@@ -32,13 +32,13 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].nval, 123);
+    AssertEqual((double)c.GetConstants()[0].num, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 123);
+    AssertEqual(vm.GetStackTop().num, 123);
   }
 
   [IsTested()]
@@ -62,13 +62,13 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].nval, 1);
+    AssertEqual((double)c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 1);
+    AssertTrue(vm.GetStackTop().bval);
   }
 
   [IsTested()]
@@ -93,13 +93,13 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].nval, 1);
+    AssertEqual((double)c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 0);
+    AssertTrue(!vm.GetStackTop().bval);
   }
 
   [IsTested()]
@@ -127,13 +127,13 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].nval, 1);
+    AssertEqual((double)c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), -1);
+    AssertEqual(vm.GetStackTop().num, -1);
   }
 
   [IsTested()]
@@ -159,14 +159,14 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].nval, 10);
-    AssertEqual((double)c.GetConstants()[1].nval, 20);
+    AssertEqual((double)c.GetConstants()[0].num, 10);
+    AssertEqual((double)c.GetConstants()[1].num, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 30);
+    AssertEqual(vm.GetStackTop().num, 30);
   }
 
   [IsTested()]
@@ -192,13 +192,13 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].nval, 10);
+    AssertEqual((double)c.GetConstants()[0].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 20);
+    AssertEqual(vm.GetStackTop().num, 20);
   }
 
   [IsTested()]
@@ -224,14 +224,14 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].nval, 20);
-    AssertEqual((double)c.GetConstants()[1].nval, 10);
+    AssertEqual((double)c.GetConstants()[0].num, 20);
+    AssertEqual((double)c.GetConstants()[1].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 10);
+    AssertEqual(vm.GetStackTop().num, 10);
   }
 
   [IsTested()]
@@ -257,14 +257,14 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].nval, 20);
-    AssertEqual((double)c.GetConstants()[1].nval, 10);
+    AssertEqual((double)c.GetConstants()[0].num, 20);
+    AssertEqual((double)c.GetConstants()[1].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 2);
+    AssertEqual(vm.GetStackTop().num, 2);
   }
 
   [IsTested()]
@@ -290,14 +290,14 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].nval, 10);
-    AssertEqual((double)c.GetConstants()[1].nval, 20);
+    AssertEqual((double)c.GetConstants()[0].num, 10);
+    AssertEqual((double)c.GetConstants()[1].num, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 200);
+    AssertEqual(vm.GetStackTop().num, 200);
   }
 
   [IsTested()]
@@ -326,14 +326,14 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertTrue(result.Length > 0);
     AssertEqual(c.GetConstants().Count, 3);
-    AssertEqual((double)c.GetConstants()[0].nval, 10);
-    AssertEqual((double)c.GetConstants()[1].nval, 20);
-    AssertEqual((double)c.GetConstants()[2].nval, 30);
+    AssertEqual((double)c.GetConstants()[0].num, 10);
+    AssertEqual((double)c.GetConstants()[1].num, 20);
+    AssertEqual((double)c.GetConstants()[2].num, 30);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 500);
+    AssertEqual(vm.GetStackTop().num, 500);
   }
 
   [IsTested()]
@@ -362,13 +362,13 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].nval, 123);
+    AssertEqual((double)c.GetConstants()[0].num, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 246);
+    AssertEqual(vm.GetStackTop().num, 246);
   }
 
   [IsTested()]
@@ -420,16 +420,16 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertEqual(c.GetConstants().Count, 4);
     
-    AssertEqual((double)c.GetConstants()[0].nval, 98);
-    AssertEqual((double)c.GetConstants()[1].nval, 1);
-    AssertEqual((double)c.GetConstants()[2].nval, 5);
-    AssertEqual((double)c.GetConstants()[3].nval, 30);
+    AssertEqual((double)c.GetConstants()[0].num, 98);
+    AssertEqual((double)c.GetConstants()[1].num, 1);
+    AssertEqual((double)c.GetConstants()[2].num, 5);
+    AssertEqual((double)c.GetConstants()[3].num, 30);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 125);
+    AssertEqual(vm.GetStackTop().num, 125);
   }
 
   [IsTested()]
@@ -468,16 +468,16 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
-    AssertEqual((double)c.GetConstants()[0].nval, 100);
-    AssertEqual((double)c.GetConstants()[1].nval, 1);
-    AssertEqual((double)c.GetConstants()[2].nval, 2);
-    AssertEqual((double)c.GetConstants()[3].nval, 10);
+    AssertEqual((double)c.GetConstants()[0].num, 100);
+    AssertEqual((double)c.GetConstants()[1].num, 1);
+    AssertEqual((double)c.GetConstants()[2].num, 2);
+    AssertEqual((double)c.GetConstants()[3].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 100);
+    AssertEqual(vm.GetStackTop().num, 100);
   }
 
   [IsTested()]
@@ -523,17 +523,17 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 5);
-    AssertEqual((double)c.GetConstants()[0].nval, 0);
-    AssertEqual((double)c.GetConstants()[1].nval, 2);
-    AssertEqual((double)c.GetConstants()[2].nval, 1);
-    AssertEqual((double)c.GetConstants()[3].nval, 10);
-    AssertEqual((double)c.GetConstants()[4].nval, 20);
+    AssertEqual((double)c.GetConstants()[0].num, 0);
+    AssertEqual((double)c.GetConstants()[1].num, 2);
+    AssertEqual((double)c.GetConstants()[2].num, 1);
+    AssertEqual((double)c.GetConstants()[3].num, 10);
+    AssertEqual((double)c.GetConstants()[4].num, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 10);
+    AssertEqual(vm.GetStackTop().num, 10);
   }
 
   [IsTested()]
@@ -577,14 +577,14 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].nval, 100);
-    AssertEqual((double)c.GetConstants()[1].nval, 10);
+    AssertEqual((double)c.GetConstants()[0].num, 100);
+    AssertEqual((double)c.GetConstants()[1].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 0);
+    AssertEqual(vm.GetStackTop().num, 0);
   }
 
   [IsTested()]
@@ -634,16 +634,16 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
-    AssertEqual((double)c.GetConstants()[0].nval, 10);
-    AssertEqual((double)c.GetConstants()[1].nval, 0);
-    AssertEqual((double)c.GetConstants()[2].nval, 3);
-    AssertEqual((double)c.GetConstants()[3].nval, 1);
+    AssertEqual((double)c.GetConstants()[0].num, 10);
+    AssertEqual((double)c.GetConstants()[1].num, 0);
+    AssertEqual((double)c.GetConstants()[2].num, 3);
+    AssertEqual((double)c.GetConstants()[3].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 7);
+    AssertEqual(vm.GetStackTop().num, 7);
   }
 
   [IsTested()]
@@ -681,7 +681,7 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.ReturnVal)
       .TestEmit(Opcodes.Constant, new int[] { 1 })
       .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
       .TestEmit(Opcodes.CondJump, new int[] { 6 })
       .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
       .TestEmit(Opcodes.ReturnVal)
@@ -691,15 +691,15 @@ public class BHL_TestVM : BHL_TestBase
       .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].nval, 1);
-    AssertEqual((double)c.GetConstants()[1].nval, 2);
+    AssertEqual(c.GetConstants().Count, 3);
+    AssertEqual((double)c.GetConstants()[0].num, 1);
+    AssertEqual((double)c.GetConstants()[1].num, 2);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 1);
+    AssertEqual(vm.GetStackTop().num, 1);
   }
 
   [IsTested()]
@@ -750,15 +750,15 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 3);
-    AssertEqual((double)c.GetConstants()[0].nval, 1);
-    AssertEqual((double)c.GetConstants()[1].nval, 2);
-    AssertEqual((double)c.GetConstants()[2].nval, 0);
+    AssertEqual((double)c.GetConstants()[0].num, 1);
+    AssertEqual((double)c.GetConstants()[1].num, 2);
+    AssertEqual((double)c.GetConstants()[2].num, 0);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop(), 1);
+    AssertEqual(vm.GetStackTop().num, 1);
   }
 
   [IsTested()]
@@ -795,7 +795,7 @@ public class BHL_TestVM : BHL_TestBase
       var stopwatch = System.Diagnostics.Stopwatch.StartNew();
       vm.Exec("test");
       stopwatch.Stop();
-      AssertEqual(vm.GetStackTop(), 610);
+      AssertEqual(vm.GetStackTop().num, 610);
       Console.WriteLine("bhl vm fib ticks: {0}", stopwatch.ElapsedTicks);
     }
   }
