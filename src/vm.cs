@@ -168,40 +168,46 @@ public class VM
 
   void ExecuteBinaryOperation(Opcodes op)
   {
-     var r_opertand = curr_frame.num_stack.Pop().num;
-     var l_opertand = curr_frame.num_stack.Pop().num;
+    var stk = curr_frame.num_stack;
+
+    var r_opertand = stk.Pop();
+    var l_opertand = stk.Pop();
 
     switch(op)
     {
       case Opcodes.Add:
-        curr_frame.num_stack.Push(DynVal.NewNum(l_opertand + r_opertand));
+        if((r_opertand.type == (byte)EnumLiteral.STR) 
+          &&(l_opertand.type == (byte)EnumLiteral.STR))
+          stk.Push(DynVal.NewStr(l_opertand.str + r_opertand.str));
+        else
+          stk.Push(DynVal.NewNum(l_opertand.num + r_opertand.num));
       break;
       case Opcodes.Sub:
-        curr_frame.num_stack.Push(DynVal.NewNum(l_opertand - r_opertand));
+        stk.Push(DynVal.NewNum(l_opertand.num - r_opertand.num));
       break;
       case Opcodes.Div:
-        curr_frame.num_stack.Push(DynVal.NewNum(l_opertand / r_opertand));
+        stk.Push(DynVal.NewNum(l_opertand.num / r_opertand.num));
       break;
       case Opcodes.Mul:
-        curr_frame.num_stack.Push(DynVal.NewNum(l_opertand * r_opertand));
+        stk.Push(DynVal.NewNum(l_opertand.num * r_opertand.num));
       break;
       case Opcodes.Equal:
-        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand == r_opertand));
+        stk.Push(DynVal.NewBool(l_opertand.num == r_opertand.num));
       break;
       case Opcodes.NotEqual:
-        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand != r_opertand));
+        stk.Push(DynVal.NewBool(l_opertand.num != r_opertand.num));
       break;
       case Opcodes.Greather:
-        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand > r_opertand));
+        stk.Push(DynVal.NewBool(l_opertand.num > r_opertand.num));
       break;
       case Opcodes.Less:
-        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand < r_opertand));
+        stk.Push(DynVal.NewBool(l_opertand.num < r_opertand.num));
       break;
       case Opcodes.GreatherOrEqual:
-        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand >= r_opertand));
+        stk.Push(DynVal.NewBool(l_opertand.num >= r_opertand.num));
       break;
       case Opcodes.LessOrEqual:
-        curr_frame.num_stack.Push(DynVal.NewBool(l_opertand <= r_opertand));
+        stk.Push(DynVal.NewBool(l_opertand.num <= r_opertand.num));
       break;
     }
   }

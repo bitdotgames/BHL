@@ -8,7 +8,13 @@ using System.Threading;
 using System.Text;
 using Antlr4.Runtime;
 using bhl;
-
+/*
+  TODO: add more test for types
+        add arrays
+        add string concat 
+        add binary and,or,xor op
+        further optimizations dor dynval alloc(pooling)
+*/
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
@@ -32,7 +38,8 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].num, 123);
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.NUM);
+    AssertEqual(c.GetConstants()[0].num, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -62,7 +69,8 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].num, 1);
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.BOOL);
+    AssertEqual(c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -123,7 +131,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].num, 1);
+    AssertTrue(c.GetConstants()[0].bval);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -157,7 +165,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].num, 1);
+    AssertEqual(c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -189,14 +197,47 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].num, 10);
-    AssertEqual((double)c.GetConstants()[1].num, 20);
+    AssertEqual(c.GetConstants()[0].num, 10);
+    AssertEqual(c.GetConstants()[1].num, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
     AssertEqual(vm.GetStackTop().num, 30);
+  }
+
+  [IsTested()]
+  public void TestCompileStringConcat()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""Hello "" + ""world !""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Add)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants()[0].str, "Hello ");
+    AssertEqual(c.GetConstants()[1].str, "world !");
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop().str, "Hello world !");
   }
 
   [IsTested()]
@@ -222,7 +263,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].num, 10);
+    AssertEqual(c.GetConstants()[0].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -254,8 +295,8 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].num, 20);
-    AssertEqual((double)c.GetConstants()[1].num, 10);
+    AssertEqual(c.GetConstants()[0].num, 20);
+    AssertEqual(c.GetConstants()[1].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -287,8 +328,8 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].num, 20);
-    AssertEqual((double)c.GetConstants()[1].num, 10);
+    AssertEqual(c.GetConstants()[0].num, 20);
+    AssertEqual(c.GetConstants()[1].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -320,8 +361,8 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].num, 10);
-    AssertEqual((double)c.GetConstants()[1].num, 20);
+    AssertEqual(c.GetConstants()[0].num, 10);
+    AssertEqual(c.GetConstants()[1].num, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -356,9 +397,9 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertTrue(result.Length > 0);
     AssertEqual(c.GetConstants().Count, 3);
-    AssertEqual((double)c.GetConstants()[0].num, 10);
-    AssertEqual((double)c.GetConstants()[1].num, 20);
-    AssertEqual((double)c.GetConstants()[2].num, 30);
+    AssertEqual(c.GetConstants()[0].num, 10);
+    AssertEqual(c.GetConstants()[1].num, 20);
+    AssertEqual(c.GetConstants()[2].num, 30);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
@@ -392,7 +433,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((double)c.GetConstants()[0].num, 123);
+    AssertEqual(c.GetConstants()[0].num, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -450,16 +491,61 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertEqual(c.GetConstants().Count, 4);
     
-    AssertEqual((double)c.GetConstants()[0].num, 98);
-    AssertEqual((double)c.GetConstants()[1].num, 1);
-    AssertEqual((double)c.GetConstants()[2].num, 5);
-    AssertEqual((double)c.GetConstants()[3].num, 30);
+    AssertEqual(c.GetConstants()[0].num, 98);
+    AssertEqual(c.GetConstants()[1].num, 1);
+    AssertEqual(c.GetConstants()[2].num, 5);
+    AssertEqual(c.GetConstants()[3].num, 30);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
     AssertEqual(vm.GetStackTop().num, 125);
+  }
+
+  [IsTested()]
+  public void TestCompileStringArgFunctionCall()
+  {
+    string bhl = @"
+
+    func string StringTest(string s) 
+    {
+      return s
+    }
+    func string test()
+    {
+      string s = ""string arg test""
+      return StringTest(s)
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      //1 func code
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      //test program code
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.FuncCall, new [] { 0,1 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 1);
+    
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.STR);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop().str, "string arg test");
   }
 
   [IsTested()]
@@ -498,10 +584,10 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
-    AssertEqual((double)c.GetConstants()[0].num, 100);
-    AssertEqual((double)c.GetConstants()[1].num, 1);
-    AssertEqual((double)c.GetConstants()[2].num, 2);
-    AssertEqual((double)c.GetConstants()[3].num, 10);
+    AssertEqual(c.GetConstants()[0].num, 100);
+    AssertEqual(c.GetConstants()[1].num, 1);
+    AssertEqual(c.GetConstants()[2].num, 2);
+    AssertEqual(c.GetConstants()[3].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -553,11 +639,11 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 5);
-    AssertEqual((double)c.GetConstants()[0].num, 0);
-    AssertEqual((double)c.GetConstants()[1].num, 2);
-    AssertEqual((double)c.GetConstants()[2].num, 1);
-    AssertEqual((double)c.GetConstants()[3].num, 10);
-    AssertEqual((double)c.GetConstants()[4].num, 20);
+    AssertEqual(c.GetConstants()[0].num, 0);
+    AssertEqual(c.GetConstants()[1].num, 2);
+    AssertEqual(c.GetConstants()[2].num, 1);
+    AssertEqual(c.GetConstants()[3].num, 10);
+    AssertEqual(c.GetConstants()[4].num, 20);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -607,8 +693,8 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
-    AssertEqual((double)c.GetConstants()[0].num, 100);
-    AssertEqual((double)c.GetConstants()[1].num, 10);
+    AssertEqual(c.GetConstants()[0].num, 100);
+    AssertEqual(c.GetConstants()[1].num, 10);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -664,10 +750,10 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
-    AssertEqual((double)c.GetConstants()[0].num, 10);
-    AssertEqual((double)c.GetConstants()[1].num, 0);
-    AssertEqual((double)c.GetConstants()[2].num, 3);
-    AssertEqual((double)c.GetConstants()[3].num, 1);
+    AssertEqual(c.GetConstants()[0].num, 10);
+    AssertEqual(c.GetConstants()[1].num, 0);
+    AssertEqual(c.GetConstants()[2].num, 3);
+    AssertEqual(c.GetConstants()[3].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -722,14 +808,15 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 3);
-    AssertEqual((double)c.GetConstants()[0].num, 1);
-    AssertEqual((double)c.GetConstants()[1].num, 2);
+    AssertEqual(c.GetConstants()[0].num, 1);
+    AssertEqual(c.GetConstants()[1].num, 2);
+    AssertTrue(c.GetConstants()[2].bval);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 1);
+    AssertTrue(vm.GetStackTop().bval);
   }
 
   [IsTested()]
@@ -780,9 +867,9 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 3);
-    AssertEqual((double)c.GetConstants()[0].num, 1);
-    AssertEqual((double)c.GetConstants()[1].num, 2);
-    AssertEqual((double)c.GetConstants()[2].num, 0);
+    AssertEqual(c.GetConstants()[0].num, 1);
+    AssertEqual(c.GetConstants()[1].num, 2);
+    AssertEqual(c.GetConstants()[2].num, 0);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
