@@ -63,14 +63,15 @@ public class VM
 
           curr_frame.num_stack.Push(constants[const_idx]);
         break;
-        case Opcodes.UnaryNot:
-        case Opcodes.UnaryNeg:
-          ExecuteUnaryOperation(opcode);
-        break;
         case Opcodes.Add:
         case Opcodes.Sub:
         case Opcodes.Div:
+        case Opcodes.Mod:
         case Opcodes.Mul:
+        case Opcodes.And:
+        case Opcodes.Or:
+        case Opcodes.BitAnd:
+        case Opcodes.BitOr:
         case Opcodes.Equal:
         case Opcodes.NotEqual:
         case Opcodes.Greather:
@@ -78,6 +79,10 @@ public class VM
         case Opcodes.GreatherOrEqual:
         case Opcodes.LessOrEqual:
           ExecuteBinaryOperation(opcode);
+        break;
+        case Opcodes.UnaryNot:
+        case Opcodes.UnaryNeg:
+          ExecuteUnaryOperation(opcode);
         break;
         case Opcodes.SetVar:
         case Opcodes.GetVar:
@@ -158,10 +163,10 @@ public class VM
     switch(op)
     {
       case Opcodes.UnaryNot:
-        curr_frame.num_stack.Push(DynVal.NewBool(!operand.bval));
+        curr_frame.num_stack.Push(DynVal.NewBool(operand._num != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.num_stack.Push(DynVal.NewNum(operand.num * -1));
+        curr_frame.num_stack.Push(DynVal.NewNum(operand._num * -1));
       break;
     }
   }
@@ -176,38 +181,53 @@ public class VM
     switch(op)
     {
       case Opcodes.Add:
-        if((r_opertand.type == (byte)EnumLiteral.STR) 
-          &&(l_opertand.type == (byte)EnumLiteral.STR))
-          stk.Push(DynVal.NewStr(l_opertand.str + r_opertand.str));
+        if((r_opertand._type == (byte)EnumLiteral.STR) 
+          &&(l_opertand._type == (byte)EnumLiteral.STR))
+          stk.Push(DynVal.NewStr(l_opertand._str + r_opertand._str));
         else
-          stk.Push(DynVal.NewNum(l_opertand.num + r_opertand.num));
+          stk.Push(DynVal.NewNum(l_opertand._num + r_opertand._num));
       break;
       case Opcodes.Sub:
-        stk.Push(DynVal.NewNum(l_opertand.num - r_opertand.num));
+        stk.Push(DynVal.NewNum(l_opertand._num - r_opertand._num));
       break;
       case Opcodes.Div:
-        stk.Push(DynVal.NewNum(l_opertand.num / r_opertand.num));
+        stk.Push(DynVal.NewNum(l_opertand._num / r_opertand._num));
       break;
       case Opcodes.Mul:
-        stk.Push(DynVal.NewNum(l_opertand.num * r_opertand.num));
+        stk.Push(DynVal.NewNum(l_opertand._num * r_opertand._num));
       break;
       case Opcodes.Equal:
-        stk.Push(DynVal.NewBool(l_opertand.num == r_opertand.num));
+        stk.Push(DynVal.NewBool(l_opertand._num == r_opertand._num));
       break;
       case Opcodes.NotEqual:
-        stk.Push(DynVal.NewBool(l_opertand.num != r_opertand.num));
+        stk.Push(DynVal.NewBool(l_opertand._num != r_opertand._num));
       break;
       case Opcodes.Greather:
-        stk.Push(DynVal.NewBool(l_opertand.num > r_opertand.num));
+        stk.Push(DynVal.NewBool(l_opertand._num > r_opertand._num));
       break;
       case Opcodes.Less:
-        stk.Push(DynVal.NewBool(l_opertand.num < r_opertand.num));
+        stk.Push(DynVal.NewBool(l_opertand._num < r_opertand._num));
       break;
       case Opcodes.GreatherOrEqual:
-        stk.Push(DynVal.NewBool(l_opertand.num >= r_opertand.num));
+        stk.Push(DynVal.NewBool(l_opertand._num >= r_opertand._num));
       break;
       case Opcodes.LessOrEqual:
-        stk.Push(DynVal.NewBool(l_opertand.num <= r_opertand.num));
+        stk.Push(DynVal.NewBool(l_opertand._num <= r_opertand._num));
+      break;
+      case Opcodes.And:
+        stk.Push(DynVal.NewBool(l_opertand._num == 1 && r_opertand._num == 1));
+      break;
+      case Opcodes.Or:
+        stk.Push(DynVal.NewBool(l_opertand._num == 1 || r_opertand._num == 1));
+      break;
+      case Opcodes.BitAnd:
+        stk.Push(DynVal.NewNum((int)l_opertand._num & (int)r_opertand._num));
+      break;
+      case Opcodes.BitOr:
+        stk.Push(DynVal.NewNum((int)l_opertand._num | (int)r_opertand._num));
+      break;
+      case Opcodes.Mod:
+        stk.Push(DynVal.NewNum((int)l_opertand._num % (int)r_opertand._num));
       break;
     }
   }

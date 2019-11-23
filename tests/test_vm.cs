@@ -104,6 +104,171 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCompileLogicalAnd()
+  {
+    string bhl = @"
+    func bool test()
+    {
+      return false && true
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.And)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants()[0].num, 0);
+    AssertEqual(c.GetConstants()[1].num, 1);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertTrue(vm.GetStackTop().bval == false);
+  }
+
+  [IsTested()]
+  public void TestCompileLogicalOr()
+  {
+    string bhl = @"
+    func bool test()
+    {
+      return false || true
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Or)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants()[0].num, 0);
+    AssertEqual(c.GetConstants()[1].num, 1);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertTrue(vm.GetStackTop().bval);
+  }
+
+  [IsTested()]
+  public void TestCompileBitAnd()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return 3 & 1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.BitAnd)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants()[0].num, 3);
+    AssertEqual(c.GetConstants()[1].num, 1);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop().num, 1);
+  }
+
+  [IsTested()]
+  public void TestCompileBitOr()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return 3 | 4
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.BitOr)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants()[0].num, 3);
+    AssertEqual(c.GetConstants()[1].num, 4);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop().num, 7);
+  }
+
+  [IsTested()]
+  public void TestCompileMod()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return 3 % 2
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Mod)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertEqual(c.GetConstants()[0].num, 3);
+    AssertEqual(c.GetConstants()[1].num, 2);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop().num, 1);
+  }
+
+  [IsTested()]
   public void TestCompileUnaryNot()
   {
     string bhl = @"
@@ -131,7 +296,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(!vm.GetStackTop().bval);
+    AssertTrue(vm.GetStackTop().bval == false);
   }
 
   [IsTested()]

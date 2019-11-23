@@ -7,27 +7,32 @@ namespace bhl {
 
 public enum Opcodes
 {
-  Constant  = 1,
-  Add       = 2,
-  Sub       = 3,
-  Div       = 4,
-  Mul       = 5,
-  SetVar    = 6,
-  GetVar    = 7,
-  FuncCall  = 8,
-  ReturnVal = 9,
-  Return    = 10,
-  Jump      = 11,
-  CondJump  = 12,
-  LoopJump  = 13,
-  Equal     = 14,
-  NotEqual  = 15,
-  Less      = 16,
-  Greather  = 17,
-  LessOrEqual = 18,
-  GreatherOrEqual = 19,
-  UnaryNot = 20,
-  UnaryNeg = 21
+  Constant        = 1,
+  Add             = 2,
+  Sub             = 3,
+  Div             = 4,
+  Mul             = 5,
+  SetVar          = 6,
+  GetVar          = 7,
+  FuncCall        = 8,
+  ReturnVal       = 9,
+  Return          = 10,
+  Jump            = 11,
+  CondJump        = 12,
+  LoopJump        = 13,
+  UnaryNot        = 14,
+  UnaryNeg        = 15,
+  And             = 16,
+  Or              = 17,
+  Mod             = 18,
+  BitOr           = 19,
+  BitAnd          = 20,
+  Equal           = 21,
+  NotEqual        = 22,
+  Less            = 23,
+  Greather        = 24,
+  LessOrEqual     = 25,
+  GreatherOrEqual = 26,
 }
 
 public enum SymbolScope
@@ -77,9 +82,6 @@ public class SymbolViewTable
 
 public class Constant
 {
-  /*Need to move all constants and variables to Constant struct. 
-    Add pooling for new instances within vm executing(pop will free and push will take from pool). 
-    Pool will be one for Vm and locals vill contain refs to them*/
   public EnumLiteral type;
   public double nval;
   public string sval;
@@ -195,6 +197,36 @@ public class Compiler : AST_Visitor
       {
         name = Opcodes.Constant,
         operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.And
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Or
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.BitAnd
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.BitOr
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Mod
       }
     );
     DeclareOpcode(
@@ -537,6 +569,21 @@ public class Compiler : AST_Visitor
 
     switch(node.type)
     {
+      case EnumBinaryOp.AND:
+        Emit(Opcodes.And);
+      break;
+      case EnumBinaryOp.OR:
+        Emit(Opcodes.Or);
+      break;
+      case EnumBinaryOp.BIT_AND:
+        Emit(Opcodes.BitAnd);
+      break;
+      case EnumBinaryOp.BIT_OR:
+        Emit(Opcodes.BitOr);
+      break;
+      case EnumBinaryOp.MOD:
+        Emit(Opcodes.Mod);
+      break;
       case EnumBinaryOp.ADD:
         Emit(Opcodes.Add);
       break;
