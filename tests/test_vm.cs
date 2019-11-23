@@ -8,13 +8,7 @@ using System.Threading;
 using System.Text;
 using Antlr4.Runtime;
 using bhl;
-/*
-  TODO: add more test for types
-        add arrays
-        add string concat 
-        add binary and,or,xor op
-        further optimizations dor dynval alloc(pooling)
-*/
+
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
@@ -510,11 +504,11 @@ public class BHL_TestVM : BHL_TestBase
 
     func string StringTest(string s) 
     {
-      return s
+      return ""Hello"" + s
     }
-    func string test()
+    func string Test()
     {
-      string s = ""string arg test""
+      string s = "" world !""
       return StringTest(s)
     }
     ";
@@ -527,25 +521,28 @@ public class BHL_TestVM : BHL_TestBase
       new Compiler()
       //1 func code
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
       .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Add)
       .TestEmit(Opcodes.ReturnVal)
       //test program code
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
       .TestEmit(Opcodes.SetVar, new int[] { 0 })
       .TestEmit(Opcodes.GetVar, new int[] { 0 })
       .TestEmit(Opcodes.FuncCall, new [] { 0,1 })
       .TestEmit(Opcodes.ReturnVal)
       .GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 1);
+    AssertEqual(c.GetConstants().Count, 2);
     
-    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.STR);
+    AssertEqual(c.GetConstants()[0].str, "Hello");
+    AssertEqual(c.GetConstants()[1].str, " world !");
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
-    vm.Exec("test");
-    AssertEqual(vm.GetStackTop().str, "string arg test");
+    vm.Exec("Test");
+    AssertEqual(vm.GetStackTop().str, "Hello world !");
   }
 
   [IsTested()]
