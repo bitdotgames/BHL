@@ -214,7 +214,7 @@ public class Interpreter : AST_Visitor
     {
       FuncBaseCallNode s1 = null;
       call_stack.TryGetAt(i-1, out s1);
-      var cs = s1?.ast; 
+      var cs = s1 == null ? null : s1.ast; 
 
       string module_name = "?";
       if(cs != null)
@@ -222,7 +222,7 @@ public class Interpreter : AST_Visitor
 
       FuncBaseCallNode s0 = null;
       call_stack.TryGetAt(i, out s0);
-      var cs_prev = s0?.ast;
+      var cs_prev = s0 == null ? null : s0.ast;
 
       var item = new CallStackInfo() 
       {
