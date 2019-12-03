@@ -212,13 +212,17 @@ public class Interpreter : AST_Visitor
     //NOTE: we transform call stack into more convenient for the user format
     for(int i=call_stack.Count;i-- > 1;)
     {
-      var cs = call_stack[i-1].ast; 
+      FuncBaseCallNode s1 = null;
+      call_stack.TryGetAt(i-1, out s1);
+      var cs = s1?.ast; 
 
       string module_name = "?";
       if(cs != null)
         loaded_modules.TryGetValue(cs.nname2, out module_name);
 
-      var cs_prev = call_stack[i].ast;
+      FuncBaseCallNode s0 = null;
+      call_stack.TryGetAt(i, out s0);
+      var cs_prev = s0?.ast;
 
       var item = new CallStackInfo() 
       {

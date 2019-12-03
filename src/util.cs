@@ -1280,6 +1280,18 @@ public class FastStack<T>
     set { storage[index] = value; }
   }
 
+  public bool TryGetAt(int index, out T v)
+  {
+    if(index < 0 || index >= storage.Length)
+    {
+      v = default(T);
+      return false;
+    }
+    
+    v = storage[index];
+    return true;
+  }
+
   public T Push(T item)
   {
     storage[head_idx++] = item;
