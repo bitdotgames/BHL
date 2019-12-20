@@ -1,6 +1,8 @@
 # **B**e**H**avior **L**anguage
 
-**bhl** is a programming language specifically tailored for Behavior Trees(BT) coding using familiar imperative style patterns. It was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1As-bw3pY5pLij86j7nf_ycaG0Hb2EqnrwR3R8ID47sQ/edit?usp=sharing). 
+**bhl** is a strictly typed programming language specifically tailored for gameplay logic scripting. It combines Behaviour Trees(BT) primitives with familiar imperative style. 
+
+First time it was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1As-bw3pY5pLij86j7nf_ycaG0Hb2EqnrwR3R8ID47sQ/edit?usp=sharing). 
 
 Please note that bhl is in alpha state and currently targets only C# platform. Nonetheless it has been battle tested in the real world projects and heavily used by BIT.GAMES for mobile games development.
 
@@ -154,42 +156,41 @@ seq {
 ### Some unit's top behavior
 
 ```go
-class Gremlin 
+class Gremlin extends Unit
 {
   float heavy_attack_last_time
   float roll_last_time
 }
 
-func UNIT_GREMLIN(float radius_max)
+func UnitGremlin(Gremlin u)
 {
-  Gremlin s = {}
+  float radius_max = 10
 
   paral_all {
-    SCATTER_AFTER_GET_HIT()
+    ScatterAfterGetHit(u)
     forever {
       paral {
-        StateChanged()
+        StateChanged(u)
         prio {
-          OVERRIDE()
-          SPAWNED()
-          ON_WATCH()
-          WANDER()
-          DEAD()
-          DYING()
-          SCATTER()
+          Spawned(u)
+          OnWatch(u)
+          Wander(u)
+          Dead(u)
+          Dying(u)
+          Scatter(u)
           paral {
-            RETHINK_LISTENER(func bool () {
-              return s.heavy_attack_last_time <= time() || 
-                     s.roll_last_time <= time()
+            RethinkTrigger(u, func bool () {
+              return u.heavy_attack_last_time <= time() || 
+                     u.roll_last_time <= time()
             })
             prio {
-              GREMLIN_ROLL_ATTACK(state: s, radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
-              GREMLIN_HEAVY_ATTACK(state: s, radius_max : radius_max, cooldown : 8, global_cooldown : 5, angle : 60)
-              ATTACK()
+              GremlinRollAttack(unit: u, radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
+              GremlinHeavyAttack(unit: u, radius_max : radius_max, cooldown : 8, global_cooldown : 5, angle : 60)
+              Attack(u)
             }
           }
-          ATTACK()
-          IDLE()
+          Attack(u)
+          Idle(u)
         }
       }
     }
@@ -279,8 +280,8 @@ You can run unit tests by executing the following command:
 10. ~~User defined enums~~
 
 
-## Version ???
+## Version 1.0
 
 1. Byte code optimization
-2. More optimal executor
+2. More optimal executor (VM)
 3. Better runtime errors reporting
