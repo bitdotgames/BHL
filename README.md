@@ -1,10 +1,10 @@
 # **B**e**H**avior **L**anguage
 
-**bhl** is a strictly typed programming language specifically tailored for gameplay logic scripting. It combines Behaviour Trees(BT) primitives with familiar imperative style. 
+> **bhl** is a strictly typed programming language specifically tailored for gameplay logic scripting. It combines Behaviour Trees(BT) primitives with familiar imperative style. 
 
 First time it was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1As-bw3pY5pLij86j7nf_ycaG0Hb2EqnrwR3R8ID47sQ/edit?usp=sharing). 
 
-Please note that bhl is in alpha state and currently targets only C# platform. Nonetheless it has been battle tested in the real world projects and heavily used by BIT.GAMES for mobile games development.
+Please note that bhl is in alpha state and currently targets only C# platform. Nonetheless it has been battle tested in the real world projects and heavily used by BIT.GAMES for mobile games development built with [Unity](https://unity.com/).
 
 ## bhl features
 
@@ -201,7 +201,7 @@ func UnitGremlin(Gremlin u)
 
 ![bhl architecture](https://puu.sh/qEkYv/edf3b678aa.png)
 
-bhl utilizes a standard interpreter architecture with a **frontend** and a **backend**. Frontend is responsible for reading input files, static type checking and bytecode generation. Binary bytecode is post-processed and optimized in a separate stage. Processed byte code can be used by the backend. Backend is a interpreter responsible for runtime bytecode evaluation. Backend can be nicely integrated with Unity3d. 
+bhl utilizes a standard interpreter architecture with a **frontend** and a **backend**. Frontend is responsible for reading input files, static type checking and bytecode generation. Binary bytecode is post-processed and optimized in a separate stage. Processed byte code can be used by the backend. Backend is a interpreter responsible for runtime bytecode evaluation. Backend can be nicely integrated with [Unity](https://unity.com/). 
 
 ### Frontend
 
