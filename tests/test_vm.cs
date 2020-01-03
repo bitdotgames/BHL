@@ -267,6 +267,233 @@ public class BHL_TestVM : BHL_TestBase
     vm.Exec("test");
     AssertEqual(vm.GetStackTop().num, 1);
   }
+//write more array test first!
+
+  [IsTested()]
+  public void TestCompileArray()
+  {
+    string bhl = @"
+    func int[] test()
+    {
+      int[] a = new int[]
+      return a
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.New, new int[] { 0 })//? 
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 0);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertTrue(vm.GetStackTop().type == DynVal.OBJ); // need make more deep array type check?
+    //vm.ShowFullStack();
+  }
+
+  [IsTested()]
+  public void TestCompileStringArray()
+  {
+    string bhl = @"
+    func string test()
+    {
+      string[] a = new string[]
+      a.Add(""test"")
+      return a[0]
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.New, new int[] { 0 })//?
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.IdxGet)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertTrue(vm.GetStackTop().str == "test");
+  }
+
+  [IsTested()]
+  public void TestCompileArrayIdx()
+  {
+    string bhl = @"
+    func int[] mkarray()
+    {
+      int[] a = new int[]
+      a.Add(1)
+      a.Add(2)
+      return a
+    }
+
+    func int test()
+    {
+      return mkarray()[0]
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      //mkarray
+      .TestEmit(Opcodes.New, new int[] { 0 })//? 
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      //test
+      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.IdxGet)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 3);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertTrue(vm.GetStackTop().num == 1);
+  }
+
+  [IsTested()]
+  public void TestCompileArrayRemoveAt()
+  {
+    string bhl = @"
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      arr.RemoveAt(0)
+      return arr
+    }
+      
+    func int[] test() 
+    {
+      return mkarray()
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      //mkarray
+      .TestEmit(Opcodes.New, new int[] { 0 })//? 
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.RemoveAt })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      //test
+      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 3);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    var ret = vm.GetStackTop()._obj as DynValList;//?
+    AssertTrue( ret.Count == 1);
+  }
+
+  [IsTested()]
+  public void TestCompileArrayCount() 
+  {
+    string bhl = @"
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func int test() 
+    {
+      return mkarray().Count
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      //mkarray
+      .TestEmit(Opcodes.New, new int[] { 0 })//? 
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.ReturnVal)
+      //test
+      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
+      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Count })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 2);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertTrue(vm.GetStackTop().num == 2);
+  }
 
   [IsTested()]
   public void TestCompileUnaryNot()

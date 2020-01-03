@@ -63,6 +63,10 @@ public class VM
 
           curr_frame.num_stack.Push(constants[const_idx]);
         break;
+        case Opcodes.New:
+          curr_frame.num_stack.Push(DynVal.NewObj(DynValList.New()));//?
+          curr_frame.ip++;
+        break;
         case Opcodes.Add:
         case Opcodes.Sub:
         case Opcodes.Div:
@@ -100,6 +104,23 @@ public class VM
           {
             vm_stack.Push(ret_val);
           }
+        break;
+        case Opcodes.MethodCall:
+          curr_frame.ip++;
+          var builtin = instructions[curr_frame.ip];
+
+          ExecuteBuiltInArrayFunc((BuiltInArray) builtin);
+        break;
+        case Opcodes.IdxGet:// move to -At- method?
+          var idx = curr_frame.num_stack.Pop();
+          var arr = curr_frame.num_stack.Pop();
+          var lst = GetAsList(arr);
+
+          var res = lst[(int)idx.num]; 
+          curr_frame.num_stack.Push(res);
+          //NOTE: this can be an operation for the temp. array,
+          //      we need to try del the array if so
+          lst.TryDel();
         break;
         case Opcodes.FuncCall:
           curr_frame.ip++;
@@ -171,6 +192,55 @@ public class VM
     }
   }
 
+  DynValList GetAsList(DynVal arr)
+  {
+    var lst = arr.obj as DynValList;
+    if(lst == null)
+      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+    return lst;
+  }
+
+  void ExecuteBuiltInArrayFunc(BuiltInArray func)
+  {
+    DynVal idx;
+    DynVal arr;
+    DynVal val;
+    DynValList lst;
+    switch(func)
+    {
+      case BuiltInArray.Add:
+        val = curr_frame.num_stack.Pop();
+        arr = curr_frame.num_stack.Peek();
+        lst = GetAsList(arr);
+
+        lst.Add(val);
+        //lst.TryDel();//?
+      break;
+      case BuiltInArray.RemoveAt:
+        idx = curr_frame.num_stack.Pop();
+        arr = curr_frame.num_stack.Pop();
+        lst = GetAsList(arr);
+
+        lst.RemoveAt((int)idx.num); 
+      break;
+      case BuiltInArray.SetAt:
+        idx = curr_frame.num_stack.Pop();
+        arr = curr_frame.num_stack.Pop();
+        val = curr_frame.num_stack.Pop();
+        lst = GetAsList(arr);
+
+        lst[(int)idx.num] = val;
+      break;
+      case BuiltInArray.Count:
+        arr = curr_frame.num_stack.Peek();
+        lst = GetAsList(arr);
+        curr_frame.num_stack.Push(DynVal.NewNum(lst.Count));
+      break;
+      default:
+        throw new Exception("Not known method -> " + func);
+    }
+  }
+
   void ExecuteBinaryOperation(Opcodes op)
   {
     var stk = curr_frame.num_stack;
@@ -235,6 +305,15 @@ public class VM
   public DynVal GetStackTop()//for test purposes
   {
     return vm_stack.Peek();
+  }
+
+  public void ShowFullStack()//for test purposes
+  {
+    Console.WriteLine(" VM STACK :");
+    foreach(var v in vm_stack)
+    {
+      Console.WriteLine(" \t " + v);
+    }
   }
 }
 

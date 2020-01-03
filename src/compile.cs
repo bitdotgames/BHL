@@ -33,6 +33,18 @@ public enum Opcodes
   Greather        = 24,
   LessOrEqual     = 25,
   GreatherOrEqual = 26,
+  New             = 27,
+  MethodCall      = 28,
+  IdxGet          = 29,
+  IdxSet          = 30
+}
+
+public enum BuiltInArray
+{
+  Add      = 1,
+  SetAt    = 2,
+  RemoveAt = 3,
+  Count    = 4
 }
 
 public enum SymbolScope
@@ -189,7 +201,7 @@ public class Compiler : AST_Visitor
   {
     return func_offset_buffer;
   }
-
+ 
   void DeclareOpcodes()
   {
     DeclareOpcode(
@@ -304,6 +316,18 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.IdxSet
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.IdxGet
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.SetVar,
         operand_width = new int[] { 2 }
       }
@@ -320,6 +344,13 @@ public class Compiler : AST_Visitor
       {
         name = Opcodes.FuncCall,
         operand_width = new int[] { 4, 1 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.MethodCall,
+        operand_width = new int[] { 1 }
       }
     );
     DeclareOpcode(
@@ -352,6 +383,13 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.CondJump,
+        operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.New,
         operand_width = new int[] { 2 }
       }
     );
@@ -506,16 +544,32 @@ public class Compiler : AST_Visitor
       break;
       default:
         VisitChildren(ast);
+        //Console.WriteLine("just block type + " + ast.type);
       break;
     }
   }
 
   public override void DoVisit(AST_TypeCast ast)
   {
+    throw new Exception("Not supported : " + ast.type);
   }
 
   public override void DoVisit(AST_New ast)
   {
+    switch(ast.type)
+    {
+      case "[]":
+        // 0 for array (maybe push type index from SymbolTable)
+        Emit(Opcodes.New, new int[] { 0 }); //ntype?
+        //create dynval array and push it on stack
+        VisitChildren(ast);//?
+      break;
+      default:
+        Console.WriteLine("Not impl new coming -> " + ast.Name());
+        VisitChildren(ast);//?
+      break;
+    }
+    
   }
 
   public override void DoVisit(AST_Inc ast)
@@ -541,6 +595,37 @@ public class Compiler : AST_Visitor
         VisitChildren(ast);
         Emit(Opcodes.FuncCall, new int[] {(int)offset, (int)ast.cargs_bits});
       break;
+      case EnumCall.MVAR:
+        //Console.WriteLine("Mvar block - [" + ast.name + "] has childs - " + ast.children.Count);
+        VisitChildren(ast);
+        Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.Count});//?
+      break;
+      case EnumCall.MFUNC:
+        switch(ast.name)
+        {
+          case "Add":
+            //Console.WriteLine("MFunk block - [" + ast.name + "] has childs - " + ast.children.Count);
+            VisitChildren(ast);
+            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.Add});//?
+          break;
+          case "RemoveAt":
+            VisitChildren(ast);
+            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.RemoveAt});//?
+          break;
+          case "SetAt":
+            VisitChildren(ast);
+            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.SetAt});//?
+          break;
+          default:
+            throw new Exception("Not supported func call: " + ast.name);
+        }
+      break;
+      case EnumCall.ARR_IDX:
+        //Console.WriteLine("IDX - [" + ast.name + "] has childs - " + ast.children.Count);
+        Emit(Opcodes.IdxGet);//1?
+      break;
+      default:
+        throw new Exception("Not supported call: " + ast.type);
     }
   }
 
@@ -648,11 +733,17 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonArr node)
   {
+    throw new Exception("Not supported : " + node);
   }
 
   public override void DoVisit(bhl.AST_JsonPair node)
   {
   }
+
+  // public override void DoVisit(bhl.AST_JsonArrAddItem node)
+  // {
+  //   throw new Exception("Not supported : " + node);
+  // }
 
 #endregion
 
