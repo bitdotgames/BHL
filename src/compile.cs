@@ -544,7 +544,6 @@ public class Compiler : AST_Visitor
       break;
       default:
         VisitChildren(ast);
-        //Console.WriteLine("just block type + " + ast.type);
       break;
     }
   }
@@ -562,11 +561,11 @@ public class Compiler : AST_Visitor
         // 0 for array (maybe push type index from SymbolTable)
         Emit(Opcodes.New, new int[] { 0 }); //ntype?
         //create dynval array and push it on stack
-        VisitChildren(ast);//?
+        VisitChildren(ast);
       break;
       default:
         Console.WriteLine("Not impl new coming -> " + ast.Name());
-        VisitChildren(ast);//?
+        VisitChildren(ast);
       break;
     }
     
@@ -596,33 +595,33 @@ public class Compiler : AST_Visitor
         Emit(Opcodes.FuncCall, new int[] {(int)offset, (int)ast.cargs_bits});
       break;
       case EnumCall.MVAR:
-        //Console.WriteLine("Mvar block - [" + ast.name + "] has childs - " + ast.children.Count);
         VisitChildren(ast);
-        Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.Count});//?
+        Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.Count});
       break;
       case EnumCall.MFUNC:
         switch(ast.name)
         {
           case "Add":
-            //Console.WriteLine("MFunk block - [" + ast.name + "] has childs - " + ast.children.Count);
             VisitChildren(ast);
-            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.Add});//?
+            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.Add});
           break;
           case "RemoveAt":
             VisitChildren(ast);
-            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.RemoveAt});//?
+            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.RemoveAt});
           break;
           case "SetAt":
             VisitChildren(ast);
-            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.SetAt});//?
+            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.SetAt});
           break;
           default:
             throw new Exception("Not supported func call: " + ast.name);
         }
       break;
       case EnumCall.ARR_IDX:
-        //Console.WriteLine("IDX - [" + ast.name + "] has childs - " + ast.children.Count);
-        Emit(Opcodes.IdxGet);//1?
+        Emit(Opcodes.IdxGet);
+      break;
+      case EnumCall.ARR_IDXW:
+        Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.SetAt});
       break;
       default:
         throw new Exception("Not supported call: " + ast.type);
@@ -739,11 +738,6 @@ public class Compiler : AST_Visitor
   public override void DoVisit(bhl.AST_JsonPair node)
   {
   }
-
-  // public override void DoVisit(bhl.AST_JsonArrAddItem node)
-  // {
-  //   throw new Exception("Not supported : " + node);
-  // }
 
 #endregion
 

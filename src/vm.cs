@@ -64,7 +64,7 @@ public class VM
           curr_frame.num_stack.Push(constants[const_idx]);
         break;
         case Opcodes.New:
-          curr_frame.num_stack.Push(DynVal.NewObj(DynValList.New()));//?
+          curr_frame.num_stack.Push(DynVal.NewObj(DynValList.New()));
           curr_frame.ip++;
         break;
         case Opcodes.Add:
@@ -214,7 +214,6 @@ public class VM
         lst = GetAsList(arr);
 
         lst.Add(val);
-        //lst.TryDel();//?
       break;
       case BuiltInArray.RemoveAt:
         idx = curr_frame.num_stack.Pop();
@@ -237,7 +236,7 @@ public class VM
         curr_frame.num_stack.Push(DynVal.NewNum(lst.Count));
       break;
       default:
-        throw new Exception("Not known method -> " + func);
+        throw new Exception("Unknown method -> " + func);
     }
   }
 
