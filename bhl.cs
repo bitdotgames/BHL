@@ -408,47 +408,32 @@ public class Taskman
 
     var p = new System.Diagnostics.Process();
 
-	if(IsWin)
-	{
-	  string tmp_path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/build/";
-	  //string tmp_path = Path.GetTempPath();
-	  string cmd = binary + " " + args;
-	  var bat_file = tmp_path + Hash.CRC32(cmd) + ".bat";    
-	  Write(bat_file, cmd);
-	  
-	  p.StartInfo.FileName = "cmd.exe";
-	  p.StartInfo.Arguments = "/c " + bat_file;
-	}
-	else
-	{
-	  p.StartInfo.FileName = binary;
-	  p.StartInfo.Arguments = args;
-	}
-    
-	p.StartInfo.UseShellExecute = false;
-    p.StartInfo.RedirectStandardOutput = true;
-    p.StartInfo.RedirectStandardError = true;
+  	if(IsWin)
+  	{
+  	  string tmp_path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/build/";
+  	  //string tmp_path = Path.GetTempPath();
+  	  string cmd = binary + " " + args;
+  	  var bat_file = tmp_path + Hash.CRC32(cmd) + ".bat";    
+  	  Write(bat_file, cmd);
+  	  
+  	  p.StartInfo.FileName = "cmd.exe";
+  	  p.StartInfo.Arguments = "/c " + bat_file;
+  	}
+  	else
+  	{
+  	  p.StartInfo.FileName = binary;
+  	  p.StartInfo.Arguments = args;
+  	}
+      
+  	p.StartInfo.UseShellExecute = false;
+    p.StartInfo.RedirectStandardOutput = false;
+    p.StartInfo.RedirectStandardError = false;
     p.Start();
     
     p.WaitForExit();
 
-    var lines = p.StandardOutput.ReadToEnd().Split(new [] { '\r', '\n' });
-    foreach(string line in lines)
-    {
-      if(line != "")
-        Echo(line);
-    }
-
     if(p.ExitCode != 0)
-    {
-      lines = p.StandardError.ReadToEnd().Split(new [] { '\r', '\n' });
-      foreach(string line in lines)
-      {
-        if(line != "")
-          Echo(line);
-      }
       throw new Exception($"Error exit code: {p.ExitCode}");
-    }
   }
 
   public string[] Glob(string s)
