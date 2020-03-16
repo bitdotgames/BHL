@@ -181,7 +181,7 @@ public class Interpreter : AST_Visitor
   {
     var cl = symbols.resolve(class_type) as ClassSymbol;
     if(cl == null)
-      throw new Exception("Class binding not found: " + class_type); 
+      throw new Exception("Class binding not found: " + class_type + ", member: " + name); 
 
     var cl_member = cl.ResolveMember(name);
     if(cl_member == null)
