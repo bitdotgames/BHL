@@ -408,12 +408,42 @@ public class Compiler : AST_Visitor
     return def;
   }
 
-  //for testing purposes
+#region ForTestingPurposes
+
+  public void DecodeBytecode(byte[] bytecode)
+  {
+    Console.WriteLine("\n{0, -10}\t{1, -10}\t{2, -10}", "Adress","Name","Operands");
+    int code_pointer = 0;
+
+    while(code_pointer < bytecode.Length)
+    {
+      var opcode = bytecode[code_pointer];
+      var op_def = LookupOpcode((Opcodes)opcode);
+
+      Console.Write("\n{0, -10}\t{1, -10}", code_pointer, op_def.name);
+
+      if(op_def.operand_width != null)
+      {
+        string operands = "";
+        foreach(var offset in op_def.operand_width)
+        {
+          ++code_pointer;
+          operands += " " + bytecode[code_pointer];
+        }
+        Console.Write("\t{0, -10}", operands);
+      }
+      ++code_pointer; 
+    }
+    Console.WriteLine();
+  }
+
   public Compiler TestEmit(Opcodes op, int[] operands = null)
   {
     Emit(op, operands);
     return this;
   }
+
+#endregion
 
   void Emit(Opcodes op, int[] operands = null)
   {
