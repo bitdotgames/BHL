@@ -1402,6 +1402,8 @@ public class BHL_TestVM : BHL_TestBase
     var result = c.GetBytes();
     AssertTrue(result.Length > 0);
 
+    new Compiler().DecodeBytecode(result);
+
     {
       var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
       var stopwatch = System.Diagnostics.Stopwatch.StartNew();

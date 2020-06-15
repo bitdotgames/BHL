@@ -16,7 +16,7 @@ public enum Opcodes
   GetVar          = 7,
   FuncCall        = 8,
   ReturnVal       = 9,
-  Return          = 10,
+  New             = 10,
   Jump            = 11,
   CondJump        = 12,
   LoopJump        = 13,
@@ -33,10 +33,9 @@ public enum Opcodes
   Greather        = 24,
   LessOrEqual     = 25,
   GreatherOrEqual = 26,
-  New             = 27,
-  MethodCall      = 28,
-  IdxGet          = 29,
-  IdxSet          = 30
+  MethodCall      = 27,
+  IdxGet          = 28,
+  IdxSet          = 29
 }
 
 public enum BuiltInArray
@@ -351,12 +350,6 @@ public class Compiler : AST_Visitor
       {
         name = Opcodes.MethodCall,
         operand_width = new int[] { 1 }
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Return //TODO: impl this type of return
       }
     );
     DeclareOpcode(

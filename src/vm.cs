@@ -301,19 +301,23 @@ public class VM
     }
   }
 
-  public DynVal GetStackTop()//for test purposes
+#region Test&DebugFunctions
+
+  public DynVal GetStackTop()
   {
     return vm_stack.Peek();
   }
 
-  public void ShowFullStack()//for test purposes
+  public void ShowFullStack()
   {
     Console.WriteLine(" VM STACK :");
     foreach(var v in vm_stack)
     {
-      Console.WriteLine(" \t " + v);
+      Console.WriteLine("\t" + v);
     }
   }
+
+#endregion
 }
 
 } //namespace bhl
