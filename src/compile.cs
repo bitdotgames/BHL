@@ -401,55 +401,12 @@ public class Compiler : AST_Visitor
     return def;
   }
 
-  public static uint DecodeBytes(byte[] bytecode, ref int ip)
-  {
-    uint decoded_num = 0;
-
-    byte[] A = new byte[9]; //Coded Bytes
-
-    {
-      A[0] = bytecode[ip];
-
-      if(A[0] < 241)
-      {
-        decoded_num = A[0];
-      }
-      else if(A[0] > 240 && A[0] < 248)
-      {
-        ++ip;
-        decoded_num = (uint) (240 + 256 * (A[0] - 241) + bytecode[ip]); //240+256*(A0-241)+A1.
-      }
-      else if(A[0] == 249)
-      { 
-        for(var i = 1; i <= 2; ++i)
-        {
-          ++ip;
-          A[i] = bytecode[ip];
-        }
-
-        decoded_num = (uint) (2288 + (256 * A[1]) + A[2]); //2288+256*A1+A2
-      }
-      else if(A[0] >= 250 && A[0] <= 255)
-      {
-        for(var i = 1; i <= 3 + (A[0] % 250); ++i)
-        {
-          ++ip;
-          A[i] = bytecode[ip];
-
-          decoded_num += (uint) A[i]; //A1..A3/A4/A5/A6/A7/A8 as a from 3 to 8 -byte big-ending integer
-        }
-      }
-    }
-
-    return decoded_num;
-  }
-
 #region ForTestingPurposes
 
   public void DecodeOpcodes(byte[] bytecode)
   {
-    Console.WriteLine("\n{0, -10}\t{1, -10}\t{2, -10}", "Adress","Name","Operands");
-    int code_pointer = 0;
+    Console.WriteLine("\n{0, -10}\t{1, -10}\t{2, -10}", "Address","Name","Operands");
+    uint code_pointer = 0;
 
     while(code_pointer < bytecode.Length)
     {
@@ -464,7 +421,7 @@ public class Compiler : AST_Visitor
         foreach(var offset in op_def.operand_width)
         {
           ++code_pointer;
-          operands += " " + DecodeBytes(bytecode, ref code_pointer);
+          operands += " " + WriteBuffer.DecodeBytes(bytecode, ref code_pointer);
         }
         Console.Write("\t{0, -10}", operands);
       }
@@ -840,6 +797,49 @@ public class WriteBuffer
   {
     //NOTE: documentation: "omits unused bytes"
     return stream.ToArray();
+  }
+
+  public static int DecodeBytes(byte[] bytecode, ref uint ip)
+  {
+    int decoded_num = 0;
+
+    byte[] A = new byte[9]; //Coded Bytes
+
+    {
+      A[0] = bytecode[ip];
+
+      if(A[0] < 241)
+      {
+        decoded_num = A[0];
+      }
+      else if(A[0] > 240 && A[0] < 248)
+      {
+        ++ip;
+        decoded_num = 240 + 256 * (A[0] - 241) + bytecode[ip]; //240+256*(A0-241)+A1.
+      }
+      else if(A[0] == 249)
+      { 
+        for(var i = 1; i <= 2; ++i)
+        {
+          ++ip;
+          A[i] = bytecode[ip];
+        }
+
+        decoded_num = 2288 + (256 * A[1]) + A[2]; //2288+256*A1+A2
+      }
+      else if(A[0] >= 250 && A[0] <= 255)
+      {
+        for(var i = 1; i <= 3 + (A[0] % 250); ++i)
+        {
+          ++ip;
+          A[i] = bytecode[ip];
+
+          decoded_num += A[i]; //A1..A3/A4/A5/A6/A7/A8 as a from 3 to 8 -byte big-ending integer
+        }
+      }
+    }
+
+    return decoded_num;
   }
 
   public void Write(byte value)

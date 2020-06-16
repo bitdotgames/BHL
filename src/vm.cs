@@ -56,7 +56,7 @@ public class VM
       {
         case Opcodes.Constant:
           curr_frame.ip++;
-          int const_idx = instructions[curr_frame.ip];
+          int const_idx = WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
 
           if(const_idx >= constants.Count)
             throw new Exception("Index out of constant pool: " + const_idx);
