@@ -401,9 +401,52 @@ public class Compiler : AST_Visitor
     return def;
   }
 
+  public static uint DecodeBytes(byte[] bytecode, ref int ip)
+  {
+    uint decoded_num = 0;
+
+    byte[] A = new byte[9]; //Coded Bytes
+
+    {
+      A[0] = bytecode[ip];
+
+      if(A[0] < 241)
+      {
+        decoded_num = A[0];
+      }
+      else if(A[0] > 240 && A[0] < 248)
+      {
+        ++ip;
+        decoded_num = (uint) (240 + 256 * (A[0] - 241) + bytecode[ip]); //240+256*(A0-241)+A1.
+      }
+      else if(A[0] == 249)
+      { 
+        for(var i = 1; i <= 2; ++i)
+        {
+          ++ip;
+          A[i] = bytecode[ip];
+        }
+
+        decoded_num = (uint) (2288 + (256 * A[1]) + A[2]); //2288+256*A1+A2
+      }
+      else if(A[0] >= 250 && A[0] <= 255)
+      {
+        for(var i = 1; i <= 3 + (A[0] % 250); ++i)
+        {
+          ++ip;
+          A[i] = bytecode[ip];
+
+          decoded_num += (uint) A[i]; //A1..A3/A4/A5/A6/A7/A8 as a from 3 to 8 -byte big-ending integer
+        }
+      }
+    }
+
+    return decoded_num;
+  }
+
 #region ForTestingPurposes
 
-  public void DecodeBytecode(byte[] bytecode)
+  public void DecodeOpcodes(byte[] bytecode)
   {
     Console.WriteLine("\n{0, -10}\t{1, -10}\t{2, -10}", "Adress","Name","Operands");
     int code_pointer = 0;
@@ -421,10 +464,11 @@ public class Compiler : AST_Visitor
         foreach(var offset in op_def.operand_width)
         {
           ++code_pointer;
-          operands += " " + bytecode[code_pointer];
+          operands += " " + DecodeBytes(bytecode, ref code_pointer);
         }
         Console.Write("\t{0, -10}", operands);
       }
+
       ++code_pointer; 
     }
     Console.WriteLine();
@@ -456,6 +500,7 @@ public class Compiler : AST_Visitor
     for(int i = 0; operands != null && i < operands.Length; ++i)
     {
       int width = def.operand_width[i];
+
       switch(width)
       {
         case 1:
@@ -581,7 +626,7 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case "[]":
-        // 0 for array (maybe push type index from SymbolTable)
+        // 0 for array (maybe push type of index from SymbolTable)
         Emit(Opcodes.New, new int[] { 0 }); //ntype?
         //create dynval array and push it on stack
         VisitChildren(ast);
