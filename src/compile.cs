@@ -461,10 +461,10 @@ public class Compiler : AST_Visitor
       switch(width)
       {
         case 1:
-          buf.Write((uint)operands[i]);
+          buf.Write((byte)operands[i]);
         break;
         case 2:
-          buf.Write((uint)operands[i]); //TODO: use ushort
+          buf.Write((ushort)operands[i]);
         break;
         case 4:
           buf.Write((uint)operands[i]);
@@ -855,15 +855,9 @@ public class WriteBuffer
   // http://sqlite.org/src4/doc/trunk/www/varint.wiki
   public void Write(uint value)
   {
-    if(value <= 240)
+    if(value <= 65535)
     {
-      Write((byte)value);
-      return;
-    }
-    if(value <= 2287)
-    {
-      Write((byte)((value - 240) / 256 + 241));
-      Write((byte)((value - 240) % 256));
+      Write((ushort)value);
       return;
     }
     if(value <= 67823)
@@ -892,30 +886,9 @@ public class WriteBuffer
 
   public void Write(ulong value)
   {
-    if(value <= 240)
-    {
-      Write((byte)value);
-      return;
-    }
-    if(value <= 2287)
-    {
-      Write((byte)((value - 240) / 256 + 241));
-      Write((byte)((value - 240) % 256));
-      return;
-    }
-    if(value <= 67823)
-    {
-      Write((byte)249);
-      Write((byte)((value - 2288) / 256));
-      Write((byte)((value - 2288) % 256));
-      return;
-    }
     if(value <= 16777215)
     {
-      Write((byte)250);
-      Write((byte)(value & 0xFF));
-      Write((byte)((value >> 8) & 0xFF));
-      Write((byte)((value >> 16) & 0xFF));
+      Write((uint)value);
       return;
     }
     if(value <= 4294967295)
@@ -988,8 +961,24 @@ public class WriteBuffer
 
   public void Write(ushort value)
   {
-    Write((byte)(value & 0xff));
-    Write((byte)((value >> 8) & 0xff));
+    if(value <= 240)
+    {
+      Write((byte)value);
+      return;
+    }
+    if(value <= 2287)
+    {
+      Write((byte)((value - 240) / 256 + 241));
+      Write((byte)((value - 240) % 256));
+      return;
+    }
+
+    {
+      Write((byte)249);
+      Write((byte)((value - 2288) / 256));
+      Write((byte)((value - 2288) % 256));
+      return;
+    }
   }
 
   //NOTE: do we really need non-packed versions?

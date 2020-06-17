@@ -55,7 +55,7 @@ public class VM
       switch(opcode)
       {
         case Opcodes.Constant:
-          curr_frame.ip++;
+          ++curr_frame.ip;
           int const_idx = WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
 
           if(const_idx >= constants.Count)
@@ -65,7 +65,7 @@ public class VM
         break;
         case Opcodes.New:
           curr_frame.num_stack.Push(DynVal.NewObj(DynValList.New()));
-          curr_frame.ip++;
+          ++curr_frame.ip;
         break;
         case Opcodes.Add:
         case Opcodes.Sub:
@@ -106,8 +106,8 @@ public class VM
           }
         break;
         case Opcodes.MethodCall:
-          curr_frame.ip++;
-          var builtin = instructions[curr_frame.ip];
+          ++curr_frame.ip;
+          var builtin = WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
 
           ExecuteBuiltInArrayFunc((BuiltInArray) builtin);
         break;
@@ -123,16 +123,16 @@ public class VM
           lst.TryDel();
         break;
         case Opcodes.FuncCall:
-          curr_frame.ip++;
+          ++curr_frame.ip;
 
           var fr = new Frame();
-          fr.ip = instructions[curr_frame.ip];
+          fr.ip = (uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
 
-          curr_frame.ip++;
+          ++curr_frame.ip;
 
           if(instructions[curr_frame.ip] != 0)//has any input variables
           {
-            for(int i = 0; i < instructions[curr_frame.ip]; ++i)
+            for(int i = 0; i < WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip); ++i)
               fr.num_stack.Push(curr_frame.num_stack.Pop());
           }
 
@@ -140,28 +140,28 @@ public class VM
           curr_frame = frames.Peek();
         continue;
         case Opcodes.Jump:
-          curr_frame.ip++;
-          curr_frame.ip = curr_frame.ip + instructions[curr_frame.ip];
+          ++curr_frame.ip;
+          curr_frame.ip = curr_frame.ip + (uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
         break;
         case Opcodes.LoopJump:
-          curr_frame.ip++;
-          curr_frame.ip = curr_frame.ip - instructions[curr_frame.ip];
+          ++curr_frame.ip;
+          curr_frame.ip = curr_frame.ip - (uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
         break;
         case Opcodes.CondJump:
-          curr_frame.ip++;
+          ++curr_frame.ip;
           if(curr_frame.num_stack.Pop().bval == false)
-            curr_frame.ip = curr_frame.ip + instructions[curr_frame.ip];
-          curr_frame.ip++;
+            curr_frame.ip = curr_frame.ip + (uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
+          ++curr_frame.ip;
         continue;
       }
-      curr_frame.ip++;
+      ++curr_frame.ip;
     }
   }
 
   void ExecuteVariablesOperation(Opcodes op)
   {
-    curr_frame.ip++;
-    int local_idx = instructions[curr_frame.ip];
+    ++curr_frame.ip;
+    int local_idx = WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
     switch(op)
     {
       case Opcodes.SetVar:
@@ -301,7 +301,7 @@ public class VM
     }
   }
 
-#region Test&DebugFunctions
+#region TestAndDebugFunctions
 
   public DynVal GetStackTop()
   {
