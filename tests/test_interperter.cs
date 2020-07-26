@@ -8,328 +8,8 @@ using System.Threading;
 using Antlr4.Runtime;
 using bhl;
 
-public class IsTestedAttribute : Attribute
+public class BHL_TestInterpreter : BHL_TestBase
 {
-  public override string ToString()
-  {
-    return "Is Tested";
-  }
-}
-
-public class BHL_Test
-{
-  public class TestNode : BehaviorTreeTerminalNode
-  {
-    public BHS status = BHS.SUCCESS;
-    public int execs;
-    public int inits;
-    public int deinits;
-    public int defers;
-
-    public TestEvents events;
-
-    public override BHS execute()
-    {
-      if(events != null)
-        events.Add("E", this);
-      ++execs;
-      return status;
-    }
-
-    public override void init()
-    {
-      if(events != null)
-        events.Add("I", this);
-      ++inits;
-    }
-
-    public override void deinit()
-    {
-      if(events != null)
-        events.Add("D", this);
-      ++deinits;
-    }
-
-    public override void defer()
-    {
-      if(events != null)
-        events.Add("F", this);
-      ++defers;
-    }
-  }
-
-  public class DecoratorTestNode : BehaviorTreeDecoratorNode
-  {
-    public DecoratorTestNode(TestNode t)
-    {
-      setSlave(t);
-    }
-  }
-
-  [IsTested()]
-  public void TestNodeSequenceSuccess()
-  {
-    var t1 = new TestNode();
-    var t2 = new TestNode();
-    var s = new SequentialNode();
-    s.children.Add(t1);
-    s.children.Add(t2);
-
-    t1.status = BHS.RUNNING;
-    t2.status = BHS.RUNNING;
-
-    AssertEqual(s.run(), BHS.RUNNING);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 1);
-    AssertEqual(t1.deinits, 0);
-    AssertEqual(t1.defers, 0);
-    AssertEqual(t2.inits, 0);
-    AssertEqual(t2.execs, 0);
-    AssertEqual(t2.deinits, 0);
-    AssertEqual(t2.defers, 0);
-
-    t1.status = BHS.SUCCESS;
-    t2.status = BHS.RUNNING;
-
-    AssertEqual(s.run(), BHS.RUNNING);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 2);
-    AssertEqual(t1.deinits, 1);
-    AssertEqual(t1.defers, 0);
-    AssertEqual(t2.inits, 1);
-    AssertEqual(t2.execs, 1);
-    AssertEqual(t2.deinits, 0);
-    AssertEqual(t2.defers, 0);
-
-    t1.status = BHS.SUCCESS;
-    t2.status = BHS.SUCCESS;
-
-    AssertEqual(s.run(), BHS.SUCCESS);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 2);
-    AssertEqual(t1.deinits, 1);
-    AssertEqual(t1.defers, 1);
-    AssertEqual(t2.inits, 1);
-    AssertEqual(t2.execs, 2);
-    AssertEqual(t2.deinits, 1);
-    AssertEqual(t2.defers, 1);
-  }
-
-  [IsTested()]
-  public void TestNodeSequenceStop()
-  {
-    var t1 = new TestNode();
-    var t2 = new TestNode();
-    var s = new SequentialNode();
-    s.children.Add(t1);
-    s.children.Add(t2);
-
-    t1.status = BHS.RUNNING;
-    t2.status = BHS.RUNNING;
-
-    AssertEqual(s.run(), BHS.RUNNING);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 1);
-    AssertEqual(t1.deinits, 0);
-    AssertEqual(t1.defers, 0);
-    AssertEqual(t2.inits, 0);
-    AssertEqual(t2.execs, 0);
-    AssertEqual(t2.deinits, 0);
-    AssertEqual(t2.defers, 0);
-
-    t1.status = BHS.SUCCESS;
-    t2.status = BHS.RUNNING;
-
-    AssertEqual(s.run(), BHS.RUNNING);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 2);
-    AssertEqual(t1.deinits, 1);
-    AssertEqual(t1.defers, 0);
-    AssertEqual(t2.inits, 1);
-    AssertEqual(t2.execs, 1);
-    AssertEqual(t2.deinits, 0);
-    AssertEqual(t2.defers, 0);
-
-    s.stop();
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 2);
-    AssertEqual(t1.deinits, 1);
-    AssertEqual(t1.defers, 1);
-    AssertEqual(t2.inits, 1);
-    AssertEqual(t2.execs, 1);
-    AssertEqual(t2.deinits, 1);
-    AssertEqual(t2.defers, 1);
-  }
-
-  [IsTested()]
-  public void TestDecoratorNode()
-  {
-    var t = new TestNode();
-    t.status = BHS.RUNNING;
-    var d = new DecoratorTestNode(t);
-
-    AssertEqual(d.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
-
-    t.status = BHS.SUCCESS;
-    AssertEqual(d.run(), BHS.SUCCESS);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 2);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 0);
-
-    d.defer();
-    AssertEqual(t.defers, 1);
-  }
-
-  public class TestEvents
-  {
-    public class Event
-    {
-      public string type;
-      public BehaviorTreeNode node;
-    }
-    public List<Event> events = new List<Event>();
-
-    public int Count {
-      get {
-        return events.Count;
-      }
-    }
-
-    public Event this[int i]
-    {
-      get {
-        return events[i];
-      }
-    }
-
-    public void Add(string type, BehaviorTreeNode n)
-    {
-      var e = new Event();
-      e.type = type;
-      e.node = n;
-      events.Add(e);
-    }
-  }
-
-  [IsTested()]
-  public void TestGroupNode()
-  {
-    var events = new TestEvents();
-
-    var t = new TestNode();
-    t.events = events;
-    t.status = BHS.RUNNING;
-    var g = new GroupNode();
-    g.addChild(t);
-
-    AssertEqual(g.run(), BHS.RUNNING);
-    AssertEqual(events.Count, 2);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-
-    t.status = BHS.SUCCESS;
-    AssertEqual(g.run(), BHS.SUCCESS);
-    AssertEqual(events.Count, 4);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-    AssertEqual(events[2].type, "E");
-    AssertEqual(events[3].type, "D");
-
-    g.defer();
-    AssertEqual(events.Count, 5);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-    AssertEqual(events[2].type, "E");
-    AssertEqual(events[3].type, "D");
-    AssertEqual(events[4].type, "F");
-  }
-
-  [IsTested()]
-  public void TestRunNodeWithSuccess()
-  {
-    var t = new TestNode();
-    t.status = BHS.RUNNING;
-
-    AssertEqual(t.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.RUNNING);
-
-    t.status = BHS.SUCCESS;
-    AssertEqual(t.run(), BHS.SUCCESS);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 2);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.SUCCESS);
-
-    //run again
-    AssertEqual(t.run(), BHS.SUCCESS);
-    AssertEqual(t.inits, 2);
-    AssertEqual(t.execs, 3);
-    AssertEqual(t.deinits, 2);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.SUCCESS);
-  }
-
-  [IsTested()]
-  public void TestRunNodeWithFailure()
-  {
-    var t = new TestNode();
-    t.status = BHS.RUNNING;
-
-    AssertEqual(t.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.RUNNING);
-
-    t.status = BHS.FAILURE;
-    AssertEqual(t.run(), BHS.FAILURE);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 2);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.FAILURE);
-
-    //run again
-    AssertEqual(t.run(), BHS.FAILURE);
-    AssertEqual(t.inits, 2);
-    AssertEqual(t.execs, 3);
-    AssertEqual(t.deinits, 2);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.FAILURE);
-  }
-
-  [IsTested()]
-  public void TestStopNode()
-  {
-    var t = new TestNode();
-    t.status = BHS.RUNNING;
-
-    AssertEqual(t.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.RUNNING);
-
-    t.stop();
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 1);
-    AssertEqual(t.currStatus, BHS.NONE);
-  }
-
   [IsTested()]
   public void TestReturnNum()
   {
@@ -3042,7 +2722,7 @@ public class BHL_Test
       float a = 2
       paral_all {
         foo(func() use(a) { 
-          WaitTicks(2, is_success: true)
+          WaitTicks(2, true)
           a = a + 1 
           trace(""A:"" + (string)a)
         } )
@@ -3088,7 +2768,7 @@ public class BHL_Test
       float a = 2
       paral_all {
         StartScript(func() use(a) { 
-          WaitTicks(2, is_success: true)
+          WaitTicks(2, true)
           a = a + 1 
           trace(""A:"" + (string)a)
         } )
@@ -9250,13 +8930,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -9300,13 +8980,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -9349,13 +9029,13 @@ public class BHL_Test
     string bhl = @"
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       trace(""A"")
     }
 
@@ -9439,13 +9119,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -9494,13 +9174,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -9628,13 +9308,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -9746,7 +9426,7 @@ public class BHL_Test
     {
       trace(""HEY"")
       //once this one fails prio will switch to 'foo'
-      WaitTicks(2, is_success: false)
+      WaitTicks(2, false)
       //will never run
       trace(""HEY2"")
     }
@@ -10124,13 +9804,13 @@ public class BHL_Test
     func bar()
     {
       trace(""BAR"")
-      WaitTicks(2, is_success: true)
+      WaitTicks(2, true)
     }
 
     func hey()
     {
       trace(""HEY"")
-      WaitTicks(2, is_success: true)
+      WaitTicks(2, true)
     }
 
     func foo()
@@ -12178,34 +11858,6 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestOutOfScopeVarCompileErrorInLambda()
-  {
-    string bhl = @"
-
-    func void test() 
-    {
-      bool some_cond
-      if(some_cond) {
-        int b = 2
-      }
-
-      void^() fn = func() {
-        b = 3
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret(bhl, globs);
-      },
-      "b : symbol not resolved"
-    );
-  }
-
-  [IsTested()]
   public void TestNull()
   {
     string bhl = @"
@@ -12769,33 +12421,6 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("012", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestDontRecomputeConditionWhenYieldingFromWhile()
-  {
-    string bhl = @"
-
-    func int test() 
-    {
-      int i = 0
-      while(i == 0) {
-        i = 1
-        yield()
-        i = 2
-      }
-      return i
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var num = ExtractNum(ExecNode(node));
-
-    AssertEqual(2, num);
     CommonChecks(intp);
   }
 
@@ -15321,143 +14946,6 @@ public class BHL_Test
     CommonChecks(intp);
   }
 
-  class TestTaskManager
-  {
-    List<BehaviorTreeNode> tasks = new List<BehaviorTreeNode>(); 
-
-    public bool IsBusy {
-      get {
-        return tasks.Count > 0;
-      }
-    }
-
-    public void Tick()
-    {
-      var intp = Interpreter.instance;
-      for(int i=0;i<tasks.Count;)
-      {
-        var t = tasks[i];
-
-        intp.PushStackParalCtx(t);
-        var res = t.run();
-        intp.PopStackParalCtx();
-
-        if(res != bhl.BHS.RUNNING)
-          tasks.RemoveAt(i);
-        else
-          ++i;
-      }
-    }
-
-    public void Add(BehaviorTreeNode task)
-    {
-      tasks.Add(task);
-    }
-  }
-
-  [IsTested()]
-  public void TestCleanFuncArgsOnStackForTaskMgr()
-  {
-    string bhl = @"
-
-    func int calc()
-    {
-      yield()
-      yield()
-      return 100
-    }
-
-    func foo()
-    {
-      yield()
-      fail()
-    }
-
-    func bar()
-    {
-      int i = 10 + calc()
-      trace((string)i)
-    }
-
-    func test1() 
-    {
-      foo()
-    }
-
-    func test2()
-    {
-      bar()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var trace_stream = new MemoryStream();
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var tm = new TestTaskManager();
-    var node1 = intp.GetFuncCallNode("test1");
-    var node2 = intp.GetFuncCallNode("test2");
-    tm.Add(node1);
-    tm.Add(node2);
-    while(tm.IsBusy)
-      tm.Tick();
-
-    var str = GetString(trace_stream);
-    AssertEqual("110", str);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestCleanFuncArgsOnStackForTaskMgrInterleaved()
-  {
-    string bhl = @"
-
-    func int calc_fail()
-    {
-      yield()
-      fail()
-      return 2
-    }
-
-    func test1() 
-    {
-      yield()
-      int i = 100 + calc_fail()
-    }
-
-    func int calc()
-    {
-      yield()
-      yield()
-      return 100
-    }
-
-    func test2()
-    {
-      int i = 10 + calc()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var tm = new TestTaskManager();
-    var node1 = intp.GetFuncCallNode("test1");
-    tm.Add(node1);
-    tm.Tick();
-
-    var node2 = intp.GetFuncCallNode("test2");
-    tm.Add(node2);
-
-    while(tm.IsBusy)
-      tm.Tick();
-
-    CommonChecks(intp);
-  }
-
   [IsTested()]
   public void TestCleanFuncArgsOnStackInUntilSuccess()
   {
@@ -15725,7 +15213,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       return 42
     }
 
@@ -15786,7 +15274,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       return 42
     }
 
@@ -15854,7 +15342,7 @@ public class BHL_Test
           f = MakeFoo({hey:10, colors:[{r:
               func int (int ticks) 
               { 
-                WaitTicks(ticks, is_success: false)
+                WaitTicks(ticks, false)
                 fail()
                 return ticks
               }(2) 
@@ -15864,7 +15352,7 @@ public class BHL_Test
           f = MakeFoo({hey:20, colors:[{r:
               func int (int ticks) 
               { 
-                WaitTicks(ticks, is_success: false)
+                WaitTicks(ticks, false)
                 fail()
                 return ticks
               }(3) 
@@ -15917,7 +15405,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       return ticks
     }
 
@@ -17982,112 +17470,6 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestGlobalCounter()
-  {
-    string bhl1 = @"
-    import ""bhl2""  
-    import ""bhl2""
-
-    func test1() { 
-      foo = foo + 1
-    }
-    ";
-
-    string bhl3 = @"
-    import ""bhl1""  
-    import ""bhl2""  
-
-    func int test2() { 
-      test1()
-      foo = foo + 1
-      return foo
-    }
-    ";
-
-    string bhl2 = @"
-    int foo = 0
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindLog(globs);
-
-    TestCleanDir();
-    var files = new List<string>();
-    TestNewFile("bhl1.bhl", bhl1, files);
-    TestNewFile("bhl2.bhl", bhl2, files);
-    TestNewFile("bhl3.bhl", bhl3, files);
-
-    var intp = CompileFiles(files, globs);
-    intp.LoadModule("bhl3");
-
-    var node = intp.GetFuncCallNode("test2");
-    var n = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(n, 2);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestImportGlobalLazyInit()
-  {
-    string bhl1 = @"
-    import ""bhl2""  
-    import ""bhl2""
-
-    func test1() { 
-      foo().a = foo().a + 1
-    }
-    ";
-
-    string bhl3 = @"
-    import ""bhl1""  
-    import ""bhl2""  
-
-    func int test2() { 
-      test1()
-      foo().a = foo().a + 1
-      return foo().a
-    }
-    ";
-
-    string bhl2 = @"
-    class Foo {
-      int a
-    }
-    Foo _foo = null
-
-    func Foo foo() {
-      if(_foo == null) {
-        _foo = {
-          a : 1 
-        }
-      }
-      return _foo
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindLog(globs);
-
-    TestCleanDir();
-    var files = new List<string>();
-    TestNewFile("bhl1.bhl", bhl1, files);
-    TestNewFile("bhl2.bhl", bhl2, files);
-    TestNewFile("bhl3.bhl", bhl3, files);
-
-    var intp = CompileFiles(files, globs);
-    intp.LoadModule("bhl3");
-
-    var node = intp.GetFuncCallNode("test2");
-    var n = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(n, 3);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestImportGlobalExecutionOnlyOnceNested()
   {
     string bhl1 = @"
@@ -19645,71 +19027,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
   ////////////////////////////////////////////////
 
-  static void Assert(bool condition, string msg = null)
-  {
-    if(!condition)
-      throw new Exception("Assertion failed " + (msg != null ? msg : ""));
-  }
-  
-  static void AssertEqual(double a, double b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(uint a, uint b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(ulong a, ulong b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(BHS a, BHS b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(string a, string b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(int a, int b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertTrue(bool cond, string msg = "")
-  {
-    if(!cond)
-      throw new Exception("Assertion failed" + (msg.Length > 0 ? (": " + msg) : ""));
-  }
-
-  void AssertError<T>(Action action, string msg) where T : Exception
-  {
-    Exception err = null;
-    try
-    {
-      action();
-    }
-    catch(T e)
-    {
-      err = e;
-    }
-
-    AssertTrue(err != null, "Error didn't occur"); 
-    var idx = err.Message.IndexOf(msg);
-    AssertTrue(idx != -1, "Error message is: " + err.Message);
-  }
-
   static string TestDirPath()
   {
     string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -19889,115 +19206,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
   static object ExtractObj(Result res)
   {
     return res.val.obj;
-  }
-}
-
-public static class BHL_TestExt 
-{
-  public static void Decode(this DynVal dv, ref List<string> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add(tmp.str);
-    }
-  }
-
-  public static void Encode(this DynVal dv, List<string> dst)
-  {
-    var lst = DynValList.New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewStr(dst[i]));
-    dv.SetObj(lst);
-  }
-
-  public static void Decode(this DynVal dv, ref List<uint> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add((uint)tmp.num);
-    }
-  }
-
-  public static void Encode(this DynVal dv, List<uint> dst)
-  {
-    var lst = DynValList.New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewNum(dst[i]));
-    dv.SetObj(lst);
-  }
-
-  public static void Decode(this DynVal dv, ref List<int> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add((int)tmp.num);
-    }
-  }
-
-  public static void Encode(this DynVal dv, List<int> dst)
-  {
-    var lst = DynValList.New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewNum(dst[i]));
-    dv.SetObj(lst);
-  }
-}
-
-public class BHL_TestRunner
-{
-  public static void Main(string[] args)
-  {
-    Console.WriteLine("Testing BHL");
-
-    var test = new BHL_Test();
-
-    int c = 0;
-    foreach(var method in (typeof(BHL_Test)).GetMethods())
-    {
-      if(IsMemberTested(method))
-      {
-        Util.SetupASTFactory();
-        if(IsAllowedToRun(args, method))
-        {
-          ++c;
-          method.Invoke(test, new object[] {});
-        }
-      }
-    }
-    Console.WriteLine("Done running "  + c + " tests");
-  }
-
-  static bool IsAllowedToRun(string[] args, MemberInfo member)
-  {
-    if(args == null || args.Length == 0)
-      return true;
-
-    for(int i=0;i<args.Length;++i)
-    {
-      if(args[i] == member.Name)
-        return true;
-    }
-
-    return false;
-  }
-
-  static bool IsMemberTested(MemberInfo member)
-  {
-    foreach(var attribute in member.GetCustomAttributes(true))
-    {
-      if(attribute is IsTestedAttribute)
-        return true;
-    }
-    return false;
   }
 }
 
