@@ -575,7 +575,18 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_TypeCast ast)
   {
-    throw new Exception("Not supported : " + ast.type);
+    VisitChildren(ast);
+
+    var val =  constants[constants.Count - 1];
+
+    if(ast.ntype == SymbolTable._int.name.n)
+    {
+      val.SetNum((int)val.num);
+    }
+    else if(ast.ntype == SymbolTable._string.name.n && val.type != DynVal.STRING)
+    {
+      val.SetStr("" + val.num);
+    }
   }
 
   public override void DoVisit(AST_New ast)
