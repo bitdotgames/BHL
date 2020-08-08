@@ -32,7 +32,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.NUM);
+    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.NUMBER);
     AssertEqual(c.GetConstants()[0].num, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -63,7 +63,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.BOOL);
+    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.BOOL);
     AssertEqual(c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -94,7 +94,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.NUM);
+    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.NUMBER);
     AssertEqual(c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -125,7 +125,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.STR);
+    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.STRING);
     AssertEqual(c.GetConstants()[0].num, 0);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -156,7 +156,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.STR);
+    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.STRING);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -328,6 +328,41 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
     AssertEqual(vm.GetStackTop().num, 1);
+  }
+
+  [IsTested()]
+  public void TestCompileNullConstant()
+  {
+    string bhl = @"
+    func bool test()
+    {
+      any fn = null
+      return fn == null
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Equal)
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 1);
+    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.NIL);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertTrue(vm.GetStackTop().bval);
   }
 
   [IsTested()]

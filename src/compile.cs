@@ -167,9 +167,10 @@ public class Compiler : AST_Visitor
   {
     for(int i = 0 ; i < constants.Count; ++i)
     {
-      if((constants[i].type == (byte)literal.type)
+      if((constants[i].type == (byte)literal.type) 
          && (constants[i].num == literal.nval)
-         && (constants[i].str == literal.sval))
+         && (constants[i].str == literal.sval)
+         || (constants[i].type == DynVal.NIL))
         return i;
     }
 
@@ -183,6 +184,9 @@ public class Compiler : AST_Visitor
       break;
       case EnumLiteral.STR:
         constants.Add(DynVal.NewStr(literal.sval));
+      break;
+      case EnumLiteral.NIL:
+        constants.Add(DynVal.NewNil());
       break;
       default:
         throw new Exception("No supported literal type: " + literal.type);

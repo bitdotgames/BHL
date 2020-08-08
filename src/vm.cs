@@ -250,8 +250,8 @@ public class VM
     switch(op)
     {
       case Opcodes.Add:
-        if((r_opertand._type == (byte)EnumLiteral.STR) 
-          &&(l_opertand._type == (byte)EnumLiteral.STR))
+        if((r_opertand._type == DynVal.STRING)
+          &&(l_opertand._type == DynVal.STRING))
           stk.Push(DynVal.NewStr(l_opertand._str + r_opertand._str));
         else
           stk.Push(DynVal.NewNum(l_opertand._num + r_opertand._num));
