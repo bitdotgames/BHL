@@ -165,10 +165,13 @@ public class VM
     switch(op)
     {
       case Opcodes.SetVar:
-        if(local_idx >= curr_frame.locals.Count)
-          curr_frame.locals.Add(curr_frame.num_stack.Pop());
-        else
+        if(local_idx < curr_frame.locals.Count)
           curr_frame.locals[local_idx] = curr_frame.num_stack.Pop();
+        else 
+          if(curr_frame.num_stack.Count > 0)
+            curr_frame.locals.Add(curr_frame.num_stack.Pop());
+          else
+            curr_frame.locals.Add(DynVal.New());
       break;
       case Opcodes.GetVar:
         if(local_idx >= curr_frame.locals.Count)
@@ -301,7 +304,7 @@ public class VM
     }
   }
 
-#region TestAndDebugFunctions
+#region ForTestingPurposes
 
   public DynVal GetStackTop()
   {
