@@ -35,7 +35,8 @@ public enum Opcodes
   GreatherOrEqual = 26,
   MethodCall      = 27,
   IdxGet          = 28,
-  IdxSet          = 29
+  IdxSet          = 29,
+  DefArg          = 30  //opcode for skipping func def args
 }
 
 public enum BuiltInArray
@@ -386,6 +387,13 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.DefArg,
+        operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.New,
         operand_width = new int[] { 2 }
       }
@@ -433,6 +441,49 @@ public class Compiler : AST_Visitor
       ++code_pointer; 
     }
     Console.WriteLine();
+  }
+
+  public void ReplaceOpcode(int position, byte[] new_op_data)
+  {
+    ReplaceOpcode(position, new_op_data, GetCurrentScope());
+  }
+
+  public void ReplaceOpcode(int position, byte[] new_op_data, WriteBuffer scope)
+  {
+    var scope_bytes = scope.GetBytes();
+
+    byte[] left_bytes = new byte[position];
+    Array.Copy(scope_bytes, left_bytes, position);
+    var opcode = (Opcodes)scope_bytes[position];
+    
+    var op_def = LookupOpcode(opcode);
+
+    var replaced_op_length = 1;
+
+    if(op_def.operand_width != null)
+    {
+      foreach(var operand in op_def.operand_width)
+      {
+        uint real_operand_width = (uint)position + 1;
+        uint delta_width = real_operand_width;
+        WriteBuffer.DecodeBytes(scope_bytes, ref real_operand_width);
+        replaced_op_length += 1 + (int)(real_operand_width - delta_width);
+      }
+    }
+
+    byte[] right_bytes = new byte[scope_bytes.Length - (position + replaced_op_length)];
+    
+    Array.Copy(scope_bytes, position + replaced_op_length, right_bytes, 0, right_bytes.Length);
+
+    scope.Reset(scope_bytes,0);
+    scope.Write(left_bytes, left_bytes.Length);
+    scope.Write(new_op_data, new_op_data.Length);
+    scope.Write(right_bytes, right_bytes.Length);
+  }
+
+  public void DeleteOpcode(int pointer)
+  {
+    ReplaceOpcode(pointer, new byte[]{});
   }
 
   public Compiler TestEmit(Opcodes op, int[] operands = null)
@@ -572,6 +623,7 @@ public class Compiler : AST_Visitor
         InsertIndex(pointer);
       break;
       default:
+        //there will be behaviour node blocks
         VisitChildren(ast);
       break;
     }
@@ -604,7 +656,7 @@ public class Compiler : AST_Visitor
         VisitChildren(ast);
       break;
       default:
-        Console.WriteLine("Not impl new coming -> " + ast.Name());
+        Console.WriteLine("Not impl ast_new coming -> " + ast.Name());
         VisitChildren(ast);
       break;
     }
@@ -632,7 +684,7 @@ public class Compiler : AST_Visitor
         uint offset;
         func_offset_buffer.TryGetValue(ast.name, out offset);
         VisitChildren(ast);
-        Emit(Opcodes.FuncCall, new int[] {(int)offset, (int)ast.cargs_bits});
+        Emit(Opcodes.FuncCall, new int[] {(int)offset, (int)ast.cargs_bits});//figure out how cargs works
       break;
       case EnumCall.MVAR:
         VisitChildren(ast);
@@ -762,6 +814,15 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_VarDecl node)
   {
+    if(node.children.Count > 0)
+    {
+      var index = 0;
+      Emit(Opcodes.DefArg, new int[] { index });
+      var pointer = GetCurrentScope().Position;
+      VisitChildren(node);
+      InsertIndex(pointer);
+    }
+
     SymbolView s = GetCurrentSVTable().Define(node.name);
     Emit(Opcodes.SetVar, new int[] { s.index });
   }

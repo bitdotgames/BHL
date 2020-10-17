@@ -130,9 +130,9 @@ public class VM
 
           ++curr_frame.ip;
 
-          if(instructions[curr_frame.ip] != 0)//has any input variables
+          var args_info = new FuncArgsInfo((uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip));
+          for(int i = 0; i < args_info.CountArgs(); ++i)
           {
-            for(int i = 0; i < WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip); ++i)
               fr.num_stack.Push(curr_frame.num_stack.Pop());
           }
 
@@ -151,6 +151,13 @@ public class VM
           ++curr_frame.ip;
           if(curr_frame.num_stack.Pop().bval == false)
             curr_frame.ip = curr_frame.ip + (uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
+          ++curr_frame.ip;
+        continue;
+        case Opcodes.DefArg:
+          ++curr_frame.ip; //need add check for args more than 1 byte long
+          var arg = WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
+          if(curr_frame.num_stack.Count > 0)
+            curr_frame.ip = curr_frame.ip + (uint)arg;
           ++curr_frame.ip;
         continue;
       }

@@ -1036,17 +1036,10 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func bool test()
     {
-      int a
+      int i
       string s
       bool b
-      if(a != 0 && b != false && s != """")
-      {
-        return false
-      }
-      else
-      {
-        return true
-      }
+      return (i == 0 && b == false && s == """")
     }
     ";
 
@@ -1054,7 +1047,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var result = c.GetBytes();
 
-    AssertEqual(c.GetConstants().Count, 4);
+    AssertEqual(c.GetConstants().Count, 3);
     AssertTrue(result.Length > 0);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
@@ -1499,6 +1492,62 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
     AssertEqual(vm.GetStackTop().num, 1);
+  }
+
+  [IsTested()]
+  public void TestFuncDefaultArg()
+  {
+    string bhl = @"
+
+    func int foo(int k0, int k1 = 1 - 0, int k2 = 10) 
+    {
+      return k0+k1+k2
+    }
+      
+    func int test()
+    {
+      return foo(1 + 1, 0)
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler()
+      //foo func code
+      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .TestEmit(Opcodes.DefArg, new int[] { 5 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.Sub)
+      .TestEmit(Opcodes.SetVar, new int[] { 1 })
+      .TestEmit(Opcodes.DefArg, new int[] { 2 })
+      .TestEmit(Opcodes.Constant, new int[] { 2 })
+      .TestEmit(Opcodes.SetVar, new int[] { 2 })
+      .TestEmit(Opcodes.GetVar, new int[] { 0 })
+      .TestEmit(Opcodes.GetVar, new int[] { 1 })
+      .TestEmit(Opcodes.Add)
+      .TestEmit(Opcodes.GetVar, new int[] { 2 })
+      .TestEmit(Opcodes.Add)
+      .TestEmit(Opcodes.ReturnVal)
+      //test program code
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Constant, new int[] { 0 })
+      .TestEmit(Opcodes.Add)
+      .TestEmit(Opcodes.Constant, new int[] { 1 })
+      .TestEmit(Opcodes.FuncCall, new [] { 0, 130 })
+      .TestEmit(Opcodes.ReturnVal)
+      .GetBytes();
+
+    AssertEqual(c.GetConstants().Count, 3);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
+    vm.Exec("test");
+    AssertEqual(vm.GetStackTop().num, 12);
   }
 
   [IsTested()]

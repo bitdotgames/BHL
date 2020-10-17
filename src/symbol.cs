@@ -1111,6 +1111,11 @@ static public class SymbolTable
       null, _boolean, _string, _int, _float, _void,  _enum, _any
   };
 
+  public static uint[] hashToType = new uint[] {
+      // 0_null  1_bool   2_string   3_int     4_float    5_void    6_enum     7_any
+      97254479, 92354194, 247378601, 72473265, 161832597, 41671150, 247377489, 83097524 
+  };
+
   // Map t1 op t2 to result type (_void implies illegal)
   public static Type[,] arithmeticResultType = new Type[,] {
       /*          struct  boolean  string   int     float    void    enum    any */
