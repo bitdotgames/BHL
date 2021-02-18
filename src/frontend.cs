@@ -1692,9 +1692,6 @@ public class Frontend : bhlBaseVisitor<object>
       parent = locals.resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
       if(parent == null)
         FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
-
-      if(parent is ClassBindSymbol)
-        FireError(Location(ctx.classEx()) + " : extending C# bound classes not currently supported");
     }
 
     var ast = AST_Util.New_ClassDecl(class_name, parent == null ? new HashedName() : parent.name);

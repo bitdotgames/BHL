@@ -5,6 +5,7 @@ tags
 tmp
 obj
 build
+obj
 src/autogen.cs*
 *.exe
 *.dylib*
