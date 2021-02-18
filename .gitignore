@@ -3,6 +3,7 @@
 tags
 
 tmp
+obj
 build
 src/autogen.cs*
 *.exe
