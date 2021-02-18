@@ -454,9 +454,9 @@ public abstract class FuncBaseCallNode : GroupNode
     interp.func_ctx_stack.Push(this);
 #endif
 
+    BHS status = BHS.SUCCESS;
     //var status = base.execute();
     ////////////////////FORCING CODE INLINE////////////////////////////////
-    BHS status = BHS.SUCCESS;
     while(currentPosition < children.Count)
     {
       var currentTask = children[currentPosition];
@@ -469,8 +469,6 @@ public abstract class FuncBaseCallNode : GroupNode
       if(is_func_call)
         interp.call_stack.Push(this);
 
-      try
-      {
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.init();
 
@@ -478,13 +476,7 @@ public abstract class FuncBaseCallNode : GroupNode
         currentTask.currStatus = status;  
         if(status != BHS.RUNNING)
           currentTask.deinit();
-      }
-      catch(Interpreter.RecoverableError e)
-      {
-        Util.Error("Recovered from error: " + e + ": " + interp.GetStackTrace());
-        status = BHS.FAILURE;
-        currentTask.currStatus = status;
-      }
+
       //NOTE: only when it's actual func call we pop it from the call stack
       if(is_func_call)
         interp.call_stack.DecFast();
@@ -501,6 +493,7 @@ public abstract class FuncBaseCallNode : GroupNode
 #endif
 
     lastExecuteStatus = status;
+
     return status;
   }
 

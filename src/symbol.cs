@@ -477,11 +477,15 @@ public class FuncArgSymbol : VariableSymbol
 {
   public bool is_ref;
 
-  public FuncArgSymbol(HashedName name, TypeRef type, bool is_ref = false)
-    : base(null, name, type)
+  public FuncArgSymbol(WrappedNode n, HashedName name, TypeRef type, bool is_ref = false)
+    : base(n, name, type)
   {
     this.is_ref = is_ref;
   }
+
+  public FuncArgSymbol(HashedName name, TypeRef type, bool is_ref = false)
+    : this(null, name, type, is_ref)
+  {}
 }
 
 public class FieldSymbol : VariableSymbol

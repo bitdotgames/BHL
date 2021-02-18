@@ -18,11 +18,15 @@ public interface IModuleLoader
   AST_Module LoadModule(HashedName id);
 }
 
+public enum ModuleBinaryFormat
+{
+  FMT_BIN      = 0,
+  FMT_LZ4      = 1,
+  FMT_FILE_REF = 2,
+}
+
 public class ModuleLoader : IModuleLoader
 {
-  public const byte FMT_BIN = 0;
-  public const byte FMT_LZ4 = 1;
-
   Stream source;
   MsgPackDataReader reader;
   Lz4DecoderStream decoder = new Lz4DecoderStream();
@@ -34,7 +38,7 @@ public class ModuleLoader : IModuleLoader
 
   public class Entry
   {
-    public byte format;
+    public ModuleBinaryFormat format;
     public long stream_pos;
   }
 
@@ -70,7 +74,7 @@ public class ModuleLoader : IModuleLoader
       Util.Verify(reader.ReadU32(ref id) == MetaIoError.SUCCESS);
 
       var ent = new Entry();
-      ent.format = (byte)format;
+      ent.format = (ModuleBinaryFormat)format;
       ent.stream_pos = source.Position;
       if(entries.ContainsKey(id))
         Util.Verify(false, "Key already exists: " + id);
@@ -112,7 +116,7 @@ public class ModuleLoader : IModuleLoader
 
   void DecodeBin(Entry ent, ref byte[] res, ref int res_len)
   {
-    if(ent.format == FMT_BIN)
+    if(ent.format == ModuleBinaryFormat.FMT_BIN)
     {
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
@@ -122,7 +126,7 @@ public class ModuleLoader : IModuleLoader
       res = tmp_buf;
       res_len = tmp_buf_len;
     }
-    else if(ent.format == FMT_LZ4)
+    else if(ent.format == ModuleBinaryFormat.FMT_LZ4)
     {
       var lz_buf = TempBuffer.Get();
       int lz_buf_len = 0;
@@ -146,8 +150,20 @@ public class ModuleLoader : IModuleLoader
       res = lz_dst_stream.GetBuffer();
       res_len = (int)lz_dst_stream.Position;
     }
+    else if(ent.format == ModuleBinaryFormat.FMT_FILE_REF)
+    {
+      var tmp_buf = TempBuffer.Get();
+      int tmp_buf_len = 0;
+      reader.setPos(ent.stream_pos);
+      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
+      TempBuffer.Update(tmp_buf);
+      string file_path = System.Text.Encoding.UTF8.GetString(tmp_buf, 0, tmp_buf_len);
+      var file_bytes = File.ReadAllBytes(file_path);
+      res = file_bytes;
+      res_len = file_bytes.Length;
+    }
     else
-      throw new Exception("Unknown format");
+      throw new Exception("Unknown format: " + ent.format);
   }
 }
 
