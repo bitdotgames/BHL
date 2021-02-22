@@ -1,0 +1,26 @@
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <appname>bhl</appname>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ANTLR">
+      <HintPath>./Antlr4.Runtime.Standard.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="src/*.cs" />
+    <Compile Include="src/g/*.cs" />
+    <Compile Include="deps/metagen.cs" />
+    <Compile Include="deps/msgpack/*.cs" />
+    <Compile Include="deps/msgpack/Compiler/*.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!--
+  <Target Name = "Compile">
+    <CSC Sources = "@(CSFile)" OutputAssembly = "$(appname).exe">
+        <Output TaskParameter = "OutputAssembly" ItemName = "EXEFile" />
+    </CSC>
+    <Message Text="The output file is @(EXEFile)"/>
+  </Target>
+  -->
+</Project>

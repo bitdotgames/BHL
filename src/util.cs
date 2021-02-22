@@ -326,23 +326,6 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static public bool NeedToRegen(string file, List<string> deps)
-  {
-    if(!File.Exists(file))
-      return true;
-
-    var fmtime = new FileInfo(file).LastWriteTime; 
-    foreach(var dep in deps)
-    {
-      if(File.Exists(dep) && (new FileInfo(dep).LastWriteTime > fmtime))
-        return true;
-    }
-
-    return false;
-  }
-
-  ////////////////////////////////////////////////////////
-
   static public T File2Meta<T>(string file) where T : IMetaStruct, new()
   {
     using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
@@ -1269,9 +1252,9 @@ public class FastStack<T>
   T[] storage;
   int head_idx = 0;
 
-  public FastStack(int maxCapacity)
+  public FastStack(int max_capacity)
   {
-    storage = new T[maxCapacity];
+    storage = new T[max_capacity];
   }
 
   public T this[int index]
@@ -1294,6 +1277,8 @@ public class FastStack<T>
 
   public T Push(T item)
   {
+    if((head_idx+1) < 0 || (head_idx+1) >= storage.Length)
+      throw new IndexOutOfRangeException("Out of bounds index: " + head_idx + " (" + storage.Length + ")");
     storage[head_idx++] = item;
     return item;
   }

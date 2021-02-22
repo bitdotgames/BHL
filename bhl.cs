@@ -33,7 +33,21 @@ public static class Tasks
   {
     var mcs_bin = args.Length > 0 ? args[0] : "/Applications/Unity/Unity.app/Contents/Frameworks/Mono/bin/gmcs"; 
     var dll_file = args.Length > 1 ? args[1] : $"{BHL_ROOT}/bhl_back.dll";
-    var extra_args = args.Length > 2 ? args[2] : "-debug";
+    var extra_args = "";
+    
+    if(args.Length > 2)
+    {
+      for(int i = 2; i < args.Length; i++)
+      {
+        extra_args += args[i];
+        if(i != args.Length - 1)
+          extra_args += " ";
+      }
+    }  
+    else
+    {
+      extra_args = "-debug";
+    }
 
     MCSBuild(tm, new string[] {
       $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
@@ -204,6 +218,12 @@ public static class Tasks
     tm.Shell("mono", mono_args);
   }
 
+  public static int TryMonoRun(Taskman tm, string exe, string[] args = null, string opts = "")
+  {
+    var mono_args = $"{opts} {exe} " + String.Join(" ", args);
+    return tm.TryShell("mono", mono_args);
+  }
+
   public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "", string binary = "mcs")
   {
     var files = new List<string>();
@@ -242,12 +262,33 @@ public static class Tasks
   }
 }
 
+public class ShellException : Exception
+{
+  public int code;
+
+  public ShellException(int code, string message)
+    : base(message)
+  {
+    this.code = code;
+  }
+}
+
 public static class BHLBuild
 {
   public static void Main(string[] args)
   {
     var tm = new Taskman(typeof(Tasks));
-    tm.Run(args);
+    try
+    {
+      tm.Run(args);
+    }
+    catch(TargetInvocationException e)
+    {
+      if(e.InnerException is ShellException)
+        System.Environment.Exit((e.InnerException as ShellException).code);
+      else
+        throw;
+    }
   }
 }
 
@@ -350,9 +391,19 @@ public class Taskman
     Echo($"************************ Running task '{task.Name}' ************************");
     var sw = new Stopwatch();
     sw.Start();
+    try
+    {
     task.func.Invoke(null, new object[] { this, task_args });
+    }
+    catch(Exception)
+    {
+      throw;
+    }
+    finally
+    {
     var elapsed = Math.Round(sw.ElapsedMilliseconds/1000.0f,2);
     Echo($"************************ '{task.Name}' done({elapsed} sec.)  ************************");
+  }
   }
 
   public Task FindTask(string name)
@@ -403,6 +454,13 @@ public class Taskman
 
   public void Shell(string binary, string args)
   {
+    int exit_code = TryShell(binary, args);
+    if(exit_code != 0)
+      throw new ShellException(exit_code, $"Error exit code: {exit_code}");
+  }
+
+  public int TryShell(string binary, string args)
+  {
     binary = CLIPath(binary);
     Echo($"shell: {binary} {args}");
 
@@ -432,8 +490,7 @@ public class Taskman
     
     p.WaitForExit();
 
-    if(p.ExitCode != 0)
-      throw new Exception($"Error exit code: {p.ExitCode}");
+    return p.ExitCode;
   }
 
   public string[] Glob(string s)

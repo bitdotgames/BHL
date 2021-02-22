@@ -12,7 +12,7 @@ public class BHLC
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic]");
+    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--format=<1,2>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -32,6 +32,7 @@ public class BHLC
     bool check_deps = true;
     bool deterministic = false;
     bool debug = false;
+    ModuleBinaryFormat format = ModuleBinaryFormat.FMT_LZ4;
 
     var p = new OptionSet () {
       { "dir=", "source dir",
@@ -57,7 +58,9 @@ public class BHLC
       { "threads=", "number of threads",
           v => max_threads = int.Parse(v) },
       { "d", "debug version",
-        v => debug = v != null }
+        v => debug = v != null },
+      { "format=", "binary module format",
+        v => format = (ModuleBinaryFormat)int.Parse(v) }
      };
 
     var extra = new List<string>();
@@ -96,12 +99,12 @@ public class BHLC
         Usage("User bindings are invalid");
     }
 
-    PostProcessor postproc = new EmptyPostProcessor();
+    IPostProcessor postproc = new EmptyPostProcessor();
     if(postproc_dll_path != "")
     {
       var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll_path);
       var postproc_class = postproc_assembly.GetTypes()[0];
-      postproc = System.Activator.CreateInstance(postproc_class) as PostProcessor;
+      postproc = System.Activator.CreateInstance(postproc_class) as IPostProcessor;
       if(postproc == null)
         Usage("User postprocessor is invalid");
     }
@@ -120,6 +123,7 @@ public class BHLC
 
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
     var conf = new BuildConf();
+    conf.args = string.Join(";", args);
     conf.use_cache = use_cache;
     conf.self_file = GetSelfFile();
     conf.check_deps = check_deps;
@@ -132,6 +136,7 @@ public class BHLC
     conf.userbindings = userbindings;
     conf.postproc = postproc;
     conf.debug = debug;
+    conf.format = format;
 
     var build = new Build();
     int err = build.Exec(conf);

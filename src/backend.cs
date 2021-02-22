@@ -31,7 +31,7 @@ public class Interpreter : AST_Visitor
   FastStack<BehaviorTreeInternalNode> node_stack = new FastStack<BehaviorTreeInternalNode>(128);
   BehaviorTreeInternalNode curr_node;
 
-  FastStack<DynValDict> mstack = new FastStack<DynValDict>(128);
+  FastStack<DynValDict> mstack = new FastStack<DynValDict>(129);
   DynValDict curr_mem;
   public DynValDict glob_mem = new DynValDict();
 
@@ -51,7 +51,7 @@ public class Interpreter : AST_Visitor
       this.name_or_idx = name_or_idx;
     }
   }
-  FastStack<JsonCtx> jcts = new FastStack<JsonCtx>(128);
+  FastStack<JsonCtx> jcts = new FastStack<JsonCtx>(130);
 
   public IModuleLoader module_loader;
   //NOTE: key is a module id, value is a file path
@@ -78,15 +78,15 @@ public class Interpreter : AST_Visitor
   }
 
   public FastStack<StackValue> stack = new FastStack<StackValue>(256);
-  public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(128);
+  public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(255);
+  //NOTE: this one is used for marking stack values with proper node ctx, 
+  //      this is used in paral nodes where stack values interleaving may happen
+  public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(131);
 #if DEBUG_STACK
   //NOTE: this one is used for marking stack values with proper func ctx so that 
   //      this info can be retrieved for debug purposes
   public FastStack<FuncBaseCallNode> func_ctx_stack = new FastStack<FuncBaseCallNode>(128);
 #endif
-  //NOTE: this one is used for marking stack values with proper node ctx, 
-  //      this is used in paral nodes where stack values interleaving may happen
-  public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(128);
 
   public void Init(BaseScope symbols, IModuleLoader module_loader)
   {
@@ -205,6 +205,44 @@ public class Interpreter : AST_Visitor
     public int func_hash;
 
     public uint line_num;
+
+    static public CallStackInfo Make(FuncBaseCallNode n)
+    {
+      var item = new CallStackInfo();
+      item.module_id = 0;
+      item.module_name = "";
+      item.func_id = 0;
+      item.func_name = "?";
+      item.func_hash = 0;
+      item.line_num = 0;
+
+      if(n == null)
+        return item;
+
+      //checking special case for FuncBaseCallNode (e.g. lambda call)
+      if(n is FuncUserCallNode)
+      {
+        var fuc = n as FuncUserCallNode;
+        if(fuc.children.Count > 0 && fuc.children[0] is FuncNodeAST)
+        {
+          var fast = fuc.children[0] as FuncNodeAST;
+          item.module_id = fast.decl.nname2; 
+          item.func_name = fast.decl.name;
+          item.func_id = fast.decl.nname1;
+          item.func_hash = fast.decl.GetHashCode(); 
+        }
+      }
+      else if(n.ast != null)
+      {
+        item.module_id = n.ast.nname2;
+        item.func_name = n.ast.name;
+        item.func_id = n.ast.nname1;
+        item.func_hash = n.ast.GetHashCode();
+        item.line_num = n.ast.line_num;
+      }
+
+      return item;
+    }
   }
 
   public void GetCallStackInfo(List<CallStackInfo> result)
@@ -212,29 +250,21 @@ public class Interpreter : AST_Visitor
     //NOTE: we transform call stack into more convenient for the user format
     for(int i=call_stack.Count;i-- > 1;)
     {
-      FuncBaseCallNode s1 = null;
-      call_stack.TryGetAt(i-1, out s1);
-      var cs = s1 == null ? null : s1.ast; 
+      FuncBaseCallNode c;
+      call_stack.TryGetAt(i-1, out c);
 
-      string module_name = "?";
-      if(cs != null)
-        loaded_modules.TryGetValue(cs.nname2, out module_name);
+      var item = CallStackInfo.Make(c);
 
-      FuncBaseCallNode s0 = null;
-      call_stack.TryGetAt(i, out s0);
-      var cs_prev = s0 == null ? null : s0.ast;
+      string module_name;
+      if(loaded_modules.TryGetValue(item.module_id, out module_name))
+        item.module_name = module_name;
 
-      var item = new CallStackInfo() 
-      {
-        module_id = cs == null ? 0 : cs.nname2,
-        module_name = module_name,
+      FuncBaseCallNode c_prev;
+      call_stack.TryGetAt(i, out c_prev);
+      var item_prev = CallStackInfo.Make(c_prev);
 
-        func_id = cs == null ? 0 : cs.nname1,
-        func_name = cs == null ? "?" : cs.name, 
-        func_hash = cs == null ? 0 : cs.GetHashCode(),
+      item.line_num = item_prev.line_num;
 
-        line_num = cs_prev == null ? 0 : cs_prev.line_num
-      };
       result.Add(item);
     }
   }
@@ -256,13 +286,6 @@ public class Interpreter : AST_Visitor
   //NOTE: caching exceptions for less allocations
   static ReturnException return_exception = new ReturnException();
   static BreakException break_exception = new BreakException();
-
-  public class RecoverableError : Exception
-  {
-    public RecoverableError(string msg = "")
-      : base(msg)
-    {}
-  }
 
   public void JumpReturn()
   {
