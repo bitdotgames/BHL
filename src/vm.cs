@@ -132,9 +132,7 @@ public class VM
 
           var args_info = new FuncArgsInfo((uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip));
           for(int i = 0; i < args_info.CountArgs(); ++i)
-          {
-              fr.num_stack.Push(curr_frame.num_stack.Pop());
-          }
+            fr.num_stack.Push(curr_frame.num_stack.Pop());
 
           frames.Push(fr);
           curr_frame = frames.Peek();
@@ -260,8 +258,7 @@ public class VM
     switch(op)
     {
       case Opcodes.Add:
-        if((r_opertand._type == DynVal.STRING)
-          &&(l_opertand._type == DynVal.STRING))
+        if((r_opertand._type == DynVal.STRING) && (l_opertand._type == DynVal.STRING))
           stk.Push(DynVal.NewStr(l_opertand._str + r_opertand._str));
         else
           stk.Push(DynVal.NewNum(l_opertand._num + r_opertand._num));
