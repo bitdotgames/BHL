@@ -25,7 +25,7 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 
 ## Code samples
 
-### Imperative style mixed with BT
+### Gradually appear from alpha
 
 ```go
 func AlphaAppear(int id, float time_to_appear) {
@@ -37,21 +37,6 @@ func AlphaAppear(int id, float time_to_appear) {
     }
     Wait(sec: time_to_appear)
  }
-}
-```
-
-### Imperative style only
-
-```go
-func Unit FindUnit(Vec3 pos, float radius) {
-  Unit[] us = GetUnits()
-  int i = 0
-  foreach(us as Unit u) {
-    if(u.position.Sub(pos).len < radius) {
-     return u
-    } 
-  }
-  return null
 }
 ```
 
@@ -180,17 +165,6 @@ func UnitGremlin(Gremlin u)
           Dead(u)
           Dying(u)
           Scatter(u)
-          paral {
-            RethinkTrigger(u, func bool () {
-              return u.heavy_attack_last_time <= time() || 
-                     u.roll_last_time <= time()
-            })
-            prio {
-              GremlinRollAttack(unit: u, radius_min : 3, radius_max : radius_max, radius_attack : 2, cooldown : 6, global_cooldown : 4, push_dist : 1)
-              GremlinHeavyAttack(unit: u, radius_max : radius_max, cooldown : 8, global_cooldown : 5, angle : 60)
-              Attack(u)
-            }
-          }
           Attack(u)
           Idle(u)
         }

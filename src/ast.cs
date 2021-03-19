@@ -57,6 +57,7 @@ public class AST  : AST_Base
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
+
     MetaHelper.syncVirtual(ctx, children);
   }
 
@@ -461,6 +462,7 @@ public class AST_EnumItem  : AST_Base
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
+
     MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref value);
   }
@@ -536,6 +538,7 @@ public class AST_UseParam  :  BaseMetaStruct
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
+
     MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
   }
@@ -610,6 +613,7 @@ public class AST_TypeCast  : AST
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
+
     MetaHelper.sync(ctx, ref ntype);
     MetaHelper.sync(ctx, ref type);
   }

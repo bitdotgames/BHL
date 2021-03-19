@@ -175,6 +175,196 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStrNewLine()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\n""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\n");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrNewLine2()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\n\n""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\n\n");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\\n""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\\n");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape2()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\\n\n""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\\n\n");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape3()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\\n\\n""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\\n\\n");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrTab()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\t""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\t");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrTab2()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\t\t""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\t\t");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrTabEscape()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\\t""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\\t");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrTabEscape2()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\\t\t""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\\t\t");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestStrTabEscape3()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return ""bar\\t\\t""
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var str = ExtractStr(ExecNode(node));
+
+    AssertEqual(str, "bar\\t\\t");
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestVarDecl()
   {
     string bhl = @"
@@ -827,6 +1017,25 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncAlreadyDeclaredArg()
+  {
+    string bhl = @"
+
+    func void foo(int k, int k)
+    {
+    }
+      
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      "@(3,29) k:<int>: already defined symbol 'k'"
+    );
+  }
+
+  [IsTested()]
   public void TestPassNamedValue()
   {
     string bhl = @"
@@ -978,6 +1187,30 @@ public class BHL_TestInterpreter : BHL_TestBase
         Interpret(bhl);
       },
       "missing argument 'k'"
+    );
+  }
+
+  [IsTested()]
+  public void TestFuncPassingExtraNamedArgs()
+  {
+    string bhl = @"
+
+    func int foo(int k)
+    {
+      return k
+    }
+      
+    func int test() 
+    {
+      return foo(k: 1, k: 2)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      "k: already passed before"
     );
   }
 
@@ -10521,7 +10754,7 @@ public class BHL_TestInterpreter : BHL_TestBase
       delegate() { 
         ExecNode(node, 0);
       },
-      "Index was outside the bounds of the array"
+      "Out of bounds index"
     );
   }
 
@@ -17585,8 +17818,8 @@ public class BHL_TestInterpreter : BHL_TestBase
     AssertEqual("foo", info[1].func_name);
     AssertEqual("bhl1", info[1].module_name);
     AssertEqual(7, info[1].line_num);
-    AssertEqual("?", info[2].func_name);
-    AssertEqual("?", info[2].module_name);
+    AssertEqual("test", info[2].func_name);
+    AssertEqual("bhl1", info[2].module_name);
     AssertEqual(12, info[2].line_num);
   }
 
@@ -17650,8 +17883,8 @@ public class BHL_TestInterpreter : BHL_TestBase
     AssertEqual("foo", info[0].func_name);
     AssertEqual("bhl2", info[0].module_name);
     AssertEqual(16, info[0].line_num);
-    AssertEqual("?", info[1].func_name);
-    AssertEqual("?", info[1].module_name);
+    AssertEqual("test", info[1].func_name);
+    AssertEqual("bhl1", info[1].module_name);
     AssertEqual(6, info[1].line_num);
   }
 

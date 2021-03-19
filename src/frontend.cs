@@ -604,6 +604,9 @@ public class Frontend : bhlBaseVisitor<object>
         idx = func_args.FindStringKeyIndex(ca_name.GetText());
         if(idx == -1)
           FireError(Location(ca_name) +  ": no such named argument");
+
+        if(norm_cargs[idx].ca != null)
+          FireError(Location(ca_name) +  ": already passed before");
       }
       
       if(idx >= func_args.Count)
@@ -1393,6 +1396,11 @@ public class Frontend : bhlBaseVisitor<object>
     ast.sval = ctx.@string().NORMALSTRING().GetText();
     //removing quotes
     ast.sval = ast.sval.Substring(1, ast.sval.Length-2);
+    //adding convenience support for newlines and tabs
+    ast.sval = ast.sval.Replace("\\n", "\n");
+    ast.sval = ast.sval.Replace("\\\n", "\\n");
+    ast.sval = ast.sval.Replace("\\t", "\t");
+    ast.sval = ast.sval.Replace("\\\t", "\\t");
     PeekAST().AddChild(ast);
 
     return null;
@@ -2001,7 +2009,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(name) +  ": 'ref' is only allowed in function declaration");
 
     Symbol symb = func_arg ? 
-      (Symbol) new FuncArgSymbol(str_name, tr, is_ref) :
+      (Symbol) new FuncArgSymbol(var_node, str_name, tr, is_ref) :
       (Symbol) new VariableSymbol(var_node, str_name, tr);
 
     symb.scope_level = scope_level;
@@ -2599,14 +2607,45 @@ public class ModuleRegistry
   }
 }
 
-public class PostProcessor
+public interface IPostProcessor
 {
-  public virtual bool NeedToRegen(List<string> files) { return false; }
-  public virtual void PostProc(ref AST_Module result) { }
-  public virtual void Finish() {}
+  //returns path to the result file
+  string Patch(LazyAST lazy_ast, string src_file, string result_file);
+  void Tally();
 }
 
-public class EmptyPostProcessor : PostProcessor {}
+public class EmptyPostProcessor : IPostProcessor 
+{
+  public string Patch(LazyAST lazy_ast, string src_file, string result_file) { return result_file; }
+  public void Tally() {}
+}
 
+public interface IASTResolver
+{
+  AST_Module Get();
+}
+
+public class LazyAST
+{
+  IASTResolver resolver;
+  AST_Module resolved;
+
+  public LazyAST(IASTResolver resolver)
+  {
+    this.resolver = resolver;
+  }
+
+  public LazyAST(AST_Module resolved)
+  {
+    this.resolved = resolved;
+  }
+
+  public AST_Module Get()
+  {
+    if(resolved == null)
+      resolved = resolver.Get();
+    return resolved;
+  }
+}
 
 } //namespace bhl
