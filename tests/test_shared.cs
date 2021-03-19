@@ -76,7 +76,6 @@ public static class BHL_TestExt
   }
 }
 
-
 public class BHL_TestRunner
 {
   public static void Main(string[] args)
@@ -88,7 +87,6 @@ public class BHL_TestRunner
 
   static void Run(string[] args, BHL_TestBase test)
   {
-    Console.WriteLine(">>>> Testing " + test.GetType().Name + " <<<<");
     int c = 0;
     foreach(var method in test.GetType().GetMethods())
     {
@@ -97,12 +95,17 @@ public class BHL_TestRunner
         Util.SetupASTFactory();
         if(IsAllowedToRun(args, test, method))
         {
+          if(c == 0)
+            Console.WriteLine(">>>> Testing " + test.GetType().Name + " <<<<");
+
           ++c;
           method.Invoke(test, new object[] {});
         }
       }
     }
-    Console.WriteLine("Done running "  + c + " tests");
+
+    if(c > 0)
+      Console.WriteLine("Done running "  + c + " tests");
   }
 
   static bool IsAllowedToRun(string[] args, BHL_TestBase test, MemberInfo member)

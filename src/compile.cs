@@ -66,20 +66,20 @@ public class SymbolViewTable
   public SymbolView Define(string name)
   {
     var s = new SymbolView()
-            {
-              name = name,
-              index = store.Count,
-              scope  = SymbolScope.Global
-            };
+    {
+      name = name,
+      index = store.Count,
+      scope  = SymbolScope.Global
+    };
 
     if(!store.ContainsKey(name))
     {
-     store[name] = s;
-     return s;
+      store[name] = s;
+      return s;
     }
     else
     {
-     return store[name];
+      return store[name];
     } 
   }
 
@@ -413,8 +413,6 @@ public class Compiler : AST_Visitor
     return def;
   }
 
-#region ForTestingPurposes
-
   public void DecodeOpcodes(byte[] bytecode)
   {
     Console.WriteLine("\n{0, -10}\t{1, -10}\t{2, -10}", "Address","Name","Operands");
@@ -491,8 +489,6 @@ public class Compiler : AST_Visitor
     Emit(op, operands);
     return this;
   }
-
-#endregion
 
   void Emit(Opcodes op, int[] operands = null)
   {

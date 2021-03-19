@@ -22,24 +22,24 @@ public class VM
 {
   List<DynVal> constants;
   byte[] instructions;
-  Dictionary<string, uint> func_buff;
+  Dictionary<string, uint> func2ip;
 
   Stack<DynVal> vm_stack = new Stack<DynVal>();
 
   Stack<Frame> frames = new Stack<Frame>();
   Frame curr_frame;
 
-  public VM(byte[] instructions, List<DynVal> constants, Dictionary<string, uint> func_buff)
+  public VM(byte[] instructions, List<DynVal> constants, Dictionary<string, uint> func2ip)
   {
     this.instructions = instructions;
     this.constants = constants;
-    this.func_buff = func_buff;
+    this.func2ip = func2ip;
   }
 
   public void Exec(string func)
   {
     var fr = new Frame();
-    fr.ip = func_buff[func];
+    fr.ip = func2ip[func];
     frames.Push(fr);
     Run();
   }
@@ -311,8 +311,6 @@ public class VM
     }
   }
 
-#region ForTestingPurposes
-
   public DynVal GetStackTop()
   {
     return vm_stack.Peek();
@@ -326,8 +324,6 @@ public class VM
       Console.WriteLine("\t" + v);
     }
   }
-
-#endregion
 }
 
 } //namespace bhl
