@@ -1,12 +1,6 @@
 using System;
-using System.Reflection;
 using System.IO;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Collections;
-using System.Threading;
 using System.Text;
-using Antlr4.Runtime;
 using bhl;
 
 public class BHL_TestVM : BHL_TestBase
@@ -32,7 +26,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.NUMBER);
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.NUM);
     AssertEqual(c.GetConstants()[0].num, 123);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -63,7 +57,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.BOOL);
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.BOOL);
     AssertEqual(c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -94,7 +88,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.NUMBER);
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.BOOL);
     AssertEqual(c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
@@ -125,14 +119,13 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.STRING);
-    AssertEqual(c.GetConstants()[0].num, 0);
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.NUM);
+    AssertEqual(c.GetConstants()[0].num, 7);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().str, "7");
   }
 
   [IsTested()]
@@ -156,7 +149,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.STRING);
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.STR);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -356,7 +349,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertEqual((int)c.GetConstants()[0].type, (int)DynVal.NIL);
+    AssertEqual((int)c.GetConstants()[0].type, (int)EnumLiteral.NIL);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -387,7 +380,7 @@ public class BHL_TestVM : BHL_TestBase
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
-    AssertTrue(c.GetConstants()[0].bval);
+    AssertEqual((int)c.GetConstants()[0].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -692,7 +685,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().type == DynVal.OBJ);
+    AssertTrue(vm.GetStackTop().type == Val.OBJ);
   }
 
   [IsTested()]
@@ -834,7 +827,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    var ret = vm.GetStackTop()._obj as DynValList;
+    var ret = vm.GetStackTop()._obj as ValList;
     AssertTrue( ret.Count == 1);
   }
 
@@ -931,7 +924,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    var ret = vm.GetStackTop()._obj as DynValList;
+    var ret = vm.GetStackTop()._obj as ValList;
     AssertTrue( ret.Count == 2);
     AssertTrue( ret[0].str == "tst");
   }
@@ -1426,7 +1419,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.GetConstants().Count, 3);
     AssertEqual(c.GetConstants()[0].num, 1);
     AssertEqual(c.GetConstants()[1].num, 2);
-    AssertTrue(c.GetConstants()[2].bval);
+    AssertEqual(c.GetConstants()[2].num, 1);
     AssertTrue(result.Length > 0);
     AssertEqual(result, expected);
 
@@ -1656,13 +1649,13 @@ public class BHL_TestVM : BHL_TestBase
   void CommonChecks(VM vm)
   {
     //for extra debug
-    //Console.WriteLine(DynVal.PoolDump());
+    //Console.WriteLine(Val.PoolDump());
 
-    //AssertEqual(intp.stack.Count, 0);
-    //AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
-    //AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
-    //AssertEqual(DynValDict.PoolCount, DynValDict.PoolCountFree);
-    //AssertEqual(FuncCtx.PoolCount, FuncCtx.PoolCountFree);
+    AssertEqual(vm.stack.Count, 0);
+    AssertEqual(Val.PoolCount, Val.PoolCountFree);
+    AssertEqual(ValList.PoolCount, ValList.PoolCountFree);
+    AssertEqual(ValDict.PoolCount, ValDict.PoolCountFree);
+    AssertEqual(FuncCtx.PoolCount, FuncCtx.PoolCountFree);
   }
 
   public static string ByteArrayToString(byte[] ba)

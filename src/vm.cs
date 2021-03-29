@@ -4,32 +4,868 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public class Frame
+public interface ValRefcounted
 {
-  public uint ip;
-  public Stack<DynVal> num_stack;
-  public List<DynVal> locals;
+  void Retain();
+  void Release(bool can_del = true);
+  bool TryDel();
+}
 
-  public Frame()
+public class Val
+{
+  public const byte NONE      = 0;
+  public const byte NUMBER    = 1;
+  public const byte BOOL      = 2;
+  public const byte STRING    = 3;
+  public const byte OBJ       = 4;
+  public const byte NIL       = 5;
+
+  public bool IsEmpty { get { return type == NONE; } }
+
+  public byte type { get { return _type; } }
+
+  public double num {
+    get {
+      return _num;
+    }
+    set {
+      SetNum(value);
+    }
+  }
+
+  public string str {
+    get {
+      return (string)_obj;
+    }
+    set {
+      SetStr(value);
+    }
+  }
+
+  public object obj {
+    get {
+      return _obj;
+    }
+    set {
+      SetObj(value);
+    }
+  }
+
+  public bool bval {
+    get {
+      return _num == 1;
+    }
+    set {
+      SetBool(value);
+    }
+  }
+
+  //NOTE: -1 means it's in released state
+  public int _refs;
+  public int refs { get { return _refs; } } 
+
+  ValRefcounted _refc;
+
+  //NOTE: below members are semi-public, one can use them for 
+  //      fast access or non-allocating storage of structs(e.g vectors, quaternions)
+  public byte _type;
+  public double _num;
+  public object _obj;
+
+  static Queue<Val> pool = new Queue<Val>(64);
+  static int pool_miss;
+  static int pool_hit;
+
+  //NOTE: use New() instead
+  internal Val()
+  {}
+
+  static public Val New()
   {
-    ip = 0;
-    num_stack = new Stack<DynVal>();
-    locals = new List<DynVal>();
+    Val dv;
+    if(pool.Count == 0)
+    {
+      ++pool_miss;
+      dv = new Val();
+#if DEBUG_REFS
+      Console.WriteLine("NEW: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
+    }
+    else
+    {
+      ++pool_hit;
+      dv = pool.Dequeue();
+#if DEBUG_REFS
+      Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
+      //NOTE: Val is Reset here instead of Del, see notes below 
+      dv.Reset();
+      dv._refs = 0;
+    }
+    return dv;
+  }
+
+  static public void Del(Val dv)
+  {
+    //NOTE: we don't Reset Val immediately, giving a caller
+    //      a chance to access its properties
+    if(dv._refs != 0)
+      throw new Exception("Deleting invalid object, refs " + dv._refs);
+    dv._refs = -1;
+
+    //NOTE: we'd like to ensure there are some spare values before 
+    //      the released one, this way it will be possible to call 
+    //      safely New() right after Del() since it won't return
+    //      just deleted object
+    if(pool.Count == 0)
+    {
+      ++pool_miss;
+      var tmp = new Val(); 
+      pool.Enqueue(tmp);
+      //Console.WriteLine("NEW3: " + tmp.GetHashCode()/* + " " + Environment.StackTrace*/);
+    }
+    pool.Enqueue(dv);
+    //Console.WriteLine("DEL: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+    if(pool.Count > pool_miss)
+      throw new Exception("Unbalanced New/Del " + pool.Count + " " + pool_miss);
+  }
+
+  //For proper assignments, like: dst = src (taking into account ref.counting)
+  static public Val Assign(Val dst, Val src)
+  {
+    if(dst != null)
+      dst.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    if(src != null) 
+      src.RefMod(RefOp.INC | RefOp.USR_INC);
+    return src;
+  }
+
+  //NOTE: refcount is not reset
+  void Reset()
+  {
+    _type = NONE;
+    _num = 0;
+    _obj = null;
+    _refc = null;
+  }
+
+  public void ValueCopyFrom(Val dv)
+  {
+    _type = dv._type;
+    _num = dv._num;
+    _obj = dv._obj;
+    _refc = dv._refc;
+  }
+
+  public Val ValueClone()
+  {
+    Val dv = New();
+    dv.ValueCopyFrom(this);
+    return dv;
+  }
+
+  //NOTE: see RefOp for constants
+  public void RefMod(int op)
+  {
+    if(_refc != null)
+    {
+      if((op & RefOp.USR_INC) != 0)
+      {
+        _refc.Retain();
+      }
+      else if((op & RefOp.USR_DEC) != 0)
+      {
+        _refc.Release(true);
+      }
+      else if((op & RefOp.USR_DEC_NO_DEL) != 0)
+      {
+        _refc.Release(false);
+      }
+      else if((op & RefOp.USR_TRY_DEL) != 0)
+      {
+        _refc.TryDel();
+      }
+    }
+
+    if((op & RefOp.INC) != 0)
+    {
+      if(_refs == -1)
+        throw new Exception("Invalid state");
+
+      ++_refs;
+#if DEBUG_REFS
+      Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
+    } 
+    else if((op & RefOp.DEC) != 0)
+    {
+      if(_refs == -1)
+        throw new Exception("Invalid state");
+      else if(_refs == 0)
+        throw new Exception("Double free");
+
+      --_refs;
+#if DEBUG_REFS
+      Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
+
+      if(_refs == 0)
+        Del(this);
+    }
+    else if((op & RefOp.DEC_NO_DEL) != 0)
+    {
+      if(_refs == -1)
+        throw new Exception("Invalid state");
+      else if(_refs == 0)
+        throw new Exception("Double free");
+
+      --_refs;
+#if DEBUG_REFS
+      Console.WriteLine("DCN: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
+    }
+    else if((op & RefOp.TRY_DEL) != 0)
+    {
+#if DEBUG_REFS
+      Console.WriteLine("TDL: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
+
+      if(_refs == 0)
+        Del(this);
+    }
+  }
+
+  public void Retain()
+  {
+    RefMod(RefOp.USR_INC | RefOp.INC);
+  }
+
+  public void Release()
+  {
+    RefMod(RefOp.USR_DEC | RefOp.DEC);
+  }
+
+  public void TryDel()
+  {
+    RefMod(RefOp.TRY_DEL);
+  }
+
+  public void RetainReference()
+  {
+    RefMod(RefOp.INC);
+  }
+
+  public void ReleaseReference()
+  {
+    RefMod(RefOp.DEC);
+  }
+
+  static public Val NewStr(string s)
+  {
+    Val dv = New();
+    dv.SetStr(s);
+    return dv;
+  }
+
+  public void SetStr(string s)
+  {
+    Reset();
+    _type = STRING;
+    _obj = s;
+  }
+
+  static public Val NewNum(int n)
+  {
+    Val dv = New();
+    dv.SetNum(n);
+    return dv;
+  }
+
+  public void SetNum(int n)
+  {
+    Reset();
+    _type = NUMBER;
+    _num = n;
+  }
+
+  static public Val NewNum(double n)
+  {
+    Val dv = New();
+    dv.SetNum(n);
+    return dv;
+  }
+
+  public void SetNum(double n)
+  {
+    Reset();
+    _type = NUMBER;
+    _num = n;
+  }
+
+  static public Val NewBool(bool b)
+  {
+    Val dv = New();
+    dv.SetBool(b);
+    return dv;
+  }
+
+  public void SetBool(bool b)
+  {
+    Reset();
+    _type = BOOL;
+    _num = b ? 1.0f : 0.0f;
+  }
+
+  static public Val NewObj(object o)
+  {
+    Val dv = New();
+    dv.SetObj(o);
+    return dv;
+  }
+
+  public void SetObj(object o)
+  {
+    Reset();
+    _type = o == null ? NIL : OBJ;
+    _obj = o;
+    _refc = _obj as ValRefcounted;
+  }
+
+  static public Val NewNil()
+  {
+    Val dv = New();
+    dv.SetNil();
+    return dv;
+  }
+
+  public void SetNil()
+  {
+    Reset();
+    _type = NIL;
+  }
+
+  public bool IsEqual(Val o)
+  {
+    bool res =
+      _type == o.type &&
+      _num == o._num &&
+      _obj == o._obj
+      ;
+
+    return res;
+  }
+
+  public override string ToString() 
+  {
+    string str = "";
+    if(type == NUMBER)
+      str = _num + ":<NUMBER>";
+    else if(type == BOOL)
+      str = bval + ":<BOOL>";
+    else if(type == STRING)
+      str = this.str + ":<STRING>";
+    else if(type == OBJ)
+      str = _obj.GetType().Name + ":<OBJ>";
+    else if(type == NIL)
+      str = "<NIL>";
+    else
+      str = "DYNVAL: type:"+type;
+
+    return str;// + " " + GetHashCode();//for extra debug
+  }
+
+  public object ToAny() 
+  {
+    if(type == NUMBER)
+      return (object)_num;
+    else if(type == BOOL)
+      return (object)bval;
+    else if(type == STRING)
+      return (string)_obj;
+    else if(type == OBJ)
+      return _obj;
+    else if(type == NIL)
+      return null;
+    else
+      throw new Exception("ToAny(): please support type: " + type);
+  }
+
+  static public void PoolAlloc(int num)
+  {
+    for(int i=0;i<num;++i)
+    {
+      ++pool_miss;
+      var tmp = new Val(); 
+      pool.Enqueue(tmp);
+    }
+  }
+
+  static public void PoolClear()
+  {
+    pool_hit = 0;
+    pool_miss = 0;
+    pool.Clear();
+  }
+
+  static public string PoolDump()
+  {
+    string res = "=== POOL ===\n";
+    res += "total:" + PoolCount + " free:" + PoolCountFree + "\n";
+    var dvs = new Val[pool.Count];
+    pool.CopyTo(dvs, 0);
+    for(int i=dvs.Length;i-- > 0;)
+    {
+      var v = dvs[i];
+      res += v + " " + v.GetHashCode() + "\n"; 
+    }
+    return res;
+  }
+
+  static public int PoolHits
+  {
+    get { return pool_hit; } 
+  }
+
+  static public int PoolMisses
+  {
+    get { return pool_miss; } 
+  }
+
+  static public int PoolCount
+  {
+    get { return pool_miss; }
+  }
+
+  static public int PoolCountFree
+  {
+    get { return pool.Count; }
+  }
+}
+
+public class ValList : IList<Val>, ValRefcounted
+{
+  //NOTE: exposed to allow manipulations like Reverse(). Use with caution.
+  public readonly List<Val> lst = new List<Val>();
+
+  //NOTE: -1 means it's in released state,
+  //      public only for inspection
+  public int refs;
+
+  //////////////////IList//////////////////
+
+  public int Count { get { return lst.Count; } }
+
+  public bool IsFixedSize { get { return false; } }
+  public bool IsReadOnly { get { return false; } }
+  public bool IsSynchronized { get { throw new NotImplementedException(); } }
+  public object SyncRoot { get { throw new NotImplementedException(); } }
+
+  public static implicit operator Val(ValList lst)
+  {
+    return Val.NewObj(lst);
+  }
+
+  public void Add(Val dv)
+  {
+    dv.RefMod(RefOp.INC | RefOp.USR_INC);
+    lst.Add(dv);
+  }
+
+  public void AddRange(IList<Val> list)
+  {
+    for(int i=0; i<list.Count; ++i)
+      Add(list[i]);
+  }
+
+  public void RemoveAt(int idx)
+  {
+    var dv = lst[idx];
+    dv.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    lst.RemoveAt(idx); 
+  }
+
+  public void Clear()
+  {
+    for(int i=0;i<Count;++i)
+      lst[i].RefMod(RefOp.USR_DEC | RefOp.DEC);
+
+    lst.Clear();
+  }
+
+  public Val this[int i]
+  {
+    get {
+      return lst[i];
+    }
+    set {
+      var prev = lst[i];
+      prev.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      value.RefMod(RefOp.INC | RefOp.USR_INC);
+      lst[i] = value;
+    }
+  }
+
+  public int IndexOf(Val dv)
+  {
+    return lst.IndexOf(dv);
+  }
+
+  public bool Contains(Val dv)
+  {
+    return IndexOf(dv) >= 0;
+  }
+
+  public bool Remove(Val dv)
+  {
+    int idx = IndexOf(dv);
+    if(idx < 0)
+      return false;
+    RemoveAt(idx);
+    return true;
+  }
+
+  public void CopyTo(Val[] arr, int len)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void Insert(int pos, Val o)
+  {
+    throw new NotImplementedException();
+  }
+
+  public IEnumerator<Val> GetEnumerator()
+  {
+    throw new NotImplementedException();
+  }
+
+  IEnumerator IEnumerable.GetEnumerator()
+  {
+    return GetEnumerator();
+  }
+
+  ///////////////////////////////////////
+
+  public void Retain()
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    ++refs;
+    //Console.WriteLine("RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
+  }
+
+  public void Release(bool can_del = true)
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    if(refs == 0)
+      throw new Exception("Double free");
+
+    --refs;
+    //Console.WriteLine("RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
+    if(can_del)
+      TryDel();
+  }
+
+  public bool TryDel()
+  {
+    if(refs != 0)
+      return false;
+
+    //Console.WriteLine("DEL " + GetHashCode());
+    
+    Del(this);
+
+    return true;
+  }
+
+  public void CopyFrom(ValList lst)
+  {
+    Clear();
+    for(int i=0;i<lst.Count;++i)
+      Add(lst[i]);
+  }
+
+  ///////////////////////////////////////
+
+  static public Stack<ValList> pool = new Stack<ValList>();
+  static int pool_hit;
+  static int pool_miss;
+
+  //NOTE: use New() instead
+  internal ValList()
+  {}
+
+  public static ValList New()
+  {
+    ValList lst;
+    if(pool.Count == 0)
+    {
+      ++pool_miss;
+      lst = new ValList();
+    }
+    else
+    {
+      ++pool_hit;
+      lst = pool.Pop();
+
+      if(lst.refs != -1)
+        throw new Exception("Expected to be released, refs " + lst.refs);
+      lst.refs = 0;
+    }
+
+    return lst;
+  }
+
+  static public void Del(ValList lst)
+  {
+    if(lst.refs != 0)
+      throw new Exception("Freeing invalid object, refs " + lst.refs);
+
+    lst.refs = -1;
+    lst.Clear();
+    pool.Push(lst);
+
+    if(pool.Count > pool_miss)
+      throw new Exception("Unbalanced New/Del");
+  }
+
+  static public void PoolClear()
+  {
+    pool_miss = 0;
+    pool_hit = 0;
+    pool.Clear();
+  }
+
+  static public int PoolHits
+  {
+    get { return pool_hit; } 
+  }
+
+  static public int PoolMisses
+  {
+    get { return pool_miss; } 
+  }
+
+  static public int PoolCount
+  {
+    get { return pool_miss; }
+  }
+
+  static public int PoolCountFree
+  {
+    get { return pool.Count; }
+  }
+}
+
+public class ValDict : ValRefcounted
+{
+  public Dictionary<ulong, Val> vars = new Dictionary<ulong, Val>();
+
+  //NOTE: -1 means it's in released state,
+  //      public only for inspection
+  public int refs;
+
+  static public Stack<ValDict> pool = new Stack<ValDict>();
+  static int pool_hit;
+  static int pool_miss;
+
+  //NOTE: use New() instead
+  internal ValDict()
+  {}
+
+  public void Retain()
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    ++refs;
+
+    //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
+  }
+
+  public void Release(bool can_del = true)
+  {
+    if(refs == -1)
+      throw new Exception("Invalid state");
+    if(refs == 0)
+      throw new Exception("Double free");
+
+    --refs;
+
+    //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
+
+    if(can_del)
+      TryDel();
+  }
+
+  public bool TryDel()
+  {
+    if(refs != 0)
+      return false;
+    
+    Del(this);
+    return true;
+  }
+
+  public static ValDict New()
+  {
+    ValDict tb;
+    if(pool.Count == 0)
+    {
+      ++pool_miss;
+      tb = new ValDict();
+    }
+    else
+    {
+      ++pool_hit;
+      tb = pool.Pop();
+
+      if(tb.refs != -1)
+        throw new Exception("Expected to be released, refs " + tb.refs);
+      tb.refs = 0;
+    }
+
+    return tb;
+  }
+
+  static public void PoolClear()
+  {
+    pool_miss = 0;
+    pool_hit = 0;
+    pool.Clear();
+  }
+
+  static public int PoolHits
+  {
+    get { return pool_hit; } 
+  }
+
+  static public int PoolMisses
+  {
+    get { return pool_miss; } 
+  }
+
+  static public int PoolCount
+  {
+    get { return pool_miss; }
+  }
+
+  static public int PoolCountFree
+  {
+    get { return pool.Count; }
+  }
+
+  static public void Del(ValDict tb)
+  {
+    if(tb.refs != 0)
+      throw new Exception("Freeing invalid object, refs " + tb.refs);
+
+    tb.refs = -1;
+    tb.Clear();
+    pool.Push(tb);
+
+    if(pool.Count > pool_miss)
+      throw new Exception("Unbalanced New/Del");
+  }
+
+  public void Clear()
+  {
+    var enm = vars.GetEnumerator();
+    try
+    {
+      while(enm.MoveNext())
+      {
+        var val = enm.Current.Value;
+        val.RefMod(RefOp.USR_DEC | RefOp.DEC);
+      }
+    }
+    finally
+    {
+      enm.Dispose();
+    }
+
+    vars.Clear();
+  }
+
+  public void Set(HashedName key, Val val)
+  {
+    ulong k = key.n; 
+    Val prev;
+    if(vars.TryGetValue(k, out prev))
+    {
+      for(int i=0;i<prev._refs;++i)
+      {
+        val.RefMod(RefOp.USR_INC);
+        prev.RefMod(RefOp.USR_DEC);
+      }
+      prev.ValueCopyFrom(val);
+      //Console.WriteLine("VAL SET2 " + prev.GetHashCode());
+    }
+    else
+    {
+      //Console.WriteLine("VAL SET1 " + val.GetHashCode());
+      vars[k] = val;
+      val.RefMod(RefOp.USR_INC | RefOp.INC);
+    }
+  }
+
+  public bool TryGet(HashedName key, out Val val)
+  {
+    return vars.TryGetValue(key.n, out val);
+  }
+
+  public Val Get(HashedName key)
+  {
+    return vars[key.n];
+  }
+
+  public void CopyFrom(ValDict o)
+  {
+    var enm = o.vars.GetEnumerator();
+    try
+    {
+      while(enm.MoveNext())
+      {
+        var key = enm.Current.Key;
+        var val = enm.Current.Value;
+        Set(key, val);
+      }
+    }
+    finally
+    {
+      enm.Dispose();
+    }
   }
 }
 
 public class VM
 {
-  List<DynVal> constants;
+  public class Frame
+  {
+    public uint ip;
+    public Stack<Val> num_stack;
+    public List<Val> locals;
+
+    public Frame()
+    {
+      ip = 0;
+      num_stack = new Stack<Val>();
+      locals = new List<Val>();
+    }
+  }
+
+  List<Const> constants;
   byte[] instructions;
   Dictionary<string, uint> func2ip;
 
-  Stack<DynVal> vm_stack = new Stack<DynVal>();
+  //public for inspection purposes only
+  public Stack<Val> stack = new Stack<Val>();
 
-  Stack<Frame> frames = new Stack<Frame>();
-  Frame curr_frame;
+  //public for inspection purposes only
+  public Stack<Frame> frames = new Stack<Frame>();
+  public Frame curr_frame;
 
-  public VM(byte[] instructions, List<DynVal> constants, Dictionary<string, uint> func2ip)
+  public VM(byte[] instructions, List<Const> constants, Dictionary<string, uint> func2ip)
   {
     this.instructions = instructions;
     this.constants = constants;
@@ -61,10 +897,11 @@ public class VM
           if(const_idx >= constants.Count)
             throw new Exception("Index out of constant pool: " + const_idx);
 
-          curr_frame.num_stack.Push(constants[const_idx]);
+          var cn = constants[const_idx];
+          curr_frame.num_stack.Push(cn.ToVal());
         break;
         case Opcodes.New:
-          curr_frame.num_stack.Push(DynVal.NewObj(DynValList.New()));
+          curr_frame.num_stack.Push(Val.NewObj(ValList.New()));
           ++curr_frame.ip;
         break;
         case Opcodes.Add:
@@ -102,7 +939,7 @@ public class VM
           }
           else
           {
-            vm_stack.Push(ret_val);
+            stack.Push(ret_val);
           }
         break;
         case Opcodes.MethodCall:
@@ -176,7 +1013,7 @@ public class VM
           if(curr_frame.num_stack.Count > 0)
             curr_frame.locals.Add(curr_frame.num_stack.Pop());
           else
-            curr_frame.locals.Add(DynVal.New());
+            curr_frame.locals.Add(Val.New());
       break;
       case Opcodes.GetVar:
         if(local_idx >= curr_frame.locals.Count)
@@ -192,28 +1029,28 @@ public class VM
     switch(op)
     {
       case Opcodes.UnaryNot:
-        curr_frame.num_stack.Push(DynVal.NewBool(operand._num != 1));
+        curr_frame.num_stack.Push(Val.NewBool(operand.num != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.num_stack.Push(DynVal.NewNum(operand._num * -1));
+        curr_frame.num_stack.Push(Val.NewNum(operand.num * -1));
       break;
     }
   }
 
-  DynValList GetAsList(DynVal arr)
+  ValList GetAsList(Val arr)
   {
-    var lst = arr.obj as DynValList;
+    var lst = arr.obj as ValList;
     if(lst == null)
-      throw new UserError("Not a DynValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+      throw new UserError("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
     return lst;
   }
 
   void ExecuteBuiltInArrayFunc(BuiltInArray func)
   {
-    DynVal idx;
-    DynVal arr;
-    DynVal val;
-    DynValList lst;
+    Val idx;
+    Val arr;
+    Val val;
+    ValList lst;
     switch(func)
     {
       case BuiltInArray.Add:
@@ -241,7 +1078,7 @@ public class VM
       case BuiltInArray.Count:
         arr = curr_frame.num_stack.Peek();
         lst = GetAsList(arr);
-        curr_frame.num_stack.Push(DynVal.NewNum(lst.Count));
+        curr_frame.num_stack.Push(Val.NewNum(lst.Count));
       break;
       default:
         throw new Exception("Unknown method -> " + func);
@@ -258,65 +1095,65 @@ public class VM
     switch(op)
     {
       case Opcodes.Add:
-        if((r_opertand._type == DynVal.STRING) && (l_opertand._type == DynVal.STRING))
-          stk.Push(DynVal.NewStr(l_opertand._str + r_opertand._str));
+        if((r_opertand._type == Val.STRING) && (l_opertand._type == Val.STRING))
+          stk.Push(Val.NewStr((string)l_opertand._obj + (string)r_opertand._obj));
         else
-          stk.Push(DynVal.NewNum(l_opertand._num + r_opertand._num));
+          stk.Push(Val.NewNum(l_opertand._num + r_opertand._num));
       break;
       case Opcodes.Sub:
-        stk.Push(DynVal.NewNum(l_opertand._num - r_opertand._num));
+        stk.Push(Val.NewNum(l_opertand._num - r_opertand._num));
       break;
       case Opcodes.Div:
-        stk.Push(DynVal.NewNum(l_opertand._num / r_opertand._num));
+        stk.Push(Val.NewNum(l_opertand._num / r_opertand._num));
       break;
       case Opcodes.Mul:
-        stk.Push(DynVal.NewNum(l_opertand._num * r_opertand._num));
+        stk.Push(Val.NewNum(l_opertand._num * r_opertand._num));
       break;
       case Opcodes.Equal:
-        stk.Push(DynVal.NewBool(l_opertand._num == r_opertand._num));
+        stk.Push(Val.NewBool(l_opertand._num == r_opertand._num));
       break;
       case Opcodes.NotEqual:
-        stk.Push(DynVal.NewBool(l_opertand._num != r_opertand._num));
+        stk.Push(Val.NewBool(l_opertand._num != r_opertand._num));
       break;
       case Opcodes.Greather:
-        stk.Push(DynVal.NewBool(l_opertand._num > r_opertand._num));
+        stk.Push(Val.NewBool(l_opertand._num > r_opertand._num));
       break;
       case Opcodes.Less:
-        stk.Push(DynVal.NewBool(l_opertand._num < r_opertand._num));
+        stk.Push(Val.NewBool(l_opertand._num < r_opertand._num));
       break;
       case Opcodes.GreatherOrEqual:
-        stk.Push(DynVal.NewBool(l_opertand._num >= r_opertand._num));
+        stk.Push(Val.NewBool(l_opertand._num >= r_opertand._num));
       break;
       case Opcodes.LessOrEqual:
-        stk.Push(DynVal.NewBool(l_opertand._num <= r_opertand._num));
+        stk.Push(Val.NewBool(l_opertand._num <= r_opertand._num));
       break;
       case Opcodes.And:
-        stk.Push(DynVal.NewBool(l_opertand._num == 1 && r_opertand._num == 1));
+        stk.Push(Val.NewBool(l_opertand._num == 1 && r_opertand._num == 1));
       break;
       case Opcodes.Or:
-        stk.Push(DynVal.NewBool(l_opertand._num == 1 || r_opertand._num == 1));
+        stk.Push(Val.NewBool(l_opertand._num == 1 || r_opertand._num == 1));
       break;
       case Opcodes.BitAnd:
-        stk.Push(DynVal.NewNum((int)l_opertand._num & (int)r_opertand._num));
+        stk.Push(Val.NewNum((int)l_opertand._num & (int)r_opertand._num));
       break;
       case Opcodes.BitOr:
-        stk.Push(DynVal.NewNum((int)l_opertand._num | (int)r_opertand._num));
+        stk.Push(Val.NewNum((int)l_opertand._num | (int)r_opertand._num));
       break;
       case Opcodes.Mod:
-        stk.Push(DynVal.NewNum((int)l_opertand._num % (int)r_opertand._num));
+        stk.Push(Val.NewNum((int)l_opertand._num % (int)r_opertand._num));
       break;
     }
   }
 
-  public DynVal GetStackTop()
+  public Val GetStackTop()
   {
-    return vm_stack.Peek();
+    return stack.Peek();
   }
 
   public void ShowFullStack()
   {
     Console.WriteLine(" VM STACK :");
-    foreach(var v in vm_stack)
+    foreach(var v in stack)
     {
       Console.WriteLine("\t" + v);
     }

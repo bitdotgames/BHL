@@ -1,9 +1,36 @@
 using System;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace bhl {
+
+public class Const
+{
+  public EnumLiteral type;
+  public double num;
+  public string str;
+
+  public Const(AST_Literal lt)
+  {
+    type = lt.type;
+    num = lt.nval;
+    str = lt.sval;
+  }
+
+  public Val ToVal()
+  {
+    if(type == EnumLiteral.NUM)
+      return Val.NewNum(num);
+    else if(type == EnumLiteral.BOOL)
+      return Val.NewBool(num == 1);
+    else if(type == EnumLiteral.STR)
+      return Val.NewStr(str);
+    else if(type == EnumLiteral.NIL)
+      return Val.NewNil();
+    else
+      throw new Exception("Bad type");
+  }
+}
 
 public enum Opcodes
 {
@@ -111,7 +138,7 @@ public class Compiler : AST_Visitor
 
   List<WriteBuffer> scopes = new List<WriteBuffer>();
 
-  List<DynVal> constants = new List<DynVal>();
+  List<Const> constants = new List<Const>();
 
   SymbolViewTable sv_table = new SymbolViewTable();
 
@@ -164,39 +191,20 @@ public class Compiler : AST_Visitor
     Visit(ast);
   }
 
-  int AddConstant(AST_Literal literal)
+  int AddConstant(AST_Literal lt)
   {
     for(int i = 0 ; i < constants.Count; ++i)
     {
-      if((constants[i].type == (byte)literal.type) 
-         && (constants[i].num == literal.nval)
-         && (constants[i].str == literal.sval)
-         || (constants[i].type == DynVal.NIL))
+      var cn = constants[i];
+
+      if(lt.type == cn.type && cn.num == lt.nval && cn.str == lt.sval)
         return i;
     }
-
-    switch(literal.type)
-    {
-      case EnumLiteral.NUM:
-        constants.Add(DynVal.NewNum(literal.nval));
-      break;
-      case EnumLiteral.BOOL:
-        constants.Add(DynVal.NewBool(literal.nval > 0));
-      break;
-      case EnumLiteral.STR:
-        constants.Add(DynVal.NewStr(literal.sval));
-      break;
-      case EnumLiteral.NIL:
-        constants.Add(DynVal.NewNil());
-      break;
-      default:
-        throw new Exception("No supported literal type: " + literal.type);
-    }
-
+    constants.Add(new Const(lt));
     return constants.Count-1;
   }
 
-  public List<DynVal> GetConstants()
+  public List<Const> GetConstants()
   {
     return constants;
   }
@@ -629,16 +637,16 @@ public class Compiler : AST_Visitor
   {
     VisitChildren(ast);
 
-    var val =  constants[constants.Count - 1];
-
-    if(ast.ntype == SymbolTable._int.name.n)
-    {
-      val.SetNum((int)val.num);
-    }
-    else if(ast.ntype == SymbolTable._string.name.n && val.type != DynVal.STRING)
-    {
-      val.SetStr("" + val.num);
-    }
+    //TODO:
+    //var val = constants[constants.Count - 1];
+    //if(ast.ntype == SymbolTable._int.name.n)
+    //{
+    //  val.SetNum((int)val.num);
+    //}
+    //else if(ast.ntype == SymbolTable._string.name.n && val.type != Val.STRING)
+    //{
+    //  val.SetStr("" + val.num);
+    //}
   }
 
   public override void DoVisit(AST_New ast)
