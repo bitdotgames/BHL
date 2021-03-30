@@ -21,8 +21,9 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -33,7 +34,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 123);
+    AssertEqual(vm.PopValue().num, 123);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -52,8 +54,9 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -64,11 +67,12 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().bval);
+    AssertTrue(vm.PopValue().bval);
+    CommonChecks(vm);
   }
 
   [IsTested()]
-  public void TestCompileBoolTypeCast()
+  public void TestCompileBoolToIntTypeCast()
   {
     string bhl = @"
     func int test()
@@ -83,8 +87,10 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.TypeCastInt)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -95,11 +101,12 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 1);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
   }
 
   [IsTested()]
-  public void TestCompileStringTypeCast()
+  public void TestCompileIntToStringTypeCast()
   {
     string bhl = @"
     func string test()
@@ -114,8 +121,10 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.TypeCastStr)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -126,6 +135,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
+    AssertEqual(vm.PopValue().str, "7");
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -144,8 +155,9 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -155,7 +167,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().str, "Hello");
+    AssertEqual(vm.PopValue().str, "Hello");
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -174,10 +187,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.And)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.And)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -188,7 +202,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().bval == false);
+    AssertTrue(vm.PopValue().bval == false);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -207,10 +222,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Or)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Or)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -221,7 +237,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().bval);
+    AssertTrue(vm.PopValue().bval);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -240,10 +257,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.BitAnd)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.BitAnd)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -254,7 +272,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 1);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -273,10 +292,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.BitOr)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.BitOr)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -287,7 +307,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 7);
+    AssertEqual(vm.PopValue().num, 7);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -306,10 +327,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Mod)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Mod)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -320,7 +342,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 1);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -340,12 +363,13 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Equal)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Equal)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -355,7 +379,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().bval);
+    AssertTrue(vm.PopValue().bval);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -374,9 +399,10 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.UnaryNot)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.UnaryNot)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -386,7 +412,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().bval == false);
+    AssertTrue(vm.PopValue().bval == false);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -406,11 +433,12 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.UnaryNeg)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.UnaryNeg)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -420,7 +448,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, -1);
+    AssertEqual(vm.PopValue().num, -1);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -439,10 +468,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -453,7 +483,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 30);
+    AssertEqual(vm.PopValue().num, 30);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -472,10 +503,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -486,7 +518,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().str, "Hello world !");
+    AssertEqual(vm.PopValue().str, "Hello world !");
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -505,10 +538,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -518,7 +552,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 20);
+    AssertEqual(vm.PopValue().num, 20);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -537,10 +572,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Sub)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -551,7 +587,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 10);
+    AssertEqual(vm.PopValue().num, 10);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -570,10 +607,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Div)
-      .TestEmit(Opcodes.ReturnVal)   
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Div)
+      .Emit(Opcodes.ReturnVal)   
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -584,7 +622,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 2);
+    AssertEqual(vm.PopValue().num, 2);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -603,10 +642,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Mul)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Mul)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -617,7 +657,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 200);
+    AssertEqual(vm.PopValue().num, 200);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -636,12 +677,13 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.Mul)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Mul)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertTrue(result.Length > 0);
@@ -653,11 +695,12 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 500);
+    AssertEqual(vm.PopValue().num, 500);
+    CommonChecks(vm);
   }
 
   [IsTested()]
-  public void TestCompileArray()
+  public void TestCompileEmptyIntArray()
   {
     string bhl = @"
     func int[] test()
@@ -673,10 +716,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.New, new int[] { 0 }) 
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.NewArr) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 0);
@@ -685,11 +729,14 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().type == Val.OBJ);
+    var lst = vm.PopValue().obj as ValList;
+    AssertEqual(lst.Count, 0);
+    lst.TryDel();
+    CommonChecks(vm);
   }
 
   [IsTested()]
-  public void TestCompileStringArray()
+  public void TestCompileAddToStringArray()
   {
     string bhl = @"
     func string test()
@@ -706,15 +753,16 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.New, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.IdxGet)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.NewArr)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.ArrIdxGet)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -723,11 +771,12 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().str == "test");
+    AssertEqual(vm.PopValue().str, "test");
+    CommonChecks(vm);
   }
 
   [IsTested()]
-  public void TestCompileArrayIdx()
+  public void TestCompileTmpArrayAtIdx()
   {
     string bhl = @"
     func int[] mkarray()
@@ -751,21 +800,23 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       //mkarray
-      .TestEmit(Opcodes.New, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.NewArr)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       //test
-      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.IdxGet)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.FuncCall, new [] { 0, 0 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.ArrIdxGet)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 3);
@@ -774,7 +825,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().num == 1);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -803,22 +855,24 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       //mkarray
-      .TestEmit(Opcodes.New, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.RemoveAt })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.NewArr)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.RemoveAt })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       //test
-      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.FuncCall, new [] { 0,0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 3);
@@ -827,12 +881,14 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    var ret = vm.GetStackTop()._obj as ValList;
-    AssertTrue( ret.Count == 1);
+    var lst = vm.PopValue().obj as ValList;
+    AssertEqual(lst.Count, 1);
+    lst.TryDel();
+    CommonChecks(vm);
   }
 
   [IsTested()]
-  public void TestCompileArrayCount() 
+  public void TestCompileTmpArrayCount() 
   {
     string bhl = @"
     func int[] mkarray()
@@ -856,20 +912,22 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       //mkarray
-      .TestEmit(Opcodes.New, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.NewArr)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       //test
-      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Count })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.FuncCall, new [] { 0,0 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Count })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -878,7 +936,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().num == 2);
+    AssertEqual(vm.PopValue().num, 2);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -902,20 +961,21 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.New, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.SetAt })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 3 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.NewArr)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.SetAt })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
@@ -924,9 +984,12 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    var ret = vm.GetStackTop()._obj as ValList;
-    AssertTrue( ret.Count == 2);
-    AssertTrue( ret[0].str == "tst");
+    var lst = vm.PopValue().obj as ValList;
+    AssertEqual(lst.Count, 2);
+    AssertEqual(lst[0].str, "tst");
+    AssertEqual(lst[1].str, "bar");
+    lst.TryDel();
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -957,26 +1020,27 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       //foo
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.Return)
       //test
-      .TestEmit(Opcodes.New, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.FuncCall, new [] { 0,1 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 3 })
-      .TestEmit(Opcodes.IdxGet)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.NewArr)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.MethodCall, new int[] { (int)BuiltInArray.Add })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.FuncCall, new [] { 0,1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.ArrIdxGet)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
@@ -985,7 +1049,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().num == 1);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1005,12 +1070,13 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 1);
@@ -1020,7 +1086,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 246);
+    AssertEqual(vm.PopValue().num, 246);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1045,7 +1112,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().bval);
+    AssertTrue(vm.PopValue().bval);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1073,26 +1141,29 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       //1 func code
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       //2 func code
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       //test program code
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.FuncCall, new [] { 0,1 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.Constant, new int[] { 3 })
-      .TestEmit(Opcodes.Sub)
-      .TestEmit(Opcodes.FuncCall, new [] { 8,1 })
-      .TestEmit(Opcodes.Sub)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.FuncCall, new [] { 0,1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.FuncCall, new [] { 9,1 })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
@@ -1106,7 +1177,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 125);
+    AssertEqual(vm.PopValue().num, 125);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1132,17 +1204,19 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       //1 func code
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       //test program code
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.FuncCall, new [] { 0,1 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.FuncCall, new [] { 0,1 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -1154,7 +1228,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("Test");
-    AssertEqual(vm.GetStackTop().str, "Hello world !");
+    AssertEqual(vm.PopValue().str, "Hello world !");
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1180,16 +1255,17 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.Greather)
-      .TestEmit(Opcodes.CondJump, new int[] { 4 })
-      .TestEmit(Opcodes.Constant, new int[] { 3 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.CondJump, new int[] { 4 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
@@ -1202,7 +1278,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 100);
+    AssertEqual(vm.PopValue().num, 100);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1232,19 +1309,20 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.Greather)
-      .TestEmit(Opcodes.CondJump, new int[] { 6 })
-      .TestEmit(Opcodes.Constant, new int[] { 3 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Jump, new int[] { 4 })
-      .TestEmit(Opcodes.Constant, new int[] { 4 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.CondJump, new int[] { 6 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Jump, new int[] { 4 })
+      .Emit(Opcodes.Constant, new int[] { 4 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 5);
@@ -1258,7 +1336,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 10);
+    AssertEqual(vm.PopValue().num, 10);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1284,21 +1363,22 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
       //__while statenemt__//
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.GreatherOrEqual)
-      .TestEmit(Opcodes.CondJump, new int[] { 9 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Sub)
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.LoopJump, new int[] { 16 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.GreaterOrEqual)
+      .Emit(Opcodes.CondJump, new int[] { 9 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.LoopJump, new int[] { 16 })
       //__//
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 2);
@@ -1309,7 +1389,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 0);
+    AssertEqual(vm.PopValue().num, 0);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1335,27 +1416,28 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
       //__for statenemt__//
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.SetVar, new int[] { 1 })
-      .TestEmit(Opcodes.GetVar, new int[] { 1 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.Less)
-      .TestEmit(Opcodes.CondJump, new int[] { 16 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 1 })
-      .TestEmit(Opcodes.Sub)
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 1 })
-      .TestEmit(Opcodes.Constant, new int[] { 3 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.SetVar, new int[] { 1 })
-      .TestEmit(Opcodes.LoopJump, new int[] { 23 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.SetVar, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Less)
+      .Emit(Opcodes.CondJump, new int[] { 16 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.SetVar, new int[] { 1 })
+      .Emit(Opcodes.LoopJump, new int[] { 23 })
       //__//
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 4);
@@ -1368,7 +1450,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 7);
+    AssertEqual(vm.PopValue().num, 7);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1402,18 +1485,20 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.CondJump, new int[] { 6 })
-      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
-      .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.Jump, new int[] { 4 })
-      .TestEmit(Opcodes.FuncCall, new [] { 3,0 })
-      .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.CondJump, new int[] { 6 })
+      .Emit(Opcodes.FuncCall, new [] { 0,0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Jump, new int[] { 4 })
+      .Emit(Opcodes.FuncCall, new [] { 4,0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 3);
@@ -1425,7 +1510,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertTrue(vm.GetStackTop().bval);
+    AssertTrue(vm.PopValue().bval);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1459,20 +1545,22 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler()
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.Greather)
-      .TestEmit(Opcodes.CondJump, new int[] { 6 })
-      .TestEmit(Opcodes.FuncCall, new [] { 0,0 })
-      .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.Jump, new int[] { 4 })
-      .TestEmit(Opcodes.FuncCall, new [] { 3,0 })
-      .TestEmit(Opcodes.ReturnVal)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.CondJump, new int[] { 6 })
+      .Emit(Opcodes.FuncCall, new [] { 0,0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Jump, new int[] { 4 })
+      .Emit(Opcodes.FuncCall, new [] { 4,0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 3);
@@ -1484,7 +1572,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 1);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1510,28 +1599,30 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       //foo func code
-      .TestEmit(Opcodes.SetVar, new int[] { 0 })
-      .TestEmit(Opcodes.DefArg, new int[] { 5 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.Sub)
-      .TestEmit(Opcodes.SetVar, new int[] { 1 })
-      .TestEmit(Opcodes.DefArg, new int[] { 2 })
-      .TestEmit(Opcodes.Constant, new int[] { 2 })
-      .TestEmit(Opcodes.SetVar, new int[] { 2 })
-      .TestEmit(Opcodes.GetVar, new int[] { 0 })
-      .TestEmit(Opcodes.GetVar, new int[] { 1 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.GetVar, new int[] { 2 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.DefArg, new int[] { 5 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.SetVar, new int[] { 1 })
+      .Emit(Opcodes.DefArg, new int[] { 2 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.SetVar, new int[] { 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       //test program code
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Constant, new int[] { 0 })
-      .TestEmit(Opcodes.Add)
-      .TestEmit(Opcodes.Constant, new int[] { 1 })
-      .TestEmit(Opcodes.FuncCall, new [] { 0, 130 })
-      .TestEmit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.FuncCall, new [] { 0, 130 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
       .GetBytes();
 
     AssertEqual(c.GetConstants().Count, 3);
@@ -1540,11 +1631,12 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 12);
+    AssertEqual(vm.PopValue().num, 12);
+    CommonChecks(vm);
   }
 
   [IsTested()]
-  public void TestFib()
+  public void TestFibonacci()
   {
     string bhl = @"
 
@@ -1579,7 +1671,8 @@ public class BHL_TestVM : BHL_TestBase
       var stopwatch = System.Diagnostics.Stopwatch.StartNew();
       vm.Exec("test");
       stopwatch.Stop();
-      AssertEqual(vm.GetStackTop().num, 610);
+      AssertEqual(vm.PopValue().num, 610);
+      CommonChecks(vm);
       Console.WriteLine("bhl vm fib ticks: {0}", stopwatch.ElapsedTicks);
     }
   }
@@ -1619,7 +1712,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(result, c.GetConstants(), c.GetFuncBuffer());
     vm.Exec("test");
-    AssertEqual(vm.GetStackTop().num, 33930);
+    AssertEqual(vm.PopValue().num, 33930);
+    CommonChecks(vm);
   }
 
   ///////////////////////////////////////
@@ -1649,13 +1743,13 @@ public class BHL_TestVM : BHL_TestBase
   void CommonChecks(VM vm)
   {
     //for extra debug
-    //Console.WriteLine(Val.PoolDump());
+    if(Val.PoolCount != Val.PoolCountFree)
+      Console.WriteLine(Val.PoolDump());
 
     AssertEqual(vm.stack.Count, 0);
     AssertEqual(Val.PoolCount, Val.PoolCountFree);
     AssertEqual(ValList.PoolCount, ValList.PoolCountFree);
     AssertEqual(ValDict.PoolCount, ValDict.PoolCountFree);
-    AssertEqual(FuncCtx.PoolCount, FuncCtx.PoolCountFree);
   }
 
   public static string ByteArrayToString(byte[] ba)
@@ -1668,10 +1762,40 @@ public class BHL_TestVM : BHL_TestBase
 
   public static void AssertEqual(byte[] a, byte[] b)
   {
-    var ahex = ByteArrayToString(a);
-    var bhex = ByteArrayToString(b);
+    string ahex = ByteArrayToString(a);
+    string bhex = ByteArrayToString(b);
 
     if(!(ahex == bhex))
+    {
+      string acmp = ""; 
+      for(int i=0;i<ahex.Length;i+=2)
+        acmp += ahex[i] + "" + ahex[i+1] + " ";
+      Console.WriteLine(acmp);
+
+      string bcmp = ""; 
+      for(int i=0;i<bhex.Length;i+=2)
+        bcmp += bhex[i] + "" + bhex[i+1] + " ";
+      Console.WriteLine(bcmp);
+
+      string cmp = "";
+      for(int i=0;i<(ahex.Length > bhex.Length ? ahex.Length : bhex.Length);i+=2)
+      {
+        string a1 = "";
+        if(i < ahex.Length)
+          a1 = ahex[i] + "" + ahex[i+1];
+
+        string b1 = "";
+        if(i < bhex.Length)
+          b1 = bhex[i] + "" + bhex[i+1];
+
+        if(a1 != b1)
+          cmp += "^^ ";
+        else
+          cmp += "   ";
+      }
+      Console.WriteLine(cmp);
+
       throw new Exception("Assertion failed: '" + ahex + "' != '" + bhex + "'");
+    }
   }
 }

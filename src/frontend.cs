@@ -1,9 +1,6 @@
 using System;
 using System.IO;
-using System.Security.Cryptography;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Threading;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
@@ -2423,21 +2420,22 @@ public class Frontend : bhlBaseVisitor<object>
     }
     PopAST();
 
+    //TODO: this optimization is not properly handled in VM version and doesn't make sense there
     //NOTE: replacing last return in a function with its statement as an optimization 
-    if(type == EnumBlock.FUNC && 
-       ast.children.Count > 0 && 
-       ast.children[ast.children.Count-1] is AST_Return)
-    {
-      var ret = ast.children[ast.children.Count-1]; 
-      var ret_children = ret.GetChildren();
-      if(ret_children != null)
-      {
-        if(ret_children.Count > 0)
-          ast.children[ast.children.Count-1] = ret_children[0];
-        for(int i=1;i<ret_children.Count;++i)
-          ast.children.Add(ret_children[i]);
-      }
-    }
+    //if(type == EnumBlock.FUNC && 
+    //   ast.children.Count > 0 && 
+    //   ast.children[ast.children.Count-1] is AST_Return)
+    //{
+    //  var ret = ast.children[ast.children.Count-1]; 
+    //  var ret_children = ret.GetChildren();
+    //  if(ret_children != null)
+    //  {
+    //    if(ret_children.Count > 0)
+    //      ast.children[ast.children.Count-1] = ret_children[0];
+    //    for(int i=1;i<ret_children.Count;++i)
+    //      ast.children.Add(ret_children[i]);
+    //  }
+    //}
 
     //NOTE: we need to undefine all symbols which were defined at the current
     //      scope level

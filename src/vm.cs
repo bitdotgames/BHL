@@ -1,3 +1,4 @@
+//#define DEBUG_REFS
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -122,10 +123,11 @@ public class Val
       ++pool_miss;
       var tmp = new Val(); 
       pool.Enqueue(tmp);
-      //Console.WriteLine("NEW3: " + tmp.GetHashCode()/* + " " + Environment.StackTrace*/);
+#if DEBUG_REFS
+      Console.WriteLine("NSP: " + tmp.GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
     }
     pool.Enqueue(dv);
-    //Console.WriteLine("DEL: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
     if(pool.Count > pool_miss)
       throw new Exception("Unbalanced New/Del " + pool.Count + " " + pool_miss);
   }
@@ -368,8 +370,10 @@ public class Val
       str = _obj.GetType().Name + ":<OBJ>";
     else if(type == NIL)
       str = "<NIL>";
+    else if(type == NONE)
+      str = "<NONE>";
     else
-      str = "DYNVAL: type:"+type;
+      str = "Val: type:"+type;
 
     return str;// + " " + GetHashCode();//for extra debug
   }
@@ -409,14 +413,14 @@ public class Val
 
   static public string PoolDump()
   {
-    string res = "=== POOL ===\n";
+    string res = "=== Val POOL ===\n";
     res += "total:" + PoolCount + " free:" + PoolCountFree + "\n";
     var dvs = new Val[pool.Count];
     pool.CopyTo(dvs, 0);
     for(int i=dvs.Length;i-- > 0;)
     {
       var v = dvs[i];
-      res += v + " " + v.GetHashCode() + "\n"; 
+      res += v + " (refs:" + v._refs + ") " + v.GetHashCode() + "\n"; 
     }
     return res;
   }
@@ -843,14 +847,82 @@ public class VM
   public class Frame
   {
     public uint ip;
-    public Stack<Val> num_stack;
+    //TODO: why not using global stack?
+    public Stack<Val> stack;
     public List<Val> locals;
 
     public Frame()
     {
       ip = 0;
-      num_stack = new Stack<Val>();
+      stack = new Stack<Val>();
       locals = new List<Val>();
+    }
+
+    public void Clear()
+    {
+      for(int i=locals.Count;i-- > 0;)
+      {
+        var val = locals[i];
+        val.RefMod(RefOp.USR_DEC | RefOp.DEC);
+      }
+      locals.Clear();
+      while(stack.Count > 0)
+        PopValue();
+    }
+
+    public void SetLocal(int idx, Val v)
+    {
+      if(locals[idx] != null)
+      {
+        var prev = locals[idx];
+        for(int i=0;i<prev._refs;++i)
+        {
+          v.RefMod(RefOp.USR_INC);
+          prev.RefMod(RefOp.USR_DEC);
+        }
+        prev.ValueCopyFrom(v);
+      }
+      else
+      {
+        v.RefMod(RefOp.INC | RefOp.USR_INC);
+        locals[idx] = v;
+      }
+    }
+
+    public Val GetLocal(int idx)
+    {
+      return locals[idx];
+    }
+
+    public void AddLocal(Val v)
+    {
+      v.RefMod(RefOp.INC | RefOp.USR_INC);
+      locals.Add(v);
+    }
+
+    public Val PopValue()
+    {
+      var val = stack.Pop();
+      val.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+      return val;
+    }
+
+    public Val PopRef()
+    {
+      var val = stack.Pop();
+      val.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
+      return val;
+    }
+
+    public void PushValue(Val v)
+    {
+      v.RefMod(RefOp.INC | RefOp.USR_INC);
+      stack.Push(v);
+    }
+
+    public Val PeekValue()
+    {
+      return stack.Peek();
     }
   }
 
@@ -898,11 +970,16 @@ public class VM
             throw new Exception("Index out of constant pool: " + const_idx);
 
           var cn = constants[const_idx];
-          curr_frame.num_stack.Push(cn.ToVal());
+          curr_frame.PushValue(cn.ToVal());
         break;
-        case Opcodes.New:
-          curr_frame.num_stack.Push(Val.NewObj(ValList.New()));
-          ++curr_frame.ip;
+        case Opcodes.NewArr:
+          curr_frame.PushValue(Val.NewObj(ValList.New()));
+        break;
+        case Opcodes.TypeCastInt:
+          curr_frame.PushValue(Val.NewNum(curr_frame.PopValue().num));
+        break;
+        case Opcodes.TypeCastStr:
+          curr_frame.PushValue(Val.NewStr(curr_frame.PopValue().num.ToString()));
         break;
         case Opcodes.Add:
         case Opcodes.Sub:
@@ -915,9 +992,9 @@ public class VM
         case Opcodes.BitOr:
         case Opcodes.Equal:
         case Opcodes.NotEqual:
-        case Opcodes.Greather:
+        case Opcodes.Greater:
         case Opcodes.Less:
-        case Opcodes.GreatherOrEqual:
+        case Opcodes.GreaterOrEqual:
         case Opcodes.LessOrEqual:
           ExecuteBinaryOperation(opcode);
         break;
@@ -927,34 +1004,38 @@ public class VM
         break;
         case Opcodes.SetVar:
         case Opcodes.GetVar:
-          ExecuteVariablesOperation(opcode);
+          ExecuteVarGetSet(opcode);
+        break;
+        case Opcodes.Return:
+          curr_frame.Clear();
+          frames.Pop();
+          if(frames.Count > 0)
+            curr_frame = frames.Peek();
         break;
         case Opcodes.ReturnVal:
-          var ret_val = curr_frame.num_stack.Peek();
+          var ret_val = curr_frame.stack.Pop();
+          curr_frame.Clear();
           frames.Pop();
           if(frames.Count > 0)
           {
             curr_frame = frames.Peek();
-            curr_frame.num_stack.Push(ret_val);
+            curr_frame.stack.Push(ret_val);
           }
           else
-          {
             stack.Push(ret_val);
-          }
         break;
         case Opcodes.MethodCall:
           ++curr_frame.ip;
           var builtin = WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
 
-          ExecuteBuiltInArrayFunc((BuiltInArray) builtin);
+          ExecuteBuiltInArrayFunc((BuiltInArray)builtin);
         break;
-        case Opcodes.IdxGet:// move to -At- method?
-          var idx = curr_frame.num_stack.Pop();
-          var arr = curr_frame.num_stack.Pop();
-          var lst = GetAsList(arr);
-
-          var res = lst[(int)idx.num]; 
-          curr_frame.num_stack.Push(res);
+        case Opcodes.ArrIdxGet:
+          var idx = (int)curr_frame.PopValue().num;
+          var arr = curr_frame.PopValue();
+          var lst = AsList(arr);
+          var res = lst[idx]; 
+          curr_frame.PushValue(res);
           //NOTE: this can be an operation for the temp. array,
           //      we need to try del the array if so
           lst.TryDel();
@@ -969,7 +1050,7 @@ public class VM
 
           var args_info = new FuncArgsInfo((uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip));
           for(int i = 0; i < args_info.CountArgs(); ++i)
-            fr.num_stack.Push(curr_frame.num_stack.Pop());
+            fr.PushValue(curr_frame.PopValue().ValueClone());
 
           frames.Push(fr);
           curr_frame = frames.Peek();
@@ -984,14 +1065,14 @@ public class VM
         break;
         case Opcodes.CondJump:
           ++curr_frame.ip;
-          if(curr_frame.num_stack.Pop().bval == false)
+          if(curr_frame.PopValue().bval == false)
             curr_frame.ip = curr_frame.ip + (uint)WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
           ++curr_frame.ip;
         continue;
         case Opcodes.DefArg:
           ++curr_frame.ip; //need add check for args more than 1 byte long
           var arg = WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
-          if(curr_frame.num_stack.Count > 0)
+          if(curr_frame.stack.Count > 0)
             curr_frame.ip = curr_frame.ip + (uint)arg;
           ++curr_frame.ip;
         continue;
@@ -1000,44 +1081,50 @@ public class VM
     }
   }
 
-  void ExecuteVariablesOperation(Opcodes op)
+  void ExecuteVarGetSet(Opcodes op)
   {
     ++curr_frame.ip;
     int local_idx = WriteBuffer.DecodeBytes(instructions, ref curr_frame.ip);
+    //Console.WriteLine("GET/SET IDX " + local_idx + " " + op);
     switch(op)
     {
       case Opcodes.SetVar:
+        //TODO: code below must not guess, it must follow sime logic
         if(local_idx < curr_frame.locals.Count)
-          curr_frame.locals[local_idx] = curr_frame.num_stack.Pop();
+        {
+          if(curr_frame.locals[local_idx] != null)
+            curr_frame.locals[local_idx].Release();
+          curr_frame.locals[local_idx] = curr_frame.stack.Pop();
+        }
         else 
-          if(curr_frame.num_stack.Count > 0)
-            curr_frame.locals.Add(curr_frame.num_stack.Pop());
+          if(curr_frame.stack.Count > 0)
+            curr_frame.locals.Add(curr_frame.stack.Pop());
           else
-            curr_frame.locals.Add(Val.New());
+            curr_frame.AddLocal(Val.New());
       break;
       case Opcodes.GetVar:
         if(local_idx >= curr_frame.locals.Count)
-          throw new Exception("Index out of locals pool: " + local_idx);
-        curr_frame.num_stack.Push(curr_frame.locals[local_idx]);
+          throw new Exception("Var index out of locals: " + local_idx);
+        curr_frame.PushValue(curr_frame.GetLocal(local_idx));
       break;
     }
   }
 
   void ExecuteUnaryOperation(Opcodes op)
   {
-    var operand = curr_frame.num_stack.Pop();
+    var operand = curr_frame.PopValue();
     switch(op)
     {
       case Opcodes.UnaryNot:
-        curr_frame.num_stack.Push(Val.NewBool(operand.num != 1));
+        curr_frame.PushValue(Val.NewBool(operand.num != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.num_stack.Push(Val.NewNum(operand.num * -1));
+        curr_frame.PushValue(Val.NewNum(operand.num * -1));
       break;
     }
   }
 
-  ValList GetAsList(Val arr)
+  ValList AsList(Val arr)
   {
     var lst = arr.obj as ValList;
     if(lst == null)
@@ -1047,38 +1134,51 @@ public class VM
 
   void ExecuteBuiltInArrayFunc(BuiltInArray func)
   {
-    Val idx;
-    Val arr;
-    Val val;
-    ValList lst;
     switch(func)
     {
       case BuiltInArray.Add:
-        val = curr_frame.num_stack.Pop();
-        arr = curr_frame.num_stack.Peek();
-        lst = GetAsList(arr);
-
+      {
+        var val = curr_frame.PopValue().ValueClone();
+        var arr = curr_frame.PopValue();
+        var lst = AsList(arr);
         lst.Add(val);
+        //NOTE: this can be an operation for the temp. array,
+        //      we need to try del the array if so
+        lst.TryDel();
+      }
       break;
       case BuiltInArray.RemoveAt:
-        idx = curr_frame.num_stack.Pop();
-        arr = curr_frame.num_stack.Pop();
-        lst = GetAsList(arr);
-
-        lst.RemoveAt((int)idx.num); 
+      {
+        int idx = (int)curr_frame.PopValue().num;
+        var arr = curr_frame.PopValue();
+        var lst = AsList(arr);
+        lst.RemoveAt(idx); 
+        //NOTE: this can be an operation for the temp. array,
+        //      we need to try del the array if so
+        lst.TryDel();
+      }
       break;
       case BuiltInArray.SetAt:
-        idx = curr_frame.num_stack.Pop();
-        arr = curr_frame.num_stack.Pop();
-        val = curr_frame.num_stack.Pop();
-        lst = GetAsList(arr);
-
-        lst[(int)idx.num] = val;
+      {
+        int idx = (int)curr_frame.PopValue().num;
+        var arr = curr_frame.PopValue();
+        var val = curr_frame.PopValue().ValueClone();
+        var lst = AsList(arr);
+        lst[idx] = val;
+        //NOTE: this can be an operation for the temp. array,
+        //      we need to try del the array if so
+        lst.TryDel();
+      }
       break;
       case BuiltInArray.Count:
-        arr = curr_frame.num_stack.Peek();
-        lst = GetAsList(arr);
-        curr_frame.num_stack.Push(Val.NewNum(lst.Count));
+      {
+        var arr = curr_frame.PopValue();
+        var lst = AsList(arr);
+        curr_frame.PushValue(Val.NewNum(lst.Count));
+        //NOTE: this can be an operation for the temp. array,
+        //      we need to try del the array if so
+        lst.TryDel();
+      }
       break;
       default:
         throw new Exception("Unknown method -> " + func);
@@ -1087,65 +1187,76 @@ public class VM
 
   void ExecuteBinaryOperation(Opcodes op)
   {
-    var stk = curr_frame.num_stack;
-
-    var r_opertand = stk.Pop();
-    var l_opertand = stk.Pop();
+    var r_operand = curr_frame.PopValue();
+    var l_operand = curr_frame.PopValue();
 
     switch(op)
     {
       case Opcodes.Add:
-        if((r_opertand._type == Val.STRING) && (l_opertand._type == Val.STRING))
-          stk.Push(Val.NewStr((string)l_opertand._obj + (string)r_opertand._obj));
+        if((r_operand._type == Val.STRING) && (l_operand._type == Val.STRING))
+          curr_frame.PushValue(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
         else
-          stk.Push(Val.NewNum(l_opertand._num + r_opertand._num));
+          curr_frame.PushValue(Val.NewNum(l_operand._num + r_operand._num));
       break;
       case Opcodes.Sub:
-        stk.Push(Val.NewNum(l_opertand._num - r_opertand._num));
+        curr_frame.PushValue(Val.NewNum(l_operand._num - r_operand._num));
       break;
       case Opcodes.Div:
-        stk.Push(Val.NewNum(l_opertand._num / r_opertand._num));
+        curr_frame.PushValue(Val.NewNum(l_operand._num / r_operand._num));
       break;
       case Opcodes.Mul:
-        stk.Push(Val.NewNum(l_opertand._num * r_opertand._num));
+        curr_frame.PushValue(Val.NewNum(l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
-        stk.Push(Val.NewBool(l_opertand._num == r_opertand._num));
+        curr_frame.PushValue(Val.NewBool(l_operand._num == r_operand._num));
       break;
       case Opcodes.NotEqual:
-        stk.Push(Val.NewBool(l_opertand._num != r_opertand._num));
+        curr_frame.PushValue(Val.NewBool(l_operand._num != r_operand._num));
       break;
-      case Opcodes.Greather:
-        stk.Push(Val.NewBool(l_opertand._num > r_opertand._num));
+      case Opcodes.Greater:
+        curr_frame.PushValue(Val.NewBool(l_operand._num > r_operand._num));
       break;
       case Opcodes.Less:
-        stk.Push(Val.NewBool(l_opertand._num < r_opertand._num));
+        curr_frame.PushValue(Val.NewBool(l_operand._num < r_operand._num));
       break;
-      case Opcodes.GreatherOrEqual:
-        stk.Push(Val.NewBool(l_opertand._num >= r_opertand._num));
+      case Opcodes.GreaterOrEqual:
+        curr_frame.PushValue(Val.NewBool(l_operand._num >= r_operand._num));
       break;
       case Opcodes.LessOrEqual:
-        stk.Push(Val.NewBool(l_opertand._num <= r_opertand._num));
+        curr_frame.PushValue(Val.NewBool(l_operand._num <= r_operand._num));
       break;
       case Opcodes.And:
-        stk.Push(Val.NewBool(l_opertand._num == 1 && r_opertand._num == 1));
+        curr_frame.PushValue(Val.NewBool(l_operand._num == 1 && r_operand._num == 1));
       break;
       case Opcodes.Or:
-        stk.Push(Val.NewBool(l_opertand._num == 1 || r_opertand._num == 1));
+        curr_frame.PushValue(Val.NewBool(l_operand._num == 1 || r_operand._num == 1));
       break;
       case Opcodes.BitAnd:
-        stk.Push(Val.NewNum((int)l_opertand._num & (int)r_opertand._num));
+        curr_frame.PushValue(Val.NewNum((int)l_operand._num & (int)r_operand._num));
       break;
       case Opcodes.BitOr:
-        stk.Push(Val.NewNum((int)l_opertand._num | (int)r_opertand._num));
+        curr_frame.PushValue(Val.NewNum((int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        stk.Push(Val.NewNum((int)l_opertand._num % (int)r_opertand._num));
+        curr_frame.PushValue(Val.NewNum((int)l_operand._num % (int)r_operand._num));
       break;
     }
   }
 
-  public Val GetStackTop()
+  public Val PopValue()
+  {
+    var val = stack.Pop();
+    val.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+    return val;
+  }
+
+  public void PushValue(Val v)
+  {
+    v.RefMod(RefOp.INC | RefOp.USR_INC);
+    stack.Push(v);
+  }
+
+  public Val PeekValue()
   {
     return stack.Peek();
   }

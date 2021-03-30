@@ -4,34 +4,6 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public class Const
-{
-  public EnumLiteral type;
-  public double num;
-  public string str;
-
-  public Const(AST_Literal lt)
-  {
-    type = lt.type;
-    num = lt.nval;
-    str = lt.sval;
-  }
-
-  public Val ToVal()
-  {
-    if(type == EnumLiteral.NUM)
-      return Val.NewNum(num);
-    else if(type == EnumLiteral.BOOL)
-      return Val.NewBool(num == 1);
-    else if(type == EnumLiteral.STR)
-      return Val.NewStr(str);
-    else if(type == EnumLiteral.NIL)
-      return Val.NewNil();
-    else
-      throw new Exception("Bad type");
-  }
-}
-
 public enum Opcodes
 {
   Constant        = 1,
@@ -42,28 +14,31 @@ public enum Opcodes
   SetVar          = 6,
   GetVar          = 7,
   FuncCall        = 8,
-  ReturnVal       = 9,
-  New             = 10,
-  Jump            = 11,
-  CondJump        = 12,
-  LoopJump        = 13,
-  UnaryNot        = 14,
-  UnaryNeg        = 15,
-  And             = 16,
-  Or              = 17,
-  Mod             = 18,
-  BitOr           = 19,
-  BitAnd          = 20,
-  Equal           = 21,
-  NotEqual        = 22,
-  Less            = 23,
-  Greather        = 24,
-  LessOrEqual     = 25,
-  GreatherOrEqual = 26,
-  MethodCall      = 27,
-  IdxGet          = 28,
-  IdxSet          = 29,
-  DefArg          = 30  //opcode for skipping func def args
+  Return          = 9,
+  ReturnVal       = 10,
+  NewArr          = 11,
+  Jump            = 12,
+  CondJump        = 13,
+  LoopJump        = 14,
+  UnaryNot        = 15,
+  UnaryNeg        = 16,
+  And             = 17,
+  Or              = 18,
+  Mod             = 19,
+  BitOr           = 20,
+  BitAnd          = 21,
+  Equal           = 22,
+  NotEqual        = 23,
+  Less            = 24,
+  Greater         = 25,
+  LessOrEqual     = 26,
+  GreaterOrEqual  = 27,
+  MethodCall      = 28,
+  ArrIdxGet       = 29,
+  IdxSet          = 30,
+  DefArg          = 31, //opcode for skipping func def args
+  TypeCastInt     = 32,
+  TypeCastStr     = 33,
 }
 
 public enum BuiltInArray
@@ -119,11 +94,32 @@ public class SymbolViewTable
   }
 }
 
-public class Constant
+public class Const
 {
   public EnumLiteral type;
-  public double nval;
-  public string sval;
+  public double num;
+  public string str;
+
+  public Const(AST_Literal lt)
+  {
+    type = lt.type;
+    num = lt.nval;
+    str = lt.sval;
+  }
+
+  public Val ToVal()
+  {
+    if(type == EnumLiteral.NUM)
+      return Val.NewNum(num);
+    else if(type == EnumLiteral.BOOL)
+      return Val.NewBool(num == 1);
+    else if(type == EnumLiteral.STR)
+      return Val.NewStr(str);
+    else if(type == EnumLiteral.NIL)
+      return Val.NewNil();
+    else
+      throw new Exception("Bad type");
+  }
 }
 
 public class Compiler : AST_Visitor
@@ -156,7 +152,7 @@ public class Compiler : AST_Visitor
     return bytecode;
   }
 
-  SymbolViewTable GetCurrentSVTable() //TODO: try to reduce similar Geters
+  SymbolViewTable GetCurrentSymbolView() //TODO: try to reduce similar Getters
   {
     if(this.symbols.Count > 0)
      return this.symbols[this.symbols.Count-1];
@@ -174,7 +170,7 @@ public class Compiler : AST_Visitor
   {
     var index = bytecode.Length;
     var curr_scope = GetCurrentScope();
-    var curr_table = GetCurrentSVTable();
+    var curr_table = GetCurrentSymbolView();
     bytecode.Write(curr_scope);
     scopes.Remove(curr_scope);
     symbols.Remove(curr_table);
@@ -292,7 +288,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.Greather
+        name = Opcodes.Greater
       }
     );
     DeclareOpcode(
@@ -304,7 +300,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.GreatherOrEqual
+        name = Opcodes.GreaterOrEqual
       }
     );
     DeclareOpcode(
@@ -334,7 +330,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.IdxGet
+        name = Opcodes.ArrIdxGet
       }
     );
     DeclareOpcode(
@@ -363,6 +359,12 @@ public class Compiler : AST_Visitor
       {
         name = Opcodes.MethodCall,
         operand_width = new int[] { 1 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Return
       }
     );
     DeclareOpcode(
@@ -402,8 +404,19 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.New,
-        operand_width = new int[] { 2 }
+        name = Opcodes.NewArr
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.TypeCastInt,
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.TypeCastStr,
       }
     );
   }
@@ -492,16 +505,11 @@ public class Compiler : AST_Visitor
     ReplaceOpcode(pointer, new byte[]{});
   }
 
-  public Compiler TestEmit(Opcodes op, int[] operands = null)
-  {
-    Emit(op, operands);
-    return this;
-  }
-
-  void Emit(Opcodes op, int[] operands = null)
+  public Compiler Emit(Opcodes op, int[] operands = null)
   {
     var curr_scope = GetCurrentScope();
     Emit(curr_scope, op, operands);
+    return this;
   }
 
   void Emit(WriteBuffer buf, Opcodes op, int[] operands = null)
@@ -577,7 +585,7 @@ public class Compiler : AST_Visitor
   {
     EnterNewScope();
     VisitChildren(ast);
-    Emit(Opcodes.ReturnVal);
+    Emit(Opcodes.Return);
 
     func_offset_buffer.Add(ast.name, (uint)LeaveCurrentScope());
   }
@@ -637,16 +645,10 @@ public class Compiler : AST_Visitor
   {
     VisitChildren(ast);
 
-    //TODO:
-    //var val = constants[constants.Count - 1];
-    //if(ast.ntype == SymbolTable._int.name.n)
-    //{
-    //  val.SetNum((int)val.num);
-    //}
-    //else if(ast.ntype == SymbolTable._string.name.n && val.type != Val.STRING)
-    //{
-    //  val.SetStr("" + val.num);
-    //}
+    if(ast.ntype == SymbolTable._int.name.n)
+      Emit(Opcodes.TypeCastInt);
+    else if(ast.ntype == SymbolTable._string.name.n)
+      Emit(Opcodes.TypeCastStr);
   }
 
   public override void DoVisit(AST_New ast)
@@ -654,17 +656,13 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case "[]":
-        // 0 for array (maybe push type of index from SymbolTable)
-        Emit(Opcodes.New, new int[] { 0 }); //ntype?
-        //create dynval array and push it on stack
+        Emit(Opcodes.NewArr);
         VisitChildren(ast);
       break;
       default:
-        Console.WriteLine("Not impl ast_new coming -> " + ast.Name());
-        VisitChildren(ast);
-      break;
+        throw new Exception("Not supported: " + ast.Name());
+        //VisitChildren(ast);
     }
-    
   }
 
   public override void DoVisit(AST_Inc ast)
@@ -677,11 +675,11 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case EnumCall.VARW:
-        s = GetCurrentSVTable().Define(ast.name);
+        s = GetCurrentSymbolView().Define(ast.name);
         Emit(Opcodes.SetVar, new int[] { s.index });
       break;
       case EnumCall.VAR:
-        s = GetCurrentSVTable().Resolve(ast.name);
+        s = GetCurrentSymbolView().Resolve(ast.name);
         Emit(Opcodes.GetVar, new int[] { s.index });
       break;
       case EnumCall.FUNC:
@@ -714,7 +712,7 @@ public class Compiler : AST_Visitor
         }
       break;
       case EnumCall.ARR_IDX:
-        Emit(Opcodes.IdxGet);
+        Emit(Opcodes.ArrIdxGet);
       break;
       case EnumCall.ARR_IDXW:
         Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.SetAt});
@@ -783,13 +781,13 @@ public class Compiler : AST_Visitor
         Emit(Opcodes.NotEqual);
       break;
       case EnumBinaryOp.GT:
-        Emit(Opcodes.Greather);
+        Emit(Opcodes.Greater);
       break;
       case EnumBinaryOp.LT:
         Emit(Opcodes.Less);
       break;
       case EnumBinaryOp.GTE:
-        Emit(Opcodes.GreatherOrEqual);
+        Emit(Opcodes.GreaterOrEqual);
       break;
       case EnumBinaryOp.LTE:
         Emit(Opcodes.LessOrEqual);
@@ -827,7 +825,7 @@ public class Compiler : AST_Visitor
       InsertIndex(pointer);
     }
 
-    SymbolView s = GetCurrentSVTable().Define(node.name);
+    SymbolView s = GetCurrentSymbolView().Define(node.name);
     Emit(Opcodes.SetVar, new int[] { s.index });
   }
 

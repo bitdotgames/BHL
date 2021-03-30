@@ -115,7 +115,7 @@ public class BHL_TestRunner
 
     for(int i=0;i<args.Length;++i)
     {
-      var parts = args[i].Split(':');
+      var parts = args[i].Split('.');
 
       string test_filter = parts.Length >= 1 ? parts[0] : null;
       string method_filter = parts.Length > 1 ? parts[1] : null;
