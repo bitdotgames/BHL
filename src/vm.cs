@@ -381,7 +381,7 @@ public class VM
       }
       else if(method == GenericArrayTypeSymbol.VM_AtIdx)
       {
-        var idx = (int)curr_frame.PopValue().num;
+        int idx = (int)curr_frame.PopValue().num;
         var arr = curr_frame.PopValue();
         var lst = AsList(arr);
         var res = lst[idx]; 
