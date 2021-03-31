@@ -1507,7 +1507,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
 
-    var cls = interp.symbols.resolve(ntype) as ClassSymbol;
+    var cls = interp.symbols.Resolve(ntype) as ClassSymbol;
     if(cls == null)
       throw new Exception("Could not find class symbol: " + ntype);
 
@@ -1867,7 +1867,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
     
     if(cls_member == null)
     {
-      var cls = interp.symbols.resolve(scope_ntype) as ClassSymbol;
+      var cls = interp.symbols.Resolve(scope_ntype) as ClassSymbol;
       if(cls == null)
         throw new Exception("Class binding not found: " + scope_ntype); 
 

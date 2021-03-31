@@ -14,39 +14,32 @@ public enum Opcodes
   SetVar          = 6,
   GetVar          = 7,
   FuncCall        = 8,
-  Return          = 9,
-  ReturnVal       = 10,
-  NewArr          = 11,
-  Jump            = 12,
-  CondJump        = 13,
-  LoopJump        = 14,
-  UnaryNot        = 15,
-  UnaryNeg        = 16,
-  And             = 17,
-  Or              = 18,
-  Mod             = 19,
-  BitOr           = 20,
-  BitAnd          = 21,
-  Equal           = 22,
-  NotEqual        = 23,
-  Less            = 24,
-  Greater         = 25,
-  LessOrEqual     = 26,
-  GreaterOrEqual  = 27,
-  MethodCall      = 28,
-  ArrIdxGet       = 29,
-  IdxSet          = 30,
+  SetMVar         = 9,
+  GetMVar         = 10,
+  MethodCall      = 11,
+  Return          = 12,
+  ReturnVal       = 13,
+  Jump            = 14,
+  CondJump        = 15,
+  LoopJump        = 16,
+  UnaryNot        = 17,
+  UnaryNeg        = 18,
+  And             = 19,
+  Or              = 20,
+  Mod             = 21,
+  BitOr           = 22,
+  BitAnd          = 23,
+  Equal           = 24,
+  NotEqual        = 25,
+  Less            = 26,
+  Greater         = 27,
+  LessOrEqual     = 28,
+  GreaterOrEqual  = 29,
   DefArg          = 31, //opcode for skipping func def args
+  //TODO: make it an universal opcode
   TypeCastInt     = 32,
   TypeCastStr     = 33,
-}
-
-public enum BuiltInArray
-{
-  Add      = 1,
-  SetAt    = 2,
-  RemoveAt = 3,
-  Count    = 4
+  ArrNew          = 34,
 }
 
 public enum SymbolScope
@@ -130,61 +123,75 @@ public class Compiler : AST_Visitor
     public int[] operand_width; //each array item represents the size of the operand in bytes
   }
 
-  WriteBuffer bytecode = new WriteBuffer();
-
-  List<WriteBuffer> scopes = new List<WriteBuffer>();
+  BaseScope symbols;
+  public BaseScope Symbols {
+    get {
+      return symbols;
+    }
+  }
 
   List<Const> constants = new List<Const>();
+  public List<Const> Constants {
+    get {
+      return constants;
+    }
+  }
 
-  SymbolViewTable sv_table = new SymbolViewTable();
+  List<Bytecode> scopes = new List<Bytecode>();
 
-  List<SymbolViewTable> symbols = new List<SymbolViewTable>();
+  List<SymbolViewTable> symbol_views = new List<SymbolViewTable>();
 
-  Dictionary<string, uint> func_offset_buffer = new Dictionary<string, uint>();
+  Dictionary<string, uint> func2offset = new Dictionary<string, uint>();
+  public Dictionary<string, uint> Func2Offset {
+    get {
+      return func2offset;
+    }
+  }
   
   Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
 
-  WriteBuffer GetCurrentScope()
-  {
-    if(this.scopes.Count > 0)
-     return this.scopes[this.scopes.Count-1];
-
-    return bytecode;
-  }
-
-  SymbolViewTable GetCurrentSymbolView() //TODO: try to reduce similar Getters
-  {
-    if(this.symbols.Count > 0)
-     return this.symbols[this.symbols.Count-1];
-
-    return sv_table;
-  }
-
-  void EnterNewScope()
-  {
-    scopes.Add(new WriteBuffer());
-    symbols.Add(new SymbolViewTable());
-  }
- 
-  long LeaveCurrentScope()
-  {
-    var index = bytecode.Length;
-    var curr_scope = GetCurrentScope();
-    var curr_table = GetCurrentSymbolView();
-    bytecode.Write(curr_scope);
-    scopes.Remove(curr_scope);
-    symbols.Remove(curr_table);
-    return index;
-  }
-
-  public Compiler()
+  public Compiler(BaseScope symbols)
   {
     DeclareOpcodes();
+
+    this.symbols = symbols;
+    scopes.Add(new Bytecode());
+    symbol_views.Add(new SymbolViewTable());
   }
 
   public void Compile(AST ast)
   {
     Visit(ast);
+  }
+
+  Bytecode GetCurrentScope()
+  {
+    return this.scopes[this.scopes.Count-1];
+  }
+
+  SymbolViewTable GetCurrentSymbolView()
+  {
+    return this.symbol_views[this.symbol_views.Count-1];
+  }
+
+  void EnterNewScope()
+  {
+    scopes.Add(new Bytecode());
+    symbol_views.Add(new SymbolViewTable());
+  }
+ 
+  long LeaveCurrentScope()
+  {
+    var bytecode = scopes[0];
+
+    long index = bytecode.Length;
+    var curr_scope = GetCurrentScope();
+    var curr_table = GetCurrentSymbolView();
+    bytecode.Write(curr_scope);
+    scopes.Remove(curr_scope);
+    symbol_views.Remove(curr_table);
+
+    return index;
   }
 
   int AddConstant(AST_Literal lt)
@@ -200,16 +207,6 @@ public class Compiler : AST_Visitor
     return constants.Count-1;
   }
 
-  public List<Const> GetConstants()
-  {
-    return constants;
-  }
-
-  public Dictionary<string, uint> GetFuncBuffer()
-  {
-    return func_offset_buffer;
-  }
- 
   void DeclareOpcodes()
   {
     DeclareOpcode(
@@ -324,18 +321,6 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.IdxSet
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.ArrIdxGet
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
         name = Opcodes.SetVar,
         operand_width = new int[] { 2 }
       }
@@ -350,6 +335,20 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.SetMVar,
+        operand_width = new int[] { 4, 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.GetMVar,
+        operand_width = new int[] { 4, 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.FuncCall,
         operand_width = new int[] { 4, 1 }
       }
@@ -358,7 +357,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.MethodCall,
-        operand_width = new int[] { 1 }
+        operand_width = new int[] { 4, 2 }
       }
     );
     DeclareOpcode(
@@ -404,7 +403,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.NewArr
+        name = Opcodes.ArrNew
       }
     );
     DeclareOpcode(
@@ -434,40 +433,12 @@ public class Compiler : AST_Visitor
     return def;
   }
 
-  public void DecodeOpcodes(byte[] bytecode)
-  {
-    Console.WriteLine("\n{0, -10}\t{1, -10}\t{2, -10}", "Address","Name","Operands");
-    uint code_pointer = 0;
-
-    while(code_pointer < bytecode.Length)
-    {
-      var opcode = bytecode[code_pointer];
-      var op_def = LookupOpcode((Opcodes)opcode);
-
-      Console.Write("\n{0, -10}\t{1, -10}", code_pointer, op_def.name);
-
-      if(op_def.operand_width != null)
-      {
-        string operands = "";
-        foreach(var offset in op_def.operand_width)
-        {
-          ++code_pointer;
-          operands += " " + WriteBuffer.DecodeBytes(bytecode, ref code_pointer);
-        }
-        Console.Write("\t{0, -10}", operands);
-      }
-
-      ++code_pointer; 
-    }
-    Console.WriteLine();
-  }
-
   public void ReplaceOpcode(int position, byte[] new_op_data)
   {
     ReplaceOpcode(position, new_op_data, GetCurrentScope());
   }
 
-  public void ReplaceOpcode(int position, byte[] new_op_data, WriteBuffer scope)
+  public void ReplaceOpcode(int position, byte[] new_op_data, Bytecode scope)
   {
     var scope_bytes = scope.GetBytes();
 
@@ -485,7 +456,7 @@ public class Compiler : AST_Visitor
       {
         uint real_operand_width = (uint)position + 1;
         uint delta_width = real_operand_width;
-        WriteBuffer.DecodeBytes(scope_bytes, ref real_operand_width);
+        Bytecode.Decode(scope_bytes, ref real_operand_width);
         replaced_op_length += 1 + (int)(real_operand_width - delta_width);
       }
     }
@@ -512,7 +483,7 @@ public class Compiler : AST_Visitor
     return this;
   }
 
-  void Emit(WriteBuffer buf, Opcodes op, int[] operands = null)
+  void Emit(Bytecode buf, Opcodes op, int[] operands = null)
   {
     var def = LookupOpcode(op);
 
@@ -562,7 +533,7 @@ public class Compiler : AST_Visitor
 
   public byte[] GetBytes()
   {
-    return bytecode.GetBytes();
+    return scopes[0].GetBytes();
   }
 
 #region Visits
@@ -587,7 +558,7 @@ public class Compiler : AST_Visitor
     VisitChildren(ast);
     Emit(Opcodes.Return);
 
-    func_offset_buffer.Add(ast.name, (uint)LeaveCurrentScope());
+    func2offset.Add(ast.name, (uint)LeaveCurrentScope());
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
@@ -656,7 +627,7 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case "[]":
-        Emit(Opcodes.NewArr);
+        Emit(Opcodes.ArrNew);
         VisitChildren(ast);
       break;
       default:
@@ -671,51 +642,57 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Call ast)
   {  
-    SymbolView s;
+    SymbolView sv;
     switch(ast.type)
     {
       case EnumCall.VARW:
-        s = GetCurrentSymbolView().Define(ast.name);
-        Emit(Opcodes.SetVar, new int[] { s.index });
+        sv = GetCurrentSymbolView().Define(ast.name);
+        Emit(Opcodes.SetVar, new int[] { sv.index });
       break;
       case EnumCall.VAR:
-        s = GetCurrentSymbolView().Resolve(ast.name);
-        Emit(Opcodes.GetVar, new int[] { s.index });
+        sv = GetCurrentSymbolView().Resolve(ast.name);
+        Emit(Opcodes.GetVar, new int[] { sv.index });
       break;
       case EnumCall.FUNC:
         uint offset;
-        func_offset_buffer.TryGetValue(ast.name, out offset);
+        func2offset.TryGetValue(ast.name, out offset);
         VisitChildren(ast);
         Emit(Opcodes.FuncCall, new int[] {(int)offset, (int)ast.cargs_bits});//figure out how cargs works
       break;
       case EnumCall.MVAR:
+      {
+        var class_symb = symbols.Resolve(ast.scope_ntype) as ClassSymbol;
+        if(class_symb == null)
+          throw new Exception("Class type not found: " + ast.scope_ntype);
+        int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
+        if(memb_idx == -1)
+          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_ntype);
+
         VisitChildren(ast);
-        Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.Count});
+
+        //TODO: instead of scope_ntype it rather should be an index?
+        Emit(Opcodes.GetMVar, new int[] { (int)ast.scope_ntype, memb_idx});
+      }
       break;
       case EnumCall.MFUNC:
-        switch(ast.name)
-        {
-          case "Add":
-            VisitChildren(ast);
-            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.Add});
-          break;
-          case "RemoveAt":
-            VisitChildren(ast);
-            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.RemoveAt});
-          break;
-          case "SetAt":
-            VisitChildren(ast);
-            Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.SetAt});
-          break;
-          default:
-            throw new Exception("Not supported func call: " + ast.name);
-        }
+      {
+        var class_symb = symbols.Resolve(ast.scope_ntype) as ClassSymbol;
+        if(class_symb == null)
+          throw new Exception("Class type not found: " + ast.scope_ntype);
+        int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
+        if(memb_idx == -1)
+          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_ntype);
+
+        VisitChildren(ast);
+        //TODO: instead of scope_ntype it rather should be an index?
+        Emit(Opcodes.MethodCall, new int[] {(int)ast.scope_ntype, memb_idx});
+      }
       break;
       case EnumCall.ARR_IDX:
-        Emit(Opcodes.ArrIdxGet);
+        Emit(Opcodes.MethodCall, new int[] { GenericArrayTypeSymbol.VM_Type, GenericArrayTypeSymbol.VM_AtIdx});
       break;
       case EnumCall.ARR_IDXW:
-        Emit(Opcodes.MethodCall, new int[] {(int)BuiltInArray.SetAt});
+        Emit(Opcodes.MethodCall, new int[] { GenericArrayTypeSymbol.VM_Type, GenericArrayTypeSymbol.VM_SetIdx});
       break;
       default:
         throw new Exception("Not supported call: " + ast.type);
@@ -843,22 +820,17 @@ public class Compiler : AST_Visitor
   }
 
 #endregion
-
 }
 
-public class WriteBuffer
+public class Bytecode
 {
   MemoryStream stream = new MemoryStream();
   public ushort Position { get { return (ushort)stream.Position; } }
   public long Length { get { return stream.Length; } }
 
-  //const int MaxStringLength = 1024 * 32;
-  //static Encoding string_encoding = new UTF8Encoding();
-  //static byte[] string_write_buffer = new byte[MaxStringLength];
+  public Bytecode() {}
 
-  public WriteBuffer() {}
-
-  public WriteBuffer(byte[] buffer)
+  public Bytecode(byte[] buffer)
   {
     //NOTE: new MemoryStream(buffer) would make it non-resizable so we write it manually
     stream.Write(buffer, 0, buffer.Length);
@@ -877,47 +849,45 @@ public class WriteBuffer
     return stream.ToArray();
   }
 
-  public static int DecodeBytes(byte[] bytecode, ref uint ip)
+  public static int Decode(byte[] bytecode, ref uint ip)
   {
-    int decoded_num = 0;
+    int decoded = 0;
 
-    byte[] A = new byte[9]; //Coded Bytes
+    var A0 = bytecode[ip];
 
+    if(A0 < 241)
     {
-      A[0] = bytecode[ip];
+      decoded = A0;
+    }
+    else if(A0 > 240 && A0 < 248)
+    {
+      ++ip;
+      var A1 = bytecode[ip];
+      decoded = 240 + 256 * (A0 - 241) + A1;
+    }
+    else if(A0 == 249)
+    { 
+      ++ip;
+      var A1 = bytecode[ip];
+      ++ip;
+      var A2 = bytecode[ip];
 
-      if(A[0] < 241)
-      {
-        decoded_num = A[0];
-      }
-      else if(A[0] > 240 && A[0] < 248)
+      decoded = 2288 + (256 * A1) + A2;
+    }
+    else if(A0 >= 250 && A0 <= 251)
+    {
+      //A1..A3/A4/A5/A6/A7/A8 as a from 3 to 8 -byte big-ending integer
+      int len = 3 + A0 % 250;
+      for(int i = 1; i <= len; ++i)
       {
         ++ip;
-        decoded_num = 240 + 256 * (A[0] - 241) + bytecode[ip]; //240+256*(A0-241)+A1.
-      }
-      else if(A[0] == 249)
-      { 
-        for(var i = 1; i <= 2; ++i)
-        {
-          ++ip;
-          A[i] = bytecode[ip];
-        }
-
-        decoded_num = 2288 + (256 * A[1]) + A[2]; //2288+256*A1+A2
-      }
-      else if(A[0] >= 250 && A[0] <= 255)
-      {
-        for(var i = 1; i <= 3 + (A[0] % 250); ++i)
-        {
-          ++ip;
-          A[i] = bytecode[ip];
-
-          decoded_num += A[i]; //A1..A3/A4/A5/A6/A7/A8 as a from 3 to 8 -byte big-ending integer
-        }
+        decoded |= bytecode[ip] << (i-1) * 8; 
       }
     }
+    else
+      throw new Exception("Not supported code: " + A0);
 
-    return decoded_num;
+    return decoded;
   }
 
   public void Write(byte value)
@@ -962,69 +932,70 @@ public class WriteBuffer
     Write((byte)((value >> 24) & 0xFF));
   }
 
-  public void Write(ulong value)
-  {
-    if(value <= 16777215)
-    {
-      Write((uint)value);
-      return;
-    }
-    if(value <= 4294967295)
-    {
-      Write((byte)251);
-      Write((byte)(value & 0xFF));
-      Write((byte)((value >> 8) & 0xFF));
-      Write((byte)((value >> 16) & 0xFF));
-      Write((byte)((value >> 24) & 0xFF));
-      return;
-    }
-    if(value <= 1099511627775)
-    {
-      Write((byte)252);
-      Write((byte)(value & 0xFF));
-      Write((byte)((value >> 8) & 0xFF));
-      Write((byte)((value >> 16) & 0xFF));
-      Write((byte)((value >> 24) & 0xFF));
-      Write((byte)((value >> 32) & 0xFF));
-      return;
-    }
-    if(value <= 281474976710655)
-    {
-      Write((byte)253);
-      Write((byte)(value & 0xFF));
-      Write((byte)((value >> 8) & 0xFF));
-      Write((byte)((value >> 16) & 0xFF));
-      Write((byte)((value >> 24) & 0xFF));
-      Write((byte)((value >> 32) & 0xFF));
-      Write((byte)((value >> 40) & 0xFF));
-      return;
-    }
-    if(value <= 72057594037927935)
-    {
-      Write((byte)254);
-      Write((byte)(value & 0xFF));
-      Write((byte)((value >> 8) & 0xFF));
-      Write((byte)((value >> 16) & 0xFF));
-      Write((byte)((value >> 24) & 0xFF));
-      Write((byte)((value >> 32) & 0xFF));
-      Write((byte)((value >> 40) & 0xFF));
-      Write((byte)((value >> 48) & 0xFF));
-      return;
-    }
+  //TODO: do we need to support that?
+  //public void Write(ulong value)
+  //{
+  //  if(value <= 16777215)
+  //  {
+  //    Write((uint)value);
+  //    return;
+  //  }
+  //  if(value <= 4294967295)
+  //  {
+  //    Write((byte)251);
+  //    Write((byte)(value & 0xFF));
+  //    Write((byte)((value >> 8) & 0xFF));
+  //    Write((byte)((value >> 16) & 0xFF));
+  //    Write((byte)((value >> 24) & 0xFF));
+  //    return;
+  //  }
+  //  if(value <= 1099511627775)
+  //  {
+  //    Write((byte)252);
+  //    Write((byte)(value & 0xFF));
+  //    Write((byte)((value >> 8) & 0xFF));
+  //    Write((byte)((value >> 16) & 0xFF));
+  //    Write((byte)((value >> 24) & 0xFF));
+  //    Write((byte)((value >> 32) & 0xFF));
+  //    return;
+  //  }
+  //  if(value <= 281474976710655)
+  //  {
+  //    Write((byte)253);
+  //    Write((byte)(value & 0xFF));
+  //    Write((byte)((value >> 8) & 0xFF));
+  //    Write((byte)((value >> 16) & 0xFF));
+  //    Write((byte)((value >> 24) & 0xFF));
+  //    Write((byte)((value >> 32) & 0xFF));
+  //    Write((byte)((value >> 40) & 0xFF));
+  //    return;
+  //  }
+  //  if(value <= 72057594037927935)
+  //  {
+  //    Write((byte)254);
+  //    Write((byte)(value & 0xFF));
+  //    Write((byte)((value >> 8) & 0xFF));
+  //    Write((byte)((value >> 16) & 0xFF));
+  //    Write((byte)((value >> 24) & 0xFF));
+  //    Write((byte)((value >> 32) & 0xFF));
+  //    Write((byte)((value >> 40) & 0xFF));
+  //    Write((byte)((value >> 48) & 0xFF));
+  //    return;
+  //  }
 
-    // all others
-    {
-      Write((byte)255);
-      Write((byte)(value & 0xFF));
-      Write((byte)((value >> 8) & 0xFF));
-      Write((byte)((value >> 16) & 0xFF));
-      Write((byte)((value >> 24) & 0xFF));
-      Write((byte)((value >> 32) & 0xFF));
-      Write((byte)((value >> 40) & 0xFF));
-      Write((byte)((value >> 48) & 0xFF));
-      Write((byte)((value >> 56) & 0xFF));
-    }
-  }
+  //  // all others
+  //  {
+  //    Write((byte)255);
+  //    Write((byte)(value & 0xFF));
+  //    Write((byte)((value >> 8) & 0xFF));
+  //    Write((byte)((value >> 16) & 0xFF));
+  //    Write((byte)((value >> 24) & 0xFF));
+  //    Write((byte)((value >> 32) & 0xFF));
+  //    Write((byte)((value >> 40) & 0xFF));
+  //    Write((byte)((value >> 48) & 0xFF));
+  //    Write((byte)((value >> 56) & 0xFF));
+  //  }
+  //}
 
   public void Write(char value)
   {
@@ -1113,31 +1084,12 @@ public class WriteBuffer
     Write(bytes, bytes.Length);
   }
 
-  //TODO:
-  //public void Write(string value)
-  //{
-  //  if(value == null)
-  //  {
-  //    Write((ushort)0);
-  //    return;
-  //  }
-
-  //  int len = string_encoding.GetByteCount(value);
-
-  //  if(len >= MaxStringLength)
-  //    throw new IndexOutOfRangeException("Serialize(string) too long: " + value.Length);
-
-  //  Write((ushort)len);
-  //  int numBytes = string_encoding.GetBytes(value, 0, value.Length, string_write_buffer, 0);
-  //  stream.Write(string_write_buffer, 0, numBytes);
-  //}
-
   public void Write(bool value)
   {
     stream.WriteByte((byte)(value ? 1 : 0));
   }
 
-  public void Write(WriteBuffer buffer)
+  public void Write(Bytecode buffer)
   {
     buffer.WriteTo(stream);
   }

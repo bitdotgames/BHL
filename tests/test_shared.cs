@@ -1,11 +1,6 @@
 using System;
 using System.Reflection;
-using System.IO;
-using System.Diagnostics;
 using System.Collections.Generic;
-using System.Collections;
-using System.Threading;
-using Antlr4.Runtime;
 using bhl;
 
 public class IsTestedAttribute : Attribute
@@ -18,6 +13,15 @@ public class IsTestedAttribute : Attribute
 
 public static class BHL_TestExt 
 {
+  public static GlobalScope Clone(this GlobalScope globs)
+  {
+    var globs_copy = new GlobalScope();
+    var ms = globs.GetMembers();
+    for(int i=0;i<ms.Count;++i)
+      globs_copy.Define(ms[i]);
+    return globs_copy;
+  }
+
   public static void Decode(this DynVal dv, ref List<string> dst)
   {
     dst.Clear();

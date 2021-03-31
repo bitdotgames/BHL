@@ -368,7 +368,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(root_name != null)
     {
       var root_str_name = root_name.GetText();
-      var name_symb = curr_scope.resolve(root_str_name);
+      var name_symb = curr_scope.Resolve(root_str_name);
       if(name_symb == null)
         FireError(Location(root_name) + " : symbol not resolved");
       if(name_symb.type == null)
@@ -435,7 +435,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(name != null)
     {
       string str_name = name.GetText();
-      var name_symb = class_scope == null ? curr_scope.resolve(str_name) : class_scope.resolve(str_name);
+      var name_symb = class_scope == null ? curr_scope.Resolve(str_name) : class_scope.Resolve(str_name);
       if(name_symb == null)
         FireError(Location(name) + " : symbol not resolved");
 
@@ -476,7 +476,7 @@ public class Frontend : bhlBaseVisitor<object>
         else
         {
           //NOTE: let's try fetching func symbol from the module scope
-          func_symb = locals.resolve(str_name) as FuncSymbol;
+          func_symb = locals.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
             ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name);
@@ -513,7 +513,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          var call_func_symb = locals.resolve(str_name) as FuncSymbol;
+          var call_func_symb = locals.Resolve(str_name) as FuncSymbol;
           if(call_func_symb == null)
             FireError(Location(name) +  " : no such function found");
           var func_call_name = call_func_symb.name;
@@ -759,7 +759,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
   {
-    var tr = locals.type(funcLambda.retType());
+    var tr = locals.Type(funcLambda.retType());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
@@ -780,7 +780,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var un = useblock.refName()[i]; 
         var un_name_str = un.NAME().GetText(); 
-        var un_symb = curr_scope.resolve(un_name_str);
+        var un_symb = curr_scope.Resolve(un_name_str);
         if(un_symb == null)
           FireError(Location(un) +  " : symbol '" + un_name_str + "' not defined in parent scope");
 
@@ -799,7 +799,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    locals.define(symb);
+    locals.Define(symb);
 
     //NOTE: while we are inside lambda the eval type is the return type of
     Wrap(ctx).eval_type = symb.GetReturnType();
@@ -863,7 +863,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(new_exp != null)
     {
-      var tr = locals.type(new_exp.type());
+      var tr = locals.Type(new_exp.type());
       if(tr.type == null)
         FireError(Location(new_exp.type()) + ": type '" + tr.name.s + "' not found");
       PushJsonType(tr.type);
@@ -944,7 +944,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var name_str = ctx.NAME().GetText();
     
-    var member = scoped_symb.resolve(name_str);
+    var member = scoped_symb.Resolve(name_str);
     if(member == null)
       FireError(Location(ctx) + ": no such attribute '" + name_str + "' in class '" + scoped_symb.name.s + "'");
 
@@ -990,7 +990,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
   {
     var type = ctx.typeid().type();
-    var tr = locals.type(type);
+    var tr = locals.Type(type);
     if(tr.type == null)
       FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
 
@@ -1007,7 +1007,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var exp = ctx.staticCallExp(); 
     var ctx_name = exp.NAME();
-    var enum_symb = locals.resolve(ctx_name.GetText()) as EnumSymbol;
+    var enum_symb = locals.Resolve(ctx_name.GetText()) as EnumSymbol;
     if(enum_symb == null)
       FireError(Location(ctx) + ": type '" + ctx_name + "' not found");
 
@@ -1037,7 +1037,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tr = locals.type(ctx.newExp().type());
+    var tr = locals.Type(ctx.newExp().type());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
@@ -1059,7 +1059,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
-    var tr = locals.type(ctx.type());
+    var tr = locals.Type(ctx.type());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
@@ -1194,9 +1194,9 @@ public class Frontend : bhlBaseVisitor<object>
 
     var class_symb = wlhs.eval_type as ClassSymbol;
     //checking if there's an operator overload
-    if(class_symb != null && class_symb.resolve(op) is FuncSymbol)
+    if(class_symb != null && class_symb.Resolve(op) is FuncSymbol)
     {
-      var op_func = class_symb.resolve(op) as FuncSymbol;
+      var op_func = class_symb.Resolve(op) as FuncSymbol;
 
       Wrap(ctx).eval_type = SymbolTable.BopOverload(wlhs, wrhs, op_func);
 
@@ -1603,7 +1603,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var tr = locals.type(ctx.retType());
+    var tr = locals.Type(ctx.retType());
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
@@ -1617,8 +1617,8 @@ public class Frontend : bhlBaseVisitor<object>
 
     var symb = new FuncSymbolAST(locals, ast, func_node, func_name, tr, ctx.funcParams());
     if(decls_only)
-      curr_module.symbols.define(symb);
-    locals.define(symb);
+      curr_module.symbols.Define(symb);
+    locals.Define(symb);
     curr_scope = symb;
 
     PushFuncDecl(symb);
@@ -1659,7 +1659,7 @@ public class Frontend : bhlBaseVisitor<object>
     ClassSymbol parent = null;
     if(ctx.classEx() != null)
     {
-      parent = locals.resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
+      parent = locals.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
       if(parent == null)
         FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
 
@@ -1671,8 +1671,8 @@ public class Frontend : bhlBaseVisitor<object>
 
     var symb = new ClassSymbolAST(class_name, ast, parent);
     if(decls_only)
-      curr_module.symbols.define(symb);
-    locals.define(symb);
+      curr_module.symbols.Define(symb);
+    locals.Define(symb);
     curr_scope = symb;
 
     for(int i=0;i<ctx.classBlock().classMember().Length;++i)
@@ -1708,8 +1708,8 @@ public class Frontend : bhlBaseVisitor<object>
 
     var symb = new EnumSymbolAST(enum_name);
     if(decls_only)
-      curr_module.symbols.define(symb);
-    locals.define(symb);
+      curr_module.symbols.Define(symb);
+    locals.Define(symb);
     curr_scope = symb;
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
@@ -1743,10 +1743,10 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(decls_only)
     {
-      var tr = locals.type(vd.type().GetText());
+      var tr = locals.Type(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
-      curr_module.symbols.define(symb);
-      locals.define(symb);
+      curr_module.symbols.Define(symb);
+      locals.Define(symb);
     }
     else
     {
@@ -1755,7 +1755,7 @@ public class Frontend : bhlBaseVisitor<object>
       AST_Interim exp_ast = null;
       if(assign_exp != null)
       {
-        var tr = locals.type(vd.type());
+        var tr = locals.Type(vd.type());
         if(tr.type == null)
           FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
 
@@ -1798,7 +1798,7 @@ public class Frontend : bhlBaseVisitor<object>
       bool pop_json_type = false;
       if(found_default_arg)
       {
-        var tr = locals.type(fp.type());
+        var tr = locals.Type(fp.type());
         PushJsonType(tr.Get());
         pop_json_type = true;
       }
@@ -1856,7 +1856,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(vd_type == null)
         {
           string vd_name = vd.NAME().GetText(); 
-          var vd_symb = curr_scope.resolve(vd_name);
+          var vd_symb = curr_scope.Resolve(vd_name);
           if(vd_symb == null)
             FireError(Location(vd) + " : symbol not resolved");
           curr_type = vd_symb.type.Get();
@@ -1917,7 +1917,7 @@ public class Frontend : bhlBaseVisitor<object>
 
         //NOTE: declaring disabled symbol again
         if(disabled_symbol != null)
-          curr_scope.define(disabled_symbol);
+          curr_scope.Define(disabled_symbol);
 
         if(pop_json_type)
           PopJsonType();
@@ -1995,7 +1995,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = name.GetText();
 
-    var tr = locals.type(type);
+    var tr = locals.Type(type);
     if(tr.type == null)
       FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
 
@@ -2010,7 +2010,7 @@ public class Frontend : bhlBaseVisitor<object>
       (Symbol) new VariableSymbol(var_node, str_name, tr);
 
     symb.scope_level = scope_level;
-    curr_scope.define(symb);
+    curr_scope.Define(symb);
 
     if(write)
       return AST_Util.New_Call(EnumCall.VARW, 0, symb.name);
@@ -2311,7 +2311,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(vod.NAME() != null)
     {
       iter_str_name = vod.NAME().GetText();
-      var vs = curr_scope.resolve(iter_str_name) as VariableSymbol;
+      var vs = curr_scope.Resolve(iter_str_name) as VariableSymbol;
       if(vs == null)
         FireError(Location(vod.NAME()) +  " : symbol is not a valid variable");
       iter_str_type = vs.type.name.s;
@@ -2321,7 +2321,7 @@ public class Frontend : bhlBaseVisitor<object>
       iter_str_name = vd.NAME().GetText();
       iter_str_type = vd.type().GetText();
     }
-    var arr_type = locals.type(iter_str_type+"[]").Get();
+    var arr_type = locals.Type(iter_str_type+"[]").Get();
 
     PushJsonType(arr_type);
     var exp = ctx.foreachExp().exp();

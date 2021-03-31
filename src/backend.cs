@@ -142,7 +142,7 @@ public class Interpreter : AST_Visitor
   public FuncSymbol ResolveFuncSymbol(AST_Call ast)
   {
     if(ast.type == EnumCall.FUNC)
-      return symbols.resolve(ast.Name()) as FuncSymbol;
+      return symbols.Resolve(ast.Name()) as FuncSymbol;
     else if(ast.type == EnumCall.MFUNC)
       return ResolveClassMember(ast.scope_ntype, ast.Name()) as FuncSymbol;
     else
@@ -157,7 +157,7 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetFuncNode(HashedName name)
   {
-    var symb = symbols.resolve(name) as FuncSymbol;
+    var symb = symbols.Resolve(name) as FuncSymbol;
     return FuncCtx.MakeFuncNode(symb);
   }
 
@@ -179,7 +179,7 @@ public class Interpreter : AST_Visitor
 
   Symbol ResolveClassMember(HashedName class_type, HashedName name)
   {
-    var cl = symbols.resolve(class_type) as ClassSymbol;
+    var cl = symbols.Resolve(class_type) as ClassSymbol;
     if(cl == null)
       throw new Exception("Class binding not found: " + class_type + ", member: " + name); 
 
@@ -501,14 +501,14 @@ public class Interpreter : AST_Visitor
 
   void CheckFuncIsUnique(HashedName name)
   {
-    var s = symbols.resolve(name) as FuncSymbol;
+    var s = symbols.Resolve(name) as FuncSymbol;
     if(s != null)
       throw new Exception("Function is already defined: " + name);
   }
 
   void CheckNameIsUnique(HashedName name)
   {
-    var s = symbols.resolve(name);
+    var s = symbols.Resolve(name);
     var cs = s as ClassSymbol;
     if(cs != null)
       throw new Exception("Class is already defined: " + name);
@@ -523,19 +523,19 @@ public class Interpreter : AST_Visitor
     CheckFuncIsUnique(name);
 
     var fn = new FuncSymbolAST(symbols, ast);
-    symbols.define(fn);
+    symbols.Define(fn);
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
     //if there's such a lambda symbol already we re-use it
     var name = ast.Name(); 
-    var lmb = symbols.resolve(name) as LambdaSymbol;
+    var lmb = symbols.Resolve(name) as LambdaSymbol;
     if(lmb == null)
     {
       CheckFuncIsUnique(name);
       lmb = new LambdaSymbol(symbols, ast);
-      symbols.define(lmb);
+      symbols.Define(lmb);
     }
 
     curr_node.addChild(new PushFuncCtxNode(lmb));
@@ -546,10 +546,10 @@ public class Interpreter : AST_Visitor
     var name = ast.Name();
     CheckNameIsUnique(name);
 
-    var parent = symbols.resolve(ast.ParentName()) as ClassSymbol;
+    var parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
 
     var cl = new ClassSymbolAST(name, ast, parent);
-    symbols.define(cl);
+    symbols.Define(cl);
 
     for(int i=0;i<ast.children.Count;++i)
     {
@@ -557,7 +557,7 @@ public class Interpreter : AST_Visitor
       var vd = child as AST_VarDecl;
       if(vd != null)
       {
-        cl.define(new FieldSymbolAST(vd.name, vd.ntype));
+        cl.Define(new FieldSymbolAST(vd.name, vd.ntype));
       }
     }
   }
@@ -568,7 +568,7 @@ public class Interpreter : AST_Visitor
     CheckNameIsUnique(name);
 
     var es = new EnumSymbolAST(name);
-    symbols.define(es);
+    symbols.Define(es);
   }
 
   public override void DoVisit(AST_Block ast)
@@ -723,14 +723,14 @@ public class Interpreter : AST_Visitor
     }
     else if(ast.type == EnumCall.FUNC2VAR)
     {
-      var s = symbols.resolve(ast.nname()) as FuncSymbol;
+      var s = symbols.Resolve(ast.nname()) as FuncSymbol;
       if(s == null)
         throw new Exception("Could not find func:" + ast.Name());
       curr_node.addChild(new PushFuncCtxNode(s));
     }
     else if(ast.type == EnumCall.ARR_IDX)
     {
-      var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
+      var bnd = symbols.Resolve(ast.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
         throw new Exception("Could not find class binding: " + ast.scope_ntype);
 
@@ -738,7 +738,7 @@ public class Interpreter : AST_Visitor
     }
     else if(ast.type == EnumCall.ARR_IDXW)
     {
-      var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
+      var bnd = symbols.Resolve(ast.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
         throw new Exception("Could not find class binding: " + ast.scope_ntype);
 
@@ -850,7 +850,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonArr node)
   {
-    var bnd = symbols.resolve(node.ntype) as ArrayTypeSymbol;
+    var bnd = symbols.Resolve(node.ntype) as ArrayTypeSymbol;
     if(bnd == null)
       throw new Exception("Could not find class binding: " + node.ntype);
 

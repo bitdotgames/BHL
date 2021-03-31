@@ -68,9 +68,9 @@ public class TypeRef
 
     //TODO: not sure if it's a non-ugly solution
     if(bindings == null)
-      type = (bhl.Type)Interpreter.instance.symbols.resolve(name);
+      type = (bhl.Type)Interpreter.instance.symbols.Resolve(name);
     else
-      type = (bhl.Type)bindings.resolve(name);
+      type = (bhl.Type)bindings.Resolve(name);
 
     return type;
   }
@@ -253,12 +253,12 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     return null;
   }
 
-  public override void define(Symbol sym) 
+  public override void Define(Symbol sym) 
   {
     if(super_class != null && super_class.GetMembers().Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
-    base.define(sym);
+    base.Define(sym);
   }
 
   public HashedName GetName() { return name; }
@@ -291,29 +291,29 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     this.creator = CreateArr;
 
     {
-      var fn = new FuncBindSymbol("Add", scope.type("void"), Create_Add);
-      fn.define(new FuncArgSymbol("o", original));
-      this.define(fn);
+      var fn = new FuncBindSymbol("Add", scope.Type("void"), Create_Add);
+      fn.Define(new FuncArgSymbol("o", original));
+      this.Define(fn);
     }
 
     {
       var fn = new FuncBindSymbol("At", original, Create_At);
-      fn.define(new FuncArgSymbol("idx", scope.type("int")));
-      this.define(fn);
+      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      this.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("RemoveAt", scope.type("void"), Create_RemoveAt);
-      fn.define(new FuncArgSymbol("idx", scope.type("int")));
-      this.define(fn);
+      var fn = new FuncBindSymbol("RemoveAt", scope.Type("void"), Create_RemoveAt);
+      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      this.Define(fn);
     }
 
     {
-      var vs = new bhl.FieldSymbol("Count", scope.type("int"), Create_Count,
+      var vs = new bhl.FieldSymbol("Count", scope.Type("int"), Create_Count,
         //read only property
         null
       );
-      this.define(vs);
+      this.Define(vs);
     }
   }
 
@@ -325,12 +325,33 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract BehaviorTreeNode Create_SetAt();
   public abstract BehaviorTreeNode Create_RemoveAt();
   public abstract BehaviorTreeNode Create_Clear();
+
+  //TODO:
+  //public abstract void VM_NewArr(ref Val v);
+  //public abstract void VM_Count(bhl.Val ctx, ref bhl.Val v);
+  //public abstract BehaviorTreeNode Create_New();
+  //public abstract BehaviorTreeNode Create_Add();
+  //public abstract BehaviorTreeNode Create_At();
+  //public abstract BehaviorTreeNode Create_SetAt();
+  //public abstract BehaviorTreeNode Create_RemoveAt();
+  //public abstract BehaviorTreeNode Create_Clear();
 }
 
 //NOTE: this one is used as a fallback for all arrays which
 //      were not explicitely re-defined 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
+  public static int VM_Type {
+    get {
+      return (int)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n1;
+    }
+  }
+  public static readonly int VM_AddIdx    = 0;
+  public static readonly int VM_SetIdx    = 1;
+  public static readonly int VM_RemoveIdx = 2;
+  public static readonly int VM_CountIdx  = 3;
+  public static readonly int VM_AtIdx     = 4;
+
   public static readonly HashedName GENERIC_CLASS_TYPE = new HashedName("[]"); 
 
 #if BHL_FRONT
@@ -550,7 +571,7 @@ public abstract class ScopedSymbol : Symbol, Scope
     this.enclosing_scope = enclosing_scope;
   }
 
-  public virtual Symbol resolve(HashedName name) 
+  public virtual Symbol Resolve(HashedName name) 
   {
     Symbol s = null;
     GetMembers().TryGetValue(name, out s);
@@ -564,12 +585,12 @@ public abstract class ScopedSymbol : Symbol, Scope
 
     var pscope = GetParentScope();
     if(pscope != null)
-      return pscope.resolve(name);
+      return pscope.Resolve(name);
 
     return null;
   }
 
-  public virtual void define(Symbol sym) 
+  public virtual void Define(Symbol sym) 
   {
     var members = GetMembers(); 
     if(members.Contains(sym.name))
@@ -634,7 +655,7 @@ public class FuncType : Type
     if(fnargs.ARR() != null)
       ret_type_str += "[]";
     
-    ret_type = scope.type(ret_type_str);
+    ret_type = scope.Type(ret_type_str);
 
     var fnames = fnargs.names();
     if(fnames != null)
@@ -642,7 +663,7 @@ public class FuncType : Type
       for(int i=0;i<fnames.refName().Length;++i)
       {
         var name = fnames.refName()[i];
-        var arg_type = scope.type(name.NAME().GetText());
+        var arg_type = scope.Type(name.NAME().GetText());
         arg_type.is_ref = name.isRef() != null; 
         arg_types.Add(arg_type);
       }
@@ -756,7 +777,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        ft.arg_types.Add(parent.type(vd.type()));
+        ft.arg_types.Add(parent.Type(vd.type()));
       }
     }
     ft.Update();
@@ -775,10 +796,10 @@ public class LambdaSymbol : FuncSymbol
   {
     var up = AST_Util.New_UseParam(s.name, is_ref); 
     decl.useparams.Add(up);
-    this.define(s);
+    this.Define(s);
   }
 
-  public override Symbol resolve(HashedName name) 
+  public override Symbol Resolve(HashedName name) 
   {
     Symbol s = null;
     GetMembers().TryGetValue(name, out s);
@@ -791,7 +812,7 @@ public class LambdaSymbol : FuncSymbol
 
     var pscope = GetParentScope();
     if(pscope != null)
-      return pscope.resolve(name);
+      return pscope.Resolve(name);
 
     return null;
   }
@@ -873,7 +894,7 @@ public class FuncSymbolAST : FuncSymbol
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
         {
           var vd = fparams.funcParamDeclare()[i];
-          var type = parent.type(vd.type());
+          var type = parent.Type(vd.type());
           type.is_ref = vd.isRef() != null;
           ft.arg_types.Add(type);
         }
@@ -926,9 +947,9 @@ public class FuncBindSymbol : FuncSymbol
   public override int GetTotalArgsNum() { return GetMembers().Count; }
   public override int GetDefaultArgsNum() { return def_args_num; }
 
-  public override void define(Symbol sym) 
+  public override void Define(Symbol sym) 
   {
-    base.define(sym);
+    base.Define(sym);
 
     //NOTE: for bind funcs every defined symbol is assumed to be an argument
     DefineArg(sym.name);
@@ -964,7 +985,7 @@ public class ClassBindSymbol : ClassSymbol
     if(s.GetReturnType() == SymbolTable._void)
       throw new UserError("Operator overload return value can't be void");
 
-    define(s);
+    Define(s);
   }
 }
 
@@ -1037,7 +1058,7 @@ public class EnumSymbol : ScopedSymbol, Scope, Type
 
   public EnumItemSymbol FindValue(HashedName name)
   {
-    return base.resolve(name) as EnumItemSymbol;
+    return base.Resolve(name) as EnumItemSymbol;
   }
 
   public override string ToString() 
@@ -1200,50 +1221,50 @@ static public class SymbolTable
       if(t != null) 
       {
         var blt = (BuiltInTypeSymbol)t; 
-        globals.define(blt);
+        globals.Define(blt);
       }
     }
 
     //for all generic arrays
-    globals.define(new GenericArrayTypeSymbol(globals));
+    globals.Define(new GenericArrayTypeSymbol(globals));
 
     {
-      var fn = new FuncBindSymbol("suspend", globals.type("void"),
+      var fn = new FuncBindSymbol("suspend", globals.Type("void"),
         delegate() { return new suspend(); } 
       );
-      globals.define(fn);
+      globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("yield", globals.type("void"),
+      var fn = new FuncBindSymbol("yield", globals.Type("void"),
         delegate() { return new yield(); } 
       );
-      globals.define(fn);
+      globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("nop", globals.type("void"),
+      var fn = new FuncBindSymbol("nop", globals.Type("void"),
         delegate() { return new nop(); } 
       );
 
-      globals.define(fn);
+      globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("fail", globals.type("void"),
+      var fn = new FuncBindSymbol("fail", globals.Type("void"),
         delegate() { return new fail(); } 
       );
 
-      globals.define(fn);
+      globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("check", globals.type("void"),
+      var fn = new FuncBindSymbol("check", globals.Type("void"),
         delegate() { return new check(); } 
       );
-      fn.define(new FuncArgSymbol("cond", globals.type("bool")));
+      fn.Define(new FuncArgSymbol("cond", globals.Type("bool")));
 
-      globals.define(fn);
+      globals.Define(fn);
     }
   }
 
