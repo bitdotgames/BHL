@@ -433,49 +433,6 @@ public class Compiler : AST_Visitor
     return def;
   }
 
-  public void ReplaceOpcode(int position, byte[] new_op_data)
-  {
-    ReplaceOpcode(position, new_op_data, GetCurrentScope());
-  }
-
-  public void ReplaceOpcode(int position, byte[] new_op_data, Bytecode scope)
-  {
-    var scope_bytes = scope.GetBytes();
-
-    byte[] left_bytes = new byte[position];
-    Array.Copy(scope_bytes, left_bytes, position);
-    var opcode = (Opcodes)scope_bytes[position];
-    
-    var op_def = LookupOpcode(opcode);
-
-    var replaced_op_length = 1;
-
-    if(op_def.operand_width != null)
-    {
-      foreach(var operand in op_def.operand_width)
-      {
-        uint real_operand_width = (uint)position + 1;
-        uint delta_width = real_operand_width;
-        Bytecode.Decode(scope_bytes, ref real_operand_width);
-        replaced_op_length += 1 + (int)(real_operand_width - delta_width);
-      }
-    }
-
-    byte[] right_bytes = new byte[scope_bytes.Length - (position + replaced_op_length)];
-    
-    Array.Copy(scope_bytes, position + replaced_op_length, right_bytes, 0, right_bytes.Length);
-
-    scope.Reset(scope_bytes,0);
-    scope.Write(left_bytes, left_bytes.Length);
-    scope.Write(new_op_data, new_op_data.Length);
-    scope.Write(right_bytes, right_bytes.Length);
-  }
-
-  public void DeleteOpcode(int pointer)
-  {
-    ReplaceOpcode(pointer, new byte[]{});
-  }
-
   public Compiler Emit(Opcodes op, int[] operands = null)
   {
     var curr_scope = GetCurrentScope();
@@ -844,7 +801,6 @@ public class Bytecode
 
   public byte[] GetBytes()
   {
-    //NOTE: documentation: "omits unused bytes"
     return stream.ToArray();
   }
 
