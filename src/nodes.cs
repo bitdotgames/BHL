@@ -1853,6 +1853,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
   //NOTE: caching class member symbol
   Symbol cls_member;
+  bool need_super_class_bind_obj; 
 
   public MVarAccessNode(uint scope_ntype, HashedName name, int mode = READ)
   {
@@ -1874,6 +1875,10 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
       cls_member = cls.ResolveMember(name.n);
       if(cls_member == null)
         throw new Exception("Member not found: " + name);
+
+      //TODO: move this check to frontend layer
+      if(cls is ClassSymbolAST && cls_member.scope is ClassBindSymbol)
+        need_super_class_bind_obj = true;
     }
 
     var var_symb = (VariableSymbol)cls_member;
@@ -1886,6 +1891,9 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       if(var_symb is FieldSymbol)
       {
+        if(need_super_class_bind_obj)
+          ctx = ((DynValDict)ctx.obj).Get(0);
+
         if(mode == READ_REF)
         {
           DynVal val;
@@ -1926,6 +1934,9 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       if(var_symb is FieldSymbol)
       {
+        if(need_super_class_bind_obj)
+          ctx = ((DynValDict)ctx.obj).Get(0);
+
         (var_symb as FieldSymbol).setter(ref ctx, val);
         val.RefMod(RefOp.TRY_DEL);
       }
