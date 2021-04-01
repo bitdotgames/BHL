@@ -122,17 +122,15 @@ public class VM
 
   public void Run()
   {
-    Opcodes opcode;
     curr_frame = frames.Peek();
     while(frames.Count > 0)
     {
-      opcode = (Opcodes)bytecode[curr_frame.ip];
+      var opcode = (Opcodes)bytecode[curr_frame.ip];
 
       switch(opcode)
       {
         case Opcodes.Constant:
-          ++curr_frame.ip;
-          int const_idx = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          int const_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
 
           if(const_idx >= constants.Count)
             throw new Exception("Index out of constant pool: " + const_idx);
@@ -197,52 +195,54 @@ public class VM
             stack.Push(ret_val);
         break;
         case Opcodes.MethodCall:
-          ++curr_frame.ip;
-          uint class_type = (uint)Bytecode.Decode(bytecode, ref curr_frame.ip);
+          uint class_type = Bytecode.Decode(bytecode, ref curr_frame.ip);
           var class_symb = symbols.Resolve(class_type) as ClassSymbol;
           if(class_symb == null)
             throw new Exception("Class type not found: " + class_type);
 
-          ++curr_frame.ip;
-          int method_offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          int method_offset = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
           ExecuteClassMethod(class_symb, method_offset);
         break;
         case Opcodes.FuncCall:
-          ++curr_frame.ip;
-
           var fr = new Frame();
-          fr.ip = (uint)Bytecode.Decode(bytecode, ref curr_frame.ip);
+          fr.ip = Bytecode.Decode(bytecode, ref curr_frame.ip);
 
-          ++curr_frame.ip;
-
-          var args_info = new FuncArgsInfo((uint)Bytecode.Decode(bytecode, ref curr_frame.ip));
+          var args_info = new FuncArgsInfo(Bytecode.Decode(bytecode, ref curr_frame.ip));
           for(int i = 0; i < args_info.CountArgs(); ++i)
             fr.PushValue(curr_frame.PopValue().ValueClone());
 
           frames.Push(fr);
           curr_frame = frames.Peek();
+        //NOTE: using continue instead of break since we 
+        //      don't want to increment ip 
         continue;
         case Opcodes.Jump:
-          ++curr_frame.ip;
-          curr_frame.ip = curr_frame.ip + (uint)Bytecode.Decode(bytecode, ref curr_frame.ip);
+        {
+          uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          curr_frame.ip = curr_frame.ip + offset;
+        }
         break;
         case Opcodes.LoopJump:
-          ++curr_frame.ip;
-          curr_frame.ip = curr_frame.ip - (uint)Bytecode.Decode(bytecode, ref curr_frame.ip);
+        {
+          uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          curr_frame.ip = curr_frame.ip - offset;
+        }
         break;
         case Opcodes.CondJump:
-          ++curr_frame.ip;
+          //we need to jump only in case of false
           if(curr_frame.PopValue().bval == false)
-            curr_frame.ip = curr_frame.ip + (uint)Bytecode.Decode(bytecode, ref curr_frame.ip);
-          ++curr_frame.ip;
-        continue;
+          {
+            uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
+            curr_frame.ip = curr_frame.ip + offset;
+          }
+          else
+            ++curr_frame.ip;
+        break;
         case Opcodes.DefArg:
-          ++curr_frame.ip; //need add check for args more than 1 byte long
-          var arg = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          uint arg = Bytecode.Decode(bytecode, ref curr_frame.ip);
           if(curr_frame.stack.Count > 0)
-            curr_frame.ip = curr_frame.ip + (uint)arg;
-          ++curr_frame.ip;
-        continue;
+            curr_frame.ip = curr_frame.ip + arg;
+        break;
         default:
           throw new Exception("Unsupported opcode: " + opcode);
       }
@@ -252,8 +252,7 @@ public class VM
 
   void ExecuteVarGetSet(Opcodes op)
   {
-    ++curr_frame.ip;
-    int local_idx = Bytecode.Decode(bytecode, ref curr_frame.ip);
+    int local_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
     
     switch(op)
     {
@@ -283,15 +282,13 @@ public class VM
 
   void ExecuteMVarGetSet(Opcodes op)
   {
-    ++curr_frame.ip;
-    uint class_type = (uint)Bytecode.Decode(bytecode, ref curr_frame.ip);
+    uint class_type = Bytecode.Decode(bytecode, ref curr_frame.ip);
 
     var class_symb = symbols.Resolve(class_type) as ClassSymbol;
     if(class_symb == null)
       throw new Exception("Class type not found: " + class_type);
 
-    ++curr_frame.ip;
-    int local_idx = Bytecode.Decode(bytecode, ref curr_frame.ip);
+    int local_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
     
     switch(op)
     {

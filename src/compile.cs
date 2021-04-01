@@ -513,22 +513,29 @@ public class Compiler : AST_Visitor
     }
   }
 
-  int EmitConditionStatement(AST_Block ast,int index)
+  //NOTE: returns position of the opcode argument for 
+  //      the jump index to be patched later
+  int EmitConditionStatement(AST_Block ast)
   {
     Visit(ast.children[0]);
-    Emit(Opcodes.CondJump, new int[] { index });
-    var pointer = GetCurrentScope().Position;
+    Emit(Opcodes.CondJump, new int[] { 0 /*dummy placeholder*/});
+    int pos = GetCurrentScope().Position;
     Visit(ast.children[1]);
-    return pointer;
+    return pos;
   }
 
-  void InsertIndex(int pointer)
+  void PatchJumpOffset(int jump_opcode_pos)
   {
     var curr_scope = GetCurrentScope();
-    var scope = curr_scope.GetBytes();
-    scope[pointer - 1] = (byte)(curr_scope.Position - pointer);
-    curr_scope.Reset(scope,0);
-    curr_scope.Write(scope, scope.Length);
+    //TODO: this patching should happen inline 
+    //      without getting and rewriting all bytes
+    var bytes = curr_scope.GetBytes();
+    int offset = curr_scope.Position - jump_opcode_pos;
+    if(offset < 0 || offset >= 241) 
+      throw new Exception("Invalid offset: " + offset);
+    bytes[jump_opcode_pos - 1] = (byte)offset;
+    curr_scope.Reset(bytes, 0);
+    curr_scope.Write(bytes, bytes.Length);
   }
 
   public byte[] GetBytes()
@@ -575,35 +582,39 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Block ast)
   {
-    int index = 0; //blank placeholder
     switch(ast.type)
     {
       case EnumBlock.IF:
-        var pointer = 0;
         switch(ast.children.Count)
         {
           case 2:
-            pointer = EmitConditionStatement(ast, index);
-            InsertIndex(pointer);
+          {
+            int pos = EmitConditionStatement(ast);
+            PatchJumpOffset(pos);
+          }
           break;
           case 3:
-            pointer = EmitConditionStatement(ast, index);
-            Emit(Opcodes.Jump, new int[] { index });
-            InsertIndex(pointer);
-            pointer = GetCurrentScope().Position;
+          {
+            int pos = EmitConditionStatement(ast);
+            Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
+            PatchJumpOffset(pos);
+            pos = GetCurrentScope().Position;
             Visit(ast.children[2]);
-            InsertIndex(pointer);
+            PatchJumpOffset(pos);
+          }
           break;
           default:
             throw new Exception("Not supported conditions count: " + ast.children.Count);
         }
       break;
       case EnumBlock.WHILE:
-        var block_ip = GetCurrentScope().Position;
-        pointer = EmitConditionStatement(ast, index);
+      {
+        int block_ip = GetCurrentScope().Position;
+        int pointer = EmitConditionStatement(ast);
         Emit(Opcodes.LoopJump, new int[] { GetCurrentScope().Position - block_ip
                                            + LookupOpcode(Opcodes.LoopJump).operand_width[0] });
-        InsertIndex(pointer);
+        PatchJumpOffset(pointer);
+      }
       break;
       default:
         //there will be behaviour node blocks
@@ -799,7 +810,7 @@ public class Compiler : AST_Visitor
       Emit(Opcodes.DefArg, new int[] { index });
       var pointer = GetCurrentScope().Position;
       VisitChildren(node);
-      InsertIndex(pointer);
+      PatchJumpOffset(pointer);
     }
 
     SymbolView s = GetCurrentSymbolView().Define(node.name);
@@ -824,15 +835,15 @@ public class Compiler : AST_Visitor
 
 public class Bytecode
 {
-  MemoryStream stream = new MemoryStream();
   public ushort Position { get { return (ushort)stream.Position; } }
   public long Length { get { return stream.Length; } }
+
+  MemoryStream stream = new MemoryStream();
 
   public Bytecode() {}
 
   public Bytecode(byte[] buffer)
   {
-    //NOTE: new MemoryStream(buffer) would make it non-resizable so we write it manually
     stream.Write(buffer, 0, buffer.Length);
   }
 
@@ -849,10 +860,11 @@ public class Bytecode
     return stream.ToArray();
   }
 
-  public static int Decode(byte[] bytecode, ref uint ip)
+  public static uint Decode(byte[] bytecode, ref uint ip)
   {
     int decoded = 0;
 
+    ++ip;
     var A0 = bytecode[ip];
 
     if(A0 < 241)
@@ -887,7 +899,7 @@ public class Bytecode
     else
       throw new Exception("Not supported code: " + A0);
 
-    return decoded;
+    return (uint)decoded;
   }
 
   public void Write(byte value)
