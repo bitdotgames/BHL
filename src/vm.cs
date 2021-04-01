@@ -141,11 +141,16 @@ public class VM
         case Opcodes.ArrNew:
           curr_frame.PushValue(Val.NewObj(ValList.New()));
         break;
-        case Opcodes.TypeCastInt:
-          curr_frame.PushValue(Val.NewNum(curr_frame.PopValue().num));
-        break;
-        case Opcodes.TypeCastStr:
-          curr_frame.PushValue(Val.NewStr(curr_frame.PopValue().num.ToString()));
+        case Opcodes.TypeCast:
+        {
+          uint cast_type = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          if(cast_type == SymbolTable.symb_string.name.n)
+            curr_frame.PushValue(Val.NewStr(curr_frame.PopValue().num.ToString()));
+          else if(cast_type == SymbolTable.symb_int.name.n)
+            curr_frame.PushValue(Val.NewNum(curr_frame.PopValue().num));
+          else
+            throw new Exception("Not supported typecast type: " + cast_type);
+        }
         break;
         case Opcodes.Add:
         case Opcodes.Sub:

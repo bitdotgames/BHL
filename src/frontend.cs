@@ -320,7 +320,7 @@ public class Frontend : bhlBaseVisitor<object>
     var exp = ctx.callExp(); 
     Visit(exp);
     var eval_type = Wrap(exp).eval_type;
-    if(eval_type != null && eval_type != SymbolTable._void)
+    if(eval_type != null && eval_type != SymbolTable.symb_void)
     {
       //TODO: add a warning?
       var mtype = eval_type as MultiType;
@@ -554,7 +554,7 @@ public class Frontend : bhlBaseVisitor<object>
     var arr_exp = arracc.exp();
     Visit(arr_exp);
 
-    if(Wrap(arr_exp).eval_type != SymbolTable._int)
+    if(Wrap(arr_exp).eval_type != SymbolTable.symb_int)
       FireError(Location(arr_exp) +  " : array index expression is not of type int");
 
     type = arr_type.original.Get();
@@ -994,7 +994,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(tr.type == null)
       FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
 
-    Wrap(ctx).eval_type = SymbolTable._int;
+    Wrap(ctx).eval_type = SymbolTable.symb_int;
 
     var ast = AST_Util.New_Literal(EnumLiteral.NUM);
     ast.nval = tr.name.n;
@@ -1318,7 +1318,7 @@ public class Frontend : bhlBaseVisitor<object>
     //TODO: disallow return statements in eval blocks
     CommonVisitBlock(EnumBlock.EVAL, ctx.block().statement(), new_local_scope: false);
 
-    Wrap(ctx).eval_type = SymbolTable._boolean;
+    Wrap(ctx).eval_type = SymbolTable.symb_bool;
 
     return null;
   }
@@ -1334,17 +1334,17 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(int_num != null)
     {
-      Wrap(ctx).eval_type = SymbolTable._int;
+      Wrap(ctx).eval_type = SymbolTable.symb_int;
       ast.nval = double.Parse(int_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(flt_num != null)
     {
-      Wrap(ctx).eval_type = SymbolTable._float;
+      Wrap(ctx).eval_type = SymbolTable.symb_float;
       ast.nval = double.Parse(flt_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(hex_num != null)
     {
-      Wrap(ctx).eval_type = SymbolTable._int;
+      Wrap(ctx).eval_type = SymbolTable.symb_int;
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
     }
 
@@ -1355,7 +1355,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
   {
-    Wrap(ctx).eval_type = SymbolTable._boolean;
+    Wrap(ctx).eval_type = SymbolTable.symb_bool;
 
     var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
     ast.nval = 0;
@@ -1366,7 +1366,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
   {
-    Wrap(ctx).eval_type = SymbolTable._null;
+    Wrap(ctx).eval_type = SymbolTable.symb_null;
 
     var ast = AST_Util.New_Literal(EnumLiteral.NIL);
     PeekAST().AddChild(ast);
@@ -1376,7 +1376,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralTrue(bhlParser.ExpLiteralTrueContext ctx)
   {
-    Wrap(ctx).eval_type = SymbolTable._boolean;
+    Wrap(ctx).eval_type = SymbolTable.symb_bool;
 
     var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
     ast.nval = 1;
@@ -1387,7 +1387,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
   {
-    Wrap(ctx).eval_type = SymbolTable._string;
+    Wrap(ctx).eval_type = SymbolTable.symb_string;
 
     var ast = AST_Util.New_Literal(EnumLiteral.STR);
     ast.sval = ctx.@string().NORMALSTRING().GetText();
@@ -1485,7 +1485,7 @@ public class Frontend : bhlBaseVisitor<object>
       var fret_type = func_symb.GetReturnType();
 
       //NOTE: immediately adding return node in case of void return type
-      if(fret_type == SymbolTable._void)
+      if(fret_type == SymbolTable.symb_void)
         PeekAST().AddChild(ret_ast);
       else
         PushAST(ret_ast);
@@ -1501,7 +1501,7 @@ public class Frontend : bhlBaseVisitor<object>
         //      where exp has void type, in this case
         //      we simply ignore exp_node since return will take
         //      effect right before it
-        if(Wrap(exp).eval_type != SymbolTable._void)
+        if(Wrap(exp).eval_type != SymbolTable.symb_void)
         {
           SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
           Wrap(ctx).eval_type = Wrap(exp).eval_type;
@@ -1538,7 +1538,7 @@ public class Frontend : bhlBaseVisitor<object>
         Wrap(ctx).eval_type = ret_type;
       }
 
-      if(fret_type != SymbolTable._void)
+      if(fret_type != SymbolTable.symb_void)
       {
         PopAST();
         PeekAST().AddChild(ret_ast);
@@ -1546,7 +1546,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
     {
-      Wrap(ctx).eval_type = SymbolTable._void;
+      Wrap(ctx).eval_type = SymbolTable.symb_void;
       PeekAST().AddChild(ret_ast);
     }
 
@@ -1637,7 +1637,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(ctx.funcBlock());
       PopAST();
 
-      if(tr.type != SymbolTable._void && !symb.return_statement_found)
+      if(tr.type != SymbolTable.symb_void && !symb.return_statement_found)
         FireError(Location(ctx.NAME()) + ": matching 'return' statement not found");
     }
 
@@ -2118,7 +2118,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(main.exp());
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(main.exp()));
+    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(main.exp()));
 
     ast.AddChild(main_cond);
     PushAST(ast);
@@ -2139,7 +2139,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(item.exp());
       PopAST();
 
-      SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(item.exp()));
+      SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(item.exp()));
 
       ast.AddChild(item_cond);
       PushAST(ast);
@@ -2175,7 +2175,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(ctx.exp()));
+    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(ctx.exp()));
 
     ast.AddChild(cond);
 
@@ -2225,7 +2225,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(for_cond);
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(for_cond.exp()));
+    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(for_cond.exp()));
 
     ast.AddChild(cond);
 
@@ -2276,7 +2276,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(ctx.exp()));
+    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(ctx.exp()));
 
     ast.AddChild(cond);
 

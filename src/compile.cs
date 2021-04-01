@@ -36,10 +36,8 @@ public enum Opcodes
   LessOrEqual     = 28,
   GreaterOrEqual  = 29,
   DefArg          = 31, //opcode for skipping func def args
-  //TODO: make it an universal opcode
-  TypeCastInt     = 32,
-  TypeCastStr     = 33,
-  ArrNew          = 34,
+  TypeCast        = 32,
+  ArrNew          = 33,
 }
 
 public enum SymbolScope
@@ -409,13 +407,8 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.TypeCastInt,
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.TypeCastStr,
+        name = Opcodes.TypeCast,
+        operand_width = new int[] { 4 }
       }
     );
   }
@@ -578,11 +571,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-
-    if(ast.ntype == SymbolTable._int.name.n)
-      Emit(Opcodes.TypeCastInt);
-    else if(ast.ntype == SymbolTable._string.name.n)
-      Emit(Opcodes.TypeCastStr);
+    Emit(Opcodes.TypeCast, new int[] {(int)ast.ntype});
   }
 
   public override void DoVisit(AST_New ast)

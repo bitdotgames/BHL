@@ -1745,11 +1745,11 @@ public class TypeCastNode : BehaviorTreeTerminalNode
     var res = val.ValueClone();
 
     //TODO: add better casting support
-    if(node.ntype == SymbolTable._int.name.n)
+    if(node.ntype == SymbolTable.symb_int.name.n)
     {
       res.SetNum((int)val.num);
     }
-    else if(node.ntype == SymbolTable._string.name.n && val.type != DynVal.STRING)
+    else if(node.ntype == SymbolTable.symb_string.name.n && val.type != DynVal.STRING)
     {
       res.SetStr("" + val.num);
     }

@@ -88,7 +88,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.TypeCastInt)
+      .Emit(Opcodes.TypeCast, new int[] { (int)SymbolTable.symb_int.name.n })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       .GetBytes();
@@ -122,7 +122,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.TypeCastStr)
+      .Emit(Opcodes.TypeCast, new int[] { (int)SymbolTable.symb_string.name.n })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       .GetBytes();
