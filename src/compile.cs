@@ -527,15 +527,10 @@ public class Compiler : AST_Visitor
   void PatchJumpOffset(int jump_opcode_pos)
   {
     var curr_scope = GetCurrentScope();
-    //TODO: this patching should happen inline 
-    //      without getting and rewriting all bytes
-    var bytes = curr_scope.GetBytes();
     int offset = curr_scope.Position - jump_opcode_pos;
     if(offset < 0 || offset >= 241) 
       throw new Exception("Invalid offset: " + offset);
-    bytes[jump_opcode_pos - 1] = (byte)offset;
-    curr_scope.Reset(bytes, 0);
-    curr_scope.Write(bytes, bytes.Length);
+    curr_scope.PatchByteAt(jump_opcode_pos - 1, (byte)offset);
   }
 
   public byte[] GetBytes()
@@ -840,13 +835,6 @@ public class Bytecode
 
   MemoryStream stream = new MemoryStream();
 
-  public Bytecode() {}
-
-  public Bytecode(byte[] buffer)
-  {
-    stream.Write(buffer, 0, buffer.Length);
-  }
-
   public void Reset(byte[] buffer, int size)
   {
     stream.SetLength(0);
@@ -1121,31 +1109,12 @@ public class Bytecode
     stream.Write(buffer, offset, count);
   }
 
-  public void SeekZero()
+  public void PatchByteAt(int pos, byte value)
   {
-    stream.Seek(0, SeekOrigin.Begin);
-  }
-
-  public void StartMessage(short type)
-  {
-    SeekZero();
-
-    // two bytes for size, will be filled out in FinishMessage
-    Write((ushort)0);
-
-    // two bytes for message type
-    Write(type);
-  }
-
-  public void FinishMessage()
-  {
-    // jump to zero, replace size (short) in header, jump back
-    long oldPosition = stream.Position;
-    ushort sz = (ushort)(Position - (sizeof(ushort) * 2)); // length - header(short,short)
-
-    SeekZero();
-    Write(sz);
-    stream.Position = oldPosition;
+    long orig_pos = stream.Position;
+    stream.Position = pos;
+    stream.WriteByte(value);
+    stream.Position = orig_pos;
   }
 }
 
