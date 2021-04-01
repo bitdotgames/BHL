@@ -6,38 +6,38 @@ namespace bhl {
 
 public enum Opcodes
 {
-  Constant        = 1,
-  Add             = 2,
-  Sub             = 3,
-  Div             = 4,
-  Mul             = 5,
-  SetVar          = 6,
-  GetVar          = 7,
-  FuncCall        = 8,
-  SetMVar         = 9,
-  GetMVar         = 10,
-  MethodCall      = 11,
-  Return          = 12,
-  ReturnVal       = 13,
-  Jump            = 14,
-  CondJump        = 15,
-  LoopJump        = 16,
-  UnaryNot        = 17,
-  UnaryNeg        = 18,
-  And             = 19,
-  Or              = 20,
-  Mod             = 21,
-  BitOr           = 22,
-  BitAnd          = 23,
-  Equal           = 24,
-  NotEqual        = 25,
-  Less            = 26,
-  Greater         = 27,
-  LessOrEqual     = 28,
-  GreaterOrEqual  = 29,
-  DefArg          = 31, //opcode for skipping func def args
-  TypeCast        = 32,
-  ArrNew          = 33,
+  Constant        = 0x1,
+  Add             = 0x2,
+  Sub             = 0x3,
+  Div             = 0x4,
+  Mul             = 0x5,
+  SetVar          = 0x6,
+  GetVar          = 0x7,
+  FuncCall        = 0x8,
+  SetMVar         = 0x9,
+  GetMVar         = 0xA,
+  MethodCall      = 0xB,
+  Return          = 0xC,
+  ReturnVal       = 0xD,
+  Jump            = 0xE,
+  CondJump        = 0xF,
+  LoopJump        = 0x10,
+  UnaryNot        = 0x11,
+  UnaryNeg        = 0x12,
+  And             = 0x13,
+  Or              = 0x14,
+  Mod             = 0x15,
+  BitOr           = 0x16,
+  BitAnd          = 0x17,
+  Equal           = 0x18,
+  NotEqual        = 0x19,
+  Less            = 0x1A,
+  Greater         = 0x1B,
+  LessOrEqual     = 0x1C,
+  GreaterOrEqual  = 0x1D,
+  DefArg          = 0x1E, //opcode for skipping func def args
+  TypeCast        = 0x1F,
+  ArrNew          = 0x20,
 }
 
 public enum SymbolScope
@@ -465,16 +465,18 @@ public class Compiler : AST_Visitor
 
   //NOTE: returns position of the opcode argument for 
   //      the jump index to be patched later
-  int EmitConditionStatement(AST_Block ast)
+  int EmitConditionAndBody(AST_Block ast, int idx)
   {
-    Visit(ast.children[0]);
+    //condition
+    Visit(ast.children[idx]);
     Emit(Opcodes.CondJump, new int[] { 0 /*dummy placeholder*/});
-    int pos = GetCurrentScope().Position;
-    Visit(ast.children[1]);
-    return pos;
+    int patch_pos = GetCurrentScope().Position;
+    //body
+    Visit(ast.children[idx+1]);
+    return patch_pos;
   }
 
-  void PatchJumpOffset(int jump_opcode_pos)
+  void PatchJumpOffsetToCurrPos(int jump_opcode_pos)
   {
     var curr_scope = GetCurrentScope();
     int offset = curr_scope.Position - jump_opcode_pos;
@@ -530,35 +532,63 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case EnumBlock.IF:
-        switch(ast.children.Count)
+
+        //if()
+        // ^-- to be patched with position out of 'if body'
+        //{
+        // ...
+        // jmp_opcode
+        // ^-- to be patched with position out of 'if body'
+        //}
+        //else if()
+        // ^-- to be patched with position out of 'if body'
+        //{
+        // ...
+        // jmp_opcode
+        // ^-- to be patched with position out of 'if body'
+        //}
+        //else
+        //{
+        //}
+
+        int last_jmp_op_pos = -1;
+        int i = 0;
+        //NOTE: amount of children is even if there's no 'else'
+        for(;i < ast.children.Count; i += 2)
         {
-          case 2:
+          //break if there's only 'else leftover' left
+          if((i + 2) > ast.children.Count)
+            break;
+
+          int if_op_pos = EmitConditionAndBody(ast, i);
+          if(last_jmp_op_pos != -1)
+            PatchJumpOffsetToCurrPos(last_jmp_op_pos);
+
+          //check if uncoditional jump out of 'if body' is required,
+          //it's required only if there are other 'else if' or 'else'
+          if(ast.children.Count > 2)
           {
-            int pos = EmitConditionStatement(ast);
-            PatchJumpOffset(pos);
-          }
-          break;
-          case 3:
-          {
-            int pos = EmitConditionStatement(ast);
             Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-            PatchJumpOffset(pos);
-            pos = GetCurrentScope().Position;
-            Visit(ast.children[2]);
-            PatchJumpOffset(pos);
+            last_jmp_op_pos = GetCurrentScope().Position;
+            PatchJumpOffsetToCurrPos(if_op_pos);
           }
-          break;
-          default:
-            throw new Exception("Not supported conditions count: " + ast.children.Count);
+          else
+            PatchJumpOffsetToCurrPos(if_op_pos);
+        }
+        //check fo 'else leftover'
+        if(i != ast.children.Count)
+        {
+          Visit(ast.children[i]);
+          PatchJumpOffsetToCurrPos(last_jmp_op_pos);
         }
       break;
       case EnumBlock.WHILE:
       {
         int block_ip = GetCurrentScope().Position;
-        int pointer = EmitConditionStatement(ast);
+        int cond_op_pos = EmitConditionAndBody(ast, 0);
         Emit(Opcodes.LoopJump, new int[] { GetCurrentScope().Position - block_ip
                                            + LookupOpcode(Opcodes.LoopJump).operand_width[0] });
-        PatchJumpOffset(pointer);
+        PatchJumpOffsetToCurrPos(cond_op_pos);
       }
       break;
       default:
@@ -751,7 +781,7 @@ public class Compiler : AST_Visitor
       Emit(Opcodes.DefArg, new int[] { index });
       var pointer = GetCurrentScope().Position;
       VisitChildren(node);
-      PatchJumpOffset(pointer);
+      PatchJumpOffsetToCurrPos(pointer);
     }
 
     SymbolView s = GetCurrentSymbolView().Define(node.name);

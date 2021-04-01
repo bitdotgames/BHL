@@ -1341,6 +1341,89 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCompileMultiIfElseCondition()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 0
+
+      if(0 > 1)
+      {
+        x1 = 10
+      }
+      else if(-1 > 1)
+      {
+        x1 = 30
+      }
+      else if(3 > 1)
+      {
+        x1 = 20
+      }
+      else
+      {
+        x1 = 40
+      }
+      
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var result = c.GetBytes();
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.CondJump, new int[] { 6 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Jump, new int[] { 12 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.UnaryNeg)
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.CondJump, new int[] { 6 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Jump, new int[] { 11 })
+      .Emit(Opcodes.Constant, new int[] { 4 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.CondJump, new int[] { 6 })
+      .Emit(Opcodes.Constant, new int[] { 5 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Jump, new int[] { 4 })
+      .Emit(Opcodes.Constant, new int[] { 6 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .GetBytes();
+
+    AssertEqual(c.Constants.Count, 7);
+    AssertEqual(c.Constants[0].num, 0);
+    AssertEqual(c.Constants[1].num, 1);
+    AssertEqual(c.Constants[2].num, 10);
+    AssertEqual(c.Constants[3].num, 30);
+    AssertEqual(c.Constants[4].num, 3);
+    AssertEqual(c.Constants[5].num, 20);
+    AssertEqual(c.Constants[6].num, 40);
+    AssertTrue(result.Length > 0);
+    AssertEqual(result, expected);
+
+    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    vm.Exec("test");
+    AssertEqual(vm.PopValue().num, 20);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCompileWhileCondition()
   {
     string bhl = @"
