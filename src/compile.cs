@@ -445,17 +445,24 @@ public class Compiler : AST_Visitor
     for(int i = 0; operands != null && i < operands.Length; ++i)
     {
       int width = def.operand_width[i];
+      int op_val = operands[i];
 
       switch(width)
       {
         case 1:
-          buf.Write((byte)operands[i]);
+          if(byte.MinValue > op_val || op_val > byte.MaxValue)
+            throw new Exception("Operand value is out of bounds: " + op_val);
+          buf.Write((byte)op_val);
         break;
         case 2:
-          buf.Write((ushort)operands[i]);
+          if(ushort.MinValue > op_val || op_val > ushort.MaxValue)
+            throw new Exception("Operand value is out of bounds: " + op_val);
+          buf.Write((ushort)op_val);
         break;
         case 4:
-          buf.Write((uint)operands[i]);
+          if(uint.MinValue > op_val || (uint)op_val > uint.MaxValue)
+            throw new Exception("Operand value is out of bounds: " + op_val);
+          buf.Write((uint)op_val);
         break;
         default:
           throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
