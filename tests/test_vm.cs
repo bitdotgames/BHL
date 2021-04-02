@@ -17,22 +17,19 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual((int)c.Constants[0].type, (int)EnumLiteral.NUM);
     AssertEqual(c.Constants[0].num, 123);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 123);
     CommonChecks(vm);
@@ -50,22 +47,19 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual((int)c.Constants[0].type, (int)EnumLiteral.BOOL);
     AssertEqual(c.Constants[0].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -83,23 +77,20 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.TypeCast, new int[] { (int)SymbolTable.symb_int.name.n })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual((int)c.Constants[0].type, (int)EnumLiteral.BOOL);
     AssertEqual(c.Constants[0].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -117,23 +108,20 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.TypeCast, new int[] { (int)SymbolTable.symb_string.name.n })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual((int)c.Constants[0].type, (int)EnumLiteral.NUM);
     AssertEqual(c.Constants[0].num, 7);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().str, "7");
     CommonChecks(vm);
@@ -151,21 +139,18 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual((int)c.Constants[0].type, (int)EnumLiteral.STR);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().str, "Hello");
     CommonChecks(vm);
@@ -183,8 +168,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -192,15 +175,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.And)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 0);
     AssertEqual(c.Constants[1].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertTrue(vm.PopValue().bval == false);
     CommonChecks(vm);
@@ -218,8 +200,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -227,15 +207,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Or)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 0);
     AssertEqual(c.Constants[1].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -253,8 +232,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -262,15 +239,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.BitAnd)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 3);
     AssertEqual(c.Constants[1].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -288,8 +264,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -297,15 +271,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.BitOr)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 3);
     AssertEqual(c.Constants[1].num, 4);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 7);
     CommonChecks(vm);
@@ -323,8 +296,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -332,15 +303,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Mod)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 3);
     AssertEqual(c.Constants[1].num, 2);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -359,8 +329,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -370,14 +338,13 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Equal)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual((int)c.Constants[0].type, (int)EnumLiteral.NIL);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -395,22 +362,19 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.UnaryNot)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual((int)c.Constants[0].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertTrue(vm.PopValue().bval == false);
     CommonChecks(vm);
@@ -429,8 +393,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -439,14 +401,13 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.UnaryNeg)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual(c.Constants[0].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, -1);
     CommonChecks(vm);
@@ -464,8 +425,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -473,15 +432,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Add)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 10);
     AssertEqual(c.Constants[1].num, 20);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 30);
     CommonChecks(vm);
@@ -499,8 +457,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -508,15 +464,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Add)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].str, "Hello ");
     AssertEqual(c.Constants[1].str, "world !");
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().str, "Hello world !");
     CommonChecks(vm);
@@ -534,8 +489,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -543,14 +496,13 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Add)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual(c.Constants[0].num, 10);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 20);
     CommonChecks(vm);
@@ -568,8 +520,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -577,15 +527,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Sub)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 20);
     AssertEqual(c.Constants[1].num, 10);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 10);
     CommonChecks(vm);
@@ -603,8 +552,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -612,15 +559,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Div)
       .Emit(Opcodes.ReturnVal)   
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 20);
     AssertEqual(c.Constants[1].num, 10);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 2);
     CommonChecks(vm);
@@ -638,8 +584,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = Compile(bhl).GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -647,15 +591,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Mul)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 10);
     AssertEqual(c.Constants[1].num, 20);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 200);
     CommonChecks(vm);
@@ -673,8 +616,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -684,16 +625,15 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Mul)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
-    AssertTrue(result.Length > 0);
     AssertEqual(c.Constants.Count, 3);
     AssertEqual(c.Constants[0].num, 10);
     AssertEqual(c.Constants[1].num, 20);
     AssertEqual(c.Constants[2].num, 30);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 500);
     CommonChecks(vm);
@@ -712,8 +652,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.ArrNew) 
@@ -721,13 +659,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 0);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     var lst = vm.PopValue().obj as ValList;
     AssertEqual(lst.Count, 0);
@@ -749,8 +686,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.ArrNew)
@@ -763,13 +698,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().str, "test");
     CommonChecks(vm);
@@ -795,8 +729,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       //mkarray
@@ -817,13 +749,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 3);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -850,8 +781,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       //mkarray
@@ -873,13 +802,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.FuncCall, new [] { 0,0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 3);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     var lst = vm.PopValue().obj as ValList;
     AssertEqual(lst.Count, 1);
@@ -907,8 +835,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       //mkarray
@@ -928,13 +854,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetMVar, new int[] { ArrType, ArrCountIdx })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 2);
     CommonChecks(vm);
@@ -957,8 +882,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.ArrNew)
@@ -976,13 +899,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 4);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     var lst = vm.PopValue().obj as ValList;
     AssertEqual(lst.Count, 2);
@@ -1015,8 +937,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       //foo
@@ -1041,13 +961,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 4);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -1066,8 +985,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -1077,14 +994,13 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Add)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 1);
     AssertEqual(c.Constants[0].num, 123);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 246);
     CommonChecks(vm);
@@ -1105,12 +1021,9 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     AssertEqual(c.Constants.Count, 3);
-    AssertTrue(result.Length > 0);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -1135,8 +1048,6 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var c = Compile(bhl);
-
-    var result = c.GetBytes();
 
     var expected = 
       new Compiler(c.Symbols)
@@ -1164,18 +1075,16 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Sub)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 4);
-    
     AssertEqual(c.Constants[0].num, 98);
     AssertEqual(c.Constants[1].num, 1);
     AssertEqual(c.Constants[2].num, 5);
     AssertEqual(c.Constants[3].num, 30);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 125);
     CommonChecks(vm);
@@ -1199,8 +1108,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       //1 func code
@@ -1217,16 +1124,15 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.FuncCall, new [] { 0,1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     
     AssertEqual(c.Constants[0].str, "Hello");
     AssertEqual(c.Constants[1].str, " world !");
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("Test");
     AssertEqual(vm.PopValue().str, "Hello world !");
     CommonChecks(vm);
@@ -1251,8 +1157,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -1266,17 +1170,16 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 4);
     AssertEqual(c.Constants[0].num, 100);
     AssertEqual(c.Constants[1].num, 1);
     AssertEqual(c.Constants[2].num, 2);
     AssertEqual(c.Constants[3].num, 10);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 100);
     CommonChecks(vm);
@@ -1305,8 +1208,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -1323,7 +1224,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 5);
     AssertEqual(c.Constants[0].num, 0);
@@ -1331,10 +1232,9 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants[2].num, 1);
     AssertEqual(c.Constants[3].num, 10);
     AssertEqual(c.Constants[4].num, 20);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 10);
     CommonChecks(vm);
@@ -1371,8 +1271,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -1404,7 +1302,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 7);
     AssertEqual(c.Constants[0].num, 0);
@@ -1414,10 +1312,9 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants[4].num, 3);
     AssertEqual(c.Constants[5].num, 20);
     AssertEqual(c.Constants[6].num, 40);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 20);
     CommonChecks(vm);
@@ -1442,13 +1339,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      //__while statenemt__//
+      //__while__//
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.GreaterOrEqual)
@@ -1462,15 +1357,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 2);
     AssertEqual(c.Constants[0].num, 100);
     AssertEqual(c.Constants[1].num, 10);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 0);
     CommonChecks(vm);
@@ -1495,13 +1389,11 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      //__for statenemt__//
+      //__for__//
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.SetVar, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
@@ -1521,17 +1413,16 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 4);
     AssertEqual(c.Constants[0].num, 10);
     AssertEqual(c.Constants[1].num, 0);
     AssertEqual(c.Constants[2].num, 3);
     AssertEqual(c.Constants[3].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 7);
     CommonChecks(vm);
@@ -1564,8 +1455,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -1582,16 +1471,15 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.FuncCall, new [] { 4,0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 3);
     AssertEqual(c.Constants[0].num, 1);
     AssertEqual(c.Constants[1].num, 2);
     AssertEqual(c.Constants[2].num, 1);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -1624,8 +1512,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -1644,16 +1530,15 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.FuncCall, new [] { 4,0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 3);
     AssertEqual(c.Constants[0].num, 1);
     AssertEqual(c.Constants[1].num, 2);
     AssertEqual(c.Constants[2].num, 0);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -1676,8 +1561,6 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var c = Compile(bhl);
-
-    var result = c.GetBytes();
 
     var expected = 
       new Compiler(c.Symbols)
@@ -1706,13 +1589,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.FuncCall, new [] { 0, 130 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .GetBytes();
+      ;
 
     AssertEqual(c.Constants.Count, 3);
-    AssertTrue(result.Length > 0);
-    AssertEqual(result, expected);
+    AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 12);
     CommonChecks(vm);
@@ -1744,13 +1626,9 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var c = Compile(bhl);
-    var result = c.GetBytes();
-    AssertTrue(result.Length > 0);
-
-    //new Compiler(c.Symbols).DecodeOpcodes(result);
 
     {
-      var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+      var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
       var stopwatch = System.Diagnostics.Stopwatch.StartNew();
       vm.Exec("test");
       stopwatch.Stop();
@@ -1788,12 +1666,9 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var result = c.GetBytes();
-
     AssertEqual(c.Constants.Count, 260);
-    AssertTrue(result.Length > 0);
 
-    var vm = new VM(c.Symbols, result, c.Constants, c.Func2Offset);
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Exec("test");
     AssertEqual(vm.PopValue().num, 33930);
     CommonChecks(vm);
@@ -1858,41 +1733,116 @@ public class BHL_TestVM : BHL_TestBase
 
   public static void AssertEqual(byte[] a, byte[] b)
   {
-    string ahex = ByteArrayToString(a);
-    string bhex = ByteArrayToString(b);
-
-    if(!(ahex == bhex))
+    bool equal = true;
+    string cmp = "";
+    for(int i=0;i<(a.Length > b.Length ? a.Length : b.Length);i++)
     {
-      string acmp = ""; 
-      for(int i=0;i<ahex.Length;i+=2)
-        acmp += ahex[i] + "" + ahex[i+1] + " ";
-      Console.WriteLine(acmp);
+      string astr = "";
+      if(i < a.Length)
+        astr = string.Format("{0:x2}", a[i]);
 
-      string bcmp = ""; 
-      for(int i=0;i<bhex.Length;i+=2)
-        bcmp += bhex[i] + "" + bhex[i+1] + " ";
-      Console.WriteLine(bcmp);
+      string bstr = "";
+      if(i < b.Length)
+        bstr = string.Format("{0:x2}", b[i]);
 
-      string cmp = "";
-      for(int i=0;i<(ahex.Length > bhex.Length ? ahex.Length : bhex.Length);i+=2)
+      cmp += string.Format("{0:x2}", i) + " " + astr + " | " + bstr;
+
+      if(astr != bstr)
       {
-        string a1 = "";
-        if(i < ahex.Length)
-          a1 = ahex[i] + "" + ahex[i+1];
-
-        string b1 = "";
-        if(i < bhex.Length)
-          b1 = bhex[i] + "" + bhex[i+1];
-
-        if(a1 != b1)
-          cmp += "^^ ";
-        else
-          cmp += "   ";
+        equal = false;
+        cmp += " <--";
       }
-      Console.WriteLine(cmp);
 
-      throw new Exception("Assertion failed: '" + ahex + "' != '" + bhex + "'");
+      cmp += "\n";
     }
+
+    if(!equal)
+    {
+      Console.WriteLine(cmp);
+      throw new Exception("Assertion failed: bytes not equal");
+    }
+  }
+
+  public static void AssertEqual(Compiler ca, Compiler cb)
+  {
+    var a = ca.GetBytes();
+    var b = cb.GetBytes();
+
+    Compiler.OpDefinition aop = null;
+    int aop_size = 0;
+    Compiler.OpDefinition bop = null;
+    int bop_size = 0;
+
+    bool equal = true;
+    string cmp = "";
+    for(int i=0;i<(a.Length > b.Length ? a.Length : b.Length);i++)
+    {
+      string astr = "";
+      if(i < a.Length)
+      {
+        astr = string.Format("{0:x2}", a[i]);
+        if(aop != null)
+        {
+          --aop_size;
+          if(aop_size == 0)
+            aop = null; 
+        }
+        else
+        {
+          aop = ca.LookupOpcode((Opcodes)a[i]);
+          aop_size = PredictOpcodeSize(aop, a, i);
+          astr += "(" + aop.name.ToString() + ")";
+          if(aop_size == 0)
+            aop = null;
+        }
+      }
+
+      string bstr = "";
+      if(i < b.Length)
+      {
+        bstr = string.Format("{0:x2}", b[i]);
+        if(bop != null)
+        {
+          --bop_size;
+          if(bop_size == 0)
+            bop = null; 
+        }
+        else
+        {
+          bop = cb.LookupOpcode((Opcodes)b[i]);
+          bop_size = PredictOpcodeSize(bop, b, i);
+          bstr += "(" + bop.name.ToString() + ")";
+          if(bop_size == 0)
+            bop = null;
+        }
+      }
+
+      cmp += string.Format("{0:x2}", i) + " " + astr + " | " + bstr;
+
+      if(a.Length <= i || b.Length <= i || a[i] != b[i])
+      {
+        equal = false;
+        cmp += " <--";
+      }
+
+      cmp += "\n";
+    }
+
+    if(!equal)
+    {
+      Console.WriteLine(cmp);
+      throw new Exception("Assertion failed: bytes not equal");
+    }
+  }
+
+  static int PredictOpcodeSize(Compiler.OpDefinition op, byte[] bytes, int start_pos)
+  {
+    if(op.operand_width == null)
+      return 0;
+    uint pos = (uint)start_pos;
+    foreach(int ow in op.operand_width)
+      Bytecode.Decode(bytes, ref pos);
+    return (int)pos - start_pos;
   }
 
   public static int ArrType {

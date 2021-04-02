@@ -115,7 +115,7 @@ public class Const
 
 public class Compiler : AST_Visitor
 {
-  class OpDefinition
+  public class OpDefinition
   {
     public Opcodes name;
     public int[] operand_width; //each array item represents the size of the operand in bytes
@@ -418,7 +418,7 @@ public class Compiler : AST_Visitor
     opcode_decls.Add((byte)def.name, def);
   }
 
-  OpDefinition LookupOpcode(Opcodes op)
+  public OpDefinition LookupOpcode(Opcodes op)
   {
     OpDefinition def;
     if(!opcode_decls.TryGetValue((byte)op, out def))
