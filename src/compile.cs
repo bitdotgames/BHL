@@ -98,6 +98,36 @@ public class Const
     str = lt.sval;
   }
 
+  public Const(double num)
+  {
+    type = EnumLiteral.NUM;
+    this.num = num;
+    str = "";
+  }
+
+  public Const(string str)
+  {
+    type = EnumLiteral.STR;
+    this.str = str;
+    num = 0;
+  }
+
+  public Const(bool v)
+  {
+    type = EnumLiteral.BOOL;
+    num = v ? 1 : 0;
+    this.str = "";
+  }
+
+  static public Const NewNil()
+  {
+    var c = new Const(0);
+    c.type = EnumLiteral.NIL;
+    c.num = 0;
+    c.str = "";
+    return c;
+  }
+
   public Val ToVal()
   {
     if(type == EnumLiteral.NUM)
