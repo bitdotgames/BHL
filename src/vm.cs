@@ -11,13 +11,13 @@ public class VM
   {
     public uint ip;
     //TODO: why not using global stack?
-    public Stack<Val> stack;
+    public FastStack<Val> stack;
     public List<Val> locals;
 
     public Frame()
     {
       ip = 0;
-      stack = new Stack<Val>();
+      stack = new FastStack<Val>(32);
       locals = new List<Val>();
     }
 
@@ -65,7 +65,7 @@ public class VM
 
     public Val PopValue()
     {
-      var val = stack.Pop();
+      var val = stack.PopFast();
       val.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
       return val;
     }
@@ -94,14 +94,14 @@ public class VM
     }
   }
 
-  Stack<Val> stack = new Stack<Val>();
-  public Stack<Val> Stack {
+  FastStack<Val> stack = new FastStack<Val>(256);
+  public FastStack<Val> Stack {
     get {
       return stack;
     }
   }
 
-  Stack<Frame> frames = new Stack<Frame>();
+  FastStack<Frame> frames = new FastStack<Frame>(256);
   Frame curr_frame;
 
   public VM(BaseScope symbols, byte[] bytecode, List<Const> constants, Dictionary<string, uint> func2ip)
@@ -183,14 +183,14 @@ public class VM
         break;
         case Opcodes.Return:
           curr_frame.Clear();
-          frames.Pop();
+          frames.PopFast();
           if(frames.Count > 0)
             curr_frame = frames.Peek();
         break;
         case Opcodes.ReturnVal:
-          var ret_val = curr_frame.stack.Pop();
+          var ret_val = curr_frame.stack.PopFast();
           curr_frame.Clear();
-          frames.Pop();
+          frames.PopFast();
           if(frames.Count > 0)
           {
             curr_frame = frames.Peek();
@@ -267,11 +267,11 @@ public class VM
         {
           if(curr_frame.locals[local_idx] != null)
             curr_frame.locals[local_idx].Release();
-          curr_frame.locals[local_idx] = curr_frame.stack.Pop();
+          curr_frame.locals[local_idx] = curr_frame.stack.PopFast();
         }
         else 
           if(curr_frame.stack.Count > 0)
-            curr_frame.locals.Add(curr_frame.stack.Pop());
+            curr_frame.locals.Add(curr_frame.stack.PopFast());
           else
             curr_frame.AddLocal(Val.New());
       break;
@@ -459,7 +459,7 @@ public class VM
 
   public Val PopValue()
   {
-    var val = stack.Pop();
+    var val = stack.PopFast();
     val.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
     return val;
   }
@@ -478,9 +478,9 @@ public class VM
   public void ShowFullStack()
   {
     Console.WriteLine(" VM STACK :");
-    foreach(var v in stack)
+    for(int i=0;i<stack.Count;++i)
     {
-      Console.WriteLine("\t" + v);
+      Console.WriteLine("\t" + stack[i]);
     }
   }
 }
@@ -544,8 +544,6 @@ public class Val
   //NOTE: -1 means it's in released state
   public int _refs;
   public int refs { get { return _refs; } } 
-
-  ValRefcounted _refc;
 
   //NOTE: below members are semi-public, one can use them for 
   //      fast access or non-allocating storage of structs(e.g vectors, quaternions)
@@ -628,7 +626,6 @@ public class Val
     _type = NONE;
     _num = 0;
     _obj = null;
-    _refc = null;
   }
 
   public void ValueCopyFrom(Val dv)
@@ -636,7 +633,6 @@ public class Val
     _type = dv._type;
     _num = dv._num;
     _obj = dv._obj;
-    _refc = dv._refc;
   }
 
   public Val ValueClone()
@@ -649,7 +645,7 @@ public class Val
   //NOTE: see RefOp for constants
   public void RefMod(int op)
   {
-    if(_refc != null)
+    if(_obj != null && _obj is ValRefcounted _refc)
     {
       if((op & RefOp.USR_INC) != 0)
       {
@@ -810,7 +806,6 @@ public class Val
     Reset();
     _type = o == null ? NIL : OBJ;
     _obj = o;
-    _refc = _obj as ValRefcounted;
   }
 
   static public Val NewNil()
