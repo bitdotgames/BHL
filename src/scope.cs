@@ -22,22 +22,20 @@ public abstract class BaseScope : Scope
 {
   // null if global (outermost) scope
   protected Scope enclosing_scope;
-  protected SymbolsDictionary symbols = new SymbolsDictionary();
+
+  protected SymbolsDictionary members = new SymbolsDictionary();
 
   public BaseScope(Scope parent) 
   { 
     enclosing_scope = parent;  
   }
 
-  public SymbolsDictionary GetMembers()
-  {
-    return symbols;
-  }
+  public SymbolsDictionary GetMembers() { return members; }
 
   public Symbol Resolve(HashedName name) 
   {
     Symbol s = null;
-    symbols.TryGetValue(name, out s);
+    members.TryGetValue(name, out s);
     if(s != null)
       return s;
 
@@ -50,17 +48,17 @@ public abstract class BaseScope : Scope
 
   public virtual void Define(Symbol sym) 
   {
-    if(symbols.Contains(sym.name))
+    if(members.Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
-    symbols.Add(sym);
+    members.Add(sym);
 
     sym.scope = this; // track the scope in each symbol
   }
 
   public void Append(BaseScope other)
   {
-    var ms = other.GetMembers(); 
+    var ms = other.GetMembers();
     for(int i=0;i<ms.Count;++i)
     {
       var s = ms[i];
@@ -73,7 +71,7 @@ public abstract class BaseScope : Scope
 
   public abstract HashedName GetScopeName();
 
-  public override string ToString() { return string.Join(",", symbols.GetStringKeys().ToArray()); }
+  public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }
 
   static bool IsBuiltin(Symbol s)
   {

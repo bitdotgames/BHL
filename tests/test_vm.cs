@@ -605,6 +605,46 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSimpleBindFunc()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      trace(""foo"")
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = new VMFuncBindSymbol("trace", globs.Type("void"),
+        delegate(VM vm_) { 
+          string str = vm_.PopValue().str;
+          log.Append(str);
+        } 
+    );
+    fn.Define(new FuncArgSymbol("str", globs.Type("string")));
+    globs.Define(fn);
+
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(globs)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.Return)
+    ;
+
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Exec("test");
+
+    AssertEqual("foo", log.ToString());
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCompileEmptyIntArray()
   {
     string bhl = @"
@@ -709,7 +749,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       //test
-      .Emit(Opcodes.FuncCall, new [] { 0, 0 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
       .Emit(Opcodes.ReturnVal)
@@ -764,7 +804,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       //test
-      .Emit(Opcodes.FuncCall, new [] { 0,0 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -815,7 +855,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       //test
-      .Emit(Opcodes.FuncCall, new [] { 0,0 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
       .Emit(Opcodes.GetMVar, new int[] { ArrType, ArrCountIdx })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -920,7 +960,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.FuncCall, new [] { 0,1 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 1 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 3 })
       .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
@@ -1031,11 +1071,11 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.Add)
-      .Emit(Opcodes.FuncCall, new [] { 0,1 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 1 })
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.Constant, new int[] { 3 })
       .Emit(Opcodes.Sub)
-      .Emit(Opcodes.FuncCall, new [] { 9,1 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 9, 1 })
       .Emit(Opcodes.Sub)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -1081,7 +1121,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.FuncCall, new [] { 0,1 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -1399,11 +1439,11 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.CondJump, new int[] { 6 })
-      .Emit(Opcodes.FuncCall, new [] { 0,0 })
+      .Emit(Opcodes.CondJump, new int[] { 7 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
       .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Jump, new int[] { 4 })
-      .Emit(Opcodes.FuncCall, new [] { 4,0 })
+      .Emit(Opcodes.Jump, new int[] { 5 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 4, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -1455,11 +1495,11 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.Greater)
-      .Emit(Opcodes.CondJump, new int[] { 6 })
-      .Emit(Opcodes.FuncCall, new [] { 0,0 })
+      .Emit(Opcodes.CondJump, new int[] { 7 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
       .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Jump, new int[] { 4 })
-      .Emit(Opcodes.FuncCall, new [] { 4,0 })
+      .Emit(Opcodes.Jump, new int[] { 5 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 4, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -1515,7 +1555,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.FuncCall, new [] { 0, 130 })
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 130 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -1620,7 +1660,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs_copy = globs.Clone();
 
     Util.DEBUG = true;
-    var ast = Src2AST(bhl);
+    var ast = Src2AST(bhl, globs_copy);
     var c  = new Compiler(globs_copy);
     c.Compile(ast);
     return c;
@@ -1813,6 +1853,18 @@ public class BHL_TestVM : BHL_TestBase
   public static int ArrAtIdx {
     get {
       return GenericArrayTypeSymbol.VM_AtIdx;
+    }
+  }
+
+  //simple console outputting version
+  void BindLog(GlobalScope globs)
+  {
+    {
+      var fn = new VMFuncBindSymbol("log", globs.Type("void"),
+          delegate(VM vm) { Console.WriteLine(vm.PopValue().str); } );
+      fn.Define(new FuncArgSymbol("str", globs.Type("string")));
+
+      globs.Define(fn);
     }
   }
 }

@@ -133,7 +133,7 @@ public class VM
           int const_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
 
           if(const_idx >= constants.Count)
-            throw new Exception("Index out of constant pool: " + const_idx);
+            throw new Exception("Index out of constants: " + const_idx);
 
           var cn = constants[const_idx];
           curr_frame.PushValue(cn.ToVal());
@@ -199,6 +199,40 @@ public class VM
           else
             stack.Push(ret_val);
         break;
+        case Opcodes.FuncCall:
+          byte func_call_type = (byte)Bytecode.Decode(bytecode, ref curr_frame.ip);
+
+          if(func_call_type == 0)
+          {
+            uint func_ip = Bytecode.Decode(bytecode, ref curr_frame.ip);
+
+            var fr = new Frame();
+            fr.ip = func_ip;
+
+            uint args_bits = Bytecode.Decode(bytecode, ref curr_frame.ip); 
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              fr.PushValue(curr_frame.PopValue().ValueClone());
+
+            frames.Push(fr);
+            curr_frame = frames.Peek();
+            //NOTE: using continue instead of break since we 
+            //      don't want to increment ip 
+            continue;
+          }
+          else if(func_call_type == 1)
+          {
+            int func_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
+            var func_symb = symbols.GetMembers()[func_idx] as VMFuncBindSymbol;
+
+            uint args_bits = Bytecode.Decode(bytecode, ref curr_frame.ip); 
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              PushValue(curr_frame.PopValue().ValueClone());
+            func_symb.cb(this);
+
+          }
+          break;
         case Opcodes.MethodCall:
           uint class_type = Bytecode.Decode(bytecode, ref curr_frame.ip);
           var class_symb = symbols.Resolve(class_type) as ClassSymbol;
@@ -208,19 +242,6 @@ public class VM
           int method_offset = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
           ExecuteClassMethod(class_symb, method_offset);
         break;
-        case Opcodes.FuncCall:
-          var fr = new Frame();
-          fr.ip = Bytecode.Decode(bytecode, ref curr_frame.ip);
-
-          var args_info = new FuncArgsInfo(Bytecode.Decode(bytecode, ref curr_frame.ip));
-          for(int i = 0; i < args_info.CountArgs(); ++i)
-            fr.PushValue(curr_frame.PopValue().ValueClone());
-
-          frames.Push(fr);
-          curr_frame = frames.Peek();
-        //NOTE: using continue instead of break since we 
-        //      don't want to increment ip 
-        continue;
         case Opcodes.Jump:
         {
           uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);

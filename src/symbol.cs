@@ -559,6 +559,8 @@ public abstract class ScopedSymbol : Symbol, Scope
 {
   protected Scope enclosing_scope;
 
+  public abstract SymbolsDictionary GetMembers();
+
   public ScopedSymbol(WrappedNode n, HashedName name, TypeRef type, Scope enclosing_scope) 
     : base(n, name, type)
   {
@@ -605,8 +607,6 @@ public abstract class ScopedSymbol : Symbol, Scope
   public virtual Scope GetEnclosingScope() { return enclosing_scope; }
 
   public HashedName GetScopeName() { return name; }
-
-  public abstract SymbolsDictionary GetMembers();
 }
 
 public class MultiType : Type
@@ -965,6 +965,39 @@ public class SimpleFuncBindSymbol : FuncBindSymbol
   public SimpleFuncBindSymbol(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
     : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num)
   {}
+}
+
+public class VMFuncBindSymbol : FuncSymbol
+{
+  public int def_args_num;
+  public System.Action<VM> cb;
+
+  public VMFuncBindSymbol(
+    HashedName name, 
+    TypeRef ret_type, 
+    System.Action<VM> cb, 
+    int def_args_num = 0
+  ) 
+    : base(null, name, new FuncType(ret_type), null)
+  {
+    this.def_args_num = def_args_num;
+    this.cb = cb;
+  }
+
+  public override int GetTotalArgsNum() { return GetMembers().Count; }
+  public override int GetDefaultArgsNum() { return def_args_num; }
+
+  public override void Define(Symbol sym) 
+  {
+    base.Define(sym);
+
+    //NOTE: for bind funcs every defined symbol is assumed to be an argument
+    DefineArg(sym.name);
+
+    var ft = GetFuncType();
+    ft.arg_types.Add(sym.type);
+    ft.Update();
+  }
 }
 
 public class ClassBindSymbol : ClassSymbol
@@ -1569,6 +1602,11 @@ public class SymbolsDictionary
     if(!string.IsNullOrEmpty(s.name.s))
       str2symb.Remove(s.name.s);
     hash2symb.Remove(s.name.n);
+  }
+
+  public int IndexOf(Symbol s)
+  {
+    return list.IndexOf(s);
   }
 
   public void Clear()

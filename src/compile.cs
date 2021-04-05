@@ -202,24 +202,22 @@ public class Compiler : AST_Visitor
     return this.symbol_views[this.symbol_views.Count-1];
   }
 
-  void EnterNewScope()
+  uint EnterNewScope()
   {
     scopes.Add(new Bytecode());
     symbol_views.Add(new SymbolViewTable());
+
+    return (uint)scopes[0].Length;
   }
  
-  long LeaveCurrentScope()
+  void LeaveCurrentScope()
   {
-    var bytecode = scopes[0];
-
-    long index = bytecode.Length;
     var curr_scope = GetCurrentScope();
     var curr_table = GetCurrentSymbolView();
-    bytecode.Write(curr_scope);
+    //main bytecode
+    scopes[0].Write(curr_scope);
     scopes.Remove(curr_scope);
     symbol_views.Remove(curr_table);
-
-    return index;
   }
 
   int AddConstant(AST_Literal lt)
@@ -378,7 +376,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.FuncCall,
-        operand_width = new int[] { 4, 1 }
+        operand_width = new int[] { 1/*type*/, 4/*idx/or ip*/, 4/*args bits*/ }
       }
     );
     DeclareOpcode(
@@ -545,11 +543,11 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
-    EnterNewScope();
+    uint ip = EnterNewScope();
+    func2offset.Add(ast.name, ip);
     VisitChildren(ast);
     Emit(Opcodes.Return);
-
-    func2offset.Add(ast.name, (uint)LeaveCurrentScope());
+    LeaveCurrentScope();
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
@@ -674,9 +672,21 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.FUNC:
         uint offset;
-        func2offset.TryGetValue(ast.name, out offset);
-        VisitChildren(ast);
-        Emit(Opcodes.FuncCall, new int[] {(int)offset, (int)ast.cargs_bits});//figure out how cargs works
+        if(func2offset.TryGetValue(ast.name, out offset))
+        {
+          VisitChildren(ast);
+          Emit(Opcodes.FuncCall, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});//figure out how cargs works
+        }
+        else if(symbols.Resolve(ast.name) is VMFuncBindSymbol fsymb)
+        {
+          int func_idx = symbols.GetMembers().IndexOf(fsymb);
+          if(func_idx == -1)
+            throw new Exception("Func '" + ast.name + "' idx not found in symbols");
+          VisitChildren(ast);
+          Emit(Opcodes.FuncCall, new int[] {(int)1, (int)func_idx, (int)ast.cargs_bits});//figure out how cargs works
+        }
+        else
+          throw new Exception("Func '" + ast.name + "' code not found");
       break;
       case EnumCall.MVAR:
       {
