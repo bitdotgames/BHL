@@ -541,12 +541,10 @@ public class Val
     }
   }
 
-  //NOTE: -1 means it's in released state
-  public int _refs;
-  public int refs { get { return _refs; } } 
-
   //NOTE: below members are semi-public, one can use them for 
   //      fast access or non-allocating storage of structs(e.g vectors, quaternions)
+  //NOTE: -1 means it's in released state
+  public int _refs;
   public byte _type;
   public double _num;
   public object _obj;
