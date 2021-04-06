@@ -112,15 +112,18 @@ public class VM
     this.func2ip = func2ip;
   }
 
-  public void Exec(string func)
+  public bool TryPushFrame(string func)
   {
+    uint ip;
+    if(!func2ip.TryGetValue(func, out ip))
+      return false;
     var fr = new Frame();
-    fr.ip = func2ip[func];
+    fr.ip = ip;
     frames.Push(fr);
-    Run();
+    return true;
   }
 
-  public void Run()
+  public void Tick()
   {
     curr_frame = frames.Peek();
     while(frames.Count > 0)

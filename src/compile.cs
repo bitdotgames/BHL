@@ -169,10 +169,10 @@ public class Compiler : AST_Visitor
 
   List<SymbolViewTable> symbol_views = new List<SymbolViewTable>();
 
-  Dictionary<string, uint> func2offset = new Dictionary<string, uint>();
+  Dictionary<string, uint> func2ip = new Dictionary<string, uint>();
   public Dictionary<string, uint> Func2Offset {
     get {
-      return func2offset;
+      return func2ip;
     }
   }
   
@@ -544,7 +544,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     uint ip = EnterNewScope();
-    func2offset.Add(ast.name, ip);
+    func2ip.Add(ast.name, ip);
     VisitChildren(ast);
     Emit(Opcodes.Return);
     LeaveCurrentScope();
@@ -672,7 +672,7 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.FUNC:
         uint offset;
-        if(func2offset.TryGetValue(ast.name, out offset))
+        if(func2ip.TryGetValue(ast.name, out offset))
         {
           VisitChildren(ast);
           Emit(Opcodes.FuncCall, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});//figure out how cargs works
