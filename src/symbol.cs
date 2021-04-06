@@ -970,12 +970,12 @@ public class SimpleFuncBindSymbol : FuncBindSymbol
 public class VMFuncBindSymbol : FuncSymbol
 {
   public int def_args_num;
-  public System.Action<VM> cb;
+  public System.Action<VM, VM.Frame> cb;
 
   public VMFuncBindSymbol(
     HashedName name, 
     TypeRef ret_type, 
-    System.Action<VM> cb, 
+    System.Action<VM, VM.Frame> cb, 
     int def_args_num = 0
   ) 
     : base(null, name, new FuncType(ret_type), null)
@@ -1301,6 +1301,67 @@ static public class SymbolTable
     }
   }
 
+  static public GlobalScope VMCreateBuiltins()
+  {
+    var globals = new GlobalScope();
+    VMInitBuiltins(globals);
+    return globals;
+  }
+
+  static public void VMInitBuiltins(GlobalScope globals) 
+  {
+    foreach(Type t in index2type) 
+    {
+      if(t != null) 
+      {
+        var blt = (BuiltInTypeSymbol)t; 
+        globals.Define(blt);
+      }
+    }
+
+    //for all generic arrays
+    globals.Define(new GenericArrayTypeSymbol(globals));
+
+    {
+      var fn = new VMFuncBindSymbol("suspend", globals.Type("void"),
+        delegate(VM vm, VM.Frame fr) { fr.status = BHS.RUNNING; } 
+      );
+      globals.Define(fn);
+    }
+
+    //{
+    //  var fn = new VMFuncBindSymbol("yield", globals.Type("void"),
+    //    delegate() { return new yield(); } 
+    //  );
+    //  globals.Define(fn);
+    //}
+
+    //{
+    //  var fn = new VMFuncBindSymbol("nop", globals.Type("void"),
+    //    delegate() { return new nop(); } 
+    //  );
+
+    //  globals.Define(fn);
+    //}
+
+    //{
+    //  var fn = new VMFuncBindSymbol("fail", globals.Type("void"),
+    //    delegate() { return new fail(); } 
+    //  );
+
+    //  globals.Define(fn);
+    //}
+
+    //{
+    //  var fn = new VMFuncBindSymbol("check", globals.Type("void"),
+    //    delegate() { return new check(); } 
+    //  );
+    //  fn.Define(new FuncArgSymbol("cond", globals.Type("bool")));
+
+    //  globals.Define(fn);
+    //}
+  }
+
   static public Type GetResultType(Type[,] typeTable, WrappedNode a, WrappedNode b) 
   {
     if(a.eval_type == b.eval_type)
@@ -1607,6 +1668,14 @@ public class SymbolsDictionary
   public int IndexOf(Symbol s)
   {
     return list.IndexOf(s);
+  }
+
+  public int IndexOf(HashedName key)
+  {
+    var s = Find(key);
+    if(s == null)
+      return -1;
+    return IndexOf(s);
   }
 
   public void Clear()
