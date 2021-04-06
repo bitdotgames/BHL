@@ -967,12 +967,12 @@ public class SimpleFuncBindSymbol : FuncBindSymbol
   {}
 }
 
-public class VMFuncBindSymbol : FuncSymbol
+public class VM_FuncBindSymbol : FuncSymbol
 {
   public int def_args_num;
   public System.Action<VM, VM.Frame> cb;
 
-  public VMFuncBindSymbol(
+  public VM_FuncBindSymbol(
     HashedName name, 
     TypeRef ret_type, 
     System.Action<VM, VM.Frame> cb, 
@@ -1301,14 +1301,14 @@ static public class SymbolTable
     }
   }
 
-  static public GlobalScope VMCreateBuiltins()
+  static public GlobalScope VM_CreateBuiltins()
   {
     var globals = new GlobalScope();
-    VMInitBuiltins(globals);
+    VM_InitBuiltins(globals);
     return globals;
   }
 
-  static public void VMInitBuiltins(GlobalScope globals) 
+  static public void VM_InitBuiltins(GlobalScope globals) 
   {
     foreach(Type t in index2type) 
     {
@@ -1323,21 +1323,27 @@ static public class SymbolTable
     globals.Define(new GenericArrayTypeSymbol(globals));
 
     {
-      var fn = new VMFuncBindSymbol("suspend", globals.Type("void"),
-        delegate(VM vm, VM.Frame fr) { fr.status = BHS.RUNNING; } 
+      var fn = new VM_FuncBindSymbol("suspend", globals.Type("void"),
+        delegate(VM vm, VM.Frame fr) 
+        { 
+          fr.coroutine = new CoroutineSuspend();
+        } 
+      );
+      globals.Define(fn);
+    }
+
+    {
+      var fn = new VM_FuncBindSymbol("yield", globals.Type("void"),
+        delegate(VM vm, VM.Frame fr) 
+        { 
+          fr.coroutine = new CoroutineYield();
+        } 
       );
       globals.Define(fn);
     }
 
     //{
-    //  var fn = new VMFuncBindSymbol("yield", globals.Type("void"),
-    //    delegate() { return new yield(); } 
-    //  );
-    //  globals.Define(fn);
-    //}
-
-    //{
-    //  var fn = new VMFuncBindSymbol("nop", globals.Type("void"),
+    //  var fn = new VM_FuncBindSymbol("nop", globals.Type("void"),
     //    delegate() { return new nop(); } 
     //  );
 

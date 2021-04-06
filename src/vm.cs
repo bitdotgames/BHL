@@ -14,7 +14,7 @@ public class VM
     //TODO: why not using global stack?
     public FastStack<Val> stack;
     public List<Val> locals;
-    public System.Action<VM, VM.Frame> coroutine;
+    public ICoroutine coroutine;
 
     public Frame()
     {
@@ -134,169 +134,170 @@ public class VM
     {
       if(curr_frame.coroutine != null)
       {
-        curr_frame.coroutine(this, curr_frame);
-        if(curr_frame.status != BHS.RUNNING)
-          curr_frame.coroutine = null;
+        curr_frame.coroutine.Tick(this, curr_frame);
+        if(curr_frame.status == BHS.RUNNING)
+          break;
         else
-          break;
-      }
-      else
-      {
-        var opcode = (Opcodes)bytecode[curr_frame.ip];
-
-        switch(opcode)
         {
-          case Opcodes.Constant:
-            int const_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
+          curr_frame.coroutine = null;
+          ++curr_frame.ip;
+        }
+      }
+      
+      var opcode = (Opcodes)bytecode[curr_frame.ip];
 
-            if(const_idx >= constants.Count)
-              throw new Exception("Index out of constants: " + const_idx);
+      switch(opcode)
+      {
+        case Opcodes.Constant:
+          int const_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
 
-            var cn = constants[const_idx];
-            curr_frame.PushValue(cn.ToVal());
-          break;
-          case Opcodes.ArrNew:
-            curr_frame.PushValue(Val.NewObj(ValList.New()));
-          break;
-          case Opcodes.TypeCast:
+          if(const_idx >= constants.Count)
+            throw new Exception("Index out of constants: " + const_idx);
+
+          var cn = constants[const_idx];
+          curr_frame.PushValue(cn.ToVal());
+        break;
+        case Opcodes.ArrNew:
+          curr_frame.PushValue(Val.NewObj(ValList.New()));
+        break;
+        case Opcodes.TypeCast:
+        {
+          uint cast_type = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          if(cast_type == SymbolTable.symb_string.name.n)
+            curr_frame.PushValue(Val.NewStr(curr_frame.PopValue().num.ToString()));
+          else if(cast_type == SymbolTable.symb_int.name.n)
+            curr_frame.PushValue(Val.NewNum(curr_frame.PopValue().num));
+          else
+            throw new Exception("Not supported typecast type: " + cast_type);
+        }
+        break;
+        case Opcodes.Add:
+        case Opcodes.Sub:
+        case Opcodes.Div:
+        case Opcodes.Mod:
+        case Opcodes.Mul:
+        case Opcodes.And:
+        case Opcodes.Or:
+        case Opcodes.BitAnd:
+        case Opcodes.BitOr:
+        case Opcodes.Equal:
+        case Opcodes.NotEqual:
+        case Opcodes.Greater:
+        case Opcodes.Less:
+        case Opcodes.GreaterOrEqual:
+        case Opcodes.LessOrEqual:
+          ExecuteBinaryOperation(opcode);
+        break;
+        case Opcodes.UnaryNot:
+        case Opcodes.UnaryNeg:
+          ExecuteUnaryOperation(opcode);
+        break;
+        case Opcodes.SetVar:
+        case Opcodes.GetVar:
+          ExecuteVarGetSet(opcode);
+        break;
+        case Opcodes.SetMVar:
+        case Opcodes.GetMVar:
+          ExecuteMVarGetSet(opcode);
+        break;
+        case Opcodes.Return:
+          curr_frame.Clear();
+          frames.PopFast();
+          if(frames.Count > 0)
+            curr_frame = frames.Peek();
+        break;
+        case Opcodes.ReturnVal:
+          var ret_val = curr_frame.stack.PopFast();
+          curr_frame.Clear();
+          frames.PopFast();
+          if(frames.Count > 0)
           {
-            uint cast_type = Bytecode.Decode(bytecode, ref curr_frame.ip);
-            if(cast_type == SymbolTable.symb_string.name.n)
-              curr_frame.PushValue(Val.NewStr(curr_frame.PopValue().num.ToString()));
-            else if(cast_type == SymbolTable.symb_int.name.n)
-              curr_frame.PushValue(Val.NewNum(curr_frame.PopValue().num));
-            else
-              throw new Exception("Not supported typecast type: " + cast_type);
+            curr_frame = frames.Peek();
+            curr_frame.stack.Push(ret_val);
+          }
+          else
+            stack.Push(ret_val);
+        break;
+        case Opcodes.FuncCall:
+          byte func_call_type = (byte)Bytecode.Decode(bytecode, ref curr_frame.ip);
+
+          if(func_call_type == 0)
+          {
+            uint func_ip = Bytecode.Decode(bytecode, ref curr_frame.ip);
+
+            var fr = new Frame();
+            fr.ip = func_ip;
+
+            uint args_bits = Bytecode.Decode(bytecode, ref curr_frame.ip); 
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              fr.PushValue(curr_frame.PopValue().ValueClone());
+
+            frames.Push(fr);
+            curr_frame = frames.Peek();
+            //NOTE: using continue instead of break since we 
+            //      don't want to increment ip 
+            continue;
+          }
+          else if(func_call_type == 1)
+          {
+            int func_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
+            var func_symb = symbols.GetMembers()[func_idx] as VM_FuncBindSymbol;
+
+            uint args_bits = Bytecode.Decode(bytecode, ref curr_frame.ip); 
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              curr_frame.PushValue(curr_frame.PopValue().ValueClone());
+
+            func_symb.cb(this, curr_frame);
+            if(curr_frame.coroutine != null)
+              curr_frame.coroutine.Tick(this, curr_frame);
           }
           break;
-          case Opcodes.Add:
-          case Opcodes.Sub:
-          case Opcodes.Div:
-          case Opcodes.Mod:
-          case Opcodes.Mul:
-          case Opcodes.And:
-          case Opcodes.Or:
-          case Opcodes.BitAnd:
-          case Opcodes.BitOr:
-          case Opcodes.Equal:
-          case Opcodes.NotEqual:
-          case Opcodes.Greater:
-          case Opcodes.Less:
-          case Opcodes.GreaterOrEqual:
-          case Opcodes.LessOrEqual:
-            ExecuteBinaryOperation(opcode);
-          break;
-          case Opcodes.UnaryNot:
-          case Opcodes.UnaryNeg:
-            ExecuteUnaryOperation(opcode);
-          break;
-          case Opcodes.SetVar:
-          case Opcodes.GetVar:
-            ExecuteVarGetSet(opcode);
-          break;
-          case Opcodes.SetMVar:
-          case Opcodes.GetMVar:
-            ExecuteMVarGetSet(opcode);
-          break;
-          case Opcodes.Return:
-            curr_frame.Clear();
-            frames.PopFast();
-            if(frames.Count > 0)
-              curr_frame = frames.Peek();
-          break;
-          case Opcodes.ReturnVal:
-            var ret_val = curr_frame.stack.PopFast();
-            curr_frame.Clear();
-            frames.PopFast();
-            if(frames.Count > 0)
-            {
-              curr_frame = frames.Peek();
-              curr_frame.stack.Push(ret_val);
-            }
-            else
-              stack.Push(ret_val);
-          break;
-          case Opcodes.FuncCall:
-            byte func_call_type = (byte)Bytecode.Decode(bytecode, ref curr_frame.ip);
+        case Opcodes.MethodCall:
+          uint class_type = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+          if(class_symb == null)
+            throw new Exception("Class type not found: " + class_type);
 
-            if(func_call_type == 0)
-            {
-              uint func_ip = Bytecode.Decode(bytecode, ref curr_frame.ip);
-
-              var fr = new Frame();
-              fr.ip = func_ip;
-
-              uint args_bits = Bytecode.Decode(bytecode, ref curr_frame.ip); 
-              var args_info = new FuncArgsInfo(args_bits);
-              for(int i = 0; i < args_info.CountArgs(); ++i)
-                fr.PushValue(curr_frame.PopValue().ValueClone());
-
-              frames.Push(fr);
-              curr_frame = frames.Peek();
-              //NOTE: using continue instead of break since we 
-              //      don't want to increment ip 
-              continue;
-            }
-            else if(func_call_type == 1)
-            {
-              int func_idx = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
-              var func_symb = symbols.GetMembers()[func_idx] as VMFuncBindSymbol;
-
-              uint args_bits = Bytecode.Decode(bytecode, ref curr_frame.ip); 
-              var args_info = new FuncArgsInfo(args_bits);
-              for(int i = 0; i < args_info.CountArgs(); ++i)
-                curr_frame.PushValue(curr_frame.PopValue().ValueClone());
-
-              func_symb.cb(this, curr_frame);
-              if(curr_frame.status == BHS.RUNNING)
-                curr_frame.coroutine = func_symb.cb;
-              else
-                curr_frame.coroutine = null;
-            }
-            break;
-          case Opcodes.MethodCall:
-            uint class_type = Bytecode.Decode(bytecode, ref curr_frame.ip);
-            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-            if(class_symb == null)
-              throw new Exception("Class type not found: " + class_type);
-
-            int method_offset = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
-            ExecuteClassMethod(class_symb, method_offset);
-          break;
-          case Opcodes.Jump:
+          int method_offset = (int)Bytecode.Decode(bytecode, ref curr_frame.ip);
+          ExecuteClassMethod(class_symb, method_offset);
+        break;
+        case Opcodes.Jump:
+        {
+          uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          curr_frame.ip = curr_frame.ip + offset;
+        }
+        break;
+        case Opcodes.LoopJump:
+        {
+          uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          curr_frame.ip = curr_frame.ip - offset;
+        }
+        break;
+        case Opcodes.CondJump:
+          //we need to jump only in case of false
+          if(curr_frame.PopValue().bval == false)
           {
             uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
             curr_frame.ip = curr_frame.ip + offset;
           }
-          break;
-          case Opcodes.LoopJump:
-          {
-            uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
-            curr_frame.ip = curr_frame.ip - offset;
-          }
-          break;
-          case Opcodes.CondJump:
-            //we need to jump only in case of false
-            if(curr_frame.PopValue().bval == false)
-            {
-              uint offset = Bytecode.Decode(bytecode, ref curr_frame.ip);
-              curr_frame.ip = curr_frame.ip + offset;
-            }
-            else
-              ++curr_frame.ip;
-          break;
-          case Opcodes.DefArg:
-            uint arg = Bytecode.Decode(bytecode, ref curr_frame.ip);
-            if(curr_frame.stack.Count > 0)
-              curr_frame.ip = curr_frame.ip + arg;
-          break;
-          default:
-            throw new Exception("Unsupported opcode: " + opcode);
-        }
-
-        if(curr_frame.status == BHS.SUCCESS)
-          ++curr_frame.ip;
+          else
+            ++curr_frame.ip;
+        break;
+        case Opcodes.DefArg:
+          uint arg = Bytecode.Decode(bytecode, ref curr_frame.ip);
+          if(curr_frame.stack.Count > 0)
+            curr_frame.ip = curr_frame.ip + arg;
+        break;
+        default:
+          throw new Exception("Unsupported opcode: " + opcode);
       }
+
+      if(curr_frame.status == BHS.SUCCESS)
+        ++curr_frame.ip;
+      else if(curr_frame.status == BHS.RUNNING)
+        break;
     }
     return curr_frame.status;
   }
@@ -531,7 +532,31 @@ public class VM
   }
 }
 
-public interface ValRefcounted
+public interface ICoroutine
+{
+  void Tick(VM vm, VM.Frame fr);
+}
+
+class CoroutineSuspend : ICoroutine
+{
+  public void Tick(VM vm, VM.Frame fr)
+  {
+    fr.status = BHS.RUNNING;
+  }
+}
+
+class CoroutineYield : ICoroutine
+{
+  byte c = 0;
+
+  public void Tick(VM vm, VM.Frame fr)
+  {
+    c++;
+    fr.status = c == 1 ? BHS.RUNNING : BHS.SUCCESS; 
+  }
+}
+
+public interface IValRefcounted
 {
   void Retain();
   void Release(bool can_del = true);
@@ -689,7 +714,7 @@ public class Val
   //NOTE: see RefOp for constants
   public void RefMod(int op)
   {
-    if(_obj != null && _obj is ValRefcounted _refc)
+    if(_obj != null && _obj is IValRefcounted _refc)
     {
       if((op & RefOp.USR_INC) != 0)
       {
@@ -965,7 +990,7 @@ public class Val
   }
 }
 
-public class ValList : IList<Val>, ValRefcounted
+public class ValList : IList<Val>, IValRefcounted
 {
   //NOTE: exposed to allow manipulations like Reverse(). Use with caution.
   public readonly List<Val> lst = new List<Val>();
@@ -1181,7 +1206,7 @@ public class ValList : IList<Val>, ValRefcounted
   }
 }
 
-public class ValDict : ValRefcounted
+public class ValDict : IValRefcounted
 {
   public Dictionary<ulong, Val> vars = new Dictionary<ulong, Val>();
 

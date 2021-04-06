@@ -671,9 +671,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VMCreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
-    var fn = new VMFuncBindSymbol("trace", globs.Type("void"),
+    var fn = new VM_FuncBindSymbol("trace", globs.Type("void"),
         delegate(VM _, VM.Frame fr) { 
           string str = fr.PopValue().str;
           log.Append(str);
@@ -1655,7 +1655,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VMCreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -1667,8 +1667,35 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.TryPushFrame("test");
-    for(int i=0;i<20;i++)
+    for(int i=0;i<99;i++)
       AssertEqual(vm.Tick(), BHS.RUNNING);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestYield()
+  {
+    string bhl = @"
+    func test()
+    {
+      yield()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.TryPushFrame("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
     CommonChecks(vm);
   }
 
@@ -1713,7 +1740,7 @@ public class BHL_TestVM : BHL_TestBase
 
   static Compiler TestCompiler(GlobalScope globs = null)
   {
-    globs = globs == null ? SymbolTable.VMCreateBuiltins() : globs;
+    globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we want to work with original globs
     var globs_copy = globs.Clone();
     return new Compiler(globs_copy);
@@ -1721,7 +1748,7 @@ public class BHL_TestVM : BHL_TestBase
 
   Compiler Compile(string bhl, GlobalScope globs = null)
   {
-    globs = globs == null ? SymbolTable.VMCreateBuiltins() : globs;
+    globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we want to work with original globs
     var globs_copy = globs.Clone();
 
@@ -1734,7 +1761,7 @@ public class BHL_TestVM : BHL_TestBase
 
   AST Src2AST(string src, GlobalScope globs = null)
   {
-    globs = globs == null ? SymbolTable.VMCreateBuiltins() : globs;
+    globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
 
     var mreg = new ModuleRegistry();
     //fake module for this specific case
@@ -1926,7 +1953,7 @@ public class BHL_TestVM : BHL_TestBase
   void BindLog(GlobalScope globs)
   {
     {
-      var fn = new VMFuncBindSymbol("log", globs.Type("void"),
+      var fn = new VM_FuncBindSymbol("log", globs.Type("void"),
           delegate(VM vm, VM.Frame fr) { Console.WriteLine(fr.PopValue().str); } );
       fn.Define(new FuncArgSymbol("str", globs.Type("string")));
 

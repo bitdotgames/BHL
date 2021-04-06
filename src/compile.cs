@@ -677,7 +677,7 @@ public class Compiler : AST_Visitor
           VisitChildren(ast);
           Emit(Opcodes.FuncCall, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});//figure out how cargs works
         }
-        else if(symbols.Resolve(ast.name) is VMFuncBindSymbol fsymb)
+        else if(symbols.Resolve(ast.name) is VM_FuncBindSymbol fsymb)
         {
           int func_idx = symbols.GetMembers().IndexOf(fsymb);
           if(func_idx == -1)
