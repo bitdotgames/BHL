@@ -1700,6 +1700,43 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestYieldSeveralTimesAndReturnValue()
+  {
+    string bhl = @"
+    func int test()
+    {
+      yield()
+      int a = 1
+      yield()
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.TryPushFrame("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFibonacci()
   {
     string bhl = @"
