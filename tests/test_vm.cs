@@ -1736,6 +1736,52 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //[IsTested()]
+  public void TestBasicParal()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int a
+      paral {
+        suspend() 
+        seq {
+          yield()
+          a = 1
+        }
+      }
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL })
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ })
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+        .Emit(Opcodes.Constant, new int[] { 0 })
+        .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.TryPushFrame("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestFibonacci()
   {
@@ -1849,7 +1895,7 @@ public class BHL_TestVM : BHL_TestBase
       if(astr != bstr)
       {
         equal = false;
-        cmp += " <--";
+        cmp += " !!!";
       }
 
       cmp += "\n";
@@ -1874,6 +1920,8 @@ public class BHL_TestVM : BHL_TestBase
 
     bool equal = true;
     string cmp = "";
+    var lens = new List<int>();
+    int max_len = 0;
     for(int i=0;i<(a.Length > b.Length ? a.Length : b.Length);i++)
     {
       string astr = "";
@@ -1916,15 +1964,23 @@ public class BHL_TestVM : BHL_TestBase
         }
       }
 
-      cmp += string.Format("{0:x2}", i) + " " + astr + " | " + bstr;
+      lens.Add(astr.Length);
+      if(astr.Length > max_len)
+        max_len = astr.Length;
+      cmp += string.Format("{0:x2}", i) + " " + astr + "{fill" + lens.Count + "} | " + bstr;
 
       if(a.Length <= i || b.Length <= i || a[i] != b[i])
       {
         equal = false;
-        cmp += " <--";
+        cmp += " <===";
       }
 
       cmp += "\n";
+    }
+
+    for(int i=1;i<=lens.Count;++i)
+    {
+      cmp = cmp.Replace("{fill" + i + "}", new String(' ', max_len - lens[i-1]));
     }
 
     if(!equal)

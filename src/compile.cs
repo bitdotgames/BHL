@@ -37,7 +37,9 @@ public enum Opcodes
   GreaterOrEqual  = 0x1D,
   DefArg          = 0x1E, //opcode for skipping func def args
   TypeCast        = 0x1F,
-  ArrNew          = 0x20,
+  PushBlock       = 0x20,
+  PopBlock        = 0x21,
+  ArrNew          = 0x22,
 }
 
 public enum SymbolScope
@@ -389,6 +391,19 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.PushBlock,
+        operand_width = new int[] { 1/*type*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.PopBlock
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.Return
       }
     );
@@ -626,10 +641,27 @@ public class Compiler : AST_Visitor
         PatchJumpOffsetToCurrPos(cond_op_pos);
       }
       break;
-      default:
-        //there will be behaviour node blocks
+      case EnumBlock.FUNC:
+      {
         VisitChildren(ast);
+      }
       break;
+      case EnumBlock.SEQ:
+      {
+        //Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ });
+        VisitChildren(ast);
+        //Emit(Opcodes.PopBlock);
+      }
+      break;
+      case EnumBlock.PARAL:
+      {
+        Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL });
+        VisitChildren(ast);
+        Emit(Opcodes.PopBlock);
+      }
+      break;
+      default:
+        throw new Exception("Not supported block type: " + ast.type); 
     }
   }
 
