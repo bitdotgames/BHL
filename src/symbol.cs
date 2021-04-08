@@ -970,12 +970,12 @@ public class SimpleFuncBindSymbol : FuncBindSymbol
 public class VM_FuncBindSymbol : FuncSymbol
 {
   public int def_args_num;
-  public System.Action<VM, VM.Frame> cb;
+  public System.Func<VM, VM.Frame, IExecutor> cb;
 
   public VM_FuncBindSymbol(
     HashedName name, 
     TypeRef ret_type, 
-    System.Action<VM, VM.Frame> cb, 
+    System.Func<VM, VM.Frame, IExecutor> cb, 
     int def_args_num = 0
   ) 
     : base(null, name, new FuncType(ret_type), null)
@@ -1326,7 +1326,7 @@ static public class SymbolTable
       var fn = new VM_FuncBindSymbol("suspend", globals.Type("void"),
         delegate(VM vm, VM.Frame fr) 
         { 
-          fr.coroutine = new CoroutineSuspend();
+          return new CoroutineSuspend();
         } 
       );
       globals.Define(fn);
@@ -1336,7 +1336,7 @@ static public class SymbolTable
       var fn = new VM_FuncBindSymbol("yield", globals.Type("void"),
         delegate(VM vm, VM.Frame fr) 
         { 
-          fr.coroutine = new CoroutineYield();
+          return new CoroutineYield();
         } 
       );
       globals.Define(fn);

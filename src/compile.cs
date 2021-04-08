@@ -392,7 +392,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.PushBlock,
-        operand_width = new int[] { 1/*type*/ }
+        operand_width = new int[] { 1/*type*/, 2/*len*/ }
       }
     );
     DeclareOpcode(
@@ -648,21 +648,29 @@ public class Compiler : AST_Visitor
       break;
       case EnumBlock.SEQ:
       {
-        //Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ });
-        VisitChildren(ast);
-        //Emit(Opcodes.PopBlock);
+        VisitControlBlock(ast);
       }
       break;
       case EnumBlock.PARAL:
       {
-        Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL });
-        VisitChildren(ast);
-        Emit(Opcodes.PopBlock);
+        VisitControlBlock(ast);
       }
       break;
       default:
         throw new Exception("Not supported block type: " + ast.type); 
     }
+  }
+
+  void VisitControlBlock(AST_Block ast)
+  {
+    var block_code = new Bytecode();
+    scopes.Add(block_code);
+    VisitChildren(ast);
+    scopes.RemoveAt(scopes.Count-1);
+
+    Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
+    GetCurrentScope().Write(block_code);
+    Emit(Opcodes.PopBlock);
   }
 
   public override void DoVisit(AST_TypeCast ast)
@@ -986,71 +994,6 @@ public class Bytecode
     Write((byte)((value >> 24) & 0xFF));
   }
 
-  //TODO: do we need to support that?
-  //public void Write(ulong value)
-  //{
-  //  if(value <= 16777215)
-  //  {
-  //    Write((uint)value);
-  //    return;
-  //  }
-  //  if(value <= 4294967295)
-  //  {
-  //    Write((byte)251);
-  //    Write((byte)(value & 0xFF));
-  //    Write((byte)((value >> 8) & 0xFF));
-  //    Write((byte)((value >> 16) & 0xFF));
-  //    Write((byte)((value >> 24) & 0xFF));
-  //    return;
-  //  }
-  //  if(value <= 1099511627775)
-  //  {
-  //    Write((byte)252);
-  //    Write((byte)(value & 0xFF));
-  //    Write((byte)((value >> 8) & 0xFF));
-  //    Write((byte)((value >> 16) & 0xFF));
-  //    Write((byte)((value >> 24) & 0xFF));
-  //    Write((byte)((value >> 32) & 0xFF));
-  //    return;
-  //  }
-  //  if(value <= 281474976710655)
-  //  {
-  //    Write((byte)253);
-  //    Write((byte)(value & 0xFF));
-  //    Write((byte)((value >> 8) & 0xFF));
-  //    Write((byte)((value >> 16) & 0xFF));
-  //    Write((byte)((value >> 24) & 0xFF));
-  //    Write((byte)((value >> 32) & 0xFF));
-  //    Write((byte)((value >> 40) & 0xFF));
-  //    return;
-  //  }
-  //  if(value <= 72057594037927935)
-  //  {
-  //    Write((byte)254);
-  //    Write((byte)(value & 0xFF));
-  //    Write((byte)((value >> 8) & 0xFF));
-  //    Write((byte)((value >> 16) & 0xFF));
-  //    Write((byte)((value >> 24) & 0xFF));
-  //    Write((byte)((value >> 32) & 0xFF));
-  //    Write((byte)((value >> 40) & 0xFF));
-  //    Write((byte)((value >> 48) & 0xFF));
-  //    return;
-  //  }
-
-  //  // all others
-  //  {
-  //    Write((byte)255);
-  //    Write((byte)(value & 0xFF));
-  //    Write((byte)((value >> 8) & 0xFF));
-  //    Write((byte)((value >> 16) & 0xFF));
-  //    Write((byte)((value >> 24) & 0xFF));
-  //    Write((byte)((value >> 32) & 0xFF));
-  //    Write((byte)((value >> 40) & 0xFF));
-  //    Write((byte)((value >> 48) & 0xFF));
-  //    Write((byte)((value >> 56) & 0xFF));
-  //  }
-  //}
-
   public void Write(char value)
   {
     Write((byte)value);
@@ -1083,48 +1026,6 @@ public class Bytecode
       return;
     }
   }
-
-  //NOTE: do we really need non-packed versions?
-  //public void Write(int value)
-  //{
-  //  // little endian...
-  //  Write((byte)(value & 0xff));
-  //  Write((byte)((value >> 8) & 0xff));
-  //  Write((byte)((value >> 16) & 0xff));
-  //  Write((byte)((value >> 24) & 0xff));
-  //}
-
-  //public void Write(uint value)
-  //{
-  //  Write((byte)(value & 0xff));
-  //  Write((byte)((value >> 8) & 0xff));
-  //  Write((byte)((value >> 16) & 0xff));
-  //  Write((byte)((value >> 24) & 0xff));
-  //}
-
-  //public void Write(long value)
-  //{
-  //  Write((byte)(value & 0xff));
-  //  Write((byte)((value >> 8) & 0xff));
-  //  Write((byte)((value >> 16) & 0xff));
-  //  Write((byte)((value >> 24) & 0xff));
-  //  Write((byte)((value >> 32) & 0xff));
-  //  Write((byte)((value >> 40) & 0xff));
-  //  Write((byte)((value >> 48) & 0xff));
-  //  Write((byte)((value >> 56) & 0xff));
-  //}
-
-  //public void Write(ulong value)
-  //{
-  //  Write((byte)(value & 0xff));
-  //  Write((byte)((value >> 8) & 0xff));
-  //  Write((byte)((value >> 16) & 0xff));
-  //  Write((byte)((value >> 24) & 0xff));
-  //  Write((byte)((value >> 32) & 0xff));
-  //  Write((byte)((value >> 40) & 0xff));
-  //  Write((byte)((value >> 48) & 0xff));
-  //  Write((byte)((value >> 56) & 0xff));
-  //}
 
   public void Write(float value)
   {

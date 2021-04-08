@@ -677,6 +677,7 @@ public class BHL_TestVM : BHL_TestBase
         delegate(VM _, VM.Frame fr) { 
           string str = fr.PopValue().str;
           log.Append(str);
+          return null;
         } 
     );
     fn.Define(new FuncArgSymbol("str", globs.Type("string")));
@@ -1736,7 +1737,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestBasicParal()
   {
     string bhl = @"
@@ -1744,7 +1745,9 @@ public class BHL_TestVM : BHL_TestBase
     {
       int a
       paral {
-        suspend() 
+        seq {
+          suspend() 
+        }
         seq {
           yield()
           a = 1
@@ -1760,9 +1763,11 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL, 20})
+        .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
         .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
-      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ })
+        .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 8})
         .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
         .Emit(Opcodes.Constant, new int[] { 0 })
         .Emit(Opcodes.SetVar, new int[] { 0 })
@@ -2047,7 +2052,10 @@ public class BHL_TestVM : BHL_TestBase
   {
     {
       var fn = new VM_FuncBindSymbol("log", globs.Type("void"),
-          delegate(VM vm, VM.Frame fr) { Console.WriteLine(fr.PopValue().str); } );
+          delegate(VM vm, VM.Frame fr) { 
+            Console.WriteLine(fr.PopValue().str); 
+            return null;
+          } );
       fn.Define(new FuncArgSymbol("str", globs.Type("string")));
 
       globs.Define(fn);
