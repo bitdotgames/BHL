@@ -7,7 +7,7 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
-  public void TestCompileNumConstant()
+  public void TestNumConstant()
   {
     string bhl = @"
     func int test()
@@ -36,7 +36,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileBoolConstant()
+  public void TestBoolConstant()
   {
     string bhl = @"
     func bool test()
@@ -65,7 +65,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileBoolToIntTypeCast()
+  public void TestBoolToIntTypeCast()
   {
     string bhl = @"
     func int test()
@@ -95,7 +95,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileIntToStringTypeCast()
+  public void TestIntToStringTypeCast()
   {
     string bhl = @"
     func string test()
@@ -125,7 +125,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileStringConstant()
+  public void TestStringConstant()
   {
     string bhl = @"
     func string test()
@@ -154,7 +154,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileLogicalAnd()
+  public void TestLogicalAnd()
   {
     string bhl = @"
     func bool test()
@@ -185,7 +185,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileLogicalOr()
+  public void TestLogicalOr()
   {
     string bhl = @"
     func bool test()
@@ -216,7 +216,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileBitAnd()
+  public void TestBitAnd()
   {
     string bhl = @"
     func int test()
@@ -247,7 +247,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileBitOr()
+  public void TestBitOr()
   {
     string bhl = @"
     func int test()
@@ -278,7 +278,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileMod()
+  public void TestMod()
   {
     string bhl = @"
     func int test()
@@ -309,7 +309,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileNullConstant()
+  public void TestNullConstant()
   {
     string bhl = @"
     func bool test()
@@ -343,7 +343,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileUnaryNot()
+  public void TestUnaryNot()
   {
     string bhl = @"
     func bool test() 
@@ -373,7 +373,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileUnaryNegVar()
+  public void TestUnaryNegVar()
   {
     string bhl = @"
     func int test() 
@@ -406,7 +406,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileAdd()
+  public void TestAdd()
   {
     string bhl = @"
     func int test() 
@@ -437,7 +437,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileConstantWithBigIndex()
+  public void TestConstantWithBigIndex()
   {
     string bhl = @"
     func int test()
@@ -474,7 +474,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileStringConcat()
+  public void TestStringConcat()
   {
     string bhl = @"
     func string test() 
@@ -505,7 +505,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileAddSameConstants()
+  public void TestAddSameConstants()
   {
     string bhl = @"
     func int test() 
@@ -536,7 +536,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileSub()
+  public void TestSub()
   {
     string bhl = @"
     func int test() 
@@ -567,7 +567,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileDiv()
+  public void TestDiv()
   {
     string bhl = @"
     func int test() 
@@ -598,7 +598,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileMul()
+  public void TestMul()
   {
     string bhl = @"
     func int test() 
@@ -629,7 +629,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileParenthesisExpression()
+  public void TestParenthesisExpression()
   {
     string bhl = @"
     func int test() 
@@ -703,7 +703,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileEmptyIntArray()
+  public void TestEmptyIntArray()
   {
     string bhl = @"
     func int[] test()
@@ -737,7 +737,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileAddToStringArray()
+  public void TestAddToStringArray()
   {
     string bhl = @"
     func string test()
@@ -775,7 +775,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileTmpArrayAtIdx()
+  public void TestTmpArrayAtIdx()
   {
     string bhl = @"
     func int[] mkarray()
@@ -827,7 +827,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileArrayRemoveAt()
+  public void TestArrayRemoveAt()
   {
     string bhl = @"
     func int[] mkarray()
@@ -883,7 +883,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileTmpArrayCount() 
+  public void TestTmpArrayCount() 
   {
     string bhl = @"
     func int[] mkarray()
@@ -1043,7 +1043,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileWriteReadVar()
+  public void TestWriteReadVar()
   {
     string bhl = @"
     func int test() 
@@ -1077,7 +1077,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileVarWithDefaultValue()
+  public void TestVarWithDefaultValue()
   {
     string bhl = @"
     func bool test()
@@ -1101,7 +1101,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileFunctionCall()
+  public void TestFunctionCall()
   {
     string bhl = @"
     func int test2(int x) 
@@ -1159,7 +1159,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileStringArgFunctionCall()
+  public void TestStringArgFunctionCall()
   {
     string bhl = @"
 
@@ -1205,7 +1205,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileIfCondition()
+  public void TestIfCondition()
   {
     string bhl = @"
     func int test()
@@ -1249,7 +1249,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileIfElseCondition()
+  public void TestIfElseCondition()
   {
     string bhl = @"
     func int test()
@@ -1300,7 +1300,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileMultiIfElseCondition()
+  public void TestMultiIfElseCondition()
   {
     string bhl = @"
     func int test()
@@ -1374,7 +1374,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileWhileCondition()
+  public void TestWhileCondition()
   {
     string bhl = @"
     func int test()
@@ -1423,7 +1423,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileForCondition()
+  public void TestForCondition()
   {
     string bhl = @"
     func int test()
@@ -1478,7 +1478,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileBooleanInCondition()
+  public void TestBooleanInCondition()
   {
     string bhl = @"
     func int first()
@@ -1533,7 +1533,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCompileFunctionCallInCondition()
+  public void TestFunctionCallInCondition()
   {
     string bhl = @"
     func int first()

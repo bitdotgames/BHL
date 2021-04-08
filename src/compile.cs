@@ -168,6 +168,7 @@ public class Compiler : AST_Visitor
   }
 
   List<Bytecode> scopes = new List<Bytecode>();
+  List<AST_Block> ctrl_blocks = new List<AST_Block>();
 
   List<SymbolViewTable> symbol_views = new List<SymbolViewTable>();
 
@@ -663,14 +664,25 @@ public class Compiler : AST_Visitor
 
   void VisitControlBlock(AST_Block ast)
   {
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
+
     var block_code = new Bytecode();
     scopes.Add(block_code);
-    VisitChildren(ast);
-    scopes.RemoveAt(scopes.Count-1);
+    ctrl_blocks.Add(ast);
 
-    Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
+    VisitChildren(ast);
+
+    scopes.RemoveAt(scopes.Count-1);
+    ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
+
+    bool need_to_push_block = ast.type == EnumBlock.PARAL || parent_block != null && (parent_block.type == EnumBlock.PARAL);
+    if(need_to_push_block)
+      Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
+
     GetCurrentScope().Write(block_code);
-    Emit(Opcodes.PopBlock);
+
+    if(need_to_push_block)
+      Emit(Opcodes.PopBlock);
   }
 
   public override void DoVisit(AST_TypeCast ast)

@@ -9,7 +9,6 @@ public class VM
 {
   public class Frame
   {
-    //for debug/inspection purposes only
     public uint curr_ip;
     public FastStack<Val> stack;
     //TODO: why not using global stack?
@@ -121,6 +120,7 @@ public class VM
     if(!func2ip.TryGetValue(func, out ip))
       return false;
     var fr = new Frame();
+    fr.curr_ip = ip;
     frames.Push(fr);
     this.ip = ip;
     return true;
@@ -130,6 +130,7 @@ public class VM
   { 
     while(frames.Count > 0 || ip <= max_ip)
     {
+      //Console.WriteLine("TICK " + frames.Count + " " + ip + " " + max_ip);
       curr_frame.curr_ip = ip;
 
       var status = BHS.SUCCESS;
@@ -151,7 +152,7 @@ public class VM
 
       {
         var opcode = (Opcodes)bytecode[ip];
-        //Console.WriteLine("OP " + opcode);
+        //Console.WriteLine("OP " + opcode + " " + ip);
         switch(opcode)
         {
           case Opcodes.Constant:
@@ -218,7 +219,10 @@ public class VM
               curr_frame.Clear();
               frames.PopFast();
               if(frames.Count > 0)
+              {
                 curr_frame = frames.Peek();
+                ip = curr_frame.curr_ip;
+              }
             }
             break;
           case Opcodes.ReturnVal:
@@ -229,6 +233,7 @@ public class VM
               if(frames.Count > 0)
               {
                 curr_frame = frames.Peek();
+                ip = curr_frame.curr_ip;
                 curr_frame.stack.Push(ret_val);
               }
               else
@@ -249,6 +254,9 @@ public class VM
                 var args_info = new FuncArgsInfo(args_bits);
                 for(int i = 0; i < args_info.CountArgs(); ++i)
                   fr.PushValue(curr_frame.PopValue().ValueClone());
+
+                //let's remember last ip
+                curr_frame.curr_ip = ip;
 
                 frames.Push(fr);
                 curr_frame = frames.Peek();
