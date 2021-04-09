@@ -9,15 +9,15 @@ public class VM
 {
   public class Frame
   {
-    public uint curr_ip;
     public FastStack<Val> stack;
-    //TODO: why not using global stack?
     public List<Val> locals;
+    public uint return_ip;
 
-    public Frame()
+    public Frame(uint ip)
     {
       stack = new FastStack<Val>(32);
       locals = new List<Val>();
+      return_ip = ip;
     }
 
     public void Clear()
@@ -82,7 +82,7 @@ public class VM
   }
 
   uint ip;
-  IExecutor executor;
+  IInstruction instruction;
   List<Const> constants;
   Dictionary<string, uint> func2ip;
 
@@ -112,32 +112,30 @@ public class VM
     this.func2ip = func2ip;
   }
 
-  public bool TryPushFrame(string func)
+  public bool TryPushFunc(string func)
   {
     if(frames.Count > 0)
       return false;
     uint ip;
     if(!func2ip.TryGetValue(func, out ip))
       return false;
-    var fr = new Frame();
-    fr.curr_ip = ip;
+    var fr = new Frame(ip);
     frames.Push(fr);
     this.ip = ip;
     return true;
   }
 
-  public BHS Tick(ref uint ip, FastStack<Frame> frames, Frame curr_frame, ref IExecutor executor, uint max_ip)
+  public BHS Execute(ref uint ip, FastStack<Frame> frames, Frame curr_frame, ref IInstruction instruction, uint max_ip = 0)
   { 
-    while(frames.Count > 0 || ip <= max_ip)
+    while(frames.Count > 0 || ip < max_ip)
     {
       //Console.WriteLine("TICK " + frames.Count + " " + ip + " " + max_ip);
-      curr_frame.curr_ip = ip;
-
       var status = BHS.SUCCESS;
 
-      if(executor != null)
+      //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
+      if(instruction != null)
       {
-        status = executor.Tick(this, curr_frame);
+        status = instruction.Tick(this, curr_frame);
         if(status == BHS.RUNNING || status == BHS.FAILURE)
         {
           //Console.WriteLine("EXECUTOR " + status);
@@ -145,7 +143,7 @@ public class VM
         }
         else
         {
-          executor = null;
+          instruction = null;
           ++ip;
         }
       }
@@ -221,7 +219,7 @@ public class VM
               if(frames.Count > 0)
               {
                 curr_frame = frames.Peek();
-                ip = curr_frame.curr_ip;
+                ip = curr_frame.return_ip;
               }
             }
             break;
@@ -233,7 +231,7 @@ public class VM
               if(frames.Count > 0)
               {
                 curr_frame = frames.Peek();
-                ip = curr_frame.curr_ip;
+                ip = curr_frame.return_ip;
                 curr_frame.stack.Push(ret_val);
               }
               else
@@ -248,7 +246,7 @@ public class VM
               {
                 uint func_ip = Bytecode.Decode(bytecode, ref ip);
 
-                var fr = new Frame();
+                var fr = new Frame(func_ip);
 
                 uint args_bits = Bytecode.Decode(bytecode, ref ip); 
                 var args_info = new FuncArgsInfo(args_bits);
@@ -256,8 +254,7 @@ public class VM
                   fr.PushValue(curr_frame.PopValue().ValueClone());
 
                 //let's remember last ip
-                curr_frame.curr_ip = ip;
-
+                curr_frame.return_ip = ip;
                 frames.Push(fr);
                 curr_frame = frames.Peek();
                 ip = func_ip;
@@ -275,12 +272,12 @@ public class VM
                 for(int i = 0; i < args_info.CountArgs(); ++i)
                   curr_frame.PushValue(curr_frame.PopValue().ValueClone());
 
-                var sub_executor = func_symb.cb(this, curr_frame);
-                if(sub_executor != null)
-                  AttachExecutor(ref executor, sub_executor);
-                //NOTE: checking if new executor was added and if so executing it immediately
-                if(executor != null)
-                  status = executor.Tick(this, curr_frame);
+                var sub_instruction = func_symb.cb(this, curr_frame);
+                if(sub_instruction != null)
+                  AttachInstruction(ref instruction, sub_instruction);
+                //NOTE: checking if new instruction was added and if so executing it immediately
+                if(instruction != null)
+                  status = instruction.Tick(this, curr_frame);
               }
             }
             break;
@@ -328,12 +325,12 @@ public class VM
             break;
           case Opcodes.PushBlock:
             {
-              AttachBlock(ref ip, curr_frame, ref executor);
+              VisitBlock(ref ip, curr_frame, ref instruction);
             }
             break;
           case Opcodes.PopBlock:
             {
-              //TODO: do we really need this opcode?
+              //TODO: add scope cleaning stuff later here
             }
             break;
           case Opcodes.ArrNew:
@@ -355,28 +352,28 @@ public class VM
     return BHS.SUCCESS;
   }
 
-  static void AttachExecutor(ref IExecutor executor, IExecutor new_executor)
+  static void AttachInstruction(ref IInstruction instruction, IInstruction candidate)
   {
-    if(executor != null)
+    if(instruction != null)
     {
-      if(executor is IMultiExecutor me)
-        me.AddChild(new_executor);
+      if(instruction is IMultiInstruction mi)
+        mi.Attach(candidate);
       else
-        throw new Exception("Not supported executor");
+        throw new Exception("Can't attach to current instruction");
     }
     else
-      executor = new_executor;
+      instruction = candidate;
   }
 
-  IExecutor AttachBlock(ref uint ip, Frame curr_frame, ref IExecutor executor)
+  IInstruction VisitBlock(ref uint ip, Frame curr_frame, ref IInstruction instruction)
   {
     var type = (EnumBlock)Bytecode.Decode(bytecode, ref ip);
     uint size = Bytecode.Decode(bytecode, ref ip);
 
     if(type == EnumBlock.PARAL) 
     {
-      var paral = new ParalExecutor();
-      AttachExecutor(ref executor, paral);
+      var paral = new ParalInstruction();
+      AttachInstruction(ref instruction, paral);
       uint tmp_ip = ip;
       while(tmp_ip < (ip + size))
       {
@@ -384,9 +381,9 @@ public class VM
         var opcode = (Opcodes)bytecode[tmp_ip]; 
         if(opcode != Opcodes.PushBlock)
           throw new Exception("Expected PushBlock got " + opcode);
-        IExecutor dummy = null;
-        var sub = AttachBlock(ref tmp_ip, curr_frame, ref dummy);
-        paral.AddChild(sub);
+        IInstruction dummy = null;
+        var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy);
+        paral.Attach(sub);
         ++tmp_ip;
         opcode = (Opcodes)bytecode[tmp_ip]; 
         if(opcode != Opcodes.PopBlock)
@@ -397,8 +394,8 @@ public class VM
     }
     else if(type == EnumBlock.SEQ)
     {
-      var seq = new SequenceExecutor(ip + 1, ip + size);
-      AttachExecutor(ref executor, seq);
+      var seq = new SeqInstruction(ip + 1, ip + size);
+      AttachInstruction(ref instruction, seq);
       ip += size;
       return seq;
     }
@@ -411,7 +408,7 @@ public class VM
     if(frames.Count == 0)
       return BHS.SUCCESS;
     var curr_frame = frames.Peek();
-    return Tick(ref ip, frames, curr_frame, ref executor, 0);
+    return Execute(ref ip, frames, curr_frame, ref instruction, 0);
   }
 
   static void ExecuteVarGetSet(Opcodes op, Frame curr_frame, byte[] bytecode, ref uint ip)
@@ -646,17 +643,17 @@ public class VM
   }
 }
 
-public interface IExecutor
+public interface IInstruction
 {
   BHS Tick(VM vm, VM.Frame fr);
 }
 
-public interface IMultiExecutor : IExecutor
+public interface IMultiInstruction : IInstruction
 {
-  void AddChild(IExecutor ex);
+  void Attach(IInstruction ex);
 }
 
-class CoroutineSuspend : IExecutor
+class CoroutineSuspend : IInstruction
 {
   public BHS Tick(VM vm, VM.Frame fr)
   {
@@ -665,7 +662,7 @@ class CoroutineSuspend : IExecutor
   }
 }
 
-class CoroutineYield : IExecutor
+class CoroutineYield : IInstruction
 {
   byte c = 0;
 
@@ -677,14 +674,14 @@ class CoroutineYield : IExecutor
   }
 }
 
-public class SequenceExecutor : IExecutor
+public class SeqInstruction : IInstruction
 {
   public uint ip;
   public uint max_ip;
   public FastStack<VM.Frame> frames = new FastStack<VM.Frame>(256);
-  public IExecutor executor;
+  public IInstruction instruction;
 
-  public SequenceExecutor(uint ip, uint max_ip)
+  public SeqInstruction(uint ip, uint max_ip)
   {
     //Console.WriteLine("NEW SEQ " + ip + " " + max_ip);
     this.ip = ip;
@@ -694,15 +691,15 @@ public class SequenceExecutor : IExecutor
   public BHS Tick(VM vm, VM.Frame curr_frame)
   {
     //Console.WriteLine("TICK SEQ " + ip);
-    return vm.Tick(ref ip, frames, curr_frame, ref executor, max_ip);
+    return vm.Execute(ref ip, frames, curr_frame, ref instruction, max_ip + 1);
   }
 }
 
-public class ParalExecutor : IMultiExecutor
+public class ParalInstruction : IMultiInstruction
 {
-  public List<IExecutor> children = new List<IExecutor>();
+  public List<IInstruction> children = new List<IInstruction>();
 
-  public ParalExecutor()
+  public ParalInstruction()
   {
     //Console.WriteLine("NEW PARAL");
   }
@@ -721,10 +718,10 @@ public class ParalExecutor : IMultiExecutor
     return BHS.RUNNING;
   }
 
-  public void AddChild(IExecutor ex)
+  public void Attach(IInstruction inst)
   {
     //Console.WriteLine("ADD CHILD");
-    children.Add(ex);
+    children.Add(inst);
   }
 }
 

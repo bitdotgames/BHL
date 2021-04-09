@@ -29,7 +29,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(123) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 123);
     CommonChecks(vm);
@@ -58,7 +58,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(true) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -88,7 +88,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(true) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -118,7 +118,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(7) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().str, "7");
     CommonChecks(vm);
@@ -147,7 +147,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const("Hello") });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().str, "Hello");
     CommonChecks(vm);
@@ -178,7 +178,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(false), new Const(true) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertTrue(vm.PopValue().bval == false);
     CommonChecks(vm);
@@ -209,7 +209,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(false), new Const(true) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -240,7 +240,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(3), new Const(1) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -271,7 +271,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(3), new Const(4) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 7);
     CommonChecks(vm);
@@ -302,7 +302,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(3), new Const(2)});
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -336,7 +336,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { Const.NewNil() });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -366,7 +366,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(true) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertTrue(vm.PopValue().bval == false);
     CommonChecks(vm);
@@ -399,7 +399,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(1) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, -1);
     CommonChecks(vm);
@@ -430,7 +430,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(10), new Const(20)});
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 30);
     CommonChecks(vm);
@@ -467,7 +467,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants.Count, 260);
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 33930);
     CommonChecks(vm);
@@ -498,7 +498,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const("Hello "), new Const("world !")});
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().str, "Hello world !");
     CommonChecks(vm);
@@ -529,7 +529,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(10) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 20);
     CommonChecks(vm);
@@ -560,7 +560,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(20), new Const(10) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 10);
     CommonChecks(vm);
@@ -591,7 +591,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(20), new Const(10) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 2);
     CommonChecks(vm);
@@ -622,7 +622,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(10), new Const(20) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 200);
     CommonChecks(vm);
@@ -655,7 +655,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(10), new Const(20), new Const(30) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 500);
     CommonChecks(vm);
@@ -694,7 +694,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
 
     AssertEqual("foo", log.ToString());
@@ -728,7 +728,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants.Count, 0);
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     var lst = vm.PopValue().obj as ValList;
     AssertEqual(lst.Count, 0);
@@ -768,7 +768,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const("test"), new Const(0) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().str, "test");
     CommonChecks(vm);
@@ -820,7 +820,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(1), new Const(2), new Const(0) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -874,7 +874,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(1), new Const(100), new Const(0) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     var lst = vm.PopValue().obj as ValList;
     AssertEqual(lst.Count, 1);
@@ -927,7 +927,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(1), new Const(100) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 2);
     CommonChecks(vm);
@@ -973,7 +973,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const("foo"), new Const("tst"), new Const(0), new Const("bar") });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     var lst = vm.PopValue().obj as ValList;
     AssertEqual(lst.Count, 2);
@@ -1036,7 +1036,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(100), new Const(1), new Const(2), new Const(0) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -1070,7 +1070,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(123) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 246);
     CommonChecks(vm);
@@ -1094,7 +1094,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(0), new Const(false), new Const("") });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -1152,7 +1152,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(98), new Const(1), new Const(5), new Const(30) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 125);
     CommonChecks(vm);
@@ -1198,7 +1198,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const("Hello"), new Const(" world !") });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("Test");
+    vm.TryPushFunc("Test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().str, "Hello world !");
     CommonChecks(vm);
@@ -1242,7 +1242,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(100), new Const(1), new Const(2), new Const(10) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 100);
     CommonChecks(vm);
@@ -1293,7 +1293,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(0), new Const(2), new Const(1), new Const(10), new Const(20) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 10);
     CommonChecks(vm);
@@ -1367,7 +1367,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(0), new Const(1), new Const(10), new Const(30), new Const(3), new Const(20), new Const(40) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 20);
     CommonChecks(vm);
@@ -1416,7 +1416,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(100), new Const(10) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 0);
     CommonChecks(vm);
@@ -1471,7 +1471,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(10), new Const(0), new Const(3), new Const(1) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 7);
     CommonChecks(vm);
@@ -1526,7 +1526,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(1), new Const(2), new Const(true) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
@@ -1583,7 +1583,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(1), new Const(2), new Const(0) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
@@ -1640,7 +1640,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c.Constants, new List<Const>() { new Const(1), new Const(0), new Const(10) });
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 12);
     CommonChecks(vm);
@@ -1667,7 +1667,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     for(int i=0;i<99;i++)
       AssertEqual(vm.Tick(), BHS.RUNNING);
     CommonChecks(vm);
@@ -1694,7 +1694,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     CommonChecks(vm);
@@ -1729,7 +1729,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.SUCCESS);
@@ -1780,7 +1780,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);
@@ -1816,7 +1816,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-    vm.TryPushFrame("test");
+    vm.TryPushFunc("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     stopwatch.Stop();
     AssertEqual(vm.PopValue().num, 610);
