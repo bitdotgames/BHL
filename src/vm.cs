@@ -13,11 +13,10 @@ public class VM
     public List<Val> locals;
     public uint return_ip;
 
-    public Frame(uint ip)
+    public Frame()
     {
       stack = new FastStack<Val>(32);
       locals = new List<Val>();
-      return_ip = ip;
     }
 
     public void Clear()
@@ -103,6 +102,11 @@ public class VM
   }
 
   FastStack<Frame> frames = new FastStack<Frame>(256);
+  public FastStack<Frame> Frames {
+    get {
+      return frames;
+    }
+  }
 
   public VM(BaseScope symbols, byte[] bytecode, List<Const> constants, Dictionary<string, uint> func2ip)
   {
@@ -116,29 +120,33 @@ public class VM
   {
     if(frames.Count > 0)
       return false;
-    uint ip;
-    if(!func2ip.TryGetValue(func, out ip))
+    uint func_ip;
+    if(!func2ip.TryGetValue(func, out func_ip))
       return false;
-    var fr = new Frame(ip);
+    var fr = new Frame();
+    //Console.WriteLine("FUNC PUSH " + func_ip + " RET TO " + ip + " " + fr.GetHashCode());
     frames.Push(fr);
-    this.ip = ip;
+    fr.return_ip = this.ip;
+    this.ip = func_ip;
     return true;
   }
 
-  public BHS Execute(ref uint ip, FastStack<Frame> frames, Frame curr_frame, ref IInstruction instruction, uint max_ip = 0)
+  public BHS Execute(ref uint ip, FastStack<Frame> frames, ref IInstruction instruction, uint max_ip)
   { 
-    while(frames.Count > 0 || ip < max_ip)
+    while(frames.Count > 0 && ip < max_ip)
     {
-      //Console.WriteLine("TICK " + frames.Count + " " + ip + " " + max_ip);
+      //Console.WriteLine("EXECUTE " + frames.Count + ", IP " + ip + " MAX " + max_ip);
+      
+      var curr_frame = frames.Peek();
+
       var status = BHS.SUCCESS;
 
       //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
       if(instruction != null)
       {
-        status = instruction.Tick(this, curr_frame);
+        status = instruction.Tick(this);
         if(status == BHS.RUNNING || status == BHS.FAILURE)
         {
-          //Console.WriteLine("EXECUTOR " + status);
           return status;
         }
         else
@@ -150,7 +158,7 @@ public class VM
 
       {
         var opcode = (Opcodes)bytecode[ip];
-        //Console.WriteLine("OP " + opcode + " " + ip);
+        //Console.WriteLine("OP " + opcode + " IP " + ip);
         switch(opcode)
         {
           case Opcodes.Constant:
@@ -215,27 +223,32 @@ public class VM
           case Opcodes.Return:
             {
               curr_frame.Clear();
+              ip = curr_frame.return_ip;
+              //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
               frames.PopFast();
               if(frames.Count > 0)
-              {
                 curr_frame = frames.Peek();
-                ip = curr_frame.return_ip;
-              }
+              else
+                return BHS.SUCCESS;
             }
             break;
           case Opcodes.ReturnVal:
             {
               var ret_val = curr_frame.stack.PopFast();
+              ip = curr_frame.return_ip;
               curr_frame.Clear();
+              //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
               frames.PopFast();
               if(frames.Count > 0)
               {
                 curr_frame = frames.Peek();
-                ip = curr_frame.return_ip;
                 curr_frame.stack.Push(ret_val);
               }
               else
+              {
                 stack.Push(ret_val);
+                return BHS.SUCCESS;
+              }
             }
             break;
           case Opcodes.FuncCall:
@@ -246,21 +259,20 @@ public class VM
               {
                 uint func_ip = Bytecode.Decode(bytecode, ref ip);
 
-                var fr = new Frame(func_ip);
+                var fr = new Frame();
 
                 uint args_bits = Bytecode.Decode(bytecode, ref ip); 
                 var args_info = new FuncArgsInfo(args_bits);
                 for(int i = 0; i < args_info.CountArgs(); ++i)
                   fr.PushValue(curr_frame.PopValue().ValueClone());
 
-                //let's remember last ip
-                curr_frame.return_ip = ip;
+                //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + " " + fr.GetHashCode());
+                //let's remember ip to return to
+                fr.return_ip = ip;
                 frames.Push(fr);
-                curr_frame = frames.Peek();
-                ip = func_ip;
-                //NOTE: using continue instead of break since we 
-                //      don't want to increment ip 
-                continue;
+                curr_frame = fr;
+                //since ip will be incremented below we decrement it intentionally here
+                ip = func_ip - 1; 
               }
               else if(func_call_type == 1)
               {
@@ -277,7 +289,7 @@ public class VM
                   AttachInstruction(ref instruction, sub_instruction);
                 //NOTE: checking if new instruction was added and if so executing it immediately
                 if(instruction != null)
-                  status = instruction.Tick(this, curr_frame);
+                  status = instruction.Tick(this);
               }
             }
             break;
@@ -394,7 +406,7 @@ public class VM
     }
     else if(type == EnumBlock.SEQ)
     {
-      var seq = new SeqInstruction(ip + 1, ip + size);
+      var seq = new SeqInstruction(this, ip + 1, ip + size);
       AttachInstruction(ref instruction, seq);
       ip += size;
       return seq;
@@ -407,8 +419,7 @@ public class VM
   {
     if(frames.Count == 0)
       return BHS.SUCCESS;
-    var curr_frame = frames.Peek();
-    return Execute(ref ip, frames, curr_frame, ref instruction, 0);
+    return Execute(ref ip, frames, ref instruction, uint.MaxValue);
   }
 
   static void ExecuteVarGetSet(Opcodes op, Frame curr_frame, byte[] bytecode, ref uint ip)
@@ -645,7 +656,7 @@ public class VM
 
 public interface IInstruction
 {
-  BHS Tick(VM vm, VM.Frame fr);
+  BHS Tick(VM vm);
 }
 
 public interface IMultiInstruction : IInstruction
@@ -655,7 +666,7 @@ public interface IMultiInstruction : IInstruction
 
 class CoroutineSuspend : IInstruction
 {
-  public BHS Tick(VM vm, VM.Frame fr)
+  public BHS Tick(VM vm)
   {
     //Console.WriteLine("SUSPEND");
     return BHS.RUNNING;
@@ -666,7 +677,7 @@ class CoroutineYield : IInstruction
 {
   byte c = 0;
 
-  public BHS Tick(VM vm, VM.Frame fr)
+  public BHS Tick(VM vm)
   {
     //Console.WriteLine("YIELD");
     c++;
@@ -681,17 +692,18 @@ public class SeqInstruction : IInstruction
   public FastStack<VM.Frame> frames = new FastStack<VM.Frame>(256);
   public IInstruction instruction;
 
-  public SeqInstruction(uint ip, uint max_ip)
+  public SeqInstruction(VM vm, uint ip, uint max_ip)
   {
-    //Console.WriteLine("NEW SEQ " + ip + " " + max_ip);
+    //Console.WriteLine("NEW SEQ " + ip + " " + max_ip + " " + GetHashCode());
     this.ip = ip;
     this.max_ip = max_ip;
+    this.frames.Push(vm.Frames.Peek());
   }
 
-  public BHS Tick(VM vm, VM.Frame curr_frame)
+  public BHS Tick(VM vm)
   {
-    //Console.WriteLine("TICK SEQ " + ip);
-    return vm.Execute(ref ip, frames, curr_frame, ref instruction, max_ip + 1);
+    //Console.WriteLine("TICK SEQ " + ip + " " + GetHashCode());
+    return vm.Execute(ref ip, frames, ref instruction, max_ip + 1);
   }
 }
 
@@ -704,12 +716,12 @@ public class ParalInstruction : IMultiInstruction
     //Console.WriteLine("NEW PARAL");
   }
 
-  public BHS Tick(VM vm, VM.Frame curr_frame)
+  public BHS Tick(VM vm)
   {
     for(int i=0;i<children.Count;++i)
     {
       var current = children[i];
-      var status = current.Tick(vm, curr_frame);
+      var status = current.Tick(vm);
       //Console.WriteLine("CHILD " + i + " " + status + " " + current.GetType().Name);
       if(status != BHS.RUNNING)
         return status;

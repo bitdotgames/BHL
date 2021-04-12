@@ -1788,6 +1788,71 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestParalWithFuncs()
+  {
+    string bhl = @"
+    func foo() {
+      suspend()
+    }
+
+    func int bar() {
+      yield()
+      return 1
+    }
+
+    func int test() {
+      int a
+      paral {
+        seq {
+          foo()
+        }
+        seq {
+          a = bar()
+        }
+      }
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      //foo
+      .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
+      .Emit(Opcodes.Return)
+      //bar
+      .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      //
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL, 18})
+        .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
+        .Emit(Opcodes.FuncCall, new int[] { 0, 0/*foo*/, 0 })
+        .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 6})
+        .Emit(Opcodes.FuncCall, new int[] { 0, 5/*bar*/, 0 })
+        .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.TryPushFunc("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFibonacci()
   {
     string bhl = @"
@@ -1932,7 +1997,7 @@ public class BHL_TestVM : BHL_TestBase
       string astr = "";
       if(i < a.Length)
       {
-        astr = string.Format("{0:x2}", a[i]);
+        astr = string.Format("0x{0:x2}", a[i]);
         if(aop != null)
         {
           --aop_size;
@@ -1952,7 +2017,7 @@ public class BHL_TestVM : BHL_TestBase
       string bstr = "";
       if(i < b.Length)
       {
-        bstr = string.Format("{0:x2}", b[i]);
+        bstr = string.Format("0x{0:x2}", b[i]);
         if(bop != null)
         {
           --bop_size;
