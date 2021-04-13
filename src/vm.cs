@@ -346,7 +346,7 @@ public class VM
             }
             break;
           default:
-            throw new Exception("Unsupported opcode: " + opcode);
+            throw new Exception("Not supported opcode: " + opcode);
         }
       }
 
@@ -377,9 +377,9 @@ public class VM
     var type = (EnumBlock)Bytecode.Decode(bytecode, ref ip);
     uint size = Bytecode.Decode(bytecode, ref ip);
 
-    if(type == EnumBlock.PARAL) 
+    if(type == EnumBlock.PARAL || type == EnumBlock.PARAL_ALL) 
     {
-      var paral = new ParalInstruction();
+      var paral = type == EnumBlock.PARAL ? (IMultiInstruction)new ParalInstruction() : (IMultiInstruction)new ParalAllInstruction();
       AttachInstruction(ref instruction, paral);
       uint tmp_ip = ip;
       while(tmp_ip < (ip + size))
@@ -407,7 +407,7 @@ public class VM
       return seq;
     }
     else
-      throw new Exception("Unsupported block type: " + type);
+      throw new Exception("Not supported block type: " + type);
   }
 
   public BHS Tick()
@@ -483,7 +483,7 @@ public class VM
         //curr_frame.PushValue(curr_frame.GetLocal(local_idx));
       break;
       default:
-        throw new Exception("Unsupported opcode: " + op);
+        throw new Exception("Not supported opcode: " + op);
     }
   }
 
@@ -706,11 +706,6 @@ public class ParalInstruction : IMultiInstruction
 {
   public List<IInstruction> children = new List<IInstruction>();
 
-  public ParalInstruction()
-  {
-    //Console.WriteLine("NEW PARAL");
-  }
-
   public BHS Tick(VM vm)
   {
     for(int i=0;i<children.Count;++i)
@@ -728,6 +723,33 @@ public class ParalInstruction : IMultiInstruction
   public void Attach(IInstruction inst)
   {
     //Console.WriteLine("ADD CHILD");
+    children.Add(inst);
+  }
+}
+
+public class ParalAllInstruction : IMultiInstruction
+{
+  public List<IInstruction> children = new List<IInstruction>();
+
+  public BHS Tick(VM vm)
+  {
+    for(int i=0;i<children.Count;)
+    {
+      var current = children[i];
+      var status = current.Tick(vm);
+      if(status == BHS.FAILURE)
+        return BHS.FAILURE;
+      else if(status == BHS.SUCCESS)
+        children.RemoveAt(i);
+      else
+        ++i;
+    }
+
+    return children.Count == 0 ? BHS.SUCCESS : BHS.RUNNING;
+  }
+
+  public void Attach(IInstruction inst)
+  {
     children.Add(inst);
   }
 }

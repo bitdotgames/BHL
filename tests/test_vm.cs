@@ -1788,7 +1788,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestParalWithFuncs()
+  public void TestParalWithSubFuncs()
   {
     string bhl = @"
     func foo() {
@@ -1846,6 +1846,110 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.TryPushFunc("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBasicParalAllRunning()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int a
+      paral_all {
+        seq {
+          suspend() 
+        }
+        seq {
+          yield()
+          a = 1
+        }
+      }
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL_ALL, 20})
+        .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
+        .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 8})
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+        .Emit(Opcodes.Constant, new int[] { 0 })
+        .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.TryPushFunc("test");
+    for(int i=0;i<99;i++)
+      AssertEqual(vm.Tick(), BHS.RUNNING);
+    //NOTE: since VM is in the running state we need to explicitely clear the pools
+    //TODO: probably Val pools should be stored in VM rather than static members
+    Val.PoolClear();
+  }
+
+  [IsTested()]
+  public void TestBasicParalAllFinished()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int a
+      paral_all {
+        seq {
+          yield()
+          yield()
+        }
+        seq {
+          yield()
+          a = 1
+        }
+      }
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL_ALL, 24})
+        .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 8})
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+        .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 8})
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+        .Emit(Opcodes.Constant, new int[] { 0 })
+        .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.TryPushFunc("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);

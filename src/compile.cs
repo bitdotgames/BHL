@@ -648,11 +648,8 @@ public class Compiler : AST_Visitor
       }
       break;
       case EnumBlock.SEQ:
-      {
-        VisitControlBlock(ast);
-      }
-      break;
       case EnumBlock.PARAL:
+      case EnumBlock.PARAL_ALL:
       {
         VisitControlBlock(ast);
       }
@@ -675,7 +672,13 @@ public class Compiler : AST_Visitor
     scopes.RemoveAt(scopes.Count-1);
     ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
 
-    bool need_to_push_block = ast.type == EnumBlock.PARAL || parent_block != null && (parent_block.type == EnumBlock.PARAL);
+    bool need_to_push_block = 
+      ast.type == EnumBlock.PARAL || 
+      ast.type == EnumBlock.PARAL_ALL || 
+      parent_block != null && 
+      (parent_block.type == EnumBlock.PARAL || 
+       parent_block.type == EnumBlock.PARAL_ALL);
+
     if(need_to_push_block)
       Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
 
