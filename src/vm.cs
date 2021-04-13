@@ -228,8 +228,6 @@ public class VM
               frames.PopFast();
               if(frames.Count > 0)
                 curr_frame = frames.Peek();
-              else
-                return BHS.SUCCESS;
             }
             break;
           case Opcodes.ReturnVal:
@@ -245,10 +243,7 @@ public class VM
                 curr_frame.stack.Push(ret_val);
               }
               else
-              {
                 stack.Push(ret_val);
-                return BHS.SUCCESS;
-              }
             }
             break;
           case Opcodes.FuncCall:
