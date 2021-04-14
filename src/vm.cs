@@ -80,8 +80,6 @@ public class VM
     }
   }
 
-  uint ip;
-  IInstruction instruction;
   List<Const> constants;
   Dictionary<string, uint> func2ip;
 
@@ -101,12 +99,16 @@ public class VM
     }
   }
 
-  FastStack<Frame> frames = new FastStack<Frame>(256);
-  public FastStack<Frame> Frames {
-    get {
-      return frames;
-    }
+  int fibers_ids = 0;
+
+  internal class Fiber
+  {
+    internal int id;
+    internal uint ip;
+    internal IInstruction instruction;
+    internal FastStack<Frame> frames = new FastStack<Frame>(256);
   }
+  List<Fiber> fibers = new List<Fiber>();
 
   public VM(BaseScope symbols, byte[] bytecode, List<Const> constants, Dictionary<string, uint> func2ip)
   {
@@ -116,19 +118,22 @@ public class VM
     this.func2ip = func2ip;
   }
 
-  public bool TryPushFunc(string func)
+  public int Start(string func)
   {
-    if(frames.Count > 0)
-      return false;
     uint func_ip;
     if(!func2ip.TryGetValue(func, out func_ip))
-      return false;
+      return -1;
+
+    var fb = new Fiber();
+    fb.id = ++fibers_ids;
+
     var fr = new Frame();
-    //Console.WriteLine("FUNC PUSH " + func_ip + " RET TO " + ip + " " + fr.GetHashCode());
-    frames.Push(fr);
-    fr.return_ip = this.ip;
-    this.ip = func_ip;
-    return true;
+    fb.ip = func_ip;
+    fb.frames.Push(fr);
+
+    fibers.Add(fb);
+
+    return fb.id;
   }
 
   public BHS Execute(ref uint ip, FastStack<Frame> frames, ref IInstruction instruction, uint max_ip)
@@ -401,7 +406,7 @@ public class VM
     }
     else if(type == EnumBlock.SEQ)
     {
-      var seq = new SeqInstruction(this, ip + 1, ip + size);
+      var seq = new SeqInstruction(curr_frame, ip + 1, ip + size);
       AttachInstruction(ref instruction, seq);
       ip += size;
       return seq;
@@ -412,9 +417,19 @@ public class VM
 
   public BHS Tick()
   {
-    if(frames.Count == 0)
-      return BHS.SUCCESS;
-    return Execute(ref ip, frames, ref instruction, uint.MaxValue);
+    for(int i=0;i<fibers.Count;)
+    {
+      var fb = fibers[i];
+
+      var status = Execute(ref fb.ip, fb.frames, ref fb.instruction, uint.MaxValue);
+      
+      if(status != BHS.RUNNING)
+        fibers.RemoveAt(i);
+      else
+        ++i;
+    }
+
+    return fibers.Count == 0 ? BHS.SUCCESS : BHS.RUNNING;
   }
 
   static void ExecuteVarGetSet(Opcodes op, Frame curr_frame, byte[] bytecode, ref uint ip)
@@ -687,12 +702,12 @@ public class SeqInstruction : IInstruction
   public FastStack<VM.Frame> frames = new FastStack<VM.Frame>(256);
   public IInstruction instruction;
 
-  public SeqInstruction(VM vm, uint ip, uint max_ip)
+  public SeqInstruction(VM.Frame curr_frame, uint ip, uint max_ip)
   {
     //Console.WriteLine("NEW SEQ " + ip + " " + max_ip + " " + GetHashCode());
     this.ip = ip;
     this.max_ip = max_ip;
-    this.frames.Push(vm.Frames.Peek());
+    this.frames.Push(curr_frame);
   }
 
   public BHS Tick(VM vm)
