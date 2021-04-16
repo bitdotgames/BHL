@@ -9,15 +9,9 @@ public class VM
 {
   public class Frame
   {
-    public FastStack<Val> stack;
-    public List<Val> locals;
+    public FastStack<Val> stack = new FastStack<Val>(32);
+    public List<Val> locals = new List<Val>();
     public uint return_ip;
-
-    public Frame()
-    {
-      stack = new FastStack<Val>(32);
-      locals = new List<Val>();
-    }
 
     public void Clear()
     {
@@ -772,7 +766,7 @@ public class ParalAllInstruction : IMultiInstruction
 public interface IValRefcounted
 {
   void Retain();
-  void Release(bool can_del = true);
+  void Release(bool del_hint = true);
   bool TryDel();
 }
 
@@ -935,11 +929,11 @@ public class Val
       }
       else if((op & RefOp.USR_DEC) != 0)
       {
-        _refc.Release(true);
+        _refc.Release(del_hint: true);
       }
       else if((op & RefOp.USR_DEC_NO_DEL) != 0)
       {
-        _refc.Release(false);
+        _refc.Release(del_hint: false);
       }
       else if((op & RefOp.USR_TRY_DEL) != 0)
       {
