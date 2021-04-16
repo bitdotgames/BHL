@@ -44,17 +44,6 @@ public class VM
       }
     }
 
-    public Val GetLocal(int idx)
-    {
-      return locals[idx];
-    }
-
-    public void AddLocal(Val v)
-    {
-      v.RefMod(RefOp.INC | RefOp.USR_INC);
-      locals.Add(v);
-    }
-
     public Val PopValue()
     {
       var val = stack.PopFast();
@@ -179,16 +168,16 @@ public class VM
                 throw new Exception("Index out of constants: " + const_idx);
 
               var cn = constants[const_idx];
-              curr_frame.PushValue(cn.ToVal());
+              curr_frame.PassValue(cn.ToVal());
             }
             break;
           case Opcodes.TypeCast:
             {
               uint cast_type = Bytecode.Decode(bytecode, ref ip);
               if(cast_type == SymbolTable.symb_string.name.n)
-                curr_frame.PushValue(Val.NewStr(curr_frame.PopValue().num.ToString()));
+                curr_frame.PassValue(Val.NewStr(curr_frame.PopValue().num.ToString()));
               else if(cast_type == SymbolTable.symb_int.name.n)
-                curr_frame.PushValue(Val.NewNum(curr_frame.PopValue().num));
+                curr_frame.PassValue(Val.NewNum(curr_frame.PopValue().num));
               else
                 throw new Exception("Not supported typecast type: " + cast_type);
             }
@@ -352,7 +341,7 @@ public class VM
             break;
           case Opcodes.ArrNew:
             {
-              curr_frame.PushValue(Val.NewObj(ValList.New()));
+              curr_frame.PassValue(Val.NewObj(ValList.New()));
             }
             break;
           default:
@@ -456,13 +445,13 @@ public class VM
           if(curr_frame.stack.Count > 0)
             curr_frame.locals.Add(curr_frame.stack.PopFast());
           else
-            curr_frame.AddLocal(Val.New());
+            curr_frame.locals.Add(Val.New());
         }
       break;
       case Opcodes.GetVar:
         if(local_idx >= curr_frame.locals.Count)
           throw new Exception("Var index out of locals: " + local_idx);
-        curr_frame.PushValue(curr_frame.GetLocal(local_idx));
+        curr_frame.PushValue(curr_frame.locals[local_idx]);
       break;
       default:
         throw new Exception("Unsupported opcode: " + op);
@@ -489,7 +478,7 @@ public class VM
           {
             var arr = curr_frame.AquireValue();
             var lst = AsList(arr);
-            curr_frame.PushValue(Val.NewNum(lst.Count));
+            curr_frame.PassValue(Val.NewNum(lst.Count));
             arr.Release();
           }
           else
@@ -498,7 +487,6 @@ public class VM
         else
           throw new Exception("Class not supported: " + class_symb.name);
       }
-        //curr_frame.PushValue(curr_frame.GetLocal(local_idx));
       break;
       default:
         throw new Exception("Not supported opcode: " + op);
@@ -511,10 +499,10 @@ public class VM
     switch(op)
     {
       case Opcodes.UnaryNot:
-        curr_frame.PushValue(Val.NewBool(operand != 1));
+        curr_frame.PassValue(Val.NewBool(operand != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.PushValue(Val.NewNum(operand * -1));
+        curr_frame.PassValue(Val.NewNum(operand * -1));
       break;
     }
   }
@@ -584,51 +572,51 @@ public class VM
     {
       case Opcodes.Add:
         if((r_operand._type == Val.STRING) && (l_operand._type == Val.STRING))
-          curr_frame.PushValue(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
+          curr_frame.PassValue(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
         else
-          curr_frame.PushValue(Val.NewNum(l_operand._num + r_operand._num));
+          curr_frame.PassValue(Val.NewNum(l_operand._num + r_operand._num));
       break;
       case Opcodes.Sub:
-        curr_frame.PushValue(Val.NewNum(l_operand._num - r_operand._num));
+        curr_frame.PassValue(Val.NewNum(l_operand._num - r_operand._num));
       break;
       case Opcodes.Div:
-        curr_frame.PushValue(Val.NewNum(l_operand._num / r_operand._num));
+        curr_frame.PassValue(Val.NewNum(l_operand._num / r_operand._num));
       break;
       case Opcodes.Mul:
-        curr_frame.PushValue(Val.NewNum(l_operand._num * r_operand._num));
+        curr_frame.PassValue(Val.NewNum(l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
-        curr_frame.PushValue(Val.NewBool(l_operand._num == r_operand._num));
+        curr_frame.PassValue(Val.NewBool(l_operand._num == r_operand._num));
       break;
       case Opcodes.NotEqual:
-        curr_frame.PushValue(Val.NewBool(l_operand._num != r_operand._num));
+        curr_frame.PassValue(Val.NewBool(l_operand._num != r_operand._num));
       break;
       case Opcodes.Greater:
-        curr_frame.PushValue(Val.NewBool(l_operand._num > r_operand._num));
+        curr_frame.PassValue(Val.NewBool(l_operand._num > r_operand._num));
       break;
       case Opcodes.Less:
-        curr_frame.PushValue(Val.NewBool(l_operand._num < r_operand._num));
+        curr_frame.PassValue(Val.NewBool(l_operand._num < r_operand._num));
       break;
       case Opcodes.GreaterOrEqual:
-        curr_frame.PushValue(Val.NewBool(l_operand._num >= r_operand._num));
+        curr_frame.PassValue(Val.NewBool(l_operand._num >= r_operand._num));
       break;
       case Opcodes.LessOrEqual:
-        curr_frame.PushValue(Val.NewBool(l_operand._num <= r_operand._num));
+        curr_frame.PassValue(Val.NewBool(l_operand._num <= r_operand._num));
       break;
       case Opcodes.And:
-        curr_frame.PushValue(Val.NewBool(l_operand._num == 1 && r_operand._num == 1));
+        curr_frame.PassValue(Val.NewBool(l_operand._num == 1 && r_operand._num == 1));
       break;
       case Opcodes.Or:
-        curr_frame.PushValue(Val.NewBool(l_operand._num == 1 || r_operand._num == 1));
+        curr_frame.PassValue(Val.NewBool(l_operand._num == 1 || r_operand._num == 1));
       break;
       case Opcodes.BitAnd:
-        curr_frame.PushValue(Val.NewNum((int)l_operand._num & (int)r_operand._num));
+        curr_frame.PassValue(Val.NewNum((int)l_operand._num & (int)r_operand._num));
       break;
       case Opcodes.BitOr:
-        curr_frame.PushValue(Val.NewNum((int)l_operand._num | (int)r_operand._num));
+        curr_frame.PassValue(Val.NewNum((int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        curr_frame.PushValue(Val.NewNum((int)l_operand._num % (int)r_operand._num));
+        curr_frame.PassValue(Val.NewNum((int)l_operand._num % (int)r_operand._num));
       break;
     }
 
@@ -783,8 +771,7 @@ public class ParalAllInstruction : IMultiInstruction
 public interface IValRefcounted
 {
   void Retain();
-  void Release(bool del_hint = true);
-  bool TryDel();
+  void Release();
 }
 
 public class Val
@@ -870,14 +857,13 @@ public class Val
 #if DEBUG_REFS
       Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
-      //NOTE: Val is Reset here instead of Del, see notes below 
-      dv.Reset();
-      dv._refs = 0;
     }
+    dv._refs = 1;
+    dv.Reset();
     return dv;
   }
 
-  static public void Del(Val dv)
+  static void Del(Val dv)
   {
     //NOTE: we don't Reset Val immediately, giving a caller
     //      a chance to access its properties
@@ -885,32 +871,9 @@ public class Val
       throw new Exception("Deleting invalid object, refs " + dv._refs);
     dv._refs = -1;
 
-    //NOTE: we'd like to ensure there are some spare values before 
-    //      the released one, this way it will be possible to call 
-    //      safely New() right after Del() since it won't return
-    //      just deleted object
-    if(pool.Count == 0)
-    {
-      ++pool_miss;
-      var tmp = new Val(); 
-      pool.Enqueue(tmp);
-#if DEBUG_REFS
-      Console.WriteLine("NSP: " + tmp.GetHashCode()/* + " " + Environment.StackTrace*/);
-#endif
-    }
     pool.Enqueue(dv);
     if(pool.Count > pool_miss)
       throw new Exception("Unbalanced New/Del " + pool.Count + " " + pool_miss);
-  }
-
-  //For proper assignments, like: dst = src (taking into account ref.counting)
-  static public Val Assign(Val dst, Val src)
-  {
-    if(dst != null)
-      dst.RefMod(RefOp.DEC | RefOp.USR_DEC);
-    if(src != null) 
-      src.RefMod(RefOp.INC | RefOp.USR_INC);
-    return src;
   }
 
   //NOTE: refcount is not reset
@@ -939,22 +902,14 @@ public class Val
       }
       else if((op & RefOp.USR_DEC) != 0)
       {
-        _refc.Release(del_hint: true);
-      }
-      else if((op & RefOp.USR_DEC_NO_DEL) != 0)
-      {
-        _refc.Release(del_hint: false);
-      }
-      else if((op & RefOp.USR_TRY_DEL) != 0)
-      {
-        _refc.TryDel();
+        _refc.Release();
       }
     }
 
     if((op & RefOp.INC) != 0)
     {
       if(_refs == -1)
-        throw new Exception("Invalid state");
+        throw new Exception("Invalid state(-1)");
 
       ++_refs;
 #if DEBUG_REFS
@@ -964,9 +919,9 @@ public class Val
     else if((op & RefOp.DEC) != 0)
     {
       if(_refs == -1)
-        throw new Exception("Invalid state");
+        throw new Exception("Invalid state(-1)");
       else if(_refs == 0)
-        throw new Exception("Double free");
+        throw new Exception("Double free(0)");
 
       --_refs;
 #if DEBUG_REFS
@@ -979,9 +934,9 @@ public class Val
     else if((op & RefOp.DEC_NO_DEL) != 0)
     {
       if(_refs == -1)
-        throw new Exception("Invalid state");
+        throw new Exception("Invalid state(-1)");
       else if(_refs == 0)
-        throw new Exception("Double free");
+        throw new Exception("Double free(0)");
 
       --_refs;
 #if DEBUG_REFS
@@ -1007,11 +962,6 @@ public class Val
   public void Release()
   {
     RefMod(RefOp.USR_DEC | RefOp.DEC);
-  }
-
-  public void TryDel()
-  {
-    RefMod(RefOp.TRY_DEL);
   }
 
   static public Val NewStr(string s)
@@ -1304,34 +1254,22 @@ public class ValList : IList<Val>, IValRefcounted
   public void Retain()
   {
     if(refs == -1)
-      throw new Exception("Invalid state");
+      throw new Exception("Invalid state(-1)");
     ++refs;
     //Console.WriteLine("RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
   }
 
-  public void Release(bool can_del = true)
+  public void Release()
   {
     if(refs == -1)
-      throw new Exception("Invalid state");
+      throw new Exception("Invalid state(-1)");
     if(refs == 0)
-      throw new Exception("Double free");
+      throw new Exception("Double free(0)");
 
     --refs;
     //Console.WriteLine("RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
-    if(can_del)
-      TryDel();
-  }
-
-  public bool TryDel()
-  {
-    if(refs != 0)
-      return false;
-
-    //Console.WriteLine("DEL " + GetHashCode());
-    
-    Del(this);
-
-    return true;
+    if(refs == 0)
+      Del(this);
   }
 
   public void CopyFrom(ValList lst)
@@ -1366,13 +1304,13 @@ public class ValList : IList<Val>, IValRefcounted
 
       if(lst.refs != -1)
         throw new Exception("Expected to be released, refs " + lst.refs);
-      lst.refs = 0;
     }
+    lst.refs = 1;
 
     return lst;
   }
 
-  static public void Del(ValList lst)
+  static void Del(ValList lst)
   {
     if(lst.refs != 0)
       throw new Exception("Freeing invalid object, refs " + lst.refs);
@@ -1432,34 +1370,25 @@ public class ValDict : IValRefcounted
   public void Retain()
   {
     if(refs == -1)
-      throw new Exception("Invalid state");
+      throw new Exception("Invalid state(-1)");
     ++refs;
 
     //Console.WriteLine("FREF INC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
   }
 
-  public void Release(bool can_del = true)
+  public void Release()
   {
     if(refs == -1)
-      throw new Exception("Invalid state");
+      throw new Exception("Invalid state(-1)");
     if(refs == 0)
-      throw new Exception("Double free");
+      throw new Exception("Double free(0)");
 
     --refs;
 
     //Console.WriteLine("FREF DEC: " + refs + " " + this.GetHashCode() + " " + Environment.StackTrace);
 
-    if(can_del)
-      TryDel();
-  }
-
-  public bool TryDel()
-  {
-    if(refs != 0)
-      return false;
-    
-    Del(this);
-    return true;
+    if(refs == 0)
+      Del(this);
   }
 
   public static ValDict New()
@@ -1477,8 +1406,8 @@ public class ValDict : IValRefcounted
 
       if(tb.refs != -1)
         throw new Exception("Expected to be released, refs " + tb.refs);
-      tb.refs = 0;
     }
+    tb.refs = 1;
 
     return tb;
   }
@@ -1510,7 +1439,7 @@ public class ValDict : IValRefcounted
     get { return pool.Count; }
   }
 
-  static public void Del(ValDict tb)
+  static void Del(ValDict tb)
   {
     if(tb.refs != 0)
       throw new Exception("Freeing invalid object, refs " + tb.refs);
