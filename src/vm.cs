@@ -58,13 +58,24 @@ public class VM
     public Val PopValue()
     {
       var val = stack.PopFast();
-      val.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+      val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       return val;
     }
 
-    public void PushValue(Val v)
+    public void PushValue(Val val)
     {
-      v.RefMod(RefOp.INC | RefOp.USR_INC);
+      val.RefMod(RefOp.INC | RefOp.USR_INC);
+      stack.Push(val);
+    }
+
+    public Val AquireValue()
+    {
+      var val = stack.PopFast();
+      return val;
+    }
+
+    public void PassValue(Val v)
+    {
       stack.Push(v);
     }
 
@@ -258,7 +269,7 @@ public class VM
                 uint args_bits = Bytecode.Decode(bytecode, ref ip); 
                 var args_info = new FuncArgsInfo(args_bits);
                 for(int i = 0; i < args_info.CountArgs(); ++i)
-                  fr.PushValue(curr_frame.PopValue().ValueClone());
+                  fr.PassValue(curr_frame.AquireValue());
 
                 //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + " " + fr.GetHashCode());
                 //let's remember ip to return to
@@ -276,7 +287,7 @@ public class VM
                 uint args_bits = Bytecode.Decode(bytecode, ref ip); 
                 var args_info = new FuncArgsInfo(args_bits);
                 for(int i = 0; i < args_info.CountArgs(); ++i)
-                  curr_frame.PushValue(curr_frame.PopValue().ValueClone());
+                  curr_frame.PassValue(curr_frame.AquireValue());
 
                 var sub_instruction = func_symb.cb(this, curr_frame);
                 if(sub_instruction != null)
@@ -476,12 +487,10 @@ public class VM
         {
           if(local_idx == GenericArrayTypeSymbol.VM_CountIdx)
           {
-            var arr = curr_frame.PopValue();
+            var arr = curr_frame.AquireValue();
             var lst = AsList(arr);
             curr_frame.PushValue(Val.NewNum(lst.Count));
-            //NOTE: this can be an operation for the temp. array,
-            //      we need to try del the array if so
-            lst.TryDel();
+            arr.Release();
           }
           else
             throw new Exception("Not supported member idx: " + local_idx);
@@ -498,14 +507,14 @@ public class VM
 
   static void ExecuteUnaryOperation(Opcodes op, Frame curr_frame)
   {
-    var operand = curr_frame.PopValue();
+    var operand = curr_frame.PopValue().num;
     switch(op)
     {
       case Opcodes.UnaryNot:
-        curr_frame.PushValue(Val.NewBool(operand.num != 1));
+        curr_frame.PushValue(Val.NewBool(operand != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.PushValue(Val.NewNum(operand.num * -1));
+        curr_frame.PushValue(Val.NewNum(operand * -1));
       break;
     }
   }
@@ -525,45 +534,39 @@ public class VM
     {
       if(method == GenericArrayTypeSymbol.VM_AddIdx)
       {
-        var val = curr_frame.PopValue().ValueClone();
-        var arr = curr_frame.PopValue();
+        var val = curr_frame.AquireValue();
+        var arr = curr_frame.AquireValue();
         var lst = AsList(arr);
         lst.Add(val);
-        //NOTE: this can be an operation for the temp. array,
-        //      we need to try del the array if so
-        lst.TryDel();
+        val.Release();
+        arr.Release();
       }
       else if(method == GenericArrayTypeSymbol.VM_RemoveIdx)
       {
         int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.PopValue();
+        var arr = curr_frame.AquireValue();
         var lst = AsList(arr);
         lst.RemoveAt(idx); 
-        //NOTE: this can be an operation for the temp. array,
-        //      we need to try del the array if so
-        lst.TryDel();
+        arr.Release();
       }
       else if(method == GenericArrayTypeSymbol.VM_SetIdx)
       {
         int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.PopValue();
-        var val = curr_frame.PopValue().ValueClone();
+        var arr = curr_frame.AquireValue();
+        var val = curr_frame.AquireValue();
         var lst = AsList(arr);
         lst[idx] = val;
-        //NOTE: this can be an operation for the temp. array,
-        //      we need to try del the array if so
-        lst.TryDel();
+        val.Release();
+        arr.Release();
       }
       else if(method == GenericArrayTypeSymbol.VM_AtIdx)
       {
         int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.PopValue();
+        var arr = curr_frame.AquireValue();
         var lst = AsList(arr);
         var res = lst[idx]; 
         curr_frame.PushValue(res);
-        //NOTE: this can be an operation for the temp. array,
-        //      we need to try del the array if so
-        lst.TryDel();
+        arr.Release();
       }
       else 
         throw new Exception("Not supported method: " + method);
@@ -574,8 +577,8 @@ public class VM
 
   static void ExecuteBinaryOperation(Opcodes op, Frame curr_frame)
   {
-    var r_operand = curr_frame.PopValue();
-    var l_operand = curr_frame.PopValue();
+    var r_operand = curr_frame.AquireValue();
+    var l_operand = curr_frame.AquireValue();
 
     switch(op)
     {
@@ -628,12 +631,26 @@ public class VM
         curr_frame.PushValue(Val.NewNum((int)l_operand._num % (int)r_operand._num));
       break;
     }
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  public Val AquireValue()
+  {
+    var val = stack.PopFast();
+    return val;
+  }
+
+  public void PassValue(Val v)
+  {
+    stack.Push(v);
   }
 
   public Val PopValue()
   {
     var val = stack.PopFast();
-    val.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
+    val.RefMod(RefOp.DEC | RefOp.USR_DEC);
     return val;
   }
 
@@ -911,13 +928,6 @@ public class Val
     _obj = dv._obj;
   }
 
-  public Val ValueClone()
-  {
-    Val dv = New();
-    dv.ValueCopyFrom(this);
-    return dv;
-  }
-
   //NOTE: see RefOp for constants
   public void RefMod(int op)
   {
@@ -1002,16 +1012,6 @@ public class Val
   public void TryDel()
   {
     RefMod(RefOp.TRY_DEL);
-  }
-
-  public void RetainReference()
-  {
-    RefMod(RefOp.INC);
-  }
-
-  public void ReleaseReference()
-  {
-    RefMod(RefOp.DEC);
   }
 
   static public Val NewStr(string s)
