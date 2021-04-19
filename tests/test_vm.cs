@@ -1241,39 +1241,40 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
-  //public void TestSimpleLambdaCall()
-  //{
-  //  string bhl = @"
-  //  func int test()
-  //  {
-  //    return func int() {
-  //      return 123
-  //    }()
-  //  }
-  //  ";
+  [IsTested()]
+  public void TestSimpleLambdaSelfCall()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return func int() {
+        return 123
+      }()
+    }
+    ";
 
-  //  var c = Compile(bhl);
+    var c = Compile(bhl);
 
-  //  var expected = 
-  //    new Compiler(c.Symbols)
-  //    .Emit(Opcodes.Constant, new int[] { 0 })
-  //    .Emit(Opcodes.ReturnVal)
-  //    .Emit(Opcodes.Return)
-  //    .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
-  //    .Emit(Opcodes.ReturnVal)
-  //    .Emit(Opcodes.Return)
-  //    ;
-  //  AssertEqual(c, expected);
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.FuncCall, new int[] { 2, 0, 0 })
+      .Emit(Opcodes.FuncCall, new int[] { 3, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
 
-  //  AssertEqual(c.Constants, new List<Const>() { new Const(123) });
+    AssertEqual(c.Constants, new List<Const>() { new Const(123) });
 
-  //  var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-  //  vm.Start("test");
-  //  AssertEqual(vm.Tick(), BHS.SUCCESS);
-  //  AssertEqual(vm.PopValue().num, 123);
-  //  CommonChecks(vm);
-  //}
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 123);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestIfCondition()

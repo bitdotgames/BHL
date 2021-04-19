@@ -568,6 +568,13 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
+    uint ip = EnterNewScope();
+    func2ip.Add(ast.name, ip);
+    VisitChildren(ast);
+    Emit(Opcodes.Return);
+    LeaveCurrentScope();
+
+    Emit(Opcodes.FuncCall, new int[] {(int)2, (int)ip, 0});
   }
 
   public override void DoVisit(AST_ClassDecl ast)
@@ -738,14 +745,19 @@ public class Compiler : AST_Visitor
     switch(ast.type)
     {
       case EnumCall.VARW:
+      {
         sv = GetCurrentSymbolView().Define(ast.name);
         Emit(Opcodes.SetVar, new int[] { sv.index });
+      }
       break;
       case EnumCall.VAR:
+      {
         sv = GetCurrentSymbolView().Resolve(ast.name);
         Emit(Opcodes.GetVar, new int[] { sv.index });
+      }
       break;
       case EnumCall.FUNC:
+      {
         uint offset;
         if(func2ip.TryGetValue(ast.name, out offset))
         {
@@ -762,6 +774,7 @@ public class Compiler : AST_Visitor
         }
         else
           throw new Exception("Func '" + ast.name + "' code not found");
+      }
       break;
       case EnumCall.MVAR:
       {
@@ -793,10 +806,19 @@ public class Compiler : AST_Visitor
       }
       break;
       case EnumCall.ARR_IDX:
+      {
         Emit(Opcodes.MethodCall, new int[] { GenericArrayTypeSymbol.VM_Type, GenericArrayTypeSymbol.VM_AtIdx});
+      }
       break;
       case EnumCall.ARR_IDXW:
+      {
         Emit(Opcodes.MethodCall, new int[] { GenericArrayTypeSymbol.VM_Type, GenericArrayTypeSymbol.VM_SetIdx});
+      }
+      break;
+      case EnumCall.FUNC_PTR_POP:
+      {
+        Emit(Opcodes.FuncCall, new int[] {(int)3, 0, 0});
+      }
       break;
       default:
         throw new Exception("Not supported call: " + ast.type);

@@ -104,6 +104,8 @@ public class VM
   }
   List<Fiber> fibers = new List<Fiber>();
 
+  FastStack<uint> fptr_stack = new FastStack<uint>(64);
+
   public VM(BaseScope symbols, byte[] bytecode, List<Const> constants, Dictionary<string, uint> func2ip)
   {
     this.symbols = symbols;
@@ -161,27 +163,27 @@ public class VM
         switch(opcode)
         {
           case Opcodes.Constant:
-            {
-              int const_idx = (int)Bytecode.Decode(bytecode, ref ip);
+          {
+            int const_idx = (int)Bytecode.Decode(bytecode, ref ip);
 
-              if(const_idx >= constants.Count)
-                throw new Exception("Index out of constants: " + const_idx);
+            if(const_idx >= constants.Count)
+              throw new Exception("Index out of constants: " + const_idx);
 
-              var cn = constants[const_idx];
-              curr_frame.PushValueOnly(cn.ToVal());
-            }
-            break;
+            var cn = constants[const_idx];
+            curr_frame.PushValueOnly(cn.ToVal());
+          }
+          break;
           case Opcodes.TypeCast:
-            {
-              uint cast_type = Bytecode.Decode(bytecode, ref ip);
-              if(cast_type == SymbolTable.symb_string.name.n)
-                curr_frame.PushValueOnly(Val.NewStr(curr_frame.PopValue().num.ToString()));
-              else if(cast_type == SymbolTable.symb_int.name.n)
-                curr_frame.PushValueOnly(Val.NewNum(curr_frame.PopValue().num));
-              else
-                throw new Exception("Not supported typecast type: " + cast_type);
-            }
-            break;
+          {
+            uint cast_type = Bytecode.Decode(bytecode, ref ip);
+            if(cast_type == SymbolTable.symb_string.name.n)
+              curr_frame.PushValueOnly(Val.NewStr(curr_frame.PopValue().num.ToString()));
+            else if(cast_type == SymbolTable.symb_int.name.n)
+              curr_frame.PushValueOnly(Val.NewNum(curr_frame.PopValue().num));
+            else
+              throw new Exception("Not supported typecast type: " + cast_type);
+          }
+          break;
           case Opcodes.Add:
           case Opcodes.Sub:
           case Opcodes.Div:
@@ -197,153 +199,182 @@ public class VM
           case Opcodes.Less:
           case Opcodes.GreaterOrEqual:
           case Opcodes.LessOrEqual:
-            {
-              ExecuteBinaryOperation(opcode, curr_frame);
-            }
-            break;
+          {
+            ExecuteBinaryOperation(opcode, curr_frame);
+          }
+          break;
           case Opcodes.UnaryNot:
           case Opcodes.UnaryNeg:
-            {
-              ExecuteUnaryOperation(opcode, curr_frame);
-            }
-            break;
+          {
+            ExecuteUnaryOperation(opcode, curr_frame);
+          }
+          break;
           case Opcodes.SetVar:
           case Opcodes.GetVar:
-            {
-              ExecuteVarGetSet(opcode, curr_frame, bytecode, ref ip);
-            }
-            break;
+          {
+            ExecuteVarGetSet(opcode, curr_frame, bytecode, ref ip);
+          }
+          break;
           case Opcodes.SetMVar:
           case Opcodes.GetMVar:
-            {
-              ExecuteMVarGetSet(opcode, curr_frame, symbols, bytecode, ref ip);
-            }
-            break;
+          {
+            ExecuteMVarGetSet(opcode, curr_frame, symbols, bytecode, ref ip);
+          }
+          break;
           case Opcodes.Return:
-            {
-              curr_frame.Clear();
-              ip = curr_frame.return_ip;
-              //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
-              frames.PopFast();
-              if(frames.Count > 0)
-                curr_frame = frames.Peek();
-            }
-            break;
+          {
+            curr_frame.Clear();
+            ip = curr_frame.return_ip;
+            //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
+            frames.PopFast();
+            if(frames.Count > 0)
+              curr_frame = frames.Peek();
+          }
+          break;
           case Opcodes.ReturnVal:
+          {
+            var ret_val = curr_frame.stack.PopFast();
+            ip = curr_frame.return_ip;
+            curr_frame.Clear();
+            //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
+            frames.PopFast();
+            if(frames.Count > 0)
             {
-              var ret_val = curr_frame.stack.PopFast();
-              ip = curr_frame.return_ip;
-              curr_frame.Clear();
-              //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
-              frames.PopFast();
-              if(frames.Count > 0)
-              {
-                curr_frame = frames.Peek();
-                curr_frame.stack.Push(ret_val);
-              }
-              else
-                stack.Push(ret_val);
+              curr_frame = frames.Peek();
+              curr_frame.stack.Push(ret_val);
             }
-            break;
+            else
+              stack.Push(ret_val);
+          }
+          break;
           case Opcodes.FuncCall:
+          {
+            byte func_call_type = (byte)Bytecode.Decode(bytecode, ref ip);
+
+            //bhl userland call
+            if(func_call_type == 0)
             {
-              byte func_call_type = (byte)Bytecode.Decode(bytecode, ref ip);
+              uint func_ip = Bytecode.Decode(bytecode, ref ip);
 
-              if(func_call_type == 0)
-              {
-                uint func_ip = Bytecode.Decode(bytecode, ref ip);
+              var fr = new Frame();
 
-                var fr = new Frame();
+              uint args_bits = Bytecode.Decode(bytecode, ref ip); 
+              var args_info = new FuncArgsInfo(args_bits);
+              for(int i = 0; i < args_info.CountArgs(); ++i)
+                fr.PushValueOnly(curr_frame.PopValueOnly());
 
-                uint args_bits = Bytecode.Decode(bytecode, ref ip); 
-                var args_info = new FuncArgsInfo(args_bits);
-                for(int i = 0; i < args_info.CountArgs(); ++i)
-                  fr.PushValueOnly(curr_frame.PopValueOnly());
-
-                //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + " " + fr.GetHashCode());
-                //let's remember ip to return to
-                fr.return_ip = ip;
-                frames.Push(fr);
-                curr_frame = fr;
-                //since ip will be incremented below we decrement it intentionally here
-                ip = func_ip - 1; 
-              }
-              else if(func_call_type == 1)
-              {
-                int func_idx = (int)Bytecode.Decode(bytecode, ref ip);
-                var func_symb = symbols.GetMembers()[func_idx] as VM_FuncBindSymbol;
-
-                uint args_bits = Bytecode.Decode(bytecode, ref ip); 
-                var args_info = new FuncArgsInfo(args_bits);
-                for(int i = 0; i < args_info.CountArgs(); ++i)
-                  curr_frame.PushValueOnly(curr_frame.PopValueOnly());
-
-                var sub_instruction = func_symb.cb(this, curr_frame);
-                if(sub_instruction != null)
-                  AttachInstruction(ref instruction, sub_instruction);
-                //NOTE: checking if new instruction was added and if so executing it immediately
-                if(instruction != null)
-                  status = instruction.Tick(this);
-              }
+              //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + " " + fr.GetHashCode());
+              //let's remember ip to return to
+              fr.return_ip = ip;
+              frames.Push(fr);
+              curr_frame = fr;
+              //since ip will be incremented below we decrement it intentionally here
+              ip = func_ip - 1; 
             }
-            break;
+            //C# bind call
+            else if(func_call_type == 1)
+            {
+              int func_idx = (int)Bytecode.Decode(bytecode, ref ip);
+              var func_symb = symbols.GetMembers()[func_idx] as VM_FuncBindSymbol;
+
+              uint args_bits = Bytecode.Decode(bytecode, ref ip); 
+              var args_info = new FuncArgsInfo(args_bits);
+              for(int i = 0; i < args_info.CountArgs(); ++i)
+                curr_frame.PushValueOnly(curr_frame.PopValueOnly());
+
+              var sub_instruction = func_symb.cb(this, curr_frame);
+              if(sub_instruction != null)
+                AttachInstruction(ref instruction, sub_instruction);
+              //NOTE: checking if new instruction was added and if so executing it immediately
+              if(instruction != null)
+                status = instruction.Tick(this);
+            }
+            //func push ip
+            else if(func_call_type == 2)
+            {
+              uint func_ip = Bytecode.Decode(bytecode, ref ip);
+              //leftovers
+              Bytecode.Decode(bytecode, ref ip);
+              fptr_stack.Push(func_ip);
+            }
+            //func ptr call
+            else if(func_call_type == 3)
+            {
+              //leftovers
+              Bytecode.Decode(bytecode, ref ip);
+              Bytecode.Decode(bytecode, ref ip);
+
+              uint func_ip = fptr_stack.PopFast();
+
+              var fr = new Frame();
+              //let's remember ip to return to
+              fr.return_ip = ip;
+              frames.Push(fr);
+              curr_frame = fr;
+              //since ip will be incremented below we decrement it intentionally here
+              ip = func_ip - 1; 
+            }
+            else
+              throw new Exception("Not supported func call type: " + func_call_type);
+          }
+          break;
           case Opcodes.MethodCall:
-            {
-              uint class_type = Bytecode.Decode(bytecode, ref ip);
-              var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-              if(class_symb == null)
-                throw new Exception("Class type not found: " + class_type);
+          {
+            uint class_type = Bytecode.Decode(bytecode, ref ip);
+            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+            if(class_symb == null)
+              throw new Exception("Class type not found: " + class_type);
 
-              int method_offset = (int)Bytecode.Decode(bytecode, ref ip);
-              ExecuteClassMethod(class_symb, method_offset, curr_frame);
-            }
-            break;
+            int method_offset = (int)Bytecode.Decode(bytecode, ref ip);
+            ExecuteClassMethod(class_symb, method_offset, curr_frame);
+          }
+          break;
           case Opcodes.Jump:
+          {
+            uint offset = Bytecode.Decode(bytecode, ref ip);
+            ip = ip + offset;
+          }
+          break;
+          case Opcodes.LoopJump:
+          {
+            uint offset = Bytecode.Decode(bytecode, ref ip);
+            ip = ip - offset;
+          }
+          break;
+          case Opcodes.CondJump:
+          {
+            //we need to jump only in case of false
+            if(curr_frame.PopValue().bval == false)
             {
               uint offset = Bytecode.Decode(bytecode, ref ip);
               ip = ip + offset;
             }
-            break;
-          case Opcodes.LoopJump:
-            {
-              uint offset = Bytecode.Decode(bytecode, ref ip);
-              ip = ip - offset;
-            }
-            break;
-          case Opcodes.CondJump:
-            {
-              //we need to jump only in case of false
-              if(curr_frame.PopValue().bval == false)
-              {
-                uint offset = Bytecode.Decode(bytecode, ref ip);
-                ip = ip + offset;
-              }
-              else
-                ++ip;
-            }
-            break;
+            else
+              ++ip;
+          }
+          break;
           case Opcodes.DefArg:
-            {
-              uint arg = Bytecode.Decode(bytecode, ref ip);
-              if(curr_frame.stack.Count > 0)
-                ip = ip + arg;
-            }
-            break;
+          {
+            uint arg = Bytecode.Decode(bytecode, ref ip);
+            if(curr_frame.stack.Count > 0)
+              ip = ip + arg;
+          }
+          break;
           case Opcodes.PushBlock:
-            {
-              VisitBlock(ref ip, curr_frame, ref instruction);
-            }
-            break;
+          {
+            VisitBlock(ref ip, curr_frame, ref instruction);
+          }
+          break;
           case Opcodes.PopBlock:
-            {
-              //TODO: add scope cleaning stuff later here
-            }
-            break;
+          {
+            //TODO: add scope cleaning stuff later here
+          }
+          break;
           case Opcodes.ArrNew:
-            {
-              curr_frame.PushValueOnly(Val.NewObj(ValList.New()));
-            }
-            break;
+          {
+            curr_frame.PushValueOnly(Val.NewObj(ValList.New()));
+          }
+          break;
           default:
             throw new Exception("Not supported opcode: " + opcode);
         }
