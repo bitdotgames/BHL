@@ -1789,6 +1789,54 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBasicParalAutoSeqWrap()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int a
+      paral {
+        suspend() 
+        seq {
+          yield()
+          a = 1
+        }
+      }
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL, 20})
+        .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
+        .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 8})
+        .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+        .Emit(Opcodes.Constant, new int[] { 0 })
+        .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestParalWithSubFuncs()
   {
     string bhl = @"
@@ -1810,6 +1858,67 @@ public class BHL_TestVM : BHL_TestBase
         seq {
           a = bar()
         }
+      }
+      return a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      //foo
+      .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
+      .Emit(Opcodes.Return)
+      //bar
+      .Emit(Opcodes.FuncCall, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      //
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL, 18})
+        .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
+        .Emit(Opcodes.FuncCall, new int[] { 0, 0/*foo*/, 0 })
+        .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 6})
+        .Emit(Opcodes.FuncCall, new int[] { 0, 5/*bar*/, 0 })
+        .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestParalWithSubFuncsAndAutoSeqWrap()
+  {
+    string bhl = @"
+    func foo() {
+      suspend()
+    }
+
+    func int bar() {
+      yield()
+      return 1
+    }
+
+    func int test() {
+      int a
+      paral {
+        foo()
+        a = bar()
       }
       return a
     }
@@ -1955,6 +2064,47 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 1);
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestYieldWhileInParal()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      paral {
+        yield while(i < 3)
+        while(true) {
+          i = i + 1
+          yield()
+        }
+      }
+      return i
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+
+    var status = vm.Tick();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = vm.Tick();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = vm.Tick();
+    AssertEqual(BHS.RUNNING, status);
+
+    status = vm.Tick();
+    AssertEqual(BHS.SUCCESS, status);
+
+    var val = vm.PopValue();
+    AssertEqual(3, val.num);
   }
 
   [IsTested()]

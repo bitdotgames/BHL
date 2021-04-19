@@ -643,6 +643,7 @@ public class Compiler : AST_Visitor
       }
       break;
       case EnumBlock.FUNC:
+      case EnumBlock.GROUP:
       {
         VisitChildren(ast);
       }
@@ -663,21 +664,40 @@ public class Compiler : AST_Visitor
   {
     var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
 
+    bool parent_is_paral = 
+      parent_block != null && 
+      (parent_block.type == EnumBlock.PARAL || 
+       parent_block.type == EnumBlock.PARAL_ALL);
+
+    bool is_paral = 
+      ast.type == EnumBlock.PARAL || 
+      ast.type == EnumBlock.PARAL_ALL;
+
     var block_code = new Bytecode();
     scopes.Add(block_code);
     ctrl_blocks.Add(ast);
 
-    VisitChildren(ast);
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var child = ast.children[i];
+
+      //NOTE: let's automatically wrap all children with sequence if 
+      //      they are inside paral block
+      if(is_paral && (!(child is AST_Block) || ((AST_Block)child).type != EnumBlock.SEQ))
+      {
+        var seq_child = new AST_Block();
+        seq_child.type = EnumBlock.SEQ;
+        seq_child.children.Add(child);
+        child = seq_child;
+      }
+
+      Visit(child);
+    }
 
     scopes.RemoveAt(scopes.Count-1);
     ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
 
-    bool need_to_push_block = 
-      ast.type == EnumBlock.PARAL || 
-      ast.type == EnumBlock.PARAL_ALL || 
-      parent_block != null && 
-      (parent_block.type == EnumBlock.PARAL || 
-       parent_block.type == EnumBlock.PARAL_ALL);
+    bool need_to_push_block = is_paral || parent_is_paral;
 
     if(need_to_push_block)
       Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
