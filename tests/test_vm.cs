@@ -662,42 +662,6 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSubFuncCall()
-  {
-    string bhl = @"
-    func int bar() 
-    {
-      return 123
-    }
-    func int test()
-    {
-      return bar()
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new Compiler(c.Symbols)
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const(123) });
-
-    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-    vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(vm.PopValue().num, 123);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
   public void TestSimpleBindFunc()
   {
     string bhl = @"
@@ -766,7 +730,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var lst = vm.AquireValue();
+    var lst = vm.PopValueOnly();
     AssertEqual((lst.obj as ValList).Count, 0);
     lst.Release();
     CommonChecks(vm);
@@ -912,7 +876,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var lst = vm.AquireValue();
+    var lst = vm.PopValueOnly();
     AssertEqual((lst.obj as ValList).Count, 1);
     lst.Release();
     CommonChecks(vm);
@@ -1011,7 +975,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var val = vm.AquireValue();
+    var val = vm.PopValueOnly();
     var lst = val.obj as ValList;
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "tst");
@@ -1138,7 +1102,43 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestFunctionCall()
+  public void TestSimpleFuncCall()
+  {
+    string bhl = @"
+    func int bar() 
+    {
+      return 123
+    }
+    func int test()
+    {
+      return bar()
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(123) });
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 123);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestMultiFuncCall()
   {
     string bhl = @"
     func int test2(int x) 
@@ -1240,6 +1240,40 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.PopValue().str, "Hello world !");
     CommonChecks(vm);
   }
+
+  //[IsTested()]
+  //public void TestSimpleLambdaCall()
+  //{
+  //  string bhl = @"
+  //  func int test()
+  //  {
+  //    return func int() {
+  //      return 123
+  //    }()
+  //  }
+  //  ";
+
+  //  var c = Compile(bhl);
+
+  //  var expected = 
+  //    new Compiler(c.Symbols)
+  //    .Emit(Opcodes.Constant, new int[] { 0 })
+  //    .Emit(Opcodes.ReturnVal)
+  //    .Emit(Opcodes.Return)
+  //    .Emit(Opcodes.FuncCall, new int[] { 0, 0, 0 })
+  //    .Emit(Opcodes.ReturnVal)
+  //    .Emit(Opcodes.Return)
+  //    ;
+  //  AssertEqual(c, expected);
+
+  //  AssertEqual(c.Constants, new List<Const>() { new Const(123) });
+
+  //  var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+  //  vm.Start("test");
+  //  AssertEqual(vm.Tick(), BHS.SUCCESS);
+  //  AssertEqual(vm.PopValue().num, 123);
+  //  CommonChecks(vm);
+  //}
 
   [IsTested()]
   public void TestIfCondition()

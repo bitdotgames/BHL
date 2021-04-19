@@ -57,13 +57,13 @@ public class VM
       stack.Push(val);
     }
 
-    public Val AquireValue()
+    public Val PopValueOnly()
     {
       var val = stack.PopFast();
       return val;
     }
 
-    public void PassValue(Val v)
+    public void PushValueOnly(Val v)
     {
       stack.Push(v);
     }
@@ -168,16 +168,16 @@ public class VM
                 throw new Exception("Index out of constants: " + const_idx);
 
               var cn = constants[const_idx];
-              curr_frame.PassValue(cn.ToVal());
+              curr_frame.PushValueOnly(cn.ToVal());
             }
             break;
           case Opcodes.TypeCast:
             {
               uint cast_type = Bytecode.Decode(bytecode, ref ip);
               if(cast_type == SymbolTable.symb_string.name.n)
-                curr_frame.PassValue(Val.NewStr(curr_frame.PopValue().num.ToString()));
+                curr_frame.PushValueOnly(Val.NewStr(curr_frame.PopValue().num.ToString()));
               else if(cast_type == SymbolTable.symb_int.name.n)
-                curr_frame.PassValue(Val.NewNum(curr_frame.PopValue().num));
+                curr_frame.PushValueOnly(Val.NewNum(curr_frame.PopValue().num));
               else
                 throw new Exception("Not supported typecast type: " + cast_type);
             }
@@ -258,7 +258,7 @@ public class VM
                 uint args_bits = Bytecode.Decode(bytecode, ref ip); 
                 var args_info = new FuncArgsInfo(args_bits);
                 for(int i = 0; i < args_info.CountArgs(); ++i)
-                  fr.PassValue(curr_frame.AquireValue());
+                  fr.PushValueOnly(curr_frame.PopValueOnly());
 
                 //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + " " + fr.GetHashCode());
                 //let's remember ip to return to
@@ -276,7 +276,7 @@ public class VM
                 uint args_bits = Bytecode.Decode(bytecode, ref ip); 
                 var args_info = new FuncArgsInfo(args_bits);
                 for(int i = 0; i < args_info.CountArgs(); ++i)
-                  curr_frame.PassValue(curr_frame.AquireValue());
+                  curr_frame.PushValueOnly(curr_frame.PopValueOnly());
 
                 var sub_instruction = func_symb.cb(this, curr_frame);
                 if(sub_instruction != null)
@@ -341,7 +341,7 @@ public class VM
             break;
           case Opcodes.ArrNew:
             {
-              curr_frame.PassValue(Val.NewObj(ValList.New()));
+              curr_frame.PushValueOnly(Val.NewObj(ValList.New()));
             }
             break;
           default:
@@ -476,9 +476,9 @@ public class VM
         {
           if(local_idx == GenericArrayTypeSymbol.VM_CountIdx)
           {
-            var arr = curr_frame.AquireValue();
+            var arr = curr_frame.PopValueOnly();
             var lst = AsList(arr);
-            curr_frame.PassValue(Val.NewNum(lst.Count));
+            curr_frame.PushValueOnly(Val.NewNum(lst.Count));
             arr.Release();
           }
           else
@@ -499,10 +499,10 @@ public class VM
     switch(op)
     {
       case Opcodes.UnaryNot:
-        curr_frame.PassValue(Val.NewBool(operand != 1));
+        curr_frame.PushValueOnly(Val.NewBool(operand != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.PassValue(Val.NewNum(operand * -1));
+        curr_frame.PushValueOnly(Val.NewNum(operand * -1));
       break;
     }
   }
@@ -522,8 +522,8 @@ public class VM
     {
       if(method == GenericArrayTypeSymbol.VM_AddIdx)
       {
-        var val = curr_frame.AquireValue();
-        var arr = curr_frame.AquireValue();
+        var val = curr_frame.PopValueOnly();
+        var arr = curr_frame.PopValueOnly();
         var lst = AsList(arr);
         lst.Add(val);
         val.Release();
@@ -532,7 +532,7 @@ public class VM
       else if(method == GenericArrayTypeSymbol.VM_RemoveIdx)
       {
         int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.AquireValue();
+        var arr = curr_frame.PopValueOnly();
         var lst = AsList(arr);
         lst.RemoveAt(idx); 
         arr.Release();
@@ -540,8 +540,8 @@ public class VM
       else if(method == GenericArrayTypeSymbol.VM_SetIdx)
       {
         int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.AquireValue();
-        var val = curr_frame.AquireValue();
+        var arr = curr_frame.PopValueOnly();
+        var val = curr_frame.PopValueOnly();
         var lst = AsList(arr);
         lst[idx] = val;
         val.Release();
@@ -550,7 +550,7 @@ public class VM
       else if(method == GenericArrayTypeSymbol.VM_AtIdx)
       {
         int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.AquireValue();
+        var arr = curr_frame.PopValueOnly();
         var lst = AsList(arr);
         var res = lst[idx]; 
         curr_frame.PushValue(res);
@@ -565,58 +565,58 @@ public class VM
 
   static void ExecuteBinaryOperation(Opcodes op, Frame curr_frame)
   {
-    var r_operand = curr_frame.AquireValue();
-    var l_operand = curr_frame.AquireValue();
+    var r_operand = curr_frame.PopValueOnly();
+    var l_operand = curr_frame.PopValueOnly();
 
     switch(op)
     {
       case Opcodes.Add:
         if((r_operand._type == Val.STRING) && (l_operand._type == Val.STRING))
-          curr_frame.PassValue(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
+          curr_frame.PushValueOnly(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
         else
-          curr_frame.PassValue(Val.NewNum(l_operand._num + r_operand._num));
+          curr_frame.PushValueOnly(Val.NewNum(l_operand._num + r_operand._num));
       break;
       case Opcodes.Sub:
-        curr_frame.PassValue(Val.NewNum(l_operand._num - r_operand._num));
+        curr_frame.PushValueOnly(Val.NewNum(l_operand._num - r_operand._num));
       break;
       case Opcodes.Div:
-        curr_frame.PassValue(Val.NewNum(l_operand._num / r_operand._num));
+        curr_frame.PushValueOnly(Val.NewNum(l_operand._num / r_operand._num));
       break;
       case Opcodes.Mul:
-        curr_frame.PassValue(Val.NewNum(l_operand._num * r_operand._num));
+        curr_frame.PushValueOnly(Val.NewNum(l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
-        curr_frame.PassValue(Val.NewBool(l_operand._num == r_operand._num));
+        curr_frame.PushValueOnly(Val.NewBool(l_operand._num == r_operand._num));
       break;
       case Opcodes.NotEqual:
-        curr_frame.PassValue(Val.NewBool(l_operand._num != r_operand._num));
+        curr_frame.PushValueOnly(Val.NewBool(l_operand._num != r_operand._num));
       break;
       case Opcodes.Greater:
-        curr_frame.PassValue(Val.NewBool(l_operand._num > r_operand._num));
+        curr_frame.PushValueOnly(Val.NewBool(l_operand._num > r_operand._num));
       break;
       case Opcodes.Less:
-        curr_frame.PassValue(Val.NewBool(l_operand._num < r_operand._num));
+        curr_frame.PushValueOnly(Val.NewBool(l_operand._num < r_operand._num));
       break;
       case Opcodes.GreaterOrEqual:
-        curr_frame.PassValue(Val.NewBool(l_operand._num >= r_operand._num));
+        curr_frame.PushValueOnly(Val.NewBool(l_operand._num >= r_operand._num));
       break;
       case Opcodes.LessOrEqual:
-        curr_frame.PassValue(Val.NewBool(l_operand._num <= r_operand._num));
+        curr_frame.PushValueOnly(Val.NewBool(l_operand._num <= r_operand._num));
       break;
       case Opcodes.And:
-        curr_frame.PassValue(Val.NewBool(l_operand._num == 1 && r_operand._num == 1));
+        curr_frame.PushValueOnly(Val.NewBool(l_operand._num == 1 && r_operand._num == 1));
       break;
       case Opcodes.Or:
-        curr_frame.PassValue(Val.NewBool(l_operand._num == 1 || r_operand._num == 1));
+        curr_frame.PushValueOnly(Val.NewBool(l_operand._num == 1 || r_operand._num == 1));
       break;
       case Opcodes.BitAnd:
-        curr_frame.PassValue(Val.NewNum((int)l_operand._num & (int)r_operand._num));
+        curr_frame.PushValueOnly(Val.NewNum((int)l_operand._num & (int)r_operand._num));
       break;
       case Opcodes.BitOr:
-        curr_frame.PassValue(Val.NewNum((int)l_operand._num | (int)r_operand._num));
+        curr_frame.PushValueOnly(Val.NewNum((int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        curr_frame.PassValue(Val.NewNum((int)l_operand._num % (int)r_operand._num));
+        curr_frame.PushValueOnly(Val.NewNum((int)l_operand._num % (int)r_operand._num));
       break;
     }
 
@@ -624,13 +624,13 @@ public class VM
     l_operand.Release();
   }
 
-  public Val AquireValue()
+  public Val PopValueOnly()
   {
     var val = stack.PopFast();
     return val;
   }
 
-  public void PassValue(Val v)
+  public void PushValueOnly(Val v)
   {
     stack.Push(v);
   }
