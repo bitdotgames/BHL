@@ -1829,96 +1829,155 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
-  //public void TestSimpleLambdaCallAsVar()
-  //{
-  //  string bhl = @"
-  //  func dummy() {
-  //  }
+  [IsTested()]
+  public void TestSimpleLambdaCallAsVar()
+  {
+    string bhl = @"
+    func dummy() {
+    }
 
-  //  func int test()
-  //  {
-  //    int^() a = func int() {
-  //      return 123
-  //    }
-  //    return a()
-  //  }
-  //  ";
+    func int test()
+    {
+      int^() a = func int() {
+        return 123
+      }
+      return a()
+    }
+    ";
 
-  //  var c = Compile(bhl);
+    var c = Compile(bhl);
 
-  //  var expected = 
-  //    new Compiler(c.Symbols)
-  //    //dummy
-  //    .Emit(Opcodes.Return)
-  //    //test
-  //    .Emit(Opcodes.Jump, new int[] { 4 })
-  //    .Emit(Opcodes.Constant, new int[] { 0 })
-  //    .Emit(Opcodes.ReturnVal)
-  //    .Emit(Opcodes.Return)
-  //    .Emit(Opcodes.FuncCall, new int[] { 2, 3, 0 })
-  //    .Emit(Opcodes.SetVar, new int[] { 0 })
-  //    .Emit(Opcodes.FuncCall, new int[] { 4, 0, 0 })
-  //    .Emit(Opcodes.ReturnVal)
-  //    .Emit(Opcodes.Return)
-  //    ;
-  //  AssertEqual(c, expected);
+    var expected = 
+      new Compiler(c.Symbols)
+      //dummy
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.Jump, new int[] { 4 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.FuncCall, new int[] { 2, 3, 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.FuncCall, new int[] { 4, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
 
-  //  AssertEqual(c.Constants, new List<Const>() { new Const(123) });
+    AssertEqual(c.Constants, new List<Const>() { new Const(123) });
 
-  //  var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-  //  vm.Start("test");
-  //  AssertEqual(vm.Tick(), BHS.SUCCESS);
-  //  AssertEqual(vm.PopValue().num, 123);
-  //  CommonChecks(vm);
-  //}
-  //
-  //[IsTested()]
-  //public void TestSimpleLambdaCallAsVarInCondition()
-  //{
-  //  string bhl = @"
-  //  func dummy() {
-  //  }
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 123);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestSimpleLambdaCallAsVarInFalseCondition()
+  {
+    string bhl = @"
+    func dummy() {
+    }
 
-  //  func int test()
-  //  {
-  //    int^() a = func int() {
-  //      return 123
-  //    }
-  //    if(false) {
-  //      return a()
-  //    } else {
-  //      return 321
-  //    }
-  //  }
-  //  ";
+    func int test()
+    {
+      int^() a = func int() {
+        return 123
+      }
+      if(false) {
+        return a()
+      } else {
+        return 321
+      }
+    }
+    ";
 
-  //  var c = Compile(bhl);
+    var c = Compile(bhl);
 
-  //  var expected = 
-  //    new Compiler(c.Symbols)
-  //    //dummy
-  //    .Emit(Opcodes.Return)
-  //    //test
-  //    .Emit(Opcodes.Constant, new int[] { 0 })
-  //    .Emit(Opcodes.ReturnVal)
-  //    .Emit(Opcodes.Return)
-  //    .Emit(Opcodes.FuncCall, new int[] { 2, 1, 0 })
-  //    .Emit(Opcodes.SetVar, new int[] { 0 })
-  //    .Emit(Opcodes.FuncCall, new int[] { 4, 0, 0 })
-  //    .Emit(Opcodes.ReturnVal)
-  //    .Emit(Opcodes.Return)
-  //    ;
-  //  AssertEqual(c, expected);
+    var expected = 
+      new Compiler(c.Symbols)
+      //dummy
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.Jump, new int[] { 4 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.FuncCall, new int[] { 2, 3, 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.CondJump, new int[] { 7 })
+      .Emit(Opcodes.FuncCall, new int[] { 4, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Jump, new int[] { 3 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
 
-  //  AssertEqual(c.Constants, new List<Const>() { new Const(123), new Const(321) });
+    AssertEqual(c.Constants, new List<Const>() { new Const(123), new Const(false), new Const(321) });
 
-  //  var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
-  //  vm.Start("test");
-  //  AssertEqual(vm.Tick(), BHS.SUCCESS);
-  //  AssertEqual(vm.PopValue().num, 321);
-  //  CommonChecks(vm);
-  //}
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 321);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSimpleLambdaCallAsVarInTrueCondition()
+  {
+    string bhl = @"
+    func dummy() {
+    }
+
+    func int test()
+    {
+      int^() a = func int() {
+        return 123
+      }
+      if(true) {
+        return a()
+      } else {
+        return 321
+      }
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      //dummy
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.Jump, new int[] { 4 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.FuncCall, new int[] { 2, 3, 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.CondJump, new int[] { 7 })
+      .Emit(Opcodes.FuncCall, new int[] { 4, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Jump, new int[] { 3 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(123), new Const(true), new Const(321) });
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 123);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestFuncDefaultArg()

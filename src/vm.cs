@@ -104,8 +104,6 @@ public class VM
   }
   List<Fiber> fibers = new List<Fiber>();
 
-  FastStack<uint> fptr_stack = new FastStack<uint>(64);
-
   public VM(BaseScope symbols, byte[] bytecode, List<Const> constants, Dictionary<string, uint> func2ip)
   {
     this.symbols = symbols;
@@ -295,16 +293,34 @@ public class VM
               uint func_ip = Bytecode.Decode(bytecode, ref ip);
               //leftovers
               Bytecode.Decode(bytecode, ref ip);
-              fptr_stack.Push(func_ip);
+
+              curr_frame.PushValueManual(Val.NewNum(func_ip));
             }
-            //func ptr call
+            //func call when ip is on the stack
             else if(func_call_type == 3)
             {
               //leftovers
               Bytecode.Decode(bytecode, ref ip);
               Bytecode.Decode(bytecode, ref ip);
 
-              uint func_ip = fptr_stack.PopFast();
+              uint func_ip = (uint)curr_frame.PopValue().num;
+
+              var fr = new Frame();
+              //let's remember ip to return to
+              fr.return_ip = ip;
+              frames.Push(fr);
+              curr_frame = fr;
+              //since ip will be incremented below we decrement it intentionally here
+              ip = func_ip - 1; 
+            }
+            //func ptr call from var
+            else if(func_call_type == 4)
+            {
+              int local_var_idx = (int)Bytecode.Decode(bytecode, ref ip);
+              //leftovers
+              Bytecode.Decode(bytecode, ref ip);
+
+              uint func_ip = (uint)curr_frame.locals[local_var_idx].num;
 
               var fr = new Frame();
               //let's remember ip to return to
