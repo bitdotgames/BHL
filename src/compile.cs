@@ -213,14 +213,14 @@ public class Compiler : AST_Visitor
     return (uint)scopes[0].Length;
   }
  
-  void LeaveCurrentScope()
+  Bytecode LeaveCurrentScope(bool auto_append = true)
   {
     var curr_scope = GetCurrentScope();
-    var curr_table = GetCurrentSymbolView();
-    //main bytecode
-    scopes[0].Write(curr_scope);
-    scopes.Remove(curr_scope);
-    symbol_views.Remove(curr_table);
+    if(auto_append)
+      scopes[0].Write(curr_scope);
+    scopes.RemoveAt(scopes.Count-1);
+    symbol_views.RemoveAt(symbol_views.Count-1);
+    return curr_scope;
   }
 
   int AddConstant(AST_Literal lt)
@@ -568,12 +568,24 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
-    uint ip = EnterNewScope();
-    func2ip.Add(ast.name, ip);
+    EnterNewScope();
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    LeaveCurrentScope();
+    var bytecode = LeaveCurrentScope(auto_append: false);
 
+    //NOTE: since lambda's body can appear anywhere in the 
+    //      compiled code we skip it by uncoditional jump over it
+    Emit(Opcodes.Jump, new int[] {(int)bytecode.Length});
+    
+    uint ip = 0;
+    for(int i=0;i < scopes.Count;++i)
+      ip += (uint)scopes[i].Length;
+    func2ip.Add(ast.name, ip);
+
+    GetCurrentScope().Write(bytecode);
+
+    //NOTE: special kind of func call which pushes 
+    //      lambda's ip on the stack 
     Emit(Opcodes.FuncCall, new int[] {(int)2, (int)ip, 0});
   }
 
@@ -818,6 +830,12 @@ public class Compiler : AST_Visitor
       case EnumCall.FUNC_PTR_POP:
       {
         Emit(Opcodes.FuncCall, new int[] {(int)3, 0, 0});
+      }
+      break;
+      case EnumCall.FUNC_PTR:
+      {
+        sv = GetCurrentSymbolView().Resolve(ast.name);
+        Emit(Opcodes.FuncCall, new int[] {(int)4, sv.index, 0});
       }
       break;
       default:

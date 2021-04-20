@@ -124,9 +124,22 @@ public class BHL_TestRunner
       string test_filter = parts.Length >= 1 ? parts[0] : null;
       string method_filter = parts.Length > 1 ? parts[1] : null;
 
-      if(test_filter == null || (test_filter != null && test.GetType().Name.IndexOf(test_filter) != -1))
+      bool exact = true;
+      if(test_filter != null && test_filter.EndsWith("~"))
       {
-        if(method_filter == null || (method_filter != null && member.Name.IndexOf(method_filter) != -1))
+        exact = false;
+        test_filter = test_filter.Substring(0, test_filter.Length-1);
+      }
+
+      if(method_filter != null && method_filter.EndsWith("~"))
+      {
+        exact = false;
+        method_filter = method_filter.Substring(0, method_filter.Length-1);
+      }
+
+      if(test_filter == null || (test_filter != null && (exact ? test.GetType().Name == test_filter : test.GetType().Name.IndexOf(test_filter) != -1)))
+      {
+        if(method_filter == null || (method_filter != null && (exact ? member.Name == method_filter : member.Name.IndexOf(method_filter) != -1)))
           return true;
       }
     }
