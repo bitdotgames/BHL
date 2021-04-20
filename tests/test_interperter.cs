@@ -11757,6 +11757,33 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNonMatchingReturnAfterElseIf2()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      if(false) {
+      } else if (true) {
+        return 20
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl, globs);
+      },
+      "matching 'return' statement not found"
+    );
+  }
+
+  [IsTested()]
   public void TestMatchingReturnInElse()
   {
     string bhl = @"

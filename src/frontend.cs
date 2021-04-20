@@ -2120,15 +2120,47 @@ public class Frontend : bhlBaseVisitor<object>
 
     SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(main.exp()));
 
+    var func_symb = PeekFuncDecl();
+    bool seen_return = func_symb.return_statement_found;
+    func_symb.return_statement_found = false;
+
     ast.AddChild(main_cond);
     PushAST(ast);
     CommonVisitBlock(EnumBlock.SEQ, main.block().statement(), new_local_scope: false);
     PopAST();
 
-    //NOTE: when inside if we reset whethe there was a return statement,
-    //      this way we force the presence of return out of 'if/else' block 
-    var func_symb = PeekFuncDecl();
-    func_symb.return_statement_found = false;
+    //NOTE: if in the block before there were no 'return' statements and in the current block
+    //      *there's one* we need to reset the 'return found' flag since otherewise
+    //      there's a code path without 'return', e.g:
+    //
+    //      func int foo() {
+    //        if(..) {
+    //          return 1
+    //        } else {
+    //          ...
+    //        }
+    //        return 3
+    //      }
+    //
+    //      func int foo() {
+    //        if(..) {
+    //          ...
+    //        } else {
+    //          return 2
+    //        }
+    //        return 3
+    //      }
+    //
+    //      func int foo() {
+    //        if(..) {
+    //          return 1 
+    //        } else {
+    //          return 2
+    //        }
+    //      }
+    //
+    if(!seen_return && func_symb.return_statement_found && (ctx.elseIf() == null || ctx.@else() == null))
+      func_symb.return_statement_found = false;
 
     var else_if = ctx.elseIf();
     for(int i=0;i<else_if.Length;++i)
@@ -2141,22 +2173,30 @@ public class Frontend : bhlBaseVisitor<object>
 
       SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(item.exp()));
 
+      seen_return = func_symb.return_statement_found;
+      func_symb.return_statement_found = false;
+
       ast.AddChild(item_cond);
       PushAST(ast);
       CommonVisitBlock(EnumBlock.SEQ, item.block().statement(), new_local_scope: false);
       PopAST();
 
-      func_symb.return_statement_found = false;
+      if(!seen_return && func_symb.return_statement_found)
+        func_symb.return_statement_found = false;
     }
 
     var @else = ctx.@else();
     if(@else != null)
     {
+      seen_return = func_symb.return_statement_found;
       func_symb.return_statement_found = false;
 
       PushAST(ast);
       CommonVisitBlock(EnumBlock.SEQ, @else.block().statement(), new_local_scope: false);
       PopAST();
+
+      if(!seen_return && func_symb.return_statement_found)
+        func_symb.return_statement_found = false;
     }
 
     PeekAST().AddChild(ast);
