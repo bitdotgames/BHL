@@ -42,51 +42,6 @@ public enum Opcodes
   ArrNew          = 0x22,
 }
 
-public enum SymbolScope
-{
-  Global = 1
-}
-
-public struct SymbolView
-{
-  public string name;
-  public SymbolScope scope;
-  public int index;
-}
-
-public class SymbolViewTable
-{
-  Dictionary<string, SymbolView> store = new Dictionary<string, SymbolView>();
-
-  public SymbolView Define(string name)
-  {
-    var s = new SymbolView()
-    {
-      name = name,
-      index = store.Count,
-      scope  = SymbolScope.Global
-    };
-
-    if(!store.ContainsKey(name))
-    {
-      store[name] = s;
-      return s;
-    }
-    else
-    {
-      return store[name];
-    } 
-  }
-
-  public SymbolView Resolve(string name)
-  {
-    SymbolView s;
-    if(!store.TryGetValue(name, out s))
-     throw new Exception("No such symbol in table " + name);
-    return s;
-  }
-}
-
 public class Const
 {
   public EnumLiteral type;
@@ -170,8 +125,6 @@ public class Compiler : AST_Visitor
   List<Bytecode> scopes = new List<Bytecode>();
   List<AST_Block> ctrl_blocks = new List<AST_Block>();
 
-  List<SymbolViewTable> symbol_views = new List<SymbolViewTable>();
-
   Dictionary<string, uint> func2ip = new Dictionary<string, uint>();
   public Dictionary<string, uint> Func2Offset {
     get {
@@ -187,7 +140,6 @@ public class Compiler : AST_Visitor
 
     this.symbols = symbols;
     scopes.Add(new Bytecode());
-    symbol_views.Add(new SymbolViewTable());
   }
 
   public void Compile(AST ast)
@@ -200,15 +152,9 @@ public class Compiler : AST_Visitor
     return this.scopes[this.scopes.Count-1];
   }
 
-  SymbolViewTable GetCurrentSymbolView()
-  {
-    return this.symbol_views[this.symbol_views.Count-1];
-  }
-
   uint EnterNewScope()
   {
     scopes.Add(new Bytecode());
-    symbol_views.Add(new SymbolViewTable());
 
     return (uint)scopes[0].Length;
   }
@@ -219,7 +165,6 @@ public class Compiler : AST_Visitor
     if(auto_append)
       scopes[0].Write(curr_scope);
     scopes.RemoveAt(scopes.Count-1);
-    symbol_views.RemoveAt(symbol_views.Count-1);
     return curr_scope;
   }
 
@@ -753,19 +698,16 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Call ast)
   {  
-    SymbolView sv;
     switch(ast.type)
     {
       case EnumCall.VARW:
       {
-        sv = GetCurrentSymbolView().Define(ast.name);
-        Emit(Opcodes.SetVar, new int[] { sv.index });
+        Emit(Opcodes.SetVar, new int[] { (int)ast.symb_idx });
       }
       break;
       case EnumCall.VAR:
       {
-        sv = GetCurrentSymbolView().Resolve(ast.name);
-        Emit(Opcodes.GetVar, new int[] { sv.index });
+        Emit(Opcodes.GetVar, new int[] { (int)ast.symb_idx });
       }
       break;
       case EnumCall.FUNC:
@@ -834,8 +776,7 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.FUNC_PTR:
       {
-        sv = GetCurrentSymbolView().Resolve(ast.name);
-        Emit(Opcodes.FuncCall, new int[] {(int)4, sv.index, 0});
+        Emit(Opcodes.FuncCall, new int[] {(int)4, (int)ast.symb_idx, 0});
       }
       break;
       default:
@@ -935,19 +876,18 @@ public class Compiler : AST_Visitor
     }
   }
 
-  public override void DoVisit(AST_VarDecl node)
+  public override void DoVisit(AST_VarDecl ast)
   {
-    if(node.children.Count > 0)
+    if(ast.children.Count > 0)
     {
       var index = 0;
       Emit(Opcodes.DefArg, new int[] { index });
       var pointer = GetCurrentScope().Position;
-      VisitChildren(node);
+      VisitChildren(ast);
       PatchJumpOffsetToCurrPos(pointer);
     }
 
-    SymbolView s = GetCurrentSymbolView().Define(node.name);
-    Emit(Opcodes.SetVar, new int[] { s.index });
+    Emit(Opcodes.SetVar, new int[] { (int)ast.symb_idx });
   }
 
   public override void DoVisit(bhl.AST_JsonObj node)

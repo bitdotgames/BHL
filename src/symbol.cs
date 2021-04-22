@@ -141,6 +141,7 @@ public class Symbol
   // Symbols also know their 'scope level', 
   // e.g. for  { { int a = 1 } } scope level will be 2
   public int scope_level;
+  public int scope_idx;
   public bool is_out_of_scope;
 
   public Symbol(WrappedNode node, HashedName name) 
@@ -599,7 +600,6 @@ public abstract class ScopedSymbol : Symbol, Scope
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
     members.Add(sym);
-
     sym.scope = this; // track the scope in each symbol
   }
 
@@ -1661,6 +1661,7 @@ public class SymbolsDictionary
       str2symb.Add(s.name.s, s);
     hash2symb.Add(s.name.n, s);
     list.Add(s);
+    s.scope_idx = list.Count - 1;
   }
 
   public void RemoveAt(int index)

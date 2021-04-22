@@ -1864,7 +1864,7 @@ public class Frontend : bhlBaseVisitor<object>
           wnode = Wrap(vd.NAME());
           wnode.eval_type = curr_type;
 
-          var ast = AST_Util.New_Call(EnumCall.VARW, start_line, vd_symb.name);
+          var ast = AST_Util.New_Call(EnumCall.VARW, start_line, vd_symb);
           root.AddChild(ast);
         }
         else
@@ -2013,9 +2013,9 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope.Define(symb);
 
     if(write)
-      return AST_Util.New_Call(EnumCall.VARW, 0, symb.name);
+      return AST_Util.New_Call(EnumCall.VARW, 0, symb);
     else
-      return AST_Util.New_VarDecl(str_name, is_ref, tr.name.n1);
+      return AST_Util.New_VarDecl(symb, is_ref, tr.name.n1);
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
@@ -2379,7 +2379,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, arr_tmp_name));
     //declaring counter var
-    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_name, false, 0));
+    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_name, false, 0, -1/*for now*/));
 
     //declaring iterating var
     if(vd != null)
@@ -2392,19 +2392,19 @@ public class Frontend : bhlBaseVisitor<object>
     //adding while condition
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name, 0 , -1));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name, 0, -1));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype, -1));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
     PushAST(ast);
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_str_name));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_str_name, 0, -1));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype, -1));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name, 0, -1));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name, 0, -1));
 
     //appending counter increment
     block.AddChild(AST_Util.New_Inc(arr_cnt_name));

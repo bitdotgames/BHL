@@ -666,10 +666,15 @@ static public class AST_Util
 
   static public AST_Call New_Call(EnumCall type, int line_num, HashedName name = new HashedName(), ClassSymbol scope_symb = null)
   {
-    return New_Call(type, line_num, name, scope_symb != null ? (uint)scope_symb.Type().n : 0);
+    return New_Call(type, line_num, name, scope_symb != null ? (uint)scope_symb.Type().n : 0, 0);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype)
+  static public AST_Call New_Call(EnumCall type, int line_num, Symbol symb, ClassSymbol scope_symb = null)
+  {
+    return New_Call(type, line_num, symb.name, scope_symb != null ? (uint)scope_symb.Type().n : 0, symb.scope_idx);
+  }
+
+  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype, int symb_idx)
   {
     var n = new AST_Call();
     n.type = type;
@@ -679,6 +684,7 @@ static public class AST_Util
       n.name = name.s;
     n.scope_ntype = scope_ntype;
     n.line_num = (uint)line_num;
+    n.symb_idx = (uint)symb_idx;
 
     return n;
   }
@@ -750,13 +756,19 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, uint ntype)
+  static public AST_VarDecl New_VarDecl(Symbol symb, bool is_ref, uint ntype)
+  {
+    return New_VarDecl(symb.name, is_ref, ntype, symb.scope_idx);
+  }
+
+  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, uint ntype, int symb_idx)
   {
     var n = new AST_VarDecl();
     n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
       n.name = name.s;
     n.ntype = ntype;
+    n.symb_idx = (uint)symb_idx;
 
     return n;
   }

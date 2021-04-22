@@ -52,7 +52,6 @@ public abstract class BaseScope : Scope
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
     members.Add(sym);
-
     sym.scope = this; // track the scope in each symbol
   }
 

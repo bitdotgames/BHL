@@ -1980,6 +1980,52 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaCapturesVar()
+  {
+    string bhl = @"
+    func dummy() {
+    }
+
+    func int test()
+    {
+      int dummy = 123
+      return func int() {
+        return dummy
+      }()
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      //dummy
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      //lambda
+      .Emit(Opcodes.Jump, new int[] { 4 } ) //skip lambda
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.FuncCall, new int[] { 2, 7, 0 })
+      .Emit(Opcodes.FuncCall, new int[] { 3, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(123) });
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 123);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncDefaultArg()
   {
     string bhl = @"

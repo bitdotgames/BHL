@@ -306,6 +306,14 @@ public class VM
               uint func_ip = (uint)curr_frame.PopValue().num;
 
               var fr = new Frame();
+
+              //NOTE: proof of concept
+              foreach(var lvar in curr_frame.locals)
+              {
+                lvar.Retain();
+                fr.locals.Add(lvar);
+              }
+              
               //let's remember ip to return to
               fr.return_ip = ip;
               frames.Push(fr);

@@ -651,6 +651,7 @@ public class AST_Call  : AST
   public uint cargs_bits;
   public uint scope_ntype;
   public uint line_num;
+  public uint symb_idx;
 
   static public  new  uint STATIC_CLASS_ID = 42771415;
 
@@ -675,6 +676,7 @@ public class AST_Call  : AST
     cargs_bits = 0;
     scope_ntype = 0;
     line_num = 0;
+    symb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -691,11 +693,12 @@ public class AST_Call  : AST
     MetaHelper.sync(ctx, ref cargs_bits);
     MetaHelper.sync(ctx, ref scope_ntype);
     MetaHelper.sync(ctx, ref line_num);
+    MetaHelper.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 8; 
+    return 9; 
   }
 }
 
@@ -820,6 +823,7 @@ public class AST_VarDecl  : AST
   public uint nname;
   public string name = "";
   public uint ntype;
+  public uint symb_idx;
 
   static public  new  uint STATIC_CLASS_ID = 232512499;
 
@@ -840,6 +844,7 @@ public class AST_VarDecl  : AST
     nname = 0;
     name = "";
     ntype = 0;
+    symb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -849,11 +854,12 @@ public class AST_VarDecl  : AST
     MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref ntype);
+    MetaHelper.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 4; 
+    return 5; 
   }
 }
 
