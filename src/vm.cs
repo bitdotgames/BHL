@@ -245,7 +245,7 @@ public class VM
               stack.Push(ret_val);
           }
           break;
-          case Opcodes.FuncCall:
+          case Opcodes.Call:
           {
             byte func_call_type = (byte)Bytecode.Decode(bytecode, ref ip);
 
@@ -287,17 +287,8 @@ public class VM
               if(instruction != null)
                 status = instruction.Tick(this);
             }
-            //func push ip
+            //func call pushed closure on the stack
             else if(func_call_type == 2)
-            {
-              uint func_ip = Bytecode.Decode(bytecode, ref ip);
-              //leftovers
-              Bytecode.Decode(bytecode, ref ip);
-
-              curr_frame.PushValueManual(Val.NewNum(func_ip));
-            }
-            //func call when ip is on the stack
-            else if(func_call_type == 3)
             {
               //leftovers
               Bytecode.Decode(bytecode, ref ip);
@@ -322,7 +313,7 @@ public class VM
               ip = func_ip - 1; 
             }
             //func ptr call from var
-            else if(func_call_type == 4)
+            else if(func_call_type == 3)
             {
               int local_var_idx = (int)Bytecode.Decode(bytecode, ref ip);
               //leftovers
@@ -340,6 +331,13 @@ public class VM
             }
             else
               throw new Exception("Not supported func call type: " + func_call_type);
+          }
+          break;
+          case Opcodes.Lambda:
+          {
+            uint func_ip = Bytecode.Decode(bytecode, ref ip);
+            //TODO: create Frame, capture the context and push it on the stack
+            curr_frame.PushValueManual(Val.NewNum(func_ip));
           }
           break;
           case Opcodes.MethodCall:

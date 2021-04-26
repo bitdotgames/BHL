@@ -13,7 +13,7 @@ public enum Opcodes
   Mul             = 0x5,
   SetVar          = 0x6,
   GetVar          = 0x7,
-  FuncCall        = 0x8,
+  Call            = 0x8,
   SetMVar         = 0x9,
   GetMVar         = 0xA,
   MethodCall      = 0xB,
@@ -40,6 +40,7 @@ public enum Opcodes
   PushBlock       = 0x20,
   PopBlock        = 0x21,
   ArrNew          = 0x22,
+  Lambda          = 0x23,
 }
 
 public class Const
@@ -323,7 +324,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.FuncCall,
+        name = Opcodes.Call,
         operand_width = new int[] { 1/*type*/, 4/*idx/or ip*/, 4/*args bits*/ }
       }
     );
@@ -332,6 +333,15 @@ public class Compiler : AST_Visitor
       {
         name = Opcodes.MethodCall,
         operand_width = new int[] { 4, 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Lambda,
+        //TODO: this can be a 16bit offset relative to the 
+        //      current ip position
+        operand_width = new int[] { 4 /*closure ip*/ }
       }
     );
     DeclareOpcode(
@@ -529,9 +539,7 @@ public class Compiler : AST_Visitor
 
     GetCurrentScope().Write(bytecode);
 
-    //NOTE: special kind of func call which pushes 
-    //      lambda's ip on the stack 
-    Emit(Opcodes.FuncCall, new int[] {(int)2, (int)ip, 0});
+    Emit(Opcodes.Lambda, new int[] {(int)ip});
   }
 
   public override void DoVisit(AST_ClassDecl ast)
@@ -716,7 +724,7 @@ public class Compiler : AST_Visitor
         if(func2ip.TryGetValue(ast.name, out offset))
         {
           VisitChildren(ast);
-          Emit(Opcodes.FuncCall, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});//figure out how cargs works
+          Emit(Opcodes.Call, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});//figure out how cargs works
         }
         else if(symbols.Resolve(ast.name) is VM_FuncBindSymbol fsymb)
         {
@@ -724,7 +732,7 @@ public class Compiler : AST_Visitor
           if(func_idx == -1)
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           VisitChildren(ast);
-          Emit(Opcodes.FuncCall, new int[] {(int)1, (int)func_idx, (int)ast.cargs_bits});//figure out how cargs works
+          Emit(Opcodes.Call, new int[] {(int)1, (int)func_idx, (int)ast.cargs_bits});//figure out how cargs works
         }
         else
           throw new Exception("Func '" + ast.name + "' code not found");
@@ -771,12 +779,12 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.FUNC_PTR_POP:
       {
-        Emit(Opcodes.FuncCall, new int[] {(int)3, 0, 0});
+        Emit(Opcodes.Call, new int[] {(int)2, 0, 0});
       }
       break;
       case EnumCall.FUNC_PTR:
       {
-        Emit(Opcodes.FuncCall, new int[] {(int)4, (int)ast.symb_idx, 0});
+        Emit(Opcodes.Call, new int[] {(int)3, (int)ast.symb_idx, 0});
       }
       break;
       default:
