@@ -7,7 +7,7 @@ public interface Scope
 {
   HashedName GetScopeName();
 
-  // Where to look next for symbols; superclass or enclosing scope
+  // Where to look next for symbols: superclass or enclosing scope
   Scope GetParentScope();
   // Scope in which this scope defined. For global scope, it's null
   Scope GetEnclosingScope();
@@ -16,6 +16,8 @@ public interface Scope
   void Define(Symbol sym);
   // Look up name in this scope or in parent scope if not here
   Symbol Resolve(HashedName name);
+
+  SymbolsDictionary GetMembers();
 }
 
 public abstract class BaseScope : Scope 
@@ -52,6 +54,7 @@ public abstract class BaseScope : Scope
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
     members.Add(sym);
+
     sym.scope = this; // track the scope in each symbol
   }
 

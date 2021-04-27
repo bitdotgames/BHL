@@ -141,7 +141,6 @@ public class Symbol
   // Symbols also know their 'scope level', 
   // e.g. for  { { int a = 1 } } scope level will be 2
   public int scope_level;
-  public int scope_idx;
   public bool is_out_of_scope;
 
   public Symbol(WrappedNode node, HashedName name) 
@@ -490,6 +489,8 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
 public class VariableSymbol : Symbol 
 {
+  public int scope_idx;
+
   public VariableSymbol(WrappedNode n, HashedName name, TypeRef type) 
     : base(n, name, type) 
   {}
@@ -599,6 +600,8 @@ public abstract class ScopedSymbol : Symbol, Scope
     if(members.Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
+    if(sym is VariableSymbol vs)
+      CalcVariableScopeIdx(vs);
     members.Add(sym);
     sym.scope = this; // track the scope in each symbol
   }
@@ -607,6 +610,31 @@ public abstract class ScopedSymbol : Symbol, Scope
   public virtual Scope GetEnclosingScope() { return enclosing_scope; }
 
   public HashedName GetScopeName() { return name; }
+
+  //TODO: this one probably should be somewhere else
+  // In this routine we are trying to calculate local variable idx.
+  // For this we are trying to find the top-level FuncSymbol scope and
+  // retrieve or assing the local var idx 
+  void CalcVariableScopeIdx(VariableSymbol sym)
+  {
+    FuncSymbol top = this as FuncSymbol;
+    if(top == null)
+      return;
+    while(top.GetParentScope() as FuncSymbol != null)
+      top = top.GetParentScope() as FuncSymbol;
+
+    var vs = top.GetMembers().Find(sym.name) as VariableSymbol;
+    if(vs == null)
+    {
+      int c = 0;
+      for(int i=0;i<top.GetMembers().Count;++i)
+        if(top.GetMembers()[i] is VariableSymbol)
+          ++c;
+      sym.scope_idx = c; 
+    }
+    else
+      sym.scope_idx = vs.scope_idx; 
+  }
 }
 
 public class MultiType : Type
@@ -1661,7 +1689,6 @@ public class SymbolsDictionary
       str2symb.Add(s.name.s, s);
     hash2symb.Add(s.name.n, s);
     list.Add(s);
-    s.scope_idx = list.Count - 1;
   }
 
   public void RemoveAt(int index)
@@ -1670,6 +1697,7 @@ public class SymbolsDictionary
     if(!string.IsNullOrEmpty(s.name.s))
       str2symb.Remove(s.name.s);
     hash2symb.Remove(s.name.n);
+    list.RemoveAt(index);
   }
 
   public int IndexOf(Symbol s)

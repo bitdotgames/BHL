@@ -500,7 +500,7 @@ public class Frontend : bhlBaseVisitor<object>
             //      scope during read operation
             //(is_write ? (is_global ? EnumCall.GVARW : EnumCall.VARW) : EnumCall.VAR), 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
-            line, str_name, class_scope
+            line, str_name, class_scope, var_symb.scope_idx
           );
           //handling passing by ref for class fields
           if(class_scope != null && PeekCallByRef())
@@ -1856,7 +1856,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(vd_type == null)
         {
           string vd_name = vd.NAME().GetText(); 
-          var vd_symb = curr_scope.Resolve(vd_name);
+          var vd_symb = curr_scope.Resolve(vd_name) as VariableSymbol;
           if(vd_symb == null)
             FireError(Location(vd) + " : symbol not resolved");
           curr_type = vd_symb.type.Get();
@@ -2005,9 +2005,9 @@ public class Frontend : bhlBaseVisitor<object>
     if(is_ref && !func_arg)
       FireError(Location(name) +  ": 'ref' is only allowed in function declaration");
 
-    Symbol symb = func_arg ? 
-      (Symbol) new FuncArgSymbol(var_node, str_name, tr, is_ref) :
-      (Symbol) new VariableSymbol(var_node, str_name, tr);
+    VariableSymbol symb = func_arg ? 
+      (VariableSymbol) new FuncArgSymbol(var_node, str_name, tr, is_ref) :
+      (VariableSymbol) new VariableSymbol(var_node, str_name, tr);
 
     symb.scope_level = scope_level;
     curr_scope.Define(symb);
@@ -2392,19 +2392,19 @@ public class Frontend : bhlBaseVisitor<object>
     //adding while condition
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name, 0 , -1));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name, 0, -1));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype, -1));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name, 0 , -1/*for now*/));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name, 0, -1/*for now*/));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype, -1/*for now*/));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
     PushAST(ast);
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_str_name, 0, -1));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype, -1));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name, 0, -1));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name, 0, -1));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_str_name, 0, -1/*for now*/));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype, -1/*for now*/));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name, 0, -1/*for now*/));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name, 0, -1/*for now*/));
 
     //appending counter increment
     block.AddChild(AST_Util.New_Inc(arr_cnt_name));
@@ -2479,10 +2479,10 @@ public class Frontend : bhlBaseVisitor<object>
 
     //NOTE: we need to undefine all symbols which were defined at the current
     //      scope level
-    var scope_members = (curr_scope as ScopedSymbol).GetMembers();
+    var scope_members = curr_scope.GetMembers();
     for(int m=scope_members.Count;m-- > 0;)
     {
-      var sym = (Symbol)scope_members[m];
+      var sym = scope_members[m];
       if(sym.scope_level == scope_level)
         sym.is_out_of_scope = true;
     }

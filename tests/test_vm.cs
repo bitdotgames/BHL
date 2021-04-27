@@ -1701,7 +1701,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.CondJump, new int[] { 17 })
+      .Emit(Opcodes.CondJump, new int[] { 15 })
       //lambda
       .Emit(Opcodes.Jump, new int[] { 4 })
       .Emit(Opcodes.Constant, new int[] { 1 })
@@ -1753,7 +1753,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.CondJump, new int[] { 17 })
+      .Emit(Opcodes.CondJump, new int[] { 15 })
       //lambda
       .Emit(Opcodes.Jump, new int[] { 4 })
       .Emit(Opcodes.Constant, new int[] { 1 })
@@ -1858,7 +1858,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       .Emit(Opcodes.Lambda, new int[] { 3 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
+      .Emit(Opcodes.Call, new int[] { 3, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;

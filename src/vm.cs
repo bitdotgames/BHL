@@ -294,17 +294,12 @@ public class VM
               Bytecode.Decode(bytecode, ref ip);
               Bytecode.Decode(bytecode, ref ip);
 
-              uint func_ip = (uint)curr_frame.PopValue().num;
+              var val = curr_frame.PopValue();
+              uint func_ip = (uint)val._num;
+              var fr = (Frame)val._obj;
+              if(fr == null)
+                fr = new Frame();
 
-              var fr = new Frame();
-
-              //NOTE: proof of concept
-              foreach(var lvar in curr_frame.locals)
-              {
-                lvar.Retain();
-                fr.locals.Add(lvar);
-              }
-              
               //let's remember ip to return to
               fr.return_ip = ip;
               frames.Push(fr);
@@ -319,9 +314,13 @@ public class VM
               //leftovers
               Bytecode.Decode(bytecode, ref ip);
 
-              uint func_ip = (uint)curr_frame.locals[local_var_idx].num;
+              var val = curr_frame.locals[local_var_idx];
 
-              var fr = new Frame();
+              uint func_ip = (uint)val._num;
+              var fr = (Frame)val._obj;
+              if(fr == null)
+                fr = new Frame();
+
               //let's remember ip to return to
               fr.return_ip = ip;
               frames.Push(fr);
@@ -337,7 +336,17 @@ public class VM
           {
             uint func_ip = Bytecode.Decode(bytecode, ref ip);
             //TODO: create Frame, capture the context and push it on the stack
-            curr_frame.PushValueManual(Val.NewNum(func_ip));
+            var fr = new Frame();
+            foreach(var lvar in curr_frame.locals)
+            {
+              lvar.Retain();
+              fr.locals.Add(lvar);
+            }
+            var frval = Val.New();
+            frval._obj = fr;
+            frval._num = func_ip;
+
+            curr_frame.PushValueManual(frval);
           }
           break;
           case Opcodes.MethodCall:
