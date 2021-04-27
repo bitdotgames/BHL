@@ -642,12 +642,14 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_UseParam New_UseParam(HashedName name, bool is_ref)
+  static public AST_UseParam New_UseParam(HashedName name, bool is_ref, int symb_idx, int upsymb_idx)
   {
     var n = new AST_UseParam();
     n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
       n.name = name.s;
+    n.symb_idx = (uint)symb_idx;
+    n.upsymb_idx = (uint)upsymb_idx;
 
     return n;
   }
@@ -1004,8 +1006,8 @@ public class AST_Dumper : AST_Visitor
   {
     Console.Write("(LMBD ");
     Console.Write(node.type + " " + node.nname() + " USE:");
-    for(int i=0;i<node.useparams.Count;++i)
-      Console.Write(" " + node.useparams[i].nname);
+    for(int i=0;i<node.uses.Count;++i)
+      Console.Write(" " + node.uses[i].nname);
     VisitChildren(node);
     Console.Write(")");
   }

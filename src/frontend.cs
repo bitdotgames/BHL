@@ -780,7 +780,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var un = useblock.refName()[i]; 
         var un_name_str = un.NAME().GetText(); 
-        var un_symb = curr_scope.Resolve(un_name_str);
+        var un_symb = curr_scope.Resolve(un_name_str) as VariableSymbol;
         if(un_symb == null)
           FireError(Location(un) +  " : symbol '" + un_name_str + "' not defined in parent scope");
 

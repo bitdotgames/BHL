@@ -489,7 +489,9 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
 public class VariableSymbol : Symbol 
 {
-  public int scope_idx;
+  public int scope_idx = -1;
+
+  public VariableSymbol up_src;
 
   public VariableSymbol(WrappedNode n, HashedName name, TypeRef type) 
     : base(n, name, type) 
@@ -600,8 +602,6 @@ public abstract class ScopedSymbol : Symbol, Scope
     if(members.Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
-    if(sym is VariableSymbol vs)
-      CalcVariableScopeIdx(vs);
     members.Add(sym);
     sym.scope = this; // track the scope in each symbol
   }
@@ -610,31 +610,6 @@ public abstract class ScopedSymbol : Symbol, Scope
   public virtual Scope GetEnclosingScope() { return enclosing_scope; }
 
   public HashedName GetScopeName() { return name; }
-
-  //TODO: this one probably should be somewhere else
-  // In this routine we are trying to calculate local variable idx.
-  // For this we are trying to find the top-level FuncSymbol scope and
-  // retrieve or assing the local var idx 
-  void CalcVariableScopeIdx(VariableSymbol sym)
-  {
-    FuncSymbol top = this as FuncSymbol;
-    if(top == null)
-      return;
-    while(top.GetParentScope() as FuncSymbol != null)
-      top = top.GetParentScope() as FuncSymbol;
-
-    var vs = top.GetMembers().Find(sym.name) as VariableSymbol;
-    if(vs == null)
-    {
-      int c = 0;
-      for(int i=0;i<top.GetMembers().Count;++i)
-        if(top.GetMembers()[i] is VariableSymbol)
-          ++c;
-      sym.scope_idx = c; 
-    }
-    else
-      sym.scope_idx = vs.scope_idx; 
-  }
 }
 
 public class MultiType : Type
@@ -775,6 +750,25 @@ public class FuncSymbol : ScopedSymbol
 #if BHL_FRONT
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
 #endif
+
+  void CalcVariableScopeIdx(VariableSymbol sym)
+  {
+    //let's ignore already assigned ones
+    if(sym.scope_idx != -1)
+      return;
+    int c = 0;
+    for(int i=0;i<GetMembers().Count;++i)
+      if(GetMembers()[i] is VariableSymbol)
+        ++c;
+    sym.scope_idx = c; 
+  }
+
+  public override void Define(Symbol sym)
+  {
+    if(sym is VariableSymbol vs)
+      CalcVariableScopeIdx(vs);
+    base.Define(sym);
+  }
 }
 
 public class LambdaSymbol : FuncSymbol
@@ -820,11 +814,17 @@ public class LambdaSymbol : FuncSymbol
     this.fdecl_stack = null;
   }
 
-  public void AddUseParam(Symbol s, bool is_ref)
+  public VariableSymbol AddUseParam(VariableSymbol src, bool is_ref)
   {
-    var up = AST_Util.New_UseParam(s.name, is_ref); 
-    decl.useparams.Add(up);
-    this.Define(s);
+    var local = new VariableSymbol(src.node, src.name, src.type);
+    local.up_src = src;
+
+    this.Define(local);
+
+    var up = AST_Util.New_UseParam(local.name, is_ref, local.scope_idx, src.scope_idx); 
+    decl.uses.Add(up);
+
+    return local;
   }
 
   public override Symbol Resolve(HashedName name) 
@@ -847,22 +847,19 @@ public class LambdaSymbol : FuncSymbol
 
   Symbol ResolveUpvalue(HashedName name)
   {
-    int idx = FindMyIdxInStack();
-    if(idx == -1)
+    int my_idx = FindMyIdxInStack();
+    if(my_idx == -1)
       throw new Exception("Not found");
 
-    for(int i=idx;i-- > 0;)
+    for(int i=my_idx;i-- > 0;)
     {
       var decl = fdecl_stack[i];
 
       //NOTE: only variable symbols are considered
       Symbol res = null;
       decl.GetMembers().TryGetValue(name, out res);
-      if(res != null && res is VariableSymbol && !res.is_out_of_scope)
-      {
-        DefineInStack(res, i+1, idx);
-        return res;
-      }
+      if(res != null && res is VariableSymbol vs && !res.is_out_of_scope)
+        return AssignUpValues(vs, i+1, my_idx);
     }
 
     return null;
@@ -878,16 +875,20 @@ public class LambdaSymbol : FuncSymbol
     return -1;
   }
 
-  void DefineInStack(Symbol res, int from_idx, int to_idx)
+  VariableSymbol AssignUpValues(VariableSymbol vs, int from_idx, int to_idx)
   {
+    VariableSymbol res = null;
     //now let's put this result into all nested lambda scopes 
     for(int j=from_idx;j<=to_idx;++j)
     {
-      var lmb = fdecl_stack[j] as LambdaSymbol;
-      if(lmb == null)
-        continue;
-      lmb.AddUseParam(res, false/*not a ref*/);
+      if(fdecl_stack[j] is LambdaSymbol lmb)
+      {
+        vs = lmb.AddUseParam(vs, false/*not a ref*/);
+        if(res == null)
+          res = vs;
+      }
     }
+    return res;
   }
 }
 

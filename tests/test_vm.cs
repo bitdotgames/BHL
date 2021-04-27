@@ -2026,6 +2026,66 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSubLambdaCapturesVar()
+  {
+    string bhl = @"
+    func dummy() {
+    }
+
+    func int test()
+    {
+      int dummy = 123
+      return func int() {
+        int foo = 321
+        return func int() {
+          int wow = 123
+          return foo
+        }()
+      }()
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      //dummy
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      //lambda
+      .Emit(Opcodes.Jump, new int[] { 25 } ) //skip lambda
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Jump, new int[] { 8 } ) //skip lambda
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Lambda, new int[] { 13 })
+      .Emit(Opcodes.UseUpval, new int[] { 0, 1 })
+      .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Lambda, new int[] { 7 })
+      .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(123), new Const(321) });
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 321);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncDefaultArg()
   {
     string bhl = @"
@@ -2757,7 +2817,7 @@ public class BHL_TestVM : BHL_TestBase
       if(a.Length <= i || b.Length <= i || a[i] != b[i])
       {
         equal = false;
-        cmp += " <===";
+        cmp += " <==============";
       }
 
       cmp += "\n";

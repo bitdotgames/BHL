@@ -2159,7 +2159,7 @@ public class FuncNodeLambda : FuncNodeAST
 
   public override string inspect()
   {
-    return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).useparams.Count + "x =";
+    return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).uses.Count + "x =";
   }
 }
 
@@ -2225,9 +2225,9 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     {
       //Console.WriteLine("PUSH LCTX " + this.GetHashCode() + " " + ldecl.useparams.Count);
       //setting use params to its own memory scope
-      for(int i=0;i<lmb.decl.useparams.Count;++i)
+      for(int i=0;i<lmb.decl.uses.Count;++i)
       {
-        var up = lmb.decl.useparams[i];
+        var up = lmb.decl.uses[i];
         var val = interp.GetScopeValue(up.Name());
         fct.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
       }

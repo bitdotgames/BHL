@@ -516,6 +516,8 @@ public class AST_UseParam  :  BaseMetaStruct
 {
   public uint nname;
   public string name = "";
+  public uint symb_idx;
+  public uint upsymb_idx;
 
   static public  uint STATIC_CLASS_ID = 121447213;
 
@@ -533,6 +535,8 @@ public class AST_UseParam  :  BaseMetaStruct
   {
     nname = 0;
     name = "";
+    symb_idx = 0;
+    upsymb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -541,17 +545,19 @@ public class AST_UseParam  :  BaseMetaStruct
 
     MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
+    MetaHelper.sync(ctx, ref symb_idx);
+    MetaHelper.sync(ctx, ref upsymb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return 4; 
   }
 }
 
 public class AST_LambdaDecl  : AST_FuncDecl 
 {
-  public List<AST_UseParam> useparams = new List<AST_UseParam>();
+  public List<AST_UseParam> uses = new List<AST_UseParam>();
 
   static public  new  uint STATIC_CLASS_ID = 44443142;
 
@@ -569,14 +575,14 @@ public class AST_LambdaDecl  : AST_FuncDecl
   {
     base.reset();
 
-    if(useparams == null) useparams = new List<AST_UseParam>(); 
-    useparams.Clear();
+    if(uses == null) uses = new List<AST_UseParam>(); 
+    uses.Clear();
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, useparams);
+    MetaHelper.sync(ctx, uses);
   }
 
   public override int getFieldsCount() 

@@ -41,6 +41,7 @@ public enum Opcodes
   PopBlock        = 0x21,
   ArrNew          = 0x22,
   Lambda          = 0x23,
+  UseUpval        = 0x24,
 }
 
 public class Const
@@ -347,6 +348,13 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.UseUpval,
+        operand_width = new int[] { 1 /*upval idx*/, 1 /*local idx*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.PushBlock,
         operand_width = new int[] { 1/*type*/, 2/*len*/ }
       }
@@ -540,6 +548,8 @@ public class Compiler : AST_Visitor
     GetCurrentScope().Write(bytecode);
 
     Emit(Opcodes.Lambda, new int[] {(int)ip});
+    foreach(var p in ast.uses)
+      Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
   }
 
   public override void DoVisit(AST_ClassDecl ast)

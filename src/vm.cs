@@ -287,7 +287,7 @@ public class VM
               if(instruction != null)
                 status = instruction.Tick(this);
             }
-            //func call pushed closure on the stack
+            //call lambda pushed on the stack
             else if(func_call_type == 2)
             {
               //leftovers
@@ -337,16 +337,32 @@ public class VM
             uint func_ip = Bytecode.Decode(bytecode, ref ip);
             //TODO: create Frame, capture the context and push it on the stack
             var fr = new Frame();
-            foreach(var lvar in curr_frame.locals)
-            {
-              lvar.Retain();
-              fr.locals.Add(lvar);
-            }
             var frval = Val.New();
             frval._obj = fr;
             frval._num = func_ip;
 
             curr_frame.PushValueManual(frval);
+          }
+          break;
+          case Opcodes.UseUpval:
+          {
+            int up_idx = (int)Bytecode.Decode(bytecode, ref ip);
+            int local_idx = (int)Bytecode.Decode(bytecode, ref ip);
+
+            var frval = curr_frame.PeekValue();
+            var fr = (Frame)frval._obj;
+
+            //TODO: amout of local variables must be known ahead 
+            int gaps = local_idx - fr.locals.Count + 1;
+            for(int i=0;i<gaps;++i)
+              fr.locals.Add(Val.New()); 
+
+            var up_val = curr_frame.locals[up_idx];
+            up_val.Retain();
+
+            if(fr.locals[local_idx] != null)
+              fr.locals[local_idx].Release();
+            fr.locals[local_idx] = up_val;
           }
           break;
           case Opcodes.MethodCall:
@@ -495,7 +511,7 @@ public class VM
     switch(op)
     {
       case Opcodes.SetVar:
-        //TODO: code below must not guess, it must follow dumb logic
+        //TODO: amout of local variables must be known ahead 
         if(local_idx < curr_frame.locals.Count)
         {
           if(curr_frame.locals[local_idx] != null)
