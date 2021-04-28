@@ -1654,13 +1654,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //lambda
-      .Emit(Opcodes.Jump, new int[] { 6 } ) //skip lambda
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 5 } ) //skip lambda
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 8 })
+      .Emit(Opcodes.Lambda, new int[] { 7 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -1703,15 +1702,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.CondJump, new int[] { 17 })
+      .Emit(Opcodes.CondJump, new int[] { 16 })
       //lambda
-      .Emit(Opcodes.Jump, new int[] { 6 })
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 5 })
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 8 })
+      .Emit(Opcodes.Lambda, new int[] { 7 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Jump,     new int[] { 3 })
@@ -1757,15 +1755,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.CondJump, new int[] { 17 })
+      .Emit(Opcodes.CondJump, new int[] { 16 })
       //lambda
-      .Emit(Opcodes.Jump, new int[] { 6 })
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 5 })
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 8 })
+      .Emit(Opcodes.Lambda, new int[] { 7 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Jump,     new int[] { 3 })
@@ -1811,13 +1808,12 @@ public class BHL_TestVM : BHL_TestBase
       //dummy
       .Emit(Opcodes.Return)
       //foo
-      .Emit(Opcodes.Jump, new int[] { 6 })
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 5 })
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 4 })
+      .Emit(Opcodes.Lambda, new int[] { 3 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -1860,13 +1856,12 @@ public class BHL_TestVM : BHL_TestBase
       //dummy
       .Emit(Opcodes.Return)
       //test
-      .Emit(Opcodes.Jump, new int[] { 6 })
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 5 })
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 4 })
+      .Emit(Opcodes.Lambda, new int[] { 3 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Call, new int[] { 3, 0, 0 })
       .Emit(Opcodes.ReturnVal)
@@ -1910,13 +1905,12 @@ public class BHL_TestVM : BHL_TestBase
       //dummy
       .Emit(Opcodes.Return)
       //test
-      .Emit(Opcodes.Jump, new int[] { 6 })
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 5 })
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 4 })
+      .Emit(Opcodes.Lambda, new int[] { 3 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.CondJump, new int[] { 7 })
@@ -1965,13 +1959,12 @@ public class BHL_TestVM : BHL_TestBase
       //dummy
       .Emit(Opcodes.Return)
       //test
-      .Emit(Opcodes.Jump, new int[] { 6 })
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 5 })
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 4 })
+      .Emit(Opcodes.Lambda, new int[] { 3 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.CondJump, new int[] { 7 })
@@ -2019,13 +2012,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //lambda
-      .Emit(Opcodes.Jump, new int[] { 6 } ) //skip lambda
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 5 } ) //skip lambda
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 8 })
+      .Emit(Opcodes.Lambda, new int[] { 7 })
       .Emit(Opcodes.UseUpval, new int[] { 0, 0 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
@@ -2072,25 +2064,23 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //lambda
-      .Emit(Opcodes.Jump, new int[] { 29 } ) //skip lambda
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 27 } ) //skip lambda
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Jump, new int[] { 10 } ) //skip lambda
-      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Jump, new int[] { 9 } ) //skip lambda
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 16 })
+      .Emit(Opcodes.Lambda, new int[] { 14 })
       .Emit(Opcodes.UseUpval, new int[] { 0, 1 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 8 })
+      .Emit(Opcodes.Lambda, new int[] { 7 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)

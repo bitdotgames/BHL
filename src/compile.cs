@@ -490,7 +490,7 @@ public class Compiler : AST_Visitor
   {
     //condition
     Visit(ast.children[idx]);
-    Emit(Opcodes.CondJump, new int[] { 0 /*dummy placeholder*/});
+    Emit(Opcodes.CondJump, new int[] { (int)Bytecode.GetMaxValueForBytes(1) /*dummy placeholder*/});
     int patch_pos = GetCurrentScope().Position;
     //body
     Visit(ast.children[idx+1]);
@@ -541,18 +541,18 @@ public class Compiler : AST_Visitor
     EnterNewScope();
     //NOTE: since lambda's body can appear anywhere in the 
     //      compiled code we skip it by uncoditional jump over it
-    Emit(Opcodes.Jump, new int[] {(int)0xFFFF/*dummy placeholder*/});
+    Emit(Opcodes.Jump, new int[] {(int)Bytecode.GetMaxValueForBytes(2)/*dummy placeholder*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
     var bytecode = LeaveCurrentScope(auto_append: false);
 
-    var jump_pos = bytecode.Length - 2;
-    if(jump_pos > ushort.MaxValue)
+    long jump_pos = bytecode.Length - 2;
+    if(jump_pos > Bytecode.GetMaxValueForBytes(2))
       throw new Exception("Too large lambda body");
     //let's patch the jump placeholder with the actual jump position
-    bytecode.PatchAt(1, (ushort)jump_pos, (byte)Opcodes.Nop);
+    bytecode.PatchAt(1, (ushort)jump_pos, max_bytes: 2, gap_filler: (byte)Opcodes.Nop);
 
-    uint ip = 3;//taking into account 'jump out of lambda'
+    uint ip = 2;//taking into account 'jump out of lambda'
     for(int i=0;i < scopes.Count;++i)
       ip += (uint)scopes[i].Length;
     func2ip.Add(ast.name, ip);
@@ -957,7 +957,7 @@ public class Bytecode
       return 5;
   }
 
-  static public uint GetMaxValue(int bytes)
+  static public uint GetMaxValueForBytes(int bytes)
   {
     if(bytes == 1)
       return 240;
@@ -1108,12 +1108,12 @@ public class Bytecode
     stream.Position = orig_pos;
   }
 
-  public void PatchAt(int pos, ushort value, byte gap_filler)
+  public void PatchAt(int pos, ushort value, int max_bytes, byte gap_filler)
   {
     long orig_pos = stream.Position;
     stream.Position = pos;
-    int written = Write(value);
-    for(int i=0;i<(3-written);++i)
+    int written_bytes = Write(value);
+    for(int i=0;i<(max_bytes-written_bytes);++i)
       Write(gap_filler);
     stream.Position = orig_pos;
   }
