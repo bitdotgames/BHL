@@ -281,11 +281,7 @@ static public class Util
   {
     var reader = new MsgPackDataReader(s);
     var ast = new T();
-    var err = MetaHelper.syncSafe(MetaSyncContext.NewForRead(reader), ref ast);
-
-    if(err != MetaIoError.SUCCESS)
-      throw new Exception("Could not read: " + err);
-
+    MetaHelper.sync(MetaSyncContext.NewForRead(reader), ref ast);
     return ast;
   }
 
@@ -297,10 +293,7 @@ static public class Util
   static public void Meta2Bin<T>(T ast, Stream dst) where T : IMetaStruct
   {
     var writer = new MsgPackDataWriter(dst);
-    var err = MetaHelper.syncSafe(MetaSyncContext.NewForWrite(writer), ref ast);
-
-    if(err != MetaIoError.SUCCESS)
-      throw new Exception("Could not write: " + err);
+    MetaHelper.sync(MetaSyncContext.NewForWrite(writer), ref ast);
   }
 
   static public void Meta2File<T>(T ast, string file) where T : IMetaStruct
@@ -760,16 +753,17 @@ static public class AST_Util
 
   static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref, uint ntype)
   {
-    return New_VarDecl(symb.name, is_ref, ntype, symb.scope_idx);
+    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, ntype, symb.scope_idx);
   }
 
-  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, uint ntype, int symb_idx)
+  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, bool is_func_arg, uint ntype, int symb_idx)
   {
     var n = new AST_VarDecl();
     n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
     if(Util.DEBUG)
       n.name = name.s;
     n.ntype = ntype;
+    n.is_func_arg = is_func_arg;
     n.symb_idx = (uint)symb_idx;
 
     return n;

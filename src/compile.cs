@@ -15,36 +15,37 @@ public enum Opcodes
   SetVar          = 0x6,
   GetVar          = 0x7,
   DeclVar         = 0x8,
-  Call            = 0x9,
-  SetMVar         = 0x10,
+  ArgVar          = 0x9,
+  Call            = 0x10,
+  SetMVar         = 0x20,
   GetMVar         = 0xA,
   MethodCall      = 0xB,
   Return          = 0xC,
   ReturnVal       = 0xD,
   Jump            = 0xE,
   CondJump        = 0xF,
-  LoopJump        = 0x20,
-  UnaryNot        = 0x21,
-  UnaryNeg        = 0x22,
-  And             = 0x23,
-  Or              = 0x24,
-  Mod             = 0x25,
-  BitOr           = 0x26,
-  BitAnd          = 0x27,
-  Equal           = 0x28,
-  NotEqual        = 0x29,
-  Less            = 0x2A,
-  Greater         = 0x2B,
-  LessOrEqual     = 0x2C,
-  GreaterOrEqual  = 0x2D,
-  DefArg          = 0x2E, //opcode for skipping func def args
-  TypeCast        = 0x2F,
-  PushBlock       = 0x30,
-  PopBlock        = 0x31,
-  ArrNew          = 0x32,
-  Lambda          = 0x33,
-  UseUpval        = 0x34,
-  InitFrame       = 0x35,
+  LoopJump        = 0x30,
+  UnaryNot        = 0x31,
+  UnaryNeg        = 0x32,
+  And             = 0x33,
+  Or              = 0x34,
+  Mod             = 0x35,
+  BitOr           = 0x36,
+  BitAnd          = 0x37,
+  Equal           = 0x38,
+  NotEqual        = 0x39,
+  Less            = 0x3A,
+  Greater         = 0x3B,
+  LessOrEqual     = 0x3C,
+  GreaterOrEqual  = 0x3D,
+  DefArg          = 0x3E, //opcode for skipping func def args
+  TypeCast        = 0x3F,
+  PushBlock       = 0x40,
+  PopBlock        = 0x41,
+  ArrNew          = 0x42,
+  Lambda          = 0x43,
+  UseUpval        = 0x44,
+  InitFrame       = 0x45,
 }
 
 public class Const
@@ -313,6 +314,13 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.ArgVar,
+        operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.SetVar,
         operand_width = new int[] { 2 }
       }
@@ -560,6 +568,8 @@ public class Compiler : AST_Visitor
     //NOTE: since lambda's body can appear anywhere in the 
     //      compiled code we skip it by uncoditional jump over it
     Emit(Opcodes.Jump, new int[] {(int)Bytecode.GetMaxValueForBytes(2)/*dummy placeholder*/});
+    if(ast.local_vars_num > 0)
+      Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num });
     VisitChildren(ast);
     Emit(Opcodes.Return);
     var bytecode = LeaveCurrentScope(auto_append: false);
@@ -926,7 +936,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_VarDecl ast)
   {
-    if(ast.children.Count > 0)
+    if(ast.is_func_arg && ast.children.Count > 0)
     {
       var index = 0;
       Emit(Opcodes.DefArg, new int[] { index });
@@ -935,11 +945,12 @@ public class Compiler : AST_Visitor
       PatchJumpOffsetToCurrPos(pointer);
     }
 
-    Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx });
+    Emit(ast.is_func_arg ? Opcodes.ArgVar : Opcodes.DeclVar, new int[] { (int)ast.symb_idx });
   }
 
   public override void DoVisit(bhl.AST_JsonObj node)
   {
+    throw new Exception("Not supported : " + node);
   }
 
   public override void DoVisit(bhl.AST_JsonArr node)
@@ -949,6 +960,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonPair node)
   {
+    throw new Exception("Not supported : " + node);
   }
 
 #endregion

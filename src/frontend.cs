@@ -816,6 +816,8 @@ public class Frontend : bhlBaseVisitor<object>
 
     curr_scope = scope_backup;
 
+    ast.local_vars_num = (uint)symb.GetMembers().Count;
+
     var chain = funcLambda.chainExp(); 
     if(chain != null)
     {
@@ -2380,7 +2382,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, arr_tmp_name));
     //declaring counter var
-    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_name, false, 0, -1/*for now*/));
+    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_name, false, false, 0, -1/*for now*/));
 
     //declaring iterating var
     if(vd != null)

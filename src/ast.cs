@@ -590,7 +590,7 @@ public class AST_LambdaDecl  : AST_FuncDecl
 
   public override int getFieldsCount() 
   {
-    return 7; 
+    return 8; 
   }
 }
 
@@ -833,6 +833,7 @@ public class AST_VarDecl  : AST
   public string name = "";
   public uint ntype;
   public uint symb_idx;
+  public bool is_func_arg;
 
   static public  new  uint STATIC_CLASS_ID = 232512499;
 
@@ -854,6 +855,7 @@ public class AST_VarDecl  : AST
     name = "";
     ntype = 0;
     symb_idx = 0;
+    is_func_arg = false;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -864,11 +866,12 @@ public class AST_VarDecl  : AST
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref ntype);
     MetaHelper.sync(ctx, ref symb_idx);
+    MetaHelper.sync(ctx, ref is_func_arg);
   }
 
   public override int getFieldsCount() 
   {
-    return 5; 
+    return 6; 
   }
 }
 

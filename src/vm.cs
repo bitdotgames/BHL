@@ -211,6 +211,7 @@ public class VM
           break;
           case Opcodes.SetVar:
           case Opcodes.GetVar:
+          case Opcodes.ArgVar:
           case Opcodes.DeclVar:
           {
             ExecuteVarOp(opcode, curr_frame, bytecode, ref ip);
@@ -338,6 +339,7 @@ public class VM
           case Opcodes.InitFrame:
           {
             int local_vars_num = (int)Bytecode.Decode(bytecode, ref ip);
+            curr_frame.locals.Capacity = local_vars_num;
             for(int i=0;i<local_vars_num;++i)
               curr_frame.locals.Add(null);
           }
@@ -531,11 +533,14 @@ public class VM
       case Opcodes.GetVar:
         curr_frame.PushValue(curr_frame.locals[local_idx]);
       break;
+      case Opcodes.ArgVar:
+        curr_frame.locals[local_idx] = curr_frame.stack.PopFast();
+      break;
       case Opcodes.DeclVar:
         curr_frame.locals[local_idx] = Val.New();
       break;
       default:
-        throw new Exception("Unsupported opcode: " + op);
+        throw new Exception("Not supported opcode: " + op);
     }
   }
 
