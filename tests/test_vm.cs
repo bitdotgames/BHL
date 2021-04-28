@@ -2035,6 +2035,65 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaCapturesSeveralVars()
+  {
+    string bhl = @"
+    func dummy() {
+    }
+
+    func int test()
+    {
+      int a = 20
+      int b = 10
+      return func int() {
+        int c = 5
+        return c + a + b
+      }()
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      //dummy
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.SetVar, new int[] { 1 })
+      //lambda
+      .Emit(Opcodes.Jump, new int[] { 15 } ) //skip lambda
+      .Emit(Opcodes.Nop)
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Lambda, new int[] { 11 })
+      .Emit(Opcodes.UseUpval, new int[] { 0, 1 })
+      .Emit(Opcodes.UseUpval, new int[] { 1, 2 })
+      .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(20), new Const(10), new Const(5) });
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 35);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSubLambdaCapturesVar()
   {
     string bhl = @"
