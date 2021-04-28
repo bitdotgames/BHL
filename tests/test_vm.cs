@@ -2055,7 +2055,6 @@ public class BHL_TestVM : BHL_TestBase
       //dummy
       .Emit(Opcodes.Return)
       //test
-      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //lambda
@@ -2065,7 +2064,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 9 })
+      .Emit(Opcodes.Lambda, new int[] { 9, 1 })
       .Emit(Opcodes.UseUpval, new int[] { 0, 0 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
