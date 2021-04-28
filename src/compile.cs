@@ -501,7 +501,7 @@ public class Compiler : AST_Visitor
   {
     var curr_scope = GetCurrentScope();
     int offset = curr_scope.Position - jump_opcode_pos;
-    if(offset < 0 || offset >= 241) 
+    if(offset < 0 || Bytecode.GetBytesRequired((uint)offset) > 1) 
       throw new Exception("Invalid offset: " + offset);
     curr_scope.PatchAt(jump_opcode_pos - 1, (byte)offset);
   }
@@ -943,6 +943,36 @@ public class Bytecode
 
   MemoryStream stream = new MemoryStream();
 
+  static public int GetBytesRequired(uint value)
+  {
+    if(value <= 240)
+      return 1;
+    else if(value <= 2287)
+      return 2;
+    else if(value <= 67823)
+      return 3;
+    else if(value <= 16777215)
+      return 4;
+    else 
+      return 5;
+  }
+
+  static public uint GetMaxValue(int bytes)
+  {
+    if(bytes == 1)
+      return 240;
+    else if(bytes == 2)
+      return 2287;
+    else if(bytes == 3)
+      return 67823;
+    else if(bytes == 4)
+      return 16777215;
+    else if(bytes == 5)
+      return uint.MaxValue;
+    else 
+      return 0;
+  }
+
   public void Reset(byte[] buffer, int size)
   {
     stream.SetLength(0);
@@ -1006,9 +1036,8 @@ public class Bytecode
   public int Write(uint value)
   {
     if(value <= 65535)
-    {
       return Write((ushort)value);
-    }
+
     if(value <= 67823)
     {
       Write((byte)249);
@@ -1016,6 +1045,7 @@ public class Bytecode
       Write((byte)((value - 2288) % 256));
       return 3;
     }
+
     if(value <= 16777215)
     {
       Write((byte)250);
