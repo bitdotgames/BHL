@@ -17,6 +17,7 @@ public interface Scope
   // Look up name in this scope or in parent scope if not here
   Symbol Resolve(HashedName name);
 
+  // Readonly collection of members
   SymbolsDictionary GetMembers();
 }
 

@@ -200,25 +200,26 @@ public class VM
           case Opcodes.GreaterOrEqual:
           case Opcodes.LessOrEqual:
           {
-            ExecuteBinaryOperation(opcode, curr_frame);
+            ExecuteBinaryOp(opcode, curr_frame);
           }
           break;
           case Opcodes.UnaryNot:
           case Opcodes.UnaryNeg:
           {
-            ExecuteUnaryOperation(opcode, curr_frame);
+            ExecuteUnaryOp(opcode, curr_frame);
           }
           break;
           case Opcodes.SetVar:
           case Opcodes.GetVar:
+          case Opcodes.DeclVar:
           {
-            ExecuteVarGetSet(opcode, curr_frame, bytecode, ref ip);
+            ExecuteVarOp(opcode, curr_frame, bytecode, ref ip);
           }
           break;
           case Opcodes.SetMVar:
           case Opcodes.GetMVar:
           {
-            ExecuteMVarGetSet(opcode, curr_frame, symbols, bytecode, ref ip);
+            ExecuteMVarOp(opcode, curr_frame, symbols, bytecode, ref ip);
           }
           break;
           case Opcodes.Return:
@@ -332,6 +333,13 @@ public class VM
             }
             else
               throw new Exception("Not supported func call type: " + func_call_type);
+          }
+          break;
+          case Opcodes.InitFrame:
+          {
+            int local_vars_num = (int)Bytecode.Decode(bytecode, ref ip);
+            for(int i=0;i<local_vars_num;++i)
+              curr_frame.locals.Add(null);
           }
           break;
           case Opcodes.Lambda:
@@ -506,39 +514,32 @@ public class VM
     return fibers.Count == 0 ? BHS.SUCCESS : BHS.RUNNING;
   }
 
-  static void ExecuteVarGetSet(Opcodes op, Frame curr_frame, byte[] bytecode, ref uint ip)
+  static void ExecuteVarOp(Opcodes op, Frame curr_frame, byte[] bytecode, ref uint ip)
   {
     int local_idx = (int)Bytecode.Decode(bytecode, ref ip);
     
     switch(op)
     {
       case Opcodes.SetVar:
-        //TODO: amout of local variables must be known ahead 
-        if(local_idx < curr_frame.locals.Count)
-        {
-          if(curr_frame.locals[local_idx] != null)
-            curr_frame.locals[local_idx].Release();
-          curr_frame.locals[local_idx] = curr_frame.stack.PopFast();
-        }
-        else 
-        {
-          if(curr_frame.stack.Count > 0)
-            curr_frame.locals.Add(curr_frame.stack.PopFast());
-          else
-            curr_frame.locals.Add(Val.New());
-        }
+      {
+        var locs = curr_frame.locals;
+        if(locs[local_idx] != null)
+          locs[local_idx].Release();
+        locs[local_idx] = curr_frame.stack.PopFast();
+      }
       break;
       case Opcodes.GetVar:
-        if(local_idx >= curr_frame.locals.Count)
-          throw new Exception("Var index out of locals: " + local_idx);
         curr_frame.PushValue(curr_frame.locals[local_idx]);
+      break;
+      case Opcodes.DeclVar:
+        curr_frame.locals[local_idx] = Val.New();
       break;
       default:
         throw new Exception("Unsupported opcode: " + op);
     }
   }
 
-  static void ExecuteMVarGetSet(Opcodes op, Frame curr_frame, BaseScope symbols, byte[] bytecode, ref uint ip)
+  static void ExecuteMVarOp(Opcodes op, Frame curr_frame, BaseScope symbols, byte[] bytecode, ref uint ip)
   {
     uint class_type = Bytecode.Decode(bytecode, ref ip);
 
@@ -573,7 +574,7 @@ public class VM
     }
   }
 
-  static void ExecuteUnaryOperation(Opcodes op, Frame curr_frame)
+  static void ExecuteUnaryOp(Opcodes op, Frame curr_frame)
   {
     var operand = curr_frame.PopValue().num;
     switch(op)
@@ -643,7 +644,7 @@ public class VM
       throw new Exception("Not supported class: " + symb.name);
   }
 
-  static void ExecuteBinaryOperation(Opcodes op, Frame curr_frame)
+  static void ExecuteBinaryOp(Opcodes op, Frame curr_frame)
   {
     var r_operand = curr_frame.PopValueManual();
     var l_operand = curr_frame.PopValueManual();

@@ -1645,6 +1645,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     curr_scope = locals;
 
+    ast.local_vars_num = (uint)symb.GetMembers().Count;
     PeekAST().AddChild(ast);
 
     return null;

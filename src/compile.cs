@@ -14,35 +14,37 @@ public enum Opcodes
   Mul             = 0x5,
   SetVar          = 0x6,
   GetVar          = 0x7,
-  Call            = 0x8,
-  SetMVar         = 0x9,
+  DeclVar         = 0x8,
+  Call            = 0x9,
+  SetMVar         = 0x10,
   GetMVar         = 0xA,
   MethodCall      = 0xB,
   Return          = 0xC,
   ReturnVal       = 0xD,
   Jump            = 0xE,
   CondJump        = 0xF,
-  LoopJump        = 0x10,
-  UnaryNot        = 0x11,
-  UnaryNeg        = 0x12,
-  And             = 0x13,
-  Or              = 0x14,
-  Mod             = 0x15,
-  BitOr           = 0x16,
-  BitAnd          = 0x17,
-  Equal           = 0x18,
-  NotEqual        = 0x19,
-  Less            = 0x1A,
-  Greater         = 0x1B,
-  LessOrEqual     = 0x1C,
-  GreaterOrEqual  = 0x1D,
-  DefArg          = 0x1E, //opcode for skipping func def args
-  TypeCast        = 0x1F,
-  PushBlock       = 0x20,
-  PopBlock        = 0x21,
-  ArrNew          = 0x22,
-  Lambda          = 0x23,
-  UseUpval        = 0x24,
+  LoopJump        = 0x20,
+  UnaryNot        = 0x21,
+  UnaryNeg        = 0x22,
+  And             = 0x23,
+  Or              = 0x24,
+  Mod             = 0x25,
+  BitOr           = 0x26,
+  BitAnd          = 0x27,
+  Equal           = 0x28,
+  NotEqual        = 0x29,
+  Less            = 0x2A,
+  Greater         = 0x2B,
+  LessOrEqual     = 0x2C,
+  GreaterOrEqual  = 0x2D,
+  DefArg          = 0x2E, //opcode for skipping func def args
+  TypeCast        = 0x2F,
+  PushBlock       = 0x30,
+  PopBlock        = 0x31,
+  ArrNew          = 0x32,
+  Lambda          = 0x33,
+  UseUpval        = 0x34,
+  InitFrame       = 0x35,
 }
 
 public class Const
@@ -304,6 +306,13 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.DeclVar,
+        operand_width = new int[] { 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.SetVar,
         operand_width = new int[] { 2 }
       }
@@ -356,7 +365,14 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.UseUpval,
-        operand_width = new int[] { 1 /*upval idx*/, 1 /*local idx*/ }
+        operand_width = new int[] { 1 /*upval src idx*/, 1 /*local dst idx*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.InitFrame,
+        operand_width = new int[] { 1/*total local vars*/ }
       }
     );
     DeclareOpcode(
@@ -531,6 +547,8 @@ public class Compiler : AST_Visitor
   {
     uint ip = EnterNewScope();
     func2ip.Add(ast.name, ip);
+    if(ast.local_vars_num > 0)
+      Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num });
     VisitChildren(ast);
     Emit(Opcodes.Return);
     LeaveCurrentScope();
@@ -917,7 +935,7 @@ public class Compiler : AST_Visitor
       PatchJumpOffsetToCurrPos(pointer);
     }
 
-    Emit(Opcodes.SetVar, new int[] { (int)ast.symb_idx });
+    Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx });
   }
 
   public override void DoVisit(bhl.AST_JsonObj node)

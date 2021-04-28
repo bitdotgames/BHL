@@ -323,6 +323,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -387,6 +388,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -717,6 +719,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArrNew) 
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -752,6 +755,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArrNew)
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -797,6 +801,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       //mkarray
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArrNew)
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -850,6 +855,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       //mkarray
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArrNew)
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -905,6 +911,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       //mkarray
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArrNew)
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -952,6 +959,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArrNew)
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -1010,12 +1018,14 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       //foo
-      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.DeclVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.Return)
       //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArrNew)
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -1078,7 +1088,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestVarWithDefaultValue()
+  public void TestDeclVarWithoutValue()
   {
     string bhl = @"
     func bool test()
@@ -1091,6 +1101,28 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var c = Compile(bhl);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 3 })
+      .Emit(Opcodes.DeclVar, new int[] { 0 })
+      .Emit(Opcodes.DeclVar, new int[] { 1 })
+      .Emit(Opcodes.DeclVar, new int[] { 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Equal)
+      .Emit(Opcodes.GetVar, new int[] { 2 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Equal)
+      .Emit(Opcodes.And)
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Equal)
+      .Emit(Opcodes.And)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
 
     AssertEqual(c.Constants, new List<Const>() { new Const(0), new Const(false), new Const("") });
 
