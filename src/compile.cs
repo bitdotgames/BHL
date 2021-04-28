@@ -6,6 +6,7 @@ namespace bhl {
 
 public enum Opcodes
 {
+  Nop             = 0x0,
   Constant        = 0x1,
   Add             = 0x2,
   Sub             = 0x3,
@@ -185,6 +186,12 @@ public class Compiler : AST_Visitor
 
   void DeclareOpcodes()
   {
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Nop,
+      }
+    );
     DeclareOpcode(
       new OpDefinition()
       {
@@ -496,7 +503,7 @@ public class Compiler : AST_Visitor
     int offset = curr_scope.Position - jump_opcode_pos;
     if(offset < 0 || offset >= 241) 
       throw new Exception("Invalid offset: " + offset);
-    curr_scope.PatchByteAt(jump_opcode_pos - 1, (byte)offset);
+    curr_scope.PatchAt(jump_opcode_pos - 1, (byte)offset);
   }
 
   public byte[] GetBytes()
@@ -532,15 +539,20 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_LambdaDecl ast)
   {
     EnterNewScope();
+    //NOTE: since lambda's body can appear anywhere in the 
+    //      compiled code we skip it by uncoditional jump over it
+    Emit(Opcodes.Jump, new int[] {(int)0xFFFF/*dummy placeholder*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
     var bytecode = LeaveCurrentScope(auto_append: false);
 
-    //NOTE: since lambda's body can appear anywhere in the 
-    //      compiled code we skip it by uncoditional jump over it
-    Emit(Opcodes.Jump, new int[] {(int)bytecode.Length});
-    
-    uint ip = 0;
+    var jump_pos = bytecode.Length - 2;
+    if(jump_pos > ushort.MaxValue)
+      throw new Exception("Too large lambda body");
+    //let's patch the jump placeholder with the actual jump position
+    bytecode.PatchAt(1, (ushort)jump_pos, (byte)Opcodes.Nop);
+
+    uint ip = 3;//taking into account 'jump out of lambda'
     for(int i=0;i < scopes.Count;++i)
       ip += (uint)scopes[i].Length;
     func2ip.Add(ast.name, ip);
@@ -990,25 +1002,19 @@ public class Bytecode
     stream.WriteByte(value);
   }
 
-  public void Write(sbyte value)
-  {
-    stream.WriteByte((byte)value);
-  }
-
   // http://sqlite.org/src4/doc/trunk/www/varint.wiki
-  public void Write(uint value)
+  public int Write(uint value)
   {
     if(value <= 65535)
     {
-      Write((ushort)value);
-      return;
+      return Write((ushort)value);
     }
     if(value <= 67823)
     {
       Write((byte)249);
       Write((byte)((value - 2288) / 256));
       Write((byte)((value - 2288) % 256));
-      return;
+      return 3;
     }
     if(value <= 16777215)
     {
@@ -1016,7 +1022,7 @@ public class Bytecode
       Write((byte)(value & 0xFF));
       Write((byte)((value >> 8) & 0xFF));
       Write((byte)((value >> 16) & 0xFF));
-      return;
+      return 4;
     }
 
     // all other values of uint
@@ -1025,51 +1031,28 @@ public class Bytecode
     Write((byte)((value >> 8) & 0xFF));
     Write((byte)((value >> 16) & 0xFF));
     Write((byte)((value >> 24) & 0xFF));
+    return 5;
   }
 
-  public void Write(char value)
-  {
-    Write((byte)value);
-  }
-
-  public void Write(short value)
-  {
-    Write((byte)(value & 0xff));
-    Write((byte)((value >> 8) & 0xff));
-  }
-
-  public void Write(ushort value)
+  public int Write(ushort value)
   {
     if(value <= 240)
     {
       Write((byte)value);
-      return;
+      return 1;
     }
+
     if(value <= 2287)
     {
       Write((byte)((value - 240) / 256 + 241));
       Write((byte)((value - 240) % 256));
-      return;
+      return 2;
     }
 
-    {
-      Write((byte)249);
-      Write((byte)((value - 2288) / 256));
-      Write((byte)((value - 2288) % 256));
-      return;
-    }
-  }
-
-  public void Write(float value)
-  {
-    byte[] bytes = BitConverter.GetBytes(value);
-    Write(bytes, bytes.Length);
-  }
-
-  public void Write(double value)
-  {
-    byte[] bytes = BitConverter.GetBytes(value);
-    Write(bytes, bytes.Length);
+    Write((byte)249);
+    Write((byte)((value - 2288) / 256));
+    Write((byte)((value - 2288) % 256));
+    return 3;
   }
 
   public void Write(bool value)
@@ -1087,21 +1070,21 @@ public class Bytecode
     stream.WriteTo(buffer_stream);
   }
 
-  public void Write(byte[] buffer, int count)
-  {
-    stream.Write(buffer, 0, count);
-  }
-
-  public void Write(byte[] buffer, int offset, int count)
-  {
-    stream.Write(buffer, offset, count);
-  }
-
-  public void PatchByteAt(int pos, byte value)
+  public void PatchAt(int pos, byte value)
   {
     long orig_pos = stream.Position;
     stream.Position = pos;
-    stream.WriteByte(value);
+    Write(value);
+    stream.Position = orig_pos;
+  }
+
+  public void PatchAt(int pos, ushort value, byte gap_filler)
+  {
+    long orig_pos = stream.Position;
+    stream.Position = pos;
+    int written = Write(value);
+    for(int i=0;i<(3-written);++i)
+      Write(gap_filler);
     stream.Position = orig_pos;
   }
 }

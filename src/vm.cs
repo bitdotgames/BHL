@@ -160,6 +160,8 @@ public class VM
         //Console.WriteLine("OP " + opcode + " IP " + ip);
         switch(opcode)
         {
+          case Opcodes.Nop:
+            break;
           case Opcodes.Constant:
           {
             int const_idx = (int)Bytecode.Decode(bytecode, ref ip);
