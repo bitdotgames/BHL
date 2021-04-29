@@ -2351,18 +2351,22 @@ public class Frontend : bhlBaseVisitor<object>
     var vd = vod.varDeclare();
     string iter_str_type = "";
     string iter_str_name = "";
+    AST iter_ast_decl = null;
+    VariableSymbol iter_symb = null;
     if(vod.NAME() != null)
     {
       iter_str_name = vod.NAME().GetText();
-      var vs = curr_scope.Resolve(iter_str_name) as VariableSymbol;
-      if(vs == null)
+      iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
+      if(iter_symb == null)
         FireError(Location(vod.NAME()) +  " : symbol is not a valid variable");
-      iter_str_type = vs.type.name.s;
+      iter_str_type = iter_symb.type.name.s;
     }
     else
     {
       iter_str_name = vd.NAME().GetText();
       iter_str_type = vd.type().GetText();
+      iter_ast_decl = CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
+      iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
     }
     var arr_type = locals.Type(iter_str_type+"[]").Get();
 
@@ -2378,15 +2382,28 @@ public class Frontend : bhlBaseVisitor<object>
       arr_ntype = (uint)arr_type.GetName().n;
 
     var arr_tmp_name = "$foreach_tmp" + loops_stack;
-    var arr_cnt_name = "$foreach_cnt" + loops_stack;
+    var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
+    if(arr_tmp_symb == null)
+    {
+      arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, locals.Type(iter_str_type));
+      curr_scope.Define(arr_tmp_symb);
+    }
 
-    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, arr_tmp_name));
+    var arr_cnt_name = "$foreach_cnt" + loops_stack;
+    var arr_cnt_symb = curr_scope.Resolve(arr_cnt_name) as VariableSymbol;
+    if(arr_cnt_symb == null)
+    {
+      arr_cnt_symb = new VariableSymbol(Wrap(exp), arr_cnt_name, locals.Type("int"));
+      curr_scope.Define(arr_cnt_symb);
+    }
+
+    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, arr_tmp_symb));
     //declaring counter var
-    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_name, false, false, 0, -1/*for now*/));
+    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, false, 0));
 
     //declaring iterating var
-    if(vd != null)
-      PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
+    if(iter_ast_decl != null)
+      PeekAST().AddChild(iter_ast_decl);
 
     var ast = AST_Util.New_Block(EnumBlock.WHILE);
 
@@ -2395,22 +2412,22 @@ public class Frontend : bhlBaseVisitor<object>
     //adding while condition
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name, 0 , -1/*for now*/));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name, 0, -1/*for now*/));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype, -1/*for now*/));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_symb));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_symb));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
     PushAST(ast);
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_str_name, 0, -1/*for now*/));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype, -1/*for now*/));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_name, 0, -1/*for now*/));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_name, 0, -1/*for now*/));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_symb));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_symb));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_symb));
 
     //appending counter increment
-    block.AddChild(AST_Util.New_Inc(arr_cnt_name));
+    block.AddChild(AST_Util.New_Inc(arr_cnt_symb));
     PopAST();
 
     --loops_stack;

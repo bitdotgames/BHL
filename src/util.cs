@@ -669,7 +669,7 @@ static public class AST_Util
     return New_Call(type, line_num, symb.name, scope_symb != null ? (uint)scope_symb.Type().n : 0, symb.scope_idx);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype, int symb_idx)
+  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype, int symb_idx = 0)
   {
     var n = new AST_Call();
     n.type = type;
@@ -781,10 +781,11 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Inc New_Inc(HashedName name)
+  static public AST_Inc New_Inc(VariableSymbol symb)
   {
     var n = new AST_Inc();
-    n.nname = (uint)name.n;
+    n.nname = (uint)symb.name.n;
+    n.symb_idx = (uint)symb.scope_idx;
 
     return n;
   }

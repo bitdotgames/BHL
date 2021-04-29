@@ -273,6 +273,7 @@ public class AST_BinaryOpExp  : AST
 public class AST_Inc  : AST_Base 
 {
   public uint nname;
+  public uint symb_idx;
 
   static public  new  uint STATIC_CLASS_ID = 192507281;
 
@@ -290,17 +291,19 @@ public class AST_Inc  : AST_Base
   {
     base.reset();
     nname = 0;
+    symb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
     MetaHelper.sync(ctx, ref nname);
+    MetaHelper.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 1; 
+    return 2; 
   }
 }
 
@@ -590,7 +593,7 @@ public class AST_LambdaDecl  : AST_FuncDecl
 
   public override int getFieldsCount() 
   {
-    return 8; 
+    return base.getFieldsCount() + 1; 
   }
 }
 

@@ -1357,7 +1357,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestForCondition()
+  public void TestForLoop()
   {
     string bhl = @"
     func int test()
@@ -1413,6 +1413,74 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForeachLoop()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(3)
+      int accum = 0
+
+      foreach(arr as int a) {
+        accum = accum + a
+      }
+
+      return accum
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 3 + 2/*hidden vars*/ })
+      .Emit(Opcodes.ArrNew) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.SetVar, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 3 }) //assign tmp arr
+      .Emit(Opcodes.DeclVar, new int[] { 4 })//declare counter
+      .Emit(Opcodes.DeclVar, new int[] { 2 })//declare iterator
+      .Emit(Opcodes.GetVar, new int[] { 4 })
+      .Emit(Opcodes.GetVar, new int[] { 3 })
+      .Emit(Opcodes.GetMVar, new int[] { ArrType, ArrCountIdx })
+      .Emit(Opcodes.Less) //compare counter and tmp arr size
+      .Emit(Opcodes.CondJump, new int[] { 0x18 })
+      //call arr idx method
+      .Emit(Opcodes.GetVar, new int[] { 3 })
+      .Emit(Opcodes.GetVar, new int[] { 4 })
+      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
+      .Emit(Opcodes.SetVar, new int[] { 2 })
+      .Emit(Opcodes.GetVar, new int[] { 1 }) //accum = accum + iterator var
+      .Emit(Opcodes.GetVar, new int[] { 2 }) 
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.SetVar, new int[] { 1 })
+      .Emit(Opcodes.Inc, new int[] { 4 }) //fast increment hidden counter
+      .Emit(Opcodes.LoopJump, new int[] { 0x26 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+    ;
+
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 4);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBooleanInCondition()
   {
     string bhl = @"
@@ -1426,12 +1494,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     func int test()
     {
-      if( true )
-      {
+      if( true ) {
         return first()
-      }
-      else
-      {
+      } else {
         return second()
       }
     }

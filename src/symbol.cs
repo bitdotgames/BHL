@@ -346,11 +346,12 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
       return (int)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n1;
     }
   }
+  //in the same order as added methods below
   public static readonly int VM_AddIdx    = 0;
-  public static readonly int VM_SetIdx    = 1;
+  public static readonly int VM_AtIdx     = 1;
   public static readonly int VM_RemoveIdx = 2;
   public static readonly int VM_CountIdx  = 3;
-  public static readonly int VM_AtIdx     = 4;
+  public static readonly int VM_SetIdx    = 4;
 
   public static readonly HashedName GENERIC_CLASS_TYPE = new HashedName("[]"); 
 

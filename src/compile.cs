@@ -46,6 +46,7 @@ public enum Opcodes
   Lambda          = 0x43,
   UseUpval        = 0x44,
   InitFrame       = 0x45,
+  Inc             = 0x46,
 }
 
 public class Const
@@ -449,6 +450,13 @@ public class Compiler : AST_Visitor
         operand_width = new int[] { 4 }
       }
     );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Inc,
+        operand_width = new int[] { 2/*var idx*/ }
+      }
+    );
   }
 
   void DeclareOpcode(OpDefinition def)
@@ -750,6 +758,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Inc ast)
   {
+    Emit(Opcodes.Inc, new int[] { (int)ast.symb_idx });
   }
 
   public override void DoVisit(AST_Call ast)

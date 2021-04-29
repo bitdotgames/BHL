@@ -184,6 +184,12 @@ public class VM
               throw new Exception("Not supported typecast type: " + cast_type);
           }
           break;
+          case Opcodes.Inc:
+          {
+            int var_idx = (int)Bytecode.Decode(bytecode, ref ip);
+            ++curr_frame.locals[var_idx]._num;
+          }
+          break;
           case Opcodes.Add:
           case Opcodes.Sub:
           case Opcodes.Div:
