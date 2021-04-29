@@ -366,7 +366,7 @@ public class Compiler : AST_Visitor
         name = Opcodes.Lambda,
         //TODO: this can be a 16bit offset relative to the 
         //      current ip position
-        operand_width = new int[] { 4 /*closure ip*/ }
+        operand_width = new int[] { 4 /*closure ip*/, 2/*local vars num*/ }
       }
     );
     DeclareOpcode(
@@ -568,8 +568,6 @@ public class Compiler : AST_Visitor
     //NOTE: since lambda's body can appear anywhere in the 
     //      compiled code we skip it by uncoditional jump over it
     Emit(Opcodes.Jump, new int[] {(int)Bytecode.GetMaxValueForBytes(2)/*dummy placeholder*/});
-    if(ast.local_vars_num > 0)
-      Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num });
     VisitChildren(ast);
     Emit(Opcodes.Return);
     var bytecode = LeaveCurrentScope(auto_append: false);
@@ -587,7 +585,7 @@ public class Compiler : AST_Visitor
 
     GetCurrentScope().Write(bytecode);
 
-    Emit(Opcodes.Lambda, new int[] {(int)ip});
+    Emit(Opcodes.Lambda, new int[] {(int)ip, (int)ast.local_vars_num});
     foreach(var p in ast.uses)
       Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
   }

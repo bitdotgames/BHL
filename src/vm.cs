@@ -347,8 +347,12 @@ public class VM
           case Opcodes.Lambda:
           {
             uint func_ip = Bytecode.Decode(bytecode, ref ip);
-            //TODO: create Frame, capture the context and push it on the stack
+            int local_vars_num = (int)Bytecode.Decode(bytecode, ref ip);
             var fr = new Frame();
+            fr.locals.Capacity = local_vars_num;
+            for(int i=0;i<local_vars_num;++i)
+              fr.locals.Add(null);
+
             var frval = Val.New();
             frval._obj = fr;
             frval._num = func_ip;

@@ -1702,7 +1702,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 9 })
+      .Emit(Opcodes.Lambda, new int[] { 9, 0 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -1745,14 +1745,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.CondJump, new int[] { 16 })
+      .Emit(Opcodes.CondJump, new int[] { 17 })
       //lambda
       .Emit(Opcodes.Jump, new int[] { 5 })
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 7 })
+      .Emit(Opcodes.Lambda, new int[] { 7, 0 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Jump,     new int[] { 3 })
@@ -1798,14 +1798,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.CondJump, new int[] { 16 })
+      .Emit(Opcodes.CondJump, new int[] { 17 })
       //lambda
       .Emit(Opcodes.Jump, new int[] { 5 })
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 7 })
+      .Emit(Opcodes.Lambda, new int[] { 7, 0 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Jump,     new int[] { 3 })
@@ -1856,7 +1856,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 3 })
+      .Emit(Opcodes.Lambda, new int[] { 3, 0 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -1905,7 +1905,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 5 })
+      .Emit(Opcodes.Lambda, new int[] { 5, 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Call, new int[] { 3, 0, 0 })
       .Emit(Opcodes.ReturnVal)
@@ -1955,7 +1955,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 5 })
+      .Emit(Opcodes.Lambda, new int[] { 5, 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.CondJump, new int[] { 7 })
@@ -2010,7 +2010,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 5 })
+      .Emit(Opcodes.Lambda, new int[] { 5, 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.CondJump, new int[] { 7 })
@@ -2055,12 +2055,12 @@ public class BHL_TestVM : BHL_TestBase
       //dummy
       .Emit(Opcodes.Return)
       //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //lambda
-      .Emit(Opcodes.Jump, new int[] { 7 } ) //skip lambda
+      .Emit(Opcodes.Jump, new int[] { 5 } ) //skip lambda
       .Emit(Opcodes.Nop)
-      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -2114,7 +2114,6 @@ public class BHL_TestVM : BHL_TestBase
       //lambda
       .Emit(Opcodes.Jump, new int[] { 15 } ) //skip lambda
       .Emit(Opcodes.Nop)
-      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -2124,7 +2123,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Add)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 11 })
+      .Emit(Opcodes.Lambda, new int[] { 13, 3 })
       .Emit(Opcodes.UseUpval, new int[] { 0, 1 })
       .Emit(Opcodes.UseUpval, new int[] { 1, 2 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
@@ -2169,10 +2168,11 @@ public class BHL_TestVM : BHL_TestBase
       //dummy
       .Emit(Opcodes.Return)
       //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //lambda
-      .Emit(Opcodes.Jump, new int[] { 27 } ) //skip lambda
+      .Emit(Opcodes.Jump, new int[] { 28 } ) //skip lambda
       .Emit(Opcodes.Nop)
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
@@ -2183,12 +2183,12 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 14 })
+      .Emit(Opcodes.Lambda, new int[] { 16, 2 })
       .Emit(Opcodes.UseUpval, new int[] { 0, 1 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 7 })
+      .Emit(Opcodes.Lambda, new int[] { 9, 1 })
       .Emit(Opcodes.Call, new int[] { 2, 0, 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -2224,16 +2224,17 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
-      //foo func code
-      .Emit(Opcodes.SetVar, new int[] { 0 })
+      //foo
+      .Emit(Opcodes.InitFrame, new int[] { 3 })
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
       .Emit(Opcodes.DefArg, new int[] { 5 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.Sub)
-      .Emit(Opcodes.SetVar, new int[] { 1 })
+      .Emit(Opcodes.ArgVar, new int[] { 1 })
       .Emit(Opcodes.DefArg, new int[] { 2 })
       .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.SetVar, new int[] { 2 })
+      .Emit(Opcodes.ArgVar, new int[] { 2 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.Add)
@@ -2241,7 +2242,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Add)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      //test program code
+      //test
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Add)
@@ -2333,6 +2334,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
@@ -2377,7 +2379,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
-      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.DeclVar, new int[] { 0 })
       .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL, 20})
         .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
         .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
@@ -2425,7 +2428,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
-      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.DeclVar, new int[] { 0 })
       .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL, 20})
         .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
         .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
@@ -2490,8 +2494,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      //
-      .Emit(Opcodes.SetVar, new int[] { 0 })
+      //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.DeclVar, new int[] { 0 })
       .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL, 18})
         .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
         .Emit(Opcodes.Call, new int[] { 0, 0/*foo*/, 0 })
@@ -2551,8 +2556,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      //
-      .Emit(Opcodes.SetVar, new int[] { 0 })
+      //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.DeclVar, new int[] { 0 })
       .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL, 18})
         .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
         .Emit(Opcodes.Call, new int[] { 0, 0/*foo*/, 0 })
@@ -2601,7 +2607,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
-      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.DeclVar, new int[] { 0 })
       .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL_ALL, 20})
         .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 4})
         .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
@@ -2653,7 +2660,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new Compiler(c.Symbols)
-      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.DeclVar, new int[] { 0 })
       .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.PARAL_ALL, 24})
         .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.SEQ, 8})
         .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
