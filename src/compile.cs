@@ -683,6 +683,11 @@ public class Compiler : AST_Visitor
         VisitControlBlock(ast);
       }
       break;
+      case EnumBlock.DEFER:
+      {
+        VisitDefer(ast);
+      }
+      break;
       default:
         throw new Exception("Not supported block type: " + ast.type); 
     }
@@ -734,6 +739,10 @@ public class Compiler : AST_Visitor
 
     if(need_to_push_block)
       Emit(Opcodes.PopBlock);
+  }
+
+  void VisitDefer(AST_Block ast)
+  {
   }
 
   public override void DoVisit(AST_TypeCast ast)

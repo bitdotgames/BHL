@@ -675,15 +675,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
-    var fn = new VM_FuncBindSymbol("trace", globs.Type("void"),
-        delegate(VM _, VM.Frame fr) { 
-          string str = fr.PopValue().str;
-          log.Append(str);
-          return null;
-        } 
-    );
-    fn.Define(new FuncArgSymbol("str", globs.Type("string")));
-    globs.Define(fn);
+    var fn = BindTrace(globs, log);
 
     var c = Compile(bhl, globs);
 
@@ -698,9 +690,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-
     AssertEqual("foo", log.ToString());
-
     CommonChecks(vm);
   }
 
@@ -2795,6 +2785,34 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBasicDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""bar"")
+      }
+      
+      trace(""foo"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("foobar", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
@@ -3079,19 +3097,18 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  //simple console outputting version
-  void BindLog(GlobalScope globs)
+  VM_FuncBindSymbol BindTrace(GlobalScope globs, StringBuilder log)
   {
-    {
-      var fn = new VM_FuncBindSymbol("log", globs.Type("void"),
-          delegate(VM vm, VM.Frame fr) { 
-            Console.WriteLine(fr.PopValue().str); 
-            return null;
-          } );
-      fn.Define(new FuncArgSymbol("str", globs.Type("string")));
-
-      globs.Define(fn);
-    }
+    var fn = new VM_FuncBindSymbol("trace", globs.Type("void"),
+        delegate(VM _, VM.Frame fr) { 
+          string str = fr.PopValue().str;
+          log.Append(str);
+          return null;
+        } 
+    );
+    fn.Define(new FuncArgSymbol("str", globs.Type("string")));
+    globs.Define(fn);
+    return fn;
   }
 }
   
