@@ -538,7 +538,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSub()
+  public void TestSubtract()
   {
     string bhl = @"
     func int test() 
@@ -2871,6 +2871,81 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual("fooheybar", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSubFuncDefer()
+  {
+    string bhl = @"
+
+    func foo() {
+      defer {
+        trace(""foo1"")
+      }
+
+      trace(""foo"")
+
+      defer {
+        trace(""foo2"")
+      }
+    }
+
+    func test() {
+      defer {
+        trace(""test1"")
+      }
+
+      foo()
+
+      defer {
+        trace(""test2"")
+      }
+      
+      trace(""test"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      //foo
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.DEFER, 6})
+        .Emit(Opcodes.Constant, new int[] { 0 })
+        .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.DEFER, 6})
+        .Emit(Opcodes.Constant, new int[] { 2 })
+        .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.DEFER, 6})
+        .Emit(Opcodes.Constant, new int[] { 3 })
+        .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.Call, new int[] { 0, 0, 0 })
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.DEFER, 6})
+        .Emit(Opcodes.Constant, new int[] { 4 })
+        .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.Constant, new int[] { 5 })
+      .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("foofoo2foo1testtest2test1", log.ToString());
     CommonChecks(vm);
   }
 
