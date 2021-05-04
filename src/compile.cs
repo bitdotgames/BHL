@@ -131,6 +131,7 @@ public class Compiler : AST_Visitor
 
   List<Bytecode> scopes = new List<Bytecode>();
   List<AST_Block> ctrl_blocks = new List<AST_Block>();
+  HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
 
   Dictionary<string, uint> func2ip = new Dictionary<string, uint>();
   public Dictionary<string, uint> Func2Offset {
@@ -697,9 +698,9 @@ public class Compiler : AST_Visitor
   {
     var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
 
-    bool parent_is_paral = 
-      parent_block != null && 
-      (parent_block.type == EnumBlock.PARAL || 
+    bool parent_is_paral =
+      parent_block != null &&
+      (parent_block.type == EnumBlock.PARAL ||
        parent_block.type == EnumBlock.PARAL_ALL);
 
     bool is_paral = 
@@ -727,22 +728,24 @@ public class Compiler : AST_Visitor
       Visit(child);
     }
 
+    bool need_to_push_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
+
     scopes.RemoveAt(scopes.Count-1);
     ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
 
-    bool need_to_push_block = is_paral || parent_is_paral;
-
     if(need_to_push_block)
       Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
-
     GetCurrentScope().Write(block_code);
-
     if(need_to_push_block)
       Emit(Opcodes.PopBlock);
   }
 
   void VisitDefer(AST_Block ast)
   {
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
+    if(parent_block != null)
+      block_has_defers.Add(parent_block);
+
     var block_code = new Bytecode();
     scopes.Add(block_code);
     VisitChildren(ast);

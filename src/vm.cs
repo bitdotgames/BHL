@@ -74,19 +74,21 @@ public class VM
       return stack.Peek();
     }
 
-    public void Register(CodeBlock cb)
+    public void RegisterOnExit(CodeBlock cb)
     {
       if(defers == null)
         defers = new List<CodeBlock>();
       defers.Add(cb);
     }
 
-    public void Exit(VM vm)
+    public void ExitScope(VM vm)
     {
+      if(defers == null)
+        return;
       for(int i=defers.Count;i-- > 0;)
       {
         //TODO: do we need ensure that status is SUCCESS?
-        defers[i].Execute(vm, vm.curr_fiber.frames, ref vm.curr_fiber.instruction);
+        defers[i].Execute(vm, vm.curr_fiber.frames, ref vm.curr_fiber.instruction, null);
       }
     }
   }
@@ -148,7 +150,7 @@ public class VM
     return fb.id;
   }
 
-  public BHS Execute(ref uint ip, FastStack<Frame> frames, ref IInstruction instruction, uint max_ip)
+  internal BHS Execute(ref uint ip, FastStack<Frame> frames, ref IInstruction instruction, uint max_ip, IDeferScope defer_scope)
   { 
     while(frames.Count > 0 && ip < max_ip)
     {
@@ -162,7 +164,7 @@ public class VM
       if(instruction != null)
       {
         status = instruction.Tick(this);
-        if(status == BHS.RUNNING || status == BHS.FAILURE)
+        if(status == BHS.RUNNING)
         {
           return status;
         }
@@ -249,7 +251,7 @@ public class VM
           break;
           case Opcodes.Return:
           {
-            curr_frame.Exit(this);
+            curr_frame.ExitScope(this);
             curr_frame.Clear();
             ip = curr_frame.return_ip;
             //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
@@ -262,7 +264,7 @@ public class VM
           {
             var ret_val = curr_frame.stack.PopFast();
             ip = curr_frame.return_ip;
-            curr_frame.Exit(this);
+            curr_frame.ExitScope(this);
             curr_frame.Clear();
             //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
             frames.PopFast();
@@ -451,12 +453,13 @@ public class VM
           break;
           case Opcodes.PushBlock:
           {
-            VisitBlock(ref ip, curr_frame, ref instruction);
+            VisitBlock(ref ip, curr_frame, ref instruction, defer_scope);
           }
           break;
           case Opcodes.PopBlock:
           {
-            //TODO: add scope cleaning stuff later here
+            if(defer_scope != null)
+              defer_scope.ExitScope(this);
           }
           break;
           case Opcodes.ArrNew:
@@ -491,7 +494,7 @@ public class VM
       instruction = candidate;
   }
 
-  IInstruction VisitBlock(ref uint ip, Frame curr_frame, ref IInstruction instruction)
+  IInstruction VisitBlock(ref uint ip, Frame curr_frame, ref IInstruction instruction, IDeferScope defer_scope)
   {
     var type = (EnumBlock)Bytecode.Decode(bytecode, ref ip);
     uint size = Bytecode.Decode(bytecode, ref ip);
@@ -508,7 +511,7 @@ public class VM
         if(opcode != Opcodes.PushBlock)
           throw new Exception("Expected PushBlock got " + opcode);
         IInstruction dummy = null;
-        var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy);
+        var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy, defer_scope);
         paral.Attach(sub);
         ++tmp_ip;
         opcode = (Opcodes)bytecode[tmp_ip]; 
@@ -528,10 +531,10 @@ public class VM
     else if(type == EnumBlock.DEFER)
     {
       var cb = new CodeBlock(ip + 1, ip + size);
-      if(instruction is IDeferScope ds)
-        ds.Register(cb);
+      if(defer_scope != null)
+        defer_scope.RegisterOnExit(cb);
       else 
-        curr_frame.Register(cb);
+        curr_frame.RegisterOnExit(cb);
 
       ip += size;
 
@@ -547,7 +550,7 @@ public class VM
     {
       curr_fiber = fibers[i];
 
-      var status = Execute(ref curr_fiber.ip, curr_fiber.frames, ref curr_fiber.instruction, uint.MaxValue);
+      var status = Execute(ref curr_fiber.ip, curr_fiber.frames, ref curr_fiber.instruction, uint.MaxValue, null);
       
       if(status != BHS.RUNNING)
         fibers.RemoveAt(i);
@@ -798,8 +801,8 @@ public interface IInstruction
 
 public interface IDeferScope
 {
-  void Register(CodeBlock cb);
-  void Exit(VM vm);
+  void RegisterOnExit(CodeBlock cb);
+  void ExitScope(VM vm);
 }
 
 public interface IMultiInstruction : IInstruction
@@ -839,9 +842,9 @@ public struct CodeBlock
     this.max_ip = max_ip;
   }
 
-  public BHS Execute(VM vm, FastStack<VM.Frame> frames, ref IInstruction instruction)
+  public BHS Execute(VM vm, FastStack<VM.Frame> frames, ref IInstruction instruction, IDeferScope defer_scope)
   {
-    return vm.Execute(ref ip, frames, ref instruction, max_ip + 1);
+    return vm.Execute(ref ip, frames, ref instruction, max_ip + 1, defer_scope);
   }
 }
 
@@ -864,22 +867,24 @@ public class SeqInstruction : IInstruction, IDeferScope
   public BHS Tick(VM vm)
   {
     //Console.WriteLine("TICK SEQ " + ip + " " + GetHashCode());
-    return vm.Execute(ref ip, frames, ref instruction, max_ip + 1);
+    return vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
   }
 
-  public void Register(CodeBlock cb)
+  public void RegisterOnExit(CodeBlock cb)
   {
     if(defers == null)
       defers = new List<CodeBlock>();
     defers.Add(cb);
   }
 
-  public void Exit(VM vm)
+  public void ExitScope(VM vm)
   {
+    if(defers == null)
+      return;
     for(int i=defers.Count;i-- > 0;)
     {
       //TODO: do we need ensure that status is SUCCESS?
-      defers[i].Execute(vm, frames, ref instruction);
+      defers[i].Execute(vm, frames, ref instruction, null);
     }
   }
 }
