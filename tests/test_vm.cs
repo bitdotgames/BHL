@@ -2805,6 +2805,19 @@ public class BHL_TestVM : BHL_TestBase
 
     var c = Compile(bhl, globs);
 
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.PushBlock, new int[] { (int)EnumBlock.DEFER, 6})
+        .Emit(Opcodes.Constant, new int[] { 0 })
+        .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.PopBlock)
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.Return)
+      ;
+
+    AssertEqual(c, expected);
+
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);

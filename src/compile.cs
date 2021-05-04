@@ -743,6 +743,14 @@ public class Compiler : AST_Visitor
 
   void VisitDefer(AST_Block ast)
   {
+    var block_code = new Bytecode();
+    scopes.Add(block_code);
+    VisitChildren(ast);
+    scopes.RemoveAt(scopes.Count-1);
+
+    Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
+    GetCurrentScope().Write(block_code);
+    Emit(Opcodes.PopBlock);
   }
 
   public override void DoVisit(AST_TypeCast ast)

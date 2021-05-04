@@ -7,11 +7,12 @@ namespace bhl {
 
 public class VM
 {
-  public class Frame
+  public class Frame : IDeferScope
   {
     public FastStack<Val> stack = new FastStack<Val>(32);
     public List<Val> locals = new List<Val>();
     public uint return_ip;
+    public List<CodeBlock> defers;
 
     public void Clear()
     {
@@ -72,6 +73,22 @@ public class VM
     {
       return stack.Peek();
     }
+
+    public void Register(CodeBlock cb)
+    {
+      if(defers == null)
+        defers = new List<CodeBlock>();
+      defers.Add(cb);
+    }
+
+    public void Exit(VM vm)
+    {
+      for(int i=defers.Count;i-- > 0;)
+      {
+        //TODO: do we need ensure that status is SUCCESS?
+        defers[i].Execute(vm, vm.curr_fiber.frames, ref vm.curr_fiber.instruction);
+      }
+    }
   }
 
   List<Const> constants;
@@ -103,6 +120,7 @@ public class VM
     internal FastStack<Frame> frames = new FastStack<Frame>(256);
   }
   List<Fiber> fibers = new List<Fiber>();
+  internal Fiber curr_fiber;
 
   public VM(BaseScope symbols, byte[] bytecode, List<Const> constants, Dictionary<string, uint> func2ip)
   {
@@ -161,7 +179,7 @@ public class VM
         switch(opcode)
         {
           case Opcodes.Nop:
-            break;
+          break;
           case Opcodes.Constant:
           {
             int const_idx = (int)Bytecode.Decode(bytecode, ref ip);
@@ -231,6 +249,7 @@ public class VM
           break;
           case Opcodes.Return:
           {
+            curr_frame.Exit(this);
             curr_frame.Clear();
             ip = curr_frame.return_ip;
             //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
@@ -243,6 +262,7 @@ public class VM
           {
             var ret_val = curr_frame.stack.PopFast();
             ip = curr_frame.return_ip;
+            curr_frame.Exit(this);
             curr_frame.Clear();
             //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
             frames.PopFast();
@@ -505,6 +525,18 @@ public class VM
       ip += size;
       return seq;
     }
+    else if(type == EnumBlock.DEFER)
+    {
+      var cb = new CodeBlock(ip + 1, ip + size);
+      if(instruction is IDeferScope ds)
+        ds.Register(cb);
+      else 
+        curr_frame.Register(cb);
+
+      ip += size;
+
+      return null;
+    }
     else
       throw new Exception("Not supported block type: " + type);
   }
@@ -513,9 +545,9 @@ public class VM
   {
     for(int i=0;i<fibers.Count;)
     {
-      var fb = fibers[i];
+      curr_fiber = fibers[i];
 
-      var status = Execute(ref fb.ip, fb.frames, ref fb.instruction, uint.MaxValue);
+      var status = Execute(ref curr_fiber.ip, curr_fiber.frames, ref curr_fiber.instruction, uint.MaxValue);
       
       if(status != BHS.RUNNING)
         fibers.RemoveAt(i);
@@ -764,6 +796,12 @@ public interface IInstruction
   BHS Tick(VM vm);
 }
 
+public interface IDeferScope
+{
+  void Register(CodeBlock cb);
+  void Exit(VM vm);
+}
+
 public interface IMultiInstruction : IInstruction
 {
   void Attach(IInstruction ex);
@@ -790,12 +828,30 @@ class CoroutineYield : IInstruction
   }
 }
 
-public class SeqInstruction : IInstruction
+public struct CodeBlock
+{
+  public uint ip;
+  public uint max_ip;
+
+  public CodeBlock(uint ip, uint max_ip)
+  {
+    this.ip = ip;
+    this.max_ip = max_ip;
+  }
+
+  public BHS Execute(VM vm, FastStack<VM.Frame> frames, ref IInstruction instruction)
+  {
+    return vm.Execute(ref ip, frames, ref instruction, max_ip + 1);
+  }
+}
+
+public class SeqInstruction : IInstruction, IDeferScope
 {
   public uint ip;
   public uint max_ip;
   public FastStack<VM.Frame> frames = new FastStack<VM.Frame>(256);
   public IInstruction instruction;
+  public List<CodeBlock> defers;
 
   public SeqInstruction(VM.Frame curr_frame, uint ip, uint max_ip)
   {
@@ -809,6 +865,22 @@ public class SeqInstruction : IInstruction
   {
     //Console.WriteLine("TICK SEQ " + ip + " " + GetHashCode());
     return vm.Execute(ref ip, frames, ref instruction, max_ip + 1);
+  }
+
+  public void Register(CodeBlock cb)
+  {
+    if(defers == null)
+      defers = new List<CodeBlock>();
+    defers.Add(cb);
+  }
+
+  public void Exit(VM vm)
+  {
+    for(int i=defers.Count;i-- > 0;)
+    {
+      //TODO: do we need ensure that status is SUCCESS?
+      defers[i].Execute(vm, frames, ref instruction);
+    }
   }
 }
 
