@@ -165,19 +165,14 @@ public class VM
       {
         status = instruction.Tick(this);
         if(status == BHS.RUNNING)
-        {
           return status;
-        }
         else
-        {
           instruction = null;
-          ++ip;
-        }
       }
 
       {
         var opcode = (Opcodes)bytecode[ip];
-        //Console.WriteLine("OP " + opcode + " IP " + ip);
+        //Console.WriteLine("OP " + opcode + " IP " + string.Format("0x{0:x2}", ip));
         switch(opcode)
         {
           case Opcodes.Nop:
@@ -451,15 +446,9 @@ public class VM
               ip = ip + arg;
           }
           break;
-          case Opcodes.PushBlock:
+          case Opcodes.EnterBlock:
           {
             VisitBlock(ref ip, curr_frame, ref instruction, defer_scope);
-          }
-          break;
-          case Opcodes.PopBlock:
-          {
-            if(defer_scope != null)
-              defer_scope.ExitScope(this);
           }
           break;
           case Opcodes.ArrNew:
@@ -508,15 +497,12 @@ public class VM
       {
         ++tmp_ip;
         var opcode = (Opcodes)bytecode[tmp_ip]; 
-        if(opcode != Opcodes.PushBlock)
+        if(opcode != Opcodes.EnterBlock)
           throw new Exception("Expected PushBlock got " + opcode);
         IInstruction dummy = null;
-        var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy, defer_scope);
-        paral.Attach(sub);
-        ++tmp_ip;
-        opcode = (Opcodes)bytecode[tmp_ip]; 
-        if(opcode != Opcodes.PopBlock)
-          throw new Exception("Expected PopBlock got " + opcode);
+        var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy, (IDeferScope)paral);
+        if(sub != null)
+          paral.Attach(sub);
       }
       ip += size;
       return paral;
@@ -535,9 +521,7 @@ public class VM
         defer_scope.RegisterOnExit(cb);
       else 
         curr_frame.RegisterOnExit(cb);
-
       ip += size;
-
       return null;
     }
     else
@@ -867,7 +851,10 @@ public class SeqInstruction : IInstruction, IDeferScope
   public BHS Tick(VM vm)
   {
     //Console.WriteLine("TICK SEQ " + ip + " " + GetHashCode());
-    return vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
+    var status = vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
+    if(status != BHS.RUNNING)
+      ExitScope(vm);
+    return status;
   }
 
   public void RegisterOnExit(CodeBlock cb)
@@ -889,9 +876,10 @@ public class SeqInstruction : IInstruction, IDeferScope
   }
 }
 
-public class ParalInstruction : IMultiInstruction
+public class ParalInstruction : IMultiInstruction, IDeferScope
 {
   public List<IInstruction> children = new List<IInstruction>();
+  public List<CodeBlock> defers;
 
   public BHS Tick(VM vm)
   {
@@ -901,7 +889,10 @@ public class ParalInstruction : IMultiInstruction
       var status = current.Tick(vm);
       //Console.WriteLine("CHILD " + i + " " + status + " " + current.GetType().Name);
       if(status != BHS.RUNNING)
+      {
+        ExitScope(vm);
         return status;
+      }
     }
 
     return BHS.RUNNING;
@@ -909,14 +900,33 @@ public class ParalInstruction : IMultiInstruction
 
   public void Attach(IInstruction inst)
   {
-    //Console.WriteLine("ADD CHILD");
     children.Add(inst);
+  }
+
+  public void RegisterOnExit(CodeBlock cb)
+  {
+    if(defers == null)
+      defers = new List<CodeBlock>();
+    defers.Add(cb);
+  }
+
+  public void ExitScope(VM vm)
+  {
+    if(defers == null)
+      return;
+    IInstruction instruction = null;
+    for(int i=defers.Count;i-- > 0;)
+    {
+      //TODO: do we need ensure that status is SUCCESS?
+      defers[i].Execute(vm, vm.curr_fiber.frames, ref instruction, null);
+    }
   }
 }
 
-public class ParalAllInstruction : IMultiInstruction
+public class ParalAllInstruction : IMultiInstruction, IDeferScope
 {
   public List<IInstruction> children = new List<IInstruction>();
+  public List<CodeBlock> defers;
 
   public BHS Tick(VM vm)
   {
@@ -938,6 +948,25 @@ public class ParalAllInstruction : IMultiInstruction
   public void Attach(IInstruction inst)
   {
     children.Add(inst);
+  }
+
+  public void RegisterOnExit(CodeBlock cb)
+  {
+    if(defers == null)
+      defers = new List<CodeBlock>();
+    defers.Add(cb);
+  }
+
+  public void ExitScope(VM vm)
+  {
+    if(defers == null)
+      return;
+    IInstruction instruction = null;
+    for(int i=defers.Count;i-- > 0;)
+    {
+      //TODO: do we need ensure that status is SUCCESS?
+      defers[i].Execute(vm, vm.curr_fiber.frames, ref instruction, null);
+    }
   }
 }
 

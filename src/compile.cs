@@ -40,13 +40,12 @@ public enum Opcodes
   GreaterOrEqual  = 0x3D,
   DefArg          = 0x3E, //opcode for skipping func def args
   TypeCast        = 0x3F,
-  PushBlock       = 0x40,
-  PopBlock        = 0x41,
-  ArrNew          = 0x42,
-  Lambda          = 0x43,
-  UseUpval        = 0x44,
-  InitFrame       = 0x45,
-  Inc             = 0x46,
+  EnterBlock      = 0x40,
+  ArrNew          = 0x41,
+  Lambda          = 0x42,
+  UseUpval        = 0x43,
+  InitFrame       = 0x44,
+  Inc             = 0x45,
 }
 
 public class Const
@@ -388,14 +387,8 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.PushBlock,
+        name = Opcodes.EnterBlock,
         operand_width = new int[] { 1/*type*/, 2/*len*/ }
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.PopBlock
       }
     );
     DeclareOpcode(
@@ -717,7 +710,7 @@ public class Compiler : AST_Visitor
 
       //NOTE: let's automatically wrap all children with sequence if 
       //      they are inside paral block
-      if(is_paral && (!(child is AST_Block) || ((AST_Block)child).type != EnumBlock.SEQ))
+      if(is_paral && (!(child is AST_Block child_block) || (child_block.type != EnumBlock.SEQ && child_block.type != EnumBlock.DEFER)))
       {
         var seq_child = new AST_Block();
         seq_child.type = EnumBlock.SEQ;
@@ -728,16 +721,14 @@ public class Compiler : AST_Visitor
       Visit(child);
     }
 
-    bool need_to_push_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
+    bool need_to_enter_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
 
     scopes.RemoveAt(scopes.Count-1);
     ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
 
-    if(need_to_push_block)
-      Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
+    if(need_to_enter_block)
+      Emit(Opcodes.EnterBlock, new int[] { (int)ast.type, block_code.Position});
     GetCurrentScope().Write(block_code);
-    if(need_to_push_block)
-      Emit(Opcodes.PopBlock);
   }
 
   void VisitDefer(AST_Block ast)
@@ -751,9 +742,8 @@ public class Compiler : AST_Visitor
     VisitChildren(ast);
     scopes.RemoveAt(scopes.Count-1);
 
-    Emit(Opcodes.PushBlock, new int[] { (int)ast.type, block_code.Position});
+    Emit(Opcodes.EnterBlock, new int[] { (int)ast.type, block_code.Position});
     GetCurrentScope().Write(block_code);
-    Emit(Opcodes.PopBlock);
   }
 
   public override void DoVisit(AST_TypeCast ast)
