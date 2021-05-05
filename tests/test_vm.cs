@@ -2973,6 +2973,78 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestIfTrueDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""hey"")
+      }
+      if(true) {
+        defer {
+          trace(""if"")
+        }
+      } else {
+        defer {
+          trace(""else"")
+        }
+      }
+      trace(""foo"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("iffoohey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIfElseDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""hey"")
+      }
+      if(false) {
+        defer {
+          trace(""if"")
+        }
+      } else {
+        defer {
+          trace(""else"")
+        }
+      }
+      trace(""foo"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("elsefoohey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestParalDefer()
   {
     string bhl = @"
