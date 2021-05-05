@@ -446,7 +446,7 @@ public class VM
               ip = ip + arg;
           }
           break;
-          case Opcodes.EnterBlock:
+          case Opcodes.Block:
           {
             VisitBlock(ref ip, curr_frame, ref instruction, defer_scope);
           }
@@ -497,7 +497,7 @@ public class VM
       {
         ++tmp_ip;
         var opcode = (Opcodes)bytecode[tmp_ip]; 
-        if(opcode != Opcodes.EnterBlock)
+        if(opcode != Opcodes.Block)
           throw new Exception("Expected PushBlock got " + opcode);
         IInstruction dummy = null;
         var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy, (IDeferScope)paral);

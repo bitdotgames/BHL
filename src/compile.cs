@@ -40,7 +40,7 @@ public enum Opcodes
   GreaterOrEqual  = 0x3D,
   DefArg          = 0x3E, //opcode for skipping func def args
   TypeCast        = 0x3F,
-  EnterBlock      = 0x40,
+  Block      = 0x40,
   ArrNew          = 0x41,
   Lambda          = 0x42,
   UseUpval        = 0x43,
@@ -387,7 +387,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.EnterBlock,
+        name = Opcodes.Block,
         operand_width = new int[] { 1/*type*/, 2/*len*/ }
       }
     );
@@ -727,7 +727,7 @@ public class Compiler : AST_Visitor
     ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
 
     if(need_to_enter_block)
-      Emit(Opcodes.EnterBlock, new int[] { (int)ast.type, block_code.Position});
+      Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
     GetCurrentScope().Write(block_code);
   }
 
@@ -742,7 +742,7 @@ public class Compiler : AST_Visitor
     VisitChildren(ast);
     scopes.RemoveAt(scopes.Count-1);
 
-    Emit(Opcodes.EnterBlock, new int[] { (int)ast.type, block_code.Position});
+    Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
     GetCurrentScope().Write(block_code);
   }
 
