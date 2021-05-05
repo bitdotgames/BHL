@@ -935,14 +935,23 @@ public class ParalAllInstruction : IMultiInstruction, IDeferScope
       var current = children[i];
       var status = current.Tick(vm);
       if(status == BHS.FAILURE)
+      {
+        ExitScope(vm);
         return BHS.FAILURE;
+      }
       else if(status == BHS.SUCCESS)
         children.RemoveAt(i);
       else
         ++i;
     }
 
-    return children.Count == 0 ? BHS.SUCCESS : BHS.RUNNING;
+    if(children.Count == 0)
+    {
+      ExitScope(vm);
+      return BHS.SUCCESS;
+    }
+    else
+      return BHS.RUNNING;
   }
 
   public void Attach(IInstruction inst)
