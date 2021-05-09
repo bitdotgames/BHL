@@ -2318,6 +2318,64 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncDefaultNamedArg()
+  {
+    string bhl = @"
+
+    func int foo(int k0, int k1 = 1 - 0, int k2 = 10) 
+    {
+      return k0+k1+k2
+    }
+      
+    func int test()
+    {
+      return foo(1 + 1, k2: 2)
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      //foo
+      .Emit(Opcodes.InitFrame, new int[] { 3 })
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
+      .Emit(Opcodes.DefArg, new int[] { 5 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.ArgVar, new int[] { 1 })
+      .Emit(Opcodes.DefArg, new int[] { 2 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.ArgVar, new int[] { 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Call, new int[] { 0, 0, 66 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(1), new Const(0), new Const(10), new Const(2) });
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 5);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSuspend()
   {
     string bhl = @"
