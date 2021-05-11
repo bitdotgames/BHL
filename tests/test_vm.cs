@@ -2280,14 +2280,15 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       //foo
-      .Emit(Opcodes.InitFrame, new int[] { 3 })
+      .Emit(Opcodes.InitFrame, new int[] { 3+1/*for cargs bits*/ })
+      .Emit(Opcodes.ArgVar, new int[] { 3 }) //cargs bits
       .Emit(Opcodes.ArgVar, new int[] { 0 })
-      .Emit(Opcodes.DefArg, new int[] { 5 })
+      .Emit(Opcodes.DefArg, new int[] { 0, 5 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.Sub)
       .Emit(Opcodes.ArgVar, new int[] { 1 })
-      .Emit(Opcodes.DefArg, new int[] { 2 })
+      .Emit(Opcodes.DefArg, new int[] { 1, 2 })
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.ArgVar, new int[] { 2 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -2338,14 +2339,15 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       //foo
-      .Emit(Opcodes.InitFrame, new int[] { 3 })
+      .Emit(Opcodes.InitFrame, new int[] { 3+1/*for cargs bits*/ })
+      .Emit(Opcodes.ArgVar, new int[] { 3 }) //cargs bits
       .Emit(Opcodes.ArgVar, new int[] { 0 })
-      .Emit(Opcodes.DefArg, new int[] { 5 })
+      .Emit(Opcodes.DefArg, new int[] { 0, 5 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.Sub)
       .Emit(Opcodes.ArgVar, new int[] { 1 })
-      .Emit(Opcodes.DefArg, new int[] { 2 })
+      .Emit(Opcodes.DefArg, new int[] { 1, 2 })
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.ArgVar, new int[] { 2 })
       .Emit(Opcodes.GetVar, new int[] { 0 })

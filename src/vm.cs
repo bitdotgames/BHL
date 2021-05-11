@@ -172,7 +172,7 @@ public class VM
 
       {
         var opcode = (Opcodes)bytecode[ip];
-        //Console.WriteLine("OP " + opcode + " IP " + string.Format("0x{0:x2}", ip));
+        //Console.WriteLine("OP " + opcode + " @ " + string.Format("0x{0:x2}", ip));
         switch(opcode)
         {
           case Opcodes.Nop:
@@ -275,20 +275,20 @@ public class VM
           case Opcodes.Call:
           {
             byte func_call_type = (byte)Bytecode.Decode(bytecode, ref ip);
-
             //bhl userland call
             if(func_call_type == 0)
             {
               uint func_ip = Bytecode.Decode(bytecode, ref ip);
-
-              var fr = new Frame();
-
               uint args_bits = Bytecode.Decode(bytecode, ref ip); 
               var args_info = new FuncArgsInfo(args_bits);
+
+              //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + ", default args: " + args_info.HasDefaultUsedArgs());
+              var fr = new Frame();
               for(int i = 0; i < args_info.CountArgs(); ++i)
                 fr.PushValueManual(curr_frame.PopValueManual());
+              if(args_info.HasDefaultUsedArgs())
+                fr.PushValueManual(Val.NewNum(args_bits));
 
-              //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + " " + fr.GetHashCode());
               //let's remember ip to return to
               fr.return_ip = ip;
               frames.Push(fr);
@@ -441,9 +441,13 @@ public class VM
           break;
           case Opcodes.DefArg:
           {
-            uint arg = Bytecode.Decode(bytecode, ref ip);
-            if(curr_frame.stack.Count > 0)
-              ip = ip + arg;
+            byte def_arg_idx = (byte)Bytecode.Decode(bytecode, ref ip);
+            uint jump_pos = Bytecode.Decode(bytecode, ref ip);
+            var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
+            //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
+            //NOTE: if default argument is not used we need to jump out of default argument calculation code
+            if(!args_info.IsDefaultArgUsed(def_arg_idx))
+              ip += jump_pos;
           }
           break;
           case Opcodes.Block:

@@ -352,6 +352,8 @@ public class AST_FuncDecl  : AST
   public uint nname2;
   public string name = "";
   public uint local_vars_num;
+  public byte required_args_num;
+  public byte default_args_num;
 
   static public  new  uint STATIC_CLASS_ID = 19638951;
 
@@ -375,6 +377,8 @@ public class AST_FuncDecl  : AST
     nname2 = 0;
     name = "";
     local_vars_num = 0;
+    required_args_num = 0;
+    default_args_num = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -387,11 +391,13 @@ public class AST_FuncDecl  : AST
     MetaHelper.sync(ctx, ref nname2);
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref local_vars_num);
+    MetaHelper.sync(ctx, ref required_args_num);
+    MetaHelper.sync(ctx, ref default_args_num);
   }
 
   public override int getFieldsCount() 
   {
-    return 7; 
+    return 9; 
   }
 }
 

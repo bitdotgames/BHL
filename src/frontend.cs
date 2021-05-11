@@ -1405,7 +1405,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  //a list since it's easier to traverse by index
+  //NOTE: a list is used instead of stack, so that it's easier to traverse by index
   public List<FuncSymbol> func_decl_stack = new List<FuncSymbol>();
 
   void PushFuncDecl(FuncSymbol symb)
@@ -1648,6 +1648,12 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope = locals;
 
     ast.local_vars_num = (uint)symb.GetMembers().Count;
+    ast.required_args_num = (byte)symb.GetRequiredArgsNum();
+    ast.default_args_num = (byte)symb.GetDefaultArgsNum();
+    //let's reserve space for cargs bits
+    if(ast.default_args_num > 0)
+      ++ast.local_vars_num;
+
     PeekAST().AddChild(ast);
 
     return null;

@@ -38,9 +38,9 @@ public enum Opcodes
   Greater         = 0x3B,
   LessOrEqual     = 0x3C,
   GreaterOrEqual  = 0x3D,
-  DefArg          = 0x3E, //opcode for skipping func def args
+  DefArg          = 0x3E, 
   TypeCast        = 0x3F,
-  Block      = 0x40,
+  Block           = 0x40,
   ArrNew          = 0x41,
   Lambda          = 0x42,
   UseUpval        = 0x43,
@@ -130,6 +130,7 @@ public class Compiler : AST_Visitor
 
   List<Bytecode> scopes = new List<Bytecode>();
   List<AST_Block> ctrl_blocks = new List<AST_Block>();
+  List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
 
   Dictionary<string, uint> func2ip = new Dictionary<string, uint>();
@@ -428,7 +429,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.DefArg,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 1, 2 }
       }
     );
     DeclareOpcode(
@@ -555,13 +556,17 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
+    func_decls.Add(ast);
     uint ip = EnterNewScope();
     func2ip.Add(ast.name, ip);
     if(ast.local_vars_num > 0)
       Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num });
+    if(ast.default_args_num > 0)
+      Emit(Opcodes.ArgVar, new int[] { (int)ast.local_vars_num-1 });
     VisitChildren(ast);
     Emit(Opcodes.Return);
     LeaveCurrentScope();
+    func_decls.RemoveAt(func_decls.Count-1);
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
@@ -791,7 +796,7 @@ public class Compiler : AST_Visitor
         if(func2ip.TryGetValue(ast.name, out offset))
         {
           VisitChildren(ast);
-          Emit(Opcodes.Call, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});//figure out how cargs works
+          Emit(Opcodes.Call, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});
         }
         else if(symbols.Resolve(ast.name) is VM_FuncBindSymbol fsymb)
         {
@@ -799,7 +804,7 @@ public class Compiler : AST_Visitor
           if(func_idx == -1)
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           VisitChildren(ast);
-          Emit(Opcodes.Call, new int[] {(int)1, (int)func_idx, (int)ast.cargs_bits});//figure out how cargs works
+          Emit(Opcodes.Call, new int[] {(int)1, (int)func_idx, (int)ast.cargs_bits});
         }
         else
           throw new Exception("Func '" + ast.name + "' code not found");
@@ -953,13 +958,14 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_VarDecl ast)
   {
+    //checking of there are default args
     if(ast.is_func_arg && ast.children.Count > 0)
-    {
-      var index = 0;
-      Emit(Opcodes.DefArg, new int[] { index });
-      var pointer = GetCurrentScope().Position;
+    {                  
+      var func_decl = func_decls[func_decls.Count-1];
+      Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - func_decl.required_args_num, 0 /*dummy placeholder for jump position*/ });
+      var pos = GetCurrentScope().Position;
       VisitChildren(ast);
-      PatchJumpOffsetToCurrPos(pointer);
+      PatchJumpOffsetToCurrPos(pos);
     }
 
     Emit(ast.is_func_arg ? Opcodes.ArgVar : Opcodes.DeclVar, new int[] { (int)ast.symb_idx });
