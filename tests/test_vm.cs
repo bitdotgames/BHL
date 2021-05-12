@@ -3105,6 +3105,40 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestWhileDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""hey"")
+      }
+      int i = 0
+      while(i < 2) {
+        defer {
+          trace(""while"")
+        }
+        i = i + 1
+      }
+      trace(""foo"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("whilewhilefoohey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestParalDefer()
   {
     string bhl = @"
@@ -3379,6 +3413,29 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual("lmb1lmb2foohey", log.ToString());
     CommonChecks(vm);
   }
+
+  //[IsTested()]
+  //public void TestEmptyUserClass()
+  //{
+  //  string bhl = @"
+
+  //  class Foo { }
+  //    
+  //  func bool test() 
+  //  {
+  //    Foo f = {}
+  //    return f != null
+  //  }
+  //  ";
+
+  //  var intp = Interpret(bhl);
+  //  var node = intp.GetFuncCallNode("test");
+  //  bool res = ExtractBool(ExecNode(node));
+
+  //  //NodeDump(node);
+  //  AssertTrue(res);
+  //  CommonChecks(intp);
+  //}
 
   [IsTested()]
   public void TestStartSeveralFibers()
