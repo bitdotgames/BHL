@@ -3414,28 +3414,36 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
-  //public void TestEmptyUserClass()
-  //{
-  //  string bhl = @"
+  [IsTested()]
+  public void TestEmptyUserClass()
+  {
+    string bhl = @"
 
-  //  class Foo { }
-  //    
-  //  func bool test() 
-  //  {
-  //    Foo f = {}
-  //    return f != null
-  //  }
-  //  ";
+    class Foo { }
+      
+    func bool test() 
+    {
+      Foo f = new Foo
+      return f != null
+    }
+    ";
 
-  //  var intp = Interpret(bhl);
-  //  var node = intp.GetFuncCallNode("test");
-  //  bool res = ExtractBool(ExecNode(node));
+    var c = Compile(bhl);
 
-  //  //NodeDump(node);
-  //  AssertTrue(res);
-  //  CommonChecks(intp);
-  //}
+    //var expected = 
+    //  new Compiler(c.Symbols)
+    //  .Emit(Opcodes.Constant, new int[] { 0 })
+    //  .Emit(Opcodes.ReturnVal)
+    //  .Emit(Opcodes.Return)
+    //  ;
+    //AssertEqual(c, expected);
+
+    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertTrue(vm.PopValue().bval);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestStartSeveralFibers()
