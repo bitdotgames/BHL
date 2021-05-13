@@ -41,7 +41,7 @@ public enum Opcodes
   DefArg          = 0x3E, 
   TypeCast        = 0x3F,
   Block           = 0x40,
-  ArrNew          = 0x41,
+  New             = 0x41,
   Lambda          = 0x42,
   UseUpval        = 0x43,
   InitFrame       = 0x44,
@@ -435,7 +435,8 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.ArrNew
+        name = Opcodes.New,
+        operand_width = new int[] { 4 }
       }
     );
     DeclareOpcode(
@@ -759,16 +760,8 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_New ast)
   {
-    switch(ast.type)
-    {
-      case "[]":
-        Emit(Opcodes.ArrNew);
-        VisitChildren(ast);
-      break;
-      default:
-        throw new Exception("Not supported: " + ast.Name());
-        //VisitChildren(ast);
-    }
+    Emit(Opcodes.New, new int[] { (int)ast.ntype });
+    VisitChildren(ast);
   }
 
   public override void DoVisit(AST_Inc ast)

@@ -455,9 +455,13 @@ public class VM
             VisitBlock(ref ip, curr_frame, ref instruction, defer_scope);
           }
           break;
-          case Opcodes.ArrNew:
+          case Opcodes.New:
           {
-            curr_frame.PushValueManual(Val.NewObj(ValList.New()));
+            uint ntype = Bytecode.Decode(bytecode, ref ip);
+            if(ntype == GenericArrayTypeSymbol.VM_Type) 
+              curr_frame.PushValueManual(Val.NewObj(ValList.New()));
+            else
+              throw new Exception("Not supported opcode new type: " + ntype);
           }
           break;
           default:
