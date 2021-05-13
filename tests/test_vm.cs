@@ -3421,27 +3421,26 @@ public class BHL_TestVM : BHL_TestBase
 
     class Foo { }
       
-    func bool test() 
+    func test() 
     {
       Foo f = new Foo
-      return f != null
     }
     ";
 
     var c = Compile(bhl);
 
-    //var expected = 
-    //  new Compiler(c.Symbols)
-    //  .Emit(Opcodes.Constant, new int[] { 0 })
-    //  .Emit(Opcodes.ReturnVal)
-    //  .Emit(Opcodes.Return)
-    //  ;
-    //AssertEqual(c, expected);
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.New, new int[] { (int)(new HashedName("Foo").n1) }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
 
     var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
   }
 
