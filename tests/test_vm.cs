@@ -3421,26 +3421,36 @@ public class BHL_TestVM : BHL_TestBase
 
     class Foo { }
       
-    func test() 
+    func bool test() 
     {
       Foo f = new Foo
+      return f != null
     }
     ";
 
-    var c = Compile(bhl);
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
 
     var expected = 
       new Compiler(c.Symbols)
+      .Emit(Opcodes.ClassBegin, new int[] { (int)(new HashedName("Foo").n1), 0 })
+      .Emit(Opcodes.ClassEnd)
+      .Emit(Opcodes.Return)
       .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.New, new int[] { (int)(new HashedName("Foo").n1) }) 
       .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.NotEqual)
+      .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
-    var vm = new VM(c.Symbols, c.GetBytes(), c.Constants, c.Func2Offset);
+    var vm = new VM(globs, c.GetBytes(), c.Constants, c.Func2Offset);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertTrue(vm.PopValue().bval);
     CommonChecks(vm);
   }
 

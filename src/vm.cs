@@ -124,12 +124,53 @@ public class VM
   List<Fiber> fibers = new List<Fiber>();
   internal Fiber curr_fiber;
 
+  public delegate void ClassCreator(ref Val res);
+  public delegate void FieldGetter(Val v, ref Val res);
+  public delegate void FieldSetter(ref Val v, Val nv);
+  public delegate void FieldRef(Val v, out Val res);
+
   public VM(BaseScope symbols, byte[] bytecode, List<Const> constants, Dictionary<string, uint> func2ip)
   {
     this.symbols = symbols;
     this.bytecode = bytecode;
     this.constants = constants;
     this.func2ip = func2ip;
+
+    DefineGlobals();
+  }
+
+  void DefineGlobals()
+  {
+    if(bytecode.Length == 0)
+      return;
+
+    uint ip = 0;
+    while(true)
+    {
+      var opcode = (Opcodes)bytecode[ip];
+      switch(opcode)
+      {
+        case Opcodes.ClassBegin:
+        {
+          uint ntype = (uint)Bytecode.Decode(bytecode, ref ip);
+          /*uint pntype = (uint)*/Bytecode.Decode(bytecode, ref ip);
+          ClassSymbolAST parent = null;
+          var cl = new ClassSymbolAST(new HashedName(ntype), null, parent);
+          symbols.Define(cl);
+        }
+        break;
+        case Opcodes.ClassEnd:
+        {
+        }
+        break;
+        case Opcodes.Return:
+          //no more global defines
+          return;
+        default:
+          throw new Exception("Not supported opcode: " + opcode);
+      }
+      ++ip;
+    }
   }
 
   public int Start(string func)
@@ -458,10 +499,7 @@ public class VM
           case Opcodes.New:
           {
             uint ntype = Bytecode.Decode(bytecode, ref ip);
-            if(ntype == GenericArrayTypeSymbol.VM_Type) 
-              curr_frame.PushValueManual(Val.NewObj(ValList.New()));
-            else
-              throw new Exception("Not supported opcode new type: " + ntype);
+            HandleNew(curr_frame, ntype);
           }
           break;
           default:
@@ -476,6 +514,26 @@ public class VM
     }
 
     return BHS.SUCCESS;
+  }
+
+  void HandleNew(Frame curr_frame, uint ntype)
+  {
+    if(ntype == GenericArrayTypeSymbol.VM_Type) 
+    {
+      curr_frame.PushValueManual(Val.NewObj(ValList.New()));
+      return;
+    }
+
+    var cls = symbols.Resolve(ntype) as ClassSymbol;
+    if(cls == null)
+      throw new Exception("Could not find class symbol: " + ntype);
+
+    if(cls.creator == null)
+      throw new Exception("Class doesn't have a creator: " + ntype);
+
+    var val = Val.New(); 
+    cls.VM_creator(ref val);
+    curr_frame.PushValueManual(val);
   }
 
   static void AttachInstruction(ref IInstruction instruction, IInstruction candidate)

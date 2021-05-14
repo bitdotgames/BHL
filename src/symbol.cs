@@ -194,13 +194,15 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   public SymbolsDictionary members = new SymbolsDictionary();
 
   public Interpreter.ClassCreator creator;
+  public VM.ClassCreator VM_creator;
 
   public ClassSymbol(
     WrappedNode n, 
     HashedName name, 
     TypeRef super_class_ref, 
     Scope enclosing_scope, 
-    Interpreter.ClassCreator creator = null
+    Interpreter.ClassCreator creator = null,
+    VM.ClassCreator VM_creator = null
   )
     : base(n, name, enclosing_scope)
   {
@@ -212,6 +214,7 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     }
 
     this.creator = creator;
+    this.VM_creator = VM_creator;
   }
 
   public virtual HashedName Type()
@@ -1061,6 +1064,7 @@ public class ClassSymbolAST : ClassSymbol
   {
     this.decl = decl;
     this.creator = ClassCreator;
+    this.VM_creator = VM_ClassCreator;
   }
 
   void ClassCreator(ref DynVal res)
@@ -1102,6 +1106,48 @@ public class ClassSymbolAST : ClassSymbol
       }
 
       tb.Set(m.name, dv);
+    }
+  }
+
+  void VM_ClassCreator(ref Val res)
+  {
+    ValList tb = null;
+    if(super_class != null)
+    {
+      super_class.VM_creator(ref res);
+      tb = (ValList)res.obj;
+    }
+    else
+    {
+      tb = ValList.New();
+      res.SetObj(tb);
+    }
+    //NOTE: storing class name hash in _num attribute
+    res._num = decl.nname; 
+
+    for(int i=0;i<members.Count;++i)
+    {
+      var m = members[i];
+      var dv = Val.New();
+      //NOTE: proper default init of built-in types
+      if(m.type.name.IsEqual(SymbolTable.symb_float.type.name))
+        dv.SetNum(0);
+      else if(m.type.name.IsEqual(SymbolTable.symb_int.type.name))
+        dv.SetNum(0);
+      else if(m.type.name.IsEqual(SymbolTable.symb_string.type.name))
+        dv.SetStr("");
+      else if(m.type.name.IsEqual(SymbolTable.symb_bool.type.name))
+        dv.SetBool(false);
+      else 
+      {
+        var t = m.type.Get();
+        if(t is EnumSymbol)
+          dv.SetNum(0);
+        else
+          dv.SetNil();
+      }
+
+      tb.Add(dv);
     }
   }
 }

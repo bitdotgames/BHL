@@ -46,6 +46,9 @@ public enum Opcodes
   UseUpval        = 0x43,
   InitFrame       = 0x44,
   Inc             = 0x45,
+  ClassBegin      = 0x46,
+  ClassMember     = 0x47,
+  ClassEnd        = 0x48,
 }
 
 public class Const
@@ -129,6 +132,7 @@ public class Compiler : AST_Visitor
   }
 
   List<Bytecode> scopes = new List<Bytecode>();
+  Bytecode global = new Bytecode();
   List<AST_Block> ctrl_blocks = new List<AST_Block>();
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
@@ -155,25 +159,37 @@ public class Compiler : AST_Visitor
     Visit(ast);
   }
 
-  Bytecode GetCurrentScope()
+  Bytecode PeekScope()
   {
     return this.scopes[this.scopes.Count-1];
   }
 
-  uint EnterNewScope()
+  uint PushScope()
   {
     scopes.Add(new Bytecode());
 
     return (uint)scopes[0].Length;
   }
  
-  Bytecode LeaveCurrentScope(bool auto_append = true)
+  Bytecode PopScope(bool auto_append = true)
   {
-    var curr_scope = GetCurrentScope();
+    var curr_scope = PeekScope();
     if(auto_append)
       scopes[0].Write(curr_scope);
     scopes.RemoveAt(scopes.Count-1);
     return curr_scope;
+  }
+
+  void PushGlobalScope()
+  {
+    scopes.Add(global);
+  }
+
+  void PopGlobalScope()
+  {
+    var scope = PopScope(auto_append: false);
+    if(scope != global)
+      throw new Exception("Unbalanced push/pop global scope");
   }
 
   int AddConstant(AST_Literal lt)
@@ -453,6 +469,26 @@ public class Compiler : AST_Visitor
         operand_width = new int[] { 2/*var idx*/ }
       }
     );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.ClassBegin,
+        operand_width = new int[] { 4/*ntype*/, 4/*parent ntype*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.ClassMember,
+        operand_width = new int[] { 4/*ntype*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.ClassEnd
+      }
+    );
   }
 
   void DeclareOpcode(OpDefinition def)
@@ -470,7 +506,7 @@ public class Compiler : AST_Visitor
 
   public Compiler Emit(Opcodes op, int[] operands = null)
   {
-    var curr_scope = GetCurrentScope();
+    var curr_scope = PeekScope();
     Emit(curr_scope, op, operands);
     return this;
   }
@@ -519,7 +555,7 @@ public class Compiler : AST_Visitor
     //condition
     Visit(ast.children[idx]);
     Emit(Opcodes.CondJump, new int[] { (int)Bytecode.GetMaxValueForBytes(1) /*dummy placeholder*/});
-    int patch_pos = GetCurrentScope().Position;
+    int patch_pos = PeekScope().Position;
     //body
     Visit(ast.children[idx+1]);
     return patch_pos;
@@ -527,7 +563,7 @@ public class Compiler : AST_Visitor
 
   void PatchJumpOffsetToCurrPos(int jump_opcode_pos)
   {
-    var curr_scope = GetCurrentScope();
+    var curr_scope = PeekScope();
     int offset = curr_scope.Position - jump_opcode_pos;
     if(offset < 0 || Bytecode.GetBytesRequired((uint)offset) > 1) 
       throw new Exception("Invalid offset: " + offset);
@@ -558,7 +594,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     func_decls.Add(ast);
-    uint ip = EnterNewScope();
+    uint ip = PushScope();
     func2ip.Add(ast.name, ip);
     if(ast.local_vars_num > 0)
       Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num });
@@ -566,19 +602,19 @@ public class Compiler : AST_Visitor
       Emit(Opcodes.ArgVar, new int[] { (int)ast.local_vars_num-1 });
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    LeaveCurrentScope();
+    PopScope();
     func_decls.RemoveAt(func_decls.Count-1);
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
-    EnterNewScope();
+    PushScope();
     //NOTE: since lambda's body can appear anywhere in the 
     //      compiled code we skip it by uncoditional jump over it
     Emit(Opcodes.Jump, new int[] {(int)Bytecode.GetMaxValueForBytes(2)/*dummy placeholder*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    var bytecode = LeaveCurrentScope(auto_append: false);
+    var bytecode = PopScope(auto_append: false);
 
     long jump_pos = bytecode.Length - 2;
     if(jump_pos > Bytecode.GetMaxValueForBytes(2))
@@ -591,7 +627,7 @@ public class Compiler : AST_Visitor
       ip += (uint)scopes[i].Length;
     func2ip.Add(ast.name, ip);
 
-    GetCurrentScope().Write(bytecode);
+    PeekScope().Write(bytecode);
 
     Emit(Opcodes.Lambda, new int[] {(int)ip, (int)ast.local_vars_num});
     foreach(var p in ast.uses)
@@ -600,10 +636,40 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_ClassDecl ast)
   {
+    PushGlobalScope();
+
+    var name = ast.Name();
+    //TODO:?
+    //CheckNameIsUnique(name);
+
+    var parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
+
+    var cl = new ClassSymbolAST(name, ast, parent);
+    symbols.Define(cl);
+
+    //TODO: Use Constant mechanism for actual string name storage.
+    //      This should be useful for reflection.
+    Emit(Opcodes.ClassBegin, new int[] { (int)name.n1, (int)(parent == null ? 0 : parent.GetName().n1) });
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var child = ast.children[i];
+      var vd = child as AST_VarDecl;
+      if(vd != null)
+      {
+        cl.Define(new FieldSymbolAST(vd.name, vd.ntype));
+        //TODO: Use Constant mechanism for actual string name storage.
+        //      This should be useful for reflection.
+        Emit(Opcodes.ClassMember, new int[] { (int)vd.ntype });
+      }
+    }
+    Emit(Opcodes.ClassEnd);
+
+    PopGlobalScope();
   }
 
   public override void DoVisit(AST_EnumDecl ast)
   {
+    throw new Exception("Not supported : " + ast);
   }
 
   public override void DoVisit(AST_Block ast)
@@ -648,7 +714,7 @@ public class Compiler : AST_Visitor
           if(ast.children.Count > 2)
           {
             Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-            last_jmp_op_pos = GetCurrentScope().Position;
+            last_jmp_op_pos = PeekScope().Position;
             PatchJumpOffsetToCurrPos(if_op_pos);
           }
           else
@@ -663,9 +729,9 @@ public class Compiler : AST_Visitor
       break;
       case EnumBlock.WHILE:
       {
-        int block_ip = GetCurrentScope().Position;
+        int block_ip = PeekScope().Position;
         int cond_op_pos = EmitConditionAndBody(ast, 0);
-        Emit(Opcodes.LoopJump, new int[] { GetCurrentScope().Position - block_ip
+        Emit(Opcodes.LoopJump, new int[] { PeekScope().Position - block_ip
                                            + LookupOpcode(Opcodes.LoopJump).operand_width[0] });
         PatchJumpOffsetToCurrPos(cond_op_pos);
       }
@@ -734,7 +800,7 @@ public class Compiler : AST_Visitor
 
     if(need_to_enter_block)
       Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
-    GetCurrentScope().Write(block_code);
+    PeekScope().Write(block_code);
   }
 
   void VisitDefer(AST_Block ast)
@@ -749,7 +815,7 @@ public class Compiler : AST_Visitor
     scopes.RemoveAt(scopes.Count-1);
 
     Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
-    GetCurrentScope().Write(block_code);
+    PeekScope().Write(block_code);
   }
 
   public override void DoVisit(AST_TypeCast ast)
@@ -857,30 +923,32 @@ public class Compiler : AST_Visitor
     }
   }
 
-  public override void DoVisit(AST_Return node)
+  public override void DoVisit(AST_Return ast)
   {
-    VisitChildren(node);
+    VisitChildren(ast);
     Emit(Opcodes.ReturnVal);
   }
 
-  public override void DoVisit(AST_Break node)
+  public override void DoVisit(AST_Break ast)
   {
+    throw new Exception("Not supported : " + ast);
   }
 
-  public override void DoVisit(AST_PopValue node)
+  public override void DoVisit(AST_PopValue ast)
   {
+    throw new Exception("Not supported : " + ast);
   }
 
-  public override void DoVisit(AST_Literal node)
+  public override void DoVisit(AST_Literal ast)
   {
-    Emit(Opcodes.Constant, new int[] { AddConstant(node) });
+    Emit(Opcodes.Constant, new int[] { AddConstant(ast) });
   }
 
-  public override void DoVisit(AST_BinaryOpExp node)
+  public override void DoVisit(AST_BinaryOpExp ast)
   {
-    VisitChildren(node);
+    VisitChildren(ast);
 
-    switch(node.type)
+    switch(ast.type)
     {
       case EnumBinaryOp.AND:
         Emit(Opcodes.And);
@@ -928,15 +996,15 @@ public class Compiler : AST_Visitor
         Emit(Opcodes.LessOrEqual);
       break;
       default:
-        throw new Exception("Not supported binary type: " + node.type);
+        throw new Exception("Not supported binary type: " + ast.type);
     }
   }
 
-  public override void DoVisit(AST_UnaryOpExp node)
+  public override void DoVisit(AST_UnaryOpExp ast)
   {
-    VisitChildren(node);
+    VisitChildren(ast);
 
-    switch(node.type)
+    switch(ast.type)
     {
       case EnumUnaryOp.NOT:
         Emit(Opcodes.UnaryNot);
@@ -945,7 +1013,7 @@ public class Compiler : AST_Visitor
         Emit(Opcodes.UnaryNeg);
       break;
       default:
-        throw new Exception("Not supported unary type: " + node.type);
+        throw new Exception("Not supported unary type: " + ast.type);
     }
   }
 
@@ -956,7 +1024,7 @@ public class Compiler : AST_Visitor
     {                  
       var func_decl = func_decls[func_decls.Count-1];
       Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - func_decl.required_args_num, 0 /*dummy placeholder for jump position*/ });
-      var pos = GetCurrentScope().Position;
+      var pos = PeekScope().Position;
       VisitChildren(ast);
       PatchJumpOffsetToCurrPos(pos);
     }
@@ -964,19 +1032,19 @@ public class Compiler : AST_Visitor
     Emit(ast.is_func_arg ? Opcodes.ArgVar : Opcodes.DeclVar, new int[] { (int)ast.symb_idx });
   }
 
-  public override void DoVisit(bhl.AST_JsonObj node)
+  public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    throw new Exception("Not supported : " + node);
+    throw new Exception("Not supported : " + ast);
   }
 
-  public override void DoVisit(bhl.AST_JsonArr node)
+  public override void DoVisit(bhl.AST_JsonArr ast)
   {
-    throw new Exception("Not supported : " + node);
+    throw new Exception("Not supported : " + ast);
   }
 
-  public override void DoVisit(bhl.AST_JsonPair node)
+  public override void DoVisit(bhl.AST_JsonPair ast)
   {
-    throw new Exception("Not supported : " + node);
+    throw new Exception("Not supported : " + ast);
   }
 
 #endregion
