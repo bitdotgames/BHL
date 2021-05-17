@@ -93,9 +93,9 @@ public class VM
     }
   }
 
+  //TODO: entities below should be encapsulated within modules later
   List<Const> constants;
   Dictionary<string, uint> func2ip;
-
   byte[] bytecode;
 
   BaseScope symbols;
@@ -129,33 +129,42 @@ public class VM
   public delegate void FieldSetter(ref Val v, Val nv);
   public delegate void FieldRef(Val v, out Val res);
 
-  public VM(BaseScope symbols, byte[] bytecode, List<Const> constants, Dictionary<string, uint> func2ip)
+  public VM(
+    BaseScope symbols, 
+    byte[] bytecode, 
+    List<Const> constants, 
+    Dictionary<string, uint> func2ip,
+    byte[] initcode = null
+    )
   {
     this.symbols = symbols;
     this.bytecode = bytecode;
     this.constants = constants;
     this.func2ip = func2ip;
 
-    DefineGlobals();
+    ExecInit(initcode);
   }
 
-  void DefineGlobals()
+  void ExecInit(byte[] initcode)
   {
-    if(bytecode.Length == 0)
+    if(initcode == null || initcode.Length == 0)
       return;
 
     uint ip = 0;
-    while(true)
+    while(ip < initcode.Length)
     {
-      var opcode = (Opcodes)bytecode[ip];
+      var opcode = (Opcodes)initcode[ip];
       switch(opcode)
       {
         case Opcodes.ClassBegin:
         {
-          uint ntype = (uint)Bytecode.Decode(bytecode, ref ip);
-          /*uint pntype = (uint)*/Bytecode.Decode(bytecode, ref ip);
+          uint ntype = (uint)Bytecode.Decode(initcode, ref ip);
+          uint nptype = (uint)Bytecode.Decode(initcode, ref ip);
           ClassSymbolAST parent = null;
-          var cl = new ClassSymbolAST(new HashedName(ntype), null, parent);
+          var decl = new AST_ClassDecl();
+          decl.nname = ntype;
+          decl.nparent = nptype;
+          var cl = new ClassSymbolAST(new HashedName(ntype), decl, parent);
           symbols.Define(cl);
         }
         break;
@@ -163,9 +172,6 @@ public class VM
         {
         }
         break;
-        case Opcodes.Return:
-          //no more global defines
-          return;
         default:
           throw new Exception("Not supported opcode: " + opcode);
       }

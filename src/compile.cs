@@ -131,8 +131,9 @@ public class Compiler : AST_Visitor
     }
   }
 
-  List<Bytecode> scopes = new List<Bytecode>();
-  Bytecode global = new Bytecode();
+  Bytecode initcode = new Bytecode();
+  Bytecode bytecode = new Bytecode();
+  List<Bytecode> code_stack = new List<Bytecode>() { null };
   List<AST_Block> ctrl_blocks = new List<AST_Block>();
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
@@ -151,7 +152,26 @@ public class Compiler : AST_Visitor
     DeclareOpcodes();
 
     this.symbols = symbols;
-    scopes.Add(new Bytecode());
+
+    UseByteCode();
+  }
+
+  //NOTE: public for testing purposes only
+  public Compiler UseByteCode()
+  {
+    if(code_stack.Count != 1)
+      throw new Exception("Invalid state");
+    code_stack[0] = bytecode;
+    return this;
+  }
+
+  //NOTE: public for testing purposes only
+  public Compiler UseInitCode()
+  {
+    if(code_stack.Count != 1)
+      throw new Exception("Invalid state");
+    code_stack[0] = initcode;
+    return this;
   }
 
   public void Compile(AST ast)
@@ -159,37 +179,25 @@ public class Compiler : AST_Visitor
     Visit(ast);
   }
 
-  Bytecode PeekScope()
+  Bytecode PeekCode()
   {
-    return this.scopes[this.scopes.Count-1];
+    return this.code_stack[this.code_stack.Count-1];
   }
 
-  uint PushScope()
+  uint PushCode()
   {
-    scopes.Add(new Bytecode());
+    code_stack.Add(new Bytecode());
 
-    return (uint)scopes[0].Length;
+    return (uint)code_stack[0].Length;
   }
  
-  Bytecode PopScope(bool auto_append = true)
+  Bytecode PopCode(bool auto_append = true)
   {
-    var curr_scope = PeekScope();
+    var curr_scope = PeekCode();
     if(auto_append)
-      scopes[0].Write(curr_scope);
-    scopes.RemoveAt(scopes.Count-1);
+      code_stack[0].Write(curr_scope);
+    code_stack.RemoveAt(code_stack.Count-1);
     return curr_scope;
-  }
-
-  void PushGlobalScope()
-  {
-    scopes.Add(global);
-  }
-
-  void PopGlobalScope()
-  {
-    var scope = PopScope(auto_append: false);
-    if(scope != global)
-      throw new Exception("Unbalanced push/pop global scope");
   }
 
   int AddConstant(AST_Literal lt)
@@ -504,9 +512,10 @@ public class Compiler : AST_Visitor
     return def;
   }
 
+  //NOTE: public for testing purposes only
   public Compiler Emit(Opcodes op, int[] operands = null)
   {
-    var curr_scope = PeekScope();
+    var curr_scope = PeekCode();
     Emit(curr_scope, op, operands);
     return this;
   }
@@ -555,7 +564,7 @@ public class Compiler : AST_Visitor
     //condition
     Visit(ast.children[idx]);
     Emit(Opcodes.CondJump, new int[] { (int)Bytecode.GetMaxValueForBytes(1) /*dummy placeholder*/});
-    int patch_pos = PeekScope().Position;
+    int patch_pos = PeekCode().Position;
     //body
     Visit(ast.children[idx+1]);
     return patch_pos;
@@ -563,16 +572,21 @@ public class Compiler : AST_Visitor
 
   void PatchJumpOffsetToCurrPos(int jump_opcode_pos)
   {
-    var curr_scope = PeekScope();
+    var curr_scope = PeekCode();
     int offset = curr_scope.Position - jump_opcode_pos;
     if(offset < 0 || Bytecode.GetBytesRequired((uint)offset) > 1) 
       throw new Exception("Invalid offset: " + offset);
     curr_scope.PatchAt(jump_opcode_pos - 1, (byte)offset);
   }
 
-  public byte[] GetBytes()
+  public byte[] GetByteCode()
   {
-    return scopes[0].GetBytes();
+    return bytecode.GetBytes();
+  }
+
+  public byte[] GetInitCode()
+  {
+    return initcode.GetBytes();
   }
 
 #region Visits
@@ -594,7 +608,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     func_decls.Add(ast);
-    uint ip = PushScope();
+    uint ip = PushCode();
     func2ip.Add(ast.name, ip);
     if(ast.local_vars_num > 0)
       Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num });
@@ -602,19 +616,19 @@ public class Compiler : AST_Visitor
       Emit(Opcodes.ArgVar, new int[] { (int)ast.local_vars_num-1 });
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    PopScope();
+    PopCode();
     func_decls.RemoveAt(func_decls.Count-1);
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
-    PushScope();
+    PushCode();
     //NOTE: since lambda's body can appear anywhere in the 
     //      compiled code we skip it by uncoditional jump over it
     Emit(Opcodes.Jump, new int[] {(int)Bytecode.GetMaxValueForBytes(2)/*dummy placeholder*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    var bytecode = PopScope(auto_append: false);
+    var bytecode = PopCode(auto_append: false);
 
     long jump_pos = bytecode.Length - 2;
     if(jump_pos > Bytecode.GetMaxValueForBytes(2))
@@ -623,11 +637,11 @@ public class Compiler : AST_Visitor
     bytecode.PatchAt(1, (ushort)jump_pos, max_bytes: 2, gap_filler: (byte)Opcodes.Nop);
 
     uint ip = 2;//taking into account 'jump out of lambda'
-    for(int i=0;i < scopes.Count;++i)
-      ip += (uint)scopes[i].Length;
+    for(int i=0;i < code_stack.Count;++i)
+      ip += (uint)code_stack[i].Length;
     func2ip.Add(ast.name, ip);
 
-    PeekScope().Write(bytecode);
+    PeekCode().Write(bytecode);
 
     Emit(Opcodes.Lambda, new int[] {(int)ip, (int)ast.local_vars_num});
     foreach(var p in ast.uses)
@@ -636,7 +650,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_ClassDecl ast)
   {
-    PushGlobalScope();
+    UseInitCode();
 
     var name = ast.Name();
     //TODO:?
@@ -664,7 +678,7 @@ public class Compiler : AST_Visitor
     }
     Emit(Opcodes.ClassEnd);
 
-    PopGlobalScope();
+    UseByteCode();
   }
 
   public override void DoVisit(AST_EnumDecl ast)
@@ -714,7 +728,7 @@ public class Compiler : AST_Visitor
           if(ast.children.Count > 2)
           {
             Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-            last_jmp_op_pos = PeekScope().Position;
+            last_jmp_op_pos = PeekCode().Position;
             PatchJumpOffsetToCurrPos(if_op_pos);
           }
           else
@@ -729,9 +743,9 @@ public class Compiler : AST_Visitor
       break;
       case EnumBlock.WHILE:
       {
-        int block_ip = PeekScope().Position;
+        int block_ip = PeekCode().Position;
         int cond_op_pos = EmitConditionAndBody(ast, 0);
-        Emit(Opcodes.LoopJump, new int[] { PeekScope().Position - block_ip
+        Emit(Opcodes.LoopJump, new int[] { PeekCode().Position - block_ip
                                            + LookupOpcode(Opcodes.LoopJump).operand_width[0] });
         PatchJumpOffsetToCurrPos(cond_op_pos);
       }
@@ -773,7 +787,7 @@ public class Compiler : AST_Visitor
       ast.type == EnumBlock.PARAL_ALL;
 
     var block_code = new Bytecode();
-    scopes.Add(block_code);
+    code_stack.Add(block_code);
     ctrl_blocks.Add(ast);
 
     for(int i=0;i<ast.children.Count;++i)
@@ -795,12 +809,12 @@ public class Compiler : AST_Visitor
 
     bool need_to_enter_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
 
-    scopes.RemoveAt(scopes.Count-1);
+    code_stack.RemoveAt(code_stack.Count-1);
     ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
 
     if(need_to_enter_block)
       Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
-    PeekScope().Write(block_code);
+    PeekCode().Write(block_code);
   }
 
   void VisitDefer(AST_Block ast)
@@ -810,12 +824,12 @@ public class Compiler : AST_Visitor
       block_has_defers.Add(parent_block);
 
     var block_code = new Bytecode();
-    scopes.Add(block_code);
+    code_stack.Add(block_code);
     VisitChildren(ast);
-    scopes.RemoveAt(scopes.Count-1);
+    code_stack.RemoveAt(code_stack.Count-1);
 
     Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
-    PeekScope().Write(block_code);
+    PeekCode().Write(block_code);
   }
 
   public override void DoVisit(AST_TypeCast ast)
@@ -1024,7 +1038,7 @@ public class Compiler : AST_Visitor
     {                  
       var func_decl = func_decls[func_decls.Count-1];
       Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - func_decl.required_args_num, 0 /*dummy placeholder for jump position*/ });
-      var pos = PeekScope().Position;
+      var pos = PeekCode().Position;
       VisitChildren(ast);
       PatchJumpOffsetToCurrPos(pos);
     }
