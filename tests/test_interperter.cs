@@ -1,11 +1,6 @@
 using System;
-using System.Reflection;
 using System.IO;
-using System.Diagnostics;
 using System.Collections.Generic;
-using System.Collections;
-using System.Threading;
-using Antlr4.Runtime;
 using bhl;
 
 public class BHL_TestInterpreter : BHL_TestBase
@@ -942,7 +937,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserFuncBinding()
+  public void TestNativeFuncBinding()
   {
     string bhl = @"
       
@@ -969,7 +964,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserFuncBindWithoutArgs()
+  public void TestNativeFuncBindWithoutArgs()
   {
     string bhl = @"
       
@@ -994,7 +989,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserFuncBindConflict()
+  public void TestNativeFuncBindConflict()
   {
     string bhl = @"
 
@@ -4313,7 +4308,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestPlusNotOverloadedForBindClass()
+  public void TestPlusNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4338,7 +4333,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestMinusNotOverloadedForBindClass()
+  public void TestMinusNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4363,7 +4358,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestMultNotOverloadedForBindClass()
+  public void TestMultNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4388,7 +4383,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestDivNotOverloadedForBindClass()
+  public void TestDivNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4413,7 +4408,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestGtNotOverloadedForBindClass()
+  public void TestGtNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4438,7 +4433,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestGteNotOverloadedForBindClass()
+  public void TestGteNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4463,7 +4458,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLtNotOverloadedForBindClass()
+  public void TestLtNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4488,7 +4483,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLteNotOverloadedForBindClass()
+  public void TestLteNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4513,7 +4508,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUnaryMinusNotOverloadedForBindClass()
+  public void TestUnaryMinusNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4537,7 +4532,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBitAndNotOverloadedForBindClass()
+  public void TestBitAndNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4562,7 +4557,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBitOrNotOverloadedForBindClass()
+  public void TestBitOrNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4587,7 +4582,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLogicalAndNotOverloadedForBindClass()
+  public void TestLogicalAndNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4612,7 +4607,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLogicalOrNotOverloadedForBindClass()
+  public void TestLogicalOrNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4637,7 +4632,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUnaryNotNotOverloadedForBindClass()
+  public void TestUnaryNotNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4661,7 +4656,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestPlusOverloadedForBindClass()
+  public void TestPlusOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4707,7 +4702,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestMultOverloadedForBindClass()
+  public void TestMultOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4752,7 +4747,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestOverloadedBinOpsPriorityForBindClass()
+  public void TestOverloadedBinOpsPriorityForNativeClass()
   {
     string bhl = @"
       
@@ -4823,7 +4818,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestEqualityOverloadedForBindClass()
+  public void TestEqualityOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4874,7 +4869,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCustomOperatorOverloadTypeMismatchForBindClass()
+  public void TestCustomOperatorOverloadTypeMismatchForNativeClass()
   {
     string bhl = @"
       

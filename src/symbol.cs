@@ -365,6 +365,8 @@ abstract public class AbstractArrayTypeSymbol : ClassSymbol
   public abstract IInstruction VM_Clear(VM vm, VM.Frame curr_frame);
 }
 
+//NOTE: this one is used as a fallback for all arrays which
+//      were not explicitely re-defined
 public class ArrayTypeSymbol : AbstractArrayTypeSymbol
 {
 #if BHL_FRONT

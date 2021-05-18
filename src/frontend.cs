@@ -2383,6 +2383,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopJsonType();
     SymbolTable.CheckAssign(Wrap(exp), arr_type);
 
+    //generic fallback
     uint arr_ntype = (uint)ArrayTypeSymbol.CLASS_TYPE.n;
     if(!(arr_type is ArrayTypeSymbol))
       arr_ntype = (uint)arr_type.GetName().n;
