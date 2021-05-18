@@ -223,9 +223,9 @@ public class Interpreter : AST_Visitor
       if(n is FuncUserCallNode)
       {
         var fuc = n as FuncUserCallNode;
-        if(fuc.children.Count > 0 && fuc.children[0] is FuncNodeAST)
+        if(fuc.children.Count > 0 && fuc.children[0] is FuncNodeScript)
         {
-          var fast = fuc.children[0] as FuncNodeAST;
+          var fast = fuc.children[0] as FuncNodeScript;
           item.module_id = fast.decl.nname2; 
           item.func_name = fast.decl.name;
           item.func_id = fast.decl.nname1;
@@ -522,7 +522,7 @@ public class Interpreter : AST_Visitor
     var name = ast.Name(); 
     CheckFuncIsUnique(name);
 
-    var fn = new FuncSymbolAST(symbols, ast);
+    var fn = new FuncSymbolScript(symbols, ast);
     symbols.Define(fn);
   }
 
@@ -548,7 +548,7 @@ public class Interpreter : AST_Visitor
 
     var parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
 
-    var cl = new ClassSymbolAST(name, ast, parent);
+    var cl = new ClassSymbolScript(name, ast, parent);
     symbols.Define(cl);
 
     for(int i=0;i<ast.children.Count;++i)
@@ -557,7 +557,7 @@ public class Interpreter : AST_Visitor
       var vd = child as AST_VarDecl;
       if(vd != null)
       {
-        cl.Define(new FieldSymbolAST(vd.name, vd.ntype));
+        cl.Define(new FieldSymbolScript(vd.name, vd.ntype));
       }
     }
   }
@@ -567,7 +567,7 @@ public class Interpreter : AST_Visitor
     var name = ast.Name();
     CheckNameIsUnique(name);
 
-    var es = new EnumSymbolAST(name);
+    var es = new EnumSymbolScript(name);
     symbols.Define(es);
   }
 
@@ -751,7 +751,7 @@ public class Interpreter : AST_Visitor
   void AddFuncCallNode(AST_Call ast)
   {
     var symb = ResolveFuncSymbol(ast);
-    var fbind_symb = symb as FuncBindSymbol;
+    var fbind_symb = symb as FuncSymbolNative;
 
     //special case if it's bind symbol
     if(fbind_symb != null)
@@ -759,7 +759,7 @@ public class Interpreter : AST_Visitor
       bool has_args = ast.cargs_bits > 0 || fbind_symb.def_args_num > 0;
 
       if(has_args)
-        curr_node.addChild(new FuncBindCallNode(ast));
+        curr_node.addChild(new NativeFuncCallNode(ast));
       //special case if it's a simple bind symbol call without any args
       else
         curr_node.addChild(fbind_symb.func_creator());
@@ -1038,12 +1038,12 @@ public class FuncCtx : DynValRefcounted
 
   public static FuncNode MakeFuncNode(FuncSymbol fs, FuncCtx fct = null)
   {
-    if(fs is FuncSymbolAST)
-      return new FuncNodeAST((fs as FuncSymbolAST).decl, fct);
+    if(fs is FuncSymbolScript)
+      return new FuncNodeScript((fs as FuncSymbolScript).decl, fct);
     else if(fs is LambdaSymbol)
       return new FuncNodeLambda(fct);
-    else if(fs is FuncBindSymbol)
-      return new FuncNodeBind(fs as FuncBindSymbol, fct);
+    else if(fs is FuncSymbolNative)
+      return new FuncNodeNative(fs as FuncSymbolNative, fct);
     else
       throw new Exception("Unknown symbol type");
   }

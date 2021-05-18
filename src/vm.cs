@@ -151,6 +151,7 @@ public class VM
       return;
 
     uint ip = 0;
+    AST_ClassDecl curr_decl = null;
     while(ip < initcode.Length)
     {
       var opcode = (Opcodes)initcode[ip];
@@ -160,16 +161,35 @@ public class VM
         {
           uint ntype = (uint)Bytecode.Decode(initcode, ref ip);
           uint nptype = (uint)Bytecode.Decode(initcode, ref ip);
-          ClassSymbolAST parent = null;
-          var decl = new AST_ClassDecl();
-          decl.nname = ntype;
-          decl.nparent = nptype;
-          var cl = new ClassSymbolAST(new HashedName(ntype), decl, parent);
-          symbols.Define(cl);
+          curr_decl = new AST_ClassDecl();
+          curr_decl.nname = ntype;
+          curr_decl.nparent = nptype;
+        }
+        break;
+        case Opcodes.ClassMember:
+        {
+          uint ntype = (uint)Bytecode.Decode(initcode, ref ip);
+          uint nname = (uint)Bytecode.Decode(initcode, ref ip);
+
+          var mdecl = new AST_VarDecl();
+          mdecl.ntype = ntype;
+          mdecl.nname = nname;
+          mdecl.symb_idx = (uint)curr_decl.children.Count;
+          curr_decl.children.Add(mdecl);
         }
         break;
         case Opcodes.ClassEnd:
         {
+          //TODO: add parent support
+          ClassSymbolScript parent = null;
+          var curr_class = new ClassSymbolScript(new HashedName(curr_decl.nname), curr_decl, parent);
+          for(int i=0;i<curr_decl.children.Count;++i)
+          {
+            var mdecl = (AST_VarDecl)curr_decl.children[i];
+            curr_class.Define(new FieldSymbolScript(mdecl.nname, mdecl.ntype, (int)mdecl.symb_idx));
+          }
+          symbols.Define(curr_class);
+          curr_class = null;
         }
         break;
         default:
@@ -347,16 +367,16 @@ public class VM
             else if(func_call_type == 1)
             {
               int func_idx = (int)Bytecode.Decode(bytecode, ref ip);
-              var func_symb = symbols.GetMembers()[func_idx] as VM_FuncBindSymbol;
+              var func_symb = symbols.GetMembers()[func_idx] as FuncSymbolNative;
 
               uint args_bits = Bytecode.Decode(bytecode, ref ip); 
               var args_info = new FuncArgsInfo(args_bits);
               for(int i = 0; i < args_info.CountArgs(); ++i)
                 curr_frame.PushValueManual(curr_frame.PopValueManual());
 
-              var sub_instruction = func_symb.cb(this, curr_frame);
-              if(sub_instruction != null)
-                AttachInstruction(ref instruction, sub_instruction);
+              var res_instruction = func_symb.VM_cb(this, curr_frame);
+              if(res_instruction != null)
+                AttachInstruction(ref instruction, res_instruction);
               //NOTE: checking if new instruction was added and if so executing it immediately
               if(instruction != null)
                 status = instruction.Tick(this);
@@ -406,6 +426,25 @@ public class VM
               throw new Exception("Not supported func call type: " + func_call_type);
           }
           break;
+          case Opcodes.MCall:
+          {
+            uint class_type = Bytecode.Decode(bytecode, ref ip);
+            int method_idx = (int)Bytecode.Decode(bytecode, ref ip);
+
+            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+            //TODO: this check must be in dev.version only
+            if(class_symb == null)
+              throw new Exception("Class type not found: " + class_type);
+
+            var func_symb = (FuncSymbolNative)class_symb.members[method_idx];
+            var res_instruction = func_symb.VM_cb(this, curr_frame);
+            if(res_instruction != null)
+              AttachInstruction(ref instruction, res_instruction);
+            //NOTE: checking if new instruction was added and if so executing it immediately
+            if(instruction != null)
+              status = instruction.Tick(this);
+          }
+          break;
           case Opcodes.InitFrame:
           {
             int local_vars_num = (int)Bytecode.Decode(bytecode, ref ip);
@@ -449,17 +488,6 @@ public class VM
             if(fr.locals[local_idx] != null)
               fr.locals[local_idx].Release();
             fr.locals[local_idx] = up_val;
-          }
-          break;
-          case Opcodes.MethodCall:
-          {
-            uint class_type = Bytecode.Decode(bytecode, ref ip);
-            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-            if(class_symb == null)
-              throw new Exception("Class type not found: " + class_type);
-
-            int method_offset = (int)Bytecode.Decode(bytecode, ref ip);
-            ExecuteClassMethod(class_symb, method_offset, curr_frame);
           }
           break;
           case Opcodes.Jump:
@@ -524,18 +552,10 @@ public class VM
 
   void HandleNew(Frame curr_frame, uint ntype)
   {
-    if(ntype == GenericArrayTypeSymbol.VM_Type) 
-    {
-      curr_frame.PushValueManual(Val.NewObj(ValList.New()));
-      return;
-    }
-
     var cls = symbols.Resolve(ntype) as ClassSymbol;
+    //TODO: this check must be in dev.version only
     if(cls == null)
       throw new Exception("Could not find class symbol: " + ntype);
-
-    if(cls.creator == null)
-      throw new Exception("Class doesn't have a creator: " + ntype);
 
     var val = Val.New(); 
     cls.VM_creator(ref val);
@@ -648,31 +668,33 @@ public class VM
   static void ExecuteMVarOp(Opcodes op, Frame curr_frame, BaseScope symbols, byte[] bytecode, ref uint ip)
   {
     uint class_type = Bytecode.Decode(bytecode, ref ip);
+    int fld_idx = (int)Bytecode.Decode(bytecode, ref ip);
 
     var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+    //TODO: this check must be in dev.version only
     if(class_symb == null)
       throw new Exception("Class type not found: " + class_type);
-
-    int local_idx = (int)Bytecode.Decode(bytecode, ref ip);
     
     switch(op)
     {
       case Opcodes.GetMVar:
       {
-        if(class_symb is GenericArrayTypeSymbol)
-        {
-          if(local_idx == GenericArrayTypeSymbol.VM_CountIdx)
-          {
-            var arr = curr_frame.PopValueManual();
-            var lst = AsList(arr);
-            curr_frame.PushValueManual(Val.NewNum(lst.Count));
-            arr.Release();
-          }
-          else
-            throw new Exception("Not supported member idx: " + local_idx);
-        }
-        else
-          throw new Exception("Class not supported: " + class_symb.name);
+        var obj = curr_frame.PopValueManual();
+        var res = Val.New();
+        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+        field_symb.VM_getter(obj, ref res);
+        curr_frame.PushValueManual(res);
+        obj.Release();
+      }
+      break;
+      case Opcodes.SetMVar:
+      {
+        var obj = curr_frame.PopValueManual();
+        var val = curr_frame.PopValueManual();
+        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+        field_symb.VM_setter(ref obj, val);
+        val.Release();
+        obj.Release();
       }
       break;
       default:
@@ -692,62 +714,6 @@ public class VM
         curr_frame.PushValueManual(Val.NewNum(operand * -1));
       break;
     }
-  }
-
-  static ValList AsList(Val arr)
-  {
-    var lst = arr.obj as ValList;
-    if(lst == null)
-      throw new UserError("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
-    return lst;
-  }
-
-  static void ExecuteClassMethod(ClassSymbol symb, int method, Frame curr_frame)
-  {
-    //TODO: stuff below must be defined inside the symbol
-    if(symb is GenericArrayTypeSymbol)
-    {
-      if(method == GenericArrayTypeSymbol.VM_AddIdx)
-      {
-        var val = curr_frame.PopValueManual();
-        var arr = curr_frame.PopValueManual();
-        var lst = AsList(arr);
-        lst.Add(val);
-        val.Release();
-        arr.Release();
-      }
-      else if(method == GenericArrayTypeSymbol.VM_RemoveIdx)
-      {
-        int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.PopValueManual();
-        var lst = AsList(arr);
-        lst.RemoveAt(idx); 
-        arr.Release();
-      }
-      else if(method == GenericArrayTypeSymbol.VM_SetIdx)
-      {
-        int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.PopValueManual();
-        var val = curr_frame.PopValueManual();
-        var lst = AsList(arr);
-        lst[idx] = val;
-        val.Release();
-        arr.Release();
-      }
-      else if(method == GenericArrayTypeSymbol.VM_AtIdx)
-      {
-        int idx = (int)curr_frame.PopValue().num;
-        var arr = curr_frame.PopValueManual();
-        var lst = AsList(arr);
-        var res = lst[idx]; 
-        curr_frame.PushValue(res);
-        arr.Release();
-      }
-      else 
-        throw new Exception("Not supported method: " + method);
-    }
-    else
-      throw new Exception("Not supported class: " + symb.name);
   }
 
   static void ExecuteBinaryOp(Opcodes op, Frame curr_frame)

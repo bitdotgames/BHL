@@ -79,7 +79,7 @@ public abstract class BaseScope : Scope
   static bool IsBuiltin(Symbol s)
   {
     return ((s is BuiltInTypeSymbol) || 
-            (s is ArrayTypeSymbol)
+            (s is AbstractArrayTypeSymbol)
            );
   }
 
@@ -109,9 +109,9 @@ public abstract class BaseScope : Scope
       {
         //checking if it's an array of func ptrs
         if(type != null)
-          type = new GenericArrayTypeSymbol(this, new TypeRef(type));
+          type = new ArrayTypeSymbol(this, new TypeRef(type));
         else
-          type = new GenericArrayTypeSymbol(this, node);
+          type = new ArrayTypeSymbol(this, node);
       }
     }
 

@@ -505,7 +505,7 @@ public class Frontend : bhlBaseVisitor<object>
           //handling passing by ref for class fields
           if(class_scope != null && PeekCallByRef())
           {
-            if(class_scope is ClassBindSymbol)
+            if(class_scope is ClassSymbolNative)
               FireError(Location(name) +  " : getting field by 'ref' not supported for this class");
             ast.type = EnumCall.MVARREF; 
           }
@@ -547,7 +547,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   void AddArrIndex(bhlParser.ArrAccessContext arracc, ref Type type, int line, bool write)
   {
-    var arr_type = type as ArrayTypeSymbol;
+    var arr_type = type as AbstractArrayTypeSymbol;
     if(arr_type == null)
       FireError(Location(arracc) +  " : accessing not an array type '" + type.GetName().s + "'");
 
@@ -636,7 +636,7 @@ public class Frontend : bhlBaseVisitor<object>
         {
           //NOTE: for func bind symbols we assume default arguments  
           //      are specified manually in bindings
-          if(func_symb is FuncBindSymbol || func_symb.GetDefaultArgsExprAt(i) != null)
+          if(func_symb is FuncSymbolNative || func_symb.GetDefaultArgsExprAt(i) != null)
           {
             int default_arg_idx = i - required_args_num;
             if(!args_info.UseDefaultArg(default_arg_idx, true))
@@ -876,7 +876,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(curr_type == null)
       FireError(Location(ctx) + ": {..} not expected");
 
-    if(!(curr_type is ClassSymbol) || (curr_type is ArrayTypeSymbol))
+    if(!(curr_type is ClassSymbol) || (curr_type is AbstractArrayTypeSymbol))
       FireError(Location(ctx) + ": type '" + curr_type + "' can't be specified with {..}");
 
     Wrap(ctx).eval_type = curr_type;
@@ -906,10 +906,10 @@ public class Frontend : bhlBaseVisitor<object>
     if(curr_type == null)
       FireError(Location(ctx) + ": [..] not expected");
 
-    if(!(curr_type is ArrayTypeSymbol))
+    if(!(curr_type is AbstractArrayTypeSymbol))
       FireError(Location(ctx) + ": [..] is not expected, need '" + curr_type + "'");
 
-    var arr_type = curr_type as ArrayTypeSymbol;
+    var arr_type = curr_type as AbstractArrayTypeSymbol;
     var orig_type = arr_type.original.Get();
     if(orig_type == null)
       FireError(Location(ctx) + ": type '" + arr_type.original.name.s + "' not found");
@@ -1617,7 +1617,7 @@ public class Frontend : bhlBaseVisitor<object>
     var func_name = new HashedName(str_name, curr_module.GetId());
     var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
-    var symb = new FuncSymbolAST(locals, ast, func_node, func_name, tr, ctx.funcParams());
+    var symb = new FuncSymbolScript(locals, ast, func_node, func_name, tr, ctx.funcParams());
     if(decls_only)
       curr_module.symbols.Define(symb);
     locals.Define(symb);
@@ -1672,13 +1672,13 @@ public class Frontend : bhlBaseVisitor<object>
       if(parent == null)
         FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
 
-      if(parent is ClassBindSymbol)
+      if(parent is ClassSymbolNative)
         FireError(Location(ctx.classEx()) + " : extending C# bound classes not currently supported");
     }
 
     var ast = AST_Util.New_ClassDecl(class_name, parent == null ? new HashedName() : parent.name);
 
-    var symb = new ClassSymbolAST(class_name, ast, parent);
+    var symb = new ClassSymbolScript(class_name, ast, parent);
     if(decls_only)
       curr_module.symbols.Define(symb);
     locals.Define(symb);
@@ -1715,7 +1715,7 @@ public class Frontend : bhlBaseVisitor<object>
     //      type info this will be justified.
     var ast = AST_Util.New_EnumDecl(enum_name);
 
-    var symb = new EnumSymbolAST(enum_name);
+    var symb = new EnumSymbolScript(enum_name);
     if(decls_only)
       curr_module.symbols.Define(symb);
     locals.Define(symb);
@@ -2383,8 +2383,8 @@ public class Frontend : bhlBaseVisitor<object>
     PopJsonType();
     SymbolTable.CheckAssign(Wrap(exp), arr_type);
 
-    uint arr_ntype = (uint)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n;
-    if(!(arr_type is GenericArrayTypeSymbol))
+    uint arr_ntype = (uint)ArrayTypeSymbol.CLASS_TYPE.n;
+    if(!(arr_type is ArrayTypeSymbol))
       arr_ntype = (uint)arr_type.GetName().n;
 
     var arr_tmp_name = "$foreach_tmp" + loops_stack;

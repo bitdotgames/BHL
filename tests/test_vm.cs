@@ -750,10 +750,10 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAtIdx })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -796,17 +796,17 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.Call, new int[] { 0, 0, 0 })
       .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAtIdx })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -850,13 +850,13 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrRemoveIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrRemoveIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -906,10 +906,10 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -954,14 +954,14 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrSetIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrSetIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 3 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -1012,7 +1012,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ArgVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.InitFrame, new int[] { 1 })
@@ -1020,15 +1020,15 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Call, new int[] { 0, 0, 1 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 3 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAtIdx })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -1430,10 +1430,10 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAddIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddIdx })
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.SetVar, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -1448,7 +1448,7 @@ public class BHL_TestVM : BHL_TestBase
       //call arr idx method
       .Emit(Opcodes.GetVar, new int[] { 3 })
       .Emit(Opcodes.GetVar, new int[] { 4 })
-      .Emit(Opcodes.MethodCall, new int[] { ArrType, ArrAtIdx })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAtIdx })
       .Emit(Opcodes.SetVar, new int[] { 2 })
       .Emit(Opcodes.GetVar, new int[] { 1 }) //accum = accum + iterator var
       .Emit(Opcodes.GetVar, new int[] { 2 }) 
@@ -3434,11 +3434,11 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .UseInitCode()
-      .Emit(Opcodes.ClassBegin, new int[] { (int)(new HashedName("Foo").n1), 0 })
+      .Emit(Opcodes.ClassBegin, new int[] { H("Foo"), 0 })
       .Emit(Opcodes.ClassEnd)
       .UseByteCode()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.New, new int[] { (int)(new HashedName("Foo").n1) }) 
+      .Emit(Opcodes.New, new int[] { H("Foo") }) 
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
@@ -3452,6 +3452,60 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertTrue(vm.PopValue().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassWithSimpleMembers()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int Int
+      float Flt
+      string Str
+    }
+      
+    func void test() 
+    {
+      Foo f = new Foo
+      f.Int = 10
+      f.Flt = 14.2
+      f.Str = ""Hey""
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .UseInitCode()
+      .Emit(Opcodes.ClassBegin, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.ClassMember, new int[] { H("int"), H("Int") })
+      .Emit(Opcodes.ClassMember, new int[] { H("float"), H("Flt") })
+      .Emit(Opcodes.ClassMember, new int[] { H("string"), H("Str") })
+      .Emit(Opcodes.ClassEnd)
+      .UseByteCode()
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.New, new int[] { H("Foo") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(globs, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
     CommonChecks(vm);
   }
 
@@ -3749,38 +3803,43 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrType {
     get {
-      return GenericArrayTypeSymbol.VM_Type;
+      return ArrayTypeSymbol.INT_CLASS_TYPE;
     }
   }
   public static int ArrAddIdx {
     get {
-      return GenericArrayTypeSymbol.VM_AddIdx;
+      return ArrayTypeSymbol.IDX_Add;
     }
   }
   public static int ArrSetIdx {
     get {
-      return GenericArrayTypeSymbol.VM_SetIdx;
+      return ArrayTypeSymbol.IDX_SetAt;
     }
   }
   public static int ArrRemoveIdx {
     get {
-      return GenericArrayTypeSymbol.VM_RemoveIdx;
+      return ArrayTypeSymbol.IDX_RemoveAt;
     }
   }
   public static int ArrCountIdx {
     get {
-      return GenericArrayTypeSymbol.VM_CountIdx;
+      return ArrayTypeSymbol.IDX_Count;
     }
   }
   public static int ArrAtIdx {
     get {
-      return GenericArrayTypeSymbol.VM_AtIdx;
+      return ArrayTypeSymbol.IDX_At;
     }
   }
 
-  VM_FuncBindSymbol BindTrace(GlobalScope globs, StringBuilder log)
+  static int H(string name)
   {
-    var fn = new VM_FuncBindSymbol("trace", globs.Type("void"),
+    return (int)(new HashedName(name).n1);
+  }
+
+  FuncSymbolNative BindTrace(GlobalScope globs, StringBuilder log)
+  {
+    var fn = new FuncSymbolNative("trace", globs.Type("void"), null,
         delegate(VM _, VM.Frame fr) { 
           string str = fr.PopValue().str;
           log.Append(str);

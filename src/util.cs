@@ -332,7 +332,7 @@ static public class Util
 
   public static void NodeDump(BehaviorTreeNode node, bool only_running = false, int level = 0, bool is_term = true)
   {
-    var fnode = node as FuncNodeAST;
+    var fnode = node as FuncNodeScript;
     if(fnode != null)
       fnode.Inflate();
 
@@ -828,7 +828,7 @@ static public class AST_Util
     return n;
   }
 
-  static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type)
+  static public AST_JsonArr New_JsonArr(AbstractArrayTypeSymbol arr_type)
   {
     var n = new AST_JsonArr();
     n.ntype = (uint)arr_type.Type().n;

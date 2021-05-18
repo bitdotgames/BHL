@@ -19,7 +19,7 @@ public enum Opcodes
   Call            = 0x10,
   SetMVar         = 0x20,
   GetMVar         = 0xA,
-  MethodCall      = 0xB,
+  MCall           = 0xB,
   Return          = 0xC,
   ReturnVal       = 0xD,
   Jump            = 0xE,
@@ -382,7 +382,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.MethodCall,
+        name = Opcodes.MCall,
         operand_width = new int[] { 4, 2 }
       }
     );
@@ -488,7 +488,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.ClassMember,
-        operand_width = new int[] { 4/*ntype*/ }
+        operand_width = new int[] { 4/*nname*/, 4/*ntype*/ }
       }
     );
     DeclareOpcode(
@@ -538,17 +538,17 @@ public class Compiler : AST_Visitor
       {
         case 1:
           if(byte.MinValue > op_val || op_val > byte.MaxValue)
-            throw new Exception("Operand value is out of bounds: " + op_val);
+            throw new Exception("Operand value(1 byte) is out of bounds: " + op_val);
           buf.Write((byte)op_val);
         break;
         case 2:
           if(ushort.MinValue > op_val || op_val > ushort.MaxValue)
-            throw new Exception("Operand value is out of bounds: " + op_val);
+            throw new Exception("Operand value(2 bytes) is out of bounds: " + op_val);
           buf.Write((ushort)op_val);
         break;
         case 4:
           if(uint.MinValue > op_val || (uint)op_val > uint.MaxValue)
-            throw new Exception("Operand value is out of bounds: " + op_val);
+            throw new Exception("Operand value(4 bytes) is out of bounds: " + op_val);
           buf.Write((uint)op_val);
         break;
         default:
@@ -658,7 +658,7 @@ public class Compiler : AST_Visitor
 
     var parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
 
-    var cl = new ClassSymbolAST(name, ast, parent);
+    var cl = new ClassSymbolScript(name, ast, parent);
     symbols.Define(cl);
 
     //TODO: Use Constant mechanism for actual string name storage.
@@ -670,10 +670,10 @@ public class Compiler : AST_Visitor
       var vd = child as AST_VarDecl;
       if(vd != null)
       {
-        cl.Define(new FieldSymbolAST(vd.name, vd.ntype));
+        cl.Define(new FieldSymbolScript(vd.name, vd.ntype));
         //TODO: Use Constant mechanism for actual string name storage.
         //      This should be useful for reflection.
-        Emit(Opcodes.ClassMember, new int[] { (int)vd.ntype });
+        Emit(Opcodes.ClassMember, new int[] { (int)vd.ntype, (int)vd.nname });
       }
     }
     Emit(Opcodes.ClassEnd);
@@ -871,7 +871,7 @@ public class Compiler : AST_Visitor
           VisitChildren(ast);
           Emit(Opcodes.Call, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});
         }
-        else if(symbols.Resolve(ast.name) is VM_FuncBindSymbol fsymb)
+        else if(symbols.Resolve(ast.name) is FuncSymbolNative fsymb)
         {
           int func_idx = symbols.GetMembers().IndexOf(fsymb);
           if(func_idx == -1)
@@ -898,6 +898,21 @@ public class Compiler : AST_Visitor
         Emit(Opcodes.GetMVar, new int[] { (int)ast.scope_ntype, memb_idx});
       }
       break;
+      case EnumCall.MVARW:
+      {
+        var class_symb = symbols.Resolve(ast.scope_ntype) as ClassSymbol;
+        if(class_symb == null)
+          throw new Exception("Class type not found: " + ast.scope_ntype);
+        int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
+        if(memb_idx == -1)
+          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_ntype);
+
+        VisitChildren(ast);
+
+        //TODO: instead of scope_ntype it rather should be an index?
+        Emit(Opcodes.SetMVar, new int[] { (int)ast.scope_ntype, memb_idx});
+      }
+      break;
       case EnumCall.MFUNC:
       {
         var class_symb = symbols.Resolve(ast.scope_ntype) as ClassSymbol;
@@ -909,17 +924,17 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
         //TODO: instead of scope_ntype it rather should be an index?
-        Emit(Opcodes.MethodCall, new int[] {(int)ast.scope_ntype, memb_idx});
+        Emit(Opcodes.MCall, new int[] {(int)ast.scope_ntype, memb_idx});
       }
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.MethodCall, new int[] { GenericArrayTypeSymbol.VM_Type, GenericArrayTypeSymbol.VM_AtIdx});
+        Emit(Opcodes.MCall, new int[] { ArrayTypeSymbol.INT_CLASS_TYPE, ArrayTypeSymbol.IDX_At});
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.MethodCall, new int[] { GenericArrayTypeSymbol.VM_Type, GenericArrayTypeSymbol.VM_SetIdx});
+        Emit(Opcodes.MCall, new int[] { ArrayTypeSymbol.INT_CLASS_TYPE, ArrayTypeSymbol.IDX_SetAt});
       }
       break;
       case EnumCall.FUNC_PTR_POP:

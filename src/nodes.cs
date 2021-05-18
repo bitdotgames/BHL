@@ -754,7 +754,7 @@ public class FuncCallNode : FuncBaseCallNode
 
     pi.id = ++last_pool_id;
     FuncNode fnode = interp.GetFuncNode(pi.ast);
-    if(!(fnode is FuncNodeAST))
+    if(!(fnode is FuncNodeScript))
       throw new Exception("Not expected type of node");
     pi.fnode = fnode;
   }
@@ -787,9 +787,9 @@ public class FuncCallNode : FuncBaseCallNode
   }
 }
 
-public class FuncBindCallNode : FuncBaseCallNode
+public class NativeFuncCallNode : FuncBaseCallNode
 {
-  public FuncBindCallNode(AST_Call ast)
+  public NativeFuncCallNode(AST_Call ast)
     : base(ast)
   {}
 
@@ -799,7 +799,7 @@ public class FuncBindCallNode : FuncBaseCallNode
     if(children.Count == 0)
     {
       var interp = Interpreter.instance;
-      var symb = interp.ResolveFuncSymbol(ast) as FuncBindSymbol;
+      var symb = interp.ResolveFuncSymbol(ast) as FuncSymbolNative;
       interp.PushNode(this);
 
       var args_info = new FuncArgsInfo(ast.cargs_bits);
@@ -2008,7 +2008,7 @@ abstract public class FuncNode : SequentialNode
   }
 }
 
-public class FuncNodeAST : FuncNode
+public class FuncNodeScript : FuncNode
 {
   public AST_FuncDecl decl;
 
@@ -2016,7 +2016,7 @@ public class FuncNodeAST : FuncNode
 
   protected DynValDict mem = new DynValDict();
 
-  public FuncNodeAST(AST_FuncDecl decl, FuncCtx fct)
+  public FuncNodeScript(AST_FuncDecl decl, FuncCtx fct)
   {
     this.fct = fct;
     this.decl = decl;
@@ -2144,7 +2144,7 @@ public class FuncNodeAST : FuncNode
   }
 }
 
-public class FuncNodeLambda : FuncNodeAST
+public class FuncNodeLambda : FuncNodeScript
 {
   public FuncNodeLambda(FuncCtx fct)
     : base((fct.fs as LambdaSymbol).decl, fct)
@@ -2165,11 +2165,11 @@ public class FuncNodeLambda : FuncNodeAST
 
 //NOTE: this one is ugly and probably should not event exist 
 //      but it does just for the consistency
-public class FuncNodeBind : FuncNode
+public class FuncNodeNative : FuncNode
 {
-  public FuncBindSymbol symb;
+  public FuncSymbolNative symb;
 
-  public FuncNodeBind(FuncBindSymbol symb, FuncCtx fct)
+  public FuncNodeNative(FuncSymbolNative symb, FuncCtx fct)
   {
     this.fct = fct;
     this.symb = symb;
@@ -2408,31 +2408,6 @@ public class Array_SetAtNode : BehaviorTreeTerminalNode
   }
 }
 
-public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
-{
-  public override void init()
-  {
-    var interp = Interpreter.instance;
-
-    //NOTE: args are in reverse order in stack
-    var idx = interp.PopValue();
-    var arr = interp.PopValue();
-
-    var lst = (arr.obj as IList<T>);
-    if(lst == null)
-      throw new UserError("Not a List<" + typeof(T).Name + ">: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
-
-    var res = lst[(int)idx.num]; 
-    var val = DynVal.NewObj(res);
-    interp.PushValue(val);
-  }
-
-  public override string inspect()
-  {
-    return "<- <- ->";
-  }
-}
-
 public class Array_SetAtNodeT<T> : BehaviorTreeTerminalNode where T : new()
 {
   public override void init()
@@ -2456,6 +2431,31 @@ public class Array_SetAtNodeT<T> : BehaviorTreeTerminalNode where T : new()
   public override string inspect()
   {
     return "<- <- <-";
+  }
+}
+
+public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
+{
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+
+    //NOTE: args are in reverse order in stack
+    var idx = interp.PopValue();
+    var arr = interp.PopValue();
+
+    var lst = (arr.obj as IList<T>);
+    if(lst == null)
+      throw new UserError("Not a List<" + typeof(T).Name + ">: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+
+    var res = lst[(int)idx.num]; 
+    var val = DynVal.NewObj(res);
+    interp.PushValue(val);
+  }
+
+  public override string inspect()
+  {
+    return "<- <- ->";
   }
 }
 

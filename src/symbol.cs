@@ -276,46 +276,73 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   }
 }
 
-abstract public class ArrayTypeSymbol : ClassSymbol
+abstract public class AbstractArrayTypeSymbol : ClassSymbol
 {
+  public static readonly HashedName CLASS_TYPE = new HashedName("[]"); 
+  public static int INT_CLASS_TYPE = (int)CLASS_TYPE.n1;
+
   public TypeRef original;
 
+  public override HashedName Type()
+  {
+    return CLASS_TYPE;
+  }
+
 #if BHL_FRONT
-  public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
+  public AbstractArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
     : this(scope, new TypeRef(scope, node.NAME().GetText()))
   {}
 #endif
 
-  public ArrayTypeSymbol(BaseScope scope, TypeRef original) 
+  //NOTE: indices below are synchronized with an actual order 
+  //      of class members initialized later
+  public const int IDX_Add      = 0;
+  public const int IDX_At       = 1;
+  public const int IDX_SetAt    = 2;
+  public const int IDX_RemoveAt = 3;
+  public const int IDX_Clear    = 4;
+  public const int IDX_Count    = 5;
+
+  public AbstractArrayTypeSymbol(BaseScope scope, TypeRef original) 
     : base(null, original.name.s + "[]", new TypeRef(), null)
   {
     this.original = original;
 
     this.creator = CreateArr;
+    this.VM_creator = VM_CreateArr;
 
     {
-      var fn = new FuncBindSymbol("Add", scope.Type("void"), Create_Add);
+      var fn = new FuncSymbolNative("Add", scope.Type("void"), Create_Add, VM_Add);
       fn.Define(new FuncArgSymbol("o", original));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("At", original, Create_At);
+      var fn = new FuncSymbolNative("At", original, Create_At, VM_At);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("RemoveAt", scope.Type("void"), Create_RemoveAt);
+      var fn = new FuncSymbolNative("SetAt", original, null, VM_SetAt);
+      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      fn.Define(new FuncArgSymbol("o", original));
+      this.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative("RemoveAt", scope.Type("void"), Create_RemoveAt, VM_RemoveAt);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       this.Define(fn);
     }
 
     {
-      var vs = new bhl.FieldSymbol("Count", scope.Type("int"), Create_Count,
-        //read only property
-        null
-      );
+      var fn = new FuncSymbolNative("Clear", scope.Type("void"), null, VM_Clear);
+      this.Define(fn);
+    }
+
+    {
+      var vs = new FieldSymbol("Count", scope.Type("int"), Create_Count, null, null, VM_GetCount, null);
       this.Define(vs);
     }
   }
@@ -329,53 +356,30 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract BehaviorTreeNode Create_RemoveAt();
   public abstract BehaviorTreeNode Create_Clear();
 
-  //TODO:
-  //public abstract void VM_NewArr(ref Val v);
-  //public abstract void VM_Count(bhl.Val ctx, ref bhl.Val v);
-  //public abstract BehaviorTreeNode Create_New();
-  //public abstract BehaviorTreeNode Create_Add();
-  //public abstract BehaviorTreeNode Create_At();
-  //public abstract BehaviorTreeNode Create_SetAt();
-  //public abstract BehaviorTreeNode Create_RemoveAt();
-  //public abstract BehaviorTreeNode Create_Clear();
+  public abstract void VM_CreateArr(ref Val v);
+  public abstract void VM_GetCount(Val ctx, ref Val v);
+  public abstract IInstruction VM_Add(VM vm, VM.Frame curr_frame);
+  public abstract IInstruction VM_At(VM vm, VM.Frame curr_frame);
+  public abstract IInstruction VM_SetAt(VM vm, VM.Frame curr_frame);
+  public abstract IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame);
+  public abstract IInstruction VM_Clear(VM vm, VM.Frame curr_frame);
 }
 
-//NOTE: this one is used as a fallback for all arrays which
-//      were not explicitely re-defined 
-public class GenericArrayTypeSymbol : ArrayTypeSymbol
+public class ArrayTypeSymbol : AbstractArrayTypeSymbol
 {
-  public static int VM_Type {
-    get {
-      return (int)GenericArrayTypeSymbol.GENERIC_CLASS_TYPE.n1;
-    }
-  }
-  //in the same order as added methods below
-  public static readonly int VM_AddIdx    = 0;
-  public static readonly int VM_AtIdx     = 1;
-  public static readonly int VM_RemoveIdx = 2;
-  public static readonly int VM_CountIdx  = 3;
-  public static readonly int VM_SetIdx    = 4;
-
-  public static readonly HashedName GENERIC_CLASS_TYPE = new HashedName("[]"); 
-
 #if BHL_FRONT
-  public GenericArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
+  public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
     : base(scope, node)
   {}
 #endif
 
-  public GenericArrayTypeSymbol(BaseScope scope, TypeRef original) 
+  public ArrayTypeSymbol(BaseScope scope, TypeRef original) 
     : base(scope, original)
   {}
 
-  public GenericArrayTypeSymbol(BaseScope scope) 
+  public ArrayTypeSymbol(BaseScope scope) 
     : base(scope, new TypeRef(scope, ""))
   {}
-
-  public override HashedName Type()
-  {
-    return GENERIC_CLASS_TYPE;
-  }
 
   public override void CreateArr(ref DynVal v)
   {
@@ -422,9 +426,82 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   {
     return new Array_ClearNode();
   }
+
+  static ValList AsList(Val arr)
+  {
+    var lst = arr.obj as ValList;
+    if(lst == null)
+      throw new UserError("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+    return lst;
+  }
+
+  public override void VM_CreateArr(ref Val v)
+  {
+    v.SetObj(ValList.New());
+  }
+
+  public override void VM_GetCount(Val ctx, ref Val v)
+  {
+    var lst = AsList(ctx);
+    v.SetNum(lst.Count);
+  }
+  
+  public override IInstruction VM_Add(VM vm, VM.Frame curr_frame)
+  {
+    var val = curr_frame.PopValueManual();
+    var arr = curr_frame.PopValueManual();
+    var lst = AsList(arr);
+    lst.Add(val);
+    val.Release();
+    arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_At(VM vm, VM.Frame curr_frame)
+  {
+    int idx = (int)curr_frame.PopValue().num;
+    var arr = curr_frame.PopValueManual();
+    var lst = AsList(arr);
+    var res = lst[idx]; 
+    curr_frame.PushValue(res);
+    arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_SetAt(VM vm, VM.Frame curr_frame)
+  {
+    int idx = (int)curr_frame.PopValue().num;
+    var arr = curr_frame.PopValueManual();
+    var val = curr_frame.PopValueManual();
+    var lst = AsList(arr);
+    lst[idx] = val;
+    val.Release();
+    arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame)
+  {
+    int idx = (int)curr_frame.PopValue().num;
+    var arr = curr_frame.PopValueManual();
+    var lst = AsList(arr);
+    lst.RemoveAt(idx); 
+    arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_Clear(VM vm, VM.Frame curr_frame)
+  {
+    int idx = (int)curr_frame.PopValue().num;
+    var arr = curr_frame.PopValueManual();
+    var lst = AsList(arr);
+    lst.Clear();
+    arr.Release();
+    return null;
+  }
 }
 
-public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
+public class ArrayTypeSymbolT<T> : AbstractArrayTypeSymbol where T : new()
 {
   public delegate void ConverterCb(DynVal dv, ref T res);
   public static ConverterCb Convert;
@@ -489,6 +566,41 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   {
     return new Array_ClearNodeT();
   }
+
+  public override void VM_CreateArr(ref Val v)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override void VM_GetCount(Val ctx, ref Val v)
+  {
+    throw new Exception("Not implemented");
+  }
+  
+  public override IInstruction VM_Add(VM vm, VM.Frame curr_frame)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_At(VM vm, VM.Frame curr_frame)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_SetAt(VM vm, VM.Frame curr_frame)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_Clear(VM vm, VM.Frame curr_frame)
+  {
+    throw new Exception("Not implemented");
+  }
 }
 
 public class VariableSymbol : Symbol 
@@ -523,23 +635,38 @@ public class FieldSymbol : VariableSymbol
   public Interpreter.FieldSetter setter;
   public Interpreter.FieldRef getref;
 
-  public FieldSymbol(HashedName name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null, Interpreter.FieldRef getref = null) 
+  public VM.FieldGetter VM_getter;
+  public VM.FieldSetter VM_setter;
+  public VM.FieldRef VM_getref;
+
+  public FieldSymbol(HashedName name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null, Interpreter.FieldRef getref = null, VM.FieldGetter VM_getter = null, VM.FieldSetter VM_setter = null, VM.FieldRef VM_getref = null) 
     : base(null, name, type)
   {
     this.getter = getter;
     this.setter = setter;
     this.getref = getref;
+
+    this.VM_getter = VM_getter;
+    this.VM_setter = VM_setter;
+    this.VM_getref = VM_getref;
   }
 }
 
-public class FieldSymbolAST : FieldSymbol
+public class FieldSymbolScript : FieldSymbol
 {
-  public FieldSymbolAST(HashedName name, HashedName type) 
+  public int VM_idx;
+
+  public FieldSymbolScript(HashedName name, HashedName type, int VM_idx = -1) 
     : base(name, new TypeRef(null, type), null, null, null)
   {
     this.getter = Getter;
     this.setter = Setter;
     this.getref = Getref;
+
+    this.VM_idx = VM_idx;
+    this.VM_getter = VM_Getter;
+    this.VM_setter = VM_Setter;
+    this.VM_getref = null;//TODO:
   }
 
   void Getter(DynVal ctx, ref DynVal v)
@@ -560,6 +687,21 @@ public class FieldSymbolAST : FieldSymbol
   {
     var m = (DynValDict)ctx.obj;
     v = m.Get(name);
+  }
+
+  void VM_Getter(Val ctx, ref Val v)
+  {
+    var m = (ValList)ctx.obj;
+    v.ValueCopyFrom(m[VM_idx]);
+  }
+
+  void VM_Setter(ref Val ctx, Val v)
+  {
+    var m = (ValList)ctx.obj;
+    var tmp = Val.New();
+    tmp.ValueCopyFrom(v);
+    m[VM_idx] = tmp;
+    tmp.Release();
   }
 }
 
@@ -896,7 +1038,7 @@ public class LambdaSymbol : FuncSymbol
   }
 }
 
-public class FuncSymbolAST : FuncSymbol
+public class FuncSymbolScript : FuncSymbol
 {
   public AST_FuncDecl decl;
 #if BHL_FRONT
@@ -906,7 +1048,7 @@ public class FuncSymbolAST : FuncSymbol
 
   //frontend version
 #if BHL_FRONT
-  public FuncSymbolAST(
+  public FuncSymbolScript(
     BaseScope parent, 
     AST_FuncDecl decl, 
     WrappedNode n, 
@@ -938,7 +1080,7 @@ public class FuncSymbolAST : FuncSymbol
 #endif
 
   //backend version
-  public FuncSymbolAST(BaseScope parent, AST_FuncDecl decl)
+  public FuncSymbolScript(BaseScope parent, AST_FuncDecl decl)
     : base(null, decl.Name(), new FuncType(), parent)
   {
     this.decl = decl;
@@ -959,21 +1101,25 @@ public class FuncSymbolAST : FuncSymbol
 #endif
 }
 
-public class FuncBindSymbol : FuncSymbol
+public class FuncSymbolNative : FuncSymbol
 {
   public Interpreter.FuncNodeCreator func_creator;
 
+  public System.Func<VM, VM.Frame, IInstruction> VM_cb;
+
   public int def_args_num;
 
-  public FuncBindSymbol(
+  public FuncSymbolNative(
     HashedName name, 
     TypeRef ret_type, 
     Interpreter.FuncNodeCreator func_creator, 
+    System.Func<VM, VM.Frame, IInstruction> VM_cb = null, 
     int def_args_num = 0
   ) 
     : base(null, name, new FuncType(ret_type), null)
   {
     this.func_creator = func_creator;
+    this.VM_cb = VM_cb;
     this.def_args_num = def_args_num;
   }
 
@@ -993,53 +1139,20 @@ public class FuncBindSymbol : FuncSymbol
   }
 }
 
-public class SimpleFuncBindSymbol : FuncBindSymbol
+public class FuncSymbolSimpleNative : FuncSymbolNative
 {
-  public SimpleFuncBindSymbol(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
-    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num)
+  public FuncSymbolSimpleNative(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
+    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, null, def_args_num)
   {}
 }
 
-public class VM_FuncBindSymbol : FuncSymbol
+public class ClassSymbolNative : ClassSymbol
 {
-  public int def_args_num;
-  public System.Func<VM, VM.Frame, IInstruction> cb;
-
-  public VM_FuncBindSymbol(
-    HashedName name, 
-    TypeRef ret_type, 
-    System.Func<VM, VM.Frame, IInstruction> cb, 
-    int def_args_num = 0
-  ) 
-    : base(null, name, new FuncType(ret_type), null)
-  {
-    this.def_args_num = def_args_num;
-    this.cb = cb;
-  }
-
-  public override int GetTotalArgsNum() { return GetMembers().Count; }
-  public override int GetDefaultArgsNum() { return def_args_num; }
-
-  public override void Define(Symbol sym) 
-  {
-    base.Define(sym);
-
-    //NOTE: for bind funcs every defined symbol is assumed to be an argument
-    DefineArg(sym.name);
-
-    var ft = GetFuncType();
-    ft.arg_types.Add(sym.type);
-    ft.Update();
-  }
-}
-
-public class ClassBindSymbol : ClassSymbol
-{
-  public ClassBindSymbol(HashedName name, Interpreter.ClassCreator creator)
+  public ClassSymbolNative(HashedName name, Interpreter.ClassCreator creator)
     : base(null, name, null, null, creator)
   {}
 
-  public ClassBindSymbol(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator)
+  public ClassSymbolNative(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator)
     : base(null, name, super_class, null, creator)
   {}
 
@@ -1055,11 +1168,11 @@ public class ClassBindSymbol : ClassSymbol
   }
 }
 
-public class ClassSymbolAST : ClassSymbol
+public class ClassSymbolScript : ClassSymbol
 {
   public AST_ClassDecl decl;
 
-  public ClassSymbolAST(HashedName name, AST_ClassDecl decl, ClassSymbol parent = null)
+  public ClassSymbolScript(HashedName name, AST_ClassDecl decl, ClassSymbol parent = null)
     : base(null, name, parent == null ? null : new TypeRef(parent), null, null)
   {
     this.decl = decl;
@@ -1111,16 +1224,16 @@ public class ClassSymbolAST : ClassSymbol
 
   void VM_ClassCreator(ref Val res)
   {
-    ValList tb = null;
+    ValList vl = null;
     if(super_class != null)
     {
       super_class.VM_creator(ref res);
-      tb = (ValList)res.obj;
+      vl = (ValList)res.obj;
     }
     else
     {
-      tb = ValList.New();
-      res.SetObj(tb);
+      vl = ValList.New();
+      res.SetObj(vl);
     }
     //NOTE: storing class name hash in _num attribute
     res._num = decl.nname; 
@@ -1147,7 +1260,8 @@ public class ClassSymbolAST : ClassSymbol
           dv.SetNil();
       }
 
-      tb.Add(dv);
+      vl.Add(dv);
+      dv.Release();
     }
   }
 }
@@ -1177,9 +1291,9 @@ public class EnumSymbol : ScopedSymbol, Scope, Type
   }
 }
 
-public class EnumSymbolAST : EnumSymbol
+public class EnumSymbolScript : EnumSymbol
 {
-  public EnumSymbolAST(HashedName name)
+  public EnumSymbolScript(HashedName name)
     : base(null, name, null)
   {
   }
@@ -1335,24 +1449,24 @@ static public class SymbolTable
     }
 
     //for all generic arrays
-    globals.Define(new GenericArrayTypeSymbol(globals));
+    globals.Define(new ArrayTypeSymbol(globals));
 
     {
-      var fn = new FuncBindSymbol("suspend", globals.Type("void"),
+      var fn = new FuncSymbolNative("suspend", globals.Type("void"),
         delegate() { return new suspend(); } 
       );
       globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("yield", globals.Type("void"),
+      var fn = new FuncSymbolNative("yield", globals.Type("void"),
         delegate() { return new yield(); } 
       );
       globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("nop", globals.Type("void"),
+      var fn = new FuncSymbolNative("nop", globals.Type("void"),
         delegate() { return new nop(); } 
       );
 
@@ -1360,7 +1474,7 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncBindSymbol("fail", globals.Type("void"),
+      var fn = new FuncSymbolNative("fail", globals.Type("void"),
         delegate() { return new fail(); } 
       );
 
@@ -1368,7 +1482,7 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncBindSymbol("check", globals.Type("void"),
+      var fn = new FuncSymbolNative("check", globals.Type("void"),
         delegate() { return new check(); } 
       );
       fn.Define(new FuncArgSymbol("cond", globals.Type("bool")));
@@ -1396,10 +1510,10 @@ static public class SymbolTable
     }
 
     //for all generic arrays
-    globals.Define(new GenericArrayTypeSymbol(globals));
+    globals.Define(new ArrayTypeSymbol(globals));
 
     {
-      var fn = new VM_FuncBindSymbol("suspend", globals.Type("void"),
+      var fn = new FuncSymbolNative("suspend", globals.Type("void"), null,
         delegate(VM vm, VM.Frame fr) 
         { 
           return new CoroutineSuspend();
@@ -1409,7 +1523,7 @@ static public class SymbolTable
     }
 
     {
-      var fn = new VM_FuncBindSymbol("yield", globals.Type("void"),
+      var fn = new FuncSymbolNative("yield", globals.Type("void"), null,
         delegate(VM vm, VM.Frame fr) 
         { 
           return new CoroutineYield();
@@ -1417,31 +1531,6 @@ static public class SymbolTable
       );
       globals.Define(fn);
     }
-
-    //{
-    //  var fn = new VM_FuncBindSymbol("nop", globals.Type("void"),
-    //    delegate() { return new nop(); } 
-    //  );
-
-    //  globals.Define(fn);
-    //}
-
-    //{
-    //  var fn = new VMFuncBindSymbol("fail", globals.Type("void"),
-    //    delegate() { return new fail(); } 
-    //  );
-
-    //  globals.Define(fn);
-    //}
-
-    //{
-    //  var fn = new VMFuncBindSymbol("check", globals.Type("void"),
-    //    delegate() { return new check(); } 
-    //  );
-    //  fn.Define(new FuncArgSymbol("cond", globals.Type("bool")));
-
-    //  globals.Define(fn);
-    //}
   }
 
   static public Type GetResultType(Type[,] typeTable, WrappedNode a, WrappedNode b) 
