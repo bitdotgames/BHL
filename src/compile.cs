@@ -18,6 +18,7 @@ public enum Opcodes
   ArgVar          = 0x9,
   Call            = 0x10,
   SetMVar         = 0x20,
+  SetMVarInplace  = 0x21,
   GetMVar         = 0xA,
   MCall           = 0xB,
   Return          = 0xC,
@@ -362,6 +363,13 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.SetMVar,
+        operand_width = new int[] { 4, 2 }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.SetMVarInplace,
         operand_width = new int[] { 4, 2 }
       }
     );
@@ -1074,7 +1082,8 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonPair ast)
   {
-    throw new Exception("Not supported : " + ast);
+    VisitChildren(ast);
+    Emit(Opcodes.SetMVarInplace, new int[] { (int)ast.scope_ntype, 0 /*TODO*/});
   }
 
 #endregion

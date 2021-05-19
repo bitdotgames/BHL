@@ -3528,8 +3528,8 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
-  public void TestJzonInitForUserClass()
+  [IsTested()]
+  public void TestJsonInitForUserClass()
   {
     string bhl = @"
 
@@ -3562,16 +3562,13 @@ public class BHL_TestVM : BHL_TestBase
       .UseByteCode()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.New, new int[] { H("Foo") }) 
-      .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Foo"), 0 })
       .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 1 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Foo"), 1 })
       .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 0 })
       .Emit(Opcodes.TypeCast, new int[] { H("string") })

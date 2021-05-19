@@ -697,6 +697,15 @@ public class VM
         obj.Release();
       }
       break;
+      case Opcodes.SetMVarInplace:
+      {
+        var obj = curr_frame.PeekValue();
+        var val = curr_frame.PopValueManual();
+        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+        field_symb.VM_setter(ref obj, val);
+        val.Release();
+      }
+      break;
       default:
         throw new Exception("Not supported opcode: " + op);
     }
