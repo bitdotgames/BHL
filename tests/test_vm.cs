@@ -3803,32 +3803,32 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrType {
     get {
-      return ArrayTypeSymbol.INT_CLASS_TYPE;
+      return GenericArrayTypeSymbol.INT_CLASS_TYPE;
     }
   }
   public static int ArrAddIdx {
     get {
-      return ArrayTypeSymbol.IDX_Add;
+      return GenericArrayTypeSymbol.IDX_Add;
     }
   }
   public static int ArrSetIdx {
     get {
-      return ArrayTypeSymbol.IDX_SetAt;
+      return GenericArrayTypeSymbol.IDX_SetAt;
     }
   }
   public static int ArrRemoveIdx {
     get {
-      return ArrayTypeSymbol.IDX_RemoveAt;
+      return GenericArrayTypeSymbol.IDX_RemoveAt;
     }
   }
   public static int ArrCountIdx {
     get {
-      return ArrayTypeSymbol.IDX_Count;
+      return GenericArrayTypeSymbol.IDX_Count;
     }
   }
   public static int ArrAtIdx {
     get {
-      return ArrayTypeSymbol.IDX_At;
+      return GenericArrayTypeSymbol.IDX_At;
     }
   }
 

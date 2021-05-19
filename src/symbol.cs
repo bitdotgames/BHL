@@ -276,20 +276,12 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   }
 }
 
-abstract public class AbstractArrayTypeSymbol : ClassSymbol
+abstract public class ArrayTypeSymbol : ClassSymbol
 {
-  public static readonly HashedName CLASS_TYPE = new HashedName("[]"); 
-  public static int INT_CLASS_TYPE = (int)CLASS_TYPE.n1;
-
-  public TypeRef original;
-
-  public override HashedName Type()
-  {
-    return CLASS_TYPE;
-  }
+  public TypeRef item_type;
 
 #if BHL_FRONT
-  public AbstractArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
+  public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
     : this(scope, new TypeRef(scope, node.NAME().GetText()))
   {}
 #endif
@@ -303,30 +295,30 @@ abstract public class AbstractArrayTypeSymbol : ClassSymbol
   public const int IDX_Clear    = 4;
   public const int IDX_Count    = 5;
 
-  public AbstractArrayTypeSymbol(BaseScope scope, TypeRef original) 
-    : base(null, original.name.s + "[]", new TypeRef(), null)
+  public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
+    : base(null, item_type.name.s + "[]", new TypeRef(), null)
   {
-    this.original = original;
+    this.item_type = item_type;
 
     this.creator = CreateArr;
     this.VM_creator = VM_CreateArr;
 
     {
       var fn = new FuncSymbolNative("Add", scope.Type("void"), Create_Add, VM_Add);
-      fn.Define(new FuncArgSymbol("o", original));
+      fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("At", original, Create_At, VM_At);
+      var fn = new FuncSymbolNative("At", item_type, Create_At, VM_At);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("SetAt", original, null, VM_SetAt);
+      var fn = new FuncSymbolNative("SetAt", item_type, null, VM_SetAt);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
-      fn.Define(new FuncArgSymbol("o", original));
+      fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
 
@@ -365,21 +357,31 @@ abstract public class AbstractArrayTypeSymbol : ClassSymbol
   public abstract IInstruction VM_Clear(VM vm, VM.Frame curr_frame);
 }
 
-//NOTE: this one is used as a fallback for all arrays which
-//      were not explicitely re-defined
-public class ArrayTypeSymbol : AbstractArrayTypeSymbol
+//NOTE: This one is used as a fallback for all arrays which
+//      were not explicitely re-defined. Fallback happens during
+//      compilation phase in BaseScope.Type(..) method
+//     
+public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
+  public static readonly HashedName CLASS_TYPE = new HashedName("[]"); 
+  public static int INT_CLASS_TYPE = (int)CLASS_TYPE.n1;
+
+  public override HashedName Type()
+  {
+    return CLASS_TYPE;
+  }
+
 #if BHL_FRONT
-  public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
+  public GenericArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
     : base(scope, node)
   {}
 #endif
 
-  public ArrayTypeSymbol(BaseScope scope, TypeRef original) 
-    : base(scope, original)
+  public GenericArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
+    : base(scope, item_type)
   {}
 
-  public ArrayTypeSymbol(BaseScope scope) 
+  public GenericArrayTypeSymbol(BaseScope scope) 
     : base(scope, new TypeRef(scope, ""))
   {}
 
@@ -503,7 +505,7 @@ public class ArrayTypeSymbol : AbstractArrayTypeSymbol
   }
 }
 
-public class ArrayTypeSymbolT<T> : AbstractArrayTypeSymbol where T : new()
+public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 {
   public delegate void ConverterCb(DynVal dv, ref T res);
   public static ConverterCb Convert;
@@ -520,8 +522,8 @@ public class ArrayTypeSymbolT<T> : AbstractArrayTypeSymbol where T : new()
       res = (T)dv.obj;
   }
 
-  public ArrayTypeSymbolT(BaseScope scope, TypeRef original, CreatorCb creator, ConverterCb converter = null) 
-    : base(scope, original)
+  public ArrayTypeSymbolT(BaseScope scope, TypeRef item_type, CreatorCb creator, ConverterCb converter = null) 
+    : base(scope, item_type)
   {
     Convert = converter == null ? DefaultConverter : converter;
 
@@ -1451,7 +1453,7 @@ static public class SymbolTable
     }
 
     //for all generic arrays
-    globals.Define(new ArrayTypeSymbol(globals));
+    globals.Define(new GenericArrayTypeSymbol(globals));
 
     {
       var fn = new FuncSymbolNative("suspend", globals.Type("void"),
@@ -1512,7 +1514,7 @@ static public class SymbolTable
     }
 
     //for all generic arrays
-    globals.Define(new ArrayTypeSymbol(globals));
+    globals.Define(new GenericArrayTypeSymbol(globals));
 
     {
       var fn = new FuncSymbolNative("suspend", globals.Type("void"), null,

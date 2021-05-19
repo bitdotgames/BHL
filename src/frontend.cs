@@ -547,7 +547,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   void AddArrIndex(bhlParser.ArrAccessContext arracc, ref Type type, int line, bool write)
   {
-    var arr_type = type as AbstractArrayTypeSymbol;
+    var arr_type = type as ArrayTypeSymbol;
     if(arr_type == null)
       FireError(Location(arracc) +  " : accessing not an array type '" + type.GetName().s + "'");
 
@@ -557,7 +557,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(Wrap(arr_exp).eval_type != SymbolTable.symb_int)
       FireError(Location(arr_exp) +  " : array index expression is not of type int");
 
-    type = arr_type.original.Get();
+    type = arr_type.item_type.Get();
 
     var ast = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
     ast.scope_ntype = (uint)arr_type.Type().n;
@@ -876,7 +876,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(curr_type == null)
       FireError(Location(ctx) + ": {..} not expected");
 
-    if(!(curr_type is ClassSymbol) || (curr_type is AbstractArrayTypeSymbol))
+    if(!(curr_type is ClassSymbol) || (curr_type is ArrayTypeSymbol))
       FireError(Location(ctx) + ": type '" + curr_type + "' can't be specified with {..}");
 
     Wrap(ctx).eval_type = curr_type;
@@ -906,13 +906,13 @@ public class Frontend : bhlBaseVisitor<object>
     if(curr_type == null)
       FireError(Location(ctx) + ": [..] not expected");
 
-    if(!(curr_type is AbstractArrayTypeSymbol))
+    if(!(curr_type is ArrayTypeSymbol))
       FireError(Location(ctx) + ": [..] is not expected, need '" + curr_type + "'");
 
-    var arr_type = curr_type as AbstractArrayTypeSymbol;
-    var orig_type = arr_type.original.Get();
+    var arr_type = curr_type as ArrayTypeSymbol;
+    var orig_type = arr_type.item_type.Get();
     if(orig_type == null)
-      FireError(Location(ctx) + ": type '" + arr_type.original.name.s + "' not found");
+      FireError(Location(ctx) + ": type '" + arr_type.item_type.name.s + "' not found");
     PushJsonType(orig_type);
 
     var ast = AST_Util.New_JsonArr(arr_type);
@@ -1202,7 +1202,7 @@ public class Frontend : bhlBaseVisitor<object>
 
       Wrap(ctx).eval_type = SymbolTable.BopOverload(wlhs, wrhs, op_func);
 
-      //NOTE: replacing original ast, a bit 'dirty' but kinda OK
+      //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = AST_Util.New_Block(EnumBlock.GROUP);
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
@@ -2383,9 +2383,9 @@ public class Frontend : bhlBaseVisitor<object>
     PopJsonType();
     SymbolTable.CheckAssign(Wrap(exp), arr_type);
 
-    //generic fallback
-    uint arr_ntype = (uint)ArrayTypeSymbol.CLASS_TYPE.n;
-    if(!(arr_type is ArrayTypeSymbol))
+    //generic fallback if the concrete type is not found 
+    uint arr_ntype = (uint)GenericArrayTypeSymbol.CLASS_TYPE.n;
+    if(!(arr_type is GenericArrayTypeSymbol))
       arr_ntype = (uint)arr_type.GetName().n;
 
     var arr_tmp_name = "$foreach_tmp" + loops_stack;

@@ -828,7 +828,7 @@ static public class AST_Util
     return n;
   }
 
-  static public AST_JsonArr New_JsonArr(AbstractArrayTypeSymbol arr_type)
+  static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type)
   {
     var n = new AST_JsonArr();
     n.ntype = (uint)arr_type.Type().n;

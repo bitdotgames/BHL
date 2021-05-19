@@ -79,7 +79,7 @@ public abstract class BaseScope : Scope
   static bool IsBuiltin(Symbol s)
   {
     return ((s is BuiltInTypeSymbol) || 
-            (s is AbstractArrayTypeSymbol)
+            (s is ArrayTypeSymbol)
            );
   }
 
@@ -105,13 +105,16 @@ public abstract class BaseScope : Scope
       if(node.fnargs() != null)
         type = new FuncType(this, node);
 
+      //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
       if(node.ARR() != null)
       {
         //checking if it's an array of func ptrs
         if(type != null)
-          type = new ArrayTypeSymbol(this, new TypeRef(type));
+          type = new GenericArrayTypeSymbol(this, new TypeRef(type));
         else
-          type = new ArrayTypeSymbol(this, node);
+        {
+          type = new GenericArrayTypeSymbol(this, node);
+        }
       }
     }
 

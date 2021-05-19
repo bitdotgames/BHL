@@ -4089,7 +4089,7 @@ public class BHL_TestInterpreter : BHL_TestBase
         cl.Define(vs);
       }
       globs.Define(cl);
-      globs.Define(new ArrayTypeSymbol(globs, new TypeRef(cl)));
+      globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
     }
   }
 
@@ -5430,7 +5430,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   {
     var en = new EnumSymbol(null, "EnumState", null);
     globs.Define(en);
-    globs.Define(new ArrayTypeSymbol(globs, new TypeRef(en)));
+    globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(en)));
 
     en.Define(new EnumItemSymbol(null, en, "SPAWNED",  10));
     en.Define(new EnumItemSymbol(null, en, "SPAWNED2", 20));
@@ -17947,7 +17947,7 @@ public class BHL_TestInterpreter : BHL_TestBase
       );
 
       globs.Define(cl);
-      globs.Define(new ArrayTypeSymbol(globs, new TypeRef(cl)));
+      globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
 
       cl.Define(new FieldSymbol("position", globs.Type("Vec3"),
         delegate(DynVal ctx, ref DynVal v)

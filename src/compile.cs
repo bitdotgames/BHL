@@ -929,12 +929,12 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.MCall, new int[] { ArrayTypeSymbol.INT_CLASS_TYPE, ArrayTypeSymbol.IDX_At});
+        Emit(Opcodes.MCall, new int[] { GenericArrayTypeSymbol.INT_CLASS_TYPE, GenericArrayTypeSymbol.IDX_At});
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.MCall, new int[] { ArrayTypeSymbol.INT_CLASS_TYPE, ArrayTypeSymbol.IDX_SetAt});
+        Emit(Opcodes.MCall, new int[] { GenericArrayTypeSymbol.INT_CLASS_TYPE, GenericArrayTypeSymbol.IDX_SetAt});
       }
       break;
       case EnumCall.FUNC_PTR_POP:
