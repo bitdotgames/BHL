@@ -1063,7 +1063,8 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    throw new Exception("Not supported : " + ast);
+    Emit(Opcodes.New, new int[] { (int)ast.ntype });
+    VisitChildren(ast);
   }
 
   public override void DoVisit(bhl.AST_JsonArr ast)

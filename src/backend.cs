@@ -35,24 +35,6 @@ public class Interpreter : AST_Visitor
   DynValDict curr_mem;
   public DynValDict glob_mem = new DynValDict();
 
-  public struct JsonCtx
-  {
-    public const int OBJ = 1;
-    public const int ARR = 2;
-
-    public int type;
-    public uint scope_type;
-    public uint name_or_idx;
-
-    public JsonCtx(int type, uint scope_type, uint name_or_idx)
-    {
-      this.type = type;
-      this.scope_type = scope_type;
-      this.name_or_idx = name_or_idx;
-    }
-  }
-  FastStack<JsonCtx> jcts = new FastStack<JsonCtx>(130);
-
   public IModuleLoader module_loader;
   //NOTE: key is a module id, value is a file path
   public Dictionary<ulong,string> loaded_modules = new Dictionary<ulong,string>();
@@ -868,12 +850,7 @@ public class Interpreter : AST_Visitor
         curr_node.addChild(n);
       }
       else
-      {
-        var jc = new JsonCtx(JsonCtx.ARR, node.ntype, (uint)i);
-        jcts.Push(jc);
         Visit(c);
-        jcts.Pop();
-      }
     }
 
     //adding last item item
@@ -887,13 +864,8 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonPair node)
   {
-    var jc = new JsonCtx(JsonCtx.OBJ, node.scope_ntype, node.nname);
-    jcts.Push(jc);
-
     VisitChildren(node);
     curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE_PUSH_CTX));
-
-    jcts.Pop();
   }
 }
 

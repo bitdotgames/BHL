@@ -3528,6 +3528,76 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //[IsTested()]
+  public void TestJzonInitForUserClass()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int Int
+      float Flt
+      string Str
+    }
+      
+    func void test() 
+    {
+      Foo f = {Int: 10, Flt: 14.2, Str: ""Hey""}
+      trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindTrace(globs, log);
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .UseInitCode()
+      .Emit(Opcodes.ClassBegin, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.ClassMember, new int[] { H("int"), H("Int") })
+      .Emit(Opcodes.ClassMember, new int[] { H("float"), H("Flt") })
+      .Emit(Opcodes.ClassMember, new int[] { H("string"), H("Str") })
+      .Emit(Opcodes.ClassEnd)
+      .UseByteCode()
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.New, new int[] { H("Foo") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 1 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(globs, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("10;14.2;Hey", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestStartSeveralFibers()
   {
