@@ -1083,7 +1083,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(bhl.AST_JsonPair ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.SetMVarInplace, new int[] { (int)ast.scope_ntype, 0 /*TODO*/});
+    Emit(Opcodes.SetMVarInplace, new int[] { (int)ast.scope_ntype, (int)ast.symb_idx });
   }
 
 #endregion

@@ -950,7 +950,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(member == null)
       FireError(Location(ctx) + ": no such attribute '" + name_str + "' in class '" + scoped_symb.name.s + "'");
 
-    var ast = AST_Util.New_JsonPair(curr_type.GetName(), name_str);
+    var ast = AST_Util.New_JsonPair(curr_type.GetName(), name_str, scoped_symb.GetMembers().FindStringKeyIndex(name_str));
 
     PushJsonType(member.type.Get());
 

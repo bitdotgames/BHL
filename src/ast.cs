@@ -1048,6 +1048,7 @@ public class AST_JsonPair  : AST
   public uint nname;
   public string name = "";
   public uint scope_ntype;
+  public uint symb_idx;
 
   static public  new  uint STATIC_CLASS_ID = 235544635;
 
@@ -1068,6 +1069,7 @@ public class AST_JsonPair  : AST
     nname = 0;
     name = "";
     scope_ntype = 0;
+    symb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -1077,11 +1079,12 @@ public class AST_JsonPair  : AST
     MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref scope_ntype);
+    MetaHelper.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 4; 
+    return 5; 
   }
 }
 

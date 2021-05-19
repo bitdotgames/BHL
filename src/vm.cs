@@ -305,8 +305,9 @@ public class VM
             ExecuteVarOp(opcode, curr_frame, bytecode, ref ip);
           }
           break;
-          case Opcodes.SetMVar:
           case Opcodes.GetMVar:
+          case Opcodes.SetMVar:
+          case Opcodes.SetMVarInplace:
           {
             ExecuteMVarOp(opcode, curr_frame, symbols, bytecode, ref ip);
           }
@@ -699,8 +700,8 @@ public class VM
       break;
       case Opcodes.SetMVarInplace:
       {
-        var obj = curr_frame.PeekValue();
         var val = curr_frame.PopValueManual();
+        var obj = curr_frame.PeekValue();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         field_symb.VM_setter(ref obj, val);
         val.Release();

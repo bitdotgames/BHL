@@ -841,13 +841,14 @@ static public class AST_Util
     return n;
   }
 
-  static public AST_JsonPair New_JsonPair(HashedName scope_type, HashedName name)
+  static public AST_JsonPair New_JsonPair(HashedName scope_type, HashedName name, int symb_idx)
   {
     var n = new AST_JsonPair();
     n.scope_ntype = (uint)scope_type.n;
     n.nname = (uint)name.n;
     if(Util.DEBUG)
       n.name = name.s;
+    n.symb_idx = (uint)symb_idx;
 
     return n;
   }
