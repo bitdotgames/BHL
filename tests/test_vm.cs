@@ -3472,10 +3472,13 @@ public class BHL_TestVM : BHL_TestBase
       f.Int = 10
       f.Flt = 14.2
       f.Str = ""Hey""
+      trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
     }
     ";
 
     var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindTrace(globs, log);
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -3499,6 +3502,21 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 2 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 1 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
       .Emit(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -3506,6 +3524,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = new VM(globs, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("10;14.2;Hey", log.ToString());
     CommonChecks(vm);
   }
 
