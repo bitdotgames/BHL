@@ -3670,6 +3670,37 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestJsonArrInitForUserClassMultiple()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int Int
+      float Flt
+      string Str
+    }
+      
+    func void test() 
+    {
+      Foo[] fs = [{Int: 10, Flt: 14.2, Str: ""Hey""},{Flt: 15.1, Int: 2, Str: ""Foo""}]
+      trace((string)fs[1].Int + "";"" + (string)fs[1].Flt + "";"" + fs[1].Str + ""-"" + 
+           (string)fs[0].Int + "";"" + (string)fs[0].Flt + "";"" + fs[0].Str)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    var c = Compile(bhl, globs);
+
+    var vm = new VM(globs, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("2;15.1;Foo-10;14.2;Hey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
