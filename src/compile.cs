@@ -1077,7 +1077,30 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonArr ast)
   {
-    throw new Exception("Not supported : " + ast);
+    var arr_symb = symbols.Resolve(ast.ntype) as ArrayTypeSymbol;
+    if(arr_symb == null)
+      throw new Exception("Could not find class binding: " + ast.ntype);
+
+    Emit(Opcodes.New, new int[] { (int)ast.ntype });
+
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var c = ast.children[i];
+
+      //checking if there's an explicit add to array operand
+      if(c is AST_JsonArrAddItem)
+      {
+        Emit(Opcodes.MCall, new int[] { (int)ast.ntype , GenericArrayTypeSymbol.IDX_AddInplace});
+      }
+      else
+        Visit(c);
+    }
+
+    //adding last item item
+    if(ast.children.Count > 0)
+    {
+      Emit(Opcodes.MCall, new int[] { (int)ast.ntype , GenericArrayTypeSymbol.IDX_AddInplace});
+    }
   }
 
   public override void DoVisit(bhl.AST_JsonPair ast)

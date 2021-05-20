@@ -288,12 +288,13 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
   //NOTE: indices below are synchronized with an actual order 
   //      of class members initialized later
-  public const int IDX_Add      = 0;
-  public const int IDX_At       = 1;
-  public const int IDX_SetAt    = 2;
-  public const int IDX_RemoveAt = 3;
-  public const int IDX_Clear    = 4;
-  public const int IDX_Count    = 5;
+  public const int IDX_Add        = 0;
+  public const int IDX_At         = 1;
+  public const int IDX_SetAt      = 2;
+  public const int IDX_RemoveAt   = 3;
+  public const int IDX_Clear      = 4;
+  public const int IDX_Count      = 5;
+  public const int IDX_AddInplace = 6;
 
   public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
     : base(null, item_type.name.s + "[]", new TypeRef(), null)
@@ -337,6 +338,13 @@ abstract public class ArrayTypeSymbol : ClassSymbol
       var vs = new FieldSymbol("Count", scope.Type("int"), Create_Count, null, null, VM_GetCount, null);
       this.Define(vs);
     }
+
+    {
+      var fn = new FuncSymbolNative("$AddInplace", scope.Type("void"), null, VM_AddInplace);
+      fn.Define(new FuncArgSymbol("o", item_type));
+      this.Define(fn);
+    }
+
   }
 
   public abstract void CreateArr(ref DynVal v);
@@ -355,6 +363,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract IInstruction VM_SetAt(VM vm, VM.Frame curr_frame);
   public abstract IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame);
   public abstract IInstruction VM_Clear(VM vm, VM.Frame curr_frame);
+  public abstract IInstruction VM_AddInplace(VM vm, VM.Frame curr_frame);
 }
 
 //NOTE: This one is used as a fallback for all arrays which
@@ -458,6 +467,16 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     lst.Add(val);
     val.Release();
     arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_AddInplace(VM vm, VM.Frame curr_frame)
+  {
+    var val = curr_frame.PopValueManual();
+    var arr = curr_frame.PeekValue();
+    var lst = AsList(arr);
+    lst.Add(val);
+    val.Release();
     return null;
   }
 
@@ -582,6 +601,11 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   }
   
   public override IInstruction VM_Add(VM vm, VM.Frame curr_frame)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_AddInplace(VM vm, VM.Frame curr_frame)
   {
     throw new Exception("Not implemented");
   }

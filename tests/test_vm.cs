@@ -3596,6 +3596,80 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestJsonArrInitForUserClass()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int Int
+      float Flt
+      string Str
+    }
+      
+    func void test() 
+    {
+      Foo[] fs = [{Int: 10, Flt: 14.2, Str: ""Hey""}]
+      Foo f = fs[0]
+      trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindTrace(globs, log);
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .UseInitCode()
+      .Emit(Opcodes.ClassBegin, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.ClassMember, new int[] { H("int"), H("Int") })
+      .Emit(Opcodes.ClassMember, new int[] { H("float"), H("Flt") })
+      .Emit(Opcodes.ClassMember, new int[] { H("string"), H("Str") })
+      .Emit(Opcodes.ClassEnd)
+      .UseByteCode()
+      .Emit(Opcodes.InitFrame, new int[] { 2 })
+      .Emit(Opcodes.New, new int[] { ArrType }) 
+      .Emit(Opcodes.New, new int[] { H("Foo") }) 
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Foo"), 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddInplaceIdx })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAtIdx })
+      .Emit(Opcodes.SetVar, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Constant, new int[] { 4 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 1 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Constant, new int[] { 4 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(globs, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("10;14.2;Hey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
@@ -3892,29 +3966,40 @@ public class BHL_TestVM : BHL_TestBase
       return GenericArrayTypeSymbol.INT_CLASS_TYPE;
     }
   }
+
   public static int ArrAddIdx {
     get {
       return GenericArrayTypeSymbol.IDX_Add;
     }
   }
+
   public static int ArrSetIdx {
     get {
       return GenericArrayTypeSymbol.IDX_SetAt;
     }
   }
+
   public static int ArrRemoveIdx {
     get {
       return GenericArrayTypeSymbol.IDX_RemoveAt;
     }
   }
+
   public static int ArrCountIdx {
     get {
       return GenericArrayTypeSymbol.IDX_Count;
     }
   }
+
   public static int ArrAtIdx {
     get {
       return GenericArrayTypeSymbol.IDX_At;
+    }
+  }
+
+  public static int ArrAddInplaceIdx {
+    get {
+      return GenericArrayTypeSymbol.IDX_AddInplace;
     }
   }
 
