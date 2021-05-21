@@ -3737,6 +3737,67 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeClassWithSimpleMembers()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      Bar o = new Bar
+      o.Int = 10
+      o.Flt = 14.5
+      o.Str = ""Hey""
+      trace((string)o.Int + "";"" + (string)o.Flt + "";"" + o.Str)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindTrace(globs, log);
+    BindBar(globs);
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.New, new int[] { H("Bar") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Bar"), 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Bar"), 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.SetMVar, new int[] { H("Bar"), 2 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Bar"), 0 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Bar"), 1 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Bar"), 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(globs, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("10;14.5;Hey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
@@ -4091,7 +4152,9 @@ public class BHL_TestVM : BHL_TestBase
 
   public class Bar
   {
-    public float F;
+    public int Int;
+    public float Flt;
+    public string Str;
   }
 
   ClassSymbolNative BindBar(GlobalScope globs)
@@ -4104,16 +4167,42 @@ public class BHL_TestVM : BHL_TestBase
     );
 
     globs.Define(cl);
-    cl.Define(new FieldSymbol("F", globs.Type("float"), null, null, null,
+    cl.Define(new FieldSymbol("Int", globs.Type("int"), null, null, null,
       delegate(Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
-        v.SetNum(c.F);
+        v.SetNum(c.Int);
       },
       delegate(ref Val ctx, Val v)
       {
         var c = (Bar)ctx.obj;
-        c.F = (float)v.num; 
+        c.Int = (int)v.num; 
+        ctx.obj = c;
+      }
+    ));
+    cl.Define(new FieldSymbol("Flt", globs.Type("float"), null, null, null,
+      delegate(Val ctx, ref Val v)
+      {
+        var c = (Bar)ctx.obj;
+        v.SetNum(c.Flt);
+      },
+      delegate(ref Val ctx, Val v)
+      {
+        var c = (Bar)ctx.obj;
+        c.Flt = (float)v.num; 
+        ctx.obj = c;
+      }
+    ));
+    cl.Define(new FieldSymbol("Str", globs.Type("string"), null, null, null,
+      delegate(Val ctx, ref Val v)
+      {
+        var c = (Bar)ctx.obj;
+        v.SetStr(c.Str);
+      },
+      delegate(ref Val ctx, Val v)
+      {
+        var c = (Bar)ctx.obj;
+        c.Str = (string)v.obj; 
         ctx.obj = c;
       }
     ));
