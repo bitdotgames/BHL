@@ -2406,7 +2406,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, arr_tmp_symb));
     //declaring counter var
-    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, false, 0));
+    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, false, SymbolTable.symb_int.GetName().n1));
 
     //declaring iterating var
     if(iter_ast_decl != null)

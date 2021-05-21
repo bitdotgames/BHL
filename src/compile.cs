@@ -335,21 +335,21 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.DeclVar,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 2 /*local idx*/, 1 /*type*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.ArgVar,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 2 /*local idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.SetVar,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 2 /*local idx*/ }
       }
     );
     DeclareOpcode(
@@ -1054,6 +1054,18 @@ public class Compiler : AST_Visitor
     }
   }
 
+  public byte MapToValType(uint ntype)
+  {
+    if(ntype == SymbolTable.symb_int.GetName().n1 || ntype == SymbolTable.symb_float.GetName().n1)
+      return Val.NUMBER;
+    else if(ntype == SymbolTable.symb_string.GetName().n1)
+      return Val.STRING;
+    else if(ntype == SymbolTable.symb_bool.GetName().n1)
+      return Val.BOOL;
+    else
+      return Val.OBJ;
+  }
+
   public override void DoVisit(AST_VarDecl ast)
   {
     //checking of there are default args
@@ -1066,7 +1078,13 @@ public class Compiler : AST_Visitor
       PatchJumpOffsetToCurrPos(pos);
     }
 
-    Emit(ast.is_func_arg ? Opcodes.ArgVar : Opcodes.DeclVar, new int[] { (int)ast.symb_idx });
+    if(!ast.is_func_arg)
+    {
+      byte type = MapToValType(ast.ntype);
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)type });
+    }
+    else
+      Emit(Opcodes.ArgVar, new int[] { (int)ast.symb_idx });
   }
 
   public override void DoVisit(bhl.AST_JsonObj ast)

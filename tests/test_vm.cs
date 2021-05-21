@@ -1096,9 +1096,9 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.InitFrame, new int[] { 3 })
-      .Emit(Opcodes.DeclVar, new int[] { 0 })
-      .Emit(Opcodes.DeclVar, new int[] { 1 })
-      .Emit(Opcodes.DeclVar, new int[] { 2 })
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
+      .Emit(Opcodes.DeclVar, new int[] { 1, (int)Val.STRING })
+      .Emit(Opcodes.DeclVar, new int[] { 2, (int)Val.BOOL })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Equal)
@@ -1438,8 +1438,8 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.SetVar, new int[] { 3 }) //assign tmp arr
-      .Emit(Opcodes.DeclVar, new int[] { 4 })//declare counter
-      .Emit(Opcodes.DeclVar, new int[] { 2 })//declare iterator
+      .Emit(Opcodes.DeclVar, new int[] { 4, (int)Val.NUMBER })//declare counter
+      .Emit(Opcodes.DeclVar, new int[] { 2, (int)Val.NUMBER  })//declare iterator
       .Emit(Opcodes.GetVar, new int[] { 4 })
       .Emit(Opcodes.GetVar, new int[] { 3 })
       .Emit(Opcodes.GetMVar, new int[] { ArrType, ArrCountIdx })
@@ -2495,7 +2495,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.DeclVar, new int[] { 0 })
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
       .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 18})
         .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 4})
           .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
@@ -2541,7 +2541,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.DeclVar, new int[] { 0 })
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
       .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 18})
         .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 4})
           .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
@@ -2605,7 +2605,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.DeclVar, new int[] { 0 })
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
       .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 16})
         .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 4})
           .Emit(Opcodes.Call, new int[] { 0, 0/*foo*/, 0 })
@@ -2664,7 +2664,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
       //test
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.DeclVar, new int[] { 0 })
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER  })
       .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 16})
         .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 4})
           .Emit(Opcodes.Call, new int[] { 0, 0/*foo*/, 0 })
@@ -2711,7 +2711,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.DeclVar, new int[] { 0 })
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER  })
       .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 18})
         .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 4})
           .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("suspend"), 0 })
@@ -2761,7 +2761,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler(c.Symbols)
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.DeclVar, new int[] { 0 })
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER  })
       .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 22})
         .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 8})
           .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf("yield"), 0 })
@@ -3701,6 +3701,42 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBindNativeClass()
+  {
+    string bhl = @"
+
+    func bool test() 
+    {
+      Bar b = new Bar
+      return b != null
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindBar(globs);
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.New, new int[] { H("Bar") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.NotEqual)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(globs, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertTrue(vm.PopValue().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
@@ -4051,6 +4087,38 @@ public class BHL_TestVM : BHL_TestBase
     fn.Define(new FuncArgSymbol("str", globs.Type("string")));
     globs.Define(fn);
     return fn;
+  }
+
+  public class Bar
+  {
+    public float F;
+  }
+
+  ClassSymbolNative BindBar(GlobalScope globs)
+  {
+    var cl = new ClassSymbolNative("Bar", null,
+      delegate(ref Val v) 
+      { 
+        v.SetObj(new Bar());
+      }
+    );
+
+    globs.Define(cl);
+    cl.Define(new FieldSymbol("F", globs.Type("float"), null, null, null,
+      delegate(Val ctx, ref Val v)
+      {
+        var c = (Bar)ctx.obj;
+        v.SetNum(c.F);
+      },
+      delegate(ref Val ctx, Val v)
+      {
+        var c = (Bar)ctx.obj;
+        c.F = (float)v.num; 
+        ctx.obj = c;
+      }
+    ));
+
+    return cl;
   }
 }
   

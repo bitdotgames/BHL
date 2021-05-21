@@ -1176,12 +1176,12 @@ public class FuncSymbolSimpleNative : FuncSymbolNative
 
 public class ClassSymbolNative : ClassSymbol
 {
-  public ClassSymbolNative(HashedName name, Interpreter.ClassCreator creator)
-    : base(null, name, null, null, creator)
+  public ClassSymbolNative(HashedName name, Interpreter.ClassCreator creator, VM.ClassCreator VM_creator = null)
+    : base(null, name, null, null, creator, VM_creator)
   {}
 
-  public ClassSymbolNative(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator)
-    : base(null, name, super_class, null, creator)
+  public ClassSymbolNative(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator, VM.ClassCreator VM_creator = null)
+    : base(null, name, super_class, null, creator, VM_creator)
   {}
 
   public void OverloadBinaryOperator(FuncSymbol s)

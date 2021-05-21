@@ -659,7 +659,19 @@ public class VM
         curr_frame.locals[local_idx] = curr_frame.stack.PopFast();
       break;
       case Opcodes.DeclVar:
-        curr_frame.locals[local_idx] = Val.New();
+      {
+        byte type = (byte)Bytecode.Decode(bytecode, ref ip);
+        Val v;
+        if(type == Val.NUMBER)
+          v = Val.NewNum(0);
+        else if(type == Val.STRING)
+          v = Val.NewStr("");
+        else if(type == Val.BOOL)
+          v = Val.NewBool(false);
+        else
+          v = Val.NewObj(null);
+        curr_frame.locals[local_idx] = v;
+      }
       break;
       default:
         throw new Exception("Not supported opcode: " + op);
@@ -749,10 +761,10 @@ public class VM
         curr_frame.PushValueManual(Val.NewNum(l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
-        curr_frame.PushValueManual(Val.NewBool(l_operand._num == r_operand._num));
+        curr_frame.PushValueManual(Val.NewBool(l_operand.IsEqual(r_operand)));
       break;
       case Opcodes.NotEqual:
-        curr_frame.PushValueManual(Val.NewBool(l_operand._num != r_operand._num));
+        curr_frame.PushValueManual(Val.NewBool(!l_operand.IsEqual(r_operand)));
       break;
       case Opcodes.Greater:
         curr_frame.PushValueManual(Val.NewBool(l_operand._num > r_operand._num));
@@ -1040,7 +1052,6 @@ public class Val
   public const byte BOOL      = 2;
   public const byte STRING    = 3;
   public const byte OBJ       = 4;
-  public const byte NIL       = 5;
 
   public bool IsEmpty { get { return type == NONE; } }
 
@@ -1289,7 +1300,7 @@ public class Val
   public void SetObj(object o)
   {
     Reset();
-    _type = o == null ? NIL : OBJ;
+    _type = OBJ;
     _obj = o;
   }
 
@@ -1303,7 +1314,7 @@ public class Val
   public void SetNil()
   {
     Reset();
-    _type = NIL;
+    _type = OBJ;
   }
 
   public bool IsEqual(Val o)
@@ -1328,8 +1339,6 @@ public class Val
       str = this.str + ":<STRING>";
     else if(type == OBJ)
       str = _obj.GetType().Name + ":<OBJ>";
-    else if(type == NIL)
-      str = "<NIL>";
     else if(type == NONE)
       str = "<NONE>";
     else
@@ -1348,8 +1357,6 @@ public class Val
       return (string)_obj;
     else if(type == OBJ)
       return _obj;
-    else if(type == NIL)
-      return null;
     else
       throw new Exception("ToAny(): please support type: " + type);
   }
