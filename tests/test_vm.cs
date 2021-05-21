@@ -3798,6 +3798,68 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestJsonArrInitForNativeClass()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      Bar[] bs = [{Int: 10, Flt: 14.5, Str: ""Hey""}]
+      Bar b = bs[0]
+      trace((string)b.Int + "";"" + (string)b.Flt + "";"" + b.Str)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindTrace(globs, log);
+    BindBar(globs);
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new Compiler(c.Symbols)
+      .Emit(Opcodes.InitFrame, new int[] { 2 })
+      .Emit(Opcodes.New, new int[] { ArrType }) 
+      .Emit(Opcodes.New, new int[] { H("Bar") }) 
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Bar"), 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Bar"), 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.SetMVarInplace, new int[] { H("Bar"), 2 })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAddInplaceIdx })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.MCall, new int[] { ArrType, ArrAtIdx })
+      .Emit(Opcodes.SetVar, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Bar"), 0 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Constant, new int[] { 4 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Bar"), 1 })
+      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Constant, new int[] { 4 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.GetMVar, new int[] { H("Bar"), 2 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.Call, new int[] { 1, globs.GetMembers().IndexOf(fn), 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = new VM(globs, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("10;14.5;Hey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
