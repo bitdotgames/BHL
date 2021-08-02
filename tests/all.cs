@@ -9913,6 +9913,58 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestParalReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      paral {
+        seq {
+          return 1
+        }
+        suspend()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+    AssertEqual(num, 1);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestParalAllReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      paral_all {
+        seq {
+          return 1
+        }
+        suspend()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+    AssertEqual(num, 1);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestPrio()
   {
     string bhl = @"
@@ -20098,6 +20150,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
         Console.WriteLine("Stack value #" + i + " " + intp.stack[i]);
     }
     AssertEqual(intp.stack.Count, 0);
+    AssertEqual(intp.node_ctx_stack.Count, 0);
     AssertEqual(DynVal.PoolCount, DynVal.PoolCountFree);
     AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
     AssertEqual(DynValDict.PoolCount, DynValDict.PoolCountFree);

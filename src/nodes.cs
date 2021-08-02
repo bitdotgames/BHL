@@ -839,7 +839,15 @@ public class ParallelNode : ScopeNode
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.init();
-        status = currentTask.execute();
+        try
+        {
+          status = currentTask.execute();
+        }
+        catch(Interpreter.ReturnException)
+        {
+          interp.PopStackParalCtx();
+          throw;
+        }
         currentTask.currStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
@@ -890,7 +898,15 @@ public class ParallelAllNode : ScopeNode
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.init();
-        status = currentTask.execute();
+        try
+        {
+          status = currentTask.execute();
+        }
+        catch(Interpreter.ReturnException)
+        {
+          interp.PopStackParalCtx();
+          throw;
+        }
         currentTask.currStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
