@@ -17547,70 +17547,11 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    var n = ExtractNum(ExecNode(node));
-
-    AssertEqual(6, n);
-  }
-
-  [IsTested()]
-  public void TestExtendCSharpClassSubChild()
-  {
-    string bhl = @"
-
-    class ColorA : Color 
-    { 
-      float a
-    }
-
-    class ColorF : ColorA 
-    { 
-      float f
-    }
-      
-    func float test() 
-    {
-      ColorF c = { r : 1, g : 2, f : 3, a: 4}
-      return c.r + c.g + c.a + c.f
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindColor(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    var n = ExtractNum(ExecNode(node));
-
-    AssertEqual(10, n);
-  }
-
-  [IsTested()]
-  public void TestExtendCSharpClassMemberAlreadyExists()
-  {
-    string bhl = @"
-
-    class ColorA : Color 
-    { 
-      float g
-    }
-      
-    func float test() 
-    {
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindColor(globs);
-
     AssertError<UserError>(
       delegate() { 
         Interpret(bhl, globs);
       },
-      "already defined symbol 'g'"
+      @"extending C# bound classes not currently supported"
     );
   }
 

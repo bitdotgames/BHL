@@ -985,13 +985,6 @@ public class ClassSymbolAST : ClassSymbol
     if(super_class != null)
     {
       super_class.creator(ref res);
-      if(super_class is ClassBindSymbol)
-      {
-        tb = DynValDict.New();
-        tb.Set(0, DynVal.NewObj(res.obj));
-        res.SetObj(tb);
-      }
-      else
       tb = (DynValDict)res.obj;
     }
     else
