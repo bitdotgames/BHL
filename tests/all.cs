@@ -9965,6 +9965,76 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestParalBreak()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int n = 0
+      while(true) {
+        paral {
+          seq {
+            n = 1
+            break
+            suspend()
+          }
+          {
+            n = 2
+            suspend()
+          }
+        }
+      }
+      return n
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+    AssertEqual(num, 1);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestParalAllBreak()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int n = 0
+      while(true) {
+        paral_all {
+          seq {
+            n = 1
+            break
+            suspend()
+          }
+          {
+            n = 2
+            suspend()
+          }
+        }
+      }
+      return n
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+    AssertEqual(num, 1);
+
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestPrio()
   {
     string bhl = @"

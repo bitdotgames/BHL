@@ -848,6 +848,11 @@ public class ParallelNode : ScopeNode
           interp.PopStackParalCtx();
           throw;
         }
+        catch(Interpreter.BreakException)
+        {
+          interp.PopStackParalCtx();
+          throw;
+        }
         currentTask.currStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
@@ -903,6 +908,11 @@ public class ParallelAllNode : ScopeNode
           status = currentTask.execute();
         }
         catch(Interpreter.ReturnException)
+        {
+          interp.PopStackParalCtx();
+          throw;
+        }
+        catch(Interpreter.BreakException)
         {
           interp.PopStackParalCtx();
           throw;
