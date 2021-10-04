@@ -3884,6 +3884,26 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestLoadModule()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return 123
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = new VM();
+    vm.LoadModule(new VM.Module(0, "", c.Symbols, c.GetByteCode(), c.Constants, c.Func2Offset));
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 123);
+    CommonChecks(vm);
+  }
+
   //[IsTested()]
   //public void TestSimpleImport()
   //{
@@ -3911,10 +3931,11 @@ public class BHL_TestVM : BHL_TestBase
   //  }
   //  ";
 
+  //  TestCleanDir();
   //  var files = new List<string>();
-  //  TestNewFile("bhl1.bhl", bhl1, files);
-  //  TestNewFile("bhl2.bhl", bhl2, files);
-  //  TestNewFile("bhl3.bhl", bhl3, files);
+  //  TestNewFile("bhl1.bhl", bhl1, ref files);
+  //  TestNewFile("bhl2.bhl", bhl2, ref files);
+  //  TestNewFile("bhl3.bhl", bhl3, ref files);
 
   //  var ms = CompileFiles(files);
   //  var vm = new VM();
@@ -4314,6 +4335,27 @@ public class BHL_TestVM : BHL_TestBase
     ));
 
     return cl;
+  }
+
+  static string TestDirPath()
+  {
+    string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
+    return Path.GetDirectoryName(self_bin) + "/tmp/tests";
+  }
+
+  static void TestCleanDir()
+  {
+    string dir = TestDirPath();
+    if(Directory.Exists(dir))
+      Directory.Delete(dir, true/*recursive*/);
+  }
+
+  static void TestNewFile(string path, string text, ref List<string> files)
+  {
+    string full_path = TestDirPath() + "/" + path;
+    Directory.CreateDirectory(Path.GetDirectoryName(full_path));
+    File.WriteAllText(full_path, text);
+    files.Add(full_path);
   }
 }
   

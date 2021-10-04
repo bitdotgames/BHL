@@ -93,7 +93,8 @@ public class VM
     }
   }
 
-  //TODO: entities below should be encapsulated within modules later
+  Dictionary<uint, Module> modules = new Dictionary<uint, Module>();
+  
   List<Const> constants;
   Dictionary<string, uint> func2ip;
   byte[] bytecode;
@@ -129,6 +130,40 @@ public class VM
   public delegate void FieldSetter(ref Val v, Val nv);
   public delegate void FieldRef(Val v, out Val res);
 
+  public class Module
+  {
+    public uint id;
+    public string path;
+    public BaseScope symbols;
+    public byte[] bytecode;
+    public List<Const> constants;
+    public Dictionary<string, uint> func2ip;
+    public byte[] initcode;
+
+    public Module(
+      uint id,
+      string path,
+      BaseScope symbols, 
+      byte[] bytecode, 
+      List<Const> constants, 
+      Dictionary<string, uint> func2ip,
+      byte[] initcode = null
+    )
+    {
+      this.id = id;
+      this.path = path;
+      this.symbols = symbols;
+      this.bytecode = bytecode;
+      this.constants = constants;
+      this.func2ip = func2ip;
+      this.initcode = initcode;
+    }
+  }
+
+  public VM()
+  {}
+
+  //for now
   public VM(
     BaseScope symbols, 
     byte[] bytecode, 
@@ -137,19 +172,34 @@ public class VM
     byte[] initcode = null
     )
   {
-    this.symbols = symbols;
-    this.bytecode = bytecode;
-    this.constants = constants;
-    this.func2ip = func2ip;
+    var m = new Module(
+      0,
+      "",
+      symbols,
+      bytecode,
+      constants,
+      func2ip,
+      initcode
+    );
+    LoadModule(m);
+  }
 
-    ExecInit(initcode);
+  public void LoadModule(Module m)
+  {
+    if(modules.ContainsKey(m.id))
+      return;
+
+    modules.Add(m.id, m);
+
+    if(m.initcode != null && m.initcode.Length != 0)
+    {
+      UseModule(m.id);
+      ExecInit(m.initcode);
+    }
   }
 
   void ExecInit(byte[] initcode)
   {
-    if(initcode == null || initcode.Length == 0)
-      return;
-
     uint ip = 0;
     AST_ClassDecl curr_decl = null;
     while(ip < initcode.Length)
@@ -199,8 +249,19 @@ public class VM
     }
   }
 
-  public int Start(string func)
+  void UseModule(uint module_id)
   {
+    var module = modules[module_id];
+    symbols = module.symbols;
+    bytecode = module.bytecode;
+    func2ip = module.func2ip;
+    constants = module.constants;
+  }
+
+  public int Start(string func, uint module_id = 0)
+  {
+    UseModule(module_id);
+
     uint func_ip;
     if(!func2ip.TryGetValue(func, out func_ip))
       return -1;

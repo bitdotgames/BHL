@@ -59,8 +59,8 @@ public class Build
     var args_changed = CheckArgsSignatureFile(conf);
 
     if(conf.use_cache && 
-      !args_changed && 
-      !BuildUtil.NeedToRegen(conf.res_file, conf.files)
+        !args_changed && 
+        !BuildUtil.NeedToRegen(conf.res_file, conf.files)
       )
       return 0;
 
@@ -222,7 +222,7 @@ public class Build
   {
     var lz4_bytes = LZ4ps.LZ4Codec.Encode64(
         bytes, 0, bytes.Length
-    );
+        );
     return lz4_bytes;
   }
 
@@ -409,7 +409,7 @@ public class Build
               var parser = Frontend.Source2Parser(sfs);
               parsed = new Parsed() {
                 tokens = parser.TokenStream,
-                prog = Frontend.ParseProgram(parser, file)
+                       prog = Frontend.ParseProgram(parser, file)
               };
               ++cache_miss;
               //Console.WriteLine("PARSE " + file + " " + cache_file);
@@ -486,8 +486,8 @@ public class Build
       catch
       {
         return null;
+      }
     }
-  }
 
     void WriteImportsCache(string file, FileImports imports)
     {
@@ -496,40 +496,40 @@ public class Build
       Util.Meta2File(imports, cache_imports_file);
     }
 
-  static List<string> ParseImports(List<string> inc_paths, string file, FileStream fs)
-  {
-    var imps = new List<string>();
-
-    var r = new StreamReader(fs);
-
-    while(true)
+    static List<string> ParseImports(List<string> inc_paths, string file, FileStream fs)
     {
-      var line = r.ReadLine();
-      if(line == null)
-        break;
+      var imps = new List<string>();
 
-      var import_idx = line.IndexOf("import");
-      if(import_idx != -1)
+      var r = new StreamReader(fs);
+
+      while(true)
       {
-        var q1_idx = line.IndexOf('"', import_idx + 1);
-        if(q1_idx != -1)
+        var line = r.ReadLine();
+        if(line == null)
+          break;
+
+        var import_idx = line.IndexOf("import");
+        if(import_idx != -1)
         {
-          var q2_idx = line.IndexOf('"', q1_idx + 1);
-          if(q2_idx != -1)
+          var q1_idx = line.IndexOf('"', import_idx + 1);
+          if(q1_idx != -1)
           {
-            var rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
-            var import = Util.ResolveImportPath(inc_paths, file, rel_import);
-            if(imps.IndexOf(import) == -1)
-              imps.Add(import);
+            var q2_idx = line.IndexOf('"', q1_idx + 1);
+            if(q2_idx != -1)
+            {
+              var rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
+              var import = Util.ResolveImportPath(inc_paths, file, rel_import);
+              if(imps.IndexOf(import) == -1)
+                imps.Add(import);
+            }
           }
         }
       }
+
+      fs.Position = 0;
+
+      return imps;
     }
-
-    fs.Position = 0;
-
-    return imps;
-  }
   }
 
   public class CompilerWorker
@@ -684,20 +684,20 @@ public class Build
           Parsed parsed = null;
           //NOTE: checking if data must be taken from the file cache
           if(w.parsed_cache.TryGetValue(file, out parsed) && parsed == null)
-            {
-              ++cache_hit;
+          {
+            ++cache_hit;
             lazy_ast = new LazyAST(
-              new CacheHitResolver(cache_file, 
-                fallback: new FromSourceResolver(file, module, w.bindings, mreg)
-              )
-            );
-            }
+                new CacheHitResolver(cache_file, 
+                  fallback: new FromSourceResolver(file, module, w.bindings, mreg)
+                  )
+                );
+          }
           else
-            {
+          {
             ++cache_miss;
             lazy_ast = new LazyAST(new CacheWriteResolver(cache_file, 
                   parsed != null ? (IASTResolver)new FromParsedResolver(parsed, module, w.bindings, mreg) : 
-                                   (IASTResolver)new FromSourceResolver(file, module, w.bindings, mreg)));
+                  (IASTResolver)new FromSourceResolver(file, module, w.bindings, mreg)));
           }
 
           w.symbols = GetSymbols(file, w.cache_dir, lazy_ast);
@@ -710,18 +710,18 @@ public class Build
         }
       }
       catch(UserError e)
-              {
+      {
         w.error = e;
-              }
+      }
       catch(Exception e)
       {
         Console.WriteLine(e.Message + " " + e.StackTrace);
         w.error = new UserError(w.files[i], e.Message);
-            }
+      }
 
       sw.Stop();
       Console.WriteLine("BHL Compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
-          }
+    }
 
     static Symbols GetSymbols(string file, string cache_dir, LazyAST lazy_ast)
     {
@@ -730,32 +730,32 @@ public class Build
       {
         symbols = new Symbols();
         var ast = lazy_ast.Get();
-          foreach(var c in ast.children)
+        foreach(var c in ast.children)
+        {
+          var fn = c as AST_FuncDecl;
+          if(fn != null)
           {
-            var fn = c as AST_FuncDecl;
-            if(fn != null)
-            {
             symbols.Add(fn.Name(), file);
-              continue;
-            }
-            var cd = c as AST_ClassDecl;
-            if(cd != null)
-            {
-            symbols.Add(cd.Name(), file);
-              continue;
-            }
-            var vd = c as AST_VarDecl;
-            if(vd != null)
-            {
-            symbols.Add(vd.Name(), file);
-              continue;
-            }
+            continue;
           }
+          var cd = c as AST_ClassDecl;
+          if(cd != null)
+          {
+            symbols.Add(cd.Name(), file);
+            continue;
+          }
+          var vd = c as AST_VarDecl;
+          if(vd != null)
+          {
+            symbols.Add(vd.Name(), file);
+            continue;
+          }
+        }
         WriteSymbolsCache(file, cache_dir, symbols);
       }
 
       return symbols;
-        }
+    }
 
     static Symbols TryReadSymbolsCache(string file, string cache_dir)
     {
@@ -774,17 +774,17 @@ public class Build
     }
 
     static void WriteSymbolsCache(string file, string cache_dir, Symbols symbols)
-      {
+    {
       //Console.WriteLine("SYMB MISS " + file);
       var cache_symb_file = GetSymbolsCacheFile(cache_dir, file);
       Util.Meta2File(symbols, cache_symb_file);
     }
-      }
-    
+  }
+
   public static string GetASTCacheFile(string cache_dir, string file)
   {
     return cache_dir + "/" + Hash.CRC32(file + Util.DEBUG) + ".ast.cache";
-    }
+  }
 
   public static string GetImportsCacheFile(string cache_dir, string file)
   {
@@ -815,12 +815,12 @@ public class Build
   public static void AddFilesFromDir(string dir, List<string> files)
   {
     DirWalk(dir, 
-      delegate(string file) 
-      { 
+        delegate(string file) 
+        { 
         if(TestFile(file))
-          files.Add(file);
-      }
-    );
+        files.Add(file);
+        }
+        );
   }
 }
 
