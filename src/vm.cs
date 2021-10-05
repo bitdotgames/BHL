@@ -93,8 +93,8 @@ public class VM
     }
   }
 
+  Module curr_module = null;
   Dictionary<uint, Module> modules = new Dictionary<uint, Module>();
-  
   List<Const> constants;
   Dictionary<string, uint> func2ip;
   byte[] bytecode;
@@ -160,30 +160,6 @@ public class VM
     }
   }
 
-  public VM()
-  {}
-
-  //for now
-  public VM(
-    BaseScope symbols, 
-    byte[] bytecode, 
-    List<Const> constants, 
-    Dictionary<string, uint> func2ip,
-    byte[] initcode = null
-    )
-  {
-    var m = new Module(
-      0,
-      "",
-      symbols,
-      bytecode,
-      constants,
-      func2ip,
-      initcode
-    );
-    LoadModule(m);
-  }
-
   public void LoadModule(Module m)
   {
     if(modules.ContainsKey(m.id))
@@ -191,11 +167,10 @@ public class VM
 
     modules.Add(m.id, m);
 
+    UseModule(m);
+
     if(m.initcode != null && m.initcode.Length != 0)
-    {
-      UseModule(m.id);
       ExecInit(m.initcode);
-    }
   }
 
   void ExecInit(byte[] initcode)
@@ -249,9 +224,9 @@ public class VM
     }
   }
 
-  void UseModule(uint module_id)
+  void UseModule(Module module)
   {
-    var module = modules[module_id];
+    curr_module = module;
     symbols = module.symbols;
     bytecode = module.bytecode;
     func2ip = module.func2ip;
@@ -260,7 +235,8 @@ public class VM
 
   public int Start(string func, uint module_id = 0)
   {
-    UseModule(module_id);
+    if(curr_module.id != module_id)
+      UseModule(modules[module_id]);
 
     uint func_ip;
     if(!func2ip.TryGetValue(func, out func_ip))
