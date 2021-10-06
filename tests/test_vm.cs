@@ -3904,50 +3904,50 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
-  //public void TestSimpleImport()
-  //{
-  //  string bhl1 = @"
-  //  import ""bhl2""  
-  //  func float bhl1(float k) 
-  //  {
-  //    return bhl2(k)
-  //  }
-  //  ";
+  [IsTested()]
+  public void TestSimpleImport()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float bhl1(float k) 
+    {
+      return bhl2(k)
+    }
+    ";
 
-  //  string bhl2 = @"
-  //  import ""bhl3""  
+    string bhl2 = @"
+    import ""bhl3""  
 
-  //  func float bhl2(float k)
-  //  {
-  //    return bhl3(k)
-  //  }
-  //  ";
+    func float bhl2(float k)
+    {
+      return bhl3(k)
+    }
+    ";
 
-  //  string bhl3 = @"
-  //  func float bhl3(float k)
-  //  {
-  //    return k
-  //  }
-  //  ";
+    string bhl3 = @"
+    func float bhl3(float k)
+    {
+      return k
+    }
+    ";
 
-  //  TestCleanDir();
-  //  var files = new List<string>();
-  //  TestNewFile("bhl1.bhl", bhl1, ref files);
-  //  TestNewFile("bhl2.bhl", bhl2, ref files);
-  //  TestNewFile("bhl3.bhl", bhl3, ref files);
+    TestCleanDir();
+    var files = new List<string>();
+    TestNewFile("bhl1.bhl", bhl1, ref files);
+    TestNewFile("bhl2.bhl", bhl2, ref files);
+    TestNewFile("bhl3.bhl", bhl3, ref files);
 
-  //  var ms = CompileFiles(files);
-  //  var vm = new VM();
-  //  vm.LoadModule(ms[0]);
-  //  vm.LoadModule(ms[1]);
-  //  vm.LoadModule(ms[2]);
+    var ms = CompileFiles(files);
+    var vm = new VM();
+    vm.LoadModule(ms[0]);
+    vm.LoadModule(ms[1]);
+    vm.LoadModule(ms[2]);
 
-  //  vm.Start("bhl1", "bhl1");
-  //  AssertEqual(vm.Tick(), BHS.SUCCESS);
-  //  AssertEqual(vm.PopValue().num, 23);
-  //  CommonChecks(vm);
-  //}
+    vm.Start("bhl1", ms[0].id);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 23);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestFibonacci()
@@ -3988,12 +3988,40 @@ public class BHL_TestVM : BHL_TestBase
 
   ///////////////////////////////////////
 
-  static Compiler TestCompiler(GlobalScope globs = null)
+  static Compiler MakeCompiler(GlobalScope globs = null)
   {
     globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we want to work with original globs
     var globs_copy = globs.Clone();
     return new Compiler(globs_copy);
+  }
+
+  List<VM.Module> CompileFiles(List<string> files, GlobalScope globs = null)
+  {
+    globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
+    //NOTE: we want to work with original globs
+    var globs_copy = globs.Clone();
+
+    var vm_mods = new List<VM.Module>();
+
+    Util.DEBUG = true;
+
+    var mreg = new ModuleRegistry();
+    mreg.AddToIncludePath(TestDirPath() + "/");
+
+    foreach(var file in files)
+    {
+      var norm_path = mreg.FilePath2ModulePath(file);
+
+      var mod = new bhl.Module(norm_path, file);
+      var ast = Src2AST(File.ReadAllText(file), mod, mreg, globs_copy);
+      var c = new Compiler(globs_copy);
+      c.Compile(ast);
+      var vm_mod = new VM.Module(mod.GetId(), mod.norm_path, globs_copy, c.GetByteCode(), c.Constants, c.Func2Offset, c.GetInitCode());
+      vm_mods.Add(vm_mod);
+    }
+
+    return vm_mods;
   }
 
   Compiler Compile(string bhl, GlobalScope globs = null)
@@ -4003,19 +4031,18 @@ public class BHL_TestVM : BHL_TestBase
     var globs_copy = globs.Clone();
 
     Util.DEBUG = true;
-    var ast = Src2AST(bhl, globs_copy);
+    var mod = new bhl.Module("", "");
+    var mreg = new ModuleRegistry();
+    var ast = Src2AST(bhl, mod, mreg, globs_copy);
     var c  = new Compiler(globs_copy);
     c.Compile(ast);
     return c;
   }
 
-  AST Src2AST(string src, GlobalScope globs = null)
+  AST Src2AST(string src, bhl.Module mod, ModuleRegistry mreg, GlobalScope globs = null)
   {
     globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
 
-    var mreg = new ModuleRegistry();
-    //fake module for this specific case
-    var mod = new bhl.Module("", "");
     var ms = new MemoryStream();
     Frontend.Source2Bin(mod, src.ToStream(), ms, globs, mreg);
     ms.Position = 0;

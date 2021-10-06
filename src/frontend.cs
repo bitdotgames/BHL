@@ -2572,10 +2572,10 @@ public class ModuleRegistry
     return include_path;
   }
 
-  public Module TryGet(string fpath)
+  public Module TryGet(string path)
   {
     Module m = null;
-    modules.TryGetValue(fpath, out m);
+    modules.TryGetValue(path, out m);
     return m;
   }
 
