@@ -611,6 +611,11 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Import ast)
   {
+    for(int i=0;i<ast.modules.Count;++i)
+    {
+      //var mod_id = ast.modules[i];
+      //TODO:
+    }
   }
 
   public override void DoVisit(AST_FuncDecl ast)
