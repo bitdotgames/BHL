@@ -183,7 +183,7 @@ public class Build
             var result_file = w.result_files[file];
 
             mwriter.Write((byte)conf.format);
-            mwriter.Write(module.GetId());
+            mwriter.Write(module.Id);
 
             if(conf.format == ModuleBinaryFormat.FMT_BIN)
               mwriter.Write(File.ReadAllBytes(result_file));
@@ -547,7 +547,7 @@ public class Build
     public Symbols symbols = new Symbols();
     public IPostProcessor postproc;
     public UserError error = null;
-    public Dictionary<string, Module> result_modules = new Dictionary<string, Module>();
+    public Dictionary<string, FileModule> result_modules = new Dictionary<string, FileModule>();
     public Dictionary<string, string> result_files = new Dictionary<string, string>();
 
     public void Start()
@@ -609,11 +609,11 @@ public class Build
     public class FromParsedResolver : IASTResolver
     {
       Parsed parsed;
-      Module mod;
+      FileModule mod;
       GlobalScope bindings;
       ModuleRegistry mreg;
 
-      public FromParsedResolver(Parsed parsed, Module mod, GlobalScope bindings, ModuleRegistry mreg)
+      public FromParsedResolver(Parsed parsed, FileModule mod, GlobalScope bindings, ModuleRegistry mreg)
       {
         this.parsed = parsed;
         this.mod = mod;
@@ -630,11 +630,11 @@ public class Build
     public class FromSourceResolver : IASTResolver
     {
       string file;
-      Module mod;
+      FileModule mod;
       GlobalScope bindings;
       ModuleRegistry mreg;
 
-      public FromSourceResolver(string file, Module mod, GlobalScope bindings, ModuleRegistry mreg)
+      public FromSourceResolver(string file, FileModule mod, GlobalScope bindings, ModuleRegistry mreg)
       {
         this.file = file;
         this.mod = mod;
@@ -678,7 +678,7 @@ public class Build
           var file = w.files[i]; 
 
           var cache_file = GetASTCacheFile(w.cache_dir, file);
-          var module = new Module(mreg.FilePath2ModulePath(file), file);
+          var module = new FileModule(mreg.FilePath2ModulePath(file), file);
           LazyAST lazy_ast = null;
 
           Parsed parsed = null;

@@ -66,7 +66,7 @@ public class Frontend : bhlBaseVisitor<object>
   //      to know which symbols can be imported from the current module
   bool decls_only = false;
 
-  Module curr_module;
+  FileModule curr_module;
   ModuleRegistry mreg;
   ITokenStream tokens;
   ParseTreeProperty<WrappedNode> nodes = new ParseTreeProperty<WrappedNode>();
@@ -89,7 +89,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     using(var sfs = File.OpenRead(file))
     {
-      var mod = new Module(mr.FilePath2ModulePath(file), file);
+      var mod = new FileModule(mr.FilePath2ModulePath(file), file);
       return Source2AST(mod, sfs, globs, mr);
     }
   }
@@ -103,7 +103,7 @@ public class Frontend : bhlBaseVisitor<object>
     return p;
   }
   
-  public static AST_Module Source2AST(Module module, Stream src, GlobalScope globs, ModuleRegistry mr, bool decls_only = false)
+  public static AST_Module Source2AST(FileModule module, Stream src, GlobalScope globs, ModuleRegistry mr, bool decls_only = false)
   {
     try
     {
@@ -121,7 +121,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
-  public static AST_Module Parsed2AST(Module module, Parsed p, GlobalScope globs, ModuleRegistry mr, bool decls_only = false)
+  public static AST_Module Parsed2AST(FileModule module, Parsed p, GlobalScope globs, ModuleRegistry mr, bool decls_only = false)
   {
     try
     {
@@ -166,7 +166,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
-  static public void Source2Bin(Module module, Stream src, Stream dst, GlobalScope globs, ModuleRegistry mr)
+  static public void Source2Bin(FileModule module, Stream src, Stream dst, GlobalScope globs, ModuleRegistry mr)
   {
     var ast = Source2AST(module, src, globs, mr);
     Util.Meta2Bin(ast, dst);
@@ -178,7 +178,7 @@ public class Frontend : bhlBaseVisitor<object>
     throw new UserError(curr_module.file_path, msg);
   }
 
-  public Frontend(Module module, ITokenStream tokens, GlobalScope globs, ModuleRegistry mreg, bool decls_only = false)
+  public Frontend(FileModule module, ITokenStream tokens, GlobalScope globs, ModuleRegistry mreg, bool decls_only = false)
   {
     this.curr_module = module;
 
@@ -252,7 +252,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public AST_Module ParseModule(bhlParser.ProgramContext p)
   {
-    var ast = AST_Util.New_Module(curr_module.GetId(), curr_module.norm_path);
+    var ast = AST_Util.New_Module(curr_module.Id, curr_module.norm_path);
     PushAST(ast);
     VisitProgram(p);
     PopAST();
@@ -311,7 +311,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(module != null)
     {
       locals.Append(module.symbols);
-      ast.modules.Add(module.GetId());
+      ast.modules.Add(module.Id);
     }
   }
 
@@ -763,7 +763,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
-    var func_name = new HashedName(curr_module.GetId() + "_lmb_" + NextLambdaId(), curr_module.GetId()); 
+    var func_name = new HashedName(curr_module.Id + "_lmb_" + NextLambdaId(), curr_module.Id); 
     var ast = AST_Util.New_LambdaDecl(func_name, tr.name);
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(
@@ -1614,7 +1614,7 @@ public class Frontend : bhlBaseVisitor<object>
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
 
-    var func_name = new HashedName(str_name, curr_module.GetId());
+    var func_name = new HashedName(str_name, curr_module.Id);
     var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
     var symb = new FuncSymbolScript(locals, ast, func_node, func_name, tr, ctx.funcParams());
@@ -2525,36 +2525,34 @@ public class Frontend : bhlBaseVisitor<object>
 
 }
 
-public class Module
+public class FileModule
 {
   uint id;
 
+  public uint Id {
+    get {
+      if(id == 0)
+        id = Hash.CRC32(norm_path);
+      return id;
+    }
+  }
+
   public string norm_path;
   public string file_path;
-  public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
+  public Dictionary<string, FileModule> imports = new Dictionary<string, FileModule>(); 
   public LocalScope symbols = new LocalScope(null);
 
-  public Module(string norm_path, string file_path)
+  public FileModule(string norm_path, string file_path)
   {
     this.norm_path = norm_path;
     this.file_path = file_path;
-  }
-
-  public uint GetId()
-  {
-    if(id == 0)
-    {
-      //Console.WriteLine("MODULE PATH " + norm_path);
-      id = Hash.CRC32(norm_path);
-    }
-    return id;
   }
 }
 
 public class ModuleRegistry
 {
   List<string> include_path = new List<string>();
-  Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
+  Dictionary<string, FileModule> modules = new Dictionary<string, FileModule>(); 
   Dictionary<string, Parsed> parsed_cache = null;
 
   public void SetParsedCache(Dictionary<string, Parsed> cache)
@@ -2572,19 +2570,19 @@ public class ModuleRegistry
     return include_path;
   }
 
-  public Module TryGet(string path)
+  public FileModule TryGet(string path)
   {
-    Module m = null;
+    FileModule m = null;
     modules.TryGetValue(path, out m);
     return m;
   }
 
-  public void Register(Module m)
+  public void Register(FileModule m)
   {
     modules.Add(m.file_path, m);
   }
 
-  public Module ImportModule(Module curr_module, GlobalScope globals, string path)
+  public FileModule ImportModule(FileModule curr_module, GlobalScope globals, string path)
   {
     string full_path;
     string norm_path;
@@ -2600,7 +2598,7 @@ public class ModuleRegistry
     }
 
     //2. checking global presence
-    Module m = TryGet(full_path);
+    FileModule m = TryGet(full_path);
     if(m != null)
     {
       curr_module.imports.Add(full_path, m);
@@ -2608,7 +2606,7 @@ public class ModuleRegistry
     }
 
     //3. Ok, let's parse it otherwise
-    m = new Module(norm_path, full_path);
+    m = new FileModule(norm_path, full_path);
    
     //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
     curr_module.imports.Add(full_path, m);

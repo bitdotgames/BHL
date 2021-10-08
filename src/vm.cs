@@ -9,27 +9,30 @@ public class VM
 {
   public class Module
   {
-    public uint id;
-    public string path;
-    public BaseScope symbols;
+    public FileModule file_module;
+    public LocalScope symbols;
     public byte[] bytecode;
     public List<Const> constants;
     public Dictionary<string, uint> func2ip;
     public byte[] initcode;
 
+    public uint Id {
+      get {
+        return file_module.Id;
+      }
+    }
+
     public Module(
-      uint id,
-      string path,
-      BaseScope symbols, 
+      FileModule file_module,
+      GlobalScope globs, 
       byte[] bytecode, 
       List<Const> constants, 
       Dictionary<string, uint> func2ip,
       byte[] initcode = null
     )
     {
-      this.id = id;
-      this.path = path;
-      this.symbols = symbols;
+      this.file_module = file_module;
+      this.symbols = new LocalScope(globs);
       this.bytecode = bytecode;
       this.constants = constants;
       this.func2ip = func2ip;
@@ -39,12 +42,12 @@ public class VM
 
   public class Frame : IDeferScope
   {
+    public byte[] bytecode;
+    public List<Const> constants;
     public FastStack<Val> stack = new FastStack<Val>(32);
     public List<Val> locals = new List<Val>();
     public uint return_ip;
     public List<CodeBlock> defers;
-    public byte[] bytecode;
-    public List<Const> constants;
 
     public Frame(Module module)
     {
@@ -145,8 +148,15 @@ public class VM
 
   Dictionary<uint, Module> modules = new Dictionary<uint, Module>();
 
-  GlobalScope symbols = new GlobalScope();
-  public BaseScope Symbols {
+  GlobalScope globs;
+  public GlobalScope Globs {
+    get {
+      return globs;
+    }
+  }
+
+  LocalScope symbols;
+  public LocalScope Symbols {
     get {
       return symbols;
     }
@@ -179,10 +189,9 @@ public class VM
 
   public void LoadModule(Module m)
   {
-    if(modules.ContainsKey(m.id))
+    if(modules.ContainsKey(m.Id))
       return;
-
-    modules.Add(m.id, m);
+    modules.Add(m.Id, m);
 
     symbols.Append(m.symbols);
 
@@ -247,6 +256,14 @@ public class VM
       }
       ++ip;
     }
+  }
+
+  public VM(GlobalScope globs = null)
+  {
+    if(globs == null)
+      globs = SymbolTable.VM_CreateBuiltins();
+    this.globs = globs;
+    symbols = new LocalScope(globs);
   }
 
   public int Start(string func)
@@ -418,7 +435,7 @@ public class VM
             else if(func_call_type == 1)
             {
               int func_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
-              var func_symb = symbols.GetMembers()[func_idx] as FuncSymbolNative;
+              var func_symb = globs.GetMembers()[func_idx] as FuncSymbolNative;
 
               uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
               var args_info = new FuncArgsInfo(args_bits);
@@ -494,6 +511,16 @@ public class VM
             //NOTE: checking if new instruction was added and if so executing it immediately
             if(instruction != null)
               status = instruction.Tick(this);
+          }
+          break;
+          case Opcodes.GetAddr:
+          {
+            uint module_id = Bytecode.Decode(curr_frame.bytecode, ref ip);
+            uint nname = Bytecode.Decode(curr_frame.bytecode, ref ip);
+
+            var module = modules[module_id];
+            var module_symb = module.symbols.Resolve(nname);
+            Console.WriteLine("RESOLVED " + module_symb.name);
           }
           break;
           case Opcodes.InitFrame:

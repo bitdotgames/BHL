@@ -52,7 +52,7 @@ public abstract class BaseScope : Scope
   public virtual void Define(Symbol sym) 
   {
     if(members.Contains(sym.name))
-      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
+      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'(" + sym.name.n1 + ")"); 
 
     members.Add(sym);
 

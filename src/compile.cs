@@ -19,6 +19,7 @@ public enum Opcodes
   Call            = 0x10,
   SetMVar         = 0x20,
   SetMVarInplace  = 0x21,
+  GetAddr         = 0x22,
   GetMVar         = 0xA,
   MCall           = 0xB,
   Return          = 0xC,
@@ -118,8 +119,23 @@ public class Compiler : AST_Visitor
     public int[] operand_width; //each array item represents the size of the operand in bytes
   }
 
-  BaseScope symbols;
-  public BaseScope Symbols {
+  AST ast;
+  FileModule module;
+  public FileModule Module {
+    get {
+      return module;
+    }
+  }
+
+  GlobalScope globs;
+  public GlobalScope Globs {
+    get {
+      return globs;
+    }
+  }
+
+  LocalScope symbols;
+  public LocalScope Symbols {
     get {
       return symbols;
     }
@@ -140,7 +156,7 @@ public class Compiler : AST_Visitor
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
 
   Dictionary<string, uint> func2ip = new Dictionary<string, uint>();
-  public Dictionary<string, uint> Func2Offset {
+  public Dictionary<string, uint> Func2Ip {
     get {
       return func2ip;
     }
@@ -148,11 +164,14 @@ public class Compiler : AST_Visitor
   
   Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
 
-  public Compiler(BaseScope symbols)
+  public Compiler(GlobalScope globs = null, AST ast = null, FileModule module = null)
   {
     DeclareOpcodes();
 
-    this.symbols = symbols;
+    this.globs = globs;
+    this.symbols = new LocalScope(globs);
+    this.ast = ast;
+    this.module = module;
 
     UseByteCode();
   }
@@ -175,7 +194,7 @@ public class Compiler : AST_Visitor
     return this;
   }
 
-  public void Compile(AST ast)
+  public void Compile()
   {
     Visit(ast);
   }
@@ -383,6 +402,13 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.GetAddr,
+        operand_width = new int[] { 4/*module id*/, 4/*nname*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.Call,
         operand_width = new int[] { 1/*type*/, 4/*idx/or ip*/, 4/*args bits*/ }
       }
@@ -555,8 +581,6 @@ public class Compiler : AST_Visitor
           buf.Write((ushort)op_val);
         break;
         case 4:
-          if(uint.MinValue > op_val || (uint)op_val > uint.MaxValue)
-            throw new Exception("Operand value(4 bytes) is out of bounds: " + op_val);
           buf.Write((uint)op_val);
         break;
         default:
@@ -884,13 +908,19 @@ public class Compiler : AST_Visitor
           VisitChildren(ast);
           Emit(Opcodes.Call, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});
         }
-        else if(symbols.Resolve(ast.name) is FuncSymbolNative fsymb)
+        else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
         {
-          int func_idx = symbols.GetMembers().IndexOf(fsymb);
+          int func_idx = globs.GetMembers().IndexOf(fsymb);
           if(func_idx == -1)
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           VisitChildren(ast);
           Emit(Opcodes.Call, new int[] {(int)1, (int)func_idx, (int)ast.cargs_bits});
+        }
+        else if(ast.nname2 != module.Id)
+        {
+          VisitChildren(ast);
+          Emit(Opcodes.GetAddr, new int[] {(int)ast.nname2, (int)ast.nname1});
+          Emit(Opcodes.Call, new int[] {(int)4, (int)0, (int)ast.cargs_bits});
         }
         else
           throw new Exception("Func '" + ast.name + "' code not found");
