@@ -1434,4 +1434,52 @@ public class OrderedDictionary<TKey, TValue>
   }
 }
 
+public class HashedName2Value<T>
+{
+  Dictionary<ulong, T> hash2val = new Dictionary<ulong, T>();
+  Dictionary<string, T> str2val = new Dictionary<string, T>();
+
+  public int Count
+  {
+    get {
+      return hash2val.Count;
+    }
+  }
+
+  public bool Contains(HashedName name)
+  {
+    if(hash2val.ContainsKey(name.n))
+      return true;
+    return str2val.ContainsKey(name.s);
+  }
+
+  public bool TryGetValue(HashedName name, out T val)
+  {
+    if(hash2val.TryGetValue(name.n, out val))
+      return true;
+    return str2val.TryGetValue(name.s, out val);
+  }
+
+  public void Add(HashedName name, T v)
+  {
+    // Dictionary operation first, so exception thrown if key already exists.
+    if(!string.IsNullOrEmpty(name.s))
+      str2val.Add(name.s, v);
+    hash2val.Add(name.n, v);
+  }
+
+  public void Remove(HashedName name)
+  {
+    if(!string.IsNullOrEmpty(name.s))
+      str2val.Remove(name.s);
+    hash2val.Remove(name.n);
+  }
+
+  public void Clear()
+  {
+    str2val.Clear();
+    hash2val.Clear();
+  }
+}
+
 } //namespace bhl

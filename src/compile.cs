@@ -135,11 +135,6 @@ public class Compiler : AST_Visitor
   }
 
   LocalScope symbols;
-  public LocalScope Symbols {
-    get {
-      return symbols;
-    }
-  }
 
   List<Const> constants = new List<Const>();
   public List<Const> Constants {

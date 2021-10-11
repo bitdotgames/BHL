@@ -156,11 +156,6 @@ public class VM
   }
 
   LocalScope symbols;
-  public LocalScope Symbols {
-    get {
-      return symbols;
-    }
-  }
   Dictionary<string, ModuleAddr> func2addr = new Dictionary<string, ModuleAddr>();
 
   FastStack<Val> stack = new FastStack<Val>(256);
