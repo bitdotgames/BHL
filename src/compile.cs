@@ -109,6 +109,13 @@ public class Const
     else
       throw new Exception("Bad type");
   }
+
+  public bool IsEqual(Const o)
+  {
+    return type == o.type && 
+           num == o.num && 
+           str == o.str;
+  }
 }
 
 public class Compiler : AST_Visitor
@@ -217,14 +224,18 @@ public class Compiler : AST_Visitor
 
   int AddConstant(AST_Literal lt)
   {
+    return AddConstant(new Const(lt));
+  }
+
+  int AddConstant(Const new_cn)
+  {
     for(int i = 0 ; i < constants.Count; ++i)
     {
       var cn = constants[i];
-
-      if(lt.type == cn.type && cn.num == lt.nval && cn.str == lt.sval)
+      if(cn.IsEqual(new_cn))
         return i;
     }
-    constants.Add(new Const(lt));
+    constants.Add(new_cn);
     return constants.Count-1;
   }
 

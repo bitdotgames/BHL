@@ -4045,8 +4045,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm_mods = new List<VM.Module>();
 
-    Util.DEBUG = true;
-
     var mreg = new ModuleRegistry();
     mreg.AddToIncludePath(TestDirPath() + "/");
 
@@ -4071,7 +4069,6 @@ public class BHL_TestVM : BHL_TestBase
     //NOTE: we don't want to affect the original globs
     var globs_copy = globs.Clone();
 
-    Util.DEBUG = true;
     var fmod = new bhl.FileModule("", "");
     var mreg = new ModuleRegistry();
     var ast = Src2AST(bhl, fmod, mreg, globs_copy);

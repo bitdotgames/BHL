@@ -19305,8 +19305,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
   static void SharedInit()
   {
-    Util.DEBUG = true;
-
     DynVal.PoolClear();
     DynValList.PoolClear();
     DynValDict.PoolClear();

@@ -69,7 +69,6 @@ public class Build
       globs = SymbolTable.CreateBuiltins();
     conf.userbindings.Register(globs);
 
-    Util.DEBUG = conf.debug;
     Util.SetupASTFactory();
 
     var parse_workers = new List<ParseWorker>();
@@ -783,17 +782,17 @@ public class Build
 
   public static string GetASTCacheFile(string cache_dir, string file)
   {
-    return cache_dir + "/" + Hash.CRC32(file + Util.DEBUG) + ".ast.cache";
+    return cache_dir + "/" + Hash.CRC32(file) + ".ast.cache";
   }
 
   public static string GetImportsCacheFile(string cache_dir, string file)
   {
-    return cache_dir + "/" + Hash.CRC32(file + Util.DEBUG) + ".imports.cache";
+    return cache_dir + "/" + Hash.CRC32(file) + ".imports.cache";
   }
 
   public static string GetSymbolsCacheFile(string cache_dir, string file)
   {
-    return cache_dir + "/" + Hash.CRC32(file + Util.DEBUG) + ".symb.cache";
+    return cache_dir + "/" + Hash.CRC32(file) + ".symb.cache";
   }
 
   public static bool TestFile(string file)

@@ -191,8 +191,6 @@ public static class Extensions
 
 static public class Util
 {
-  static public bool DEBUG = false;
-
   public delegate void LogCb(string text);
   static public LogCb Debug = DefaultDebug;
   static public LogCb Error = DefaultError;
@@ -474,8 +472,7 @@ static public class AST_Util
   {
     var n = new AST_Module();
     n.nname = nname;
-    if(Util.DEBUG)
-      n.name = name;
+    n.name = name;
     return n;
   }
 
@@ -499,15 +496,13 @@ static public class AST_Util
   static void Init_FuncDecl(AST_FuncDecl n, HashedName name, HashedName type)
   {
     n.ntype = (uint)type.n; 
-    if(Util.DEBUG)
-      n.type = type.s;
+    n.type = type.s;
 
     n.nname1 = name.n1;
     //module id
     n.nname2 = name.n2;
 
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
 
     //fparams
     n.NewInterimChild();
@@ -582,12 +577,10 @@ static public class AST_Util
     var n = new AST_ClassDecl();
 
     n.nname = (uint)name.n;
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
 
     n.nparent = (uint)parent.n;
-    if(Util.DEBUG)
-      n.parent = parent.s;
+    n.parent = parent.s;
 
     return n;
   }
@@ -609,8 +602,7 @@ static public class AST_Util
     var n = new AST_EnumDecl();
 
     n.nname = (uint)name.n;
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
 
     return n;
   }
@@ -646,8 +638,7 @@ static public class AST_Util
   {
     var n = new AST_TypeCast();
     n.ntype = (uint)type.n;
-    if(Util.DEBUG)
-      n.type = type.s;
+    n.type = type.s;
 
     return n;
   }
@@ -658,8 +649,7 @@ static public class AST_Util
   {
     var n = new AST_UseParam();
     n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
     n.symb_idx = (uint)symb_idx;
     n.upsymb_idx = (uint)upsymb_idx;
 
@@ -694,8 +684,7 @@ static public class AST_Util
     n.type = type;
     n.nname1 = name.n1;
     n.nname2 = name.n2;
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
     n.scope_ntype = scope_ntype;
     n.line_num = (uint)line_num;
     n.symb_idx = (uint)symb_idx;
@@ -747,8 +736,7 @@ static public class AST_Util
     var n = new AST_New();
     var type_name = type.Type(); 
     n.ntype = (uint)type_name.n;
-    if(Util.DEBUG)
-      n.type = type_name.s;
+    n.type = type_name.s;
 
     return n;
   }
@@ -779,8 +767,7 @@ static public class AST_Util
   {
     var n = new AST_VarDecl();
     n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
     n.ntype = ntype;
     n.is_func_arg = is_func_arg;
     n.symb_idx = (uint)symb_idx;
@@ -846,8 +833,7 @@ static public class AST_Util
     var n = new AST_JsonPair();
     n.scope_ntype = (uint)scope_type.n;
     n.nname = (uint)name.n;
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
     n.symb_idx = (uint)symb_idx;
 
     return n;

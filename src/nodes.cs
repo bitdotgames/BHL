@@ -150,11 +150,8 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
 
       if(c.currStatus != BHS.NONE)
       {
-        if(Util.DEBUG)
-        {
-          if(c.currStatus == BHS.RUNNING)
-            throw new Exception("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
-        }
+        if(c.currStatus == BHS.RUNNING)
+          throw new Exception("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
 
         c.defer();
         c.currStatus = BHS.NONE;
