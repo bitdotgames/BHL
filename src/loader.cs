@@ -184,4 +184,9 @@ public class ExtensibleModuleLoader : IModuleLoader
   }
 }
 
+public interface IModuleImporter
+{
+  VM.Module Import(string module_name);
+}
+
 } //namespace bhl

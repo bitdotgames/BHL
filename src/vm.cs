@@ -9,7 +9,7 @@ public class VM
 {
   public class Module
   {
-    public string Name {
+    public string name {
       get {
         return file_module.name;
       }
@@ -140,10 +140,10 @@ public class VM
     }
   }
 
-  struct ModuleAddr
+  internal struct ModuleAddr
   {
-    public Module module;
-    public uint ip;
+    internal Module module;
+    internal uint ip;
   }
 
   Dictionary<string, Module> modules = new Dictionary<string, Module>();
@@ -177,16 +177,27 @@ public class VM
   List<Fiber> fibers = new List<Fiber>();
   internal Fiber curr_fiber;
 
+  IModuleImporter importer;
+
   public delegate void ClassCreator(ref Val res);
   public delegate void FieldGetter(Val v, ref Val res);
   public delegate void FieldSetter(ref Val v, Val nv);
   public delegate void FieldRef(Val v, out Val res);
 
-  public void LoadModule(Module m)
+  public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
-    if(modules.ContainsKey(m.Name))
+    if(globs == null)
+      globs = SymbolTable.VM_CreateBuiltins();
+    this.globs = globs;
+    this.importer = importer;
+    symbols = new LocalScope(globs);
+  }
+
+  public void RegisterModule(Module m)
+  {
+    if(modules.ContainsKey(m.name))
       return;
-    modules.Add(m.Name, m);
+    modules.Add(m.name, m);
 
     symbols.Append(m.symbols);
 
@@ -199,22 +210,31 @@ public class VM
     }
 
     if(m.initcode != null && m.initcode.Length != 0)
-      ExecInit(m.initcode);
+      ExecInit(m);
   }
 
-  void ExecInit(byte[] initcode)
+  void ExecInit(Module module)
   {
+    byte[] bytecode = module.initcode;
     uint ip = 0;
     AST_ClassDecl curr_decl = null;
-    while(ip < initcode.Length)
+    while(ip < bytecode.Length)
     {
-      var opcode = (Opcodes)initcode[ip];
+      var opcode = (Opcodes)bytecode[ip];
       switch(opcode)
       {
+        case Opcodes.Import:
+        {
+          int module_idx = (int)Bytecode.Decode(bytecode, ref ip);
+          string module_name = module.constants[module_idx].str;
+          var imported_module = importer.Import(module_name);
+          RegisterModule(imported_module);
+        }
+        break;
         case Opcodes.ClassBegin:
         {
-          uint ntype = (uint)Bytecode.Decode(initcode, ref ip);
-          uint nptype = (uint)Bytecode.Decode(initcode, ref ip);
+          uint ntype = (uint)Bytecode.Decode(bytecode, ref ip);
+          uint nptype = (uint)Bytecode.Decode(bytecode, ref ip);
           curr_decl = new AST_ClassDecl();
           curr_decl.nname = ntype;
           curr_decl.nparent = nptype;
@@ -222,8 +242,8 @@ public class VM
         break;
         case Opcodes.ClassMember:
         {
-          uint ntype = (uint)Bytecode.Decode(initcode, ref ip);
-          uint nname = (uint)Bytecode.Decode(initcode, ref ip);
+          uint ntype = (uint)Bytecode.Decode(bytecode, ref ip);
+          uint nname = (uint)Bytecode.Decode(bytecode, ref ip);
 
           var mdecl = new AST_VarDecl();
           mdecl.ntype = ntype;
@@ -251,14 +271,6 @@ public class VM
       }
       ++ip;
     }
-  }
-
-  public VM(GlobalScope globs = null)
-  {
-    if(globs == null)
-      globs = SymbolTable.VM_CreateBuiltins();
-    this.globs = globs;
-    symbols = new LocalScope(globs);
   }
 
   public int Start(string func)

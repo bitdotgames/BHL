@@ -3885,7 +3885,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLoadModule()
+  public void TestRegisterModule()
   {
     string bhl = @"
     func int test()
@@ -3897,7 +3897,7 @@ public class BHL_TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var vm = new VM();
-    vm.LoadModule(new VM.Module(c.Module, c.Globs, c.GetByteCode(), c.Constants, c.Func2Ip));
+    vm.RegisterModule(new VM.Module(c.Module, c.Globs, c.GetByteCode(), c.Constants, c.Func2Ip));
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 123);
@@ -3905,7 +3905,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLoadModulesManually()
+  public void TestSimpleImport()
   {
     string bhl1 = @"
     import ""bhl2""  
@@ -3941,13 +3941,19 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertEqual(cs[0], 
       new Compiler()
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.Call, new int[] { 4, 0x10001, 1 })
+      .UseInitCode()
+      .Emit(Opcodes.Import, new int[] { 0 })
+      .UseByteCode()
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Call, new int[] { 4, 0, 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
     );
     AssertEqual(cs[1], 
       new Compiler()
+      .UseInitCode()
+      .Emit(Opcodes.Import, new int[] { 0 })
+      .UseByteCode()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArgVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -3964,57 +3970,17 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
     );
 
-    var vm = new VM();
-    vm.LoadModule(MakeModule(cs[0]));
-    vm.LoadModule(MakeModule(cs[1]));
-    vm.LoadModule(MakeModule(cs[2]));
+    var mock_importer = new TestImporter();
+    mock_importer.mods.Add("bhl2", MakeModule(cs[1]));
+    mock_importer.mods.Add("bhl3", MakeModule(cs[2]));
+
+    var vm = new VM(globs: null, importer: mock_importer);
+    vm.RegisterModule(MakeModule(cs[0]));
     vm.Start("bhl1");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 23);
     CommonChecks(vm);
   }
-
-  //[IsTested()]
-  //public void TestSimpleImport()
-  //{
-  //  string bhl1 = @"
-  //  import ""bhl2""  
-  //  func float bhl1(float k) 
-  //  {
-  //    return bhl2(k)
-  //  }
-  //  ";
-
-  //  string bhl2 = @"
-  //  import ""bhl3""  
-
-  //  func float bhl2(float k)
-  //  {
-  //    return bhl3(k)
-  //  }
-  //  ";
-
-  //  string bhl3 = @"
-  //  func float bhl3(float k)
-  //  {
-  //    return k
-  //  }
-  //  ";
-
-  //  TestCleanDir();
-  //  var files = new List<string>();
-  //  TestNewFile("bhl1.bhl", bhl1, ref files);
-  //  TestNewFile("bhl2.bhl", bhl2, ref files);
-  //  TestNewFile("bhl3.bhl", bhl3, ref files);
-
-  //  var ms = CompileFiles(files);
-  //  var vm = new VM();
-  //  vm.LoadModule(ms[0]);
-  //  vm.Start("bhl1");
-  //  AssertEqual(vm.Tick(), BHS.SUCCESS);
-  //  AssertEqual(vm.PopValue().num, 23);
-  //  CommonChecks(vm);
-  //}
 
   [IsTested()]
   public void TestFibonacci()
@@ -4300,7 +4266,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     var vm = new VM(c.Globs);
     var m = MakeModule(c);
-    vm.LoadModule(m);
+    vm.RegisterModule(m);
     return vm;
   }
 
@@ -4444,6 +4410,16 @@ public class BHL_TestVM : BHL_TestBase
   {
     string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
     return Path.GetDirectoryName(self_bin) + "/tmp/tests";
+  }
+
+  class TestImporter : IModuleImporter
+  {
+    public Dictionary<string, VM.Module> mods = new Dictionary<string, VM.Module>();
+
+    public VM.Module Import(string name)
+    {
+      return mods[name];
+    }
   }
 
   static void CleanTestDir()

@@ -50,6 +50,7 @@ public enum Opcodes
   ClassBegin      = 0x46,
   ClassMember     = 0x47,
   ClassEnd        = 0x48,
+  Import          = 0x49,
 }
 
 public class Const
@@ -531,6 +532,13 @@ public class Compiler : AST_Visitor
         name = Opcodes.ClassEnd
       }
     );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Import,
+        operand_width = new int[] { 4/*literal idx*/}
+      }
+    );
   }
 
   void DeclareOpcode(OpDefinition def)
@@ -636,7 +644,14 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_Import ast)
   {
     for(int i=0;i<ast.module_names.Count;++i)
+    {
       imports.Add(ast.module_ids[i], ast.module_names[i]);
+      int module_idx = AddConstant(new Const(ast.module_names[i]));
+
+      UseInitCode();
+      Emit(Opcodes.Import, new int[] { module_idx });
+      UseByteCode();
+    }
   }
 
   public override void DoVisit(AST_FuncDecl ast)
