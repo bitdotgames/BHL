@@ -418,7 +418,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.MCall,
-        operand_width = new int[] { 4, 2 }
+        operand_width = new int[] { 4/*type*/, 2/*member idx*/ }
       }
     );
     DeclareOpcode(

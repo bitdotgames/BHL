@@ -42,8 +42,9 @@ public class VM
 
   public class Frame : IDeferScope
   {
-    public byte[] bytecode;
-    public List<Const> constants;
+    public byte[] module_bytecode;
+    public List<Const> module_constants;
+    //TODO: use shared stack for stack and locals 
     public FastStack<Val> stack = new FastStack<Val>(32);
     public List<Val> locals = new List<Val>();
     public uint return_ip;
@@ -51,14 +52,14 @@ public class VM
 
     public Frame(Module module)
     {
-      bytecode = module.bytecode;
-      constants = module.constants;
+      module_bytecode = module.bytecode;
+      module_constants = module.constants;
     }
 
     public Frame(Frame frm)
     {
-      bytecode = frm.bytecode;
-      constants = frm.constants;
+      module_bytecode = frm.module_bytecode;
+      module_constants = frm.module_constants;
     }
 
     public void Clear()
@@ -312,7 +313,7 @@ public class VM
       }
 
       {
-        var opcode = (Opcodes)curr_frame.bytecode[ip];
+        var opcode = (Opcodes)curr_frame.module_bytecode[ip];
         //Console.WriteLine("OP " + opcode + " @ " + string.Format("0x{0:x2}", ip));
         switch(opcode)
         {
@@ -320,18 +321,18 @@ public class VM
           break;
           case Opcodes.Constant:
           {
-            int const_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            int const_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
 
-            if(const_idx >= curr_frame.constants.Count)
-              throw new Exception("Index out of constants: " + const_idx + ", total: " + curr_frame.constants.Count);
+            if(const_idx >= curr_frame.module_constants.Count)
+              throw new Exception("Index out of constants: " + const_idx + ", total: " + curr_frame.module_constants.Count);
 
-            var cn = curr_frame.constants[const_idx];
+            var cn = curr_frame.module_constants[const_idx];
             curr_frame.PushValueManual(cn.ToVal());
           }
           break;
           case Opcodes.TypeCast:
           {
-            uint cast_type = Bytecode.Decode(curr_frame.bytecode, ref ip);
+            uint cast_type = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             if(cast_type == SymbolTable.symb_string.name.n)
               curr_frame.PushValueManual(Val.NewStr(curr_frame.PopValue().num.ToString()));
             else if(cast_type == SymbolTable.symb_int.name.n)
@@ -342,7 +343,7 @@ public class VM
           break;
           case Opcodes.Inc:
           {
-            int var_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            int var_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             ++curr_frame.locals[var_idx]._num;
           }
           break;
@@ -416,12 +417,12 @@ public class VM
           break;
           case Opcodes.Call:
           {
-            byte func_call_type = (byte)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            byte func_call_type = (byte)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             //bhl userland call
             if(func_call_type == 0)
             {
-              uint func_ip = Bytecode.Decode(curr_frame.bytecode, ref ip);
-              uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
+              uint func_ip = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+              uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
               var args_info = new FuncArgsInfo(args_bits);
 
               //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + ", default args: " + args_info.HasDefaultUsedArgs());
@@ -441,10 +442,10 @@ public class VM
             //C# bind call
             else if(func_call_type == 1)
             {
-              int func_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+              int func_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
               var func_symb = globs.GetMembers()[func_idx] as FuncSymbolNative;
 
-              uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
+              uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
               var args_info = new FuncArgsInfo(args_bits);
               for(int i = 0; i < args_info.CountArgs(); ++i)
                 curr_frame.PushValueManual(curr_frame.PopValueManual());
@@ -460,8 +461,8 @@ public class VM
             else if(func_call_type == 2)
             {
               //leftovers
-              Bytecode.Decode(curr_frame.bytecode, ref ip);
-              Bytecode.Decode(curr_frame.bytecode, ref ip);
+              Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+              Bytecode.Decode(curr_frame.module_bytecode, ref ip);
 
               var val = curr_frame.PopValue();
               uint func_ip = (uint)val._num;
@@ -479,9 +480,9 @@ public class VM
             //func ptr call from var
             else if(func_call_type == 3)
             {
-              int local_var_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+              int local_var_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
               //leftovers
-              Bytecode.Decode(curr_frame.bytecode, ref ip);
+              Bytecode.Decode(curr_frame.module_bytecode, ref ip);
 
               var val = curr_frame.locals[local_var_idx];
 
@@ -500,18 +501,18 @@ public class VM
             //func call by ip stored on a stack
             else if(func_call_type == 4)
             {
-              uint encoded = Bytecode.Decode(curr_frame.bytecode, ref ip);
+              uint encoded = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
               //TODO: should we cache this result?
               int module_idx = (int)(encoded >> 16); 
               int func_idx = (int)(encoded & 0xFFFF);
 
-              string func_name = curr_frame.constants[func_idx].str;
-              string module_name = curr_frame.constants[module_idx].str;
+              string func_name = curr_frame.module_constants[func_idx].str;
+              string module_name = curr_frame.module_constants[module_idx].str;
 
               var module = modules[module_name];
               uint func_ip = module.func2ip[func_name];
 
-              uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
+              uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
               var fr = new Frame(module);
               var args_info = new FuncArgsInfo(args_bits);
               for(int i = 0; i < args_info.CountArgs(); ++i)
@@ -532,8 +533,8 @@ public class VM
           break;
           case Opcodes.MCall:
           {
-            uint class_type = Bytecode.Decode(curr_frame.bytecode, ref ip);
-            int method_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            uint class_type = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+            int method_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
 
             var class_symb = symbols.Resolve(class_type) as ClassSymbol;
             //TODO: this check must be in dev.version only
@@ -551,7 +552,7 @@ public class VM
           break;
           case Opcodes.InitFrame:
           {
-            int local_vars_num = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            int local_vars_num = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             curr_frame.locals.Capacity = local_vars_num;
             for(int i=0;i<local_vars_num;++i)
               curr_frame.locals.Add(null);
@@ -559,8 +560,8 @@ public class VM
           break;
           case Opcodes.Lambda:
           {
-            uint func_ip = Bytecode.Decode(curr_frame.bytecode, ref ip);
-            int local_vars_num = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            uint func_ip = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+            int local_vars_num = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             var fr = new Frame(curr_frame);
             fr.locals.Capacity = local_vars_num;
             for(int i=0;i<local_vars_num;++i)
@@ -575,8 +576,8 @@ public class VM
           break;
           case Opcodes.UseUpval:
           {
-            int up_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
-            int local_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            int up_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+            int local_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
 
             var frval = curr_frame.PeekValue();
             var fr = (Frame)frval._obj;
@@ -596,13 +597,13 @@ public class VM
           break;
           case Opcodes.Jump:
           {
-            uint offset = Bytecode.Decode(curr_frame.bytecode, ref ip);
+            uint offset = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             ip = ip + offset;
           }
           break;
           case Opcodes.LoopJump:
           {
-            uint offset = Bytecode.Decode(curr_frame.bytecode, ref ip);
+            uint offset = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             ip = ip - offset;
           }
           break;
@@ -611,7 +612,7 @@ public class VM
             //we need to jump only in case of false
             if(curr_frame.PopValue().bval == false)
             {
-              uint offset = Bytecode.Decode(curr_frame.bytecode, ref ip);
+              uint offset = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
               ip = ip + offset;
             }
             else
@@ -620,8 +621,8 @@ public class VM
           break;
           case Opcodes.DefArg:
           {
-            byte def_arg_idx = (byte)Bytecode.Decode(curr_frame.bytecode, ref ip);
-            uint jump_pos = Bytecode.Decode(curr_frame.bytecode, ref ip);
+            byte def_arg_idx = (byte)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+            uint jump_pos = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
             //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
             //NOTE: if default argument is not used we need to jump out of default argument calculation code
@@ -636,7 +637,7 @@ public class VM
           break;
           case Opcodes.New:
           {
-            uint ntype = Bytecode.Decode(curr_frame.bytecode, ref ip);
+            uint ntype = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             HandleNew(curr_frame, ntype);
           }
           break;
@@ -681,8 +682,8 @@ public class VM
 
   IInstruction VisitBlock(ref uint ip, Frame curr_frame, ref IInstruction instruction, IDeferScope defer_scope)
   {
-    var type = (EnumBlock)Bytecode.Decode(curr_frame.bytecode, ref ip);
-    uint size = Bytecode.Decode(curr_frame.bytecode, ref ip);
+    var type = (EnumBlock)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+    uint size = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
 
     if(type == EnumBlock.PARAL || type == EnumBlock.PARAL_ALL) 
     {
@@ -692,7 +693,7 @@ public class VM
       while(tmp_ip < (ip + size))
       {
         ++tmp_ip;
-        var opcode = (Opcodes)curr_frame.bytecode[tmp_ip]; 
+        var opcode = (Opcodes)curr_frame.module_bytecode[tmp_ip]; 
         if(opcode != Opcodes.Block)
           throw new Exception("Expected PushBlock got " + opcode);
         IInstruction dummy = null;
@@ -743,7 +744,7 @@ public class VM
 
   static void ExecuteVarOp(Opcodes op, Frame curr_frame, ref uint ip)
   {
-    int local_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+    int local_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
     
     switch(op)
     {
@@ -763,7 +764,7 @@ public class VM
       break;
       case Opcodes.DeclVar:
       {
-        byte type = (byte)Bytecode.Decode(curr_frame.bytecode, ref ip);
+        byte type = (byte)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
         Val v;
         if(type == Val.NUMBER)
           v = Val.NewNum(0);
@@ -783,8 +784,8 @@ public class VM
 
   static void ExecuteMVarOp(Opcodes op, Frame curr_frame, BaseScope symbols, ref uint ip)
   {
-    uint class_type = Bytecode.Decode(curr_frame.bytecode, ref ip);
-    int fld_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+    uint class_type = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+    int fld_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
 
     var class_symb = symbols.Resolve(class_type) as ClassSymbol;
     //TODO: this check must be in dev.version only
