@@ -99,7 +99,8 @@ public class AST_Interim  : AST
 
 public class AST_Import  : AST_Base 
 {
-  public List<uint> modules = new List<uint>();
+  public List<uint> module_ids = new List<uint>();
+  public List<string> module_names = new List<string>();
 
   static public  new  uint STATIC_CLASS_ID = 117209009;
 
@@ -117,19 +118,21 @@ public class AST_Import  : AST_Base
   {
     base.reset();
 
-    if(modules == null) modules = new List<uint>(); modules.Clear();
+    if(module_ids == null) module_ids = new List<uint>(); module_ids.Clear();
+    if(module_names == null) module_names = new List<string>(); module_names.Clear();
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, modules);
+    MetaHelper.sync(ctx, module_ids);
+    MetaHelper.sync(ctx, module_names);
   }
 
   public override int getFieldsCount() 
   {
-    return 1; 
+    return 2; 
   }
 }
 

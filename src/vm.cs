@@ -9,18 +9,18 @@ public class VM
 {
   public class Module
   {
+    public string Name {
+      get {
+        return file_module.name;
+      }
+    }
+
     public FileModule file_module;
     public LocalScope symbols;
     public byte[] bytecode;
     public List<Const> constants;
     public Dictionary<string, uint> func2ip;
     public byte[] initcode;
-
-    public uint Id {
-      get {
-        return file_module.Id;
-      }
-    }
 
     public Module(
       FileModule file_module,
@@ -146,7 +146,7 @@ public class VM
     public uint ip;
   }
 
-  Dictionary<uint, Module> modules = new Dictionary<uint, Module>();
+  Dictionary<string, Module> modules = new Dictionary<string, Module>();
 
   GlobalScope globs;
   public GlobalScope Globs {
@@ -184,9 +184,9 @@ public class VM
 
   public void LoadModule(Module m)
   {
-    if(modules.ContainsKey(m.Id))
+    if(modules.ContainsKey(m.Name))
       return;
-    modules.Add(m.Id, m);
+    modules.Add(m.Name, m);
 
     symbols.Append(m.symbols);
 
@@ -311,7 +311,7 @@ public class VM
             int const_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
 
             if(const_idx >= curr_frame.constants.Count)
-              throw new Exception("Index out of constants: " + const_idx);
+              throw new Exception("Index out of constants: " + const_idx + ", total: " + curr_frame.constants.Count);
 
             var cn = curr_frame.constants[const_idx];
             curr_frame.PushValueManual(cn.ToVal());
@@ -485,6 +485,28 @@ public class VM
               //since ip will be incremented below we decrement it intentionally here
               ip = func_ip - 1; 
             }
+            //func call by ip stored on a stack
+            else if(func_call_type == 4)
+            {
+              //dummy 0
+              Bytecode.Decode(curr_frame.bytecode, ref ip);
+              uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
+              uint func_ip = (uint)curr_frame.PopValue().num;
+
+              var fr = new Frame(curr_frame);
+              var args_info = new FuncArgsInfo(args_bits);
+              for(int i = 0; i < args_info.CountArgs(); ++i)
+                fr.PushValueManual(curr_frame.PopValueManual());
+              if(args_info.HasDefaultUsedArgs())
+                fr.PushValueManual(Val.NewNum(args_bits));
+
+              //let's remember ip to return to
+              fr.return_ip = ip;
+              frames.Push(fr);
+              curr_frame = fr;
+              //since ip will be incremented below we decrement it intentionally here
+              ip = func_ip - 1; 
+            }
             else
               throw new Exception("Not supported func call type: " + func_call_type);
           }
@@ -510,12 +532,16 @@ public class VM
           break;
           case Opcodes.GetAddr:
           {
-            uint module_id = Bytecode.Decode(curr_frame.bytecode, ref ip);
-            uint nname = Bytecode.Decode(curr_frame.bytecode, ref ip);
+            //TODO: should we cache this result?
+            int module_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            int func_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            string func_name = curr_frame.constants[func_idx].str;
+            string module_name = curr_frame.constants[module_idx].str;
+            
+            var module = modules[module_name];
+            uint func_ip = module.func2ip[func_name];
 
-            var module = modules[module_id];
-            var module_symb = module.symbols.Resolve(nname);
-            Console.WriteLine("RESOLVED " + module_symb.name);
+            curr_frame.PushValue(Val.NewNum(func_ip));
           }
           break;
           case Opcodes.InitFrame:

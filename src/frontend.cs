@@ -252,7 +252,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public AST_Module ParseModule(bhlParser.ProgramContext p)
   {
-    var ast = AST_Util.New_Module(curr_module.Id, curr_module.norm_path);
+    var ast = AST_Util.New_Module(curr_module.id, curr_module.name);
     PushAST(ast);
     VisitProgram(p);
     PopAST();
@@ -311,7 +311,8 @@ public class Frontend : bhlBaseVisitor<object>
     if(module != null)
     {
       locals.Append(module.symbols);
-      ast.modules.Add(module.Id);
+      ast.module_ids.Add(module.id);
+      ast.module_names.Add(import);
     }
   }
 
@@ -763,7 +764,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(tr.type == null)
       FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
 
-    var func_name = new HashedName(curr_module.Id + "_lmb_" + NextLambdaId(), curr_module.Id); 
+    var func_name = new HashedName(curr_module.id + "_lmb_" + NextLambdaId(), curr_module.id); 
     var ast = AST_Util.New_LambdaDecl(func_name, tr.name);
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(
@@ -1614,7 +1615,7 @@ public class Frontend : bhlBaseVisitor<object>
     var func_node = Wrap(ctx);
     func_node.eval_type = tr.type;
 
-    var func_name = new HashedName(str_name, curr_module.Id);
+    var func_name = new HashedName(str_name, curr_module.id);
     var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
     var symb = new FuncSymbolScript(locals, ast, func_node, func_name, tr, ctx.funcParams());
@@ -2527,24 +2528,22 @@ public class Frontend : bhlBaseVisitor<object>
 
 public class FileModule
 {
-  uint id;
-
-  public uint Id {
+  public string name;
+  uint _id;
+  public uint id {
     get {
-      if(id == 0)
-        id = Hash.CRC32(norm_path);
-      return id;
+      if(_id == 0)
+        _id = Hash.CRC32(name);
+      return _id;
     }
   }
-
-  public string norm_path;
   public string file_path;
   public Dictionary<string, FileModule> imports = new Dictionary<string, FileModule>(); 
   public LocalScope symbols = new LocalScope(null);
 
-  public FileModule(string norm_path, string file_path)
+  public FileModule(string name, string file_path)
   {
-    this.norm_path = norm_path;
+    this.name = name;
     this.file_path = file_path;
   }
 }

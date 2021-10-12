@@ -477,8 +477,8 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_Import ast)
   {
-    for(int i=0;i<ast.modules.Count;++i)
-      LoadModule(ast.modules[i]);
+    for(int i=0;i<ast.module_ids.Count;++i)
+      LoadModule(ast.module_ids[i]);
   }
 
   void CheckFuncIsUnique(HashedName name)

@@ -3937,11 +3937,39 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var ms = CompileFiles(files);
+    var cs = CompileFiles(files);
+
+    AssertEqual(cs[0], 
+      new Compiler()
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.GetAddr, new int[] { 1, 1 })
+      .Emit(Opcodes.Call, new int[] { 4, 0, 1 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+    );
+    AssertEqual(cs[1], 
+      new Compiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetAddr, new int[] { 0, 0 })
+      .Emit(Opcodes.Call, new int[] { 4, 0, 1 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+    );
+    AssertEqual(cs[2], 
+      new Compiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+    );
+
     var vm = new VM();
-    vm.LoadModule(ms[0]);
-    vm.LoadModule(ms[1]);
-    vm.LoadModule(ms[2]);
+    vm.LoadModule(MakeModule(cs[0]));
+    vm.LoadModule(MakeModule(cs[1]));
+    vm.LoadModule(MakeModule(cs[2]));
     vm.Start("bhl1");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 23);
@@ -4037,13 +4065,13 @@ public class BHL_TestVM : BHL_TestBase
     return new Compiler(globs_copy);
   }
 
-  List<VM.Module> CompileFiles(List<string> files, GlobalScope globs = null)
+  List<Compiler> CompileFiles(List<string> files, GlobalScope globs = null)
   {
     globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
     var globs_copy = globs.Clone();
 
-    var vm_mods = new List<VM.Module>();
+    var cs = new List<Compiler>();
 
     var mreg = new ModuleRegistry();
     mreg.AddToIncludePath(TestDirPath() + "/");
@@ -4056,11 +4084,10 @@ public class BHL_TestVM : BHL_TestBase
       var ast = Src2AST(File.ReadAllText(file), fmod, mreg, globs_copy);
       var c = new Compiler(globs_copy, ast, fmod);
       c.Compile();
-      var vm_mod = new VM.Module(fmod, c.Globs, c.GetByteCode(), c.Constants, c.Func2Ip, c.GetInitCode());
-      vm_mods.Add(vm_mod);
+      cs.Add(c);
     }
 
-    return vm_mods;
+    return cs;
   }
 
   Compiler Compile(string bhl, GlobalScope globs = null)
@@ -4274,9 +4301,14 @@ public class BHL_TestVM : BHL_TestBase
   static VM MakeVM(Compiler c)
   {
     var vm = new VM(c.Globs);
-    var m = new VM.Module(c.Module, c.Globs, c.GetByteCode(), c.Constants, c.Func2Ip, c.GetInitCode());
+    var m = MakeModule(c);
     vm.LoadModule(m);
     return vm;
+  }
+
+  static VM.Module MakeModule(Compiler c)
+  {
+    return new VM.Module(c.Module, c.Globs, c.GetByteCode(), c.Constants, c.Func2Ip, c.GetInitCode());
   }
 
   static int PredictOpcodeSize(Compiler.OpDefinition op, byte[] bytes, int start_pos)

@@ -182,7 +182,7 @@ public class Build
             var result_file = w.result_files[file];
 
             mwriter.Write((byte)conf.format);
-            mwriter.Write(module.Id);
+            mwriter.Write(module.id);
 
             if(conf.format == ModuleBinaryFormat.FMT_BIN)
               mwriter.Write(File.ReadAllBytes(result_file));

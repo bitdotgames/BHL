@@ -163,6 +163,8 @@ public class Compiler : AST_Visitor
       return func2ip;
     }
   }
+
+  Dictionary<uint, string> imports = new Dictionary<uint, string>();
   
   Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
 
@@ -641,11 +643,8 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Import ast)
   {
-    for(int i=0;i<ast.modules.Count;++i)
-    {
-      //var mod_id = ast.modules[i];
-      //TODO:
-    }
+    for(int i=0;i<ast.module_names.Count;++i)
+      imports.Add(ast.module_ids[i], ast.module_names[i]);
   }
 
   public override void DoVisit(AST_FuncDecl ast)
@@ -922,10 +921,16 @@ public class Compiler : AST_Visitor
           VisitChildren(ast);
           Emit(Opcodes.Call, new int[] {(int)1, (int)func_idx, (int)ast.cargs_bits});
         }
-        else if(ast.nname2 != module.Id)
+        else if(ast.nname2 != module.id)
         {
           VisitChildren(ast);
-          Emit(Opcodes.GetAddr, new int[] {(int)ast.nname2, (int)ast.nname1});
+
+          var import_name = imports[ast.nname2];
+
+          Emit(Opcodes.GetAddr, new int[] {
+              AddConstant(new Const(import_name)), 
+              AddConstant(new Const(ast.name))
+          });
           Emit(Opcodes.Call, new int[] {(int)4, (int)0, (int)ast.cargs_bits});
         }
         else

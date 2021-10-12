@@ -990,7 +990,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Import node)
   {
     Console.Write("(IMPORT ");
-    foreach(var m in node.modules)
+    foreach(var m in node.module_names)
       Console.Write("" + m);
     Console.Write(")");
   }
