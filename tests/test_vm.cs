@@ -3942,8 +3942,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(cs[0], 
       new Compiler()
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.GetAddr, new int[] { 1, 1 })
-      .Emit(Opcodes.Call, new int[] { 4, 0, 1 })
+      .Emit(Opcodes.Call, new int[] { 4, 0x10001, 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
     );
@@ -3952,7 +3951,6 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArgVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.GetAddr, new int[] { 0, 0 })
       .Emit(Opcodes.Call, new int[] { 4, 0, 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)

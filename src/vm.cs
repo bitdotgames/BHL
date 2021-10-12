@@ -488,12 +488,19 @@ public class VM
             //func call by ip stored on a stack
             else if(func_call_type == 4)
             {
-              //dummy 0
-              Bytecode.Decode(curr_frame.bytecode, ref ip);
-              uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
-              uint func_ip = (uint)curr_frame.PopValue().num;
+              uint encoded = Bytecode.Decode(curr_frame.bytecode, ref ip);
+              //TODO: should we cache this result?
+              int module_idx = (int)(encoded >> 16); 
+              int func_idx = (int)(encoded & 0xFFFF);
 
-              var fr = new Frame(curr_frame);
+              string func_name = curr_frame.constants[func_idx].str;
+              string module_name = curr_frame.constants[module_idx].str;
+
+              var module = modules[module_name];
+              uint func_ip = module.func2ip[func_name];
+
+              uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
+              var fr = new Frame(module);
               var args_info = new FuncArgsInfo(args_bits);
               for(int i = 0; i < args_info.CountArgs(); ++i)
                 fr.PushValueManual(curr_frame.PopValueManual());
@@ -528,20 +535,6 @@ public class VM
             //NOTE: checking if new instruction was added and if so executing it immediately
             if(instruction != null)
               status = instruction.Tick(this);
-          }
-          break;
-          case Opcodes.GetAddr:
-          {
-            //TODO: should we cache this result?
-            int module_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
-            int func_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
-            string func_name = curr_frame.constants[func_idx].str;
-            string module_name = curr_frame.constants[module_idx].str;
-            
-            var module = modules[module_name];
-            uint func_ip = module.func2ip[func_name];
-
-            curr_frame.PushValue(Val.NewNum(func_ip));
           }
           break;
           case Opcodes.InitFrame:

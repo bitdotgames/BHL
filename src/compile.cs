@@ -19,7 +19,6 @@ public enum Opcodes
   Call            = 0x10,
   SetMVar         = 0x20,
   SetMVarInplace  = 0x21,
-  GetAddr         = 0x22,
   GetMVar         = 0xA,
   MCall           = 0xB,
   Return          = 0xC,
@@ -405,13 +404,6 @@ public class Compiler : AST_Visitor
       {
         name = Opcodes.GetMVar,
         operand_width = new int[] { 4, 2 }
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetAddr,
-        operand_width = new int[] { 4/*module id*/, 4/*nname*/ }
       }
     );
     DeclareOpcode(
@@ -927,11 +919,14 @@ public class Compiler : AST_Visitor
 
           var import_name = imports[ast.nname2];
 
-          Emit(Opcodes.GetAddr, new int[] {
-              AddConstant(new Const(import_name)), 
-              AddConstant(new Const(ast.name))
-          });
-          Emit(Opcodes.Call, new int[] {(int)4, (int)0, (int)ast.cargs_bits});
+          int module_idx = AddConstant(new Const(import_name));
+          if(module_idx > ushort.MaxValue)
+            throw new Exception("Can't encode module literal in ushort: " + module_idx);
+          int func_idx = AddConstant(new Const(ast.name));
+          if(func_idx > ushort.MaxValue)
+            throw new Exception("Can't encode func literal in ushort: " + func_idx);
+
+          Emit(Opcodes.Call, new int[] {(int)4, (int)((uint)module_idx << 16 | (uint)func_idx), (int)ast.cargs_bits});
         }
         else
           throw new Exception("Func '" + ast.name + "' code not found");
