@@ -17,10 +17,14 @@ public enum Opcodes
   DeclVar         = 0x8,
   ArgVar          = 0x9,
   Call            = 0x10,
+  CallNative      = 0x11,
+  CallMethod      = 0x12, //TODO: get rid of this one
+  GetFunc         = 0x13,
+  GetFuncFromVar  = 0x14,
+  GetFuncFromMod  = 0x15,
   SetMVar         = 0x20,
   SetMVarInplace  = 0x21,
   GetMVar         = 0xA,
-  MCall           = 0xB,
   Return          = 0xC,
   ReturnVal       = 0xD,
   Jump            = 0xE,
@@ -410,14 +414,42 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.Call,
-        operand_width = new int[] { 1/*type*/, 4/*idx/or ip*/, 4/*args bits*/ }
+        name = Opcodes.GetFunc,
+        operand_width = new int[] { 4/*ip*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.MCall,
+        name = Opcodes.GetFuncFromVar,
+        operand_width = new int[] { 4/*idx*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.GetFuncFromMod,
+        operand_width = new int[] { 4/*module idx*/, 4/*func idx*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Call,
+        operand_width = new int[] { 4/*args bits*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.CallNative,
+        operand_width = new int[] { 4/*idx*/, 4/*args bits*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.CallMethod,
         operand_width = new int[] { 4/*type*/, 2/*member idx*/ }
       }
     );
@@ -918,7 +950,8 @@ public class Compiler : AST_Visitor
         if(func2ip.TryGetValue(ast.name, out offset))
         {
           VisitChildren(ast);
-          Emit(Opcodes.Call, new int[] {(int)0, (int)offset, (int)ast.cargs_bits});
+          Emit(Opcodes.GetFunc, new int[] {(int)offset});
+          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits});
         }
         else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
         {
@@ -926,7 +959,7 @@ public class Compiler : AST_Visitor
           if(func_idx == -1)
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           VisitChildren(ast);
-          Emit(Opcodes.Call, new int[] {(int)1, (int)func_idx, (int)ast.cargs_bits});
+          Emit(Opcodes.CallNative, new int[] {(int)func_idx, (int)ast.cargs_bits});
         }
         else if(ast.nname2 != module.id)
         {
@@ -941,7 +974,8 @@ public class Compiler : AST_Visitor
           if(func_idx > ushort.MaxValue)
             throw new Exception("Can't encode func literal in ushort: " + func_idx);
 
-          Emit(Opcodes.Call, new int[] {(int)4, (int)((uint)module_idx << 16 | (uint)func_idx), (int)ast.cargs_bits});
+          Emit(Opcodes.GetFuncFromMod, new int[] {(int)module_idx, (int)func_idx});
+          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits});
         }
         else
           throw new Exception("Func '" + ast.name + "' code not found");
@@ -988,27 +1022,28 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
         //TODO: instead of scope_ntype it rather should be an index?
-        Emit(Opcodes.MCall, new int[] {(int)ast.scope_ntype, memb_idx});
+        Emit(Opcodes.CallMethod, new int[] {(int)ast.scope_ntype, memb_idx});
       }
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.MCall, new int[] { GenericArrayTypeSymbol.INT_CLASS_TYPE, GenericArrayTypeSymbol.IDX_At});
+        Emit(Opcodes.CallMethod, new int[] { GenericArrayTypeSymbol.INT_CLASS_TYPE, GenericArrayTypeSymbol.IDX_At});
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.MCall, new int[] { GenericArrayTypeSymbol.INT_CLASS_TYPE, GenericArrayTypeSymbol.IDX_SetAt});
+        Emit(Opcodes.CallMethod, new int[] { GenericArrayTypeSymbol.INT_CLASS_TYPE, GenericArrayTypeSymbol.IDX_SetAt});
       }
       break;
       case EnumCall.FUNC_PTR_POP:
       {
-        Emit(Opcodes.Call, new int[] {(int)2, 0, 0});
+        Emit(Opcodes.Call, new int[] {0});
       }
       break;
       case EnumCall.FUNC_PTR:
       {
-        Emit(Opcodes.Call, new int[] {(int)3, (int)ast.symb_idx, 0});
+        Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx});
+        Emit(Opcodes.Call, new int[] {0});
       }
       break;
       default:
@@ -1164,7 +1199,7 @@ public class Compiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.MCall, new int[] { (int)ast.ntype , GenericArrayTypeSymbol.IDX_AddInplace});
+        Emit(Opcodes.CallMethod, new int[] { (int)ast.ntype , GenericArrayTypeSymbol.IDX_AddInplace});
       }
       else
         Visit(c);
@@ -1173,7 +1208,7 @@ public class Compiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.MCall, new int[] { (int)ast.ntype , GenericArrayTypeSymbol.IDX_AddInplace});
+      Emit(Opcodes.CallMethod, new int[] { (int)ast.ntype , GenericArrayTypeSymbol.IDX_AddInplace});
     }
   }
 

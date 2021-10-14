@@ -47,19 +47,22 @@ public class VM
     //TODO: use shared stack for stack and locals 
     public FastStack<Val> stack = new FastStack<Val>(32);
     public List<Val> locals = new List<Val>();
+    public uint start_ip;
     public uint return_ip;
     public List<CodeBlock> defers;
 
-    public Frame(Module module)
+    public Frame(Module module, uint start_ip)
     {
       module_bytecode = module.bytecode;
       module_constants = module.constants;
+      this.start_ip = start_ip;
     }
 
-    public Frame(Frame frm)
+    public Frame(Frame frm, uint start_ip)
     {
       module_bytecode = frm.module_bytecode;
       module_constants = frm.module_constants;
+      this.start_ip = start_ip;
     }
 
     public void Clear()
@@ -104,17 +107,6 @@ public class VM
     {
       val.RefMod(RefOp.INC | RefOp.USR_INC);
       stack.Push(val);
-    }
-
-    public Val PopValueManual()
-    {
-      var val = stack.PopFast();
-      return val;
-    }
-
-    public void PushValueManual(Val v)
-    {
-      stack.Push(v);
     }
 
     public Val PeekValue()
@@ -283,7 +275,7 @@ public class VM
     var fb = new Fiber();
     fb.id = ++fibers_ids;
 
-    var fr = new Frame(addr.module);
+    var fr = new Frame(addr.module, addr.ip);
     fb.ip = addr.ip;
     fb.frames.Push(fr);
 
@@ -327,16 +319,16 @@ public class VM
               throw new Exception("Index out of constants: " + const_idx + ", total: " + curr_frame.module_constants.Count);
 
             var cn = curr_frame.module_constants[const_idx];
-            curr_frame.PushValueManual(cn.ToVal());
+            curr_frame.stack.Push(cn.ToVal());
           }
           break;
           case Opcodes.TypeCast:
           {
             uint cast_type = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             if(cast_type == SymbolTable.symb_string.name.n)
-              curr_frame.PushValueManual(Val.NewStr(curr_frame.PopValue().num.ToString()));
+              curr_frame.stack.Push(Val.NewStr(curr_frame.PopValue().num.ToString()));
             else if(cast_type == SymbolTable.symb_int.name.n)
-              curr_frame.PushValueManual(Val.NewNum(curr_frame.PopValue().num));
+              curr_frame.stack.Push(Val.NewNum(curr_frame.PopValue().num));
             else
               throw new Exception("Not supported typecast type: " + cast_type);
           }
@@ -415,123 +407,75 @@ public class VM
               stack.Push(ret_val);
           }
           break;
-          case Opcodes.Call:
+          case Opcodes.GetFunc:
           {
-            byte func_call_type = (byte)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-            //bhl userland call
-            if(func_call_type == 0)
-            {
-              uint func_ip = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-              uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
-              var args_info = new FuncArgsInfo(args_bits);
-
-              //Console.WriteLine("FUNC CALL " + func_ip + " RET TO " + ip + ", default args: " + args_info.HasDefaultUsedArgs());
-              var fr = new Frame(curr_frame);
-              for(int i = 0; i < args_info.CountArgs(); ++i)
-                fr.PushValueManual(curr_frame.PopValueManual());
-              if(args_info.HasDefaultUsedArgs())
-                fr.PushValueManual(Val.NewNum(args_bits));
-
-              //let's remember ip to return to
-              fr.return_ip = ip;
-              frames.Push(fr);
-              curr_frame = fr;
-              //since ip will be incremented below we decrement it intentionally here
-              ip = func_ip - 1; 
-            }
-            //C# bind call
-            else if(func_call_type == 1)
-            {
-              int func_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-              var func_symb = globs.GetMembers()[func_idx] as FuncSymbolNative;
-
-              uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
-              var args_info = new FuncArgsInfo(args_bits);
-              for(int i = 0; i < args_info.CountArgs(); ++i)
-                curr_frame.PushValueManual(curr_frame.PopValueManual());
-
-              var res_instruction = func_symb.VM_cb(this, curr_frame);
-              if(res_instruction != null)
-                AttachInstruction(ref instruction, res_instruction);
-              //NOTE: checking if new instruction was added and if so executing it immediately
-              if(instruction != null)
-                status = instruction.Tick(this);
-            }
-            //call lambda pushed on the stack
-            else if(func_call_type == 2)
-            {
-              //leftovers
-              Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-              Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-
-              var val = curr_frame.PopValue();
-              uint func_ip = (uint)val._num;
-              var fr = (Frame)val._obj;
-              if(fr == null)
-                fr = new Frame(curr_frame);
-
-              //let's remember ip to return to
-              fr.return_ip = ip;
-              frames.Push(fr);
-              curr_frame = fr;
-              //since ip will be incremented below we decrement it intentionally here
-              ip = func_ip - 1; 
-            }
-            //func ptr call from var
-            else if(func_call_type == 3)
-            {
-              int local_var_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-              //leftovers
-              Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-
-              var val = curr_frame.locals[local_var_idx];
-
-              uint func_ip = (uint)val._num;
-              var fr = (Frame)val._obj;
-              if(fr == null)
-                fr = new Frame(curr_frame);
-
-              //let's remember ip to return to
-              fr.return_ip = ip;
-              frames.Push(fr);
-              curr_frame = fr;
-              //since ip will be incremented below we decrement it intentionally here
-              ip = func_ip - 1; 
-            }
-            //func call by ip stored on a stack
-            else if(func_call_type == 4)
-            {
-              uint encoded = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-              //TODO: should we cache this result?
-              int module_idx = (int)(encoded >> 16); 
-              int func_idx = (int)(encoded & 0xFFFF);
-
-              string func_name = curr_frame.module_constants[func_idx].str;
-              string module_name = curr_frame.module_constants[module_idx].str;
-
-              var module = modules[module_name];
-              uint func_ip = module.func2ip[func_name];
-
-              uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
-              var fr = new Frame(module);
-              var args_info = new FuncArgsInfo(args_bits);
-              for(int i = 0; i < args_info.CountArgs(); ++i)
-                fr.PushValueManual(curr_frame.PopValueManual());
-              if(args_info.HasDefaultUsedArgs())
-                fr.PushValueManual(Val.NewNum(args_bits));
-
-              //let's remember ip to return to
-              fr.return_ip = ip;
-              frames.Push(fr);
-              curr_frame = fr;
-              //since ip will be incremented below we decrement it intentionally here
-              ip = func_ip - 1; 
-            }
-            else
-              throw new Exception("Not supported func call type: " + func_call_type);
+            uint func_ip = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+            var func_frame = new Frame(curr_frame, func_ip);
+            curr_frame.stack.Push(Val.NewObj(func_frame));
           }
           break;
-          case Opcodes.MCall:
+          case Opcodes.GetFuncFromVar:
+          {
+            int local_var_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+            var val = curr_frame.locals[local_var_idx];
+            curr_frame.stack.Push(Val.NewObj(val._obj));
+          }
+          break;
+          case Opcodes.GetFuncFromMod:
+          {
+            int module_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+            int func_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+
+            string module_name = curr_frame.module_constants[module_idx].str;
+            string func_name = curr_frame.module_constants[func_idx].str;
+
+            var module = modules[module_name];
+            uint func_ip = module.func2ip[func_name];
+
+            var func_frame = new Frame(module, func_ip);
+            curr_frame.stack.Push(Val.NewObj(func_frame));
+          }
+          break;
+          case Opcodes.Call:
+          {
+            uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
+
+            var val = curr_frame.PopValue();
+            var fr = (Frame)val._obj;
+
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              fr.stack.Push(curr_frame.stack.PopFast());
+            if(args_info.HasDefaultUsedArgs())
+              fr.stack.Push(Val.NewNum(args_bits));
+
+            //let's remember ip to return to
+            fr.return_ip = ip;
+            frames.Push(fr);
+            curr_frame = fr;
+            //since ip will be incremented below we decrement it intentionally here
+            ip = fr.start_ip - 1; 
+          }
+          break;
+          case Opcodes.CallNative:
+          {
+            int func_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+            var func_symb = globs.GetMembers()[func_idx] as FuncSymbolNative;
+
+            uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              curr_frame.stack.Push(curr_frame.stack.PopFast());
+
+            var res_instruction = func_symb.VM_cb(this, curr_frame);
+            if(res_instruction != null)
+              AttachInstruction(ref instruction, res_instruction);
+            //NOTE: checking if new instruction was added and if so executing it immediately
+            if(instruction != null)
+              status = instruction.Tick(this);
+          }
+          break;
+          case Opcodes.CallMethod:
           {
             uint class_type = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             int method_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
@@ -562,7 +506,7 @@ public class VM
           {
             uint func_ip = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             int local_vars_num = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-            var fr = new Frame(curr_frame);
+            var fr = new Frame(curr_frame, func_ip);
             fr.locals.Capacity = local_vars_num;
             for(int i=0;i<local_vars_num;++i)
               fr.locals.Add(null);
@@ -571,7 +515,7 @@ public class VM
             frval._obj = fr;
             frval._num = func_ip;
 
-            curr_frame.PushValueManual(frval);
+            curr_frame.stack.Push(frval);
           }
           break;
           case Opcodes.UseUpval:
@@ -664,7 +608,7 @@ public class VM
 
     var val = Val.New(); 
     cls.VM_creator(ref val);
-    curr_frame.PushValueManual(val);
+    curr_frame.stack.Push(val);
   }
 
   static void AttachInstruction(ref IInstruction instruction, IInstruction candidate)
@@ -796,18 +740,18 @@ public class VM
     {
       case Opcodes.GetMVar:
       {
-        var obj = curr_frame.PopValueManual();
+        var obj = curr_frame.stack.PopFast();
         var res = Val.New();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         field_symb.VM_getter(obj, ref res);
-        curr_frame.PushValueManual(res);
+        curr_frame.stack.Push(res);
         obj.Release();
       }
       break;
       case Opcodes.SetMVar:
       {
-        var obj = curr_frame.PopValueManual();
-        var val = curr_frame.PopValueManual();
+        var obj = curr_frame.stack.PopFast();
+        var val = curr_frame.stack.PopFast();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         field_symb.VM_setter(ref obj, val);
         val.Release();
@@ -816,7 +760,7 @@ public class VM
       break;
       case Opcodes.SetMVarInplace:
       {
-        var val = curr_frame.PopValueManual();
+        var val = curr_frame.stack.PopFast();
         var obj = curr_frame.PeekValue();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         field_symb.VM_setter(ref obj, val);
@@ -834,84 +778,73 @@ public class VM
     switch(op)
     {
       case Opcodes.UnaryNot:
-        curr_frame.PushValueManual(Val.NewBool(operand != 1));
+        curr_frame.stack.Push(Val.NewBool(operand != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.PushValueManual(Val.NewNum(operand * -1));
+        curr_frame.stack.Push(Val.NewNum(operand * -1));
       break;
     }
   }
 
   static void ExecuteBinaryOp(Opcodes op, Frame curr_frame)
   {
-    var r_operand = curr_frame.PopValueManual();
-    var l_operand = curr_frame.PopValueManual();
+    var r_operand = curr_frame.stack.PopFast();
+    var l_operand = curr_frame.stack.PopFast();
 
     switch(op)
     {
       case Opcodes.Add:
         if((r_operand._type == Val.STRING) && (l_operand._type == Val.STRING))
-          curr_frame.PushValueManual(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
+          curr_frame.stack.Push(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
         else
-          curr_frame.PushValueManual(Val.NewNum(l_operand._num + r_operand._num));
+          curr_frame.stack.Push(Val.NewNum(l_operand._num + r_operand._num));
       break;
       case Opcodes.Sub:
-        curr_frame.PushValueManual(Val.NewNum(l_operand._num - r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(l_operand._num - r_operand._num));
       break;
       case Opcodes.Div:
-        curr_frame.PushValueManual(Val.NewNum(l_operand._num / r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(l_operand._num / r_operand._num));
       break;
       case Opcodes.Mul:
-        curr_frame.PushValueManual(Val.NewNum(l_operand._num * r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
-        curr_frame.PushValueManual(Val.NewBool(l_operand.IsEqual(r_operand)));
+        curr_frame.stack.Push(Val.NewBool(l_operand.IsEqual(r_operand)));
       break;
       case Opcodes.NotEqual:
-        curr_frame.PushValueManual(Val.NewBool(!l_operand.IsEqual(r_operand)));
+        curr_frame.stack.Push(Val.NewBool(!l_operand.IsEqual(r_operand)));
       break;
       case Opcodes.Greater:
-        curr_frame.PushValueManual(Val.NewBool(l_operand._num > r_operand._num));
+        curr_frame.stack.Push(Val.NewBool(l_operand._num > r_operand._num));
       break;
       case Opcodes.Less:
-        curr_frame.PushValueManual(Val.NewBool(l_operand._num < r_operand._num));
+        curr_frame.stack.Push(Val.NewBool(l_operand._num < r_operand._num));
       break;
       case Opcodes.GreaterOrEqual:
-        curr_frame.PushValueManual(Val.NewBool(l_operand._num >= r_operand._num));
+        curr_frame.stack.Push(Val.NewBool(l_operand._num >= r_operand._num));
       break;
       case Opcodes.LessOrEqual:
-        curr_frame.PushValueManual(Val.NewBool(l_operand._num <= r_operand._num));
+        curr_frame.stack.Push(Val.NewBool(l_operand._num <= r_operand._num));
       break;
       case Opcodes.And:
-        curr_frame.PushValueManual(Val.NewBool(l_operand._num == 1 && r_operand._num == 1));
+        curr_frame.stack.Push(Val.NewBool(l_operand._num == 1 && r_operand._num == 1));
       break;
       case Opcodes.Or:
-        curr_frame.PushValueManual(Val.NewBool(l_operand._num == 1 || r_operand._num == 1));
+        curr_frame.stack.Push(Val.NewBool(l_operand._num == 1 || r_operand._num == 1));
       break;
       case Opcodes.BitAnd:
-        curr_frame.PushValueManual(Val.NewNum((int)l_operand._num & (int)r_operand._num));
+        curr_frame.stack.Push(Val.NewNum((int)l_operand._num & (int)r_operand._num));
       break;
       case Opcodes.BitOr:
-        curr_frame.PushValueManual(Val.NewNum((int)l_operand._num | (int)r_operand._num));
+        curr_frame.stack.Push(Val.NewNum((int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        curr_frame.PushValueManual(Val.NewNum((int)l_operand._num % (int)r_operand._num));
+        curr_frame.stack.Push(Val.NewNum((int)l_operand._num % (int)r_operand._num));
       break;
     }
 
     r_operand.Release();
     l_operand.Release();
-  }
-
-  public Val PopValueManual()
-  {
-    var val = stack.PopFast();
-    return val;
-  }
-
-  public void PushValueManual(Val v)
-  {
-    stack.Push(v);
   }
 
   public Val PopValue()

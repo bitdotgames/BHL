@@ -461,8 +461,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   
   public override IInstruction VM_Add(VM vm, VM.Frame curr_frame)
   {
-    var val = curr_frame.PopValueManual();
-    var arr = curr_frame.PopValueManual();
+    var val = curr_frame.stack.PopFast();
+    var arr = curr_frame.stack.PopFast();
     var lst = AsList(arr);
     lst.Add(val);
     val.Release();
@@ -472,8 +472,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override IInstruction VM_AddInplace(VM vm, VM.Frame curr_frame)
   {
-    var val = curr_frame.PopValueManual();
-    var arr = curr_frame.PeekValue();
+    var val = curr_frame.stack.PopFast();
+    var arr = curr_frame.stack.Peek();
     var lst = AsList(arr);
     lst.Add(val);
     val.Release();
@@ -483,7 +483,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override IInstruction VM_At(VM vm, VM.Frame curr_frame)
   {
     int idx = (int)curr_frame.PopValue().num;
-    var arr = curr_frame.PopValueManual();
+    var arr = curr_frame.stack.PopFast();
     var lst = AsList(arr);
     var res = lst[idx]; 
     curr_frame.PushValue(res);
@@ -494,8 +494,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override IInstruction VM_SetAt(VM vm, VM.Frame curr_frame)
   {
     int idx = (int)curr_frame.PopValue().num;
-    var arr = curr_frame.PopValueManual();
-    var val = curr_frame.PopValueManual();
+    var arr = curr_frame.stack.PopFast();
+    var val = curr_frame.stack.PopFast();
     var lst = AsList(arr);
     lst[idx] = val;
     val.Release();
@@ -506,7 +506,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame)
   {
     int idx = (int)curr_frame.PopValue().num;
-    var arr = curr_frame.PopValueManual();
+    var arr = curr_frame.stack.PopFast();
     var lst = AsList(arr);
     lst.RemoveAt(idx); 
     arr.Release();
@@ -516,7 +516,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override IInstruction VM_Clear(VM vm, VM.Frame curr_frame)
   {
     int idx = (int)curr_frame.PopValue().num;
-    var arr = curr_frame.PopValueManual();
+    var arr = curr_frame.stack.PopFast();
     var lst = AsList(arr);
     lst.Clear();
     arr.Release();
