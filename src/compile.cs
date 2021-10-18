@@ -18,10 +18,10 @@ public enum Opcodes
   ArgVar          = 0x9,
   Call            = 0x10,
   CallNative      = 0x11,
-  CallMethod      = 0x12, //TODO: get rid of this one
-  GetFunc         = 0x13,
+  GetFunc         = 0x12,
+  GetFuncNative   = 0x13,
   GetFuncFromVar  = 0x14,
-  GetFuncFromMod  = 0x15,
+  GetFuncImported = 0x15,
   SetMVar         = 0x20,
   SetMVarInplace  = 0x21,
   GetMVar         = 0xA,
@@ -421,6 +421,13 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.GetFuncNative,
+        operand_width = new int[] { 4/*idx*/, 4/*type idx*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.GetFuncFromVar,
         operand_width = new int[] { 4/*idx*/ }
       }
@@ -428,7 +435,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.GetFuncFromMod,
+        name = Opcodes.GetFuncImported,
         operand_width = new int[] { 4/*module idx*/, 4/*func idx*/ }
       }
     );
@@ -443,14 +450,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.CallNative,
-        operand_width = new int[] { 4/*idx*/, 4/*args bits*/ }
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.CallMethod,
-        operand_width = new int[] { 4/*type*/, 2/*member idx*/ }
+        operand_width = new int[] { 4/*args bits*/ }
       }
     );
     DeclareOpcode(
@@ -959,7 +959,8 @@ public class Compiler : AST_Visitor
           if(func_idx == -1)
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           VisitChildren(ast);
-          Emit(Opcodes.CallNative, new int[] {(int)func_idx, (int)ast.cargs_bits});
+          Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx, 0});
+          Emit(Opcodes.CallNative, new int[] {(int)ast.cargs_bits});
         }
         else if(ast.nname2 != module.id)
         {
@@ -974,7 +975,7 @@ public class Compiler : AST_Visitor
           if(func_idx > ushort.MaxValue)
             throw new Exception("Can't encode func literal in ushort: " + func_idx);
 
-          Emit(Opcodes.GetFuncFromMod, new int[] {(int)module_idx, (int)func_idx});
+          Emit(Opcodes.GetFuncImported, new int[] {(int)module_idx, (int)func_idx});
           Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits});
         }
         else
@@ -1022,17 +1023,20 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
         //TODO: instead of scope_ntype it rather should be an index?
-        Emit(Opcodes.CallMethod, new int[] {(int)ast.scope_ntype, memb_idx});
+        Emit(Opcodes.GetFuncNative, new int[] {memb_idx, (int)ast.scope_ntype});
+        Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.CallMethod, new int[] { GenericArrayTypeSymbol.INT_CLASS_TYPE, GenericArrayTypeSymbol.IDX_At});
+        Emit(Opcodes.GetFuncNative, new int[] {GenericArrayTypeSymbol.IDX_At, GenericArrayTypeSymbol.INT_CLASS_TYPE});
+        Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.CallMethod, new int[] { GenericArrayTypeSymbol.INT_CLASS_TYPE, GenericArrayTypeSymbol.IDX_SetAt});
+        Emit(Opcodes.GetFuncNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, GenericArrayTypeSymbol.INT_CLASS_TYPE});
+        Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
       case EnumCall.FUNC_PTR_POP:
@@ -1199,7 +1203,8 @@ public class Compiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.CallMethod, new int[] { (int)ast.ntype , GenericArrayTypeSymbol.IDX_AddInplace});
+        Emit(Opcodes.GetFuncNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, (int)ast.ntype});
+        Emit(Opcodes.CallNative, new int[] {0});
       }
       else
         Visit(c);
@@ -1208,7 +1213,8 @@ public class Compiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.CallMethod, new int[] { (int)ast.ntype , GenericArrayTypeSymbol.IDX_AddInplace});
+      Emit(Opcodes.GetFuncNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, (int)ast.ntype});
+      Emit(Opcodes.CallNative, new int[] {0});
     }
   }
 

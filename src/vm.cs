@@ -421,7 +421,7 @@ public class VM
             curr_frame.stack.Push(Val.NewObj(val._obj));
           }
           break;
-          case Opcodes.GetFuncFromMod:
+          case Opcodes.GetFuncImported:
           {
             int module_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
             int func_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
@@ -434,6 +434,31 @@ public class VM
 
             var func_frame = new Frame(module, func_ip);
             curr_frame.stack.Push(Val.NewObj(func_frame));
+          }
+          break;
+          case Opcodes.GetFuncNative:
+          {
+            int func_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+
+            uint class_type = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
+
+            FuncSymbolNative func_symb = null;
+
+            if(class_type == 0)
+            {
+              func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
+            }
+            else
+            {
+              var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+              //TODO: this check must be in dev.version only
+              if(class_symb == null)
+                throw new Exception("Class type not found: " + class_type);
+
+              func_symb = (FuncSymbolNative)class_symb.members[func_idx];
+            }
+
+            curr_frame.stack.Push(Val.NewObj(func_symb));
           }
           break;
           case Opcodes.Call:
@@ -459,33 +484,14 @@ public class VM
           break;
           case Opcodes.CallNative:
           {
-            int func_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-            var func_symb = globs.GetMembers()[func_idx] as FuncSymbolNative;
-
             uint args_bits = Bytecode.Decode(curr_frame.module_bytecode, ref ip); 
+            var val = curr_frame.PopValue();
+            var func_symb = (FuncSymbolNative)val._obj;
+
             var args_info = new FuncArgsInfo(args_bits);
             for(int i = 0; i < args_info.CountArgs(); ++i)
               curr_frame.stack.Push(curr_frame.stack.PopFast());
 
-            var res_instruction = func_symb.VM_cb(this, curr_frame);
-            if(res_instruction != null)
-              AttachInstruction(ref instruction, res_instruction);
-            //NOTE: checking if new instruction was added and if so executing it immediately
-            if(instruction != null)
-              status = instruction.Tick(this);
-          }
-          break;
-          case Opcodes.CallMethod:
-          {
-            uint class_type = Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-            int method_idx = (int)Bytecode.Decode(curr_frame.module_bytecode, ref ip);
-
-            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-            //TODO: this check must be in dev.version only
-            if(class_symb == null)
-              throw new Exception("Class type not found: " + class_type);
-
-            var func_symb = (FuncSymbolNative)class_symb.members[method_idx];
             var res_instruction = func_symb.VM_cb(this, curr_frame);
             if(res_instruction != null)
               AttachInstruction(ref instruction, res_instruction);
