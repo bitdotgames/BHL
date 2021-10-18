@@ -670,15 +670,15 @@ static public class AST_Util
 
   static public AST_Call New_Call(EnumCall type, int line_num, HashedName name = new HashedName(), ClassSymbol scope_symb = null, int symb_idx = 0)
   {
-    return New_Call(type, line_num, name, scope_symb != null ? (uint)scope_symb.Type().n : 0, symb_idx);
+    return New_Call(type, line_num, name, scope_symb != null ? (uint)scope_symb.Type().n : 0, scope_symb != null ? (string)scope_symb.Type().s : "", symb_idx);
   }
 
   static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, ClassSymbol scope_symb = null)
   {
-    return New_Call(type, line_num, symb.name, scope_symb != null ? (uint)scope_symb.Type().n : 0, symb.scope_idx);
+    return New_Call(type, line_num, symb.name, scope_symb != null ? (uint)scope_symb.Type().n : 0, scope_symb != null ? (string)scope_symb.Type().s : "", symb.scope_idx);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype, int symb_idx = 0)
+  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype, string scope_type, int symb_idx = 0)
   {
     var n = new AST_Call();
     n.type = type;
@@ -686,6 +686,7 @@ static public class AST_Util
     n.nname2 = name.n2;
     n.name = name.s;
     n.scope_ntype = scope_ntype;
+    n.scope_type = scope_type;
     n.line_num = (uint)line_num;
     n.symb_idx = (uint)symb_idx;
 
@@ -758,17 +759,18 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref, uint ntype)
+  static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref, uint ntype, string type)
   {
-    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, ntype, symb.scope_idx);
+    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, ntype, type, symb.scope_idx);
   }
 
-  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, bool is_func_arg, uint ntype, int symb_idx)
+  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, bool is_func_arg, uint ntype, string type, int symb_idx)
   {
     var n = new AST_VarDecl();
     n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
     n.name = name.s;
     n.ntype = ntype;
+    n.type = type;
     n.is_func_arg = is_func_arg;
     n.symb_idx = (uint)symb_idx;
 

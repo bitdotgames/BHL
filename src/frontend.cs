@@ -2025,7 +2025,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(write)
       return AST_Util.New_Call(EnumCall.VARW, 0, symb);
     else
-      return AST_Util.New_VarDecl(symb, is_ref, tr.name.n1);
+      return AST_Util.New_VarDecl(symb, is_ref, tr.name.n1, tr.name.s);
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
@@ -2386,8 +2386,12 @@ public class Frontend : bhlBaseVisitor<object>
 
     //generic fallback if the concrete type is not found 
     uint arr_ntype = (uint)GenericArrayTypeSymbol.CLASS_TYPE.n;
+    string arr_stype = GenericArrayTypeSymbol.CLASS_TYPE.s;
     if(!(arr_type is GenericArrayTypeSymbol))
+    {
       arr_ntype = (uint)arr_type.GetName().n;
+      arr_stype = arr_type.GetName().s;
+    }
 
     var arr_tmp_name = "$foreach_tmp" + loops_stack;
     var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
@@ -2407,7 +2411,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, arr_tmp_symb));
     //declaring counter var
-    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, false, SymbolTable.symb_int.GetName().n1));
+    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, false, SymbolTable.symb_int.GetName().n1, SymbolTable.symb_int.GetName().s));
 
     //declaring iterating var
     if(iter_ast_decl != null)
@@ -2422,7 +2426,7 @@ public class Frontend : bhlBaseVisitor<object>
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_symb));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype, arr_stype));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
@@ -2430,7 +2434,7 @@ public class Frontend : bhlBaseVisitor<object>
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_symb));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype, arr_stype));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_symb));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_symb));
 

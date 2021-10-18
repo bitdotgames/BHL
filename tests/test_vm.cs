@@ -3529,14 +3529,14 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       .UseInitCode()
-      .Emit(Opcodes.ClassBegin, new int[] { H("Foo"), 0 })
+      .Emit(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Foo"), -1 })
       .Emit(Opcodes.ClassEnd)
       .UseByteCode()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.New, new int[] { H("Foo") }) 
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
       .Emit(Opcodes.NotEqual)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -3579,37 +3579,37 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       .UseInitCode()
-      .Emit(Opcodes.ClassBegin, new int[] { H("Foo"), 0 })
-      .Emit(Opcodes.ClassMember, new int[] { H("int"), H("Int") })
-      .Emit(Opcodes.ClassMember, new int[] { H("float"), H("Flt") })
-      .Emit(Opcodes.ClassMember, new int[] { H("string"), H("Str") })
+      .Emit(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Foo"), -1 })
+      .Emit(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "Int") })
+      .Emit(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "Flt") })
+      .Emit(Opcodes.ClassMember, new int[] { ConstIdx(c, "string"), ConstIdx(c, "Str") })
       .Emit(Opcodes.ClassEnd)
       .UseByteCode()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.New, new int[] { H("Foo") }) 
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.SetMVar, new int[] { ConstIdx(c, "Foo"), 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 1 })
-      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.SetMVar, new int[] { ConstIdx(c, "Foo"), 1 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.SetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.SetMVar, new int[] { ConstIdx(c, "Foo"), 2 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 0 })
-      .Emit(Opcodes.TypeCast, new int[] { H("string") })
-      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.GetMVar, new int[] { ConstIdx(c, "Foo"), 0 })
+      .Emit(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 1 })
-      .Emit(Opcodes.TypeCast, new int[] { H("string") })
+      .Emit(Opcodes.GetMVar, new int[] { ConstIdx(c, "Foo"), 1 })
+      .Emit(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
       .Emit(Opcodes.Add)
-      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.GetMVar, new int[] { H("Foo"), 2 })
+      .Emit(Opcodes.GetMVar, new int[] { ConstIdx(c, "Foo"), 2 })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn), 0 })
       .Emit(Opcodes.CallNative, new int[] { 1 })
@@ -4541,6 +4541,28 @@ public class BHL_TestVM : BHL_TestBase
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     files.Add(full_path);
+  }
+
+  static int ConstIdx(Compiler c, string str)
+  {
+    for(int i=0;i<c.Constants.Count;++i)
+    {
+      var cn = c.Constants[i];
+      if(cn.type == EnumLiteral.STR && cn.str == str)
+        return i;
+    }
+    return -1;
+  }
+
+  static int ConstIdx(Compiler c, double num)
+  {
+    for(int i=0;i<c.Constants.Count;++i)
+    {
+      var cn = c.Constants[i];
+      if(cn.type == EnumLiteral.NUM && cn.num == num)
+        return i;
+    }
+    return -1;
   }
 }
   

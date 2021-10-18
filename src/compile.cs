@@ -245,6 +245,12 @@ public class Compiler : AST_Visitor
     return constants.Count-1;
   }
 
+  //TODO: use implicit conversion in Const ctor?
+  int AddConstant(string str)
+  {
+    return AddConstant(new Const(str));
+  }
+
   void DeclareOpcodes()
   {
     DeclareOpcode(
@@ -548,7 +554,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.ClassBegin,
-        operand_width = new int[] { 4/*ntype*/, 4/*parent ntype*/ }
+        operand_width = new int[] { 4/*type idx*/, 4/*parent type idx*/ }
       }
     );
     DeclareOpcode(
@@ -678,7 +684,7 @@ public class Compiler : AST_Visitor
     for(int i=0;i<ast.module_names.Count;++i)
     {
       imports.Add(ast.module_ids[i], ast.module_names[i]);
-      int module_idx = AddConstant(new Const(ast.module_names[i]));
+      int module_idx = AddConstant(ast.module_names[i]);
 
       UseInitCode();
       Emit(Opcodes.Import, new int[] { module_idx });
@@ -742,19 +748,17 @@ public class Compiler : AST_Visitor
     var cl = new ClassSymbolScript(name, ast, parent);
     symbols.Define(cl);
 
-    //TODO: Use Constant mechanism for actual string name storage.
-    //      This should be useful for reflection.
-    Emit(Opcodes.ClassBegin, new int[] { (int)name.n1, (int)(parent == null ? 0 : parent.GetName().n1) });
+    Emit(Opcodes.ClassBegin, new int[] { AddConstant(name.s), (int)(parent == null ? -1 : AddConstant(parent.GetName().s)) });
     for(int i=0;i<ast.children.Count;++i)
     {
       var child = ast.children[i];
       var vd = child as AST_VarDecl;
       if(vd != null)
       {
-        cl.Define(new FieldSymbolScript(vd.name, vd.ntype));
+        cl.Define(new FieldSymbolScript(vd.name, vd.type));
         //TODO: Use Constant mechanism for actual string name storage.
         //      This should be useful for reflection.
-        Emit(Opcodes.ClassMember, new int[] { (int)vd.ntype, (int)vd.nname });
+        Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name) });
       }
     }
     Emit(Opcodes.ClassEnd);
@@ -916,12 +920,12 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeCast, new int[] {(int)ast.ntype});
+    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type) });
   }
 
   public override void DoVisit(AST_New ast)
   {
-    Emit(Opcodes.New, new int[] { (int)ast.ntype });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
     VisitChildren(ast);
   }
 
@@ -968,10 +972,10 @@ public class Compiler : AST_Visitor
 
           var import_name = imports[ast.nname2];
 
-          int module_idx = AddConstant(new Const(import_name));
+          int module_idx = AddConstant(import_name);
           if(module_idx > ushort.MaxValue)
             throw new Exception("Can't encode module literal in ushort: " + module_idx);
-          int func_idx = AddConstant(new Const(ast.name));
+          int func_idx = AddConstant(ast.name);
           if(func_idx > ushort.MaxValue)
             throw new Exception("Can't encode func literal in ushort: " + func_idx);
 
@@ -993,23 +997,21 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
 
-        //TODO: instead of scope_ntype it rather should be an index?
-        Emit(Opcodes.GetMVar, new int[] { (int)ast.scope_ntype, memb_idx});
+        Emit(Opcodes.GetMVar, new int[] { AddConstant(ast.scope_type), memb_idx});
       }
       break;
       case EnumCall.MVARW:
       {
-        var class_symb = symbols.Resolve(ast.scope_ntype) as ClassSymbol;
+        var class_symb = symbols.Resolve(ast.scope_type) as ClassSymbol;
         if(class_symb == null)
-          throw new Exception("Class type not found: " + ast.scope_ntype);
+          throw new Exception("Class type not found: " + ast.scope_type);
         int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
         if(memb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_ntype);
+          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_type);
 
         VisitChildren(ast);
 
-        //TODO: instead of scope_ntype it rather should be an index?
-        Emit(Opcodes.SetMVar, new int[] { (int)ast.scope_ntype, memb_idx});
+        Emit(Opcodes.SetMVar, new int[] { AddConstant(ast.scope_type), memb_idx});
       }
       break;
       case EnumCall.MFUNC:
