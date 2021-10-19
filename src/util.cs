@@ -35,6 +35,8 @@ public static class Hash
 {
   static public uint CRC32(string id)
   {
+    if(string.IsNullOrEmpty(id))
+      return 0;
     var bytes = System.Text.Encoding.ASCII.GetBytes(id);
     return Crc32.Compute(bytes, bytes.Length);
   }
@@ -67,8 +69,16 @@ public static class Hash
 
 public struct HashedName
 {
-  public ulong n;
   public string s;
+  ulong _n;
+  public ulong n {
+    get {
+      if(_n == 0) {
+        _n = Hash.CRC28(s);
+      }
+      return _n;
+    }
+  }
 
   public uint n1 {
     get {
@@ -84,12 +94,12 @@ public struct HashedName
 
   public HashedName(ulong n, string s = "")
   {
-    this.n = n;
+    this._n = n;
     this.s = s;
   }
 
   public HashedName(string s)
-    : this(Hash.CRC28(s), s)
+    : this(0, s)
   {}
 
   public HashedName(uint n1, uint n2, string s = "")

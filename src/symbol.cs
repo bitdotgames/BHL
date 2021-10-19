@@ -1828,16 +1828,16 @@ public class SymbolsDictionary
 
   public bool Contains(HashedName key)
   {
-    if(hash2symb.ContainsKey(key.n))
+    if(str2symb.ContainsKey(key.s))
       return true;
-    return str2symb.ContainsKey(key.s);
+    return hash2symb.ContainsKey(key.n);
   }
 
   public bool TryGetValue(HashedName key, out Symbol val)
   {
-    if(hash2symb.TryGetValue(key.n, out val))
+    if(str2symb.TryGetValue(key.s, out val))
       return true;
-    return str2symb.TryGetValue(key.s, out val);
+    return hash2symb.TryGetValue(key.n, out val);
   }
 
   public Symbol Find(HashedName key)
