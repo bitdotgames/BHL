@@ -328,9 +328,10 @@ public class VM
             int cast_type_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
             string cast_type = curr_frame.constants[cast_type_idx].str;
 
-            if(cast_type == SymbolTable.symb_string.name.s)
+            //TODO: make it more universal and robust
+            if(cast_type == "string")
               curr_frame.stack.Push(Val.NewStr(curr_frame.PopValue().num.ToString()));
-            else if(cast_type == SymbolTable.symb_int.name.s)
+            else if(cast_type == "int")
               curr_frame.stack.Push(Val.NewNum(curr_frame.PopValue().num));
             else
               throw new Exception("Not supported typecast type: " + cast_type);
@@ -375,9 +376,9 @@ public class VM
             ExecuteVarOp(opcode, curr_frame, ref ip);
           }
           break;
-          case Opcodes.GetMVar:
-          case Opcodes.SetMVar:
-          case Opcodes.SetMVarInplace:
+          case Opcodes.GetAttr:
+          case Opcodes.SetAttr:
+          case Opcodes.SetAttrInplace:
           {
             ExecuteMVarOp(opcode, curr_frame, symbols, ref ip);
           }
@@ -443,23 +444,24 @@ public class VM
           {
             int func_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
 
-            uint class_type = Bytecode.Decode(curr_frame.bytecode, ref ip);
+            var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
 
-            FuncSymbolNative func_symb = null;
+            curr_frame.stack.Push(Val.NewObj(func_symb));
+          }
+          break;
+          case Opcodes.GetMFuncNative:
+          {
+            int func_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
 
-            if(class_type == 0)
-            {
-              func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
-            }
-            else
-            {
-              var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-              //TODO: this check must be in dev.version only
-              if(class_symb == null)
-                throw new Exception("Class type not found: " + class_type);
+            int class_type_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            string class_type = curr_frame.constants[class_type_idx].str; 
 
-              func_symb = (FuncSymbolNative)class_symb.members[func_idx];
-            }
+            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+            //TODO: this check must be in dev.version only
+            if(class_symb == null)
+              throw new Exception("Class type not found: " + class_type);
+
+            var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
 
             curr_frame.stack.Push(Val.NewObj(func_symb));
           }
@@ -749,7 +751,7 @@ public class VM
     
     switch(op)
     {
-      case Opcodes.GetMVar:
+      case Opcodes.GetAttr:
       {
         var obj = curr_frame.stack.PopFast();
         var res = Val.New();
@@ -759,7 +761,7 @@ public class VM
         obj.Release();
       }
       break;
-      case Opcodes.SetMVar:
+      case Opcodes.SetAttr:
       {
         var obj = curr_frame.stack.PopFast();
         var val = curr_frame.stack.PopFast();
@@ -769,7 +771,7 @@ public class VM
         obj.Release();
       }
       break;
-      case Opcodes.SetMVarInplace:
+      case Opcodes.SetAttrInplace:
       {
         var val = curr_frame.stack.PopFast();
         var obj = curr_frame.PeekValue();

@@ -953,6 +953,7 @@ public class AST_Block  : AST
 public class AST_JsonObj  : AST 
 {
   public uint ntype;
+  public string type = "";
 
   static public  new  uint STATIC_CLASS_ID = 31901170;
 
@@ -971,6 +972,7 @@ public class AST_JsonObj  : AST
     base.reset();
 
     ntype = 0;
+    type = "";
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -978,17 +980,19 @@ public class AST_JsonObj  : AST
     base.syncFields(ctx);
 
     MetaHelper.sync(ctx, ref ntype);
+    MetaHelper.sync(ctx, ref type);
   }
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return 3; 
   }
 }
 
 public class AST_JsonArr  : AST 
 {
   public uint ntype;
+  public string type;
 
   static public  new  uint STATIC_CLASS_ID = 47604479;
 
@@ -1007,6 +1011,7 @@ public class AST_JsonArr  : AST
     base.reset();
 
     ntype = 0;
+    type = "";
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -1014,11 +1019,12 @@ public class AST_JsonArr  : AST
     base.syncFields(ctx);
 
     MetaHelper.sync(ctx, ref ntype);
+    MetaHelper.sync(ctx, ref type);
   }
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return 3; 
   }
 }
 
@@ -1058,6 +1064,7 @@ public class AST_JsonPair  : AST
   public string name = "";
   public uint scope_ntype;
   public uint symb_idx;
+  public string scope_type = "";
 
   static public  new  uint STATIC_CLASS_ID = 235544635;
 
@@ -1079,6 +1086,7 @@ public class AST_JsonPair  : AST
     name = "";
     scope_ntype = 0;
     symb_idx = 0;
+    scope_type = "";
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -1089,11 +1097,12 @@ public class AST_JsonPair  : AST
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref scope_ntype);
     MetaHelper.sync(ctx, ref symb_idx);
+    MetaHelper.sync(ctx, ref scope_type);
   }
 
   public override int getFieldsCount() 
   {
-    return 5; 
+    return 6; 
   }
 }
 

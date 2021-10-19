@@ -804,7 +804,6 @@ static public class AST_Util
   {
     var n = new AST_Block();
     n.type = type;
-
     return n;
   }
 
@@ -814,6 +813,7 @@ static public class AST_Util
   {
     var n = new AST_JsonObj();
     n.ntype = (uint)root_type_name.n;
+    n.type = root_type_name.s;
     return n;
   }
 
@@ -821,6 +821,7 @@ static public class AST_Util
   {
     var n = new AST_JsonArr();
     n.ntype = (uint)arr_type.Type().n;
+    n.type = arr_type.Type().s;
     return n;
   }
 
@@ -834,6 +835,7 @@ static public class AST_Util
   {
     var n = new AST_JsonPair();
     n.scope_ntype = (uint)scope_type.n;
+    n.scope_type = scope_type.s;
     n.nname = (uint)name.n;
     n.name = name.s;
     n.symb_idx = (uint)symb_idx;

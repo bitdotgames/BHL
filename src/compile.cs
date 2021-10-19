@@ -22,9 +22,10 @@ public enum Opcodes
   GetFuncNative   = 0x13,
   GetFuncFromVar  = 0x14,
   GetFuncImported = 0x15,
-  SetMVar         = 0x20,
-  SetMVarInplace  = 0x21,
-  GetMVar         = 0xA,
+  GetMFuncNative = 0x16,
+  SetAttr         = 0x20,
+  SetAttrInplace  = 0x21,
+  GetAttr         = 0xA,
   Return          = 0xC,
   ReturnVal       = 0xD,
   Jump            = 0xE,
@@ -399,21 +400,21 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.SetMVar,
+        name = Opcodes.SetAttr,
         operand_width = new int[] { 4, 2 }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.SetMVarInplace,
+        name = Opcodes.SetAttrInplace,
         operand_width = new int[] { 4, 2 }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.GetMVar,
+        name = Opcodes.GetAttr,
         operand_width = new int[] { 4, 2 }
       }
     );
@@ -428,6 +429,13 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.GetFuncNative,
+        operand_width = new int[] { 4/*idx*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.GetMFuncNative,
         operand_width = new int[] { 4/*idx*/, 4/*type idx*/ }
       }
     );
@@ -561,7 +569,7 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.ClassMember,
-        operand_width = new int[] { 4/*nname*/, 4/*ntype*/ }
+        operand_width = new int[] { 4/*name idx*/, 4/*type idx*/ }
       }
     );
     DeclareOpcode(
@@ -756,8 +764,6 @@ public class Compiler : AST_Visitor
       if(vd != null)
       {
         cl.Define(new FieldSymbolScript(vd.name, vd.type));
-        //TODO: Use Constant mechanism for actual string name storage.
-        //      This should be useful for reflection.
         Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name) });
       }
     }
@@ -963,7 +969,7 @@ public class Compiler : AST_Visitor
           if(func_idx == -1)
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           VisitChildren(ast);
-          Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx, 0});
+          Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx});
           Emit(Opcodes.CallNative, new int[] {(int)ast.cargs_bits});
         }
         else if(ast.nname2 != module.id)
@@ -988,16 +994,16 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.MVAR:
       {
-        var class_symb = symbols.Resolve(ast.scope_ntype) as ClassSymbol;
+        var class_symb = symbols.Resolve(ast.scope_type) as ClassSymbol;
         if(class_symb == null)
-          throw new Exception("Class type not found: " + ast.scope_ntype);
+          throw new Exception("Class type not found: " + ast.scope_type);
         int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
         if(memb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_ntype);
+          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_type);
 
         VisitChildren(ast);
 
-        Emit(Opcodes.GetMVar, new int[] { AddConstant(ast.scope_type), memb_idx});
+        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), memb_idx});
       }
       break;
       case EnumCall.MVARW:
@@ -1011,33 +1017,33 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.SetMVar, new int[] { AddConstant(ast.scope_type), memb_idx});
+        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), memb_idx});
       }
       break;
       case EnumCall.MFUNC:
       {
-        var class_symb = symbols.Resolve(ast.scope_ntype) as ClassSymbol;
+        var class_symb = symbols.Resolve(ast.scope_type) as ClassSymbol;
         if(class_symb == null)
-          throw new Exception("Class type not found: " + ast.scope_ntype);
+          throw new Exception("Class type not found: " + ast.scope_type);
         int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
         if(memb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_ntype);
+          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_type);
 
         VisitChildren(ast);
-        //TODO: instead of scope_ntype it rather should be an index?
-        Emit(Opcodes.GetFuncNative, new int[] {memb_idx, (int)ast.scope_ntype});
+        
+        Emit(Opcodes.GetMFuncNative, new int[] {memb_idx, AddConstant(ast.scope_type)});
         Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.GetFuncNative, new int[] {GenericArrayTypeSymbol.IDX_At, GenericArrayTypeSymbol.INT_CLASS_TYPE});
+        Emit(Opcodes.GetMFuncNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]")});
         Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.GetFuncNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, GenericArrayTypeSymbol.INT_CLASS_TYPE});
+        Emit(Opcodes.GetMFuncNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")});
         Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
@@ -1151,13 +1157,13 @@ public class Compiler : AST_Visitor
     }
   }
 
-  public byte MapToValType(uint ntype)
+  public byte MapToValType(string type)
   {
-    if(ntype == SymbolTable.symb_int.GetName().n1 || ntype == SymbolTable.symb_float.GetName().n1)
+    if(type == "int" || type == "float")
       return Val.NUMBER;
-    else if(ntype == SymbolTable.symb_string.GetName().n1)
+    else if(type == "string")
       return Val.STRING;
-    else if(ntype == SymbolTable.symb_bool.GetName().n1)
+    else if(type == "bool")
       return Val.BOOL;
     else
       return Val.OBJ;
@@ -1177,8 +1183,8 @@ public class Compiler : AST_Visitor
 
     if(!ast.is_func_arg)
     {
-      byte type = MapToValType(ast.ntype);
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)type });
+      byte val_type = MapToValType(ast.type);
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)val_type });
     }
     else
       Emit(Opcodes.ArgVar, new int[] { (int)ast.symb_idx });
@@ -1186,17 +1192,17 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    Emit(Opcodes.New, new int[] { (int)ast.ntype });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
     VisitChildren(ast);
   }
 
   public override void DoVisit(bhl.AST_JsonArr ast)
   {
-    var arr_symb = symbols.Resolve(ast.ntype) as ArrayTypeSymbol;
+    var arr_symb = symbols.Resolve(ast.type) as ArrayTypeSymbol;
     if(arr_symb == null)
-      throw new Exception("Could not find class binding: " + ast.ntype);
+      throw new Exception("Could not find class binding: " + ast.type);
 
-    Emit(Opcodes.New, new int[] { (int)ast.ntype });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
 
     for(int i=0;i<ast.children.Count;++i)
     {
@@ -1205,7 +1211,7 @@ public class Compiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.GetFuncNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, (int)ast.ntype});
+        Emit(Opcodes.GetMFuncNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
         Emit(Opcodes.CallNative, new int[] {0});
       }
       else
@@ -1215,7 +1221,7 @@ public class Compiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.GetFuncNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, (int)ast.ntype});
+      Emit(Opcodes.GetMFuncNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
       Emit(Opcodes.CallNative, new int[] {0});
     }
   }
@@ -1223,7 +1229,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(bhl.AST_JsonPair ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.SetMVarInplace, new int[] { (int)ast.scope_ntype, (int)ast.symb_idx });
+    Emit(Opcodes.SetAttrInplace, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx });
   }
 
 #endregion
