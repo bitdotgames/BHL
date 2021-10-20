@@ -14,6 +14,7 @@ public class BuildConf
   public string args = ""; 
   public List<string> files = new List<string>();
   public GlobalScope globs;
+  public byte mode = 0; //0 - interpreter, 1 - vm
   public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
@@ -71,14 +72,31 @@ public class Build
 
     Util.SetupASTFactory();
 
+    var parse_workers = StartParseWorkers(conf);
+    var compiler_workers = StartAndWaitCompileWorkers(conf, globs, parse_workers);
+
+    var tmp_res_file = conf.cache_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
+
+    if(!WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file))
+      return ERROR_EXIT_CODE;
+
+    if(File.Exists(conf.res_file))
+      File.Delete(conf.res_file);
+    File.Move(tmp_res_file, conf.res_file);
+
+    conf.postproc.Tally();
+
+    return 0;
+  }
+
+  static List<ParseWorker> StartParseWorkers(BuildConf conf)
+  {
     var parse_workers = new List<ParseWorker>();
-    var compiler_workers = new List<CompilerWorker>();
 
     int files_per_worker = conf.files.Count < conf.max_threads ? conf.files.Count : (int)Math.Ceiling((float)conf.files.Count / (float)conf.max_threads);
+
     int idx = 0;
     int wid = 0;
-
-    var parsed_cache = new Dictionary<string, Parsed>(); 
 
     while(idx < conf.files.Count)
     {
@@ -103,7 +121,16 @@ public class Build
       idx += count;
     }
 
+    return parse_workers;
+  }
+
+  static List<CompilerWorker> StartAndWaitCompileWorkers(BuildConf conf, GlobalScope globs, List<ParseWorker> parse_workers)
+  {
+    var compiler_workers = new List<CompilerWorker>();
+
     //1. parsing first and creating the shared parsed cache 
+    var parsed_cache = new Dictionary<string, Parsed>(); 
+
     bool had_errors = false;
     foreach(var pw in parse_workers)
     {
@@ -144,8 +171,12 @@ public class Build
         w.Join();
     }
 
-    var tmp_res_file = conf.cache_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
-    using(FileStream dfs = new FileStream(tmp_res_file, FileMode.Create, System.IO.FileAccess.Write))
+    return compiler_workers;
+  }
+
+  bool WriteCompilationResultToFile(BuildConf conf, List<CompilerWorker> compiler_workers, string file_path)
+  {
+    using(FileStream dfs = new FileStream(file_path, FileMode.Create, System.IO.FileAccess.Write))
     {
       var mwriter = new MsgPack.MsgPackWriter(dfs);
       int total_modules = 0;
@@ -162,7 +193,7 @@ public class Build
           else
             File.WriteAllText(conf.err_file, w.error.ToJson());
 
-          return ERROR_EXIT_CODE;
+          return false;
         }
         total_modules += w.result_modules.Count;
       }
@@ -197,15 +228,9 @@ public class Build
           }
         }
       }
+
+      return true;
     }
-
-    if(File.Exists(conf.res_file))
-      File.Delete(conf.res_file);
-    File.Move(tmp_res_file, conf.res_file);
-
-    conf.postproc.Tally();
-
-    return 0;
   }
 
   static bool CheckArgsSignatureFile(BuildConf conf)
