@@ -264,14 +264,6 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static public T File2Meta<T>(string file) where T : IMetaStruct, new()
-  {
-    using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
-    {
-      return Bin2Meta<T>(rfs);
-    }
-  }
-
   static MetaHelper.CreateByIdCb prev_create_factory; 
 
   static public void SetupASTFactory()
@@ -285,12 +277,20 @@ static public class Util
     MetaHelper.CreateById = prev_create_factory;
   }
 
+  static public T File2Meta<T>(string file) where T : IMetaStruct, new()
+  {
+    using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
+    {
+      return Bin2Meta<T>(rfs);
+    }
+  }
+
   static public T Bin2Meta<T>(Stream s) where T : IMetaStruct, new()
   {
     var reader = new MsgPackDataReader(s);
-    var ast = new T();
-    MetaHelper.sync(MetaSyncContext.NewForRead(reader), ref ast);
-    return ast;
+    var meta = new T();
+    MetaHelper.sync(MetaSyncContext.NewForRead(reader), ref meta);
+    return meta;
   }
 
   static public T Bin2Meta<T>(byte[] bytes) where T : IMetaStruct, new()
@@ -298,17 +298,99 @@ static public class Util
     return Bin2Meta<T>(new MemoryStream(bytes));
   }
 
-  static public void Meta2Bin<T>(T ast, Stream dst) where T : IMetaStruct
+  static public void Meta2Bin<T>(T meta, Stream dst) where T : IMetaStruct
   {
     var writer = new MsgPackDataWriter(dst);
-    MetaHelper.sync(MetaSyncContext.NewForWrite(writer), ref ast);
+    MetaHelper.sync(MetaSyncContext.NewForWrite(writer), ref meta);
   }
 
-  static public void Meta2File<T>(T ast, string file) where T : IMetaStruct
+  static public void Meta2File<T>(T meta, string file) where T : IMetaStruct
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {
-      Meta2Bin(ast, wfs);
+      Meta2Bin(meta, wfs);
+    }
+  }
+
+  static public void Compiled2Bin(CompiledModule m, Stream dst)
+  {
+    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
+    {
+      //TODO: add better support for version
+      w.Write((uint)1);
+
+      w.Write(m.name);
+
+      w.Write(m.initcode == null ? (int)0 : m.initcode.Length);
+      if(m.initcode != null)
+        w.Write(m.initcode, 0, m.initcode.Length);
+
+      w.Write(m.bytecode == null ? (int)0 : m.bytecode.Length);
+      if(m.bytecode != null)
+        w.Write(m.bytecode, 0, m.bytecode.Length);
+
+      w.Write(m.constants.Count);
+      foreach(var cn in m.constants)
+      {
+        w.Write((byte)cn.type);
+        if(cn.type == EnumLiteral.STR)
+          w.Write(cn.str);
+        else
+          w.Write(cn.num);
+      }
+
+      w.Write(m.func2ip.Count);
+      foreach(var kv in m.func2ip)
+      {
+        w.Write(kv.Key);
+        w.Write(kv.Value);
+      }
+    }
+  }
+
+  static public CompiledModule Bin2Compiled(Stream src)
+  {
+    //TODO: read header with version
+    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8))
+    {
+      //TODO: add better support for version
+      uint ver = r.ReadUInt32();
+      if(ver != 1)
+        throw new Exception("Unsupported version: " + ver);
+
+      string name = r.ReadString();
+
+      byte[] initcode = null;
+      int initcode_len = r.ReadInt32();
+      if(initcode_len > 0)
+        initcode = r.ReadBytes(initcode_len);
+
+      byte[] bytecode = null;
+      int bytecode_len = r.ReadInt32();
+      if(bytecode_len > 0)
+        bytecode = r.ReadBytes(bytecode_len);
+
+      var constants = new List<Const>();
+      int constants_len = r.ReadInt32();
+      for(int i=0;i<constants_len;++i)
+      {
+        var cn_type = (EnumLiteral)r.Read();
+        double cn_num = 0;
+        string cn_str = "";
+        if(cn_type == EnumLiteral.STR)
+          cn_str = r.ReadString();
+        else
+          cn_num = r.ReadDouble();
+        var cn = new Const(cn_type, cn_num, cn_str);
+        constants.Add(cn);
+      }
+
+      var func2ip = new Dictionary<string, uint>();
+      int func2ip_len = r.ReadInt32();
+      for(int i=0;i<func2ip_len;++i)
+        func2ip.Add(r.ReadString(), r.ReadUInt32());
+
+      return new CompiledModule(name, bytecode, constants, func2ip, initcode);
     }
   }
 

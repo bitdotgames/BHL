@@ -7,39 +7,6 @@ namespace bhl {
 
 public class VM
 {
-  public class Module
-  {
-    public string name {
-      get {
-        return file_module.name;
-      }
-    }
-
-    public FileModule file_module;
-    public LocalScope symbols;
-    public byte[] bytecode;
-    public List<Const> constants;
-    public Dictionary<string, uint> func2ip;
-    public byte[] initcode;
-
-    public Module(
-      FileModule file_module,
-      GlobalScope globs, 
-      byte[] bytecode, 
-      List<Const> constants, 
-      Dictionary<string, uint> func2ip,
-      byte[] initcode = null
-    )
-    {
-      this.file_module = file_module;
-      this.symbols = new LocalScope(globs);
-      this.bytecode = bytecode;
-      this.constants = constants;
-      this.func2ip = func2ip;
-      this.initcode = initcode;
-    }
-  }
-
   public class Frame : IDeferScope
   {
     public byte[] bytecode;
@@ -51,7 +18,7 @@ public class VM
     public uint return_ip;
     public List<CodeBlock> defers;
 
-    public Frame(Module module, uint start_ip)
+    public Frame(CompiledModule module, uint start_ip)
     {
       bytecode = module.bytecode;
       constants = module.constants;
@@ -135,11 +102,11 @@ public class VM
 
   internal struct ModuleAddr
   {
-    internal Module module;
+    internal CompiledModule module;
     internal uint ip;
   }
 
-  Dictionary<string, Module> modules = new Dictionary<string, Module>();
+  Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
 
   GlobalScope globs;
   public GlobalScope Globs {
@@ -186,13 +153,11 @@ public class VM
     symbols = new LocalScope(globs);
   }
 
-  public void RegisterModule(Module m)
+  public void RegisterModule(CompiledModule m)
   {
     if(modules.ContainsKey(m.name))
       return;
     modules.Add(m.name, m);
-
-    symbols.Append(m.symbols);
 
     foreach(var kv in m.func2ip)
     {
@@ -206,7 +171,7 @@ public class VM
       ExecInit(m);
   }
 
-  void ExecInit(Module module)
+  void ExecInit(CompiledModule module)
   {
     byte[] bytecode = module.initcode;
     uint ip = 0;
@@ -886,6 +851,34 @@ public class VM
       Console.WriteLine("\t" + stack[i]);
     }
   }
+}
+
+public class CompiledModule
+{
+  public string name;
+  public byte[] initcode;
+  public byte[] bytecode;
+  public List<Const> constants;
+  public Dictionary<string, uint> func2ip;
+
+  public CompiledModule(
+    string name,
+    byte[] bytecode, 
+    List<Const> constants, 
+    Dictionary<string, uint> func2ip,
+    byte[] initcode = null
+  )
+  {
+    this.name = name;
+    this.initcode = initcode;
+    this.bytecode = bytecode;
+    this.constants = constants;
+    this.func2ip = func2ip;
+  }
+
+  public CompiledModule(Compiler c)
+    : this(c.Module.name, c.GetByteCode(), c.Constants, c.Func2Ip, c.GetInitCode())
+  {}
 }
 
 public interface IInstruction

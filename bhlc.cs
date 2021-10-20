@@ -12,7 +12,7 @@ public class BHLC
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--format=<1,2>]");
+    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--format=<1,2>] [--mode=<0,1>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -25,6 +25,7 @@ public class BHLC
     string res_file = "";
     string cache_dir = "";
     bool use_cache = true;
+    CompileMode mode = CompileMode.AST;
     string err_file = "";
     string postproc_dll_path = "";
     string userbindings_dll_path = "";
@@ -61,6 +62,8 @@ public class BHLC
         v => debug = v != null },
       { "format=", "binary module format",
         v => format = (ModuleBinaryFormat)int.Parse(v) }
+      { "mode=", "compile mode",
+        v => mode = (CompileMode)int.Parse(v) }
      };
 
     var extra = new List<string>();
@@ -124,6 +127,7 @@ public class BHLC
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
     var conf = new BuildConf();
     conf.args = string.Join(";", args);
+    conf.mode = mode;
     conf.use_cache = use_cache;
     conf.self_file = GetSelfFile();
     conf.check_deps = check_deps;

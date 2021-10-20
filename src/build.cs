@@ -1,20 +1,24 @@
 using System;
 using System.IO;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
-using Antlr4.Runtime.Misc;
+using System.Diagnostics;
 
 namespace bhl {
+
+public enum CompileMode
+{
+  AST        = 0,
+  VmBytecode = 1
+}
 
 public class BuildConf
 {
   public string args = ""; 
   public List<string> files = new List<string>();
   public GlobalScope globs;
-  public byte mode = 0; //0 - interpreter, 1 - vm
+  public CompileMode mode;
   public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
@@ -142,10 +146,11 @@ public class Build
       var cw = new CompilerWorker();
       cw.id = pw.id;
       cw.parsed_cache = parsed_cache;
+      cw.mode = conf.mode;
       cw.inc_dir = conf.inc_dir;
       cw.cache_dir = pw.cache_dir;
       cw.use_cache = pw.use_cache;
-      cw.bindings = globs;
+      cw.globs = globs;
       cw.files = pw.files;
       cw.start = pw.start;
       cw.count = pw.count;
@@ -561,11 +566,12 @@ public class Build
     public int id;
     public Dictionary<string, Parsed> parsed_cache;
     public Thread th;
+    public CompileMode mode;
     public string inc_dir;
     public bool use_cache;
     public string cache_dir;
     public List<string> files;
-    public GlobalScope bindings;
+    public GlobalScope globs;
     public int start;
     public int count;
     public Symbols symbols = new Symbols();
@@ -634,20 +640,20 @@ public class Build
     {
       Parsed parsed;
       FileModule mod;
-      GlobalScope bindings;
+      GlobalScope globs;
       ModuleRegistry mreg;
 
-      public FromParsedResolver(Parsed parsed, FileModule mod, GlobalScope bindings, ModuleRegistry mreg)
+      public FromParsedResolver(Parsed parsed, FileModule mod, GlobalScope globs, ModuleRegistry mreg)
       {
         this.parsed = parsed;
         this.mod = mod;
-        this.bindings = bindings;
+        this.globs = globs;
         this.mreg = mreg;
       }
 
       public AST_Module Get()
       {
-        return Frontend.Parsed2AST(mod, parsed, bindings, mreg);
+        return Frontend.Parsed2AST(mod, parsed, globs, mreg);
       }
     }
 
@@ -655,14 +661,14 @@ public class Build
     {
       string file;
       FileModule mod;
-      GlobalScope bindings;
+      GlobalScope globs;
       ModuleRegistry mreg;
 
-      public FromSourceResolver(string file, FileModule mod, GlobalScope bindings, ModuleRegistry mreg)
+      public FromSourceResolver(string file, FileModule mod, GlobalScope globs, ModuleRegistry mreg)
       {
         this.file = file;
         this.mod = mod;
-        this.bindings = bindings;
+        this.globs = globs;
         this.mreg = mreg;
       }
 
@@ -671,7 +677,7 @@ public class Build
         AST_Module ast = null;
         using(var sfs = File.OpenRead(file))
         {
-          ast = Frontend.Source2AST(mod, sfs, bindings, mreg);
+          ast = Frontend.Source2AST(mod, sfs, globs, mreg);
         }
         return ast;
       }
@@ -712,7 +718,7 @@ public class Build
             ++cache_hit;
             lazy_ast = new LazyAST(
                 new CacheHitResolver(cache_file, 
-                  fallback: new FromSourceResolver(file, module, w.bindings, mreg)
+                  fallback: new FromSourceResolver(file, module, w.globs, mreg)
                   )
                 );
           }
@@ -720,15 +726,22 @@ public class Build
           {
             ++cache_miss;
             lazy_ast = new LazyAST(new CacheWriteResolver(cache_file, 
-                  parsed != null ? (IASTResolver)new FromParsedResolver(parsed, module, w.bindings, mreg) : 
-                  (IASTResolver)new FromSourceResolver(file, module, w.bindings, mreg)));
+                  parsed != null ? (IASTResolver)new FromParsedResolver(parsed, module, w.globs, mreg) : 
+                  (IASTResolver)new FromSourceResolver(file, module, w.globs, mreg)));
           }
 
           w.symbols = GetSymbols(file, w.cache_dir, lazy_ast);
 
           w.result_modules.Add(file, module);
 
-          var result_file = w.postproc.Patch(lazy_ast, file, cache_file);
+          string result_file = w.postproc.Patch(lazy_ast, file, cache_file);
+
+          if(w.mode == CompileMode.VmBytecode)
+          {
+            var ast = lazy_ast.Get();
+            var c  = new Compiler(w.globs, ast, module);
+            c.Compile();
+          }
 
           w.result_files.Add(file, result_file);
         }

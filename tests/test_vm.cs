@@ -334,7 +334,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants, new List<Const>() { Const.NewNil() });
+    AssertEqual(c.Constants, new List<Const>() { Const.Nil });
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -3991,7 +3991,7 @@ public class BHL_TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var vm = new VM();
-    vm.RegisterModule(new VM.Module(c.Module, c.Globs, c.GetByteCode(), c.Constants, c.Func2Ip));
+    vm.RegisterModule(new CompiledModule(c.Module.name, c.GetByteCode(), c.Constants, c.Func2Ip));
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 123);
@@ -4067,11 +4067,11 @@ public class BHL_TestVM : BHL_TestBase
     );
 
     var mock_importer = new TestImporter();
-    mock_importer.mods.Add("bhl2", MakeModule(cs[1]));
-    mock_importer.mods.Add("bhl3", MakeModule(cs[2]));
+    mock_importer.mods.Add("bhl2", cs[1]);
+    mock_importer.mods.Add("bhl3", cs[2]);
 
     var vm = new VM(globs: null, importer: mock_importer);
-    vm.RegisterModule(MakeModule(cs[0]));
+    vm.RegisterModule(cs[0]);
     vm.Start("bhl1");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 23);
@@ -4125,13 +4125,13 @@ public class BHL_TestVM : BHL_TestBase
     return new Compiler(globs_copy);
   }
 
-  List<Compiler> CompileFiles(List<string> files, GlobalScope globs = null)
+  List<CompiledModule> CompileFiles(List<string> files, GlobalScope globs = null)
   {
     globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
     var globs_copy = globs.Clone();
 
-    var cs = new List<Compiler>();
+    var ms = new List<CompiledModule>();
 
     var mreg = new ModuleRegistry();
     mreg.AddToIncludePath(TestDirPath() + "/");
@@ -4144,10 +4144,10 @@ public class BHL_TestVM : BHL_TestBase
       var ast = Src2AST(File.ReadAllText(file), fmod, mreg, globs_copy);
       var c = new Compiler(globs_copy, ast, fmod);
       c.Compile();
-      cs.Add(c);
+      ms.Add(new CompiledModule(c));
     }
 
-    return cs;
+    return ms;
   }
 
   Compiler Compile(string bhl, GlobalScope globs = null)
@@ -4244,7 +4244,7 @@ public class BHL_TestVM : BHL_TestBase
       }
       else
       {
-        op = c.LookupOpcode((Opcodes)bs[i]);
+        op = Compiler.LookupOpcode((Opcodes)bs[i]);
         op_size = PredictOpcodeSize(op, bs, i);
         str += "(" + op.name.ToString() + ")";
         if(op_size == 0)
@@ -4257,22 +4257,32 @@ public class BHL_TestVM : BHL_TestBase
 
   public static void AssertEqual(Compiler ca, Compiler cb)
   {
+    AssertEqual(new CompiledModule(ca), new CompiledModule(cb));
+  }
+
+  public static void AssertEqual(CompiledModule ca, Compiler cb)
+  {
+    AssertEqual(ca, new CompiledModule(cb));
+  }
+
+  public static void AssertEqual(CompiledModule ca, CompiledModule cb)
+  {
     string cmp;
 
-    if(!CompareCode(ca, cb, ca.GetInitCode(), cb.GetInitCode(), out cmp))
+    if(!CompareCode(ca.initcode, cb.initcode, out cmp))
     {
       Console.WriteLine(cmp);
       throw new Exception("Assertion failed: init bytes not equal");
     }
 
-    if(!CompareCode(ca, cb, ca.GetByteCode(), cb.GetByteCode(), out cmp))
+    if(!CompareCode(ca.bytecode, cb.bytecode, out cmp))
     {
       Console.WriteLine(cmp);
       throw new Exception("Assertion failed: bytes not equal");
     }
   }
 
-  static bool CompareCode(Compiler ca, Compiler cb, byte[] a, byte[] b, out string cmp)
+  static bool CompareCode(byte[] a, byte[] b, out string cmp)
   {
     Compiler.OpDefinition aop = null;
     int aop_size = 0;
@@ -4297,7 +4307,7 @@ public class BHL_TestVM : BHL_TestBase
         }
         else
         {
-          aop = ca.LookupOpcode((Opcodes)a[i]);
+          aop = Compiler.LookupOpcode((Opcodes)a[i]);
           aop_size = PredictOpcodeSize(aop, a, i);
           astr += "(" + aop.name.ToString() + ")";
           if(aop_size == 0)
@@ -4317,7 +4327,7 @@ public class BHL_TestVM : BHL_TestBase
         }
         else
         {
-          bop = cb.LookupOpcode((Opcodes)b[i]);
+          bop = Compiler.LookupOpcode((Opcodes)b[i]);
           bop_size = PredictOpcodeSize(bop, b, i);
           bstr += "(" + bop.name.ToString() + ")";
           if(bop_size == 0)
@@ -4361,14 +4371,9 @@ public class BHL_TestVM : BHL_TestBase
   static VM MakeVM(Compiler c)
   {
     var vm = new VM(c.Globs);
-    var m = MakeModule(c);
+    var m = new CompiledModule(c);
     vm.RegisterModule(m);
     return vm;
-  }
-
-  static VM.Module MakeModule(Compiler c)
-  {
-    return new VM.Module(c.Module, c.Globs, c.GetByteCode(), c.Constants, c.Func2Ip, c.GetInitCode());
   }
 
   static int PredictOpcodeSize(Compiler.OpDefinition op, byte[] bytes, int start_pos)
@@ -4504,9 +4509,9 @@ public class BHL_TestVM : BHL_TestBase
 
   class TestImporter : IModuleImporter
   {
-    public Dictionary<string, VM.Module> mods = new Dictionary<string, VM.Module>();
+    public Dictionary<string, CompiledModule> mods = new Dictionary<string, CompiledModule>();
 
-    public VM.Module Import(string name)
+    public CompiledModule Import(string name)
     {
       return mods[name];
     }

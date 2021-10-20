@@ -60,9 +60,18 @@ public enum Opcodes
 
 public class Const
 {
+  static public readonly Const Nil = new Const(EnumLiteral.NIL, 0, "");
+
   public EnumLiteral type;
   public double num;
   public string str;
+
+  public Const(EnumLiteral type, double num, string str)
+  {
+    this.type = type;
+    this.num = num;
+    this.str = str;
+  }
 
   public Const(AST_Literal lt)
   {
@@ -90,15 +99,6 @@ public class Const
     type = EnumLiteral.BOOL;
     num = v ? 1 : 0;
     this.str = "";
-  }
-
-  static public Const NewNil()
-  {
-    var c = new Const(0);
-    c.type = EnumLiteral.NIL;
-    c.num = 0;
-    c.str = "";
-    return c;
   }
 
   public Val ToVal()
@@ -171,15 +171,20 @@ public class Compiler : AST_Visitor
 
   Dictionary<uint, string> imports = new Dictionary<uint, string>();
   
-  Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
+  static Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
+
+  static Compiler()
+  {
+    DeclareOpcodes();
+  }
 
   public Compiler(GlobalScope globs = null, AST ast = null, FileModule module = null)
   {
-    DeclareOpcodes();
-
     this.globs = globs;
     this.symbols = new LocalScope(globs);
     this.ast = ast;
+    if(module == null)
+      module = new FileModule("", "");
     this.module = module;
 
     UseByteCode();
@@ -252,7 +257,7 @@ public class Compiler : AST_Visitor
     return AddConstant(new Const(str));
   }
 
-  void DeclareOpcodes()
+  static void DeclareOpcodes()
   {
     DeclareOpcode(
       new OpDefinition()
@@ -541,14 +546,14 @@ public class Compiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.New,
-        operand_width = new int[] { 4 }
+        operand_width = new int[] { 4/*type idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.TypeCast,
-        operand_width = new int[] { 4 }
+        operand_width = new int[] { 4/*type idx*/ }
       }
     );
     DeclareOpcode(
@@ -587,12 +592,12 @@ public class Compiler : AST_Visitor
     );
   }
 
-  void DeclareOpcode(OpDefinition def)
+  static void DeclareOpcode(OpDefinition def)
   {
     opcode_decls.Add((byte)def.name, def);
   }
 
-  public OpDefinition LookupOpcode(Opcodes op)
+  static public OpDefinition LookupOpcode(Opcodes op)
   {
     OpDefinition def;
     if(!opcode_decls.TryGetValue((byte)op, out def))
