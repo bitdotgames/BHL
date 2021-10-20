@@ -348,9 +348,16 @@ static public class Util
     }
   }
 
+  static public void Compiled2File(CompiledModule m, string file)
+  {
+    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
+    {
+      Compiled2Bin(m, wfs);
+    }
+  }
+
   static public CompiledModule Bin2Compiled(Stream src)
   {
-    //TODO: read header with version
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8))
     {
       //TODO: add better support for version

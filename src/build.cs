@@ -9,8 +9,8 @@ namespace bhl {
 
 public enum CompileMode
 {
-  AST        = 0,
-  VmBytecode = 1
+  AST = 0,
+  VM  = 1
 }
 
 public class BuildConf
@@ -736,11 +736,12 @@ public class Build
 
           string result_file = w.postproc.Patch(lazy_ast, file, cache_file);
 
-          if(w.mode == CompileMode.VmBytecode)
+          if(w.mode == CompileMode.VM)
           {
             var ast = lazy_ast.Get();
             var c  = new Compiler(w.globs, ast, module);
-            c.Compile();
+            var cm = c.Compile();
+            Util.Compiled2File(cm, result_file);
           }
 
           w.result_files.Add(file, result_file);

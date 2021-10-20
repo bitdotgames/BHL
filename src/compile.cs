@@ -208,9 +208,10 @@ public class Compiler : AST_Visitor
     return this;
   }
 
-  public void Compile()
+  public CompiledModule Compile()
   {
     Visit(ast);
+    return new CompiledModule(this);
   }
 
   Bytecode PeekCode()

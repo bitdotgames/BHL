@@ -4127,27 +4127,56 @@ public class BHL_TestVM : BHL_TestBase
 
   List<CompiledModule> CompileFiles(List<string> files, GlobalScope globs = null)
   {
+    var ms = new List<CompiledModule>();
+    foreach(var file in files)
+      ms.Add(CompileFile(file, globs));
+    return ms;
+  }
+
+  CompiledModule CompileFile(string file, GlobalScope globs = null)
+  {
     globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
     var globs_copy = globs.Clone();
 
-    var ms = new List<CompiledModule>();
+    var conf = new BuildConf();
+    conf.mode = CompileMode.VM;
+    conf.format = ModuleBinaryFormat.FMT_BIN;
+    conf.globs = globs_copy;
+    conf.files = new List<string>() { file };
+    conf.res_file = TestDirPath() + "/result.bin";
+    conf.inc_dir = TestDirPath();
+    conf.cache_dir = TestDirPath() + "/cache";
+    conf.err_file = TestDirPath() + "/error.log";
+    conf.use_cache = false;
+    conf.debug = true;
 
-    var mreg = new ModuleRegistry();
-    mreg.AddToIncludePath(TestDirPath() + "/");
+    var bld = new Build();
+    int res = bld.Exec(conf);
+    if(res != 0)
+      throw new UserError(File.ReadAllText(conf.err_file));
 
-    foreach(var file in files)
-    {
-      var norm_path = mreg.FilePath2ModulePath(file);
+    var ms = new MemoryStream(File.ReadAllBytes(conf.res_file));
+    ms.Position = 0;
 
-      var fmod = new bhl.FileModule(norm_path, file);
-      var ast = Src2AST(File.ReadAllText(file), fmod, mreg, globs_copy);
-      var c = new Compiler(globs_copy, ast, fmod);
-      c.Compile();
-      ms.Add(new CompiledModule(c));
-    }
+    var reader = new MsgPackDataReader(ms);
 
-    return ms;
+    int total_modules = 0;
+    reader.ReadI32(ref total_modules);
+    Util.Verify(reader.ReadI32(ref total_modules) == MetaIoError.SUCCESS);
+    if(total_modules != 1)
+      throw new Exception("Expecting 1 module, got " + total_modules);
+
+    int format = 0;
+    Util.Verify(reader.ReadI32(ref format) == MetaIoError.SUCCESS);
+    if((ModuleBinaryFormat)format != ModuleBinaryFormat.FMT_BIN)
+      throw new Exception("Bad format: " + format);
+
+    uint module_id = 0;
+    Util.Verify(reader.ReadU32(ref module_id) == MetaIoError.SUCCESS);
+
+    var m = Util.Bin2Compiled(ms);
+    return m;
   }
 
   Compiler Compile(string bhl, GlobalScope globs = null)
