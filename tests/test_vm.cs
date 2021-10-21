@@ -4460,7 +4460,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     var fn = new FuncSymbolNative("trace", globs.Type("void"), null,
         delegate(VM _, VM.Frame fr) { 
-          string str = fr.PopValue().str;
+          string str = fr.PopRelease().str;
           log.Append(str);
           return null;
         } 

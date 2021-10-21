@@ -482,18 +482,18 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override IInstruction VM_At(VM vm, VM.Frame curr_frame)
   {
-    int idx = (int)curr_frame.PopValue().num;
+    int idx = (int)curr_frame.PopRelease().num;
     var arr = curr_frame.stack.PopFast();
     var lst = AsList(arr);
     var res = lst[idx]; 
-    curr_frame.PushValue(res);
+    curr_frame.PushRetain(res);
     arr.Release();
     return null;
   }
 
   public override IInstruction VM_SetAt(VM vm, VM.Frame curr_frame)
   {
-    int idx = (int)curr_frame.PopValue().num;
+    int idx = (int)curr_frame.PopRelease().num;
     var arr = curr_frame.stack.PopFast();
     var val = curr_frame.stack.PopFast();
     var lst = AsList(arr);
@@ -505,7 +505,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame)
   {
-    int idx = (int)curr_frame.PopValue().num;
+    int idx = (int)curr_frame.PopRelease().num;
     var arr = curr_frame.stack.PopFast();
     var lst = AsList(arr);
     lst.RemoveAt(idx); 
@@ -515,7 +515,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override IInstruction VM_Clear(VM vm, VM.Frame curr_frame)
   {
-    int idx = (int)curr_frame.PopValue().num;
+    int idx = (int)curr_frame.PopRelease().num;
     var arr = curr_frame.stack.PopFast();
     var lst = AsList(arr);
     lst.Clear();

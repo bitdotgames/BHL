@@ -41,7 +41,7 @@ public class VM
       }
       locals.Clear();
       while(stack.Count > 0)
-        PopValue();
+        PopRelease();
     }
 
     public void SetLocal(int idx, Val v)
@@ -63,14 +63,14 @@ public class VM
       }
     }
 
-    public Val PopValue()
+    public Val PopRelease()
     {
       var val = stack.PopFast();
       val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       return val;
     }
 
-    public void PushValue(Val val)
+    public void PushRetain(Val val)
     {
       val.RefMod(RefOp.INC | RefOp.USR_INC);
       stack.Push(val);
@@ -295,9 +295,9 @@ public class VM
 
             //TODO: make it more universal and robust
             if(cast_type == "string")
-              curr_frame.stack.Push(Val.NewStr(curr_frame.PopValue().num.ToString()));
+              curr_frame.stack.Push(Val.NewStr(curr_frame.PopRelease().num.ToString()));
             else if(cast_type == "int")
-              curr_frame.stack.Push(Val.NewNum(curr_frame.PopValue().num));
+              curr_frame.stack.Push(Val.NewNum(curr_frame.PopRelease().num));
             else
               throw new Exception("Not supported typecast type: " + cast_type);
           }
@@ -334,18 +334,93 @@ public class VM
           }
           break;
           case Opcodes.SetVar:
+          {
+            int local_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            var locs = curr_frame.locals;
+            if(locs[local_idx] != null)
+              locs[local_idx].Release();
+            locs[local_idx] = curr_frame.stack.PopFast();
+          }
+          break;
           case Opcodes.GetVar:
+          {
+            int local_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            curr_frame.PushRetain(curr_frame.locals[local_idx]);
+          }
+          break;
           case Opcodes.ArgVar:
+          {
+            int local_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            curr_frame.locals[local_idx] = curr_frame.stack.PopFast();
+          }
+          break;
           case Opcodes.DeclVar:
           {
-            ExecuteVarOp(opcode, curr_frame, ref ip);
+            int local_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            byte type = (byte)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            Val v;
+            if(type == Val.NUMBER)
+              v = Val.NewNum(0);
+            else if(type == Val.STRING)
+              v = Val.NewStr("");
+            else if(type == Val.BOOL)
+              v = Val.NewBool(false);
+            else
+              v = Val.NewObj(null);
+            curr_frame.locals[local_idx] = v;
           }
           break;
           case Opcodes.GetAttr:
+          {
+            int class_type_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            string class_type = curr_frame.constants[class_type_idx].str;
+            int fld_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+            //TODO: this check must be in dev.version only
+            if(class_symb == null)
+              throw new Exception("Class type not found: " + class_type);
+
+            var obj = curr_frame.stack.PopFast();
+            var res = Val.New();
+            var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+            field_symb.VM_getter(obj, ref res);
+            curr_frame.stack.Push(res);
+            obj.Release();
+          }
+          break;
           case Opcodes.SetAttr:
+          {
+            int class_type_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            string class_type = curr_frame.constants[class_type_idx].str;
+            int fld_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+            //TODO: this check must be in dev.version only
+            if(class_symb == null)
+              throw new Exception("Class type not found: " + class_type);
+
+            var obj = curr_frame.stack.PopFast();
+            var val = curr_frame.stack.PopFast();
+            var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+            field_symb.VM_setter(ref obj, val);
+            val.Release();
+            obj.Release();
+          }
+          break;
           case Opcodes.SetAttrInplace:
           {
-            ExecuteMVarOp(opcode, curr_frame, symbols, ref ip);
+            int class_type_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            string class_type = curr_frame.constants[class_type_idx].str;
+            int fld_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
+            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+            //TODO: this check must be in dev.version only
+            if(class_symb == null)
+              throw new Exception("Class type not found: " + class_type);
+
+            var val = curr_frame.stack.PopFast();
+            var obj = curr_frame.PeekValue();
+            var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+            field_symb.VM_setter(ref obj, val);
+            val.Release();
           }
           break;
           case Opcodes.Return:
@@ -435,7 +510,7 @@ public class VM
           {
             uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
 
-            var val = curr_frame.PopValue();
+            var val = curr_frame.PopRelease();
             var fr = (Frame)val._obj;
 
             var args_info = new FuncArgsInfo(args_bits);
@@ -455,7 +530,7 @@ public class VM
           case Opcodes.CallNative:
           {
             uint args_bits = Bytecode.Decode(curr_frame.bytecode, ref ip); 
-            var val = curr_frame.PopValue();
+            var val = curr_frame.PopRelease();
             var func_symb = (FuncSymbolNative)val._obj;
 
             var args_info = new FuncArgsInfo(args_bits);
@@ -530,7 +605,7 @@ public class VM
           case Opcodes.CondJump:
           {
             //we need to jump only in case of false
-            if(curr_frame.PopValue().bval == false)
+            if(curr_frame.PopRelease().bval == false)
             {
               uint offset = Bytecode.Decode(curr_frame.bytecode, ref ip);
               ip = ip + offset;
@@ -663,96 +738,9 @@ public class VM
     return fibers.Count == 0 ? BHS.SUCCESS : BHS.RUNNING;
   }
 
-  static void ExecuteVarOp(Opcodes op, Frame curr_frame, ref uint ip)
-  {
-    int local_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
-    
-    switch(op)
-    {
-      case Opcodes.SetVar:
-      {
-        var locs = curr_frame.locals;
-        if(locs[local_idx] != null)
-          locs[local_idx].Release();
-        locs[local_idx] = curr_frame.stack.PopFast();
-      }
-      break;
-      case Opcodes.GetVar:
-        curr_frame.PushValue(curr_frame.locals[local_idx]);
-      break;
-      case Opcodes.ArgVar:
-        curr_frame.locals[local_idx] = curr_frame.stack.PopFast();
-      break;
-      case Opcodes.DeclVar:
-      {
-        byte type = (byte)Bytecode.Decode(curr_frame.bytecode, ref ip);
-        Val v;
-        if(type == Val.NUMBER)
-          v = Val.NewNum(0);
-        else if(type == Val.STRING)
-          v = Val.NewStr("");
-        else if(type == Val.BOOL)
-          v = Val.NewBool(false);
-        else
-          v = Val.NewObj(null);
-        curr_frame.locals[local_idx] = v;
-      }
-      break;
-      default:
-        throw new Exception("Not supported opcode: " + op);
-    }
-  }
-
-  static void ExecuteMVarOp(Opcodes op, Frame curr_frame, BaseScope symbols, ref uint ip)
-  {
-    int class_type_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
-    string class_type = curr_frame.constants[class_type_idx].str;
-    int fld_idx = (int)Bytecode.Decode(curr_frame.bytecode, ref ip);
-
-    var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-    //TODO: this check must be in dev.version only
-    if(class_symb == null)
-      throw new Exception("Class type not found: " + class_type);
-    
-    switch(op)
-    {
-      case Opcodes.GetAttr:
-      {
-        var obj = curr_frame.stack.PopFast();
-        var res = Val.New();
-        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.VM_getter(obj, ref res);
-        curr_frame.stack.Push(res);
-        obj.Release();
-      }
-      break;
-      case Opcodes.SetAttr:
-      {
-        var obj = curr_frame.stack.PopFast();
-        var val = curr_frame.stack.PopFast();
-        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.VM_setter(ref obj, val);
-        val.Release();
-        obj.Release();
-      }
-      break;
-      case Opcodes.SetAttrInplace:
-      {
-        var val = curr_frame.stack.PopFast();
-        var obj = curr_frame.PeekValue();
-        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.VM_setter(ref obj, val);
-        val.Release();
-      }
-      break;
-      default:
-        throw new Exception("Not supported opcode: " + op);
-    }
-  }
-
   static void ExecuteUnaryOp(Opcodes op, Frame curr_frame)
   {
-    var operand = curr_frame.PopValue().num;
+    var operand = curr_frame.PopRelease().num;
     switch(op)
     {
       case Opcodes.UnaryNot:
