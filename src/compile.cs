@@ -123,7 +123,7 @@ public class Const
   }
 }
 
-public class Compiler : AST_Visitor
+public class ModuleCompiler : AST_Visitor
 {
   public class OpDefinition
   {
@@ -132,10 +132,10 @@ public class Compiler : AST_Visitor
   }
 
   AST ast;
-  FileModule module;
-  public FileModule Module {
+  ModulePath module_path;
+  public ModulePath Module {
     get {
-      return module;
+      return module_path;
     }
   }
 
@@ -173,25 +173,25 @@ public class Compiler : AST_Visitor
   
   static Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
 
-  static Compiler()
+  static ModuleCompiler()
   {
     DeclareOpcodes();
   }
 
-  public Compiler(GlobalScope globs = null, AST ast = null, FileModule module = null)
+  public ModuleCompiler(GlobalScope globs = null, AST ast = null, ModulePath module_path = null)
   {
     this.globs = globs;
     this.symbols = new LocalScope(globs);
     this.ast = ast;
-    if(module == null)
-      module = new FileModule("", "");
-    this.module = module;
+    if(module_path == null)
+      module_path = new ModulePath("", "");
+    this.module_path = module_path;
 
     UseByteCode();
   }
 
   //NOTE: public for testing purposes only
-  public Compiler UseByteCode()
+  public ModuleCompiler UseByteCode()
   {
     if(code_stack.Count != 1)
       throw new Exception("Invalid state");
@@ -200,7 +200,7 @@ public class Compiler : AST_Visitor
   }
 
   //NOTE: public for testing purposes only
-  public Compiler UseInitCode()
+  public ModuleCompiler UseInitCode()
   {
     if(code_stack.Count != 1)
       throw new Exception("Invalid state");
@@ -607,7 +607,7 @@ public class Compiler : AST_Visitor
   }
 
   //NOTE: public for testing purposes only
-  public Compiler Emit(Opcodes op, int[] operands = null)
+  public ModuleCompiler Emit(Opcodes op, int[] operands = null)
   {
     var curr_scope = PeekCode();
     Emit(curr_scope, op, operands);
@@ -978,7 +978,7 @@ public class Compiler : AST_Visitor
           Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx});
           Emit(Opcodes.CallNative, new int[] {(int)ast.cargs_bits});
         }
-        else if(ast.nname2 != module.id)
+        else if(ast.nname2 != module_path.id)
         {
           VisitChildren(ast);
 

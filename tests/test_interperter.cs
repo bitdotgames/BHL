@@ -19399,7 +19399,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     var mreg = new ModuleRegistry();
     //fake module for this specific case
-    var mod = new bhl.FileModule("", "");
+    var mod = new bhl.Module("", "");
     var bin = new MemoryStream();
     Frontend.Source2Bin(mod, src.ToStream(), bin, globs, mreg);
     bin.Position = 0;

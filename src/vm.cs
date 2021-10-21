@@ -865,7 +865,7 @@ public class CompiledModule
     this.func2ip = func2ip;
   }
 
-  public CompiledModule(Compiler c)
+  public CompiledModule(ModuleCompiler c)
     : this(c.Module.name, c.GetByteCode(), c.Constants, c.Func2Ip, c.GetInitCode())
   {}
 }

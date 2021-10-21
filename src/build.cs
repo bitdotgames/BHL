@@ -200,7 +200,7 @@ public class Build
 
           return false;
         }
-        total_modules += w.result_modules.Count;
+        total_modules += w.file2module.Count;
       }
 
       mwriter.Write(total_modules);
@@ -214,8 +214,8 @@ public class Build
         {
           if(file_idx >= w.start && file_idx < w.start + w.count) 
           {
-            var module = w.result_modules[file];
-            var result_file = w.compiled_files[file];
+            var module = w.file2module[file];
+            var result_file = w.file2compiled_file[file];
 
             mwriter.Write((byte)conf.format);
             mwriter.Write(module.id);
@@ -577,8 +577,8 @@ public class Build
     public Symbols symbols = new Symbols();
     public IPostProcessor postproc;
     public UserError error = null;
-    public Dictionary<string, FileModule> result_modules = new Dictionary<string, FileModule>();
-    public Dictionary<string, string> compiled_files = new Dictionary<string, string>();
+    public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
+    public Dictionary<string, string> file2compiled_file = new Dictionary<string, string>();
 
     public void Start()
     {
@@ -639,11 +639,11 @@ public class Build
     public class FromParsedResolver : IASTResolver
     {
       Parsed parsed;
-      FileModule mod;
+      Module mod;
       GlobalScope globs;
       ModuleRegistry mreg;
 
-      public FromParsedResolver(Parsed parsed, FileModule mod, GlobalScope globs, ModuleRegistry mreg)
+      public FromParsedResolver(Parsed parsed, Module mod, GlobalScope globs, ModuleRegistry mreg)
       {
         this.parsed = parsed;
         this.mod = mod;
@@ -660,11 +660,11 @@ public class Build
     public class FromSourceResolver : IASTResolver
     {
       string file;
-      FileModule mod;
+      Module mod;
       GlobalScope globs;
       ModuleRegistry mreg;
 
-      public FromSourceResolver(string file, FileModule mod, GlobalScope globs, ModuleRegistry mreg)
+      public FromSourceResolver(string file, Module mod, GlobalScope globs, ModuleRegistry mreg)
       {
         this.file = file;
         this.mod = mod;
@@ -689,8 +689,8 @@ public class Build
       sw.Start();
 
       var w = (CompilerWorker)data;
-      w.result_modules.Clear();
-      w.compiled_files.Clear();
+      w.file2module.Clear();
+      w.file2compiled_file.Clear();
 
       var mreg = new ModuleRegistry();
       mreg.SetParsedCache(w.parsed_cache);
@@ -708,7 +708,7 @@ public class Build
           var file = w.files[i]; 
 
           var cache_file = GetASTCacheFile(w.cache_dir, file);
-          var file_module = new FileModule(mreg.FilePath2ModulePath(file), file);
+          var file_module = new Module(mreg.FilePath2ModuleName(file), file);
           LazyAST lazy_ast = null;
 
           Parsed parsed = null;
@@ -732,19 +732,19 @@ public class Build
 
           w.symbols = GetSymbols(file, w.cache_dir, lazy_ast);
 
-          w.result_modules.Add(file, file_module);
+          w.file2module.Add(file, file_module);
 
           string compiled_file = w.postproc.Patch(lazy_ast, file, cache_file);
 
           if(w.mode == CompileMode.VM)
           {
             var ast = lazy_ast.Get();
-            var c  = new Compiler(w.globs, ast, file_module);
+            var c  = new ModuleCompiler(w.globs, ast, file_module.path);
             var cm = c.Compile();
             Util.Compiled2File(cm, compiled_file);
           }
 
-          w.compiled_files.Add(file, compiled_file);
+          w.file2compiled_file.Add(file, compiled_file);
         }
       }
       catch(UserError e)
