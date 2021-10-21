@@ -215,7 +215,7 @@ public class Build
           if(file_idx >= w.start && file_idx < w.start + w.count) 
           {
             var module = w.result_modules[file];
-            var result_file = w.result_files[file];
+            var result_file = w.compiled_files[file];
 
             mwriter.Write((byte)conf.format);
             mwriter.Write(module.id);
@@ -578,7 +578,7 @@ public class Build
     public IPostProcessor postproc;
     public UserError error = null;
     public Dictionary<string, FileModule> result_modules = new Dictionary<string, FileModule>();
-    public Dictionary<string, string> result_files = new Dictionary<string, string>();
+    public Dictionary<string, string> compiled_files = new Dictionary<string, string>();
 
     public void Start()
     {
@@ -690,7 +690,7 @@ public class Build
 
       var w = (CompilerWorker)data;
       w.result_modules.Clear();
-      w.result_files.Clear();
+      w.compiled_files.Clear();
 
       var mreg = new ModuleRegistry();
       mreg.SetParsedCache(w.parsed_cache);
@@ -708,7 +708,7 @@ public class Build
           var file = w.files[i]; 
 
           var cache_file = GetASTCacheFile(w.cache_dir, file);
-          var module = new FileModule(mreg.FilePath2ModulePath(file), file);
+          var file_module = new FileModule(mreg.FilePath2ModulePath(file), file);
           LazyAST lazy_ast = null;
 
           Parsed parsed = null;
@@ -718,7 +718,7 @@ public class Build
             ++cache_hit;
             lazy_ast = new LazyAST(
                 new CacheHitResolver(cache_file, 
-                  fallback: new FromSourceResolver(file, module, w.globs, mreg)
+                  fallback: new FromSourceResolver(file, file_module, w.globs, mreg)
                   )
                 );
           }
@@ -726,25 +726,25 @@ public class Build
           {
             ++cache_miss;
             lazy_ast = new LazyAST(new CacheWriteResolver(cache_file, 
-                  parsed != null ? (IASTResolver)new FromParsedResolver(parsed, module, w.globs, mreg) : 
-                  (IASTResolver)new FromSourceResolver(file, module, w.globs, mreg)));
+                  parsed != null ? (IASTResolver)new FromParsedResolver(parsed, file_module, w.globs, mreg) : 
+                  (IASTResolver)new FromSourceResolver(file, file_module, w.globs, mreg)));
           }
 
           w.symbols = GetSymbols(file, w.cache_dir, lazy_ast);
 
-          w.result_modules.Add(file, module);
+          w.result_modules.Add(file, file_module);
 
-          string result_file = w.postproc.Patch(lazy_ast, file, cache_file);
+          string compiled_file = w.postproc.Patch(lazy_ast, file, cache_file);
 
           if(w.mode == CompileMode.VM)
           {
             var ast = lazy_ast.Get();
-            var c  = new Compiler(w.globs, ast, module);
+            var c  = new Compiler(w.globs, ast, file_module);
             var cm = c.Compile();
-            Util.Compiled2File(cm, result_file);
+            Util.Compiled2File(cm, compiled_file);
           }
 
-          w.result_files.Add(file, result_file);
+          w.compiled_files.Add(file, compiled_file);
         }
       }
       catch(UserError e)

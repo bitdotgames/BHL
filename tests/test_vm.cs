@@ -4162,7 +4162,6 @@ public class BHL_TestVM : BHL_TestBase
     var reader = new MsgPackDataReader(ms);
 
     int total_modules = 0;
-    reader.ReadI32(ref total_modules);
     Util.Verify(reader.ReadI32(ref total_modules) == MetaIoError.SUCCESS);
     if(total_modules != 1)
       throw new Exception("Expecting 1 module, got " + total_modules);
@@ -4174,9 +4173,15 @@ public class BHL_TestVM : BHL_TestBase
 
     uint module_id = 0;
     Util.Verify(reader.ReadU32(ref module_id) == MetaIoError.SUCCESS);
+    if(module_id == 0)
+      throw new Exception("Bad module id: " + module_id);
 
-    var m = Util.Bin2Compiled(ms);
-    return m;
+    var tmp_buf = new byte[512];
+    int tmp_buf_len = 0;
+    Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
+
+    var cm = Util.Bin2Compiled(new MemoryStream(tmp_buf, 0, tmp_buf_len));
+    return cm;
   }
 
   Compiler Compile(string bhl, GlobalScope globs = null)
@@ -4322,10 +4327,10 @@ public class BHL_TestVM : BHL_TestBase
     cmp = "";
     var lens = new List<int>();
     int max_len = 0;
-    for(int i=0;i<(a.Length > b.Length ? a.Length : b.Length);i++)
+    for(int i=0;i<(a?.Length > b?.Length ? a?.Length : b?.Length);i++)
     {
       string astr = "";
-      if(i < a.Length)
+      if(i < a?.Length)
       {
         astr = string.Format("0x{0:x2}", a[i]);
         if(aop != null)
@@ -4345,7 +4350,7 @@ public class BHL_TestVM : BHL_TestBase
       }
 
       string bstr = "";
-      if(i < b.Length)
+      if(i < b?.Length)
       {
         bstr = string.Format("0x{0:x2}", b[i]);
         if(bop != null)
@@ -4369,7 +4374,7 @@ public class BHL_TestVM : BHL_TestBase
         max_len = astr.Length;
       cmp += string.Format("{0:x2}", i) + " " + astr + "{fill" + lens.Count + "} | " + bstr;
 
-      if(a.Length <= i || b.Length <= i || a[i] != b[i])
+      if(a?.Length <= i || b?.Length <= i || a[i] != b[i])
       {
         equal = false;
         cmp += " <============== actual vs expected";

@@ -760,6 +760,7 @@ public class VM
     switch(op)
     {
       case Opcodes.Add:
+        //TODO: add Opcodes.Concat?
         if((r_operand._type == Val.STRING) && (l_operand._type == Val.STRING))
           curr_frame.stack.Push(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
         else
