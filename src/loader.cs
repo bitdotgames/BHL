@@ -62,10 +62,10 @@ public class ModuleLoader : IModuleLoader
     Util.Verify(reader.ReadU32(ref file_version) == MetaIoError.SUCCESS);
     Util.Verify(file_version == 1);
 
-    int total_modules = 0;
-    Util.Verify(reader.ReadI32(ref total_modules) == MetaIoError.SUCCESS);
+    int num_entries = 0;
+    Util.Verify(reader.ReadI32(ref num_entries) == MetaIoError.SUCCESS);
     //Util.Debug("Total modules: " + total_modules);
-    while(total_modules-- > 0)
+    while(num_entries-- > 0)
     {
       int format = 0;
       Util.Verify(reader.ReadI32(ref format) == MetaIoError.SUCCESS);
@@ -229,10 +229,10 @@ public class ModuleImporter : IModuleImporter
     Util.Verify(reader.ReadU32(ref file_version) == MetaIoError.SUCCESS);
     Util.Verify(file_version == 1);
 
-    int total_modules = 0;
-    Util.Verify(reader.ReadI32(ref total_modules) == MetaIoError.SUCCESS);
+    int num_entries = 0;
+    Util.Verify(reader.ReadI32(ref num_entries) == MetaIoError.SUCCESS);
     //Util.Debug("Total modules: " + total_modules);
-    while(total_modules-- > 0)
+    while(num_entries-- > 0)
     {
       int format = 0;
       Util.Verify(reader.ReadI32(ref format) == MetaIoError.SUCCESS);
