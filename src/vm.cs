@@ -153,6 +153,12 @@ public class VM
     symbols = new LocalScope(globs);
   }
 
+  public void ImportModule(string module_name)
+  {
+    var imported_module = importer.Import(module_name);
+    RegisterModule(imported_module);
+  }
+
   public void RegisterModule(CompiledModule m)
   {
     if(modules.ContainsKey(m.name))
@@ -185,8 +191,7 @@ public class VM
         {
           int module_idx = (int)Bytecode.Decode(bytecode, ref ip);
           string module_name = module.constants[module_idx].str;
-          var imported_module = importer.Import(module_name);
-          RegisterModule(imported_module);
+          ImportModule(module_name);
         }
         break;
         case Opcodes.ClassBegin:

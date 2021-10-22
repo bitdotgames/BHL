@@ -4031,9 +4031,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var cs = CompileFiles(files);
+    var imp = new ModuleImporter(CompileFiles(files));
 
-    AssertEqual(cs[0], 
+    AssertEqual(imp.Import("bhl1"), 
       new ModuleCompiler()
       .UseInitCode()
       .Emit(Opcodes.Import, new int[] { 0 })
@@ -4044,7 +4044,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
     );
-    AssertEqual(cs[1], 
+    AssertEqual(imp.Import("bhl2"), 
       new ModuleCompiler()
       .UseInitCode()
       .Emit(Opcodes.Import, new int[] { 0 })
@@ -4057,7 +4057,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
     );
-    AssertEqual(cs[2], 
+    AssertEqual(imp.Import("bhl3"), 
       new ModuleCompiler()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArgVar, new int[] { 0 })
@@ -4066,12 +4066,8 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
     );
 
-    var mock_importer = new TestImporter();
-    mock_importer.mods.Add("bhl2", cs[1]);
-    mock_importer.mods.Add("bhl3", cs[2]);
-
-    var vm = new VM(globs: null, importer: mock_importer);
-    vm.RegisterModule(cs[0]);
+    var vm = new VM(globs: null, importer: imp);
+    vm.ImportModule("bhl1");
     vm.Start("bhl1");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopValue().num, 23);
@@ -4125,25 +4121,17 @@ public class BHL_TestVM : BHL_TestBase
     return new ModuleCompiler(globs_copy);
   }
 
-  List<CompiledModule> CompileFiles(List<string> files, GlobalScope globs = null)
-  {
-    var ms = new List<CompiledModule>();
-    foreach(var file in files)
-      ms.Add(CompileFile(file, globs));
-    return ms;
-  }
-
-  CompiledModule CompileFile(string file, GlobalScope globs = null)
+  Stream CompileFiles(List<string> files, GlobalScope globs = null)
   {
     globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
     var globs_copy = globs.Clone();
 
     var conf = new BuildConf();
-    conf.mode = CompileMode.VM;
-    conf.format = ModuleBinaryFormat.FMT_BIN;
+    conf.compile_fmt = CompileFormat.VM;
+    conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.globs = globs_copy;
-    conf.files = new List<string>() { file };
+    conf.files = files;
     conf.res_file = TestDirPath() + "/result.bin";
     conf.inc_dir = TestDirPath();
     conf.cache_dir = TestDirPath() + "/cache";
@@ -4156,32 +4144,7 @@ public class BHL_TestVM : BHL_TestBase
     if(res != 0)
       throw new UserError(File.ReadAllText(conf.err_file));
 
-    var ms = new MemoryStream(File.ReadAllBytes(conf.res_file));
-    ms.Position = 0;
-
-    var reader = new MsgPackDataReader(ms);
-
-    int total_modules = 0;
-    Util.Verify(reader.ReadI32(ref total_modules) == MetaIoError.SUCCESS);
-    if(total_modules != 1)
-      throw new Exception("Expecting 1 module, got " + total_modules);
-
-    int format = 0;
-    Util.Verify(reader.ReadI32(ref format) == MetaIoError.SUCCESS);
-    if((ModuleBinaryFormat)format != ModuleBinaryFormat.FMT_BIN)
-      throw new Exception("Bad format: " + format);
-
-    uint module_id = 0;
-    Util.Verify(reader.ReadU32(ref module_id) == MetaIoError.SUCCESS);
-    if(module_id == 0)
-      throw new Exception("Bad module id: " + module_id);
-
-    var tmp_buf = new byte[512];
-    int tmp_buf_len = 0;
-    Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
-
-    var cm = Util.Bin2Compiled(new MemoryStream(tmp_buf, 0, tmp_buf_len));
-    return cm;
+    return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
 
   ModuleCompiler Compile(string bhl, GlobalScope globs = null)

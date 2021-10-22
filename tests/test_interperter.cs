@@ -19320,7 +19320,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     SharedInit();
 
     var conf = new BuildConf();
-    conf.mode = CompileMode.AST;
+    conf.compile_fmt = CompileFormat.AST;
     conf.globs = globs;
     conf.files = test_files;
     conf.res_file = TestDirPath() + "/result.bin";

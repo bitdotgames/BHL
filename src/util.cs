@@ -358,12 +358,12 @@ static public class Util
 
   static public CompiledModule Bin2Compiled(Stream src)
   {
-    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8))
+    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
     {
       //TODO: add better support for version
-      uint ver = r.ReadUInt32();
-      if(ver != 1)
-        throw new Exception("Unsupported version: " + ver);
+      uint version = r.ReadUInt32();
+      if(version != 1)
+        throw new Exception("Unsupported version: " + version);
 
       string name = r.ReadString();
 

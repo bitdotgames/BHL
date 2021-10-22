@@ -12,7 +12,7 @@ public class BHLC
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--format=<1,2>] [--mode=<0,1>]");
+    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--module_fmt=<1,2>] [--compile_fmt=<1,2>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -25,7 +25,7 @@ public class BHLC
     string res_file = "";
     string cache_dir = "";
     bool use_cache = true;
-    CompileMode mode = CompileMode.AST;
+    CompileFormat compile_fmt = CompileFormat.AST;
     string err_file = "";
     string postproc_dll_path = "";
     string userbindings_dll_path = "";
@@ -33,7 +33,7 @@ public class BHLC
     bool check_deps = true;
     bool deterministic = false;
     bool debug = false;
-    ModuleBinaryFormat format = ModuleBinaryFormat.FMT_LZ4;
+    ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
 
     var p = new OptionSet () {
       { "dir=", "source dir",
@@ -60,10 +60,10 @@ public class BHLC
           v => max_threads = int.Parse(v) },
       { "d", "debug version",
         v => debug = v != null },
-      { "format=", "binary module format",
-        v => format = (ModuleBinaryFormat)int.Parse(v) }
-      { "mode=", "compile mode",
-        v => mode = (CompileMode)int.Parse(v) }
+      { "module_fmt=", "binary module format",
+        v => module_fmt = (ModuleBinaryFormat)int.Parse(v) }
+      { "compile_fmt=", "compile format",
+        v => compile_fmt = (CompileFormat)int.Parse(v) }
      };
 
     var extra = new List<string>();
@@ -127,7 +127,8 @@ public class BHLC
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
     var conf = new BuildConf();
     conf.args = string.Join(";", args);
-    conf.mode = mode;
+    conf.compile_fmt = compile_fmt;
+    conf.module_fmt = module_fmt;
     conf.use_cache = use_cache;
     conf.self_file = GetSelfFile();
     conf.check_deps = check_deps;
@@ -140,7 +141,6 @@ public class BHLC
     conf.userbindings = userbindings;
     conf.postproc = postproc;
     conf.debug = debug;
-    conf.format = format;
 
     var build = new Build();
     int err = build.Exec(conf);

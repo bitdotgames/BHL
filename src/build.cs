@@ -7,10 +7,17 @@ using System.Diagnostics;
 
 namespace bhl {
 
-public enum CompileMode
+public class UserBindings
 {
-  AST = 0,
-  VM  = 1
+  public virtual void Register(GlobalScope globs) {}
+}
+
+public class EmptyUserBindings : UserBindings {}
+
+public enum CompileFormat
+{
+  AST = 1,
+  VM  = 2
 }
 
 public class BuildConf
@@ -18,7 +25,7 @@ public class BuildConf
   public string args = ""; 
   public List<string> files = new List<string>();
   public GlobalScope globs;
-  public CompileMode mode;
+  public CompileFormat compile_fmt = CompileFormat.AST;
   public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
@@ -30,11 +37,12 @@ public class BuildConf
   public int max_threads = 1;
   public bool check_deps = true;
   public bool debug = false;
-  public ModuleBinaryFormat format = ModuleBinaryFormat.FMT_LZ4; 
+  public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
  
 public class Build
 {
+  const uint FILE_VERSION = 1;
   const int ERROR_EXIT_CODE = 2;
 
   UniqueSymbols uniq_symbols = new UniqueSymbols();
@@ -146,7 +154,7 @@ public class Build
       var cw = new CompilerWorker();
       cw.id = pw.id;
       cw.parsed_cache = parsed_cache;
-      cw.mode = conf.mode;
+      cw.compile_fmt = conf.compile_fmt;
       cw.inc_dir = conf.inc_dir;
       cw.cache_dir = pw.cache_dir;
       cw.use_cache = pw.use_cache;
@@ -184,6 +192,10 @@ public class Build
     using(FileStream dfs = new FileStream(file_path, FileMode.Create, System.IO.FileAccess.Write))
     {
       var mwriter = new MsgPack.MsgPackWriter(dfs);
+
+      mwriter.Write((byte)conf.compile_fmt);
+      mwriter.Write(FILE_VERSION);
+
       int total_modules = 0;
       foreach(var w in compiler_workers)
       {
@@ -202,7 +214,6 @@ public class Build
         }
         total_modules += w.file2module.Count;
       }
-
       mwriter.Write(total_modules);
 
       //NOTE: we'd like to write file binary modules in the same order they were added
@@ -215,19 +226,22 @@ public class Build
           if(file_idx >= w.start && file_idx < w.start + w.count) 
           {
             var module = w.file2module[file];
-            var result_file = w.file2compiled_file[file];
+            var compiled_file = w.file2compiled[file];
 
-            mwriter.Write((byte)conf.format);
-            mwriter.Write(module.id);
-
-            if(conf.format == ModuleBinaryFormat.FMT_BIN)
-              mwriter.Write(File.ReadAllBytes(result_file));
-            else if(conf.format == ModuleBinaryFormat.FMT_LZ4)
-              mwriter.Write(EncodeToLZ4(File.ReadAllBytes(result_file)));
-            else if(conf.format == ModuleBinaryFormat.FMT_FILE_REF)
-              mwriter.Write(result_file);
+            mwriter.Write((byte)conf.module_fmt);
+            if(conf.compile_fmt == CompileFormat.VM)
+              mwriter.Write(module.name);
             else
-              throw new Exception("Unsupported format: " + conf.format);
+              mwriter.Write(module.id);
+
+            if(conf.module_fmt == ModuleBinaryFormat.FMT_BIN)
+              mwriter.Write(File.ReadAllBytes(compiled_file));
+            else if(conf.module_fmt == ModuleBinaryFormat.FMT_LZ4)
+              mwriter.Write(EncodeToLZ4(File.ReadAllBytes(compiled_file)));
+            else if(conf.module_fmt == ModuleBinaryFormat.FMT_FILE_REF)
+              mwriter.Write(compiled_file);
+            else
+              throw new Exception("Unsupported format: " + conf.module_fmt);
 
             break;
           }
@@ -566,7 +580,7 @@ public class Build
     public int id;
     public Dictionary<string, Parsed> parsed_cache;
     public Thread th;
-    public CompileMode mode;
+    public CompileFormat compile_fmt;
     public string inc_dir;
     public bool use_cache;
     public string cache_dir;
@@ -578,7 +592,7 @@ public class Build
     public IPostProcessor postproc;
     public UserError error = null;
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
-    public Dictionary<string, string> file2compiled_file = new Dictionary<string, string>();
+    public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
 
     public void Start()
     {
@@ -690,7 +704,7 @@ public class Build
 
       var w = (CompilerWorker)data;
       w.file2module.Clear();
-      w.file2compiled_file.Clear();
+      w.file2compiled.Clear();
 
       var mreg = new ModuleRegistry();
       mreg.SetParsedCache(w.parsed_cache);
@@ -736,7 +750,7 @@ public class Build
 
           string compiled_file = w.postproc.Patch(lazy_ast, file, cache_file);
 
-          if(w.mode == CompileMode.VM)
+          if(w.compile_fmt == CompileFormat.VM)
           {
             var ast = lazy_ast.Get();
             var c  = new ModuleCompiler(w.globs, ast, file_module.path);
@@ -744,7 +758,7 @@ public class Build
             Util.Compiled2File(cm, compiled_file);
           }
 
-          w.file2compiled_file.Add(file, compiled_file);
+          w.file2compiled.Add(file, compiled_file);
         }
       }
       catch(UserError e)
