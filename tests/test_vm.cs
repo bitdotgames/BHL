@@ -1530,7 +1530,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       int x1 = 10
 
-      for( int i = 0; i < 3; i = i + 1 )
+      for( int i = 1; i < 3; i = i + 1 )
       {
         x1 = x1 - i
         break
@@ -1545,25 +1545,25 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .Emit(Opcodes.InitFrame, new int[] { 2 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //__for__//
-      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.SetVar, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
       .Emit(Opcodes.Less)
-      .Emit(Opcodes.CondJump, new int[] { 16 })
+      .Emit(Opcodes.CondJump, new int[] { 18 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.Sub)
-      .Emit(Opcodes.Jump, new int[] { 10 })
       .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Jump, new int[] { 9 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.SetVar, new int[] { 1 })
-      .Emit(Opcodes.LoopJump, new int[] { 23 })
+      .Emit(Opcodes.LoopJump, new int[] { 25 })
       //__//
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
@@ -1571,12 +1571,12 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants, new List<Const>() { new Const(10), new Const(0), new Const(3), new Const(1) });
+    AssertEqual(c.Constants, new List<Const>() { new Const(10), new Const(1), new Const(3)});
 
     var vm = MakeVM(c);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(vm.PopValue().num, 7);
+    AssertEqual(vm.PopValue().num, 9);
     CommonChecks(vm);
   }
 

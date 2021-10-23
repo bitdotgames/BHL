@@ -159,6 +159,13 @@ public class ModuleCompiler : AST_Visitor
   Bytecode bytecode = new Bytecode();
   List<Bytecode> code_stack = new List<Bytecode>() { null };
   List<AST_Block> ctrl_blocks = new List<AST_Block>();
+  List<Bytecode> loop_blocks = new List<Bytecode>();
+  internal struct PendingBreak
+  {
+    internal Bytecode block;
+    internal int patch_pos;
+  }
+  List<PendingBreak> non_patched_breaks = new List<PendingBreak>();
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
 
@@ -216,13 +223,12 @@ public class ModuleCompiler : AST_Visitor
 
   Bytecode PeekCode()
   {
-    return this.code_stack[this.code_stack.Count-1];
+    return code_stack[code_stack.Count-1];
   }
 
   uint PushCode()
   {
     code_stack.Add(new Bytecode());
-
     return (uint)code_stack[0].Length;
   }
  
@@ -233,6 +239,19 @@ public class ModuleCompiler : AST_Visitor
       code_stack[0].Write(curr_scope);
     code_stack.RemoveAt(code_stack.Count-1);
     return curr_scope;
+  }
+
+  int GetPositionUpTo(Bytecode parent)
+  {
+    int i = code_stack.Count - 1;
+    Bytecode tmp = code_stack[i];
+    int pos = tmp.Position;
+    while(tmp != parent)
+    {
+      tmp = code_stack[--i];
+      pos += tmp.Position;
+    }
+    return pos;
   }
 
   int AddConstant(AST_Literal lt)
@@ -651,7 +670,7 @@ public class ModuleCompiler : AST_Visitor
 
   //NOTE: returns position of the opcode argument for 
   //      the jump index to be patched later
-  int EmitConditionAndBody(AST_Block ast, int idx)
+  int EmitConditionPlaceholderAndBody(AST_Block ast, int idx)
   {
     //condition
     Visit(ast.children[idx]);
@@ -660,6 +679,25 @@ public class ModuleCompiler : AST_Visitor
     //body
     Visit(ast.children[idx+1]);
     return patch_pos;
+  }
+
+  void PatchBreaksToCurrPos(Bytecode curr_scope)
+  {
+    int curr_pos = curr_scope.Position;
+
+    for(int i=non_patched_breaks.Count;i-- > 0;)
+    {
+      var npb = non_patched_breaks[i];
+      if(npb.block == curr_scope)
+      {
+        int offset = curr_pos - npb.patch_pos;
+        if(offset < 0 || offset > Bytecode.GetMaxValueForBytes(1))
+          throw new Exception("Bad break jump position");
+        curr_scope.PatchAt(npb.patch_pos - 1, (byte)offset);
+
+        non_patched_breaks.RemoveAt(i);
+      }
+    }
   }
 
   void PatchJumpOffsetToCurrPos(int jump_opcode_pos)
@@ -816,7 +854,7 @@ public class ModuleCompiler : AST_Visitor
           if((i + 2) > ast.children.Count)
             break;
 
-          int if_op_pos = EmitConditionAndBody(ast, i);
+          int if_op_pos = EmitConditionPlaceholderAndBody(ast, i);
           if(last_jmp_op_pos != -1)
             PatchJumpOffsetToCurrPos(last_jmp_op_pos);
 
@@ -840,11 +878,17 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumBlock.WHILE:
       {
+        loop_blocks.Add(PeekCode());
+
         int block_ip = PeekCode().Position;
-        int cond_op_pos = EmitConditionAndBody(ast, 0);
+        int cond_op_pos = EmitConditionPlaceholderAndBody(ast, 0);
         Emit(Opcodes.LoopJump, new int[] { PeekCode().Position - block_ip
                                            + LookupOpcode(Opcodes.LoopJump).operand_width[0] });
         PatchJumpOffsetToCurrPos(cond_op_pos);
+
+        PatchBreaksToCurrPos(PeekCode());
+
+        loop_blocks.Remove(PeekCode());
       }
       break;
       case EnumBlock.FUNC:
@@ -1077,7 +1121,9 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Break ast)
   {
-    throw new Exception("Not supported : " + ast);
+    Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
+    int patch_pos = GetPositionUpTo(loop_blocks[loop_blocks.Count-1]);
+    non_patched_breaks.Add(new PendingBreak() { block = loop_blocks[loop_blocks.Count-1], patch_pos = patch_pos});
   }
 
   public override void DoVisit(AST_PopValue ast)
