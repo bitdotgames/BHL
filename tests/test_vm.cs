@@ -3276,16 +3276,16 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new ModuleCompiler()
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
         .Emit(Opcodes.Constant, new int[] { 0 })
         .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
         .Emit(Opcodes.CallNative, new int[] { 1 })
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 18})
-        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 34})
+        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
           .Emit(Opcodes.Constant, new int[] { 1 })
           .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
           .Emit(Opcodes.CallNative, new int[] { 1 })
-        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 6})
+        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 13})
           .Emit(Opcodes.Constant, new int[] { 2 })
           .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
           .Emit(Opcodes.CallNative, new int[] { 1 })
@@ -3335,16 +3335,16 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new ModuleCompiler()
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
         .Emit(Opcodes.Constant, new int[] { 0 })
         .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
         .Emit(Opcodes.CallNative, new int[] { 1 })
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 22})
-        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 43})
+        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
           .Emit(Opcodes.Constant, new int[] { 1 })
           .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
           .Emit(Opcodes.CallNative, new int[] { 1 })
-        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 10})
+        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 22})
           .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
           .Emit(Opcodes.CallNative, new int[] { 0 })
           .Emit(Opcodes.Constant, new int[] { 2 })
@@ -3395,16 +3395,16 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new ModuleCompiler()
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
         .Emit(Opcodes.Constant, new int[] { 0 })
         .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
         .Emit(Opcodes.CallNative, new int[] { 1 })
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 18})
-        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 34})
+        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
           .Emit(Opcodes.Constant, new int[] { 1 })
           .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
           .Emit(Opcodes.CallNative, new int[] { 1 })
-        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 6})
+        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 13})
           .Emit(Opcodes.Constant, new int[] { 2 })
           .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
           .Emit(Opcodes.CallNative, new int[] { 1 })
@@ -3454,16 +3454,16 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new ModuleCompiler()
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
         .Emit(Opcodes.Constant, new int[] { 0 })
         .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
         .Emit(Opcodes.CallNative, new int[] { 1 })
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 22})
-        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 43})
+        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
           .Emit(Opcodes.Constant, new int[] { 1 })
           .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
           .Emit(Opcodes.CallNative, new int[] { 1 })
-        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 10})
+        .Emit(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 22})
           .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
           .Emit(Opcodes.CallNative, new int[] { 0 })
           .Emit(Opcodes.Constant, new int[] { 2 })
@@ -3514,14 +3514,13 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new ModuleCompiler()
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
         .Emit(Opcodes.Constant, new int[] { 0 })
         .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
         .Emit(Opcodes.CallNative, new int[] { 1 })
       //lambda
-      .Emit(Opcodes.Jump, new int[] { 17 } ) //skip lambda
-      .Emit(Opcodes.Nop)
-      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 6})
+      .Emit(Opcodes.Jump, new int[] { 31 } ) //skip lambda
+      .Emit(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
         .Emit(Opcodes.Constant, new int[] { 1 })
         .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
         .Emit(Opcodes.CallNative, new int[] { 1 })
@@ -3529,7 +3528,7 @@ public class BHL_TestVM : BHL_TestBase
         .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
         .Emit(Opcodes.CallNative, new int[] { 1 })
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Lambda, new int[] { 11, 0 })
+      .Emit(Opcodes.Lambda, new int[] { 19, 0 })
       .Emit(Opcodes.Call, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 3 })
       .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
@@ -4342,7 +4341,7 @@ public class BHL_TestVM : BHL_TestBase
       string astr = "";
       if(i < a?.Length)
       {
-        astr = string.Format("0x{0:x2}", a[i]);
+        astr = string.Format("0x{0:x2} {0}", a[i]);
         if(aop != null)
         {
           --aop_size;
@@ -4362,7 +4361,7 @@ public class BHL_TestVM : BHL_TestBase
       string bstr = "";
       if(i < b?.Length)
       {
-        bstr = string.Format("0x{0:x2}", b[i]);
+        bstr = string.Format("0x{0:x2} {0}", b[i]);
         if(bop != null)
         {
           --bop_size;
@@ -4382,7 +4381,7 @@ public class BHL_TestVM : BHL_TestBase
       lens.Add(astr.Length);
       if(astr.Length > max_len)
         max_len = astr.Length;
-      cmp += string.Format("{0:x2}", i) + " " + astr + "{fill" + lens.Count + "} | " + bstr;
+      cmp += string.Format("{0,2}", i) + " " + astr + "{fill" + lens.Count + "} | " + bstr;
 
       if(a?.Length <= i || b?.Length <= i || a[i] != b[i])
       {
