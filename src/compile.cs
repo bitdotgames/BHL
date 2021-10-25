@@ -162,7 +162,7 @@ public class ModuleCompiler : AST_Visitor
   internal struct PendingBreak
   {
     internal Bytecode block;
-    internal int patch_pos;
+    internal int jump_opcode_end_pos;
   }
   List<PendingBreak> non_patched_breaks = new List<PendingBreak>();
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
@@ -642,22 +642,22 @@ public class ModuleCompiler : AST_Visitor
       switch(width)
       {
         case 1:
-          if((uint)op_val > 0xFF)
+          if(op_val < sbyte.MinValue || op_val > sbyte.MaxValue)
             throw new Exception("Operand value(1 byte) is out of bounds: " + op_val);
-          buf.Write((byte)op_val);
+          buf.Write8((uint)op_val);
         break;
         case 2:
-          if((uint)op_val > 0xFFFF)
+          if(op_val < short.MinValue || op_val > short.MaxValue)
             throw new Exception("Operand value(2 bytes) is out of bounds: " + op_val);
-          buf.Write((ushort)op_val);
+          buf.Write16((uint)op_val);
         break;
         case 3:
-          if((uint)op_val > 0xFFFFFF)
+          if(op_val < -8388607 || op_val > 8388607)
             throw new Exception("Operand value(3 bytes) is out of bounds: " + op_val);
           buf.Write24((uint)op_val);
         break;
         case 4:
-          buf.Write((uint)op_val);
+          buf.Write32((uint)op_val);
         break;
         default:
           throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
@@ -671,7 +671,7 @@ public class ModuleCompiler : AST_Visitor
   {
     //condition
     Visit(ast.children[idx]);
-    Emit(Opcodes.CondJump, new int[] { (int)ushort.MaxValue /*dummy placeholder*/});
+    Emit(Opcodes.CondJump, new int[] { 0/*dummy placeholder*/});
     int patch_pos = PeekCode().Position;
     //body
     Visit(ast.children[idx+1]);
@@ -687,22 +687,22 @@ public class ModuleCompiler : AST_Visitor
       var npb = non_patched_breaks[i];
       if(npb.block == curr_scope)
       {
-        int offset = curr_pos - npb.patch_pos;
+        int offset = curr_pos - npb.jump_opcode_end_pos;
         if(offset < short.MinValue || offset > short.MaxValue)
           throw new Exception("Too large jump offset: " + offset);
-        curr_scope.PatchAt(npb.patch_pos - 1, (uint)offset, num_bytes: 2);
+        curr_scope.PatchAt(npb.jump_opcode_end_pos - 2/*to offset bytes*/, (uint)offset, num_bytes: 2);
         non_patched_breaks.RemoveAt(i);
       }
     }
   }
 
-  void PatchJumpOffsetToCurrPos(int jump_opcode_pos)
+  void PatchJumpOffsetToCurrPos(int jump_opcode_end_pos)
   {
     var curr_scope = PeekCode();
-    int offset = curr_scope.Position - jump_opcode_pos;
-    if(offset < byte.MinValue || offset > byte.MaxValue) 
+    int offset = curr_scope.Position - jump_opcode_end_pos;
+    if(offset < sbyte.MinValue || offset > sbyte.MaxValue) 
       throw new Exception("Too large jump offset: " + offset);
-    curr_scope.PatchAt(jump_opcode_pos - 1, (uint)offset, num_bytes: 1);
+    curr_scope.PatchAt(jump_opcode_end_pos - 2/*go to jump address bytes*/, (uint)offset, num_bytes: 1);
   }
 
   public byte[] GetByteCode()
@@ -760,7 +760,7 @@ public class ModuleCompiler : AST_Visitor
     PushCode();
     //NOTE: since lambda's body can appear anywhere in the 
     //      compiled code we skip it by uncoditional jump over it
-    Emit(Opcodes.Jump, new int[] {0/*dummy placeholder*/});
+    Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
     var bytecode = PopCode(auto_append: false);
@@ -878,12 +878,16 @@ public class ModuleCompiler : AST_Visitor
 
         int block_start_pos = PeekCode().Position;
         int cond_op_pos = EmitConditionPlaceholderAndBody(ast, 0);
-        Emit(Opcodes.Jump, new int[] { 
-          -(PeekCode().Position -
-            block_start_pos +
-            LookupOpcode(Opcodes.Jump).operand_width[0]
-          )
-        });
+
+        int while_begin_offset_pos = 
+          PeekCode().Position -
+          block_start_pos + 
+          3/*jump opcode size*/
+          ;
+        //to the beginning of the loop
+        Emit(Opcodes.Jump, new int[] { -while_begin_offset_pos });
+
+        //patch 'jump out of the loop' position
         PatchJumpOffsetToCurrPos(cond_op_pos);
 
         PatchBreaksToCurrPos(PeekCode());
@@ -1123,7 +1127,12 @@ public class ModuleCompiler : AST_Visitor
   {
     Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
     int patch_pos = GetPositionUpTo(loop_blocks[loop_blocks.Count-1]);
-    non_patched_breaks.Add(new PendingBreak() { block = loop_blocks[loop_blocks.Count-1], patch_pos = patch_pos});
+    non_patched_breaks.Add(
+      new PendingBreak() 
+        { block = loop_blocks[loop_blocks.Count-1], 
+          jump_opcode_end_pos = patch_pos
+        }
+    );
   }
 
   public override void DoVisit(AST_PopValue ast)
@@ -1228,7 +1237,7 @@ public class ModuleCompiler : AST_Visitor
     if(ast.is_func_arg && ast.children.Count > 0)
     {                  
       var func_decl = func_decls[func_decls.Count-1];
-      Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - func_decl.required_args_num, 0 /*dummy placeholder for jump position*/ });
+      Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - func_decl.required_args_num, 0 /*dummy placeholder*/ });
       var pos = PeekCode().Position;
       VisitChildren(ast);
       PatchJumpOffsetToCurrPos(pos);

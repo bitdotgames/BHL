@@ -496,7 +496,7 @@ public class VM
           break;
           case Opcodes.GetMFuncNative:
           {
-            int func_idx = (int)Bytecode.Decode32(curr_frame.bytecode, ref ip);
+            int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
 
             int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             string class_type = curr_frame.constants[class_type_idx].str; 
