@@ -1367,18 +1367,18 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //__while__//
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.GreaterOrEqual)
-      .Emit(Opcodes.CondJump, new int[] { 9 })
+      .Emit(Opcodes.CondJump, new int[] { 10 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.Sub)
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.LoopJump, new int[] { 16 })
+      .Emit(Opcodes.Jump, new int[] { -16 })
       //__//
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
@@ -1434,7 +1434,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { 3 })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.SetVar, new int[] { 1 })
-      .Emit(Opcodes.LoopJump, new int[] { 23 })
+      .Emit(Opcodes.Jump, new int[] { -23 })
       //__//
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
@@ -1507,7 +1507,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Add)
       .Emit(Opcodes.SetVar, new int[] { 1 })
       .Emit(Opcodes.Inc, new int[] { 4 }) //fast increment hidden counter
-      .Emit(Opcodes.LoopJump, new int[] { 0x20 })
+      .Emit(Opcodes.Jump, new int[] { -32 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
@@ -1563,7 +1563,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.SetVar, new int[] { 1 })
-      .Emit(Opcodes.LoopJump, new int[] { 25 })
+      .Emit(Opcodes.Jump, new int[] { -25 })
       //__//
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
@@ -4437,7 +4437,7 @@ public class BHL_TestVM : BHL_TestBase
       return 0;
     uint pos = (uint)start_pos;
     foreach(int ow in op.operand_width)
-      Bytecode.Decode(bytes, ref pos);
+      Bytecode.Decode(bytes, ow, ref pos);
     return (int)pos - start_pos;
   }
 

@@ -22,7 +22,7 @@ public enum Opcodes
   GetFuncNative   = 0x13,
   GetFuncFromVar  = 0x14,
   GetFuncImported = 0x15,
-  GetMFuncNative = 0x16,
+  GetMFuncNative  = 0x16,
   SetAttr         = 0x20,
   SetAttrInplace  = 0x21,
   GetAttr         = 0xA,
@@ -30,7 +30,6 @@ public enum Opcodes
   ReturnVal       = 0xD,
   Jump            = 0xE,
   CondJump        = 0xF,
-  LoopJump        = 0x30,
   UnaryNot        = 0x31,
   UnaryNeg        = 0x32,
   And             = 0x33,
@@ -289,7 +288,7 @@ public class ModuleCompiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.Constant,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 3/*const idx*/ }
       }
     );
     DeclareOpcode(
@@ -398,84 +397,84 @@ public class ModuleCompiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.DeclVar,
-        operand_width = new int[] { 2 /*local idx*/, 1 /*type*/ }
+        operand_width = new int[] { 1 /*local idx*/, 1 /*Val type*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.ArgVar,
-        operand_width = new int[] { 2 /*local idx*/ }
+        operand_width = new int[] { 1 /*local idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.SetVar,
-        operand_width = new int[] { 2 /*local idx*/ }
+        operand_width = new int[] { 1 /*local idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.GetVar,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 1 /*local idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.SetAttr,
-        operand_width = new int[] { 4, 2 }
+        operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.SetAttrInplace,
-        operand_width = new int[] { 4, 2 }
+        operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.GetAttr,
-        operand_width = new int[] { 4, 2 }
+        operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.GetFunc,
-        operand_width = new int[] { 4/*ip*/ }
+        operand_width = new int[] { 3/*module ip*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.GetFuncNative,
-        operand_width = new int[] { 4/*idx*/ }
+        operand_width = new int[] { 3/*globs idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.GetMFuncNative,
-        operand_width = new int[] { 4/*idx*/, 4/*type idx*/ }
+        operand_width = new int[] { 2/*class member idx*/, 3/*type literal idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.GetFuncFromVar,
-        operand_width = new int[] { 4/*idx*/ }
+        operand_width = new int[] { 1/*local idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.GetFuncImported,
-        operand_width = new int[] { 4/*module idx*/, 4/*func idx*/ }
+        operand_width = new int[] { 4/*module name idx*/, 4/*func name idx*/ }
       }
     );
     DeclareOpcode(
@@ -498,7 +497,7 @@ public class ModuleCompiler : AST_Visitor
         name = Opcodes.Lambda,
         //TODO: this can be a 16bit offset relative to the 
         //      current ip position
-        operand_width = new int[] { 4 /*closure ip*/, 2/*local vars num*/ }
+        operand_width = new int[] { 3/*closure ip*/, 1/*local vars num*/ }
       }
     );
     DeclareOpcode(
@@ -538,49 +537,42 @@ public class ModuleCompiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.Jump,
-        operand_width = new int[] { 2 }
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.LoopJump,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 2 /*rel.offset*/}
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.CondJump,
-        operand_width = new int[] { 2 }
+        operand_width = new int[] { 2/*rel.offset*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.DefArg,
-        operand_width = new int[] { 1, 2 }
+        operand_width = new int[] { 1/*local scope idx*/, 2/*jump out of def.arg calc pos*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.New,
-        operand_width = new int[] { 4/*type idx*/ }
+        operand_width = new int[] { 3/*type idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.TypeCast,
-        operand_width = new int[] { 4/*type idx*/ }
+        operand_width = new int[] { 3/*type idx*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.Inc,
-        operand_width = new int[] { 2/*var idx*/ }
+        operand_width = new int[] { 1/*local idx*/ }
       }
     );
     DeclareOpcode(
@@ -607,7 +599,7 @@ public class ModuleCompiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.Import,
-        operand_width = new int[] { 4/*literal idx*/}
+        operand_width = new int[] { 4/*name idx*/}
       }
     );
   }
@@ -650,14 +642,19 @@ public class ModuleCompiler : AST_Visitor
       switch(width)
       {
         case 1:
-          if(byte.MinValue > op_val || op_val > byte.MaxValue)
+          if((uint)op_val > 0xFF)
             throw new Exception("Operand value(1 byte) is out of bounds: " + op_val);
           buf.Write((byte)op_val);
         break;
         case 2:
-          if(ushort.MinValue > op_val || op_val > ushort.MaxValue)
+          if((uint)op_val > 0xFFFF)
             throw new Exception("Operand value(2 bytes) is out of bounds: " + op_val);
           buf.Write((ushort)op_val);
+        break;
+        case 3:
+          if((uint)op_val > 0xFFFFFF)
+            throw new Exception("Operand value(3 bytes) is out of bounds: " + op_val);
+          buf.Write24((uint)op_val);
         break;
         case 4:
           buf.Write((uint)op_val);
@@ -674,7 +671,7 @@ public class ModuleCompiler : AST_Visitor
   {
     //condition
     Visit(ast.children[idx]);
-    Emit(Opcodes.CondJump, new int[] { (int)Bytecode.GetMaxValueForBytes(1) /*dummy placeholder*/});
+    Emit(Opcodes.CondJump, new int[] { (int)ushort.MaxValue /*dummy placeholder*/});
     int patch_pos = PeekCode().Position;
     //body
     Visit(ast.children[idx+1]);
@@ -691,10 +688,9 @@ public class ModuleCompiler : AST_Visitor
       if(npb.block == curr_scope)
       {
         int offset = curr_pos - npb.patch_pos;
-        if(offset < 0 || offset > Bytecode.GetMaxValueForBytes(1))
-          throw new Exception("Bad break jump position");
-        curr_scope.PatchAt(npb.patch_pos - 1, (byte)offset);
-
+        if(offset < short.MinValue || offset > short.MaxValue)
+          throw new Exception("Too large jump offset: " + offset);
+        curr_scope.PatchAt(npb.patch_pos - 1, (uint)offset, num_bytes: 2);
         non_patched_breaks.RemoveAt(i);
       }
     }
@@ -704,9 +700,9 @@ public class ModuleCompiler : AST_Visitor
   {
     var curr_scope = PeekCode();
     int offset = curr_scope.Position - jump_opcode_pos;
-    if(offset < 0 || Bytecode.GetBytesRequired((uint)offset) > 1) 
-      throw new Exception("Invalid offset: " + offset);
-    curr_scope.PatchAt(jump_opcode_pos - 1, (byte)offset);
+    if(offset < byte.MinValue || offset > byte.MaxValue) 
+      throw new Exception("Too large jump offset: " + offset);
+    curr_scope.PatchAt(jump_opcode_pos - 1, (uint)offset, num_bytes: 1);
   }
 
   public byte[] GetByteCode()
@@ -764,16 +760,16 @@ public class ModuleCompiler : AST_Visitor
     PushCode();
     //NOTE: since lambda's body can appear anywhere in the 
     //      compiled code we skip it by uncoditional jump over it
-    Emit(Opcodes.Jump, new int[] {(int)Bytecode.GetMaxValueForBytes(2)/*dummy placeholder*/});
+    Emit(Opcodes.Jump, new int[] {0/*dummy placeholder*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
     var bytecode = PopCode(auto_append: false);
 
     long jump_pos = bytecode.Length - 2;
-    if(jump_pos > Bytecode.GetMaxValueForBytes(2))
+    if(jump_pos > short.MaxValue)
       throw new Exception("Too large lambda body");
     //let's patch the jump placeholder with the actual jump position
-    bytecode.PatchAt(1, (ushort)jump_pos, max_bytes: 2, gap_filler: (byte)Opcodes.Nop);
+    bytecode.PatchAt(1, (uint)jump_pos, num_bytes: 2);
 
     uint ip = 2;//taking into account 'jump out of lambda'
     for(int i=0;i < code_stack.Count;++i)
@@ -880,10 +876,14 @@ public class ModuleCompiler : AST_Visitor
       {
         loop_blocks.Add(PeekCode());
 
-        int block_ip = PeekCode().Position;
+        int block_start_pos = PeekCode().Position;
         int cond_op_pos = EmitConditionPlaceholderAndBody(ast, 0);
-        Emit(Opcodes.LoopJump, new int[] { PeekCode().Position - block_ip
-                                           + LookupOpcode(Opcodes.LoopJump).operand_width[0] });
+        Emit(Opcodes.Jump, new int[] { 
+          -(PeekCode().Position -
+            block_start_pos +
+            LookupOpcode(Opcodes.Jump).operand_width[0]
+          )
+        });
         PatchJumpOffsetToCurrPos(cond_op_pos);
 
         PatchBreaksToCurrPos(PeekCode());
@@ -1133,7 +1133,8 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Literal ast)
   {
-    Emit(Opcodes.Constant, new int[] { AddConstant(ast) });
+    int literal_idx = AddConstant(ast);
+    Emit(Opcodes.Constant, new int[] { literal_idx });
   }
 
   public override void DoVisit(AST_BinaryOpExp ast)
@@ -1294,36 +1295,6 @@ public class Bytecode
 
   MemoryStream stream = new MemoryStream();
 
-  static public int GetBytesRequired(uint value)
-  {
-    if(value <= 240)
-      return 1;
-    else if(value <= 2287)
-      return 2;
-    else if(value <= 67823)
-      return 3;
-    else if(value <= 16777215)
-      return 4;
-    else 
-      return 5;
-  }
-
-  static public uint GetMaxValueForBytes(int bytes)
-  {
-    if(bytes == 1)
-      return 240;
-    else if(bytes == 2)
-      return 2287;
-    else if(bytes == 3)
-      return 67823;
-    else if(bytes == 4)
-      return 16777215;
-    else if(bytes == 5)
-      return uint.MaxValue;
-    else 
-      return 0;
-  }
-
   public void Reset(byte[] buffer, int size)
   {
     stream.SetLength(0);
@@ -1336,109 +1307,143 @@ public class Bytecode
     return stream.ToArray();
   }
 
-  public static uint Decode(byte[] bytecode, ref uint ip)
+  public static byte Decode8(byte[] bytecode, ref uint ip)
   {
-    int decoded = 0;
+    ++ip;
+    return bytecode[ip];
+  }
+
+  public static ushort Decode16(byte[] bytecode, ref uint ip)
+  {
+    ++ip;
+    ushort val = (ushort)
+      ((uint)bytecode[ip] | 
+       ((uint)bytecode[ip+1]) << 8
+       );
+    ;
+    ip += 1;
+    return val;
+  }
+
+  public static uint Decode24(byte[] bytecode, ref uint ip)
+  {
+    ++ip;
+    uint val = (uint)
+      ((uint)bytecode[ip]          | 
+       ((uint)bytecode[ip+1]) << 8 |
+       ((uint)bytecode[ip+2]) << 16
+       );
+    ;
+    ip += 2;
+    return val;
+  }
+
+  public static uint Decode32(byte[] bytecode, ref uint ip)
+  {
+    ++ip;
+    uint val = (uint)
+      ((uint)bytecode[ip]           | 
+       ((uint)bytecode[ip+1] << 8)  |
+       ((uint)bytecode[ip+2] << 16) |
+       ((uint)bytecode[ip+3] << 24)
+       );
+    ;
+    ip += 3;
+    return val;
+  }
+
+  public static uint Decode(byte[] bytecode, int num_bytes, ref uint ip)
+  {
+    if(num_bytes < 1 || num_bytes > 4)
+      throw new Exception("Invalid amount of bytes: " + num_bytes);
+
+    uint val = 0;
 
     ++ip;
-    var A0 = bytecode[ip];
 
-    if(A0 < 241)
-    {
-      decoded = A0;
-    }
-    else if(A0 > 240 && A0 < 248)
-    {
-      ++ip;
-      var A1 = bytecode[ip];
-      decoded = 240 + 256 * (A0 - 241) + A1;
-    }
-    else if(A0 == 249)
-    { 
-      ++ip;
-      var A1 = bytecode[ip];
-      ++ip;
-      var A2 = bytecode[ip];
+    if(num_bytes >= 1)
+      val |= (uint)bytecode[ip];
 
-      decoded = 2288 + (256 * A1) + A2;
-    }
-    else if(A0 >= 250 && A0 <= 251)
-    {
-      //A1..A3/A4/A5/A6/A7/A8 as a from 3 to 8 -byte big-ending integer
-      int len = 3 + A0 % 250;
-      for(int i = 1; i <= len; ++i)
-      {
-        ++ip;
-        decoded |= bytecode[ip] << (i-1) * 8; 
-      }
-    }
-    else
-      throw new Exception("Not supported code: " + A0);
+    if(num_bytes >= 2)
+      val |= ((uint)bytecode[ip+1]) << 8;
 
-    return (uint)decoded;
+    if(num_bytes >= 3)
+      val |= ((uint)bytecode[ip+2]) << 16;
+
+    if(num_bytes == 4)
+      val |= ((uint)bytecode[ip+3]) << 24;
+
+    ip += (uint)(num_bytes-1);
+
+    return val;
   }
 
-  public void Write(byte value)
+  public int Write(byte value)
   {
-    stream.WriteByte(value);
-  }
-
-  // http://sqlite.org/src4/doc/trunk/www/varint.wiki
-  public int Write(uint value)
-  {
-    if(value <= 65535)
-      return Write((ushort)value);
-
-    if(value <= 67823)
-    {
-      Write((byte)249);
-      Write((byte)((value - 2288) / 256));
-      Write((byte)((value - 2288) % 256));
-      return 3;
-    }
-
-    if(value <= 16777215)
-    {
-      Write((byte)250);
-      Write((byte)(value & 0xFF));
-      Write((byte)((value >> 8) & 0xFF));
-      Write((byte)((value >> 16) & 0xFF));
-      return 4;
-    }
-
-    // all other values of uint
-    Write((byte)251);
-    Write((byte)(value & 0xFF));
-    Write((byte)((value >> 8) & 0xFF));
-    Write((byte)((value >> 16) & 0xFF));
-    Write((byte)((value >> 24) & 0xFF));
-    return 5;
+    return Write8(value);
   }
 
   public int Write(ushort value)
   {
-    if(value <= 240)
-    {
-      Write((byte)value);
-      return 1;
-    }
+    return Write16(value);
+  }
 
-    if(value <= 2287)
-    {
-      Write((byte)((value - 240) / 256 + 241));
-      Write((byte)((value - 240) % 256));
-      return 2;
-    }
+  public int Write(uint value)
+  {
+    return Write32(value);
+  }
 
-    Write((byte)249);
-    Write((byte)((value - 2288) / 256));
-    Write((byte)((value - 2288) % 256));
+  public int Write(bool value)
+  {
+    stream.WriteByte((byte)(value ? 1 : 0));
+    return 1;
+  }
+
+  public int Write8(uint value)
+  {
+    stream.WriteByte((byte)(value & 0xFF));
+    return 1;
+  }
+
+  public int Write16(uint value)
+  {
+    Write8((byte)(value & 0xFF));
+    Write8((byte)((value >> 8) & 0xFF));
+    return 2;
+  }
+
+  public int Write24(uint value)
+  {
+    Write8((byte)(value & 0xFF));
+    Write8((byte)((value >> 8) & 0xFF));
+    Write8((byte)((value >> 16) & 0xFF));
     return 3;
   }
 
-  public void Write(bool value)
+  public int Write32(uint value)
   {
-    stream.WriteByte((byte)(value ? 1 : 0));
+    Write8((byte)(value & 0xFF));
+    Write8((byte)((value >> 8) & 0xFF));
+    Write8((byte)((value >> 16) & 0xFF));
+    Write8((byte)((value >> 24) & 0xFF));
+    return 4;
+  }
+
+  public int Write(uint value, int num_bytes)
+  {
+    if(num_bytes < 1 || num_bytes > 4)
+      throw new Exception("Invalid amount of bytes: " + num_bytes);
+
+    if(num_bytes >= 1)
+      Write8((byte)(value & 0xFF));
+    if(num_bytes >= 2)
+      Write8((byte)((value >> 8) & 0xFF));
+    if(num_bytes >= 3)
+      Write8((byte)((value >> 16) & 0xFF));
+    if(num_bytes == 4)
+      Write8((byte)((value >> 24) & 0xFF));
+
+    return num_bytes;
   }
 
   public void Write(Bytecode buffer)
@@ -1451,21 +1456,11 @@ public class Bytecode
     stream.WriteTo(buffer_stream);
   }
 
-  public void PatchAt(int pos, byte value)
+  public void PatchAt(int pos, uint value, int num_bytes)
   {
     long orig_pos = stream.Position;
     stream.Position = pos;
-    Write(value);
-    stream.Position = orig_pos;
-  }
-
-  public void PatchAt(int pos, ushort value, int max_bytes, byte gap_filler)
-  {
-    long orig_pos = stream.Position;
-    stream.Position = pos;
-    int written_bytes = Write(value);
-    for(int i=0;i<(max_bytes-written_bytes);++i)
-      Write(gap_filler);
+    Write(value, num_bytes);
     stream.Position = orig_pos;
   }
 }
