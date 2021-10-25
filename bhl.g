@@ -112,6 +112,7 @@ statement
   | 'yield' '(' ')'                                             #Yield //we need this one because of 'yield while()' special case
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
+  | 'continue'                                                  #Continue
   | 'return' explist?                                           #Return
   | 'seq' block                                                 #Seq
   | 'seq_' block                                                #Seq_
