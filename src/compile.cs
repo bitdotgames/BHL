@@ -765,11 +765,11 @@ public class ModuleCompiler : AST_Visitor
     Emit(Opcodes.Return);
     var bytecode = PopCode(auto_append: false);
 
-    long jump_pos = bytecode.Length - 2;
-    if(jump_pos > short.MaxValue)
+    long jump_out_pos = bytecode.Length - 3/*jump op code length*/;
+    if(jump_out_pos > short.MaxValue)
       throw new Exception("Too large lambda body");
     //let's patch the jump placeholder with the actual jump position
-    bytecode.PatchAt(1, (uint)jump_pos, num_bytes: 2);
+    bytecode.PatchAt(1, (uint)jump_out_pos, num_bytes: 2);
 
     uint ip = 2;//taking into account 'jump out of lambda'
     for(int i=0;i < code_stack.Count;++i)
