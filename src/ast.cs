@@ -787,6 +787,36 @@ public class AST_Break  : AST_Base
   }
 }
 
+public class AST_Continue  : AST_Base 
+{
+  static public  new  uint STATIC_CLASS_ID = 83587594;
+
+  public override uint CLASS_ID() 
+  {
+    return 83587594; 
+  }
+
+  public AST_Continue()
+  {
+    reset();
+  }
+
+  public override void reset() 
+  {
+    base.reset();
+  }
+
+  public override void syncFields(MetaSyncContext ctx) 
+  {
+    base.syncFields(ctx);
+  }
+
+  public override int getFieldsCount() 
+  {
+    return 0; 
+  }
+}
+
 public enum EnumLiteral 
 {
   NUM = 1,
@@ -1162,6 +1192,7 @@ public static class AST_Factory
       case 42771415: { return new AST_Call(); };
       case 204244643: { return new AST_Return(); };
       case 93587594: { return new AST_Break(); };
+      case 83587594: { return new AST_Continue(); };
       case 246902930: { return new AST_Literal(); };
       case 232512499: { return new AST_VarDecl(); };
       case 183750514: { return new AST_Block(); };

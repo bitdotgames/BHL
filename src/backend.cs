@@ -777,6 +777,11 @@ public class Interpreter : AST_Visitor
     curr_node.addChild(new BreakNode());
   }
 
+  public override void DoVisit(AST_Continue node)
+  {
+    throw new Exception("Not implemented");
+  }
+
   public override void DoVisit(AST_PopValue node)
   {
     curr_node.addChild(new PopValueNode());
@@ -884,6 +889,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_Call node);
   public abstract void DoVisit(AST_Return node);
   public abstract void DoVisit(AST_Break node);
+  public abstract void DoVisit(AST_Continue node);
   public abstract void DoVisit(AST_PopValue node);
   public abstract void DoVisit(AST_Literal node);
   public abstract void DoVisit(AST_BinaryOpExp node);
@@ -924,6 +930,8 @@ public abstract class AST_Visitor
       DoVisit(node as AST_Return);
     else if(node is AST_Break)
       DoVisit(node as AST_Break);
+    else if(node is AST_Continue)
+      DoVisit(node as AST_Continue);
     else if(node is AST_PopValue)
       DoVisit(node as AST_PopValue);
     else if(node is AST_BinaryOpExp)

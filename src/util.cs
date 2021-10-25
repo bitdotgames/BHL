@@ -822,6 +822,11 @@ static public class AST_Util
     return new AST_Break();
   }
   
+  static public AST_Continue New_Continue()
+  {
+    return new AST_Continue();
+  }
+  
   ////////////////////////////////////////////////////////
 
   static public AST_PopValue New_PopValue()
@@ -1173,6 +1178,12 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Break node)
   {
     Console.Write("(BRK ");
+    Console.Write(")");
+  }
+
+  public override void DoVisit(AST_Continue node)
+  {
+    Console.Write("(CONT ");
     Console.Write(")");
   }
 

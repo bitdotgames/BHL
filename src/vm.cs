@@ -277,7 +277,7 @@ public class VM
 
       {
         var opcode = (Opcodes)curr_frame.bytecode[ip];
-        //Console.WriteLine("OP " + opcode + " @ " + string.Format("0x{0:x2}", ip));
+        //Console.WriteLine("OP " + opcode + " @ " + string.Format("0x{0:x2} {0}", ip));
         switch(opcode)
         {
           case Opcodes.Nop:

@@ -159,12 +159,13 @@ public class ModuleCompiler : AST_Visitor
   List<Bytecode> code_stack = new List<Bytecode>() { null };
   List<AST_Block> ctrl_blocks = new List<AST_Block>();
   List<Bytecode> loop_blocks = new List<Bytecode>();
-  internal struct PendingBreak
+  internal struct NonPatchedJump
   {
     internal Bytecode block;
     internal int jump_opcode_end_pos;
   }
-  List<PendingBreak> non_patched_breaks = new List<PendingBreak>();
+  List<NonPatchedJump> non_patched_breaks = new List<NonPatchedJump>();
+  List<NonPatchedJump> non_patched_continues = new List<NonPatchedJump>();
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
 
@@ -678,7 +679,7 @@ public class ModuleCompiler : AST_Visitor
     return patch_pos;
   }
 
-  void PatchBreaksToCurrPos(Bytecode curr_scope)
+  void PatchBreaks(Bytecode curr_scope)
   {
     int curr_pos = curr_scope.Position;
 
@@ -692,6 +693,24 @@ public class ModuleCompiler : AST_Visitor
           throw new Exception("Too large jump offset: " + offset);
         curr_scope.PatchAt(npb.jump_opcode_end_pos - 2/*to offset bytes*/, (uint)offset, num_bytes: 2);
         non_patched_breaks.RemoveAt(i);
+      }
+    }
+  }
+
+  void PatchContinues(Bytecode curr_scope)
+  {
+    int curr_pos = curr_scope.Position - 3/*jump opcode size*/;
+
+    for(int i=non_patched_continues.Count;i-- > 0;)
+    {
+      var npb = non_patched_continues[i];
+      if(npb.block == curr_scope)
+      {
+        int offset = curr_pos - npb.jump_opcode_end_pos;
+        if(offset < short.MinValue || offset > short.MaxValue)
+          throw new Exception("Too large jump offset: " + offset);
+        curr_scope.PatchAt(npb.jump_opcode_end_pos - 2/*to offset bytes*/, (uint)offset, num_bytes: 2);
+        non_patched_continues.RemoveAt(i);
       }
     }
   }
@@ -890,7 +909,9 @@ public class ModuleCompiler : AST_Visitor
         //patch 'jump out of the loop' position
         PatchJumpOffsetToCurrPos(cond_op_pos);
 
-        PatchBreaksToCurrPos(PeekCode());
+        PatchContinues(PeekCode());
+
+        PatchBreaks(PeekCode());
 
         loop_blocks.Remove(PeekCode());
       }
@@ -1128,7 +1149,19 @@ public class ModuleCompiler : AST_Visitor
     Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
     int patch_pos = GetPositionUpTo(loop_blocks[loop_blocks.Count-1]);
     non_patched_breaks.Add(
-      new PendingBreak() 
+      new NonPatchedJump() 
+        { block = loop_blocks[loop_blocks.Count-1], 
+          jump_opcode_end_pos = patch_pos
+        }
+    );
+  }
+
+  public override void DoVisit(AST_Continue ast)
+  {
+    Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
+    int patch_pos = GetPositionUpTo(loop_blocks[loop_blocks.Count-1]);
+    non_patched_continues.Add(
+      new NonPatchedJump() 
         { block = loop_blocks[loop_blocks.Count-1], 
           jump_opcode_end_pos = patch_pos
         }

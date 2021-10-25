@@ -371,6 +371,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitBreak([NotNull] bhlParser.BreakContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>Continue</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitContinue([NotNull] bhlParser.ContinueContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Return</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

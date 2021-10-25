@@ -1569,6 +1569,19 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitContinue(bhlParser.ContinueContext ctx)
+  {
+    if(defer_stack > 0)
+      FireError(Location(ctx) + ": not within loop construct");
+
+    if(loops_stack == 0)
+      FireError(Location(ctx) + ": not within loop construct");
+
+    PeekAST().AddChild(AST_Util.New_Continue());
+
+    return null;
+  }
+
   public override object VisitDecls(bhlParser.DeclsContext ctx)
   {
     var decls = ctx.decl();

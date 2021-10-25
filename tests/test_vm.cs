@@ -1588,7 +1588,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       int x1 = 10
 
-      for( int i = 0; i < 3; i = i + 1 )
+      for( int i = 1; i < 3; i = i + 1 )
       {
         continue
         x1 = x1 - i
@@ -1612,16 +1612,16 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
       .Emit(Opcodes.Less)
       .Emit(Opcodes.CondJump, new int[] { 22 })
+      .Emit(Opcodes.Jump, new int[] { 16 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.Sub)
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Jump, new int[] { 9 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.SetVar, new int[] { 1 })
-      .Emit(Opcodes.Jump, new int[] { -32 })
+      .Emit(Opcodes.Jump, new int[] { -41 })
       //__//
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
