@@ -779,7 +779,8 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_Continue node)
   {
-    throw new Exception("Not implemented");
+    if(!node.jump_marker)
+      throw new Exception("Not implemented");
   }
 
   public override void DoVisit(AST_PopValue node)

@@ -164,6 +164,7 @@ public class ModuleCompiler : AST_Visitor
     internal Bytecode block;
     internal int jump_opcode_end_pos;
   }
+  Dictionary<Bytecode, int> continue_jump_markers = new Dictionary<Bytecode, int>();
   List<NonPatchedJump> non_patched_breaks = new List<NonPatchedJump>();
   List<NonPatchedJump> non_patched_continues = new List<NonPatchedJump>();
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
@@ -241,7 +242,7 @@ public class ModuleCompiler : AST_Visitor
     return curr_scope;
   }
 
-  int GetPositionFromParent(Bytecode parent)
+  int GetPositionRelativeToParent(Bytecode parent)
   {
     int i = code_stack.Count - 1;
     Bytecode tmp = code_stack[i];
@@ -699,14 +700,12 @@ public class ModuleCompiler : AST_Visitor
 
   void PatchContinues(Bytecode curr_scope)
   {
-    int curr_pos = curr_scope.Position - 3/*jump opcode size*/;
-
     for(int i=non_patched_continues.Count;i-- > 0;)
     {
       var npc = non_patched_continues[i];
       if(npc.block == curr_scope)
       {
-        int offset = curr_pos - npc.jump_opcode_end_pos - 9/*fixed size of a block responsible for variable increment*/;
+        int offset = continue_jump_markers[npc.block] - npc.jump_opcode_end_pos;
         if(offset < short.MinValue || offset > short.MaxValue)
           throw new Exception("Too large jump offset: " + offset);
         curr_scope.PatchAt(npc.jump_opcode_end_pos - 2/*to offset bytes*/, (uint)offset, num_bytes: 2);
@@ -893,7 +892,7 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumBlock.WHILE:
       {
-        Util.Verify(ast.children.Count == 2);
+        Util.Verify(ast.children.Count == 2, "Unexpected amount of children (must be 2)");
 
         loop_blocks.Add(PeekCode());
 
@@ -1149,7 +1148,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Break ast)
   {
     Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-    int patch_pos = GetPositionFromParent(loop_blocks[loop_blocks.Count-1]);
+    int patch_pos = GetPositionRelativeToParent(loop_blocks[loop_blocks.Count-1]);
     non_patched_breaks.Add(
       new NonPatchedJump() 
         { block = loop_blocks[loop_blocks.Count-1], 
@@ -1160,14 +1159,23 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Continue ast)
   {
-    Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-    int patch_pos = GetPositionFromParent(loop_blocks[loop_blocks.Count-1]);
-    non_patched_continues.Add(
-      new NonPatchedJump() 
-        { block = loop_blocks[loop_blocks.Count-1], 
-          jump_opcode_end_pos = patch_pos
-        }
-    );
+    var loop_block = loop_blocks[loop_blocks.Count-1];
+    if(ast.jump_marker)
+    {
+      int pos = GetPositionRelativeToParent(loop_block);
+      continue_jump_markers.Add(loop_block, pos);
+    }
+    else
+    {
+      Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
+      int pos = GetPositionRelativeToParent(loop_block);
+      non_patched_continues.Add(
+        new NonPatchedJump() 
+          { block = loop_block, 
+            jump_opcode_end_pos = pos
+          }
+      );
+    }
   }
 
   public override void DoVisit(AST_PopValue ast)

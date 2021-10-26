@@ -822,9 +822,11 @@ static public class AST_Util
     return new AST_Break();
   }
   
-  static public AST_Continue New_Continue()
+  static public AST_Continue New_Continue(bool jump_marker = false)
   {
-    return new AST_Continue();
+    return new AST_Continue() {
+      jump_marker = jump_marker
+    };
   }
   
   ////////////////////////////////////////////////////////

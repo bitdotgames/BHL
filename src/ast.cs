@@ -790,6 +790,7 @@ public class AST_Break  : AST_Base
 public class AST_Continue  : AST_Base 
 {
   static public  new  uint STATIC_CLASS_ID = 83587594;
+  public bool jump_marker;
 
   public override uint CLASS_ID() 
   {
@@ -809,11 +810,13 @@ public class AST_Continue  : AST_Base
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
+
+    MetaHelper.sync(ctx, ref jump_marker);
   }
 
   public override int getFieldsCount() 
   {
-    return 0; 
+    return 1; 
   }
 }
 

@@ -2245,6 +2245,7 @@ public class Frontend : bhlBaseVisitor<object>
     PushAST(ast);
     CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     PopAST();
+    ast.children[ast.children.Count-1].AddChild(AST_Util.New_Continue(jump_marker: true));
 
     --loops_stack;
 
@@ -2298,6 +2299,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(for_post_iter != null)
     {
       PushAST(block);
+      PeekAST().AddChild(AST_Util.New_Continue(jump_marker: true));
       for(int i=0;i<for_post_iter.forStmts().forStmt().Length;++i)
       {
         var stmt = for_post_iter.forStmts().forStmt()[i];
@@ -2450,6 +2452,7 @@ public class Frontend : bhlBaseVisitor<object>
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_symb));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_symb));
 
+    block.AddChild(AST_Util.New_Continue(jump_marker: true));
     //appending counter increment
     block.AddChild(AST_Util.New_Inc(arr_cnt_symb));
     PopAST();
@@ -2503,23 +2506,6 @@ public class Frontend : bhlBaseVisitor<object>
         Visit(sts[i]);
     }
     PopAST();
-
-    //TODO: this optimization is not properly handled in VM version and doesn't make sense there
-    //NOTE: replacing last return in a function with its statement as an optimization 
-    //if(type == EnumBlock.FUNC && 
-    //   ast.children.Count > 0 && 
-    //   ast.children[ast.children.Count-1] is AST_Return)
-    //{
-    //  var ret = ast.children[ast.children.Count-1]; 
-    //  var ret_children = ret.GetChildren();
-    //  if(ret_children != null)
-    //  {
-    //    if(ret_children.Count > 0)
-    //      ast.children[ast.children.Count-1] = ret_children[0];
-    //    for(int i=1;i<ret_children.Count;++i)
-    //      ast.children.Add(ret_children[i]);
-    //  }
-    //}
 
     //NOTE: we need to undefine all symbols which were defined at the current
     //      scope level
