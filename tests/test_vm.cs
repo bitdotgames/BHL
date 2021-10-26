@@ -1612,7 +1612,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
       .Emit(Opcodes.Less)
       .Emit(Opcodes.CondJump, new int[] { 22 })
-      .Emit(Opcodes.Jump, new int[] { 16 })
+      .Emit(Opcodes.Jump, new int[] { 7 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.Sub)
@@ -1621,7 +1621,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.Add)
       .Emit(Opcodes.SetVar, new int[] { 1 })
-      .Emit(Opcodes.Jump, new int[] { -41 })
+      .Emit(Opcodes.Jump, new int[] { -32 })
       //__//
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)

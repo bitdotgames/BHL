@@ -241,7 +241,7 @@ public class ModuleCompiler : AST_Visitor
     return curr_scope;
   }
 
-  int GetPositionUpTo(Bytecode parent)
+  int GetPositionFromParent(Bytecode parent)
   {
     int i = code_stack.Count - 1;
     Bytecode tmp = code_stack[i];
@@ -703,13 +703,13 @@ public class ModuleCompiler : AST_Visitor
 
     for(int i=non_patched_continues.Count;i-- > 0;)
     {
-      var npb = non_patched_continues[i];
-      if(npb.block == curr_scope)
+      var npc = non_patched_continues[i];
+      if(npc.block == curr_scope)
       {
-        int offset = curr_pos - npb.jump_opcode_end_pos;
+        int offset = curr_pos - npc.jump_opcode_end_pos - 9/*fixed size of a block responsible for variable increment*/;
         if(offset < short.MinValue || offset > short.MaxValue)
           throw new Exception("Too large jump offset: " + offset);
-        curr_scope.PatchAt(npb.jump_opcode_end_pos - 2/*to offset bytes*/, (uint)offset, num_bytes: 2);
+        curr_scope.PatchAt(npc.jump_opcode_end_pos - 2/*to offset bytes*/, (uint)offset, num_bytes: 2);
         non_patched_continues.RemoveAt(i);
       }
     }
@@ -893,21 +893,23 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumBlock.WHILE:
       {
+        Util.Verify(ast.children.Count == 2);
+
         loop_blocks.Add(PeekCode());
 
-        int block_start_pos = PeekCode().Position;
-        int cond_op_pos = EmitConditionPlaceholderAndBody(ast, 0);
+        int while_start_pos = PeekCode().Position;
+
+        int cond_opcode_end_pos = EmitConditionPlaceholderAndBody(ast, 0);
 
         int while_begin_offset_pos = 
-          PeekCode().Position -
-          block_start_pos + 
-          3/*jump opcode size*/
+          while_start_pos - 
+          (PeekCode().Position + 3/*jump itself opcode size*/)
           ;
         //to the beginning of the loop
-        Emit(Opcodes.Jump, new int[] { -while_begin_offset_pos });
+        Emit(Opcodes.Jump, new int[] { while_begin_offset_pos });
 
         //patch 'jump out of the loop' position
-        PatchJumpOffsetToCurrPos(cond_op_pos);
+        PatchJumpOffsetToCurrPos(cond_opcode_end_pos);
 
         PatchContinues(PeekCode());
 
@@ -1147,7 +1149,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Break ast)
   {
     Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-    int patch_pos = GetPositionUpTo(loop_blocks[loop_blocks.Count-1]);
+    int patch_pos = GetPositionFromParent(loop_blocks[loop_blocks.Count-1]);
     non_patched_breaks.Add(
       new NonPatchedJump() 
         { block = loop_blocks[loop_blocks.Count-1], 
@@ -1159,7 +1161,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Continue ast)
   {
     Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-    int patch_pos = GetPositionUpTo(loop_blocks[loop_blocks.Count-1]);
+    int patch_pos = GetPositionFromParent(loop_blocks[loop_blocks.Count-1]);
     non_patched_continues.Add(
       new NonPatchedJump() 
         { block = loop_blocks[loop_blocks.Count-1], 

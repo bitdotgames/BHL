@@ -2305,7 +2305,6 @@ public class Frontend : bhlBaseVisitor<object>
         var post_assign_exp = stmt.assignExp();
         CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
       }
-
       PopAST();
     }
     PopAST();
