@@ -1639,6 +1639,68 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBreakInForeachLoop()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(3)
+      int accum = 0
+
+      foreach(arr as int a) {
+        if(a == 3) {
+          break
+        }
+        accum = accum + a
+      }
+
+      return accum
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestContinueInForeachLoop()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(3)
+      int accum = 0
+
+      foreach(arr as int a) {
+        if(a == 1) {
+          continue
+        }
+        accum = accum + a
+      }
+
+      return accum
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBooleanInCondition()
   {
     string bhl = @"
