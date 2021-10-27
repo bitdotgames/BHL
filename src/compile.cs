@@ -638,6 +638,9 @@ public class ModuleCompiler : AST_Visitor
 
     for(int i = 0; operands != null && i < operands.Length; ++i)
     {
+      if(def.operand_width == null || def.operand_width.Length <= i)
+        throw new Exception("Invalid operand for opcode:" + op + ", at index:" + i);
+
       int width = def.operand_width[i];
       int op_val = operands[i];
 

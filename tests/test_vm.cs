@@ -1346,7 +1346,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestWhileCondition()
+  public void TestWhileWithCondition()
   {
     string bhl = @"
     func int test()
@@ -1387,6 +1387,90 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     AssertEqual(c.Constants, new List<Const>() { new Const(100), new Const(10) });
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBreakInWhile()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 100
+
+      while( x1 >= 10 )
+      {
+        x1 = x1 - 10
+        if(x1 < 80) {
+          break
+        }
+      }
+
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      //__while__//
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+      .Emit(Opcodes.GreaterOrEqual)
+      .Emit(Opcodes.CondJump, new int[] { 25 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 80) })
+      .Emit(Opcodes.Less)
+      .Emit(Opcodes.CondJump, new int[] { 3 })
+      .Emit(Opcodes.Jump, new int[] { 3 })
+      .Emit(Opcodes.Jump, new int[] { -35 })
+      //__//
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(vm.PopValue().num, 70);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestContinueInWhile()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 100
+
+      while( x1 >= 10 )
+      {
+        x1 = x1 - 10
+        continue
+        x1 = x1 + 10
+      }
+
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
 
     var vm = MakeVM(c);
     vm.Start("test");
