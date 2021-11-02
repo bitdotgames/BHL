@@ -146,7 +146,7 @@ public class VM
 
   public class ValPool
   {
-    public Queue<Val> pool = new Queue<Val>(64);
+    public Stack<Val> pool = new Stack<Val>();
     public int miss = 0;
     public int hit = 0;
 
@@ -166,7 +166,7 @@ public class VM
       {
         ++miss;
         var tmp = new Val(vm); 
-        pool.Enqueue(tmp);
+        pool.Push(tmp);
       }
     }
 
@@ -1247,7 +1247,7 @@ public class Val
     else
     {
       ++vm.vals.hit;
-      dv = vm.vals.pool.Dequeue();
+      dv = vm.vals.pool.Pop();
 #if DEBUG_REFS
       Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
@@ -1265,7 +1265,7 @@ public class Val
       throw new Exception("Deleting invalid object, refs " + dv._refs);
     dv._refs = -1;
 
-    dv.vm.vals.pool.Enqueue(dv);
+    dv.vm.vals.pool.Push(dv);
     if(dv.vm.vals.pool.Count > dv.vm.vals.miss)
       throw new Exception("Unbalanced New/Del " + dv.vm.vals.pool.Count + " " + dv.vm.vals.miss);
   }
