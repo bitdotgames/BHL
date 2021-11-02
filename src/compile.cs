@@ -895,7 +895,8 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumBlock.WHILE:
       {
-        Util.Verify(ast.children.Count == 2, "Unexpected amount of children (must be 2)");
+        if(ast.children.Count != 2)
+         throw new Exception("Unexpected amount of children (must be 2)");
 
         loop_blocks.Add(PeekCode());
 
