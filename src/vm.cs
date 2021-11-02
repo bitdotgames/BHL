@@ -144,6 +144,99 @@ public class VM
   public delegate void FieldSetter(ref Val v, Val nv);
   public delegate void FieldRef(Val v, out Val res);
 
+  public class ValPool
+  {
+    public Queue<Val> pool = new Queue<Val>(64);
+    public int miss = 0;
+    public int hit = 0;
+
+    public int Count
+    {
+      get { return miss; }
+    }
+
+    public int Free
+    {
+      get { return pool.Count; }
+    }
+
+    public void Alloc(VM vm, int num)
+    {
+      for(int i=0;i<num;++i)
+      {
+        ++miss;
+        var tmp = new Val(vm); 
+        pool.Enqueue(tmp);
+      }
+    }
+
+    public string Dump()
+    {
+      string res = "=== Val POOL ===\n";
+      res += "total:" + Count + " free:" + Free + "\n";
+      var dvs = new Val[pool.Count];
+      pool.CopyTo(dvs, 0);
+      for(int i=dvs.Length;i-- > 0;)
+      {
+        var v = dvs[i];
+        res += v + " (refs:" + v._refs + ") " + v.GetHashCode() + "\n"; 
+      }
+      return res;
+    }
+  }
+  internal ValPool vals = new ValPool();
+  public ValPool Vals {
+    get {
+      return vals;
+    }
+  }
+
+  public class ValListPool
+  {
+    public Stack<ValList> pool = new Stack<ValList>();
+    public int hit;
+    public int miss;
+
+    public int Count
+    {
+      get { return miss; }
+    }
+
+    public int Free
+    {
+      get { return pool.Count; }
+    }
+  }
+  internal ValListPool vlists = new ValListPool();
+  public ValListPool Vlists {
+    get {
+      return vlists;
+    }
+  }
+
+  public class ValDictPool
+  {
+    public Stack<ValDict> pool = new Stack<ValDict>();
+    public int hit;
+    public int miss;
+
+    public int Count
+    {
+      get { return miss; }
+    }
+
+    public int Free
+    {
+      get { return pool.Count; }
+    }
+  }
+  internal ValDictPool vdicts = new ValDictPool();
+  public ValDictPool Vdicts {
+    get {
+      return vdicts;
+    }
+  }
+
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
     if(globs == null)
@@ -290,7 +383,7 @@ public class VM
               throw new Exception("Index out of constants: " + const_idx + ", total: " + curr_frame.constants.Count);
 
             var cn = curr_frame.constants[const_idx];
-            curr_frame.stack.Push(cn.ToVal());
+            curr_frame.stack.Push(cn.ToVal(this));
           }
           break;
           case Opcodes.TypeCast:
@@ -300,9 +393,9 @@ public class VM
 
             //TODO: make it more universal and robust
             if(cast_type == "string")
-              curr_frame.stack.Push(Val.NewStr(curr_frame.PopRelease().num.ToString()));
+              curr_frame.stack.Push(Val.NewStr(this, curr_frame.PopRelease().num.ToString()));
             else if(cast_type == "int")
-              curr_frame.stack.Push(Val.NewNum(curr_frame.PopRelease().num));
+              curr_frame.stack.Push(Val.NewNum(this, curr_frame.PopRelease().num));
             else
               throw new Exception("Not supported typecast type: " + cast_type);
           }
@@ -365,13 +458,13 @@ public class VM
             byte type = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             Val v;
             if(type == Val.NUMBER)
-              v = Val.NewNum(0);
+              v = Val.NewNum(this, 0);
             else if(type == Val.STRING)
-              v = Val.NewStr("");
+              v = Val.NewStr(this, "");
             else if(type == Val.BOOL)
-              v = Val.NewBool(false);
+              v = Val.NewBool(this, false);
             else
-              v = Val.NewObj(null);
+              v = Val.NewObj(this, null);
             curr_frame.locals[local_idx] = v;
           }
           break;
@@ -386,7 +479,7 @@ public class VM
               throw new Exception("Class type not found: " + class_type);
 
             var obj = curr_frame.stack.PopFast();
-            var res = Val.New();
+            var res = Val.New(this);
             var field_symb = (FieldSymbol)class_symb.members[fld_idx];
             field_symb.VM_getter(obj, ref res);
             curr_frame.stack.Push(res);
@@ -460,14 +553,14 @@ public class VM
           {
             uint func_ip = Bytecode.Decode24(curr_frame.bytecode, ref ip);
             var func_frame = new Frame(curr_frame, func_ip);
-            curr_frame.stack.Push(Val.NewObj(func_frame));
+            curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
           case Opcodes.GetFuncFromVar:
           {
             int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             var val = curr_frame.locals[local_var_idx];
-            curr_frame.stack.Push(Val.NewObj(val._obj));
+            curr_frame.stack.Push(Val.NewObj(this, val._obj));
           }
           break;
           case Opcodes.GetFuncImported:
@@ -482,7 +575,7 @@ public class VM
             uint func_ip = module.func2ip[func_name];
 
             var func_frame = new Frame(module, func_ip);
-            curr_frame.stack.Push(Val.NewObj(func_frame));
+            curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
           case Opcodes.GetFuncNative:
@@ -491,7 +584,7 @@ public class VM
 
             var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
 
-            curr_frame.stack.Push(Val.NewObj(func_symb));
+            curr_frame.stack.Push(Val.NewObj(this, func_symb));
           }
           break;
           case Opcodes.GetMFuncNative:
@@ -508,7 +601,7 @@ public class VM
 
             var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
 
-            curr_frame.stack.Push(Val.NewObj(func_symb));
+            curr_frame.stack.Push(Val.NewObj(this, func_symb));
           }
           break;
           case Opcodes.Call:
@@ -522,7 +615,7 @@ public class VM
             for(int i = 0; i < args_info.CountArgs(); ++i)
               fr.stack.Push(curr_frame.stack.PopFast());
             if(args_info.HasDefaultUsedArgs())
-              fr.stack.Push(Val.NewNum(args_bits));
+              fr.stack.Push(Val.NewNum(this, args_bits));
 
             //let's remember ip to return to
             fr.return_ip = ip;
@@ -567,7 +660,7 @@ public class VM
             for(int i=0;i<local_vars_num;++i)
               fr.locals.Add(null);
 
-            var frval = Val.New();
+            var frval = Val.New(this);
             frval._obj = fr;
             frval._num = func_ip;
 
@@ -585,7 +678,7 @@ public class VM
             //TODO: amout of local variables must be known ahead 
             int gaps = local_idx - fr.locals.Count + 1;
             for(int i=0;i<gaps;++i)
-              fr.locals.Add(Val.New()); 
+              fr.locals.Add(Val.New(this)); 
 
             var up_val = curr_frame.locals[up_idx];
             up_val.Retain();
@@ -657,7 +750,7 @@ public class VM
     if(cls == null)
       throw new Exception("Could not find class symbol: " + class_type);
 
-    var val = Val.New(); 
+    var val = Val.New(this); 
     cls.VM_creator(ref val);
     curr_frame.stack.Push(val);
   }
@@ -737,21 +830,21 @@ public class VM
     return fibers.Count == 0 ? BHS.SUCCESS : BHS.RUNNING;
   }
 
-  static void ExecuteUnaryOp(Opcodes op, Frame curr_frame)
+  void ExecuteUnaryOp(Opcodes op, Frame curr_frame)
   {
     var operand = curr_frame.PopRelease().num;
     switch(op)
     {
       case Opcodes.UnaryNot:
-        curr_frame.stack.Push(Val.NewBool(operand != 1));
+        curr_frame.stack.Push(Val.NewBool(this, operand != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.stack.Push(Val.NewNum(operand * -1));
+        curr_frame.stack.Push(Val.NewNum(this, operand * -1));
       break;
     }
   }
 
-  static void ExecuteBinaryOp(Opcodes op, Frame curr_frame)
+  void ExecuteBinaryOp(Opcodes op, Frame curr_frame)
   {
     var r_operand = curr_frame.stack.PopFast();
     var l_operand = curr_frame.stack.PopFast();
@@ -761,51 +854,51 @@ public class VM
       case Opcodes.Add:
         //TODO: add Opcodes.Concat?
         if((r_operand._type == Val.STRING) && (l_operand._type == Val.STRING))
-          curr_frame.stack.Push(Val.NewStr((string)l_operand._obj + (string)r_operand._obj));
+          curr_frame.stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
         else
-          curr_frame.stack.Push(Val.NewNum(l_operand._num + r_operand._num));
+          curr_frame.stack.Push(Val.NewNum(this, l_operand._num + r_operand._num));
       break;
       case Opcodes.Sub:
-        curr_frame.stack.Push(Val.NewNum(l_operand._num - r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(this, l_operand._num - r_operand._num));
       break;
       case Opcodes.Div:
-        curr_frame.stack.Push(Val.NewNum(l_operand._num / r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(this, l_operand._num / r_operand._num));
       break;
       case Opcodes.Mul:
-        curr_frame.stack.Push(Val.NewNum(l_operand._num * r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(this, l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
-        curr_frame.stack.Push(Val.NewBool(l_operand.IsEqual(r_operand)));
+        curr_frame.stack.Push(Val.NewBool(this, l_operand.IsEqual(r_operand)));
       break;
       case Opcodes.NotEqual:
-        curr_frame.stack.Push(Val.NewBool(!l_operand.IsEqual(r_operand)));
+        curr_frame.stack.Push(Val.NewBool(this, !l_operand.IsEqual(r_operand)));
       break;
       case Opcodes.Greater:
-        curr_frame.stack.Push(Val.NewBool(l_operand._num > r_operand._num));
+        curr_frame.stack.Push(Val.NewBool(this, l_operand._num > r_operand._num));
       break;
       case Opcodes.Less:
-        curr_frame.stack.Push(Val.NewBool(l_operand._num < r_operand._num));
+        curr_frame.stack.Push(Val.NewBool(this, l_operand._num < r_operand._num));
       break;
       case Opcodes.GreaterOrEqual:
-        curr_frame.stack.Push(Val.NewBool(l_operand._num >= r_operand._num));
+        curr_frame.stack.Push(Val.NewBool(this, l_operand._num >= r_operand._num));
       break;
       case Opcodes.LessOrEqual:
-        curr_frame.stack.Push(Val.NewBool(l_operand._num <= r_operand._num));
+        curr_frame.stack.Push(Val.NewBool(this, l_operand._num <= r_operand._num));
       break;
       case Opcodes.And:
-        curr_frame.stack.Push(Val.NewBool(l_operand._num == 1 && r_operand._num == 1));
+        curr_frame.stack.Push(Val.NewBool(this, l_operand._num == 1 && r_operand._num == 1));
       break;
       case Opcodes.Or:
-        curr_frame.stack.Push(Val.NewBool(l_operand._num == 1 || r_operand._num == 1));
+        curr_frame.stack.Push(Val.NewBool(this, l_operand._num == 1 || r_operand._num == 1));
       break;
       case Opcodes.BitAnd:
-        curr_frame.stack.Push(Val.NewNum((int)l_operand._num & (int)r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(this, (int)l_operand._num & (int)r_operand._num));
       break;
       case Opcodes.BitOr:
-        curr_frame.stack.Push(Val.NewNum((int)l_operand._num | (int)r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        curr_frame.stack.Push(Val.NewNum((int)l_operand._num % (int)r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(this, (int)l_operand._num % (int)r_operand._num));
       break;
     }
 
@@ -813,14 +906,14 @@ public class VM
     l_operand.Release();
   }
 
-  public Val PopValue()
+  public Val PopRelease()
   {
     var val = stack.PopFast();
     val.RefMod(RefOp.DEC | RefOp.USR_DEC);
     return val;
   }
 
-  public void PushValue(Val v)
+  public void PushRetain(Val v)
   {
     v.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(v);
@@ -1132,29 +1225,29 @@ public class Val
   public double _num;
   public object _obj;
 
-  static Queue<Val> pool = new Queue<Val>(64);
-  static int pool_miss;
-  static int pool_hit;
+  internal VM vm;
 
   //NOTE: use New() instead
-  internal Val()
-  {}
+  internal Val(VM vm)
+  {
+    this.vm = vm;
+  }
 
-  static public Val New()
+  static public Val New(VM vm)
   {
     Val dv;
-    if(pool.Count == 0)
+    if(vm.vals.pool.Count == 0)
     {
-      ++pool_miss;
-      dv = new Val();
+      ++vm.vals.miss;
+      dv = new Val(vm);
 #if DEBUG_REFS
       Console.WriteLine("NEW: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
     }
     else
     {
-      ++pool_hit;
-      dv = pool.Dequeue();
+      ++vm.vals.hit;
+      dv = vm.vals.pool.Dequeue();
 #if DEBUG_REFS
       Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
@@ -1172,9 +1265,9 @@ public class Val
       throw new Exception("Deleting invalid object, refs " + dv._refs);
     dv._refs = -1;
 
-    pool.Enqueue(dv);
-    if(pool.Count > pool_miss)
-      throw new Exception("Unbalanced New/Del " + pool.Count + " " + pool_miss);
+    dv.vm.vals.pool.Enqueue(dv);
+    if(dv.vm.vals.pool.Count > dv.vm.vals.miss)
+      throw new Exception("Unbalanced New/Del " + dv.vm.vals.pool.Count + " " + dv.vm.vals.miss);
   }
 
   //NOTE: refcount is not reset
@@ -1265,9 +1358,9 @@ public class Val
     RefMod(RefOp.USR_DEC | RefOp.DEC);
   }
 
-  static public Val NewStr(string s)
+  static public Val NewStr(VM vm, string s)
   {
-    Val dv = New();
+    Val dv = New(vm);
     dv.SetStr(s);
     return dv;
   }
@@ -1279,9 +1372,9 @@ public class Val
     _obj = s;
   }
 
-  static public Val NewNum(int n)
+  static public Val NewNum(VM vm, int n)
   {
-    Val dv = New();
+    Val dv = New(vm);
     dv.SetNum(n);
     return dv;
   }
@@ -1293,9 +1386,9 @@ public class Val
     _num = n;
   }
 
-  static public Val NewNum(double n)
+  static public Val NewNum(VM vm, double n)
   {
-    Val dv = New();
+    Val dv = New(vm);
     dv.SetNum(n);
     return dv;
   }
@@ -1307,9 +1400,9 @@ public class Val
     _num = n;
   }
 
-  static public Val NewBool(bool b)
+  static public Val NewBool(VM vm, bool b)
   {
-    Val dv = New();
+    Val dv = New(vm);
     dv.SetBool(b);
     return dv;
   }
@@ -1321,9 +1414,9 @@ public class Val
     _num = b ? 1.0f : 0.0f;
   }
 
-  static public Val NewObj(object o)
+  static public Val NewObj(VM vm, object o)
   {
-    Val dv = New();
+    Val dv = New(vm);
     dv.SetObj(o);
     return dv;
   }
@@ -1335,9 +1428,9 @@ public class Val
     _obj = o;
   }
 
-  static public Val NewNil()
+  static public Val NewNil(VM vm)
   {
-    Val dv = New();
+    Val dv = New(vm);
     dv.SetNil();
     return dv;
   }
@@ -1391,57 +1484,6 @@ public class Val
     else
       throw new Exception("ToAny(): please support type: " + type);
   }
-
-  static public void PoolAlloc(int num)
-  {
-    for(int i=0;i<num;++i)
-    {
-      ++pool_miss;
-      var tmp = new Val(); 
-      pool.Enqueue(tmp);
-    }
-  }
-
-  static public void PoolClear()
-  {
-    pool_hit = 0;
-    pool_miss = 0;
-    pool.Clear();
-  }
-
-  static public string PoolDump()
-  {
-    string res = "=== Val POOL ===\n";
-    res += "total:" + PoolCount + " free:" + PoolCountFree + "\n";
-    var dvs = new Val[pool.Count];
-    pool.CopyTo(dvs, 0);
-    for(int i=dvs.Length;i-- > 0;)
-    {
-      var v = dvs[i];
-      res += v + " (refs:" + v._refs + ") " + v.GetHashCode() + "\n"; 
-    }
-    return res;
-  }
-
-  static public int PoolHits
-  {
-    get { return pool_hit; } 
-  }
-
-  static public int PoolMisses
-  {
-    get { return pool_miss; } 
-  }
-
-  static public int PoolCount
-  {
-    get { return pool_miss; }
-  }
-
-  static public int PoolCountFree
-  {
-    get { return pool.Count; }
-  }
 }
 
 public class ValList : IList<Val>, IValRefcounted
@@ -1453,6 +1495,8 @@ public class ValList : IList<Val>, IValRefcounted
   //      public only for inspection
   public int refs;
 
+  internal VM vm;
+
   //////////////////IList//////////////////
 
   public int Count { get { return lst.Count; } }
@@ -1461,11 +1505,6 @@ public class ValList : IList<Val>, IValRefcounted
   public bool IsReadOnly { get { return false; } }
   public bool IsSynchronized { get { throw new NotImplementedException(); } }
   public object SyncRoot { get { throw new NotImplementedException(); } }
-
-  public static implicit operator Val(ValList lst)
-  {
-    return Val.NewObj(lst);
-  }
 
   public void Add(Val dv)
   {
@@ -1578,26 +1617,24 @@ public class ValList : IList<Val>, IValRefcounted
 
   ///////////////////////////////////////
 
-  static public Stack<ValList> pool = new Stack<ValList>();
-  static int pool_hit;
-  static int pool_miss;
-
   //NOTE: use New() instead
-  internal ValList()
-  {}
+  internal ValList(VM vm)
+  {
+    this.vm = vm;
+  }
 
-  public static ValList New()
+  public static ValList New(VM vm)
   {
     ValList lst;
-    if(pool.Count == 0)
+    if(vm.vlists.pool.Count == 0)
     {
-      ++pool_miss;
-      lst = new ValList();
+      ++vm.vlists.miss;
+      lst = new ValList(vm);
     }
     else
     {
-      ++pool_hit;
-      lst = pool.Pop();
+      ++vm.vlists.hit;
+      lst = vm.vlists.pool.Pop();
 
       if(lst.refs != -1)
         throw new Exception("Expected to be released, refs " + lst.refs);
@@ -1614,37 +1651,10 @@ public class ValList : IList<Val>, IValRefcounted
 
     lst.refs = -1;
     lst.Clear();
-    pool.Push(lst);
+    lst.vm.vlists.pool.Push(lst);
 
-    if(pool.Count > pool_miss)
+    if(lst.vm.vlists.pool.Count > lst.vm.vlists.miss)
       throw new Exception("Unbalanced New/Del");
-  }
-
-  static public void PoolClear()
-  {
-    pool_miss = 0;
-    pool_hit = 0;
-    pool.Clear();
-  }
-
-  static public int PoolHits
-  {
-    get { return pool_hit; } 
-  }
-
-  static public int PoolMisses
-  {
-    get { return pool_miss; } 
-  }
-
-  static public int PoolCount
-  {
-    get { return pool_miss; }
-  }
-
-  static public int PoolCountFree
-  {
-    get { return pool.Count; }
   }
 }
 
@@ -1656,13 +1666,13 @@ public class ValDict : IValRefcounted
   //      public only for inspection
   public int refs;
 
-  static public Stack<ValDict> pool = new Stack<ValDict>();
-  static int pool_hit;
-  static int pool_miss;
+  internal VM vm;
 
   //NOTE: use New() instead
-  internal ValDict()
-  {}
+  internal ValDict(VM vm)
+  {
+    this.vm = vm;
+  }
 
   public void Retain()
   {
@@ -1688,18 +1698,18 @@ public class ValDict : IValRefcounted
       Del(this);
   }
 
-  public static ValDict New()
+  public static ValDict New(VM vm)
   {
     ValDict tb;
-    if(pool.Count == 0)
+    if(vm.vdicts.pool.Count == 0)
     {
-      ++pool_miss;
-      tb = new ValDict();
+      ++vm.vdicts.miss;
+      tb = new ValDict(vm);
     }
     else
     {
-      ++pool_hit;
-      tb = pool.Pop();
+      ++vm.vdicts.hit;
+      tb = vm.vdicts.pool.Pop();
 
       if(tb.refs != -1)
         throw new Exception("Expected to be released, refs " + tb.refs);
@@ -1709,33 +1719,6 @@ public class ValDict : IValRefcounted
     return tb;
   }
 
-  static public void PoolClear()
-  {
-    pool_miss = 0;
-    pool_hit = 0;
-    pool.Clear();
-  }
-
-  static public int PoolHits
-  {
-    get { return pool_hit; } 
-  }
-
-  static public int PoolMisses
-  {
-    get { return pool_miss; } 
-  }
-
-  static public int PoolCount
-  {
-    get { return pool_miss; }
-  }
-
-  static public int PoolCountFree
-  {
-    get { return pool.Count; }
-  }
-
   static void Del(ValDict tb)
   {
     if(tb.refs != 0)
@@ -1743,9 +1726,9 @@ public class ValDict : IValRefcounted
 
     tb.refs = -1;
     tb.Clear();
-    pool.Push(tb);
+    tb.vm.vdicts.pool.Push(tb);
 
-    if(pool.Count > pool_miss)
+    if(tb.vm.vdicts.pool.Count > tb.vm.vdicts.miss)
       throw new Exception("Unbalanced New/Del");
   }
 
@@ -1818,6 +1801,5 @@ public class ValDict : IValRefcounted
     }
   }
 }
-
 
 } //namespace bhl

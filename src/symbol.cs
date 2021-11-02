@@ -450,7 +450,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override void VM_CreateArr(ref Val v)
   {
-    v.SetObj(ValList.New());
+    v.SetObj(ValList.New(v.vm));
   }
 
   public override void VM_GetCount(Val ctx, ref Val v)
@@ -726,7 +726,7 @@ public class FieldSymbolScript : FieldSymbol
   void VM_Setter(ref Val ctx, Val v)
   {
     var m = (ValList)ctx.obj;
-    var tmp = Val.New();
+    var tmp = Val.New(ctx.vm);
     tmp.ValueCopyFrom(v);
     m[VM_idx] = tmp;
     tmp.Release();
@@ -1260,7 +1260,7 @@ public class ClassSymbolScript : ClassSymbol
     }
     else
     {
-      vl = ValList.New();
+      vl = ValList.New(res.vm);
       res.SetObj(vl);
     }
     //NOTE: storing class name hash in _num attribute
@@ -1269,7 +1269,7 @@ public class ClassSymbolScript : ClassSymbol
     for(int i=0;i<members.Count;++i)
     {
       var m = members[i];
-      var dv = Val.New();
+      var dv = Val.New(res.vm);
       //NOTE: proper default init of built-in types
       if(m.type.name.IsEqual(SymbolTable.symb_float.type.name))
         dv.SetNum(0);

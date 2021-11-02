@@ -100,16 +100,16 @@ public class Const
     this.str = "";
   }
 
-  public Val ToVal()
+  public Val ToVal(VM vm)
   {
     if(type == EnumLiteral.NUM)
-      return Val.NewNum(num);
+      return Val.NewNum(vm, num);
     else if(type == EnumLiteral.BOOL)
-      return Val.NewBool(num == 1);
+      return Val.NewBool(vm, num == 1);
     else if(type == EnumLiteral.STR)
-      return Val.NewStr(str);
+      return Val.NewStr(vm, str);
     else if(type == EnumLiteral.NIL)
-      return Val.NewNil();
+      return Val.NewNil(vm);
     else
       throw new Exception("Bad type");
   }
