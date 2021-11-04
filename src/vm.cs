@@ -14,18 +14,18 @@ public class VM
     //TODO: use shared stack for stack and locals 
     public FastStack<Val> stack = new FastStack<Val>(32);
     public List<Val> locals = new List<Val>();
-    public uint start_ip;
-    public uint return_ip;
+    public int start_ip;
+    public int return_ip;
     public List<CodeBlock> defers;
 
-    public Frame(CompiledModule module, uint start_ip)
+    public Frame(CompiledModule module, int start_ip)
     {
       bytecode = module.bytecode;
       constants = module.constants;
       this.start_ip = start_ip;
     }
 
-    public Frame(Frame frm, uint start_ip)
+    public Frame(Frame frm, int start_ip)
     {
       bytecode = frm.bytecode;
       constants = frm.constants;
@@ -103,7 +103,7 @@ public class VM
   internal struct ModuleAddr
   {
     internal CompiledModule module;
-    internal uint ip;
+    internal int ip;
   }
 
   Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
@@ -130,7 +130,7 @@ public class VM
   internal class Fiber
   {
     internal int id;
-    internal uint ip;
+    internal int ip;
     internal IInstruction instruction;
     internal FastStack<Frame> frames = new FastStack<Frame>(256);
   }
@@ -273,7 +273,7 @@ public class VM
   void ExecInit(CompiledModule module)
   {
     byte[] bytecode = module.initcode;
-    uint ip = 0;
+    int ip = 0;
     AST_ClassDecl curr_decl = null;
     while(ip < bytecode.Length)
     {
@@ -348,7 +348,7 @@ public class VM
     return fb.id;
   }
 
-  internal BHS Execute(ref uint ip, FastStack<Frame> frames, ref IInstruction instruction, uint max_ip, IDeferScope defer_scope)
+  internal BHS Execute(ref int ip, FastStack<Frame> frames, ref IInstruction instruction, int max_ip, IDeferScope defer_scope)
   { 
     while(frames.Count > 0 && ip < max_ip)
     {
@@ -549,7 +549,7 @@ public class VM
           break;
           case Opcodes.GetFunc:
           {
-            uint func_ip = Bytecode.Decode24(curr_frame.bytecode, ref ip);
+            int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             var func_frame = new Frame(curr_frame, func_ip);
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
@@ -570,7 +570,7 @@ public class VM
             string func_name = curr_frame.constants[func_idx].str;
 
             var module = modules[module_name];
-            uint func_ip = module.func2ip[func_name];
+            int func_ip = module.func2ip[func_name];
 
             var func_frame = new Frame(module, func_ip);
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
@@ -651,7 +651,7 @@ public class VM
           break;
           case Opcodes.Lambda:
           {
-            uint func_ip = Bytecode.Decode24(curr_frame.bytecode, ref ip);
+            int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             var fr = new Frame(curr_frame, func_ip);
             fr.locals.Capacity = local_vars_num;
@@ -689,7 +689,7 @@ public class VM
           case Opcodes.Jump:
           {
             short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            ip = (uint)((int)ip + offset);
+            ip += offset;
           }
           break;
           case Opcodes.CondJump:
@@ -698,7 +698,7 @@ public class VM
             if(curr_frame.PopRelease().bval == false)
             {
               ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
-              ip = ip + offset;
+              ip += offset;
             }
             else
               ++ip;
@@ -707,7 +707,7 @@ public class VM
           case Opcodes.DefArg:
           {
             byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            uint jump_pos = Bytecode.Decode16(curr_frame.bytecode, ref ip);
+            int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
             var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
             //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
             //NOTE: if default argument is not used we need to jump out of default argument calculation code
@@ -766,16 +766,16 @@ public class VM
       instruction = candidate;
   }
 
-  IInstruction VisitBlock(ref uint ip, Frame curr_frame, ref IInstruction instruction, IDeferScope defer_scope)
+  IInstruction VisitBlock(ref int ip, Frame curr_frame, ref IInstruction instruction, IDeferScope defer_scope)
   {
     var type = (EnumBlock)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-    uint size = Bytecode.Decode16(curr_frame.bytecode, ref ip);
+    int size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
 
     if(type == EnumBlock.PARAL || type == EnumBlock.PARAL_ALL) 
     {
       var paral = type == EnumBlock.PARAL ? (IMultiInstruction)new ParalInstruction() : (IMultiInstruction)new ParalAllInstruction();
       AttachInstruction(ref instruction, paral);
-      uint tmp_ip = ip;
+      int tmp_ip = ip;
       while(tmp_ip < (ip + size))
       {
         ++tmp_ip;
@@ -817,7 +817,7 @@ public class VM
     {
       curr_fiber = fibers[i];
 
-      var status = Execute(ref curr_fiber.ip, curr_fiber.frames, ref curr_fiber.instruction, uint.MaxValue, null);
+      var status = Execute(ref curr_fiber.ip, curr_fiber.frames, ref curr_fiber.instruction, int.MaxValue, null);
       
       if(status != BHS.RUNNING)
         fibers.RemoveAt(i);
@@ -932,13 +932,13 @@ public class CompiledModule
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
-  public Dictionary<string, uint> func2ip;
+  public Dictionary<string, int> func2ip;
 
   public CompiledModule(
     string name,
     byte[] bytecode, 
     List<Const> constants, 
-    Dictionary<string, uint> func2ip,
+    Dictionary<string, int> func2ip,
     byte[] initcode = null
   )
   {
@@ -993,10 +993,10 @@ class CoroutineYield : IInstruction
 
 public struct CodeBlock
 {
-  public uint ip;
-  public uint max_ip;
+  public int ip;
+  public int max_ip;
 
-  public CodeBlock(uint ip, uint max_ip)
+  public CodeBlock(int ip, int max_ip)
   {
     this.ip = ip;
     this.max_ip = max_ip;
@@ -1010,13 +1010,13 @@ public struct CodeBlock
 
 public class SeqInstruction : IInstruction, IDeferScope
 {
-  public uint ip;
-  public uint max_ip;
+  public int ip;
+  public int max_ip;
   public FastStack<VM.Frame> frames = new FastStack<VM.Frame>(256);
   public IInstruction instruction;
   public List<CodeBlock> defers;
 
-  public SeqInstruction(VM.Frame curr_frame, uint ip, uint max_ip)
+  public SeqInstruction(VM.Frame curr_frame, int ip, int max_ip)
   {
     //Console.WriteLine("NEW SEQ " + ip + " " + max_ip + " " + GetHashCode());
     this.ip = ip;

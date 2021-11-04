@@ -4624,10 +4624,10 @@ public class BHL_TestVM : BHL_TestBase
   {
     if(op.operand_width == null)
       return 0;
-    uint pos = (uint)start_pos;
+    int pos = start_pos;
     foreach(int ow in op.operand_width)
       Bytecode.Decode(bytes, ow, ref pos);
-    return (int)pos - start_pos;
+    return pos - start_pos;
   }
 
   public static int ArrAddIdx {

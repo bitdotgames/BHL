@@ -392,10 +392,10 @@ static public class Util
         constants.Add(cn);
       }
 
-      var func2ip = new Dictionary<string, uint>();
+      var func2ip = new Dictionary<string, int>();
       int func2ip_len = r.ReadInt32();
       for(int i=0;i<func2ip_len;++i)
-        func2ip.Add(r.ReadString(), r.ReadUInt32());
+        func2ip.Add(r.ReadString(), r.ReadInt32());
 
       return new CompiledModule(name, bytecode, constants, func2ip, initcode);
     }

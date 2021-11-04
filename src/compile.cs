@@ -168,8 +168,8 @@ public class ModuleCompiler : AST_Visitor
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
 
-  Dictionary<string, uint> func2ip = new Dictionary<string, uint>();
-  public Dictionary<string, uint> Func2Ip {
+  Dictionary<string, int> func2ip = new Dictionary<string, int>();
+  public Dictionary<string, int> Func2Ip {
     get {
       return func2ip;
     }
@@ -225,10 +225,10 @@ public class ModuleCompiler : AST_Visitor
     return code_stack[code_stack.Count-1];
   }
 
-  uint PushCode()
+  int PushCode()
   {
     code_stack.Add(new Bytecode());
-    return (uint)code_stack[0].Length;
+    return (int)code_stack[0].Length;
   }
  
   Bytecode PopCode(bool auto_append = true)
@@ -750,7 +750,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     func_decls.Add(ast);
-    uint ip = PushCode();
+    int ip = PushCode();
     func2ip.Add(ast.name, ip);
     if(ast.local_vars_num > 0)
       Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num });
@@ -778,14 +778,14 @@ public class ModuleCompiler : AST_Visitor
     //let's patch the jump placeholder with the actual jump position
     bytecode.PatchAt(1, (uint)jump_out_pos, num_bytes: 2);
 
-    uint ip = 2;//taking into account 'jump out of lambda'
+    int ip = 2;//taking into account 'jump out of lambda'
     for(int i=0;i < code_stack.Count;++i)
-      ip += (uint)code_stack[i].Length;
+      ip += (int)code_stack[i].Length;
     func2ip.Add(ast.name, ip);
 
     PeekCode().Write(bytecode);
 
-    Emit(Opcodes.Lambda, new int[] {(int)ip, (int)ast.local_vars_num});
+    Emit(Opcodes.Lambda, new int[] {ip, (int)ast.local_vars_num});
     foreach(var p in ast.uses)
       Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
   }
@@ -1022,11 +1022,11 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.FUNC:
       {
-        uint offset;
+        int offset;
         if(func2ip.TryGetValue(ast.name, out offset))
         {
           VisitChildren(ast);
-          Emit(Opcodes.GetFunc, new int[] {(int)offset});
+          Emit(Opcodes.GetFunc, new int[] {offset});
           Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits});
         }
         else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
@@ -1368,13 +1368,13 @@ public class Bytecode
     return stream.ToArray();
   }
 
-  public static byte Decode8(byte[] bytecode, ref uint ip)
+  public static byte Decode8(byte[] bytecode, ref int ip)
   {
     ++ip;
     return bytecode[ip];
   }
 
-  public static ushort Decode16(byte[] bytecode, ref uint ip)
+  public static ushort Decode16(byte[] bytecode, ref int ip)
   {
     ++ip;
     ushort val = (ushort)
@@ -1386,7 +1386,7 @@ public class Bytecode
     return val;
   }
 
-  public static uint Decode24(byte[] bytecode, ref uint ip)
+  public static uint Decode24(byte[] bytecode, ref int ip)
   {
     ++ip;
     uint val = (uint)
@@ -1399,7 +1399,7 @@ public class Bytecode
     return val;
   }
 
-  public static uint Decode32(byte[] bytecode, ref uint ip)
+  public static uint Decode32(byte[] bytecode, ref int ip)
   {
     ++ip;
     uint val = (uint)
@@ -1413,7 +1413,7 @@ public class Bytecode
     return val;
   }
 
-  public static uint Decode(byte[] bytecode, int num_bytes, ref uint ip)
+  public static uint Decode(byte[] bytecode, int num_bytes, ref int ip)
   {
     if(num_bytes < 1 || num_bytes > 4)
       throw new Exception("Invalid amount of bytes: " + num_bytes);
@@ -1434,7 +1434,7 @@ public class Bytecode
     if(num_bytes == 4)
       val |= ((uint)bytecode[ip+3]) << 24;
 
-    ip += (uint)(num_bytes-1);
+    ip += (num_bytes-1);
 
     return val;
   }
