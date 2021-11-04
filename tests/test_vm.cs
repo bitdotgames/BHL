@@ -1195,13 +1195,13 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.Less)
       .Emit(Opcodes.CondJump, new int[] { 6 })
-      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
@@ -1209,7 +1209,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants, new List<Const>() { new Const(100), new Const(1), new Const(2), new Const(10) });
+    AssertEqual(c.Constants.Count, 4);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -1244,16 +1244,16 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .Emit(Opcodes.Less)
       .Emit(Opcodes.CondJump, new int[] { 9 })
-      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Jump, new int[] { 6 })
-      .Emit(Opcodes.Constant, new int[] { 4 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
@@ -1261,7 +1261,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants, new List<Const>() { new Const(0), new Const(2), new Const(1), new Const(10), new Const(20) });
+    AssertEqual(c.Constants.Count, 5);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -1304,31 +1304,31 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .Emit(Opcodes.Less)
       .Emit(Opcodes.CondJump, new int[] { 9 })
-      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Jump, new int[] { 19 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.UnaryNeg)
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.Less)
       .Emit(Opcodes.CondJump, new int[] { 9 })
-      .Emit(Opcodes.Constant, new int[] { 3 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 30) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Jump, new int[] { 18 })
-      .Emit(Opcodes.Constant, new int[] { 4 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
+      .Emit(Opcodes.Less)
       .Emit(Opcodes.CondJump, new int[] { 9 })
-      .Emit(Opcodes.Constant, new int[] { 5 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Jump, new int[] { 6 })
-      .Emit(Opcodes.Constant, new int[] { 6 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 40) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
@@ -1336,7 +1336,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants, new List<Const>() { new Const(0), new Const(1), new Const(10), new Const(30), new Const(3), new Const(20), new Const(40) });
+    AssertEqual(c.Constants.Count, 7);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -1370,9 +1370,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //__while__//
-      .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .Emit(Opcodes.GreaterOrEqual)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.LessOrEqual)
       .Emit(Opcodes.CondJump, new int[] { 12 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -1423,9 +1423,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //__while__//
-      .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .Emit(Opcodes.GreaterOrEqual)
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.LessOrEqual)
       .Emit(Opcodes.CondJump, new int[] { 25 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -1867,15 +1867,15 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new ModuleCompiler()
-      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.Greater)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.Less)
       .Emit(Opcodes.CondJump, new int[] { 13 })
       .Emit(Opcodes.GetFunc, new int[] { 0 })
       .Emit(Opcodes.Call, new int[] { 0 })
@@ -1888,7 +1888,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants, new List<Const>() { new Const(1), new Const(2), new Const(0) });
+    AssertEqual(c.Constants.Count, 3);
 
     var vm = MakeVM(c);
     vm.Start("test");

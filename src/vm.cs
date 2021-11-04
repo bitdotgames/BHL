@@ -417,9 +417,7 @@ public class VM
           case Opcodes.BitOr:
           case Opcodes.Equal:
           case Opcodes.NotEqual:
-          case Opcodes.Greater:
           case Opcodes.Less:
-          case Opcodes.GreaterOrEqual:
           case Opcodes.LessOrEqual:
           {
             ExecuteBinaryOp(opcode, curr_frame);
@@ -873,14 +871,8 @@ public class VM
       case Opcodes.NotEqual:
         curr_frame.stack.Push(Val.NewBool(this, !l_operand.IsEqual(r_operand)));
       break;
-      case Opcodes.Greater:
-        curr_frame.stack.Push(Val.NewBool(this, l_operand._num > r_operand._num));
-      break;
       case Opcodes.Less:
         curr_frame.stack.Push(Val.NewBool(this, l_operand._num < r_operand._num));
-      break;
-      case Opcodes.GreaterOrEqual:
-        curr_frame.stack.Push(Val.NewBool(this, l_operand._num >= r_operand._num));
       break;
       case Opcodes.LessOrEqual:
         curr_frame.stack.Push(Val.NewBool(this, l_operand._num <= r_operand._num));

@@ -78,6 +78,13 @@ public static class BHL_TestExt
       lst.Add(DynVal.NewNum(dst[i]));
     dv.SetObj(lst);
   }
+
+  public static string GetFullMessage(this Exception ex)
+  {
+    return ex.InnerException == null 
+      ? ex.Message 
+      : ex.Message + " --> " + ex.InnerException.GetFullMessage();
+  }
 }
 
 public class BHL_TestRunner
@@ -90,6 +97,21 @@ public class BHL_TestRunner
   }
 
   static void Run(string[] args, BHL_TestBase test)
+  {
+    try
+    {
+      _Run(args, test);
+    }
+    catch(Exception e)
+    {
+      Console.WriteLine(e.ToString());
+      Console.WriteLine("=========================");
+      Console.WriteLine(e.GetFullMessage());
+      System.Environment.Exit(1);
+    }
+  }
+
+  static void _Run(string[] args, BHL_TestBase test)
   {
     int c = 0;
     foreach(var method in test.GetType().GetMethods())

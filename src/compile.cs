@@ -40,9 +40,7 @@ public enum Opcodes
   Equal           = 0x38,
   NotEqual        = 0x39,
   Less            = 0x3A,
-  Greater         = 0x3B,
-  LessOrEqual     = 0x3C,
-  GreaterOrEqual  = 0x3D,
+  LessOrEqual     = 0x3B,
   DefArg          = 0x3E, 
   TypeCast        = 0x3F,
   Block           = 0x40,
@@ -362,19 +360,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.Greater
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
         name = Opcodes.Less
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GreaterOrEqual
       }
     );
     DeclareOpcode(
@@ -1195,51 +1181,70 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_BinaryOpExp ast)
   {
-    VisitChildren(ast);
-
     switch(ast.type)
     {
       case EnumBinaryOp.AND:
+        VisitChildren(ast);
         Emit(Opcodes.And);
       break;
       case EnumBinaryOp.OR:
+        VisitChildren(ast);
         Emit(Opcodes.Or);
       break;
       case EnumBinaryOp.BIT_AND:
+        VisitChildren(ast);
         Emit(Opcodes.BitAnd);
       break;
       case EnumBinaryOp.BIT_OR:
+        VisitChildren(ast);
         Emit(Opcodes.BitOr);
       break;
       case EnumBinaryOp.MOD:
+        VisitChildren(ast);
         Emit(Opcodes.Mod);
       break;
       case EnumBinaryOp.ADD:
+        VisitChildren(ast);
         Emit(Opcodes.Add);
       break;
       case EnumBinaryOp.SUB:
+        VisitChildren(ast);
         Emit(Opcodes.Sub);
       break;
       case EnumBinaryOp.DIV:
+        VisitChildren(ast);
         Emit(Opcodes.Div);
       break;
       case EnumBinaryOp.MUL:
+        VisitChildren(ast);
         Emit(Opcodes.Mul);
       break;
       case EnumBinaryOp.EQ:
+        VisitChildren(ast);
         Emit(Opcodes.Equal);
       break;
       case EnumBinaryOp.NQ:
+        VisitChildren(ast);
         Emit(Opcodes.NotEqual);
       break;
       case EnumBinaryOp.GT:
-        Emit(Opcodes.Greater);
+        if(ast.children.Count != 2)
+          throw new Exception("Expected 2 AST children, got " + ast.children.Count);
+
+        Visit(ast.children[1]);
+        Visit(ast.children[0]);
+        Emit(Opcodes.Less);
       break;
       case EnumBinaryOp.LT:
+        VisitChildren(ast);
         Emit(Opcodes.Less);
       break;
       case EnumBinaryOp.GTE:
-        Emit(Opcodes.GreaterOrEqual);
+        if(ast.children.Count != 2)
+          throw new Exception("Expected 2 AST children, got " + ast.children.Count);
+        Visit(ast.children[1]);
+        Visit(ast.children[0]);
+        Emit(Opcodes.LessOrEqual);
       break;
       case EnumBinaryOp.LTE:
         Emit(Opcodes.LessOrEqual);
