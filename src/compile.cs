@@ -798,7 +798,9 @@ public class ModuleCompiler : AST_Visitor
     //TODO:?
     //CheckNameIsUnique(name);
 
-    var parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
+    ClassSymbol parent = null;
+    if(ast.nparent != 0)
+      parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
 
     var cl = new ClassSymbolScript(name, ast, parent);
     symbols.Define(cl);

@@ -4387,9 +4387,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var imp = new ModuleImporter(CompileFiles(files));
+    var importer = new ModuleImporter(CompileFiles(files));
 
-    AssertEqual(imp.Import("bhl1"), 
+    AssertEqual(importer.Import("bhl1"), 
       new ModuleCompiler()
       .UseInitCode()
       .Emit(Opcodes.Import, new int[] { 0 })
@@ -4400,7 +4400,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
     );
-    AssertEqual(imp.Import("bhl2"), 
+    AssertEqual(importer.Import("bhl2"), 
       new ModuleCompiler()
       .UseInitCode()
       .Emit(Opcodes.Import, new int[] { 0 })
@@ -4413,7 +4413,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
     );
-    AssertEqual(imp.Import("bhl3"), 
+    AssertEqual(importer.Import("bhl3"), 
       new ModuleCompiler()
       .Emit(Opcodes.InitFrame, new int[] { 1 })
       .Emit(Opcodes.ArgVar, new int[] { 0 })
@@ -4422,11 +4422,54 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Return)
     );
 
-    var vm = new VM(globs: null, importer: imp);
+    var vm = new VM(globs: null, importer: importer);
     vm.ImportModule("bhl1");
     vm.Start("bhl1");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(vm.PopRelease().num, 23);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportUserClass()
+  {
+    string bhl1 = @"
+    class Foo { 
+      int Int
+      float Flt
+      string Str
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+    func void test() 
+    {
+      Foo f = new Foo
+      f.Int = 10
+      f.Flt = 14.2
+      f.Str = ""Hey""
+      trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var importer = new ModuleImporter(CompileFiles(files, globs));
+
+    var vm = new VM(globs: globs, importer: importer);
+
+    vm.ImportModule("bhl2");
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("10;14.2;Hey", log.ToString());
     CommonChecks(vm);
   }
 
