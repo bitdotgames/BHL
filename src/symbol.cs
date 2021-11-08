@@ -1544,7 +1544,7 @@ static public class SymbolTable
       var fn = new FuncSymbolNative("suspend", globals.Type("void"), null,
         delegate(VM vm, VM.Frame fr) 
         { 
-          return new CoroutineSuspend();
+          return CoroutineSuspend.Instance;
         } 
       );
       globals.Define(fn);
@@ -1555,6 +1555,17 @@ static public class SymbolTable
         delegate(VM vm, VM.Frame fr) 
         { 
           return new CoroutineYield();
+        } 
+      );
+      globals.Define(fn);
+    }
+
+    //TODO: this one is controversary, it's defined for BC for now
+    {
+      var fn = new FuncSymbolNative("fail", globals.Type("void"), null,
+        delegate(VM vm, VM.Frame fr) 
+        { 
+          return FailInstruction.Instance;
         } 
       );
       globals.Define(fn);

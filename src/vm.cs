@@ -7,8 +7,14 @@ namespace bhl {
 
 public class VM
 {
-  public class Frame : IDeferScope
+  public class Frame : IExitableScope, IValRefcounted
   {
+    //NOTE: -1 means it's in released state,
+    //      public only for inspection
+    public int refs;
+
+    internal VM vm;
+
     public byte[] bytecode;
     public List<Const> constants;
     //TODO: use shared stack for stack and locals 
@@ -18,17 +24,57 @@ public class VM
     public int return_ip;
     public List<CodeBlock> defers;
 
-    public Frame(CompiledModule module, int start_ip)
+    static public Frame New(VM vm)
+    {
+      Frame frm;
+      if(vm.frames.pool.Count == 0)
+      {
+        ++vm.frames.miss;
+        frm = new Frame(vm);
+      }
+      else
+      {
+        ++vm.frames.hit;
+        frm = vm.frames.pool.Pop();
+
+      if(frm.refs != -1)
+        throw new Exception("Expected to be released, refs " + frm.refs);
+      }
+
+      frm.refs = 1;
+
+      return frm;
+    }
+
+    static void Del(Frame frm)
+    {
+      if(frm.refs != 0)
+        throw new Exception("Freeing invalid object, refs " + frm.refs);
+
+      //Console.WriteLine("DEL " + frm.GetHashCode() + " " + Environment.StackTrace);
+      frm.refs = -1;
+
+      frm.Clear();
+      frm.vm.frames.pool.Push(frm);
+    }
+
+    //NOTE: use New() instead
+    internal Frame(VM vm)
+    {
+      this.vm = vm;
+    }
+
+    public void Init(CompiledModule module, int start_ip)
     {
       bytecode = module.bytecode;
       constants = module.constants;
       this.start_ip = start_ip;
     }
 
-    public Frame(Frame frm, int start_ip)
+    public void Init(Frame origin, int start_ip)
     {
-      bytecode = frm.bytecode;
-      constants = frm.constants;
+      bytecode = origin.bytecode;
+      constants = origin.constants;
       this.start_ip = start_ip;
     }
 
@@ -90,13 +136,38 @@ public class VM
 
     public void ExitScope(VM vm)
     {
-      if(defers == null)
-        return;
-      for(int i=defers.Count;i-- > 0;)
+      if(defers != null)
       {
-        //TODO: do we need ensure that status is SUCCESS?
-        defers[i].Execute(vm, vm.curr_fiber.frames, ref vm.curr_fiber.instruction, null);
+        for(int i=defers.Count;i-- > 0;)
+        {
+          //TODO: do we need ensure that status is SUCCESS?
+          defers[i].Execute(vm, vm.curr_fiber.frames, ref vm.curr_fiber.instruction, null);
+        }
+        defers.Clear();
       }
+    }
+
+    public void Retain()
+    {
+      //Console.WriteLine("RTN " + GetHashCode() + " " + Environment.StackTrace);
+
+      if(refs == -1)
+        throw new Exception("Invalid state(-1)");
+      ++refs;
+    }
+
+    public void Release()
+    {
+      //Console.WriteLine("REL " + GetHashCode());
+
+      if(refs == -1)
+        throw new Exception("Invalid state(-1)");
+      if(refs == 0)
+        throw new Exception("Double free(0)");
+
+      --refs;
+      if(refs == 0)
+        Del(this);
     }
   }
 
@@ -237,6 +308,29 @@ public class VM
     }
   }
 
+  public class FramesPool
+  {
+    public Stack<Frame> pool = new Stack<Frame>();
+    public int hit;
+    public int miss;
+
+    public int Count
+    {
+      get { return miss; }
+    }
+
+    public int Free
+    {
+      get { return pool.Count; }
+    }
+  }
+  internal FramesPool frames = new FramesPool();
+  public FramesPool Frames {
+    get {
+      return frames;
+    }
+  }
+
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
     if(globs == null)
@@ -339,7 +433,8 @@ public class VM
     var fb = new Fiber();
     fb.id = ++fibers_ids;
 
-    var fr = new Frame(addr.module, addr.ip);
+    var fr = Frame.New(this);
+    fr.Init(addr.module, addr.ip);
     fb.ip = addr.ip;
     fb.frames.Push(fr);
 
@@ -348,7 +443,7 @@ public class VM
     return fb.id;
   }
 
-  internal BHS Execute(ref int ip, FastStack<Frame> frames, ref IInstruction instruction, int max_ip, IDeferScope defer_scope)
+  internal BHS Execute(ref int ip, FastStack<Frame> frames, ref IInstruction instruction, int max_ip, IExitableScope defer_scope)
   { 
     while(frames.Count > 0 && ip < max_ip)
     {
@@ -364,6 +459,15 @@ public class VM
         status = instruction.Tick(this);
         if(status == BHS.RUNNING)
           return status;
+        else if(status == BHS.FAILURE)
+        {
+          instruction = null;
+          curr_frame.ExitScope(this);
+          ip = curr_frame.return_ip;
+          curr_frame.Release();
+          frames.PopFast();
+          return status;
+        }
         else
           instruction = null;
       }
@@ -435,7 +539,8 @@ public class VM
             var locs = curr_frame.locals;
             if(locs[local_idx] != null)
               locs[local_idx].Release();
-            locs[local_idx] = curr_frame.stack.PopFast();
+            var new_val = curr_frame.stack.PopFast();
+            locs[local_idx] = new_val;
           }
           break;
           case Opcodes.GetVar:
@@ -522,8 +627,8 @@ public class VM
           case Opcodes.Return:
           {
             curr_frame.ExitScope(this);
-            curr_frame.Clear();
             ip = curr_frame.return_ip;
+            curr_frame.Release();
             //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
             frames.PopFast();
             if(frames.Count > 0)
@@ -535,7 +640,7 @@ public class VM
             var ret_val = curr_frame.stack.PopFast();
             ip = curr_frame.return_ip;
             curr_frame.ExitScope(this);
-            curr_frame.Clear();
+            curr_frame.Release();
             //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
             frames.PopFast();
             if(frames.Count > 0)
@@ -550,7 +655,8 @@ public class VM
           case Opcodes.GetFunc:
           {
             int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            var func_frame = new Frame(curr_frame, func_ip);
+            var func_frame = Frame.New(this);
+            func_frame.Init(curr_frame, func_ip);
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
@@ -558,7 +664,12 @@ public class VM
           {
             int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             var val = curr_frame.locals[local_var_idx];
-            curr_frame.stack.Push(Val.NewObj(this, val._obj));
+            var frm = (Frame)val._obj; 
+            //NOTE: we need to call an extra Retain since Release will be called for this frame 
+            //      during its execution of Opcode.Return, however since this frame is stored in a var 
+            //      and this var will be released at some point we want to avoid 'double free' situation 
+            frm.Retain();
+            curr_frame.stack.Push(Val.NewObj(this, frm));
           }
           break;
           case Opcodes.GetFuncImported:
@@ -572,7 +683,8 @@ public class VM
             var module = modules[module_name];
             int func_ip = module.func2ip[func_name];
 
-            var func_frame = new Frame(module, func_ip);
+            var func_frame = Frame.New(this);
+            func_frame.Init(module, func_ip);
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
@@ -606,8 +718,11 @@ public class VM
           {
             uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-            var val = curr_frame.PopRelease();
+            var val = curr_frame.stack.PopFast();
             var fr = (Frame)val._obj;
+            //NOTE: it will be released once return is invoked
+            fr.Retain();
+            val.Release();
 
             var args_info = new FuncArgsInfo(args_bits);
             for(int i = 0; i < args_info.CountArgs(); ++i)
@@ -653,13 +768,14 @@ public class VM
           {
             int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var fr = new Frame(curr_frame, func_ip);
+
+            var fr = Frame.New(this);
+            fr.Init(curr_frame, func_ip);
             fr.locals.Capacity = local_vars_num;
             for(int i=0;i<local_vars_num;++i)
               fr.locals.Add(null);
 
-            var frval = Val.New(this);
-            frval._obj = fr;
+            var frval = Val.NewObj(this, fr);
             frval._num = func_ip;
 
             curr_frame.stack.Push(frval);
@@ -766,7 +882,7 @@ public class VM
       instruction = candidate;
   }
 
-  IInstruction VisitBlock(ref int ip, Frame curr_frame, ref IInstruction instruction, IDeferScope defer_scope)
+  IInstruction VisitBlock(ref int ip, Frame curr_frame, ref IInstruction instruction, IExitableScope defer_scope)
   {
     var type = (EnumBlock)Bytecode.Decode8(curr_frame.bytecode, ref ip);
     int size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
@@ -783,7 +899,7 @@ public class VM
         if(opcode != Opcodes.Block)
           throw new Exception("Expected PushBlock got " + opcode);
         IInstruction dummy = null;
-        var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy, (IDeferScope)paral);
+        var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy, (IExitableScope)paral);
         if(sub != null)
           paral.Attach(sub);
       }
@@ -959,7 +1075,7 @@ public interface IInstruction
   BHS Tick(VM vm);
 }
 
-public interface IDeferScope
+public interface IExitableScope
 {
   void RegisterOnExit(CodeBlock cb);
   void ExitScope(VM vm);
@@ -972,6 +1088,8 @@ public interface IMultiInstruction : IInstruction
 
 class CoroutineSuspend : IInstruction
 {
+  static public readonly CoroutineSuspend Instance = new CoroutineSuspend();
+
   public BHS Tick(VM vm)
   {
     //Console.WriteLine("SUSPEND");
@@ -991,6 +1109,16 @@ class CoroutineYield : IInstruction
   }
 }
 
+class FailInstruction : IInstruction
+{
+  static public readonly FailInstruction Instance = new FailInstruction();
+
+  public BHS Tick(VM vm)
+  {
+    return BHS.FAILURE;
+  }
+}
+
 public struct CodeBlock
 {
   public int ip;
@@ -1002,13 +1130,13 @@ public struct CodeBlock
     this.max_ip = max_ip;
   }
 
-  public BHS Execute(VM vm, FastStack<VM.Frame> frames, ref IInstruction instruction, IDeferScope defer_scope)
+  public BHS Execute(VM vm, FastStack<VM.Frame> frames, ref IInstruction instruction, IExitableScope defer_scope)
   {
     return vm.Execute(ref ip, frames, ref instruction, max_ip + 1, defer_scope);
   }
 }
 
-public class SeqInstruction : IInstruction, IDeferScope
+public class SeqInstruction : IInstruction, IExitableScope
 {
   public int ip;
   public int max_ip;
@@ -1042,36 +1170,68 @@ public class SeqInstruction : IInstruction, IDeferScope
 
   public void ExitScope(VM vm)
   {
-    if(defers == null)
-      return;
-    for(int i=defers.Count;i-- > 0;)
+    if(defers != null)
     {
-      //TODO: do we need ensure that status is SUCCESS?
-      defers[i].Execute(vm, frames, ref instruction, null);
+      for(int i=defers.Count;i-- > 0;)
+      {
+        var d = defers[i];
+        IInstruction dummy = null;
+        //TODO: do we need ensure that status is SUCCESS?
+        d.Execute(vm, frames, ref dummy, null);
+      }
     }
+
+    //NOTE: Let's release frames which were allocated but due to 
+    //      some control flow abruption(e.g paral exited) should be 
+    //      explicitely released. We start from index 1 on purpose
+    //      since the frame at index 0 will be released as expected.
+    for(int i=1;i<frames.Count;i++)
+      frames[i].Release();
   }
 }
 
-public class ParalInstruction : IMultiInstruction, IDeferScope
+public class ParalInstruction : IMultiInstruction, IExitableScope
 {
   public List<IInstruction> children = new List<IInstruction>();
   public List<CodeBlock> defers;
 
   public BHS Tick(VM vm)
   {
+    BHS status = BHS.RUNNING;
+
+    int exited_idx = -1;
     for(int i=0;i<children.Count;++i)
     {
       var current = children[i];
-      var status = current.Tick(vm);
+      status = current.Tick(vm);
       //Console.WriteLine("CHILD " + i + " " + status + " " + current.GetType().Name);
       if(status != BHS.RUNNING)
       {
-        ExitScope(vm);
-        return status;
+        exited_idx = i;
+        break;
       }
     }
 
-    return BHS.RUNNING;
+    if(exited_idx != -1)
+    {
+      ExitChildren(vm, exited_idx, children);
+      ExitScope(vm);
+    }
+
+    return status;
+  }
+
+  static internal void ExitChildren(VM vm, int exited_child_idx, List<IInstruction> children)
+  {
+    for(int i=0;i<children.Count;++i)
+    {
+      if(exited_child_idx != i)
+      {
+        var exitable = children[i] as IExitableScope;
+        if(exitable != null)
+          exitable.ExitScope(vm);
+      }
+    }
   }
 
   public void Attach(IInstruction inst)
@@ -1088,18 +1248,19 @@ public class ParalInstruction : IMultiInstruction, IDeferScope
 
   public void ExitScope(VM vm)
   {
-    if(defers == null)
-      return;
-    IInstruction instruction = null;
-    for(int i=defers.Count;i-- > 0;)
+    if(defers != null)
     {
-      //TODO: do we need ensure that status is SUCCESS?
-      defers[i].Execute(vm, vm.curr_fiber.frames, ref instruction, null);
+      IInstruction dummy = null;
+      for(int i=defers.Count;i-- > 0;)
+      {
+        //TODO: do we need ensure that status is SUCCESS?
+        defers[i].Execute(vm, vm.curr_fiber.frames, ref dummy, null);
+      }
     }
   }
 }
 
-public class ParalAllInstruction : IMultiInstruction, IDeferScope
+public class ParalAllInstruction : IMultiInstruction, IExitableScope
 {
   public List<IInstruction> children = new List<IInstruction>();
   public List<CodeBlock> defers;
@@ -1113,6 +1274,7 @@ public class ParalAllInstruction : IMultiInstruction, IDeferScope
       if(status == BHS.FAILURE)
       {
         ExitScope(vm);
+        ParalInstruction.ExitChildren(vm, i, children);
         return BHS.FAILURE;
       }
       else if(status == BHS.SUCCESS)
@@ -1144,13 +1306,14 @@ public class ParalAllInstruction : IMultiInstruction, IDeferScope
 
   public void ExitScope(VM vm)
   {
-    if(defers == null)
-      return;
-    IInstruction instruction = null;
-    for(int i=defers.Count;i-- > 0;)
+    if(defers != null)
     {
-      //TODO: do we need ensure that status is SUCCESS?
-      defers[i].Execute(vm, vm.curr_fiber.frames, ref instruction, null);
+      IInstruction dummy = null;
+      for(int i=defers.Count;i-- > 0;)
+      {
+        //TODO: do we need ensure that status is SUCCESS?
+        defers[i].Execute(vm, vm.curr_fiber.frames, ref dummy, null);
+      }
     }
   }
 }
@@ -1485,7 +1648,7 @@ public class ValList : IList<Val>, IValRefcounted
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection
-  public int refs;
+  internal int refs;
 
   internal VM vm;
 
@@ -1599,6 +1762,8 @@ public class ValList : IList<Val>, IValRefcounted
     if(refs == 0)
       Del(this);
   }
+
+  ///////////////////////////////////////
 
   public void CopyFrom(ValList lst)
   {

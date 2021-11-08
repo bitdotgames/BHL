@@ -2680,7 +2680,8 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     for(int i=0;i<99;i++)
       AssertEqual(vm.Tick(), BHS.RUNNING);
-    CommonChecks(vm);
+    CommonChecks(vm, check_frames: false);
+    AssertEqual(vm.Frames.Count, 1);
   }
 
   [IsTested()]
@@ -3569,6 +3570,58 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestParalWithMultiSeqDefers()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""1"")
+      }
+      paral {
+        seq {
+          defer {
+            trace(""2"")
+          }
+          suspend()
+        }
+        seq {
+          defer {
+            trace(""3"")
+          }
+          suspend()
+        }
+        seq {
+          defer {
+            trace(""4"")
+          }
+          yield()
+          yield()
+          trace(""5"")
+        }
+      }
+      trace(""6"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual("", log.ToString());
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("542361", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestParalAllDefer()
   {
     string bhl = @"
@@ -3684,6 +3737,61 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual("", log.ToString());
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual("wowbarfoohey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestParalAllFailureWithMultiSeqDefers()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""1"")
+      }
+      paral_all {
+        seq {
+          defer {
+            trace(""2"")
+          }
+          suspend()
+        }
+        seq {
+          defer {
+            trace(""3"")
+          }
+          suspend()
+        }
+        seq {
+          defer {
+            trace(""4"")
+          }
+          yield()
+          yield()
+          trace(""5"")
+          fail()
+        }
+      }
+      trace(""6"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual("", log.ToString());
+    //TODO: VM.Tick() returns BHS.SUCCESS when all fibers exited 
+    //      regardless of their individual exit status
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("54231", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4419,7 +4527,7 @@ public class BHL_TestVM : BHL_TestBase
     return Util.Bin2Meta<AST_Module>(ms);
   }
 
-  void CommonChecks(VM vm)
+  void CommonChecks(VM vm, bool check_frames = true)
   {
     //for extra debug
     if(vm.Vals.Count != vm.Vals.Free)
@@ -4429,6 +4537,8 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.Vals.Count, vm.Vals.Free);
     AssertEqual(vm.Vlists.Count, vm.Vlists.Free);
     AssertEqual(vm.Vdicts.Count, vm.Vdicts.Free);
+    if(check_frames)
+      AssertEqual(vm.Frames.Count, vm.Frames.Free);
   }
 
   public static string ByteArrayToString(byte[] ba)
