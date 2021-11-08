@@ -27,15 +27,15 @@ public class VM
     static public Frame New(VM vm)
     {
       Frame frm;
-      if(vm.frames.pool.Count == 0)
+      if(vm.frames_pool.pool.Count == 0)
       {
-        ++vm.frames.miss;
+        ++vm.frames_pool.miss;
         frm = new Frame(vm);
       }
       else
       {
-        ++vm.frames.hit;
-        frm = vm.frames.pool.Pop();
+        ++vm.frames_pool.hit;
+        frm = vm.frames_pool.pool.Pop();
 
       if(frm.refs != -1)
         throw new Exception("Expected to be released, refs " + frm.refs);
@@ -55,7 +55,7 @@ public class VM
       frm.refs = -1;
 
       frm.Clear();
-      frm.vm.frames.pool.Push(frm);
+      frm.vm.frames_pool.pool.Push(frm);
     }
 
     //NOTE: use New() instead
@@ -171,6 +171,23 @@ public class VM
     }
   }
 
+  public class Pool<T> where T : class
+  {
+    public Stack<T> pool = new Stack<T>();
+    public int hit;
+    public int miss;
+
+    public int Allocs
+    {
+      get { return miss; }
+    }
+
+    public int Free
+    {
+      get { return pool.Count; }
+    }
+  }
+
   internal struct ModuleAddr
   {
     internal CompiledModule module;
@@ -198,12 +215,49 @@ public class VM
 
   int fibers_ids = 0;
 
-  internal class Fiber
+  public class Fiber
   {
+    internal VM vm;
+
     internal int id;
     internal int ip;
     internal IInstruction instruction;
     internal FastStack<Frame> frames = new FastStack<Frame>(256);
+
+    static public Fiber New(VM vm)
+    {
+      Fiber fb;
+      if(vm.fibers_pool.pool.Count == 0)
+      {
+        ++vm.fibers_pool.miss;
+        fb = new Fiber(vm);
+      }
+      else
+      {
+        ++vm.fibers_pool.hit;
+        fb = vm.fibers_pool.pool.Pop();
+      }
+
+      return fb;
+    }
+
+    static public void Del(Fiber fb)
+    {
+      fb.Clear();
+      fb.vm.fibers_pool.pool.Push(fb);
+    }
+
+    //NOTE: use New() instead
+    internal Fiber(VM vm)
+    {
+      this.vm = vm;
+    }
+
+    internal void Clear()
+    {
+      frames.Clear();
+      instruction = null;
+    }
   }
   List<Fiber> fibers = new List<Fiber>();
   internal Fiber curr_fiber;
@@ -215,22 +269,8 @@ public class VM
   public delegate void FieldSetter(ref Val v, Val nv);
   public delegate void FieldRef(Val v, out Val res);
 
-  public class ValPool
+  public class ValPool : Pool<Val>
   {
-    public Stack<Val> pool = new Stack<Val>();
-    public int miss = 0;
-    public int hit = 0;
-
-    public int Count
-    {
-      get { return miss; }
-    }
-
-    public int Free
-    {
-      get { return pool.Count; }
-    }
-
     public void Alloc(VM vm, int num)
     {
       for(int i=0;i<num;++i)
@@ -244,7 +284,7 @@ public class VM
     public string Dump()
     {
       string res = "=== Val POOL ===\n";
-      res += "total:" + Count + " free:" + Free + "\n";
+      res += "total:" + Allocs + " free:" + Free + "\n";
       var dvs = new Val[pool.Count];
       pool.CopyTo(dvs, 0);
       for(int i=dvs.Length;i-- > 0;)
@@ -255,79 +295,38 @@ public class VM
       return res;
     }
   }
-  internal ValPool vals = new ValPool();
-  public ValPool Vals {
+  internal ValPool vals_pool = new ValPool();
+  public ValPool ValsPool {
     get {
-      return vals;
+      return vals_pool;
     }
   }
 
-  public class ValListPool
-  {
-    public Stack<ValList> pool = new Stack<ValList>();
-    public int hit;
-    public int miss;
-
-    public int Count
-    {
-      get { return miss; }
-    }
-
-    public int Free
-    {
-      get { return pool.Count; }
-    }
-  }
-  internal ValListPool vlists = new ValListPool();
-  public ValListPool Vlists {
+  internal Pool<ValList> vlsts_pool = new Pool<ValList>();
+  public Pool<ValList> VlistsPool {
     get {
-      return vlists;
+      return vlsts_pool;
     }
   }
 
-  public class ValDictPool
-  {
-    public Stack<ValDict> pool = new Stack<ValDict>();
-    public int hit;
-    public int miss;
-
-    public int Count
-    {
-      get { return miss; }
-    }
-
-    public int Free
-    {
-      get { return pool.Count; }
-    }
-  }
-  internal ValDictPool vdicts = new ValDictPool();
-  public ValDictPool Vdicts {
+  internal Pool<ValDict> vdicts_pool = new Pool<ValDict>();
+  public Pool<ValDict> VdictsPool {
     get {
-      return vdicts;
+      return vdicts_pool;
     }
   }
 
-  public class FramesPool
-  {
-    public Stack<Frame> pool = new Stack<Frame>();
-    public int hit;
-    public int miss;
-
-    public int Count
-    {
-      get { return miss; }
-    }
-
-    public int Free
-    {
-      get { return pool.Count; }
-    }
-  }
-  internal FramesPool frames = new FramesPool();
-  public FramesPool Frames {
+  internal Pool<Frame> frames_pool = new Pool<Frame>();
+  public Pool<Frame> FramesPool {
     get {
-      return frames;
+      return frames_pool;
+    }
+  }
+
+  internal Pool<Fiber> fibers_pool = new Pool<Fiber>();
+  public Pool<Fiber> FibersPool {
+    get {
+      return fibers_pool;
     }
   }
 
@@ -430,7 +429,7 @@ public class VM
     if(!func2addr.TryGetValue(func, out addr))
       return -1;
 
-    var fb = new Fiber();
+    var fb = Fiber.New(this);
     fb.id = ++fibers_ids;
 
     var fr = Frame.New(this);
@@ -936,7 +935,10 @@ public class VM
       var status = Execute(ref curr_fiber.ip, curr_fiber.frames, ref curr_fiber.instruction, int.MaxValue, null);
       
       if(status != BHS.RUNNING)
+      {
+        Fiber.Del(fibers[i]);
         fibers.RemoveAt(i);
+      }
       else
         ++i;
     }
@@ -1391,9 +1393,9 @@ public class Val
   static public Val New(VM vm)
   {
     Val dv;
-    if(vm.vals.pool.Count == 0)
+    if(vm.vals_pool.pool.Count == 0)
     {
-      ++vm.vals.miss;
+      ++vm.vals_pool.miss;
       dv = new Val(vm);
 #if DEBUG_REFS
       Console.WriteLine("NEW: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
@@ -1401,8 +1403,8 @@ public class Val
     }
     else
     {
-      ++vm.vals.hit;
-      dv = vm.vals.pool.Pop();
+      ++vm.vals_pool.hit;
+      dv = vm.vals_pool.pool.Pop();
 #if DEBUG_REFS
       Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
@@ -1420,9 +1422,9 @@ public class Val
       throw new Exception("Deleting invalid object, refs " + dv._refs);
     dv._refs = -1;
 
-    dv.vm.vals.pool.Push(dv);
-    if(dv.vm.vals.pool.Count > dv.vm.vals.miss)
-      throw new Exception("Unbalanced New/Del " + dv.vm.vals.pool.Count + " " + dv.vm.vals.miss);
+    dv.vm.vals_pool.pool.Push(dv);
+    if(dv.vm.vals_pool.pool.Count > dv.vm.vals_pool.miss)
+      throw new Exception("Unbalanced New/Del " + dv.vm.vals_pool.pool.Count + " " + dv.vm.vals_pool.miss);
   }
 
   //NOTE: refcount is not reset
@@ -1783,15 +1785,15 @@ public class ValList : IList<Val>, IValRefcounted
   public static ValList New(VM vm)
   {
     ValList lst;
-    if(vm.vlists.pool.Count == 0)
+    if(vm.vlsts_pool.pool.Count == 0)
     {
-      ++vm.vlists.miss;
+      ++vm.vlsts_pool.miss;
       lst = new ValList(vm);
     }
     else
     {
-      ++vm.vlists.hit;
-      lst = vm.vlists.pool.Pop();
+      ++vm.vlsts_pool.hit;
+      lst = vm.vlsts_pool.pool.Pop();
 
       if(lst.refs != -1)
         throw new Exception("Expected to be released, refs " + lst.refs);
@@ -1808,9 +1810,9 @@ public class ValList : IList<Val>, IValRefcounted
 
     lst.refs = -1;
     lst.Clear();
-    lst.vm.vlists.pool.Push(lst);
+    lst.vm.vlsts_pool.pool.Push(lst);
 
-    if(lst.vm.vlists.pool.Count > lst.vm.vlists.miss)
+    if(lst.vm.vlsts_pool.pool.Count > lst.vm.vlsts_pool.miss)
       throw new Exception("Unbalanced New/Del");
   }
 }
@@ -1858,15 +1860,15 @@ public class ValDict : IValRefcounted
   public static ValDict New(VM vm)
   {
     ValDict tb;
-    if(vm.vdicts.pool.Count == 0)
+    if(vm.vdicts_pool.pool.Count == 0)
     {
-      ++vm.vdicts.miss;
+      ++vm.vdicts_pool.miss;
       tb = new ValDict(vm);
     }
     else
     {
-      ++vm.vdicts.hit;
-      tb = vm.vdicts.pool.Pop();
+      ++vm.vdicts_pool.hit;
+      tb = vm.vdicts_pool.pool.Pop();
 
       if(tb.refs != -1)
         throw new Exception("Expected to be released, refs " + tb.refs);
@@ -1883,9 +1885,9 @@ public class ValDict : IValRefcounted
 
     tb.refs = -1;
     tb.Clear();
-    tb.vm.vdicts.pool.Push(tb);
+    tb.vm.vdicts_pool.pool.Push(tb);
 
-    if(tb.vm.vdicts.pool.Count > tb.vm.vdicts.miss)
+    if(tb.vm.vdicts_pool.pool.Count > tb.vm.vdicts_pool.miss)
       throw new Exception("Unbalanced New/Del");
   }
 

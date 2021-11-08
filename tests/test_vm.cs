@@ -2680,8 +2680,9 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     for(int i=0;i<99;i++)
       AssertEqual(vm.Tick(), BHS.RUNNING);
-    CommonChecks(vm, check_frames: false);
-    AssertEqual(vm.Frames.Count, 1);
+    CommonChecks(vm, check_frames: false, check_fibers: false);
+    AssertEqual(vm.FramesPool.Allocs, 1);
+    AssertEqual(vm.FibersPool.Allocs, 1);
   }
 
   [IsTested()]
@@ -4527,18 +4528,20 @@ public class BHL_TestVM : BHL_TestBase
     return Util.Bin2Meta<AST_Module>(ms);
   }
 
-  void CommonChecks(VM vm, bool check_frames = true)
+  void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true)
   {
     //for extra debug
-    if(vm.Vals.Count != vm.Vals.Free)
-      Console.WriteLine(vm.Vals.Dump());
+    if(vm.ValsPool.Allocs != vm.ValsPool.Free)
+      Console.WriteLine(vm.ValsPool.Dump());
 
     AssertEqual(vm.Stack.Count, 0);
-    AssertEqual(vm.Vals.Count, vm.Vals.Free);
-    AssertEqual(vm.Vlists.Count, vm.Vlists.Free);
-    AssertEqual(vm.Vdicts.Count, vm.Vdicts.Free);
+    AssertEqual(vm.ValsPool.Allocs, vm.ValsPool.Free);
+    AssertEqual(vm.VlistsPool.Allocs, vm.VlistsPool.Free);
+    AssertEqual(vm.VdictsPool.Allocs, vm.VdictsPool.Free);
     if(check_frames)
-      AssertEqual(vm.Frames.Count, vm.Frames.Free);
+      AssertEqual(vm.FramesPool.Allocs, vm.FramesPool.Free);
+    if(check_fibers)
+      AssertEqual(vm.FibersPool.Allocs, vm.FibersPool.Free);
   }
 
   public static string ByteArrayToString(byte[] ba)
