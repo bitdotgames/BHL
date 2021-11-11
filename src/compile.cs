@@ -1062,30 +1062,22 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.MVAR:
       {
-        var class_symb = symbols.Resolve(ast.scope_type) as ClassSymbol;
-        if(class_symb == null)
-          throw new Exception("Class type not found: " + ast.scope_type);
-        int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
-        if(memb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_type);
+        if((int)ast.symb_idx == -1)
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
 
         VisitChildren(ast);
 
-        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), memb_idx});
+        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx});
       }
       break;
       case EnumCall.MVARW:
       {
-        var class_symb = symbols.Resolve(ast.scope_type) as ClassSymbol;
-        if(class_symb == null)
-          throw new Exception("Class type not found: " + ast.scope_type);
-        int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
-        if(memb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_type);
+        if((int)ast.symb_idx == -1)
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
 
         VisitChildren(ast);
 
-        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), memb_idx});
+        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx});
       }
       break;
       case EnumCall.MFUNC:

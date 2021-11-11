@@ -262,6 +262,9 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
     base.Define(sym);
+
+    if(sym is VariableSymbol vs)
+      vs.scope_idx = members.FindStringKeyIndex(sym.name.s);
   }
 
   public HashedName GetName() { return name; }

@@ -2389,7 +2389,7 @@ public class Frontend : bhlBaseVisitor<object>
       iter_ast_decl = CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
       iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
     }
-    var arr_type = locals.Type(iter_str_type+"[]").Get();
+    var arr_type = (ClassSymbol)locals.Type(iter_str_type+"[]").Get();
 
     PushJsonType(arr_type);
     var exp = ctx.foreachExp().exp();
@@ -2440,7 +2440,7 @@ public class Frontend : bhlBaseVisitor<object>
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_symb));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype, arr_stype));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype, arr_stype, arr_type.members.FindStringKeyIndex("Count")));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
