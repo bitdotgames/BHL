@@ -723,9 +723,9 @@ public class VM
             for(int i = 0; i < args_info.CountArgs(); ++i)
               curr_frame.stack.Push(curr_frame.stack.PopFast());
 
-            var res_instruction = func_symb.VM_cb(curr_frame);
-            if(res_instruction != null)
-              AttachInstruction(ref instruction, res_instruction);
+            var sub_instruction = func_symb.VM_cb(curr_frame, ref status);
+            if(sub_instruction != null)
+              AttachInstruction(ref instruction, sub_instruction);
             //NOTE: checking if new instruction was added and if so executing it immediately
             if(instruction != null)
               instruction.Tick(curr_frame, ref status);
@@ -1138,6 +1138,7 @@ public interface IMultiInstruction : IInstruction
   void Attach(IInstruction ex);
 }
 
+//TODO: use static shared instance
 class CoroutineSuspend : IInstruction
 {
   public void Tick(VM.Frame frm, ref BHS status)
@@ -1164,17 +1165,6 @@ class CoroutineYield : IInstruction
   {
     c = 0;
   }
-}
-
-class FailInstruction : IInstruction
-{
-  public void Tick(VM.Frame frm, ref BHS status)
-  {
-    status = BHS.FAILURE;
-  }
-
-  public void Recycle(VM vm)
-  {}
 }
 
 public struct CodeBlock

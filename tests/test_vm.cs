@@ -4866,7 +4866,7 @@ public class BHL_TestVM : BHL_TestBase
   FuncSymbolNative BindTrace(GlobalScope globs, StringBuilder log)
   {
     var fn = new FuncSymbolNative("trace", globs.Type("void"), null,
-        delegate(VM.Frame frm) { 
+        delegate(VM.Frame frm, ref BHS status) { 
           string str = frm.PopRelease().str;
           log.Append(str);
           return null;
@@ -4902,7 +4902,7 @@ public class BHL_TestVM : BHL_TestBase
   FuncSymbolNative BindWaitTicks(GlobalScope globs, StringBuilder log)
   {
     var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"), null,
-        delegate(VM.Frame frm) { 
+        delegate(VM.Frame frm, ref BHS status) { 
           return InstructionPool.New<CoroutineWaitTicks>(frm.vm);
         } 
     );
