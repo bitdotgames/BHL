@@ -733,6 +733,39 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStatefulNativeFunc()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      WaitTicks(2)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindWaitTicks(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new ModuleCompiler(globs)
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
+      .Emit(Opcodes.CallNative, new int[] { 1 })
+      .Emit(Opcodes.Return)
+    ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestEmptyIntArray()
   {
     string bhl = @"
@@ -4830,13 +4863,46 @@ public class BHL_TestVM : BHL_TestBase
   FuncSymbolNative BindTrace(GlobalScope globs, StringBuilder log)
   {
     var fn = new FuncSymbolNative("trace", globs.Type("void"), null,
-        delegate(VM _, VM.Frame fr) { 
+        delegate(VM.Frame fr) { 
           string str = fr.PopRelease().str;
           log.Append(str);
           return null;
         } 
     );
     fn.Define(new FuncArgSymbol("str", globs.Type("string")));
+    globs.Define(fn);
+    return fn;
+  }
+
+  class CoroutineWaitTicks : IInstruction
+  {
+    int c;
+    int ticks_ttl;
+
+    public void Tick(VM.Frame frm, ref BHS status)
+    {
+      //first time
+      if(c++ == 0)
+        ticks_ttl = (int)frm.PopRelease().num;
+
+      if(ticks_ttl-- > 0)
+        status = BHS.RUNNING;
+    
+      //cleanup
+      if(status != BHS.RUNNING)
+        c = 0;
+    }
+  }
+
+  FuncSymbolNative BindWaitTicks(GlobalScope globs, StringBuilder log)
+  {
+    var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"), null,
+        delegate(VM.Frame frm) { 
+          //return new vm.instruction_pool.Pop<CoroutineWaitTicks>();
+          return new CoroutineWaitTicks();
+        } 
+    );
+    fn.Define(new FuncArgSymbol("ticks", globs.Type("int")));
     globs.Define(fn);
     return fn;
   }

@@ -13,7 +13,7 @@ public class VM
     //      public only for inspection
     public int refs;
 
-    internal VM vm;
+    public VM vm;
 
     public byte[] bytecode;
     public List<Const> constants;
@@ -455,7 +455,7 @@ public class VM
       //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
       if(instruction != null)
       {
-        status = instruction.Tick(this);
+        instruction.Tick(curr_frame, ref status);
         if(status == BHS.RUNNING)
           return status;
         else if(status == BHS.FAILURE)
@@ -742,12 +742,12 @@ public class VM
             for(int i = 0; i < args_info.CountArgs(); ++i)
               curr_frame.stack.Push(curr_frame.stack.PopFast());
 
-            var res_instruction = func_symb.VM_cb(this, curr_frame);
+            var res_instruction = func_symb.VM_cb(curr_frame);
             if(res_instruction != null)
               AttachInstruction(ref instruction, res_instruction);
             //NOTE: checking if new instruction was added and if so executing it immediately
             if(instruction != null)
-              status = instruction.Tick(this);
+              instruction.Tick(curr_frame, ref status);
           }
           break;
           case Opcodes.InitFrame:
@@ -1069,7 +1069,7 @@ public class CompiledModule
 
 public interface IInstruction
 {
-  BHS Tick(VM vm);
+  void Tick(VM.Frame frm, ref BHS status);
 }
 
 public interface IExitableScope
@@ -1087,10 +1087,9 @@ class CoroutineSuspend : IInstruction
 {
   static public readonly CoroutineSuspend Instance = new CoroutineSuspend();
 
-  public BHS Tick(VM vm)
+  public void Tick(VM.Frame frm, ref BHS status)
   {
-    //Console.WriteLine("SUSPEND");
-    return BHS.RUNNING;
+    status = BHS.RUNNING;
   }
 }
 
@@ -1098,11 +1097,15 @@ class CoroutineYield : IInstruction
 {
   byte c = 0;
 
-  public BHS Tick(VM vm)
+  public void Tick(VM.Frame frm, ref BHS status)
   {
-    //Console.WriteLine("YIELD");
-    c++;
-    return c == 1 ? BHS.RUNNING : BHS.SUCCESS; 
+    //first time
+    if(c++ == 0)
+      status = BHS.RUNNING;
+    
+    //cleanup
+    if(status != BHS.RUNNING)
+      c = 0;
   }
 }
 
@@ -1110,9 +1113,9 @@ class FailInstruction : IInstruction
 {
   static public readonly FailInstruction Instance = new FailInstruction();
 
-  public BHS Tick(VM vm)
+  public void Tick(VM.Frame frm, ref BHS status)
   {
-    return BHS.FAILURE;
+    status = BHS.FAILURE;
   }
 }
 
@@ -1141,21 +1144,20 @@ public class SeqInstruction : IInstruction, IExitableScope
   public IInstruction instruction;
   public List<CodeBlock> defers;
 
-  public SeqInstruction(VM.Frame curr_frame, int ip, int max_ip)
+  public SeqInstruction(VM.Frame frm, int ip, int max_ip)
   {
     //Console.WriteLine("NEW SEQ " + ip + " " + max_ip + " " + GetHashCode());
     this.ip = ip;
     this.max_ip = max_ip;
-    this.frames.Push(curr_frame);
+    this.frames.Push(frm);
   }
 
-  public BHS Tick(VM vm)
+  public void Tick(VM.Frame frm, ref BHS status)
   {
     //Console.WriteLine("TICK SEQ " + ip + " " + GetHashCode());
-    var status = vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
+    status = frm.vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
     if(status != BHS.RUNNING)
-      ExitScope(vm);
-    return status;
+      ExitScope(frm.vm);
   }
 
   public void RegisterOnExit(CodeBlock cb)
@@ -1192,15 +1194,15 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
   public List<IInstruction> children = new List<IInstruction>();
   public List<CodeBlock> defers;
 
-  public BHS Tick(VM vm)
+  public void Tick(VM.Frame frm, ref BHS status)
   {
-    BHS status = BHS.RUNNING;
+    status = BHS.RUNNING;
 
     int exited_idx = -1;
     for(int i=0;i<children.Count;++i)
     {
       var current = children[i];
-      status = current.Tick(vm);
+      current.Tick(frm, ref status);
       //Console.WriteLine("CHILD " + i + " " + status + " " + current.GetType().Name);
       if(status != BHS.RUNNING)
       {
@@ -1211,11 +1213,9 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
 
     if(exited_idx != -1)
     {
-      ExitChildren(vm, exited_idx, children);
-      ExitScope(vm);
+      ExitChildren(frm.vm, exited_idx, children);
+      ExitScope(frm.vm);
     }
-
-    return status;
   }
 
   static internal void ExitChildren(VM vm, int exited_child_idx, List<IInstruction> children)
@@ -1262,17 +1262,17 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
   public List<IInstruction> children = new List<IInstruction>();
   public List<CodeBlock> defers;
 
-  public BHS Tick(VM vm)
+  public void Tick(VM.Frame frm, ref BHS status)
   {
     for(int i=0;i<children.Count;)
     {
       var current = children[i];
-      var status = current.Tick(vm);
+      current.Tick(frm, ref status);
       if(status == BHS.FAILURE)
       {
-        ExitScope(vm);
-        ParalInstruction.ExitChildren(vm, i, children);
-        return BHS.FAILURE;
+        ExitScope(frm.vm);
+        ParalInstruction.ExitChildren(frm.vm, i, children);
+        return;
       }
       else if(status == BHS.SUCCESS)
         children.RemoveAt(i);
@@ -1280,13 +1280,10 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
         ++i;
     }
 
-    if(children.Count == 0)
-    {
-      ExitScope(vm);
-      return BHS.SUCCESS;
-    }
+    if(children.Count > 0)
+      status = BHS.RUNNING;
     else
-      return BHS.RUNNING;
+      ExitScope(frm.vm);
   }
 
   public void Attach(IInstruction inst)

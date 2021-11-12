@@ -361,12 +361,12 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
   public abstract void VM_CreateArr(ref Val v);
   public abstract void VM_GetCount(Val ctx, ref Val v);
-  public abstract IInstruction VM_Add(VM vm, VM.Frame curr_frame);
-  public abstract IInstruction VM_At(VM vm, VM.Frame curr_frame);
-  public abstract IInstruction VM_SetAt(VM vm, VM.Frame curr_frame);
-  public abstract IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame);
-  public abstract IInstruction VM_Clear(VM vm, VM.Frame curr_frame);
-  public abstract IInstruction VM_AddInplace(VM vm, VM.Frame curr_frame);
+  public abstract IInstruction VM_Add(VM.Frame frame);
+  public abstract IInstruction VM_At(VM.Frame frame);
+  public abstract IInstruction VM_SetAt(VM.Frame frame);
+  public abstract IInstruction VM_RemoveAt(VM.Frame frame);
+  public abstract IInstruction VM_Clear(VM.Frame frame);
+  public abstract IInstruction VM_AddInplace(VM.Frame frame);
 }
 
 //NOTE: This one is used as a fallback for all arrays which
@@ -462,10 +462,10 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     v.SetNum(lst.Count);
   }
   
-  public override IInstruction VM_Add(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_Add(VM.Frame frame)
   {
-    var val = curr_frame.stack.PopFast();
-    var arr = curr_frame.stack.PopFast();
+    var val = frame.stack.PopFast();
+    var arr = frame.stack.PopFast();
     var lst = AsList(arr);
     lst.Add(val);
     val.Release();
@@ -473,32 +473,32 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_AddInplace(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_AddInplace(VM.Frame frame)
   {
-    var val = curr_frame.stack.PopFast();
-    var arr = curr_frame.stack.Peek();
+    var val = frame.stack.PopFast();
+    var arr = frame.stack.Peek();
     var lst = AsList(arr);
     lst.Add(val);
     val.Release();
     return null;
   }
 
-  public override IInstruction VM_At(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_At(VM.Frame frame)
   {
-    int idx = (int)curr_frame.PopRelease().num;
-    var arr = curr_frame.stack.PopFast();
+    int idx = (int)frame.PopRelease().num;
+    var arr = frame.stack.PopFast();
     var lst = AsList(arr);
     var res = lst[idx]; 
-    curr_frame.PushRetain(res);
+    frame.PushRetain(res);
     arr.Release();
     return null;
   }
 
-  public override IInstruction VM_SetAt(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_SetAt(VM.Frame frame)
   {
-    int idx = (int)curr_frame.PopRelease().num;
-    var arr = curr_frame.stack.PopFast();
-    var val = curr_frame.stack.PopFast();
+    int idx = (int)frame.PopRelease().num;
+    var arr = frame.stack.PopFast();
+    var val = frame.stack.PopFast();
     var lst = AsList(arr);
     lst[idx] = val;
     val.Release();
@@ -506,20 +506,20 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_RemoveAt(VM.Frame frame)
   {
-    int idx = (int)curr_frame.PopRelease().num;
-    var arr = curr_frame.stack.PopFast();
+    int idx = (int)frame.PopRelease().num;
+    var arr = frame.stack.PopFast();
     var lst = AsList(arr);
     lst.RemoveAt(idx); 
     arr.Release();
     return null;
   }
 
-  public override IInstruction VM_Clear(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_Clear(VM.Frame frame)
   {
-    int idx = (int)curr_frame.PopRelease().num;
-    var arr = curr_frame.stack.PopFast();
+    int idx = (int)frame.PopRelease().num;
+    var arr = frame.stack.PopFast();
     var lst = AsList(arr);
     lst.Clear();
     arr.Release();
@@ -603,32 +603,32 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     throw new Exception("Not implemented");
   }
   
-  public override IInstruction VM_Add(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_Add(VM.Frame frame)
   {
     throw new Exception("Not implemented");
   }
 
-  public override IInstruction VM_AddInplace(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_AddInplace(VM.Frame frame)
   {
     throw new Exception("Not implemented");
   }
 
-  public override IInstruction VM_At(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_At(VM.Frame frame)
   {
     throw new Exception("Not implemented");
   }
 
-  public override IInstruction VM_SetAt(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_SetAt(VM.Frame frame)
   {
     throw new Exception("Not implemented");
   }
 
-  public override IInstruction VM_RemoveAt(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_RemoveAt(VM.Frame frame)
   {
     throw new Exception("Not implemented");
   }
 
-  public override IInstruction VM_Clear(VM vm, VM.Frame curr_frame)
+  public override IInstruction VM_Clear(VM.Frame frame)
   {
     throw new Exception("Not implemented");
   }
@@ -1136,7 +1136,7 @@ public class FuncSymbolNative : FuncSymbol
 {
   public Interpreter.FuncNodeCreator func_creator;
 
-  public System.Func<VM, VM.Frame, IInstruction> VM_cb;
+  public System.Func<VM.Frame, IInstruction> VM_cb;
 
   public int def_args_num;
 
@@ -1144,7 +1144,7 @@ public class FuncSymbolNative : FuncSymbol
     HashedName name, 
     TypeRef ret_type, 
     Interpreter.FuncNodeCreator func_creator, 
-    System.Func<VM, VM.Frame, IInstruction> VM_cb = null, 
+    System.Func<VM.Frame, IInstruction> VM_cb = null, 
     int def_args_num = 0
   ) 
     : base(null, name, new FuncType(ret_type), null)
@@ -1545,7 +1545,7 @@ static public class SymbolTable
 
     {
       var fn = new FuncSymbolNative("suspend", globals.Type("void"), null,
-        delegate(VM vm, VM.Frame fr) 
+        delegate(VM.Frame _) 
         { 
           return CoroutineSuspend.Instance;
         } 
@@ -1555,7 +1555,7 @@ static public class SymbolTable
 
     {
       var fn = new FuncSymbolNative("yield", globals.Type("void"), null,
-        delegate(VM vm, VM.Frame fr) 
+        delegate(VM.Frame _) 
         { 
           return new CoroutineYield();
         } 
@@ -1566,7 +1566,7 @@ static public class SymbolTable
     //TODO: this one is controversary, it's defined for BC for now
     {
       var fn = new FuncSymbolNative("fail", globals.Type("void"), null,
-        delegate(VM vm, VM.Frame fr) 
+        delegate(VM.Frame _) 
         { 
           return FailInstruction.Instance;
         } 
