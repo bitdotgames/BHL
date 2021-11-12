@@ -256,7 +256,11 @@ public class VM
     internal void Clear()
     {
       frames.Clear();
-      instruction = null;
+      if(instruction != null)
+      {
+        InstructionPool.Del(vm, instruction);
+        instruction = null;
+      }
     }
   }
   List<Fiber> fibers = new List<Fiber>();
@@ -1054,7 +1058,7 @@ public class CompiledModule
 public interface IInstruction
 {
   void Tick(VM.Frame frm, ref BHS status);
-  void Recycle();
+  void Recycle(VM vm);
 }
 
 public class InstructionPool
@@ -1083,12 +1087,16 @@ public class InstructionPool
       inst = pool.stack.Pop();
     }
 
+    //Console.WriteLine("NEW " + typeof(T).Name + " " + inst.GetHashCode());
+
     return (T)inst;
   }
 
   static public void Del(VM vm, IInstruction inst)
   {
-    inst.Recycle();
+    //Console.WriteLine("DEL " + inst.GetType().Name + " " + inst.GetHashCode());
+
+    inst.Recycle(vm);
 
     var t = inst.GetType();
     var pool = vm.instr_pool.all[t];
@@ -1139,7 +1147,7 @@ class CoroutineSuspend : IInstruction
     status = BHS.RUNNING;
   }
 
-  public void Recycle()
+  public void Recycle(VM vm)
   {}
 }
 
@@ -1154,7 +1162,7 @@ class CoroutineYield : IInstruction
       status = BHS.RUNNING;
   }
 
-  public void Recycle()
+  public void Recycle(VM vm)
   {
     c = 0;
   }
@@ -1169,7 +1177,7 @@ class FailInstruction : IInstruction
     status = BHS.FAILURE;
   }
 
-  public void Recycle()
+  public void Recycle(VM vm)
   {}
 }
 
@@ -1206,9 +1214,14 @@ public class SeqInstruction : IInstruction, IExitableScope
     frames.Push(frm);
   }
 
-  public void Recycle()
+  public void Recycle(VM vm)
   {
     frames.Clear();
+    if(instruction != null)
+    {
+      InstructionPool.Del(vm, instruction);
+      instruction = null;
+    }
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
@@ -1277,9 +1290,12 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
     }
   }
 
-  public void Recycle()
+  public void Recycle(VM vm)
   {
+    for(int i=0;i<children.Count;++i)
+      InstructionPool.Del(vm, children[i]);
     children.Clear();
+
     if(defers != null)
       defers.Clear();
   }
@@ -1290,8 +1306,8 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
     {
       if(exited_child_idx != i)
       {
-        var exitable = children[i] as IExitableScope;
-        if(exitable != null)
+        var child = children[i];
+        if(child is IExitableScope exitable)
           exitable.ExitScope(vm);
       }
     }
@@ -1341,7 +1357,10 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
         return;
       }
       else if(status == BHS.SUCCESS)
+      {
+        InstructionPool.Del(frm.vm, children[i]);
         children.RemoveAt(i);
+      }
       else
         ++i;
     }
@@ -1352,9 +1371,12 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
       ExitScope(frm.vm);
   }
 
-  public void Recycle()
+  public void Recycle(VM vm)
   {
+    for(int i=0;i<children.Count;++i)
+      InstructionPool.Del(vm, children[i]);
     children.Clear();
+
     if(defers != null)
       defers.Clear();
   }

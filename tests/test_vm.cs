@@ -4892,7 +4892,7 @@ public class BHL_TestVM : BHL_TestBase
         status = BHS.RUNNING;
     }
 
-    public void Recycle()
+    public void Recycle(VM vm)
     {
       c = 0;
       ticks_ttl = 0;
