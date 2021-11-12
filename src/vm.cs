@@ -703,13 +703,8 @@ public class VM
             int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             string class_type = curr_frame.constants[class_type_idx].str; 
 
-            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-            //TODO: this check must be in dev.version only
-            if(class_symb == null)
-              throw new Exception("Class type not found: " + class_type);
-
+            var class_symb = (ClassSymbol)symbols.Resolve(class_type) as ClassSymbol;
             var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
-
             curr_frame.stack.Push(Val.NewObj(this, func_symb));
           }
           break;
