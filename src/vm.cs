@@ -666,7 +666,7 @@ public class VM
             curr_frame.stack.Push(Val.NewObj(this, func_symb));
           }
           break;
-          case Opcodes.GetMethod:
+          case Opcodes.GetMethodNative:
           {
             int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
 
@@ -674,7 +674,7 @@ public class VM
             string class_type = curr_frame.constants[class_type_idx].str; 
 
             var class_symb = (ClassSymbol)symbols.Resolve(class_type);
-            var func_symb = (FuncSymbol)class_symb.members[func_idx];
+            var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
             curr_frame.stack.Push(Val.NewObj(this, func_symb));
           }
           break;
