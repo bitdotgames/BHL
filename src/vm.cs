@@ -1140,8 +1140,6 @@ public interface IMultiInstruction : IInstruction
 
 class CoroutineSuspend : IInstruction
 {
-  static public readonly CoroutineSuspend Instance = new CoroutineSuspend();
-
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = BHS.RUNNING;
@@ -1170,8 +1168,6 @@ class CoroutineYield : IInstruction
 
 class FailInstruction : IInstruction
 {
-  static public readonly FailInstruction Instance = new FailInstruction();
-
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = BHS.FAILURE;
@@ -1217,11 +1213,15 @@ public class SeqInstruction : IInstruction, IExitableScope
   public void Recycle(VM vm)
   {
     frames.Clear();
+
     if(instruction != null)
     {
       InstructionPool.Del(vm, instruction);
       instruction = null;
     }
+
+    if(defers != null)
+      defers.Clear();
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
