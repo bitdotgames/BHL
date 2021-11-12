@@ -659,6 +659,25 @@ public class VM
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
+          case Opcodes.GetFuncNative:
+          {
+            int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+            var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
+            curr_frame.stack.Push(Val.NewObj(this, func_symb));
+          }
+          break;
+          case Opcodes.GetMethod:
+          {
+            int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+
+            int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+            string class_type = curr_frame.constants[class_type_idx].str; 
+
+            var class_symb = (ClassSymbol)symbols.Resolve(class_type);
+            var func_symb = (FuncSymbol)class_symb.members[func_idx];
+            curr_frame.stack.Push(Val.NewObj(this, func_symb));
+          }
+          break;
           case Opcodes.GetFuncFromVar:
           {
             int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
@@ -680,32 +699,13 @@ public class VM
             string func_name = curr_frame.constants[func_idx].str;
 
             var module = modules[module_name];
+            //TODO: during postprocessing retrieve func_ip and encode it into the opcode
+            //      so that there will be two Dictionary fetches less
             int func_ip = module.func2ip[func_name];
 
             var func_frame = Frame.New(this);
             func_frame.Init(module, func_ip);
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
-          }
-          break;
-          case Opcodes.GetFuncNative:
-          {
-            int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-
-            var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
-
-            curr_frame.stack.Push(Val.NewObj(this, func_symb));
-          }
-          break;
-          case Opcodes.GetMFuncNative:
-          {
-            int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-
-            int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            string class_type = curr_frame.constants[class_type_idx].str; 
-
-            var class_symb = (ClassSymbol)symbols.Resolve(class_type) as ClassSymbol;
-            var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
-            curr_frame.stack.Push(Val.NewObj(this, func_symb));
           }
           break;
           case Opcodes.Call:

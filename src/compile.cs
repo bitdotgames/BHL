@@ -22,7 +22,7 @@ public enum Opcodes
   GetFuncNative   = 0x13,
   GetFuncFromVar  = 0x14,
   GetFuncImported = 0x15,
-  GetMFuncNative  = 0x16,
+  GetMethod       = 0x16,
   SetAttr         = 0x20,
   SetAttrInplace  = 0x21,
   GetAttr         = 0xA,
@@ -447,7 +447,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.GetMFuncNative,
+        name = Opcodes.GetMethod,
         operand_width = new int[] { 2/*class member idx*/, 3/*type literal idx*/ }
       }
     );
@@ -1091,19 +1091,19 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
         
-        Emit(Opcodes.GetMFuncNative, new int[] {memb_idx, AddConstant(ast.scope_type)});
+        Emit(Opcodes.GetMethod, new int[] {memb_idx, AddConstant(ast.scope_type)});
         Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.GetMFuncNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]")});
+        Emit(Opcodes.GetMethod, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]")});
         Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.GetMFuncNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")});
+        Emit(Opcodes.GetMethod, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")});
         Emit(Opcodes.CallNative, new int[] {0});
       }
       break;
@@ -1319,7 +1319,7 @@ public class ModuleCompiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.GetMFuncNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
+        Emit(Opcodes.GetMethod, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
         Emit(Opcodes.CallNative, new int[] {0});
       }
       else
@@ -1329,7 +1329,7 @@ public class ModuleCompiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.GetMFuncNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
+      Emit(Opcodes.GetMethod, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
       Emit(Opcodes.CallNative, new int[] {0});
     }
   }
