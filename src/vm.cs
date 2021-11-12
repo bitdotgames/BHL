@@ -27,7 +27,7 @@ public class VM
     static public Frame New(VM vm)
     {
       Frame frm;
-      if(vm.frames_pool.pool.Count == 0)
+      if(vm.frames_pool.stack.Count == 0)
       {
         ++vm.frames_pool.miss;
         frm = new Frame(vm);
@@ -35,7 +35,7 @@ public class VM
       else
       {
         ++vm.frames_pool.hit;
-        frm = vm.frames_pool.pool.Pop();
+        frm = vm.frames_pool.stack.Pop();
 
       if(frm.refs != -1)
         throw new Exception("Expected to be released, refs " + frm.refs);
@@ -55,7 +55,7 @@ public class VM
       frm.refs = -1;
 
       frm.Clear();
-      frm.vm.frames_pool.pool.Push(frm);
+      frm.vm.frames_pool.stack.Push(frm);
     }
 
     //NOTE: use New() instead
@@ -173,7 +173,7 @@ public class VM
 
   public class Pool<T> where T : class
   {
-    public Stack<T> pool = new Stack<T>();
+    public Stack<T> stack = new Stack<T>();
     public int hit;
     public int miss;
 
@@ -184,7 +184,7 @@ public class VM
 
     public int Free
     {
-      get { return pool.Count; }
+      get { return stack.Count; }
     }
   }
 
@@ -227,7 +227,7 @@ public class VM
     static public Fiber New(VM vm)
     {
       Fiber fb;
-      if(vm.fibers_pool.pool.Count == 0)
+      if(vm.fibers_pool.stack.Count == 0)
       {
         ++vm.fibers_pool.miss;
         fb = new Fiber(vm);
@@ -235,7 +235,7 @@ public class VM
       else
       {
         ++vm.fibers_pool.hit;
-        fb = vm.fibers_pool.pool.Pop();
+        fb = vm.fibers_pool.stack.Pop();
       }
 
       return fb;
@@ -244,7 +244,7 @@ public class VM
     static public void Del(Fiber fb)
     {
       fb.Clear();
-      fb.vm.fibers_pool.pool.Push(fb);
+      fb.vm.fibers_pool.stack.Push(fb);
     }
 
     //NOTE: use New() instead
@@ -277,7 +277,7 @@ public class VM
       {
         ++miss;
         var tmp = new Val(vm); 
-        pool.Push(tmp);
+        stack.Push(tmp);
       }
     }
 
@@ -285,8 +285,8 @@ public class VM
     {
       string res = "=== Val POOL ===\n";
       res += "total:" + Allocs + " free:" + Free + "\n";
-      var dvs = new Val[pool.Count];
-      pool.CopyTo(dvs, 0);
+      var dvs = new Val[stack.Count];
+      stack.CopyTo(dvs, 0);
       for(int i=dvs.Length;i-- > 0;)
       {
         var v = dvs[i];
@@ -295,40 +295,13 @@ public class VM
       return res;
     }
   }
-  internal ValPool vals_pool = new ValPool();
-  public ValPool ValsPool {
-    get {
-      return vals_pool;
-    }
-  }
 
-  internal Pool<ValList> vlsts_pool = new Pool<ValList>();
-  public Pool<ValList> VlistsPool {
-    get {
-      return vlsts_pool;
-    }
-  }
-
-  internal Pool<ValDict> vdicts_pool = new Pool<ValDict>();
-  public Pool<ValDict> VdictsPool {
-    get {
-      return vdicts_pool;
-    }
-  }
-
-  internal Pool<Frame> frames_pool = new Pool<Frame>();
-  public Pool<Frame> FramesPool {
-    get {
-      return frames_pool;
-    }
-  }
-
-  internal Pool<Fiber> fibers_pool = new Pool<Fiber>();
-  public Pool<Fiber> FibersPool {
-    get {
-      return fibers_pool;
-    }
-  }
+  public ValPool vals_pool = new ValPool();
+  public Pool<ValList> vlsts_pool = new Pool<ValList>();
+  public Pool<ValDict> vdicts_pool = new Pool<ValDict>();
+  public Pool<Frame> frames_pool = new Pool<Frame>();
+  public Pool<Fiber> fibers_pool = new Pool<Fiber>();
+  public InstructionPool instr_pool = new InstructionPool();
 
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
@@ -460,6 +433,7 @@ public class VM
           return status;
         else if(status == BHS.FAILURE)
         {
+          InstructionPool.Del(this, instruction);
           instruction = null;
           curr_frame.ExitScope(this);
           ip = curr_frame.return_ip;
@@ -468,7 +442,10 @@ public class VM
           return status;
         }
         else
+        {
+          InstructionPool.Del(this, instruction);
           instruction = null;
+        }
       }
 
       {
@@ -883,7 +860,12 @@ public class VM
 
     if(type == EnumBlock.PARAL || type == EnumBlock.PARAL_ALL) 
     {
-      var paral = type == EnumBlock.PARAL ? (IMultiInstruction)new ParalInstruction() : (IMultiInstruction)new ParalAllInstruction();
+      IMultiInstruction paral = null;
+      if(type == EnumBlock.PARAL)
+        paral = InstructionPool.New<ParalInstruction>(curr_frame.vm);
+      else
+        paral = InstructionPool.New<ParalAllInstruction>(curr_frame.vm);
+
       AttachInstruction(ref instruction, paral);
       int tmp_ip = ip;
       while(tmp_ip < (ip + size))
@@ -902,7 +884,9 @@ public class VM
     }
     else if(type == EnumBlock.SEQ)
     {
-      var seq = new SeqInstruction(curr_frame, ip + 1, ip + size);
+      var seq = InstructionPool.New<SeqInstruction>(curr_frame.vm);
+      seq.Init(curr_frame, ip + 1, ip + size);
+
       AttachInstruction(ref instruction, seq);
       ip += size;
       return seq;
@@ -1070,6 +1054,69 @@ public class CompiledModule
 public interface IInstruction
 {
   void Tick(VM.Frame frm, ref BHS status);
+  void Recycle();
+}
+
+public class InstructionPool
+{
+  Dictionary<System.Type, VM.Pool<IInstruction>> all = new Dictionary<System.Type, VM.Pool<IInstruction>>(); 
+
+  static public T New<T>(VM vm) where T : IInstruction, new()
+  {
+    var t = typeof(T); 
+    VM.Pool<IInstruction> pool;
+    if(!vm.instr_pool.all.TryGetValue(t, out pool))
+    {
+      pool = new VM.Pool<IInstruction>();
+      vm.instr_pool.all.Add(t, pool);
+    }
+
+    IInstruction inst = null;
+    if(pool.stack.Count == 0)
+    {
+      ++pool.miss;
+      inst = new T();
+    }
+    else
+    {
+      ++pool.hit;
+      inst = pool.stack.Pop();
+    }
+
+    return (T)inst;
+  }
+
+  static public void Del(VM vm, IInstruction inst)
+  {
+    inst.Recycle();
+
+    var t = inst.GetType();
+    var pool = vm.instr_pool.all[t];
+    pool.stack.Push(inst);
+
+    if(pool.stack.Count > pool.miss)
+      throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
+  }
+
+  public int Allocs
+  {
+    get {
+      int total = 0;
+      foreach(var kv in all) 
+        total += kv.Value.Allocs;
+      return total;
+    }
+  }
+
+  public int Free
+  {
+    get {
+      int total = 0;
+      foreach(var kv in all) 
+        total += kv.Value.Free;
+      return total;
+    }
+  }
 }
 
 public interface IExitableScope
@@ -1091,6 +1138,9 @@ class CoroutineSuspend : IInstruction
   {
     status = BHS.RUNNING;
   }
+
+  public void Recycle()
+  {}
 }
 
 class CoroutineYield : IInstruction
@@ -1102,10 +1152,11 @@ class CoroutineYield : IInstruction
     //first time
     if(c++ == 0)
       status = BHS.RUNNING;
-    
-    //cleanup
-    if(status != BHS.RUNNING)
-      c = 0;
+  }
+
+  public void Recycle()
+  {
+    c = 0;
   }
 }
 
@@ -1117,6 +1168,9 @@ class FailInstruction : IInstruction
   {
     status = BHS.FAILURE;
   }
+
+  public void Recycle()
+  {}
 }
 
 public struct CodeBlock
@@ -1144,12 +1198,17 @@ public class SeqInstruction : IInstruction, IExitableScope
   public IInstruction instruction;
   public List<CodeBlock> defers;
 
-  public SeqInstruction(VM.Frame frm, int ip, int max_ip)
+  public void Init(VM.Frame frm, int ip, int max_ip)
   {
     //Console.WriteLine("NEW SEQ " + ip + " " + max_ip + " " + GetHashCode());
     this.ip = ip;
     this.max_ip = max_ip;
-    this.frames.Push(frm);
+    frames.Push(frm);
+  }
+
+  public void Recycle()
+  {
+    frames.Clear();
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
@@ -1218,6 +1277,13 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
     }
   }
 
+  public void Recycle()
+  {
+    children.Clear();
+    if(defers != null)
+      defers.Clear();
+  }
+
   static internal void ExitChildren(VM vm, int exited_child_idx, List<IInstruction> children)
   {
     for(int i=0;i<children.Count;++i)
@@ -1284,6 +1350,13 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
       status = BHS.RUNNING;
     else
       ExitScope(frm.vm);
+  }
+
+  public void Recycle()
+  {
+    children.Clear();
+    if(defers != null)
+      defers.Clear();
   }
 
   public void Attach(IInstruction inst)
@@ -1385,7 +1458,7 @@ public class Val
   static public Val New(VM vm)
   {
     Val dv;
-    if(vm.vals_pool.pool.Count == 0)
+    if(vm.vals_pool.stack.Count == 0)
     {
       ++vm.vals_pool.miss;
       dv = new Val(vm);
@@ -1396,7 +1469,7 @@ public class Val
     else
     {
       ++vm.vals_pool.hit;
-      dv = vm.vals_pool.pool.Pop();
+      dv = vm.vals_pool.stack.Pop();
 #if DEBUG_REFS
       Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
@@ -1414,9 +1487,9 @@ public class Val
       throw new Exception("Deleting invalid object, refs " + dv._refs);
     dv._refs = -1;
 
-    dv.vm.vals_pool.pool.Push(dv);
-    if(dv.vm.vals_pool.pool.Count > dv.vm.vals_pool.miss)
-      throw new Exception("Unbalanced New/Del " + dv.vm.vals_pool.pool.Count + " " + dv.vm.vals_pool.miss);
+    dv.vm.vals_pool.stack.Push(dv);
+    if(dv.vm.vals_pool.stack.Count > dv.vm.vals_pool.miss)
+      throw new Exception("Unbalanced New/Del " + dv.vm.vals_pool.stack.Count + " " + dv.vm.vals_pool.miss);
   }
 
   //NOTE: refcount is not reset
@@ -1777,7 +1850,7 @@ public class ValList : IList<Val>, IValRefcounted
   public static ValList New(VM vm)
   {
     ValList lst;
-    if(vm.vlsts_pool.pool.Count == 0)
+    if(vm.vlsts_pool.stack.Count == 0)
     {
       ++vm.vlsts_pool.miss;
       lst = new ValList(vm);
@@ -1785,7 +1858,7 @@ public class ValList : IList<Val>, IValRefcounted
     else
     {
       ++vm.vlsts_pool.hit;
-      lst = vm.vlsts_pool.pool.Pop();
+      lst = vm.vlsts_pool.stack.Pop();
 
       if(lst.refs != -1)
         throw new Exception("Expected to be released, refs " + lst.refs);
@@ -1802,9 +1875,9 @@ public class ValList : IList<Val>, IValRefcounted
 
     lst.refs = -1;
     lst.Clear();
-    lst.vm.vlsts_pool.pool.Push(lst);
+    lst.vm.vlsts_pool.stack.Push(lst);
 
-    if(lst.vm.vlsts_pool.pool.Count > lst.vm.vlsts_pool.miss)
+    if(lst.vm.vlsts_pool.stack.Count > lst.vm.vlsts_pool.miss)
       throw new Exception("Unbalanced New/Del");
   }
 }
@@ -1852,7 +1925,7 @@ public class ValDict : IValRefcounted
   public static ValDict New(VM vm)
   {
     ValDict tb;
-    if(vm.vdicts_pool.pool.Count == 0)
+    if(vm.vdicts_pool.stack.Count == 0)
     {
       ++vm.vdicts_pool.miss;
       tb = new ValDict(vm);
@@ -1860,7 +1933,7 @@ public class ValDict : IValRefcounted
     else
     {
       ++vm.vdicts_pool.hit;
-      tb = vm.vdicts_pool.pool.Pop();
+      tb = vm.vdicts_pool.stack.Pop();
 
       if(tb.refs != -1)
         throw new Exception("Expected to be released, refs " + tb.refs);
@@ -1877,9 +1950,9 @@ public class ValDict : IValRefcounted
 
     tb.refs = -1;
     tb.Clear();
-    tb.vm.vdicts_pool.pool.Push(tb);
+    tb.vm.vdicts_pool.stack.Push(tb);
 
-    if(tb.vm.vdicts_pool.pool.Count > tb.vm.vdicts_pool.miss)
+    if(tb.vm.vdicts_pool.stack.Count > tb.vm.vdicts_pool.miss)
       throw new Exception("Unbalanced New/Del");
   }
 

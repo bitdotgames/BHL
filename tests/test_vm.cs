@@ -2713,9 +2713,10 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     for(int i=0;i<99;i++)
       AssertEqual(vm.Tick(), BHS.RUNNING);
-    CommonChecks(vm, check_frames: false, check_fibers: false);
-    AssertEqual(vm.FramesPool.Allocs, 1);
-    AssertEqual(vm.FibersPool.Allocs, 1);
+    CommonChecks(vm, check_frames: false, check_fibers: false, check_instructions: false);
+    AssertEqual(vm.frames_pool.Allocs, 1);
+    AssertEqual(vm.fibers_pool.Allocs, 1);
+    AssertEqual(vm.instr_pool.Allocs, 1);
   }
 
   [IsTested()]
@@ -4604,20 +4605,22 @@ public class BHL_TestVM : BHL_TestBase
     return Util.Bin2Meta<AST_Module>(ms);
   }
 
-  void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true)
+  void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)
   {
     //for extra debug
-    if(vm.ValsPool.Allocs != vm.ValsPool.Free)
-      Console.WriteLine(vm.ValsPool.Dump());
+    if(vm.vals_pool.Allocs != vm.vals_pool.Free)
+      Console.WriteLine(vm.vals_pool.Dump());
 
     AssertEqual(vm.Stack.Count, 0);
-    AssertEqual(vm.ValsPool.Allocs, vm.ValsPool.Free);
-    AssertEqual(vm.VlistsPool.Allocs, vm.VlistsPool.Free);
-    AssertEqual(vm.VdictsPool.Allocs, vm.VdictsPool.Free);
+    AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
+    AssertEqual(vm.vlsts_pool.Allocs, vm.vlsts_pool.Free);
+    AssertEqual(vm.vdicts_pool.Allocs, vm.vdicts_pool.Free);
     if(check_frames)
-      AssertEqual(vm.FramesPool.Allocs, vm.FramesPool.Free);
+      AssertEqual(vm.frames_pool.Allocs, vm.frames_pool.Free);
     if(check_fibers)
-      AssertEqual(vm.FibersPool.Allocs, vm.FibersPool.Free);
+      AssertEqual(vm.fibers_pool.Allocs, vm.fibers_pool.Free);
+    if(check_instructions)
+      AssertEqual(vm.instr_pool.Allocs, vm.instr_pool.Free);
   }
 
   public static string ByteArrayToString(byte[] ba)
@@ -4863,8 +4866,8 @@ public class BHL_TestVM : BHL_TestBase
   FuncSymbolNative BindTrace(GlobalScope globs, StringBuilder log)
   {
     var fn = new FuncSymbolNative("trace", globs.Type("void"), null,
-        delegate(VM.Frame fr) { 
-          string str = fr.PopRelease().str;
+        delegate(VM.Frame frm) { 
+          string str = frm.PopRelease().str;
           log.Append(str);
           return null;
         } 
@@ -4887,10 +4890,12 @@ public class BHL_TestVM : BHL_TestBase
 
       if(ticks_ttl-- > 0)
         status = BHS.RUNNING;
-    
-      //cleanup
-      if(status != BHS.RUNNING)
-        c = 0;
+    }
+
+    public void Recycle()
+    {
+      c = 0;
+      ticks_ttl = 0;
     }
   }
 
@@ -4898,8 +4903,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"), null,
         delegate(VM.Frame frm) { 
-          //return new vm.instruction_pool.Pop<CoroutineWaitTicks>();
-          return new CoroutineWaitTicks();
+          return InstructionPool.New<CoroutineWaitTicks>(frm.vm);
         } 
     );
     fn.Define(new FuncArgSymbol("ticks", globs.Type("int")));

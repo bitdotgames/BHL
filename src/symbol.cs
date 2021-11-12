@@ -1545,9 +1545,10 @@ static public class SymbolTable
 
     {
       var fn = new FuncSymbolNative("suspend", globals.Type("void"), null,
-        delegate(VM.Frame _) 
+        delegate(VM.Frame frm) 
         { 
-          return CoroutineSuspend.Instance;
+          //TODO: there's no need for stateful instruction here
+          return InstructionPool.New<CoroutineSuspend>(frm.vm);
         } 
       );
       globals.Define(fn);
@@ -1555,9 +1556,9 @@ static public class SymbolTable
 
     {
       var fn = new FuncSymbolNative("yield", globals.Type("void"), null,
-        delegate(VM.Frame _) 
+        delegate(VM.Frame frm) 
         { 
-          return new CoroutineYield();
+          return InstructionPool.New<CoroutineYield>(frm.vm);
         } 
       );
       globals.Define(fn);
@@ -1566,9 +1567,10 @@ static public class SymbolTable
     //TODO: this one is controversary, it's defined for BC for now
     {
       var fn = new FuncSymbolNative("fail", globals.Type("void"), null,
-        delegate(VM.Frame _) 
+        delegate(VM.Frame frm) 
         { 
-          return FailInstruction.Instance;
+          //TODO: there's no need for stateful instruction here
+          return InstructionPool.New<FailInstruction>(frm.vm);
         } 
       );
       globals.Define(fn);
