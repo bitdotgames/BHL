@@ -1548,7 +1548,7 @@ static public class SymbolTable
       var fn = new FuncSymbolNative("suspend", globals.Type("void"), null,
         delegate(VM.Frame frm, ref BHS status) 
         { 
-          return InstructionPool.New<CoroutineSuspend>(frm.vm);
+          return CoroutineSuspend.Instance;
         } 
       );
       globals.Define(fn);
@@ -1558,7 +1558,7 @@ static public class SymbolTable
       var fn = new FuncSymbolNative("yield", globals.Type("void"), null,
         delegate(VM.Frame frm, ref BHS status) 
         { 
-          return InstructionPool.New<CoroutineYield>(frm.vm);
+          return Instructions.New<CoroutineYield>(frm.vm);
         } 
       );
       globals.Define(fn);

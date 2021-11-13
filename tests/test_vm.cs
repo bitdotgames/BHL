@@ -2713,10 +2713,9 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     for(int i=0;i<99;i++)
       AssertEqual(vm.Tick(), BHS.RUNNING);
-    CommonChecks(vm, check_frames: false, check_fibers: false, check_instructions: false);
+    CommonChecks(vm, check_frames: false, check_fibers: false);
     AssertEqual(vm.frames_pool.Allocs, 1);
     AssertEqual(vm.fibers_pool.Allocs, 1);
-    AssertEqual(vm.instr_pool.Allocs, 1);
   }
 
   [IsTested()]
@@ -4892,10 +4891,11 @@ public class BHL_TestVM : BHL_TestBase
         status = BHS.RUNNING;
     }
 
-    public void Recycle(VM vm)
+    public bool Recycle(VM vm)
     {
       c = 0;
       ticks_ttl = 0;
+      return true;
     }
   }
 
@@ -4903,7 +4903,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"), null,
         delegate(VM.Frame frm, ref BHS status) { 
-          return InstructionPool.New<CoroutineWaitTicks>(frm.vm);
+          return Instructions.New<CoroutineWaitTicks>(frm.vm);
         } 
     );
     fn.Define(new FuncArgSymbol("ticks", globs.Type("int")));

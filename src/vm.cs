@@ -258,7 +258,7 @@ public class VM
       frames.Clear();
       if(instruction != null)
       {
-        InstructionPool.Del(vm, instruction);
+        Instructions.Del(vm, instruction);
         instruction = null;
       }
     }
@@ -305,7 +305,7 @@ public class VM
   public Pool<ValDict> vdicts_pool = new Pool<ValDict>();
   public Pool<Frame> frames_pool = new Pool<Frame>();
   public Pool<Fiber> fibers_pool = new Pool<Fiber>();
-  public InstructionPool instr_pool = new InstructionPool();
+  public Instructions instr_pool = new Instructions();
 
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
@@ -437,7 +437,7 @@ public class VM
           return status;
         else if(status == BHS.FAILURE)
         {
-          InstructionPool.Del(this, instruction);
+          Instructions.Del(this, instruction);
           instruction = null;
           curr_frame.ExitScope(this);
           ip = curr_frame.return_ip;
@@ -447,7 +447,7 @@ public class VM
         }
         else
         {
-          InstructionPool.Del(this, instruction);
+          Instructions.Del(this, instruction);
           instruction = null;
         }
       }
@@ -866,9 +866,9 @@ public class VM
     {
       IMultiInstruction paral = null;
       if(type == EnumBlock.PARAL)
-        paral = InstructionPool.New<ParalInstruction>(curr_frame.vm);
+        paral = Instructions.New<ParalInstruction>(curr_frame.vm);
       else
-        paral = InstructionPool.New<ParalAllInstruction>(curr_frame.vm);
+        paral = Instructions.New<ParalAllInstruction>(curr_frame.vm);
 
       AttachInstruction(ref instruction, paral);
       int tmp_ip = ip;
@@ -888,7 +888,7 @@ public class VM
     }
     else if(type == EnumBlock.SEQ)
     {
-      var seq = InstructionPool.New<SeqInstruction>(curr_frame.vm);
+      var seq = Instructions.New<SeqInstruction>(curr_frame.vm);
       seq.Init(curr_frame, ip + 1, ip + size);
 
       AttachInstruction(ref instruction, seq);
@@ -1058,10 +1058,11 @@ public class CompiledModule
 public interface IInstruction
 {
   void Tick(VM.Frame frm, ref BHS status);
-  void Recycle(VM vm);
+  //NOTE: return false if instruction is not put into pool after recycle 
+  bool Recycle(VM vm);
 }
 
-public class InstructionPool
+public class Instructions
 {
   Dictionary<System.Type, VM.Pool<IInstruction>> all = new Dictionary<System.Type, VM.Pool<IInstruction>>(); 
 
@@ -1096,7 +1097,8 @@ public class InstructionPool
   {
     //Console.WriteLine("DEL " + inst.GetType().Name + " " + inst.GetHashCode());
 
-    inst.Recycle(vm);
+    if(!inst.Recycle(vm))
+      return;
 
     var t = inst.GetType();
     var pool = vm.instr_pool.all[t];
@@ -1138,32 +1140,38 @@ public interface IMultiInstruction : IInstruction
   void Attach(IInstruction ex);
 }
 
-//TODO: use static shared instance
 class CoroutineSuspend : IInstruction
 {
+  public static readonly IInstruction Instance = new CoroutineSuspend();
+
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = BHS.RUNNING;
   }
 
-  public void Recycle(VM vm)
-  {}
+  public bool Recycle(VM vm)
+  {
+    return false;
+  }
 }
 
 class CoroutineYield : IInstruction
 {
-  byte c = 0;
+  bool first_time = true;
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    //first time
-    if(c++ == 0)
+    if(first_time)
+    {
       status = BHS.RUNNING;
+      first_time = false;
+    }
   }
 
-  public void Recycle(VM vm)
+  public bool Recycle(VM vm)
   {
-    c = 0;
+    first_time = true;
+    return true;
   }
 }
 
@@ -1200,18 +1208,20 @@ public class SeqInstruction : IInstruction, IExitableScope
     frames.Push(frm);
   }
 
-  public void Recycle(VM vm)
+  public bool Recycle(VM vm)
   {
     frames.Clear();
 
     if(instruction != null)
     {
-      InstructionPool.Del(vm, instruction);
+      Instructions.Del(vm, instruction);
       instruction = null;
     }
 
     if(defers != null)
       defers.Clear();
+
+    return true;
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
@@ -1280,14 +1290,16 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
     }
   }
 
-  public void Recycle(VM vm)
+  public bool Recycle(VM vm)
   {
     for(int i=0;i<children.Count;++i)
-      InstructionPool.Del(vm, children[i]);
+      Instructions.Del(vm, children[i]);
     children.Clear();
 
     if(defers != null)
       defers.Clear();
+
+    return true;
   }
 
   static internal void ExitChildren(VM vm, int exited_child_idx, List<IInstruction> children)
@@ -1348,7 +1360,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
       }
       else if(status == BHS.SUCCESS)
       {
-        InstructionPool.Del(frm.vm, children[i]);
+        Instructions.Del(frm.vm, children[i]);
         children.RemoveAt(i);
       }
       else
@@ -1361,14 +1373,16 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
       ExitScope(frm.vm);
   }
 
-  public void Recycle(VM vm)
+  public bool Recycle(VM vm)
   {
     for(int i=0;i<children.Count;++i)
-      InstructionPool.Del(vm, children[i]);
+      Instructions.Del(vm, children[i]);
     children.Clear();
 
     if(defers != null)
       defers.Clear();
+
+    return true;
   }
 
   public void Attach(IInstruction inst)
