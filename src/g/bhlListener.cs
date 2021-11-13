@@ -337,6 +337,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpTypeCast([NotNull] bhlParser.ExpTypeCastContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpTernaryIf</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpTernaryIf</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLambda</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -396,6 +408,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterTernaryIfExp([NotNull] bhlParser.TernaryIfExpContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitTernaryIfExp([NotNull] bhlParser.TernaryIfExpContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.newExp"/>.
 	/// </summary>

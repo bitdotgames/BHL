@@ -2167,6 +2167,45 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
+  {
+    var ast = AST_Util.New_Block(EnumBlock.IF); //short-circuit evaluation
+
+    var exp_0 = ctx.exp();
+    var exp_1 = ctx.ternaryIfExp().exp(0);
+    var exp_2 = ctx.ternaryIfExp().exp(1);
+
+    var condition = AST_Util.New_Block(EnumBlock.SEQ);
+    PushAST(condition);
+    Visit(exp_0);
+    PopAST();
+
+    SymbolTable.CheckAssign(SymbolTable._boolean, Wrap(exp_0));
+
+    ast.AddChild(condition);
+
+    var consequent = AST_Util.New_Block(EnumBlock.SEQ);
+    PushAST(consequent);
+    Visit(exp_1);
+    PopAST();
+
+    ast.AddChild(consequent);
+
+    var alternative = AST_Util.New_Block(EnumBlock.SEQ);
+    PushAST(alternative);
+    Visit(exp_2);
+    PopAST();
+
+    ast.AddChild(alternative);
+
+    var wrap_exp_1 = Wrap(exp_1);
+    Wrap(ctx).eval_type = wrap_exp_1.eval_type;
+
+    SymbolTable.CheckAssign(wrap_exp_1, Wrap(exp_2));
+    PeekAST().AddChild(ast);
+    return null;
+  }
+
   public override object VisitWhile(bhlParser.WhileContext ctx)
   {
     var ast = AST_Util.New_Block(EnumBlock.WHILE);

@@ -395,6 +395,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpTypeCast([NotNull] bhlParser.ExpTypeCastContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpTernaryIf</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpTernaryIf</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLambda</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -464,6 +478,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpTypeid([NotNull] bhlParser.ExpTypeidContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterTernaryIfExp([NotNull] bhlParser.TernaryIfExpContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitTernaryIfExp([NotNull] bhlParser.TernaryIfExpContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.newExp"/>.
 	/// <para>The default implementation does nothing.</para>
