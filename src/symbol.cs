@@ -1575,6 +1575,22 @@ static public class SymbolTable
       );
       globals.Define(fn);
     }
+
+    {
+      var fn = new FuncSymbolNative("start", globals.Type("void"), null,
+        delegate(VM.Frame frm, ref BHS status) 
+        { 
+          var dfn = frm.stack.PopFast();
+          //NOTE: we don't touch the payload
+          dfn.RefMod(RefOp.DEC);
+          frm.vm.Start((VM.Frame)dfn._obj);
+          return null;
+        } 
+      );
+      fn.Define(new FuncArgSymbol("p", globals.Type("void^()")));
+      globals.Define(fn);
+    }
+
   }
 
   static public Type GetResultType(Type[,] typeTable, WrappedNode a, WrappedNode b) 

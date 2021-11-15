@@ -406,12 +406,18 @@ public class VM
     if(!func2addr.TryGetValue(func, out addr))
       return -1;
 
-    var fb = Fiber.New(this);
-    fb.id = ++fibers_ids;
-
     var fr = Frame.New(this);
     fr.Init(addr.module, addr.ip);
-    fb.ip = addr.ip;
+
+    return Start(fr);
+  }
+
+  public int Start(Frame fr)
+  {
+    var fb = Fiber.New(this);
+    fb.id = ++fibers_ids;
+    fb.ip = fr.start_ip;
+
     fb.frames.Push(fr);
 
     fibers.Add(fb);

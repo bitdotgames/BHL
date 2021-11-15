@@ -4368,6 +4368,34 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartFiber()
+  {
+    string bhl = @"
+    func test()
+    {
+      start(func() {
+        yield()
+        trace(""done"")
+      })
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("done", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestRegisterModule()
   {
     string bhl = @"
