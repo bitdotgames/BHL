@@ -19884,6 +19884,26 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
+  public void TestOperatorTernaryIfIncompatibleTypes()
+  {
+    string bhl = @"
+    func test()
+    {
+      string foo = true ? ""Foo"" : 1
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl, globs);
+      },
+      "@(4,26) \"Foo\":<string>, @(4,34) 1:<int> have incompatible types"
+    );
+  }
+
+  [IsTested()]
   public void TestOperatorTernaryIf()
   {
     string bhl = @"
