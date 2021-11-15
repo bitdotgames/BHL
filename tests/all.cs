@@ -19886,10 +19886,17 @@ func Unit FindUnit(Vec3 pos, float radius) {
   [IsTested()]
   public void TestOperatorTernaryIfIncompatibleTypes()
   {
-    string bhl = @"
+    string bhl1 = @"
     func test()
     {
       string foo = true ? ""Foo"" : 1
+    }
+    ";
+
+    string bhl2 = @"
+    func int test()
+    {
+      return true ? ""Foo"" : ""Bar""
     }
     ";
 
@@ -19897,9 +19904,16 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
     AssertError<UserError>(
       delegate() {
-        Interpret(bhl, globs);
+        Interpret(bhl1, globs);
       },
       "@(4,26) \"Foo\":<string>, @(4,34) 1:<int> have incompatible types"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl2, globs);
+      },
+      "@(2,4) funcinttest(){returntrue?\"Foo\":\"Bar\"}:<int>, @(4,13) true?\"Foo\":\"Bar\":<string> have incompatible types"
     );
   }
 
