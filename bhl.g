@@ -62,6 +62,11 @@ exp
   | exp operatorOr exp                                      #ExpOr
   | 'eval' block                                            #ExpEval
   | newExp                                                  #ExpNew
+  | exp ternaryIfExp                                        #ExpTernaryIf
+  ;
+
+ternaryIfExp
+  : '?' exp ':' exp 
   ;
 
 newExp

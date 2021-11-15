@@ -19883,6 +19883,126 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
   }
 
+  [IsTested()]
+  public void TestOperatorTernaryIfIncompatibleTypes()
+  {
+    string bhl1 = @"
+    func test()
+    {
+      string foo = true ? ""Foo"" : 1
+    }
+    ";
+
+    string bhl2 = @"
+    func int test()
+    {
+      return true ? ""Foo"" : ""Bar""
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl1, globs);
+      },
+      "@(4,26) \"Foo\":<string>, @(4,34) 1:<int> have incompatible types"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl2, globs);
+      },
+      "@(2,4) funcinttest(){returntrue?\"Foo\":\"Bar\"}:<int>, @(4,13) true?\"Foo\":\"Bar\":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestOperatorTernaryIf()
+  {
+    string bhl = @"
+
+    func int foo(float a, int b)
+    {
+      return a < b ? (int)a : b
+    }
+
+    func int test1() 
+    {
+      float a = 100500
+      int b   = 500100
+
+      int c = a > b ? b : (int)a
+      
+      return foo(a > c ? b : c, (int)a)
+    }
+
+    func int test2() 
+    {
+      int^() af = func int() { return 500100 } //500100
+
+      int^() bf = func int() { 
+        int a = 2
+        int b = 1
+
+        int c = a > b ? 100500 : 500100
+
+        return c //100500
+      }
+
+      int^() cf = func int() { 
+        return true ? 100500 : 500100 //100500
+      }
+
+      return foo(af(), af() > bf() ? false ? af() : cf() : bf()) > af() ? af() : cf()
+    }
+
+    func string test3(int v)
+    {
+      int a = 1
+      int b = 2
+
+      defer
+      {
+        int d = a > b ? b + a : 0
+        if(b > a ? true : false)
+        {
+          int c = a > b ? 1 : 2
+          seq {
+            int e = a > b ? 1 : 2
+          }
+
+          int j = foo(1, d == c ? 4 : 3)
+        }
+      }
+
+      string^() af = func string() use(ref v) {
+        return v == 1 ? ""first value""  :
+               v == 2 ? ""second value"" :
+               v == 3 ? ""result value"" : ""default value""
+      }
+
+      return af()
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node1 = intp.GetFuncCallNode("test1");
+    var node2 = intp.GetFuncCallNode("test2");
+    var node3 = intp.GetFuncCallNode("test3");
+
+    AssertEqual(ExtractNum(ExecNode(node1)), 100500);
+    AssertEqual(ExtractNum(ExecNode(node2)), 100500);
+
+    node3.SetArgs(DynVal.NewNum(0));
+    AssertEqual(ExtractStr(ExecNode(node3)), "default value");
+    node3.SetArgs(DynVal.NewNum(2));
+    AssertEqual(ExtractStr(ExecNode(node3)), "second value");
+
+    //NodeDump(node3);
+    CommonChecks(intp);
+  }
+
   static int Fib(int x)
   {
     if(x == 0)
