@@ -1094,7 +1094,7 @@ public class CompiledModule
 public interface IInstruction
 {
   void Tick(VM.Frame frm, ref BHS status);
-  void Stop(VM vm);
+  void Release(VM vm);
 }
 
 public interface IStaticInstruction
@@ -1135,7 +1135,7 @@ public class Instructions
   {
     //Console.WriteLine("DEL " + inst.GetType().Name + " " + inst.GetHashCode());
 
-    inst.Stop(vm);
+    inst.Release(vm);
     if(inst is IStaticInstruction)
       return;
 
@@ -1188,7 +1188,7 @@ class CoroutineSuspend : IInstruction, IStaticInstruction
     status = BHS.RUNNING;
   }
 
-  public void Stop(VM vm)
+  public void Release(VM vm)
   {}
 }
 
@@ -1205,7 +1205,7 @@ class CoroutineYield : IInstruction
     }
   }
 
-  public void Stop(VM vm)
+  public void Release(VM vm)
   {
     first_time = true;
   }
@@ -1272,7 +1272,7 @@ public class SeqInstruction : IInstruction, IExitableScope
     status = frm.vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
   }
 
-  public void Stop(VM vm)
+  public void Release(VM vm)
   {
     if(instruction != null)
     {
@@ -1327,7 +1327,7 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
     }
   }
 
-  public void Stop(VM vm)
+  public void Release(VM vm)
   {
     CodeBlock.DelInstructions(vm, branches);
     ExitScope(vm);
@@ -1381,7 +1381,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
       status = BHS.RUNNING;
   }
 
-  public void Stop(VM vm)
+  public void Release(VM vm)
   {
     CodeBlock.DelInstructions(vm, branches);
     ExitScope(vm);

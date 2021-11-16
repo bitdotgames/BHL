@@ -4955,7 +4955,7 @@ public class BHL_TestVM : BHL_TestBase
         status = BHS.RUNNING;
     }
 
-    public void Stop(VM vm)
+    public void Release(VM vm)
     {
       c = 0;
       ticks_ttl = 0;
