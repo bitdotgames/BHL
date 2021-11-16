@@ -136,15 +136,7 @@ public class VM
 
     public void ExitScope(VM vm)
     {
-      if(defers != null)
-      {
-        for(int i=defers.Count;i-- > 0;)
-        {
-          //TODO: do we need ensure that status is SUCCESS?
-          defers[i].Execute(vm, vm.curr_fiber.frames, ref vm.curr_fiber.instruction, null);
-        }
-        defers.Clear();
-      }
+      CodeBlock.ExitScope(vm, vm.curr_fiber.frames, defers);
     }
 
     public void Retain()
@@ -417,12 +409,43 @@ public class VM
     var fb = Fiber.New(this);
     fb.id = ++fibers_ids;
     fb.ip = fr.start_ip;
-
     fb.frames.Push(fr);
 
     fibers.Add(fb);
 
     return fb.id;
+  }
+
+  public void Stop(int fid)
+  {
+    var fiber = FindFiber(fid);
+    if(fiber == null)
+      return;
+
+    if(fiber.instruction != null)
+    {
+      Instructions.Del(this, fiber.instruction);
+      fiber.instruction = null;
+    }
+
+    while(fiber.frames.Count > 0)
+    {
+      var frame = fiber.frames.Peek();
+      frame.ExitScope(this);
+      frame.Release();
+      fiber.frames.PopFast();
+    }
+
+    Fiber.Del(fiber);
+    fibers.Remove(fiber);
+  }
+
+  Fiber FindFiber(int fid)
+  {
+    for(int i=0;i<fibers.Count;++i)
+      if(fibers[i].id == fid)
+        return fibers[i];
+    return null;
   }
 
   internal BHS Execute(ref int ip, FastStack<Frame> frames, ref IInstruction instruction, int max_ip, IExitableScope defer_scope)
@@ -439,12 +462,14 @@ public class VM
       if(instruction != null)
       {
         instruction.Tick(curr_frame, ref status);
+
         if(status == BHS.RUNNING)
           return status;
         else if(status == BHS.FAILURE)
         {
           Instructions.Del(this, instruction);
           instruction = null;
+
           curr_frame.ExitScope(this);
           ip = curr_frame.return_ip;
           curr_frame.Release();
@@ -783,6 +808,11 @@ public class VM
             fr.locals[local_idx] = up_val;
           }
           break;
+          case Opcodes.Pop:
+          {
+            curr_frame.PopRelease();
+          }
+          break;
           case Opcodes.Jump:
           {
             short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
@@ -872,9 +902,9 @@ public class VM
     {
       IMultiInstruction paral = null;
       if(type == EnumBlock.PARAL)
-        paral = Instructions.New<ParalInstruction>(curr_frame.vm);
+        paral = Instructions.New<ParalInstruction>(this);
       else
-        paral = Instructions.New<ParalAllInstruction>(curr_frame.vm);
+        paral = Instructions.New<ParalAllInstruction>(this);
 
       AttachInstruction(ref instruction, paral);
       int tmp_ip = ip;
@@ -894,7 +924,7 @@ public class VM
     }
     else if(type == EnumBlock.SEQ)
     {
-      var seq = Instructions.New<SeqInstruction>(curr_frame.vm);
+      var seq = Instructions.New<SeqInstruction>(this);
       seq.Init(curr_frame, ip + 1, ip + size);
 
       AttachInstruction(ref instruction, seq);
@@ -1064,9 +1094,11 @@ public class CompiledModule
 public interface IInstruction
 {
   void Tick(VM.Frame frm, ref BHS status);
-  //NOTE: return false if instruction is not put into pool after recycle 
-  bool Recycle(VM vm);
+  void Stop(VM vm);
 }
+
+public interface IStaticInstruction
+{}
 
 public class Instructions
 {
@@ -1103,7 +1135,8 @@ public class Instructions
   {
     //Console.WriteLine("DEL " + inst.GetType().Name + " " + inst.GetHashCode());
 
-    if(!inst.Recycle(vm))
+    inst.Stop(vm);
+    if(inst is IStaticInstruction)
       return;
 
     var t = inst.GetType();
@@ -1146,7 +1179,7 @@ public interface IMultiInstruction : IInstruction
   void Attach(IInstruction ex);
 }
 
-class CoroutineSuspend : IInstruction
+class CoroutineSuspend : IInstruction, IStaticInstruction
 {
   public static readonly IInstruction Instance = new CoroutineSuspend();
 
@@ -1155,10 +1188,8 @@ class CoroutineSuspend : IInstruction
     status = BHS.RUNNING;
   }
 
-  public bool Recycle(VM vm)
-  {
-    return false;
-  }
+  public void Stop(VM vm)
+  {}
 }
 
 class CoroutineYield : IInstruction
@@ -1174,10 +1205,9 @@ class CoroutineYield : IInstruction
     }
   }
 
-  public bool Recycle(VM vm)
+  public void Stop(VM vm)
   {
     first_time = true;
-    return true;
   }
 }
 
@@ -1195,6 +1225,28 @@ public struct CodeBlock
   public BHS Execute(VM vm, FastStack<VM.Frame> frames, ref IInstruction instruction, IExitableScope defer_scope)
   {
     return vm.Execute(ref ip, frames, ref instruction, max_ip + 1, defer_scope);
+  }
+
+  static internal void ExitScope(VM vm, FastStack<VM.Frame> frames, List<CodeBlock> defers)
+  {
+    if(defers == null)
+      return;
+
+    for(int i=defers.Count;i-- > 0;)
+    {
+      var d = defers[i];
+      IInstruction dummy = null;
+      //TODO: do we need ensure that status is SUCCESS?
+      d.Execute(vm, frames, ref dummy, null);
+    }
+    defers.Clear();
+  }
+
+  static internal void DelInstructions(VM vm, List<IInstruction> iis)
+  {
+    for(int i=0;i<iis.Count;++i)
+      Instructions.Del(vm, iis[i]);
+    iis.Clear();
   }
 }
 
@@ -1214,28 +1266,21 @@ public class SeqInstruction : IInstruction, IExitableScope
     frames.Push(frm);
   }
 
-  public bool Recycle(VM vm)
+  public void Tick(VM.Frame frm, ref BHS status)
   {
-    frames.Clear();
+    //Console.WriteLine("TICK SEQ " + ip + " " + GetHashCode());
+    status = frm.vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
+  }
 
+  public void Stop(VM vm)
+  {
     if(instruction != null)
     {
       Instructions.Del(vm, instruction);
       instruction = null;
     }
 
-    if(defers != null)
-      defers.Clear();
-
-    return true;
-  }
-
-  public void Tick(VM.Frame frm, ref BHS status)
-  {
-    //Console.WriteLine("TICK SEQ " + ip + " " + GetHashCode());
-    status = frm.vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
-    if(status != BHS.RUNNING)
-      ExitScope(frm.vm);
+    ExitScope(vm);
   }
 
   public void RegisterOnExit(CodeBlock cb)
@@ -1247,16 +1292,7 @@ public class SeqInstruction : IInstruction, IExitableScope
 
   public void ExitScope(VM vm)
   {
-    if(defers != null)
-    {
-      for(int i=defers.Count;i-- > 0;)
-      {
-        var d = defers[i];
-        IInstruction dummy = null;
-        //TODO: do we need ensure that status is SUCCESS?
-        d.Execute(vm, frames, ref dummy, null);
-      }
-    }
+    CodeBlock.ExitScope(vm, frames, defers);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption(e.g paral exited) should be 
@@ -1264,66 +1300,42 @@ public class SeqInstruction : IInstruction, IExitableScope
     //      since the frame at index 0 will be released as expected.
     for(int i=1;i<frames.Count;i++)
       frames[i].Release();
+    frames.Clear();
   }
 }
 
 public class ParalInstruction : IMultiInstruction, IExitableScope
 {
-  public List<IInstruction> children = new List<IInstruction>();
+  public List<IInstruction> branches = new List<IInstruction>();
   public List<CodeBlock> defers;
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = BHS.RUNNING;
 
-    int exited_idx = -1;
-    for(int i=0;i<children.Count;++i)
+    for(int i=0;i<branches.Count;++i)
     {
-      var current = children[i];
-      current.Tick(frm, ref status);
-      //Console.WriteLine("CHILD " + i + " " + status + " " + current.GetType().Name);
+      var branch = branches[i];
+      branch.Tick(frm, ref status);
+      //Console.WriteLine("CHILD " + i + " " + status + " " + child.GetType().Name);
       if(status != BHS.RUNNING)
       {
-        exited_idx = i;
+        Instructions.Del(frm.vm, branch);
+        branches.RemoveAt(i);
         break;
       }
     }
-
-    if(exited_idx != -1)
-    {
-      ExitChildren(frm.vm, exited_idx, children);
-      ExitScope(frm.vm);
-    }
   }
 
-  public bool Recycle(VM vm)
+  public void Stop(VM vm)
   {
-    for(int i=0;i<children.Count;++i)
-      Instructions.Del(vm, children[i]);
-    children.Clear();
-
-    if(defers != null)
-      defers.Clear();
-
-    return true;
-  }
-
-  static internal void ExitChildren(VM vm, int exited_child_idx, List<IInstruction> children)
-  {
-    for(int i=0;i<children.Count;++i)
-    {
-      if(exited_child_idx != i)
-      {
-        var child = children[i];
-        if(child is IExitableScope exitable)
-          exitable.ExitScope(vm);
-      }
-    }
+    CodeBlock.DelInstructions(vm, branches);
+    ExitScope(vm);
   }
 
   public void Attach(IInstruction inst)
   {
-    children.Add(inst);
+    branches.Add(inst);
   }
 
   public void RegisterOnExit(CodeBlock cb)
@@ -1335,65 +1347,49 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
 
   public void ExitScope(VM vm)
   {
-    if(defers != null)
-    {
-      IInstruction dummy = null;
-      for(int i=defers.Count;i-- > 0;)
-      {
-        //TODO: do we need ensure that status is SUCCESS?
-        defers[i].Execute(vm, vm.curr_fiber.frames, ref dummy, null);
-      }
-    }
+    CodeBlock.ExitScope(vm, vm.curr_fiber.frames, defers);
   }
 }
 
 public class ParalAllInstruction : IMultiInstruction, IExitableScope
 {
-  public List<IInstruction> children = new List<IInstruction>();
+  public List<IInstruction> branches = new List<IInstruction>();
   public List<CodeBlock> defers;
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    for(int i=0;i<children.Count;)
+    for(int i=0;i<branches.Count;)
     {
-      var current = children[i];
-      current.Tick(frm, ref status);
-      if(status == BHS.FAILURE)
+      var branch = branches[i];
+      branch.Tick(frm, ref status);
+      if(status == BHS.SUCCESS)
       {
-        ExitScope(frm.vm);
-        ParalInstruction.ExitChildren(frm.vm, i, children);
-        return;
+        Instructions.Del(frm.vm, branch);
+        branches.RemoveAt(i);
       }
-      else if(status == BHS.SUCCESS)
+      else if(status == BHS.FAILURE)
       {
-        Instructions.Del(frm.vm, children[i]);
-        children.RemoveAt(i);
+        Instructions.Del(frm.vm, branch);
+        branches.RemoveAt(i);
+        return;
       }
       else
         ++i;
     }
 
-    if(children.Count > 0)
+    if(branches.Count > 0)
       status = BHS.RUNNING;
-    else
-      ExitScope(frm.vm);
   }
 
-  public bool Recycle(VM vm)
+  public void Stop(VM vm)
   {
-    for(int i=0;i<children.Count;++i)
-      Instructions.Del(vm, children[i]);
-    children.Clear();
-
-    if(defers != null)
-      defers.Clear();
-
-    return true;
+    CodeBlock.DelInstructions(vm, branches);
+    ExitScope(vm);
   }
 
   public void Attach(IInstruction inst)
   {
-    children.Add(inst);
+    branches.Add(inst);
   }
 
   public void RegisterOnExit(CodeBlock cb)
@@ -1405,15 +1401,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
 
   public void ExitScope(VM vm)
   {
-    if(defers != null)
-    {
-      IInstruction dummy = null;
-      for(int i=defers.Count;i-- > 0;)
-      {
-        //TODO: do we need ensure that status is SUCCESS?
-        defers[i].Execute(vm, vm.curr_fiber.frames, ref dummy, null);
-      }
-    }
+    CodeBlock.ExitScope(vm, vm.curr_fiber.frames, defers);
   }
 }
 

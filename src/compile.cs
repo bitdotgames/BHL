@@ -16,6 +16,11 @@ public enum Opcodes
   GetVar          = 0x7,
   DeclVar         = 0x8,
   ArgVar          = 0x9,
+  GetAttr         = 0xA,
+  Return          = 0xC,
+  ReturnVal       = 0xD,
+  Jump            = 0xE,
+  Pop             = 0xF,
   Call            = 0x10,
   CallNative      = 0x11,
   GetFunc         = 0x12,
@@ -23,13 +28,9 @@ public enum Opcodes
   GetFuncFromVar  = 0x14,
   GetFuncImported = 0x15,
   GetMethodNative = 0x16,
+  CondJump        = 0x19,
   SetAttr         = 0x20,
   SetAttrInplace  = 0x21,
-  GetAttr         = 0xA,
-  Return          = 0xC,
-  ReturnVal       = 0xD,
-  Jump            = 0xE,
-  CondJump        = 0xF,
   UnaryNot        = 0x31,
   UnaryNeg        = 0x32,
   And             = 0x33,
@@ -519,6 +520,12 @@ public class ModuleCompiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.ReturnVal
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.Pop
       }
     );
     DeclareOpcode(
@@ -1164,7 +1171,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_PopValue ast)
   {
-    throw new Exception("Not supported : " + ast);
+    Emit(Opcodes.Pop);
   }
 
   public override void DoVisit(AST_Literal ast)

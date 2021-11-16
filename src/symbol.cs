@@ -1577,17 +1577,31 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncSymbolNative("start", globals.Type("void"), null,
+      var fn = new FuncSymbolNative("start", globals.Type("int"), null,
         delegate(VM.Frame frm, ref BHS status) 
         { 
-          var dfn = frm.stack.PopFast();
+          var vfn = frm.stack.PopFast();
           //NOTE: we don't decrease ref.count for the payload
-          dfn.RefMod(RefOp.DEC);
-          frm.vm.Start((VM.Frame)dfn._obj);
+          vfn.RefMod(RefOp.DEC);
+          int fid = frm.vm.Start((VM.Frame)vfn._obj);
+          frm.stack.Push(Val.NewNum(frm.vm, fid));
           return null;
         } 
       );
       fn.Define(new FuncArgSymbol("p", globals.Type("void^()")));
+      globals.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative("stop", globals.Type("void"), null,
+        delegate(VM.Frame frm, ref BHS status) 
+        { 
+          var fid = (int)frm.PopRelease().num;
+          frm.vm.Stop(fid);
+          return null;
+        } 
+      );
+      fn.Define(new FuncArgSymbol("fid", globals.Type("int")));
       globals.Define(fn);
     }
 

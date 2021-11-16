@@ -4396,6 +4396,42 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStopFiber()
+  {
+    string bhl = @"
+    func test()
+    {
+      int fid = start(func() {
+        defer {
+          trace(""0"")
+        }
+        trace(""1"")
+        yield()
+        trace(""2"")
+      })
+
+      yield()
+      trace(""3"")
+      stop(fid)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("130", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestRegisterModule()
   {
     string bhl = @"
@@ -4919,11 +4955,10 @@ public class BHL_TestVM : BHL_TestBase
         status = BHS.RUNNING;
     }
 
-    public bool Recycle(VM vm)
+    public void Stop(VM vm)
     {
       c = 0;
       ticks_ttl = 0;
-      return true;
     }
   }
 
