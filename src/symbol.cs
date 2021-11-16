@@ -1581,7 +1581,7 @@ static public class SymbolTable
         delegate(VM.Frame frm, ref BHS status) 
         { 
           var dfn = frm.stack.PopFast();
-          //NOTE: we don't touch the payload
+          //NOTE: we don't decrease ref.count for the payload
           dfn.RefMod(RefOp.DEC);
           frm.vm.Start((VM.Frame)dfn._obj);
           return null;
