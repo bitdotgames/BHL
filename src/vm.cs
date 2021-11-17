@@ -1094,11 +1094,8 @@ public class CompiledModule
 public interface IInstruction
 {
   void Tick(VM.Frame frm, ref BHS status);
-  void Release(VM vm);
+  void Cleanup(VM vm);
 }
-
-public interface IStaticInstruction
-{}
 
 public class Instructions
 {
@@ -1135,12 +1132,15 @@ public class Instructions
   {
     //Console.WriteLine("DEL " + inst.GetType().Name + " " + inst.GetHashCode());
 
-    inst.Release(vm);
-    if(inst is IStaticInstruction)
-      return;
+    inst.Cleanup(vm);
 
     var t = inst.GetType();
-    var pool = vm.instr_pool.all[t];
+
+    VM.Pool<IInstruction> pool;
+    //ignoring instructions whch were not allocated via pool 
+    if(!vm.instr_pool.all.TryGetValue(t, out pool))
+      return;
+
     pool.stack.Push(inst);
 
     if(pool.stack.Count > pool.miss)
@@ -1179,7 +1179,7 @@ public interface IMultiInstruction : IInstruction
   void Attach(IInstruction ex);
 }
 
-class CoroutineSuspend : IInstruction, IStaticInstruction
+class CoroutineSuspend : IInstruction
 {
   public static readonly IInstruction Instance = new CoroutineSuspend();
 
@@ -1188,7 +1188,7 @@ class CoroutineSuspend : IInstruction, IStaticInstruction
     status = BHS.RUNNING;
   }
 
-  public void Release(VM vm)
+  public void Cleanup(VM vm)
   {}
 }
 
@@ -1205,7 +1205,7 @@ class CoroutineYield : IInstruction
     }
   }
 
-  public void Release(VM vm)
+  public void Cleanup(VM vm)
   {
     first_time = true;
   }
@@ -1272,7 +1272,7 @@ public class SeqInstruction : IInstruction, IExitableScope
     status = frm.vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
   }
 
-  public void Release(VM vm)
+  public void Cleanup(VM vm)
   {
     if(instruction != null)
     {
@@ -1327,7 +1327,7 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
     }
   }
 
-  public void Release(VM vm)
+  public void Cleanup(VM vm)
   {
     CodeBlock.DelInstructions(vm, branches);
     ExitScope(vm);
@@ -1381,7 +1381,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
       status = BHS.RUNNING;
   }
 
-  public void Release(VM vm)
+  public void Cleanup(VM vm)
   {
     CodeBlock.DelInstructions(vm, branches);
     ExitScope(vm);

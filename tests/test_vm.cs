@@ -4963,7 +4963,7 @@ public class BHL_TestVM : BHL_TestBase
         status = BHS.RUNNING;
     }
 
-    public void Release(VM vm)
+    public void Cleanup(VM vm)
     {
       c = 0;
       ticks_ttl = 0;
