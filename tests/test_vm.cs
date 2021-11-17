@@ -4399,14 +4399,22 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStopFiber()
   {
     string bhl = @"
+    func foo()
+    {
+      defer {
+        trace(""4"")
+      }
+      trace(""1"")
+      yield()
+    }
+
     func test()
     {
       int fid = start(func() {
         defer {
           trace(""0"")
         }
-        trace(""1"")
-        yield()
+        foo()
         trace(""2"")
       })
 
@@ -4427,7 +4435,7 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual("130", log.ToString());
+    AssertEqual("1340", log.ToString());
     CommonChecks(vm);
   }
 
