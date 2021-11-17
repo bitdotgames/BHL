@@ -3158,6 +3158,49 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestInterleaveValuesStackInParal()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0) {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func test() 
+    {
+      paral {
+        seq {
+          foo(1, ret_int(val: 2, ticks: 1))
+          suspend()
+        }
+        foo(10, ret_int(val: 20, ticks: 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    while(vm.Tick() != BHS.SUCCESS) {}
+    AssertEqual("1 2;10 20;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBasicDefer()
   {
     string bhl = @"
