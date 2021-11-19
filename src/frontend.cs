@@ -390,11 +390,28 @@ public class Frontend : bhlBaseVisitor<object>
 
         if(cargs != null)
         {
-          ++call_cargs_level;
+          //NOTE: We really want to avoid stack interleaving for the following case: 
+          //        
+          //        foo(1, bar())
+          //      
+          //      where bar() might execute for many ticks and at the same time 
+          //      somewhere *in parallel* executes some another function which pushes 
+          //      result onto the stack *before* bar() finishes its execution. 
+          //
+          //      At the time foo(..) is actually called the stack will contain badly 
+          //      interleaved arguments! 
+          //
+          //      For this reason we rewrite the example above into something as follows:
+          //
+          //        tmp_1 = bar()
+          //        foo(1, tmp_1)
+          if(!scope2call_cargs_level.ContainsKey(curr_scope))
+            scope2call_cargs_level[curr_scope] = 0;
+          ++scope2call_cargs_level[curr_scope];
 
           AST var_tmp_decl = null;
           AST var_tmp_read = null;
-          if(call_cargs_level > 1)
+          if(scope2call_cargs_level[curr_scope] > 1)
           {
             var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + root_name.Symbol.Line + "_" + root_name.Symbol.Column, new TypeRef(curr_type));
             curr_scope.Define(var_tmp_symb);
@@ -402,24 +419,25 @@ public class Frontend : bhlBaseVisitor<object>
             var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, root_name.Symbol.Line, var_tmp_symb);
             var_tmp_read = AST_Util.New_Call(EnumCall.VAR, root_name.Symbol.Line, var_tmp_symb);
           }
-          else if(call_cargs_level == 1)
+          else if(scope2call_cargs_level[curr_scope] == 1)
           {
-            cargs_ast_root = PeekAST();
+            scope2cargs_ast_root[curr_scope] = PeekAST();
           }
 
           ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, false);
           curr_class = null;
           curr_name = null;
 
-          if(call_cargs_level > 1)
+          if(scope2call_cargs_level[curr_scope] > 1)
           {
             var ast_children = PeekAST().children;
             var ast_last = ast_children[ast_children.Count-1]; 
+
             ast_children[ast_children.Count-1] = var_tmp_read; 
-            cargs_ast_root.children.Insert(0, var_tmp_decl);
-            cargs_ast_root.children.Insert(0, ast_last);
+            scope2cargs_ast_root[curr_scope].children.Insert(0, var_tmp_decl);
+            scope2cargs_ast_root[curr_scope].children.Insert(0, ast_last);
           }
-          --call_cargs_level;
+          --scope2call_cargs_level[curr_scope];
         }
         else if(arracc != null)
         {
@@ -1493,8 +1511,8 @@ public class Frontend : bhlBaseVisitor<object>
     return call_by_ref_stack.Peek();
   }
 
-  int call_cargs_level = 0;
-  AST cargs_ast_root = null;
+  Dictionary<Scope, int> scope2call_cargs_level = new Dictionary<Scope, int>();
+  Dictionary<Scope, AST> scope2cargs_ast_root = new Dictionary<Scope, AST>();
 
   int loops_stack = 0;
   int defer_stack = 0;
