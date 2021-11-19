@@ -413,7 +413,7 @@ public class Frontend : bhlBaseVisitor<object>
           AST var_tmp_read = null;
           if(scope2call_cargs_level[curr_scope] > 1)
           {
-            var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + root_name.Symbol.Line + "_" + root_name.Symbol.Column, new TypeRef(curr_type));
+            var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + ch.Start.Line + "_" + ch.Start.Column, new TypeRef(curr_type));
             curr_scope.Define(var_tmp_symb);
 
             var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, root_name.Symbol.Line, var_tmp_symb);
@@ -434,8 +434,8 @@ public class Frontend : bhlBaseVisitor<object>
             var ast_last = ast_children[ast_children.Count-1]; 
 
             ast_children[ast_children.Count-1] = var_tmp_read; 
-            scope2cargs_ast_root[curr_scope].children.Insert(0, var_tmp_decl);
-            scope2cargs_ast_root[curr_scope].children.Insert(0, ast_last);
+            scope2cargs_ast_root[curr_scope].children.Add(ast_last);
+            scope2cargs_ast_root[curr_scope].children.Add(var_tmp_decl);
           }
           --scope2call_cargs_level[curr_scope];
         }

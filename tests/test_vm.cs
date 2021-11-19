@@ -3166,6 +3166,11 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
+    func int ticky()
+    {
+      return 1
+    }
+
     func int ret_int(int val, int ticks)
     {
       while(ticks > 0) {
@@ -3179,7 +3184,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       paral {
         seq {
-          foo(1, ret_int(val: 2, ticks: 1))
+          foo(1, ret_int(val: 2, ticks: ticky()))
           suspend()
         }
         foo(10, ret_int(val: 20, ticks: 2))
