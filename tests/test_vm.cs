@@ -4694,7 +4694,7 @@ public class BHL_TestVM : BHL_TestBase
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
 
-  ModuleCompiler Compile(string bhl, GlobalScope globs = null)
+  ModuleCompiler Compile(string bhl, GlobalScope globs = null, bool show_ast = false)
   {
     globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
@@ -4703,6 +4703,8 @@ public class BHL_TestVM : BHL_TestBase
     var mdl = new bhl.Module("", "");
     var mreg = new ModuleRegistry();
     var ast = Src2AST(bhl, mdl, mreg, globs_copy);
+    if(show_ast)
+      Util.ASTDump(ast);
     var c  = new ModuleCompiler(globs_copy, ast, mdl.path);
     c.Compile();
     return c;

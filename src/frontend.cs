@@ -384,15 +384,42 @@ public class Frontend : bhlBaseVisitor<object>
         var ch = chain[c];
 
         var cargs = ch.callArgs();
-        var ma = ch.memberAccess();
+        var macc = ch.memberAccess();
         var arracc = ch.arrAccess();
         bool is_last = c == chain.Length-1;
 
         if(cargs != null)
         {
+          ++call_cargs_level;
+
+          AST var_tmp_decl = null;
+          AST var_tmp_read = null;
+          if(call_cargs_level > 1)
+          {
+            var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + root_name.Symbol.Line + "_" + root_name.Symbol.Column, new TypeRef(curr_type));
+            curr_scope.Define(var_tmp_symb);
+
+            var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, root_name.Symbol.Line, var_tmp_symb);
+            var_tmp_read = AST_Util.New_Call(EnumCall.VAR, root_name.Symbol.Line, var_tmp_symb);
+          }
+          else if(call_cargs_level == 1)
+          {
+            cargs_ast_root = PeekAST();
+          }
+
           ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, false);
           curr_class = null;
           curr_name = null;
+
+          if(call_cargs_level > 1)
+          {
+            var ast_children = PeekAST().children;
+            var ast_last = ast_children[ast_children.Count-1]; 
+            ast_children[ast_children.Count-1] = var_tmp_read; 
+            cargs_ast_root.children.Insert(0, var_tmp_decl);
+            cargs_ast_root.children.Insert(0, ast_last);
+          }
+          --call_cargs_level;
         }
         else if(arracc != null)
         {
@@ -400,16 +427,16 @@ public class Frontend : bhlBaseVisitor<object>
           curr_class = null;
           curr_name = null;
         }
-        else if(ma != null)
+        else if(macc != null)
         {
           if(curr_name != null)
             ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, false);
 
           curr_class = curr_type as ClassSymbol; 
           if(curr_class == null)
-            FireError(Location(ma) + " : type doesn't support member access via '.'");
+            FireError(Location(macc) + " : type doesn't support member access via '.'");
 
-          curr_name = ma.NAME();
+          curr_name = macc.NAME();
         }
       }
     }
@@ -691,7 +718,6 @@ public class Frontend : bhlBaseVisitor<object>
   void AddCallArgs(FuncType func_type, bhlParser.CallArgsContext cargs, ref AST_Call new_ast)
   {     
     var func_args = func_type.arg_types;
-
     int ca_len = cargs.callArg().Length; 
     IParseTree prev_ca = null;
     PushAST(new_ast);
@@ -1466,6 +1492,9 @@ public class Frontend : bhlBaseVisitor<object>
 
     return call_by_ref_stack.Peek();
   }
+
+  int call_cargs_level = 0;
+  AST cargs_ast_root = null;
 
   int loops_stack = 0;
   int defer_stack = 0;
@@ -2423,7 +2452,7 @@ public class Frontend : bhlBaseVisitor<object>
       curr_scope.Define(arr_cnt_symb);
     }
 
-    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, arr_tmp_symb));
+    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
     //declaring counter var
     PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, false, SymbolTable.symb_int.GetName().n1, SymbolTable.symb_int.GetName().s));
 
@@ -2438,19 +2467,19 @@ public class Frontend : bhlBaseVisitor<object>
     //adding while condition
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_symb));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_symb));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, 0, "Count", arr_ntype, arr_stype, arr_type.members.FindStringKeyIndex("Count")));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_ntype, arr_stype, arr_type.members.FindStringKeyIndex("Count")));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
     PushAST(ast);
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, 0, iter_symb));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, 0, "At", arr_ntype, arr_stype));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_cnt_symb));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, 0, arr_tmp_symb));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_ntype, arr_stype));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
 
     block.AddChild(AST_Util.New_Continue(jump_marker: true));
     //appending counter increment
