@@ -388,7 +388,7 @@ public class Frontend : bhlBaseVisitor<object>
         var arracc = ch.arrAccess();
         bool is_last = c == chain.Length-1;
 
-        //Console.WriteLine("CHAIN " + ch.GetText() + " " + is_last + " " + (cargs != null ? cargs.callArg().Length.ToString() : "null") + " " + (macc != null) + " " + curr_name?.GetText() + " " + current_call_arg_n);
+        //Console.WriteLine("CHAIN " + curr_name?.GetText() + ch.GetText() + " last:" + is_last + " macc:" + (macc != null) + " arg.n:" + current_call_arg_n);
 
         if(cargs != null)
         {
@@ -669,8 +669,6 @@ public class Frontend : bhlBaseVisitor<object>
     //1. filling normalized call args
     for(int ci=0;ci<cargs.callArg().Length;++ci)
     {
-      current_call_arg_n = ci;
-
       var ca = cargs.callArg()[ci];
       var ca_name = ca.NAME();
 
@@ -697,9 +695,12 @@ public class Frontend : bhlBaseVisitor<object>
 
     PushAST(new_ast);
     IParseTree prev_ca = null;
+    int current_call_arg_n_bak = current_call_arg_n;
     //2. traversing normalized args
     for(int i=0;i<norm_cargs.Count;++i)
     {
+      current_call_arg_n = i;
+
       var ca = norm_cargs[i].ca;
 
       //NOTE: if call arg is not specified, try to find the default one
@@ -762,6 +763,8 @@ public class Frontend : bhlBaseVisitor<object>
           SymbolTable.CheckAssign(func_arg_symb.node, wca);
       }
     }
+
+    current_call_arg_n = current_call_arg_n_bak;
     PopAST();
 
     new_ast.cargs_bits = args_info.bits;
