@@ -14793,6 +14793,110 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
+  public class Foo_ret_int  : BehaviorTreeTerminalNode
+  {
+    int ticks;
+    int ret;
+
+    public override void init()
+    {
+      var interp = Interpreter.instance;
+      ticks = (int)interp.PopValue().num;
+      ret = (int)interp.PopValue().num;
+      interp.PopValue();
+    }
+
+    public override BHS execute()
+    {
+      if(ticks-- > 0)
+        return BHS.RUNNING;
+      Interpreter.instance.PushValue(DynVal.NewNum(ret));
+      return BHS.SUCCESS;
+    }
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithMethods()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
+      paral {
+        seq {
+          foo(1, (new Foo).self().ret_int(val: 2, ticks: 1))
+          suspend()
+        }
+        foo(10, (new Foo).self().ret_int(val: 20, ticks: 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var cl = new ClassSymbolNative("Foo",
+        delegate(ref DynVal v) 
+        { 
+          //fake object
+          v.obj = null;
+        }
+      );
+
+      globs.Define(cl);
+
+      {
+        var m = new FuncSymbolSimpleNative("self", globs.Type("Foo"),
+          delegate()
+          {
+            var interp = Interpreter.instance;
+            var obj = interp.PopValue().obj;
+            interp.PushValue(DynVal.NewObj(obj));
+            return BHS.SUCCESS;
+          }
+        );
+        cl.Define(m);
+      }
+
+      {
+        var m = new FuncSymbolNative("ret_int", globs.Type("int"),
+          delegate() { return new Foo_ret_int(); }
+        );
+        m.Define(new FuncArgSymbol("val", globs.Type("int")));
+        m.Define(new FuncArgSymbol("ticks", globs.Type("int")));
+        cl.Define(m);
+      }
+
+    }
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
   [IsTested()]
   public void TestInterleaveValuesStackInParalAll()
   {
