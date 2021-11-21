@@ -359,34 +359,11 @@ public class Interpreter : AST_Visitor
   public void PushStackParalCtx(BehaviorTreeNode n)
   {
     node_ctx_stack.Push(n);
-    if(stack.Count > 0)
-      SortStackByNodeCtx(n);
   }
 
   public void PopStackParalCtx()
   {
     node_ctx_stack.Pop();
-    if(node_ctx_stack.Count > 0 && stack.Count > 0)
-      SortStackByNodeCtx(node_ctx_stack.Peek());
-  }
-
-  void SortStackByNodeCtx(BehaviorTreeNode n)
-  {
-    int candidate_slot_idx = -1;
-    //NOTE: moving ctx marked stack values to the end
-    for(int i=stack.Count;i-- > 0;)
-    {
-      var sv = stack[i];
-
-      if(sv.node_ctx != n && candidate_slot_idx == -1)
-        candidate_slot_idx = i;
-      
-      if(sv.node_ctx == n && candidate_slot_idx != -1)
-      {
-        stack.MoveTo(i, candidate_slot_idx);
-        --candidate_slot_idx;
-      }
-    }
   }
 
   public void PushValue(DynVal v)
