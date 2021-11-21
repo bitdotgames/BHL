@@ -444,7 +444,7 @@ public class Frontend : bhlBaseVisitor<object>
 
           if(is_last)
           {
-            if(current_call_arg_n > 0 && scope2call_cargs_level[curr_scope] > 1)
+            if(var_tmp_read != null && var_tmp_decl != null)
             {
               var ast_children = PeekAST().children;
               var ast_last = ast_children[ast_children.Count-1]; 
