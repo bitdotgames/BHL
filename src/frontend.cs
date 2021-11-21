@@ -388,6 +388,8 @@ public class Frontend : bhlBaseVisitor<object>
         var arracc = ch.arrAccess();
         bool is_last = c == chain.Length-1;
 
+        //Console.WriteLine("CHAIN " + ch.GetText() + " " + is_last + " " + (cargs != null ? cargs.callArg().Length.ToString() : "null") + " " + (macc != null) + " " + curr_name?.GetText() + " " + current_call_arg_n);
+
         if(cargs != null)
         {
           //NOTE: We really want to avoid stack interleaving for the following case: 
@@ -405,39 +407,57 @@ public class Frontend : bhlBaseVisitor<object>
           //
           //        tmp_1 = bar()
           //        foo(1, tmp_1)
-          if(!scope2call_cargs_level.ContainsKey(curr_scope))
-            scope2call_cargs_level[curr_scope] = 0;
-          ++scope2call_cargs_level[curr_scope];
-
+          //
+          //      However we should take into account cases like: 
+          //
+          //        foo(wow().bar())
+          //
+          //      At the same time we should not rewrite trivial cases like:
+          //
+          //        foo(bar())
+          //
+          //      Since in this case there is no stack interleaving possible and we
+          //      really want to avoid introduction of the new temp local variable
           AST var_tmp_decl = null;
           AST var_tmp_read = null;
-          if(scope2call_cargs_level[curr_scope] > 1)
+          if(is_last)
           {
-            var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + ch.Start.Line + "_" + ch.Start.Column, new TypeRef(curr_type));
-            curr_scope.Define(var_tmp_symb);
+            if(!scope2call_cargs_level.ContainsKey(curr_scope))
+              scope2call_cargs_level[curr_scope] = 0;
+            ++scope2call_cargs_level[curr_scope];
 
-            var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, root_name.Symbol.Line, var_tmp_symb);
-            var_tmp_read = AST_Util.New_Call(EnumCall.VAR, root_name.Symbol.Line, var_tmp_symb);
-          }
-          else if(scope2call_cargs_level[curr_scope] == 1)
-          {
-            scope2cargs_ast_root[curr_scope] = PeekAST();
+            if(current_call_arg_n > 0 && scope2call_cargs_level[curr_scope] > 1)
+            {
+              var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + ch.Start.Line + "_" + ch.Start.Column, new TypeRef(curr_type));
+              curr_scope.Define(var_tmp_symb);
+
+              var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, root_name.Symbol.Line, var_tmp_symb);
+              var_tmp_read = AST_Util.New_Call(EnumCall.VAR, root_name.Symbol.Line, var_tmp_symb);
+            }
+            else if(scope2call_cargs_level[curr_scope] == 1)
+            {
+              scope2cargs_ast_root[curr_scope] = PeekAST();
+            }
           }
 
           ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, false);
+
+          if(is_last)
+          {
+            if(current_call_arg_n > 0 && scope2call_cargs_level[curr_scope] > 1)
+            {
+              var ast_children = PeekAST().children;
+              var ast_last = ast_children[ast_children.Count-1]; 
+
+              ast_children[ast_children.Count-1] = var_tmp_read; 
+              scope2cargs_ast_root[curr_scope].children.Add(ast_last);
+              scope2cargs_ast_root[curr_scope].children.Add(var_tmp_decl);
+            }
+            --scope2call_cargs_level[curr_scope];
+          }
+
           curr_class = null;
           curr_name = null;
-
-          if(scope2call_cargs_level[curr_scope] > 1)
-          {
-            var ast_children = PeekAST().children;
-            var ast_last = ast_children[ast_children.Count-1]; 
-
-            ast_children[ast_children.Count-1] = var_tmp_read; 
-            scope2cargs_ast_root[curr_scope].children.Add(ast_last);
-            scope2cargs_ast_root[curr_scope].children.Add(var_tmp_decl);
-          }
-          --scope2call_cargs_level[curr_scope];
         }
         else if(arracc != null)
         {
@@ -637,6 +657,8 @@ public class Frontend : bhlBaseVisitor<object>
     //1. filling normalized call args
     for(int ci=0;ci<cargs.callArg().Length;++ci)
     {
+      current_call_arg_n = ci;
+
       var ca = cargs.callArg()[ci];
       var ca_name = ca.NAME();
 
@@ -1513,6 +1535,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   Dictionary<Scope, int> scope2call_cargs_level = new Dictionary<Scope, int>();
   Dictionary<Scope, AST> scope2cargs_ast_root = new Dictionary<Scope, AST>();
+  int current_call_arg_n = 0;
 
   int loops_stack = 0;
   int defer_stack = 0;

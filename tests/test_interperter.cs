@@ -5416,7 +5416,7 @@ public class BHL_TestInterpreter : BHL_TestBase
     var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
-    var intp = Interpret(bhl, globs, true);
+    var intp = Interpret(bhl, globs);
     var node = intp.GetFuncCallNode("test");
     //NodeDump(node);
     node.SetArgs(DynVal.NewNum(2));
