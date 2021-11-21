@@ -420,7 +420,7 @@ public class Frontend : bhlBaseVisitor<object>
           //      really want to avoid introduction of the new temp local variable
           AST var_tmp_decl = null;
           AST var_tmp_read = null;
-          if(is_last)
+          if(root_name != null && is_last)
           {
             if(!scope2call_cargs_level.ContainsKey(curr_scope))
               scope2call_cargs_level[curr_scope] = 0;
@@ -442,7 +442,7 @@ public class Frontend : bhlBaseVisitor<object>
 
           ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, false);
 
-          if(is_last)
+          if(root_name != null && is_last)
           {
             if(var_tmp_read != null && var_tmp_decl != null)
             {
