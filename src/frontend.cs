@@ -392,69 +392,13 @@ public class Frontend : bhlBaseVisitor<object>
 
         if(cargs != null)
         {
-          //NOTE: We really want to avoid stack interleaving for the following case: 
-          //        
-          //        foo(1, bar())
-          //      
-          //      where bar() might execute for many ticks and at the same time 
-          //      somewhere *in parallel* executes some another function which pushes 
-          //      result onto the stack *before* bar() finishes its execution. 
-          //
-          //      At the time foo(..) is actually called the stack will contain badly 
-          //      interleaved arguments! 
-          //
-          //      For this reason we rewrite the example above into something as follows:
-          //
-          //        tmp_1 = bar()
-          //        foo(1, tmp_1)
-          //
-          //      However we should take into account cases like: 
-          //
-          //        foo(wow().bar())
-          //
-          //      At the same time we should not rewrite trivial cases like:
-          //
-          //        foo(bar())
-          //
-          //      Since in this case there is no stack interleaving possible and we
-          //      really want to avoid introduction of the new temp local variable
-          AST var_tmp_decl = null;
-          AST var_tmp_read = null;
-          if(root_name != null && is_last)
-          {
-            if(!scope2call_cargs_level.ContainsKey(curr_scope))
-              scope2call_cargs_level[curr_scope] = 0;
-            ++scope2call_cargs_level[curr_scope];
-
-            if(current_call_arg_n > 0 && scope2call_cargs_level[curr_scope] > 1)
-            {
-              var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + ch.Start.Line + "_" + ch.Start.Column, new TypeRef(curr_type));
-              curr_scope.Define(var_tmp_symb);
-
-              var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, root_name.Symbol.Line, var_tmp_symb);
-              var_tmp_read = AST_Util.New_Call(EnumCall.VAR, root_name.Symbol.Line, var_tmp_symb);
-            }
-            else if(scope2call_cargs_level[curr_scope] == 1)
-            {
-              scope2cargs_ast_root[curr_scope] = PeekAST();
-            }
-          }
+          AST var_tmp_decl;
+          AST var_tmp_read;
+          BeginStackProtectionRewrite(root_name, is_last, curr_type, ch, out var_tmp_decl, out var_tmp_read);
 
           ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, false);
 
-          if(root_name != null && is_last)
-          {
-            if(var_tmp_read != null && var_tmp_decl != null)
-            {
-              var ast_children = PeekAST().children;
-              var ast_last = ast_children[ast_children.Count-1]; 
-
-              ast_children[ast_children.Count-1] = var_tmp_read; 
-              scope2cargs_ast_root[curr_scope].children.Add(ast_last);
-              scope2cargs_ast_root[curr_scope].children.Add(var_tmp_decl);
-            }
-            --scope2call_cargs_level[curr_scope];
-          }
+          FinishStackProtectionRewrite(root_name, is_last, var_tmp_decl, var_tmp_read);
 
           curr_class = null;
           curr_name = null;
@@ -484,6 +428,74 @@ public class Frontend : bhlBaseVisitor<object>
       ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, write);
 
     curr_scope = orig_scope;
+  }
+
+  //NOTE: We really want to avoid stack interleaving for the following case: 
+  //        
+  //        foo(1, bar())
+  //      
+  //      where bar() might execute for many ticks and at the same time 
+  //      somewhere *in parallel* executes some another function which pushes 
+  //      result onto the stack *before* bar() finishes its execution. 
+  //
+  //      At the time foo(..) is actually called the stack will contain badly 
+  //      interleaved arguments! 
+  //
+  //      For this reason we rewrite the example above into something as follows:
+  //
+  //        tmp_1 = bar()
+  //        foo(1, tmp_1)
+  //
+  //      However we should take into account cases like: 
+  //
+  //        foo(wow().bar())
+  //
+  //      At the same time we should not rewrite trivial cases like:
+  //
+  //        foo(bar())
+  //
+  //      Since in this case there is no stack interleaving possible and we
+  //      really want to avoid introduction of the new temp local variable
+  void BeginStackProtectionRewrite(ITerminalNode root_name, bool is_last, Type curr_type, bhlParser.ChainExpContext ch, out AST var_tmp_decl, out AST var_tmp_read)
+  {
+    var_tmp_decl = null;
+    var_tmp_read = null;
+    if(root_name == null || !is_last)
+      return;
+
+    if(!scope2call_cargs_level.ContainsKey(curr_scope))
+      scope2call_cargs_level[curr_scope] = 0;
+    ++scope2call_cargs_level[curr_scope];
+
+    if(current_call_arg_n > 0 && scope2call_cargs_level[curr_scope] > 1)
+    {
+      var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + ch.Start.Line + "_" + ch.Start.Column, new TypeRef(curr_type));
+      curr_scope.Define(var_tmp_symb);
+
+      var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, root_name.Symbol.Line, var_tmp_symb);
+      var_tmp_read = AST_Util.New_Call(EnumCall.VAR, root_name.Symbol.Line, var_tmp_symb);
+    }
+    else if(scope2call_cargs_level[curr_scope] == 1)
+    {
+      scope2cargs_ast_root[curr_scope] = PeekAST();
+    }
+  }
+
+  void FinishStackProtectionRewrite(ITerminalNode root_name, bool is_last, AST var_tmp_decl, AST var_tmp_read)
+  {
+    if(root_name == null || !is_last)
+      return;
+
+    if(var_tmp_read != null && var_tmp_decl != null)
+    {
+      var ast_children = PeekAST().children;
+      var ast_last = ast_children[ast_children.Count-1]; 
+
+      ast_children[ast_children.Count-1] = var_tmp_read; 
+      scope2cargs_ast_root[curr_scope].children.Add(ast_last);
+      scope2cargs_ast_root[curr_scope].children.Add(var_tmp_decl);
+    }
+    --scope2call_cargs_level[curr_scope];
   }
 
   void ProcCallChainItem(
