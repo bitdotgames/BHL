@@ -14824,16 +14824,6 @@ public class BHL_TestInterpreter : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    func int ret_int(int val, int ticks)
-    {
-      while(ticks > 0)
-      {
-        yield()
-        ticks = ticks - 1
-      }
-      return val
-    }
-
     func void test() 
     {
       paral {

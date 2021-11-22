@@ -361,6 +361,14 @@ public class Frontend : bhlBaseVisitor<object>
     bool write
    )
   {
+    if(!call_chain_level.ContainsKey(curr_scope))
+      call_chain_level[curr_scope] = 0;
+    ++call_chain_level[curr_scope];
+    if(call_chain_level[curr_scope] == 1)
+      call_chain_ctx_ast = PeekAST();
+    PushAST(new AST_Interim());
+    bhlParser.CallArgsContext last_cargs_ctx = null;
+
     var orig_scope = curr_scope;
 
     ITerminalNode curr_name = root_name;
@@ -388,18 +396,13 @@ public class Frontend : bhlBaseVisitor<object>
         var arracc = ch.arrAccess();
         bool is_last = c == chain.Length-1;
 
-        //Console.WriteLine("CHAIN " + curr_name?.GetText() + ch.GetText() + " last:" + is_last + " macc:" + (macc != null) + " arg.n:" + current_call_arg_n);
+        //Console.WriteLine("CH " + cargs?.GetText() + " " + macc?.GetText() + " " + arracc?.GetText());
 
         if(cargs != null)
         {
-          AST var_tmp_decl;
-          AST var_tmp_read;
-          BeginStackProtectionRewrite(root_name, is_last, curr_type, ch, out var_tmp_decl, out var_tmp_read);
+          last_cargs_ctx = cargs;
 
           ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, false);
-
-          FinishStackProtectionRewrite(root_name, is_last, var_tmp_decl, var_tmp_read);
-
           curr_class = null;
           curr_name = null;
         }
@@ -428,7 +431,6 @@ public class Frontend : bhlBaseVisitor<object>
       ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, write);
 
     curr_scope = orig_scope;
-  }
 
   //NOTE: We really want to avoid stack interleaving for the following case: 
   //        
@@ -456,46 +458,29 @@ public class Frontend : bhlBaseVisitor<object>
   //
   //      Since in this case there is no stack interleaving possible and we
   //      really want to avoid introduction of the new temp local variable
-  void BeginStackProtectionRewrite(ITerminalNode root_name, bool is_last, Type curr_type, bhlParser.ChainExpContext ch, out AST var_tmp_decl, out AST var_tmp_read)
-  {
-    var_tmp_decl = null;
-    var_tmp_read = null;
-    if(root_name == null || !is_last)
-      return;
-
-    if(!scope2call_cargs_level.ContainsKey(curr_scope))
-      scope2call_cargs_level[curr_scope] = 0;
-    ++scope2call_cargs_level[curr_scope];
-
-    if(current_call_arg_n > 0 && scope2call_cargs_level[curr_scope] > 1)
+    var chain_ast = PeekAST();
+    PopAST();
+    if(last_cargs_ctx != null && call_chain_level[curr_scope] > 1 && current_call_arg_n > 0)
     {
-      var var_tmp_symb = new VariableSymbol(Wrap(root_name), "$_tmp_" + ch.Start.Line + "_" + ch.Start.Column, new TypeRef(curr_type));
+      //Console.WriteLine("REPL CHAIN " + chain_ast.children.Count + ", arg n " + current_call_arg_n + " " + curr_type + " " + last_cargs_ctx.GetText());
+
+      var var_tmp_symb = new VariableSymbol(Wrap(last_cargs_ctx), "$_tmp_" + last_cargs_ctx.Start.Line + "_" + last_cargs_ctx.Start.Column, new TypeRef(curr_type));
       curr_scope.Define(var_tmp_symb);
 
-      var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, root_name.Symbol.Line, var_tmp_symb);
-      var_tmp_read = AST_Util.New_Call(EnumCall.VAR, root_name.Symbol.Line, var_tmp_symb);
+      var var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, last_cargs_ctx.Start.Line, var_tmp_symb);
+      var var_tmp_read = AST_Util.New_Call(EnumCall.VAR, last_cargs_ctx.Start.Line, var_tmp_symb);
+      
+      foreach(var chain_child in chain_ast.children)
+        call_chain_ctx_ast.children.Add(chain_child);
+      call_chain_ctx_ast.children.Add(var_tmp_decl);
+      PeekAST().AddChild(var_tmp_read);
     }
-    else if(scope2call_cargs_level[curr_scope] == 1)
+    else
     {
-      scope2cargs_ast_root[curr_scope] = PeekAST();
+      foreach(var chain_child in chain_ast.children)
+        PeekAST().AddChild(chain_child);
     }
-  }
-
-  void FinishStackProtectionRewrite(ITerminalNode root_name, bool is_last, AST var_tmp_decl, AST var_tmp_read)
-  {
-    if(root_name == null || !is_last)
-      return;
-
-    if(var_tmp_read != null && var_tmp_decl != null)
-    {
-      var ast_children = PeekAST().children;
-      var ast_last = ast_children[ast_children.Count-1]; 
-
-      ast_children[ast_children.Count-1] = var_tmp_read; 
-      scope2cargs_ast_root[curr_scope].children.Add(ast_last);
-      scope2cargs_ast_root[curr_scope].children.Add(var_tmp_decl);
-    }
-    --scope2call_cargs_level[curr_scope];
+    --call_chain_level[curr_scope];
   }
 
   void ProcCallChainItem(
@@ -1548,9 +1533,9 @@ public class Frontend : bhlBaseVisitor<object>
     return call_by_ref_stack.Peek();
   }
 
-  Dictionary<Scope, int> scope2call_cargs_level = new Dictionary<Scope, int>();
-  Dictionary<Scope, AST> scope2cargs_ast_root = new Dictionary<Scope, AST>();
   int current_call_arg_n = 0;
+  Dictionary<Scope, int> call_chain_level = new Dictionary<Scope, int>();
+  AST call_chain_ctx_ast = null;
 
   int loops_stack = 0;
   int defer_stack = 0;
