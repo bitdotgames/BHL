@@ -340,8 +340,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Type curr_type = null;
 
-    int line = ctx.Start.Line;
-    ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type, line, false);
+    ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type, ctx.Start.Line, write: false);
 
     Wrap(ctx).eval_type = curr_type;
     return null;
@@ -402,20 +401,20 @@ public class Frontend : bhlBaseVisitor<object>
         {
           last_cargs_ctx = cargs;
 
-          ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, false);
+          ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, write: false);
           curr_class = null;
           curr_name = null;
         }
         else if(arracc != null)
         {
-          ProcCallChainItem(curr_name, null, arracc, curr_class, ref curr_type, line, write && is_last);
+          ProcCallChainItem(curr_name, null, arracc, curr_class, ref curr_type, line, write: write && is_last);
           curr_class = null;
           curr_name = null;
         }
         else if(macc != null)
         {
           if(curr_name != null)
-            ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, false);
+            ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, write: false);
 
           curr_class = curr_type as ClassSymbol; 
           if(curr_class == null)
@@ -890,9 +889,8 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var interim = new AST_Interim();
       interim.AddChild(ast);
-      int line = funcLambda.Start.Line;
       PushAST(interim);
-      ProcChainedCall(null, chain, ref curr_type, line, false);
+      ProcChainedCall(null, chain, ref curr_type, funcLambda.Start.Line, write: false);
       PopAST();
       Wrap(ctx).eval_type = curr_type;
       PeekAST().AddChild(interim);
@@ -1181,12 +1179,10 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp);
 
     var curr_type = Wrap(exp).eval_type;
-
     var chain = ctx.chainExp(); 
     if(chain != null)
     {
-      int line = exp.Start.Line;
-      ProcChainedCall(null, chain, ref curr_type, line, false);
+      ProcChainedCall(null, chain, ref curr_type, exp.Start.Line, write: false);
     }
     PopAST();
     
@@ -1935,8 +1931,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(assign_exp == null)
           FireError(Location(cexp) + " : assign expression expected");
 
-        int line = cexp.Start.Line;
-        ProcChainedCall(cexp.NAME(), cexp.chainExp(), ref curr_type, line, true/*write*/);
+        ProcChainedCall(cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
 
         wnode = Wrap(cexp.NAME());
         wnode.eval_type = curr_type;
