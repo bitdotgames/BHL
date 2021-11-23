@@ -14793,6 +14793,158 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithPtrCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
+      int^(int,int) p = ret_int
+      paral {
+        seq {
+          foo(1, p(2, 1))
+          suspend()
+        }
+        foo(10, p(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithMemberPtrCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    class Bar { 
+      int^(int,int) ptr
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
+      Bar b = {}
+      b.ptr = ret_int
+      paral {
+        seq {
+          foo(1, b.ptr(2, 1))
+          suspend()
+        }
+        foo(10, b.ptr(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithLambdaCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func void test() 
+    {
+      paral {
+        seq {
+          foo(1, 
+              func int (int val, int ticks) {
+                while(ticks > 0) {
+                  yield()
+                  ticks = ticks - 1
+                }
+                return val
+              }(2, 1))
+          suspend()
+        }
+        foo(10, 
+            func int (int val, int ticks) {
+              while(ticks > 0) {
+                yield()
+                ticks = ticks - 1
+              }
+              return val
+            }(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
   public class Foo_ret_int  : BehaviorTreeTerminalNode
   {
     int ticks;

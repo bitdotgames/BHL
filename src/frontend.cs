@@ -204,7 +204,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast_stack.Pop();
   }
 
-  void PopAddOptimizeAST()
+  void PopAddAST()
   {
     var tmp = PeekAST();
     PopAST();
@@ -387,8 +387,6 @@ public class Frontend : bhlBaseVisitor<object>
         var macc = ch.memberAccess();
         var arracc = ch.arrAccess();
         bool is_last = c == chain.Length-1;
-
-        //Console.WriteLine("CH " + cargs?.GetText() + " " + macc?.GetText() + " " + arracc?.GetText());
 
         if(cargs != null)
         {
@@ -675,8 +673,8 @@ public class Frontend : bhlBaseVisitor<object>
         PushJsonType(func_arg_type);
         PushAST(new AST_Interim());
         Visit(ca);
-        TryProtectStackInterleaving(ca, func_arg_type, i, is_ref, ref pre_call);
-        PopAddOptimizeAST();
+        TryProtectStackInterleaving(ca, func_arg_type, i, ref pre_call);
+        PopAddAST();
         PopJsonType();
         PopCallByRef();
 
@@ -725,8 +723,8 @@ public class Frontend : bhlBaseVisitor<object>
       PushJsonType(arg_type);
       PushAST(new AST_Interim());
       Visit(ca);
-      TryProtectStackInterleaving(ca, arg_type, i, arg_type_ref.is_ref, ref pre_call);
-      PopAddOptimizeAST();
+      TryProtectStackInterleaving(ca, arg_type, i, ref pre_call);
+      PopAddAST();
       PopJsonType();
 
       var wca = Wrap(ca);
@@ -752,7 +750,12 @@ public class Frontend : bhlBaseVisitor<object>
 
   static bool HasFuncCalls(AST ast)
   {
-    if(ast is AST_Call call && (call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC))
+    if(ast is AST_Call call && 
+        (call.type == EnumCall.FUNC || 
+         call.type == EnumCall.MFUNC ||
+         call.type == EnumCall.FUNC_PTR ||
+         call.type == EnumCall.FUNC_PTR_POP
+         ))
       return true;
     
     for(int i=0;i<ast.children.Count;++i)
@@ -792,10 +795,10 @@ public class Frontend : bhlBaseVisitor<object>
   //
   //      Since in this case there is no stack interleaving possible (only one argument) 
   //      and we really want to avoid introduction of the new temp local variable
-  void TryProtectStackInterleaving(bhlParser.CallArgContext ca, Type func_arg_type, int i, bool is_ref, ref AST_Interim pre_call)
+  void TryProtectStackInterleaving(bhlParser.CallArgContext ca, Type func_arg_type, int i, ref AST_Interim pre_call)
   {
     var arg_ast = PeekAST();
-    if(i == 0 || is_ref || !HasFuncCalls(arg_ast))
+    if(i == 0 || !HasFuncCalls(arg_ast))
       return;
 
     PopAST();
@@ -1192,9 +1195,7 @@ public class Frontend : bhlBaseVisitor<object>
     var curr_type = Wrap(exp).eval_type;
     var chain = ctx.chainExp(); 
     if(chain != null)
-    {
       ProcChainedCall(null, chain, ref curr_type, exp.Start.Line, write: false);
-    }
     PopAST();
     
     PeekAST().AddChild(ast);
