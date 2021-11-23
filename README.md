@@ -242,7 +242,7 @@ You can run unit tests by executing the following command:
 
 # Roadmap
 
-## Version 0.9
+## Version 1.0
 
 1. ~~**ref** semantics similar to C#~~
 2. ~~Generic functors support~~
@@ -256,8 +256,10 @@ You can run unit tests by executing the following command:
 10. ~~User defined enums~~
 
 
-## Version 1.0
+## Version 2.0
 
 1. Byte code optimization
 2. More optimal executor (VM)
 3. Better runtime errors reporting
+4. Debugger support
+5. LSP integration
