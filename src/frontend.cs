@@ -204,14 +204,18 @@ public class Frontend : bhlBaseVisitor<object>
     ast_stack.Pop();
   }
 
-  void PopAddFlattenAST()
+  void PopAddOptimizeAST()
   {
     var tmp = PeekAST();
     PopAST();
-
-    if(tmp.children.Count == 1)
-      PeekAST().AddChild(tmp.children[0]);
-    else if(tmp.children.Count > 1)
+    if(tmp is AST_Interim intr)
+    {
+      if(intr.children.Count == 1)
+        PeekAST().AddChild(intr.children[0]);
+      else if(intr.children.Count > 1)
+        PeekAST().AddChild(intr);
+    }
+    else
       PeekAST().AddChild(tmp);
   }
 
@@ -671,8 +675,8 @@ public class Frontend : bhlBaseVisitor<object>
         PushJsonType(func_arg_type);
         PushAST(new AST_Interim());
         Visit(ca);
-        if(!TryProtectStackInterleaving(ca, func_arg_type, i, is_ref, ref pre_call))
-          PopAddFlattenAST();
+        TryProtectStackInterleaving(ca, func_arg_type, i, is_ref, ref pre_call);
+        PopAddOptimizeAST();
         PopJsonType();
         PopCallByRef();
 
@@ -721,8 +725,8 @@ public class Frontend : bhlBaseVisitor<object>
       PushJsonType(arg_type);
       PushAST(new AST_Interim());
       Visit(ca);
-      if(!TryProtectStackInterleaving(ca, arg_type, i, arg_type_ref.is_ref, ref pre_call))
-        PopAddFlattenAST();
+      TryProtectStackInterleaving(ca, arg_type, i, arg_type_ref.is_ref, ref pre_call);
+      PopAddOptimizeAST();
       PopJsonType();
 
       var wca = Wrap(ca);
@@ -788,11 +792,11 @@ public class Frontend : bhlBaseVisitor<object>
   //
   //      Since in this case there is no stack interleaving possible (only one argument) 
   //      and we really want to avoid introduction of the new temp local variable
-  bool TryProtectStackInterleaving(bhlParser.CallArgContext ca, Type func_arg_type, int i, bool is_ref, ref AST_Interim pre_call)
+  void TryProtectStackInterleaving(bhlParser.CallArgContext ca, Type func_arg_type, int i, bool is_ref, ref AST_Interim pre_call)
   {
     var arg_ast = PeekAST();
     if(i == 0 || is_ref || !HasFuncCalls(arg_ast))
-      return false;
+      return;
 
     PopAST();
 
@@ -808,9 +812,7 @@ public class Frontend : bhlBaseVisitor<object>
       pre_call.children.Add(chain_child);
     pre_call.children.Add(var_tmp_decl);
 
-    PeekAST().AddChild(var_tmp_read);
-
-    return true;
+    PushAST(var_tmp_read);
   }
 
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
