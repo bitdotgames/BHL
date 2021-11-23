@@ -558,6 +558,15 @@ static public class AST_Util
     self.children.Add(c);
   }
 
+  static public void AddChildren(this AST self, AST_Base b)
+  {
+    if(b is AST c)
+    {
+      for(int i=0;i<c.children.Count;++i)
+        self.AddChild(c.children[i]);
+    }
+  }
+
   static public AST NewInterimChild(this AST self)
   {
     var c = new AST_Interim();
