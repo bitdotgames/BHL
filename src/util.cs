@@ -1146,7 +1146,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Block node)
   {
-    Console.Write("(");
+    Console.Write("(BLK ");
     Console.Write(node.type + " {");
     VisitChildren(node);
     Console.Write("})");

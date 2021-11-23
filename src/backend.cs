@@ -1085,6 +1085,8 @@ public class FuncCtx : DynValRefcounted
       pool.Add(fs, stack);
     }
 
+    //Console.WriteLine("FREF NEW " + Environment.StackTrace);
+    
     if(stack.Count == 0)
     {
       ++pool_miss;
@@ -1107,6 +1109,8 @@ public class FuncCtx : DynValRefcounted
   {
     if(fct.refs != 0)
       throw new Exception("Freeing invalid object, refs " + fct.refs);
+
+    //Console.WriteLine("FREF DEL " + Environment.StackTrace);
 
     //NOTE: actually there must be an existing stack, throw an exception if not?
     Stack<FuncCtx> stack;

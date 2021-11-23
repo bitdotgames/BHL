@@ -16554,7 +16554,7 @@ public class BHL_TestInterpreter : BHL_TestBase
 
     BindColor(globs);
 
-    var intp = Interpret(bhl, globs);
+    var intp = Interpret(bhl, globs, true);
     var node = intp.GetFuncCallNode("test");
     ExecNode(node, 0);
     //NodeDump(node);

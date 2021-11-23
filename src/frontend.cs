@@ -360,14 +360,6 @@ public class Frontend : bhlBaseVisitor<object>
     bool write
    )
   {
-    if(!call_chain_level.ContainsKey(curr_scope))
-      call_chain_level[curr_scope] = 0;
-    ++call_chain_level[curr_scope];
-    if(call_chain_level[curr_scope] == 1)
-      call_chain_ctx_ast = PeekAST();
-    PushAST(new AST_Interim());
-    bhlParser.CallArgsContext last_cargs_ctx = null;
-
     var orig_scope = curr_scope;
 
     ITerminalNode curr_name = root_name;
@@ -399,8 +391,6 @@ public class Frontend : bhlBaseVisitor<object>
 
         if(cargs != null)
         {
-          last_cargs_ctx = cargs;
-
           ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, line, write: false);
           curr_class = null;
           curr_name = null;
@@ -430,56 +420,6 @@ public class Frontend : bhlBaseVisitor<object>
       ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, line, write);
 
     curr_scope = orig_scope;
-
-  //NOTE: We really want to avoid stack interleaving for the following case: 
-  //        
-  //        foo(1, bar())
-  //      
-  //      where bar() might execute for many ticks and at the same time 
-  //      somewhere *in parallel* executes some another function which pushes 
-  //      result onto the stack *before* bar() finishes its execution. 
-  //
-  //      At the time foo(..) is actually called the stack will contain badly 
-  //      interleaved arguments! 
-  //
-  //      For this reason we rewrite the example above into something as follows:
-  //
-  //        tmp_1 = bar()
-  //        foo(1, tmp_1)
-  //
-  //      However we should take into account cases like: 
-  //
-  //        foo(wow().bar())
-  //
-  //      At the same time we should not rewrite trivial cases like:
-  //
-  //        foo(bar())
-  //
-  //      Since in this case there is no stack interleaving possible and we
-  //      really want to avoid introduction of the new temp local variable
-    var chain_ast = PeekAST();
-    PopAST();
-    if(last_cargs_ctx != null && call_chain_level[curr_scope] > 1 && current_call_arg_n > 0)
-    {
-      //Console.WriteLine("REPL CHAIN " + chain_ast.children.Count + ", arg n " + current_call_arg_n + " " + curr_type + " " + last_cargs_ctx.GetText());
-
-      var var_tmp_symb = new VariableSymbol(Wrap(last_cargs_ctx), "$_tmp_" + last_cargs_ctx.Start.Line + "_" + last_cargs_ctx.Start.Column, new TypeRef(curr_type));
-      curr_scope.Define(var_tmp_symb);
-
-      var var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, last_cargs_ctx.Start.Line, var_tmp_symb);
-      var var_tmp_read = AST_Util.New_Call(EnumCall.VAR, last_cargs_ctx.Start.Line, var_tmp_symb);
-      
-      foreach(var chain_child in chain_ast.children)
-        call_chain_ctx_ast.children.Add(chain_child);
-      call_chain_ctx_ast.children.Add(var_tmp_decl);
-      PeekAST().AddChild(var_tmp_read);
-    }
-    else
-    {
-      foreach(var chain_child in chain_ast.children)
-        PeekAST().AddChild(chain_child);
-    }
-    --call_chain_level[curr_scope];
   }
 
   void ProcCallChainItem(
@@ -492,6 +432,7 @@ public class Frontend : bhlBaseVisitor<object>
     bool write
     )
   {
+    AST_Interim pre_call = null;
     AST_Call ast = null;
 
     if(name != null)
@@ -518,21 +459,21 @@ public class Frontend : bhlBaseVisitor<object>
           if(class_scope == null)
           {
             ast = AST_Util.New_Call(EnumCall.FUNC_PTR, line, str_name);
-            AddCallArgs(ftype, cargs, ref ast);
+            AddCallArgs(ftype, cargs, ref ast, out pre_call);
             type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
             PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, str_name, class_scope));
             ast = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, line);
-            AddCallArgs(ftype, cargs, ref ast);
+            AddCallArgs(ftype, cargs, ref ast, out pre_call);
             type = ftype.ret_type.Get();
           }
         }
         else if(func_symb != null)
         {
           ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, class_scope);
-          AddCallArgs(func_symb, cargs, ref ast);
+          AddCallArgs(func_symb, cargs, ref ast, out pre_call);
           type = func_symb.GetReturnType();
         }
         else
@@ -542,7 +483,7 @@ public class Frontend : bhlBaseVisitor<object>
           if(func_symb != null)
           {
             ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name);
-            AddCallArgs(func_symb, cargs, ref ast);
+            AddCallArgs(func_symb, cargs, ref ast, out pre_call);
             type = func_symb.GetReturnType();
           }
           else
@@ -596,10 +537,12 @@ public class Frontend : bhlBaseVisitor<object>
         FireError(Location(cargs) +  " : no func to call");
       
       ast = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, line);
-      AddCallArgs(ftype, cargs, ref ast);
+      AddCallArgs(ftype, cargs, ref ast, out pre_call);
       type = ftype.ret_type.Get();
     }
 
+    if(pre_call != null)
+      PeekAST().AddChild(pre_call);
     if(ast != null)
       PeekAST().AddChild(ast);
 
@@ -633,8 +576,10 @@ public class Frontend : bhlBaseVisitor<object>
     public Symbol orig;
   }
 
-  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call new_ast)
+  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call new_ast, out AST_Interim pre_call)
   {     
+    pre_call = null;
+
     var func_args = func_symb.GetArgs();
     int total_args_num = func_symb.GetTotalArgsNum();
     //Console.WriteLine(func_args.Count + " " + total_args_num);
@@ -679,12 +624,9 @@ public class Frontend : bhlBaseVisitor<object>
 
     PushAST(new_ast);
     IParseTree prev_ca = null;
-    int current_call_arg_n_bak = current_call_arg_n;
     //2. traversing normalized args
     for(int i=0;i<norm_cargs.Count;++i)
     {
-      current_call_arg_n = i;
-
       var ca = norm_cargs[i].ca;
 
       //NOTE: if call arg is not specified, try to find the default one
@@ -730,7 +672,8 @@ public class Frontend : bhlBaseVisitor<object>
         PushJsonType(func_arg_type);
         PushInterimAST();
         Visit(ca);
-        PopInterimAST();
+        if(!TryProtectStackInterleaving(ca, func_arg_type, i, is_ref, out pre_call))
+          PopInterimAST();
         PopJsonType();
         PopCallByRef();
 
@@ -748,26 +691,27 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
-    current_call_arg_n = current_call_arg_n_bak;
     PopAST();
 
     new_ast.cargs_bits = args_info.bits;
   }
 
-  void AddCallArgs(FuncType func_type, bhlParser.CallArgsContext cargs, ref AST_Call new_ast)
+  void AddCallArgs(FuncType func_type, bhlParser.CallArgsContext cargs, ref AST_Call new_ast, out AST_Interim pre_call)
   {     
+    pre_call = null;
+
     var func_args = func_type.arg_types;
     int ca_len = cargs.callArg().Length; 
     IParseTree prev_ca = null;
     PushAST(new_ast);
     for(int i=0;i<func_args.Count;++i)
     {
-      var arg_type = func_args[i]; 
+      var arg_type_ref = func_args[i]; 
 
       if(i == ca_len)
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
-        FireError(Location(next_arg) +  ": missing argument of type '" + arg_type.name.s + "'");
+        FireError(Location(next_arg) +  ": missing argument of type '" + arg_type_ref.name.s + "'");
       }
 
       var ca = cargs.callArg()[i];
@@ -776,19 +720,20 @@ public class Frontend : bhlBaseVisitor<object>
       if(ca_name != null)
         FireError(Location(ca_name) +  ": named arguments not supported for function pointers");
 
-      var type = arg_type.Get();
-      PushJsonType(type);
+      var arg_type = arg_type_ref.Get();
+      PushJsonType(arg_type);
       PushInterimAST();
       Visit(ca);
-      PopInterimAST();
+      if(!TryProtectStackInterleaving(ca, arg_type, i, arg_type_ref.is_ref, out pre_call))
+        PopInterimAST();
       PopJsonType();
 
       var wca = Wrap(ca);
-      SymbolTable.CheckAssign(type, wca);
+      SymbolTable.CheckAssign(arg_type, wca);
 
-      if(arg_type.is_ref && ca.isRef() == null)
+      if(arg_type_ref.is_ref && ca.isRef() == null)
         FireError(Location(ca) +  ": 'ref' is missing");
-      else if(!arg_type.is_ref && ca.isRef() != null)
+      else if(!arg_type_ref.is_ref && ca.isRef() != null)
         FireError(Location(ca) +  ": argument is not a 'ref'");
 
       prev_ca = ca;
@@ -802,6 +747,74 @@ public class Frontend : bhlBaseVisitor<object>
     if(!args_info.SetArgsNum(func_args.Count))
       FireError(Location(cargs) +  ": max arguments reached");
     new_ast.cargs_bits = args_info.bits;
+  }
+
+  static bool HasFuncCalls(AST ast)
+  {
+    if(ast is AST_Call call && (call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC))
+      return true;
+    
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      if(ast.children[i] is AST sub)
+      {
+        if(HasFuncCalls(sub))
+          return true;
+      }
+    }
+    return false;
+  }
+
+  //NOTE: We really want to avoid stack interleaving for the following case: 
+  //        
+  //        foo(1, bar())
+  //      
+  //      where bar() might execute for many ticks and at the same time 
+  //      somewhere *in parallel* executes some another function which pushes 
+  //      result onto the stack *before* bar() finishes its execution. 
+  //
+  //      At the time foo(..) is actually called the stack will contain badly 
+  //      interleaved arguments! 
+  //
+  //      For this reason we rewrite the example above into something as follows:
+  //
+  //        tmp_1 = bar()
+  //        foo(1, tmp_1)
+  //
+  //      We also should take into account cases like: 
+  //
+  //        foo(wow().bar())
+  //
+  //      At the same time we should not rewrite trivial cases like:
+  //
+  //        foo(bar())
+  //
+  //      Since in this case there is no stack interleaving possible (only one argument) 
+  //      and we really want to avoid introduction of the new temp local variable
+  bool TryProtectStackInterleaving(bhlParser.CallArgContext ca, Type func_arg_type, int i, bool is_ref, out AST_Interim pre_call)
+  {
+    pre_call = null;
+
+    var arg_ast = PeekAST();
+    if(i == 0 || is_ref || !HasFuncCalls(arg_ast))
+      return false;
+
+    PopAST();
+
+    var var_tmp_symb = new VariableSymbol(Wrap(ca), "$_tmp_" + ca.Start.Line + "_" + ca.Start.Column, new TypeRef(func_arg_type));
+    curr_scope.Define(var_tmp_symb);
+
+    var var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, ca.Start.Line, var_tmp_symb);
+    var var_tmp_read = AST_Util.New_Call(EnumCall.VAR, ca.Start.Line, var_tmp_symb);
+
+    pre_call = new AST_Interim();
+    foreach(var chain_child in arg_ast.children)
+      pre_call.children.Add(chain_child);
+    pre_call.children.Add(var_tmp_decl);
+
+    PeekAST().AddChild(var_tmp_read);
+
+    return true;
   }
 
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
@@ -1181,9 +1194,7 @@ public class Frontend : bhlBaseVisitor<object>
     var curr_type = Wrap(exp).eval_type;
     var chain = ctx.chainExp(); 
     if(chain != null)
-    {
       ProcChainedCall(null, chain, ref curr_type, exp.Start.Line, write: false);
-    }
     PopAST();
     
     PeekAST().AddChild(ast);
@@ -1528,10 +1539,6 @@ public class Frontend : bhlBaseVisitor<object>
 
     return call_by_ref_stack.Peek();
   }
-
-  int current_call_arg_n = 0;
-  Dictionary<Scope, int> call_chain_level = new Dictionary<Scope, int>();
-  AST call_chain_ctx_ast = null;
 
   int loops_stack = 0;
   int defer_stack = 0;
