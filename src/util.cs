@@ -1304,8 +1304,6 @@ public class FixedStack<T>
 
   public T Push(T item)
   {
-    if((head_idx+1) < 0 || (head_idx+1) >= storage.Length)
-      throw new IndexOutOfRangeException("Out of bounds index: " + head_idx + " (" + storage.Length + ")");
     storage[head_idx++] = item;
     return item;
   }
@@ -1365,6 +1363,11 @@ public class FixedStack<T>
   public void Dec()
   {
     --head_idx;
+  }
+
+  public void Advance(int offset)
+  {
+    head_idx = offset;
   }
 
   public void Clear()

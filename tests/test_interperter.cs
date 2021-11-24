@@ -10733,27 +10733,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBadRecursion()
-  {
-    string bhl = @"
-      
-    func test() 
-    {
-      test()
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    AssertError<IndexOutOfRangeException>(
-      delegate() { 
-        ExecNode(node, 0);
-      },
-      "Out of bounds index"
-    );
-  }
-
-  [IsTested()]
   public void TestForever()
   {
     string bhl = @"
@@ -19328,7 +19307,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
       AssertEqual(1, st.Pop(0));
       AssertEqual(st.Count, 0);
     }
-
 
     //Push/Dec
     {

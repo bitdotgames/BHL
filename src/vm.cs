@@ -9,6 +9,9 @@ public class VM
 {
   public class Frame : IExitableScope, IValRefcounted
   {
+    public const int MAX_LOCALS = 64;
+    public const int MAX_TEMPS = 32;
+
     //NOTE: -1 means it's in released state,
     //      public only for inspection
     public int refs;
@@ -17,9 +20,18 @@ public class VM
 
     public byte[] bytecode;
     public List<Const> constants;
-    //TODO: use shared stack for stack and locals 
-    public FixedStack<Val> stack = new FixedStack<Val>(32);
-    public List<Val> locals = new List<Val>();
+    public FixedStack<Val> stack = new FixedStack<Val>(MAX_LOCALS + MAX_TEMPS);
+    public int _locals_num;
+    public int locals_num {
+      get {
+        return _locals_num; 
+      }
+      set {
+        if(value > MAX_LOCALS)
+          throw new Exception("Too many local variables: " + value);
+        _locals_num = value; 
+      }
+    }
     public int start_ip;
     public int return_ip;
     public List<CodeBlock> defers;
@@ -64,37 +76,43 @@ public class VM
       this.vm = vm;
     }
 
-    public void Init(CompiledModule module, int start_ip)
+    public void Init(CompiledModule module, int start_ip, int locals_num = 0)
     {
-      bytecode = module.bytecode;
       constants = module.constants;
-      this.start_ip = start_ip;
+      Init(module.bytecode, start_ip, locals_num);
     }
 
-    public void Init(Frame origin, int start_ip)
+    public void Init(Frame origin, int start_ip, int locals_num = 0)
     {
-      bytecode = origin.bytecode;
       constants = origin.constants;
+      Init(origin.bytecode, start_ip, locals_num);
+    }
+
+    void Init(byte[] bytecode, int start_ip, int locals_num)
+    {
+      this.bytecode = bytecode;
       this.start_ip = start_ip;
+      this.locals_num = locals_num;
+      stack.Advance(MAX_LOCALS);
     }
 
     public void Clear()
     {
-      for(int i=locals.Count;i-- > 0;)
+      for(int i=stack.Count;i-- > 0;)
       {
-        var val = locals[i];
-        val.RefMod(RefOp.USR_DEC | RefOp.DEC);
+        var val = stack[i];
+        if(val != null)
+          val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       }
-      locals.Clear();
-      while(stack.Count > 0)
-        PopRelease();
+      stack.Clear();
+      locals_num = 0;
     }
 
     public void SetLocal(int idx, Val v)
     {
-      if(locals[idx] != null)
+      if(stack[idx] != null)
       {
-        var prev = locals[idx];
+        var prev = stack[idx];
         for(int i=0;i<prev._refs;++i)
         {
           v.RefMod(RefOp.USR_INC);
@@ -105,7 +123,7 @@ public class VM
       else
       {
         v.RefMod(RefOp.INC | RefOp.USR_INC);
-        locals[idx] = v;
+        stack[idx] = v;
       }
     }
 
@@ -399,7 +417,7 @@ public class VM
       return -1;
 
     var fr = Frame.New(this);
-    fr.Init(addr.module, addr.ip);
+    fr.Init(addr.module, addr.ip, 0);
 
     return Start(fr);
   }
@@ -518,7 +536,7 @@ public class VM
           case Opcodes.Inc:
           {
             int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            ++curr_frame.locals[var_idx]._num;
+            ++curr_frame.stack[var_idx]._num;
           }
           break;
           case Opcodes.Add:
@@ -547,23 +565,23 @@ public class VM
           case Opcodes.SetVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var locs = curr_frame.locals;
-            if(locs[local_idx] != null)
-              locs[local_idx].Release();
-            var new_val = curr_frame.stack.Pop();
-            locs[local_idx] = new_val;
+            var stack = curr_frame.stack;
+            if(stack[local_idx] != null)
+              stack[local_idx].Release();
+            var new_val = stack.Pop();
+            stack[local_idx] = new_val;
           }
           break;
           case Opcodes.GetVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.PushRetain(curr_frame.locals[local_idx]);
+            curr_frame.PushRetain(curr_frame.stack[local_idx]);
           }
           break;
           case Opcodes.ArgVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.locals[local_idx] = curr_frame.stack.Pop();
+            curr_frame.stack[local_idx] = curr_frame.stack.Pop();
           }
           break;
           case Opcodes.DeclVar:
@@ -579,7 +597,7 @@ public class VM
               v = Val.NewBool(this, false);
             else
               v = Val.NewObj(this, null);
-            curr_frame.locals[local_idx] = v;
+            curr_frame.stack[local_idx] = v;
           }
           break;
           case Opcodes.GetAttr:
@@ -667,7 +685,7 @@ public class VM
           {
             int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             var func_frame = Frame.New(this);
-            func_frame.Init(curr_frame, func_ip);
+            func_frame.Init(curr_frame, func_ip, 64);
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
@@ -693,7 +711,7 @@ public class VM
           case Opcodes.GetFuncFromVar:
           {
             int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var val = curr_frame.locals[local_var_idx];
+            var val = curr_frame.stack[local_var_idx];
             var frm = (Frame)val._obj; 
             //NOTE: we need to call an extra Retain since Release will be called for this frame 
             //      during its execution of Opcode.Return, however since this frame is stored in a var 
@@ -765,9 +783,7 @@ public class VM
           case Opcodes.InitFrame:
           {
             int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.locals.Capacity = local_vars_num;
-            for(int i=0;i<local_vars_num;++i)
-              curr_frame.locals.Add(null);
+            curr_frame.locals_num = local_vars_num;
           }
           break;
           case Opcodes.Lambda:
@@ -776,11 +792,7 @@ public class VM
             int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
             var fr = Frame.New(this);
-            fr.Init(curr_frame, func_ip);
-            fr.locals.Capacity = local_vars_num;
-            for(int i=0;i<local_vars_num;++i)
-              fr.locals.Add(null);
-
+            fr.Init(curr_frame, func_ip, local_vars_num);
             var frval = Val.NewObj(this, fr);
             frval._num = func_ip;
 
@@ -795,17 +807,18 @@ public class VM
             var frval = curr_frame.PeekValue();
             var fr = (Frame)frval._obj;
 
-            //TODO: amout of local variables must be known ahead 
-            int gaps = local_idx - fr.locals.Count + 1;
+            //TODO: amount of local variables must be known ahead 
+            int gaps = local_idx - fr.locals_num + 1;
             for(int i=0;i<gaps;++i)
-              fr.locals.Add(Val.New(this)); 
+              fr.stack[fr.locals_num + i] = Val.New(this); 
+            fr.locals_num += gaps;
 
-            var up_val = curr_frame.locals[up_idx];
+            var up_val = curr_frame.stack[up_idx];
             up_val.Retain();
 
-            if(fr.locals[local_idx] != null)
-              fr.locals[local_idx].Release();
-            fr.locals[local_idx] = up_val;
+            if(fr.stack[local_idx] != null)
+              fr.stack[local_idx].Release();
+            fr.stack[local_idx] = up_val;
           }
           break;
           case Opcodes.Pop:
@@ -835,7 +848,7 @@ public class VM
           {
             byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
+            var args_info = new FuncArgsInfo((uint)curr_frame.stack[curr_frame.locals_num-1]._num);
             //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
             //NOTE: if default argument is not used we need to jump out of default argument calculation code
             if(!args_info.IsDefaultArgUsed(def_arg_idx))
