@@ -108,7 +108,7 @@ public static class Tasks
     tm.Copy($"{BHL_ROOT}/bhl.g", $"{BHL_ROOT}/tmp/bhl.g");
     tm.Copy($"{BHL_ROOT}/bin/g4sharp", $"{BHL_ROOT}/tmp/g4sharp");
 
-    tm.Shell("sh", $"cd {BHL_ROOT}/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/ ");
+    tm.Shell("sh", $"-c 'cd {BHL_ROOT}/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/' ");
   }
 
   [Task(deps: "build_front_dll")]
