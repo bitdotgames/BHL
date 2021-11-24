@@ -769,22 +769,18 @@ static public class AST_Util
   static public AST_UseParam New_UseParam(HashedName name, bool is_ref, int symb_idx, int upsymb_idx)
   {
     var n = new AST_UseParam();
-    n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
+    n.nname = (uint)name.n;
     n.name = name.s;
+    n.is_ref = is_ref;
     n.symb_idx = (uint)symb_idx;
     n.upsymb_idx = (uint)upsymb_idx;
 
     return n;
   }
 
-  static public bool IsRef(this AST_UseParam n)
-  {
-    return (n.nname & (1u << 29)) != 0; 
-  }
-
   static public HashedName Name(this AST_UseParam n)
   {
-    return new HashedName(n.nname & 0xFFFFFFF, n.name);
+    return new HashedName(n.nname, n.name);
   }
 
   ////////////////////////////////////////////////////////
@@ -895,10 +891,11 @@ static public class AST_Util
   static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, bool is_func_arg, uint ntype, string type, int symb_idx)
   {
     var n = new AST_VarDecl();
-    n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
+    n.nname = (uint)name.n;
     n.name = name.s;
     n.ntype = ntype;
     n.type = type;
+    n.is_ref = is_ref;
     n.is_func_arg = is_func_arg;
     n.symb_idx = (uint)symb_idx;
 
@@ -907,12 +904,7 @@ static public class AST_Util
 
   static public HashedName Name(this AST_VarDecl n)
   {
-    return new HashedName(n.nname & 0xFFFFFFF, n.name);
-  }
-
-  static public bool IsRef(this AST_VarDecl n)
-  {
-    return (n.nname & (1u << 29)) != 0; 
+    return new HashedName(n.nname, n.name);
   }
 
   ////////////////////////////////////////////////////////

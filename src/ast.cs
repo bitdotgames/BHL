@@ -533,6 +533,7 @@ public class AST_UseParam  :  BaseMetaStruct
   public string name = "";
   public uint symb_idx;
   public uint upsymb_idx;
+  public bool is_ref;
 
   static public  uint STATIC_CLASS_ID = 121447213;
 
@@ -552,6 +553,7 @@ public class AST_UseParam  :  BaseMetaStruct
     name = "";
     symb_idx = 0;
     upsymb_idx = 0;
+    is_ref = false;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -562,11 +564,12 @@ public class AST_UseParam  :  BaseMetaStruct
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref symb_idx);
     MetaHelper.sync(ctx, ref upsymb_idx);
+    MetaHelper.sync(ctx, ref is_ref);
   }
 
   public override int getFieldsCount() 
   {
-    return 4; 
+    return 5; 
   }
 }
 
@@ -883,6 +886,7 @@ public class AST_VarDecl  : AST
   public string type = "";
   public uint symb_idx;
   public bool is_func_arg;
+  public bool is_ref;
 
   static public  new  uint STATIC_CLASS_ID = 232512499;
 
@@ -906,6 +910,7 @@ public class AST_VarDecl  : AST
     type = "";
     symb_idx = 0;
     is_func_arg = false;
+    is_ref = false;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -918,11 +923,12 @@ public class AST_VarDecl  : AST
     MetaHelper.sync(ctx, ref symb_idx);
     MetaHelper.sync(ctx, ref is_func_arg);
     MetaHelper.sync(ctx, ref type);
+    MetaHelper.sync(ctx, ref is_ref);
   }
 
   public override int getFieldsCount() 
   {
-    return 7; 
+    return 8; 
   }
 }
 

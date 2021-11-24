@@ -2067,7 +2067,7 @@ public class FuncNodeScript : FuncNode
       var fparam = (AST_VarDecl)fparams.children[i];
       var fparam_name = fparam.Name();
 
-      var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
+      var fparam_val = fparam.is_ref ? interp.PopRef() : interp.PopValue().ValueClone();
       //Console.WriteLine(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
       mem.Set(fparam_name, fparam_val);
 
@@ -2225,7 +2225,7 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
       {
         var up = lmb.decl.uses[i];
         var val = interp.GetScopeValue(up.Name());
-        fct.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        fct.mem.Set(up.Name(), up.is_ref ? val : val.ValueClone());
       }
     }
 

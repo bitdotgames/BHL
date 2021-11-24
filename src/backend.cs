@@ -1021,7 +1021,7 @@ public class FuncCtx : DynValRefcounted
       {
         var up = ldecl.uses[i];
         var val = mem.Get(up.Name());
-        dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        dup.mem.Set(up.Name(), up.is_ref ? val : val.ValueClone());
       }
     }
 
