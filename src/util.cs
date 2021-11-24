@@ -1374,59 +1374,6 @@ public class FixedStack<T>
   }
 }
 
-public class FastStackDynamic<T> : List<T>
-{
-  public FastStackDynamic(int startingCapacity)
-    : base(startingCapacity)
-  {}
-
-  public T Push(T item)
-  {
-    this.Add(item);
-    return item;
-  }
-
-  public void Expand(int size)
-  {
-    for(int i = 0; i < size; i++)
-      this.Add(default(T));
-  }
-
-  public void Zero(int index)
-  {
-    this[index] = default(T);
-  }
-
-  public T Peek()
-  {
-    return this[this.Count - 1];
-  }
-
-  public void CropAtCount(int p)
-  {
-    RemoveLast(Count - p);
-  }
-
-  public void RemoveLast( int cnt = 1)
-  {
-    if(cnt == 1)
-    {
-      this.RemoveAt(this.Count - 1);
-    }
-    else
-    {
-      this.RemoveRange(this.Count - cnt, cnt);
-    }
-  }
-
-  public T Pop()
-  {
-    T retval = this[this.Count - 1];
-    this.RemoveAt(this.Count - 1);
-    return retval;
-  }
-}
-
 //NOTE: cache for less GC operations
 public static class TempBuffer
 {
