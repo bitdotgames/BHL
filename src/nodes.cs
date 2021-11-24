@@ -475,7 +475,7 @@ public abstract class FuncBaseCallNode : GroupNode
 
       //NOTE: only when it's actual func call we pop it from the call stack
       if(is_func_call)
-        interp.call_stack.DecFast();
+        interp.call_stack.Dec();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;

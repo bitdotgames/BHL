@@ -19293,9 +19293,9 @@ func Unit FindUnit(Vec3 pos, float radius) {
   [IsTested()]
   public void TestStack()
   {
-    //Push/Pop
+    //Push/PopFast
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(10);
 
@@ -19310,10 +19310,10 @@ func Unit FindUnit(Vec3 pos, float radius) {
       AssertEqual(1, st.Pop());
       AssertEqual(st.Count, 0);
     }
-
-    //Push/PopFast
+    
+    //Push/Pop(repl)
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(10);
 
@@ -19321,17 +19321,18 @@ func Unit FindUnit(Vec3 pos, float radius) {
       AssertEqual(1, st[0]);
       AssertEqual(10, st[1]);
 
-      AssertEqual(10, st.PopFast());
+      AssertEqual(10, st.Pop(0));
       AssertEqual(st.Count, 1);
       AssertEqual(1, st[0]);
 
-      AssertEqual(1, st.PopFast());
+      AssertEqual(1, st.Pop(0));
       AssertEqual(st.Count, 0);
     }
 
-    //Push/DecFast
+
+    //Push/Dec
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(10);
 
@@ -19339,48 +19340,48 @@ func Unit FindUnit(Vec3 pos, float radius) {
       AssertEqual(1, st[0]);
       AssertEqual(10, st[1]);
 
-      st.DecFast();
+      st.Dec();
       AssertEqual(st.Count, 1);
       AssertEqual(1, st[0]);
 
-      st.DecFast();
+      st.Dec();
       AssertEqual(st.Count, 0);
     }
 
-    //RemoveAtFast
+    //RemoveAt
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(2);
       st.Push(3);
 
-      st.RemoveAtFast(1);
+      st.RemoveAt(1);
       AssertEqual(st.Count, 2);
       AssertEqual(1, st[0]);
       AssertEqual(3, st[1]);
     }
 
-    //RemoveAtFast
+    //RemoveAt
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(2);
       st.Push(3);
 
-      st.RemoveAtFast(0);
+      st.RemoveAt(0);
       AssertEqual(st.Count, 2);
       AssertEqual(2, st[0]);
       AssertEqual(3, st[1]);
     }
 
-    //RemoveAtFast
+    //RemoveAt
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(2);
       st.Push(3);
 
-      st.RemoveAtFast(2);
+      st.RemoveAt(2);
       AssertEqual(st.Count, 2);
       AssertEqual(1, st[0]);
       AssertEqual(2, st[1]);

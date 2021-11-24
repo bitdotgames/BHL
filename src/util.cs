@@ -1269,6 +1269,111 @@ public class AST_Dumper : AST_Visitor
   }
 }
 
+public class FixedStack<T>
+{
+  T[] storage;
+  int head_idx = 0;
+
+  public int Count
+  {
+    get { return head_idx; }
+  }
+
+  public FixedStack(int max_capacity)
+  {
+    storage = new T[max_capacity];
+  }
+
+  public T this[int index]
+  {
+    get { return storage[index]; }
+    set { storage[index] = value; }
+  }
+
+  public bool TryGetAt(int index, out T v)
+  {
+    if(index < 0 || index >= storage.Length)
+    {
+      v = default(T);
+      return false;
+    }
+    
+    v = storage[index];
+    return true;
+  }
+
+  public T Push(T item)
+  {
+    if((head_idx+1) < 0 || (head_idx+1) >= storage.Length)
+      throw new IndexOutOfRangeException("Out of bounds index: " + head_idx + " (" + storage.Length + ")");
+    storage[head_idx++] = item;
+    return item;
+  }
+
+  public T Pop()
+  {
+    --head_idx;
+    return storage[head_idx];
+  }
+
+  public T Pop(T repl)
+  {
+    --head_idx;
+    T retval = storage[head_idx];
+    storage[head_idx] = repl;
+    return retval;
+  }
+
+  public T Peek()
+  {
+    return storage[head_idx - 1];
+  }
+
+  public void SetRelative(int offset, T item)
+  {
+    storage[head_idx - 1 - offset] = item;
+  }
+
+  public void RemoveAt(int idx)
+  {
+    if(idx == (head_idx-1))
+    {
+      Dec();
+    }
+    else
+    {
+      --head_idx;
+      Array.Copy(storage, idx+1, storage, idx, storage.Length-idx-1);
+    }
+  }
+
+  public void MoveTo(int src, int dst)
+  {
+    if(src == dst)
+      return;
+
+    var tmp = storage[src];
+
+    if(src > dst)
+      Array.Copy(storage, dst, storage, dst + 1, src - dst);
+    else
+      Array.Copy(storage, src + 1, storage, src, dst - src);
+
+    storage[dst] = tmp;
+  }
+
+  public void Dec()
+  {
+    --head_idx;
+  }
+
+  public void Clear()
+  {
+    Array.Clear(storage, 0, storage.Length);
+    head_idx = 0;
+  }
+}
+
 public class FastStackDynamic<T> : List<T>
 {
   public FastStackDynamic(int startingCapacity)
@@ -1304,7 +1409,7 @@ public class FastStackDynamic<T> : List<T>
 
   public void RemoveLast( int cnt = 1)
   {
-    if (cnt == 1)
+    if(cnt == 1)
     {
       this.RemoveAt(this.Count - 1);
     }
@@ -1319,111 +1424,6 @@ public class FastStackDynamic<T> : List<T>
     T retval = this[this.Count - 1];
     this.RemoveAt(this.Count - 1);
     return retval;
-  }
-}
-
-public class FastStack<T>
-{
-  T[] storage;
-  int head_idx = 0;
-
-  public FastStack(int max_capacity)
-  {
-    storage = new T[max_capacity];
-  }
-
-  public T this[int index]
-  {
-    get { return storage[index]; }
-    set { storage[index] = value; }
-  }
-
-  public bool TryGetAt(int index, out T v)
-  {
-    if(index < 0 || index >= storage.Length)
-    {
-      v = default(T);
-      return false;
-    }
-    
-    v = storage[index];
-    return true;
-  }
-
-  public T Push(T item)
-  {
-    if((head_idx+1) < 0 || (head_idx+1) >= storage.Length)
-      throw new IndexOutOfRangeException("Out of bounds index: " + head_idx + " (" + storage.Length + ")");
-    storage[head_idx++] = item;
-    return item;
-  }
-
-  public T Peek()
-  {
-    return storage[head_idx - 1];
-  }
-
-  public void SetRelative(int offset, T item)
-  {
-    storage[head_idx - 1 - offset] = item;
-  }
-
-  public void RemoveAtFast(int idx)
-  {
-    if(idx == (head_idx-1))
-    {
-      DecFast();
-    }
-    else
-    {
-      --head_idx;
-      Array.Copy(storage, idx+1, storage, idx, storage.Length-idx-1);
-    }
-  }
-
-  public void MoveTo(int src, int dst)
-  {
-    if(src == dst)
-      return;
-
-    var tmp = storage[src];
-
-    if(src > dst)
-      Array.Copy(storage, dst, storage, dst + 1, src - dst);
-    else
-      Array.Copy(storage, src + 1, storage, src, dst - src);
-
-    storage[dst] = tmp;
-  }
-
-  public T Pop()
-  {
-    --head_idx;
-    T retval = storage[head_idx];
-    storage[head_idx] = default(T);
-    return retval;
-  }
-
-  public T PopFast()
-  {
-    --head_idx;
-    return storage[head_idx];
-  }
-
-  public void DecFast()
-  {
-    --head_idx;
-  }
-
-  public void Clear()
-  {
-    Array.Clear(storage, 0, storage.Length);
-    head_idx = 0;
-  }
-
-  public int Count
-  {
-    get { return head_idx; }
   }
 }
 

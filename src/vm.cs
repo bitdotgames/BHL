@@ -18,7 +18,7 @@ public class VM
     public byte[] bytecode;
     public List<Const> constants;
     //TODO: use shared stack for stack and locals 
-    public FastStack<Val> stack = new FastStack<Val>(32);
+    public FixedStack<Val> stack = new FixedStack<Val>(32);
     public List<Val> locals = new List<Val>();
     public int start_ip;
     public int return_ip;
@@ -111,7 +111,7 @@ public class VM
 
     public Val PopRelease()
     {
-      var val = stack.PopFast();
+      var val = stack.Pop();
       val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       return val;
     }
@@ -198,8 +198,8 @@ public class VM
   LocalScope symbols;
   Dictionary<string, ModuleAddr> func2addr = new Dictionary<string, ModuleAddr>();
 
-  FastStack<Val> stack = new FastStack<Val>(256);
-  public FastStack<Val> Stack {
+  FixedStack<Val> stack = new FixedStack<Val>(256);
+  public FixedStack<Val> Stack {
     get {
       return stack;
     }
@@ -214,7 +214,7 @@ public class VM
     internal int id;
     internal int ip;
     internal IInstruction instruction;
-    internal FastStack<Frame> frames = new FastStack<Frame>(256);
+    internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
 
     static public Fiber New(VM vm)
     {
@@ -433,7 +433,7 @@ public class VM
       var frame = fiber.frames.Peek();
       frame.ExitScope(this);
       frame.Release();
-      fiber.frames.PopFast();
+      fiber.frames.Pop();
     }
 
     Fiber.Del(fiber);
@@ -448,7 +448,7 @@ public class VM
     return null;
   }
 
-  internal BHS Execute(ref int ip, FastStack<Frame> frames, ref IInstruction instruction, int max_ip, IExitableScope defer_scope)
+  internal BHS Execute(ref int ip, FixedStack<Frame> frames, ref IInstruction instruction, int max_ip, IExitableScope defer_scope)
   { 
     while(frames.Count > 0 && ip < max_ip)
     {
@@ -473,7 +473,7 @@ public class VM
           curr_frame.ExitScope(this);
           ip = curr_frame.return_ip;
           curr_frame.Release();
-          frames.PopFast();
+          frames.Pop();
           return status;
         }
         else
@@ -550,7 +550,7 @@ public class VM
             var locs = curr_frame.locals;
             if(locs[local_idx] != null)
               locs[local_idx].Release();
-            var new_val = curr_frame.stack.PopFast();
+            var new_val = curr_frame.stack.Pop();
             locs[local_idx] = new_val;
           }
           break;
@@ -563,7 +563,7 @@ public class VM
           case Opcodes.ArgVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.locals[local_idx] = curr_frame.stack.PopFast();
+            curr_frame.locals[local_idx] = curr_frame.stack.Pop();
           }
           break;
           case Opcodes.DeclVar:
@@ -592,7 +592,7 @@ public class VM
             if(class_symb == null)
               throw new Exception("Class type not found: " + class_type);
 
-            var obj = curr_frame.stack.PopFast();
+            var obj = curr_frame.stack.Pop();
             var res = Val.New(this);
             var field_symb = (FieldSymbol)class_symb.members[fld_idx];
             field_symb.VM_getter(obj, ref res);
@@ -610,8 +610,8 @@ public class VM
             if(class_symb == null)
               throw new Exception("Class type not found: " + class_type);
 
-            var obj = curr_frame.stack.PopFast();
-            var val = curr_frame.stack.PopFast();
+            var obj = curr_frame.stack.Pop();
+            var val = curr_frame.stack.Pop();
             var field_symb = (FieldSymbol)class_symb.members[fld_idx];
             field_symb.VM_setter(ref obj, val);
             val.Release();
@@ -628,7 +628,7 @@ public class VM
             if(class_symb == null)
               throw new Exception("Class type not found: " + class_type);
 
-            var val = curr_frame.stack.PopFast();
+            var val = curr_frame.stack.Pop();
             var obj = curr_frame.PeekValue();
             var field_symb = (FieldSymbol)class_symb.members[fld_idx];
             field_symb.VM_setter(ref obj, val);
@@ -641,19 +641,19 @@ public class VM
             ip = curr_frame.return_ip;
             curr_frame.Release();
             //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
-            frames.PopFast();
+            frames.Pop();
             if(frames.Count > 0)
               curr_frame = frames.Peek();
           }
           break;
           case Opcodes.ReturnVal:
           {
-            var ret_val = curr_frame.stack.PopFast();
+            var ret_val = curr_frame.stack.Pop();
             ip = curr_frame.return_ip;
             curr_frame.ExitScope(this);
             curr_frame.Release();
             //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
-            frames.PopFast();
+            frames.Pop();
             if(frames.Count > 0)
             {
               curr_frame = frames.Peek();
@@ -724,7 +724,7 @@ public class VM
           {
             uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-            var val = curr_frame.stack.PopFast();
+            var val = curr_frame.stack.Pop();
             var fr = (Frame)val._obj;
             //NOTE: it will be released once return is invoked
             fr.Retain();
@@ -732,7 +732,7 @@ public class VM
 
             var args_info = new FuncArgsInfo(args_bits);
             for(int i = 0; i < args_info.CountArgs(); ++i)
-              fr.stack.Push(curr_frame.stack.PopFast());
+              fr.stack.Push(curr_frame.stack.Pop());
             if(args_info.HasDefaultUsedArgs())
               fr.stack.Push(Val.NewNum(this, args_bits));
 
@@ -752,7 +752,7 @@ public class VM
 
             var args_info = new FuncArgsInfo(args_bits);
             for(int i = 0; i < args_info.CountArgs(); ++i)
-              curr_frame.stack.Push(curr_frame.stack.PopFast());
+              curr_frame.stack.Push(curr_frame.stack.Pop());
 
             var sub_instruction = func_symb.VM_cb(curr_frame, ref status);
             if(sub_instruction != null)
@@ -981,8 +981,8 @@ public class VM
 
   void ExecuteBinaryOp(Opcodes op, Frame curr_frame)
   {
-    var r_operand = curr_frame.stack.PopFast();
-    var l_operand = curr_frame.stack.PopFast();
+    var r_operand = curr_frame.stack.Pop();
+    var l_operand = curr_frame.stack.Pop();
 
     switch(op)
     {
@@ -1037,7 +1037,7 @@ public class VM
 
   public Val PopRelease()
   {
-    var val = stack.PopFast();
+    var val = stack.Pop();
     val.RefMod(RefOp.DEC | RefOp.USR_DEC);
     return val;
   }
@@ -1222,12 +1222,12 @@ public struct CodeBlock
     this.max_ip = max_ip;
   }
 
-  public BHS Execute(VM vm, FastStack<VM.Frame> frames, ref IInstruction instruction, IExitableScope defer_scope)
+  public BHS Execute(VM vm, FixedStack<VM.Frame> frames, ref IInstruction instruction, IExitableScope defer_scope)
   {
     return vm.Execute(ref ip, frames, ref instruction, max_ip + 1, defer_scope);
   }
 
-  static internal void ExitScope(VM vm, FastStack<VM.Frame> frames, List<CodeBlock> defers)
+  static internal void ExitScope(VM vm, FixedStack<VM.Frame> frames, List<CodeBlock> defers)
   {
     if(defers == null)
       return;
@@ -1254,7 +1254,7 @@ public class SeqInstruction : IInstruction, IExitableScope
 {
   public int ip;
   public int max_ip;
-  public FastStack<VM.Frame> frames = new FastStack<VM.Frame>(256);
+  public FixedStack<VM.Frame> frames = new FixedStack<VM.Frame>(256);
   public IInstruction instruction;
   public List<CodeBlock> defers;
 

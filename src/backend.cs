@@ -28,10 +28,10 @@ public class Interpreter : AST_Visitor
   public delegate void FieldRef(DynVal v, out DynVal res);
   public delegate BehaviorTreeNode FuncNodeCreator(); 
 
-  FastStack<BehaviorTreeInternalNode> node_stack = new FastStack<BehaviorTreeInternalNode>(128);
+  FixedStack<BehaviorTreeInternalNode> node_stack = new FixedStack<BehaviorTreeInternalNode>(128);
   BehaviorTreeInternalNode curr_node;
 
-  FastStack<DynValDict> mstack = new FastStack<DynValDict>(129);
+  FixedStack<DynValDict> mstack = new FixedStack<DynValDict>(129);
   DynValDict curr_mem;
   public DynValDict glob_mem = new DynValDict();
 
@@ -59,11 +59,11 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  public FastStack<StackValue> stack = new FastStack<StackValue>(256);
-  public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(255);
+  public FixedStack<StackValue> stack = new FixedStack<StackValue>(256);
+  public FixedStack<FuncBaseCallNode> call_stack = new FixedStack<FuncBaseCallNode>(255);
   //NOTE: this one is used for marking stack values with proper node ctx, 
   //      this is used in paral nodes where stack values interleaving may happen
-  public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(131);
+  public FixedStack<BehaviorTreeNode> node_ctx_stack = new FixedStack<BehaviorTreeNode>(131);
 #if DEBUG_STACK
   //NOTE: this one is used for marking stack values with proper func ctx so that 
   //      this info can be retrieved for debug purposes
@@ -293,7 +293,7 @@ public class Interpreter : AST_Visitor
 
   public void PopScope()
   {
-    mstack.Pop();
+    mstack.Pop(null);
     curr_mem = mstack.Count > 0 ? mstack.Peek() : null;
   }
 
@@ -351,7 +351,7 @@ public class Interpreter : AST_Visitor
 
   public BehaviorTreeInternalNode PopNode()
   {
-    var node = node_stack.Pop();
+    var node = node_stack.Pop(null);
     curr_node = node_stack.Count > 0 ? node_stack.Peek() : null; 
     return node;
   }
@@ -363,7 +363,7 @@ public class Interpreter : AST_Visitor
 
   public void PopStackParalCtx()
   {
-    node_ctx_stack.Pop();
+    node_ctx_stack.Pop(null);
   }
 
   public void PushValue(DynVal v)
@@ -382,21 +382,21 @@ public class Interpreter : AST_Visitor
 
   public DynVal PopValue()
   {
-    var sv = stack.PopFast();
+    var sv = stack.Pop();
     sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
     return sv.dv;
   }
 
   public DynVal PopRef()
   {
-    var sv = stack.PopFast();
+    var sv = stack.Pop();
     sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
     return sv.dv;
   }
 
   public DynVal PopValueEx(int mode)
   {
-    var sv = stack.PopFast();
+    var sv = stack.Pop();
     sv.dv.RefMod(mode);
     return sv.dv;
   }
@@ -411,7 +411,7 @@ public class Interpreter : AST_Visitor
       if(sv.node_ctx != paral_ctx)
         continue;
       sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-      stack.RemoveAtFast(i);
+      stack.RemoveAt(i);
     }
   }
 

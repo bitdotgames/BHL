@@ -794,7 +794,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(c);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var lst = vm.Stack.PopFast();
+    var lst = vm.Stack.Pop();
     AssertEqual((lst.obj as ValList).Count, 0);
     lst.Release();
     CommonChecks(vm);
@@ -949,7 +949,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(c);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var lst = vm.Stack.PopFast();
+    var lst = vm.Stack.Pop();
     AssertEqual((lst.obj as ValList).Count, 1);
     lst.Release();
     CommonChecks(vm);
@@ -1052,7 +1052,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(c);
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var val = vm.Stack.PopFast();
+    var val = vm.Stack.Pop();
     var lst = val.obj as ValList;
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "tst");

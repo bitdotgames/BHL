@@ -464,8 +464,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   
   public override IInstruction VM_Add(VM.Frame frame, ref BHS status)
   {
-    var val = frame.stack.PopFast();
-    var arr = frame.stack.PopFast();
+    var val = frame.stack.Pop();
+    var arr = frame.stack.Pop();
     var lst = AsList(arr);
     lst.Add(val);
     val.Release();
@@ -475,7 +475,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override IInstruction VM_AddInplace(VM.Frame frame, ref BHS status)
   {
-    var val = frame.stack.PopFast();
+    var val = frame.stack.Pop();
     var arr = frame.stack.Peek();
     var lst = AsList(arr);
     lst.Add(val);
@@ -486,7 +486,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override IInstruction VM_At(VM.Frame frame, ref BHS status)
   {
     int idx = (int)frame.PopRelease().num;
-    var arr = frame.stack.PopFast();
+    var arr = frame.stack.Pop();
     var lst = AsList(arr);
     var res = lst[idx]; 
     frame.PushRetain(res);
@@ -497,8 +497,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override IInstruction VM_SetAt(VM.Frame frame, ref BHS status)
   {
     int idx = (int)frame.PopRelease().num;
-    var arr = frame.stack.PopFast();
-    var val = frame.stack.PopFast();
+    var arr = frame.stack.Pop();
+    var val = frame.stack.Pop();
     var lst = AsList(arr);
     lst[idx] = val;
     val.Release();
@@ -509,7 +509,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override IInstruction VM_RemoveAt(VM.Frame frame, ref BHS status)
   {
     int idx = (int)frame.PopRelease().num;
-    var arr = frame.stack.PopFast();
+    var arr = frame.stack.Pop();
     var lst = AsList(arr);
     lst.RemoveAt(idx); 
     arr.Release();
@@ -519,7 +519,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override IInstruction VM_Clear(VM.Frame frame, ref BHS status)
   {
     int idx = (int)frame.PopRelease().num;
-    var arr = frame.stack.PopFast();
+    var arr = frame.stack.Pop();
     var lst = AsList(arr);
     lst.Clear();
     arr.Release();
@@ -1580,7 +1580,7 @@ static public class SymbolTable
       var fn = new FuncSymbolNative("start", globals.Type("int"), null,
         delegate(VM.Frame frm, ref BHS status) 
         { 
-          var vfn = frm.stack.PopFast();
+          var vfn = frm.stack.Pop();
           //NOTE: we don't decrease ref.count for the payload
           vfn.RefMod(RefOp.DEC);
           int fid = frm.vm.Start((VM.Frame)vfn._obj);
