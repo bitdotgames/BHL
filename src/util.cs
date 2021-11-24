@@ -892,11 +892,6 @@ static public class AST_Util
     return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.name.n1, symb.type.name.s, symb.scope_idx);
   }
 
-  static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref, uint ntype, string type)
-  {
-    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, ntype, type, symb.scope_idx);
-  }
-
   static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, bool is_func_arg, uint ntype, string type, int symb_idx)
   {
     var n = new AST_VarDecl();

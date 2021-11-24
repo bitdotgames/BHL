@@ -2111,7 +2111,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(write)
       return AST_Util.New_Call(EnumCall.VARW, 0, symb);
     else
-      return AST_Util.New_VarDecl(symb, is_ref, tr.name.n1, tr.name.s);
+      return AST_Util.New_VarDecl(symb, is_ref);
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
@@ -2498,7 +2498,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
     //declaring counter var
-    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, false, SymbolTable.symb_int.GetName().n1, SymbolTable.symb_int.GetName().s));
+    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, is_ref: false));
 
     //declaring iterating var
     if(iter_ast_decl != null)
