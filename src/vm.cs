@@ -7,6 +7,57 @@ namespace bhl {
 
 public class VM
 {
+  public class Fiber
+  {
+    internal VM vm;
+
+    internal int id;
+    internal int ip;
+    internal IInstruction instruction;
+    internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
+
+    public FixedStack<Val> stack = new FixedStack<Val>(32);
+
+    static public Fiber New(VM vm)
+    {
+      Fiber fb;
+      if(vm.fibers_pool.stack.Count == 0)
+      {
+        ++vm.fibers_pool.miss;
+        fb = new Fiber(vm);
+      }
+      else
+      {
+        ++vm.fibers_pool.hit;
+        fb = vm.fibers_pool.stack.Pop();
+      }
+
+      return fb;
+    }
+
+    static public void Del(Fiber fb)
+    {
+      fb.Clear();
+      fb.vm.fibers_pool.stack.Push(fb);
+    }
+
+    //NOTE: use New() instead
+    internal Fiber(VM vm)
+    {
+      this.vm = vm;
+    }
+
+    internal void Clear()
+    {
+      frames.Clear();
+      if(instruction != null)
+      {
+        Instructions.Del(vm, instruction);
+        instruction = null;
+      }
+    }
+  }
+
   public class Frame : IExitableScope, IValRefcounted
   {
     public const int MAX_LOCALS = 64;
@@ -17,6 +68,7 @@ public class VM
     public int refs;
 
     public VM vm;
+    public Fiber fb;
 
     public byte[] bytecode;
     public List<Const> constants;
@@ -127,24 +179,6 @@ public class VM
       }
     }
 
-    public Val PopRelease()
-    {
-      var val = stack.Pop();
-      val.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      return val;
-    }
-
-    public void PushRetain(Val val)
-    {
-      val.RefMod(RefOp.INC | RefOp.USR_INC);
-      stack.Push(val);
-    }
-
-    public Val PeekValue()
-    {
-      return stack.Peek();
-    }
-
     public void RegisterOnExit(CodeBlock cb)
     {
       if(defers == null)
@@ -216,63 +250,8 @@ public class VM
   LocalScope symbols;
   Dictionary<string, ModuleAddr> func2addr = new Dictionary<string, ModuleAddr>();
 
-  FixedStack<Val> stack = new FixedStack<Val>(256);
-  public FixedStack<Val> Stack {
-    get {
-      return stack;
-    }
-  }
-
   int fibers_ids = 0;
 
-  public class Fiber
-  {
-    internal VM vm;
-
-    internal int id;
-    internal int ip;
-    internal IInstruction instruction;
-    internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
-
-    static public Fiber New(VM vm)
-    {
-      Fiber fb;
-      if(vm.fibers_pool.stack.Count == 0)
-      {
-        ++vm.fibers_pool.miss;
-        fb = new Fiber(vm);
-      }
-      else
-      {
-        ++vm.fibers_pool.hit;
-        fb = vm.fibers_pool.stack.Pop();
-      }
-
-      return fb;
-    }
-
-    static public void Del(Fiber fb)
-    {
-      fb.Clear();
-      fb.vm.fibers_pool.stack.Push(fb);
-    }
-
-    //NOTE: use New() instead
-    internal Fiber(VM vm)
-    {
-      this.vm = vm;
-    }
-
-    internal void Clear()
-    {
-      frames.Clear();
-      if(instruction != null)
-      {
-        Instructions.Del(vm, instruction);
-        instruction = null;
-      }
-    }
-  }
   List<Fiber> fibers = new List<Fiber>();
   internal Fiber curr_fiber;
 
@@ -410,11 +389,11 @@ public class VM
     }
   }
 
-  public int Start(string func)
+  public Fiber Start(string func)
   {
     ModuleAddr addr;
     if(!func2addr.TryGetValue(func, out addr))
-      return -1;
+      return null;
 
     var fr = Frame.New(this);
     fr.Init(addr.module, addr.ip, 0);
@@ -422,40 +401,46 @@ public class VM
     return Start(fr);
   }
 
-  public int Start(Frame fr)
+  public Fiber Start(Frame fr)
   {
     var fb = Fiber.New(this);
     fb.id = ++fibers_ids;
     fb.ip = fr.start_ip;
+
+    fr.fb = fb;
     fb.frames.Push(fr);
 
     fibers.Add(fb);
 
-    return fb.id;
+    return fb;
+  }
+
+  public void Stop(Fiber fb)
+  {
+    if(fb.instruction != null)
+    {
+      Instructions.Del(this, fb.instruction);
+      fb.instruction = null;
+    }
+
+    while(fb.frames.Count > 0)
+    {
+      var frame = fb.frames.Peek();
+      frame.ExitScope(this);
+      frame.Release();
+      fb.frames.Pop();
+    }
+
+    Fiber.Del(fb);
+    fibers.Remove(fb);
   }
 
   public void Stop(int fid)
   {
-    var fiber = FindFiber(fid);
-    if(fiber == null)
+    var fb = FindFiber(fid);
+    if(fb == null)
       return;
-
-    if(fiber.instruction != null)
-    {
-      Instructions.Del(this, fiber.instruction);
-      fiber.instruction = null;
-    }
-
-    while(fiber.frames.Count > 0)
-    {
-      var frame = fiber.frames.Peek();
-      frame.ExitScope(this);
-      frame.Release();
-      fiber.frames.Pop();
-    }
-
-    Fiber.Del(fiber);
-    fibers.Remove(fiber);
+    Stop(fb);
   }
 
   Fiber FindFiber(int fid)
@@ -526,9 +511,9 @@ public class VM
 
             //TODO: make it more universal and robust
             if(cast_type == "string")
-              curr_frame.stack.Push(Val.NewStr(this, curr_frame.PopRelease().num.ToString()));
+              curr_frame.stack.Push(Val.NewStr(this, curr_frame.stack.PopRelease().num.ToString()));
             else if(cast_type == "int")
-              curr_frame.stack.Push(Val.NewNum(this, curr_frame.PopRelease().num));
+              curr_frame.stack.Push(Val.NewNum(this, curr_frame.stack.PopRelease().num));
             else
               throw new Exception("Not supported typecast type: " + cast_type);
           }
@@ -575,7 +560,7 @@ public class VM
           case Opcodes.GetVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.PushRetain(curr_frame.stack[local_idx]);
+            curr_frame.stack.PushRetain(curr_frame.stack[local_idx]);
           }
           break;
           case Opcodes.ArgVar:
@@ -647,7 +632,7 @@ public class VM
               throw new Exception("Class type not found: " + class_type);
 
             var val = curr_frame.stack.Pop();
-            var obj = curr_frame.PeekValue();
+            var obj = curr_frame.stack.Peek();
             var field_symb = (FieldSymbol)class_symb.members[fld_idx];
             field_symb.VM_setter(ref obj, val);
             val.Release();
@@ -678,7 +663,7 @@ public class VM
               curr_frame.stack.Push(ret_val);
             }
             else
-              stack.Push(ret_val);
+              curr_frame.fb.stack.Push(ret_val);
           }
           break;
           case Opcodes.GetFunc:
@@ -765,7 +750,7 @@ public class VM
           case Opcodes.CallNative:
           {
             uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-            var val = curr_frame.PopRelease();
+            var val = curr_frame.stack.PopRelease();
             var func_symb = (FuncSymbolNative)val._obj;
 
             var args_info = new FuncArgsInfo(args_bits);
@@ -804,7 +789,7 @@ public class VM
             int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
-            var frval = curr_frame.PeekValue();
+            var frval = curr_frame.stack.Peek();
             var fr = (Frame)frval._obj;
 
             //TODO: amount of local variables must be known ahead 
@@ -823,7 +808,7 @@ public class VM
           break;
           case Opcodes.Pop:
           {
-            curr_frame.PopRelease();
+            curr_frame.stack.PopRelease();
           }
           break;
           case Opcodes.Jump:
@@ -835,7 +820,7 @@ public class VM
           case Opcodes.CondJump:
           {
             //we need to jump only in case of false
-            if(curr_frame.PopRelease().bval == false)
+            if(curr_frame.stack.PopRelease().bval == false)
             {
               ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
               ip += offset;
@@ -980,7 +965,7 @@ public class VM
 
   void ExecuteUnaryOp(Opcodes op, Frame curr_frame)
   {
-    var operand = curr_frame.PopRelease().num;
+    var operand = curr_frame.stack.PopRelease().num;
     switch(op)
     {
       case Opcodes.UnaryNot:
@@ -1046,33 +1031,6 @@ public class VM
 
     r_operand.Release();
     l_operand.Release();
-  }
-
-  public Val PopRelease()
-  {
-    var val = stack.Pop();
-    val.RefMod(RefOp.DEC | RefOp.USR_DEC);
-    return val;
-  }
-
-  public void PushRetain(Val v)
-  {
-    v.RefMod(RefOp.INC | RefOp.USR_INC);
-    stack.Push(v);
-  }
-
-  public Val PeekValue()
-  {
-    return stack.Peek();
-  }
-
-  public void ShowFullStack()
-  {
-    Console.WriteLine(" VM STACK :");
-    for(int i=0;i<stack.Count;++i)
-    {
-      Console.WriteLine("\t" + stack[i]);
-    }
   }
 }
 

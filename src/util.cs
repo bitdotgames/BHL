@@ -197,6 +197,19 @@ public static class Extensions
     } while (n != 0);           
     return total;
   }
+
+  public static Val PopRelease(this FixedStack<Val> stack)
+  {
+    var val = stack.Pop();
+    val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    return val;
+  }
+
+  public static void PushRetain(this FixedStack<Val> stack, Val val)
+  {
+    val.RefMod(RefOp.INC | RefOp.USR_INC);
+    stack.Push(val);
+  }
 }
 
 static public class Util

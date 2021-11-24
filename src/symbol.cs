@@ -485,18 +485,18 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override IInstruction VM_At(VM.Frame frame, ref BHS status)
   {
-    int idx = (int)frame.PopRelease().num;
+    int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = AsList(arr);
     var res = lst[idx]; 
-    frame.PushRetain(res);
+    frame.stack.PushRetain(res);
     arr.Release();
     return null;
   }
 
   public override IInstruction VM_SetAt(VM.Frame frame, ref BHS status)
   {
-    int idx = (int)frame.PopRelease().num;
+    int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var val = frame.stack.Pop();
     var lst = AsList(arr);
@@ -508,7 +508,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override IInstruction VM_RemoveAt(VM.Frame frame, ref BHS status)
   {
-    int idx = (int)frame.PopRelease().num;
+    int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = AsList(arr);
     lst.RemoveAt(idx); 
@@ -518,7 +518,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override IInstruction VM_Clear(VM.Frame frame, ref BHS status)
   {
-    int idx = (int)frame.PopRelease().num;
+    int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = AsList(arr);
     lst.Clear();
@@ -1583,7 +1583,7 @@ static public class SymbolTable
           var vfn = frm.stack.Pop();
           //NOTE: we don't decrease ref.count for the payload
           vfn.RefMod(RefOp.DEC);
-          int fid = frm.vm.Start((VM.Frame)vfn._obj);
+          int fid = frm.vm.Start((VM.Frame)vfn._obj).id;
           frm.stack.Push(Val.NewNum(frm.vm, fid));
           return null;
         } 
@@ -1596,7 +1596,7 @@ static public class SymbolTable
       var fn = new FuncSymbolNative("stop", globals.Type("void"), null,
         delegate(VM.Frame frm, ref BHS status) 
         { 
-          var fid = (int)frm.PopRelease().num;
+          var fid = (int)frm.stack.PopRelease().num;
           frm.vm.Stop(fid);
           return null;
         } 
