@@ -3150,6 +3150,36 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsStackOnFailure()
+  {
+    string bhl = @"
+    func int foo(int v) 
+    {
+      fail()
+      return v
+    }
+
+    func hey(int a, int b)
+    { }
+
+    func test() 
+    {
+      hey(1, foo(10))
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c); 
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestInterleaveValuesStackInParal()
   {
     string bhl = @"

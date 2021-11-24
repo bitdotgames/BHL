@@ -49,11 +49,17 @@ public class VM
 
     internal void Clear()
     {
-      frames.Clear();
       if(instruction != null)
       {
         Instructions.Del(vm, instruction);
         instruction = null;
+      }
+
+      while(frames.Count > 0)
+      {
+        var frm = frames.Pop();
+        frm.ExitScope(vm);
+        frm.Release();
       }
     }
   }
@@ -417,20 +423,6 @@ public class VM
 
   public void Stop(Fiber fb)
   {
-    if(fb.instruction != null)
-    {
-      Instructions.Del(this, fb.instruction);
-      fb.instruction = null;
-    }
-
-    while(fb.frames.Count > 0)
-    {
-      var frame = fb.frames.Peek();
-      frame.ExitScope(this);
-      frame.Release();
-      fb.frames.Pop();
-    }
-
     Fiber.Del(fb);
     fibers.Remove(fb);
   }
