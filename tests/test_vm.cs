@@ -4649,6 +4649,76 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGetCallstackInfo()
+  {
+    string bhl3 = @"
+    func float wow(float b)
+    {
+      record_callstack()
+      return b
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+    func float bar(float b)
+    {
+      return wow(b)
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func float foo(float k)
+    {
+      return bar(k)
+    }
+
+    func float test(float k) 
+    {
+      return foo(k)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var info = new List<VM.CallStackInfo>();
+    {
+      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"), null,
+        delegate(VM.Frame frm, ref BHS status) { 
+          frm.fb.GetCallStackInfo(info); 
+          return null;
+        });
+      globs.Define(fn);
+    }
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files, globs));
+
+    var vm = new VM(globs: globs, importer: importer);
+    vm.ImportModule("bhl1");
+    var fb = vm.Start("test");
+    fb.SetArgs(Val.NewNum(vm, 3));
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 3);
+
+    AssertEqual(3, info.Count);
+    AssertEqual("bar", info[0].func_name);
+    AssertEqual("bhl2", info[0].module_name);
+    AssertEqual(6, info[0].line_num);
+    AssertEqual("foo", info[1].func_name);
+    AssertEqual("bhl1", info[1].module_name);
+    AssertEqual(7, info[1].line_num);
+    AssertEqual("test", info[2].func_name);
+    AssertEqual("bhl1", info[2].module_name);
+    AssertEqual(12, info[2].line_num);
+  }
+
+  [IsTested()]
   public void TestFibonacci()
   {
     string bhl = @"

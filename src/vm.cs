@@ -62,6 +62,20 @@ public class VM
         frm.Release();
       }
     }
+
+    public void SetArgs(params Val[] args)
+    {
+      var frm = frames.Peek();
+      for(int i=0;i<args.Length;++i)
+      {
+        var arg = args[i];
+        frm.stack.Push(arg);
+      }
+    }
+
+    public void GetCallStackInfo(List<VM.CallStackInfo> info)
+    {
+    }
   }
 
   public class Frame : IExitableScope, IValRefcounted
@@ -79,7 +93,7 @@ public class VM
     public byte[] bytecode;
     public List<Const> constants;
     public FixedStack<Val> stack = new FixedStack<Val>(MAX_LOCALS + MAX_TEMPS);
-    public int _locals_num;
+    int _locals_num;
     public int locals_num {
       get {
         return _locals_num; 
@@ -134,23 +148,25 @@ public class VM
       this.vm = vm;
     }
 
-    public void Init(CompiledModule module, int start_ip, int locals_num = 0)
+    public void Init(Fiber fb, CompiledModule module, int start_ip)
     {
+      this.fb = fb;
       constants = module.constants;
-      Init(module.bytecode, start_ip, locals_num);
+      Init(module.bytecode, start_ip);
     }
 
-    public void Init(Frame origin, int start_ip, int locals_num = 0)
+    public void Init(Frame origin, int start_ip)
     {
+      fb = origin.fb;
       constants = origin.constants;
-      Init(origin.bytecode, start_ip, locals_num);
+      Init(origin.bytecode, start_ip);
     }
 
-    void Init(byte[] bytecode, int start_ip, int locals_num)
+    void Init(byte[] bytecode, int start_ip)
     {
       this.bytecode = bytecode;
       this.start_ip = start_ip;
-      this.locals_num = locals_num;
+      this.locals_num = 0;
       stack.Advance(MAX_LOCALS);
     }
 
@@ -219,6 +235,13 @@ public class VM
       if(refs == 0)
         Del(this);
     }
+  }
+
+  public struct CallStackInfo
+  {
+    public string module_name;
+    public string func_name;
+    public uint line_num;
   }
 
   public class Pool<T> where T : class
@@ -401,15 +424,22 @@ public class VM
     if(!func2addr.TryGetValue(func, out addr))
       return null;
 
+    var fb = Fiber.New(this);
     var fr = Frame.New(this);
-    fr.Init(addr.module, addr.ip, 0);
-
-    return Start(fr);
+    fr.Init(fb, addr.module, addr.ip);
+    Register(fb, fr);
+    return fb;
   }
 
   public Fiber Start(Frame fr)
   {
     var fb = Fiber.New(this);
+    Register(fb, fr);
+    return fb;
+  }
+
+  void Register(Fiber fb, Frame fr)
+  {
     fb.id = ++fibers_ids;
     fb.ip = fr.start_ip;
 
@@ -417,8 +447,6 @@ public class VM
     fb.frames.Push(fr);
 
     fibers.Add(fb);
-
-    return fb;
   }
 
   public void Stop(Fiber fb)
@@ -662,7 +690,7 @@ public class VM
           {
             int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             var func_frame = Frame.New(this);
-            func_frame.Init(curr_frame, func_ip, 64);
+            func_frame.Init(curr_frame, func_ip);
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
@@ -711,7 +739,7 @@ public class VM
             int func_ip = module.func2ip[func_name];
 
             var func_frame = Frame.New(this);
-            func_frame.Init(module, func_ip);
+            func_frame.Init(curr_frame.fb, module, func_ip);
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
@@ -769,7 +797,8 @@ public class VM
             int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
             var fr = Frame.New(this);
-            fr.Init(curr_frame, func_ip, local_vars_num);
+            fr.Init(curr_frame, func_ip);
+            fr.locals_num = local_vars_num;
             var frval = Val.NewObj(this, fr);
             frval._num = func_ip;
 

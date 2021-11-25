@@ -463,7 +463,7 @@ public class ModuleCompiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.GetFuncImported,
-        operand_width = new int[] { 4/*module name idx*/, 4/*func name idx*/ }
+        operand_width = new int[] { 3/*module name idx*/, 3/*func name idx*/ }
       }
     );
     DeclareOpcode(
