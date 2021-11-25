@@ -20063,7 +20063,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
         trace((string)j)
       }
 
-      for(j = 0, int k = 0; j < 3; j++, k++) {
+      for(j = 0, int k = 0, k++; j < 3; j++, k++) {
         trace((string)j)
         trace((string)k)
       }
@@ -20083,7 +20083,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     ExecNode(node2, 0);
 
     var str = GetString(trace_stream);
-    AssertEqual("012012001122", str);
+    AssertEqual("012012011223", str);
 
     //NodeDump(node);
     CommonChecks(intp);
@@ -20115,6 +20115,26 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
+    string bhl4 = @"
+    func test()
+    {
+      int j = 0
+      for(++; j < 3; j++) {
+
+      }
+    }
+    ";
+
+    string bhl5 = @"
+    func test()
+    {
+      for(j = 0, k++, int k = 0; j < 3; j++, k++) {
+        trace((string)j)
+        trace((string)k)
+      }
+    }
+    ";
+
     var globs = SymbolTable.CreateBuiltins();
 
     AssertError<UserError>(
@@ -20136,6 +20156,20 @@ func Unit FindUnit(Vec3 pos, float radius) {
         Interpret(bhl3, globs);
       },
       "extraneous input '++' expecting ')'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl4, globs);
+      },
+      "extraneous input '++' expecting ';'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl5, globs);
+      },
+      "symbol not resolved"
     );
   }
 

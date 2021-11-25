@@ -2288,12 +2288,24 @@ public class Frontend : bhlBaseVisitor<object>
     var for_pre = ctx.forExp().forPre();
     if(for_pre != null)
     {
-      for(int i=0;i<for_pre.forStmts().forStmt().Length;++i)
+      var for_pre_stmts = for_pre.forStmts();
+      for(int i=0;i<for_pre_stmts.forStmt().Length;++i)
       {
-        var stmt = for_pre.forStmts().forStmt()[i];
-        var pre_vdecls = stmt.varsDeclareOrCallExps().varDeclareOrCallExp();
-        var pre_assign_exp = stmt.assignExp();
-        CommonDeclOrAssign(pre_vdecls, pre_assign_exp, ctx.Start.Line);
+        var stmt = for_pre_stmts.forStmt()[i];
+        var vdoce = stmt.varsDeclareOrCallExps();
+        
+        if (vdoce != null)
+        {
+          var pre_vdecls = vdoce.varDeclareOrCallExp();
+          var pre_assign_exp = stmt.assignExp();
+          CommonDeclOrAssign(pre_vdecls, pre_assign_exp, ctx.Start.Line);
+        }
+        else
+        {
+          var cpi = stmt.callPostInc();
+          if(cpi != null)
+            CommonVisitPostIncCall(cpi);
+        }
       }
     }
 
@@ -2328,7 +2340,7 @@ public class Frontend : bhlBaseVisitor<object>
         
         if (vdoce != null)
         {
-          var post_vdecls = stmt.varsDeclareOrCallExps().varDeclareOrCallExp();
+          var post_vdecls = vdoce.varDeclareOrCallExp();
           var post_assign_exp = stmt.assignExp();
           CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
         }
