@@ -853,7 +853,8 @@ public class FuncSymbolAST : FuncSymbol
   //frontend version
 #if BHL_FRONT
   public FuncSymbolAST(
-    BaseScope parent, 
+    LocalScope locals,
+    Scope parent, 
     AST_FuncDecl decl, 
     WrappedNode n, 
     HashedName name, 
@@ -873,7 +874,7 @@ public class FuncSymbolAST : FuncSymbol
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
         {
           var vd = fparams.funcParamDeclare()[i];
-          var type = parent.type(vd.type());
+          var type = locals.type(vd.type());
           type.is_ref = vd.isRef() != null;
           ft.arg_types.Add(type);
         }
@@ -884,7 +885,7 @@ public class FuncSymbolAST : FuncSymbol
 #endif
 
   //backend version
-  public FuncSymbolAST(BaseScope parent, AST_FuncDecl decl)
+  public FuncSymbolAST(Scope parent, AST_FuncDecl decl)
     : base(null, decl.Name(), new FuncType(), parent)
   {
     this.decl = decl;

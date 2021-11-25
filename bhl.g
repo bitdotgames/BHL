@@ -174,6 +174,7 @@ memberAccess
   : '.' NAME
   ;
 
+  
 callArgs
   : '(' callArg? (',' callArg)* ')'
   ;
@@ -195,11 +196,15 @@ classEx
   ;
 
 classBlock
-  : '{' classMember* '}'
+  : '{' classMembers '}'
+  ;
+
+classMembers
+  : classMember*
   ;
 
 classMember
-  : varDeclare
+  : (varDeclare | funcDecl)
   ;
 
 enumDecl
