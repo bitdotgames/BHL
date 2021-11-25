@@ -277,7 +277,7 @@ public class Frontend : bhlBaseVisitor<object>
       var imps = ctx.imports();
       if(imps != null)
         Visit(imps);
-
+      
       Visit(ctx.decls()); 
     }
     catch(UserError e)
@@ -831,7 +831,7 @@ public class Frontend : bhlBaseVisitor<object>
     else
       PeekAST().AddChild(ast);
   }
-
+  
   public override object VisitCallArg(bhlParser.CallArgContext ctx)
   {
     var exp = ctx.exp();
@@ -1145,7 +1145,35 @@ public class Frontend : bhlBaseVisitor<object>
 
     return null;
   }
+  
+  public override object VisitPostIncCall(bhlParser.PostIncCallContext ctx)
+  {
+    CommonVisitPostIncCall(ctx.callPostInc());
+    return null;
+  }
 
+  void CommonVisitPostIncCall(bhlParser.CallPostIncContext ctx)
+  {
+    var v = ctx.NAME();
+    var ast = new AST_Interim();
+    
+    var vs = curr_scope.resolve(v.GetText()) as VariableSymbol;
+    if(vs == null)
+      FireError(Location(v) + " : symbol not resolved");
+    
+    if(!SymbolTable.IsRelopCompatibleType(vs.type.type)) // only numeric types
+    {
+      var wv = Wrap(v);
+      throw new UserError(
+        wv.Location() + " operator is not overloaded"
+      );
+    }
+    
+    ast.AddChild(AST_Util.New_Inc(v.GetText()));
+    
+    PeekAST().AddChild(ast);
+  }
+  
   public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
   {
     var op = ctx.operatorComparison().GetText(); 
@@ -2291,12 +2319,25 @@ public class Frontend : bhlBaseVisitor<object>
     if(for_post_iter != null)
     {
       PushAST(block);
-      for(int i=0;i<for_post_iter.forStmts().forStmt().Length;++i)
+      
+      var for_post_iter_stmts = for_post_iter.forStmts();
+      for(int i=0;i<for_post_iter_stmts.forStmt().Length;++i)
       {
-        var stmt = for_post_iter.forStmts().forStmt()[i];
-        var post_vdecls = stmt.varsDeclareOrCallExps().varDeclareOrCallExp();
-        var post_assign_exp = stmt.assignExp();
-        CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
+        var stmt = for_post_iter_stmts.forStmt()[i];
+        var vdoce = stmt.varsDeclareOrCallExps();
+        
+        if (vdoce != null)
+        {
+          var post_vdecls = stmt.varsDeclareOrCallExps().varDeclareOrCallExp();
+          var post_assign_exp = stmt.assignExp();
+          CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
+        }
+        else
+        {
+          var cpi = stmt.callPostInc();
+          if(cpi != null)
+            CommonVisitPostIncCall(cpi);
+        }
       }
 
       PopAST();

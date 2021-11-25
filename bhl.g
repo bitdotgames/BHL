@@ -63,6 +63,7 @@ exp
   | 'eval' block                                            #ExpEval
   | newExp                                                  #ExpNew
   | exp ternaryIfExp                                        #ExpTernaryIf
+  
   ;
 
 ternaryIfExp
@@ -78,7 +79,7 @@ foreachExp
   ;
 
 forStmt
-  : varsDeclareOrCallExps assignExp
+  : (varsDeclareOrCallExps assignExp) | callPostInc
   ;
 
 forStmts
@@ -130,6 +131,11 @@ statement
   | 'not' block                                                 #Not
   | block                                                       #BlockNested
   | funcLambda                                                  #LambdaCall
+  | callPostInc                                                 #PostIncCall
+  ;
+
+callPostInc
+  : NAME '++'
   ;
 
 mainIf

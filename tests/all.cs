@@ -13566,7 +13566,8 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl, globs);
       },
-      "mismatched input ';' expecting '='"
+      // "mismatched input ';' expecting '='"
+      "no viable alternative at input 'i ;"
     );
   }
 
@@ -13646,7 +13647,8 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl, globs);
       },
-      "mismatched input ')' expecting '='"
+      // "mismatched input ')' expecting '='"
+      "no viable alternative at input 'i)'"
     );
   }
 
@@ -20035,23 +20037,106 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
-  public void TestOperatorPostfixIncrement()
+  public void TestOperatorPostfixIncrementCallNoReturnValue()
   {
     string bhl = @"
     func int test1()
     {
       int i = 0
       i++
+      i = i - 1
+      i++
+      i = i - 1
+
       return i
+    }
+
+    func test2()
+    {
+      for(int i = 0; i < 3;) {
+        trace((string)i)
+
+        i++
+      }
+
+      for(int j = 0; j < 3; j++) {
+        trace((string)j)
+      }
+
+      for(j = 0, int k = 0; j < 3; j++, k++) {
+        trace((string)j)
+        trace((string)k)
+      }
     }
     ";
 
-    var intp = Interpret(bhl);
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+
     var node1 = intp.GetFuncCallNode("test1");
-    AssertEqual(ExtractNum(ExecNode(node1)), 1);
+    AssertEqual(ExtractNum(ExecNode(node1)), 0);
+
+    var node2 = intp.GetFuncCallNode("test2");
+    ExecNode(node2, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("012012001122", str);
 
     //NodeDump(node);
     CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestBadOperatorPostfixIncrementCallNoReturnValue()
+  {
+    string bhl1 = @"
+    func test()
+    {
+      ++
+    }
+    ";
+
+    string bhl2 = @"
+    func test()
+    {
+      string str = ""Foo""
+      str++
+    }
+    ";
+
+    string bhl3 = @"
+    func test()
+    {
+      for(int j = 0; j < 3; ++) {
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl1, globs);
+      },
+      "extraneous input '++' expecting '}'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl2, globs);
+      },
+      "str operator is not overloaded"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl3, globs);
+      },
+      "extraneous input '++' expecting ')'"
+    );
   }
 
   static int Fib(int x)
