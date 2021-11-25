@@ -1603,50 +1603,8 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var tr = locals.type(ctx.retType());
-    if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
-
-    var str_name = ctx.NAME().GetText();
-
-    var func_node = Wrap(ctx);
-    func_node.eval_type = tr.type;
-
-    var func_name = new HashedName(str_name, curr_module.GetId());
-    var ast = AST_Util.New_FuncDecl(func_name, tr.name);
-
-    var symb = new FuncSymbolAST(locals, locals, ast, func_node, func_name, tr, ctx.funcParams());
-    if(decls_only)
-      curr_module.symbols.define(symb);
-    locals.define(symb);
-    curr_scope = symb;
-
-    PushFuncDecl(symb);
-
-    var fparams = ctx.funcParams();
-    if(fparams != null)
-    {
-      PushAST(ast.fparams());
-      Visit(fparams);
-      PopAST();
-    }
-
-    if(!decls_only)
-    {
-      PushAST(ast.block());
-      Visit(ctx.funcBlock());
-      PopAST();
-
-      if(tr.type != SymbolTable._void && !symb.return_statement_found)
-        FireError(Location(ctx.NAME()) + ": matching 'return' statement not found");
-    }
-
-    PopFuncDecl();
-
-    curr_scope = locals;
-
-    PeekAST().AddChild(ast);
-
+    var func_ast = CommonFuncDecl(ctx, locals, parent: null);
+    PeekAST().AddChild(func_ast);
     return null;
   }
 
@@ -1692,44 +1650,8 @@ public class Frontend : bhlBaseVisitor<object>
       var fd = cb.funcDecl();
       if(fd != null)
       {
-        var tr = locals.type(fd.retType());
-        if(tr.type == null)
-          FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
-
-        var fstr_name = fd.NAME().GetText();
-
-        var func_node = Wrap(fd);
-        func_node.eval_type = tr.type;
-
-        var func_name = new HashedName(fstr_name, curr_module.GetId());
-        var fast = AST_Util.New_FuncDecl(func_name, tr.name);
-
-        var fsymb = new FuncSymbolAST(locals, symb, fast, func_node, func_name, tr, fd.funcParams());
-        symb.define(fsymb);
-
-        fsymb.define(new VariableSymbol(Wrap(fd.NAME()), "this", new TypeRef(symb)));
-
-        curr_scope = fsymb;
-        PushFuncDecl(fsymb);
-
-        var fparams = fd.funcParams();
-        if(fparams != null)
-        {
-          PushAST(fast.fparams());
-          Visit(fparams);
-          PopAST();
-        }
-
-        PushAST(fast.block());
-        Visit(fd.funcBlock());
-        PopAST();
-
-        if(tr.type != SymbolTable._void && !fsymb.return_statement_found)
-          FireError(Location(fd.NAME()) + ": matching 'return' statement not found");
-    
-        PopFuncDecl();
-        curr_scope = symb;
-        ast.AddChild(fast);
+        var func_ast = CommonFuncDecl(fd, symb, symb);
+        ast.AddChild(func_ast);
       }
     }
 
@@ -1737,6 +1659,57 @@ public class Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     return null;
+  }
+
+  public AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, Scope scope, ClassSymbolAST parent)
+  {
+    var tr = locals.type(context.retType());
+
+    if(tr.type == null)
+      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
+
+    var fstr_name = context.NAME().GetText();
+
+    var func_node = Wrap(context);
+    func_node.eval_type = tr.type;
+
+    var func_name = new HashedName(fstr_name, curr_module.GetId());
+    var ast = AST_Util.New_FuncDecl(func_name, tr.name);
+
+    var func_symb = new FuncSymbolAST(locals, scope, ast, func_node, func_name, tr, context.funcParams());
+    scope.define(func_symb);
+
+    if(parent != null)
+    {
+      var this_symb = new VariableSymbol(func_node, "this", new TypeRef(parent));
+      func_symb.define(this_symb);
+    }
+    else
+    {
+      curr_module.symbols.define(func_symb);
+    }
+
+    curr_scope = func_symb;
+    PushFuncDecl(func_symb);
+
+    var func_params = context.funcParams();
+    if(func_params != null)
+    {
+      PushAST(ast.fparams());
+      Visit(func_params);
+      PopAST();
+    }
+
+    PushAST(ast.block());
+    Visit(context.funcBlock());
+    PopAST();
+
+    if(tr.type != SymbolTable._void && !func_symb.return_statement_found)
+      FireError(Location(context.NAME()) + ": matching 'return' statement not found");
+    
+    PopFuncDecl();
+    curr_scope = scope;
+    return ast;
   }
 
   public override object VisitEnumDecl(bhlParser.EnumDeclContext ctx)

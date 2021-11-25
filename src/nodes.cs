@@ -2172,17 +2172,17 @@ public class FuncNodeAST : FuncNode
 
 public class MethodNodeAST : FuncNodeAST
 {
+  private readonly HashedName this_hashed_name = new HashedName("this");
+
   public MethodNodeAST(AST_FuncDecl decl, FuncCtx fct)
     : base(decl, fct)
   { }
 
   public override void init()
   {
-    var obj_this = Interpreter.instance.PopValue().obj;
-
     base.init();
-
-    mem.Set(new HashedName("this"), DynVal.NewObj(obj_this));
+    var obj_this = Interpreter.instance.PopValue().obj;
+    mem.Set(this_hashed_name, DynVal.NewObj(obj_this));
   }
 }
 
