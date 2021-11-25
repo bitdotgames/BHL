@@ -554,11 +554,10 @@ public class Interpreter : AST_Visitor
     for(int i=0;i<ast.children.Count;++i)
     {
       var child = ast.children[i];
-      var vd = child as AST_VarDecl;
-      if(vd != null)
-      {
+      if(child is AST_VarDecl vd)
         cl.define(new FieldSymbolAST(vd.name, vd.ntype));
-      }
+      if(child is AST_FuncDecl fd)
+        cl.define(new FuncSymbolAST(parent, fd));
     }
   }
 
@@ -1039,7 +1038,12 @@ public class FuncCtx : DynValRefcounted
   public static FuncNode MakeFuncNode(FuncSymbol fs, FuncCtx fct = null)
   {
     if(fs is FuncSymbolAST)
-      return new FuncNodeAST((fs as FuncSymbolAST).decl, fct);
+    {
+      if(fs.scope is ClassSymbol)
+        return new MethodNodeAST((fs as FuncSymbolAST).decl, fct);
+      else
+        return new FuncNodeAST((fs as FuncSymbolAST).decl, fct);
+    }
     else if(fs is LambdaSymbol)
       return new FuncNodeLambda(fct);
     else if(fs is FuncBindSymbol)

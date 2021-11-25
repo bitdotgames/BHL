@@ -499,9 +499,6 @@ public class Frontend : bhlBaseVisitor<object>
           bool is_global = var_symb.scope.GetParentScope() is GlobalScope;
           ast = AST_Util.New_Call(class_scope != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
-            //NOTE: more conservative version due to the fact we check if variable is available in the global
-            //      scope during read operation
-            //(is_write ? (is_global ? EnumCall.GVARW : EnumCall.VARW) : EnumCall.VAR), 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, str_name, class_scope
           );
@@ -1618,7 +1615,7 @@ public class Frontend : bhlBaseVisitor<object>
     var func_name = new HashedName(str_name, curr_module.GetId());
     var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
-    var symb = new FuncSymbolAST(locals, ast, func_node, func_name, tr, ctx.funcParams());
+    var symb = new FuncSymbolAST(locals, locals, ast, func_node, func_name, tr, ctx.funcParams());
     if(decls_only)
       curr_module.symbols.define(symb);
     locals.define(symb);
@@ -1671,16 +1668,18 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     var ast = AST_Util.New_ClassDecl(class_name, parent == null ? new HashedName() : parent.name);
-
     var symb = new ClassSymbolAST(class_name, ast, parent);
+
     if(decls_only)
       curr_module.symbols.define(symb);
+
     locals.define(symb);
     curr_scope = symb;
 
-    for(int i=0;i<ctx.classBlock().classMember().Length;++i)
+    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
-      var cb = ctx.classBlock().classMember()[i];
+      var cb = ctx.classBlock().classMembers().classMember()[i];
+
       var vd = cb.varDeclare();
       if(vd != null)
       {
@@ -1689,10 +1688,52 @@ public class Frontend : bhlBaseVisitor<object>
         (decl as AST_VarDecl).name = vd.NAME().GetText();
         ast.AddChild(decl);
       }
+
+      var fd = cb.funcDecl();
+      if(fd != null)
+      {
+        var tr = locals.type(fd.retType());
+        if(tr.type == null)
+          FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
+
+        var fstr_name = fd.NAME().GetText();
+
+        var func_node = Wrap(fd);
+        func_node.eval_type = tr.type;
+
+        var func_name = new HashedName(fstr_name, curr_module.GetId());
+        var fast = AST_Util.New_FuncDecl(func_name, tr.name);
+
+        var fsymb = new FuncSymbolAST(locals, symb, fast, func_node, func_name, tr, fd.funcParams());
+        symb.define(fsymb);
+
+        fsymb.define(new VariableSymbol(Wrap(fd.NAME()), "this", new TypeRef(symb)));
+
+        curr_scope = fsymb;
+        PushFuncDecl(fsymb);
+
+        var fparams = fd.funcParams();
+        if(fparams != null)
+        {
+          PushAST(fast.fparams());
+          Visit(fparams);
+          PopAST();
+        }
+
+        PushAST(fast.block());
+        Visit(fd.funcBlock());
+        PopAST();
+
+        if(tr.type != SymbolTable._void && !fsymb.return_statement_found)
+          FireError(Location(fd.NAME()) + ": matching 'return' statement not found");
+    
+        PopFuncDecl();
+        curr_scope = symb;
+        ast.AddChild(fast);
+      }
     }
 
     curr_scope = locals;
-
     PeekAST().AddChild(ast);
 
     return null;

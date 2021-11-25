@@ -2170,6 +2170,22 @@ public class FuncNodeAST : FuncNode
   }
 }
 
+public class MethodNodeAST : FuncNodeAST
+{
+  public MethodNodeAST(AST_FuncDecl decl, FuncCtx fct)
+    : base(decl, fct)
+  { }
+
+  public override void init()
+  {
+    var obj_this = Interpreter.instance.PopValue().obj;
+
+    base.init();
+
+    mem.Set(new HashedName("this"), DynVal.NewObj(obj_this));
+  }
+}
+
 public class FuncNodeLambda : FuncNodeAST
 {
   public FuncNodeLambda(FuncCtx fct)
