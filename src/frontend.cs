@@ -1603,7 +1603,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var func_ast = CommonFuncDecl(ctx, locals, parent: null);
+    var func_ast = CommonFuncDecl(ctx, locals, class_scope: null);
     PeekAST().AddChild(func_ast);
     return null;
   }
@@ -1661,7 +1661,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, Scope scope, ClassSymbolAST parent)
+  private AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, Scope scope, ClassSymbolAST class_scope)
   {
     var tr = locals.type(context.retType());
 
@@ -1679,9 +1679,9 @@ public class Frontend : bhlBaseVisitor<object>
     var func_symb = new FuncSymbolAST(locals, scope, ast, func_node, func_name, tr, context.funcParams());
     scope.define(func_symb);
 
-    if(parent != null)
+    if(class_scope != null)
     {
-      var this_symb = new VariableSymbol(func_node, "this", new TypeRef(parent));
+      var this_symb = new VariableSymbol(func_node, "this", new TypeRef(class_scope));
       func_symb.define(this_symb);
     }
     else

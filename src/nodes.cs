@@ -2172,7 +2172,7 @@ public class FuncNodeAST : FuncNode
 
 public class MethodNodeAST : FuncNodeAST
 {
-  private readonly HashedName this_hashed_name = new HashedName("this");
+  private readonly HashedName this_keyword_hashed_name = new HashedName("this");
 
   public MethodNodeAST(AST_FuncDecl decl, FuncCtx fct)
     : base(decl, fct)
@@ -2182,7 +2182,7 @@ public class MethodNodeAST : FuncNodeAST
   {
     base.init();
     var obj_this = Interpreter.instance.PopValue().obj;
-    mem.Set(this_hashed_name, DynVal.NewObj(obj_this));
+    mem.Set(this_keyword_hashed_name, DynVal.NewObj(obj_this));
   }
 }
 
