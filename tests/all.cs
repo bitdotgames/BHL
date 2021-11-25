@@ -16542,6 +16542,142 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestSeveralUserClassMethodDecl()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+      int b
+
+      func int getA()
+      {
+        return this.b
+      }
+
+      func int getB() 
+      {
+        return this.a
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      f.b = 10
+      return f.getA() + f.getB()
+    }
+    ";
+
+    var intp = Interpret(bhl, null);
+    var node = intp.GetFuncCallNode("test");
+    var res = ExtractNum(ExecNode(node));
+
+    AssertEqual(res, 20);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassMethodSameNameLikeClass()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      func int Foo()
+      {
+        return 0
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      return f.Foo()
+    }
+    ";
+
+    var intp = Interpret(bhl, null);
+    var node = intp.GetFuncCallNode("test");
+    var res = ExtractNum(ExecNode(node));
+
+    AssertEqual(res, 0);
+    CommonChecks(intp);
+  }
+
+
+  [IsTested()]
+  public void TestUserClassMethodDeclVarLikeClassVar()
+  {
+    string bhl = @"
+      class Foo {
+        
+        int a
+
+        func int Foo()
+        {
+          a = 10
+          return this.a + a
+        }
+      }
+
+      func int test()
+      {
+        Foo f = {}
+        f.a = 10
+        return f.Foo()
+      }
+    ";
+
+    var intp = Interpret(bhl, null);
+    var node = intp.GetFuncCallNode("test");
+    var res = ExtractNum(ExecNode(node));
+
+    AssertEqual(res, 20);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestUserClassContainThisMember()
+  {
+    string bhl = @"
+      class Foo {
+        int this
+      }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      "the keyword \"this\" is reserved"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserClassContainThisMethod()
+  {
+    string bhl = @"
+      class Foo {
+
+        func bool this()
+        {
+          return false
+        }
+      }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      "the keyword \"this\" is reserved"
+    );
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitInt()
   {
     string bhl = @"
