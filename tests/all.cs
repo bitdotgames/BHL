@@ -20034,6 +20034,26 @@ func Unit FindUnit(Vec3 pos, float radius) {
     CommonChecks(intp);
   }
 
+  [IsTested()]
+  public void TestOperatorPostfixIncrement()
+  {
+    string bhl = @"
+    func int test1()
+    {
+      int i = 0
+      i++
+      return i
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node1 = intp.GetFuncCallNode("test1");
+    AssertEqual(ExtractNum(ExecNode(node1)), 1);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
   static int Fib(int x)
   {
     if(x == 0)
