@@ -1165,7 +1165,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var wv = Wrap(v);
       throw new UserError(
-        wv.Location() + " operator is not overloaded"
+        $"{wv.Location()} : operator ++ is not supported for {vs.type.name.s} type"
       );
     }
     

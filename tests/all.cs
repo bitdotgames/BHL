@@ -20148,7 +20148,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
       delegate() {
         Interpret(bhl2, globs);
       },
-      "str operator is not overloaded"
+      "operator ++ is not supported for string type"
     );
 
     AssertError<UserError>(
