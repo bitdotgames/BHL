@@ -20037,7 +20037,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
-  public void TestOperatorPostfixIncrementCallNoReturnValue()
+  public void TestOperatorPostfixIncrementCall()
   {
     string bhl = @"
     func int test1()
@@ -20090,7 +20090,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
   }
 
   [IsTested()]
-  public void TestBadOperatorPostfixIncrementCallNoReturnValue()
+  public void TestBadOperatorPostfixIncrementCall()
   {
     string bhl1 = @"
     func test()
@@ -20135,6 +20135,48 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
+    string bhl6 = @"
+    
+    func foo(float a)
+    {
+    }
+
+    func int test()
+    {
+      int i = 0
+      foo(i++)
+      return i
+    }
+    ";
+
+    string bhl7 = @"
+    func test()
+    {
+      int[] arr = [0, 1, 3, 4]
+      int i = 0
+      int j = arr[i++]
+    }
+    ";
+
+    string bhl8 = @"
+    func int test()
+    {
+      bool^(int) foo = func bool(int b) { return b > 1 }
+
+      int i = 0
+      foo(i++)
+      return i
+    }
+    ";
+
+    string bhl9 = @"
+    func int test()
+    {
+      int i = 0
+      return i++
+    }
+    ";
+
     var globs = SymbolTable.CreateBuiltins();
 
     AssertError<UserError>(
@@ -20170,6 +20212,34 @@ func Unit FindUnit(Vec3 pos, float radius) {
         Interpret(bhl5, globs);
       },
       "symbol not resolved"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl6, globs);
+      },
+      "no viable alternative at input 'foo(i++'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl7, globs);
+      },
+      "extraneous input '++' expecting ']'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl8, globs);
+      },
+      "no viable alternative at input 'foo(i++'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl9, globs);
+      },
+      "" //TODO: error msg
     );
   }
 

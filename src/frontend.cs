@@ -1161,9 +1161,10 @@ public class Frontend : bhlBaseVisitor<object>
     if(vs == null)
       FireError(Location(v) + " : symbol not resolved");
     
+    var wv = Wrap(v);
+    
     if(!SymbolTable.IsRelopCompatibleType(vs.type.type)) // only numeric types
     {
-      var wv = Wrap(v);
       throw new UserError(
         $"{wv.Location()} : operator ++ is not supported for {vs.type.name.s} type"
       );
@@ -1171,6 +1172,13 @@ public class Frontend : bhlBaseVisitor<object>
     
     ast.AddChild(AST_Util.New_Inc(v.GetText()));
     
+    //NOTE: immediately adding return node in case of void return type
+    // if(fret_type != SymbolTable._void)
+    //   throw new UserError(
+    //     $"{wv.Location()} : operator ++ is not allowed a return type"
+    //   );
+    
+    Wrap(ctx).eval_type = SymbolTable._void;
     PeekAST().AddChild(ast);
   }
   
@@ -1498,13 +1506,13 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitReturn(bhlParser.ReturnContext ctx)
   {
     var func_symb = PeekFuncDecl();
+    if(func_symb == null)
+      FireError(Location(ctx) + ": return statement is not in function");
+    
     func_symb.return_statement_found = true;
 
     var ret_ast = AST_Util.New_Return();
-
-    if(func_symb == null)
-      FireError(Location(ctx) + ": return statement is not in function");
-
+    
     var explist = ctx.explist();
     if(explist != null)
     {
