@@ -2294,7 +2294,7 @@ public class Frontend : bhlBaseVisitor<object>
         var stmt = for_pre_stmts.forStmt()[i];
         var vdoce = stmt.varsDeclareOrCallExps();
         
-        if (vdoce != null)
+        if(vdoce != null)
         {
           var pre_vdecls = vdoce.varDeclareOrCallExp();
           var pre_assign_exp = stmt.assignExp();
@@ -2338,7 +2338,7 @@ public class Frontend : bhlBaseVisitor<object>
         var stmt = for_post_iter_stmts.forStmt()[i];
         var vdoce = stmt.varsDeclareOrCallExps();
         
-        if (vdoce != null)
+        if(vdoce != null)
         {
           var post_vdecls = vdoce.varDeclareOrCallExp();
           var post_assign_exp = stmt.assignExp();
