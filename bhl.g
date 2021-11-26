@@ -106,11 +106,20 @@ varDeclareAssign
   : varDeclare assignExp?
   ;
 
+callPostInc
+  : NAME '++'
+  ;
+
+expCallPostIncMixedList
+  : (callPostInc | exp) (',' (callPostInc | exp))*
+  ;
+
 //statements
 statement
   : varDeclare                                                  #VarDecl
   | varsDeclareOrCallExps assignExp                             #DeclAssign
   | callExp                                                     #SymbCall
+  | callPostInc                                                 #PostIncCall
   | mainIf elseIf* else?                                        #If
   | 'while' '(' exp ')' block                                   #While
   | 'for' forExp block                                          #For
@@ -118,7 +127,7 @@ statement
   | 'yield' '(' ')'                                             #Yield //we need this one because of 'yield while()' special case
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
-  | 'return' explist?                                           #Return
+  | 'return' (explist | expCallPostIncMixedList)?               #Return
   | 'seq' block                                                 #Seq
   | 'seq_' block                                                #Seq_
   | 'paral' block                                               #Paral
@@ -131,11 +140,6 @@ statement
   | 'not' block                                                 #Not
   | block                                                       #BlockNested
   | funcLambda                                                  #LambdaCall
-  | callPostInc                                                 #PostIncCall
-  ;
-
-callPostInc
-  : NAME '++'
   ;
 
 mainIf

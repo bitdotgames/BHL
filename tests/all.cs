@@ -20313,6 +20313,36 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
     ";
 
+    string bhl10 = @"
+    func int test()
+    {
+      int i = 0
+      int j = 1
+      int l = 2
+      return j++, i++, k++
+    }
+    ";
+
+    string bhl11 = @"
+    func int test()
+    {
+      int i = 0
+      int j = 1
+      int l = 2
+      return j, i++, k++
+    }
+    ";
+
+    string bhl12 = @"
+    func int test()
+    {
+      int i = 0
+      int j = 1
+      int l = 2
+      return j++, i, k++
+    }
+    ";
+
     var globs = SymbolTable.CreateBuiltins();
 
     AssertError<UserError>(
@@ -20375,8 +20405,30 @@ func Unit FindUnit(Vec3 pos, float radius) {
       delegate() {
         Interpret(bhl9, globs);
       },
-      "" //TODO: error msg
+      "operator ++ is not allowed a return"
     );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl10, globs);
+      },
+      "operator ++ is not allowed a return"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl11, globs);
+      },
+      "operator ++ is not allowed a return"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl12, globs);
+      },
+      "operator ++ is not allowed a return"
+    );
+
   }
 
   static int Fib(int x)
