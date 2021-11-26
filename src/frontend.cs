@@ -1172,12 +1172,6 @@ public class Frontend : bhlBaseVisitor<object>
     
     ast.AddChild(AST_Util.New_Inc(v.GetText()));
     
-    //NOTE: immediately adding return node in case of void return type
-    // if(fret_type != SymbolTable._void)
-    //   throw new UserError(
-    //     $"{wv.Location()} : operator ++ is not allowed a return type"
-    //   );
-    
     Wrap(ctx).eval_type = SymbolTable._void;
     PeekAST().AddChild(ast);
   }
