@@ -1641,7 +1641,7 @@ public class Frontend : bhlBaseVisitor<object>
       var vd = cb.varDeclare();
       if(vd != null)
       {
-        if(vd.NAME().GetText().ToLower() == "this")
+        if(vd.NAME().GetText() == "this")
           FireError("the keyword \"this\" is reserved");
 
         var decl = CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
@@ -1653,7 +1653,7 @@ public class Frontend : bhlBaseVisitor<object>
       var fd = cb.funcDecl();
       if(fd != null)
       {
-        if(fd.NAME().GetText().ToLower() == "this")
+        if(fd.NAME().GetText() == "this")
           FireError("the keyword \"this\" is reserved");
 
         var func_ast = CommonFuncDecl(fd, symb, symb);

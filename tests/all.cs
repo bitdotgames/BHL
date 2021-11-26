@@ -16640,7 +16640,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUserClassContainThisMember()
+  public void TestUserClassContainThisMemberNotAllowed()
   {
     string bhl = @"
       class Foo {
@@ -16657,7 +16657,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUserClassContainThisMethod()
+  public void TestUserClassContainThisMethodNotAllowed()
   {
     string bhl = @"
       class Foo {
