@@ -1576,6 +1576,9 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
     {
+      if(func_symb.GetReturnType() != SymbolTable._void)
+        FireError(Location(ctx) + ": return value is missing");
+      
       Wrap(ctx).eval_type = SymbolTable._void;
       PeekAST().AddChild(ret_ast);
     }

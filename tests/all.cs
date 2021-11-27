@@ -1669,6 +1669,24 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestFuncMissingReturnArgument()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      "return value is missing"
+    );
+  }
+
+  [IsTested()]
   public void TestFuncMissingDefaultArgument()
   {
     string bhl = @"
