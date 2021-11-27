@@ -20341,7 +20341,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     ";
 
     string bhl11 = @"
-    func int test()
+    func int, int test()
     {
       int i = 0
       int j = 1
@@ -20405,6 +20405,27 @@ func Unit FindUnit(Vec3 pos, float radius) {
         Interpret(bhl8, globs);
       },
       "no viable alternative at input 'foo(i++'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl9, globs);
+      },
+      "return value is missing"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl10, globs);
+      },
+      "extraneous input '++' expecting '}'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl11, globs);
+      },
+      "mismatched input ',' expecting '}'"
     );
   }
 
