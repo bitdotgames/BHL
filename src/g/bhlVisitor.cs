@@ -320,12 +320,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCallPostInc([NotNull] bhlParser.CallPostIncContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.expCallPostIncMixedList"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpCallPostIncMixedList([NotNull] bhlParser.ExpCallPostIncMixedListContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>VarDecl</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

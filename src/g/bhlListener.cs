@@ -519,16 +519,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitCallPostInc([NotNull] bhlParser.CallPostIncContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.expCallPostIncMixedList"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpCallPostIncMixedList([NotNull] bhlParser.ExpCallPostIncMixedListContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.expCallPostIncMixedList"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpCallPostIncMixedList([NotNull] bhlParser.ExpCallPostIncMixedListContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>VarDecl</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

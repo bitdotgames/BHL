@@ -110,10 +110,6 @@ callPostInc
   : NAME '++'
   ;
 
-expCallPostIncMixedList
-  : (callPostInc | exp) (',' (callPostInc | exp))*
-  ;
-
 //statements
 statement
   : varDeclare                                                  #VarDecl
@@ -127,7 +123,7 @@ statement
   | 'yield' '(' ')'                                             #Yield //we need this one because of 'yield while()' special case
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
-  | 'return' (explist | expCallPostIncMixedList)?               #Return
+  | 'return' explist?                                           #Return
   | 'seq' block                                                 #Seq
   | 'seq_' block                                                #Seq_
   | 'paral' block                                               #Paral

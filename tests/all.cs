@@ -20314,12 +20314,11 @@ func Unit FindUnit(Vec3 pos, float radius) {
     ";
 
     string bhl10 = @"
-    func int test()
+    func int, int test()
     {
       int i = 0
       int j = 1
-      int l = 2
-      return j++, i++, k++
+      return j, i++
     }
     ";
 
@@ -20328,18 +20327,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     {
       int i = 0
       int j = 1
-      int l = 2
-      return j, i++, k++
-    }
-    ";
-
-    string bhl12 = @"
-    func int test()
-    {
-      int i = 0
-      int j = 1
-      int l = 2
-      return j++, i, k++
+      return j++, i
     }
     ";
 
@@ -20400,35 +20388,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
       },
       "no viable alternative at input 'foo(i++'"
     );
-
-    AssertError<UserError>(
-      delegate() {
-        Interpret(bhl9, globs);
-      },
-      "operator ++ is not allowed a return"
-    );
-
-    AssertError<UserError>(
-      delegate() {
-        Interpret(bhl10, globs);
-      },
-      "operator ++ is not allowed a return"
-    );
-
-    AssertError<UserError>(
-      delegate() {
-        Interpret(bhl11, globs);
-      },
-      "operator ++ is not allowed a return"
-    );
-
-    AssertError<UserError>(
-      delegate() {
-        Interpret(bhl12, globs);
-      },
-      "operator ++ is not allowed a return"
-    );
-
   }
 
   static int Fib(int x)

@@ -1576,10 +1576,6 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
     {
-      var call_post_inc_mixed = ctx.expCallPostIncMixedList();
-      if(call_post_inc_mixed != null)
-        FireError(Location(ctx) + ": operator ++ is not allowed a return");
-      
       Wrap(ctx).eval_type = SymbolTable._void;
       PeekAST().AddChild(ret_ast);
     }
