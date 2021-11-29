@@ -25,18 +25,19 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 
 ## Code samples
 
-### Gradually appear from alpha
+### Unit attack behaviour
 
 ```go
-func AlphaAppear(int id, float time_to_appear) {
-  float time_start = time()
-  paral {
-    forever {
-      float alpha = clamp01((time()-time_start)/time_to_appear)
-      SetObjAlpha(id: id, alpha: alpha)
-    }
-    Wait(sec: time_to_appear)
- }
+func Attack() {
+  Check(TargetInRange())
+  paral_all {
+   PlayAnim(trigger: "Attack")
+   SoundPlay(sound: "Swoosh")
+   seq {
+     WaitAnimEvent(event: "Hit")
+     SoundPlay(sound: "Damage")
+     HitTarget(damage: RandRange(1,16))
+  }
 }
 ```
 
@@ -140,7 +141,7 @@ seq {
      ... 
 }
 ```
-### Some unit's top behavior
+### Example of some unit's top behavior
 
 ```go
 class Gremlin extends Unit
@@ -216,15 +217,15 @@ Found new target 902! Approaching it.
 
 Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
 
-### Unity3d integration
+### Unity engine integration
 
-The example script has also a special Unity3d compatibility mode. It illustrates how you can build a bhl backend dll(**bhl_back.dll**) for Unity3d. After that you can put it into Assets/Plugins directory and use bhl for your Unity3d game development. This mode can be enabled just as follows: 
+The example script has also a special Unity compatibility mode. It illustrates how you can build a bhl backend dll (**bhl_back.dll**) for Unity. After that you can put it into Assets/Plugins directory and use bhl for your Unity3d game development. This mode can be enabled just as follows: 
 
 > cd example && ./run.sh -unity
 
 ## Building
 
-bhl comes with its own simple build tool **bhl**. bhl tool is written in PHP and should work just fine both on \*nix and Windows platforms. 
+bhl comes with its own simple build tool **bhl**. bhl tool is written in C# and should work just fine both on \*nix and Windows platforms. 
 
 It allows you to build frontend dll, backend dll, compile bhl sources into a binary, run unit tests etc. 
 
