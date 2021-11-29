@@ -850,6 +850,16 @@ static public class AST_Util
 
     return n;
   }
+  
+  ////////////////////////////////////////////////////////
+
+  static public AST_Dec New_Dec(HashedName name)
+  {
+    var n = new AST_Dec();
+    n.nname = (uint)name.n;
+
+    return n;
+  }
 
   ////////////////////////////////////////////////////////
 
@@ -1111,6 +1121,13 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Inc node)
   {
     Console.Write("(INC ");
+    Console.Write(node.nname);
+    Console.Write(")");
+  }
+  
+  public override void DoVisit(AST_Dec node)
+  {
+    Console.Write("(DEC ");
     Console.Write(node.nname);
     Console.Write(")");
   }

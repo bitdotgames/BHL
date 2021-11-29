@@ -314,11 +314,23 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.callPostInc"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.callPostOperators"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitCallPostInc([NotNull] bhlParser.CallPostIncContext context);
+	Result VisitCallPostOperators([NotNull] bhlParser.CallPostOperatorsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIncrementOperator([NotNull] bhlParser.IncrementOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.decrementOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>VarDecl</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -341,12 +353,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSymbCall([NotNull] bhlParser.SymbCallContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>PostIncCall</c>
+	/// Visit a parse tree produced by the <c>PostOperatorCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitPostIncCall([NotNull] bhlParser.PostIncCallContext context);
+	Result VisitPostOperatorCall([NotNull] bhlParser.PostOperatorCallContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>If</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

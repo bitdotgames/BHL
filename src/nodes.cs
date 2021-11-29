@@ -2003,6 +2003,28 @@ public class IncNode : BehaviorTreeTerminalNode
   }
 }
 
+public class DecNode : BehaviorTreeTerminalNode
+{
+  HashedName name;
+
+  public DecNode(HashedName name)
+  {
+    this.name = name;
+  }
+
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+    var val = interp.GetScopeValue(name);
+    val.num--;
+  }
+
+  public override string inspect()
+  {
+    return "" + name; 
+  }
+}
+
 abstract public class FuncNode : SequentialNode
 {
   public FuncCtx fct;

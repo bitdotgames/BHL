@@ -1146,13 +1146,13 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
   
-  public override object VisitPostIncCall(bhlParser.PostIncCallContext ctx)
+  public override object VisitPostOperatorCall(bhlParser.PostOperatorCallContext ctx)
   {
-    CommonVisitPostIncCall(ctx.callPostInc());
+    CommonVisitCallPostOperators(ctx.callPostOperators());
     return null;
   }
 
-  void CommonVisitPostIncCall(bhlParser.CallPostIncContext ctx)
+  void CommonVisitCallPostOperators(bhlParser.CallPostOperatorsContext ctx)
   {
     var v = ctx.NAME();
     var ast = new AST_Interim();
@@ -1162,15 +1162,19 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(v) + " : symbol not resolved");
     
     var wv = Wrap(v);
+    bool is_negative = ctx.decrementOperator() != null;
     
     if(!SymbolTable.IsRelopCompatibleType(vs.type.type)) // only numeric types
     {
       throw new UserError(
-        $"{wv.Location()} : operator ++ is not supported for {vs.type.name.s} type"
+        $"{wv.Location()} : operator {(is_negative ? "--" : "++")} is not supported for {vs.type.name.s} type"
       );
     }
     
-    ast.AddChild(AST_Util.New_Inc(v.GetText()));
+    if(is_negative)
+      ast.AddChild(AST_Util.New_Dec(v.GetText()));
+    else
+      ast.AddChild(AST_Util.New_Inc(v.GetText()));
     
     Wrap(ctx).eval_type = SymbolTable._void;
     PeekAST().AddChild(ast);
@@ -2313,9 +2317,9 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else
         {
-          var cpi = stmt.callPostInc();
-          if(cpi != null)
-            CommonVisitPostIncCall(cpi);
+          var cpo = stmt.callPostOperators();
+          if(cpo != null)
+            CommonVisitCallPostOperators(cpo);
         }
       }
     }
@@ -2357,9 +2361,9 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else
         {
-          var cpi = stmt.callPostInc();
-          if(cpi != null)
-            CommonVisitPostIncCall(cpi);
+          var cpo = stmt.callPostOperators();
+          if(cpo != null)
+            CommonVisitCallPostOperators(cpo);
         }
       }
 

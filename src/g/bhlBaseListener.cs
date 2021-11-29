@@ -599,17 +599,41 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.callPostInc"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.callPostOperators"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterCallPostInc([NotNull] bhlParser.CallPostIncContext context) { }
+	public virtual void EnterCallPostOperators([NotNull] bhlParser.CallPostOperatorsContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.callPostInc"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.callPostOperators"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitCallPostInc([NotNull] bhlParser.CallPostIncContext context) { }
+	public virtual void ExitCallPostOperators([NotNull] bhlParser.CallPostOperatorsContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterIncrementOperator([NotNull] bhlParser.IncrementOperatorContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitIncrementOperator([NotNull] bhlParser.IncrementOperatorContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.decrementOperator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.decrementOperator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>VarDecl</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -653,19 +677,19 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitSymbCall([NotNull] bhlParser.SymbCallContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>PostIncCall</c>
+	/// Enter a parse tree produced by the <c>PostOperatorCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterPostIncCall([NotNull] bhlParser.PostIncCallContext context) { }
+	public virtual void EnterPostOperatorCall([NotNull] bhlParser.PostOperatorCallContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by the <c>PostIncCall</c>
+	/// Exit a parse tree produced by the <c>PostOperatorCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitPostIncCall([NotNull] bhlParser.PostIncCallContext context) { }
+	public virtual void ExitPostOperatorCall([NotNull] bhlParser.PostOperatorCallContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>If</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

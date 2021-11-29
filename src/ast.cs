@@ -304,6 +304,40 @@ public class AST_Inc  : AST_Base
   }
 }
 
+public class AST_Dec  : AST_Base 
+{
+  public uint nname;
+
+  static public  new  uint STATIC_CLASS_ID = 5580553;
+
+  public override uint CLASS_ID() 
+  {
+    return 5580553; 
+  }
+
+  public AST_Dec()
+  {
+    reset();
+  }
+
+  public override void reset() 
+  {
+    base.reset();
+    nname = 0;
+  }
+
+  public override void syncFields(MetaSyncContext ctx) 
+  {
+    base.syncFields(ctx);
+    MetaHelper.sync(ctx, ref nname);
+  }
+
+  public override int getFieldsCount() 
+  {
+    return 1; 
+  }
+}
+
 public class AST_New  : AST 
 {
   public uint ntype;
@@ -1103,6 +1137,7 @@ public static class AST_Factory
       case 224392343: { return new AST_UnaryOpExp(); };
       case 78094287: { return new AST_BinaryOpExp(); };
       case 192507281: { return new AST_Inc(); };
+      case 5580553: { return new AST_Dec(); };
       case 119043746: { return new AST_New(); };
       case 19638951: { return new AST_FuncDecl(); };
       case 168955538: { return new AST_ClassDecl(); };

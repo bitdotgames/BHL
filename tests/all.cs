@@ -20429,6 +20429,205 @@ func Unit FindUnit(Vec3 pos, float radius) {
     );
   }
 
+  [IsTested()]
+  public void TestBadOperatorPostfixDecrementCall()
+  {
+    string bhl1 = @"
+    func test()
+    {
+      --
+    }
+    ";
+
+    string bhl2 = @"
+    func test()
+    {
+      string str = ""Foo""
+      str--
+    }
+    ";
+
+    string bhl3 = @"
+    func test()
+    {
+      for(int j = 0; j < 3; --) {
+      }
+    }
+    ";
+
+    string bhl4 = @"
+    func test()
+    {
+      int j = 0
+      for(--; j < 3; j++) {
+
+      }
+    }
+    ";
+
+    string bhl5 = @"
+    
+    func foo(float a)
+    {
+    }
+
+    func int test()
+    {
+      int i = 0
+      foo(i--)
+      return i
+    }
+    ";
+
+    string bhl6 = @"
+    func test()
+    {
+      int[] arr = [0, 1, 3, 4]
+      int i = 0
+      int j = arr[i--]
+    }
+    ";
+
+    string bhl7 = @"
+    func int test()
+    {
+      int i = 0
+      return i--
+    }
+    ";
+
+    string bhl8 = @"
+    func int, int test()
+    {
+      int i = 0
+      int j = 1
+      return j, i--
+    }
+    ";
+
+    string bhl9 = @"
+    func int, int test()
+    {
+      int i = 0
+      int j = 1
+      return j--, i
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl1, globs);
+      },
+      "extraneous input '--' expecting '}'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl2, globs);
+      },
+      "operator -- is not supported for string type"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl3, globs);
+      },
+      "extraneous input '--' expecting ')'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl4, globs);
+      },
+      "extraneous input '--' expecting ';'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl5, globs);
+      },
+      "no viable alternative at input 'foo(i--'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl6, globs);
+      },
+      "extraneous input '--' expecting ']'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl7, globs);
+      },
+      "return value is missing"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl8, globs);
+      },
+      "extraneous input '--' expecting '}'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Interpret(bhl9, globs);
+      },
+      "mismatched input ',' expecting '}'"
+    );
+  }
+
+  [IsTested()]
+  public void TestOperatorPostfixDecrementCall()
+  {
+    string bhl = @"
+    func int test1()
+    {
+      int i = 0
+      i--
+      i = i + 1
+      i--
+      i = i + 1
+
+      return i
+    }
+
+    func test2()
+    {
+      for(int i = 3; i >= 0;) {
+        trace((string)i)
+
+        i--
+      }
+
+      for(int j = 3; j >= 0; j--) {
+        trace((string)j)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+
+    var node1 = intp.GetFuncCallNode("test1");
+    AssertEqual(ExtractNum(ExecNode(node1)), 0);
+
+    var node2 = intp.GetFuncCallNode("test2");
+    ExecNode(node2, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("32103210", str);
+
+    //NodeDump(node1);
+    CommonChecks(intp);
+  }
+
   static int Fib(int x)
   {
     if(x == 0)

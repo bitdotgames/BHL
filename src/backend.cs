@@ -681,6 +681,11 @@ public class Interpreter : AST_Visitor
   {
     curr_node.addChild(new IncNode(ast.nname));
   }
+  
+  public override void DoVisit(AST_Dec ast)
+  {
+    curr_node.addChild(new DecNode(ast.nname));
+  }
 
   public override void DoVisit(AST_Call ast)
   {           
@@ -917,6 +922,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_UnaryOpExp node);
   public abstract void DoVisit(AST_New node);
   public abstract void DoVisit(AST_Inc node);
+  public abstract void DoVisit(AST_Dec node);
   public abstract void DoVisit(AST_JsonObj node);
   public abstract void DoVisit(AST_JsonArr node);
   public abstract void DoVisit(AST_JsonPair node);
@@ -961,6 +967,8 @@ public abstract class AST_Visitor
       DoVisit(node as AST_New);
     else if(node is AST_Inc)
       DoVisit(node as AST_Inc);
+    else if(node is AST_Dec)
+      DoVisit(node as AST_Dec);
     else if(node is AST_JsonObj)
       DoVisit(node as AST_JsonObj);
     else if(node is AST_JsonArr)
