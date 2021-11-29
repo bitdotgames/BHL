@@ -63,6 +63,7 @@ exp
   | 'eval' block                                            #ExpEval
   | newExp                                                  #ExpNew
   | exp ternaryIfExp                                        #ExpTernaryIf
+  
   ;
 
 ternaryIfExp
@@ -78,7 +79,7 @@ foreachExp
   ;
 
 forStmt
-  : varsDeclareOrCallExps assignExp
+  : (varsDeclareOrCallExps assignExp) | callPostInc
   ;
 
 forStmts
@@ -105,11 +106,16 @@ varDeclareAssign
   : varDeclare assignExp?
   ;
 
+callPostInc
+  : NAME '++'
+  ;
+
 //statements
 statement
   : varDeclare                                                  #VarDecl
   | varsDeclareOrCallExps assignExp                             #DeclAssign
   | callExp                                                     #SymbCall
+  | callPostInc                                                 #PostIncCall
   | mainIf elseIf* else?                                        #If
   | 'while' '(' exp ')' block                                   #While
   | 'for' forExp block                                          #For

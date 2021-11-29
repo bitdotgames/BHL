@@ -11,3 +11,4 @@ src/autogen.cs*
 *.mdb
 bhl*.dll*
 
+.idea

@@ -277,7 +277,7 @@ public class Frontend : bhlBaseVisitor<object>
       var imps = ctx.imports();
       if(imps != null)
         Visit(imps);
-
+      
       Visit(ctx.decls()); 
     }
     catch(UserError e)
@@ -831,7 +831,7 @@ public class Frontend : bhlBaseVisitor<object>
     else
       PeekAST().AddChild(ast);
   }
-
+  
   public override object VisitCallArg(bhlParser.CallArgContext ctx)
   {
     var exp = ctx.exp();
@@ -1145,7 +1145,37 @@ public class Frontend : bhlBaseVisitor<object>
 
     return null;
   }
+  
+  public override object VisitPostIncCall(bhlParser.PostIncCallContext ctx)
+  {
+    CommonVisitPostIncCall(ctx.callPostInc());
+    return null;
+  }
 
+  void CommonVisitPostIncCall(bhlParser.CallPostIncContext ctx)
+  {
+    var v = ctx.NAME();
+    var ast = new AST_Interim();
+    
+    var vs = curr_scope.resolve(v.GetText()) as VariableSymbol;
+    if(vs == null)
+      FireError(Location(v) + " : symbol not resolved");
+    
+    var wv = Wrap(v);
+    
+    if(!SymbolTable.IsRelopCompatibleType(vs.type.type)) // only numeric types
+    {
+      throw new UserError(
+        $"{wv.Location()} : operator ++ is not supported for {vs.type.name.s} type"
+      );
+    }
+    
+    ast.AddChild(AST_Util.New_Inc(v.GetText()));
+    
+    Wrap(ctx).eval_type = SymbolTable._void;
+    PeekAST().AddChild(ast);
+  }
+  
   public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
   {
     var op = ctx.operatorComparison().GetText(); 
@@ -1470,13 +1500,13 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitReturn(bhlParser.ReturnContext ctx)
   {
     var func_symb = PeekFuncDecl();
+    if(func_symb == null)
+      FireError(Location(ctx) + ": return statement is not in function");
+    
     func_symb.return_statement_found = true;
 
     var ret_ast = AST_Util.New_Return();
-
-    if(func_symb == null)
-      FireError(Location(ctx) + ": return statement is not in function");
-
+    
     var explist = ctx.explist();
     if(explist != null)
     {
@@ -1546,6 +1576,9 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
     {
+      if(func_symb.GetReturnType() != SymbolTable._void)
+        FireError(Location(ctx) + ": return value is missing");
+      
       Wrap(ctx).eval_type = SymbolTable._void;
       PeekAST().AddChild(ret_ast);
     }
@@ -2266,12 +2299,24 @@ public class Frontend : bhlBaseVisitor<object>
     var for_pre = ctx.forExp().forPre();
     if(for_pre != null)
     {
-      for(int i=0;i<for_pre.forStmts().forStmt().Length;++i)
+      var for_pre_stmts = for_pre.forStmts();
+      for(int i=0;i<for_pre_stmts.forStmt().Length;++i)
       {
-        var stmt = for_pre.forStmts().forStmt()[i];
-        var pre_vdecls = stmt.varsDeclareOrCallExps().varDeclareOrCallExp();
-        var pre_assign_exp = stmt.assignExp();
-        CommonDeclOrAssign(pre_vdecls, pre_assign_exp, ctx.Start.Line);
+        var stmt = for_pre_stmts.forStmt()[i];
+        var vdoce = stmt.varsDeclareOrCallExps();
+        
+        if(vdoce != null)
+        {
+          var pre_vdecls = vdoce.varDeclareOrCallExp();
+          var pre_assign_exp = stmt.assignExp();
+          CommonDeclOrAssign(pre_vdecls, pre_assign_exp, ctx.Start.Line);
+        }
+        else
+        {
+          var cpi = stmt.callPostInc();
+          if(cpi != null)
+            CommonVisitPostIncCall(cpi);
+        }
       }
     }
 
@@ -2297,12 +2342,25 @@ public class Frontend : bhlBaseVisitor<object>
     if(for_post_iter != null)
     {
       PushAST(block);
-      for(int i=0;i<for_post_iter.forStmts().forStmt().Length;++i)
+      
+      var for_post_iter_stmts = for_post_iter.forStmts();
+      for(int i=0;i<for_post_iter_stmts.forStmt().Length;++i)
       {
-        var stmt = for_post_iter.forStmts().forStmt()[i];
-        var post_vdecls = stmt.varsDeclareOrCallExps().varDeclareOrCallExp();
-        var post_assign_exp = stmt.assignExp();
-        CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
+        var stmt = for_post_iter_stmts.forStmt()[i];
+        var vdoce = stmt.varsDeclareOrCallExps();
+        
+        if(vdoce != null)
+        {
+          var post_vdecls = vdoce.varDeclareOrCallExp();
+          var post_assign_exp = stmt.assignExp();
+          CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
+        }
+        else
+        {
+          var cpi = stmt.callPostInc();
+          if(cpi != null)
+            CommonVisitPostIncCall(cpi);
+        }
       }
 
       PopAST();
