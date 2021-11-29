@@ -953,7 +953,7 @@ public class VM
     }
     else if(type == EnumBlock.DEFER)
     {
-      var cb = new CodeBlock(curr_frame, ip + 1, ip + size);
+      var cb = new CodeBlock(curr_frame.fb, ip + 1, ip + size);
       if(defer_scope != null)
         defer_scope.RegisterOnExit(cb);
       else 
@@ -1203,20 +1203,20 @@ class CoroutineYield : IInstruction
 
 public struct CodeBlock
 {
-  public VM.Frame frame;
+  public VM.Fiber fb;
   public int ip;
   public int max_ip;
 
-  public CodeBlock(VM.Frame frame, int ip, int max_ip)
+  public CodeBlock(VM.Fiber fb, int ip, int max_ip)
   {
-    this.frame = frame;
+    this.fb = fb;
     this.ip = ip;
     this.max_ip = max_ip;
   }
 
   public BHS Execute(ref IInstruction instruction, IExitableScope defer_scope)
   {
-    return frame.vm.Execute(ref ip, frame.fb.frames, ref instruction, max_ip + 1, defer_scope);
+    return fb.vm.Execute(ref ip, fb.frames, ref instruction, max_ip + 1, defer_scope);
   }
 
   static internal void ExitScope(List<CodeBlock> defers)
