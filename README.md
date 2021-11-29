@@ -125,6 +125,22 @@ seq {
      ... 
 }
 ```
+
+### Pseudo parallel code execution
+
+func Attack(Unit u) {
+  Unit t = TargetInRange(u)
+  Check(t != null)
+  paral_all {
+   PlayAnim(u, trigger: "Attack")
+   SoundPlay(u, sound: "Swoosh")
+   seq {
+     WaitAnimEvent(u, event: "Hit")
+     SoundPlay(u, sound: "Damage")
+     HitTarget(u, t, damage: RandRange(1,16))
+  }
+}
+
 ### Example of some unit's top behavior
 
 ```go
@@ -156,20 +172,6 @@ func UnitGremlin(Gremlin u) {
   }
 }
 
-func Attack(Unit u) {
-  Unit t = TargetInRange(u)
-  Check(t != null)
-  paral_all {
-   PlayAnim(u, trigger: "Attack")
-   SoundPlay(u, sound: "Swoosh")
-   seq {
-     WaitAnimEvent(u, event: "Hit")
-     SoundPlay(u, sound: "Damage")
-     HitTarget(u, t, damage: RandRange(1,16))
-  }
-}
-
-...
 ```
 ## Architecture
 
