@@ -220,7 +220,7 @@ Please note that while bhl works fine under Windows the example assumes you are 
 
 ### Unity engine integration
 
-The example script has also a special Unity compatibility mode. It illustrates how you can build a bhl backend dll (**bhl_back.dll**) for Unity. After that you can put it into Assets/Plugins directory and use bhl for your Unity3d game development. This mode can be enabled just as follows: 
+The example script has also a special Unity compatibility mode. It illustrates how you can build a bhl backend dll (**bhl_back.dll**) for Unity. After that you can put it into Assets/Plugins directory and use bhl for your Unity game development. You can run the example script in this mode just as follows: 
 
 > cd example && ./run.sh -unity
 
