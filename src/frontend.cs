@@ -1541,11 +1541,41 @@ public class Frontend : bhlBaseVisitor<object>
     return call_by_ref_stack.Peek();
   }
 
-  int loops_stack = 0;
-  int defer_stack = 0;
+  Dictionary<FuncSymbol, int> loops2func = new Dictionary<FuncSymbol, int>();
+  int loops_stack {
+    get {
+      var fsymb = PeekFuncDecl();
+      int v;
+      loops2func.TryGetValue(fsymb, out v);
+      return v;
+    }
+
+    set {
+      var fsymb = PeekFuncDecl();
+      loops2func[fsymb] = value;
+    }
+  }
+
+  Dictionary<FuncSymbol, int> defers2func = new Dictionary<FuncSymbol, int>();
+  int defer_stack {
+    get {
+      var fsymb = PeekFuncDecl();
+      int v;
+      defers2func.TryGetValue(fsymb, out v);
+      return v;
+    }
+
+    set {
+      var fsymb = PeekFuncDecl();
+      defers2func[fsymb] = value;
+    }
+  }
 
   public override object VisitReturn(bhlParser.ReturnContext ctx)
   {
+    if(defer_stack > 0)
+      FireError(Location(ctx) + ": return is not allowed in defer block");
+
     var func_symb = PeekFuncDecl();
     func_symb.return_statement_found = true;
 

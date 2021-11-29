@@ -3270,6 +3270,49 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestReturnInDeferIsForbidden()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        return
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"return is not allowed in defer block"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnInDeferIsOkInLambda()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        func() {
+          return
+        } ()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    Compile(bhl, globs);
+  }
+
+  [IsTested()]
   public void TestSeveralDefers()
   {
     string bhl = @"
@@ -4577,9 +4620,68 @@ public class BHL_TestVM : BHL_TestBase
 
     var fb = vm.Start("test");
     AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual("1", log.ToString());
     AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual("1342", log.ToString());
     vm.Stop(fb);
     AssertEqual("134250", log.ToString());
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStopFiberExternallyWithProperDefersInParalsInModules()
+  {
+    string bhl2 = @"
+    func foo()
+    {
+      paral {
+        defer {
+          trace(""2"")
+        }
+        suspend()
+      }
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func test()
+    {
+      int fb = start(func() {
+        foo()
+      })
+
+      defer {
+        trace(""1"")
+        stop(fb)
+      }
+
+      suspend()
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var importer = new ModuleImporter(CompileFiles(files, globs));
+
+
+    var vm = new VM(globs: globs, importer: importer);
+
+    vm.ImportModule("bhl1");
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual("", log.ToString());
+    vm.Stop(fb);
+    AssertEqual("12", log.ToString());
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     CommonChecks(vm);
   }

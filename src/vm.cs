@@ -211,7 +211,7 @@ public class VM
 
     public void ExitScope(VM vm)
     {
-      CodeBlock.ExitScope(vm, fb.frames, defers);
+      CodeBlock.ExitScope(defers);
     }
 
     public void Retain()
@@ -452,11 +452,8 @@ public class VM
 
   public void Stop(Fiber fb)
   {
-    var curr_fiber_bak = curr_fiber;
-    curr_fiber = fb;
     Fiber.Del(fb);
     fibers.Remove(fb);
-    curr_fiber = curr_fiber_bak;
   }
 
   public void Stop(int fid)
@@ -956,7 +953,7 @@ public class VM
     }
     else if(type == EnumBlock.DEFER)
     {
-      var cb = new CodeBlock(ip + 1, ip + size);
+      var cb = new CodeBlock(curr_frame, ip + 1, ip + size);
       if(defer_scope != null)
         defer_scope.RegisterOnExit(cb);
       else 
@@ -977,10 +974,7 @@ public class VM
       var status = Execute(ref curr_fiber.ip, curr_fiber.frames, ref curr_fiber.instruction, int.MaxValue, null);
       
       if(status != BHS.RUNNING)
-      {
-        Fiber.Del(curr_fiber);
-        fibers.Remove(curr_fiber);
-      }
+        Stop(curr_fiber);
       else
         ++i;
     }
@@ -1209,21 +1203,23 @@ class CoroutineYield : IInstruction
 
 public struct CodeBlock
 {
+  public VM.Frame frame;
   public int ip;
   public int max_ip;
 
-  public CodeBlock(int ip, int max_ip)
+  public CodeBlock(VM.Frame frame, int ip, int max_ip)
   {
+    this.frame = frame;
     this.ip = ip;
     this.max_ip = max_ip;
   }
 
-  public BHS Execute(VM vm, FixedStack<VM.Frame> frames, ref IInstruction instruction, IExitableScope defer_scope)
+  public BHS Execute(ref IInstruction instruction, IExitableScope defer_scope)
   {
-    return vm.Execute(ref ip, frames, ref instruction, max_ip + 1, defer_scope);
+    return frame.vm.Execute(ref ip, frame.fb.frames, ref instruction, max_ip + 1, defer_scope);
   }
 
-  static internal void ExitScope(VM vm, FixedStack<VM.Frame> frames, List<CodeBlock> defers)
+  static internal void ExitScope(List<CodeBlock> defers)
   {
     if(defers == null)
       return;
@@ -1233,7 +1229,7 @@ public struct CodeBlock
       var d = defers[i];
       IInstruction dummy = null;
       //TODO: do we need ensure that status is SUCCESS?
-      d.Execute(vm, frames, ref dummy, null);
+      d.Execute(ref dummy, null);
     }
     defers.Clear();
   }
@@ -1288,7 +1284,7 @@ public class SeqInstruction : IInstruction, IExitableScope
 
   public void ExitScope(VM vm)
   {
-    CodeBlock.ExitScope(vm, frames, defers);
+    CodeBlock.ExitScope(defers);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
@@ -1343,7 +1339,7 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
 
   public void ExitScope(VM vm)
   {
-    CodeBlock.ExitScope(vm, vm.curr_fiber.frames, defers);
+    CodeBlock.ExitScope(defers);
   }
 }
 
@@ -1397,7 +1393,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
 
   public void ExitScope(VM vm)
   {
-    CodeBlock.ExitScope(vm, vm.curr_fiber.frames, defers);
+    CodeBlock.ExitScope(defers);
   }
 }
 
