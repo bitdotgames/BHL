@@ -25,22 +25,6 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 
 ## Code samples
 
-### Unit attack behaviour
-
-```go
-func Attack() {
-  Check(TargetInRange())
-  paral_all {
-   PlayAnim(trigger: "Attack")
-   SoundPlay(sound: "Swoosh")
-   seq {
-     WaitAnimEvent(event: "Hit")
-     SoundPlay(sound: "Damage")
-     HitTarget(damage: RandRange(1,16))
-  }
-}
-```
-
 ### Structs
 
 ```go
@@ -144,14 +128,12 @@ seq {
 ### Example of some unit's top behavior
 
 ```go
-class Gremlin extends Unit
-{
+class Gremlin extends Unit {
   float heavy_attack_last_time
   float roll_last_time
 }
 
-func UnitGremlin(Gremlin u)
-{
+func UnitGremlin(Gremlin u) {
   float radius_max = 10
 
   paral_all {
@@ -173,6 +155,21 @@ func UnitGremlin(Gremlin u)
     }
   }
 }
+
+func Attack(Unit u) {
+  Unit t = TargetInRange(u)
+  Check(t != null)
+  paral_all {
+   PlayAnim(u, trigger: "Attack")
+   SoundPlay(u, sound: "Swoosh")
+   seq {
+     WaitAnimEvent(u, event: "Hit")
+     SoundPlay(u, sound: "Damage")
+     HitTarget(u, t, damage: RandRange(1,16))
+  }
+}
+
+...
 ```
 ## Architecture
 
