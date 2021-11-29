@@ -119,7 +119,7 @@ return p(10)
 ### **defer** support
 
 ```go
-seq {
+{
   RimColorSet(color: {r:  0.65, a: 1.0}, power: 1.1)
   defer { RimColorSet(color: {a: 0}, power: 0) }
      ... 
@@ -128,6 +128,7 @@ seq {
 
 ### Pseudo parallel code execution
 
+```go
 func Attack(Unit u) {
   Unit t = TargetInRange(u)
   Check(t != null)
@@ -140,6 +141,7 @@ func Attack(Unit u) {
      HitTarget(u, t, damage: RandRange(1,16))
   }
 }
+```
 
 ### Example of some unit's top behavior
 
