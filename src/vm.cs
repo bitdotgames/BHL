@@ -472,13 +472,11 @@ public class VM
     return null;
   }
 
-  internal BHS Execute(ref int ip, FixedStack<Frame> frames, ref IInstruction instruction, int max_ip, IExitableScope defer_scope)
+  internal BHS Execute(ref int ip, Frame curr_frame, FixedStack<Frame> frames, ref IInstruction instruction, int max_ip, IExitableScope defer_scope)
   { 
-    while(frames.Count > 0 && ip < max_ip)
+    while(curr_frame != null && ip < max_ip)
     {
       //Console.WriteLine("EXECUTE " + frames.Count + ", IP " + ip + " MAX " + max_ip);
-      
-      var curr_frame = frames.Peek();
 
       var status = BHS.SUCCESS;
 
@@ -668,6 +666,8 @@ public class VM
             frames.Pop();
             if(frames.Count > 0)
               curr_frame = frames.Peek();
+            else 
+              curr_frame = null;
           }
           break;
           case Opcodes.ReturnVal:
@@ -684,7 +684,10 @@ public class VM
               curr_frame.stack.Push(ret_val);
             }
             else
+            {
               curr_frame.fb.stack.Push(ret_val);
+              curr_frame = null;
+            }
           }
           break;
           case Opcodes.GetFunc:
@@ -953,7 +956,7 @@ public class VM
     }
     else if(type == EnumBlock.DEFER)
     {
-      var cb = new CodeBlock(curr_frame.fb, ip + 1, ip + size);
+      var cb = new CodeBlock(curr_frame, ip + 1, ip + size);
       if(defer_scope != null)
         defer_scope.RegisterOnExit(cb);
       else 
@@ -971,7 +974,7 @@ public class VM
     {
       curr_fiber = fibers[i];
 
-      var status = Execute(ref curr_fiber.ip, curr_fiber.frames, ref curr_fiber.instruction, int.MaxValue, null);
+      var status = Execute(ref curr_fiber.ip, curr_fiber.frames.Peek(), curr_fiber.frames, ref curr_fiber.instruction, int.MaxValue, null);
       
       if(status != BHS.RUNNING)
         Stop(curr_fiber);
@@ -1203,20 +1206,20 @@ class CoroutineYield : IInstruction
 
 public struct CodeBlock
 {
-  public VM.Fiber fb;
+  public VM.Frame frm;
   public int ip;
   public int max_ip;
 
-  public CodeBlock(VM.Fiber fb, int ip, int max_ip)
+  public CodeBlock(VM.Frame frm, int ip, int max_ip)
   {
-    this.fb = fb;
+    this.frm = frm;
     this.ip = ip;
     this.max_ip = max_ip;
   }
 
   public BHS Execute(ref IInstruction instruction, IExitableScope defer_scope)
   {
-    return fb.vm.Execute(ref ip, fb.frames, ref instruction, max_ip + 1, defer_scope);
+    return frm.vm.Execute(ref ip, frm, null, ref instruction, max_ip + 1, defer_scope);
   }
 
   static internal void ExitScope(List<CodeBlock> defers)
@@ -1261,7 +1264,7 @@ public class SeqInstruction : IInstruction, IExitableScope
   public void Tick(VM.Frame frm, ref BHS status)
   {
     //Console.WriteLine("TICK SEQ " + ip + " " + GetHashCode());
-    status = frm.vm.Execute(ref ip, frames, ref instruction, max_ip + 1, this);
+    status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, max_ip + 1, this);
   }
 
   public void Cleanup(VM vm)
