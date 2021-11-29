@@ -19,7 +19,7 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 * Supports C# bindings to user types and functions
 * Golang alike *defer*
 * Passing arguments to function by *ref* like in C#
-* Multiple returned values like in Go
+* Multiple returned values like in Golang
 * Hot code reload
 * Strict control over memory allocations 
 
@@ -254,6 +254,7 @@ You can run unit tests by executing the following command:
 8. ~~User defined structs~~
 9. User defined struct methods
 10. ~~User defined enums~~
+11. Postfix increment/decrement
 
 
 ## Version 2.0
@@ -263,5 +264,6 @@ You can run unit tests by executing the following command:
 3. Better runtime errors reporting
 4. More robust type system
 5. Interfaces support
-6. Debugger support
-7. LSP integration
+6. Maps support
+7. Debugger support
+8. LSP integration
