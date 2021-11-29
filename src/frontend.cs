@@ -1146,9 +1146,9 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
   
-  public override object VisitCallPostOperators(bhlParser.CallPostOperatorsContext ctx)
+  public override object VisitPostOperatorCall(bhlParser.PostOperatorCallContext ctx)
   {
-    CommonVisitCallPostOperators(ctx);
+    CommonVisitCallPostOperators(ctx.callPostOperators());
     return null;
   }
 
