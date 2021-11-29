@@ -4413,6 +4413,30 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassArgToFiber()
+  {
+    string bhl = @"
+    func int test(int a)
+    {
+      yield()
+      return a
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+
+    var fb = vm.Start("test");
+    fb.SetArgs(Val.NewNum(vm, 123));
+
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 123);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
@@ -4438,7 +4462,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestStartFiber()
+  public void TestStartFiberFromScript()
   {
     string bhl = @"
     func test()
@@ -4466,7 +4490,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestStopFiber()
+  public void TestStopFiberFromScript()
   {
     string bhl = @"
     func foo()
@@ -4506,6 +4530,57 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual("1340", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStopFiberExternallyWithProperDefers()
+  {
+    string bhl = @"
+    func foo()
+    {
+      defer {
+        trace(""4"")
+      }
+      trace(""1"")
+      yield()
+    }
+
+    func test()
+    {
+      int fb = start(func() {
+        defer {
+          trace(""0"")
+        }
+        foo()
+        trace(""2"")
+        yield()
+      })
+      defer {
+        trace(""5"")
+        stop(fb)
+      }
+
+      yield()
+      trace(""3"")
+      yield()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    vm.Stop(fb);
+    AssertEqual("134250", log.ToString());
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
     CommonChecks(vm);
   }
 
@@ -4648,7 +4723,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestGetCallstackInfo()
   {
     string bhl3 = @"

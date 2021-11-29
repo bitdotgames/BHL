@@ -1272,11 +1272,11 @@ public class AST_Dumper : AST_Visitor
 public class FixedStack<T>
 {
   T[] storage;
-  int head_idx = 0;
+  int head = 0;
 
   public int Count
   {
-    get { return head_idx; }
+    get { return head; }
   }
 
   public FixedStack(int max_capacity)
@@ -1286,8 +1286,22 @@ public class FixedStack<T>
 
   public T this[int index]
   {
-    get { return storage[index]; }
-    set { storage[index] = value; }
+    get { 
+      //for extra debug
+      //ValidateIndex(index);
+      return storage[index]; 
+    }
+    set { 
+      //for extra debug
+      //ValidateIndex(index);
+      storage[index] = value; 
+    }
+  }
+
+  void ValidateIndex(int index)
+  {
+    if(index < 0 || index >= head)
+      throw new Exception("Out of index " + index + " vs " + head);
   }
 
   public bool TryGetAt(int index, out T v)
@@ -1304,43 +1318,42 @@ public class FixedStack<T>
 
   public T Push(T item)
   {
-    storage[head_idx++] = item;
+    storage[head++] = item;
     return item;
   }
 
   public T Pop()
   {
-    --head_idx;
-    return storage[head_idx];
+    return storage[--head];
   }
 
   public T Pop(T repl)
   {
-    --head_idx;
-    T retval = storage[head_idx];
-    storage[head_idx] = repl;
+    --head;
+    T retval = storage[head];
+    storage[head] = repl;
     return retval;
   }
 
   public T Peek()
   {
-    return storage[head_idx - 1];
+    return storage[head - 1];
   }
 
   public void SetRelative(int offset, T item)
   {
-    storage[head_idx - 1 - offset] = item;
+    storage[head - 1 - offset] = item;
   }
 
   public void RemoveAt(int idx)
   {
-    if(idx == (head_idx-1))
+    if(idx == (head-1))
     {
       Dec();
     }
     else
     {
-      --head_idx;
+      --head;
       Array.Copy(storage, idx+1, storage, idx, storage.Length-idx-1);
     }
   }
@@ -1362,18 +1375,18 @@ public class FixedStack<T>
 
   public void Dec()
   {
-    --head_idx;
+    --head;
   }
 
   public void Advance(int offset)
   {
-    head_idx = offset;
+    head = offset;
   }
 
   public void Clear()
   {
     Array.Clear(storage, 0, storage.Length);
-    head_idx = 0;
+    head = 0;
   }
 }
 

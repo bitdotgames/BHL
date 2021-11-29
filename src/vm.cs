@@ -55,12 +55,13 @@ public class VM
         instruction = null;
       }
 
-      while(frames.Count > 0)
+      for(int i=frames.Count;i-- > 0;)
       {
-        var frm = frames.Pop();
+        var frm = frames[i];
         frm.ExitScope(vm);
         frm.Release();
       }
+      frames.Clear();
     }
 
     public void SetArgs(params Val[] args)
@@ -170,7 +171,7 @@ public class VM
       stack.Advance(MAX_LOCALS);
     }
 
-    public void Clear()
+    void Clear()
     {
       for(int i=stack.Count;i-- > 0;)
       {
@@ -210,7 +211,7 @@ public class VM
 
     public void ExitScope(VM vm)
     {
-      CodeBlock.ExitScope(vm, vm.curr_fiber.frames, defers);
+      CodeBlock.ExitScope(vm, fb.frames, defers);
     }
 
     public void Retain()
@@ -451,8 +452,11 @@ public class VM
 
   public void Stop(Fiber fb)
   {
+    var curr_fiber_bak = curr_fiber;
+    curr_fiber = fb;
     Fiber.Del(fb);
     fibers.Remove(fb);
+    curr_fiber = curr_fiber_bak;
   }
 
   public void Stop(int fid)
@@ -974,8 +978,8 @@ public class VM
       
       if(status != BHS.RUNNING)
       {
-        Fiber.Del(fibers[i]);
-        fibers.RemoveAt(i);
+        Fiber.Del(curr_fiber);
+        fibers.Remove(curr_fiber);
       }
       else
         ++i;
@@ -1287,7 +1291,7 @@ public class SeqInstruction : IInstruction, IExitableScope
     CodeBlock.ExitScope(vm, frames, defers);
 
     //NOTE: Let's release frames which were allocated but due to 
-    //      some control flow abruption(e.g paral exited) should be 
+    //      some control flow abruption (e.g paral exited) should be 
     //      explicitely released. We start from index 1 on purpose
     //      since the frame at index 0 will be released as expected.
     for(int i=1;i<frames.Count;i++)
