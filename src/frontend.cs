@@ -1137,7 +1137,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx.NAME()) + " : symbol not resolved");
 
     if(SymbolTable.IsRelopCompatibleType(vlhs.type.type) == false)
-      throw new UserError(Location(ctx.NAME()) + " : Invalid operand types");
+      throw new UserError(Location(ctx.NAME()) + " : incompatible variable type");
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
     var op_type = GetBinaryOpType(op);

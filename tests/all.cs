@@ -976,7 +976,7 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl);
       },
-      " : Invalid operand types"
+      " : incompatible variable type"
     );
   }
 
@@ -996,7 +996,7 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl);
       },
-      " : Invalid operand types"
+      " : incompatible variable type"
     );
   }
 
@@ -1016,7 +1016,7 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl);
       },
-      " : Invalid operand types"
+      " : incompatible variable type"
     );
   }
 
@@ -1036,7 +1036,7 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl);
       },
-      " : Invalid operand types"
+      " : incompatible variable type"
     );
   }
 
