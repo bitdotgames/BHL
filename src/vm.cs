@@ -107,7 +107,7 @@ public class VM
     }
     public int start_ip;
     public int return_ip;
-    public List<CodeBlock> defers;
+    public List<DeferBlock> defers;
 
     static public Frame New(VM vm)
     {
@@ -202,16 +202,16 @@ public class VM
       }
     }
 
-    public void RegisterOnExit(CodeBlock cb)
+    public void RegisterOnExit(DeferBlock cb)
     {
       if(defers == null)
-        defers = new List<CodeBlock>();
+        defers = new List<DeferBlock>();
       defers.Add(cb);
     }
 
     public void ExitScope(VM vm)
     {
-      CodeBlock.ExitScope(defers);
+      DeferBlock.ExitScope(vm, defers);
     }
 
     public void Retain()
@@ -956,7 +956,7 @@ public class VM
     }
     else if(type == EnumBlock.DEFER)
     {
-      var cb = new CodeBlock(curr_frame, ip + 1, ip + size);
+      var cb = new DeferBlock(curr_frame, ip + 1, ip + size);
       if(defer_scope != null)
         defer_scope.RegisterOnExit(cb);
       else 
@@ -1163,7 +1163,7 @@ public class Instructions
 
 public interface IExitableScope
 {
-  void RegisterOnExit(CodeBlock cb);
+  void RegisterOnExit(DeferBlock cb);
   void ExitScope(VM vm);
 }
 
@@ -1204,25 +1204,25 @@ class CoroutineYield : IInstruction
   }
 }
 
-public struct CodeBlock
+public struct DeferBlock
 {
   public VM.Frame frm;
   public int ip;
   public int max_ip;
 
-  public CodeBlock(VM.Frame frm, int ip, int max_ip)
+  public DeferBlock(VM.Frame frm, int ip, int max_ip)
   {
     this.frm = frm;
     this.ip = ip;
     this.max_ip = max_ip;
   }
 
-  public BHS Execute(ref IInstruction instruction, IExitableScope defer_scope)
+  public BHS Execute(VM vm, ref IInstruction instruction)
   {
-    return frm.vm.Execute(ref ip, frm, null, ref instruction, max_ip + 1, defer_scope);
+    return vm.Execute(ref ip, frm, null, ref instruction, max_ip + 1, null);
   }
 
-  static internal void ExitScope(List<CodeBlock> defers)
+  static internal void ExitScope(VM vm, List<DeferBlock> defers)
   {
     if(defers == null)
       return;
@@ -1232,7 +1232,7 @@ public struct CodeBlock
       var d = defers[i];
       IInstruction dummy = null;
       //TODO: do we need ensure that status is SUCCESS?
-      d.Execute(ref dummy, null);
+      d.Execute(vm, ref dummy);
     }
     defers.Clear();
   }
@@ -1251,7 +1251,7 @@ public class SeqInstruction : IInstruction, IExitableScope
   public int max_ip;
   public FixedStack<VM.Frame> frames = new FixedStack<VM.Frame>(256);
   public IInstruction instruction;
-  public List<CodeBlock> defers;
+  public List<DeferBlock> defers;
 
   public void Init(VM.Frame frm, int ip, int max_ip)
   {
@@ -1278,16 +1278,16 @@ public class SeqInstruction : IInstruction, IExitableScope
     ExitScope(vm);
   }
 
-  public void RegisterOnExit(CodeBlock cb)
+  public void RegisterOnExit(DeferBlock cb)
   {
     if(defers == null)
-      defers = new List<CodeBlock>();
+      defers = new List<DeferBlock>();
     defers.Add(cb);
   }
 
   public void ExitScope(VM vm)
   {
-    CodeBlock.ExitScope(defers);
+    DeferBlock.ExitScope(vm, defers);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
@@ -1302,7 +1302,7 @@ public class SeqInstruction : IInstruction, IExitableScope
 public class ParalInstruction : IMultiInstruction, IExitableScope
 {
   public List<IInstruction> branches = new List<IInstruction>();
-  public List<CodeBlock> defers;
+  public List<DeferBlock> defers;
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
@@ -1324,7 +1324,7 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
 
   public void Cleanup(VM vm)
   {
-    CodeBlock.DelInstructions(vm, branches);
+    DeferBlock.DelInstructions(vm, branches);
     ExitScope(vm);
   }
 
@@ -1333,23 +1333,23 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
     branches.Add(inst);
   }
 
-  public void RegisterOnExit(CodeBlock cb)
+  public void RegisterOnExit(DeferBlock cb)
   {
     if(defers == null)
-      defers = new List<CodeBlock>();
+      defers = new List<DeferBlock>();
     defers.Add(cb);
   }
 
   public void ExitScope(VM vm)
   {
-    CodeBlock.ExitScope(defers);
+    DeferBlock.ExitScope(vm, defers);
   }
 }
 
 public class ParalAllInstruction : IMultiInstruction, IExitableScope
 {
   public List<IInstruction> branches = new List<IInstruction>();
-  public List<CodeBlock> defers;
+  public List<DeferBlock> defers;
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
@@ -1378,7 +1378,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
 
   public void Cleanup(VM vm)
   {
-    CodeBlock.DelInstructions(vm, branches);
+    DeferBlock.DelInstructions(vm, branches);
     ExitScope(vm);
   }
 
@@ -1387,16 +1387,16 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
     branches.Add(inst);
   }
 
-  public void RegisterOnExit(CodeBlock cb)
+  public void RegisterOnExit(DeferBlock cb)
   {
     if(defers == null)
-      defers = new List<CodeBlock>();
+      defers = new List<DeferBlock>();
     defers.Add(cb);
   }
 
   public void ExitScope(VM vm)
   {
-    CodeBlock.ExitScope(defers);
+    DeferBlock.ExitScope(vm, defers);
   }
 }
 
