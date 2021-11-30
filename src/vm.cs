@@ -81,17 +81,20 @@ public class VM
         var frm = frames[i];
         var item = new CallStackItem(); 
         item.module_name = frm.module.name;
-        //if(i == frames.Count-1)
-        //{
-        //  item.ip = frm.fb.ip;
-        //  frm.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
-        //}
-        if(i > 0)
+        if(i == frames.Count-1)
+        {
+          item.ip = frm.fb.ip;
+          frm.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
+          item.func_name = "";
+        }
+        else
         {
           item.ip = frm.return_ip;
-          var caller = frames[i-1];
-          caller.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
-          item.func_name = CallStackItem.MapIp2Func(caller.start_ip, caller.module.func2ip);  
+          //frm.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
+          //var caller = frames[i-1];
+          //caller.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
+          var callee = frames[i+1];
+          item.func_name = CallStackItem.MapIp2Func(callee.start_ip, callee.module.func2ip);
         }
 
         info.Add(item);
