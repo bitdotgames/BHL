@@ -1136,7 +1136,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(vlhs == null)
       FireError(Location(ctx.NAME()) + " : symbol not resolved");
 
-    if(SymbolTable.IsRelopCompatibleType(vlhs.type.type) == false)
+    if(!SymbolTable.IsRelopCompatibleType(vlhs.type.type))
       throw new UserError(Location(ctx.NAME()) + " : incompatible variable type");
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
