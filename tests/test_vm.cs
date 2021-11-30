@@ -4885,21 +4885,21 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertEqual(4, info.Count);
 
-    AssertEqual("", info[0].func_name);
-    AssertEqual("bhl3", info[0].module_name);
-    AssertEqual(4, info[0].line_num);
+    AssertEqual("wow", info[0].func);
+    AssertEqual("bhl3.bhl", info[0].file);
+    AssertEqual(4, info[0].line);
 
-    AssertEqual("wow", info[1].func_name);
-    AssertEqual("bhl2", info[1].module_name);
-    //AssertEqual(5, info[1].line_num);
+    AssertEqual("bar", info[1].func);
+    AssertEqual("bhl2.bhl", info[1].file);
+    AssertEqual(5, info[1].line);
 
-    AssertEqual("bar", info[2].func_name);
-    AssertEqual("bhl1", info[2].module_name);
-    //AssertEqual(5, info[2].line_num);
+    AssertEqual("foo", info[2].func);
+    AssertEqual("bhl1.bhl", info[2].file);
+    AssertEqual(5, info[2].line);
 
-    AssertEqual("foo", info[3].func_name);
-    AssertEqual("bhl1", info[3].module_name);
-    //AssertEqual(10, info[3].line_num);
+    AssertEqual("test", info[3].func);
+    AssertEqual("bhl1.bhl", info[3].file);
+    AssertEqual(10, info[3].line);
   }
 
   [IsTested()]

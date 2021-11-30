@@ -76,28 +76,30 @@ public class VM
 
     public void GetCallStackInfo(List<VM.CallStackItem> info)
     {
-      for(int i=frames.Count;i-- > 0;)
+      for(int i=0;i<frames.Count;++i)
       {
         var frm = frames[i];
+
         var item = new CallStackItem(); 
-        item.module_name = frm.module.name;
+        item.file = frm.module.name + ".bhl";
+        item.func = CallStackItem.MapIp2Func(frm.start_ip, frm.module.func2ip);
+
         if(i == frames.Count-1)
         {
+          //NOTE: current ip of the last Frame is ip of its Fiber
           item.ip = frm.fb.ip;
-          frm.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
-          item.func_name = "";
+          frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
         }
         else
         {
-          item.ip = frm.return_ip;
-          //frm.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
-          //var caller = frames[i-1];
-          //caller.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
-          var callee = frames[i+1];
-          item.func_name = CallStackItem.MapIp2Func(callee.start_ip, callee.module.func2ip);
+          var next = frames[i+1];
+          //NOTE: retrieving last ip in the current Frame which 
+          //      turns out to be return_ip of the next Frame
+          item.ip = next.return_ip;
+          frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
         }
 
-        info.Add(item);
+        info.Insert(0, item);
       }
     }
   }
@@ -266,9 +268,9 @@ public class VM
 
   public struct CallStackItem
   {
-    public string module_name;
-    public string func_name;
-    public int line_num;
+    public string file;
+    public string func;
+    public int line;
     public int ip; 
 
     static public string MapIp2Func(int ip, Dictionary<string, int> func2ip)
