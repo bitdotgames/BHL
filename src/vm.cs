@@ -202,7 +202,7 @@ public class VM
       }
     }
 
-    public void RegisterOnExit(DeferBlock cb)
+    public void RegisterDefer(DeferBlock cb)
     {
       if(defers == null)
         defers = new List<DeferBlock>();
@@ -958,9 +958,9 @@ public class VM
     {
       var cb = new DeferBlock(curr_frame, ip + 1, ip + size);
       if(defer_scope != null)
-        defer_scope.RegisterOnExit(cb);
+        defer_scope.RegisterDefer(cb);
       else 
-        curr_frame.RegisterOnExit(cb);
+        curr_frame.RegisterDefer(cb);
       ip += size;
       return null;
     }
@@ -1163,7 +1163,7 @@ public class Instructions
 
 public interface IExitableScope
 {
-  void RegisterOnExit(DeferBlock cb);
+  void RegisterDefer(DeferBlock cb);
   void ExitScope(VM vm);
 }
 
@@ -1278,7 +1278,7 @@ public class SeqInstruction : IInstruction, IExitableScope
     ExitScope(vm);
   }
 
-  public void RegisterOnExit(DeferBlock cb)
+  public void RegisterDefer(DeferBlock cb)
   {
     if(defers == null)
       defers = new List<DeferBlock>();
@@ -1333,7 +1333,7 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
     branches.Add(inst);
   }
 
-  public void RegisterOnExit(DeferBlock cb)
+  public void RegisterDefer(DeferBlock cb)
   {
     if(defers == null)
       defers = new List<DeferBlock>();
@@ -1387,7 +1387,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
     branches.Add(inst);
   }
 
-  public void RegisterOnExit(DeferBlock cb)
+  public void RegisterDefer(DeferBlock cb)
   {
     if(defers == null)
       defers = new List<DeferBlock>();
