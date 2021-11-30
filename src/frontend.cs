@@ -1128,6 +1128,34 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitVarPostOpAssign(bhlParser.VarPostOpAssignContext ctx)
+  {
+    var lhs = ctx.NAME().GetText();
+    var vlhs = curr_scope.resolve(lhs) as VariableSymbol;
+
+    if(vlhs == null)
+      FireError(Location(ctx.NAME()) + " : symbol not resolved");
+
+    if(SymbolTable.IsRelopCompatibleType(vlhs.type.type) == false)
+      throw new UserError(Location(ctx.NAME()) + " : PostOpAssign not supported for string");
+
+    var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
+    var op_type = GetBinaryOpType(op);
+    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
+
+    PushAST(bin_op_ast);
+    bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, lhs));
+    Visit(ctx.exp());
+    PopAST();
+
+    SymbolTable.CheckAssign(vlhs.type.type, Wrap(ctx.exp()));
+
+    PeekAST().AddChild(bin_op_ast);
+    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, lhs));
+
+    return null;
+  }
+
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
     var op = ctx.operatorAddSub().GetText(); 
@@ -1189,9 +1217,10 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
+  static EnumBinaryOp GetBinaryOpType(string op)
   {
     EnumBinaryOp op_type;
+
     if(op == "+")
       op_type = EnumBinaryOp.ADD;
     else if(op == "-")
@@ -1215,8 +1244,14 @@ public class Frontend : bhlBaseVisitor<object>
     else if(op == "<=")
       op_type = EnumBinaryOp.LTE;
     else
-      throw new Exception("Unknown type");
+      throw new Exception("Unknown type: " + op);
 
+    return op_type;
+  }
+
+  void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
+  {
+    EnumBinaryOp op_type = GetBinaryOpType(op);
     AST ast = AST_Util.New_BinaryOpExp(op_type);
     PushAST(ast);
     Visit(lhs);

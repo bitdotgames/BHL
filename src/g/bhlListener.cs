@@ -563,6 +563,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitDeclAssign([NotNull] bhlParser.DeclAssignContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>VarPostOpAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterVarPostOpAssign([NotNull] bhlParser.VarPostOpAssignContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>VarPostOpAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitVarPostOpAssign([NotNull] bhlParser.VarPostOpAssignContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>SymbCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -1226,6 +1238,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.operatorPostOpAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterOperatorPostOpAssign([NotNull] bhlParser.OperatorPostOpAssignContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.operatorPostOpAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitOperatorPostOpAssign([NotNull] bhlParser.OperatorPostOpAssignContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.operatorComparison"/>.
 	/// </summary>

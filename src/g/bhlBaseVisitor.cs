@@ -540,6 +540,17 @@ public partial class bhlBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// <return>The visitor result.</return>
 	public virtual Result VisitDeclAssign([NotNull] bhlParser.DeclAssignContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>VarPostOpAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitVarPostOpAssign([NotNull] bhlParser.VarPostOpAssignContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SymbCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>
@@ -1181,6 +1192,16 @@ public partial class bhlBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.operatorPostOpAssign"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitOperatorPostOpAssign([NotNull] bhlParser.OperatorPostOpAssignContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.operatorComparison"/>.
 	/// <para>

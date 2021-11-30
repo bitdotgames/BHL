@@ -63,7 +63,6 @@ exp
   | 'eval' block                                            #ExpEval
   | newExp                                                  #ExpNew
   | exp ternaryIfExp                                        #ExpTernaryIf
-  
   ;
 
 ternaryIfExp
@@ -122,6 +121,7 @@ decrementOperator
 statement
   : varDeclare                                                  #VarDecl
   | varsDeclareOrCallExps assignExp                             #DeclAssign
+  | NAME operatorPostOpAssign exp                               #VarPostOpAssign
   | callExp                                                     #SymbCall
   | callPostOperators                                           #PostOperatorCall
   | mainIf elseIf* else?                                        #If
@@ -307,6 +307,10 @@ operatorBitOr
 
 operatorBitAnd 
   : '&'
+  ;
+
+operatorPostOpAssign
+  : '+=' | '-=' | '*=' | '/='
   ;
 
 operatorComparison 
