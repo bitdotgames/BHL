@@ -976,7 +976,7 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl);
       },
-      " : PostOpAssign not supported for string"
+      " : Invalid operand types"
     );
   }
 
@@ -996,7 +996,7 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl);
       },
-      " : PostOpAssign not supported for string"
+      " : Invalid operand types"
     );
   }
 
@@ -1016,7 +1016,7 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl);
       },
-      " : PostOpAssign not supported for string"
+      " : Invalid operand types"
     );
   }
 
@@ -1036,7 +1036,7 @@ public class BHL_Test
       delegate() { 
         Interpret(bhl);
       },
-      " : PostOpAssign not supported for string"
+      " : Invalid operand types"
     );
   }
 
@@ -1059,6 +1059,28 @@ public class BHL_Test
       },
       " have incompatible types"
     );
+  }
+
+  [IsTested()]
+  public void TestPostOpAssignExpCompatibleTypes()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      float k = 2.1
+      int a = 1
+      k += a
+      return k
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+
+    AssertEqual(num, 3.1);
+    CommonChecks(intp);
   }
 
   [IsTested()]
