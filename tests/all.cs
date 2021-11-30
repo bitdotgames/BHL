@@ -877,6 +877,213 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestPostOpAddAssign()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int k
+      k += 10
+      return k
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+
+    AssertEqual(num, 10);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPostOpSubAssign()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int k
+      k -= 10
+      return k
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+
+    AssertEqual(num, -10);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPostOpMulAssign()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int k = 1
+      k *= 10
+      return k
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+
+    AssertEqual(num, 10);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPostOpDivAssign()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int k = 10
+      k /= 10
+      return k
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+
+    AssertEqual(num, 1);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestPostOpAddAssignStringNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      string k
+      k += ""foo""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      " : incompatible variable type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpSubAssignStringNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      string k
+      k -= ""foo""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      " : incompatible variable type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpMulAssignStringNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      string k
+      k *= ""foo""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      " : incompatible variable type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpDivAssignStringNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      string k
+      k /= ""foo""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      " : incompatible variable type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpAssignExpIncompatibleTypesNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      int k
+      float a
+      k += a
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl);
+      },
+      " have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpAssignExpCompatibleTypes()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      float k = 2.1
+      int a = 1
+      k += a
+      return k
+    }
+    ";
+
+    var intp = Interpret(bhl);
+    var node = intp.GetFuncCallNode("test");
+    var num = ExtractNum(ExecNode(node));
+
+    AssertEqual(num, 3.1);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
   public void TestSub()
   {
     string bhl = @"

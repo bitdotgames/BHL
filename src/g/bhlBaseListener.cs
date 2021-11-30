@@ -663,6 +663,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDeclAssign([NotNull] bhlParser.DeclAssignContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>VarPostOpAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterVarPostOpAssign([NotNull] bhlParser.VarPostOpAssignContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>VarPostOpAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitVarPostOpAssign([NotNull] bhlParser.VarPostOpAssignContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>SymbCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -1450,6 +1464,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.operatorPostOpAssign"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterOperatorPostOpAssign([NotNull] bhlParser.OperatorPostOpAssignContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.operatorPostOpAssign"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitOperatorPostOpAssign([NotNull] bhlParser.OperatorPostOpAssignContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.operatorComparison"/>.
 	/// <para>The default implementation does nothing.</para>

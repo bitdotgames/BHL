@@ -346,6 +346,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDeclAssign([NotNull] bhlParser.DeclAssignContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>VarPostOpAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarPostOpAssign([NotNull] bhlParser.VarPostOpAssignContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SymbCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -739,6 +746,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.operatorPostOpAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOperatorPostOpAssign([NotNull] bhlParser.OperatorPostOpAssignContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.operatorComparison"/>.
 	/// </summary>
