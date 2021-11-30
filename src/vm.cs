@@ -74,15 +74,15 @@ public class VM
       }
     }
 
-    public void GetCallStackInfo(List<VM.CallStackItem> info)
+    public void GetStackTrace(List<VM.TraceItem> info)
     {
       for(int i=0;i<frames.Count;++i)
       {
         var frm = frames[i];
 
-        var item = new CallStackItem(); 
+        var item = new TraceItem(); 
         item.file = frm.module.name + ".bhl";
-        item.func = CallStackItem.MapIp2Func(frm.start_ip, frm.module.func2ip);
+        item.func = TraceItem.MapIp2Func(frm.start_ip, frm.module.func2ip);
 
         if(i == frames.Count-1)
         {
@@ -93,8 +93,8 @@ public class VM
         else
         {
           var next = frames[i+1];
-          //NOTE: retrieving last ip in the current Frame which 
-          //      turns out to be return_ip of the next Frame
+          //NOTE: retrieving last ip for the current Frame which 
+          //      turns out to be return_ip assigned to the next Frame
           item.ip = next.return_ip;
           frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
         }
@@ -266,7 +266,7 @@ public class VM
     }
   }
 
-  public struct CallStackItem
+  public struct TraceItem
   {
     public string file;
     public string func;
@@ -509,6 +509,17 @@ public class VM
       if(fibers[i].id == fid)
         return fibers[i];
     return null;
+  }
+
+  public void GetStackTrace(Dictionary<Fiber, List<TraceItem>> info)
+  {
+    for(int i=0;i<fibers.Count;++i)
+    {
+      var fb = fibers[i];
+      var trace = new List<TraceItem>();
+      fb.GetStackTrace(trace);
+      info[fb] = trace;
+    }
   }
 
   internal BHS Execute(ref int ip, Frame curr_frame, FixedStack<Frame> frames, ref IInstruction instruction, int max_ip, IExitableScope defer_scope)

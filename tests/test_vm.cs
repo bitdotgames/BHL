@@ -4826,7 +4826,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestGetCallStackInfo()
+  public void TestGetStackTrace()
   {
     string bhl3 = @"
     func float wow(float b)
@@ -4858,11 +4858,11 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var globs = SymbolTable.VM_CreateBuiltins();
-    var info = new List<VM.CallStackItem>();
+    var trace = new List<VM.TraceItem>();
     {
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"), null,
         delegate(VM.Frame frm, ref BHS status) { 
-          frm.fb.GetCallStackInfo(info); 
+          frm.fb.GetStackTrace(trace); 
           return null;
         });
       globs.Define(fn);
@@ -4883,23 +4883,171 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().num, 3);
 
-    AssertEqual(4, info.Count);
+    AssertEqual(4, trace.Count);
 
-    AssertEqual("wow", info[0].func);
-    AssertEqual("bhl3.bhl", info[0].file);
-    AssertEqual(4, info[0].line);
+    AssertEqual("wow", trace[0].func);
+    AssertEqual("bhl3.bhl", trace[0].file);
+    AssertEqual(4, trace[0].line);
 
-    AssertEqual("bar", info[1].func);
-    AssertEqual("bhl2.bhl", info[1].file);
-    AssertEqual(5, info[1].line);
+    AssertEqual("bar", trace[1].func);
+    AssertEqual("bhl2.bhl", trace[1].file);
+    AssertEqual(5, trace[1].line);
 
-    AssertEqual("foo", info[2].func);
-    AssertEqual("bhl1.bhl", info[2].file);
-    AssertEqual(5, info[2].line);
+    AssertEqual("foo", trace[2].func);
+    AssertEqual("bhl1.bhl", trace[2].file);
+    AssertEqual(5, trace[2].line);
 
-    AssertEqual("test", info[3].func);
-    AssertEqual("bhl1.bhl", info[3].file);
-    AssertEqual(10, info[3].line);
+    AssertEqual("test", trace[3].func);
+    AssertEqual("bhl1.bhl", trace[3].file);
+    AssertEqual(10, trace[3].line);
+  }
+
+  [IsTested()]
+  public void TestGetStackTraceForUserObjNullRef()
+  {
+    string bhl2 = @"
+    class Foo {
+      float k
+    }
+    func float bar()
+    {
+      Foo f
+      return f.k
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func float test() 
+    {
+      return bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files, globs));
+
+    var vm = new VM(globs: globs, importer: importer);
+    vm.ImportModule("bhl1");
+    var fb = vm.Start("test");
+    
+    var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
+
+    try
+    {
+      vm.Tick();
+    }
+    catch(Exception)
+    {
+      vm.GetStackTrace(info);
+    }
+
+    AssertEqual(1, info.Count);
+
+    var trace = info[fb];
+    AssertEqual(2, trace.Count);
+
+    AssertEqual("bar", trace[0].func);
+    AssertEqual("bhl2.bhl", trace[0].file);
+    AssertEqual(8, trace[0].line);
+
+    AssertEqual("test", trace[1].func);
+    AssertEqual("bhl1.bhl", trace[1].file);
+    AssertEqual(5, trace[1].line);
+  }
+
+  [IsTested()]
+  public void TestGetStackTraceAfterNativeException()
+  {
+    string bhl3 = @"
+    func float wow(float b)
+    {
+      throw()
+      return b
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+    func float bar(float b)
+    {
+      return wow(b)
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func float foo(float k)
+    {
+      return bar(k)
+    }
+
+    func float test(float k) 
+    {
+      return foo(k)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
+    {
+      var fn = new FuncSymbolNative("throw", globs.Type("void"), null,
+        delegate(VM.Frame frm, ref BHS status) { 
+          //emulating null reference
+          frm = null;
+          frm.fb = null;
+          return null;
+        });
+      globs.Define(fn);
+    }
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files, globs));
+
+    var vm = new VM(globs: globs, importer: importer);
+    vm.ImportModule("bhl1");
+    var fb = vm.Start("test");
+    fb.SetArgs(Val.NewNum(vm, 3));
+    try
+    {
+      vm.Tick();
+    }
+    catch(Exception)
+    {
+      vm.GetStackTrace(info);
+    }
+
+    AssertEqual(1, info.Count);
+
+    var trace = info[fb];
+    AssertEqual(4, trace.Count);
+
+    AssertEqual("wow", trace[0].func);
+    AssertEqual("bhl3.bhl", trace[0].file);
+    AssertEqual(4, trace[0].line);
+
+    AssertEqual("bar", trace[1].func);
+    AssertEqual("bhl2.bhl", trace[1].file);
+    AssertEqual(5, trace[1].line);
+
+    AssertEqual("foo", trace[2].func);
+    AssertEqual("bhl1.bhl", trace[2].file);
+    AssertEqual(5, trace[2].line);
+
+    AssertEqual("test", trace[3].func);
+    AssertEqual("bhl1.bhl", trace[3].file);
+    AssertEqual(10, trace[3].line);
   }
 
   [IsTested()]
