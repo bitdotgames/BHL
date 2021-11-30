@@ -74,8 +74,28 @@ public class VM
       }
     }
 
-    public void GetCallStackInfo(List<VM.CallStackInfo> info)
+    public void GetCallStackInfo(List<VM.CallStackItem> info)
     {
+      for(int i=frames.Count;i-- > 0;)
+      {
+        var frm = frames[i];
+        var item = new CallStackItem(); 
+        item.module_name = frm.module.name;
+        //if(i == frames.Count-1)
+        //{
+        //  item.ip = frm.fb.ip;
+        //  frm.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
+        //}
+        if(i > 0)
+        {
+          item.ip = frm.return_ip;
+          var caller = frames[i-1];
+          caller.module.ip2src_line.TryGetValue(item.ip, out item.line_num);
+          item.func_name = CallStackItem.MapIp2Func(caller.start_ip, caller.module.func2ip);  
+        }
+
+        info.Add(item);
+      }
     }
   }
 
@@ -90,6 +110,7 @@ public class VM
 
     public VM vm;
     public Fiber fb;
+    public CompiledModule module;
 
     public byte[] bytecode;
     public List<Const> constants;
@@ -152,6 +173,7 @@ public class VM
     public void Init(Fiber fb, CompiledModule module, int start_ip)
     {
       this.fb = fb;
+      this.module = module;
       constants = module.constants;
       Init(module.bytecode, start_ip);
     }
@@ -159,6 +181,7 @@ public class VM
     public void Init(Frame origin, int start_ip)
     {
       fb = origin.fb;
+      module = origin.module;
       constants = origin.constants;
       Init(origin.bytecode, start_ip);
     }
@@ -238,11 +261,22 @@ public class VM
     }
   }
 
-  public struct CallStackInfo
+  public struct CallStackItem
   {
     public string module_name;
     public string func_name;
-    public uint line_num;
+    public int line_num;
+    public int ip; 
+
+    static public string MapIp2Func(int ip, Dictionary<string, int> func2ip)
+    {
+      foreach(var kv in func2ip)
+      {
+        if(kv.Value == ip)
+          return kv.Key;
+      }
+      return "?";
+    }
   }
 
   public class Pool<T> where T : class
@@ -507,7 +541,7 @@ public class VM
 
       {
         var opcode = (Opcodes)curr_frame.bytecode[ip];
-        //Console.WriteLine("OP " + opcode + " @ " + string.Format("0x{0:x2} {0}", ip));
+        //Console.WriteLine("OP " + opcode + " @ " + string.Format("0x{0:x2} {0} {1}", ip, curr_frame.module.name));
         switch(opcode)
         {
           case Opcodes.Nop:
@@ -1063,13 +1097,15 @@ public class CompiledModule
   public byte[] bytecode;
   public List<Const> constants;
   public Dictionary<string, int> func2ip;
+  public Dictionary<int, int> ip2src_line;
 
   public CompiledModule(
     string name,
     byte[] bytecode, 
     List<Const> constants, 
     Dictionary<string, int> func2ip,
-    byte[] initcode = null
+    byte[] initcode = null,
+    Dictionary<int, int> ip2src_line = null
   )
   {
     this.name = name;
@@ -1077,10 +1113,18 @@ public class CompiledModule
     this.bytecode = bytecode;
     this.constants = constants;
     this.func2ip = func2ip;
+    this.ip2src_line = ip2src_line;
   }
 
   public CompiledModule(ModuleCompiler c)
-    : this(c.Module.name, c.GetByteCode(), c.Constants, c.Func2Ip, c.GetInitCode())
+    : this(
+        c.Module.name, 
+        c.GetByteCode(), 
+        c.Constants, 
+        c.Func2Ip, 
+        c.GetInitCode(),
+        c.Ip2SrcLine
+      )
   {}
 }
 

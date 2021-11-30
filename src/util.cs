@@ -358,6 +358,14 @@ static public class Util
         w.Write(kv.Key);
         w.Write(kv.Value);
       }
+
+      //TODO: add this info only for development builds
+      w.Write(m.ip2src_line.Count);
+      foreach(var kv in m.ip2src_line)
+      {
+        w.Write(kv.Key);
+        w.Write(kv.Value);
+      }
     }
   }
 
@@ -410,7 +418,12 @@ static public class Util
       for(int i=0;i<func2ip_len;++i)
         func2ip.Add(r.ReadString(), r.ReadInt32());
 
-      return new CompiledModule(name, bytecode, constants, func2ip, initcode);
+      var ip2src_line = new Dictionary<int, int>();
+      int ip2src_line_len = r.ReadInt32();
+      for(int i=0;i<ip2src_line_len;++i)
+        ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
+
+      return new CompiledModule(name, bytecode, constants, func2ip, initcode, ip2src_line);
     }
   }
 

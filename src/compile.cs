@@ -176,6 +176,13 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
+  Dictionary<int, int> ip2src_line = new Dictionary<int, int>();
+  public Dictionary<int, int> Ip2SrcLine {
+    get {
+      return ip2src_line;
+    }
+  }
+
   Dictionary<uint, string> imports = new Dictionary<uint, string>();
   
   static Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
@@ -246,12 +253,17 @@ public class ModuleCompiler : AST_Visitor
     int i = code_stack.Count - 1;
     Bytecode tmp = code_stack[i];
     int pos = tmp.Position;
-    while(tmp != parent)
+    while(tmp != parent && i > 0)
     {
       tmp = code_stack[--i];
       pos += tmp.Position;
     }
     return pos;
+  }
+
+  int GetAbsPosition()
+  {
+    return GetPositionRelativeToParent(null);
   }
 
   int AddConstant(AST_Literal lt)
@@ -613,18 +625,23 @@ public class ModuleCompiler : AST_Visitor
   }
 
   //NOTE: public for testing purposes only
-  public ModuleCompiler Emit(Opcodes op, int[] operands = null)
+  public ModuleCompiler Emit(Opcodes op, int[] operands = null, int line_num = 0)
   {
     var curr_scope = PeekCode();
-    Emit(curr_scope, op, operands);
+    Emit(curr_scope, op, line_num, operands);
+
+    int ip_pos = GetAbsPosition()-1;
+    //Console.WriteLine("EMT " + op + " " + ip_pos + " -> " + module_path.name + "@" + line_num);
+    ip2src_line[ip_pos] = line_num; 
+
     return this;
   }
 
-  void Emit(Bytecode buf, Opcodes op, int[] operands = null)
+  void Emit(Bytecode code, Opcodes op, int line_num, int[] operands = null)
   {
     var def = LookupOpcode(op);
 
-    buf.Write((byte)op);
+    code.Write((byte)op);
 
     if(def.operand_width != null && (operands == null || operands.Length != def.operand_width.Length))
       throw new Exception("Invalid number of operands for opcode:" + op + ", expected:" + def.operand_width.Length);
@@ -642,20 +659,20 @@ public class ModuleCompiler : AST_Visitor
         case 1:
           if(op_val < sbyte.MinValue || op_val > sbyte.MaxValue)
             throw new Exception("Operand value(1 byte) is out of bounds: " + op_val);
-          buf.Write8((uint)op_val);
+          code.Write8((uint)op_val);
         break;
         case 2:
           if(op_val < short.MinValue || op_val > short.MaxValue)
             throw new Exception("Operand value(2 bytes) is out of bounds: " + op_val);
-          buf.Write16((uint)op_val);
+          code.Write16((uint)op_val);
         break;
         case 3:
           if(op_val < -8388607 || op_val > 8388607)
             throw new Exception("Operand value(3 bytes) is out of bounds: " + op_val);
-          buf.Write24((uint)op_val);
+          code.Write24((uint)op_val);
         break;
         case 4:
-          buf.Write32((uint)op_val);
+          code.Write32((uint)op_val);
         break;
         default:
           throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
@@ -1021,12 +1038,12 @@ public class ModuleCompiler : AST_Visitor
     {
       case EnumCall.VARW:
       {
-        Emit(Opcodes.SetVar, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.SetVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
       }
       break;
       case EnumCall.VAR:
       {
-        Emit(Opcodes.GetVar, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.GetVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC:
@@ -1035,8 +1052,8 @@ public class ModuleCompiler : AST_Visitor
         if(func2ip.TryGetValue(ast.name, out offset))
         {
           VisitChildren(ast);
-          Emit(Opcodes.GetFunc, new int[] {offset});
-          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits});
+          Emit(Opcodes.GetFunc, new int[] {offset}, (int)ast.line_num);
+          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
         }
         else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
         {
@@ -1044,8 +1061,8 @@ public class ModuleCompiler : AST_Visitor
           if(func_idx == -1)
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           VisitChildren(ast);
-          Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx});
-          Emit(Opcodes.CallNative, new int[] {(int)ast.cargs_bits});
+          Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
         }
         else if(ast.nname2 != module_path.id)
         {
@@ -1060,8 +1077,8 @@ public class ModuleCompiler : AST_Visitor
           if(func_idx > ushort.MaxValue)
             throw new Exception("Can't encode func literal in ushort: " + func_idx);
 
-          Emit(Opcodes.GetFuncImported, new int[] {(int)module_idx, (int)func_idx});
-          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits});
+          Emit(Opcodes.GetFuncImported, new int[] {(int)module_idx, (int)func_idx}, (int)ast.line_num);
+          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
         }
         else
           throw new Exception("Func '" + ast.name + "' code not found");
@@ -1074,7 +1091,7 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx});
+        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVARW:
@@ -1084,7 +1101,7 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx});
+        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, (int)ast.line_num);
       }
       break;
       case EnumCall.MFUNC:
@@ -1098,31 +1115,31 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
         
-        Emit(Opcodes.GetMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)});
-        Emit(Opcodes.CallNative, new int[] {0});
+        Emit(Opcodes.GetMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
+        Emit(Opcodes.CallNative, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]")});
-        Emit(Opcodes.CallNative, new int[] {0});
+        Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]")}, (int)ast.line_num);
+        Emit(Opcodes.CallNative, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
         Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")});
-        Emit(Opcodes.CallNative, new int[] {0});
+        Emit(Opcodes.CallNative, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC_PTR_POP:
       {
-        Emit(Opcodes.Call, new int[] {0});
+        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC_PTR:
       {
-        Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx});
-        Emit(Opcodes.Call, new int[] {0});
+        Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
+        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
       }
       break;
       default:

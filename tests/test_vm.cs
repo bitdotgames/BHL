@@ -4825,8 +4825,8 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
-  public void TestGetCallstackInfo()
+  [IsTested()]
+  public void TestGetCallStackInfo()
   {
     string bhl3 = @"
     func float wow(float b)
@@ -4858,7 +4858,7 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var globs = SymbolTable.VM_CreateBuiltins();
-    var info = new List<VM.CallStackInfo>();
+    var info = new List<VM.CallStackItem>();
     {
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"), null,
         delegate(VM.Frame frm, ref BHS status) { 
@@ -4883,16 +4883,27 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().num, 3);
 
-    AssertEqual(3, info.Count);
-    AssertEqual("bar", info[0].func_name);
-    AssertEqual("bhl2", info[0].module_name);
-    AssertEqual(6, info[0].line_num);
-    AssertEqual("foo", info[1].func_name);
-    AssertEqual("bhl1", info[1].module_name);
-    AssertEqual(7, info[1].line_num);
-    AssertEqual("test", info[2].func_name);
+    AssertEqual(4, info.Count);
+
+    AssertEqual("record_callstack", info[0].func_name);
+    AssertEqual("bhl3", info[0].module_name);
+    AssertEqual(4, info[0].line_num);
+
+    AssertEqual("wow", info[1].func_name);
+    AssertEqual("bhl2", info[1].module_name);
+    AssertEqual(5, info[1].line_num);
+
+    AssertEqual("bar", info[2].func_name);
     AssertEqual("bhl1", info[2].module_name);
-    AssertEqual(12, info[2].line_num);
+    AssertEqual(5, info[2].line_num);
+
+    AssertEqual("foo", info[3].func_name);
+    AssertEqual("bhl1", info[3].module_name);
+    AssertEqual(10, info[3].line_num);
+
+    //AssertEqual("?", info[4].module_name);
+    //AssertEqual("test", info[4].func_name);
+    //AssertEqual(0, info[3].line_num);
   }
 
   [IsTested()]
