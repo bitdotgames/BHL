@@ -4577,6 +4577,99 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDoubleStopFiberFromScript()
+  {
+    string bhl = @"
+    func foo()
+    {
+      defer {
+        trace(""4"")
+      }
+      trace(""1"")
+      yield()
+    }
+
+    func test()
+    {
+      int fid = start(func() {
+        defer {
+          trace(""0"")
+        }
+        foo()
+        trace(""2"")
+      })
+
+      yield()
+      trace(""3"")
+      stop(fid)
+      stop(fid)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("1340", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestSelfStopFiberFromScript()
+  {
+    string bhl = @"
+    func foo()
+    {
+      defer {
+        trace(""4"")
+      }
+      trace(""1"")
+    }
+
+    func test()
+    {
+      int fid
+      fid = start(func() use(ref fid) {
+        defer {
+          trace(""0"")
+        }
+        yield()
+        foo()
+        stop(fid)
+        yield()
+        trace(""2"")
+      })
+
+      yield()
+      trace(""3"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("1340", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStopFiberExternallyWithProperDefers()
   {
     string bhl = @"
