@@ -5,6 +5,124 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+public enum Opcodes
+{
+  Nop             = 0x0,
+  Constant        = 0x1,
+  Add             = 0x2,
+  Sub             = 0x3,
+  Div             = 0x4,
+  Mul             = 0x5,
+  SetVar          = 0x6,
+  GetVar          = 0x7,
+  DeclVar         = 0x8,
+  ArgVar          = 0x9,
+  GetAttr         = 0xA,
+  Return          = 0xC,
+  ReturnVal       = 0xD,
+  Jump            = 0xE,
+  Pop             = 0xF,
+  Call            = 0x10,
+  CallNative      = 0x11,
+  GetFunc         = 0x12,
+  GetFuncNative   = 0x13,
+  GetFuncFromVar  = 0x14,
+  GetFuncImported = 0x15,
+  GetMethodNative = 0x16,
+  CondJump        = 0x19,
+  SetAttr         = 0x20,
+  SetAttrInplace  = 0x21,
+  UnaryNot        = 0x31,
+  UnaryNeg        = 0x32,
+  And             = 0x33,
+  Or              = 0x34,
+  Mod             = 0x35,
+  BitOr           = 0x36,
+  BitAnd          = 0x37,
+  Equal           = 0x38,
+  NotEqual        = 0x39,
+  Less            = 0x3A,
+  LessOrEqual     = 0x3B,
+  DefArg          = 0x3E, 
+  TypeCast        = 0x3F,
+  Block           = 0x40,
+  New             = 0x41,
+  Lambda          = 0x42,
+  UseUpval        = 0x43,
+  InitFrame       = 0x44,
+  Inc             = 0x45,
+  Dec             = 0x46,
+  ClassBegin      = 0x48,
+  ClassMember     = 0x49,
+  ClassEnd        = 0x4A,
+  Import          = 0x4B,
+}
+
+public class Const
+{
+  static public readonly Const Nil = new Const(EnumLiteral.NIL, 0, "");
+
+  public EnumLiteral type;
+  public double num;
+  public string str;
+
+  public Const(EnumLiteral type, double num, string str)
+  {
+    this.type = type;
+    this.num = num;
+    this.str = str;
+  }
+
+  public Const(AST_Literal lt)
+  {
+    type = lt.type;
+    num = lt.nval;
+    str = lt.sval;
+  }
+
+  public Const(double num)
+  {
+    type = EnumLiteral.NUM;
+    this.num = num;
+    str = "";
+  }
+
+  public Const(string str)
+  {
+    type = EnumLiteral.STR;
+    this.str = str;
+    num = 0;
+  }
+
+  public Const(bool v)
+  {
+    type = EnumLiteral.BOOL;
+    num = v ? 1 : 0;
+    this.str = "";
+  }
+
+  public Val ToVal(VM vm)
+  {
+    if(type == EnumLiteral.NUM)
+      return Val.NewNum(vm, num);
+    else if(type == EnumLiteral.BOOL)
+      return Val.NewBool(vm, num == 1);
+    else if(type == EnumLiteral.STR)
+      return Val.NewStr(vm, str);
+    else if(type == EnumLiteral.NIL)
+      return Val.NewNil(vm);
+    else
+      throw new Exception("Bad type");
+  }
+
+  public bool IsEqual(Const o)
+  {
+    return type == o.type && 
+           num == o.num && 
+           str == o.str;
+  }
+}
+
 public class VM
 {
   public class Fiber
@@ -1136,17 +1254,6 @@ public class CompiledModule
     this.func2ip = func2ip;
     this.ip2src_line = ip2src_line;
   }
-
-  public CompiledModule(ModuleCompiler c)
-    : this(
-        c.Module.name, 
-        c.GetByteCode(), 
-        c.Constants, 
-        c.Func2Ip, 
-        c.GetInitCode(),
-        c.Ip2SrcLine
-      )
-  {}
 }
 
 public interface IInstruction

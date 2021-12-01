@@ -5330,12 +5330,12 @@ public class BHL_TestVM : BHL_TestBase
 
   public static void AssertEqual(ModuleCompiler ca, ModuleCompiler cb)
   {
-    AssertEqual(new CompiledModule(ca), new CompiledModule(cb));
+    AssertEqual(ca.GetModule(), cb.GetModule());
   }
 
   public static void AssertEqual(CompiledModule ca, ModuleCompiler cb)
   {
-    AssertEqual(ca, new CompiledModule(cb));
+    AssertEqual(ca, cb.GetModule());
   }
 
   public static void AssertEqual(CompiledModule ca, CompiledModule cb)
@@ -5444,7 +5444,7 @@ public class BHL_TestVM : BHL_TestBase
   static VM MakeVM(ModuleCompiler c)
   {
     var vm = new VM(c.Globs);
-    var m = new CompiledModule(c);
+    var m = c.GetModule();
     vm.RegisterModule(m);
     return vm;
   }

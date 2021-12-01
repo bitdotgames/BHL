@@ -54,6 +54,7 @@ public static class Tasks
       $"{BHL_ROOT}/deps/msgpack/*.cs",
       $"{BHL_ROOT}/deps/metagen.cs",
       $"{BHL_ROOT}/src/ast.cs", 
+      $"{BHL_ROOT}/src/vm.cs", 
       $"{BHL_ROOT}/src/symbol.cs", 
       $"{BHL_ROOT}/src/scope.cs", 
       $"{BHL_ROOT}/src/backend.cs", 

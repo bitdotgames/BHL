@@ -7,19 +7,6 @@ using System.Diagnostics;
 
 namespace bhl {
 
-public class UserBindings
-{
-  public virtual void Register(GlobalScope globs) {}
-}
-
-public class EmptyUserBindings : UserBindings {}
-
-public enum CompileFormat
-{
-  AST = 1,
-  VM  = 2
-}
-
 public class BuildConf
 {
   public string args = ""; 

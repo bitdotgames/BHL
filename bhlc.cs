@@ -61,7 +61,7 @@ public class BHLC
       { "d", "debug version",
         v => debug = v != null },
       { "module_fmt=", "binary module format",
-        v => module_fmt = (ModuleBinaryFormat)int.Parse(v) }
+        v => module_fmt = (ModuleBinaryFormat)int.Parse(v) },
       { "compile_fmt=", "compile format",
         v => compile_fmt = (CompileFormat)int.Parse(v) }
      };
@@ -124,7 +124,7 @@ public class BHLC
     if(deterministic)
       files.Sort();
 
-    Console.WriteLine("Total files {0}(debug: {1})", files.Count, Util.DEBUG);
+    Console.WriteLine("Total files {0}(debug: {1})", files.Count, debug);
     var conf = new BuildConf();
     conf.args = string.Join(";", args);
     conf.compile_fmt = compile_fmt;

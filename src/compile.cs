@@ -4,124 +4,6 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public enum Opcodes
-{
-  Nop             = 0x0,
-  Constant        = 0x1,
-  Add             = 0x2,
-  Sub             = 0x3,
-  Div             = 0x4,
-  Mul             = 0x5,
-  SetVar          = 0x6,
-  GetVar          = 0x7,
-  DeclVar         = 0x8,
-  ArgVar          = 0x9,
-  GetAttr         = 0xA,
-  Return          = 0xC,
-  ReturnVal       = 0xD,
-  Jump            = 0xE,
-  Pop             = 0xF,
-  Call            = 0x10,
-  CallNative      = 0x11,
-  GetFunc         = 0x12,
-  GetFuncNative   = 0x13,
-  GetFuncFromVar  = 0x14,
-  GetFuncImported = 0x15,
-  GetMethodNative = 0x16,
-  CondJump        = 0x19,
-  SetAttr         = 0x20,
-  SetAttrInplace  = 0x21,
-  UnaryNot        = 0x31,
-  UnaryNeg        = 0x32,
-  And             = 0x33,
-  Or              = 0x34,
-  Mod             = 0x35,
-  BitOr           = 0x36,
-  BitAnd          = 0x37,
-  Equal           = 0x38,
-  NotEqual        = 0x39,
-  Less            = 0x3A,
-  LessOrEqual     = 0x3B,
-  DefArg          = 0x3E, 
-  TypeCast        = 0x3F,
-  Block           = 0x40,
-  New             = 0x41,
-  Lambda          = 0x42,
-  UseUpval        = 0x43,
-  InitFrame       = 0x44,
-  Inc             = 0x45,
-  Dec             = 0x46,
-  ClassBegin      = 0x48,
-  ClassMember     = 0x49,
-  ClassEnd        = 0x4A,
-  Import          = 0x4B,
-}
-
-public class Const
-{
-  static public readonly Const Nil = new Const(EnumLiteral.NIL, 0, "");
-
-  public EnumLiteral type;
-  public double num;
-  public string str;
-
-  public Const(EnumLiteral type, double num, string str)
-  {
-    this.type = type;
-    this.num = num;
-    this.str = str;
-  }
-
-  public Const(AST_Literal lt)
-  {
-    type = lt.type;
-    num = lt.nval;
-    str = lt.sval;
-  }
-
-  public Const(double num)
-  {
-    type = EnumLiteral.NUM;
-    this.num = num;
-    str = "";
-  }
-
-  public Const(string str)
-  {
-    type = EnumLiteral.STR;
-    this.str = str;
-    num = 0;
-  }
-
-  public Const(bool v)
-  {
-    type = EnumLiteral.BOOL;
-    num = v ? 1 : 0;
-    this.str = "";
-  }
-
-  public Val ToVal(VM vm)
-  {
-    if(type == EnumLiteral.NUM)
-      return Val.NewNum(vm, num);
-    else if(type == EnumLiteral.BOOL)
-      return Val.NewBool(vm, num == 1);
-    else if(type == EnumLiteral.STR)
-      return Val.NewStr(vm, str);
-    else if(type == EnumLiteral.NIL)
-      return Val.NewNil(vm);
-    else
-      throw new Exception("Bad type");
-  }
-
-  public bool IsEqual(Const o)
-  {
-    return type == o.type && 
-           num == o.num && 
-           str == o.str;
-  }
-}
-
 public class ModuleCompiler : AST_Visitor
 {
   public class OpDefinition
@@ -226,7 +108,19 @@ public class ModuleCompiler : AST_Visitor
   public CompiledModule Compile()
   {
     Visit(ast);
-    return new CompiledModule(this);
+    return GetModule();
+  }
+
+  public CompiledModule GetModule()
+  {
+    return new CompiledModule(
+        Module.name, 
+        GetByteCode(), 
+        Constants, 
+        Func2Ip, 
+        GetInitCode(),
+        Ip2SrcLine
+      );
   }
 
   Bytecode PeekCode()
@@ -1378,183 +1272,6 @@ public class ModuleCompiler : AST_Visitor
   }
 
 #endregion
-}
-
-public class Bytecode
-{
-  public ushort Position { get { return (ushort)stream.Position; } }
-  public long Length { get { return stream.Length; } }
-
-  MemoryStream stream = new MemoryStream();
-
-  public void Reset(byte[] buffer, int size)
-  {
-    stream.SetLength(0);
-    stream.Write(buffer, 0, size);
-    stream.Position = 0;
-  }
-
-  public byte[] GetBytes()
-  {
-    return stream.ToArray();
-  }
-
-  public static byte Decode8(byte[] bytecode, ref int ip)
-  {
-    ++ip;
-    return bytecode[ip];
-  }
-
-  public static ushort Decode16(byte[] bytecode, ref int ip)
-  {
-    ++ip;
-    ushort val = (ushort)
-      ((uint)bytecode[ip] | 
-       ((uint)bytecode[ip+1]) << 8
-       );
-    ;
-    ip += 1;
-    return val;
-  }
-
-  public static uint Decode24(byte[] bytecode, ref int ip)
-  {
-    ++ip;
-    uint val = (uint)
-      ((uint)bytecode[ip]          | 
-       ((uint)bytecode[ip+1]) << 8 |
-       ((uint)bytecode[ip+2]) << 16
-       );
-    ;
-    ip += 2;
-    return val;
-  }
-
-  public static uint Decode32(byte[] bytecode, ref int ip)
-  {
-    ++ip;
-    uint val = (uint)
-      ((uint)bytecode[ip]           | 
-       ((uint)bytecode[ip+1] << 8)  |
-       ((uint)bytecode[ip+2] << 16) |
-       ((uint)bytecode[ip+3] << 24)
-       );
-    ;
-    ip += 3;
-    return val;
-  }
-
-  public static uint Decode(byte[] bytecode, int num_bytes, ref int ip)
-  {
-    if(num_bytes < 1 || num_bytes > 4)
-      throw new Exception("Invalid amount of bytes: " + num_bytes);
-
-    uint val = 0;
-
-    ++ip;
-
-    if(num_bytes >= 1)
-      val |= (uint)bytecode[ip];
-
-    if(num_bytes >= 2)
-      val |= ((uint)bytecode[ip+1]) << 8;
-
-    if(num_bytes >= 3)
-      val |= ((uint)bytecode[ip+2]) << 16;
-
-    if(num_bytes == 4)
-      val |= ((uint)bytecode[ip+3]) << 24;
-
-    ip += (num_bytes-1);
-
-    return val;
-  }
-
-  public int Write(byte value)
-  {
-    return Write8(value);
-  }
-
-  public int Write(ushort value)
-  {
-    return Write16(value);
-  }
-
-  public int Write(uint value)
-  {
-    return Write32(value);
-  }
-
-  public int Write(bool value)
-  {
-    stream.WriteByte((byte)(value ? 1 : 0));
-    return 1;
-  }
-
-  public int Write8(uint value)
-  {
-    stream.WriteByte((byte)(value & 0xFF));
-    return 1;
-  }
-
-  public int Write16(uint value)
-  {
-    Write8((byte)(value & 0xFF));
-    Write8((byte)((value >> 8) & 0xFF));
-    return 2;
-  }
-
-  public int Write24(uint value)
-  {
-    Write8((byte)(value & 0xFF));
-    Write8((byte)((value >> 8) & 0xFF));
-    Write8((byte)((value >> 16) & 0xFF));
-    return 3;
-  }
-
-  public int Write32(uint value)
-  {
-    Write8((byte)(value & 0xFF));
-    Write8((byte)((value >> 8) & 0xFF));
-    Write8((byte)((value >> 16) & 0xFF));
-    Write8((byte)((value >> 24) & 0xFF));
-    return 4;
-  }
-
-  public int Write(uint value, int num_bytes)
-  {
-    if(num_bytes < 1 || num_bytes > 4)
-      throw new Exception("Invalid amount of bytes: " + num_bytes);
-
-    if(num_bytes >= 1)
-      Write8((byte)(value & 0xFF));
-    if(num_bytes >= 2)
-      Write8((byte)((value >> 8) & 0xFF));
-    if(num_bytes >= 3)
-      Write8((byte)((value >> 16) & 0xFF));
-    if(num_bytes == 4)
-      Write8((byte)((value >> 24) & 0xFF));
-
-    return num_bytes;
-  }
-
-  public void Write(Bytecode buffer)
-  {
-    buffer.WriteTo(stream);
-  }
-
-  void WriteTo(MemoryStream buffer_stream)
-  {
-    stream.WriteTo(buffer_stream);
-  }
-
-  public void PatchAt(int pos, uint value, int num_bytes)
-  {
-    long orig_pos = stream.Position;
-    stream.Position = pos;
-    Write(value, num_bytes);
-    stream.Position = orig_pos;
-  }
 }
 
 } //namespace bhl

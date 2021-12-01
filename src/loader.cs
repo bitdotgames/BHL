@@ -5,10 +5,23 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+public class UserBindings
+{
+  public virtual void Register(GlobalScope globs) {}
+}
+
+public class EmptyUserBindings : UserBindings {}
+
 public interface IModuleLoader
 {
   //NOTE: must return null if no such module
   AST_Module LoadModule(HashedName id);
+}
+
+public enum CompileFormat
+{
+  AST = 1,
+  VM  = 2
 }
 
 public enum ModuleBinaryFormat
