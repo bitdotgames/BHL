@@ -322,7 +322,6 @@ public class VM
   int fibers_ids = 0;
 
   List<Fiber> fibers = new List<Fiber>();
-  internal Fiber curr_fiber;
 
   IModuleImporter importer;
 
@@ -1022,12 +1021,12 @@ public class VM
   {
     for(int i=0;i<fibers.Count;)
     {
-      curr_fiber = fibers[i];
+      var fb = fibers[i];
 
-      var status = Execute(ref curr_fiber.ip, curr_fiber.frames.Peek(), curr_fiber.frames, ref curr_fiber.instruction, int.MaxValue, null);
+      var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, int.MaxValue, null);
       
       if(status != BHS.RUNNING)
-        Stop(curr_fiber);
+        Stop(fb);
       else
         ++i;
     }
