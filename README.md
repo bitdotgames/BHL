@@ -252,11 +252,11 @@ You can run unit tests by executing the following command:
 4. ~~Multiple return values support~~
 5. ~~**while** syntax sugar: **for(...) {}** support~~
 6. ~~**while** syntax sugar: **foreach(...) {}** support~~
-7. Ternary operator support
+7. ~~Ternary operator support~~
 8. ~~User defined structs~~
-9. Basic user defined struct methods
+9. ~~Basic user defined struct methods~~
 10. ~~User defined enums~~
-11. Postfix increment/decrement
+11. ~~Postfix increment/decrement~~
 
 
 ## Version 2.0
