@@ -3,7 +3,7 @@
 tags
 
 tmp
-obj
+obj/
 build
 obj
 src/autogen.cs*

@@ -803,6 +803,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitBreak([NotNull] bhlParser.BreakContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Continue</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterContinue([NotNull] bhlParser.ContinueContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Continue</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitContinue([NotNull] bhlParser.ContinueContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Return</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>

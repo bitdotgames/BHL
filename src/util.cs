@@ -35,6 +35,8 @@ public static class Hash
 {
   static public uint CRC32(string id)
   {
+    if(string.IsNullOrEmpty(id))
+      return 0;
     var bytes = System.Text.Encoding.ASCII.GetBytes(id);
     return Crc32.Compute(bytes, bytes.Length);
   }
@@ -67,8 +69,16 @@ public static class Hash
 
 public struct HashedName
 {
-  public ulong n;
   public string s;
+  ulong _n;
+  public ulong n {
+    get {
+      if(_n == 0) {
+        _n = Hash.CRC28(s);
+      }
+      return _n;
+    }
+  }
 
   public uint n1 {
     get {
@@ -84,12 +94,12 @@ public struct HashedName
 
   public HashedName(ulong n, string s = "")
   {
-    this.n = n;
+    this._n = n;
     this.s = s;
   }
 
   public HashedName(string s)
-    : this(Hash.CRC28(s), s)
+    : this(0, s)
   {}
 
   public HashedName(uint n1, uint n2, string s = "")
@@ -143,76 +153,6 @@ public struct HashedName
   }
 }
 
-static public class OPool
-{
-  public struct PoolItem
-  {
-    public bool used;
-    public object obj;
-  }
-
-  static public List<PoolItem> pool = new List<PoolItem>();
-  static public int hits = 0;
-  static public int miss = 0;
-
-  static public T Request<T>() where T : class, new()
-  {
-    for(int i=0;i<pool.Count;++i)
-    {
-      var item = pool[i];
-      if(!item.used && item.obj is T)
-      {
-        ++hits;
-
-        var res = item.obj as T;
-        item.used = true;
-        pool[i] = item;
-        return res;
-      }
-    }
-
-    {
-      var res = new T();
-      AddToPool(res);
-      return res;
-    }
-  }
-
-  static void AddToPool(object obj)
-  {
-    ++miss;
-
-    var item = new PoolItem();
-    item.used = true;
-    item.obj = obj;
-    pool.Add(item);
-  }
-
-  static public void Release(object obj)
-  {
-    if(obj == null)
-      return;
-
-    for(int i=0;i<pool.Count;++i)
-    {
-      var item = pool[i];
-      if(item.obj == obj)
-      {
-        item.used = false;
-        pool[i] = item;
-        break;
-      }
-    }
-  }
-
-  static public void Clear()
-  {
-    hits = 0;
-    miss = 0;
-    pool.Clear();
-  }
-}
-
 public static class Extensions
 {
   public static void Append(this AST dst, AST src)
@@ -257,12 +197,23 @@ public static class Extensions
     } while (n != 0);           
     return total;
   }
+
+  public static Val PopRelease(this FixedStack<Val> stack)
+  {
+    var val = stack.Pop();
+    val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    return val;
+  }
+
+  public static void PushRetain(this FixedStack<Val> stack, Val val)
+  {
+    val.RefMod(RefOp.INC | RefOp.USR_INC);
+    stack.Push(val);
+  }
 }
 
 static public class Util
 {
-  static public bool DEBUG = false;
-
   public delegate void LogCb(string text);
   static public LogCb Debug = DefaultDebug;
   static public LogCb Error = DefaultError;
@@ -326,14 +277,6 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static public T File2Meta<T>(string file) where T : IMetaStruct, new()
-  {
-    using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
-    {
-      return Bin2Meta<T>(rfs);
-    }
-  }
-
   static MetaHelper.CreateByIdCb prev_create_factory; 
 
   static public void SetupASTFactory()
@@ -347,16 +290,20 @@ static public class Util
     MetaHelper.CreateById = prev_create_factory;
   }
 
+  static public T File2Meta<T>(string file) where T : IMetaStruct, new()
+  {
+    using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
+    {
+      return Bin2Meta<T>(rfs);
+    }
+  }
+
   static public T Bin2Meta<T>(Stream s) where T : IMetaStruct, new()
   {
     var reader = new MsgPackDataReader(s);
-    var ast = new T();
-    var err = MetaHelper.syncSafe(MetaSyncContext.NewForRead(reader), ref ast);
-
-    if(err != MetaIoError.SUCCESS)
-      throw new Exception("Could not read: " + err);
-
-    return ast;
+    var meta = new T();
+    MetaHelper.sync(MetaSyncContext.NewForRead(reader), ref meta);
+    return meta;
   }
 
   static public T Bin2Meta<T>(byte[] bytes) where T : IMetaStruct, new()
@@ -364,20 +311,119 @@ static public class Util
     return Bin2Meta<T>(new MemoryStream(bytes));
   }
 
-  static public void Meta2Bin<T>(T ast, Stream dst) where T : IMetaStruct
+  static public void Meta2Bin<T>(T meta, Stream dst) where T : IMetaStruct
   {
     var writer = new MsgPackDataWriter(dst);
-    var err = MetaHelper.syncSafe(MetaSyncContext.NewForWrite(writer), ref ast);
-
-    if(err != MetaIoError.SUCCESS)
-      throw new Exception("Could not write: " + err);
+    MetaHelper.sync(MetaSyncContext.NewForWrite(writer), ref meta);
   }
 
-  static public void Meta2File<T>(T ast, string file) where T : IMetaStruct
+  static public void Meta2File<T>(T meta, string file) where T : IMetaStruct
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {
-      Meta2Bin(ast, wfs);
+      Meta2Bin(meta, wfs);
+    }
+  }
+
+  static public void Compiled2Bin(CompiledModule m, Stream dst)
+  {
+    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
+    {
+      //TODO: add better support for version
+      w.Write((uint)1);
+
+      w.Write(m.name);
+
+      w.Write(m.initcode == null ? (int)0 : m.initcode.Length);
+      if(m.initcode != null)
+        w.Write(m.initcode, 0, m.initcode.Length);
+
+      w.Write(m.bytecode == null ? (int)0 : m.bytecode.Length);
+      if(m.bytecode != null)
+        w.Write(m.bytecode, 0, m.bytecode.Length);
+
+      w.Write(m.constants.Count);
+      foreach(var cn in m.constants)
+      {
+        w.Write((byte)cn.type);
+        if(cn.type == EnumLiteral.STR)
+          w.Write(cn.str);
+        else
+          w.Write(cn.num);
+      }
+
+      w.Write(m.func2ip.Count);
+      foreach(var kv in m.func2ip)
+      {
+        w.Write(kv.Key);
+        w.Write(kv.Value);
+      }
+
+      //TODO: add this info only for development builds
+      w.Write(m.ip2src_line.Count);
+      foreach(var kv in m.ip2src_line)
+      {
+        w.Write(kv.Key);
+        w.Write(kv.Value);
+      }
+    }
+  }
+
+  static public void Compiled2File(CompiledModule m, string file)
+  {
+    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
+    {
+      Compiled2Bin(m, wfs);
+    }
+  }
+
+  static public CompiledModule Bin2Compiled(Stream src)
+  {
+    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
+    {
+      //TODO: add better support for version
+      uint version = r.ReadUInt32();
+      if(version != 1)
+        throw new Exception("Unsupported version: " + version);
+
+      string name = r.ReadString();
+
+      byte[] initcode = null;
+      int initcode_len = r.ReadInt32();
+      if(initcode_len > 0)
+        initcode = r.ReadBytes(initcode_len);
+
+      byte[] bytecode = null;
+      int bytecode_len = r.ReadInt32();
+      if(bytecode_len > 0)
+        bytecode = r.ReadBytes(bytecode_len);
+
+      var constants = new List<Const>();
+      int constants_len = r.ReadInt32();
+      for(int i=0;i<constants_len;++i)
+      {
+        var cn_type = (EnumLiteral)r.Read();
+        double cn_num = 0;
+        string cn_str = "";
+        if(cn_type == EnumLiteral.STR)
+          cn_str = r.ReadString();
+        else
+          cn_num = r.ReadDouble();
+        var cn = new Const(cn_type, cn_num, cn_str);
+        constants.Add(cn);
+      }
+
+      var func2ip = new Dictionary<string, int>();
+      int func2ip_len = r.ReadInt32();
+      for(int i=0;i<func2ip_len;++i)
+        func2ip.Add(r.ReadString(), r.ReadInt32());
+
+      var ip2src_line = new Dictionary<int, int>();
+      int ip2src_line_len = r.ReadInt32();
+      for(int i=0;i<ip2src_line_len;++i)
+        ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
+
+      return new CompiledModule(name, bytecode, constants, func2ip, initcode, ip2src_line);
     }
   }
 
@@ -409,7 +455,7 @@ static public class Util
 
   public static void NodeDump(BehaviorTreeNode node, bool only_running = false, int level = 0, bool is_term = true)
   {
-    var fnode = node as FuncNodeAST;
+    var fnode = node as FuncNodeScript;
     if(fnode != null)
       fnode.Inflate();
 
@@ -438,7 +484,7 @@ static public class Util
 public struct FuncArgsInfo
 {
   //NOTE: 6 bits are used for a total number of args passed (max 63), 
-  //      26 bits are reserved for default args set bits(max 26 default args)
+  //      26 bits are reserved for default args set bits (max 26 default args)
   const int ARGS_NUM_BITS = 6;
   const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
   const int MAX_ARGS = (int)ARGS_NUM_MASK;
@@ -454,6 +500,25 @@ public struct FuncArgsInfo
   public int CountArgs()
   {
     return (int)(bits & ARGS_NUM_MASK);
+  }
+
+  public bool HasDefaultUsedArgs()
+  {              
+    return (bits & ~ARGS_NUM_MASK) > 0;
+  }
+
+  public int CountRequiredArgs()
+  {
+    return CountArgs() - CountUsedDefaultArgs();
+  }
+
+  public int CountUsedDefaultArgs()
+  {
+    int c = 0;
+    for(int i=0;i<MAX_DEFAULT_ARGS;++i)
+      if(IsDefaultArgUsed(i))
+        ++c;
+    return c;
   }
 
   public bool SetArgsNum(int num)
@@ -519,6 +584,15 @@ static public class AST_Util
     self.children.Add(c);
   }
 
+  static public void AddChildren(this AST self, AST_Base b)
+  {
+    if(b is AST c)
+    {
+      for(int i=0;i<c.children.Count;++i)
+        self.AddChild(c.children[i]);
+    }
+  }
+
   static public AST NewInterimChild(this AST self)
   {
     var c = new AST_Interim();
@@ -532,8 +606,7 @@ static public class AST_Util
   {
     var n = new AST_Module();
     n.nname = nname;
-    if(Util.DEBUG)
-      n.name = name;
+    n.name = name;
     return n;
   }
 
@@ -557,15 +630,13 @@ static public class AST_Util
   static void Init_FuncDecl(AST_FuncDecl n, HashedName name, HashedName type)
   {
     n.ntype = (uint)type.n; 
-    if(Util.DEBUG)
-      n.type = type.s;
+    n.type = type.s;
 
     n.nname1 = name.n1;
     //module id
     n.nname2 = name.n2;
 
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
 
     //fparams
     n.NewInterimChild();
@@ -640,12 +711,10 @@ static public class AST_Util
     var n = new AST_ClassDecl();
 
     n.nname = (uint)name.n;
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
 
     n.nparent = (uint)parent.n;
-    if(Util.DEBUG)
-      n.parent = parent.s;
+    n.parent = parent.s;
 
     return n;
   }
@@ -667,8 +736,7 @@ static public class AST_Util
     var n = new AST_EnumDecl();
 
     n.nname = (uint)name.n;
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
 
     return n;
   }
@@ -704,51 +772,53 @@ static public class AST_Util
   {
     var n = new AST_TypeCast();
     n.ntype = (uint)type.n;
-    if(Util.DEBUG)
-      n.type = type.s;
+    n.type = type.s;
 
     return n;
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_UseParam New_UseParam(HashedName name, bool is_ref)
+  static public AST_UseParam New_UseParam(HashedName name, bool is_ref, int symb_idx, int upsymb_idx)
   {
     var n = new AST_UseParam();
-    n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.nname = (uint)name.n;
+    n.name = name.s;
+    n.is_ref = is_ref;
+    n.symb_idx = (uint)symb_idx;
+    n.upsymb_idx = (uint)upsymb_idx;
 
     return n;
-  }
-
-  static public bool IsRef(this AST_UseParam n)
-  {
-    return (n.nname & (1u << 29)) != 0; 
   }
 
   static public HashedName Name(this AST_UseParam n)
   {
-    return new HashedName(n.nname & 0xFFFFFFF, n.name);
+    return new HashedName(n.nname, n.name);
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name = new HashedName(), ClassSymbol scope_symb = null)
+  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name = new HashedName(), ClassSymbol scope_symb = null, int symb_idx = 0)
   {
-    return New_Call(type, line_num, name, scope_symb != null ? (uint)scope_symb.Type().n : 0);
+    return New_Call(type, line_num, name, scope_symb != null ? (uint)scope_symb.Type().n : 0, scope_symb != null ? (string)scope_symb.Type().s : "", symb_idx);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype)
+  static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, ClassSymbol scope_symb = null)
+  {
+    return New_Call(type, line_num, symb.name, scope_symb != null ? (uint)scope_symb.Type().n : 0, scope_symb != null ? (string)scope_symb.Type().s : "", symb.scope_idx);
+  }
+
+  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype, string scope_type, int symb_idx = 0)
   {
     var n = new AST_Call();
     n.type = type;
     n.nname1 = name.n1;
     n.nname2 = name.n2;
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
     n.scope_ntype = scope_ntype;
+    n.scope_type = scope_type;
     n.line_num = (uint)line_num;
+    n.symb_idx = (uint)symb_idx;
 
     return n;
   }
@@ -783,6 +853,13 @@ static public class AST_Util
     return new AST_Break();
   }
   
+  static public AST_Continue New_Continue(bool jump_marker = false)
+  {
+    return new AST_Continue() {
+      jump_marker = jump_marker
+    };
+  }
+  
   ////////////////////////////////////////////////////////
 
   static public AST_PopValue New_PopValue()
@@ -797,8 +874,7 @@ static public class AST_Util
     var n = new AST_New();
     var type_name = type.Type(); 
     n.ntype = (uint)type_name.n;
-    if(Util.DEBUG)
-      n.type = type_name.s;
+    n.type = type_name.s;
 
     return n;
   }
@@ -820,43 +896,48 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, uint ntype)
+  static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref)
+  {
+    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.name.n1, symb.type.name.s, symb.scope_idx);
+  }
+
+  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, bool is_func_arg, uint ntype, string type, int symb_idx)
   {
     var n = new AST_VarDecl();
-    n.nname = (uint)name.n | (is_ref ? 1u << 29 : 0u);
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.nname = (uint)name.n;
+    n.name = name.s;
     n.ntype = ntype;
+    n.type = type;
+    n.is_ref = is_ref;
+    n.is_func_arg = is_func_arg;
+    n.symb_idx = (uint)symb_idx;
 
     return n;
   }
 
   static public HashedName Name(this AST_VarDecl n)
   {
-    return new HashedName(n.nname & 0xFFFFFFF, n.name);
-  }
-
-  static public bool IsRef(this AST_VarDecl n)
-  {
-    return (n.nname & (1u << 29)) != 0; 
+    return new HashedName(n.nname, n.name);
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Inc New_Inc(HashedName name)
+  static public AST_Inc New_Inc(VariableSymbol symb)
   {
     var n = new AST_Inc();
-    n.nname = (uint)name.n;
+    n.nname = (uint)symb.name.n;
+    n.symb_idx = (uint)symb.scope_idx;
 
     return n;
   }
   
   ////////////////////////////////////////////////////////
 
-  static public AST_Dec New_Dec(HashedName name)
+  static public AST_Dec New_Dec(VariableSymbol symb)
   {
     var n = new AST_Dec();
-    n.nname = (uint)name.n;
+    n.nname = (uint)symb.name.n;
+    n.symb_idx = (uint)symb.scope_idx;
 
     return n;
   }
@@ -867,7 +948,6 @@ static public class AST_Util
   {
     var n = new AST_Block();
     n.type = type;
-
     return n;
   }
 
@@ -877,6 +957,7 @@ static public class AST_Util
   {
     var n = new AST_JsonObj();
     n.ntype = (uint)root_type_name.n;
+    n.type = root_type_name.s;
     return n;
   }
 
@@ -884,6 +965,7 @@ static public class AST_Util
   {
     var n = new AST_JsonArr();
     n.ntype = (uint)arr_type.Type().n;
+    n.type = arr_type.Type().s;
     return n;
   }
 
@@ -893,13 +975,14 @@ static public class AST_Util
     return n;
   }
 
-  static public AST_JsonPair New_JsonPair(HashedName scope_type, HashedName name)
+  static public AST_JsonPair New_JsonPair(HashedName scope_type, HashedName name, int symb_idx)
   {
     var n = new AST_JsonPair();
     n.scope_ntype = (uint)scope_type.n;
+    n.scope_type = scope_type.s;
     n.nname = (uint)name.n;
-    if(Util.DEBUG)
-      n.name = name.s;
+    n.name = name.s;
+    n.symb_idx = (uint)symb_idx;
 
     return n;
   }
@@ -1055,7 +1138,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Import node)
   {
     Console.Write("(IMPORT ");
-    foreach(var m in node.modules)
+    foreach(var m in node.module_names)
       Console.Write("" + m);
     Console.Write(")");
   }
@@ -1072,8 +1155,8 @@ public class AST_Dumper : AST_Visitor
   {
     Console.Write("(LMBD ");
     Console.Write(node.type + " " + node.nname() + " USE:");
-    for(int i=0;i<node.useparams.Count;++i)
-      Console.Write(" " + node.useparams[i].nname);
+    for(int i=0;i<node.uses.Count;++i)
+      Console.Write(" " + node.uses[i].nname);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1096,7 +1179,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Block node)
   {
-    Console.Write("(");
+    Console.Write("(BLK ");
     Console.Write(node.type + " {");
     VisitChildren(node);
     Console.Write("})");
@@ -1142,6 +1225,12 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Break node)
   {
     Console.Write("(BRK ");
+    Console.Write(")");
+  }
+
+  public override void DoVisit(AST_Continue node)
+  {
+    Console.Write("(CONT ");
     Console.Write(")");
   }
 
@@ -1211,73 +1300,39 @@ public class AST_Dumper : AST_Visitor
   }
 }
 
-public class FastStackDynamic<T> : List<T>
-{
-  public FastStackDynamic(int startingCapacity)
-    : base(startingCapacity)
-  {}
-
-  public T Push(T item)
-  {
-    this.Add(item);
-    return item;
-  }
-
-  public void Expand(int size)
-  {
-    for(int i = 0; i < size; i++)
-      this.Add(default(T));
-  }
-
-  public void Zero(int index)
-  {
-    this[index] = default(T);
-  }
-
-  public T Peek()
-  {
-    return this[this.Count - 1];
-  }
-
-  public void CropAtCount(int p)
-  {
-    RemoveLast(Count - p);
-  }
-
-  public void RemoveLast( int cnt = 1)
-  {
-    if (cnt == 1)
-    {
-      this.RemoveAt(this.Count - 1);
-    }
-    else
-    {
-      this.RemoveRange(this.Count - cnt, cnt);
-    }
-  }
-
-  public T Pop()
-  {
-    T retval = this[this.Count - 1];
-    this.RemoveAt(this.Count - 1);
-    return retval;
-  }
-}
-
-public class FastStack<T>
+public class FixedStack<T>
 {
   T[] storage;
-  int head_idx = 0;
+  int head = 0;
 
-  public FastStack(int max_capacity)
+  public int Count
+  {
+    get { return head; }
+  }
+
+  public FixedStack(int max_capacity)
   {
     storage = new T[max_capacity];
   }
 
   public T this[int index]
   {
-    get { return storage[index]; }
-    set { storage[index] = value; }
+    get { 
+      //for extra debug
+      //ValidateIndex(index);
+      return storage[index]; 
+    }
+    set { 
+      //for extra debug
+      //ValidateIndex(index);
+      storage[index] = value; 
+    }
+  }
+
+  void ValidateIndex(int index)
+  {
+    if(index < 0 || index >= head)
+      throw new Exception("Out of index " + index + " vs " + head);
   }
 
   public bool TryGetAt(int index, out T v)
@@ -1294,31 +1349,42 @@ public class FastStack<T>
 
   public T Push(T item)
   {
-    if((head_idx+1) < 0 || (head_idx+1) >= storage.Length)
-      throw new IndexOutOfRangeException("Out of bounds index: " + head_idx + " (" + storage.Length + ")");
-    storage[head_idx++] = item;
+    storage[head++] = item;
     return item;
+  }
+
+  public T Pop()
+  {
+    return storage[--head];
+  }
+
+  public T Pop(T repl)
+  {
+    --head;
+    T retval = storage[head];
+    storage[head] = repl;
+    return retval;
   }
 
   public T Peek()
   {
-    return storage[head_idx - 1];
+    return storage[head - 1];
   }
 
   public void SetRelative(int offset, T item)
   {
-    storage[head_idx - 1 - offset] = item;
+    storage[head - 1 - offset] = item;
   }
 
-  public void RemoveAtFast(int idx)
+  public void RemoveAt(int idx)
   {
-    if(idx == (head_idx-1))
+    if(idx == (head-1))
     {
-      DecFast();
+      Dec();
     }
     else
     {
-      --head_idx;
+      --head;
       Array.Copy(storage, idx+1, storage, idx, storage.Length-idx-1);
     }
   }
@@ -1338,34 +1404,20 @@ public class FastStack<T>
     storage[dst] = tmp;
   }
 
-  public T Pop()
+  public void Dec()
   {
-    --head_idx;
-    T retval = storage[head_idx];
-    storage[head_idx] = default(T);
-    return retval;
+    --head;
   }
 
-  public T PopFast()
+  public void Advance(int offset)
   {
-    --head_idx;
-    return storage[head_idx];
-  }
-
-  public void DecFast()
-  {
-    --head_idx;
+    head = offset;
   }
 
   public void Clear()
   {
     Array.Clear(storage, 0, storage.Length);
-    head_idx = 0;
-  }
-
-  public int Count
-  {
-    get { return head_idx; }
+    head = 0;
   }
 }
 
@@ -1489,6 +1541,54 @@ public class OrderedDictionary<TKey, TValue>
   {
     dict.Clear();
     keys.Clear();
+  }
+}
+
+public class HashedName2Value<T>
+{
+  Dictionary<ulong, T> hash2val = new Dictionary<ulong, T>();
+  Dictionary<string, T> str2val = new Dictionary<string, T>();
+
+  public int Count
+  {
+    get {
+      return hash2val.Count;
+    }
+  }
+
+  public bool Contains(HashedName name)
+  {
+    if(hash2val.ContainsKey(name.n))
+      return true;
+    return str2val.ContainsKey(name.s);
+  }
+
+  public bool TryGetValue(HashedName name, out T val)
+  {
+    if(hash2val.TryGetValue(name.n, out val))
+      return true;
+    return str2val.TryGetValue(name.s, out val);
+  }
+
+  public void Add(HashedName name, T v)
+  {
+    // Dictionary operation first, so exception thrown if key already exists.
+    if(!string.IsNullOrEmpty(name.s))
+      str2val.Add(name.s, v);
+    hash2val.Add(name.n, v);
+  }
+
+  public void Remove(HashedName name)
+  {
+    if(!string.IsNullOrEmpty(name.s))
+      str2val.Remove(name.s);
+    hash2val.Remove(name.n);
+  }
+
+  public void Clear()
+  {
+    str2val.Clear();
+    hash2val.Clear();
   }
 }
 

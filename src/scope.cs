@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Specialized;
 using System.Collections.Generic;
 
 namespace bhl {
@@ -8,64 +7,65 @@ public interface Scope
 {
   HashedName GetScopeName();
 
-  // Where to look next for symbols; superclass or enclosing scope
+  // Where to look next for symbols: superclass or enclosing scope
   Scope GetParentScope();
   // Scope in which this scope defined. For global scope, it's null
   Scope GetEnclosingScope();
 
   // Define a symbol in the current scope
-  void define(Symbol sym);
+  void Define(Symbol sym);
   // Look up name in this scope or in parent scope if not here
-  Symbol resolve(HashedName name);
+  Symbol Resolve(HashedName name);
+
+  // Readonly collection of members
+  SymbolsDictionary GetMembers();
 }
 
 public abstract class BaseScope : Scope 
 {
   // null if global (outermost) scope
   protected Scope enclosing_scope;
-  protected SymbolsDictionary symbols = new SymbolsDictionary();
+
+  protected SymbolsDictionary members = new SymbolsDictionary();
 
   public BaseScope(Scope parent) 
   { 
     enclosing_scope = parent;  
   }
 
-  public SymbolsDictionary GetMembers()
-  {
-    return symbols;
-  }
+  public SymbolsDictionary GetMembers() { return members; }
 
-  public Symbol resolve(HashedName name) 
+  public Symbol Resolve(HashedName name) 
   {
     Symbol s = null;
-    symbols.TryGetValue(name, out s);
+    members.TryGetValue(name, out s);
     if(s != null)
       return s;
 
     // if not here, check any enclosing scope
     if(enclosing_scope != null) 
-      return enclosing_scope.resolve(name);
+      return enclosing_scope.Resolve(name);
 
     return null;
   }
 
-  public virtual void define(Symbol sym) 
+  public virtual void Define(Symbol sym) 
   {
-    if(symbols.Contains(sym.name))
-      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
+    if(members.Contains(sym.name))
+      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'(" + sym.name.n1 + ")"); 
 
-    symbols.Add(sym);
+    members.Add(sym);
 
     sym.scope = this; // track the scope in each symbol
   }
 
   public void Append(BaseScope other)
   {
-    var ms = other.GetMembers(); 
+    var ms = other.GetMembers();
     for(int i=0;i<ms.Count;++i)
     {
       var s = ms[i];
-      define(s);
+      Define(s);
     }
   }
 
@@ -74,7 +74,7 @@ public abstract class BaseScope : Scope
 
   public abstract HashedName GetScopeName();
 
-  public override string ToString() { return string.Join(",", symbols.GetStringKeys().ToArray()); }
+  public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }
 
   static bool IsBuiltin(Symbol s)
   {
@@ -95,23 +95,26 @@ public abstract class BaseScope : Scope
   }
 
 #if BHL_FRONT
-  public TypeRef type(bhlParser.TypeContext node)
+  public TypeRef Type(bhlParser.TypeContext node)
   {
     var str = node.GetText();
-    var type = resolve(str) as Type;
+    var type = Resolve(str) as Type;
 
     if(type == null && node != null)
     {    
       if(node.fnargs() != null)
         type = new FuncType(this, node);
 
+      //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
       if(node.ARR() != null)
       {
         //checking if it's an array of func ptrs
         if(type != null)
           type = new GenericArrayTypeSymbol(this, new TypeRef(type));
         else
+        {
           type = new GenericArrayTypeSymbol(this, node);
+        }
       }
     }
 
@@ -124,10 +127,10 @@ public abstract class BaseScope : Scope
     return tr;
   }
 
-  public TypeRef type(bhlParser.RetTypeContext node)
+  public TypeRef Type(bhlParser.RetTypeContext node)
   {
     var str = node == null ? "void" : node.GetText();
-    var type = resolve(str) as Type;
+    var type = Resolve(str) as Type;
 
     if(type == null && node != null)
     {    
@@ -135,12 +138,12 @@ public abstract class BaseScope : Scope
       {
         var mtype = new MultiType();
         for(int i=0;i<node.type().Length;++i)
-          mtype.items.Add(this.type(node.type()[i]));
+          mtype.items.Add(this.Type(node.type()[i]));
         mtype.Update();
         type = mtype;
       }
       else
-        return this.type(node.type()[0]);
+        return this.Type(node.type()[0]);
     }
 
     var tr = new TypeRef();
@@ -155,7 +158,7 @@ public abstract class BaseScope : Scope
 
   Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
 
-  public TypeRef type(string name)
+  public TypeRef Type(string name)
   {
     if(name.Length == 0)
       throw new Exception("Bad type: '" + name + "'");
@@ -165,7 +168,7 @@ public abstract class BaseScope : Scope
       return tr;
     
     //let's check if the type was already explicitely defined
-    var t = resolve(name) as Type;
+    var t = Resolve(name) as Type;
     if(t != null)
     {
       tr = new TypeRef(t);
@@ -180,9 +183,9 @@ public abstract class BaseScope : Scope
           throw new Exception("Bad type: '" + name + "'");
 
         if(node.type().Length == 1)
-          tr = this.type(node.type()[0]);
+          tr = this.Type(node.type()[0]);
         else
-          tr = this.type(node);
+          tr = this.Type(node);
       }
       else
 #endif
@@ -194,7 +197,7 @@ public abstract class BaseScope : Scope
     return tr;
   }
 
-  public TypeRef type(Type t)
+  public TypeRef Type(Type t)
   {
     return new TypeRef(t);
   }
@@ -217,12 +220,12 @@ public class LocalScope : BaseScope
 
   public override HashedName GetScopeName() { return new HashedName("local"); }
 
-  public override void define(Symbol sym) 
+  public override void Define(Symbol sym) 
   {
-    if(enclosing_scope != null && enclosing_scope.resolve(sym.name) != null)
+    if(enclosing_scope != null && enclosing_scope.Resolve(sym.name) != null)
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
-    base.define(sym);
+    base.Define(sym);
   }
 }
 

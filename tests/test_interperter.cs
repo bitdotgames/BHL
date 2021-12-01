@@ -1,335 +1,10 @@
 using System;
-using System.Reflection;
 using System.IO;
-using System.Diagnostics;
 using System.Collections.Generic;
-using System.Collections;
-using System.Threading;
-using Antlr4.Runtime;
 using bhl;
 
-public class IsTestedAttribute : Attribute
+public class BHL_TestInterpreter : BHL_TestBase
 {
-  public override string ToString()
-  {
-    return "Is Tested";
-  }
-}
-
-public class BHL_Test
-{
-  public class TestNode : BehaviorTreeTerminalNode
-  {
-    public BHS status = BHS.SUCCESS;
-    public int execs;
-    public int inits;
-    public int deinits;
-    public int defers;
-
-    public TestEvents events;
-
-    public override BHS execute()
-    {
-      if(events != null)
-        events.Add("E", this);
-      ++execs;
-      return status;
-    }
-
-    public override void init()
-    {
-      if(events != null)
-        events.Add("I", this);
-      ++inits;
-    }
-
-    public override void deinit()
-    {
-      if(events != null)
-        events.Add("D", this);
-      ++deinits;
-    }
-
-    public override void defer()
-    {
-      if(events != null)
-        events.Add("F", this);
-      ++defers;
-    }
-  }
-
-  public class DecoratorTestNode : BehaviorTreeDecoratorNode
-  {
-    public DecoratorTestNode(TestNode t)
-    {
-      setSlave(t);
-    }
-  }
-
-  [IsTested()]
-  public void TestNodeSequenceSuccess()
-  {
-    var t1 = new TestNode();
-    var t2 = new TestNode();
-    var s = new SequentialNode();
-    s.children.Add(t1);
-    s.children.Add(t2);
-
-    t1.status = BHS.RUNNING;
-    t2.status = BHS.RUNNING;
-
-    AssertEqual(s.run(), BHS.RUNNING);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 1);
-    AssertEqual(t1.deinits, 0);
-    AssertEqual(t1.defers, 0);
-    AssertEqual(t2.inits, 0);
-    AssertEqual(t2.execs, 0);
-    AssertEqual(t2.deinits, 0);
-    AssertEqual(t2.defers, 0);
-
-    t1.status = BHS.SUCCESS;
-    t2.status = BHS.RUNNING;
-
-    AssertEqual(s.run(), BHS.RUNNING);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 2);
-    AssertEqual(t1.deinits, 1);
-    AssertEqual(t1.defers, 0);
-    AssertEqual(t2.inits, 1);
-    AssertEqual(t2.execs, 1);
-    AssertEqual(t2.deinits, 0);
-    AssertEqual(t2.defers, 0);
-
-    t1.status = BHS.SUCCESS;
-    t2.status = BHS.SUCCESS;
-
-    AssertEqual(s.run(), BHS.SUCCESS);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 2);
-    AssertEqual(t1.deinits, 1);
-    AssertEqual(t1.defers, 1);
-    AssertEqual(t2.inits, 1);
-    AssertEqual(t2.execs, 2);
-    AssertEqual(t2.deinits, 1);
-    AssertEqual(t2.defers, 1);
-  }
-
-  [IsTested()]
-  public void TestNodeSequenceStop()
-  {
-    var t1 = new TestNode();
-    var t2 = new TestNode();
-    var s = new SequentialNode();
-    s.children.Add(t1);
-    s.children.Add(t2);
-
-    t1.status = BHS.RUNNING;
-    t2.status = BHS.RUNNING;
-
-    AssertEqual(s.run(), BHS.RUNNING);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 1);
-    AssertEqual(t1.deinits, 0);
-    AssertEqual(t1.defers, 0);
-    AssertEqual(t2.inits, 0);
-    AssertEqual(t2.execs, 0);
-    AssertEqual(t2.deinits, 0);
-    AssertEqual(t2.defers, 0);
-
-    t1.status = BHS.SUCCESS;
-    t2.status = BHS.RUNNING;
-
-    AssertEqual(s.run(), BHS.RUNNING);
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 2);
-    AssertEqual(t1.deinits, 1);
-    AssertEqual(t1.defers, 0);
-    AssertEqual(t2.inits, 1);
-    AssertEqual(t2.execs, 1);
-    AssertEqual(t2.deinits, 0);
-    AssertEqual(t2.defers, 0);
-
-    s.stop();
-    AssertEqual(t1.inits, 1);
-    AssertEqual(t1.execs, 2);
-    AssertEqual(t1.deinits, 1);
-    AssertEqual(t1.defers, 1);
-    AssertEqual(t2.inits, 1);
-    AssertEqual(t2.execs, 1);
-    AssertEqual(t2.deinits, 1);
-    AssertEqual(t2.defers, 1);
-  }
-
-  [IsTested()]
-  public void TestDecoratorNode()
-  {
-    var t = new TestNode();
-    t.status = BHS.RUNNING;
-    var d = new DecoratorTestNode(t);
-
-    AssertEqual(d.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
-
-    t.status = BHS.SUCCESS;
-    AssertEqual(d.run(), BHS.SUCCESS);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 2);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 0);
-
-    d.defer();
-    AssertEqual(t.defers, 1);
-  }
-
-  public class TestEvents
-  {
-    public class Event
-    {
-      public string type;
-      public BehaviorTreeNode node;
-    }
-    public List<Event> events = new List<Event>();
-
-    public int Count {
-      get {
-        return events.Count;
-      }
-    }
-
-    public Event this[int i]
-    {
-      get {
-        return events[i];
-      }
-    }
-
-    public void Add(string type, BehaviorTreeNode n)
-    {
-      var e = new Event();
-      e.type = type;
-      e.node = n;
-      events.Add(e);
-    }
-  }
-
-  [IsTested()]
-  public void TestGroupNode()
-  {
-    var events = new TestEvents();
-
-    var t = new TestNode();
-    t.events = events;
-    t.status = BHS.RUNNING;
-    var g = new GroupNode();
-    g.addChild(t);
-
-    AssertEqual(g.run(), BHS.RUNNING);
-    AssertEqual(events.Count, 2);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-
-    t.status = BHS.SUCCESS;
-    AssertEqual(g.run(), BHS.SUCCESS);
-    AssertEqual(events.Count, 4);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-    AssertEqual(events[2].type, "E");
-    AssertEqual(events[3].type, "D");
-
-    g.defer();
-    AssertEqual(events.Count, 5);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-    AssertEqual(events[2].type, "E");
-    AssertEqual(events[3].type, "D");
-    AssertEqual(events[4].type, "F");
-  }
-
-  [IsTested()]
-  public void TestRunNodeWithSuccess()
-  {
-    var t = new TestNode();
-    t.status = BHS.RUNNING;
-
-    AssertEqual(t.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.RUNNING);
-
-    t.status = BHS.SUCCESS;
-    AssertEqual(t.run(), BHS.SUCCESS);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 2);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.SUCCESS);
-
-    //run again
-    AssertEqual(t.run(), BHS.SUCCESS);
-    AssertEqual(t.inits, 2);
-    AssertEqual(t.execs, 3);
-    AssertEqual(t.deinits, 2);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.SUCCESS);
-  }
-
-  [IsTested()]
-  public void TestRunNodeWithFailure()
-  {
-    var t = new TestNode();
-    t.status = BHS.RUNNING;
-
-    AssertEqual(t.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.RUNNING);
-
-    t.status = BHS.FAILURE;
-    AssertEqual(t.run(), BHS.FAILURE);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 2);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.FAILURE);
-
-    //run again
-    AssertEqual(t.run(), BHS.FAILURE);
-    AssertEqual(t.inits, 2);
-    AssertEqual(t.execs, 3);
-    AssertEqual(t.deinits, 2);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.FAILURE);
-  }
-
-  [IsTested()]
-  public void TestStopNode()
-  {
-    var t = new TestNode();
-    t.status = BHS.RUNNING;
-
-    AssertEqual(t.run(), BHS.RUNNING);
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 0);
-    AssertEqual(t.defers, 0);
-    AssertEqual(t.currStatus, BHS.RUNNING);
-
-    t.stop();
-    AssertEqual(t.inits, 1);
-    AssertEqual(t.execs, 1);
-    AssertEqual(t.deinits, 1);
-    AssertEqual(t.defers, 1);
-    AssertEqual(t.currStatus, BHS.NONE);
-  }
-
   [IsTested()]
   public void TestReturnNum()
   {
@@ -1469,7 +1144,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUserFuncBinding()
+  public void TestNativeFuncBinding()
   {
     string bhl = @"
       
@@ -1496,7 +1171,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUserFuncBindWithoutArgs()
+  public void TestNativeFuncBindWithoutArgs()
   {
     string bhl = @"
       
@@ -1521,7 +1196,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUserFuncBindConflict()
+  public void TestNativeFuncBindConflict()
   {
     string bhl = @"
 
@@ -2460,7 +2135,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_ref", globs.type("void"), 
+      var fn = new FuncSymbolSimpleNative("func_with_ref", globs.Type("void"), 
           delegate()
           {
             var interp = Interpreter.instance;
@@ -2472,10 +2147,10 @@ public class BHL_Test
             return BHS.SUCCESS;
           }
           );
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float"), true/*is ref*/));
+      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("float"), true/*is ref*/));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -3500,7 +3175,7 @@ public class BHL_Test
       float a = 2
       paral_all {
         foo(func() use(a) { 
-          WaitTicks(2, is_success: true)
+          WaitTicks(2, true)
           a = a + 1 
           trace(""A:"" + (string)a)
         } )
@@ -3546,7 +3221,7 @@ public class BHL_Test
       float a = 2
       paral_all {
         StartScript(func() use(a) { 
-          WaitTicks(2, is_success: true)
+          WaitTicks(2, true)
           a = a + 1 
           trace(""A:"" + (string)a)
         } )
@@ -3914,11 +3589,11 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new FuncBindSymbol("ret_val", globs.type("float"),
+      var fn = new FuncSymbolNative("ret_val", globs.Type("float"),
           delegate() { return new RetValNode(); } );
-      fn.define(new FuncArgSymbol("k", globs.type("float")));
+      fn.Define(new FuncArgSymbol("k", globs.Type("float")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -3945,7 +3620,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new FuncSymbolSimpleNative("func_with_def", globs.Type("float"), 
           delegate()
           {
             var interp = Interpreter.instance;
@@ -3957,10 +3632,10 @@ public class BHL_Test
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("float")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -3992,7 +3667,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new FuncSymbolSimpleNative("func_with_def", globs.Type("float"), 
           delegate()
           {
             var interp = Interpreter.instance;
@@ -4004,10 +3679,10 @@ public class BHL_Test
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("float")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -4034,7 +3709,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new FuncSymbolSimpleNative("func_with_def", globs.Type("float"), 
           delegate()
           {
             var interp = Interpreter.instance;
@@ -4045,9 +3720,9 @@ public class BHL_Test
             return BHS.SUCCESS;
           },
           1);
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
+      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -4073,7 +3748,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_with_def", globs.type("float"), 
+      var fn = new FuncSymbolSimpleNative("func_with_def", globs.Type("float"), 
           delegate()
           {
             var interp = Interpreter.instance;
@@ -4086,10 +3761,10 @@ public class BHL_Test
             return BHS.SUCCESS;
           },
           2);
-      fn.define(new FuncArgSymbol("a", globs.type("int")));
-      fn.define(new FuncArgSymbol("b", globs.type("int")));
+      fn.Define(new FuncArgSymbol("a", globs.Type("int")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("int")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -4143,9 +3818,9 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("float"),
+      var fn = new FuncSymbolSimpleNative("foo", globs.Type("float"),
           delegate() { return BHS.FAILURE; } );
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -4256,18 +3931,18 @@ public class BHL_Test
     }
   }
 
-  ClassBindSymbol BindColor(GlobalScope globs)
+  ClassSymbolNative BindColor(GlobalScope globs)
   {
-    var cl = new ClassBindSymbol("Color",
+    var cl = new ClassSymbolNative("Color",
       delegate(ref DynVal v) 
       { 
         v.obj = new Color();
       }
     );
 
-    globs.define(cl);
-    globs.define(new ArrayTypeSymbolT<Color>(globs, new TypeRef(cl), delegate() { return new List<Color>(); } ));
-    cl.define(new FieldSymbol("r", globs.type("float"),
+    globs.Define(cl);
+    globs.Define(new ArrayTypeSymbolT<Color>(globs, new TypeRef(cl), delegate() { return new List<Color>(); } ));
+    cl.Define(new FieldSymbol("r", globs.Type("float"),
       delegate(DynVal ctx, ref DynVal v)
       {
         var c = (Color)ctx.obj;
@@ -4280,7 +3955,7 @@ public class BHL_Test
         ctx.obj = c;
       }
     ));
-    cl.define(new FieldSymbol("g", globs.type("float"),
+    cl.Define(new FieldSymbol("g", globs.Type("float"),
       delegate(DynVal ctx, ref DynVal v)
       {
         var c = (Color)ctx.obj;
@@ -4295,7 +3970,7 @@ public class BHL_Test
     ));
 
     {
-      var m = new SimpleFuncBindSymbol("Add", globs.type("Color"),
+      var m = new FuncSymbolSimpleNative("Add", globs.Type("Color"),
         delegate()
         {
           var interp = Interpreter.instance;
@@ -4313,13 +3988,13 @@ public class BHL_Test
           return BHS.SUCCESS;
         }
       );
-      m.define(new FuncArgSymbol("k", globs.type("float")));
+      m.Define(new FuncArgSymbol("k", globs.Type("float")));
 
-      cl.define(m);
+      cl.Define(m);
     }
 
     {
-      var m = new SimpleFuncBindSymbol("mult_summ", globs.type("float"),
+      var m = new FuncSymbolSimpleNative("mult_summ", globs.Type("float"),
         delegate()
         {
           var interp = Interpreter.instance;
@@ -4332,22 +4007,22 @@ public class BHL_Test
           return BHS.SUCCESS;
         }
       );
-      m.define(new FuncArgSymbol("k", globs.type("float")));
+      m.Define(new FuncArgSymbol("k", globs.Type("float")));
 
-      cl.define(m);
+      cl.Define(m);
     }
 
     {
-      var fn = new FuncBindSymbol("mkcolor", globs.type("Color"),
+      var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"),
           delegate() { return new MkColorNode(); }
       );
-      fn.define(new FuncArgSymbol("r", globs.type("float")));
+      fn.Define(new FuncArgSymbol("r", globs.Type("float")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("mkcolor_null", globs.type("Color"),
+      var fn = new FuncSymbolSimpleNative("mkcolor_null", globs.Type("Color"),
           delegate() { 
             var interp = Interpreter.instance;
             var dv = DynVal.New();
@@ -4357,7 +4032,7 @@ public class BHL_Test
           }
       );
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     return cl;
@@ -4366,16 +4041,16 @@ public class BHL_Test
   void BindStringClass(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol("StringClass",
+      var cl = new ClassSymbolNative("StringClass",
         delegate(ref DynVal v) 
         { 
           v.obj = new StringClass();
         }
       );
 
-      globs.define(cl);
+      globs.Define(cl);
 
-      cl.define(new FieldSymbol("str", globs.type("string"),
+      cl.Define(new FieldSymbol("str", globs.Type("string"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (StringClass)ctx.obj;
@@ -4394,21 +4069,21 @@ public class BHL_Test
   void BindCustomNull(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol("CustomNull",
+      var cl = new ClassSymbolNative("CustomNull",
         delegate(ref DynVal v) 
         { 
           v.obj = new CustomNull();
         }
       );
 
-      globs.define(cl);
+      globs.Define(cl);
     }
   }
 
   void BindIntStruct(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol("IntStruct",
+      var cl = new ClassSymbolNative("IntStruct",
         delegate(ref DynVal v) 
         { 
           var s = new IntStruct();
@@ -4416,9 +4091,9 @@ public class BHL_Test
         }
       );
 
-      globs.define(cl);
+      globs.Define(cl);
 
-      cl.define(new FieldSymbol("n", globs.type("int"),
+      cl.Define(new FieldSymbol("n", globs.Type("int"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var s = new IntStruct();
@@ -4434,7 +4109,7 @@ public class BHL_Test
         }
       ));
 
-      cl.define(new FieldSymbol("n2", globs.type("int"),
+      cl.Define(new FieldSymbol("n2", globs.Type("int"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var s = new IntStruct();
@@ -4458,7 +4133,7 @@ public class BHL_Test
     BindIntStruct(globs);
 
     {
-      var cl = new ClassBindSymbol("MasterStruct",
+      var cl = new ClassSymbolNative("MasterStruct",
         delegate(ref DynVal v) 
         { 
           var o = new MasterStruct();
@@ -4468,9 +4143,9 @@ public class BHL_Test
         }
       );
 
-      globs.define(cl);
+      globs.Define(cl);
 
-      cl.define(new FieldSymbol("child", globs.type("StringClass"),
+      cl.Define(new FieldSymbol("child", globs.Type("StringClass"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -4484,7 +4159,7 @@ public class BHL_Test
         }
       ));
 
-      cl.define(new FieldSymbol("child2", globs.type("StringClass"),
+      cl.Define(new FieldSymbol("child2", globs.Type("StringClass"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -4498,7 +4173,7 @@ public class BHL_Test
         }
       ));
 
-      cl.define(new FieldSymbol("child_struct", globs.type("IntStruct"),
+      cl.Define(new FieldSymbol("child_struct", globs.Type("IntStruct"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -4514,7 +4189,7 @@ public class BHL_Test
         }
       ));
 
-      cl.define(new FieldSymbol("child_struct2", globs.type("IntStruct"),
+      cl.Define(new FieldSymbol("child_struct2", globs.Type("IntStruct"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -4539,16 +4214,16 @@ public class BHL_Test
       BindColor(globs);
 
     {
-      var cl = new ClassBindSymbol("ColorAlpha", globs.type("Color"),
+      var cl = new ClassSymbolNative("ColorAlpha", globs.Type("Color"),
         delegate(ref DynVal v) 
         { 
           v.obj = new ColorAlpha();
         }
       );
 
-      globs.define(cl);
+      globs.Define(cl);
 
-      cl.define(new FieldSymbol("a", globs.type("float"),
+      cl.Define(new FieldSymbol("a", globs.Type("float"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var c = (ColorAlpha)ctx.obj;
@@ -4563,7 +4238,7 @@ public class BHL_Test
       ));
 
       {
-        var m = new SimpleFuncBindSymbol("mult_summ_alpha", globs.type("float"),
+        var m = new FuncSymbolSimpleNative("mult_summ_alpha", globs.Type("float"),
           delegate()
           {
             var interp = Interpreter.instance;
@@ -4576,7 +4251,7 @@ public class BHL_Test
           }
         );
 
-        cl.define(m);
+        cl.Define(m);
       }
     }
   }
@@ -4621,14 +4296,14 @@ public class BHL_Test
   void BindRefC(GlobalScope globs, MemoryStream mstream)
   {
     {
-      var cl = new ClassBindSymbol("RefC",
+      var cl = new ClassSymbolNative("RefC",
         delegate(ref DynVal v) 
         { 
           v.obj = new RefC(mstream);
         }
       );
       {
-        var vs = new bhl.FieldSymbol("refs", globs.type("int"),
+        var vs = new bhl.FieldSymbol("refs", globs.Type("int"),
           delegate(bhl.DynVal ctx, ref bhl.DynVal v)
           {
             v.num = ((RefC)ctx.obj).refs;
@@ -4636,26 +4311,26 @@ public class BHL_Test
           //read only property
           null
         );
-        cl.define(vs);
+        cl.Define(vs);
       }
-      globs.define(cl);
-      globs.define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
+      globs.Define(cl);
+      globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
     }
   }
 
   void BindFoo(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol("Foo",
+      var cl = new ClassSymbolNative("Foo",
         delegate(ref DynVal v) 
         { 
           v.obj = new Foo();
         }
       );
-      globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl), delegate() { return new List<Foo>(); } ));
+      globs.Define(cl);
+      globs.Define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl), delegate() { return new List<Foo>(); } ));
 
-      cl.define(new FieldSymbol("hey", globs.type("int"),
+      cl.Define(new FieldSymbol("hey", globs.Type("int"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
@@ -4668,7 +4343,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("colors", globs.type("Color[]"),
+      cl.Define(new FieldSymbol("colors", globs.Type("Color[]"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
@@ -4681,7 +4356,7 @@ public class BHL_Test
           ctx.obj = f;
         }
       ));
-      cl.define(new FieldSymbol("sub_color", globs.type("Color"),
+      cl.Define(new FieldSymbol("sub_color", globs.Type("Color"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (Foo)ctx.obj;
@@ -4705,15 +4380,15 @@ public class BHL_Test
   void BindDynValContainer(GlobalScope globs, DynValContainer c)
   {
     {
-      var cl = new ClassBindSymbol("DynValContainer",
+      var cl = new ClassSymbolNative("DynValContainer",
         delegate(ref DynVal v) 
         { 
           v.obj = new DynValContainer();
         }
       );
-      globs.define(cl);
+      globs.Define(cl);
 
-      cl.define(new FieldSymbol("dv", globs.type("any"),
+      cl.Define(new FieldSymbol("dv", globs.Type("any"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var f = (DynValContainer)ctx.obj;
@@ -4737,26 +4412,26 @@ public class BHL_Test
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("get_dv_container", globs.type("DynValContainer"),
+      var fn = new FuncSymbolSimpleNative("get_dv_container", globs.Type("DynValContainer"),
           delegate() { Interpreter.instance.PushValue(DynVal.NewObj(c)); return BHS.SUCCESS; } );
 
-      globs.define(fn);
+      globs.Define(fn);
     }
   }
 
   void BindFooLambda(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol("FooLambda",
+      var cl = new ClassSymbolNative("FooLambda",
         delegate(ref DynVal v) 
         { 
           v.obj = new FooLambda();
         }
       );
-      globs.define(cl);
-      globs.define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl), delegate() { return new List<Foo>(); } ));
+      globs.Define(cl);
+      globs.Define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl), delegate() { return new List<Foo>(); } ));
 
-      cl.define(new FieldSymbol("script", globs.type("void^()"),
+      cl.Define(new FieldSymbol("script", globs.Type("void^()"),
           delegate(DynVal ctx, ref DynVal v) {
             var f = (FooLambda)ctx.obj;
             v.obj = f.script.Count == 0 ? null : ((BaseLambda)(f.script[0])).fct.obj;
@@ -4772,7 +4447,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestBindClass()
+  public void TestNativeClass()
   {
     string bhl = @"
       
@@ -4858,7 +4533,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestPlusNotOverloadedForBindClass()
+  public void TestPlusNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4883,7 +4558,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestMinusNotOverloadedForBindClass()
+  public void TestMinusNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4908,7 +4583,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestMultNotOverloadedForBindClass()
+  public void TestMultNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4933,7 +4608,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestDivNotOverloadedForBindClass()
+  public void TestDivNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4958,7 +4633,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestGtNotOverloadedForBindClass()
+  public void TestGtNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -4983,7 +4658,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestGteNotOverloadedForBindClass()
+  public void TestGteNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5008,7 +4683,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestLtNotOverloadedForBindClass()
+  public void TestLtNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5033,7 +4708,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestLteNotOverloadedForBindClass()
+  public void TestLteNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5058,7 +4733,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUnaryMinusNotOverloadedForBindClass()
+  public void TestUnaryMinusNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5082,7 +4757,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestBitAndNotOverloadedForBindClass()
+  public void TestBitAndNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5107,7 +4782,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestBitOrNotOverloadedForBindClass()
+  public void TestBitOrNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5132,7 +4807,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestLogicalAndNotOverloadedForBindClass()
+  public void TestLogicalAndNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5157,7 +4832,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestLogicalOrNotOverloadedForBindClass()
+  public void TestLogicalOrNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5182,7 +4857,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestUnaryNotNotOverloadedForBindClass()
+  public void TestUnaryNotNotOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5206,7 +4881,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestPlusOverloadedForBindClass()
+  public void TestPlusOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5222,7 +4897,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     
     var cl = BindColor(globs);
-    var op = new SimpleFuncBindSymbol("+", globs.type("Color"),
+    var op = new FuncSymbolSimpleNative("+", globs.Type("Color"),
       delegate()
       {
         var interp = Interpreter.instance;
@@ -5240,7 +4915,7 @@ public class BHL_Test
         return BHS.SUCCESS;
       }
     );
-    op.define(new FuncArgSymbol("r", globs.type("Color")));
+    op.Define(new FuncArgSymbol("r", globs.Type("Color")));
     cl.OverloadBinaryOperator(op);
 
     var intp = Interpret(bhl, globs);
@@ -5252,7 +4927,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestMultOverloadedForBindClass()
+  public void TestMultOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5267,7 +4942,7 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     
     var cl = BindColor(globs);
-    var op = new SimpleFuncBindSymbol("*", globs.type("Color"),
+    var op = new FuncSymbolSimpleNative("*", globs.Type("Color"),
       delegate()
       {
         var interp = Interpreter.instance;
@@ -5285,7 +4960,7 @@ public class BHL_Test
         return BHS.SUCCESS;
       }
     );
-    op.define(new FuncArgSymbol("k", globs.type("float")));
+    op.Define(new FuncArgSymbol("k", globs.Type("float")));
     cl.OverloadBinaryOperator(op);
 
     var intp = Interpret(bhl, globs);
@@ -5297,7 +4972,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestOverloadedBinOpsPriorityForBindClass()
+  public void TestOverloadedBinOpsPriorityForNativeClass()
   {
     string bhl = @"
       
@@ -5314,7 +4989,7 @@ public class BHL_Test
     
     var cl = BindColor(globs);
     {
-      var op = new SimpleFuncBindSymbol("*", globs.type("Color"),
+      var op = new FuncSymbolSimpleNative("*", globs.Type("Color"),
         delegate()
         {
           var interp = Interpreter.instance;
@@ -5332,12 +5007,12 @@ public class BHL_Test
           return BHS.SUCCESS;
         }
       );
-      op.define(new FuncArgSymbol("k", globs.type("float")));
+      op.Define(new FuncArgSymbol("k", globs.Type("float")));
       cl.OverloadBinaryOperator(op);
     }
     
     {
-      var op = new SimpleFuncBindSymbol("+", globs.type("Color"),
+      var op = new FuncSymbolSimpleNative("+", globs.Type("Color"),
         delegate()
         {
           var interp = Interpreter.instance;
@@ -5355,7 +5030,7 @@ public class BHL_Test
           return BHS.SUCCESS;
         }
       );
-      op.define(new FuncArgSymbol("r", globs.type("Color")));
+      op.Define(new FuncArgSymbol("r", globs.Type("Color")));
       cl.OverloadBinaryOperator(op);
     }
 
@@ -5368,7 +5043,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestEqualityOverloadedForBindClass()
+  public void TestEqualityOverloadedForNativeClass()
   {
     string bhl = @"
       
@@ -5392,7 +5067,7 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
     
     var cl = BindColor(globs);
-    var op = new SimpleFuncBindSymbol("==", globs.type("bool"),
+    var op = new FuncSymbolSimpleNative("==", globs.Type("bool"),
       delegate()
       {
         var interp = Interpreter.instance;
@@ -5406,7 +5081,7 @@ public class BHL_Test
         return BHS.SUCCESS;
       }
     );
-    op.define(new FuncArgSymbol("arg", globs.type("Color")));
+    op.Define(new FuncArgSymbol("arg", globs.Type("Color")));
     cl.OverloadBinaryOperator(op);
 
     var intp = Interpret(bhl, globs);
@@ -5419,7 +5094,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestCustomOperatorOverloadTypeMismatchForBindClass()
+  public void TestCustomOperatorOverloadTypeMismatchForNativeClass()
   {
     string bhl = @"
       
@@ -5433,8 +5108,8 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     
     var cl = BindColor(globs);
-    var op = new SimpleFuncBindSymbol("*", globs.type("Color"), null);
-    op.define(new FuncArgSymbol("k", globs.type("float")));
+    var op = new FuncSymbolSimpleNative("*", globs.Type("Color"), null);
+    op.Define(new FuncArgSymbol("k", globs.Type("float")));
     cl.OverloadBinaryOperator(op);
 
     AssertError<UserError>(
@@ -5745,15 +5420,15 @@ public class BHL_Test
     BindColor(globs);
 
     {
-      var cl = new ClassBindSymbol( "ColorNested",
+      var cl = new ClassSymbolNative( "ColorNested",
         delegate(ref DynVal v) 
         { 
           v.obj = new ColorNested();
         }
       );
-      globs.define(cl);
+      globs.Define(cl);
 
-      cl.define(new FieldSymbol("c", globs.type("Color"),
+      cl.Define(new FieldSymbol("c", globs.Type("Color"),
         delegate(DynVal ctx, ref DynVal v)
         {
           var cn = (ColorNested)ctx.obj;
@@ -5779,7 +5454,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestReturnBinded()
+  public void TestReturnNativeInstance()
   {
     string bhl = @"
       
@@ -5979,11 +5654,11 @@ public class BHL_Test
   void BindEnum(GlobalScope globs)
   {
     var en = new EnumSymbol(null, "EnumState", null);
-    globs.define(en);
-    globs.define(new GenericArrayTypeSymbol(globs, new TypeRef(en)));
+    globs.Define(en);
+    globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(en)));
 
-    en.define(new EnumItemSymbol(null, en, "SPAWNED",  10));
-    en.define(new EnumItemSymbol(null, en, "SPAWNED2", 20));
+    en.Define(new EnumItemSymbol(null, en, "SPAWNED",  10));
+    en.Define(new EnumItemSymbol(null, en, "SPAWNED2", 20));
   }
 
   [IsTested()]
@@ -6539,7 +6214,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestBindedClassArray()
+  public void TestNativeClassArray()
   {
     string bhl = @"
       
@@ -6579,7 +6254,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestBindedClassTmpArray()
+  public void TestNativeClassTmpArray()
   {
     string bhl = @"
 
@@ -6651,7 +6326,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestBindedSubClassArray()
+  public void TestNativeSubClassArray()
   {
     string bhl = @"
       
@@ -6685,7 +6360,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestBindedAttributeIsNotAFunction()
+  public void TestNativeAttributeIsNotAFunction()
   {
     string bhl = @"
 
@@ -6724,7 +6399,7 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestPassEnumToBindedNode()
+  public void TestPassEnumToNativeNode()
   {
     string bhl = @"
       
@@ -6739,11 +6414,11 @@ public class BHL_Test
     BindEnum(globs);
 
     {
-      var fn = new FuncBindSymbol("StateIs", globs.type("void"),
+      var fn = new FuncSymbolNative("StateIs", globs.Type("void"),
           delegate() { return new StateIsNode(); });
-      fn.define(new FuncArgSymbol("state", globs.type("EnumState")));
+      fn.Define(new FuncArgSymbol("state", globs.Type("EnumState")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -7024,20 +6699,20 @@ public class BHL_Test
   void BindTrace(GlobalScope globs, MemoryStream trace_stream)
   {
     {
-      var fn = new FuncBindSymbol("trace", globs.type("void"),
+      var fn = new FuncSymbolNative("trace", globs.Type("void"),
           delegate() { return new TraceNode(trace_stream); } );
-      fn.define(new FuncArgSymbol("str", globs.type("string")));
+      fn.Define(new FuncArgSymbol("str", globs.Type("string")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
   }
 
   void BindAnswer42(GlobalScope globs)
   {
     {
-      var fn = new SimpleFuncBindSymbol("answer42", globs.type("int"),
+      var fn = new FuncSymbolSimpleNative("answer42", globs.Type("int"),
           delegate() { Interpreter.instance.PushValue(DynVal.NewNum(42)); return BHS.SUCCESS; } );
-      globs.define(fn);
+      globs.Define(fn);
     }
   }
 
@@ -7045,18 +6720,18 @@ public class BHL_Test
   void BindLog(GlobalScope globs)
   {
     {
-      var fn = new SimpleFuncBindSymbol("log", globs.type("void"),
+      var fn = new FuncSymbolSimpleNative("log", globs.Type("void"),
           delegate() { Console.WriteLine(Interpreter.instance.PopValue().str); return BHS.SUCCESS; } );
-      fn.define(new FuncArgSymbol("str", globs.type("string")));
+      fn.Define(new FuncArgSymbol("str", globs.Type("string")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
   }
 
   void BindMin(GlobalScope globs)
   {
     {
-      var fn = new SimpleFuncBindSymbol("min", globs.type("float"),
+      var fn = new FuncSymbolSimpleNative("min", globs.Type("float"),
         delegate()
         {
           var interp = Interpreter.instance;
@@ -7066,10 +6741,10 @@ public class BHL_Test
           return BHS.SUCCESS;
         }
       );
-      fn.define(new FuncArgSymbol("a", globs.type("float")));
-      fn.define(new FuncArgSymbol("b", globs.type("float")));
+      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("float")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
   }
 
@@ -7121,11 +6796,11 @@ public class BHL_Test
   void BindNodeWithLog(GlobalScope globs, MemoryStream s, Dictionary<int, BHS> ctl)
   {
     {
-      var fn = new FuncBindSymbol("NodeWithLog", globs.type("void"),
+      var fn = new FuncSymbolNative("NodeWithLog", globs.Type("void"),
           delegate() { return new NodeWithLog(s, ctl); } );
 
-      fn.define(new FuncArgSymbol("id", globs.type("int")));
-      globs.define(fn);
+      fn.Define(new FuncArgSymbol("id", globs.Type("int")));
+      globs.Define(fn);
     }
   }
 
@@ -7183,30 +6858,30 @@ public class BHL_Test
   void BindNodeWithDefer(GlobalScope globs, MemoryStream s)
   {
     {
-      var fn = new FuncBindSymbol("NodeWithDefer", globs.type("void"),
+      var fn = new FuncSymbolNative("NodeWithDefer", globs.Type("void"),
           delegate() { return new NodeWithDefer(s); } );
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("NodeWithDeferRetInt", globs.type("int"),
+      var fn = new FuncSymbolNative("NodeWithDeferRetInt", globs.Type("int"),
           delegate() { return new NodeWithDeferRetInt(s); } );
 
-      fn.define(new FuncArgSymbol("n", globs.type("int")));
-      globs.define(fn);
+      fn.Define(new FuncArgSymbol("n", globs.Type("int")));
+      globs.Define(fn);
     }
   }
 
   void BindWaitTicks(GlobalScope globs)
   {
     {
-      var fn = new FuncBindSymbol("WaitTicks", globs.type("void"),
+      var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"),
           delegate() { return new WaitTicksNode(); } );
-      fn.define(new FuncArgSymbol("ticks", globs.type("int")));
-      fn.define(new FuncArgSymbol("is_success", globs.type("bool")));
+      fn.Define(new FuncArgSymbol("ticks", globs.Type("int")));
+      fn.Define(new FuncArgSymbol("is_success", globs.Type("bool")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
   }
 
@@ -7256,18 +6931,18 @@ public class BHL_Test
   void BindStartScript(GlobalScope globs)
   {
     {
-      var fn = new FuncBindSymbol("StartScript", globs.type("void"),
+      var fn = new FuncSymbolNative("StartScript", globs.Type("void"),
           delegate() { return new StartScriptNode(); } );
-      fn.define(new FuncArgSymbol("script", globs.type("void^()")));
+      fn.Define(new FuncArgSymbol("script", globs.Type("void^()")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
   }
 
   void BindStartScriptInMgr(GlobalScope globs)
   {
     {
-      var fn = new SimpleFuncBindSymbol("StartScriptInMgr", globs.type("void"),
+      var fn = new FuncSymbolSimpleNative("StartScriptInMgr", globs.Type("void"),
           delegate()
           {
             var interp = Interpreter.instance;
@@ -7288,11 +6963,11 @@ public class BHL_Test
           }
       );
 
-      fn.define(new FuncArgSymbol("script", globs.type("void^()")));
-      fn.define(new FuncArgSymbol("num", globs.type("int")));
-      fn.define(new FuncArgSymbol("now", globs.type("bool")));
+      fn.Define(new FuncArgSymbol("script", globs.Type("void^()")));
+      fn.Define(new FuncArgSymbol("num", globs.Type("int")));
+      fn.Define(new FuncArgSymbol("now", globs.Type("bool")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
   }
 
@@ -8310,11 +7985,11 @@ public class BHL_Test
     var trace_stream = new MemoryStream();
 
     {
-      var cl = new ClassBindSymbol("refbool",
+      var cl = new ClassSymbolNative("refbool",
         delegate(ref DynVal v) 
         {}
       );
-      globs.define(cl);
+      globs.Define(cl);
     }
 
     BindTrace(globs, trace_stream);
@@ -8781,14 +8456,14 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new SimpleFuncBindSymbol("say_here", globs.type("void"), 
+      var fn = new FuncSymbolSimpleNative("say_here", globs.Type("void"), 
           delegate()
           {
             AddString(trace_stream, "HERE;");
             return BHS.RUNNING;
           }
           );
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -9051,14 +8726,14 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("void"), 
+      var fn = new FuncSymbolSimpleNative("foo", globs.Type("void"), 
           delegate()
           {
             AddString(trace_stream, "FOO");
             return BHS.SUCCESS;
           }
           );
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -9708,13 +9383,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -9758,13 +9433,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -9807,13 +9482,13 @@ public class BHL_Test
     string bhl = @"
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       trace(""A"")
     }
 
@@ -9897,13 +9572,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -9952,13 +9627,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -10086,13 +9761,13 @@ public class BHL_Test
 
     func foo(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""A"")
     }
 
     func bar(int ticks)
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       trace(""B"")
     }
 
@@ -10704,13 +10379,13 @@ public class BHL_Test
     func bar()
     {
       trace(""BAR"")
-      WaitTicks(2, is_success: true)
+      WaitTicks(2, true)
     }
 
     func hey()
     {
       trace(""HEY"")
-      WaitTicks(2, is_success: true)
+      WaitTicks(2, true)
     }
 
     func foo()
@@ -11402,27 +11077,6 @@ public class BHL_Test
 
     AssertEqual(num, 8);
     CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestBadRecursion()
-  {
-    string bhl = @"
-      
-    func test() 
-    {
-      test()
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    AssertError<IndexOutOfRangeException>(
-      delegate() { 
-        ExecNode(node, 0);
-      },
-      "Out of bounds index"
-    );
   }
 
   [IsTested()]
@@ -12424,6 +12078,33 @@ public class BHL_Test
   }
 
   [IsTested()]
+  public void TestNonMatchingReturnAfterElseIf2()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      if(false) {
+      } else if (true) {
+        return 20
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var trace_stream = new MemoryStream();
+
+    BindTrace(globs, trace_stream);
+
+    AssertError<UserError>(
+      delegate() { 
+        Interpret(bhl, globs);
+      },
+      "matching 'return' statement not found"
+    );
+  }
+
+  [IsTested()]
   public void TestMatchingReturnInElse()
   {
     string bhl = @"
@@ -12755,34 +12436,6 @@ public class BHL_Test
 
     AssertEqual(res.num, 42);
     CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestOutOfScopeVarCompileErrorInLambda()
-  {
-    string bhl = @"
-
-    func void test() 
-    {
-      bool some_cond
-      if(some_cond) {
-        int b = 2
-      }
-
-      void^() fn = func() {
-        b = 3
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret(bhl, globs);
-      },
-      "b : symbol not resolved"
-    );
   }
 
   [IsTested()]
@@ -13349,33 +13002,6 @@ public class BHL_Test
 
     var str = GetString(trace_stream);
     AssertEqual("012", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestDontRecomputeConditionWhenYieldingFromWhile()
-  {
-    string bhl = @"
-
-    func int test() 
-    {
-      int i = 0
-      while(i == 0) {
-        i = 1
-        yield()
-        i = 2
-      }
-      return i
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var num = ExtractNum(ExecNode(node));
-
-    AssertEqual(2, num);
     CommonChecks(intp);
   }
 
@@ -15429,11 +15055,11 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"),
           delegate() { return new MakeFooNode(); } );
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -15480,6 +15106,252 @@ public class BHL_Test
     ";
 
     var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithPtrCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
+      int^(int,int) p = ret_int
+      paral {
+        seq {
+          foo(1, p(2, 1))
+          suspend()
+        }
+        foo(10, p(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithMemberPtrCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    class Bar { 
+      int^(int,int) ptr
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
+      Bar b = {}
+      b.ptr = ret_int
+      paral {
+        seq {
+          foo(1, b.ptr(2, 1))
+          suspend()
+        }
+        foo(10, b.ptr(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithLambdaCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func void test() 
+    {
+      paral {
+        seq {
+          foo(1, 
+              func int (int val, int ticks) {
+                while(ticks > 0) {
+                  yield()
+                  ticks = ticks - 1
+                }
+                return val
+              }(2, 1))
+          suspend()
+        }
+        foo(10, 
+            func int (int val, int ticks) {
+              while(ticks > 0) {
+                yield()
+                ticks = ticks - 1
+              }
+              return val
+            }(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    var trace_stream = new MemoryStream();
+    BindTrace(globs, trace_stream);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+    ExecNode(node, 0);
+
+    var str = GetString(trace_stream);
+    AssertEqual("1 2;10 20;", str);
+
+    //NodeDump(node);
+    CommonChecks(intp);
+  }
+
+  public class Foo_ret_int  : BehaviorTreeTerminalNode
+  {
+    int ticks;
+    int ret;
+
+    public override void init()
+    {
+      var interp = Interpreter.instance;
+      ticks = (int)interp.PopValue().num;
+      ret = (int)interp.PopValue().num;
+      interp.PopValue();
+    }
+
+    public override BHS execute()
+    {
+      if(ticks-- > 0)
+        return BHS.RUNNING;
+      Interpreter.instance.PushValue(DynVal.NewNum(ret));
+      return BHS.SUCCESS;
+    }
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithMethods()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func void test() 
+    {
+      paral {
+        seq {
+          foo(1, (new Foo).self().ret_int(val: 2, ticks: 1))
+          suspend()
+        }
+        foo(10, (new Foo).self().ret_int(val: 20, ticks: 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var cl = new ClassSymbolNative("Foo",
+        delegate(ref DynVal v) 
+        { 
+          //fake object
+          v.obj = null;
+        }
+      );
+
+      globs.Define(cl);
+
+      {
+        var m = new FuncSymbolSimpleNative("self", globs.Type("Foo"),
+          delegate()
+          {
+            var interp = Interpreter.instance;
+            var obj = interp.PopValue().obj;
+            interp.PushValue(DynVal.NewObj(obj));
+            return BHS.SUCCESS;
+          }
+        );
+        cl.Define(m);
+      }
+
+      {
+        var m = new FuncSymbolNative("ret_int", globs.Type("int"),
+          delegate() { return new Foo_ret_int(); }
+        );
+        m.Define(new FuncArgSymbol("val", globs.Type("int")));
+        m.Define(new FuncArgSymbol("ticks", globs.Type("int")));
+        cl.Define(m);
+      }
+
+    }
 
     var trace_stream = new MemoryStream();
     BindTrace(globs, trace_stream);
@@ -15775,11 +15647,11 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("hey", globs.type("void"),
+      var fn = new FuncSymbolSimpleNative("hey", globs.Type("void"),
           delegate() { return BHS.SUCCESS; } );
-      fn.define(new FuncArgSymbol("s", globs.type("string")));
-      fn.define(new FuncArgSymbol("i", globs.type("int")));
-      globs.define(fn);
+      fn.Define(new FuncArgSymbol("s", globs.Type("string")));
+      fn.Define(new FuncArgSymbol("i", globs.Type("int")));
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -15805,17 +15677,17 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
+      var fn = new FuncSymbolSimpleNative("foo", globs.Type("int"),
           delegate() { return BHS.FAILURE; } );
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("hey", globs.type("void"),
+      var fn = new FuncSymbolSimpleNative("hey", globs.Type("void"),
           delegate() { return BHS.SUCCESS; } );
-      fn.define(new FuncArgSymbol("i", globs.type("int")));
-      fn.define(new FuncArgSymbol("b", globs.type("int")));
-      globs.define(fn);
+      fn.Define(new FuncArgSymbol("i", globs.Type("int")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("int")));
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -15839,24 +15711,24 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
+      var fn = new FuncSymbolSimpleNative("foo", globs.Type("int"),
           delegate() { 
             Interpreter.instance.PopValue();
             Interpreter.instance.PushValue(DynVal.NewNum(42));
             return BHS.SUCCESS; 
           } );
-      fn.define(new FuncArgSymbol("b", globs.type("bool")));
-      globs.define(fn);
+      fn.Define(new FuncArgSymbol("b", globs.Type("bool")));
+      globs.Define(fn);
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("bar", globs.type("int"),
+      var fn = new FuncSymbolSimpleNative("bar", globs.Type("int"),
           delegate() { 
             Interpreter.instance.PopValue();
             return BHS.FAILURE; 
           } );
-      fn.define(new FuncArgSymbol("n", globs.type("int")));
-      globs.define(fn);
+      fn.Define(new FuncArgSymbol("n", globs.Type("int")));
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -15882,17 +15754,17 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("foo", globs.type("int"),
+      var fn = new FuncSymbolSimpleNative("foo", globs.Type("int"),
           delegate() { return BHS.FAILURE; } );
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("hey", globs.type("void"),
+      var fn = new FuncSymbolSimpleNative("hey", globs.Type("void"),
           delegate() { return BHS.SUCCESS; } );
-      fn.define(new FuncArgSymbol("i", globs.type("int")));
-      fn.define(new FuncArgSymbol("b", globs.type("int")));
-      globs.define(fn);
+      fn.Define(new FuncArgSymbol("i", globs.Type("int")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("int")));
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -15900,143 +15772,6 @@ public class BHL_Test
     var res = ExecNode(node, 0);
     AssertEqual(BHS.SUCCESS, res.status);
     //NodeDump(node);
-    CommonChecks(intp);
-  }
-
-  class TestTaskManager
-  {
-    List<BehaviorTreeNode> tasks = new List<BehaviorTreeNode>(); 
-
-    public bool IsBusy {
-      get {
-        return tasks.Count > 0;
-      }
-    }
-
-    public void Tick()
-    {
-      var intp = Interpreter.instance;
-      for(int i=0;i<tasks.Count;)
-      {
-        var t = tasks[i];
-
-        intp.PushStackParalCtx(t);
-        var res = t.run();
-        intp.PopStackParalCtx();
-
-        if(res != bhl.BHS.RUNNING)
-          tasks.RemoveAt(i);
-        else
-          ++i;
-      }
-    }
-
-    public void Add(BehaviorTreeNode task)
-    {
-      tasks.Add(task);
-    }
-  }
-
-  [IsTested()]
-  public void TestCleanFuncArgsOnStackForTaskMgr()
-  {
-    string bhl = @"
-
-    func int calc()
-    {
-      yield()
-      yield()
-      return 100
-    }
-
-    func foo()
-    {
-      yield()
-      fail()
-    }
-
-    func bar()
-    {
-      int i = 10 + calc()
-      trace((string)i)
-    }
-
-    func test1() 
-    {
-      foo()
-    }
-
-    func test2()
-    {
-      bar()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var trace_stream = new MemoryStream();
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var tm = new TestTaskManager();
-    var node1 = intp.GetFuncCallNode("test1");
-    var node2 = intp.GetFuncCallNode("test2");
-    tm.Add(node1);
-    tm.Add(node2);
-    while(tm.IsBusy)
-      tm.Tick();
-
-    var str = GetString(trace_stream);
-    AssertEqual("110", str);
-
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestCleanFuncArgsOnStackForTaskMgrInterleaved()
-  {
-    string bhl = @"
-
-    func int calc_fail()
-    {
-      yield()
-      fail()
-      return 2
-    }
-
-    func test1() 
-    {
-      yield()
-      int i = 100 + calc_fail()
-    }
-
-    func int calc()
-    {
-      yield()
-      yield()
-      return 100
-    }
-
-    func test2()
-    {
-      int i = 10 + calc()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var tm = new TestTaskManager();
-    var node1 = intp.GetFuncCallNode("test1");
-    tm.Add(node1);
-    tm.Tick();
-
-    var node2 = intp.GetFuncCallNode("test2");
-    tm.Add(node2);
-
-    while(tm.IsBusy)
-      tm.Tick();
-
     CommonChecks(intp);
   }
 
@@ -16139,11 +15874,11 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"),
           delegate() { return new MakeFooNode(); });
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -16232,14 +15967,14 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("NodeTakingFunc", globs.type("Foo"),
+      var fn = new FuncSymbolNative("NodeTakingFunc", globs.Type("Foo"),
         delegate() { 
           return new NodeTakingFunc(trace_stream);
         }
       );
-      fn.define(new FuncArgSymbol("fn", globs.type("int[]^()")));
+      fn.Define(new FuncArgSymbol("fn", globs.Type("int[]^()")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -16283,11 +16018,11 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"),
           delegate() { return new MakeFooNode(); });
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -16307,7 +16042,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       return 42
     }
 
@@ -16340,11 +16075,11 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"),
           delegate() { return new MakeFooNode(); });
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -16368,7 +16103,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, is_success: false)
+      WaitTicks(ticks, false)
       return 42
     }
 
@@ -16402,11 +16137,11 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"),
           delegate() { return new MakeFooNode(); });
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -16436,7 +16171,7 @@ public class BHL_Test
           f = MakeFoo({hey:10, colors:[{r:
               func int (int ticks) 
               { 
-                WaitTicks(ticks, is_success: false)
+                WaitTicks(ticks, false)
                 fail()
                 return ticks
               }(2) 
@@ -16446,7 +16181,7 @@ public class BHL_Test
           f = MakeFoo({hey:20, colors:[{r:
               func int (int ticks) 
               { 
-                WaitTicks(ticks, is_success: false)
+                WaitTicks(ticks, false)
                 fail()
                 return ticks
               }(3) 
@@ -16471,11 +16206,11 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"),
           delegate() { return new MakeFooNode(); });
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -16499,7 +16234,7 @@ public class BHL_Test
     string bhl = @"
     func int foo(int ticks) 
     {
-      WaitTicks(ticks, is_success: true)
+      WaitTicks(ticks, true)
       return ticks
     }
 
@@ -16535,11 +16270,11 @@ public class BHL_Test
     BindLog(globs);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"),
           delegate() { return new MakeFooNode(); });
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -16611,11 +16346,11 @@ public class BHL_Test
     BindTrace(globs, trace_stream);
 
     {
-      var fn = new FuncBindSymbol("MakeFoo", globs.type("Foo"),
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"),
           delegate() { return new MakeFooNode(); } );
-      fn.define(new FuncArgSymbol("conf", globs.type("Foo")));
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -18790,112 +18525,6 @@ public class BHL_Test
   }
 
   [IsTested()]
-  public void TestGlobalCounter()
-  {
-    string bhl1 = @"
-    import ""bhl2""  
-    import ""bhl2""
-
-    func test1() { 
-      foo = foo + 1
-    }
-    ";
-
-    string bhl3 = @"
-    import ""bhl1""  
-    import ""bhl2""  
-
-    func int test2() { 
-      test1()
-      foo = foo + 1
-      return foo
-    }
-    ";
-
-    string bhl2 = @"
-    int foo = 0
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindLog(globs);
-
-    TestCleanDir();
-    var files = new List<string>();
-    TestNewFile("bhl1.bhl", bhl1, files);
-    TestNewFile("bhl2.bhl", bhl2, files);
-    TestNewFile("bhl3.bhl", bhl3, files);
-
-    var intp = CompileFiles(files, globs);
-    intp.LoadModule("bhl3");
-
-    var node = intp.GetFuncCallNode("test2");
-    var n = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(n, 2);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestImportGlobalLazyInit()
-  {
-    string bhl1 = @"
-    import ""bhl2""  
-    import ""bhl2""
-
-    func test1() { 
-      foo().a = foo().a + 1
-    }
-    ";
-
-    string bhl3 = @"
-    import ""bhl1""  
-    import ""bhl2""  
-
-    func int test2() { 
-      test1()
-      foo().a = foo().a + 1
-      return foo().a
-    }
-    ";
-
-    string bhl2 = @"
-    class Foo {
-      int a
-    }
-    Foo _foo = null
-
-    func Foo foo() {
-      if(_foo == null) {
-        _foo = {
-          a : 1 
-        }
-      }
-      return _foo
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindLog(globs);
-
-    TestCleanDir();
-    var files = new List<string>();
-    TestNewFile("bhl1.bhl", bhl1, files);
-    TestNewFile("bhl2.bhl", bhl2, files);
-    TestNewFile("bhl3.bhl", bhl3, files);
-
-    var intp = CompileFiles(files, globs);
-    intp.LoadModule("bhl3");
-
-    var node = intp.GetFuncCallNode("test2");
-    var n = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(n, 3);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestImportGlobalExecutionOnlyOnceNested()
   {
     string bhl1 = @"
@@ -18983,12 +18612,12 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     var info = new List<Interpreter.CallStackInfo>();
     {
-      var fn = new SimpleFuncBindSymbol("record_callstack", globs.type("void"),
+      var fn = new FuncSymbolSimpleNative("record_callstack", globs.Type("void"),
         delegate() { 
           Interpreter.instance.GetCallStackInfo(info); 
           return BHS.SUCCESS; 
         });
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     TestCleanDir();
@@ -19052,12 +18681,12 @@ public class BHL_Test
     var globs = SymbolTable.CreateBuiltins();
     var info = new List<Interpreter.CallStackInfo>();
     {
-      var fn = new SimpleFuncBindSymbol("record_callstack", globs.type("void"),
+      var fn = new FuncSymbolSimpleNative("record_callstack", globs.Type("void"),
         delegate() { 
           Interpreter.instance.GetCallStackInfo(info); 
           return BHS.SUCCESS; 
         });
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     TestCleanDir();
@@ -19084,26 +18713,26 @@ public class BHL_Test
   void BindForSlides(GlobalScope globs)
   {
     {
-      var cl = new ClassBindSymbol("Vec3",
+      var cl = new ClassSymbolNative("Vec3",
         delegate(ref DynVal v) 
         {}
       );
 
-      globs.define(cl);
+      globs.Define(cl);
 
       {
-        var m = new SimpleFuncBindSymbol("Sub", globs.type("Vec3"),
+        var m = new FuncSymbolSimpleNative("Sub", globs.Type("Vec3"),
           delegate()
           {
             return BHS.SUCCESS;
           }
         );
-        m.define(new FuncArgSymbol("val", globs.type("Vec3")));
+        m.Define(new FuncArgSymbol("val", globs.Type("Vec3")));
 
-        cl.define(m);
+        cl.Define(m);
       }
 
-      cl.define(new FieldSymbol("len", globs.type("float"),
+      cl.Define(new FieldSymbol("len", globs.Type("float"),
         delegate(DynVal ctx, ref DynVal v)
         {},
         //setter not allowed
@@ -19112,15 +18741,15 @@ public class BHL_Test
     }
 
     {
-      var cl = new ClassBindSymbol("Unit",
+      var cl = new ClassSymbolNative("Unit",
         delegate(ref DynVal v) 
         {}
       );
 
-      globs.define(cl);
-      globs.define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
+      globs.Define(cl);
+      globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(cl)));
 
-      cl.define(new FieldSymbol("position", globs.type("Vec3"),
+      cl.Define(new FieldSymbol("position", globs.Type("Vec3"),
         delegate(DynVal ctx, ref DynVal v)
         {},
         //setter not allowed
@@ -19129,14 +18758,14 @@ public class BHL_Test
     }
 
     {
-      var fn = new SimpleFuncBindSymbol("get_units", globs.type("Unit[]"),
+      var fn = new FuncSymbolSimpleNative("get_units", globs.Type("Unit[]"),
         delegate()
         {
           return BHS.SUCCESS;
         }
       );
 
-      globs.define(fn);
+      globs.Define(fn);
     }
 
   }
@@ -19751,7 +19380,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_mult", globs.type("float,string"), 
+      var fn = new FuncSymbolSimpleNative("func_mult", globs.Type("float,string"), 
           delegate()
           {
             var interp = Interpreter.instance;
@@ -19761,7 +19390,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
             return BHS.SUCCESS;
           }
         );
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -19789,7 +19418,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new SimpleFuncBindSymbol("func_mult", globs.type("float,string,int,float"), 
+      var fn = new FuncSymbolSimpleNative("func_mult", globs.Type("float,string,int,float"), 
           delegate()
           {
             var interp = Interpreter.instance;
@@ -19801,7 +19430,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
             return BHS.SUCCESS;
           }
         );
-      globs.define(fn);
+      globs.Define(fn);
     }
 
     var intp = Interpret(bhl, globs);
@@ -20218,9 +19847,9 @@ func Unit FindUnit(Vec3 pos, float radius) {
   [IsTested()]
   public void TestStack()
   {
-    //Push/Pop
+    //Push/PopFast
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(10);
 
@@ -20235,10 +19864,10 @@ func Unit FindUnit(Vec3 pos, float radius) {
       AssertEqual(1, st.Pop());
       AssertEqual(st.Count, 0);
     }
-
-    //Push/PopFast
+    
+    //Push/Pop(repl)
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(10);
 
@@ -20246,17 +19875,17 @@ func Unit FindUnit(Vec3 pos, float radius) {
       AssertEqual(1, st[0]);
       AssertEqual(10, st[1]);
 
-      AssertEqual(10, st.PopFast());
+      AssertEqual(10, st.Pop(0));
       AssertEqual(st.Count, 1);
       AssertEqual(1, st[0]);
 
-      AssertEqual(1, st.PopFast());
+      AssertEqual(1, st.Pop(0));
       AssertEqual(st.Count, 0);
     }
 
-    //Push/DecFast
+    //Push/Dec
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(10);
 
@@ -20264,48 +19893,48 @@ func Unit FindUnit(Vec3 pos, float radius) {
       AssertEqual(1, st[0]);
       AssertEqual(10, st[1]);
 
-      st.DecFast();
+      st.Dec();
       AssertEqual(st.Count, 1);
       AssertEqual(1, st[0]);
 
-      st.DecFast();
+      st.Dec();
       AssertEqual(st.Count, 0);
     }
 
-    //RemoveAtFast
+    //RemoveAt
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(2);
       st.Push(3);
 
-      st.RemoveAtFast(1);
+      st.RemoveAt(1);
       AssertEqual(st.Count, 2);
       AssertEqual(1, st[0]);
       AssertEqual(3, st[1]);
     }
 
-    //RemoveAtFast
+    //RemoveAt
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(2);
       st.Push(3);
 
-      st.RemoveAtFast(0);
+      st.RemoveAt(0);
       AssertEqual(st.Count, 2);
       AssertEqual(2, st[0]);
       AssertEqual(3, st[1]);
     }
 
-    //RemoveAtFast
+    //RemoveAt
     {
-      var st = new FastStack<int>(16); 
+      var st = new FixedStack<int>(16); 
       st.Push(1);
       st.Push(2);
       st.Push(3);
 
-      st.RemoveAtFast(2);
+      st.RemoveAt(2);
       AssertEqual(st.Count, 2);
       AssertEqual(1, st[0]);
       AssertEqual(2, st[1]);
@@ -21011,71 +20640,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
   ////////////////////////////////////////////////
 
-  static void Assert(bool condition, string msg = null)
-  {
-    if(!condition)
-      throw new Exception("Assertion failed " + (msg != null ? msg : ""));
-  }
-  
-  static void AssertEqual(double a, double b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(uint a, uint b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(ulong a, ulong b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(BHS a, BHS b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(string a, string b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertEqual(int a, int b)
-  {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
-  }
-
-  static void AssertTrue(bool cond, string msg = "")
-  {
-    if(!cond)
-      throw new Exception("Assertion failed" + (msg.Length > 0 ? (": " + msg) : ""));
-  }
-
-  void AssertError<T>(Action action, string msg) where T : Exception
-  {
-    Exception err = null;
-    try
-    {
-      action();
-    }
-    catch(T e)
-    {
-      err = e;
-    }
-
-    AssertTrue(err != null, "Error didn't occur"); 
-    var idx = err.Message.IndexOf(msg);
-    AssertTrue(idx != -1, "Error message is: " + err.Message);
-  }
-
   static string TestDirPath()
   {
     string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -21099,8 +20663,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
 
   static void SharedInit()
   {
-    Util.DEBUG = true;
-
     DynVal.PoolClear();
     DynValList.PoolClear();
     DynValDict.PoolClear();
@@ -21108,23 +20670,15 @@ func Unit FindUnit(Vec3 pos, float radius) {
     FuncCtx.PoolClear();
   }
 
-  static GlobalScope Clone(GlobalScope globs)
-  {
-    var globs_copy = new GlobalScope();
-    var ms = globs.GetMembers();
-    for(int i=0;i<ms.Count;++i)
-      globs_copy.define(ms[i]);
-    return globs_copy;
-  }
-
   static Interpreter CompileFiles(List<string> test_files, GlobalScope globs = null)
   {
     globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
     //NOTE: we want interpreter to work with original globs
-    var globs_copy = Clone(globs);
+    var globs_copy = globs.Clone();
     SharedInit();
 
     var conf = new BuildConf();
+    conf.compile_fmt = CompileFormat.AST;
     conf.globs = globs;
     conf.files = test_files;
     conf.res_file = TestDirPath() + "/result.bin";
@@ -21195,7 +20749,7 @@ func Unit FindUnit(Vec3 pos, float radius) {
   {
     globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
     //NOTE: we want interpreter to work with original globs
-    var globs_copy = Clone(globs);
+    var globs_copy = globs.Clone();
     SharedInit();
 
     var intp = Interpreter.instance;
@@ -21256,115 +20810,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
   static object ExtractObj(Result res)
   {
     return res.val.obj;
-  }
-}
-
-public static class BHL_TestExt 
-{
-  public static void Decode(this DynVal dv, ref List<string> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add(tmp.str);
-    }
-  }
-
-  public static void Encode(this DynVal dv, List<string> dst)
-  {
-    var lst = DynValList.New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewStr(dst[i]));
-    dv.SetObj(lst);
-  }
-
-  public static void Decode(this DynVal dv, ref List<uint> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add((uint)tmp.num);
-    }
-  }
-
-  public static void Encode(this DynVal dv, List<uint> dst)
-  {
-    var lst = DynValList.New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewNum(dst[i]));
-    dv.SetObj(lst);
-  }
-
-  public static void Decode(this DynVal dv, ref List<int> dst)
-  {
-    dst.Clear();
-    var src = (DynValList)dv.obj;
-    for(int i=0;i<src.Count;++i)
-    {
-      var tmp = src[i];
-      dst.Add((int)tmp.num);
-    }
-  }
-
-  public static void Encode(this DynVal dv, List<int> dst)
-  {
-    var lst = DynValList.New();
-    for(int i=0;i<dst.Count;++i)
-      lst.Add(DynVal.NewNum(dst[i]));
-    dv.SetObj(lst);
-  }
-}
-
-public class BHL_TestRunner
-{
-  public static void Main(string[] args)
-  {
-    Console.WriteLine("Testing BHL");
-
-    var test = new BHL_Test();
-
-    int c = 0;
-    foreach(var method in (typeof(BHL_Test)).GetMethods())
-    {
-      if(IsMemberTested(method))
-      {
-        Util.SetupASTFactory();
-        if(IsAllowedToRun(args, method))
-        {
-          ++c;
-          method.Invoke(test, new object[] {});
-        }
-      }
-    }
-    Console.WriteLine("Done running "  + c + " tests");
-  }
-
-  static bool IsAllowedToRun(string[] args, MemberInfo member)
-  {
-    if(args == null || args.Length == 0)
-      return true;
-
-    for(int i=0;i<args.Length;++i)
-    {
-      if(args[i] == member.Name)
-        return true;
-    }
-
-    return false;
-  }
-
-  static bool IsMemberTested(MemberInfo member)
-  {
-    foreach(var attribute in member.GetCustomAttributes(true))
-    {
-      if(attribute is IsTestedAttribute)
-        return true;
-    }
-    return false;
   }
 }
 

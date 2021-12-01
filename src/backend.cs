@@ -28,30 +28,12 @@ public class Interpreter : AST_Visitor
   public delegate void FieldRef(DynVal v, out DynVal res);
   public delegate BehaviorTreeNode FuncNodeCreator(); 
 
-  FastStack<BehaviorTreeInternalNode> node_stack = new FastStack<BehaviorTreeInternalNode>(128);
+  FixedStack<BehaviorTreeInternalNode> node_stack = new FixedStack<BehaviorTreeInternalNode>(128);
   BehaviorTreeInternalNode curr_node;
 
-  FastStack<DynValDict> mstack = new FastStack<DynValDict>(129);
+  FixedStack<DynValDict> mstack = new FixedStack<DynValDict>(129);
   DynValDict curr_mem;
   public DynValDict glob_mem = new DynValDict();
-
-  public struct JsonCtx
-  {
-    public const int OBJ = 1;
-    public const int ARR = 2;
-
-    public int type;
-    public uint scope_type;
-    public uint name_or_idx;
-
-    public JsonCtx(int type, uint scope_type, uint name_or_idx)
-    {
-      this.type = type;
-      this.scope_type = scope_type;
-      this.name_or_idx = name_or_idx;
-    }
-  }
-  FastStack<JsonCtx> jcts = new FastStack<JsonCtx>(130);
 
   public IModuleLoader module_loader;
   //NOTE: key is a module id, value is a file path
@@ -77,11 +59,11 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  public FastStack<StackValue> stack = new FastStack<StackValue>(256);
-  public FastStack<FuncBaseCallNode> call_stack = new FastStack<FuncBaseCallNode>(255);
+  public FixedStack<StackValue> stack = new FixedStack<StackValue>(256);
+  public FixedStack<FuncBaseCallNode> call_stack = new FixedStack<FuncBaseCallNode>(255);
   //NOTE: this one is used for marking stack values with proper node ctx, 
   //      this is used in paral nodes where stack values interleaving may happen
-  public FastStack<BehaviorTreeNode> node_ctx_stack = new FastStack<BehaviorTreeNode>(131);
+  public FixedStack<BehaviorTreeNode> node_ctx_stack = new FixedStack<BehaviorTreeNode>(131);
 #if DEBUG_STACK
   //NOTE: this one is used for marking stack values with proper func ctx so that 
   //      this info can be retrieved for debug purposes
@@ -142,7 +124,7 @@ public class Interpreter : AST_Visitor
   public FuncSymbol ResolveFuncSymbol(AST_Call ast)
   {
     if(ast.type == EnumCall.FUNC)
-      return symbols.resolve(ast.Name()) as FuncSymbol;
+      return symbols.Resolve(ast.Name()) as FuncSymbol;
     else if(ast.type == EnumCall.MFUNC)
       return ResolveClassMember(ast.scope_ntype, ast.Name()) as FuncSymbol;
     else
@@ -157,7 +139,7 @@ public class Interpreter : AST_Visitor
 
   public FuncNode GetFuncNode(HashedName name)
   {
-    var symb = symbols.resolve(name) as FuncSymbol;
+    var symb = symbols.Resolve(name) as FuncSymbol;
     return FuncCtx.MakeFuncNode(symb);
   }
 
@@ -179,7 +161,7 @@ public class Interpreter : AST_Visitor
 
   Symbol ResolveClassMember(HashedName class_type, HashedName name)
   {
-    var cl = symbols.resolve(class_type) as ClassSymbol;
+    var cl = symbols.Resolve(class_type) as ClassSymbol;
     if(cl == null)
       throw new Exception("Class binding not found: " + class_type + ", member: " + name); 
 
@@ -223,9 +205,9 @@ public class Interpreter : AST_Visitor
       if(n is FuncUserCallNode)
       {
         var fuc = n as FuncUserCallNode;
-        if(fuc.children.Count > 0 && fuc.children[0] is FuncNodeAST)
+        if(fuc.children.Count > 0 && fuc.children[0] is FuncNodeScript)
         {
-          var fast = fuc.children[0] as FuncNodeAST;
+          var fast = fuc.children[0] as FuncNodeScript;
           item.module_id = fast.decl.nname2; 
           item.func_name = fast.decl.name;
           item.func_id = fast.decl.nname1;
@@ -311,7 +293,7 @@ public class Interpreter : AST_Visitor
 
   public void PopScope()
   {
-    mstack.Pop();
+    mstack.Pop(null);
     curr_mem = mstack.Count > 0 ? mstack.Peek() : null;
   }
 
@@ -369,7 +351,7 @@ public class Interpreter : AST_Visitor
 
   public BehaviorTreeInternalNode PopNode()
   {
-    var node = node_stack.Pop();
+    var node = node_stack.Pop(null);
     curr_node = node_stack.Count > 0 ? node_stack.Peek() : null; 
     return node;
   }
@@ -377,34 +359,11 @@ public class Interpreter : AST_Visitor
   public void PushStackParalCtx(BehaviorTreeNode n)
   {
     node_ctx_stack.Push(n);
-    if(stack.Count > 0)
-      SortStackByNodeCtx(n);
   }
 
   public void PopStackParalCtx()
   {
-    node_ctx_stack.Pop();
-    if(node_ctx_stack.Count > 0 && stack.Count > 0)
-      SortStackByNodeCtx(node_ctx_stack.Peek());
-  }
-
-  void SortStackByNodeCtx(BehaviorTreeNode n)
-  {
-    int candidate_slot_idx = -1;
-    //NOTE: moving ctx marked stack values to the end
-    for(int i=stack.Count;i-- > 0;)
-    {
-      var sv = stack[i];
-
-      if(sv.node_ctx != n && candidate_slot_idx == -1)
-        candidate_slot_idx = i;
-      
-      if(sv.node_ctx == n && candidate_slot_idx != -1)
-      {
-        stack.MoveTo(i, candidate_slot_idx);
-        --candidate_slot_idx;
-      }
-    }
+    node_ctx_stack.Pop(null);
   }
 
   public void PushValue(DynVal v)
@@ -423,21 +382,21 @@ public class Interpreter : AST_Visitor
 
   public DynVal PopValue()
   {
-    var sv = stack.PopFast();
+    var sv = stack.Pop();
     sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
     return sv.dv;
   }
 
   public DynVal PopRef()
   {
-    var sv = stack.PopFast();
+    var sv = stack.Pop();
     sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC_NO_DEL);
     return sv.dv;
   }
 
   public DynVal PopValueEx(int mode)
   {
-    var sv = stack.PopFast();
+    var sv = stack.Pop();
     sv.dv.RefMod(mode);
     return sv.dv;
   }
@@ -452,7 +411,7 @@ public class Interpreter : AST_Visitor
       if(sv.node_ctx != paral_ctx)
         continue;
       sv.dv.RefMod(RefOp.USR_DEC_NO_DEL | RefOp.DEC);
-      stack.RemoveAtFast(i);
+      stack.RemoveAt(i);
     }
   }
 
@@ -495,20 +454,20 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(AST_Import ast)
   {
-    for(int i=0;i<ast.modules.Count;++i)
-      LoadModule(ast.modules[i]);
+    for(int i=0;i<ast.module_ids.Count;++i)
+      LoadModule(ast.module_ids[i]);
   }
 
   void CheckFuncIsUnique(HashedName name)
   {
-    var s = symbols.resolve(name) as FuncSymbol;
+    var s = symbols.Resolve(name) as FuncSymbol;
     if(s != null)
       throw new Exception("Function is already defined: " + name);
   }
 
   void CheckNameIsUnique(HashedName name)
   {
-    var s = symbols.resolve(name);
+    var s = symbols.Resolve(name);
     var cs = s as ClassSymbol;
     if(cs != null)
       throw new Exception("Class is already defined: " + name);
@@ -522,20 +481,20 @@ public class Interpreter : AST_Visitor
     var name = ast.Name(); 
     CheckFuncIsUnique(name);
 
-    var fn = new FuncSymbolAST(symbols, ast);
-    symbols.define(fn);
+    var fn = new FuncSymbolScript(symbols, ast);
+    symbols.Define(fn);
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
     //if there's such a lambda symbol already we re-use it
     var name = ast.Name(); 
-    var lmb = symbols.resolve(name) as LambdaSymbol;
+    var lmb = symbols.Resolve(name) as LambdaSymbol;
     if(lmb == null)
     {
       CheckFuncIsUnique(name);
       lmb = new LambdaSymbol(symbols, ast);
-      symbols.define(lmb);
+      symbols.Define(lmb);
     }
 
     curr_node.addChild(new PushFuncCtxNode(lmb));
@@ -546,18 +505,18 @@ public class Interpreter : AST_Visitor
     var name = ast.Name();
     CheckNameIsUnique(name);
 
-    var parent = symbols.resolve(ast.ParentName()) as ClassSymbol;
+    var parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
 
-    var cl = new ClassSymbolAST(name, ast, parent);
-    symbols.define(cl);
+    var cl = new ClassSymbolScript(name, ast, parent);
+    symbols.Define(cl);
 
     for(int i=0;i<ast.children.Count;++i)
     {
       var child = ast.children[i];
       if(child is AST_VarDecl vd)
-        cl.define(new FieldSymbolAST(vd.name, vd.ntype));
-      if(child is AST_FuncDecl fd)
-        cl.define(new FuncSymbolAST(parent, fd));
+        cl.Define(new FieldSymbolScript(vd.name, vd.ntype));
+      else if(child is AST_FuncDecl fd)
+        cl.Define(new FuncSymbolScript(parent, fd));
     }
   }
 
@@ -566,8 +525,8 @@ public class Interpreter : AST_Visitor
     var name = ast.Name();
     CheckNameIsUnique(name);
 
-    var es = new EnumSymbolAST(name);
-    symbols.define(es);
+    var es = new EnumSymbolScript(name);
+    symbols.Define(es);
   }
 
   public override void DoVisit(AST_Block ast)
@@ -727,14 +686,14 @@ public class Interpreter : AST_Visitor
     }
     else if(ast.type == EnumCall.FUNC2VAR)
     {
-      var s = symbols.resolve(ast.nname()) as FuncSymbol;
+      var s = symbols.Resolve(ast.nname()) as FuncSymbol;
       if(s == null)
         throw new Exception("Could not find func:" + ast.Name());
       curr_node.addChild(new PushFuncCtxNode(s));
     }
     else if(ast.type == EnumCall.ARR_IDX)
     {
-      var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
+      var bnd = symbols.Resolve(ast.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
         throw new Exception("Could not find class binding: " + ast.scope_ntype);
 
@@ -742,7 +701,7 @@ public class Interpreter : AST_Visitor
     }
     else if(ast.type == EnumCall.ARR_IDXW)
     {
-      var bnd = symbols.resolve(ast.scope_ntype) as ArrayTypeSymbol;
+      var bnd = symbols.Resolve(ast.scope_ntype) as ArrayTypeSymbol;
       if(bnd == null)
         throw new Exception("Could not find class binding: " + ast.scope_ntype);
 
@@ -755,7 +714,7 @@ public class Interpreter : AST_Visitor
   void AddFuncCallNode(AST_Call ast)
   {
     var symb = ResolveFuncSymbol(ast);
-    var fbind_symb = symb as FuncBindSymbol;
+    var fbind_symb = symb as FuncSymbolNative;
 
     //special case if it's bind symbol
     if(fbind_symb != null)
@@ -763,7 +722,7 @@ public class Interpreter : AST_Visitor
       bool has_args = ast.cargs_bits > 0 || fbind_symb.def_args_num > 0;
 
       if(has_args)
-        curr_node.addChild(new FuncBindCallNode(ast));
+        curr_node.addChild(new NativeFuncCallNode(ast));
       //special case if it's a simple bind symbol call without any args
       else
         curr_node.addChild(fbind_symb.func_creator());
@@ -797,6 +756,12 @@ public class Interpreter : AST_Visitor
   public override void DoVisit(AST_Break node)
   {
     curr_node.addChild(new BreakNode());
+  }
+
+  public override void DoVisit(AST_Continue node)
+  {
+    if(!node.jump_marker)
+      throw new Exception("Not implemented");
   }
 
   public override void DoVisit(AST_PopValue node)
@@ -854,7 +819,7 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonArr node)
   {
-    var bnd = symbols.resolve(node.ntype) as ArrayTypeSymbol;
+    var bnd = symbols.Resolve(node.ntype) as ArrayTypeSymbol;
     if(bnd == null)
       throw new Exception("Could not find class binding: " + node.ntype);
 
@@ -872,12 +837,7 @@ public class Interpreter : AST_Visitor
         curr_node.addChild(n);
       }
       else
-      {
-        var jc = new JsonCtx(JsonCtx.ARR, node.ntype, (uint)i);
-        jcts.Push(jc);
         Visit(c);
-        jcts.Pop();
-      }
     }
 
     //adding last item item
@@ -891,13 +851,8 @@ public class Interpreter : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonPair node)
   {
-    var jc = new JsonCtx(JsonCtx.OBJ, node.scope_ntype, node.nname);
-    jcts.Push(jc);
-
     VisitChildren(node);
     curr_node.addChild(new MVarAccessNode(node.scope_ntype, node.Name(), MVarAccessNode.WRITE_PUSH_CTX));
-
-    jcts.Pop();
   }
 }
 
@@ -916,6 +871,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_Call node);
   public abstract void DoVisit(AST_Return node);
   public abstract void DoVisit(AST_Break node);
+  public abstract void DoVisit(AST_Continue node);
   public abstract void DoVisit(AST_PopValue node);
   public abstract void DoVisit(AST_Literal node);
   public abstract void DoVisit(AST_BinaryOpExp node);
@@ -957,6 +913,8 @@ public abstract class AST_Visitor
       DoVisit(node as AST_Return);
     else if(node is AST_Break)
       DoVisit(node as AST_Break);
+    else if(node is AST_Continue)
+      DoVisit(node as AST_Continue);
     else if(node is AST_PopValue)
       DoVisit(node as AST_PopValue);
     else if(node is AST_BinaryOpExp)
@@ -1045,17 +1003,17 @@ public class FuncCtx : DynValRefcounted
 
   public static FuncNode MakeFuncNode(FuncSymbol fs, FuncCtx fct = null)
   {
-    if(fs is FuncSymbolAST)
+    if(fs is FuncSymbolScript)
     {
       if(fs.scope is ClassSymbol)
-        return new MethodNodeAST((fs as FuncSymbolAST).decl, fct);
+        return new MethodNodeScript((fs as FuncSymbolScript).decl, fct);
       else
-        return new FuncNodeAST((fs as FuncSymbolAST).decl, fct);
+        return new FuncNodeScript((fs as FuncSymbolScript).decl, fct);
     }
     else if(fs is LambdaSymbol)
       return new FuncNodeLambda(fct);
-    else if(fs is FuncBindSymbol)
-      return new FuncNodeBind(fs as FuncBindSymbol, fct);
+    else if(fs is FuncSymbolNative)
+      return new FuncNodeNative(fs as FuncSymbolNative, fct);
     else
       throw new Exception("Unknown symbol type");
   }
@@ -1071,11 +1029,11 @@ public class FuncCtx : DynValRefcounted
     if(fs is LambdaSymbol)
     {
       var ldecl = (fs as LambdaSymbol).decl as AST_LambdaDecl;
-      for(int i=0;i<ldecl.useparams.Count;++i)
+      for(int i=0;i<ldecl.uses.Count;++i)
       {
-        var up = ldecl.useparams[i];
+        var up = ldecl.uses[i];
         var val = mem.Get(up.Name());
-        dup.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        dup.mem.Set(up.Name(), up.is_ref ? val : val.ValueClone());
       }
     }
 
@@ -1139,6 +1097,8 @@ public class FuncCtx : DynValRefcounted
       pool.Add(fs, stack);
     }
 
+    //Console.WriteLine("FREF NEW " + Environment.StackTrace);
+    
     if(stack.Count == 0)
     {
       ++pool_miss;
@@ -1161,6 +1121,8 @@ public class FuncCtx : DynValRefcounted
   {
     if(fct.refs != 0)
       throw new Exception("Freeing invalid object, refs " + fct.refs);
+
+    //Console.WriteLine("FREF DEL " + Environment.StackTrace);
 
     //NOTE: actually there must be an existing stack, throw an exception if not?
     Stack<FuncCtx> stack;
@@ -1213,6 +1175,5 @@ public class FuncCtx : DynValRefcounted
     get { return nodes_created; }
   }
 }
-
 
 } //namespace bhl

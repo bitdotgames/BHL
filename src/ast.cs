@@ -99,7 +99,8 @@ public class AST_Interim  : AST
 
 public class AST_Import  : AST_Base 
 {
-  public List<uint> modules = new List<uint>();
+  public List<uint> module_ids = new List<uint>();
+  public List<string> module_names = new List<string>();
 
   static public  new  uint STATIC_CLASS_ID = 117209009;
 
@@ -117,19 +118,21 @@ public class AST_Import  : AST_Base
   {
     base.reset();
 
-    if(modules == null) modules = new List<uint>(); modules.Clear();
+    if(module_ids == null) module_ids = new List<uint>(); module_ids.Clear();
+    if(module_names == null) module_names = new List<string>(); module_names.Clear();
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, modules);
+    MetaHelper.sync(ctx, module_ids);
+    MetaHelper.sync(ctx, module_names);
   }
 
   public override int getFieldsCount() 
   {
-    return 1; 
+    return 2; 
   }
 }
 
@@ -273,6 +276,7 @@ public class AST_BinaryOpExp  : AST
 public class AST_Inc  : AST_Base 
 {
   public uint nname;
+  public uint symb_idx;
 
   static public  new  uint STATIC_CLASS_ID = 192507281;
 
@@ -290,23 +294,26 @@ public class AST_Inc  : AST_Base
   {
     base.reset();
     nname = 0;
+    symb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
     MetaHelper.sync(ctx, ref nname);
+    MetaHelper.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 1; 
+    return 2; 
   }
 }
 
 public class AST_Dec  : AST_Base 
 {
   public uint nname;
+  public uint symb_idx;
 
   static public  new  uint STATIC_CLASS_ID = 5580553;
 
@@ -324,17 +331,19 @@ public class AST_Dec  : AST_Base
   {
     base.reset();
     nname = 0;
+    symb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
     MetaHelper.sync(ctx, ref nname);
+    MetaHelper.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 1; 
+    return 2; 
   }
 }
 
@@ -382,6 +391,9 @@ public class AST_FuncDecl  : AST
   public uint nname1;
   public uint nname2;
   public string name = "";
+  public uint local_vars_num;
+  public byte required_args_num;
+  public byte default_args_num;
 
   static public  new  uint STATIC_CLASS_ID = 19638951;
 
@@ -404,6 +416,9 @@ public class AST_FuncDecl  : AST
     nname1 = 0;
     nname2 = 0;
     name = "";
+    local_vars_num = 0;
+    required_args_num = 0;
+    default_args_num = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -415,11 +430,14 @@ public class AST_FuncDecl  : AST
     MetaHelper.sync(ctx, ref nname1);
     MetaHelper.sync(ctx, ref nname2);
     MetaHelper.sync(ctx, ref name);
+    MetaHelper.sync(ctx, ref local_vars_num);
+    MetaHelper.sync(ctx, ref required_args_num);
+    MetaHelper.sync(ctx, ref default_args_num);
   }
 
   public override int getFieldsCount() 
   {
-    return 6; 
+    return 9; 
   }
 }
 
@@ -550,6 +568,9 @@ public class AST_UseParam  :  BaseMetaStruct
 {
   public uint nname;
   public string name = "";
+  public uint symb_idx;
+  public uint upsymb_idx;
+  public bool is_ref;
 
   static public  uint STATIC_CLASS_ID = 121447213;
 
@@ -567,6 +588,9 @@ public class AST_UseParam  :  BaseMetaStruct
   {
     nname = 0;
     name = "";
+    symb_idx = 0;
+    upsymb_idx = 0;
+    is_ref = false;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -575,17 +599,20 @@ public class AST_UseParam  :  BaseMetaStruct
 
     MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
+    MetaHelper.sync(ctx, ref symb_idx);
+    MetaHelper.sync(ctx, ref upsymb_idx);
+    MetaHelper.sync(ctx, ref is_ref);
   }
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return 5; 
   }
 }
 
 public class AST_LambdaDecl  : AST_FuncDecl 
 {
-  public List<AST_UseParam> useparams = new List<AST_UseParam>();
+  public List<AST_UseParam> uses = new List<AST_UseParam>();
 
   static public  new  uint STATIC_CLASS_ID = 44443142;
 
@@ -603,19 +630,19 @@ public class AST_LambdaDecl  : AST_FuncDecl
   {
     base.reset();
 
-    if(useparams == null) useparams = new List<AST_UseParam>(); 
-    useparams.Clear();
+    if(uses == null) uses = new List<AST_UseParam>(); 
+    uses.Clear();
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, useparams);
+    MetaHelper.sync(ctx, uses);
   }
 
   public override int getFieldsCount() 
   {
-    return 7; 
+    return base.getFieldsCount() + 1; 
   }
 }
 
@@ -685,6 +712,8 @@ public class AST_Call  : AST
   public uint cargs_bits;
   public uint scope_ntype;
   public uint line_num;
+  public uint symb_idx;
+  public string scope_type = "";
 
   static public  new  uint STATIC_CLASS_ID = 42771415;
 
@@ -709,6 +738,8 @@ public class AST_Call  : AST
     cargs_bits = 0;
     scope_ntype = 0;
     line_num = 0;
+    symb_idx = 0;
+    scope_type = "";
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -725,11 +756,13 @@ public class AST_Call  : AST
     MetaHelper.sync(ctx, ref cargs_bits);
     MetaHelper.sync(ctx, ref scope_ntype);
     MetaHelper.sync(ctx, ref line_num);
+    MetaHelper.sync(ctx, ref symb_idx);
+    MetaHelper.sync(ctx, ref scope_type);
   }
 
   public override int getFieldsCount() 
   {
-    return 8; 
+    return 10; 
   }
 }
 
@@ -794,6 +827,39 @@ public class AST_Break  : AST_Base
   }
 }
 
+public class AST_Continue  : AST_Base 
+{
+  static public  new  uint STATIC_CLASS_ID = 83587594;
+  public bool jump_marker;
+
+  public override uint CLASS_ID() 
+  {
+    return 83587594; 
+  }
+
+  public AST_Continue()
+  {
+    reset();
+  }
+
+  public override void reset() 
+  {
+    base.reset();
+  }
+
+  public override void syncFields(MetaSyncContext ctx) 
+  {
+    base.syncFields(ctx);
+
+    MetaHelper.sync(ctx, ref jump_marker);
+  }
+
+  public override int getFieldsCount() 
+  {
+    return 1; 
+  }
+}
+
 public enum EnumLiteral 
 {
   NUM = 1,
@@ -854,6 +920,10 @@ public class AST_VarDecl  : AST
   public uint nname;
   public string name = "";
   public uint ntype;
+  public string type = "";
+  public uint symb_idx;
+  public bool is_func_arg;
+  public bool is_ref;
 
   static public  new  uint STATIC_CLASS_ID = 232512499;
 
@@ -874,6 +944,10 @@ public class AST_VarDecl  : AST
     nname = 0;
     name = "";
     ntype = 0;
+    type = "";
+    symb_idx = 0;
+    is_func_arg = false;
+    is_ref = false;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -883,11 +957,15 @@ public class AST_VarDecl  : AST
     MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref ntype);
+    MetaHelper.sync(ctx, ref symb_idx);
+    MetaHelper.sync(ctx, ref is_func_arg);
+    MetaHelper.sync(ctx, ref type);
+    MetaHelper.sync(ctx, ref is_ref);
   }
 
   public override int getFieldsCount() 
   {
-    return 4; 
+    return 8; 
   }
 }
 
@@ -951,6 +1029,7 @@ public class AST_Block  : AST
 public class AST_JsonObj  : AST 
 {
   public uint ntype;
+  public string type = "";
 
   static public  new  uint STATIC_CLASS_ID = 31901170;
 
@@ -969,6 +1048,7 @@ public class AST_JsonObj  : AST
     base.reset();
 
     ntype = 0;
+    type = "";
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -976,17 +1056,19 @@ public class AST_JsonObj  : AST
     base.syncFields(ctx);
 
     MetaHelper.sync(ctx, ref ntype);
+    MetaHelper.sync(ctx, ref type);
   }
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return 3; 
   }
 }
 
 public class AST_JsonArr  : AST 
 {
   public uint ntype;
+  public string type;
 
   static public  new  uint STATIC_CLASS_ID = 47604479;
 
@@ -1005,6 +1087,7 @@ public class AST_JsonArr  : AST
     base.reset();
 
     ntype = 0;
+    type = "";
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -1012,11 +1095,12 @@ public class AST_JsonArr  : AST
     base.syncFields(ctx);
 
     MetaHelper.sync(ctx, ref ntype);
+    MetaHelper.sync(ctx, ref type);
   }
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return 3; 
   }
 }
 
@@ -1055,6 +1139,8 @@ public class AST_JsonPair  : AST
   public uint nname;
   public string name = "";
   public uint scope_ntype;
+  public uint symb_idx;
+  public string scope_type = "";
 
   static public  new  uint STATIC_CLASS_ID = 235544635;
 
@@ -1075,6 +1161,8 @@ public class AST_JsonPair  : AST
     nname = 0;
     name = "";
     scope_ntype = 0;
+    symb_idx = 0;
+    scope_type = "";
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -1084,11 +1172,13 @@ public class AST_JsonPair  : AST
     MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref scope_ntype);
+    MetaHelper.sync(ctx, ref symb_idx);
+    MetaHelper.sync(ctx, ref scope_type);
   }
 
   public override int getFieldsCount() 
   {
-    return 4; 
+    return 6; 
   }
 }
 
@@ -1149,6 +1239,7 @@ public static class AST_Factory
       case 42771415: { return new AST_Call(); };
       case 204244643: { return new AST_Return(); };
       case 93587594: { return new AST_Break(); };
+      case 83587594: { return new AST_Continue(); };
       case 246902930: { return new AST_Literal(); };
       case 232512499: { return new AST_VarDecl(); };
       case 183750514: { return new AST_Block(); };

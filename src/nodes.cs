@@ -1,6 +1,5 @@
 //#define DEBUG_STACK
 using System;
-using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -151,11 +150,8 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
 
       if(c.currStatus != BHS.NONE)
       {
-        if(Util.DEBUG)
-        {
-          if(c.currStatus == BHS.RUNNING)
-            throw new Exception("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
-        }
+        if(c.currStatus == BHS.RUNNING)
+          throw new Exception("Node is RUNNING during defer: " + Interpreter.instance.GetStackTrace());
 
         c.defer();
         c.currStatus = BHS.NONE;
@@ -479,7 +475,7 @@ public abstract class FuncBaseCallNode : GroupNode
 
       //NOTE: only when it's actual func call we pop it from the call stack
       if(is_func_call)
-        interp.call_stack.DecFast();
+        interp.call_stack.Dec();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       if(status == BHS.SUCCESS)
         ++currentPosition;
@@ -754,7 +750,7 @@ public class FuncCallNode : FuncBaseCallNode
 
     pi.id = ++last_pool_id;
     FuncNode fnode = interp.GetFuncNode(pi.ast);
-    if(!(fnode is FuncNodeAST))
+    if(!(fnode is FuncNodeScript))
       throw new Exception("Not expected type of node");
     pi.fnode = fnode;
   }
@@ -787,9 +783,9 @@ public class FuncCallNode : FuncBaseCallNode
   }
 }
 
-public class FuncBindCallNode : FuncBaseCallNode
+public class NativeFuncCallNode : FuncBaseCallNode
 {
-  public FuncBindCallNode(AST_Call ast)
+  public NativeFuncCallNode(AST_Call ast)
     : base(ast)
   {}
 
@@ -799,7 +795,7 @@ public class FuncBindCallNode : FuncBaseCallNode
     if(children.Count == 0)
     {
       var interp = Interpreter.instance;
-      var symb = interp.ResolveFuncSymbol(ast) as FuncBindSymbol;
+      var symb = interp.ResolveFuncSymbol(ast) as FuncSymbolNative;
       interp.PushNode(this);
 
       var args_info = new FuncArgsInfo(ast.cargs_bits);
@@ -1533,7 +1529,7 @@ public class ConstructNode : BehaviorTreeTerminalNode
   {
     var interp = Interpreter.instance;
 
-    var cls = interp.symbols.resolve(ntype) as ClassSymbol;
+    var cls = interp.symbols.Resolve(ntype) as ClassSymbol;
     if(cls == null)
       throw new Exception("Could not find class symbol: " + ntype);
 
@@ -1771,11 +1767,11 @@ public class TypeCastNode : BehaviorTreeTerminalNode
     var res = val.ValueClone();
 
     //TODO: add better casting support
-    if(node.ntype == SymbolTable._int.name.n)
+    if(node.ntype == SymbolTable.symb_int.name.n)
     {
       res.SetNum((int)val.num);
     }
-    else if(node.ntype == SymbolTable._string.name.n && val.type != DynVal.STRING)
+    else if(node.ntype == SymbolTable.symb_string.name.n && val.type != DynVal.STRING)
     {
       res.SetStr("" + val.num);
     }
@@ -1894,7 +1890,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
     
     if(cls_member == null)
     {
-      var cls = interp.symbols.resolve(scope_ntype) as ClassSymbol;
+      var cls = interp.symbols.Resolve(scope_ntype) as ClassSymbol;
       if(cls == null)
         throw new Exception("Class binding not found: " + scope_ntype); 
 
@@ -1903,7 +1899,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
         throw new Exception("Member not found: " + name);
 
       //TODO: move this check to frontend layer
-      if(cls is ClassSymbolAST && cls_member.scope is ClassBindSymbol)
+      if(cls is ClassSymbolScript && cls_member.scope is ClassSymbolNative)
         need_super_class_bind_obj = true;
     }
 
@@ -2067,7 +2063,7 @@ abstract public class FuncNode : SequentialNode
   }
 }
 
-public class FuncNodeAST : FuncNode
+public class FuncNodeScript : FuncNode
 {
   public AST_FuncDecl decl;
 
@@ -2075,7 +2071,7 @@ public class FuncNodeAST : FuncNode
 
   protected DynValDict mem = new DynValDict();
 
-  public FuncNodeAST(AST_FuncDecl decl, FuncCtx fct)
+  public FuncNodeScript(AST_FuncDecl decl, FuncCtx fct)
   {
     this.fct = fct;
     this.decl = decl;
@@ -2130,7 +2126,7 @@ public class FuncNodeAST : FuncNode
       var fparam = (AST_VarDecl)fparams.children[i];
       var fparam_name = fparam.Name();
 
-      var fparam_val = fparam.IsRef() ? interp.PopRef() : interp.PopValue().ValueClone();
+      var fparam_val = fparam.is_ref ? interp.PopRef() : interp.PopValue().ValueClone();
       //Console.WriteLine(fparam_name + "=" + fparam_val + (fparam.IsRef() ? " ref " : " ") + fparam_val.GetHashCode());
       mem.Set(fparam_name, fparam_val);
 
@@ -2203,11 +2199,11 @@ public class FuncNodeAST : FuncNode
   }
 }
 
-public class MethodNodeAST : FuncNodeAST
+public class MethodNodeScript : FuncNodeScript
 {
   private readonly HashedName this_keyword_hashed_name = new HashedName("this");
 
-  public MethodNodeAST(AST_FuncDecl decl, FuncCtx fct)
+  public MethodNodeScript(AST_FuncDecl decl, FuncCtx fct)
     : base(decl, fct)
   { }
 
@@ -2219,7 +2215,7 @@ public class MethodNodeAST : FuncNodeAST
   }
 }
 
-public class FuncNodeLambda : FuncNodeAST
+public class FuncNodeLambda : FuncNodeScript
 {
   public FuncNodeLambda(FuncCtx fct)
     : base((fct.fs as LambdaSymbol).decl, fct)
@@ -2234,17 +2230,17 @@ public class FuncNodeLambda : FuncNodeAST
 
   public override string inspect()
   {
-    return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).useparams.Count + "x =";
+    return this.decl.Name() + " use " + ((AST_LambdaDecl)this.decl).uses.Count + "x =";
   }
 }
 
 //NOTE: this one is ugly and probably should not event exist 
 //      but it does just for the consistency
-public class FuncNodeBind : FuncNode
+public class FuncNodeNative : FuncNode
 {
-  public FuncBindSymbol symb;
+  public FuncSymbolNative symb;
 
-  public FuncNodeBind(FuncBindSymbol symb, FuncCtx fct)
+  public FuncNodeNative(FuncSymbolNative symb, FuncCtx fct)
   {
     this.fct = fct;
     this.symb = symb;
@@ -2300,11 +2296,11 @@ public class PushFuncCtxNode : BehaviorTreeTerminalNode
     {
       //Console.WriteLine("PUSH LCTX " + this.GetHashCode() + " " + ldecl.useparams.Count);
       //setting use params to its own memory scope
-      for(int i=0;i<lmb.decl.useparams.Count;++i)
+      for(int i=0;i<lmb.decl.uses.Count;++i)
       {
-        var up = lmb.decl.useparams[i];
+        var up = lmb.decl.uses[i];
         var val = interp.GetScopeValue(up.Name());
-        fct.mem.Set(up.Name(), up.IsRef() ? val : val.ValueClone());
+        fct.mem.Set(up.Name(), up.is_ref ? val : val.ValueClone());
       }
     }
 
@@ -2483,31 +2479,6 @@ public class Array_SetAtNode : BehaviorTreeTerminalNode
   }
 }
 
-public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
-{
-  public override void init()
-  {
-    var interp = Interpreter.instance;
-
-    //NOTE: args are in reverse order in stack
-    var idx = interp.PopValue();
-    var arr = interp.PopValue();
-
-    var lst = (arr.obj as IList<T>);
-    if(lst == null)
-      throw new UserError("Not a List<" + typeof(T).Name + ">: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
-
-    var res = lst[(int)idx.num]; 
-    var val = DynVal.NewObj(res);
-    interp.PushValue(val);
-  }
-
-  public override string inspect()
-  {
-    return "<- <- ->";
-  }
-}
-
 public class Array_SetAtNodeT<T> : BehaviorTreeTerminalNode where T : new()
 {
   public override void init()
@@ -2531,6 +2502,31 @@ public class Array_SetAtNodeT<T> : BehaviorTreeTerminalNode where T : new()
   public override string inspect()
   {
     return "<- <- <-";
+  }
+}
+
+public class Array_AtNodeT<T> : BehaviorTreeTerminalNode
+{
+  public override void init()
+  {
+    var interp = Interpreter.instance;
+
+    //NOTE: args are in reverse order in stack
+    var idx = interp.PopValue();
+    var arr = interp.PopValue();
+
+    var lst = (arr.obj as IList<T>);
+    if(lst == null)
+      throw new UserError("Not a List<" + typeof(T).Name + ">: " + (arr.obj != null ? arr.obj.GetType().Name : ""));
+
+    var res = lst[(int)idx.num]; 
+    var val = DynVal.NewObj(res);
+    interp.PushValue(val);
+  }
+
+  public override string inspect()
+  {
+    return "<- <- ->";
   }
 }
 

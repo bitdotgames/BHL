@@ -68,9 +68,9 @@ public class TypeRef
 
     //TODO: not sure if it's a non-ugly solution
     if(bindings == null)
-      type = (bhl.Type)Interpreter.instance.symbols.resolve(name);
+      type = (bhl.Type)Interpreter.instance.symbols.Resolve(name);
     else
-      type = (bhl.Type)bindings.resolve(name);
+      type = (bhl.Type)bindings.Resolve(name);
 
     return type;
   }
@@ -194,13 +194,15 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   public SymbolsDictionary members = new SymbolsDictionary();
 
   public Interpreter.ClassCreator creator;
+  public VM.ClassCreator VM_creator;
 
   public ClassSymbol(
     WrappedNode n, 
     HashedName name, 
     TypeRef super_class_ref, 
     Scope enclosing_scope, 
-    Interpreter.ClassCreator creator = null
+    Interpreter.ClassCreator creator = null,
+    VM.ClassCreator VM_creator = null
   )
     : base(n, name, enclosing_scope)
   {
@@ -212,6 +214,7 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     }
 
     this.creator = creator;
+    this.VM_creator = VM_creator;
   }
 
   public virtual HashedName Type()
@@ -253,16 +256,19 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     return null;
   }
 
-  public override void define(Symbol sym) 
+  public override void Define(Symbol sym) 
   {
     if(super_class != null && super_class.GetMembers().Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
-    base.define(sym);
+    base.Define(sym);
+
+    if(sym is VariableSymbol vs)
+      vs.scope_idx = members.FindStringKeyIndex(sym.name.s);
   }
 
   public HashedName GetName() { return name; }
-  public int GetTypeIndex() { return SymbolTable.tUSER; }
+  public int GetTypeIndex() { return SymbolTable.TIDX_USER; }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
@@ -275,7 +281,7 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
 
 abstract public class ArrayTypeSymbol : ClassSymbol
 {
-  public TypeRef original;
+  public TypeRef item_type;
 
 #if BHL_FRONT
   public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
@@ -283,38 +289,65 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   {}
 #endif
 
-  public ArrayTypeSymbol(BaseScope scope, TypeRef original) 
-    : base(null, original.name.s + "[]", new TypeRef(), null)
+  //NOTE: indices below are synchronized with an actual order 
+  //      of class members initialized later
+  public const int IDX_Add        = 0;
+  public const int IDX_At         = 1;
+  public const int IDX_SetAt      = 2;
+  public const int IDX_RemoveAt   = 3;
+  public const int IDX_Clear      = 4;
+  public const int IDX_Count      = 5;
+  public const int IDX_AddInplace = 6;
+
+  public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
+    : base(null, item_type.name.s + "[]", new TypeRef(), null)
   {
-    this.original = original;
+    this.item_type = item_type;
 
     this.creator = CreateArr;
+    this.VM_creator = VM_CreateArr;
 
     {
-      var fn = new FuncBindSymbol("Add", scope.type("void"), Create_Add);
-      fn.define(new FuncArgSymbol("o", original));
-      this.define(fn);
+      var fn = new FuncSymbolNative("Add", scope.Type("void"), Create_Add, VM_Add);
+      fn.Define(new FuncArgSymbol("o", item_type));
+      this.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("At", original, Create_At);
-      fn.define(new FuncArgSymbol("idx", scope.type("int")));
-      this.define(fn);
+      var fn = new FuncSymbolNative("At", item_type, Create_At, VM_At);
+      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      this.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("RemoveAt", scope.type("void"), Create_RemoveAt);
-      fn.define(new FuncArgSymbol("idx", scope.type("int")));
-      this.define(fn);
+      var fn = new FuncSymbolNative("SetAt", item_type, null, VM_SetAt);
+      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      fn.Define(new FuncArgSymbol("o", item_type));
+      this.Define(fn);
     }
 
     {
-      var vs = new bhl.FieldSymbol("Count", scope.type("int"), Create_Count,
-        //read only property
-        null
-      );
-      this.define(vs);
+      var fn = new FuncSymbolNative("RemoveAt", scope.Type("void"), Create_RemoveAt, VM_RemoveAt);
+      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      this.Define(fn);
     }
+
+    {
+      var fn = new FuncSymbolNative("Clear", scope.Type("void"), null, VM_Clear);
+      this.Define(fn);
+    }
+
+    {
+      var vs = new FieldSymbol("Count", scope.Type("int"), Create_Count, null, null, VM_GetCount, null);
+      this.Define(vs);
+    }
+
+    {
+      var fn = new FuncSymbolNative("$AddInplace", scope.Type("void"), null, VM_AddInplace);
+      fn.Define(new FuncArgSymbol("o", item_type));
+      this.Define(fn);
+    }
+
   }
 
   public abstract void CreateArr(ref DynVal v);
@@ -325,13 +358,30 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract BehaviorTreeNode Create_SetAt();
   public abstract BehaviorTreeNode Create_RemoveAt();
   public abstract BehaviorTreeNode Create_Clear();
+
+  public abstract void VM_CreateArr(ref Val v);
+  public abstract void VM_GetCount(Val ctx, ref Val v);
+  public abstract IInstruction VM_Add(VM.Frame frame, ref BHS status);
+  public abstract IInstruction VM_At(VM.Frame frame, ref BHS status);
+  public abstract IInstruction VM_SetAt(VM.Frame frame, ref BHS status);
+  public abstract IInstruction VM_RemoveAt(VM.Frame frame, ref BHS status);
+  public abstract IInstruction VM_Clear(VM.Frame frame, ref BHS status);
+  public abstract IInstruction VM_AddInplace(VM.Frame frame, ref BHS status);
 }
 
-//NOTE: this one is used as a fallback for all arrays which
-//      were not explicitely re-defined 
+//NOTE: This one is used as a fallback for all arrays which
+//      were not explicitely re-defined. Fallback happens during
+//      compilation phase in BaseScope.Type(..) method
+//     
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
-  public static readonly HashedName GENERIC_CLASS_TYPE = new HashedName("[]"); 
+  public static readonly HashedName CLASS_TYPE = new HashedName("[]"); 
+  public static int INT_CLASS_TYPE = (int)CLASS_TYPE.n1;
+
+  public override HashedName Type()
+  {
+    return CLASS_TYPE;
+  }
 
 #if BHL_FRONT
   public GenericArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
@@ -339,18 +389,13 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   {}
 #endif
 
-  public GenericArrayTypeSymbol(BaseScope scope, TypeRef original) 
-    : base(scope, original)
+  public GenericArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
+    : base(scope, item_type)
   {}
 
   public GenericArrayTypeSymbol(BaseScope scope) 
     : base(scope, new TypeRef(scope, ""))
   {}
-
-  public override HashedName Type()
-  {
-    return GENERIC_CLASS_TYPE;
-  }
 
   public override void CreateArr(ref DynVal v)
   {
@@ -397,6 +442,89 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   {
     return new Array_ClearNode();
   }
+
+  static ValList AsList(Val arr)
+  {
+    var lst = arr.obj as ValList;
+    if(lst == null)
+      throw new UserError("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+    return lst;
+  }
+
+  public override void VM_CreateArr(ref Val v)
+  {
+    v.SetObj(ValList.New(v.vm));
+  }
+
+  public override void VM_GetCount(Val ctx, ref Val v)
+  {
+    var lst = AsList(ctx);
+    v.SetNum(lst.Count);
+  }
+  
+  public override IInstruction VM_Add(VM.Frame frame, ref BHS status)
+  {
+    var val = frame.stack.Pop();
+    var arr = frame.stack.Pop();
+    var lst = AsList(arr);
+    lst.Add(val);
+    val.Release();
+    arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_AddInplace(VM.Frame frame, ref BHS status)
+  {
+    var val = frame.stack.Pop();
+    var arr = frame.stack.Peek();
+    var lst = AsList(arr);
+    lst.Add(val);
+    val.Release();
+    return null;
+  }
+
+  public override IInstruction VM_At(VM.Frame frame, ref BHS status)
+  {
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = AsList(arr);
+    var res = lst[idx]; 
+    frame.stack.PushRetain(res);
+    arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_SetAt(VM.Frame frame, ref BHS status)
+  {
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var val = frame.stack.Pop();
+    var lst = AsList(arr);
+    lst[idx] = val;
+    val.Release();
+    arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_RemoveAt(VM.Frame frame, ref BHS status)
+  {
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = AsList(arr);
+    lst.RemoveAt(idx); 
+    arr.Release();
+    return null;
+  }
+
+  public override IInstruction VM_Clear(VM.Frame frame, ref BHS status)
+  {
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = AsList(arr);
+    lst.Clear();
+    arr.Release();
+    return null;
+  }
 }
 
 public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
@@ -416,8 +544,8 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
       res = (T)dv.obj;
   }
 
-  public ArrayTypeSymbolT(BaseScope scope, TypeRef original, CreatorCb creator, ConverterCb converter = null) 
-    : base(scope, original)
+  public ArrayTypeSymbolT(BaseScope scope, TypeRef item_type, CreatorCb creator, ConverterCb converter = null) 
+    : base(scope, item_type)
   {
     Convert = converter == null ? DefaultConverter : converter;
 
@@ -464,10 +592,54 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   {
     return new Array_ClearNodeT();
   }
+
+  public override void VM_CreateArr(ref Val v)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override void VM_GetCount(Val ctx, ref Val v)
+  {
+    throw new Exception("Not implemented");
+  }
+  
+  public override IInstruction VM_Add(VM.Frame frame, ref BHS status)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_AddInplace(VM.Frame frame, ref BHS status)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_At(VM.Frame frame, ref BHS status)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_SetAt(VM.Frame frame, ref BHS status)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_RemoveAt(VM.Frame frame, ref BHS status)
+  {
+    throw new Exception("Not implemented");
+  }
+
+  public override IInstruction VM_Clear(VM.Frame frame, ref BHS status)
+  {
+    throw new Exception("Not implemented");
+  }
 }
 
 public class VariableSymbol : Symbol 
 {
+  public int scope_idx = -1;
+
+  public VariableSymbol up_src;
+
   public VariableSymbol(WrappedNode n, HashedName name, TypeRef type) 
     : base(n, name, type) 
   {}
@@ -494,23 +666,38 @@ public class FieldSymbol : VariableSymbol
   public Interpreter.FieldSetter setter;
   public Interpreter.FieldRef getref;
 
-  public FieldSymbol(HashedName name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null, Interpreter.FieldRef getref = null) 
+  public VM.FieldGetter VM_getter;
+  public VM.FieldSetter VM_setter;
+  public VM.FieldRef VM_getref;
+
+  public FieldSymbol(HashedName name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null, Interpreter.FieldRef getref = null, VM.FieldGetter VM_getter = null, VM.FieldSetter VM_setter = null, VM.FieldRef VM_getref = null) 
     : base(null, name, type)
   {
     this.getter = getter;
     this.setter = setter;
     this.getref = getref;
+
+    this.VM_getter = VM_getter;
+    this.VM_setter = VM_setter;
+    this.VM_getref = VM_getref;
   }
 }
 
-public class FieldSymbolAST : FieldSymbol
+public class FieldSymbolScript : FieldSymbol
 {
-  public FieldSymbolAST(HashedName name, HashedName type) 
+  public int VM_idx;
+
+  public FieldSymbolScript(HashedName name, HashedName type, int VM_idx = -1) 
     : base(name, new TypeRef(null, type), null, null, null)
   {
     this.getter = Getter;
     this.setter = Setter;
     this.getref = Getref;
+
+    this.VM_idx = VM_idx;
+    this.VM_getter = VM_Getter;
+    this.VM_setter = VM_Setter;
+    this.VM_getref = null;//TODO:
   }
 
   void Getter(DynVal ctx, ref DynVal v)
@@ -532,11 +719,28 @@ public class FieldSymbolAST : FieldSymbol
     var m = (DynValDict)ctx.obj;
     v = m.Get(name);
   }
+
+  void VM_Getter(Val ctx, ref Val v)
+  {
+    var m = (ValList)ctx.obj;
+    v.ValueCopyFrom(m[VM_idx]);
+  }
+
+  void VM_Setter(ref Val ctx, Val v)
+  {
+    var m = (ValList)ctx.obj;
+    var tmp = Val.New(ctx.vm);
+    tmp.ValueCopyFrom(v);
+    m[VM_idx] = tmp;
+    tmp.Release();
+  }
 }
 
 public abstract class ScopedSymbol : Symbol, Scope 
 {
   protected Scope enclosing_scope;
+
+  public abstract SymbolsDictionary GetMembers();
 
   public ScopedSymbol(WrappedNode n, HashedName name, TypeRef type, Scope enclosing_scope) 
     : base(n, name, type)
@@ -550,7 +754,7 @@ public abstract class ScopedSymbol : Symbol, Scope
     this.enclosing_scope = enclosing_scope;
   }
 
-  public virtual Symbol resolve(HashedName name) 
+  public virtual Symbol Resolve(HashedName name) 
   {
     Symbol s = null;
     GetMembers().TryGetValue(name, out s);
@@ -564,19 +768,18 @@ public abstract class ScopedSymbol : Symbol, Scope
 
     var pscope = GetParentScope();
     if(pscope != null)
-      return pscope.resolve(name);
+      return pscope.Resolve(name);
 
     return null;
   }
 
-  public virtual void define(Symbol sym) 
+  public virtual void Define(Symbol sym) 
   {
     var members = GetMembers(); 
     if(members.Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
     members.Add(sym);
-
     sym.scope = this; // track the scope in each symbol
   }
 
@@ -584,8 +787,6 @@ public abstract class ScopedSymbol : Symbol, Scope
   public virtual Scope GetEnclosingScope() { return enclosing_scope; }
 
   public HashedName GetScopeName() { return name; }
-
-  public abstract SymbolsDictionary GetMembers();
 }
 
 public class MultiType : Type
@@ -594,7 +795,7 @@ public class MultiType : Type
 
   public List<TypeRef> items = new List<TypeRef>();
 
-  public int GetTypeIndex() { return SymbolTable.tUSER; }
+  public int GetTypeIndex() { return SymbolTable.TIDX_USER; }
   public HashedName GetName() { return name; }
 
   public void Update()
@@ -619,7 +820,7 @@ public class FuncType : Type
   public TypeRef ret_type;
   public List<TypeRef> arg_types = new List<TypeRef>();
 
-  public int GetTypeIndex() { return SymbolTable.tUSER; }
+  public int GetTypeIndex() { return SymbolTable.TIDX_USER; }
   public HashedName GetName() { return name; }
 
   public FuncType()
@@ -634,7 +835,7 @@ public class FuncType : Type
     if(fnargs.ARR() != null)
       ret_type_str += "[]";
     
-    ret_type = scope.type(ret_type_str);
+    ret_type = scope.Type(ret_type_str);
 
     var fnames = fnargs.names();
     if(fnames != null)
@@ -642,7 +843,7 @@ public class FuncType : Type
       for(int i=0;i<fnames.refName().Length;++i)
       {
         var name = fnames.refName()[i];
-        var arg_type = scope.type(name.NAME().GetText());
+        var arg_type = scope.Type(name.NAME().GetText());
         arg_type.is_ref = name.isRef() != null; 
         arg_types.Add(arg_type);
       }
@@ -726,6 +927,25 @@ public class FuncSymbol : ScopedSymbol
 #if BHL_FRONT
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
 #endif
+
+  void CalcVariableScopeIdx(VariableSymbol sym)
+  {
+    //let's ignore already assigned ones
+    if(sym.scope_idx != -1)
+      return;
+    int c = 0;
+    for(int i=0;i<GetMembers().Count;++i)
+      if(GetMembers()[i] is VariableSymbol)
+        ++c;
+    sym.scope_idx = c; 
+  }
+
+  public override void Define(Symbol sym)
+  {
+    if(sym is VariableSymbol vs)
+      CalcVariableScopeIdx(vs);
+    base.Define(sym);
+  }
 }
 
 public class LambdaSymbol : FuncSymbol
@@ -756,7 +976,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        ft.arg_types.Add(parent.type(vd.type()));
+        ft.arg_types.Add(parent.Type(vd.type()));
       }
     }
     ft.Update();
@@ -771,14 +991,20 @@ public class LambdaSymbol : FuncSymbol
     this.fdecl_stack = null;
   }
 
-  public void AddUseParam(Symbol s, bool is_ref)
+  public VariableSymbol AddUseParam(VariableSymbol src, bool is_ref)
   {
-    var up = AST_Util.New_UseParam(s.name, is_ref); 
-    decl.useparams.Add(up);
-    this.define(s);
+    var local = new VariableSymbol(src.node, src.name, src.type);
+    local.up_src = src;
+
+    this.Define(local);
+
+    var up = AST_Util.New_UseParam(local.name, is_ref, local.scope_idx, src.scope_idx); 
+    decl.uses.Add(up);
+
+    return local;
   }
 
-  public override Symbol resolve(HashedName name) 
+  public override Symbol Resolve(HashedName name) 
   {
     Symbol s = null;
     GetMembers().TryGetValue(name, out s);
@@ -791,29 +1017,26 @@ public class LambdaSymbol : FuncSymbol
 
     var pscope = GetParentScope();
     if(pscope != null)
-      return pscope.resolve(name);
+      return pscope.Resolve(name);
 
     return null;
   }
 
   Symbol ResolveUpvalue(HashedName name)
   {
-    int idx = FindMyIdxInStack();
-    if(idx == -1)
+    int my_idx = FindMyIdxInStack();
+    if(my_idx == -1)
       throw new Exception("Not found");
 
-    for(int i=idx;i-- > 0;)
+    for(int i=my_idx;i-- > 0;)
     {
       var decl = fdecl_stack[i];
 
       //NOTE: only variable symbols are considered
       Symbol res = null;
       decl.GetMembers().TryGetValue(name, out res);
-      if(res != null && res is VariableSymbol && !res.is_out_of_scope)
-      {
-        DefineInStack(res, i+1, idx);
-        return res;
-      }
+      if(res != null && res is VariableSymbol vs && !res.is_out_of_scope)
+        return AssignUpValues(vs, i+1, my_idx);
     }
 
     return null;
@@ -829,20 +1052,24 @@ public class LambdaSymbol : FuncSymbol
     return -1;
   }
 
-  void DefineInStack(Symbol res, int from_idx, int to_idx)
+  VariableSymbol AssignUpValues(VariableSymbol vs, int from_idx, int to_idx)
   {
+    VariableSymbol res = null;
     //now let's put this result into all nested lambda scopes 
     for(int j=from_idx;j<=to_idx;++j)
     {
-      var lmb = fdecl_stack[j] as LambdaSymbol;
-      if(lmb == null)
-        continue;
-      lmb.AddUseParam(res, false/*not a ref*/);
+      if(fdecl_stack[j] is LambdaSymbol lmb)
+      {
+        vs = lmb.AddUseParam(vs, false/*not a ref*/);
+        if(res == null)
+          res = vs;
+      }
     }
+    return res;
   }
 }
 
-public class FuncSymbolAST : FuncSymbol
+public class FuncSymbolScript : FuncSymbol
 {
   public AST_FuncDecl decl;
 #if BHL_FRONT
@@ -852,7 +1079,7 @@ public class FuncSymbolAST : FuncSymbol
 
   //frontend version
 #if BHL_FRONT
-  public FuncSymbolAST(
+  public FuncSymbolScript(
     LocalScope locals,
     Scope parent, 
     AST_FuncDecl decl, 
@@ -874,7 +1101,7 @@ public class FuncSymbolAST : FuncSymbol
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
         {
           var vd = fparams.funcParamDeclare()[i];
-          var type = locals.type(vd.type());
+          var type = locals.Type(vd.type());
           type.is_ref = vd.isRef() != null;
           ft.arg_types.Add(type);
         }
@@ -885,7 +1112,7 @@ public class FuncSymbolAST : FuncSymbol
 #endif
 
   //backend version
-  public FuncSymbolAST(Scope parent, AST_FuncDecl decl)
+  public FuncSymbolScript(Scope parent, AST_FuncDecl decl)
     : base(null, decl.Name(), new FuncType(), parent)
   {
     this.decl = decl;
@@ -906,30 +1133,35 @@ public class FuncSymbolAST : FuncSymbol
 #endif
 }
 
-public class FuncBindSymbol : FuncSymbol
+public class FuncSymbolNative : FuncSymbol
 {
   public Interpreter.FuncNodeCreator func_creator;
 
+  public delegate IInstruction VM_Cb(VM.Frame frm, ref BHS status); 
+  public VM_Cb VM_cb;
+
   public int def_args_num;
 
-  public FuncBindSymbol(
+  public FuncSymbolNative(
     HashedName name, 
     TypeRef ret_type, 
     Interpreter.FuncNodeCreator func_creator, 
+    VM_Cb VM_cb = null, 
     int def_args_num = 0
   ) 
     : base(null, name, new FuncType(ret_type), null)
   {
     this.func_creator = func_creator;
+    this.VM_cb = VM_cb;
     this.def_args_num = def_args_num;
   }
 
   public override int GetTotalArgsNum() { return GetMembers().Count; }
   public override int GetDefaultArgsNum() { return def_args_num; }
 
-  public override void define(Symbol sym) 
+  public override void Define(Symbol sym) 
   {
-    base.define(sym);
+    base.Define(sym);
 
     //NOTE: for bind funcs every defined symbol is assumed to be an argument
     DefineArg(sym.name);
@@ -940,21 +1172,21 @@ public class FuncBindSymbol : FuncSymbol
   }
 }
 
-public class SimpleFuncBindSymbol : FuncBindSymbol
+public class FuncSymbolSimpleNative : FuncSymbolNative
 {
-  public SimpleFuncBindSymbol(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
-    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, def_args_num)
+  public FuncSymbolSimpleNative(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
+    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, null, def_args_num)
   {}
 }
 
-public class ClassBindSymbol : ClassSymbol
+public class ClassSymbolNative : ClassSymbol
 {
-  public ClassBindSymbol(HashedName name, Interpreter.ClassCreator creator)
-    : base(null, name, null, null, creator)
+  public ClassSymbolNative(HashedName name, Interpreter.ClassCreator creator, VM.ClassCreator VM_creator = null)
+    : base(null, name, null, null, creator, VM_creator)
   {}
 
-  public ClassBindSymbol(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator)
-    : base(null, name, super_class, null, creator)
+  public ClassSymbolNative(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator, VM.ClassCreator VM_creator = null)
+    : base(null, name, super_class, null, creator, VM_creator)
   {}
 
   public void OverloadBinaryOperator(FuncSymbol s)
@@ -962,22 +1194,23 @@ public class ClassBindSymbol : ClassSymbol
     if(s.GetArgs().Count != 1)
       throw new UserError("Operator overload must have exactly one argument");
 
-    if(s.GetReturnType() == SymbolTable._void)
+    if(s.GetReturnType() == SymbolTable.symb_void)
       throw new UserError("Operator overload return value can't be void");
 
-    define(s);
+    Define(s);
   }
 }
 
-public class ClassSymbolAST : ClassSymbol
+public class ClassSymbolScript : ClassSymbol
 {
   public AST_ClassDecl decl;
 
-  public ClassSymbolAST(HashedName name, AST_ClassDecl decl, ClassSymbol parent = null)
+  public ClassSymbolScript(HashedName name, AST_ClassDecl decl, ClassSymbol parent = null)
     : base(null, name, parent == null ? null : new TypeRef(parent), null, null)
   {
     this.decl = decl;
     this.creator = ClassCreator;
+    this.VM_creator = VM_ClassCreator;
   }
 
   void ClassCreator(ref DynVal res)
@@ -986,7 +1219,7 @@ public class ClassSymbolAST : ClassSymbol
     if(super_class != null)
     {
       super_class.creator(ref res);
-      if(super_class is ClassBindSymbol)
+      if(super_class is ClassSymbolNative)
       {
         tb = DynValDict.New();
         tb.Set(0, DynVal.NewObj(res.obj));
@@ -1008,13 +1241,13 @@ public class ClassSymbolAST : ClassSymbol
       var m = members[i];
       var dv = DynVal.New();
       //NOTE: proper default init of built-in types
-      if(m.type.name.IsEqual(SymbolTable._float.type.name))
+      if(m.type.name.IsEqual(SymbolTable.symb_float.type.name))
         dv.SetNum(0);
-      else if(m.type.name.IsEqual(SymbolTable._int.type.name))
+      else if(m.type.name.IsEqual(SymbolTable.symb_int.type.name))
         dv.SetNum(0);
-      else if(m.type.name.IsEqual(SymbolTable._string.type.name))
+      else if(m.type.name.IsEqual(SymbolTable.symb_string.type.name))
         dv.SetStr("");
-      else if(m.type.name.IsEqual(SymbolTable._boolean.type.name))
+      else if(m.type.name.IsEqual(SymbolTable.symb_bool.type.name))
         dv.SetBool(false);
       else 
       {
@@ -1028,6 +1261,49 @@ public class ClassSymbolAST : ClassSymbol
       tb.Set(m.name, dv);
     }
   }
+
+  void VM_ClassCreator(ref Val res)
+  {
+    ValList vl = null;
+    if(super_class != null)
+    {
+      super_class.VM_creator(ref res);
+      vl = (ValList)res.obj;
+    }
+    else
+    {
+      vl = ValList.New(res.vm);
+      res.SetObj(vl);
+    }
+    //NOTE: storing class name hash in _num attribute
+    res._num = decl.nname; 
+
+    for(int i=0;i<members.Count;++i)
+    {
+      var m = members[i];
+      var dv = Val.New(res.vm);
+      //NOTE: proper default init of built-in types
+      if(m.type.name.IsEqual(SymbolTable.symb_float.type.name))
+        dv.SetNum(0);
+      else if(m.type.name.IsEqual(SymbolTable.symb_int.type.name))
+        dv.SetNum(0);
+      else if(m.type.name.IsEqual(SymbolTable.symb_string.type.name))
+        dv.SetStr("");
+      else if(m.type.name.IsEqual(SymbolTable.symb_bool.type.name))
+        dv.SetBool(false);
+      else 
+      {
+        var t = m.type.Get();
+        if(t is EnumSymbol)
+          dv.SetNum(0);
+        else
+          dv.SetNil();
+      }
+
+      vl.Add(dv);
+      dv.Release();
+    }
+  }
 }
 
 public class EnumSymbol : ScopedSymbol, Scope, Type 
@@ -1039,13 +1315,13 @@ public class EnumSymbol : ScopedSymbol, Scope, Type
   {}
 
   public HashedName GetName() { return name; }
-  public int GetTypeIndex() { return SymbolTable.tENUM; }
+  public int GetTypeIndex() { return SymbolTable.TIDX_ENUM; }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
   public EnumItemSymbol FindValue(HashedName name)
   {
-    return base.resolve(name) as EnumItemSymbol;
+    return base.Resolve(name) as EnumItemSymbol;
   }
 
   public override string ToString() 
@@ -1055,9 +1331,9 @@ public class EnumSymbol : ScopedSymbol, Scope, Type
   }
 }
 
-public class EnumSymbolAST : EnumSymbol
+public class EnumSymbolScript : EnumSymbol
 {
-  public EnumSymbolAST(HashedName name)
+  public EnumSymbolScript(HashedName name)
     : base(null, name, null)
   {
   }
@@ -1099,65 +1375,70 @@ public class EnumItemSymbol : Symbol, Type
 static public class SymbolTable 
 {
   // arithmetic types defined in order from narrowest to widest
-  public const int tUSER      = 0; // user-defined type
-  public const int tBOOLEAN   = 1;
-  public const int tSTRING    = 2;
-  public const int tINT       = 3;
-  public const int tFLOAT     = 4;
-  public const int tVOID      = 5;
-  public const int tENUM      = 6;
-  public const int tANY       = 7;
+  public const int TIDX_USER      = 0; // user-defined type
+  public const int TIDX_BOOLEAN   = 1;
+  public const int TIDX_STRING    = 2;
+  public const int TIDX_INT       = 3;
+  public const int TIDX_FLOAT     = 4;
+  public const int TIDX_VOID      = 5;
+  public const int TIDX_ENUM      = 6;
+  public const int TIDX_ANY       = 7;
 
-  static public BuiltInTypeSymbol _boolean = new BuiltInTypeSymbol("bool", tBOOLEAN);
-  static public BuiltInTypeSymbol _string = new BuiltInTypeSymbol("string", tSTRING);
-  static public BuiltInTypeSymbol _int = new BuiltInTypeSymbol("int", tINT);
-  static public BuiltInTypeSymbol _float = new BuiltInTypeSymbol("float", tFLOAT);
-  static public BuiltInTypeSymbol _void = new BuiltInTypeSymbol("void", tVOID);
-  static public BuiltInTypeSymbol _enum = new BuiltInTypeSymbol("enum", tENUM);
-  static public BuiltInTypeSymbol _any = new BuiltInTypeSymbol("any", tANY);
-  static public BuiltInTypeSymbol _null = new BuiltInTypeSymbol("null", tUSER);
+  static public BuiltInTypeSymbol symb_bool = new BuiltInTypeSymbol("bool", TIDX_BOOLEAN);
+  static public BuiltInTypeSymbol symb_string = new BuiltInTypeSymbol("string", TIDX_STRING);
+  static public BuiltInTypeSymbol symb_int = new BuiltInTypeSymbol("int", TIDX_INT);
+  static public BuiltInTypeSymbol symb_float = new BuiltInTypeSymbol("float", TIDX_FLOAT);
+  static public BuiltInTypeSymbol symb_void = new BuiltInTypeSymbol("void", TIDX_VOID);
+  static public BuiltInTypeSymbol symb_enum = new BuiltInTypeSymbol("enum", TIDX_ENUM);
+  static public BuiltInTypeSymbol symb_any = new BuiltInTypeSymbol("any", TIDX_ANY);
+  static public BuiltInTypeSymbol symb_null = new BuiltInTypeSymbol("null", TIDX_USER);
 
   // Arithmetic types defined in order from narrowest to widest
-  public static Type[] indexToType = new Type[] {
-      // 0,  1,        2,       3,    4,      5,     6       7
-      null, _boolean, _string, _int, _float, _void,  _enum, _any
+  public static Type[] index2type = new Type[] {
+      // 0,  1,        2,           3,        4,          5,          6          7
+      null, symb_bool, symb_string, symb_int, symb_float, symb_void,  symb_enum, symb_any
+  };
+
+  public static uint[] hash2type = new uint[] {
+      // 0_null  1_bool   2_string   3_int     4_float    5_void    6_enum     7_any
+      97254479, 92354194, 247378601, 72473265, 161832597, 41671150, 247377489, 83097524 
   };
 
   // Map t1 op t2 to result type (_void implies illegal)
-  public static Type[,] arithmeticResultType = new Type[,] {
+  public static Type[,] arithmetic_res_type = new Type[,] {
       /*          struct  boolean  string   int     float    void    enum    any */
-      /*struct*/  {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
-      /*boolean*/ {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
-      /*string*/  {_void, _void,   _string, _void,  _void,   _void,  _void,  _void},
-      /*int*/     {_void, _void,   _void,   _int,   _float,  _void,  _void,  _void},
-      /*float*/   {_void, _void,   _void,   _float, _float,  _void,  _void,  _void},
-      /*void*/    {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
-      /*enum*/    {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void},
-      /*any*/     {_void, _void,   _void,   _void,  _void,   _void,  _void,  _void}
+      /*struct*/  {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
+      /*boolean*/ {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
+      /*string*/  {symb_void, symb_void,   symb_string, symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
+      /*int*/     {symb_void, symb_void,   symb_void,   symb_int,   symb_float,  symb_void,  symb_void,  symb_void},
+      /*float*/   {symb_void, symb_void,   symb_void,   symb_float, symb_float,  symb_void,  symb_void,  symb_void},
+      /*void*/    {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
+      /*enum*/    {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
+      /*any*/     {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void}
   };
 
-  public static Type[,] relationalResultType = new Type[,] {
+  public static Type[,] relational_res_type = new Type[,] {
       /*          struct  boolean string    int       float     void    enum    any */
-      /*struct*/  {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
-      /*boolean*/ {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
-      /*string*/  {_void, _void,  _boolean, _void,    _void,    _void,  _void,  _void},
-      /*int*/     {_void, _void,  _void,    _boolean, _boolean, _void,  _void,  _void},
-      /*float*/   {_void, _void,  _void,    _boolean, _boolean, _void,  _void,  _void},
-      /*void*/    {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
-      /*enum*/    {_void, _void,  _void,    _void,    _void,    _void,  _void,  _void},
-      /*any*/     {_void, _void,   _void,   _void,    _void,    _void,  _void,  _void}
+      /*struct*/  {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*boolean*/ {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*string*/  {symb_void, symb_void,  symb_bool, symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*int*/     {symb_void, symb_void,  symb_void,    symb_bool, symb_bool, symb_void,  symb_void,  symb_void},
+      /*float*/   {symb_void, symb_void,  symb_void,    symb_bool, symb_bool, symb_void,  symb_void,  symb_void},
+      /*void*/    {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*enum*/    {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*any*/     {symb_void, symb_void,   symb_void,   symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
   };
 
-  public static Type[,] equalityResultType = new Type[,] {
+  public static Type[,] equality_res_type = new Type[,] {
       /*           struct boolean   string    int       float     void    enum     any */
-      /*struct*/  {_boolean,_void,    _void,    _void,    _void,    _void,  _void,  _void},
-      /*boolean*/ {_void,   _boolean, _void,    _void,    _void,    _void,  _void,  _void},
-      /*string*/  {_void,   _void,    _boolean, _void,    _void,    _void,  _void,  _void},
-      /*int*/     {_void,   _void,    _void,    _boolean, _boolean, _void,  _void,  _void},
-      /*float*/   {_void,   _void,    _void,    _boolean, _boolean, _void,  _void,  _void},
-      /*void*/    {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void},
-      /*enum*/    {_void,   _void,    _void,    _void,    _void,    _void,  _void,  _void},
-      /*any*/     {_boolean,_void,    _void,    _void,    _void,    _void,  _void,  _void}
+      /*struct*/  {symb_bool,symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*boolean*/ {symb_void,   symb_bool, symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*string*/  {symb_void,   symb_void,    symb_bool, symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*int*/     {symb_void,   symb_void,    symb_void,    symb_bool, symb_bool, symb_void,  symb_void,  symb_void},
+      /*float*/   {symb_void,   symb_void,    symb_void,    symb_bool, symb_bool, symb_void,  symb_void,  symb_void},
+      /*void*/    {symb_void,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*enum*/    {symb_void,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*any*/     {symb_bool,symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
   };
 
   // Indicate whether a type needs a promotion to a wider type.
@@ -1165,28 +1446,28 @@ static public class SymbolTable
   //  error--it implies no promotion.  This works for
   //  arithmetic, equality, and relational operators in bhl
   // 
-  public static Type[,] promoteFromTo = new Type[,] {
+  public static Type[,] promote_from_to = new Type[,] {
       /*          struct  boolean  string  int     float    void   enum   any*/
       /*struct*/  {null,  null,    null,   null,   null,    null,  null,  null},
       /*boolean*/ {null,  null,    null,   null,   null,    null,  null,  null},
       /*string*/  {null,  null,    null,   null,   null,    null,  null,  null},
-      /*int*/     {null,  null,    null,   null,   _float,  null,  null,  null},
+      /*int*/     {null,  null,    null,   null,   symb_float,  null,  null,  null},
       /*float*/   {null,  null,    null,   null,    null,   null,  null,  null},
       /*void*/    {null,  null,    null,   null,    null,   null,  null,  null},
       /*enum*/    {null,  null,    null,   null,    null,   null,  null,  null},
       /*any*/     {null,  null,    null,   null,    null,   null,  null,  null}
   };
 
-  public static Type[,] castFromTo = new Type[,] {
+  public static Type[,] cast_from_to = new Type[,] {
       /*          struct  boolean  string   int     float   void   enum   any*/
-      /*struct*/  {null,  null,    null,    null,   null,   null,  null,  _any},
-      /*boolean*/ {null,  null,    _string, _int,   _float, null,  null,  _any},
-      /*string*/  {null,  null,    _string, null,   null,   null,  null,  _any},
-      /*int*/     {null,  _boolean,_string, _int,   _float, null,  null,  _any},
-      /*float*/   {null,  _boolean,_string, _int,   _float, null,  _enum,  _any},
+      /*struct*/  {null,  null,    null,    null,   null,   null,  null,  symb_any},
+      /*boolean*/ {null,  null,    symb_string, symb_int,   symb_float, null,  null,  symb_any},
+      /*string*/  {null,  null,    symb_string, null,   null,   null,  null,  symb_any},
+      /*int*/     {null,  symb_bool,symb_string, symb_int,   symb_float, null,  null,  symb_any},
+      /*float*/   {null,  symb_bool,symb_string, symb_int,   symb_float, null,  symb_enum,  symb_any},
       /*void*/    {null,  null,    null,    null,   null,   null,  null,  null},
-      /*enum*/    {null,  null,    _string, _int,   _float,   null,  null,  _any},
-      /*any*/     {null,  _boolean,_string, _int,   null,   null,  null,  _any}
+      /*enum*/    {null,  null,    symb_string, symb_int,   symb_float,   null,  null,  symb_any},
+      /*any*/     {null,  symb_bool,symb_string, symb_int,   null,   null,  null,  symb_any}
   };
 
   static public GlobalScope CreateBuiltins()
@@ -1198,56 +1479,140 @@ static public class SymbolTable
 
   static public void InitBuiltins(GlobalScope globals) 
   {
-    foreach(Type t in indexToType) 
+    foreach(Type t in index2type) 
     {
       if(t != null) 
       {
         var blt = (BuiltInTypeSymbol)t; 
-        globals.define(blt);
+        globals.Define(blt);
       }
     }
 
     //for all generic arrays
-    globals.define(new GenericArrayTypeSymbol(globals));
+    globals.Define(new GenericArrayTypeSymbol(globals));
 
     {
-      var fn = new FuncBindSymbol("suspend", globals.type("void"),
+      var fn = new FuncSymbolNative("suspend", globals.Type("void"),
         delegate() { return new suspend(); } 
       );
-      globals.define(fn);
+      globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("yield", globals.type("void"),
+      var fn = new FuncSymbolNative("yield", globals.Type("void"),
         delegate() { return new yield(); } 
       );
-      globals.define(fn);
+      globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("nop", globals.type("void"),
+      var fn = new FuncSymbolNative("nop", globals.Type("void"),
         delegate() { return new nop(); } 
       );
 
-      globals.define(fn);
+      globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("fail", globals.type("void"),
+      var fn = new FuncSymbolNative("fail", globals.Type("void"),
         delegate() { return new fail(); } 
       );
 
-      globals.define(fn);
+      globals.Define(fn);
     }
 
     {
-      var fn = new FuncBindSymbol("check", globals.type("void"),
+      var fn = new FuncSymbolNative("check", globals.Type("void"),
         delegate() { return new check(); } 
       );
-      fn.define(new FuncArgSymbol("cond", globals.type("bool")));
+      fn.Define(new FuncArgSymbol("cond", globals.Type("bool")));
 
-      globals.define(fn);
+      globals.Define(fn);
     }
+  }
+
+  static public GlobalScope VM_CreateBuiltins()
+  {
+    var globals = new GlobalScope();
+    VM_InitBuiltins(globals);
+    return globals;
+  }
+
+  static public void VM_InitBuiltins(GlobalScope globals) 
+  {
+    foreach(Type t in index2type) 
+    {
+      if(t != null) 
+      {
+        var blt = (BuiltInTypeSymbol)t; 
+        globals.Define(blt);
+      }
+    }
+
+    //for all generic arrays
+    globals.Define(new GenericArrayTypeSymbol(globals));
+
+    {
+      var fn = new FuncSymbolNative("suspend", globals.Type("void"), null,
+        delegate(VM.Frame frm, ref BHS status) 
+        { 
+          return CoroutineSuspend.Instance;
+        } 
+      );
+      globals.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative("yield", globals.Type("void"), null,
+        delegate(VM.Frame frm, ref BHS status) 
+        { 
+          return Instructions.New<CoroutineYield>(frm.vm);
+        } 
+      );
+      globals.Define(fn);
+    }
+
+    //TODO: this one is controversary, it's defined for BC for now
+    {
+      var fn = new FuncSymbolNative("fail", globals.Type("void"), null,
+        delegate(VM.Frame frm, ref BHS status) 
+        { 
+          status = BHS.FAILURE;
+          return null;
+        } 
+      );
+      globals.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative("start", globals.Type("int"), null,
+        delegate(VM.Frame frm, ref BHS status) 
+        { 
+          var vfn = frm.stack.Pop();
+          //NOTE: we don't decrease ref.count for the payload
+          vfn.RefMod(RefOp.DEC);
+          int fid = frm.vm.Start((VM.Frame)vfn._obj).id;
+          frm.stack.Push(Val.NewNum(frm.vm, fid));
+          return null;
+        } 
+      );
+      fn.Define(new FuncArgSymbol("p", globals.Type("void^()")));
+      globals.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative("stop", globals.Type("void"), null,
+        delegate(VM.Frame frm, ref BHS status) 
+        { 
+          var fid = (int)frm.stack.PopRelease().num;
+          frm.vm.Stop(fid);
+          return null;
+        } 
+      );
+      fn.Define(new FuncArgSymbol("fid", globals.Type("int")));
+      globals.Define(fn);
+    }
+
   }
 
   static public Type GetResultType(Type[,] typeTable, WrappedNode a, WrappedNode b) 
@@ -1259,7 +1624,7 @@ static public class SymbolTable
     int tb = b.eval_type.GetTypeIndex(); // type index of right operand
 
     Type result = typeTable[ta,tb];    // operation result type
-    if(result == _void) 
+    if(result == symb_void) 
     {
       throw new UserError(
         a.Location()+", "+ b.Location()+" have incompatible types"// + ta + " " + tb
@@ -1267,8 +1632,8 @@ static public class SymbolTable
     }
     else 
     {
-      a.promote_to_type = promoteFromTo[ta,tb];
-      b.promote_to_type = promoteFromTo[tb,ta];
+      a.promote_to_type = promote_from_to[ta,tb];
+      b.promote_to_type = promote_from_to[tb,ta];
     }
     return result;
   }
@@ -1277,9 +1642,9 @@ static public class SymbolTable
   {
     return valueType == destType || 
            promotion == destType || 
-           destType == _any ||
-           (destType is ClassSymbol && valueType == _null) ||
-           (destType is FuncType && valueType == _null) || 
+           destType == symb_any ||
+           (destType is ClassSymbol && valueType == symb_null) ||
+           (destType is FuncType && valueType == symb_null) || 
            valueType.GetName().n == destType.GetName().n ||
            IsChildClass(valueType, destType)
            ;
@@ -1311,7 +1676,7 @@ static public class SymbolTable
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
-    rhs.promote_to_type = promoteFromTo[trhs,tlhs];
+    rhs.promote_to_type = promote_from_to[trhs,tlhs];
     if(!CanAssignTo(rhs.eval_type, lhs.eval_type, rhs.promote_to_type)) 
     {
       throw new UserError(
@@ -1325,7 +1690,7 @@ static public class SymbolTable
   {
     int tlhs = lhs.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
-    rhs.promote_to_type = promoteFromTo[trhs,tlhs];
+    rhs.promote_to_type = promote_from_to[trhs,tlhs];
     if(!CanAssignTo(rhs.eval_type, lhs, rhs.promote_to_type)) 
     {
       throw new UserError(
@@ -1339,7 +1704,7 @@ static public class SymbolTable
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.GetTypeIndex();
-    var promote_to_type = promoteFromTo[trhs,tlhs];
+    var promote_to_type = promote_from_to[trhs,tlhs];
     if(!CanAssignTo(rhs, lhs.eval_type, promote_to_type)) 
     {
       throw new UserError(
@@ -1355,16 +1720,16 @@ static public class SymbolTable
     int trhs = exp.eval_type.GetTypeIndex();
 
     //special case: we allow to cast from 'any' to any user type
-    if(trhs == SymbolTable.tANY && tlhs == SymbolTable.tUSER)
+    if(trhs == SymbolTable.TIDX_ANY && tlhs == SymbolTable.TIDX_USER)
       return;
 
     //special case: we allow to cast from 'any' numeric type to enum
-    if((trhs == SymbolTable.tFLOAT || 
-        trhs == SymbolTable.tINT) && 
-        tlhs == SymbolTable.tENUM)
+    if((trhs == SymbolTable.TIDX_FLOAT || 
+        trhs == SymbolTable.TIDX_INT) && 
+        tlhs == SymbolTable.TIDX_ENUM)
       return;
 
-    var cast_type = castFromTo[trhs,tlhs];
+    var cast_type = cast_from_to[trhs,tlhs];
 
     if(cast_type == type.eval_type)
       return;
@@ -1380,10 +1745,10 @@ static public class SymbolTable
 
   static public bool IsBopCompatibleType(Type type)
   {
-    return type == _boolean || 
-           type == _string ||
-           type == _int ||
-           type == _float;
+    return type == symb_bool || 
+           type == symb_string ||
+           type == symb_int ||
+           type == symb_float;
   }
 
   static public Type Bop(WrappedNode a, WrappedNode b) 
@@ -1398,7 +1763,7 @@ static public class SymbolTable
         b.Location()+" operator is not overloaded"
       );
 
-    return GetResultType(arithmeticResultType, a, b);
+    return GetResultType(arithmetic_res_type, a, b);
   }
 
   static public Type BopOverload(WrappedNode a, WrappedNode b, FuncSymbol op_func) 
@@ -1410,8 +1775,8 @@ static public class SymbolTable
 
   static public bool IsRelopCompatibleType(Type type)
   {
-    return type == _int ||
-           type == _float;
+    return type == symb_int ||
+           type == symb_float;
   }
 
   static public Type Relop(WrappedNode a, WrappedNode b) 
@@ -1426,21 +1791,21 @@ static public class SymbolTable
         b.Location()+" operator is not overloaded"
       );
 
-    GetResultType(relationalResultType, a, b);
+    GetResultType(relational_res_type, a, b);
     // even if the operands are incompatible, the type of
     // this operation must be boolean
-    return _boolean;
+    return symb_bool;
   }
 
   static public Type Eqop(WrappedNode a, WrappedNode b) 
   {
-    GetResultType(equalityResultType, a, b);
-    return _boolean;
+    GetResultType(equality_res_type, a, b);
+    return symb_bool;
   }
 
   static public Type Uminus(WrappedNode a) 
   {
-    if(!(a.eval_type == _int || a.eval_type == _float)) 
+    if(!(a.eval_type == symb_int || a.eval_type == symb_float)) 
       throw new UserError(a.Location()+" must be numeric type");
 
     return a.eval_type;
@@ -1448,29 +1813,29 @@ static public class SymbolTable
 
   static public Type Bitop(WrappedNode a, WrappedNode b) 
   {
-    if(a.eval_type != _int) 
+    if(a.eval_type != symb_int) 
       throw new UserError(a.Location()+" must be int type");
 
-    if(b.eval_type != _int)
+    if(b.eval_type != symb_int)
       throw new UserError(b.Location()+" must be int type");
 
-    return _int;
+    return symb_int;
   }
 
   static public Type Lop(WrappedNode a, WrappedNode b) 
   {
-    if(a.eval_type != _boolean) 
+    if(a.eval_type != symb_bool) 
       throw new UserError(a.Location()+" must be bool type");
 
-    if(b.eval_type != _boolean)
+    if(b.eval_type != symb_bool)
       throw new UserError(b.Location()+" must be bool type");
 
-    return _boolean;
+    return symb_bool;
   }
 
   static public Type Unot(WrappedNode a) 
   {
-    if(a.eval_type != _boolean) 
+    if(a.eval_type != symb_bool) 
       throw new UserError(a.Location()+" must be bool type");
 
     return a.eval_type;
@@ -1517,16 +1882,16 @@ public class SymbolsDictionary
 
   public bool Contains(HashedName key)
   {
-    if(hash2symb.ContainsKey(key.n))
+    if(str2symb.ContainsKey(key.s))
       return true;
-    return str2symb.ContainsKey(key.s);
+    return hash2symb.ContainsKey(key.n);
   }
 
   public bool TryGetValue(HashedName key, out Symbol val)
   {
-    if(hash2symb.TryGetValue(key.n, out val))
+    if(str2symb.TryGetValue(key.s, out val))
       return true;
-    return str2symb.TryGetValue(key.s, out val);
+    return hash2symb.TryGetValue(key.n, out val);
   }
 
   public Symbol Find(HashedName key)
@@ -1551,6 +1916,20 @@ public class SymbolsDictionary
     if(!string.IsNullOrEmpty(s.name.s))
       str2symb.Remove(s.name.s);
     hash2symb.Remove(s.name.n);
+    list.RemoveAt(index);
+  }
+
+  public int IndexOf(Symbol s)
+  {
+    return list.IndexOf(s);
+  }
+
+  public int IndexOf(HashedName key)
+  {
+    var s = Find(key);
+    if(s == null)
+      return -1;
+    return IndexOf(s);
   }
 
   public void Clear()
