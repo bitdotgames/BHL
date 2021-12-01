@@ -7,7 +7,7 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
-  public void TestNumConstant()
+  public void TestReturnNumConstant()
   {
     string bhl = @"
     func int test()
@@ -36,7 +36,37 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBoolConstant()
+  public void TestNumberPrecision()
+  {
+    DoTestReturnNum(bhlnum: "100", expected_num: 100);
+    DoTestReturnNum(bhlnum: "2147483647", expected_num: 2147483647);
+    DoTestReturnNum(bhlnum: "2147483648", expected_num: 2147483648);
+    DoTestReturnNum(bhlnum: "100.5", expected_num: 100.5);
+    DoTestReturnNum(bhlnum: "2147483648.1", expected_num: 2147483648.1);
+  }
+
+  void DoTestReturnNum(string bhlnum, double expected_num) 
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      return "+bhlnum+@"
+    }
+    ";
+
+    var c = Compile(bhl);
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    var num = fb.stack.PopRelease().num;
+
+    AssertEqual(num, expected_num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnBoolConstant()
   {
     string bhl = @"
     func bool test()
@@ -63,6 +93,36 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(fb.stack.PopRelease().bval);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestReturnStringConstant()
+  {
+    string bhl = @"
+    func string test()
+    {
+      return ""Hello""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const("Hello") });
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "Hello");
+    CommonChecks(vm);
+  }
+
 
   [IsTested()]
   public void TestBoolToIntTypeCast()
@@ -121,35 +181,6 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().str, "7");
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestStringConstant()
-  {
-    string bhl = @"
-    func string test()
-    {
-      return ""Hello""
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const("Hello") });
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().str, "Hello");
     CommonChecks(vm);
   }
 
