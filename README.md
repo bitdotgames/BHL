@@ -254,7 +254,7 @@ You can run unit tests by executing the following command:
 6. ~~**while** syntax sugar: **foreach(...) {}** support~~
 7. Ternary operator support
 8. ~~User defined structs~~
-9. User defined struct methods
+9. Basic user defined struct methods
 10. ~~User defined enums~~
 11. Postfix increment/decrement
 
