@@ -1153,9 +1153,6 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.NotEqual);
       break;
       case EnumBinaryOp.GT:
-        if(ast.children.Count != 2)
-          throw new Exception("Expected 2 AST children, got " + ast.children.Count);
-
         Visit(ast.children[1]);
         Visit(ast.children[0]);
         Emit(Opcodes.Less);
@@ -1165,13 +1162,12 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.Less);
       break;
       case EnumBinaryOp.GTE:
-        if(ast.children.Count != 2)
-          throw new Exception("Expected 2 AST children, got " + ast.children.Count);
         Visit(ast.children[1]);
         Visit(ast.children[0]);
         Emit(Opcodes.LessOrEqual);
       break;
       case EnumBinaryOp.LTE:
+        VisitChildren(ast);
         Emit(Opcodes.LessOrEqual);
       break;
       default:

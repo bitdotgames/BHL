@@ -742,6 +742,53 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLTE()
+  {
+    string bhl = @"
+      
+    func bool test(float k) 
+    {
+      return k <= 21
+    }
+    ";
+
+    var c = Compile(bhl);
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.LessOrEqual)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var num = Execute(vm, "test", Val.NewNum(vm, 20)).stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLTE2()
+  {
+    string bhl = @"
+      
+    func bool test(float k) 
+    {
+      return k <= 20
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 20)).stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestEqNumber()
   {
     string bhl = @"

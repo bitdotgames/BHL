@@ -6,46 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestLTE()
-  {
-    string bhl = @"
-      
-    func bool test(float k) 
-    {
-      return k <= 21
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(20));
-    var num = ExtractNum(ExecNode(node));
-
-    AssertEqual(num, 1);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestLTE2()
-  {
-    string bhl = @"
-      
-    func bool test(float k) 
-    {
-      return k <= 20
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(20));
-    var num = ExtractNum(ExecNode(node));
-
-    AssertEqual(num, 1);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestPass2Values()
   {
     string bhl = @"
