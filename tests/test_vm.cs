@@ -547,6 +547,201 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSubtract()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 20 - 10
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Sub)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(20), new Const(10) });
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDivision()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 20 / 10
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Div)
+      .Emit(Opcodes.ReturnVal)   
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(20), new Const(10) });
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestMultiply()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 10 * 20
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Mul)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(10), new Const(20) });
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 200);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestGreaterThan()
+  {
+    string bhl = @"
+      
+    func bool test(float k) 
+    {
+      return k > 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 4)).stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNotGT()
+  {
+    string bhl = @"
+      
+    func bool test(float k) 
+    {
+      return k > 5
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 4)).stack.PopRelease().num;
+    AssertEqual(num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLT()
+  {
+    string bhl = @"
+      
+    func bool test(float k) 
+    {
+      return k < 20
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 4)).stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNotLT()
+  {
+    string bhl = @"
+      
+    func bool test(float k) 
+    {
+      return k < 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 4)).stack.PopRelease().num;
+    AssertEqual(num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestGTE()
+  {
+    string bhl = @"
+      
+    func bool test(float k) 
+    {
+      return k >= 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 4)).stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestGTE2()
+  {
+    string bhl = @"
+      
+    func bool test(float k) 
+    {
+      return k >= 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestConstantWithBigIndex()
   {
     string bhl = @"
@@ -832,99 +1027,6 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().num, 20);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestSubtract()
-  {
-    string bhl = @"
-    func int test() 
-    {
-      return 20 - 10
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Sub)
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const(20), new Const(10) });
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 10);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestDivision()
-  {
-    string bhl = @"
-    func int test() 
-    {
-      return 20 / 10
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Div)
-      .Emit(Opcodes.ReturnVal)   
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const(20), new Const(10) });
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 2);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestMultiply()
-  {
-    string bhl = @"
-    func int test() 
-    {
-      return 10 * 20
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Mul)
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const(10), new Const(20) });
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 200);
     CommonChecks(vm);
   }
 
