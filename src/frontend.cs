@@ -1906,9 +1906,6 @@ public class Frontend : bhlBaseVisitor<object>
     ast.local_vars_num = (uint)func_symb.GetMembers().Count;
     ast.required_args_num = (byte)func_symb.GetRequiredArgsNum();
     ast.default_args_num = (byte)func_symb.GetDefaultArgsNum();
-    //let's reserve space for cargs bits
-    if(ast.default_args_num > 0)
-      ++ast.local_vars_num;
 
     return ast;
   }

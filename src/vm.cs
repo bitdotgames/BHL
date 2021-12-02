@@ -190,6 +190,8 @@ public class VM
         var arg = args[i];
         frm.stack.Push(arg);
       }
+      //cargs bits
+      frm.stack.Push(Val.NewNum(vm, 0));
     }
 
     public void GetStackTrace(List<VM.TraceItem> info)
@@ -938,8 +940,7 @@ public class VM
             var args_info = new FuncArgsInfo(args_bits);
             for(int i = 0; i < args_info.CountArgs(); ++i)
               fr.stack.Push(curr_frame.stack.Pop());
-            if(args_info.HasDefaultUsedArgs())
-              fr.stack.Push(Val.NewNum(this, args_bits));
+            fr.stack.Push(Val.NewNum(this, args_bits));
 
             //let's remember ip to return to
             fr.return_ip = ip;
@@ -971,6 +972,8 @@ public class VM
           {
             int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             curr_frame.locals_num = local_vars_num;
+            //cargs bits
+            curr_frame.stack[local_vars_num-1] = curr_frame.stack.Pop();
           }
           break;
           case Opcodes.Lambda:

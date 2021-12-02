@@ -678,10 +678,7 @@ public class ModuleCompiler : AST_Visitor
     func_decls.Add(ast);
     int ip = PushCode();
     func2ip.Add(ast.name, ip);
-    if(ast.local_vars_num > 0)
-      Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num });
-    if(ast.default_args_num > 0)
-      Emit(Opcodes.ArgVar, new int[] { (int)ast.local_vars_num-1 });
+    Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
     PopCode();
