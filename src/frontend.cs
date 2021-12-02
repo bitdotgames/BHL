@@ -2252,18 +2252,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitUntilFailure(bhlParser.UntilFailureContext ctx)
-  {
-    CommonVisitBlock(EnumBlock.UNTIL_FAILURE, ctx.block().statement(), new_local_scope: false);
-    return null;
-  }
-
-  public override object VisitUntilSuccess(bhlParser.UntilSuccessContext ctx)
-  {
-    CommonVisitBlock(EnumBlock.UNTIL_SUCCESS, ctx.block().statement(), new_local_scope: false);
-    return null;
-  }
-
   public override object VisitForever(bhlParser.ForeverContext ctx)
   {
     ++loops_stack;

@@ -767,30 +767,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitPrio([NotNull] bhlParser.PrioContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>UntilFailure</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterUntilFailure([NotNull] bhlParser.UntilFailureContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>UntilFailure</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitUntilFailure([NotNull] bhlParser.UntilFailureContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>UntilSuccess</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterUntilSuccess([NotNull] bhlParser.UntilSuccessContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>UntilSuccess</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitUntilSuccess([NotNull] bhlParser.UntilSuccessContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockNested</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

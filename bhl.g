@@ -138,8 +138,6 @@ statement
   | 'forever' block                                             #Forever
   | 'defer' block                                               #Defer
   | 'prio' block                                                #Prio
-  | 'until_failure' block                                       #UntilFailure
-  | 'until_success' block                                       #UntilSuccess
   | block                                                       #BlockNested
   | funcLambda                                                  #LambdaCall
   ;

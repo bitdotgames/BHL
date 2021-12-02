@@ -465,20 +465,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitPrio([NotNull] bhlParser.PrioContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>UntilFailure</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitUntilFailure([NotNull] bhlParser.UntilFailureContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>UntilSuccess</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitUntilSuccess([NotNull] bhlParser.UntilSuccessContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>BlockNested</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

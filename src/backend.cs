@@ -561,18 +561,6 @@ public class Interpreter : AST_Visitor
       VisitChildren(ast);
       PopNode();
     }
-    else if(ast.type == EnumBlock.UNTIL_FAILURE)
-    {
-      PushAttachNode(new MonitorFailureNode());
-      VisitChildren(ast);
-      PopNode();
-    }
-    else if(ast.type == EnumBlock.UNTIL_SUCCESS)
-    {
-      PushAttachNode(new MonitorSuccessNode());
-      VisitChildren(ast);
-      PopNode();
-    }
     else if(ast.type == EnumBlock.PRIO)
     {
       PushAttachNode(new PriorityNode());
