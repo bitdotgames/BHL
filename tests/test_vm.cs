@@ -729,6 +729,63 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStrTabEscape()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\t""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\\t");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTabEscape2()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\t\t""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\\t\t");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTabEscape3()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\t\\t""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\\t\\t");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestAddSameConstants()
   {
     string bhl = @"
@@ -912,6 +969,37 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnVar()
+  {
+    string bhl = @"
+    func float test()
+    {
+      float k = 42
+      return k
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 42);
     CommonChecks(vm);
   }
 
