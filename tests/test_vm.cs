@@ -596,6 +596,139 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStrNewLine()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\n""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\n");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLine2()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\n\n""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\n\n");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\n""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\\n");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape2()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\n\n""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\\n\n");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape3()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\n\\n""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\\n\\n");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTab()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\t""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\t");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTab2()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\t\t""
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "bar\t\t");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestAddSameConstants()
   {
     string bhl = @"
@@ -658,7 +791,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestDiv()
+  public void TestDivision()
   {
     string bhl = @"
     func int test() 
@@ -689,7 +822,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestMul()
+  public void TestMultiply()
   {
     string bhl = @"
     func int test() 
