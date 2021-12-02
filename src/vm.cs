@@ -182,18 +182,6 @@ public class VM
       frames.Clear();
     }
 
-    public void SetArgs(params Val[] args)
-    {
-      var frm = frames.Peek();
-      for(int i=args.Length;i-- > 0;)
-      {
-        var arg = args[i];
-        frm.stack.Push(arg);
-      }
-      //cargs bits
-      frm.stack.Push(Val.NewNum(vm, 0));
-    }
-
     public void GetStackTrace(List<VM.TraceItem> info)
     {
       for(int i=0;i<frames.Count;++i)
@@ -582,7 +570,7 @@ public class VM
     }
   }
 
-  public Fiber Start(string func)
+  public Fiber Start(string func, params Val[] args)
   {
     ModuleAddr addr;
     if(!func2addr.TryGetValue(func, out addr))
@@ -592,6 +580,15 @@ public class VM
     var fr = Frame.New(this);
     fr.Init(fb, addr.module, addr.ip);
     Register(fb, fr);
+
+    for(int i=args.Length;i-- > 0;)
+    {
+      var arg = args[i];
+      fr.stack.Push(arg);
+    }
+    //cargs bits
+    fr.stack.Push(Val.NewNum(this, 0));
+
     return fb;
   }
 

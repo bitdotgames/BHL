@@ -3872,12 +3872,11 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = MakeVM(c);
-    vm.Start("test");
+    var fb = vm.Start("test");
     for(int i=0;i<99;i++)
       AssertEqual(vm.Tick(), BHS.RUNNING);
-    CommonChecks(vm, check_frames: false, check_fibers: false);
-    AssertEqual(vm.frames_pool.Allocs, 1);
-    AssertEqual(vm.fibers_pool.Allocs, 1);
+    vm.Stop(fb);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -5641,8 +5640,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(c);
 
-    var fb = vm.Start("test");
-    fb.SetArgs(Val.NewNum(vm, 123));
+    var fb = vm.Start("test", Val.NewNum(vm, 123));
 
     AssertEqual(vm.Tick(), BHS.RUNNING);
     AssertEqual(vm.Tick(), BHS.SUCCESS);
@@ -6177,8 +6175,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(globs: globs, importer: importer);
     vm.ImportModule("bhl1");
-    var fb = vm.Start("test");
-    fb.SetArgs(Val.NewNum(vm, 3));
+    var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().num, 3);
 
@@ -6316,8 +6313,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(globs: globs, importer: importer);
     vm.ImportModule("bhl1");
-    var fb = vm.Start("test");
-    fb.SetArgs(Val.NewNum(vm, 3));
+    var fb = vm.Start("test", Val.NewNum(vm, 3));
     try
     {
       vm.Tick();
@@ -6662,8 +6658,7 @@ public class BHL_TestVM : BHL_TestBase
 
   VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
   {
-    var fb = vm.Start(fn_name);
-    fb.SetArgs(args);
+    var fb = vm.Start(fn_name, args);
     while(vm.Tick() == BHS.RUNNING) {}
     return fb;
   }
