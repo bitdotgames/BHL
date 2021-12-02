@@ -273,6 +273,25 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSeveralReturns()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      return 300
+      float k = 1
+      return 100
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 300);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLogicalAnd()
   {
     string bhl = @"
@@ -910,6 +929,204 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPostOpAddAssign()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int k
+      k += 10
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPostOpSubAssign()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int k
+      k -= 10
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, -10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPostOpMulAssign()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int k = 1
+      k *= 10
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPostOpDivAssign()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      int k = 10
+      k /= 10
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPostOpAddAssignStringNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      string k
+      k += ""foo""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      " : incompatible variable type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpSubAssignStringNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      string k
+      k -= ""foo""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      " : incompatible variable type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpMulAssignStringNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      string k
+      k *= ""foo""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      " : incompatible variable type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpDivAssignStringNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      string k
+      k /= ""foo""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      " : incompatible variable type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpAssignExpIncompatibleTypesNotAllowed()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      int k
+      float a
+      k += a
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      " have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestPostOpAssignExpCompatibleTypes()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      float k = 2.1
+      int a = 1
+      k += a
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 3.1);
+    CommonChecks(vm);
+  }
+
+
+  [IsTested()]
   public void TestParenthesisExpression()
   {
     string bhl = @"
@@ -1039,6 +1256,26 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVarSelfDecl()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      float k = k
+      return k
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol not resolved"
+    );
+  }
+
+  [IsTested()]
   public void TestDeclVarWithoutValue()
   {
     string bhl = @"
@@ -1084,6 +1321,28 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestAssignVars()
+  {
+    string bhl = @"
+    func float test() 
+    {
+      float k
+      k = 42
+      float r
+      r = k 
+      return r
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 42);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestSimpleFuncCall()
@@ -5788,6 +6047,19 @@ public class BHL_TestVM : BHL_TestBase
     var m = c.GetModule();
     vm.RegisterModule(m);
     return vm;
+  }
+
+  VM MakeVM(string bhl)
+  {
+    return MakeVM(Compile(bhl));
+  }
+
+  VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
+  {
+    var fb = vm.Start(fn_name);
+    fb.SetArgs(args);
+    while(vm.Tick() == BHS.RUNNING) {}
+    return fb;
   }
 
   static int PredictOpcodeSize(ModuleCompiler.OpDefinition op, byte[] bytes, int start_pos)
