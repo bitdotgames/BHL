@@ -3586,6 +3586,122 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncNotEnoughArgs()
+  {
+    string bhl = @"
+
+    func bool foo(bool k)
+    {
+      return k
+    }
+      
+    func bool test() 
+    {
+      return foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "missing argument 'k'"
+    );
+  }
+
+  [IsTested()]
+  public void TestFuncPassingExtraNamedArgs()
+  {
+    string bhl = @"
+
+    func int foo(int k)
+    {
+      return k
+    }
+      
+    func int test() 
+    {
+      return foo(k: 1, k: 2)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "k: already passed before"
+    );
+  }
+
+  [IsTested()]
+  public void TestFuncNotEnoughArgsWithDefaultArgs()
+  {
+    string bhl = @"
+
+    func bool foo(float radius, bool k = true)
+    {
+      return k
+    }
+      
+    func bool test() 
+    {
+      return foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "missing argument 'radius'"
+    );
+  }
+
+  [IsTested()]
+  public void TestFuncDefaultArgIgnored()
+  {
+    string bhl = @"
+
+    func float foo(float k = 42)
+    {
+      return k
+    }
+      
+    func float test() 
+    {
+      return foo(24)
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      //foo
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.ArgVar, new int[] { 1 }) //cargs bits
+      .Emit(Opcodes.DefArg, new int[] { 0, 4 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.GetFunc, new int[] { 0 })
+      .Emit(Opcodes.Call, new int[] { 1 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 24);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestPassNamedValue()
   {
     string bhl = @"
