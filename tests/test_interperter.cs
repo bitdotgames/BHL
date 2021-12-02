@@ -6,58 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestNativeFuncBinding()
-  {
-    string bhl = @"
-      
-    func void test() 
-    {
-      trace(""HERE"")
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-    //NodeDump(node);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("HERE", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestNativeFuncBindWithoutArgs()
-  {
-    string bhl = @"
-      
-    func int test() 
-    {
-      int n = answer42()
-      return n
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindAnswer42(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var num = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(42, num);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestNativeFuncBindConflict()
   {
     string bhl = @"

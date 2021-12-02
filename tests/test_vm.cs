@@ -1648,6 +1648,55 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSimpleNativeFuncReturnValue()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return answer42()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    var fn = new FuncSymbolNative("answer42", globs.Type("int"), null,
+        delegate(VM.Frame frm, ref BHS status) { 
+          frm.stack.Push(Val.NewNum(frm.vm, 42));
+          return null;
+        } 
+    );
+    globs.Define(fn);
+
+    var vm = MakeVM(bhl, globs);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(42, num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeFuncBindConflict()
+  {
+    string bhl = @"
+
+    func trace(string hey)
+    {
+    }
+      
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      "already defined symbol 'trace'"
+    );
+  }
+
+  [IsTested()]
   public void TestStatefulNativeFunc()
   {
     string bhl = @"
@@ -6317,9 +6366,9 @@ public class BHL_TestVM : BHL_TestBase
     return vm;
   }
 
-  VM MakeVM(string bhl)
+  VM MakeVM(string bhl, GlobalScope globs = null)
   {
-    return MakeVM(Compile(bhl));
+    return MakeVM(Compile(bhl, globs));
   }
 
   VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
