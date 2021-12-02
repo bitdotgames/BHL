@@ -1409,9 +1409,9 @@ public class FixedStack<T>
     --head;
   }
 
-  public void Advance(int offset)
+  public void SetHead(int pos)
   {
-    head = offset;
+    head = pos;
   }
 
   public void Clear()

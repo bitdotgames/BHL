@@ -249,6 +249,11 @@ public class VM
         _locals_num = value; 
       }
     }
+    public int temps_num {
+      get {
+        return stack.Count - MAX_LOCALS;
+      }
+    }
     public int start_ip;
     public int return_ip;
     public List<DeferBlock> defers;
@@ -314,7 +319,7 @@ public class VM
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.locals_num = 0;
-      stack.Advance(MAX_LOCALS);
+      stack.SetHead(MAX_LOCALS);
     }
 
     void Clear()
