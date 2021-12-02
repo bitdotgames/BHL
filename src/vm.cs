@@ -1855,7 +1855,7 @@ public class Val
     bool res =
       _type == o.type &&
       _num == o._num &&
-      _obj == o._obj
+      (_type == STRING ? (string)_obj == (string)o._obj : _obj == o._obj)
       ;
 
     return res;
