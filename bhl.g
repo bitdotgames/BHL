@@ -133,7 +133,6 @@ statement
   | 'continue'                                                  #Continue
   | 'return' explist?                                           #Return
   | 'seq' block                                                 #Seq
-  | 'seq_' block                                                #Seq_
   | 'paral' block                                               #Paral
   | 'paral_all' block                                           #ParalAll
   | 'forever' block                                             #Forever

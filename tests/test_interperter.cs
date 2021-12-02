@@ -7742,94 +7742,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSwallowingSequenceSuccess()
-  {
-    string bhl = @"
-
-    func foo()
-    {
-      trace(""FOO"")
-    }
-
-    func bar()
-    {
-      trace(""BAR"")
-    }
-
-    func test() 
-    {
-      seq_ {
-        bar()
-        foo()
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindWaitTicks(globs);
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    {
-      var status = node.run();
-      AssertEqual(BHS.SUCCESS, status);
-    }
-
-    var str = GetString(trace_stream);
-    AssertEqual("BARFOO", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestSwallowingSequenceFailure()
-  {
-    string bhl = @"
-
-    func foo()
-    {
-      trace(""FOO"")
-      fail()
-    }
-
-    func bar()
-    {
-      trace(""BAR"")
-    }
-
-    func test() 
-    {
-      seq_ {
-        bar()
-        foo()
-        bar()
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindWaitTicks(globs);
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    {
-      var status = node.run();
-      AssertEqual(BHS.SUCCESS, status);
-    }
-
-    var str = GetString(trace_stream);
-    AssertEqual("BARFOO", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestNormalBlockIsSequenceFailure()
   {
     string bhl = @"
@@ -13852,51 +13764,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCleanFuncArgsOnStackForParal()
-  {
-    string bhl = @"
-
-    func int calc()
-    {
-      yield()
-      yield()
-      return 100
-    }
-
-    func foo()
-    {
-      yield()
-      fail()
-    }
-
-    func bar()
-    {
-      int i = 10 + calc()
-    }
-
-    func test() 
-    {
-      paral_all {
-        seq_ {
-          foo()
-        }
-        bar()
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    AssertEqual(node.run(), BHS.RUNNING);
-    AssertEqual(node.run(), BHS.RUNNING);
-    AssertEqual(node.run(), BHS.SUCCESS);
-    //NodeDump(node);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestCleanFuncArgsOnStackForYieldInWhile()
   {
     string bhl = @"
@@ -14005,43 +13872,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     var intp = Interpret(bhl, globs);
     var node = intp.GetFuncCallNode("test");
     ExecNode(node, 0);
-    //NodeDump(node);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestCleanFuncArgsOnStackUserBindInSafeSeq()
-  {
-    string bhl = @"
-    
-    func test() 
-    {
-      seq_ {
-        hey(1, foo())
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    {
-      var fn = new FuncSymbolSimpleNative("foo", globs.Type("int"),
-          delegate() { return BHS.FAILURE; } );
-      globs.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolSimpleNative("hey", globs.Type("void"),
-          delegate() { return BHS.SUCCESS; } );
-      fn.Define(new FuncArgSymbol("i", globs.Type("int")));
-      fn.Define(new FuncArgSymbol("b", globs.Type("int")));
-      globs.Define(fn);
-    }
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExecNode(node, 0);
-    AssertEqual(BHS.SUCCESS, res.status);
     //NodeDump(node);
     CommonChecks(intp);
   }

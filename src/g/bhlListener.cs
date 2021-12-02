@@ -707,18 +707,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSeq([NotNull] bhlParser.SeqContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>Seq_</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterSeq_([NotNull] bhlParser.Seq_Context context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>Seq_</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitSeq_([NotNull] bhlParser.Seq_Context context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>Paral</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

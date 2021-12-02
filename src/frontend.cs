@@ -2297,12 +2297,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitSeq_(bhlParser.Seq_Context ctx)
-  {
-    CommonVisitBlock(EnumBlock.SEQ_, ctx.block().statement(), new_local_scope: false);
-    return null;
-  }
-
   public override object VisitDefer(bhlParser.DeferContext ctx)
   {
     ++defer_stack;
