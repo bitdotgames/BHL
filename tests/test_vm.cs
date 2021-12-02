@@ -1697,6 +1697,26 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncAlreadyDeclaredArg()
+  {
+    string bhl = @"
+
+    func void foo(int k, int k)
+    {
+    }
+      
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "@(3,29) k:<int>: already defined symbol 'k'"
+    );
+  }
+
+
+  [IsTested()]
   public void TestStatefulNativeFunc()
   {
     string bhl = @"
@@ -3508,6 +3528,104 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().num, 12);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncManyDefaultArgs()
+  {
+    string bhl = @"
+
+    func float foo(
+          float k1 = 1, float k2 = 1, float k3 = 1, float k4 = 1, float k5 = 1, float k6 = 1, float k7 = 1, float k8 = 1, float k9 = 1,
+          float k10 = 1, float k11 = 1, float k12 = 1, float k13 = 1, float k14 = 1, float k15 = 1, float k16 = 1, float k17 = 1, float k18 = 1,
+          float k19 = 1, float k20 = 1, float k21 = 1, float k22 = 1, float k23 = 1, float k24 = 1, float k25 = 1, float k26 = 42
+        )
+    {
+      return k26
+    }
+      
+    func float test() 
+    {
+      return foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncTooManyDefaultArgs()
+  {
+    string bhl = @"
+
+    func float foo(
+          float k1 = 1, float k2 = 1, float k3 = 1, float k4 = 1, float k5 = 1, float k6 = 1, float k7 = 1, float k8 = 1, float k9 = 1,
+          float k10 = 1, float k11 = 1, float k12 = 1, float k13 = 1, float k14 = 1, float k15 = 1, float k16 = 1, float k17 = 1, float k18 = 1,
+          float k19 = 1, float k20 = 1, float k21 = 1, float k22 = 1, float k23 = 1, float k24 = 1, float k25 = 1, float k26 = 1, float k27 = 1
+        )
+    {
+      return k27
+    }
+      
+    func float test() 
+    {
+      return foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "max default arguments reached"
+    );
+  }
+
+  [IsTested()]
+  public void TestPassNamedValue()
+  {
+    string bhl = @"
+      
+    func float foo(float a)
+    {
+      return a
+    }
+
+    func float test(float k) 
+    {
+      return foo(a : k)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassSeveralNamedValues()
+  {
+    string bhl = @"
+      
+    func float foo(float a, float b)
+    {
+      return b - a
+    }
+
+    func float test() 
+    {
+      return foo(b : 5, a : 3)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 2);
     CommonChecks(vm);
   }
 
