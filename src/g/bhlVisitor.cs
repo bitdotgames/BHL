@@ -479,13 +479,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitUntilSuccess([NotNull] bhlParser.UntilSuccessContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>Not</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitNot([NotNull] bhlParser.NotContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>BlockNested</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

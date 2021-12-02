@@ -929,20 +929,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitUntilSuccess([NotNull] bhlParser.UntilSuccessContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>Not</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterNot([NotNull] bhlParser.NotContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>Not</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitNot([NotNull] bhlParser.NotContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockNested</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>

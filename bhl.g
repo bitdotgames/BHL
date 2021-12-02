@@ -140,7 +140,6 @@ statement
   | 'prio' block                                                #Prio
   | 'until_failure' block                                       #UntilFailure
   | 'until_success' block                                       #UntilSuccess
-  | 'not' block                                                 #Not
   | block                                                       #BlockNested
   | funcLambda                                                  #LambdaCall
   ;

@@ -2264,25 +2264,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitNot(bhlParser.NotContext ctx)
-  {
-    var not = AST_Util.New_Block(EnumBlock.NOT);
-
-    PushAST(not);
-    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false, auto_add: false);
-    //NOTE: since 'not' is a decorator node which accepts only one child we need to take
-    //      this into account
-    if(block.children.Count > 1)
-      not.AddChild(block);
-    else
-      not.AddChild(block.children[0]); 
-    PopAST();
-
-    PeekAST().AddChild(not);
-
-    return null;
-  }
-
   public override object VisitForever(bhlParser.ForeverContext ctx)
   {
     ++loops_stack;

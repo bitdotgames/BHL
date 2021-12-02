@@ -791,18 +791,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitUntilSuccess([NotNull] bhlParser.UntilSuccessContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>Not</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterNot([NotNull] bhlParser.NotContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>Not</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitNot([NotNull] bhlParser.NotContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockNested</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

@@ -573,12 +573,6 @@ public class Interpreter : AST_Visitor
       VisitChildren(ast);
       PopNode();
     }
-    else if(ast.type == EnumBlock.NOT)
-    {
-      PushAttachNode(new InvertNode());
-      VisitChildren(ast);
-      PopNode();
-    }
     else if(ast.type == EnumBlock.PRIO)
     {
       PushAttachNode(new PriorityNode());
