@@ -185,7 +185,7 @@ public class VM
     public void SetArgs(params Val[] args)
     {
       var frm = frames.Peek();
-      for(int i=0;i<args.Length;++i)
+      for(int i=args.Length;i-- > 0;)
       {
         var arg = args[i];
         frm.stack.Push(arg);

@@ -5314,6 +5314,23 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassArgsToFiber()
+  {
+    string bhl = @"
+    func float test(float k, float m) 
+    {
+      yield()
+      return m
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3), Val.NewNum(vm, 7)).stack.PopRelease().num; 
+    AssertEqual(num, 7);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
