@@ -859,20 +859,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitParalAll([NotNull] bhlParser.ParalAllContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>Forever</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterForever([NotNull] bhlParser.ForeverContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>Forever</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitForever([NotNull] bhlParser.ForeverContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by the <c>Defer</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>

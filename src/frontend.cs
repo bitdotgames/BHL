@@ -2252,14 +2252,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitForever(bhlParser.ForeverContext ctx)
-  {
-    ++loops_stack;
-    CommonVisitBlock(EnumBlock.FOREVER, ctx.block().statement(), new_local_scope: false);
-    --loops_stack;
-    return null;
-  }
-
   public override object VisitSeq(bhlParser.SeqContext ctx)
   {
     CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);

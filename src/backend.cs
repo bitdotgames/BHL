@@ -567,12 +567,6 @@ public class Interpreter : AST_Visitor
       VisitChildren(ast);
       PopNode();
     }
-    else if(ast.type == EnumBlock.FOREVER)
-    {
-      PushAttachNode(new ForeverNode());
-      VisitChildren(ast);
-      PopNode();
-    }
     else if(ast.type == EnumBlock.DEFER)
     {
       PushAttachNode(new DeferNode());

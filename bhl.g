@@ -135,7 +135,6 @@ statement
   | 'seq' block                                                 #Seq
   | 'paral' block                                               #Paral
   | 'paral_all' block                                           #ParalAll
-  | 'forever' block                                             #Forever
   | 'defer' block                                               #Defer
   | 'prio' block                                                #Prio
   | block                                                       #BlockNested

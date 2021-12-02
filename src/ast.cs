@@ -977,7 +977,6 @@ public enum EnumBlock
   PARAL = 3,
   PARAL_ALL = 4,
   PRIO = 5,
-  FOREVER = 6,
   IF = 7,
   WHILE = 8,
   FOR = 9,

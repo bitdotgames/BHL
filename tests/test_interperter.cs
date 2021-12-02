@@ -4372,127 +4372,127 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
-  [IsTested()]
-  public void TestVarInForever()
-  {
-    string bhl = @"
+  //[IsTested()]
+  //public void TestVarInForever()
+  //{
+  //  string bhl = @"
 
-    func test() 
-    {
-      forever {
-        int foo = 1
-        trace((string)foo + "";"")
-      }
-    }
-    ";
+  //  func test() 
+  //  {
+  //    forever {
+  //      int foo = 1
+  //      trace((string)foo + "";"")
+  //    }
+  //  }
+  //  ";
 
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
 
-    BindTrace(globs, trace_stream);
+  //  BindTrace(globs, trace_stream);
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    //NodeDump(node);
-    
-    for(int i=0;i<5;++i)
-      node.run();
-    AssertEqual(DynVal.PoolCount, 4);
-    AssertEqual(DynVal.PoolCountFree, 3);
+  //  //NodeDump(node);
+  //  
+  //  for(int i=0;i<5;++i)
+  //    node.run();
+  //  AssertEqual(DynVal.PoolCount, 4);
+  //  AssertEqual(DynVal.PoolCountFree, 3);
 
-    var str = GetString(trace_stream);
+  //  var str = GetString(trace_stream);
 
-    AssertEqual("1;1;1;1;1;", str);
+  //  AssertEqual("1;1;1;1;1;", str);
 
-    for(int i=0;i<5;++i)
-      node.run();
-    AssertEqual(DynVal.PoolCount, 4);
-    AssertEqual(DynVal.PoolCountFree, 3);
+  //  for(int i=0;i<5;++i)
+  //    node.run();
+  //  AssertEqual(DynVal.PoolCount, 4);
+  //  AssertEqual(DynVal.PoolCountFree, 3);
 
-    str = GetString(trace_stream);
+  //  str = GetString(trace_stream);
 
-    AssertEqual("1;1;1;1;1;" + "1;1;1;1;1;", str);
+  //  AssertEqual("1;1;1;1;1;" + "1;1;1;1;1;", str);
 
-    node.stop();
+  //  node.stop();
 
-    CommonChecks(intp);
-  }
+  //  CommonChecks(intp);
+  //}
+  //
+  //[IsTested()]
+  //public void TestArrayPoolInForever()
+  //{
+  //  string bhl = @"
 
-  [IsTested()]
-  public void TestArrayPoolInForever()
-  {
-    string bhl = @"
+  //  func string[] make()
+  //  {
+  //    string[] arr = new string[]
+  //    return arr
+  //  }
+  //    
+  //  func test() 
+  //  {
+  //    forever {
+  //      string[] arr = new string[]
+  //    }
+  //  }
+  //  ";
 
-    func string[] make()
-    {
-      string[] arr = new string[]
-      return arr
-    }
-      
-    func test() 
-    {
-      forever {
-        string[] arr = new string[]
-      }
-    }
-    ";
+  //  var globs = SymbolTable.CreateBuiltins();
 
-    var globs = SymbolTable.CreateBuiltins();
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
+  //  node.run();
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    node.run();
+  //  //NodeDump(node);
+  //  
+  //  for(int i=0;i<2;++i)
+  //    node.run();
 
-    //NodeDump(node);
-    
-    for(int i=0;i<2;++i)
-      node.run();
+  //  node.stop();
 
-    node.stop();
+  //  AssertEqual(DynValList.PoolCount, 2);
+  //  CommonChecks(intp);
+  //}
+  //
+  //[IsTested()]
+  //public void TestStackInForever()
+  //{
+  //  string bhl = @"
 
-    AssertEqual(DynValList.PoolCount, 2);
-    CommonChecks(intp);
-  }
+  //  func int foo()
+  //  {
+  //    return 100
+  //  }
 
-  [IsTested()]
-  public void TestStackInForever()
-  {
-    string bhl = @"
+  //  func hey(int a)
+  //  {
+  //  }
 
-    func int foo()
-    {
-      return 100
-    }
+  //  func test() 
+  //  {
+  //    forever {
+  //      hey(foo())
+  //    }
+  //  }
+  //  ";
 
-    func hey(int a)
-    {
-    }
+  //  var globs = SymbolTable.CreateBuiltins();
 
-    func test() 
-    {
-      forever {
-        hey(foo())
-      }
-    }
-    ";
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    var globs = SymbolTable.CreateBuiltins();
+  //  //NodeDump(node);
+  //  
+  //  for(int i=0;i<5;++i)
+  //    node.run();
+  //  AssertEqual(intp.stack.Count, 0);
+  //  AssertEqual(DynVal.PoolCount, 2);
+  //  AssertEqual(DynVal.PoolCountFree, 2);
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    //NodeDump(node);
-    
-    for(int i=0;i<5;++i)
-      node.run();
-    AssertEqual(intp.stack.Count, 0);
-    AssertEqual(DynVal.PoolCount, 2);
-    AssertEqual(DynVal.PoolCountFree, 2);
-
-    node.stop();
-    CommonChecks(intp);
-  }
+  //  node.stop();
+  //  CommonChecks(intp);
+  //}
 
   [IsTested()]
   public void TestPassingDynValToBindClass()
@@ -6754,133 +6754,133 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  [IsTested()]
-  public void TestStartLambdaInScriptMgr()
-  {
-    string bhl = @"
+  //[IsTested()]
+  //public void TestStartLambdaInScriptMgr()
+  //{
+  //  string bhl = @"
 
-    func void test() 
-    {
-      forever {
-        StartScriptInMgr(
-          script: func() { 
-            trace(""HERE;"") 
-          },
-          num : 1,
-          now : false
-        )
-      }
-    }
-    ";
+  //  func void test() 
+  //  {
+  //    forever {
+  //      StartScriptInMgr(
+  //        script: func() { 
+  //          trace(""HERE;"") 
+  //        },
+  //        num : 1,
+  //        now : false
+  //      )
+  //    }
+  //  }
+  //  ";
 
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
 
-    BindTrace(globs, trace_stream);
-    BindStartScriptInMgr(globs);
+  //  BindTrace(globs, trace_stream);
+  //  BindStartScriptInMgr(globs);
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    {
-      var status = node.run();
-      AssertEqual(status, BHS.RUNNING);
+  //  {
+  //    var status = node.run();
+  //    AssertEqual(status, BHS.RUNNING);
 
-      ScriptMgr.instance.run();
+  //    ScriptMgr.instance.run();
 
-      var str = GetString(trace_stream);
-      AssertEqual("HERE;", str);
+  //    var str = GetString(trace_stream);
+  //    AssertEqual("HERE;", str);
 
-      var cs = ScriptMgr.instance.getChildren();
-      AssertEqual(0, cs.Count); 
-    }
+  //    var cs = ScriptMgr.instance.getChildren();
+  //    AssertEqual(0, cs.Count); 
+  //  }
 
-    //NodeDump(node);
+  //  //NodeDump(node);
 
-    {
-      var status = node.run();
-      AssertEqual(status, BHS.RUNNING);
+  //  {
+  //    var status = node.run();
+  //    AssertEqual(status, BHS.RUNNING);
 
-      ScriptMgr.instance.run();
+  //    ScriptMgr.instance.run();
 
-      var str = GetString(trace_stream);
-      AssertEqual("HERE;HERE;", str);
+  //    var str = GetString(trace_stream);
+  //    AssertEqual("HERE;HERE;", str);
 
-      var cs = ScriptMgr.instance.getChildren();
-      AssertEqual(0, cs.Count); 
-    }
+  //    var cs = ScriptMgr.instance.getChildren();
+  //    AssertEqual(0, cs.Count); 
+  //  }
 
-    ScriptMgr.instance.stop();
+  //  ScriptMgr.instance.stop();
 
-    AssertTrue(!ScriptMgr.instance.busy());
-    AssertEqual(1, FuncCtx.NodesCreated);
-    CommonChecks(intp);
-  }
+  //  AssertTrue(!ScriptMgr.instance.busy());
+  //  AssertEqual(1, FuncCtx.NodesCreated);
+  //  CommonChecks(intp);
+  //}
+  //
+  //[IsTested()]
+  //public void TestStartLambdaRunninInScriptMgr()
+  //{
+  //  string bhl = @"
 
-  [IsTested()]
-  public void TestStartLambdaRunninInScriptMgr()
-  {
-    string bhl = @"
+  //  func void test() 
+  //  {
+  //    forever {
+  //      StartScriptInMgr(
+  //        script: func() { 
+  //          trace(""HERE;"") 
+  //          suspend()
+  //        },
+  //        num : 1,
+  //        now : false
+  //      )
+  //    }
+  //  }
+  //  ";
 
-    func void test() 
-    {
-      forever {
-        StartScriptInMgr(
-          script: func() { 
-            trace(""HERE;"") 
-            suspend()
-          },
-          num : 1,
-          now : false
-        )
-      }
-    }
-    ";
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
 
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
+  //  BindTrace(globs, trace_stream);
+  //  BindStartScriptInMgr(globs);
 
-    BindTrace(globs, trace_stream);
-    BindStartScriptInMgr(globs);
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
+  //  {
+  //    var status = node.run();
+  //    AssertEqual(status, BHS.RUNNING);
 
-    {
-      var status = node.run();
-      AssertEqual(status, BHS.RUNNING);
+  //    ScriptMgr.instance.run();
 
-      ScriptMgr.instance.run();
+  //    var str = GetString(trace_stream);
+  //    AssertEqual("HERE;", str);
 
-      var str = GetString(trace_stream);
-      AssertEqual("HERE;", str);
+  //    var cs = ScriptMgr.instance.getChildren();
+  //    AssertEqual(1, cs.Count); 
+  //  }
 
-      var cs = ScriptMgr.instance.getChildren();
-      AssertEqual(1, cs.Count); 
-    }
+  //  //NodeDump(node);
 
-    //NodeDump(node);
+  //  {
+  //    var status = node.run();
+  //    AssertEqual(status, BHS.RUNNING);
 
-    {
-      var status = node.run();
-      AssertEqual(status, BHS.RUNNING);
+  //    ScriptMgr.instance.run();
 
-      ScriptMgr.instance.run();
+  //    var str = GetString(trace_stream);
+  //    AssertEqual("HERE;HERE;", str);
 
-      var str = GetString(trace_stream);
-      AssertEqual("HERE;HERE;", str);
+  //    var cs = ScriptMgr.instance.getChildren();
+  //    AssertEqual(2, cs.Count); 
+  //    AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
+  //  }
 
-      var cs = ScriptMgr.instance.getChildren();
-      AssertEqual(2, cs.Count); 
-      AssertTrue(cs[0].GetHashCode() != cs[1].GetHashCode());
-    }
+  //  ScriptMgr.instance.stop();
 
-    ScriptMgr.instance.stop();
-
-    AssertTrue(!ScriptMgr.instance.busy());
-    AssertEqual(2, FuncCtx.NodesCreated);
-    CommonChecks(intp);
-  }
+  //  AssertTrue(!ScriptMgr.instance.busy());
+  //  AssertEqual(2, FuncCtx.NodesCreated);
+  //  CommonChecks(intp);
+  //}
 
   [IsTested()]
   public void TestStartLambdaManyTimesInScriptMgr()
@@ -9103,206 +9103,206 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
-  [IsTested()]
-  public void TestForever()
-  {
-    string bhl = @"
+  //[IsTested()]
+  //public void TestForever()
+  //{
+  //  string bhl = @"
 
-    func bar()
-    {
-      trace(""B"")
-      fail()
-    }
+  //  func bar()
+  //  {
+  //    trace(""B"")
+  //    fail()
+  //  }
 
-    func foo()
-    {
-      trace(""A"")
-      fail()
-    }
+  //  func foo()
+  //  {
+  //    trace(""A"")
+  //    fail()
+  //  }
 
-    func test() 
-    {
-      forever {
-        bar()
-        foo() //this one won't be executed
-      }
-    }
-    ";
+  //  func test() 
+  //  {
+  //    forever {
+  //      bar()
+  //      foo() //this one won't be executed
+  //    }
+  //  }
+  //  ";
 
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
 
-    BindWaitTicks(globs);
-    BindTrace(globs, trace_stream);
+  //  BindWaitTicks(globs);
+  //  BindTrace(globs, trace_stream);
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    for(int i=0;i<5;++i)
-    {
-      var status = node.run();
-      AssertEqual(BHS.RUNNING, status);
-    }
+  //  for(int i=0;i<5;++i)
+  //  {
+  //    var status = node.run();
+  //    AssertEqual(BHS.RUNNING, status);
+  //  }
 
-    //...will be running forever, well, we assume that :)
+  //  //...will be running forever, well, we assume that :)
 
-    var str = GetString(trace_stream);
-    AssertEqual("BBBBB", str);
-    CommonChecks(intp);
-  }
+  //  var str = GetString(trace_stream);
+  //  AssertEqual("BBBBB", str);
+  //  CommonChecks(intp);
+  //}
+  //
+  //[IsTested()]
+  //public void TestDeferInForever()
+  //{
+  //  string bhl = @"
 
-  [IsTested()]
-  public void TestDeferInForever()
-  {
-    string bhl = @"
+  //  func test() 
+  //  {
+  //    forever {
+  //      defer {
+  //        trace(""HEY;"")
+  //      }
+  //    }
+  //    defer {
+  //      trace(""NEVER;"")
+  //    }
+  //  }
+  //  ";
 
-    func test() 
-    {
-      forever {
-        defer {
-          trace(""HEY;"")
-        }
-      }
-      defer {
-        trace(""NEVER;"")
-      }
-    }
-    ";
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
 
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
+  //  BindTrace(globs, trace_stream);
 
-    BindTrace(globs, trace_stream);
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
+  //  for(int i=0;i<3;++i)
+  //  {
+  //    var status = node.run();
+  //    AssertEqual(BHS.RUNNING, status);
+  //  }
 
-    for(int i=0;i<3;++i)
-    {
-      var status = node.run();
-      AssertEqual(BHS.RUNNING, status);
-    }
+  //  //...will be running forever, well, we assume that :)
 
-    //...will be running forever, well, we assume that :)
+  //  var str = GetString(trace_stream);
+  //  AssertEqual("HEY;HEY;HEY;", str);
+  //  CommonChecks(intp);
+  //}
+  //
+  //[IsTested()]
+  //public void TestForeverBreak()
+  //{
+  //  string bhl = @"
 
-    var str = GetString(trace_stream);
-    AssertEqual("HEY;HEY;HEY;", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestForeverBreak()
-  {
-    string bhl = @"
-
-    func int test() 
-    {
-      int i = 0
-      forever {
-        i = i + 1
-        if(i == 3) {
-          break
-        }
-      }
-      return i
-    }
-    ";
+  //  func int test() 
+  //  {
+  //    int i = 0
+  //    forever {
+  //      i = i + 1
+  //      if(i == 3) {
+  //        break
+  //      }
+  //    }
+  //    return i
+  //  }
+  //  ";
 
 
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
+  //  var intp = Interpret(bhl);
+  //  var node = intp.GetFuncCallNode("test");
 
-    var status = node.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  var status = node.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    status = node.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  status = node.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    status = node.run();
-    AssertEqual(BHS.SUCCESS, status);
+  //  status = node.run();
+  //  AssertEqual(BHS.SUCCESS, status);
 
-    var res = intp.PopValue();
-    AssertEqual(res.num, 3);
+  //  var res = intp.PopValue();
+  //  AssertEqual(res.num, 3);
 
-    CommonChecks(intp);
-  }
+  //  CommonChecks(intp);
+  //}
+  //
+  //[IsTested()]
+  //public void TestDeferInForeverWithBreak()
+  //{
+  //  string bhl = @"
 
-  [IsTested()]
-  public void TestDeferInForeverWithBreak()
-  {
-    string bhl = @"
+  //  func test() 
+  //  {
+  //    int i = 0
+  //    forever {
+  //      defer {
+  //        trace(""HEY;"")
+  //      }
+  //      i = i + 1
+  //      if(i == 2) {
+  //        break
+  //      }
+  //    }
+  //    defer {
+  //      trace(""YOU;"")
+  //    }
+  //  }
+  //  ";
 
-    func test() 
-    {
-      int i = 0
-      forever {
-        defer {
-          trace(""HEY;"")
-        }
-        i = i + 1
-        if(i == 2) {
-          break
-        }
-      }
-      defer {
-        trace(""YOU;"")
-      }
-    }
-    ";
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
 
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
+  //  BindTrace(globs, trace_stream);
 
-    BindTrace(globs, trace_stream);
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
+  //  for(int i=0;i<2;++i)
+  //    node.run();
 
-    for(int i=0;i<2;++i)
-      node.run();
+  //  var str = GetString(trace_stream);
+  //  AssertEqual("HEY;HEY;YOU;", str);
+  //  CommonChecks(intp);
+  //}
+  //
+  //[IsTested()]
+  //public void TestNodeWithDeferInForever()
+  //{
+  //  string bhl = @"
 
-    var str = GetString(trace_stream);
-    AssertEqual("HEY;HEY;YOU;", str);
-    CommonChecks(intp);
-  }
+  //  func test() 
+  //  {
+  //    forever {
+  //      NodeWithDefer()
+  //    }
+  //    defer {
+  //      trace(""NEVER;"")
+  //    }
+  //  }
+  //  ";
 
-  [IsTested()]
-  public void TestNodeWithDeferInForever()
-  {
-    string bhl = @"
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
+  //  
+  //  BindNodeWithDefer(globs, trace_stream);
+  //  BindTrace(globs, trace_stream);
+  // 
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    func test() 
-    {
-      forever {
-        NodeWithDefer()
-      }
-      defer {
-        trace(""NEVER;"")
-      }
-    }
-    ";
+  //  for(int i=0;i<3;++i)
+  //  {
+  //    var status = node.run();
+  //    AssertEqual(BHS.RUNNING, status);
+  //  }
 
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-    
-    BindNodeWithDefer(globs, trace_stream);
-    BindTrace(globs, trace_stream);
-   
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
+  //  //...will be running forever, well, we assume that :)
 
-    for(int i=0;i<3;++i)
-    {
-      var status = node.run();
-      AssertEqual(BHS.RUNNING, status);
-    }
-
-    //...will be running forever, well, we assume that :)
-
-    var str = GetString(trace_stream);
-    AssertEqual("DEFER!!!DEFER!!!DEFER!!!", str);
-    CommonChecks(intp);
-  }
+  //  var str = GetString(trace_stream);
+  //  AssertEqual("DEFER!!!DEFER!!!DEFER!!!", str);
+  //  CommonChecks(intp);
+  //}
 
   [IsTested()]
   public void TestDeferScopes()
@@ -9534,83 +9534,83 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
-  [IsTested()]
-  public void TestYieldInParal()
-  {
-    string bhl = @"
+  //[IsTested()]
+  //public void TestYieldInParal()
+  //{
+  //  string bhl = @"
 
-    func int test() 
-    {
-      int i = 0
-      paral {
-        while(i < 3) { yield() }
-        forever {
-          i = i + 1
-        }
-      }
-      return i
-    }
-    ";
+  //  func int test() 
+  //  {
+  //    int i = 0
+  //    paral {
+  //      while(i < 3) { yield() }
+  //      forever {
+  //        i = i + 1
+  //      }
+  //    }
+  //    return i
+  //  }
+  //  ";
 
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
+  //  var intp = Interpret(bhl);
+  //  var node = intp.GetFuncCallNode("test");
 
-    var status = node.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  var status = node.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    status = node.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  status = node.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    status = node.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  status = node.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    status = node.run();
-    AssertEqual(BHS.SUCCESS, status);
+  //  status = node.run();
+  //  AssertEqual(BHS.SUCCESS, status);
 
-    var val = intp.PopValue();
-    AssertEqual(3, val.num);
+  //  var val = intp.PopValue();
+  //  AssertEqual(3, val.num);
 
-    CommonChecks(intp);
-  }
+  //  CommonChecks(intp);
+  //}
+  //
+  //[IsTested()]
+  //public void TestYieldWhileInParal()
+  //{
+  //  string bhl = @"
 
-  [IsTested()]
-  public void TestYieldWhileInParal()
-  {
-    string bhl = @"
+  //  func int test() 
+  //  {
+  //    int i = 0
+  //    paral {
+  //      yield while(i < 3)
+  //      forever {
+  //        i = i + 1
+  //      }
+  //    }
+  //    return i
+  //  }
+  //  ";
 
-    func int test() 
-    {
-      int i = 0
-      paral {
-        yield while(i < 3)
-        forever {
-          i = i + 1
-        }
-      }
-      return i
-    }
-    ";
+  //  var intp = Interpret(bhl);
+  //  var node = intp.GetFuncCallNode("test");
 
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
+  //  var status = node.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    var status = node.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  status = node.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    status = node.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  status = node.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    status = node.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  status = node.run();
+  //  AssertEqual(BHS.SUCCESS, status);
 
-    status = node.run();
-    AssertEqual(BHS.SUCCESS, status);
+  //  var val = intp.PopValue();
+  //  AssertEqual(3, val.num);
 
-    var val = intp.PopValue();
-    AssertEqual(3, val.num);
-
-    CommonChecks(intp);
-  }
+  //  CommonChecks(intp);
+  //}
 
   [IsTested()]
   public void TestFuncCaching()
@@ -9741,55 +9741,55 @@ public class BHL_TestInterpreter : BHL_TestBase
     AssertEqual(FuncCallNode.PoolCount, 1);
   }
 
-  [IsTested()]
-  public void TestOnlyUserlandFuncsAreCached()
-  {
-    string bhl = @"
-      
-    func void foo(float k)
-    { }
+  //[IsTested()]
+  //public void TestOnlyUserlandFuncsAreCached()
+  //{
+  //  string bhl = @"
+  //    
+  //  func void foo(float k)
+  //  { }
 
-    func void test(float k) 
-    {
-      forever
-      {
-        foo(k)
-        suspend()
-      }
-    }
-    ";
+  //  func void test(float k) 
+  //  {
+  //    forever
+  //    {
+  //      foo(k)
+  //      suspend()
+  //    }
+  //  }
+  //  ";
 
-    var intp = Interpret(bhl);
+  //  var intp = Interpret(bhl);
 
-    AssertEqual(FuncCallNode.PoolCount, 0);
-    AssertEqual(FuncCallNode.PoolCountFree, 0);
+  //  AssertEqual(FuncCallNode.PoolCount, 0);
+  //  AssertEqual(FuncCallNode.PoolCountFree, 0);
 
-    var node1 = intp.GetFuncCallNode("test");
-    node1.SetArgs(DynVal.NewNum(3));
-    var status = node1.run();
-    AssertEqual(BHS.RUNNING, status);
-    
-    AssertEqual(FuncCallNode.PoolCount, 1);
-    AssertEqual(FuncCallNode.PoolCountFree, 1);
+  //  var node1 = intp.GetFuncCallNode("test");
+  //  node1.SetArgs(DynVal.NewNum(3));
+  //  var status = node1.run();
+  //  AssertEqual(BHS.RUNNING, status);
+  //  
+  //  AssertEqual(FuncCallNode.PoolCount, 1);
+  //  AssertEqual(FuncCallNode.PoolCountFree, 1);
 
-    var node2 = intp.GetFuncCallNode("test");
-    node2.SetArgs(DynVal.NewNum(30));
-    status = node2.run();
-    AssertEqual(BHS.RUNNING, status);
+  //  var node2 = intp.GetFuncCallNode("test");
+  //  node2.SetArgs(DynVal.NewNum(30));
+  //  status = node2.run();
+  //  AssertEqual(BHS.RUNNING, status);
 
-    AssertEqual(FuncCallNode.PoolCount, 1);
-    AssertEqual(FuncCallNode.PoolCountFree, 1);
+  //  AssertEqual(FuncCallNode.PoolCount, 1);
+  //  AssertEqual(FuncCallNode.PoolCountFree, 1);
 
-    node1.stop();
+  //  node1.stop();
 
-    AssertEqual(FuncCallNode.PoolCount, 1);
-    AssertEqual(FuncCallNode.PoolCountFree, 1);
+  //  AssertEqual(FuncCallNode.PoolCount, 1);
+  //  AssertEqual(FuncCallNode.PoolCountFree, 1);
 
-    node2.stop();
+  //  node2.stop();
 
-    AssertEqual(FuncCallNode.PoolCount, 1);
-    AssertEqual(FuncCallNode.PoolCountFree, 1);
-  }
+  //  AssertEqual(FuncCallNode.PoolCount, 1);
+  //  AssertEqual(FuncCallNode.PoolCountFree, 1);
+  //}
 
   [IsTested()]
   public void TestDetachedUserlandFuncsAreNotDoubleDeferred()
@@ -18300,53 +18300,53 @@ func Unit FindUnit(Vec3 pos, float radius) {
     }
   }
 
-  [IsTested()]
-  public void TestWeird()
-  {
-    string bhl = @"
+  //[IsTested()]
+  //public void TestWeird()
+  //{
+  //  string bhl = @"
 
-    func A(int b = 1)
-    {
-      trace(""A"" + (string)b)
-      suspend()
-    }
+  //  func A(int b = 1)
+  //  {
+  //    trace(""A"" + (string)b)
+  //    suspend()
+  //  }
 
-    func test() 
-    {
-      forever {
-        int i = 0
-        paral {
-          A()
-          seq {
-            while(i < 1) {
-              yield()
-              i = i + 1
-            }
-          }
-        }
-      }
-    }
-    ";
+  //  func test() 
+  //  {
+  //    forever {
+  //      int i = 0
+  //      paral {
+  //        A()
+  //        seq {
+  //          while(i < 1) {
+  //            yield()
+  //            i = i + 1
+  //          }
+  //        }
+  //      }
+  //    }
+  //  }
+  //  ";
 
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
 
-    BindTrace(globs, trace_stream);
-    BindStartScript(globs);
+  //  BindTrace(globs, trace_stream);
+  //  BindStartScript(globs);
 
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
 
-    node.run();
-    node.run();
-    node.run();
-    node.stop();
+  //  node.run();
+  //  node.run();
+  //  node.run();
+  //  node.stop();
 
-    var str = GetString(trace_stream);
+  //  var str = GetString(trace_stream);
 
-    AssertEqual("A1A1", str);
-    CommonChecks(intp);
-  }
+  //  AssertEqual("A1A1", str);
+  //  CommonChecks(intp);
+  //}
 
   [IsTested()]
   public void TestFib()

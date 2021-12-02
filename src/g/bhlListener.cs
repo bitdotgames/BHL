@@ -731,18 +731,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitParalAll([NotNull] bhlParser.ParalAllContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>Forever</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterForever([NotNull] bhlParser.ForeverContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>Forever</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitForever([NotNull] bhlParser.ForeverContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>Defer</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
