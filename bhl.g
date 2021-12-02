@@ -136,7 +136,6 @@ statement
   | 'paral' block                                               #Paral
   | 'paral_all' block                                           #ParalAll
   | 'defer' block                                               #Defer
-  | 'prio' block                                                #Prio
   | block                                                       #BlockNested
   | funcLambda                                                  #LambdaCall
   ;

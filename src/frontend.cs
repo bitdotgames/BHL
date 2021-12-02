@@ -2246,12 +2246,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitPrio(bhlParser.PrioContext ctx)
-  {
-    CommonVisitBlock(EnumBlock.PRIO, ctx.block().statement(), new_local_scope: false);
-    return null;
-  }
-
   public override object VisitSeq(bhlParser.SeqContext ctx)
   {
     CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
@@ -2673,8 +2667,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     bool may_need_group = 
       type == EnumBlock.PARAL || 
-      type == EnumBlock.PARAL_ALL || 
-      type == EnumBlock.PRIO;
+      type == EnumBlock.PARAL_ALL;
 
     var ast = AST_Util.New_Block(type);
     var tmp = new AST_Interim();

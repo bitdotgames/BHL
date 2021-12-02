@@ -743,18 +743,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitDefer([NotNull] bhlParser.DeferContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>Prio</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterPrio([NotNull] bhlParser.PrioContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>Prio</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitPrio([NotNull] bhlParser.PrioContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockNested</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

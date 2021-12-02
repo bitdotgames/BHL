@@ -451,13 +451,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDefer([NotNull] bhlParser.DeferContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>Prio</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPrio([NotNull] bhlParser.PrioContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>BlockNested</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

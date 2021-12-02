@@ -873,20 +873,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDefer([NotNull] bhlParser.DeferContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>Prio</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterPrio([NotNull] bhlParser.PrioContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>Prio</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitPrio([NotNull] bhlParser.PrioContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockNested</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
