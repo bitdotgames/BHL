@@ -985,8 +985,7 @@ public enum EnumBlock
   UNTIL_FAILURE = 11,
   UNTIL_SUCCESS = 12,
   NOT = 13,
-  SEQ_ = 14,
-  EVAL = 15,
+  SEQ_ = 14
 }
 
 public class AST_Block  : AST 

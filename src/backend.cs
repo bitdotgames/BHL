@@ -615,12 +615,6 @@ public class Interpreter : AST_Visitor
       VisitChildren(ast);
       PopNode();
     }
-    else if(ast.type == EnumBlock.EVAL)
-    {
-      PushAttachNode(new EvalNode());
-      VisitChildren(ast);
-      PopNode();
-    }
     else
       throw new Exception("Unknown block type: " + ast.type);
   }

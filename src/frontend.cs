@@ -1456,16 +1456,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitExpEval(bhlParser.ExpEvalContext ctx)
-  {
-    //TODO: disallow return statements in eval blocks
-    CommonVisitBlock(EnumBlock.EVAL, ctx.block().statement(), new_local_scope: false);
-
-    Wrap(ctx).eval_type = SymbolTable.symb_bool;
-
-    return null;
-  }
-
   public override object VisitExpLiteralNum(bhlParser.ExpLiteralNumContext ctx)
   {
     var ast = AST_Util.New_Literal(EnumLiteral.NUM);

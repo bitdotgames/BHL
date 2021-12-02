@@ -60,7 +60,6 @@ exp
   | exp operatorComparison exp                              #ExpCompare
   | exp operatorAnd exp                                     #ExpAnd
   | exp operatorOr exp                                      #ExpOr
-  | 'eval' block                                            #ExpEval
   | newExp                                                  #ExpNew
   | exp ternaryIfExp                                        #ExpTernaryIf
   ;

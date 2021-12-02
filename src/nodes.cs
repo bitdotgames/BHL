@@ -1030,50 +1030,6 @@ public class PriorityNode : ScopeNode
   }
 }
 
-public class EvalNode : SequentialNode
-{
-  override public BHS execute()
-  {
-    //var status = base.execute();
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    BHS status = BHS.SUCCESS;
-    while(currentPosition < children.Count)
-    {
-      var currentTask = children[currentPosition];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(currentTask.currStatus != BHS.RUNNING)
-        currentTask.init();
-      status = currentTask.execute();
-      currentTask.currStatus = status;
-      if(status != BHS.RUNNING)
-        currentTask.deinit();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++currentPosition;
-      else
-        break;
-    } 
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-
-    if(status != BHS.RUNNING)
-    {
-      var interp = Interpreter.instance;
-      interp.PushValue(DynVal.NewBool(status == BHS.SUCCESS ? true : false));
-      //since we are inside eval block we should not propagate failures
-      if(status == BHS.FAILURE)
-        status = BHS.SUCCESS;
-    }
-
-    return status;
-  }
-
-  public override string inspect()
-  {
-    return "->";
-  }
-}
-
 public class ForeverNode : SequentialNode
 {
   override public BHS execute()
