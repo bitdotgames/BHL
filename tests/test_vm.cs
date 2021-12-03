@@ -2459,6 +2459,26 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestWhileComplexCondition()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      while(i < 3 && true) {
+        i = i + 1
+      }
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBreakInWhile()
   {
     string bhl = @"

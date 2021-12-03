@@ -11703,35 +11703,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
-  [IsTested()]
-  public void TestWhileComplexCondition()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int i = 0
-      while(i < 3 && true) {
-        trace((string)i)
-        i = i + 1
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-    AssertEqual("012", str);
-    CommonChecks(intp);
-  }
-
   public class MakeFooNode : BehaviorTreeTerminalNode
   {
     public override void init()
