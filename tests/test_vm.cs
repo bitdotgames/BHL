@@ -3902,6 +3902,149 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncDefaultArgMixed()
+  {
+    string bhl = @"
+
+    func float foo(float b, float k = 42)
+    {
+      return b + k
+    }
+      
+    func float test() 
+    {
+      return foo(24)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 66);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncDefaultArgIsFunc()
+  {
+    string bhl = @"
+
+    func float bar(float m)
+    {
+      return m
+    }
+
+    func float foo(float b, float k = bar(1))
+    {
+      return b + k
+    }
+      
+    func float test() 
+    {
+      return foo(24)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 25);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncDefaultArgIsFunc2()
+  {
+    string bhl = @"
+
+    func float bar(float m)
+    {
+      return m
+    }
+
+    func float foo(float b = 1, float k = bar(1))
+    {
+      return b + k
+    }
+      
+    func float test() 
+    {
+      return foo(26, bar(2))
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 28);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncMissingReturnArgument()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "return value is missing"
+    );
+  }
+
+  [IsTested()]
+  public void TestFuncMissingDefaultArgument()
+  {
+    string bhl = @"
+
+    func float foo(float b = 23, float k)
+    {
+      return b + k
+    }
+      
+    func float test() 
+    {
+      return foo(24)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "missing default argument expression"
+    );
+  }
+  
+  [IsTested()]
+  public void TestFuncExtraArgumentMatchesLocalVariable()
+  {
+    string bhl = @"
+
+    func void foo(float b, float k)
+    {
+      float f = 3
+      float a = b + k
+    }
+      
+    func void test() 
+    {
+      foo(b: 24, k: 3, f : 1)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "f: no such named argument"
+    );
+  }
+
+  [IsTested()]
   public void TestPassNamedValue()
   {
     string bhl = @"
