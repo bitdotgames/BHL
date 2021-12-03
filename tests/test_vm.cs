@@ -1599,6 +1599,110 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLocalScopeNotSupported()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 1
+      {
+        int i = 2
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'i'"
+    );
+  }
+
+  [IsTested()]
+  public void TestLocalScopeNotSupported2()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      {
+        int i = 1
+        i = i + 1
+      }
+      {
+        string i
+        i = ""foo""
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'i'"
+    );
+  }
+
+  [IsTested()]
+  public void TestVarDeclMustBeInUpperScope()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      seq {
+        int i = 1
+        i = i + 1
+      }
+      seq {
+        i = i + 2
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "i : symbol not resolved"
+    );
+  }
+
+  [IsTested()]
+  public void TestVarDeclMustBeInUpperScope2()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral_all {
+        seq {
+          int i = 1
+          seq {
+            i = i + 1
+          }
+        }
+        seq {
+          if(i == 2) {
+            suspend()
+          }
+        }
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "i : symbol not resolved"
+    );
+  }
+
+  [IsTested()]
   public void TestSimpleFuncCall()
   {
     string bhl = @"
@@ -5041,8 +5145,6 @@ public class BHL_TestVM : BHL_TestBase
       return j++, i
     }
     ";
-
-    var globs = SymbolTable.CreateBuiltins();
 
     AssertError<UserError>(
       delegate() {
