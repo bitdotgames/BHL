@@ -2495,6 +2495,38 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSeveralForLoops()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 10
+
+      for( int i = 0; i < 3; i = i + 1 )
+      {
+        x1 = x1 - i
+      }
+
+      for( int j = 1; j < 3; j = j + 1 )
+      {
+        x1 = x1 - j
+      }
+
+
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 4);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestForeachLoop()
   {
     string bhl = @"
@@ -4852,6 +4884,432 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(Execute(vm, "test2").stack.PopRelease().num, 100500);
     AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 0)).stack.PopRelease().str, "default value");
     AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 2)).stack.PopRelease().str, "second value");
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestOperatorPostfixIncrementCall()
+  {
+    string bhl = @"
+    func int test1()
+    {
+      int i = 0
+      i++
+      i = i - 1
+      i++
+      i = i - 1
+
+      return i
+    }
+
+    func test2()
+    {
+      for(int i = 0; i < 3;) {
+        trace((string)i)
+
+        i++
+      }
+
+      for(int j = 0; j < 3; j++) {
+        trace((string)j)
+      }
+
+      for(j = 0, int k = 0, k++; j < 3; j++, k++) {
+        trace((string)j)
+        trace((string)k)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+
+    AssertEqual(Execute(vm, "test1").stack.PopRelease().num, 0);
+
+    Execute(vm, "test2");
+    AssertEqual("012012011223", log.ToString());
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBadOperatorPostfixIncrementCall()
+  {
+    string bhl1 = @"
+    func test()
+    {
+      ++
+    }
+    ";
+
+    string bhl2 = @"
+    func test()
+    {
+      string str = ""Foo""
+      str++
+    }
+    ";
+
+    string bhl3 = @"
+    func test()
+    {
+      for(int j = 0; j < 3; ++) {
+      }
+    }
+    ";
+
+    string bhl4 = @"
+    func test()
+    {
+      int j = 0
+      for(++; j < 3; j++) {
+
+      }
+    }
+    ";
+
+    string bhl5 = @"
+    func test()
+    {
+      for(j = 0, k++, int k = 0; j < 3; j++, k++) {
+        trace((string)j)
+        trace((string)k)
+      }
+    }
+    ";
+
+    string bhl6 = @"
+    
+    func foo(float a)
+    {
+    }
+
+    func int test()
+    {
+      int i = 0
+      foo(i++)
+      return i
+    }
+    ";
+
+    string bhl7 = @"
+    func test()
+    {
+      int[] arr = [0, 1, 3, 4]
+      int i = 0
+      int j = arr[i++]
+    }
+    ";
+
+    string bhl8 = @"
+    func int test()
+    {
+      bool^(int) foo = func bool(int b) { return b > 1 }
+
+      int i = 0
+      foo(i++)
+      return i
+    }
+    ";
+
+    string bhl9 = @"
+    func int test()
+    {
+      int i = 0
+      return i++
+    }
+    ";
+
+    string bhl10 = @"
+    func int, int test()
+    {
+      int i = 0
+      int j = 1
+      return j, i++
+    }
+    ";
+
+    string bhl11 = @"
+    func int, int test()
+    {
+      int i = 0
+      int j = 1
+      return j++, i
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl1);
+      },
+      "extraneous input '++' expecting '}'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl2);
+      },
+      "operator ++ is not supported for string type"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl3);
+      },
+      "extraneous input '++' expecting ')'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl4);
+      },
+      "extraneous input '++' expecting ';'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl5);
+      },
+      "symbol not resolved"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl6);
+      },
+      "no viable alternative at input 'foo(i++'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl7);
+      },
+      "extraneous input '++' expecting ']'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl8);
+      },
+      "no viable alternative at input 'foo(i++'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl9);
+      },
+      "return value is missing"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl10);
+      },
+      "extraneous input '++' expecting '}'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl11);
+      },
+      "mismatched input ',' expecting '}'"
+    );
+  }
+
+  [IsTested()]
+  public void TestBadOperatorPostfixDecrementCall()
+  {
+    string bhl1 = @"
+    func test()
+    {
+      --
+    }
+    ";
+
+    string bhl2 = @"
+    func test()
+    {
+      string str = ""Foo""
+      str--
+    }
+    ";
+
+    string bhl3 = @"
+    func test()
+    {
+      for(int j = 0; j < 3; --) {
+      }
+    }
+    ";
+
+    string bhl4 = @"
+    func test()
+    {
+      int j = 0
+      for(--; j < 3; j++) {
+
+      }
+    }
+    ";
+
+    string bhl5 = @"
+    
+    func foo(float a)
+    {
+    }
+
+    func int test()
+    {
+      int i = 0
+      foo(i--)
+      return i
+    }
+    ";
+
+    string bhl6 = @"
+    func test()
+    {
+      int[] arr = [0, 1, 3, 4]
+      int i = 0
+      int j = arr[i--]
+    }
+    ";
+
+    string bhl7 = @"
+    func int test()
+    {
+      int i = 0
+      return i--
+    }
+    ";
+
+    string bhl8 = @"
+    func int, int test()
+    {
+      int i = 0
+      int j = 1
+      return j, i--
+    }
+    ";
+
+    string bhl9 = @"
+    func int, int test()
+    {
+      int i = 0
+      int j = 1
+      return j--, i
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl1);
+      },
+      "extraneous input '--' expecting '}'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl2);
+      },
+      "operator -- is not supported for string type"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl3);
+      },
+      "extraneous input '--' expecting ')'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl4);
+      },
+      "extraneous input '--' expecting ';'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl5);
+      },
+      "no viable alternative at input 'foo(i--'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl6);
+      },
+      "extraneous input '--' expecting ']'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl7);
+      },
+      "return value is missing"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl8);
+      },
+      "extraneous input '--' expecting '}'"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl9);
+      },
+      "mismatched input ',' expecting '}'"
+    );
+  }
+
+  [IsTested()]
+  public void TestOperatorPostfixDecrementCall()
+  {
+    string bhl = @"
+    func int test1()
+    {
+      int i = 0
+      i--
+      i = i + 1
+      i--
+      i = i + 1
+
+      return i
+    }
+
+    func test2()
+    {
+      for(int i = 3; i >= 0;) {
+        trace((string)i)
+
+        i--
+      }
+
+      for(int j = 3; j >= 0; j--) {
+        trace((string)j)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+
+    AssertEqual(Execute(vm, "test1").stack.PopRelease().num, 0);
+
+    Execute(vm, "test2");
+    AssertEqual("32103210", log.ToString());
 
     CommonChecks(vm);
   }

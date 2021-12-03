@@ -39,8 +39,8 @@ public class ModuleCompiler : AST_Visitor
   Bytecode initcode = new Bytecode();
   Bytecode bytecode = new Bytecode();
   List<Bytecode> code_stack = new List<Bytecode>() { null };
-  List<AST_Block> ctrl_blocks = new List<AST_Block>();
-  List<Bytecode> loop_blocks = new List<Bytecode>();
+  Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
+  Stack<Bytecode> loop_blocks = new Stack<Bytecode>();
   internal struct NonPatchedJump
   {
     internal Bytecode block;
@@ -639,6 +639,7 @@ public class ModuleCompiler : AST_Visitor
         non_patched_continues.RemoveAt(i);
       }
     }
+    continue_jump_markers.Clear();
   }
 
   void PatchJumpOffsetToCurrPos(int jump_opcode_end_pos)
@@ -821,7 +822,7 @@ public class ModuleCompiler : AST_Visitor
         if(ast.children.Count != 2)
          throw new Exception("Unexpected amount of children (must be 2)");
 
-        loop_blocks.Add(PeekCode());
+        loop_blocks.Push(PeekCode());
 
         int while_start_pos = PeekCode().Position;
 
@@ -841,7 +842,7 @@ public class ModuleCompiler : AST_Visitor
 
         PatchBreaks(PeekCode());
 
-        loop_blocks.Remove(PeekCode());
+        loop_blocks.Pop();
       }
       break;
       case EnumBlock.FUNC:
@@ -869,7 +870,7 @@ public class ModuleCompiler : AST_Visitor
 
   void VisitControlBlock(AST_Block ast)
   {
-    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks.Peek() : null;
 
     bool parent_is_paral =
       parent_block != null &&
@@ -882,7 +883,7 @@ public class ModuleCompiler : AST_Visitor
 
     var block_code = new Bytecode();
     code_stack.Add(block_code);
-    ctrl_blocks.Add(ast);
+    ctrl_blocks.Push(ast);
 
     for(int i=0;i<ast.children.Count;++i)
     {
@@ -904,7 +905,7 @@ public class ModuleCompiler : AST_Visitor
     bool need_to_enter_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
 
     code_stack.RemoveAt(code_stack.Count-1);
-    ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
+    ctrl_blocks.Pop();
 
     if(need_to_enter_block)
       Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
@@ -913,7 +914,7 @@ public class ModuleCompiler : AST_Visitor
 
   void VisitDefer(AST_Block ast)
   {
-    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks.Peek() : null;
     if(parent_block != null)
       block_has_defers.Add(parent_block);
 
@@ -1072,10 +1073,10 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Break ast)
   {
     Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-    int patch_pos = GetPositionRelativeToParent(loop_blocks[loop_blocks.Count-1]);
+    int patch_pos = GetPositionRelativeToParent(loop_blocks.Peek());
     non_patched_breaks.Add(
       new NonPatchedJump() 
-        { block = loop_blocks[loop_blocks.Count-1], 
+        { block = loop_blocks.Peek(), 
           jump_opcode_end_pos = patch_pos
         }
     );
@@ -1083,7 +1084,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Continue ast)
   {
-    var loop_block = loop_blocks[loop_blocks.Count-1];
+    var loop_block = loop_blocks.Peek();
     if(ast.jump_marker)
     {
       int pos = GetPositionRelativeToParent(loop_block);
