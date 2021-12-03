@@ -4045,6 +4045,69 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncSeveralDefaultArgsMixed()
+  {
+    string bhl = @"
+
+    func float foo(float b = 100, float k = 1000)
+    {
+      return k - b
+    }
+      
+    func float test() 
+    {
+      return foo(k : 2, b : 5)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, -3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncSeveralDefaultArgsOmittingSome()
+  {
+    string bhl = @"
+
+    func float foo(float b = 100, float k = 1000)
+    {
+      return k - b
+    }
+      
+    func float test() 
+    {
+      return foo(k : 2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, -98);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFiberFuncDefaultArg()
+  {
+    string bhl = @"
+
+    func float test(float k = 42) 
+    {
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var args_inf = new FuncArgsInfo();
+    args_inf.UseDefaultArg(0, true);
+    var num = Execute(vm, "test", args_inf).stack.PopRelease().num;
+    AssertEqual(num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestPassNamedValue()
   {
     string bhl = @"
@@ -7552,7 +7615,17 @@ public class BHL_TestVM : BHL_TestBase
 
   VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
   {
-    var fb = vm.Start(fn_name, args);
+    return Execute(vm, fn_name, 0, args);
+  }
+
+  VM.Fiber Execute(VM vm, string fn_name, FuncArgsInfo args_info, params Val[] args)
+  {
+    return Execute(vm, fn_name, args_info.bits, args);
+  }
+
+  VM.Fiber Execute(VM vm, string fn_name, uint cargs_bits, params Val[] args)
+  {
+    var fb = vm.Start(fn_name, cargs_bits, args);
     while(vm.Tick() == BHS.RUNNING) {}
     return fb;
   }

@@ -574,6 +574,16 @@ public class VM
 
   public Fiber Start(string func, params Val[] args)
   {
+    return Start(func, 0, args);
+  }
+
+  public Fiber Start(string func, FuncArgsInfo args_info, params Val[] args)
+  {
+    return Start(func, args_info.bits, args);
+  }
+
+  public Fiber Start(string func, uint cargs_bits, params Val[] args)
+  {
     ModuleAddr addr;
     if(!func2addr.TryGetValue(func, out addr))
       return null;
@@ -589,7 +599,7 @@ public class VM
       fr.stack.Push(arg);
     }
     //cargs bits
-    fr.stack.Push(Val.NewNum(this, 0));
+    fr.stack.Push(Val.NewNum(this, cargs_bits));
 
     return fb;
   }
