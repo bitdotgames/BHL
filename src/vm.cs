@@ -32,7 +32,7 @@ public enum Opcodes
   CondJump        = 0x19,
   SetAttr         = 0x20,
   SetAttrInplace  = 0x21,
-  RefVar          = 0x22,
+  ArgRef          = 0x22,
   UnaryNot        = 0x31,
   UnaryNeg        = 0x32,
   And             = 0x33,
@@ -329,9 +329,9 @@ public class VM
 
     public void SetLocal(int idx, Val v)
     {
-      if(stack[idx] != null)
+      var prev = stack[idx];
+      if(prev != null)
       {
-        var prev = stack[idx];
         for(int i=0;i<prev._refs;++i)
         {
           v.RefMod(RefOp.USR_INC);
@@ -761,11 +761,9 @@ public class VM
           case Opcodes.SetVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var stack = curr_frame.stack;
-            if(stack[local_idx] != null)
-              stack[local_idx].Release();
-            var new_val = stack.Pop();
-            stack[local_idx] = new_val;
+            var new_val = curr_frame.stack.Pop();
+            curr_frame.SetLocal(local_idx, new_val);
+            new_val.Release();
           }
           break;
           case Opcodes.GetVar:
@@ -777,16 +775,19 @@ public class VM
           case Opcodes.ArgVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+            var arg_val = curr_frame.stack.Pop();
+            var new_var = Val.New(this);
+            new_var.ValueCopyFrom(arg_val);
+            curr_frame.stack[local_idx] = new_var;
+            arg_val.Release();
+          }
+          break;
+          case Opcodes.ArgRef:
+          {
+            int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             curr_frame.stack[local_idx] = curr_frame.stack.Pop();
           }
           break;
-          //TODO:
-          //case Opcodes.RefVar:
-          //{
-          //  int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-          //  curr_frame.stack[local_idx] = curr_frame.stack.Pop();
-          //}
-          //break;
           case Opcodes.DeclVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
@@ -1903,7 +1904,7 @@ public class Val
     else if(type == STRING)
       str = this.str + ":<STRING>";
     else if(type == OBJ)
-      str = _obj.GetType().Name + ":<OBJ>";
+      str = _obj?.GetType().Name + ":<OBJ>";
     else if(type == NONE)
       str = "<NONE>";
     else

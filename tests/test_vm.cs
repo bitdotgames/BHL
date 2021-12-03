@@ -460,6 +460,191 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestReturnDefaultVar()
+  {
+    string bhl = @"
+    func float test()
+    {
+      float k
+      return k
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnVar()
+  {
+    string bhl = @"
+    func float test()
+    {
+      float k = 42
+      return k
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestWriteReadVar()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      int a = 123
+      return a + a
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(123) });
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 246);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestVarSelfDecl()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      float k = k
+      return k
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol not resolved"
+    );
+  }
+
+  [IsTested()]
+  public void TestDeclVarWithoutValue()
+  {
+    string bhl = @"
+    func bool test()
+    {
+      int i
+      string s
+      bool b
+      return (i == 0 && b == false && s == """")
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 3 + 1 /*cargs bits*/})
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
+      .Emit(Opcodes.DeclVar, new int[] { 1, (int)Val.STRING })
+      .Emit(Opcodes.DeclVar, new int[] { 2, (int)Val.BOOL })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Equal)
+      .Emit(Opcodes.GetVar, new int[] { 2 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Equal)
+      .Emit(Opcodes.And)
+      .Emit(Opcodes.GetVar, new int[] { 1 })
+      .Emit(Opcodes.Constant, new int[] { 2 })
+      .Emit(Opcodes.Equal)
+      .Emit(Opcodes.And)
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const(0), new Const(false), new Const("") });
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertTrue(fb.stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAssignVars()
+  {
+    string bhl = @"
+    func float test() 
+    {
+      float k
+      k = 42
+      float r
+      r = k 
+      return r
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestAnyAndNullConstant()
   {
     string bhl = @"
@@ -1414,191 +1599,6 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestReturnDefaultVar()
-  {
-    string bhl = @"
-    func float test()
-    {
-      float k
-      return k
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 0);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestReturnVar()
-  {
-    string bhl = @"
-    func float test()
-    {
-      float k = 42
-      return k
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 42);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestWriteReadVar()
-  {
-    string bhl = @"
-    func int test() 
-    {
-      int a = 123
-      return a + a
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Add)
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const(123) });
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 246);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestVarSelfDecl()
-  {
-    string bhl = @"
-      
-    func float test() 
-    {
-      float k = k
-      return k
-    }
-    ";
-
-    AssertError<UserError>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "symbol not resolved"
-    );
-  }
-
-  [IsTested()]
-  public void TestDeclVarWithoutValue()
-  {
-    string bhl = @"
-    func bool test()
-    {
-      int i
-      string s
-      bool b
-      return (i == 0 && b == false && s == """")
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 3 + 1 /*cargs bits*/})
-      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
-      .Emit(Opcodes.DeclVar, new int[] { 1, (int)Val.STRING })
-      .Emit(Opcodes.DeclVar, new int[] { 2, (int)Val.BOOL })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.Equal)
-      .Emit(Opcodes.GetVar, new int[] { 2 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Equal)
-      .Emit(Opcodes.And)
-      .Emit(Opcodes.GetVar, new int[] { 1 })
-      .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.Equal)
-      .Emit(Opcodes.And)
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const(0), new Const(false), new Const("") });
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertTrue(fb.stack.PopRelease().bval);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestAssignVars()
-  {
-    string bhl = @"
-    func float test() 
-    {
-      float k
-      k = 42
-      float r
-      r = k 
-      return r
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 42);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
   public void TestLocalScopeNotSupported()
   {
     string bhl = @"
@@ -2241,7 +2241,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestPassArrayToFunctionByValue()
+  public void TestPassArrayToFunction()
   {
     string bhl = @"
     func foo(int[] a)
@@ -2257,7 +2257,7 @@ public class BHL_TestVM : BHL_TestBase
 
       foo(a)
 
-      return a[0]
+      return a[2]
     }
     ";
 
@@ -2289,7 +2289,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetFunc, new int[] { 0 })
       .Emit(Opcodes.Call, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
       .Emit(Opcodes.GetMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]") })
       .Emit(Opcodes.CallNative, new int[] { 0 })
       .Emit(Opcodes.ReturnVal)
@@ -2300,7 +2300,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 1);
+    AssertEqual(fb.stack.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
@@ -2326,7 +2326,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.RefVar, new int[] { 0 })
+      .Emit(Opcodes.ArgRef, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
       .Emit(Opcodes.Add)

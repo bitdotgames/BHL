@@ -332,7 +332,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.RefVar,
+        name = Opcodes.ArgRef,
         operand_width = new int[] { 1 /*local idx*/ }
       }
     );
@@ -1239,7 +1239,7 @@ public class ModuleCompiler : AST_Visitor
     else
     {
       if(ast.is_ref)
-        Emit(Opcodes.RefVar, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.ArgRef, new int[] { (int)ast.symb_idx });
       else
         Emit(Opcodes.ArgVar, new int[] { (int)ast.symb_idx });
     }
