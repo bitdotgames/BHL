@@ -1950,6 +1950,26 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStringArrayIndex()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""bar"")
+      arr.Add(""foo"")
+      return arr[1]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().str;
+    AssertEqual(res, "foo");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestTmpArrayAtIdx()
   {
     string bhl = @"
@@ -2116,6 +2136,54 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTmpArrayRemoveAt()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func void test() 
+    {
+      mkarray().RemoveAt(0)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTmpArrayAdd()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func void test() 
+    {
+      mkarray().Add(300)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
     CommonChecks(vm);
   }
 
@@ -4063,6 +4131,30 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(num, -3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncArgPassedByValue()
+  {
+    string bhl = @"
+      
+    func void foo(float a)
+    {
+      a = a + 1
+    }
+
+    func float test() 
+    {
+      float k = 1
+      foo(k)
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 1);
     CommonChecks(vm);
   }
 
