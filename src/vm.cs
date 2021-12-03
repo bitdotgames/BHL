@@ -776,9 +776,11 @@ public class VM
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             var arg_val = curr_frame.stack.Pop();
-            var new_var = Val.New(this);
-            new_var.ValueCopyFrom(arg_val);
-            curr_frame.stack[local_idx] = new_var;
+            var loc_var = Val.New(this);
+            loc_var.ValueCopyFrom(arg_val);
+            //TODO: maybe it's part of ValueCopyFrom(..)?
+            loc_var.RefMod(RefOp.USR_INC);
+            curr_frame.stack[local_idx] = loc_var;
             arg_val.Release();
           }
           break;
