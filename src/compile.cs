@@ -332,6 +332,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.RefVar,
+        operand_width = new int[] { 1 /*local idx*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.SetAttr,
         operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
       }
@@ -1230,7 +1237,12 @@ public class ModuleCompiler : AST_Visitor
       Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)val_type });
     }
     else
-      Emit(Opcodes.ArgVar, new int[] { (int)ast.symb_idx });
+    {
+      if(ast.is_ref)
+        Emit(Opcodes.RefVar, new int[] { (int)ast.symb_idx });
+      else
+        Emit(Opcodes.ArgVar, new int[] { (int)ast.symb_idx });
+    }
   }
 
   public override void DoVisit(bhl.AST_JsonObj ast)

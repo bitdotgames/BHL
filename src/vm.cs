@@ -32,6 +32,7 @@ public enum Opcodes
   CondJump        = 0x19,
   SetAttr         = 0x20,
   SetAttrInplace  = 0x21,
+  RefVar          = 0x22,
   UnaryNot        = 0x31,
   UnaryNeg        = 0x32,
   And             = 0x33,
@@ -779,6 +780,13 @@ public class VM
             curr_frame.stack[local_idx] = curr_frame.stack.Pop();
           }
           break;
+          //TODO:
+          //case Opcodes.RefVar:
+          //{
+          //  int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          //  curr_frame.stack[local_idx] = curr_frame.stack.Pop();
+          //}
+          //break;
           case Opcodes.DeclVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);

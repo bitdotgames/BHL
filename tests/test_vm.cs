@@ -2305,6 +2305,51 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassByRef()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.RefVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetFunc, new int[] { 0 })
+      .Emit(Opcodes.Call, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 4);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestIfCondition()
   {
     string bhl = @"

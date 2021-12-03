@@ -5,34 +5,6 @@ using bhl;
 
 public class BHL_TestInterpreter : BHL_TestBase
 {
-
-  [IsTested()]
-  public void TestPassByRef()
-  {
-    string bhl = @"
-
-    func foo(ref float a) 
-    {
-      a = a + 1
-    }
-      
-    func float test(float k) 
-    {
-      foo(ref k)
-      return k
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(3));
-    var num = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(num, 4);
-    CommonChecks(intp);
-  }
-
   [IsTested()]
   public void TestPassByRefNonAssignedValue()
   {
