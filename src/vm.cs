@@ -41,8 +41,10 @@ public enum Opcodes
   BitAnd          = 0x37,
   Equal           = 0x38,
   NotEqual        = 0x39,
-  Less            = 0x3A,
-  LessOrEqual     = 0x3B,
+  LT              = 0x3A,
+  LTE             = 0x3B,
+  GT              = 0x3C,
+  GTE             = 0x3D,
   DefArg          = 0x3E, 
   TypeCast        = 0x3F,
   Block           = 0x40,
@@ -731,8 +733,10 @@ public class VM
           case Opcodes.BitOr:
           case Opcodes.Equal:
           case Opcodes.NotEqual:
-          case Opcodes.Less:
-          case Opcodes.LessOrEqual:
+          case Opcodes.LT:
+          case Opcodes.LTE:
+          case Opcodes.GT:
+          case Opcodes.GTE:
           {
             ExecuteBinaryOp(opcode, curr_frame);
           }
@@ -983,7 +987,6 @@ public class VM
             fr.locals_num = local_vars_num;
             var frval = Val.NewObj(this, fr);
             frval._num = func_ip;
-
             curr_frame.stack.Push(frval);
           }
           break;
@@ -1206,11 +1209,17 @@ public class VM
       case Opcodes.NotEqual:
         curr_frame.stack.Push(Val.NewBool(this, !l_operand.IsEqual(r_operand)));
       break;
-      case Opcodes.Less:
+      case Opcodes.LT:
         curr_frame.stack.Push(Val.NewBool(this, l_operand._num < r_operand._num));
       break;
-      case Opcodes.LessOrEqual:
+      case Opcodes.LTE:
         curr_frame.stack.Push(Val.NewBool(this, l_operand._num <= r_operand._num));
+      break;
+      case Opcodes.GT:
+        curr_frame.stack.Push(Val.NewBool(this, l_operand._num > r_operand._num));
+      break;
+      case Opcodes.GTE:
+        curr_frame.stack.Push(Val.NewBool(this, l_operand._num >= r_operand._num));
       break;
       case Opcodes.And:
         curr_frame.stack.Push(Val.NewBool(this, l_operand._num == 1 && r_operand._num == 1));
@@ -1396,7 +1405,7 @@ public struct DeferBlock
 
   public BHS Execute(VM vm, ref IInstruction instruction)
   {
-    return vm.Execute(ref ip, frm, null, ref instruction, max_ip + 1, null);
+    return vm.Execute(ref ip, frm, frm.fb.frames, ref instruction, max_ip + 1, null);
   }
 
   static internal void ExitScope(VM vm, List<DeferBlock> defers)

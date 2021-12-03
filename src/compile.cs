@@ -268,13 +268,25 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.Less
+        name = Opcodes.LT
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.LessOrEqual
+        name = Opcodes.LTE
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.GT
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
+        name = Opcodes.GTE
       }
     );
     DeclareOpcode(
@@ -1149,23 +1161,21 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         Emit(Opcodes.NotEqual);
       break;
-      case EnumBinaryOp.GT:
-        Visit(ast.children[1]);
-        Visit(ast.children[0]);
-        Emit(Opcodes.Less);
-      break;
       case EnumBinaryOp.LT:
         VisitChildren(ast);
-        Emit(Opcodes.Less);
-      break;
-      case EnumBinaryOp.GTE:
-        Visit(ast.children[1]);
-        Visit(ast.children[0]);
-        Emit(Opcodes.LessOrEqual);
+        Emit(Opcodes.LT);
       break;
       case EnumBinaryOp.LTE:
         VisitChildren(ast);
-        Emit(Opcodes.LessOrEqual);
+        Emit(Opcodes.LTE);
+      break;
+      case EnumBinaryOp.GT:
+        VisitChildren(ast);
+        Emit(Opcodes.GT);
+      break;
+      case EnumBinaryOp.GTE:
+        VisitChildren(ast);
+        Emit(Opcodes.GTE);
       break;
       default:
         throw new Exception("Not supported binary type: " + ast.type);

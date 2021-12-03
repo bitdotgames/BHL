@@ -204,7 +204,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast_stack.Pop();
   }
 
-  void PopAddAST()
+  void PopAddOptimizeAST()
   {
     var tmp = PeekAST();
     PopAST();
@@ -217,6 +217,13 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
       PeekAST().AddChild(tmp);
+  }
+
+  void PopAddAST()
+  {
+    var tmp = PeekAST();
+    PopAST();
+    PeekAST().AddChild(tmp);
   }
 
   AST PeekAST()
@@ -463,13 +470,13 @@ public class Frontend : bhlBaseVisitor<object>
 
           if(class_scope == null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC_PTR, line, str_name);
+            ast = AST_Util.New_Call(EnumCall.FUNC_PTR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
-            PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, str_name, class_scope));
+            PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, var_symb, class_scope));
             ast = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, line);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
@@ -505,7 +512,7 @@ public class Frontend : bhlBaseVisitor<object>
           ast = AST_Util.New_Call(class_scope != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
-            line, str_name, class_scope, var_symb.scope_idx
+            line, var_symb, class_scope
           );
           //handling passing by ref for class fields
           if(class_scope != null && PeekCallByRef())
@@ -671,7 +678,7 @@ public class Frontend : bhlBaseVisitor<object>
         PushAST(new AST_Interim());
         Visit(ca);
         TryProtectStackInterleaving(ca, func_arg_type, i, ref pre_call);
-        PopAddAST();
+        PopAddOptimizeAST();
         PopJsonType();
         PopCallByRef();
 
@@ -721,7 +728,7 @@ public class Frontend : bhlBaseVisitor<object>
       PushAST(new AST_Interim());
       Visit(ca);
       TryProtectStackInterleaving(ca, arg_type, i, ref pre_call);
-      PopAddAST();
+      PopAddOptimizeAST();
       PopJsonType();
 
       var wca = Wrap(ca);
@@ -1218,14 +1225,14 @@ public class Frontend : bhlBaseVisitor<object>
     AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
 
     PushAST(bin_op_ast);
-    bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, 0, lhs));
+    bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
     Visit(ctx.exp());
     PopAST();
 
     SymbolTable.CheckAssign(vlhs.type.type, Wrap(ctx.exp()));
 
     PeekAST().AddChild(bin_op_ast);
-    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, 0, lhs));
+    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vlhs));
 
     return null;
   }
@@ -1336,7 +1343,7 @@ public class Frontend : bhlBaseVisitor<object>
     var wrhs = Wrap(rhs);
 
     var class_symb = wlhs.eval_type as ClassSymbol;
-    //checking if there's an operator overload
+    //NOTE: checking if there's an operator overload
     if(class_symb != null && class_symb.Resolve(op) is FuncSymbol)
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
@@ -2217,7 +2224,7 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope.Define(symb);
 
     if(write)
-      return AST_Util.New_Call(EnumCall.VARW, 0, symb);
+      return AST_Util.New_Call(EnumCall.VARW, name.Symbol.Line, symb);
     else
       return AST_Util.New_VarDecl(symb, is_ref);
   }

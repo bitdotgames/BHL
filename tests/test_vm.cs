@@ -776,7 +776,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ArgVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.LessOrEqual)
+      .Emit(Opcodes.LTE)
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       ;
@@ -2156,9 +2156,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .Emit(Opcodes.GT)
       .Emit(Opcodes.CondJump, new int[] { 6 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
@@ -2205,9 +2205,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.GT)
       .Emit(Opcodes.CondJump, new int[] { 9 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
@@ -2265,24 +2265,24 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.GT)
       .Emit(Opcodes.CondJump, new int[] { 9 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Jump, new int[] { 19 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.UnaryNeg)
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.GT)
       .Emit(Opcodes.CondJump, new int[] { 9 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 30) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.Jump, new int[] { 18 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.GT)
       .Emit(Opcodes.CondJump, new int[] { 9 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
@@ -2329,9 +2329,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //__while__//
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.LessOrEqual)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+      .Emit(Opcodes.GTE)
       .Emit(Opcodes.CondJump, new int[] { 12 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -2382,9 +2382,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .Emit(Opcodes.SetVar, new int[] { 0 })
       //__while__//
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.LessOrEqual)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+      .Emit(Opcodes.GTE)
       .Emit(Opcodes.CondJump, new int[] { 25 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -2392,7 +2392,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 80) })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.LT)
       .Emit(Opcodes.CondJump, new int[] { 3 })
       .Emit(Opcodes.Jump, new int[] { 3 })
       .Emit(Opcodes.Jump, new int[] { -35 })
@@ -2467,7 +2467,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { 2 })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.LT)
       .Emit(Opcodes.CondJump, new int[] { 19 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
@@ -2537,7 +2537,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.GetVar, new int[] { 4 })
       .Emit(Opcodes.GetVar, new int[] { 3 })
       .Emit(Opcodes.GetAttr, new int[] { ConstIdx(c, "[]"), ArrCountIdx })
-      .Emit(Opcodes.Less) //compare counter and tmp arr size
+      .Emit(Opcodes.LT) //compare counter and tmp arr size
       .Emit(Opcodes.CondJump, new int[] { 0x1d })
       //call arr idx method
       .Emit(Opcodes.GetVar, new int[] { 3 })
@@ -2595,7 +2595,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.LT)
       .Emit(Opcodes.CondJump, new int[] { 22 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
@@ -2653,7 +2653,7 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.SetVar, new int[] { 1 })
       .Emit(Opcodes.GetVar, new int[] { 1 })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.LT)
       .Emit(Opcodes.CondJump, new int[] { 22 })
       .Emit(Opcodes.Jump, new int[] { 7 })
       .Emit(Opcodes.GetVar, new int[] { 0 })
@@ -2838,9 +2838,9 @@ public class BHL_TestVM : BHL_TestBase
       .Emit(Opcodes.ReturnVal)
       .Emit(Opcodes.Return)
       .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/ })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .Emit(Opcodes.Less)
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .Emit(Opcodes.GT)
       .Emit(Opcodes.CondJump, new int[] { 13 })
       .Emit(Opcodes.GetFunc, new int[] { 0 })
       .Emit(Opcodes.Call, new int[] { 0 })
@@ -4479,6 +4479,37 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSubCallsInDefer()
+  {
+    string bhl = @"
+    func string bar() 
+    {
+      return ""bar""
+    }
+    func test() 
+    {
+      defer {
+        trace(bar())
+      }
+      
+      trace(""foo"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual("foobar", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSeveralDefers()
   {
     string bhl = @"
@@ -4728,6 +4759,100 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual("elsefoohey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestOperatorTernaryIfIncompatibleTypes()
+  {
+    string bhl1 = @"
+    func test()
+    {
+      string foo = true ? ""Foo"" : 1
+    }
+    ";
+
+    string bhl2 = @"
+    func int test()
+    {
+      return true ? ""Foo"" : ""Bar""
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl1);
+      },
+      "@(4,26) \"Foo\":<string>, @(4,34) 1:<int> have incompatible types"
+    );
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl2);
+      },
+      "@(2,4) funcinttest(){returntrue?\"Foo\":\"Bar\"}:<int>, @(4,13) true?\"Foo\":\"Bar\":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestOperatorTernaryIf()
+  {
+    string bhl = @"
+
+    func int min(float a, int b)
+    {
+      return a < b ? (int)a : b
+    }
+
+    func int test1() 
+    {
+      float a = 100500
+      int b   = 500100
+
+      int c = a > b ? b : (int)a //500100
+      
+      return min(a > c ? b : c/*500100*/, (int)a/*100500*/)
+    }
+
+    func int test2() 
+    {
+      int^() af = func int() { return 500100 } //500100
+
+      int^() bf = func int() { 
+        int a = 2
+        int b = 1
+
+        int c = a > b ? 100500 : 500100
+
+        return c //100500
+      }
+
+      int^() cf = func int() { 
+        return true ? 100500 : 500100 //100500
+      }
+
+      return min(af()/*500100*/, af() > bf()/*true*/ ? false ? af() : cf() : bf()) > af()/*500100*/ ? af() : cf()
+    }
+
+    func string test3(int v)
+    {
+      string^() af = func string() {
+        return v == 1 ? ""first value""  :
+               v == 2 ? ""second value"" :
+               v == 3 ? ""result value"" : ""default value""
+      }
+
+      return af()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    AssertEqual(Execute(vm, "test1").stack.PopRelease().num, 100500);
+    AssertEqual(Execute(vm, "test2").stack.PopRelease().num, 100500);
+    AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 0)).stack.PopRelease().str, "default value");
+    AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 2)).stack.PopRelease().str, "second value");
+
     CommonChecks(vm);
   }
 
@@ -6555,6 +6680,52 @@ public class BHL_TestVM : BHL_TestBase
       Console.WriteLine(cmp);
       throw new Exception("Assertion failed: bytes not equal");
     }
+  }
+
+  static void Dump(ModuleCompiler c)
+  {
+    Dump(c.GetModule());
+  }
+
+  static void Dump(CompiledModule c)
+  {
+    if(c.initcode?.Length > 0)
+    {
+      Console.WriteLine("=== INIT ===");
+      Dump(c.initcode);
+    }
+    Console.WriteLine("=== CODE ===");
+    Dump(c.bytecode);
+  }
+
+  static void Dump(byte[] a)
+  {
+    string res = "";
+
+    ModuleCompiler.OpDefinition aop = null;
+    int aop_size = 0;
+
+    for(int i=0;i<a?.Length;i++)
+    {
+      res += string.Format("0x{0:x2} {0}", a[i]);
+      if(aop != null)
+      {
+        --aop_size;
+        if(aop_size == 0)
+          aop = null; 
+      }
+      else
+      {
+        aop = ModuleCompiler.LookupOpcode((Opcodes)a[i]);
+        aop_size = PredictOpcodeSize(aop, a, i);
+        res += "(" + aop.name.ToString() + ")";
+        if(aop_size == 0)
+          aop = null;
+      }
+      res += "\n";
+    }
+
+    Console.WriteLine(res);
   }
 
   static bool CompareCode(byte[] a, byte[] b, out string cmp)
