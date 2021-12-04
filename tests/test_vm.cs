@@ -3811,6 +3811,58 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassByRefNested()
+  {
+    string bhl = @"
+
+    func bar(ref float b)
+    {
+      b = b * 2
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+      bar(ref a)
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 8);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassByRefMixed()
+  {
+    string bhl = @"
+
+    func foo(ref float a, float b) 
+    {
+      a = a + b
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k, k)
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 6);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"

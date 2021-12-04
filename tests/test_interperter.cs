@@ -6,66 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestPassByRefNested()
-  {
-    string bhl = @"
-
-    func bar(ref float b)
-    {
-      b = b * 2
-    }
-
-    func foo(ref float a) 
-    {
-      a = a + 1
-      bar(ref a)
-    }
-      
-    func float test(float k) 
-    {
-      foo(ref k)
-      return k
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(3));
-    var num = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(num, 8);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestPassByRefMixed()
-  {
-    string bhl = @"
-
-    func foo(ref float a, float b) 
-    {
-      a = a + b
-    }
-      
-    func float test(float k) 
-    {
-      foo(ref k, k)
-      return k
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(3));
-    var num = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(num, 6);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestPassByRefInUserBinding()
   {
     string bhl = @"
