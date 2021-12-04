@@ -3810,7 +3810,6 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
@@ -7569,7 +7568,7 @@ public class BHL_TestVM : BHL_TestBase
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
 
-  ModuleCompiler Compile(string bhl, GlobalScope globs = null, bool show_ast = false)
+  ModuleCompiler Compile(string bhl, GlobalScope globs = null, bool show_ast = false, bool show_bytes = false)
   {
     globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
@@ -7582,6 +7581,8 @@ public class BHL_TestVM : BHL_TestBase
       Util.ASTDump(ast);
     var c  = new ModuleCompiler(globs_copy, ast, mdl.path);
     c.Compile();
+    if(show_bytes)
+      Dump(c);
     return c;
   }
 
@@ -7848,9 +7849,9 @@ public class BHL_TestVM : BHL_TestBase
     return vm;
   }
 
-  VM MakeVM(string bhl, GlobalScope globs = null)
+  VM MakeVM(string bhl, GlobalScope globs = null, bool show_ast = false, bool show_bytes = false)
   {
-    return MakeVM(Compile(bhl, globs));
+    return MakeVM(Compile(bhl, globs, show_ast: show_ast, show_bytes: show_bytes));
   }
 
   VM.Fiber Execute(VM vm, string fn_name, params Val[] args)

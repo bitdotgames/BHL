@@ -327,22 +327,24 @@ public class VM
       locals_num = 0;
     }
 
-    public void SetLocal(int idx, Val v)
+    public void SetLocal(int idx, Val val)
     {
-      var prev = stack[idx];
-      if(prev != null)
+      var curr = stack[idx];
+      if(curr != null)
       {
-        for(int i=0;i<prev._refs;++i)
+        for(int i=0;i<curr._refs;++i)
         {
-          v.RefMod(RefOp.USR_INC);
-          prev.RefMod(RefOp.USR_DEC);
+          val.RefMod(RefOp.USR_INC);
+          curr.RefMod(RefOp.USR_DEC);
         }
-        prev.ValueCopyFrom(v);
+        curr.ValueCopyFrom(val);
       }
       else
       {
-        v.RefMod(RefOp.INC | RefOp.USR_INC);
-        stack[idx] = v;
+        curr = Val.New(vm);
+        curr.ValueCopyFrom(val);
+        curr.RefMod(RefOp.USR_INC);
+        stack[idx] = curr;
       }
     }
 
@@ -772,6 +774,7 @@ public class VM
             curr_frame.stack.PushRetain(curr_frame.stack[local_idx]);
           }
           break;
+          //TODO: this one looks pretty much like SetVar
           case Opcodes.ArgVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
