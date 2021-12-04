@@ -3863,6 +3863,44 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassByRefInUserBinding()
+  {
+    string bhl = @"
+
+    func float test(float k) 
+    {
+      func_with_ref(k, ref k)
+      return k
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    {
+      var fn = new FuncSymbolNative("func_with_ref", globs.Type("void"), null, 
+          delegate(VM.Frame frm, ref BHS status)
+          {
+            var b = frm.stack.Pop();
+            var a = frm.stack.PopRelease().num;
+
+            b.num = a * 2;
+            b.Release();
+            return null;
+          }
+          );
+      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("float"), true/*is ref*/));
+
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 6);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"

@@ -6,50 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestPassByRefInUserBinding()
-  {
-    string bhl = @"
-
-    func float test(float k) 
-    {
-      func_with_ref(k, ref k)
-      return k
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    {
-      var fn = new FuncSymbolSimpleNative("func_with_ref", globs.Type("void"), 
-          delegate()
-          {
-            var interp = Interpreter.instance;
-            var b = interp.PopRef();
-            var a = interp.PopValue().num;
-
-            b.num = a * 2;
-
-            return BHS.SUCCESS;
-          }
-          );
-      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
-      fn.Define(new FuncArgSymbol("b", globs.Type("float"), true/*is ref*/));
-
-      globs.Define(fn);
-    }
-
-    var intp = Interpret(bhl, globs);
-
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(3));
-    var num = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(num, 6);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestPassByRefNamedArg()
   {
     string bhl = @"
