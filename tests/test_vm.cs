@@ -1838,517 +1838,6 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
-
-  [IsTested()]
-  public void TestStatefulNativeFunc()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      WaitTicks(2)
-    }
-    ";
-
-    var globs = SymbolTable.VM_CreateBuiltins();
-    var log = new StringBuilder();
-    var fn = BindWaitTicks(globs, log);
-
-    var c = Compile(bhl, globs);
-
-    var expected = 
-      new ModuleCompiler(globs)
-      .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/ })
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .Emit(Opcodes.CallNative, new int[] { 1 })
-      .Emit(Opcodes.Return)
-    ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.RUNNING);
-    AssertEqual(vm.Tick(), BHS.RUNNING);
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestEmptyIntArray()
-  {
-    string bhl = @"
-    func int[] test()
-    {
-      int[] a = new int[]
-      return a
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const("[]") });
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var lst = fb.stack.Pop();
-    AssertEqual((lst.obj as ValList).Count, 0);
-    lst.Release();
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestAddToStringArray()
-  {
-    string bhl = @"
-    func string test()
-    {
-      string[] a = new string[]
-      a.Add(""test"")
-      return a[0]
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "test") })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.Constants, new List<Const>() { new Const("[]"), new Const("test"), new Const(0) });
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().str, "test");
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestStringArrayIndex()
-  {
-    string bhl = @"
-      
-    func string test() 
-    {
-      string[] arr = new string[]
-      arr.Add(""bar"")
-      arr.Add(""foo"")
-      return arr[1]
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").stack.PopRelease().str;
-    AssertEqual(res, "foo");
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTmpArrayAtIdx()
-  {
-    string bhl = @"
-    func int[] mkarray()
-    {
-      int[] a = new int[]
-      a.Add(1)
-      a.Add(2)
-      return a
-    }
-
-    func int test()
-    {
-      return mkarray()[0]
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      //mkarray
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      //test
-      .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/})
-      .Emit(Opcodes.GetFunc, new int[] { 0 })
-      .Emit(Opcodes.Call, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 1);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestArrayRemoveAt()
-  {
-    string bhl = @"
-    func int[] mkarray()
-    {
-      int[] arr = new int[]
-      arr.Add(1)
-      arr.Add(100)
-      arr.RemoveAt(0)
-      return arr
-    }
-      
-    func int[] test() 
-    {
-      return mkarray()
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      //mkarray
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrRemoveIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      //test
-      .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/})
-      .Emit(Opcodes.GetFunc, new int[] { 0 })
-      .Emit(Opcodes.Call, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var lst = fb.stack.Pop();
-    AssertEqual((lst.obj as ValList).Count, 1);
-    lst.Release();
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTmpArrayCount() 
-  {
-    string bhl = @"
-    func int[] mkarray()
-    {
-      int[] arr = new int[]
-      arr.Add(1)
-      arr.Add(100)
-      return arr
-    }
-      
-    func int test() 
-    {
-      return mkarray().Count
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      //mkarray
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      //test
-      .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/})
-      .Emit(Opcodes.GetFunc, new int[] { 0 })
-      .Emit(Opcodes.Call, new int[] { 0 })
-      .Emit(Opcodes.GetAttr, new int[] { ConstIdx(c, "[]"), ArrCountIdx })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 2);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTmpArrayRemoveAt()
-  {
-    string bhl = @"
-
-    func int[] mkarray()
-    {
-      int[] arr = new int[]
-      arr.Add(1)
-      arr.Add(100)
-      return arr
-    }
-      
-    func void test() 
-    {
-      mkarray().RemoveAt(0)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    Execute(vm, "test");
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTmpArrayAdd()
-  {
-    string bhl = @"
-
-    func int[] mkarray()
-    {
-      int[] arr = new int[]
-      arr.Add(1)
-      arr.Add(100)
-      return arr
-    }
-      
-    func void test() 
-    {
-      mkarray().Add(300)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    Execute(vm, "test");
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestStringArrayAssign()
-  {
-    string bhl = @"
-      
-    func string[] test() 
-    {
-      string[] arr = new string[]
-      arr.Add(""foo"")
-      arr[0] = ""tst""
-      arr.Add(""bar"")
-      return arr
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "tst") })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrSetIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    var val = fb.stack.Pop();
-    var lst = val.obj as ValList;
-    AssertEqual(lst.Count, 2);
-    AssertEqual(lst[0].str, "tst");
-    AssertEqual(lst[1].str, "bar");
-    val.Release();
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestPassArrayToFunction()
-  {
-    string bhl = @"
-    func foo(int[] a)
-    {
-      a.Add(100)
-    }
-      
-    func int test() 
-    {
-      int[] a = new int[]
-      a.Add(1)
-      a.Add(2)
-
-      foo(a)
-
-      return a[2]
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      //foo
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.ArgVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.Return)
-      //test
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.GetFunc, new int[] { 0 })
-      .Emit(Opcodes.Call, new int[] { 1 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .Emit(Opcodes.GetMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]") })
-      .Emit(Opcodes.CallNative, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertEqual(vm.Tick(), BHS.SUCCESS);
-    AssertEqual(fb.stack.PopRelease().num, 100);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestPassByRef()
-  {
-    string bhl = @"
-
-    func foo(ref float a) 
-    {
-      a = a + 1
-    }
-      
-    func float test(float k) 
-    {
-      foo(ref k)
-      return k
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.ArgRef, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.Add)
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Return)
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
-      .Emit(Opcodes.ArgVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.GetFunc, new int[] { 0 })
-      .Emit(Opcodes.Call, new int[] { 1 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal)
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
-    AssertEqual(num, 4);
-    CommonChecks(vm);
-  }
-
   [IsTested()]
   public void TestIfCondition()
   {
@@ -4204,6 +3693,125 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassByRef()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.ArgRef, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetFunc, new int[] { 0 })
+      .Emit(Opcodes.Call, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 4);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassByRefNonAssignedValue()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      float k
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassByRefAlreadyDefinedError()
+  {
+    string bhl = @"
+
+    func foo(ref float a, float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k, k)
+      return k
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "already defined symbol 'a'"
+    );
+  }
+
+  [IsTested()]
+  public void TestPassByRefAssignToNonRef()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      float b = a
+      b = b + 1
+    }
+      
+    func float test(float k) 
+    {
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 3);
+    CommonChecks(vm);
+  }
+
+
+  [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"
@@ -4349,6 +3957,467 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEmptyIntArray()
+  {
+    string bhl = @"
+    func int[] test()
+    {
+      int[] a = new int[]
+      return a
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const("[]") });
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    var lst = fb.stack.Pop();
+    AssertEqual((lst.obj as ValList).Count, 0);
+    lst.Release();
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAddToStringArray()
+  {
+    string bhl = @"
+    func string test()
+    {
+      string[] a = new string[]
+      a.Add(""test"")
+      return a[0]
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "test") })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants, new List<Const>() { new Const("[]"), new Const("test"), new Const(0) });
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().str, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStringArrayIndex()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""bar"")
+      arr.Add(""foo"")
+      return arr[1]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().str;
+    AssertEqual(res, "foo");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTmpArrayAtIdx()
+  {
+    string bhl = @"
+    func int[] mkarray()
+    {
+      int[] a = new int[]
+      a.Add(1)
+      a.Add(2)
+      return a
+    }
+
+    func int test()
+    {
+      return mkarray()[0]
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      //mkarray
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/})
+      .Emit(Opcodes.GetFunc, new int[] { 0 })
+      .Emit(Opcodes.Call, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestArrayRemoveAt()
+  {
+    string bhl = @"
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      arr.RemoveAt(0)
+      return arr
+    }
+      
+    func int[] test() 
+    {
+      return mkarray()
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      //mkarray
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrRemoveIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/})
+      .Emit(Opcodes.GetFunc, new int[] { 0 })
+      .Emit(Opcodes.Call, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    var lst = fb.stack.Pop();
+    AssertEqual((lst.obj as ValList).Count, 1);
+    lst.Release();
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTmpArrayCount() 
+  {
+    string bhl = @"
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func int test() 
+    {
+      return mkarray().Count
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      //mkarray
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/})
+      .Emit(Opcodes.GetFunc, new int[] { 0 })
+      .Emit(Opcodes.Call, new int[] { 0 })
+      .Emit(Opcodes.GetAttr, new int[] { ConstIdx(c, "[]"), ArrCountIdx })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTmpArrayRemoveAt()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func void test() 
+    {
+      mkarray().RemoveAt(0)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTmpArrayAdd()
+  {
+    string bhl = @"
+
+    func int[] mkarray()
+    {
+      int[] arr = new int[]
+      arr.Add(1)
+      arr.Add(100)
+      return arr
+    }
+      
+    func void test() 
+    {
+      mkarray().Add(300)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStringArrayAssign()
+  {
+    string bhl = @"
+      
+    func string[] test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""foo"")
+      arr[0] = ""tst""
+      arr.Add(""bar"")
+      return arr
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "tst") })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrSetIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    var val = fb.stack.Pop();
+    var lst = val.obj as ValList;
+    AssertEqual(lst.Count, 2);
+    AssertEqual(lst[0].str, "tst");
+    AssertEqual(lst[1].str, "bar");
+    val.Release();
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestArrayPassedToFuncIsChanged()
+  {
+    string bhl = @"
+    func foo(int[] a)
+    {
+      a.Add(100)
+    }
+      
+    func int test() 
+    {
+      int[] a = new int[]
+      a.Add(1)
+      a.Add(2)
+
+      foo(a)
+
+      return a[2]
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      //foo
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.ArgVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      //test
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetFunc, new int[] { 0 })
+      .Emit(Opcodes.Call, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .Emit(Opcodes.GetMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]") })
+      .Emit(Opcodes.CallNative, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal)
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 100);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestArrayPassedToFuncByRef()
+  {
+    string bhl = @"
+    func foo(ref int[] a)
+    {
+      a.Add(100)
+    }
+      
+    func int test() 
+    {
+      int[] a = new int[]
+      a.Add(1)
+      a.Add(2)
+
+      foo(ref a)
+
+      return a[2]
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 100);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSuspend()
   {
     string bhl = @"
@@ -4375,6 +4444,40 @@ public class BHL_TestVM : BHL_TestBase
     for(int i=0;i<99;i++)
       AssertEqual(vm.Tick(), BHS.RUNNING);
     vm.Stop(fb);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStatefulNativeFunc()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      WaitTicks(2)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = BindWaitTicks(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var expected = 
+      new ModuleCompiler(globs)
+      .Emit(Opcodes.InitFrame, new int[] { 1 /*cargs bits*/ })
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
+      .Emit(Opcodes.CallNative, new int[] { 1 })
+      .Emit(Opcodes.Return)
+    ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.RUNNING);
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
     CommonChecks(vm);
   }
 
