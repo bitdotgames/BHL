@@ -3901,6 +3901,90 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassByRefNamedArg()
+  {
+    string bhl = @"
+
+    func foo(ref float a, float b) 
+    {
+      a = a + b
+    }
+      
+    func float test(float k) 
+    {
+      foo(a : ref k, b: k)
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 6);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassByRefAndThenReturn()
+  {
+    string bhl = @"
+
+    func float foo(ref float a) 
+    {
+      a = a + 1
+      return a
+    }
+      
+    func float test(float k) 
+    {
+      return foo(ref k)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 4);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefsAllowedInFuncArgsOnly()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      ref float a
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "mismatched input 'ref'"
+    );
+  }
+
+  [IsTested()]
+  public void TestPassByRefDefaultArgsNotAllowed()
+  {
+    string bhl = @"
+
+    func void foo(ref float k = 10)
+    {
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "'ref' is not allowed to have a default value"
+    );
+  }
+
+
+  [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"
