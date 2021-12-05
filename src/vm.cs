@@ -719,6 +719,12 @@ public class VM
               curr_frame.stack.Push(Val.NewStr(this, curr_frame.stack.PopRelease().num.ToString()));
             else if(cast_type == "int")
               curr_frame.stack.Push(Val.NewNum(this, curr_frame.stack.PopRelease().num));
+            else if(cast_type == "any")
+            {
+              var new_val = Val.New(this);
+              new_val.ValueCopyFrom(curr_frame.stack.PopRelease());
+              curr_frame.stack.Push(new_val);
+            }
             else
               throw new Exception("Not supported typecast type: " + cast_type);
           }
@@ -877,22 +883,22 @@ public class VM
           break;
           case Opcodes.ReturnVal:
           {
-            var ret_val = curr_frame.stack.Pop();
+            int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+
+            var ret_stack = frames.Count == 1 ? curr_frame.fb.stack : frames[frames.Count-2].stack;  
+            //TODO: make it more efficient?
+            for(int i=0;i<ret_num;++i)
+              ret_stack.Push(curr_frame.stack.Pop());
+
             ip = curr_frame.return_ip;
             curr_frame.ExitScope(this);
             curr_frame.Release();
             //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
             frames.Pop();
             if(frames.Count > 0)
-            {
               curr_frame = frames.Peek();
-              curr_frame.stack.Push(ret_val);
-            }
             else
-            {
-              curr_frame.fb.stack.Push(ret_val);
               curr_frame = null;
-            }
           }
           break;
           case Opcodes.GetFunc:

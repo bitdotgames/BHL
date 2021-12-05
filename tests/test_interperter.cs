@@ -6,41 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestPassByRefNullValue()
-  {
-    string bhl = @"
-
-    func float foo(ref float k = null)
-    {
-      if((any)k != null) {
-        k = k + 1
-        return k
-      } else {
-        return 1
-      }
-    }
-
-    func float,float test() 
-    {
-      float res = 0
-      float k = 10
-      res = res + foo()
-      res = res + foo(ref k)
-      return res,k
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExecNode(node, 2); 
-    //NodeDump(node);
-
-    AssertEqual(res.vals[0].num, 12);
-    AssertEqual(res.vals[1].num, 11);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestPassByRefLiteralNotAllowed()
   {
     string bhl = @"

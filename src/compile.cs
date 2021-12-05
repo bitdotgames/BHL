@@ -445,7 +445,8 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.ReturnVal
+        name = Opcodes.ReturnVal,
+        operand_width = new int[] { 1/*returned amount*/ }
       }
     );
     DeclareOpcode(
@@ -1074,7 +1075,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Return ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.ReturnVal);
+    Emit(Opcodes.ReturnVal, new int[] { ast.children.Count });
   }
 
   public override void DoVisit(AST_Break ast)
