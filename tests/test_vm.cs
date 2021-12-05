@@ -324,12 +324,36 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(c);
     var fb = Execute(vm, "test");
-    var str = fb.stack.PopRelease().str;
     var num = fb.stack.PopRelease().num;
+    var str = fb.stack.PopRelease().str;
     AssertEqual(num, 300);
     AssertEqual(str, "bar");
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestMultiReturnVarsOrder()
+  {
+    string bhl = @"
+    func float,float foo() 
+    {
+      return 300,100
+    }
+      
+    func float test() 
+    {
+      float f1,float f2 = foo()
+      return f1-f2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = Execute(vm, "test");
+    var num = fb.stack.PopRelease().num;
+    AssertEqual(num, 200);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestLogicalAnd()
   {
@@ -4041,8 +4065,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test", Val.NewNum(vm, 3));
-    var num2 = fb.stack.PopRelease().num;
     var num1 = fb.stack.PopRelease().num;
+    var num2 = fb.stack.PopRelease().num;
     AssertEqual(num1, 12);
     AssertEqual(num2, 11);
     CommonChecks(vm);

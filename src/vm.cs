@@ -887,8 +887,12 @@ public class VM
 
             var ret_stack = frames.Count == 1 ? curr_frame.fb.stack : frames[frames.Count-2].stack;  
             //TODO: make it more efficient?
+            int stack_offset = curr_frame.stack.Count; 
             for(int i=0;i<ret_num;++i)
-              ret_stack.Push(curr_frame.stack.Pop());
+            {
+              ret_stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
+              curr_frame.stack.Dec();
+            }
 
             ip = curr_frame.return_ip;
             curr_frame.ExitScope(this);
