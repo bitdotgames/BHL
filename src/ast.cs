@@ -770,6 +770,8 @@ public class AST_Return  : AST
 {
   static public  new  uint STATIC_CLASS_ID = 204244643;
 
+  public int num;
+
   public override uint CLASS_ID() 
   {
     return 204244643; 
@@ -789,11 +791,12 @@ public class AST_Return  : AST
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
+    MetaHelper.sync(ctx, ref num);
   }
 
   public override int getFieldsCount() 
   {
-    return 1; 
+    return 2; 
   }
 }
 

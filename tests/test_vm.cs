@@ -4041,8 +4041,8 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test", Val.NewNum(vm, 3));
-    var num1 = fb.stack.PopRelease().num;
     var num2 = fb.stack.PopRelease().num;
+    var num1 = fb.stack.PopRelease().num;
     AssertEqual(num1, 12);
     AssertEqual(num2, 11);
     CommonChecks(vm);

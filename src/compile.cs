@@ -1075,7 +1075,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Return ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.ReturnVal, new int[] { ast.children.Count });
+    Emit(Opcodes.ReturnVal, new int[] { ast.num });
   }
 
   public override void DoVisit(AST_Break ast)

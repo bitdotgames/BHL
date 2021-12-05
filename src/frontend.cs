@@ -1673,6 +1673,8 @@ public class Frontend : bhlBaseVisitor<object>
         //      effect right before it
         if(Wrap(exp).eval_type != SymbolTable.symb_void)
         {
+          ret_ast.num = 1;
+
           SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
           Wrap(ctx).eval_type = Wrap(exp).eval_type;
         }
@@ -1706,6 +1708,8 @@ public class Frontend : bhlBaseVisitor<object>
 
         ret_type.Update();
         Wrap(ctx).eval_type = ret_type;
+
+        ret_ast.num = fmret_type.items.Count;
       }
 
       if(fret_type != SymbolTable.symb_void)
