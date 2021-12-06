@@ -6,80 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestPassByRefClassFieldFuncPtr()
-  {
-    string bhl = @"
-
-    class Bar
-    {
-      int^() p
-    }
-
-    func int _5()
-    {
-      return 5
-    }
-
-    func int _10()
-    {
-      return 10
-    }
-
-    func foo(ref int^() p) 
-    {
-      p = _10
-    }
-      
-    func int test() 
-    {
-      Bar b = { p: _5}
-
-      foo(ref b.p)
-      return b.p()
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    var num = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(num, 10);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestPassByRefBindClassFieldNotSupported()
-  {
-    string bhl = @"
-
-    func foo(ref float a) 
-    {
-      a = a + 1
-    }
-      
-    func float test() 
-    {
-      Color c = new Color
-
-      foo(ref c.r)
-      return c.r
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    
-    BindColor(globs);
-
-    AssertError<UserError>(
-      delegate() {
-        Interpret(bhl, globs);
-      },
-      "getting field by 'ref' not supported"
-    );
-  }
-
-  [IsTested()]
   public void TestLambdaUsesValueImplicit()
   {
     string bhl = @"
@@ -4656,38 +4582,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  [IsTested()]
-  public void TestFuncPtr()
-  {
-    string bhl = @"
-    func foo()
-    {
-      trace(""FOO"")
-    }
-
-    func void test() 
-    {
-      void^() ptr = foo
-      ptr()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("FOO", str);
-    AssertEqual(1, FuncCtx.NodesCreated);
-    CommonChecks(intp);
-  }
 
   [IsTested()]
   public void TestFuncPtrLambda()

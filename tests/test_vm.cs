@@ -1894,6 +1894,28 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncPtr()
+  {
+    string bhl = @"
+    func int foo()
+    {
+      return 1
+    }
+
+    func int test() 
+    {
+      int^() ptr = foo
+      return ptr()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(1, num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestIfCondition()
   {
     string bhl = @"
@@ -4280,6 +4302,111 @@ public class BHL_TestVM : BHL_TestBase
     var num = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(num, 5);
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrByRef()
+  {
+    string bhl = @"
+    func int _1()
+    {
+      return 1
+    }
+
+    func int _2()
+    {
+      return 2
+    }
+
+    func change(ref int^() p)
+    {
+      p = _2
+    }
+
+    func int test() 
+    {
+      int^() ptr = _1
+      change(ref ptr)
+      return ptr()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(2, num);
+    CommonChecks(vm);
+  }
+
+
+  [IsTested()]
+  public void TestPassByRefClassFieldFuncPtr()
+  {
+    string bhl = @"
+
+    class Bar
+    {
+      int^() p
+    }
+
+    func int _5()
+    {
+      return 5
+    }
+
+    func int _10()
+    {
+      return 10
+    }
+
+    func foo(ref int^() p) 
+    {
+      p = _10
+    }
+      
+    func int test() 
+    {
+      Bar b = { p: _5}
+
+      foo(ref b.p)
+      return b.p()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassByRefNativeClassFieldNotSupported()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      Color c = new Color
+
+      foo(ref c.r)
+      return c.r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl, globs);
+      },
+      "getting field by 'ref' not supported"
+    );
   }
 
   [IsTested()]
@@ -8406,6 +8533,123 @@ public class BHL_TestVM : BHL_TestBase
     fn.Define(new FuncArgSymbol("str", globs.Type("string")));
     globs.Define(fn);
     return fn;
+  }
+
+  public class Color
+  {
+    public float r;
+    public float g;
+
+    public override string ToString()
+    {
+      return "[r="+r+",g="+g+"]";
+    }
+  }
+
+  ClassSymbolNative BindColor(GlobalScope globs)
+  {
+    var cl = new ClassSymbolNative("Color", null,
+      delegate(ref DynVal v) 
+      { 
+        v.obj = new Color();
+      }
+    );
+
+    globs.Define(cl);
+    cl.Define(new FieldSymbol("r", globs.Type("float"), null, null, null,
+      delegate(Val ctx, ref Val v)
+      {
+        var c = (Color)ctx.obj;
+        v.SetNum(c.r);
+      },
+      delegate(ref Val ctx, Val v)
+      {
+        var c = (Color)ctx.obj;
+        c.r = (float)v.num; 
+        ctx.obj = c;
+      }
+    ));
+    cl.Define(new FieldSymbol("g", globs.Type("float"), null, null, null,
+      delegate(Val ctx, ref Val v)
+      {
+        var c = (Color)ctx.obj;
+        v.SetNum(c.g);
+      },
+      delegate(ref Val ctx, Val v)
+      {
+        var c = (Color)ctx.obj;
+        c.g = (float)v.num; 
+        ctx.obj = c;
+      }
+    ));
+
+    //{
+    //  var m = new FuncSymbolSimpleNative("Add", globs.Type("Color"),
+    //    delegate()
+    //    {
+    //      var interp = Interpreter.instance;
+
+    //      var k = (float)interp.PopValue().num;
+    //      var c = (Color)interp.PopValue().obj;
+
+    //      var newc = new Color();
+    //      newc.r = c.r + k;
+    //      newc.g = c.g + k;
+
+    //      var dv = DynVal.NewObj(newc);
+    //      interp.PushValue(dv);
+
+    //      return BHS.SUCCESS;
+    //    }
+    //  );
+    //  m.Define(new FuncArgSymbol("k", globs.Type("float")));
+
+    //  cl.Define(m);
+    //}
+    //
+    //{
+    //  var m = new FuncSymbolSimpleNative("mult_summ", globs.Type("float"),
+    //    delegate()
+    //    {
+    //      var interp = Interpreter.instance;
+
+    //      var k = interp.PopValue().num;
+    //      var c = (Color)interp.PopValue().obj;
+
+    //      interp.PushValue(DynVal.NewNum((c.r * k) + (c.g * k)));
+
+    //      return BHS.SUCCESS;
+    //    }
+    //  );
+    //  m.Define(new FuncArgSymbol("k", globs.Type("float")));
+
+    //  cl.Define(m);
+    //}
+    //
+    //{
+    //  var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"),
+    //      delegate() { return new MkColorNode(); }
+    //  );
+    //  fn.Define(new FuncArgSymbol("r", globs.Type("float")));
+
+    //  globs.Define(fn);
+    //}
+    //
+    //{
+    //  var fn = new FuncSymbolSimpleNative("mkcolor_null", globs.Type("Color"),
+    //      delegate() { 
+    //        var interp = Interpreter.instance;
+    //        var dv = DynVal.New();
+    //        dv.obj = null;
+    //        interp.PushValue(dv);
+    //        return BHS.SUCCESS;
+    //      }
+    //  );
+
+    //  globs.Define(fn);
+    //}
+
+    return cl;
   }
 
   class CoroutineWaitTicks : IInstruction

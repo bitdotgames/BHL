@@ -1084,6 +1084,17 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
       }
       break;
+      case EnumCall.FUNC2VAR:
+      {
+        int offset;
+        if(func2ip.TryGetValue(ast.name, out offset))
+        {
+          Emit(Opcodes.GetFunc, new int[] {offset}, (int)ast.line_num);
+        }
+        else
+          throw new Exception("Not found func IP");
+      }
+      break;
       default:
         throw new Exception("Not supported call: " + ast.type);
     }
