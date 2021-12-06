@@ -723,6 +723,7 @@ public class FieldSymbolScript : FieldSymbol
   {
     var m = (ValList)ctx.obj;
     v.ValueCopyFrom(m[VM_idx]);
+    v.RefMod(RefOp.USR_INC);
   }
 
   void VM_Setter(ref Val ctx, Val v)
@@ -735,7 +736,6 @@ public class FieldSymbolScript : FieldSymbol
       curr.RefMod(RefOp.USR_DEC);
     }
     curr.ValueCopyFrom(v);
-    curr.RefMod(RefOp.USR_INC);
   }
 
   void VM_Getref(Val ctx, out Val v)

@@ -2004,7 +2004,7 @@ public class ValList : IList<Val>, IValRefcounted
   public void Clear()
   {
     for(int i=0;i<Count;++i)
-      lst[i].RefMod(RefOp.USR_DEC | RefOp.DEC);
+      lst[i].RefMod(RefOp.DEC | RefOp.USR_DEC);
 
     lst.Clear();
   }

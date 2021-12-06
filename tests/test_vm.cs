@@ -4365,7 +4365,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func int test() 
     {
-      Bar b = { p: _5}
+      Bar b = {p: _5}
 
       foo(ref b.p)
       return b.p()
