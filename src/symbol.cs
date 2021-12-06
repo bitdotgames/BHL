@@ -36,7 +36,6 @@ public class TypeRef
     this.name = name;
     this.type = null;
     this.is_ref = false;
-
 #if BHL_FRONT
     this.node = null;
 #endif
@@ -66,7 +65,7 @@ public class TypeRef
     if(name.n == 0)
       return null;
 
-    //TODO: not sure if it's a non-ugly solution
+    //TODO: get rid of this ugly hack
     if(bindings == null)
       type = (bhl.Type)Interpreter.instance.symbols.Resolve(name);
     else
@@ -359,7 +358,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract BehaviorTreeNode Create_RemoveAt();
   public abstract BehaviorTreeNode Create_Clear();
 
-  public abstract void VM_CreateArr(ref Val v);
+  public abstract void VM_CreateArr(VM vm, ref Val v);
   public abstract void VM_GetCount(Val ctx, ref Val v);
   public abstract IInstruction VM_Add(VM.Frame frame, ref BHS status);
   public abstract IInstruction VM_At(VM.Frame frame, ref BHS status);
@@ -451,9 +450,9 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return lst;
   }
 
-  public override void VM_CreateArr(ref Val v)
+  public override void VM_CreateArr(VM vm, ref Val v)
   {
-    v.SetObj(ValList.New(v.vm));
+    v.SetObj(ValList.New(vm));
   }
 
   public override void VM_GetCount(Val ctx, ref Val v)
@@ -593,7 +592,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return new Array_ClearNodeT();
   }
 
-  public override void VM_CreateArr(ref Val v)
+  public override void VM_CreateArr(VM vm, ref Val v)
   {
     throw new Exception("Not implemented");
   }
@@ -729,10 +728,14 @@ public class FieldSymbolScript : FieldSymbol
   void VM_Setter(ref Val ctx, Val v)
   {
     var m = (ValList)ctx.obj;
-    var tmp = Val.New(ctx.vm);
-    tmp.ValueCopyFrom(v);
-    m[VM_idx] = tmp;
-    tmp.Release();
+    var curr = m[VM_idx];
+    for(int i=0;i<curr._refs;++i)
+    {
+      v.RefMod(RefOp.USR_INC);
+      curr.RefMod(RefOp.USR_DEC);
+    }
+    curr.ValueCopyFrom(v);
+    curr.RefMod(RefOp.USR_INC);
   }
 
   void VM_Getref(Val ctx, out Val v)
@@ -1268,12 +1271,12 @@ public class ClassSymbolScript : ClassSymbol
     }
   }
 
-  void VM_ClassCreator(ref Val res)
+  void VM_ClassCreator(VM vm, ref Val res)
   {
     ValList vl = null;
     if(super_class != null)
     {
-      super_class.VM_creator(ref res);
+      super_class.VM_creator(vm, ref res);
       vl = (ValList)res.obj;
     }
     else
@@ -1281,33 +1284,35 @@ public class ClassSymbolScript : ClassSymbol
       vl = ValList.New(res.vm);
       res.SetObj(vl);
     }
+    //TODO: this should be more robust
     //NOTE: storing class name hash in _num attribute
     res._num = decl.nname; 
 
     for(int i=0;i<members.Count;++i)
     {
       var m = members[i];
-      var dv = Val.New(res.vm);
+      var v = Val.New(res.vm);
       //NOTE: proper default init of built-in types
       if(m.type.name.IsEqual(SymbolTable.symb_float.type.name))
-        dv.SetNum(0);
+        v.SetNum(0);
       else if(m.type.name.IsEqual(SymbolTable.symb_int.type.name))
-        dv.SetNum(0);
+        v.SetNum(0);
       else if(m.type.name.IsEqual(SymbolTable.symb_string.type.name))
-        dv.SetStr("");
+        v.SetStr("");
       else if(m.type.name.IsEqual(SymbolTable.symb_bool.type.name))
-        dv.SetBool(false);
+        v.SetBool(false);
       else 
       {
-        var t = m.type.Get();
-        if(t is EnumSymbol)
-          dv.SetNum(0);
-        else
-          dv.SetNil();
+        //TODO:???
+        //var t = m.type.Get();
+        //if(t is EnumSymbol)
+        //  dv.SetNum(0);
+        //else
+        //  dv.SetNil();
       }
 
-      vl.Add(dv);
-      dv.Release();
+      vl.Add(v);
+      v.Release();
     }
   }
 }

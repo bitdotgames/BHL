@@ -4151,6 +4151,138 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassByRefArrayObj()
+  {
+    string bhl = @"
+
+    class Bar
+    {
+      float f
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      Bar[] bs = [{f:1},{f:10},{f:20}]
+
+      foo(ref bs[1].f)
+      return bs[0].f + bs[1].f + bs[2].f
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 32);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassByRefTmpClassField()
+  {
+    string bhl = @"
+
+    class Bar
+    {
+      float a
+    }
+
+    func float foo(ref float a) 
+    {
+      a = a + 1
+      return a
+    }
+      
+    func float test() 
+    {
+      return foo(ref (new Bar).a)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassByRefClassFieldNested()
+  {
+    string bhl = @"
+
+    class Wow
+    {
+      float c
+    }
+
+    class Bar
+    {
+      Wow w
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      Bar b = { w: { c : 4} }
+
+      foo(ref b.w.c)
+      return b.w.c
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseInitCode()
+      .Emit(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Wow"), -1 })
+      .Emit(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "c") })
+      .Emit(Opcodes.ClassEnd)
+      .Emit(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Bar"), -1 })
+      .Emit(Opcodes.ClassMember, new int[] { ConstIdx(c, "Wow"), ConstIdx(c, "w") })
+      .Emit(Opcodes.ClassEnd)
+      .UseByteCode()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.ArgRef, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*cargs bits*/})
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "Bar") }) 
+      .Emit(Opcodes.New, new int[] { ConstIdx(c, "Wow") }) 
+      .Emit(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
+      .Emit(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Wow"), 0 })
+      .Emit(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.RefAttr, new int[] { ConstIdx(c, "Bar"), 0 })
+      .Emit(Opcodes.RefAttr, new int[] { ConstIdx(c, "Wow"), 0 })
+      .Emit(Opcodes.GetFunc, new int[] { 0 })
+      .Emit(Opcodes.Call, new int[] { 1 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 0 })
+      .Emit(Opcodes.GetAttr, new int[] { ConstIdx(c, "Wow"), 0 })
+      .Emit(Opcodes.ReturnVal, new int[] { 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 5);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"
@@ -8320,7 +8452,7 @@ public class BHL_TestVM : BHL_TestBase
   ClassSymbolNative BindBar(GlobalScope globs)
   {
     var cl = new ClassSymbolNative("Bar", null,
-      delegate(ref Val v) 
+      delegate(VM vm, ref Val v) 
       { 
         v.SetObj(new Bar());
       }

@@ -444,7 +444,7 @@ public class VM
 
   IModuleImporter importer;
 
-  public delegate void ClassCreator(ref Val res);
+  public delegate void ClassCreator(VM vm, ref Val res);
   public delegate void FieldGetter(Val v, ref Val res);
   public delegate void FieldSetter(ref Val v, Val nv);
   public delegate void FieldRef(Val v, out Val res);
@@ -845,8 +845,8 @@ public class VM
               throw new Exception("Class type not found: " + class_type);
 
             var obj = curr_frame.stack.Pop();
-            Val res;
             var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+            Val res;
             field_symb.VM_getref(obj, out res);
             curr_frame.stack.PushRetain(res);
             obj.Release();
@@ -1133,7 +1133,7 @@ public class VM
       throw new Exception("Could not find class symbol: " + class_type);
 
     var val = Val.New(this); 
-    cls.VM_creator(ref val);
+    cls.VM_creator(this, ref val);
     curr_frame.stack.Push(val);
   }
 
@@ -2065,21 +2065,22 @@ public class ValList : IList<Val>, IValRefcounted
 
   public void Retain()
   {
+    //Console.WriteLine("== RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
     if(refs == -1)
       throw new Exception("Invalid state(-1)");
     ++refs;
-    //Console.WriteLine("RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
   }
 
   public void Release()
   {
+    //Console.WriteLine("== RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
+
     if(refs == -1)
       throw new Exception("Invalid state(-1)");
     if(refs == 0)
       throw new Exception("Double free(0)");
 
     --refs;
-    //Console.WriteLine("RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
     if(refs == 0)
       Del(this);
   }
