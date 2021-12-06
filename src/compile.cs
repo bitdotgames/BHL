@@ -360,6 +360,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.RefAttr,
+        operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.GetFunc,
         operand_width = new int[] { 3/*module ip*/ }
       }
@@ -1042,6 +1049,16 @@ public class ModuleCompiler : AST_Visitor
         
         Emit(Opcodes.GetMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
         Emit(Opcodes.CallNative, new int[] {0}, (int)ast.line_num);
+      }
+      break;
+      case EnumCall.MVARREF:
+      {
+        if((int)ast.symb_idx == -1)
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
+
+        VisitChildren(ast);
+
+        Emit(Opcodes.RefAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDX:

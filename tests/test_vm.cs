@@ -4073,6 +4073,84 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassByRefLiteralNotAllowed()
+  {
+    string bhl = @"
+
+    void foo(ref int a) 
+    {
+    }
+
+    func void test() 
+    {
+      foo(ref 10)  
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "mismatched input '('"
+    );
+  }
+
+  [IsTested()]
+  public void TestPassByRefClassField()
+  {
+    string bhl = @"
+
+    class Bar
+    {
+      float a
+    }
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      Bar b = { a: 10}
+
+      foo(ref b.a)
+      return b.a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 11);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassByRefArrayItem()
+  {
+    string bhl = @"
+
+    func foo(ref float a) 
+    {
+      a = a + 1
+    }
+      
+    func float test() 
+    {
+      float[] fs = [1,10,20]
+
+      foo(ref fs[1])
+      return fs[0] + fs[1] + fs[2]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 32);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"

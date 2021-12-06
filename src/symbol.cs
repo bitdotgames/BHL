@@ -697,7 +697,7 @@ public class FieldSymbolScript : FieldSymbol
     this.VM_idx = VM_idx;
     this.VM_getter = VM_Getter;
     this.VM_setter = VM_Setter;
-    this.VM_getref = null;//TODO:
+    this.VM_getref = VM_Getref;
   }
 
   void Getter(DynVal ctx, ref DynVal v)
@@ -733,6 +733,12 @@ public class FieldSymbolScript : FieldSymbol
     tmp.ValueCopyFrom(v);
     m[VM_idx] = tmp;
     tmp.Release();
+  }
+
+  void VM_Getref(Val ctx, out Val v)
+  {
+    var m = (ValList)ctx.obj;
+    v = m[VM_idx];
   }
 }
 

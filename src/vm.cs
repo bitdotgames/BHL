@@ -18,6 +18,7 @@ public enum Opcodes
   DeclVar         = 0x8,
   ArgVar          = 0x9,
   GetAttr         = 0xA,
+  RefAttr         = 0xB,
   Return          = 0xC,
   ReturnVal       = 0xD,
   Jump            = 0xE,
@@ -830,6 +831,24 @@ public class VM
             var field_symb = (FieldSymbol)class_symb.members[fld_idx];
             field_symb.VM_getter(obj, ref res);
             curr_frame.stack.Push(res);
+            obj.Release();
+          }
+          break;
+          case Opcodes.RefAttr:
+          {
+            int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+            string class_type = curr_frame.constants[class_type_idx].str;
+            int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+            //TODO: this check must be in dev.version only
+            if(class_symb == null)
+              throw new Exception("Class type not found: " + class_type);
+
+            var obj = curr_frame.stack.Pop();
+            Val res;
+            var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+            field_symb.VM_getref(obj, out res);
+            curr_frame.stack.PushRetain(res);
             obj.Release();
           }
           break;
