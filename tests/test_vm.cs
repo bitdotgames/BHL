@@ -8535,6 +8535,22 @@ public class BHL_TestVM : BHL_TestBase
     return fn;
   }
 
+  //simple console outputting version
+  void BindLog(GlobalScope globs)
+  {
+    {
+      var fn = new FuncSymbolNative("log", globs.Type("void"), null,
+          delegate(VM.Frame frm, ref BHS status) { 
+            string str = frm.stack.PopRelease().str;
+            Console.WriteLine(str); 
+            return null;
+          } 
+      );
+      fn.Define(new FuncArgSymbol("str", globs.Type("string")));
+      globs.Define(fn);
+    }
+  }
+
   public class Color
   {
     public float r;
