@@ -128,10 +128,11 @@ public class ModuleCompiler : AST_Visitor
     return code_stack[code_stack.Count-1];
   }
 
-  int PushCode()
+  Bytecode PushCode()
   {
-    code_stack.Add(new Bytecode());
-    return (int)code_stack[0].Length;
+    var code = new Bytecode();
+    code_stack.Add(code);
+    return code;
   }
  
   Bytecode PopCode(bool auto_append = true)
@@ -186,12 +187,6 @@ public class ModuleCompiler : AST_Visitor
 
   static void DeclareOpcodes()
   {
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Nop,
-      }
-    );
     DeclareOpcode(
       new OpDefinition()
       {
@@ -418,7 +413,7 @@ public class ModuleCompiler : AST_Visitor
       {
         name = Opcodes.Lambda,
         //TODO: this can be a 16bit offset relative to the 
-        //      current ip position
+        //      current ip position instead of abs.pos
         operand_width = new int[] { 3/*closure ip*/, 1/*local vars num*/ }
       }
     );
@@ -704,7 +699,8 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     func_decls.Add(ast);
-    int ip = PushCode();
+    PushCode();
+    int ip = (int)code_stack[0].Length;
     func2ip.Add(ast.name, ip);
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
@@ -729,7 +725,7 @@ public class ModuleCompiler : AST_Visitor
     //let's patch the jump placeholder with the actual jump position
     bytecode.PatchAt(1, (uint)jump_out_pos, num_bytes: 2);
 
-    int ip = 2;//taking into account 'jump out of lambda'
+    int ip = 3;//taking into account 'jump out of lambda'
     for(int i=0;i<code_stack.Count;++i)
       ip += (int)code_stack[i].Length;
     func2ip.Add(ast.name, ip);

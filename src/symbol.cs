@@ -1068,7 +1068,7 @@ public class LambdaSymbol : FuncSymbol
     {
       if(fdecl_stack[j] is LambdaSymbol lmb)
       {
-        vs = lmb.AddUseParam(vs, false/*not a ref*/);
+        vs = lmb.AddUseParam(vs, is_ref: false);
         if(res == null)
           res = vs;
       }

@@ -7,7 +7,6 @@ namespace bhl {
 
 public enum Opcodes
 {
-  Nop             = 0x0,
   Constant        = 0x1,
   Add             = 0x2,
   Sub             = 0x3,
@@ -697,8 +696,6 @@ public class VM
         //Console.WriteLine("OP " + opcode + " @ " + string.Format("0x{0:x2} {0} {1}", ip, curr_frame.module.name));
         switch(opcode)
         {
-          case Opcodes.Nop:
-          break;
           case Opcodes.Constant:
           {
             int const_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
@@ -1052,21 +1049,19 @@ public class VM
             int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
-            var frval = curr_frame.stack.Peek();
-            var fr = (Frame)frval._obj;
+            var lmb = (Frame)curr_frame.stack.Peek()._obj;
 
             //TODO: amount of local variables must be known ahead 
-            int gaps = local_idx - fr.locals_num + 1;
+            int gaps = local_idx - lmb.locals_num + 1;
             for(int i=0;i<gaps;++i)
-              fr.stack[fr.locals_num + i] = Val.New(this); 
-            fr.locals_num += gaps;
+              lmb.stack[lmb.locals_num + i] = Val.New(this); 
+            lmb.locals_num += gaps;
 
             var up_val = curr_frame.stack[up_idx];
             up_val.Retain();
-
-            if(fr.stack[local_idx] != null)
-              fr.stack[local_idx].Release();
-            fr.stack[local_idx] = up_val;
+            if(lmb.stack[local_idx] != null)
+              lmb.stack[local_idx].Release();
+            lmb.stack[local_idx] = up_val;
           }
           break;
           case Opcodes.Pop:

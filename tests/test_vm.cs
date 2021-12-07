@@ -4758,33 +4758,89 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
+  public void TestLambdaNestedNoCalls()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      float a = 2
+      func() {
+          void^() fn = func() {
+            a = a + 1    
+          }
+      }()
+      return a
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1+1 /*cargs bits*/}) 
+      .Emit(Opcodes.Constant, new int[] { 0 })                  
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Jump, new int[] { 24 })
+      .Emit(Opcodes.Jump, new int[] { 10 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Lambda, new int[] { 14, 1 })
+      .Emit(Opcodes.UseUpval, new int[] { 0, 1 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.Lambda, new int[] { 11, 2 })
+      .Emit(Opcodes.UseUpval, new int[] { 0, 0 })
+      .Emit(Opcodes.Call, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal, new int[] { 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLambdaCaptureNested()
   {
     string bhl = @"
 
-    func foo(void^() fn) 
-    {
-      fn()
-    }
+    //func foo(void^() fn) 
+    //{
+    //  fn()
+    //}
       
     func float test() 
     {
       float a = 2
       float b = 10
-      foo(func() { 
+      func() {
           void^() fn = func() {
             a = a + 1    
             b = b * 2    
           }
-          //fn(..)
-        } 
-      )
+      }()
+      //foo(func() { 
+      //    void^() fn = func() {
+      //      a = a + 1    
+      //      b = b * 2    
+      //    }
+      //    fn()
+      //  } 
+      //)
       return a+b
     }
     ";
 
-    var vm = MakeVM(bhl, null, true, true);
+    var vm = MakeVM(bhl);
     var num = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(num, 12);
     CommonChecks(vm);
@@ -8714,7 +8770,7 @@ public class BHL_TestVM : BHL_TestBase
 
     for(int i=0;i<a?.Length;i++)
     {
-      res += string.Format("0x{0:x2} {0}", a[i]);
+      res += string.Format("{1:00} 0x{0:x2} {0}", a[i], i);
       if(aop != null)
       {
         --aop_size;
