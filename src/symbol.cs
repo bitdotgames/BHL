@@ -1043,7 +1043,7 @@ public class LambdaSymbol : FuncSymbol
       //NOTE: only variable symbols are considered
       Symbol res = null;
       decl.GetMembers().TryGetValue(name, out res);
-      if(res != null && res is VariableSymbol vs && !res.is_out_of_scope)
+      if(res is VariableSymbol vs && !res.is_out_of_scope)
         return AssignUpValues(vs, i+1, my_idx);
     }
 

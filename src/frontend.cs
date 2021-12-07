@@ -2086,6 +2086,7 @@ public class Frontend : bhlBaseVisitor<object>
         {
           var ast = CommonDeclVar(vd.NAME(), vd_type, is_ref: false, func_arg: false, write: assign_exp != null);
           root.AddChild(ast);
+
           is_decl = true;
 
           wnode = Wrap(vd.NAME()); 
@@ -2111,13 +2112,18 @@ public class Frontend : bhlBaseVisitor<object>
           PushJsonType(curr_type);
         }
 
-        //NOTE: temporarily removing just declared variable when visiting assignment expression
+        //TODO: below is quite an ugly hack
+        //NOTE: temporarily replacing just declared variable with dummy one when visiting 
+        //      assignment expression in order to avoid error like: float k = k
         Symbol disabled_symbol = null;
+        Symbol subst_symbol = null;
         if(is_decl)
         {
           var symbols = ((FuncSymbol)curr_scope).GetMembers();
           disabled_symbol = (Symbol)symbols[symbols.Count - 1];
           symbols.RemoveAt(symbols.Count - 1);
+          subst_symbol = new VariableSymbol(disabled_symbol.node, "#$"+disabled_symbol.name.s, disabled_symbol.type);
+          curr_scope.Define(subst_symbol);
         }
 
         //NOTE: need to put expression nodes first
@@ -2132,7 +2138,11 @@ public class Frontend : bhlBaseVisitor<object>
 
         //NOTE: declaring disabled symbol again
         if(disabled_symbol != null)
+        {
+          var symbols = ((FuncSymbol)curr_scope).GetMembers();
+          symbols.RemoveAt(symbols.IndexOf(subst_symbol));
           curr_scope.Define(disabled_symbol);
+        }
 
         if(pop_json_type)
           PopJsonType();

@@ -686,6 +686,10 @@ public class VM
         }
         else
         {
+          //NOTE: in case of non-block (e.g seq, paral, paral_all) native instruction (e.g yield) we need
+          //      to increment the ip upon its completion
+          if(!(instruction is IExitableScope))
+            ++ip;
           Instructions.Del(this, instruction);
           instruction = null;
         }
@@ -1018,6 +1022,7 @@ public class VM
             var sub_instruction = func_symb.VM_cb(curr_frame, ref status);
             if(sub_instruction != null)
               AttachInstruction(ref instruction, sub_instruction);
+
             //NOTE: checking if new instruction was added and if so executing it immediately
             if(instruction != null)
               instruction.Tick(curr_frame, ref status);
@@ -1077,14 +1082,10 @@ public class VM
           break;
           case Opcodes.CondJump:
           {
+            ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
             //we need to jump only in case of false
             if(curr_frame.stack.PopRelease().bval == false)
-            {
-              ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
               ip += offset;
-            }
-            else
-              ++ip;
           }
           break;
           case Opcodes.DefArg:
