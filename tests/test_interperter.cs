@@ -262,37 +262,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBindFunction()
-  {
-    string bhl = @"
-      
-    func float test(int k) 
-    {
-      return ret_val(k)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    {
-      var fn = new FuncSymbolNative("ret_val", globs.Type("float"),
-          delegate() { return new RetValNode(); } );
-      fn.Define(new FuncArgSymbol("k", globs.Type("float")));
-
-      globs.Define(fn);
-    }
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    node.SetArgs(DynVal.NewNum(42));
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 42);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestBindFunctionWithDefaultArgs()
   {
     string bhl = @"
