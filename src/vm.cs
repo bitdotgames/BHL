@@ -724,6 +724,7 @@ public class VM
             {
               var new_val = Val.New(this);
               new_val.ValueCopyFrom(curr_frame.stack.PopRelease());
+              new_val.RefMod(RefOp.USR_INC);
               curr_frame.stack.Push(new_val);
             }
             else
@@ -788,7 +789,6 @@ public class VM
             var arg_val = curr_frame.stack.Pop();
             var loc_var = Val.New(this);
             loc_var.ValueCopyFrom(arg_val);
-            //TODO: maybe it's part of ValueCopyFrom(..)?
             loc_var.RefMod(RefOp.USR_INC);
             curr_frame.stack[local_idx] = loc_var;
             arg_val.Release();
@@ -830,6 +830,10 @@ public class VM
             var res = Val.New(this);
             var field_symb = (FieldSymbol)class_symb.members[fld_idx];
             field_symb.VM_getter(obj, ref res);
+            //NOTE: we retain only the payload since we make the copy of the value 
+            //      and the new res already has refs = 1 while payload's refcount 
+            //      is not incremented
+            res.RefMod(RefOp.USR_INC);
             curr_frame.stack.Push(res);
             obj.Release();
           }
