@@ -4809,7 +4809,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLambdaCaptureNested()
+  public void TestLambdaCapturesNested()
   {
     string bhl = @"
 
@@ -4837,6 +4837,59 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(num, 23);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaSelfCallAndBindValues()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      float a = 2
+
+      float res
+
+      void^() fn = func void^() (float a, int b) { 
+        return func() { 
+          res = a + b 
+        }
+      }(a, 1) 
+
+      a = 100
+
+      fn()
+
+      return res
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 3);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestClosure()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      //TODO: need more flexible types support for this:
+      //float^(float)^(float)
+      
+      return func float^(float) (float a) {
+        return func float (float b) { return a + b }
+      }(2)(3)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 5);
     CommonChecks(vm);
   }
 
