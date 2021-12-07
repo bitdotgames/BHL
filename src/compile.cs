@@ -730,7 +730,7 @@ public class ModuleCompiler : AST_Visitor
     bytecode.PatchAt(1, (uint)jump_out_pos, num_bytes: 2);
 
     int ip = 2;//taking into account 'jump out of lambda'
-    for(int i=0;i < code_stack.Count;++i)
+    for(int i=0;i<code_stack.Count;++i)
       ip += (int)code_stack[i].Length;
     func2ip.Add(ast.name, ip);
 

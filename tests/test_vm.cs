@@ -4702,6 +4702,95 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaReplacesFuncPtrByRef2()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float^() a = func float() { return 45 } 
+      foo(func() use(ref a) { 
+          a = func float () { return 42 }
+        } 
+      )
+      return a()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaChangesSeveralVars()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      float b = 10
+      foo(func()
+        { 
+          a = a + 1 
+          b = b * 2
+        } 
+      )
+      return a + b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 3+20);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestLambdaCaptureNested()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      float b = 10
+      foo(func() { 
+          void^() fn = func() {
+            a = a + 1    
+            b = b * 2    
+          }
+          //fn(..)
+        } 
+      )
+      return a+b
+    }
+    ";
+
+    var vm = MakeVM(bhl, null, true, true);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 12);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"

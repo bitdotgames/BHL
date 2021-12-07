@@ -1156,7 +1156,7 @@ public class AST_Dumper : AST_Visitor
     Console.Write("(LMBD ");
     Console.Write(node.type + " " + node.nname() + " USE:");
     for(int i=0;i<node.uses.Count;++i)
-      Console.Write(" " + node.uses[i].nname);
+      Console.Write(" " + node.uses[i].name + " " + node.uses[i].nname);
     VisitChildren(node);
     Console.Write(")");
   }
