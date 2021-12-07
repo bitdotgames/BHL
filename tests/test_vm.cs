@@ -4410,6 +4410,84 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaUsesValueByRef()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      foo(func() { a = a + 1 } )
+      return a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaUsesArrayByRef()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float[] a = []
+      foo(func() { a.Add(10) } )
+      return a[0]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncReplacesArrayValueByRef()
+  {
+    string bhl = @"
+
+    func float[] make()
+    {
+      float[] fs = [42]
+      return fs
+    }
+
+    func foo(ref float[] a) 
+    {
+      a = make()
+    }
+      
+    func float test() 
+    {
+      float[] a
+      foo(ref a)
+      return a[0]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"
