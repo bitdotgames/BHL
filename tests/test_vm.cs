@@ -576,6 +576,22 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSimpleExpression()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      return ((k*100) + 100) / 400
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestWriteReadVar()
   {
     string bhl = @"
@@ -607,6 +623,29 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertEqual(vm.Tick(), BHS.SUCCESS);
     AssertEqual(fb.stack.PopRelease().num, 246);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLocalVariables()
+  {
+    string bhl = @"
+      
+    func float foo(float k)
+    {
+      float b = 5
+      return k + 5
+    }
+
+    func float test(float k) 
+    {
+      float b = 10
+      return k * foo(b)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num, 45);
     CommonChecks(vm);
   }
 
@@ -3393,6 +3432,171 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaChangesSeveralVars()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      float b = 10
+      foo(func()
+        { 
+          a = a + 1 
+          b = b * 2
+        } 
+      )
+      return a + b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 3+20);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaNestedNoCalls()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      float a = 2
+      func() {
+          void^() fn = func() {
+            a = a + 1    
+          }
+      }()
+      return a
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1+1 /*cargs bits*/}) 
+      .Emit(Opcodes.Constant, new int[] { 0 })                  
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Lambda, new int[] { 23 })
+      .Emit(Opcodes.InitFrame, new int[] { 2+1 /*cargs bits*/})
+      .Emit(Opcodes.Lambda, new int[] { 12 })
+      .Emit(Opcodes.InitFrame, new int[] { 1+1 /*cargs bits*/})
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.Constant, new int[] { 1 })
+      .Emit(Opcodes.Add)
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.UseUpval, new int[] { 1, 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.Return)
+      .Emit(Opcodes.UseUpval, new int[] { 0, 1 })
+      .Emit(Opcodes.CallAlt, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal, new int[] { 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaCapturesNested()
+  {
+    string bhl = @"
+
+    func foo(void^() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      float b = 10
+      foo(func() { 
+          void^() p = func() {
+            a = a + 1    
+            b = b * 2    
+          }
+          p()
+        } 
+      )
+      return a+b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 23);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaSelfCallAndBindValues()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      float a = 2
+
+      float res
+
+      void^() fn = func void^() (float a, int b) { 
+        return func() { 
+          res = a + b 
+        }
+      }(a, 1) 
+
+      a = 100
+
+      fn()
+
+      return res
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestClosure()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      //TODO: need more flexible types support for this:
+      //float^(float)^(float)
+      
+      return func float^(float) (float a) {
+        return func float (float b) { return a + b }
+      }(2)(3)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 5);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncDefaultArg()
   {
     string bhl = @"
@@ -4644,7 +4848,7 @@ public class BHL_TestVM : BHL_TestBase
     func float test() 
     {
       float[] a = []
-      foo(func() use(ref a) { 
+      foo(func() { 
           a = [42]
         } 
       )
@@ -4729,7 +4933,7 @@ public class BHL_TestVM : BHL_TestBase
     func float test() 
     {
       float^() a
-      foo(func() use(ref a) { 
+      foo(func() { 
           a = func float () { return 42 }
         } 
       )
@@ -4756,7 +4960,7 @@ public class BHL_TestVM : BHL_TestBase
     func float test() 
     {
       float^() a = func float() { return 45 } 
-      foo(func() use(ref a) { 
+      foo(func() { 
           a = func float () { return 42 }
         } 
       )
@@ -4767,171 +4971,6 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(num, 42);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestLambdaChangesSeveralVars()
-  {
-    string bhl = @"
-
-    func foo(void^() fn) 
-    {
-      fn()
-    }
-      
-    func float test() 
-    {
-      float a = 2
-      float b = 10
-      foo(func()
-        { 
-          a = a + 1 
-          b = b * 2
-        } 
-      )
-      return a + b
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").stack.PopRelease().num;
-    AssertEqual(num, 3+20);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestLambdaNestedNoCalls()
-  {
-    string bhl = @"
-
-    func float test() 
-    {
-      float a = 2
-      func() {
-          void^() fn = func() {
-            a = a + 1    
-          }
-      }()
-      return a
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1+1 /*cargs bits*/}) 
-      .Emit(Opcodes.Constant, new int[] { 0 })                  
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Lambda, new int[] { 23 })
-      .Emit(Opcodes.InitFrame, new int[] { 2+1 /*cargs bits*/})
-      .Emit(Opcodes.Lambda, new int[] { 12 })
-      .Emit(Opcodes.InitFrame, new int[] { 1+1 /*cargs bits*/})
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.Constant, new int[] { 1 })
-      .Emit(Opcodes.Add)
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Return)
-      .Emit(Opcodes.UseUpval, new int[] { 1, 0 })
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.Return)
-      .Emit(Opcodes.UseUpval, new int[] { 0, 1 })
-      .Emit(Opcodes.CallAlt, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal, new int[] { 1 })
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var num = Execute(vm, "test").stack.PopRelease().num;
-    AssertEqual(num, 2);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestLambdaCapturesNested()
-  {
-    string bhl = @"
-
-    func foo(void^() fn) 
-    {
-      fn()
-    }
-      
-    func float test() 
-    {
-      float a = 2
-      float b = 10
-      foo(func() { 
-          void^() p = func() {
-            a = a + 1    
-            b = b * 2    
-          }
-          p()
-        } 
-      )
-      return a+b
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").stack.PopRelease().num;
-    AssertEqual(num, 23);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestLambdaSelfCallAndBindValues()
-  {
-    string bhl = @"
-
-    func float test() 
-    {
-      float a = 2
-
-      float res
-
-      void^() fn = func void^() (float a, int b) { 
-        return func() { 
-          res = a + b 
-        }
-      }(a, 1) 
-
-      a = 100
-
-      fn()
-
-      return res
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").stack.PopRelease().num;
-    AssertEqual(num, 3);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestClosure()
-  {
-    string bhl = @"
-
-    func float test() 
-    {
-      //TODO: need more flexible types support for this:
-      //float^(float)^(float)
-      
-      return func float^(float) (float a) {
-        return func float (float b) { return a + b }
-      }(2)(3)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").stack.PopRelease().num;
-    AssertEqual(num, 5);
     CommonChecks(vm);
   }
 
@@ -8125,7 +8164,7 @@ public class BHL_TestVM : BHL_TestBase
     func test()
     {
       int fid
-      fid = start(func() use(ref fid) {
+      fid = start(func() {
         defer {
           trace(""0"")
         }

@@ -6,53 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestSimpleExpression()
-  {
-    string bhl = @"
-      
-    func float test(float k) 
-    {
-      return ((k*100) + 100) / 400
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(3));
-    var num = ExtractNum(ExecNode(node));
-
-    AssertEqual(num, 1);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestLocalVariables()
-  {
-    string bhl = @"
-      
-    func float foo(float k)
-    {
-      float b = 5
-      return k + 5
-    }
-
-    func float test(float k) 
-    {
-      float b = 10
-      return k * foo(b)
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(3));
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 45);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestCastFloatToStr()
   {
     string bhl = @"
