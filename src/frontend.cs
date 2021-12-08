@@ -2112,7 +2112,7 @@ public class Frontend : bhlBaseVisitor<object>
           PushJsonType(curr_type);
         }
 
-        //TODO: below is quite an ugly hack
+        //TODO: below is quite an ugly hack, fix it traversing the expression first
         //NOTE: temporarily replacing just declared variable with dummy one when visiting 
         //      assignment expression in order to avoid error like: float k = k
         Symbol disabled_symbol = null;
@@ -2386,7 +2386,7 @@ public class Frontend : bhlBaseVisitor<object>
     var exp_1 = ctx.ternaryIfExp().exp(0);
     var exp_2 = ctx.ternaryIfExp().exp(1);
 
-    var condition = AST_Util.New_Block(EnumBlock.SEQ);
+    var condition = new AST_Interim();
     PushAST(condition);
     Visit(exp_0);
     PopAST();
@@ -2395,14 +2395,14 @@ public class Frontend : bhlBaseVisitor<object>
 
     ast.AddChild(condition);
 
-    var consequent = AST_Util.New_Block(EnumBlock.SEQ);
+    var consequent = new AST_Interim();
     PushAST(consequent);
     Visit(exp_1);
     PopAST();
 
     ast.AddChild(consequent);
 
-    var alternative = AST_Util.New_Block(EnumBlock.SEQ);
+    var alternative = new AST_Interim();
     PushAST(alternative);
     Visit(exp_2);
     PopAST();

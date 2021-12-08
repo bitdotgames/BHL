@@ -383,6 +383,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.GetLambda,
+        operand_width = new int[] { 4/*args bits*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.GetFuncFromVar,
         operand_width = new int[] { 1/*local idx*/ }
       }
@@ -398,13 +405,6 @@ public class ModuleCompiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.Call,
-        operand_width = new int[] { 4/*args bits*/ }
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.CallAlt,
         operand_width = new int[] { 4/*args bits*/ }
       }
     );
@@ -1075,7 +1075,8 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.FUNC_PTR_POP:
       {
         VisitChildren(ast);
-        Emit(Opcodes.CallAlt, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.GetLambda, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC_PTR:

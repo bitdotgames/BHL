@@ -23,13 +23,13 @@ public enum Opcodes
   Jump            = 0xE,
   Pop             = 0xF,
   Call            = 0x10,
-  CallAlt         = 0x23,
   CallNative      = 0x11,
   GetFunc         = 0x12,
   GetFuncNative   = 0x13,
   GetFuncFromVar  = 0x14,
   GetFuncImported = 0x15,
   GetMethodNative = 0x16,
+  GetLambda       = 0x17,
   CondJump        = 0x19,
   SetAttr         = 0x20,
   SetAttrInplace  = 0x21,
@@ -1010,30 +1010,17 @@ public class VM
             ip = fr.start_ip - 1; 
           }
           break;
-          case Opcodes.CallAlt:
+          case Opcodes.GetLambda:
           {
+            //NOTE: geting rid of Frame on the stack left after Opcode.Lambda.
+            //      Since lambda is called 'inplace' we need to generate proper 
+            //      opcode sequence required for Opcode.Call
             uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-
             var args_info = new FuncArgsInfo(args_bits);
-
-            //Frame object is located in this case on the top of the stack
-            var fr = (Frame)curr_frame.stack[curr_frame.stack.Count-args_info.CountArgs()-1]._obj;
-            //NOTE: it will be released once return is invoked
-            fr.Retain();
-
-            for(int i = 0; i < args_info.CountArgs(); ++i)
-              fr.stack.Push(curr_frame.stack.Pop());
-            fr.stack.Push(Val.NewNum(this, args_bits));
-
-            //let's pop Frame
-            curr_frame.stack.PopRelease();
-
-            //let's remember ip to return to
-            fr.return_ip = ip;
-            frames.Push(fr);
-            curr_frame = fr;
-            //since ip will be incremented below we decrement it intentionally here
-            ip = fr.start_ip - 1; 
+            int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
+            var fr = curr_frame.stack[fr_idx];
+            curr_frame.stack.RemoveAt(fr_idx);
+            curr_frame.stack.Push(fr);
           }
           break;
           case Opcodes.CallNative:
@@ -1059,14 +1046,15 @@ public class VM
           {
             int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             curr_frame.locals_num = local_vars_num;
-            //cargs bits
+            //NOTE: we need to store arg info bits locally so that
+            //      this information will be available to func 
+            //      args related opcodes
             curr_frame.stack[local_vars_num-1] = curr_frame.stack.Pop();
           }
           break;
           case Opcodes.Lambda:
           {             
             short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-
             var fr = Frame.New(this);
             fr.Init(curr_frame, ip+1/*func address*/);
             curr_frame.stack.Push(Val.NewObj(this, fr));
