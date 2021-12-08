@@ -404,6 +404,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
+        name = Opcodes.CallAlt,
+        operand_width = new int[] { 4/*args bits*/ }
+      }
+    );
+    DeclareOpcode(
+      new OpDefinition()
+      {
         name = Opcodes.CallNative,
         operand_width = new int[] { 4/*args bits*/ }
       }
@@ -412,16 +419,14 @@ public class ModuleCompiler : AST_Visitor
       new OpDefinition()
       {
         name = Opcodes.Lambda,
-        //TODO: this can be a 16bit offset relative to the 
-        //      current ip position instead of abs.pos
-        operand_width = new int[] { 3/*closure ip*/, 1/*local vars num*/ }
+        operand_width = new int[] { 2/*rel.offset skip lambda pos*/ }
       }
     );
     DeclareOpcode(
       new OpDefinition()
       {
         name = Opcodes.UseUpval,
-        operand_width = new int[] { 1 /*upval src idx*/, 1 /*local dst idx*/ }
+        operand_width = new int[] { 1/*upval src idx*/, 1/*local dst idx*/ }
       }
     );
     DeclareOpcode(
@@ -712,9 +717,8 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_LambdaDecl ast)
   {
     PushCode();
-    //NOTE: since lambda's body can appear anywhere in the 
-    //      compiled code we skip it by uncoditional jump over it
-    Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
+    Emit(Opcodes.Lambda, new int[] { 0 /*dummy placeholder*/});
+    Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
     var bytecode = PopCode(auto_append: false);
@@ -732,7 +736,6 @@ public class ModuleCompiler : AST_Visitor
 
     PeekCode().Write(bytecode);
 
-    Emit(Opcodes.Lambda, new int[] {ip, (int)ast.local_vars_num});
     foreach(var p in ast.uses)
       Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
   }
@@ -1071,13 +1074,15 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.FUNC_PTR_POP:
       {
-        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
+        VisitChildren(ast);
+        Emit(Opcodes.CallAlt, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC_PTR:
       {
+        VisitChildren(ast);
         Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
-        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC2VAR:

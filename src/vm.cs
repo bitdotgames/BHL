@@ -23,6 +23,7 @@ public enum Opcodes
   Jump            = 0xE,
   Pop             = 0xF,
   Call            = 0x10,
+  CallAlt         = 0x23,
   CallNative      = 0x11,
   GetFunc         = 0x12,
   GetFuncNative   = 0x13,
@@ -697,7 +698,7 @@ public class VM
 
       {
         var opcode = (Opcodes)curr_frame.bytecode[ip];
-        //Console.WriteLine("OP " + opcode + " @ " + string.Format("0x{0:x2} {0} {1}", ip, curr_frame.module.name));
+        //Console.WriteLine(string.Format("OP {0:00} 0x{0:x2} {2} {1}", ip, curr_frame.module.name, opcode));
         switch(opcode)
         {
           case Opcodes.Constant:
@@ -1009,6 +1010,32 @@ public class VM
             ip = fr.start_ip - 1; 
           }
           break;
+          case Opcodes.CallAlt:
+          {
+            uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+            var args_info = new FuncArgsInfo(args_bits);
+
+            //Frame object is located in this case on the top of the stack
+            var fr = (Frame)curr_frame.stack[curr_frame.stack.Count-args_info.CountArgs()-1]._obj;
+            //NOTE: it will be released once return is invoked
+            fr.Retain();
+
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              fr.stack.Push(curr_frame.stack.Pop());
+            fr.stack.Push(Val.NewNum(this, args_bits));
+
+            //let's pop Frame
+            curr_frame.stack.PopRelease();
+
+            //let's remember ip to return to
+            fr.return_ip = ip;
+            frames.Push(fr);
+            curr_frame = fr;
+            //since ip will be incremented below we decrement it intentionally here
+            ip = fr.start_ip - 1; 
+          }
+          break;
           case Opcodes.CallNative:
           {
             uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
@@ -1037,16 +1064,14 @@ public class VM
           }
           break;
           case Opcodes.Lambda:
-          {
-            int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          {             
+            short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
 
             var fr = Frame.New(this);
-            fr.Init(curr_frame, func_ip);
-            fr.locals_num = local_vars_num;
-            var frval = Val.NewObj(this, fr);
-            frval._num = func_ip;
-            curr_frame.stack.Push(frval);
+            fr.Init(curr_frame, ip+1/*func address*/);
+            curr_frame.stack.Push(Val.NewObj(this, fr));
+
+            ip += offset;
           }
           break;
           case Opcodes.UseUpval:
@@ -1058,8 +1083,6 @@ public class VM
 
             //TODO: amount of local variables must be known ahead 
             int gaps = local_idx - lmb.locals_num + 1;
-            for(int i=0;i<gaps;++i)
-              lmb.stack[lmb.locals_num + i] = Val.New(this); 
             lmb.locals_num += gaps;
 
             var up_val = curr_frame.stack[up_idx];
