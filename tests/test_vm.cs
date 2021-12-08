@@ -281,6 +281,79 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCastFloatToStr()
+  {
+    string bhl = @"
+      
+    func string test(float k) 
+    {
+      return (string)k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var str = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().str;
+    AssertEqual(str, "3");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCastFloatToInt()
+  {
+    string bhl = @"
+
+    func int test(float k) 
+    {
+      return (int)k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test", Val.NewNum(vm, 3.9)).stack.PopRelease().num;
+    AssertEqual(res, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCastIntToAny()
+  {
+    string bhl = @"
+      
+    func any test() 
+    {
+      return (any)121
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 121);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCastIntToAny2()
+  {
+    string bhl = @"
+
+    func int foo(any a)
+    {
+      return (int)a
+    }
+      
+    func int test() 
+    {
+      return foo(121)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 121);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSeveralReturns()
   {
     string bhl = @"

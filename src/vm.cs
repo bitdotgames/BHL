@@ -721,7 +721,7 @@ public class VM
             if(cast_type == "string")
               curr_frame.stack.Push(Val.NewStr(this, curr_frame.stack.PopRelease().num.ToString()));
             else if(cast_type == "int")
-              curr_frame.stack.Push(Val.NewNum(this, curr_frame.stack.PopRelease().num));
+              curr_frame.stack.Push(Val.NewNum(this, (int)curr_frame.stack.PopRelease().num));
             else if(cast_type == "any")
             {
               var new_val = Val.New(this);
