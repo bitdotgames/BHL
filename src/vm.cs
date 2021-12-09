@@ -219,7 +219,7 @@ public class VM
   public class Frame : IExitableScope, IValRefcounted
   {
     public const int MAX_LOCALS = 64;
-    public const int MAX_TEMPS = 32;
+    public const int MAX_STACK = 32;
 
     //NOTE: -1 means it's in released state,
     //      public only for inspection
@@ -231,23 +231,8 @@ public class VM
 
     public byte[] bytecode;
     public List<Const> constants;
-    public FixedStack<Val> stack = new FixedStack<Val>(MAX_LOCALS + MAX_TEMPS);
-    int _locals_num;
-    public int locals_num {
-      get {
-        return _locals_num; 
-      }
-      set {
-        if(value > MAX_LOCALS)
-          throw new Exception("Too many local variables: " + value);
-        _locals_num = value; 
-      }
-    }
-    public int temps_num {
-      get {
-        return stack.Count - MAX_LOCALS;
-      }
-    }
+    public FixedStack<Val> locals = new FixedStack<Val>(MAX_LOCALS);
+    public FixedStack<Val> stack = new FixedStack<Val>(MAX_STACK);
     public int start_ip;
     public int return_ip;
     public List<DeferBlock> defers;
@@ -312,25 +297,30 @@ public class VM
     {
       this.bytecode = bytecode;
       this.start_ip = start_ip;
-      this.locals_num = 0;
-      stack.SetHead(MAX_LOCALS);
     }
 
-    void Clear()
+    public void Clear()
     {
-      for(int i=stack.Count;i-- > 0;)
+      for(int i=locals.Count;i-- > 0;)
       {
-        var val = stack[i];
+        var val = locals[i];
+        //for now allowing null gaps?
         if(val != null)
           val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       }
+      locals.Clear();
+
+      for(int i=stack.Count;i-- > 0;)
+      {
+        var val = stack[i];
+        val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      }
       stack.Clear();
-      locals_num = 0;
     }
 
     public void SetLocal(int idx, Val val)
     {
-      var curr = stack[idx];
+      var curr = locals[idx];
       if(curr != null)
       {
         for(int i=0;i<curr._refs;++i)
@@ -345,7 +335,7 @@ public class VM
         curr = Val.New(vm);
         curr.ValueCopyFrom(val);
         curr.RefMod(RefOp.USR_INC);
-        stack[idx] = curr;
+        locals[idx] = curr;
       }
     }
 
@@ -451,6 +441,14 @@ public class VM
 
   public class ValPool : Pool<Val>
   {
+    //NOTE: used for debug tracking of not-freed Vals
+    internal struct Tracking
+    {
+      internal Val v;
+      internal string stack_trace;
+    }
+    internal List<Tracking> debug_track = new List<Tracking>();
+
     public void Alloc(VM vm, int num)
     {
       for(int i=0;i<num;++i)
@@ -465,6 +463,7 @@ public class VM
     {
       string res = "=== Val POOL ===\n";
       res += "total:" + Allocs + " free:" + Free + "\n";
+
       var dvs = new Val[stack.Count];
       stack.CopyTo(dvs, 0);
       for(int i=dvs.Length;i-- > 0;)
@@ -472,6 +471,19 @@ public class VM
         var v = dvs[i];
         res += v + " (refs:" + v._refs + ") " + v.GetHashCode() + "\n"; 
       }
+
+      if(debug_track.Count > 0)
+      {
+        var dangling = new List<Tracking>();
+        foreach(var t in debug_track)
+          if(t.v._refs != -1)
+            dangling.Add(t);
+
+        res += "== dangling:" + dangling.Count + " ==\n";
+        foreach(var t in dangling)
+          res += t.v + " (refs:" + t.v._refs + ") " + t.v.GetHashCode() + "\n" + t.stack_trace + "\n<<<<<\n"; 
+      }
+
       return res;
     }
   }
@@ -612,6 +624,8 @@ public class VM
   {
     var fb = Fiber.New(this);
     Register(fb, fr);
+    //cargs bits
+    fr.stack.Push(Val.NewNum(this, 0));
     return fb;
   }
 
@@ -736,13 +750,13 @@ public class VM
           case Opcodes.Inc:
           {
             int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            ++curr_frame.stack[var_idx]._num;
+            ++curr_frame.locals[var_idx]._num;
           }
           break;
           case Opcodes.Dec:
           {
             int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            --curr_frame.stack[var_idx]._num;
+            --curr_frame.locals[var_idx]._num;
           }
           break;
           case Opcodes.Add:
@@ -781,7 +795,7 @@ public class VM
           case Opcodes.GetVar:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.stack.PushRetain(curr_frame.stack[local_idx]);
+            curr_frame.stack.PushRetain(curr_frame.locals[local_idx]);
           }
           break;
           //TODO: this one looks pretty much like SetVar
@@ -792,14 +806,14 @@ public class VM
             var loc_var = Val.New(this);
             loc_var.ValueCopyFrom(arg_val);
             loc_var.RefMod(RefOp.USR_INC);
-            curr_frame.stack[local_idx] = loc_var;
+            curr_frame.locals[local_idx] = loc_var;
             arg_val.Release();
           }
           break;
           case Opcodes.ArgRef:
           {
             int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.stack[local_idx] = curr_frame.stack.Pop();
+            curr_frame.locals[local_idx] = curr_frame.stack.Pop();
           }
           break;
           case Opcodes.DeclVar:
@@ -815,7 +829,7 @@ public class VM
               v = Val.NewBool(this, false);
             else
               v = Val.NewObj(this, null);
-            curr_frame.stack[local_idx] = v;
+            curr_frame.locals[local_idx] = v;
           }
           break;
           case Opcodes.GetAttr:
@@ -897,6 +911,7 @@ public class VM
           {
             curr_frame.ExitScope(this);
             ip = curr_frame.return_ip;
+            curr_frame.Clear();
             curr_frame.Release();
             //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
             frames.Pop();
@@ -921,8 +936,8 @@ public class VM
 
             ip = curr_frame.return_ip;
             curr_frame.ExitScope(this);
+            curr_frame.Clear();
             curr_frame.Release();
-            //Console.WriteLine("RETVAL IP " + ip + " FRAMES " + frames.Count + " " + curr_frame.GetHashCode());
             frames.Pop();
             if(frames.Count > 0)
               curr_frame = frames.Peek();
@@ -960,7 +975,7 @@ public class VM
           case Opcodes.GetFuncFromVar:
           {
             int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var val = curr_frame.stack[local_var_idx];
+            var val = curr_frame.locals[local_var_idx];
             var frm = (Frame)val._obj; 
             //NOTE: we need to call an extra Retain since Release will be called for this frame 
             //      during its execution of Opcode.Return, however since this frame is stored in a var 
@@ -1045,11 +1060,12 @@ public class VM
           case Opcodes.InitFrame:
           {
             int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.locals_num = local_vars_num;
+            var args_bits = curr_frame.stack.Pop(); 
+            curr_frame.locals.SetHead(local_vars_num);
             //NOTE: we need to store arg info bits locally so that
             //      this information will be available to func 
             //      args related opcodes
-            curr_frame.stack[local_vars_num-1] = curr_frame.stack.Pop();
+            curr_frame.locals[local_vars_num-1] = args_bits;
           }
           break;
           case Opcodes.Lambda:
@@ -1069,15 +1085,18 @@ public class VM
 
             var lmb = (Frame)curr_frame.stack.Peek()._obj;
 
-            //TODO: amount of local variables must be known ahead 
-            int gaps = local_idx - lmb.locals_num + 1;
-            lmb.locals_num += gaps;
+            //TODO: amount of local variables must be known ahead and
+            //      initialized during Frame initialization
+            //NOTE: we need to reflect the updated max amount of locals,
+            //      otherwise they might not be cleared upon Frame exit
+            lmb.locals.SetHead(local_idx+1);
 
-            var up_val = curr_frame.stack[up_idx];
+            var up_val = curr_frame.locals[up_idx];
             up_val.Retain();
-            if(lmb.stack[local_idx] != null)
-              lmb.stack[local_idx].Release();
-            lmb.stack[local_idx] = up_val;
+            if(lmb.locals[local_idx] != null)
+              lmb.locals[local_idx].Release();
+            lmb.locals[local_idx] = up_val;
+
           }
           break;
           case Opcodes.Pop:
@@ -1103,7 +1122,7 @@ public class VM
           {
             byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            var args_info = new FuncArgsInfo((uint)curr_frame.stack[curr_frame.locals_num-1]._num);
+            var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
             //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
             //NOTE: if default argument is not used we need to jump out of default argument calculation code
             if(!args_info.IsDefaultArgUsed(def_arg_idx))
@@ -1728,6 +1747,12 @@ public class Val
       ++vm.vals_pool.miss;
       dv = new Val(vm);
 #if DEBUG_REFS
+      vm.vals_pool.debug_track.Add(
+        new VM.ValPool.Tracking() {
+          v = dv,
+          stack_trace = Environment.StackTrace
+        }
+      );
       Console.WriteLine("NEW: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
     }

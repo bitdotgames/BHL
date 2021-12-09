@@ -3206,6 +3206,29 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaCallAsVarSeveralTimes()
+  {
+    string bhl = @"
+    func dummy() {
+    }
+
+    func int test()
+    {
+      int^() a = func int() {
+        return 123
+      }
+      return a() + a()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    AssertEqual(vm.Tick(), BHS.SUCCESS);
+    AssertEqual(fb.stack.PopRelease().num, 246);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLambdaCallAsVarWithArgs()
   {
     string bhl = @"
@@ -6641,7 +6664,7 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestOperatorTernaryIf()
   {
     string bhl = @"
@@ -6703,7 +6726,7 @@ public class BHL_TestVM : BHL_TestBase
     //}
     ";
 
-    var vm = MakeVM(bhl, null, true, true);
+    var vm = MakeVM(bhl);
 
     //AssertEqual(Execute(vm, "test1").stack.PopRelease().num, 100500);
     AssertEqual(Execute(vm, "test2").stack.PopRelease().num, 100500);
