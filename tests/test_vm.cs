@@ -354,6 +354,87 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCastStrToAny()
+  {
+    string bhl = @"
+      
+    func any test() 
+    {
+      return (any)""foo""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().str;
+    AssertEqual(res, "foo");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrConcat()
+  {
+    string bhl = @"
+      
+    func string test(int k) 
+    {
+      return (string)k + (string)(k*2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().str;
+    AssertEqual(res, "36");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImplicitIntArgsCast()
+  {
+    string bhl = @"
+
+    func float foo(float a, float b)
+    {
+      return a + b
+    }
+      
+    func float test() 
+    {
+      return foo(1, 2.0)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImplicitIntArgsCastBindFunc()
+  {
+    string bhl = @"
+
+    func float bar(float a)
+    {
+      return a
+    }
+      
+    func float test() 
+    {
+      return bar(a : min(1, 0.3))
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindMin(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 0.3f);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSeveralReturns()
   {
     string bhl = @"
@@ -9222,6 +9303,21 @@ public class BHL_TestVM : BHL_TestBase
       fn.Define(new FuncArgSymbol("str", globs.Type("string")));
       globs.Define(fn);
     }
+  }
+
+  void BindMin(GlobalScope globs)
+  {
+    var fn = new FuncSymbolNative("min", globs.Type("float"), null,
+        delegate(VM.Frame frm, ref BHS status) { 
+          var b = (float)frm.stack.PopRelease().num;
+          var a = (float)frm.stack.PopRelease().num;
+          frm.stack.Push(Val.NewNum(frm.vm, a > b ? b : a)); 
+          return null;
+        } 
+    );
+    fn.Define(new FuncArgSymbol("a", globs.Type("float")));
+    fn.Define(new FuncArgSymbol("b", globs.Type("float")));
+    globs.Define(fn);
   }
 
   public class Color
