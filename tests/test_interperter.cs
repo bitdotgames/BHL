@@ -5,16 +5,6 @@ using bhl;
 
 public class BHL_TestInterpreter : BHL_TestBase
 {
-  public class RetValNode : BehaviorTreeTerminalNode
-  {
-    public override void init()
-    {
-      var interp = Interpreter.instance;
-      var k = interp.PopValue().ValueClone();
-      interp.PushValue(k);
-    }
-  }
-
   [IsTested()]
   public void TestBindFunctionWithDefaultArgs()
   {
