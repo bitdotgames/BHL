@@ -6674,64 +6674,56 @@ public class BHL_TestVM : BHL_TestBase
       return a < b ? (int)a : b
     }
 
-    //func int test1() 
-    //{
-    //  float a = 100500
-    //  int b   = 500100
+    func int test1() 
+    {
+      float a = 100500
+      int b   = 500100
 
-    //  int c = a > b ? b : (int)a //500100
-    //  
-    //  return min(a > c ? b : c/*500100*/, (int)a/*100500*/)
-    //}
+      int c = a > b ? b : (int)a //500100
+      
+      return min(a > c ? b : c/*500100*/, (int)a/*100500*/)
+    }
 
     func int test2() 
     {
-      //int^() af = func int() { return 500100 } //500100
-      int^() af = func int() { return 100500 }
+      int^() af = func int() { return 500100 } //500100
 
-      //int^() bf = func int() { 
-      //  int a = 2
-      //  int b = 1
+      int^() bf = func int() { 
+        int a = 2
+        int b = 1
 
-      //  int c = a > b ? 100500 : 500100
+        int c = a > b ? 100500 : 500100
 
-      //  return c //100500
-      //}
+        return c //100500
+      }
 
-      //int^() cf = func int() { 
-      //  return true ? 100500 : 500100 //100500
-      //}
+      int^() cf = func int() { 
+        return true ? 100500 : 500100 //100500
+      }
 
-      int tmp = af()
-      return min(af(), 100500 > 100500 ? 100500 : tmp)
-
-      //return min(cf(), cf() > cf() ? cf() : cf())
-      //return min(cf(), 100500 > 100500 ? cf() : cf())
-      //return min(100500, 100500 > bf() ? cf() : cf())
-
-      //return min(af()/*500100*/, 
-      //  af() > bf()/*true*/ ? (false ? af() : cf()/*100500*/) : bf())
-      //  /*100500*/ > af()/*500100*/ ? af() : cf()/*100500*/
+      return min(af()/*500100*/, 
+        af() > bf()/*true*/ ? (false ? af() : cf()/*100500*/) : bf())
+        /*100500*/ > af()/*500100*/ ? af() : cf()/*100500*/
     }
 
-    //func string test3(int v)
-    //{
-    //  string^() af = func string() {
-    //    return v == 1 ? ""first value""  :
-    //           v == 2 ? ""second value"" :
-    //           v == 3 ? ""result value"" : ""default value""
-    //  }
+    func string test3(int v)
+    {
+      string^() af = func string() {
+        return v == 1 ? ""first value""  :
+               v == 2 ? ""second value"" :
+               v == 3 ? ""result value"" : ""default value""
+      }
 
-    //  return af()
-    //}
+      return af()
+    }
     ";
 
     var vm = MakeVM(bhl);
 
-    //AssertEqual(Execute(vm, "test1").stack.PopRelease().num, 100500);
+    AssertEqual(Execute(vm, "test1").stack.PopRelease().num, 100500);
     AssertEqual(Execute(vm, "test2").stack.PopRelease().num, 100500);
-    //AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 0)).stack.PopRelease().str, "default value");
-    //AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 2)).stack.PopRelease().str, "second value");
+    AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 0)).stack.PopRelease().str, "default value");
+    AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 2)).stack.PopRelease().str, "second value");
 
     CommonChecks(vm);
   }
