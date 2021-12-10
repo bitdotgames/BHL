@@ -8409,6 +8409,397 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPlusNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      Color c3 = c1 + c2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestMinusNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      Color c3 = c1 - c2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestMultNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      Color c3 = c1 * c2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestDivNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      Color c3 = c1 / c2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestGtNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool r = c1 > c2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestGteNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool r = c1 >= c2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestLtNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool r = c1 > c2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestLteNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool r = c1 > c2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"operator is not overloaded"
+    );
+  }
+
+  [IsTested()]
+  public void TestUnaryMinusNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2 = -c1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"must be numeric type"
+    );
+  }
+
+  [IsTested()]
+  public void TestBitAndNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      int a = c2 & c1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"must be int type"
+    );
+  }
+
+  [IsTested()]
+  public void TestBitOrNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      int a = c2 | c1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"must be int type"
+    );
+  }
+
+  [IsTested()]
+  public void TestLogicalAndNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool a = c2 && c1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"must be bool type"
+    );
+  }
+
+  [IsTested()]
+  public void TestLogicalOrNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      Color c2
+      bool a = c2 || c1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"must be bool type"
+    );
+  }
+
+  [IsTested()]
+  public void TestUnaryNotNotOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c1
+      bool a = !c1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"must be bool type"
+    );
+  }
+
+  [IsTested()]
+  public void TestPlusOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func Color test() 
+    {
+      Color c1 = {r:1,g:2}
+      Color c2 = {r:20,g:30}
+      Color c3 = c1 + c2
+      return c3
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    var cl = BindColor(globs);
+    var op = new FuncSymbolNative("+", globs.Type("Color"), null,
+      delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+      {
+        var r = (Color)frm.stack.PopRelease().obj;
+        var c = (Color)frm.stack.PopRelease().obj;
+
+        var newc = new Color();
+        newc.r = c.r + r.r;
+        newc.g = c.g + r.g;
+
+        var v = Val.NewObj(frm.vm, newc);
+        frm.stack.Push(v);
+
+        return null;
+      }
+    );
+    op.Define(new FuncArgSymbol("r", globs.Type("Color")));
+    cl.OverloadBinaryOperator(op);
+
+    var vm = MakeVM(bhl, globs);
+    var res = (Color)Execute(vm, "test").stack.PopRelease().obj;
+    AssertEqual(21, res.r);
+    AssertEqual(32, res.g);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestPassArgToFiber()
   {
     string bhl = @"
