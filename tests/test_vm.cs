@@ -8335,6 +8335,30 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeClassCallMethod()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = new Color
+      c.r = 10
+      c.g = 20
+      return c.mult_summ(k)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 60);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestPassArgToFiber()
   {
     string bhl = @"
@@ -9537,8 +9561,8 @@ public class BHL_TestVM : BHL_TestBase
 
   ClassSymbolNative BindColor(GlobalScope globs)
   {
-    var cl = new ClassSymbolNative("Color", null,
-      delegate(ref DynVal v) 
+    var cl = new ClassSymbolNative("Color", null, null,
+      delegate(VM.Frame frm, ref Val v) 
       { 
         v.obj = new Color();
       }
@@ -9596,24 +9620,22 @@ public class BHL_TestVM : BHL_TestBase
     //  cl.Define(m);
     //}
     //
-    //{
-    //  var m = new FuncSymbolSimpleNative("mult_summ", globs.Type("float"),
-    //    delegate()
-    //    {
-    //      var interp = Interpreter.instance;
+    {
+      var m = new FuncSymbolNative("mult_summ", globs.Type("float"), null,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        {
+          var k = frm.stack.PopRelease().num;
+          var c = (Color)frm.stack.PopRelease().obj;
 
-    //      var k = interp.PopValue().num;
-    //      var c = (Color)interp.PopValue().obj;
+          frm.stack.Push(Val.NewNum(frm.vm, (c.r * k) + (c.g * k)));
 
-    //      interp.PushValue(DynVal.NewNum((c.r * k) + (c.g * k)));
+          return null;
+        }
+      );
+      m.Define(new FuncArgSymbol("k", globs.Type("float")));
 
-    //      return BHS.SUCCESS;
-    //    }
-    //  );
-    //  m.Define(new FuncArgSymbol("k", globs.Type("float")));
-
-    //  cl.Define(m);
-    //}
+      cl.Define(m);
+    }
     //
     //{
     //  var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"),
@@ -9685,7 +9707,7 @@ public class BHL_TestVM : BHL_TestBase
   ClassSymbolNative BindBar(GlobalScope globs)
   {
     var cl = new ClassSymbolNative("Bar", null,
-      delegate(VM vm, ref Val v) 
+      delegate(VM.Frame frm, ref Val v) 
       { 
         v.SetObj(new Bar());
       }

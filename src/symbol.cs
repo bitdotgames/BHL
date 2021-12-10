@@ -358,7 +358,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract BehaviorTreeNode Create_RemoveAt();
   public abstract BehaviorTreeNode Create_Clear();
 
-  public abstract void VM_CreateArr(VM vm, ref Val v);
+  public abstract void VM_CreateArr(VM.Frame frame, ref Val v);
   public abstract void VM_GetCount(Val ctx, ref Val v);
   public abstract IInstruction VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract IInstruction VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
@@ -450,9 +450,9 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return lst;
   }
 
-  public override void VM_CreateArr(VM vm, ref Val v)
+  public override void VM_CreateArr(VM.Frame frm, ref Val v)
   {
-    v.SetObj(ValList.New(vm));
+    v.SetObj(ValList.New(frm.vm));
   }
 
   public override void VM_GetCount(Val ctx, ref Val v)
@@ -592,7 +592,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return new Array_ClearNodeT();
   }
 
-  public override void VM_CreateArr(VM vm, ref Val v)
+  public override void VM_CreateArr(VM.Frame frm, ref Val v)
   {
     throw new Exception("Not implemented");
   }
@@ -1270,12 +1270,12 @@ public class ClassSymbolScript : ClassSymbol
     }
   }
 
-  void VM_ClassCreator(VM vm, ref Val res)
+  void VM_ClassCreator(VM.Frame frm, ref Val res)
   {
     ValList vl = null;
     if(super_class != null)
     {
-      super_class.VM_creator(vm, ref res);
+      super_class.VM_creator(frm, ref res);
       vl = (ValList)res.obj;
     }
     else
