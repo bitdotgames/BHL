@@ -8270,6 +8270,30 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeClassMembersAccess()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = new Color
+      c.r = k*1
+      c.g = k*100
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
