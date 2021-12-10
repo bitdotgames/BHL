@@ -746,20 +746,7 @@ public class VM
             int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             string cast_type = curr_frame.constants[cast_type_idx].str;
 
-            //TODO: make it more universal and robust
-            if(cast_type == "string")
-              curr_frame.stack.Push(Val.NewStr(this, curr_frame.stack.PopRelease().num.ToString()));
-            else if(cast_type == "int")
-              curr_frame.stack.Push(Val.NewNum(this, (int)curr_frame.stack.PopRelease().num));
-            else if(cast_type == "any")
-            {
-              var new_val = Val.New(this);
-              new_val.ValueCopyFrom(curr_frame.stack.PopRelease());
-              new_val.RefMod(RefOp.USR_INC);
-              curr_frame.stack.Push(new_val);
-            }
-            else
-              throw new Exception("Not supported typecast type: " + cast_type);
+            HandleTypeCast(curr_frame, cast_type);
           }
           break;
           case Opcodes.Inc:
@@ -1168,6 +1155,25 @@ public class VM
     }
 
     return BHS.SUCCESS;
+  }
+
+  //TODO: make it more universal and robust
+  void HandleTypeCast(Frame curr_frame, string cast_type)
+  {
+    var new_val = Val.New(this);
+    var val = curr_frame.stack.PopRelease();
+
+    if(cast_type == "int")
+      new_val.SetNum((int)val.num);
+    else if(cast_type == "string" && val.type != Val.STRING)
+      new_val.SetStr(val.num.ToString());
+    else
+    {
+      new_val.ValueCopyFrom(val);
+      new_val.RefMod(RefOp.USR_INC);
+    }
+
+    curr_frame.stack.Push(new_val);
   }
 
   void HandleNew(Frame curr_frame, string class_type)

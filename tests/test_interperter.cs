@@ -649,36 +649,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCastClassToAny()
-  {
-    string bhl = @"
-      
-    func float test(float k) 
-    {
-      Color c = new Color
-      c.r = k
-      c.g = k*100
-      any a = (any)c
-      Color b = (Color)a
-      return b.g + b.r 
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    
-    BindColor(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    node.SetArgs(DynVal.NewNum(2));
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 202);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestPlusNotOverloadedForNativeClass()
   {
     string bhl = @"

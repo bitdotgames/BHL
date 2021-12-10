@@ -8359,6 +8359,32 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCastClassToAny()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = new Color
+      c.r = k
+      c.g = k*100
+      any a = (any)c
+      Color b = (Color)a
+      return b.g + b.r 
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestPassArgToFiber()
   {
     string bhl = @"
