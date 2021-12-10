@@ -611,6 +611,36 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFailureInBindFunction()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      float val = foo()
+      return val
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new FuncSymbolNative("foo", globs.Type("float"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+            status = BHS.FAILURE; 
+            return null;
+          });
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+    vm.Tick();
+    AssertEqual(fb.status, BHS.FAILURE);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSeveralReturns()
   {
     string bhl = @"
@@ -8503,8 +8533,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestSelfStopFiberFromScript()
   {
     string bhl = @"
@@ -8545,9 +8574,8 @@ public class BHL_TestVM : BHL_TestBase
 
     vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertFalse(vm.Tick());
     AssertTrue(vm.Tick());
-    AssertEqual("1340", log.ToString());
+    AssertEqual("3140", log.ToString());
     CommonChecks(vm);
   }
 

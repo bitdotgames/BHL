@@ -129,6 +129,9 @@ public class Const
 
 public class VM
 {
+  public const int MAX_IP = int.MaxValue;
+  public const int STOP_IP = MAX_IP - 1;
+
   public class Fiber
   {
     internal VM vm;
@@ -433,6 +436,7 @@ public class VM
   int fibers_ids = 0;
 
   List<Fiber> fibers = new List<Fiber>();
+  List<Fiber> fibers_stopped = new List<Fiber>();
 
   IModuleImporter importer;
 
@@ -644,8 +648,16 @@ public class VM
 
   public void Stop(Fiber fb)
   {
+    //we don't immediately remove stopped fibers but rather
+    //put them into a special to-be-removed list
+    if(fibers_stopped.IndexOf(fb) != -1)
+      return;
+    fibers_stopped.Add(fb);
+
     Fiber.Del(fb);
-    fibers.Remove(fb);
+    //NOTE: we assing Fiber ip to a special value which is just one value before MAX_IP,
+    //      this way Fiber breaks its current Frame execution loop.
+    fb.ip = STOP_IP;
   }
 
   public void Stop(int fid)
@@ -699,6 +711,7 @@ public class VM
           ip = curr_frame.return_ip;
           curr_frame.Release();
           frames.Pop();
+
           return status;
         }
         else
@@ -1236,18 +1249,28 @@ public class VM
 
   public bool Tick()
   {
-    for(int i=0;i<fibers.Count;)
+    for(int i=0;i<fibers.Count;++i)
     {
       var fb = fibers[i];
 
-      var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, int.MaxValue, null);
+      //let's check if this Fiber was already stopped
+      if(fb.ip == STOP_IP)
+        continue;
+
+      var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, MAX_IP, null);
       fb.status = status;
       
       if(status != BHS.RUNNING)
         Stop(fb);
-      else
-        ++i;
     }
+
+    for(int i=fibers_stopped.Count;i-- > 0;)
+    {
+      var fb = fibers_stopped[i];
+      fibers_stopped.RemoveAt(i);
+      fibers.Remove(fb);
+    }
+
     return fibers.Count == 0;
   }
 
@@ -1387,7 +1410,7 @@ public class Instructions
       inst = pool.stack.Pop();
     }
 
-    //Console.WriteLine("NEW " + typeof(T).Name + " " + inst.GetHashCode());
+    //Console.WriteLine("NEW " + typeof(T).Name + " " + inst.GetHashCode() + " " + Environment.StackTrace);
 
     return (T)inst;
   }

@@ -5,34 +5,6 @@ using bhl;
 
 public class BHL_TestInterpreter : BHL_TestBase
 {
-  [IsTested()]
-  public void TestFailureInBindFunction()
-  {
-    string bhl = @"
-
-    func float test() 
-    {
-      float val = foo()
-      return val
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    {
-      var fn = new FuncSymbolSimpleNative("foo", globs.Type("float"),
-          delegate() { return BHS.FAILURE; } );
-      globs.Define(fn);
-    }
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExecNode(node, 0);
-
-    AssertEqual(res.status, BHS.FAILURE);
-    CommonChecks(intp);
-  }
-
   public class Color
   {
     public float r;
