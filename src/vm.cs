@@ -1002,6 +1002,19 @@ public class VM
             curr_frame.stack.Push(Val.NewObj(this, func_frame));
           }
           break;
+          case Opcodes.GetLambda:
+          {
+            //NOTE: geting rid of Frame on the stack left after Opcode.Lambda.
+            //      Since lambda is called 'inplace' we need to generate proper 
+            //      opcode sequence required for Opcode.Call
+            uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+            var args_info = new FuncArgsInfo(args_bits);
+            int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
+            var fr = curr_frame.stack[fr_idx];
+            curr_frame.stack.RemoveAt(fr_idx);
+            curr_frame.stack.Push(fr);
+          }
+          break;
           case Opcodes.Call:
           {
             uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
@@ -1025,19 +1038,6 @@ public class VM
             ip = fr.start_ip - 1; 
           }
           break;
-          case Opcodes.GetLambda:
-          {
-            //NOTE: geting rid of Frame on the stack left after Opcode.Lambda.
-            //      Since lambda is called 'inplace' we need to generate proper 
-            //      opcode sequence required for Opcode.Call
-            uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-            var args_info = new FuncArgsInfo(args_bits);
-            int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-            var fr = curr_frame.stack[fr_idx];
-            curr_frame.stack.RemoveAt(fr_idx);
-            curr_frame.stack.Push(fr);
-          }
-          break;
           case Opcodes.CallNative:
           {
             uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
@@ -1048,7 +1048,7 @@ public class VM
             for(int i = 0; i < args_info.CountArgs(); ++i)
               curr_frame.stack.Push(curr_frame.stack.Pop());
 
-            var sub_instruction = func_symb.VM_cb(curr_frame, ref status);
+            var sub_instruction = func_symb.VM_cb(curr_frame, args_info, ref status);
             if(sub_instruction != null)
               AttachInstruction(ref instruction, sub_instruction);
 
