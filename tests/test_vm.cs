@@ -514,6 +514,78 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBindFunctionWithDefaultArgs3()
+  {
+    string bhl = @"
+
+    func float test() 
+    {
+      return func_with_def()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), null, 
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          {
+            var a = args_info.IsDefaultArgUsed(0) ? 14 : frm.stack.PopRelease().num;
+
+            frm.stack.Push(Val.NewNum(frm.vm, a));
+
+            return null;
+          },
+          1);
+      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
+
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 14);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBindFunctionWithDefaultArgsOmittingSome()
+  {
+    string bhl = @"
+      
+    func float test(int k) 
+    {
+      return func_with_def(b : k)
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    {
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), null, 
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          {
+            var b = args_info.IsDefaultArgUsed(1) ? 2 : frm.stack.PopRelease().num;
+            var a = args_info.IsDefaultArgUsed(0) ? 10 : frm.stack.PopRelease().num;
+
+            frm.stack.Push(Val.NewNum(frm.vm, a + b));
+
+            return null;
+          },
+          2);
+      fn.Define(new FuncArgSymbol("a", globs.Type("int")));
+      fn.Define(new FuncArgSymbol("b", globs.Type("int")));
+
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 42)).stack.PopRelease().num;
+    AssertEqual(res, 52);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSeveralReturns()
   {
     string bhl = @"
