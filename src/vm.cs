@@ -1271,7 +1271,7 @@ public class VM
       fibers.Remove(fb);
     }
 
-    return fibers.Count == 0;
+    return fibers.Count != 0;
   }
 
   void ExecuteUnaryOp(Opcodes op, Frame curr_frame)
