@@ -230,6 +230,12 @@ public class BHL_TestBase
       throw new Exception("Assertion failed" + (msg.Length > 0 ? (": " + msg) : ""));
   }
 
+  public static void AssertFalse(bool cond, string msg = "")
+  {
+    if(cond)
+      throw new Exception("Assertion failed" + (msg.Length > 0 ? (": " + msg) : ""));
+  }
+
   public void AssertError<T>(Action action, string msg) where T : Exception
   {
     Exception err = null;

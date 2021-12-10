@@ -139,6 +139,8 @@ public class VM
     internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
 
     public FixedStack<Val> stack = new FixedStack<Val>(32);
+    
+    public BHS status;
 
     static public Fiber New(VM vm)
     {
@@ -1232,21 +1234,21 @@ public class VM
       throw new Exception("Not supported block type: " + type);
   }
 
-  public BHS Tick()
+  public bool Tick()
   {
     for(int i=0;i<fibers.Count;)
     {
       var fb = fibers[i];
 
       var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, int.MaxValue, null);
+      fb.status = status;
       
       if(status != BHS.RUNNING)
         Stop(fb);
       else
         ++i;
     }
-
-    return fibers.Count == 0 ? BHS.SUCCESS : BHS.RUNNING;
+    return fibers.Count == 0;
   }
 
   void ExecuteUnaryOp(Opcodes op, Frame curr_frame)

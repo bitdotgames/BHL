@@ -6,32 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestReturnFailureFirst()
-  {
-    string bhl = @"
-
-    func float foo()
-    {
-      fail()
-      return 100
-    }
-      
-    func float test() 
-    {
-      float val = foo()
-      return val
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExecNode(node, 0);
-
-    AssertEqual(res.status, BHS.FAILURE);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestFailureInBindFunction()
   {
     string bhl = @"
