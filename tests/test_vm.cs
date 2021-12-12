@@ -8842,6 +8842,72 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestOverloadedBinOpsPriorityForNativeClass()
+  {
+    string bhl = @"
+      
+    func Color test() 
+    {
+      Color c1 = {r:1,g:2}
+      Color c2 = {r:10,g:20}
+      Color c3 = c1 + c2 * 2
+      return c3
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    var cl = BindColor(globs);
+    {
+      var op = new FuncSymbolNative("*", globs.Type("Color"), null,
+      delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+      {
+        var k = (float)frm.stack.PopRelease().num;
+        var c = (Color)frm.stack.PopRelease().obj;
+
+        var newc = new Color();
+        newc.r = c.r * k;
+        newc.g = c.g * k;
+
+        var v = Val.NewObj(frm.vm, newc);
+        frm.stack.Push(v);
+
+        return null;
+      }
+      );
+      op.Define(new FuncArgSymbol("k", globs.Type("float")));
+      cl.OverloadBinaryOperator(op);
+    }
+    
+    {
+      var op = new FuncSymbolNative("+", globs.Type("Color"), null,
+      delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+      {
+        var r = (Color)frm.stack.PopRelease().obj;
+        var c = (Color)frm.stack.PopRelease().obj;
+
+        var newc = new Color();
+        newc.r = c.r + r.r;
+        newc.g = c.g + r.g;
+
+        var v = Val.NewObj(frm.vm, newc);
+        frm.stack.Push(v);
+
+        return null;
+      }
+      );
+      op.Define(new FuncArgSymbol("r", globs.Type("Color")));
+      cl.OverloadBinaryOperator(op);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var res = (Color)Execute(vm, "test").stack.PopRelease().obj;
+    AssertEqual(21, res.r);
+    AssertEqual(42, res.g);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestPassArgToFiber()
   {
     string bhl = @"
