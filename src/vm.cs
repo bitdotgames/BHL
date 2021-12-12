@@ -191,6 +191,11 @@ public class VM
       frames.Clear();
     }
 
+    public bool IsStopped()
+    {
+      return ip >= STOP_IP;
+    }
+
     public void GetStackTrace(List<VM.TraceItem> info)
     {
       for(int i=0;i<frames.Count;++i)
@@ -434,9 +439,7 @@ public class VM
   Dictionary<string, ModuleAddr> func2addr = new Dictionary<string, ModuleAddr>();
 
   int fibers_ids = 0;
-
   List<Fiber> fibers = new List<Fiber>();
-  List<Fiber> fibers_stopped = new List<Fiber>();
 
   IModuleImporter importer;
 
@@ -648,11 +651,8 @@ public class VM
 
   public void Stop(Fiber fb)
   {
-    //we don't immediately remove stopped fibers but rather
-    //put them into a special to-be-removed list
-    if(fibers_stopped.IndexOf(fb) != -1)
+    if(fb.IsStopped())
       return;
-    fibers_stopped.Add(fb);
 
     Fiber.Del(fb);
     //NOTE: we assing Fiber ip to a special value which is just one value before MAX_IP,
@@ -1260,7 +1260,7 @@ public class VM
       var fb = fibers[i];
 
       //let's check if this Fiber was already stopped
-      if(fb.ip == STOP_IP)
+      if(fb.IsStopped())
         continue;
 
       var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, MAX_IP, null);
@@ -1270,11 +1270,11 @@ public class VM
         Stop(fb);
     }
 
-    for(int i=fibers_stopped.Count;i-- > 0;)
+    for(int i=fibers.Count;i-- > 0;)
     {
-      var fb = fibers_stopped[i];
-      fibers_stopped.RemoveAt(i);
-      fibers.Remove(fb);
+      var fb = fibers[i];
+      if(fb.IsStopped())
+        fibers.RemoveAt(i);
     }
 
     return fibers.Count != 0;
