@@ -621,51 +621,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestMultOverloadedForNativeClass()
-  {
-    string bhl = @"
-      
-    func Color test() 
-    {
-      Color c1 = {r:1,g:2}
-      Color c2 = c1 * 2
-      return c2
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    
-    var cl = BindColor(globs);
-    var op = new FuncSymbolSimpleNative("*", globs.Type("Color"),
-      delegate()
-      {
-        var interp = Interpreter.instance;
-
-        var k = (float)interp.PopValue().num;
-        var c = (Color)interp.PopValue().obj;
-
-        var newc = new Color();
-        newc.r = c.r * k;
-        newc.g = c.g * k;
-
-        var dv = DynVal.NewObj(newc);
-        interp.PushValue(dv);
-
-        return BHS.SUCCESS;
-      }
-    );
-    op.Define(new FuncArgSymbol("k", globs.Type("float")));
-    cl.OverloadBinaryOperator(op);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var res = (Color)ExtractObj(ExecNode(node));
-
-    AssertEqual(2, res.r);
-    AssertEqual(4, res.g);
-  }
-
-  [IsTested()]
   public void TestOverloadedBinOpsPriorityForNativeClass()
   {
     string bhl = @"
