@@ -9649,6 +9649,34 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEnumArray()
+  {
+    string bhl = @"
+      
+    func EnumState[] test() 
+    {
+      EnumState[] arr = new EnumState[]
+      arr.Add(EnumState::SPAWNED2)
+      arr.Add(EnumState::SPAWNED)
+      return arr
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindEnum(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.Pop();
+    var lst = res.obj as ValList;
+    AssertEqual(lst.Count, 2);
+    AssertEqual(lst[0].num, 20);
+    AssertEqual(lst[1].num, 10);
+    res.Release();
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUsingBultinTypeAsFunc()
   {
     string bhl = @"

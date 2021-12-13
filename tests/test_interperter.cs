@@ -935,38 +935,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestEnumArray()
-  {
-    string bhl = @"
-      
-    func EnumState[] test() 
-    {
-      EnumState[] arr = new EnumState[]
-      arr.Add(EnumState::SPAWNED2)
-      arr.Add(EnumState::SPAWNED)
-      return arr
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindEnum(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    var res = ExecNode(node).val;
-
-    var lst = res.obj as DynValList;
-    AssertEqual(lst.Count, 2);
-    AssertEqual(lst[0].num, 20);
-    AssertEqual(lst[1].num, 10);
-    lst.TryDel();
-    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestNativeClassArray()
   {
     string bhl = @"
