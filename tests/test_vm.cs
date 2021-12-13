@@ -2663,6 +2663,50 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVarInForeverLoop()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      while(true) {
+        int foo = 1
+        trace((string)foo + "";"")
+        yield()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+    for(int i=0;i<5;++i)
+      vm.Tick();
+    AssertEqual(vm.vals_pool.Allocs, 5);
+    AssertEqual(vm.vals_pool.Free, 3);
+
+    var str = log.ToString();
+
+    AssertEqual("1;1;1;1;1;", str);
+
+    for(int i=0;i<5;++i)
+      vm.Tick();
+    AssertEqual(vm.vals_pool.Allocs, 5);
+    AssertEqual(vm.vals_pool.Free, 3);
+
+    str = log.ToString();
+
+    AssertEqual("1;1;1;1;1;" + "1;1;1;1;1;", str);
+
+    vm.Stop(fb);
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestForLoop()
   {
     string bhl = @"

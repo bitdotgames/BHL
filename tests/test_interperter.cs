@@ -631,54 +631,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestVarInForeverLoop()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      while(true) {
-        int foo = 1
-        trace((string)foo + "";"")
-        yield()
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    //NodeDump(node);
-    
-    for(int i=0;i<5;++i)
-      node.run();
-    AssertEqual(DynVal.PoolCount, 4);
-    AssertEqual(DynVal.PoolCountFree, 3);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("1;1;1;1;1;", str);
-
-    for(int i=0;i<5;++i)
-      node.run();
-    AssertEqual(DynVal.PoolCount, 4);
-    AssertEqual(DynVal.PoolCountFree, 3);
-
-    str = GetString(trace_stream);
-
-    AssertEqual("1;1;1;1;1;" + "1;1;1;1;1;", str);
-
-    node.stop();
-
-    CommonChecks(intp);
-  }
-  
-  [IsTested()]
   public void TestArrayPoolInForeverLoop()
   {
     string bhl = @"
