@@ -1660,26 +1660,35 @@ public class Frontend : bhlBaseVisitor<object>
       else
         PushAST(ret_ast);
 
+      var fmret_type = fret_type as MultiType;
+
+      //NOTE: there can be a situation when explen == 1 but the return type 
+      //      is actually a multi return, like in the following case:
+      //
+      //      func int,string bar() {
+      //        return foo()
+      //      }
+      //
+      //      where foo has the following signature: func int,string foo() {..}
       if(explen == 1)
       {
-        var exp = explist.exp()[0];
+        var exp_item = explist.exp()[0];
         PushJsonType(fret_type);
-        Visit(exp);
+        Visit(exp_item);
         PopJsonType();
 
         //NOTE: workaround for cases like: `return \n trace(...)`
         //      where exp has void type, in this case
         //      we simply ignore exp_node since return will take
         //      effect right before it
-        if(Wrap(exp).eval_type != SymbolTable.symb_void)
-          ret_ast.num = 1;
+        if(Wrap(exp_item).eval_type != SymbolTable.symb_void)
+          ret_ast.num = fmret_type != null ? fmret_type.items.Count : 1;
 
-        SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
-        Wrap(ctx).eval_type = Wrap(exp).eval_type;
+        SymbolTable.CheckAssign(func_symb.node, Wrap(exp_item));
+        Wrap(ctx).eval_type = Wrap(exp_item).eval_type;
       }
       else
       {
-        var fmret_type = fret_type as MultiType;
         if(fmret_type == null)
           FireError(Location(ctx) + ": function doesn't support multi return");
 

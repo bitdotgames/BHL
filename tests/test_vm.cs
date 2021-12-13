@@ -850,6 +850,227 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestReturnMultipleLambda()
+  {
+    string bhl = @"
+
+    func float,string test() 
+    {
+      return func float,string () 
+        { return 30, ""foo"" }()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = Execute(vm, "test");
+    AssertEqual(fb.stack.PopRelease().num, 30);
+    AssertEqual(fb.stack.PopRelease().str, "foo");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleLambdaIncompatibleTypes()
+  {
+    string bhl = @"
+
+    func float,string test() 
+    {
+      return func string,string () 
+        { return ""bar"", ""foo"" }()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleLambdaIncompatibleTypes2()
+  {
+    string bhl = @"
+
+    func string test() 
+    {
+      return func string,string () 
+        { return ""bar"", ""foo"" }()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleLambdaViaVars()
+  {
+    string bhl = @"
+
+    func float,string test() 
+    {
+      float a,string s = func float,string () 
+        { return 30, ""foo"" }()
+      return a,s
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = Execute(vm, "test");
+    AssertEqual(fb.stack.PopRelease().num, 30);
+    AssertEqual(fb.stack.PopRelease().str, "foo");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleNotEnough()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func void test() 
+    {
+      float s = foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "multi return size doesn't match destination"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleTooMany()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func void test() 
+    {
+      float s,string a,int f = foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "multi return size doesn't match destination"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleInFuncBadCast()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return ""bar"",100
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"float, @(5,13) ""bar"":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleBadCast()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func void test() 
+    {
+      string a,float s = foo()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "a:<string>, float have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleFromBindings()
+  {
+    string bhl = @"
+      
+    func float,string test() 
+    {
+      return func_mult()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    {
+      var fn = new FuncSymbolNative("func_mult", globs.Type("float,string"), null, 
+          delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
+          {
+            frm.stack.Push(Val.NewStr(frm.vm, "foo"));
+            frm.stack.Push(Val.NewNum(frm.vm, 42));
+            return null;
+          }
+        );
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var fb = Execute(vm, "test");
+    AssertEqual(fb.stack.PopRelease().num, 42);
+    AssertEqual(fb.stack.PopRelease().str, "foo");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnMultiple3()
+  {
+    string bhl = @"
+      
+    func float,string,int test() 
+    {
+      return 100,""foo"",3
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = Execute(vm, "test");
+    AssertEqual(fb.stack.PopRelease().num, 100);
+    AssertEqual(fb.stack.PopRelease().str, "foo");
+    AssertEqual(fb.stack.PopRelease().num, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLogicalAnd()
   {
     string bhl = @"
