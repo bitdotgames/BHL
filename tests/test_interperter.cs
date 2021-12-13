@@ -620,50 +620,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  [IsTested()]
-  public void TestChainCall5()
-  {
-    string bhl = @"
-      
-    func Color MakeColor2(string temp)
-    {
-      Color c = new Color
-      return c
-    }
-
-    func Color MakeColor(float g)
-    {
-      Color c = new Color
-      c.g = g
-      return c
-    }
-
-    func bool Check(bool cond)
-    {
-      return cond
-    }
-
-    func bool test(float k) 
-    {
-      Color o = new Color
-      o.g = k
-      return Check(MakeColor2(""hey"").Add(1).Add(MakeColor(k).g).r == 3)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindColor(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    node.SetArgs(DynVal.NewNum(2));
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 1);
-    CommonChecks(intp);
-  }
-
   void BindEnum(GlobalScope globs)
   {
     var en = new EnumSymbol(null, "EnumState", null);

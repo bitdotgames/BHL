@@ -8707,6 +8707,46 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestChainCall5()
+  {
+    string bhl = @"
+      
+    func Color MakeColor2(string temp)
+    {
+      Color c = new Color
+      return c
+    }
+
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func bool Check(bool cond)
+    {
+      return cond
+    }
+
+    func bool test(float k) 
+    {
+      Color o = new Color
+      o.g = k
+      return Check(MakeColor2(""hey"").Add(1).Add(MakeColor(k).g).r == 3)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
