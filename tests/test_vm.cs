@@ -8908,6 +8908,51 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEqualityOverloadedForNativeClass()
+  {
+    string bhl = @"
+      
+    func test() 
+    {
+      Color c1 = {r:1,g:2}
+      Color c2 = {r:1,g:2}
+      Color c3 = {r:10,g:20}
+      if(c1 == c2) {
+        trace(""YES"")
+      }
+      if(c1 == c3) {
+        trace(""NO"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    
+    var cl = BindColor(globs);
+    var op = new FuncSymbolNative("==", globs.Type("bool"), null,
+      delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+      {
+        var arg = (Color)frm.stack.PopRelease().obj;
+        var c = (Color)frm.stack.PopRelease().obj;
+
+        var v = Val.NewBool(frm.vm, c.r == arg.r && c.g == arg.g);
+        frm.stack.Push(v);
+
+        return null;
+      }
+    );
+    op.Define(new FuncArgSymbol("arg", globs.Type("Color")));
+    cl.OverloadBinaryOperator(op);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual(log.ToString(), "YES");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestPassArgToFiber()
   {
     string bhl = @"

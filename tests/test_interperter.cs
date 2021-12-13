@@ -621,57 +621,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestEqualityOverloadedForNativeClass()
-  {
-    string bhl = @"
-      
-    func test() 
-    {
-      Color c1 = {r:1,g:2}
-      Color c2 = {r:1,g:2}
-      Color c3 = {r:10,g:20}
-      if(c1 == c2) {
-        trace(""YES"")
-      }
-      if(c1 == c3) {
-        trace(""NO"")
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-    
-    var cl = BindColor(globs);
-    var op = new FuncSymbolSimpleNative("==", globs.Type("bool"),
-      delegate()
-      {
-        var interp = Interpreter.instance;
-
-        var arg = (Color)interp.PopValue().obj;
-        var c = (Color)interp.PopValue().obj;
-
-        var dv = DynVal.NewBool(c.r == arg.r && c.g == arg.g);
-        interp.PushValue(dv);
-
-        return BHS.SUCCESS;
-      }
-    );
-    op.Define(new FuncArgSymbol("arg", globs.Type("Color")));
-    cl.OverloadBinaryOperator(op);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual(str, "YES");
-  }
-
-  [IsTested()]
   public void TestCustomOperatorOverloadTypeMismatchForNativeClass()
   {
     string bhl = @"
