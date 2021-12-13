@@ -660,6 +660,90 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestReturnDefaultVar()
+  {
+    string bhl = @"
+    func float test()
+    {
+      float k
+      return k
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal, new int[] { 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.stack.PopRelease().num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnVar()
+  {
+    string bhl = @"
+    func float test()
+    {
+      float k = 42
+      return k
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+      .Emit(Opcodes.Constant, new int[] { 0 })
+      .Emit(Opcodes.SetVar, new int[] { 0 })
+      .Emit(Opcodes.GetVar, new int[] { 0 })
+      .Emit(Opcodes.ReturnVal, new int[] { 1 })
+      .Emit(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.stack.PopRelease().num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnVoid()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      trace(""HERE"")
+      return
+      trace(""NOT HERE"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("HERE", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestMultiReturn()
   {
     string bhl = @"
@@ -1071,6 +1155,192 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestReturnMultiple4FromBindings()
+  {
+    string bhl = @"
+      
+    func float,string,int,float test() 
+    {
+      float a,string b,int c,float d = func_mult()
+      return a,b,c,d
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    {
+      var fn = new FuncSymbolNative("func_mult", globs.Type("float,string,int,float"), null, 
+          delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
+          {
+            frm.stack.Push(Val.NewNum(frm.vm, 42.5));
+            frm.stack.Push(Val.NewNum(frm.vm, 12));
+            frm.stack.Push(Val.NewStr(frm.vm, "foo"));
+            frm.stack.Push(Val.NewNum(frm.vm, 104));
+            return null;
+          }
+        );
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var fb = Execute(vm, "test");
+    AssertEqual(fb.stack.PopRelease().num, 104);
+    AssertEqual(fb.stack.PopRelease().str, "foo");
+    AssertEqual(fb.stack.PopRelease().num, 12);
+    AssertEqual(fb.stack.PopRelease().num, 42.5);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestVarValueNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      float foo = 1
+      foo
+      return 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrReturnNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int^() ptr = func int() {
+        return 1
+      }
+      ptr()
+      return 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFuncPtrArrReturnNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int[]^() ptr = func int[]() {
+        return [1,2]
+      }
+      ptr()
+      return 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAttributeNonConsumed()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      Color c = new Color
+      c.r
+      return 2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnNonConsumed()
+  {
+    string bhl = @"
+
+    func float foo() 
+    {
+      return 100
+    }
+      
+    func int test() 
+    {
+      foo()
+      return 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnNonConsumedInParal()
+  {
+    string bhl = @"
+
+    func float foo() 
+    {
+      return 100
+    }
+      
+    func int test() 
+    {
+      paral {
+        foo()
+        suspend()
+      }
+      return 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleNonConsumed()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func int test() 
+    {
+      foo()
+      return 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLogicalAnd()
   {
     string bhl = @"
@@ -1227,90 +1497,6 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.stack.PopRelease().num, 1);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestReturnDefaultVar()
-  {
-    string bhl = @"
-    func float test()
-    {
-      float k
-      return k
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .Emit(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal, new int[] { 1 })
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
-    AssertEqual(fb.stack.PopRelease().num, 0);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestReturnVar()
-  {
-    string bhl = @"
-    func float test()
-    {
-      float k = 42
-      return k
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .Emit(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .Emit(Opcodes.Constant, new int[] { 0 })
-      .Emit(Opcodes.SetVar, new int[] { 0 })
-      .Emit(Opcodes.GetVar, new int[] { 0 })
-      .Emit(Opcodes.ReturnVal, new int[] { 1 })
-      .Emit(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
-    AssertEqual(fb.stack.PopRelease().num, 42);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestReturnVoid()
-  {
-    string bhl = @"
-      
-    func void test() 
-    {
-      trace(""HERE"")
-      return
-      trace(""NOT HERE"")
-    }
-    ";
-
-    var globs = SymbolTable.VM_CreateBuiltins();
-    var log = new StringBuilder();
-    BindTrace(globs, log);
-    
-    var vm = MakeVM(bhl, globs);
-    Execute(vm, "test");
-    AssertEqual("HERE", log.ToString());
     CommonChecks(vm);
   }
 
