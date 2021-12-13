@@ -692,7 +692,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestMultiReturnVarsOrder()
+  public void TestMultiReturnVarsAssign()
   {
     string bhl = @"
     func float,float foo() 
@@ -711,6 +711,33 @@ public class BHL_TestVM : BHL_TestBase
     var fb = Execute(vm, "test");
     var num = fb.stack.PopRelease().num;
     AssertEqual(num, 200);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestMultiReturnVarAssign2()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      string s
+      float a,s = foo()
+      return a,s
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = Execute(vm, "test");
+    var num = fb.stack.PopRelease().num;
+    var str = fb.stack.PopRelease().str;
+    AssertEqual(num, 100);
+    AssertEqual(str, "bar");
     CommonChecks(vm);
   }
 

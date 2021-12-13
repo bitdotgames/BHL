@@ -1066,26 +1066,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  void BindMin(GlobalScope globs)
-  {
-    {
-      var fn = new FuncSymbolSimpleNative("min", globs.Type("float"),
-        delegate()
-        {
-          var interp = Interpreter.instance;
-          var b = (float)interp.PopValue().num;
-          var a = (float)interp.PopValue().num;
-          interp.PushValue(DynVal.NewNum(a > b ? b : a)); 
-          return BHS.SUCCESS;
-        }
-      );
-      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
-      fn.Define(new FuncArgSymbol("b", globs.Type("float")));
-
-      globs.Define(fn);
-    }
-  }
-
   public class NodeWithLog : BehaviorTreeTerminalNode
   {
     Dictionary<int, BHS> ctl;
@@ -11399,36 +11379,6 @@ func Unit FindUnit(Vec3 pos, float radius) {
       },
       "multi return size doesn't match destination"
     );
-  }
-
-  [IsTested()]
-  public void TestReturnMultipleVarAssign()
-  {
-    string bhl = @"
-
-    func float,string foo() 
-    {
-      return 100,""bar""
-    }
-      
-    func float,string test() 
-    {
-      float a,string s = foo()
-      return a,s
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindLog(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var vals = ExecNode(node, 2).vals;
-    //NodeDump(node);
-
-    AssertEqual(vals[0].num, 100);
-    AssertEqual(vals[1].str, "bar");
-    CommonChecks(intp);
   }
 
   [IsTested()]
