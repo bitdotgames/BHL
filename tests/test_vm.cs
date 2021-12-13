@@ -6404,6 +6404,59 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestArrayCount()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""foo"")
+      arr.Add(""bar"")
+      int c = arr.Count
+      return c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestArrayPoolInInfiniteLoop()
+  {
+    string bhl = @"
+
+    func string[] make()
+    {
+      string[] arr = new string[]
+      return arr
+    }
+      
+    func test() 
+    {
+      while(true) {
+        string[] arr = new string[]
+        yield()
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    
+    for(int i=0;i<3;++i)
+      vm.Tick();
+
+    vm.Stop(fb);
+
+    AssertEqual(vm.vlsts_pool.Allocs, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSuspend()
   {
     string bhl = @"

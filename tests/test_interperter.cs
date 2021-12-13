@@ -621,43 +621,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestArrayPoolInForeverLoop()
-  {
-    string bhl = @"
-
-    func string[] make()
-    {
-      string[] arr = new string[]
-      return arr
-    }
-      
-    func test() 
-    {
-      while(true) {
-        string[] arr = new string[]
-        yield()
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    node.run();
-
-    //NodeDump(node);
-    
-    for(int i=0;i<2;++i)
-      node.run();
-
-    node.stop();
-
-    AssertEqual(DynValList.PoolCount, 2);
-    CommonChecks(intp);
-  }
-  
-  [IsTested()]
   public void TestPassingDynValToBindClass()
   {
     string bhl = @"
@@ -855,33 +818,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     AssertEqual(DynValList.PoolCountFree, 1);
 
     CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestArrayCount()
-  {
-    string bhl = @"
-      
-    func int test() 
-    {
-      string[] arr = new string[]
-      arr.Add(""foo"")
-      arr.Add(""bar"")
-      int c = arr.Count
-      return c
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 2);
-    CommonChecks(intp);
-    AssertEqual(DynValList.PoolCount, DynValList.PoolCountFree);
   }
 
   [IsTested()]
