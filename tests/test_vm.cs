@@ -742,6 +742,114 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestReturnMultipleVarAssignObjectAttr()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      string s
+      Color c = {}
+      c.r,s = foo()
+      return c.r,s
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = Execute(vm, "test");
+    AssertEqual(fb.stack.PopRelease().num, 100);
+    AssertEqual(fb.stack.PopRelease().str, "bar");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleVarAssignArrItem()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      string[] s = [""""]
+      float r,s[0] = foo()
+      return r,s[0]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = Execute(vm, "test");
+    AssertEqual(fb.stack.PopRelease().num, 100);
+    AssertEqual(fb.stack.PopRelease().str, "bar");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleVarAssignArrItem2()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      string s
+      Color[] c = [{}]
+      c[0].r,s = foo()
+      return c[0].r,s
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = Execute(vm, "test");
+    AssertEqual(fb.stack.PopRelease().num, 100);
+    AssertEqual(fb.stack.PopRelease().str, "bar");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnMultipleVarAssignNoSuchSymbol()
+  {
+    string bhl = @"
+
+    func float,string foo() 
+    {
+      return 100,""bar""
+    }
+      
+    func float,string test() 
+    {
+      float a,s = foo()
+      return a,s
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "s : symbol not resolved"
+    );
+  }
+
+  [IsTested()]
   public void TestLogicalAnd()
   {
     string bhl = @"
