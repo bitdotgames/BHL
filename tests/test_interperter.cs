@@ -658,46 +658,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
   
   [IsTested()]
-  public void TestStackInForever()
-  {
-    string bhl = @"
-
-    func int foo()
-    {
-      return 100
-    }
-
-    func hey(int a)
-    {
-    }
-
-    func test() 
-    {
-      while(true) {
-        hey(foo())
-        yield()
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    //NodeDump(node);
-    
-    for(int i=0;i<5;++i)
-      node.run();
-    AssertEqual(intp.stack.Count, 0);
-    AssertEqual(DynVal.PoolCount, 2);
-    AssertEqual(DynVal.PoolCountFree, 2);
-
-    node.stop();
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestPassingDynValToBindClass()
   {
     string bhl = @"
