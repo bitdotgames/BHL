@@ -8572,6 +8572,141 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestReturnNativeInstance()
+  {
+    string bhl = @"
+      
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(k).g + MakeColor(k).r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestChainCall()
+  {
+    string bhl = @"
+      
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(k).mult_summ(k*2)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 8);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestChainCall2()
+  {
+    string bhl = @"
+      
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(k).g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestChainCall3()
+  {
+    string bhl = @"
+      
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(k).Add(1).g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestChainCall4()
+  {
+    string bhl = @"
+      
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(MakeColor(k).g).g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
@@ -10546,30 +10681,28 @@ public class BHL_TestVM : BHL_TestBase
       }
     ));
 
-    //{
-    //  var m = new FuncSymbolSimpleNative("Add", globs.Type("Color"),
-    //    delegate()
-    //    {
-    //      var interp = Interpreter.instance;
+    {
+      var m = new FuncSymbolNative("Add", globs.Type("Color"), null,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        {
+          var k = (float)frm.stack.PopRelease().num;
+          var c = (Color)frm.stack.PopRelease().obj;
 
-    //      var k = (float)interp.PopValue().num;
-    //      var c = (Color)interp.PopValue().obj;
+          var newc = new Color();
+          newc.r = c.r + k;
+          newc.g = c.g + k;
 
-    //      var newc = new Color();
-    //      newc.r = c.r + k;
-    //      newc.g = c.g + k;
+          var v = Val.NewObj(frm.vm, newc);
+          frm.stack.Push(v);
 
-    //      var dv = DynVal.NewObj(newc);
-    //      interp.PushValue(dv);
+          return null;
+        }
+      );
+      m.Define(new FuncArgSymbol("k", globs.Type("float")));
 
-    //      return BHS.SUCCESS;
-    //    }
-    //  );
-    //  m.Define(new FuncArgSymbol("k", globs.Type("float")));
-
-    //  cl.Define(m);
-    //}
-    //
+      cl.Define(m);
+    }
+    
     {
       var m = new FuncSymbolNative("mult_summ", globs.Type("float"), null,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
