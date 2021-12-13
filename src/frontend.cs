@@ -1672,12 +1672,10 @@ public class Frontend : bhlBaseVisitor<object>
         //      we simply ignore exp_node since return will take
         //      effect right before it
         if(Wrap(exp).eval_type != SymbolTable.symb_void)
-        {
           ret_ast.num = 1;
 
-          SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
-          Wrap(ctx).eval_type = Wrap(exp).eval_type;
-        }
+        SymbolTable.CheckAssign(func_symb.node, Wrap(exp));
+        Wrap(ctx).eval_type = Wrap(exp).eval_type;
       }
       else
       {

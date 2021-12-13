@@ -9677,6 +9677,38 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassEnumToNativeFunc()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      return StateIs(state : EnumState::SPAWNED2)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindEnum(globs);
+
+    {
+      var fn = new FuncSymbolNative("StateIs", globs.Type("bool"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+          var n = frm.stack.PopRelease().num;
+          frm.stack.Push(Val.NewBool(frm.vm, n == 20));
+          return null;
+        });
+      fn.Define(new FuncArgSymbol("state", globs.Type("EnumState")));
+
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().bval;
+    AssertTrue(res);
+  }
+
+  [IsTested()]
   public void TestUsingBultinTypeAsFunc()
   {
     string bhl = @"

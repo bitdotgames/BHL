@@ -1120,36 +1120,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestPassEnumToNativeNode()
-  {
-    string bhl = @"
-      
-    func void test() 
-    {
-      StateIs(state : EnumState::SPAWNED)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindEnum(globs);
-
-    {
-      var fn = new FuncSymbolNative("StateIs", globs.Type("void"),
-          delegate() { return new StateIsNode(); });
-      fn.Define(new FuncArgSymbol("state", globs.Type("EnumState")));
-
-      globs.Define(fn);
-    }
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    var res = ExecNode(node, 0);
-    AssertEqual(res.status, BHS.FAILURE);
-  }
-
-  [IsTested()]
   public void TestUserEnum()
   {
     string bhl = @"
