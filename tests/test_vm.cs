@@ -4940,6 +4940,126 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncPtrReturningArrLambda()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      int[]^() ptr = func int[]() {
+        return [1,2]
+      }
+      trace((string)ptr()[1])
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("2", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //TODO:?
+  //[IsTested()]
+  public void TestFuncPtrReturningArrOfArrLambda()
+  {
+    string bhl = @"
+
+    typedef string[]^()[] arr_of_funcs
+
+    func arr_of_func^() hey() {
+      return func() {
+        func string[]() { return [""a"",""b""] },
+        func string[]() { return [""c"",""d""] }
+      }
+    }
+
+    func void test() 
+    {
+      string[]^()[] ptr = [
+        func string[]() { return [""a"",""b""] },
+        func string[]() { return [""c"",""d""] }
+      ]
+      trace(ptr[1]()[0])
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("c", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestFuncPtrSeveralLambdaRunning()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      void^(string) ptr = func(string arg) {
+        trace(arg)
+        yield()
+      }
+      paral {
+        ptr(""FOO"")
+        ptr(""BAR"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual("FOOBAR", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestComplexFuncPtr()
+  {
+    string bhl = @"
+    func bool foo(int a, string k)
+    {
+      trace(k)
+      return a > 2
+    }
+
+    func bool test(int a) 
+    {
+      bool^(int,string) ptr = foo
+      return ptr(a, ""HEY"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewNum(vm, 3));
+    AssertEqual("HEY", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestClosure()
   {
     string bhl = @"
@@ -6963,6 +7083,47 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestArrayPool()
+  {
+    string bhl = @"
+
+    func string[] make()
+    {
+      string[] arr = new string[]
+      return arr
+    }
+
+    func add(string[] arr)
+    {
+      arr.Add(""foo"")
+      arr.Add(""bar"")
+    }
+      
+    func string[] test() 
+    {
+      string[] arr = make()
+      add(arr)
+      return arr
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.Pop();
+
+    var lst = res.obj as ValList;
+    AssertEqual(lst.Count, 2);
+    AssertEqual(lst[0].str, "foo");
+    AssertEqual(lst[1].str, "bar");
+
+    AssertEqual(vm.vlsts_pool.Allocs, 1);
+    AssertEqual(vm.vlsts_pool.Free, 0);
+    
+    res.Release();
+
     CommonChecks(vm);
   }
 
@@ -11750,6 +11911,94 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
     AssertEqual(10, trace[3].line);
+  }
+
+  [IsTested()]
+  public void TestParseType()
+  {
+    {
+      var type = Frontend.ParseType("bool").type()[0];
+      AssertEqual(type.NAME().GetText(), "bool");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
+    }
+
+    {
+      var ret = Frontend.ParseType("bool,float");
+      AssertEqual(ret.type().Length, 2);
+      AssertEqual(ret.type()[0].NAME().GetText(), "bool");
+      AssertTrue(ret.type()[0].fnargs() == null);
+      AssertTrue(ret.type()[0].ARR() == null);
+      AssertEqual(ret.type()[1].NAME().GetText(), "float");
+      AssertTrue(ret.type()[1].fnargs() == null);
+      AssertTrue(ret.type()[1].ARR() == null);
+    }
+
+    {
+      var type = Frontend.ParseType("int[]").type()[0];
+      AssertEqual(type.NAME().GetText(), "int");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() != null);
+    }
+
+    {
+      var type = Frontend.ParseType("bool^(int,string)").type()[0];
+      AssertEqual(type.NAME().GetText(), "bool");
+      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
+      AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
+      AssertTrue(type.ARR() == null);
+    }
+
+    {
+      var ret = Frontend.ParseType("bool^(int,string),float[]");
+      AssertEqual(ret.type().Length, 2);
+      var type = ret.type()[0];
+      AssertEqual(type.NAME().GetText(), "bool");
+      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
+      AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
+      AssertTrue(type.ARR() == null);
+      type = ret.type()[1];
+      AssertEqual(type.NAME().GetText(), "float");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() != null);
+    }
+
+    {
+      var type = Frontend.ParseType("float^(int)[]").type()[0];
+      AssertEqual(type.NAME().GetText(), "float");
+      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
+      AssertTrue(type.ARR() != null);
+    }
+
+    {
+      var ret = Frontend.ParseType("Vec3,Vec3,Vec3");
+      AssertEqual(ret.type().Length, 3);
+      var type = ret.type()[0];
+      AssertEqual(type.NAME().GetText(), "Vec3");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
+      type = ret.type()[1];
+      AssertEqual(type.NAME().GetText(), "Vec3");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
+      type = ret.type()[2];
+      AssertEqual(type.NAME().GetText(), "Vec3");
+      AssertTrue(type.fnargs() == null);
+      AssertTrue(type.ARR() == null);
+    }
+
+    {
+      //malformed
+      var type = Frontend.ParseType("float^");
+      AssertTrue(type == null);
+    }
+
+    {
+      //TODO:
+      //malformed
+      //var type = Frontend.ParseType("int]");
+      //AssertTrue(type == null);
+    }
   }
 
   [IsTested()]
