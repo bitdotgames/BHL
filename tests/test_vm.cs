@@ -2532,6 +2532,135 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestIfFalseComplexCondition()
+  {
+    string bhl = @"
+    func test() 
+    {
+      if(false || !true) {
+        trace(""NEVER"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIfElseIf()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      if(false) {
+        trace(""NEVER"")
+      } else if(false) {
+        trace(""NEVER2"")
+      } else if(true) {
+        trace(""OK"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("OK", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIfElseIfComplexCondition()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      if(false) {
+        trace(""NEVER"")
+      } else if(false) {
+        trace(""NEVER2"")
+      } else if(true && !false) {
+        trace(""OK"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("OK", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIfElse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      if(false) {
+        trace(""NEVER"")
+      } else {
+        trace(""ELSE"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("ELSE", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIfElseIfElse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      if(false) {
+        trace(""NEVER"")
+      }
+      else if (false) {
+        trace(""NEVER2"")
+      } else {
+        trace(""ELSE"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("ELSE", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestNonMatchingReturnAfterIf()
   {
     string bhl = @"
