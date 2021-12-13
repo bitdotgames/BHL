@@ -586,7 +586,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestReturnFailureFirst()
+  public void TestFaileBeforeReturn()
   {
     string bhl = @"
 
@@ -932,6 +932,29 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.stack.PopRelease().num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnVoid()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      trace(""HERE"")
+      return
+      trace(""NOT HERE"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("HERE", log.ToString());
     CommonChecks(vm);
   }
 
@@ -2505,6 +2528,95 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.stack.PopRelease().num, 20);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNonMatchingReturnAfterIf()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      if(false) {
+        return 10
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "matching 'return' statement not found"
+    );
+  }
+
+  [IsTested()]
+  public void TestNonMatchingReturnAfterElseIf()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      if(false) {
+        return 10
+      } else if (true) {
+        return 20
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "matching 'return' statement not found"
+    );
+  }
+
+  [IsTested()]
+  public void TestNonMatchingReturnAfterElseIf2()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      if(false) {
+      } else if (true) {
+        return 20
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "matching 'return' statement not found"
+    );
+  }
+
+  [IsTested()]
+  public void TestMatchingReturnInElse()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      if(false) {
+        return 10
+      } else if (false) {
+        return 20
+      } else {
+        return 30
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(30, num);
     CommonChecks(vm);
   }
 
