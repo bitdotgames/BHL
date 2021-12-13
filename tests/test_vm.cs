@@ -9563,6 +9563,73 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEqEnum()
+  {
+    string bhl = @"
+      
+    func bool test(EnumState state) 
+    {
+      return state == EnumState::SPAWNED2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindEnum(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 20)).stack.PopRelease().num;
+    AssertEqual(res, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNotEqEnum()
+  {
+    string bhl = @"
+      
+    func bool test(EnumState state) 
+    {
+      return state != EnumState::SPAWNED
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindEnum(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 20)).stack.PopRelease().num;
+    AssertEqual(res, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUsingBultinTypeAsFunc()
+  {
+    string bhl = @"
+
+    func float foo()
+    {
+      return 14
+    }
+      
+    func int test() 
+    {
+      return int(foo())
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      "int : symbol is not a function"
+    );
+  }
+
+  [IsTested()]
   public void TestPassArgToFiber()
   {
     string bhl = @"
