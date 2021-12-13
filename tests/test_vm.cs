@@ -9468,6 +9468,58 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
+  void BindEnum(GlobalScope globs)
+  {
+    var en = new EnumSymbol(null, "EnumState", null);
+    globs.Define(en);
+    globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(en)));
+
+    en.Define(new EnumItemSymbol(null, en, "SPAWNED",  10));
+    en.Define(new EnumItemSymbol(null, en, "SPAWNED2", 20));
+  }
+
+  [IsTested()]
+  public void TestBindEnum()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      return (int)EnumState::SPAWNED + (int)EnumState::SPAWNED2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindEnum(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 30);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCastEnumToInt()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      return (int)EnumState::SPAWNED2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindEnum(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 20);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestPassArgToFiber()
   {

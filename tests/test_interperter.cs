@@ -631,54 +631,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBindEnum()
-  {
-    string bhl = @"
-      
-    func int test() 
-    {
-      return (int)EnumState::SPAWNED + (int)EnumState::SPAWNED2
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindEnum(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 30);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestCastEnumToInt()
-  {
-    string bhl = @"
-      
-    func int test() 
-    {
-      return (int)EnumState::SPAWNED2
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindEnum(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 20);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestCastEnumToFloat()
   {
     string bhl = @"
