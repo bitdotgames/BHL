@@ -8319,6 +8319,68 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeChildClassLazilyNotAllowed()
+  {
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    AssertError<UserError>(
+      delegate() { 
+        BindColorAlpha(globs, bind_parent: false);
+      },
+      @"parent class not resolved"
+    );
+  }
+
+  [IsTested()]
+  public void TestNativeChildClassCallParentMethod()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = 10
+      c.g = 20
+      return c.mult_summ(k)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 60);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassCallOwnMethod()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = 10
+      c.g = 20
+      c.a = 3
+      return c.mult_summ_alpha()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 90);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
@@ -10384,22 +10446,20 @@ public class BHL_TestVM : BHL_TestBase
         }
       ));
 
-      //{
-      //  var m = new FuncSymbolSimpleNative("mult_summ_alpha", globs.Type("float"),
-      //    delegate()
-      //    {
-      //      var interp = Interpreter.instance;
+      {
+        var m = new FuncSymbolNative("mult_summ_alpha", globs.Type("float"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          {
+            var c = (ColorAlpha)frm.stack.PopRelease().obj;
 
-      //      var c = (ColorAlpha)interp.PopValue().obj;
+            frm.stack.Push(Val.NewNum(frm.vm, (c.r * c.a) + (c.g * c.a)));
 
-      //      interp.PushValue(DynVal.NewNum((c.r * c.a) + (c.g * c.a)));
+            return null;
+          }
+        );
 
-      //      return BHS.SUCCESS;
-      //    }
-      //  );
-
-      //  cl.Define(m);
-      //}
+        cl.Define(m);
+      }
     }
   }
 
