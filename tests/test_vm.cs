@@ -9521,6 +9521,48 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCastEnumToFloat()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      return (float)EnumState::SPAWNED
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindEnum(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCastEnumToStr()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return (string)EnumState::SPAWNED2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindEnum(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().str;
+    AssertEqual(res, "20");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestPassArgToFiber()
   {
     string bhl = @"
