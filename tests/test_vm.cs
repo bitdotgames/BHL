@@ -8381,6 +8381,197 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeChildClassImplicitBaseCast()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassExplicitBaseCast()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = (Color)new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassExplicitDownCast()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha orig = new ColorAlpha
+      orig.a = 1000
+      Color tmp = (Color)orig
+      tmp.r = 1
+      tmp.g = 100
+      ColorAlpha c = (ColorAlpha)tmp
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 1101);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIncompatibleImplicitClassCast()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Foo tmp = new Color
+      return 1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    {
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          v.obj = null;
+        }
+      );
+      globs.Define(cl);
+    }
+
+    AssertError<UserError>(
+       delegate() {
+         Compile(bhl, globs);
+       },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestIncompatibleExplicitClassCast()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Foo tmp = (Foo)new Color
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    {
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          v.obj = null;
+        }
+      );
+      globs.Define(cl);
+    }
+
+    AssertError<UserError>(
+       delegate() {
+         Compile(bhl, globs);
+       },
+      "have incompatible types for casting"
+    );
+  }
+
+  [IsTested()]
+  public void TestNestedMembersAccess()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      ColorNested cn = new ColorNested
+      cn.c.r = k*1
+      cn.c.g = k*100
+      return cn.c.r + cn.c.g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+
+    {
+      var cl = new ClassSymbolNative("ColorNested", null, null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          v.obj = new ColorNested();
+        }
+      );
+
+      globs.Define(cl);
+
+      cl.Define(new FieldSymbol("c", globs.Type("Color"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var cn = (ColorNested)ctx.obj;
+          v.obj = cn.c;
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var cn = (ColorNested)ctx.obj;
+          cn.c = (Color)v.obj; 
+          ctx.obj = cn;
+        }
+      ));
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
@@ -10311,6 +10502,11 @@ public class BHL_TestVM : BHL_TestBase
     {
       return "[r="+r+",g="+g+",a="+a+"]";
     }
+  }
+
+  public class ColorNested
+  {
+    public Color c = new Color();
   }
 
   ClassSymbolNative BindColor(GlobalScope globs)
