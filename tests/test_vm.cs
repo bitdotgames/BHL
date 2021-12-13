@@ -8661,7 +8661,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNativeClassMembersAccess()
+  public void TestNativeClassAttributesAccess()
   {
     string bhl = @"
       
@@ -8674,7 +8674,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     
     BindColor(globs);
 
@@ -8682,6 +8682,35 @@ public class BHL_TestVM : BHL_TestBase
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeAttributeIsNotAFunction()
+  {
+    string bhl = @"
+
+    func float r()
+    {
+      return 0
+    }
+      
+    func void test() 
+    {
+      Color c = new Color
+      c.r()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      "symbol is not a function"
+    );
   }
 
   [IsTested()]

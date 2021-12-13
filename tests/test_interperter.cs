@@ -1070,45 +1070,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
-  [IsTested()]
-  public void TestNativeAttributeIsNotAFunction()
-  {
-    string bhl = @"
-
-    func float r()
-    {
-      return 0
-    }
-      
-    func void test() 
-    {
-      Color c = new Color
-      c.r()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret(bhl, globs);
-      },
-      "symbol is not a function"
-    );
-  }
-
-  public class StateIsNode : BehaviorTreeTerminalNode
-  {
-    public override BHS execute()
-    {
-      var interp = Interpreter.instance;
-      var val = interp.PopValue();
-      return val.num == 20 ? BHS.SUCCESS : BHS.FAILURE; 
-    }
-  }
-
   public class StartScriptNode : BehaviorTreeDecoratorNode
   {
     FuncCtx fct;
