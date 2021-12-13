@@ -8294,6 +8294,31 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBindNativeChildClass()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      c.a = 1000
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
+    AssertEqual(res, 1202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
@@ -8405,6 +8430,42 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
     AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAnyNullEquality()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      any foo
+      return foo == null
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().bval;
+    AssertTrue(res);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAnyNullAssign()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      any foo = null
+      return foo == null
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().bval;
+    AssertTrue(res);
     CommonChecks(vm);
   }
 
@@ -8950,6 +9011,33 @@ public class BHL_TestVM : BHL_TestBase
     Execute(vm, "test");
     AssertEqual(log.ToString(), "YES");
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCustomOperatorOverloadTypeMismatchForNativeClass()
+  {
+    string bhl = @"
+      
+    func Color test() 
+    {
+      Color c1 = {r:1,g:2}
+      return c1 * ""hey""
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    var cl = BindColor(globs);
+    var op = new FuncSymbolNative("*", globs.Type("Color"), null, null);
+    op.Define(new FuncArgSymbol("k", globs.Type("float")));
+    cl.OverloadBinaryOperator(op);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"<string> have incompatible types"
+    );
   }
 
   [IsTested()]
@@ -10153,6 +10241,16 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
+  public class ColorAlpha : Color
+  {
+    public float a;
+
+    public override string ToString()
+    {
+      return "[r="+r+",g="+g+",a="+a+"]";
+    }
+  }
+
   ClassSymbolNative BindColor(GlobalScope globs)
   {
     var cl = new ClassSymbolNative("Color", null, null,
@@ -10255,6 +10353,54 @@ public class BHL_TestVM : BHL_TestBase
     //}
 
     return cl;
+  }
+
+  void BindColorAlpha(GlobalScope globs, bool bind_parent = true)
+  {
+    if(bind_parent)
+      BindColor(globs);
+
+    {
+      var cl = new ClassSymbolNative("ColorAlpha", globs.Type("Color"), null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          v.obj = new ColorAlpha();
+        }
+      );
+
+      globs.Define(cl);
+
+      cl.Define(new FieldSymbol("a", globs.Type("float"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var c = (ColorAlpha)ctx.obj;
+          v.num = c.a;
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var c = (ColorAlpha)ctx.obj;
+          c.a = (float)v.num; 
+          ctx.obj = c;
+        }
+      ));
+
+      //{
+      //  var m = new FuncSymbolSimpleNative("mult_summ_alpha", globs.Type("float"),
+      //    delegate()
+      //    {
+      //      var interp = Interpreter.instance;
+
+      //      var c = (ColorAlpha)interp.PopValue().obj;
+
+      //      interp.PushValue(DynVal.NewNum((c.r * c.a) + (c.g * c.a)));
+
+      //      return BHS.SUCCESS;
+      //    }
+      //  );
+
+      //  cl.Define(m);
+      //}
+    }
   }
 
   class CoroutineWaitTicks : IInstruction
