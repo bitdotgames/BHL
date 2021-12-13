@@ -1033,6 +1033,65 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLocalVarHiding()
+  {
+    string bhl = @"
+      
+    func float time()
+    {
+      return 42
+    }
+
+    func float bar(float time)
+    {
+      return time
+    }
+
+    func float test() 
+    {
+      return bar(100)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 100);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLocalVarHiding2()
+  {
+    string bhl = @"
+      
+    func float time()
+    {
+      return 42
+    }
+
+    func float bar(float time)
+    {
+      if(time == 0)
+      {
+        return time
+      }
+      else
+      {
+        return time()
+      }
+    }
+
+    func float test() 
+    {
+      return bar(100)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 42);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestVarSelfDecl()
   {
     string bhl = @"
@@ -8626,6 +8685,105 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNullWithClassInstance()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c = null
+      Color c2 = new Color
+      if(c == null) {
+        trace(""NULL;"")
+      }
+      if(c != null) {
+        trace(""NEVER;"")
+      }
+      if(c2 == null) {
+        trace(""NEVER;"")
+      }
+      if(c2 != null) {
+        trace(""NOTNULL;"")
+      }
+      c = c2
+      if(c2 == c) {
+        trace(""EQ;"")
+      }
+      if(c2 == null) {
+        trace(""NEVER;"")
+      }
+      if(c != null) {
+        trace(""NOTNULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("NULL;NOTNULL;EQ;NOTNULL;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  public struct IntStruct
+  {
+    public int n;
+
+    public static void Decode(Val v, ref IntStruct dst)
+    {
+      dst.n = (int)v._num;
+    }
+
+    public static void Encode(Val v, IntStruct dst)
+    {
+      v._num = dst.n;
+    }
+  }
+
+  [IsTested()]
+  public void TestNullWithStruct()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      IntStruct c = null
+      IntStruct c2 = new IntStruct
+      if(c == null) {
+        trace(""NULL;"")
+      }
+      if(c2 == null) {
+        trace(""NEVER;"")
+      }
+      if(c2 != null) {
+        trace(""NOTNULL;"")
+      }
+      c = c2
+      if(c2 == c) {
+        trace(""EQ;"")
+      }
+      if(c2 == null) {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindIntStruct(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("NULL;NOTNULL;EQ;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
@@ -11382,6 +11540,37 @@ public class BHL_TestVM : BHL_TestBase
 
         cl.Define(m);
       }
+    }
+  }
+
+  void BindIntStruct(GlobalScope globs)
+  {
+    {
+      var cl = new ClassSymbolNative("IntStruct", null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          var s = new IntStruct();
+          IntStruct.Encode(v, s);
+        }
+      );
+
+      globs.Define(cl);
+
+      cl.Define(new FieldSymbol("n", globs.Type("int"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var s = new IntStruct();
+          IntStruct.Decode(ctx, ref s);
+          v.num = s.n;
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var s = new IntStruct();
+          IntStruct.Decode(ctx, ref s);
+          s.n = (int)v.num;
+          IntStruct.Encode(ctx, s);
+        }
+      ));
     }
   }
 
