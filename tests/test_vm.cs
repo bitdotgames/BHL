@@ -2598,6 +2598,26 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNonMatchingVoidReturn()
+  {
+    string bhl = @"
+    func VoidFunc() {
+    }
+
+    func bool test() {
+      return VoidFunc()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
   public void TestMatchingReturnInElse()
   {
     string bhl = @"
@@ -2617,6 +2637,33 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(30, num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIfWithMultipleReturns()
+  {
+    string bhl = @"
+
+    func int test(int b) 
+    {
+      if(b == 1) {
+        return 2
+      }
+
+      return 3
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    {
+      var num = Execute(vm, "test", Val.NewNum(vm, 1)).stack.PopRelease().num;
+      AssertEqual(2, num);
+    }
+    {
+      var num = Execute(vm, "test", Val.NewNum(vm, 10)).stack.PopRelease().num;
+      AssertEqual(3, num);
+    }
     CommonChecks(vm);
   }
 

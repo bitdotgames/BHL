@@ -5782,38 +5782,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestIfWithMultipleReturns()
-  {
-    string bhl = @"
-
-    func int test(int b) 
-    {
-      if(b == 1) {
-        return 2
-      }
-
-      return 3
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewNum(1));
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 2);
-    CommonChecks(intp);
-
-    node.SetArgs(DynVal.NewNum(10));
-    res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 3);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestIfFalseComplexCondition()
   {
     string bhl = @"
