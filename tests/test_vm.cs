@@ -11376,7 +11376,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var importer = new ModuleImporter(CompileFiles(files, globs));
 
-
     var vm = new VM(globs: globs, importer: importer);
 
     vm.ImportModule("bhl1");

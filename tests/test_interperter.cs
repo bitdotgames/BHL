@@ -10549,52 +10549,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImport()
-  {
-    string bhl1 = @"
-    import ""bhl2""  
-    func float test(float k) 
-    {
-      return bar(k)
-    }
-    ";
-
-    string bhl2 = @"
-    import ""bhl3""  
-
-    func float bar(float k)
-    {
-      return hey(k)
-    }
-    ";
-
-    string bhl3 = @"
-    func float hey(float k)
-    {
-      return k
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    TestCleanDir();
-    var files = new List<string>();
-    TestNewFile("bhl1.bhl", bhl1, files);
-    TestNewFile("bhl2.bhl", bhl2, files);
-    TestNewFile("bhl3.bhl", bhl3, files);
-
-    var intp = CompileFiles(files, globs);
-
-    var node = intp.GetFuncCallNode("bhl1", "test");
-    node.SetArgs(DynVal.NewNum(23));
-    //NodeDump(node);
-    var res = ExecNode(node).val;
-
-    AssertEqual(res.num, 23);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestImportMixed()
   {
     string bhl1 = @"
