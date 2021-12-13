@@ -773,7 +773,12 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_EnumDecl ast)
   {
-    throw new Exception("Not supported : " + ast);
+    var name = ast.Name();
+    //TODO:?
+    //CheckNameIsUnique(name);
+
+    var es = new EnumSymbolScript(name);
+    symbols.Define(es);
   }
 
   public override void DoVisit(AST_Block ast)

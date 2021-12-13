@@ -10155,6 +10155,198 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserEnum()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+      
+    func int test() 
+    {
+      Foo f = Foo::B 
+      return (int)f
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserEnumIntCast()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+      
+    func int test() 
+    {
+      return (int)Foo::B + (int)Foo::A
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIntCastToUserEnum()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+      
+    func int test() 
+    {
+      Foo f = (Foo)2
+      return (int)f
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserEnumWithDuplicateKey()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+      A = 10
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"duplicate key 'A'"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserEnumWithDuplicateValue()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+      C = 1
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"duplicate value '1'"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserEnumConflictsWithAnotherEnum()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+
+    enum Foo
+    {
+      C = 3
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"already defined symbol 'Foo'"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserEnumConflictsWithClass()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+
+    class Foo
+    {
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"already defined symbol 'Foo'"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserEnumItemBadChainCall()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+    }
+
+    func foo(Foo f) 
+    {
+    }
+
+    func test() 
+    {
+      foo(Foo.A)
+    }
+
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"bad chain call"
+    );
+  }
+
+
+  [IsTested()]
   public void TestUsingBultinTypeAsFunc()
   {
     string bhl = @"
