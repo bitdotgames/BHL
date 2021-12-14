@@ -5060,6 +5060,59 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes()
+  {
+    string bhl = @"
+    func bool foo(int a, string k)
+    {
+      trace(k)
+      return a > 2
+    }
+
+    func bool test(int a) 
+    {
+      bool^(int,string) ptr = foo
+      return ptr(a, ""HEY"") && ptr(a-1, ""BAR"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    AssertFalse(Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().bval);
+    AssertEqual("HEYBAR", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes2()
+  {
+    string bhl = @"
+    func int foo(int a)
+    {
+      int^(int) p = 
+        func int (int a) {
+          return a * 2
+        }
+
+      return p(a)
+    }
+
+    func int test(int a) 
+    {
+      return foo(a) + foo(a+1)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(14, Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestClosure()
   {
     string bhl = @"
