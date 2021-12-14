@@ -10092,7 +10092,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestParalNestedReturn()
   {
     string bhl = @"
@@ -10114,7 +10114,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, null, true, true);
+    var vm = MakeVM(bhl);
     AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
     CommonChecks(vm);
   }

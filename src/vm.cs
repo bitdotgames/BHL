@@ -703,8 +703,6 @@ public class VM
       //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
       if(instruction != null)
       {
-        //Instructions.Dump(instruction);
-
         instruction.Tick(curr_frame, ref status);
 
         if(status == BHS.RUNNING)
@@ -723,11 +721,9 @@ public class VM
         }
         else
         {
-          //NOTE: in case of non-block (e.g seq, paral, paral_all) native instruction (e.g yield) we need
-          //      to increment the ip upon its completion
-          if(!(instruction is IExitableScope))
-            ++ip;
-          //Instructions.Dump(instruction);
+          //NOTE: since we skip ip incrementing once the new instruction is 
+          //      attached we must increment the ip upon instruction completion
+          ++ip;
           Instructions.Del(this, instruction);
           instruction = null;
 
@@ -762,7 +758,7 @@ public class VM
 
       {
         var opcode = (Opcodes)curr_frame.bytecode[ip];
-        //Console.WriteLine(string.Format("OP {0:00} 0x{0:x2} {2} {1}", ip, curr_frame.module.name, opcode)/* + " " + Environment.StackTrace*/);
+        //Console.WriteLine(string.Format("OP {0:00} 0x{0:x2} {2} {1} scope:{3}", ip, curr_frame.module.name, opcode, defer_scope?.GetHashCode())/* + " " + Environment.StackTrace*/);
         switch(opcode)
         {
           case Opcodes.Constant:
@@ -1200,7 +1196,15 @@ public class VM
           {
             var new_instr = VisitBlock(ref ip, curr_frame, defer_scope);
             if(new_instr != null)
+            {
               AttachInstruction(ref instruction, new_instr);
+              //NOTE: since there's a new instruction we want to skip ip incrementing
+              //      which happens below and proceed right to the execution of 
+              //      the new instruction in the beginning of the loop. If we don't 
+              //      skip it we simply might exit the loop without executing the
+              //      new instruction at all because we'll hit max_ip limit.
+              continue;
+            }
           }
           break;
           case Opcodes.New:
@@ -1719,11 +1723,8 @@ public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableI
     {
       var branch = branches[i];
       branch.Tick(frm, ref status);
-      //Console.WriteLine("CHILD " + i + " " + status + " " + child.GetType().Name);
       if(status != BHS.RUNNING)
       {
-        //Console.WriteLine("DONE " + i + " " + branch.GetHashCode() + " " + branch.GetType().Name + " " + GetHashCode());
-        //Instructions.Dump(branch);
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
         break;
