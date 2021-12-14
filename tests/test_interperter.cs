@@ -1937,53 +1937,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestDeferSeveral()
-  {
-    string bhl = @"
-
-    func bar()
-    {
-      defer {
-        trace(""~BAR"")
-      }
-      trace(""BAR"")
-    }
-
-    func foo()
-    {
-      defer {
-        trace(""~FOO"")
-      }
-      trace(""FOO"")
-    }
-
-    func test() 
-    {
-      bar()
-      foo()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindWaitTicks(globs);
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    {
-      var status = node.run();
-      AssertEqual(BHS.SUCCESS, status);
-    }
-
-    var str = GetString(trace_stream);
-    AssertEqual("BAR~BARFOO~FOO", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestDeferNested()
   {
     string bhl = @"
