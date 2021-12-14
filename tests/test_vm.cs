@@ -4253,6 +4253,65 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCallLambdaInPlaceArray()
+  {
+    string bhl = @"
+
+    func int test(int a) 
+    {
+      return func int[](int a) { 
+        int[] ns = new int[]
+        ns.Add(a)
+        ns.Add(a*2)
+        return ns
+      }(a)[1] 
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(6, Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCallLambdaInPlaceInvalid()
+  {
+    string bhl = @"
+
+    func bool test(int a) 
+    {
+      return func bool(int a) { return a > 2 }.foo 
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "type doesn't support member access via '.'"
+    );
+  }
+
+  [IsTested()]
+  public void TestCallLambdaInPlaceInvalid2()
+  {
+    string bhl = @"
+
+    func bool test(int a) 
+    {
+      return func bool(int a) { return a > 2 }[10] 
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "accessing not an array type 'bool^(int)'"
+    );
+  }
+
+  [IsTested()]
   public void TestLambdaCallInFalseCondition()
   {
     string bhl = @"
