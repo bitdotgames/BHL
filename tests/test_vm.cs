@@ -3964,6 +3964,68 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //[IsTested()]
+  public void TestParalBreak()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int n = 0
+      while(true) {
+        paral {
+          seq {
+            n = 1
+            break
+            suspend()
+          }
+          {
+            n = 2
+            suspend()
+          }
+        }
+      }
+      return n
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestParalAllBreak()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int n = 0
+      while(true) {
+        paral_all {
+          seq {
+            n = 1
+            break
+            suspend()
+          }
+          {
+            n = 2
+            suspend()
+          }
+        }
+      }
+      return n
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestContinueInForeachLoop()
   {
