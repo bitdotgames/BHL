@@ -5323,6 +5323,302 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestComplexFuncPtrPassRef()
+  {
+    string bhl = @"
+    func void foo(int a, string k, ref bool res)
+    {
+      trace(k)
+      res = a > 2
+    }
+
+    func bool test(int a) 
+    {
+      void^(int,string, ref  bool) ptr = foo
+      bool res = false
+      ptr(a, ""HEY"", ref res)
+      return res
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    AssertTrue(Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().bval);
+    AssertEqual("HEY", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrLambda()
+  {
+    string bhl = @"
+    func bool test(int a) 
+    {
+      bool^(int,string) ptr = 
+        func bool (int a, string k)
+        {
+          trace(k)
+          return a > 2
+        }
+      return ptr(a, ""HEY"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    AssertTrue(Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().bval);
+    AssertEqual("HEY", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrLambdaInALoop()
+  {
+    string bhl = @"
+    func test() 
+    {
+      void^(int) ptr = 
+        func void (int a)
+        {
+          trace((string)a)
+        }
+      int i = 0
+      while(i < 5)
+      {
+        ptr(i)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewNum(vm, 3));
+    AssertEqual("01234", log.ToString());
+    AssertEqual(2, vm.frames_pool.Allocs);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrIncompatibleRetType()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      bool^(int) ptr = foo
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "@(6,17) ptr:<bool^(int)>, @(6,21) =foo:<void^(int)> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrArgTypeCheck()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      void^(float) ptr = foo
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "@(6,19) ptr:<void^(float)>, @(6,23) =foo:<void^(int)> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgTypeCheck()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      void^(int) ptr = foo
+      ptr(""hey"")
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      @"int, @(7,10) ""hey"":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgRefTypeCheck()
+  {
+    string bhl = @"
+    func void foo(int a, ref  float b) { }
+
+    func void test() 
+    {
+      float b = 1
+      void^(int, ref float) ptr = foo
+      ptr(10, b)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      @"b:<float>: 'ref' is missing"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgRefTypeCheck2()
+  {
+    string bhl = @"
+    func void foo(int a, ref float b) { }
+
+    func void test() 
+    {
+      float b = 1
+      void^(int, float) ptr = foo
+      ptr(10, ref b)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "ptr:<void^(int,float)>, @(7,28) =foo:<void^(int,ref float)> have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrPassConflictingRef()
+  {
+    string bhl = @"
+    func void foo(int a, string k, refbool res)
+    {
+      trace(k)
+    }
+
+    func bool test(int a) 
+    {
+      void^(int,string,ref bool) ptr = foo
+      bool res = false
+      ptr(a, ""HEY"", ref res)
+      return res
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    {
+      var cl = new ClassSymbolNative("refbool", null,
+        delegate(VM.Frame frm, ref Val v) 
+        {}
+      );
+      globs.Define(cl);
+    }
+
+    BindTrace(globs, log);
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl, globs);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgNotEnoughArgsCheck()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      void^(int) ptr = foo
+      ptr()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "missing argument of type 'int'"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgNotEnoughArgsCheck2()
+  {
+    string bhl = @"
+    func void foo(int a, float b) { }
+
+    func void test() 
+    {
+      void^(int, float) ptr = foo
+      ptr(10)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "missing argument of type 'float'"
+    );
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrCallArgTooManyArgsCheck()
+  {
+    string bhl = @"
+    func void foo(int a) { }
+
+    func void test() 
+    {
+      void^(int) ptr = foo
+      ptr(10, 30)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "too many arguments"
+    );
+  }
+
   public void TestClosure()
   {
     string bhl = @"
