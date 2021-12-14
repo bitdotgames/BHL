@@ -5000,7 +5000,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestFuncPtrSeveralLambdaRunning()
   {
     string bhl = @"
@@ -5031,7 +5031,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestComplexFuncPtr()
   {
     string bhl = @"
@@ -5054,7 +5054,7 @@ public class BHL_TestVM : BHL_TestBase
     BindTrace(globs, log);
 
     var vm = MakeVM(bhl, globs);
-    Execute(vm, "test", Val.NewNum(vm, 3));
+    AssertTrue(Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().bval);
     AssertEqual("HEY", log.ToString());
     CommonChecks(vm);
   }

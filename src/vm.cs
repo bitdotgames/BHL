@@ -307,6 +307,7 @@ public class VM
     {
       this.bytecode = bytecode;
       this.start_ip = start_ip;
+      this.return_ip = -1;
     }
 
     public void Clear()
@@ -979,11 +980,23 @@ public class VM
             int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             var val = curr_frame.locals[local_var_idx];
             var frm = (Frame)val._obj; 
-            //NOTE: we need to call an extra Retain since Release will be called for this frame 
-            //      during its execution of Opcode.Return, however since this frame is stored in a var 
-            //      and this var will be released at some point we want to avoid 'double free' situation 
-            frm.Retain();
-            curr_frame.stack.Push(Val.NewObj(this, frm));
+            //NOTE: we need to make an authentic copy of the original Frame stored in a var 
+            //      in case it's already being executed. The simplest (but not the most smart one)
+            //      way to do that is to check ref.counter.
+            if(frm.refs > 1)
+            {
+              var frm_clone = Frame.New(this);
+              frm_clone.Init(frm, frm.start_ip);
+              curr_frame.stack.Push(Val.NewObj(this, frm_clone));
+            }
+            else
+            {
+              //NOTE: we need to call an extra Retain since Release will be called for this frame 
+              //      during its execution of Opcode.Return, however since this frame is stored in a var 
+              //      and this var will be released at some point we want to avoid 'double free' situation 
+              frm.Retain();
+              curr_frame.stack.Push(Val.NewObj(this, frm));
+            }
           }
           break;
           case Opcodes.GetFuncImported:
