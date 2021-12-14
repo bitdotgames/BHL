@@ -1212,45 +1212,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  [IsTested()]
-  public void TestLambdaPassAsVar()
-  {
-    string bhl = @"
-
-    func foo(void^() fn)
-    {
-      fn()
-    }
-
-    func void test() 
-    {
-      void^() fun = 
-        func()
-        { 
-          trace(""HERE"")
-        }             
-
-      foo(fun)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-    BindStartScript(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("HERE", str);
-    CommonChecks(intp);
-  }
-
   public class ScriptMgr : BehaviorTreeInternalNode
   {
     public static ScriptMgr instance = new ScriptMgr();
@@ -1813,82 +1774,6 @@ public class BHL_TestInterpreter : BHL_TestBase
 
     AssertTrue(!ScriptMgr.instance.busy());
 
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestFuncPtrWithDeclPassedAsArg()
-  {
-    string bhl = @"
-
-    func foo(void^() fn)
-    {
-      fn()
-    }
-
-    func hey()
-    {
-      float foo
-      trace(""HERE"")
-    }
-
-    func void test() 
-    {
-      foo(hey)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("HERE", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestFuncPtrForBindFunc()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      void^() ptr = foo
-      ptr()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    {
-      var fn = new FuncSymbolSimpleNative("foo", globs.Type("void"), 
-          delegate()
-          {
-            AddString(trace_stream, "FOO");
-            return BHS.SUCCESS;
-          }
-          );
-      globs.Define(fn);
-    }
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("FOO", str);
     CommonChecks(intp);
   }
 

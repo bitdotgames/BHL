@@ -23,7 +23,6 @@ public enum Opcodes
   Jump            = 0xE,
   Pop             = 0xF,
   Call            = 0x10,
-  CallNative      = 0x11,
   GetFunc         = 0x12,
   GetFuncNative   = 0x13,
   GetFuncFromVar  = 0x14,
@@ -960,7 +959,10 @@ public class VM
           {
             int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
-            curr_frame.stack.Push(Val.NewObj(this, func_symb));
+            var fn_val = Val.NewObj(this, func_symb);
+            //marking it a native call
+            fn_val._num = 1;
+            curr_frame.stack.Push(fn_val);
           }
           break;
           case Opcodes.GetMethodNative:
@@ -972,30 +974,43 @@ public class VM
 
             var class_symb = (ClassSymbol)symbols.Resolve(class_type);
             var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
-            curr_frame.stack.Push(Val.NewObj(this, func_symb));
+            var fn_val = Val.NewObj(this, func_symb);
+            //marking it a native call
+            fn_val._num = 1;
+            curr_frame.stack.Push(fn_val);
           }
           break;
           case Opcodes.GetFuncFromVar:
           {
             int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
             var val = curr_frame.locals[local_var_idx];
-            var frm = (Frame)val._obj; 
-            //NOTE: we need to make an authentic copy of the original Frame stored in a var 
-            //      in case it's already being executed. The simplest (but not the most smart one)
-            //      way to do that is to check ref.counter.
-            if(frm.refs > 1)
+            if(val._obj is Frame frm)
             {
-              var frm_clone = Frame.New(this);
-              frm_clone.Init(frm, frm.start_ip);
-              curr_frame.stack.Push(Val.NewObj(this, frm_clone));
+              //NOTE: we need to make an authentic copy of the original Frame stored in a var 
+              //      in case it's already being executed. The simplest (but not the most smart one)
+              //      way to do that is to check ref.counter.
+              if(frm.refs > 1)
+              {
+                var frm_clone = Frame.New(this);
+                frm_clone.Init(frm, frm.start_ip);
+                curr_frame.stack.Push(Val.NewObj(this, frm_clone));
+              }
+              else
+              {
+                //NOTE: we need to call an extra Retain since Release will be called for this frame 
+                //      during its execution of Opcode.Return, however since this frame is stored in a var 
+                //      and this var will be released at some point we want to avoid 'double free' situation 
+                frm.Retain();
+                curr_frame.stack.Push(Val.NewObj(this, frm));
+              }
             }
             else
             {
-              //NOTE: we need to call an extra Retain since Release will be called for this frame 
-              //      during its execution of Opcode.Return, however since this frame is stored in a var 
-              //      and this var will be released at some point we want to avoid 'double free' situation 
-              frm.Retain();
-              curr_frame.stack.Push(Val.NewObj(this, frm));
+              var func_symb = (FuncSymbolNative)val._obj;
+              var fn_val = Val.NewObj(this, func_symb);
+              //marking it a native call
+              fn_val._num = 1;
+              curr_frame.stack.Push(fn_val);
             }
           }
           break;
@@ -1035,41 +1050,43 @@ public class VM
             uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
             var val = curr_frame.stack.Pop();
-            var fr = (Frame)val._obj;
-            //NOTE: it will be released once return is invoked
-            fr.Retain();
-            val.Release();
+            //checking if it's a userland or native func call
+            if(val._num == 0)
+            {
+              var fr = (Frame)val._obj;
+              //NOTE: it will be released once return is invoked
+              fr.Retain();
+              val.Release();
 
-            var args_info = new FuncArgsInfo(args_bits);
-            for(int i = 0; i < args_info.CountArgs(); ++i)
-              fr.stack.Push(curr_frame.stack.Pop());
-            fr.stack.Push(Val.NewNum(this, args_bits));
+              var args_info = new FuncArgsInfo(args_bits);
+              for(int i = 0; i < args_info.CountArgs(); ++i)
+                fr.stack.Push(curr_frame.stack.Pop());
+              fr.stack.Push(Val.NewNum(this, args_bits));
 
-            //let's remember ip to return to
-            fr.return_ip = ip;
-            frames.Push(fr);
-            curr_frame = fr;
-            //since ip will be incremented below we decrement it intentionally here
-            ip = fr.start_ip - 1; 
-          }
-          break;
-          case Opcodes.CallNative:
-          {
-            uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-            var val = curr_frame.stack.PopRelease();
-            var func_symb = (FuncSymbolNative)val._obj;
+              //let's remember ip to return to
+              fr.return_ip = ip;
+              frames.Push(fr);
+              curr_frame = fr;
+              //since ip will be incremented below we decrement it intentionally here
+              ip = fr.start_ip - 1; 
+            }
+            else
+            {
+              var func_symb = (FuncSymbolNative)val._obj;
+              val.Release();
 
-            var args_info = new FuncArgsInfo(args_bits);
-            for(int i = 0; i < args_info.CountArgs(); ++i)
-              curr_frame.stack.Push(curr_frame.stack.Pop());
+              var args_info = new FuncArgsInfo(args_bits);
+              for(int i = 0; i < args_info.CountArgs(); ++i)
+                curr_frame.stack.Push(curr_frame.stack.Pop());
 
-            var sub_instruction = func_symb.VM_cb(curr_frame, args_info, ref status);
-            if(sub_instruction != null)
-              AttachInstruction(ref instruction, sub_instruction);
+              var sub_instruction = func_symb.VM_cb(curr_frame, args_info, ref status);
+              if(sub_instruction != null)
+                AttachInstruction(ref instruction, sub_instruction);
 
-            //NOTE: checking if new instruction was added and if so executing it immediately
-            if(instruction != null)
-              instruction.Tick(curr_frame, ref status);
+              //NOTE: checking if new instruction was added and if so executing it immediately
+              if(instruction != null)
+                instruction.Tick(curr_frame, ref status);
+            }
           }
           break;
           case Opcodes.InitFrame:

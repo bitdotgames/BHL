@@ -411,13 +411,6 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new OpDefinition()
       {
-        name = Opcodes.CallNative,
-        operand_width = new int[] { 4/*args bits*/ }
-      }
-    );
-    DeclareOpcode(
-      new OpDefinition()
-      {
         name = Opcodes.Lambda,
         operand_width = new int[] { 2/*rel.offset skip lambda pos*/ }
       }
@@ -998,7 +991,7 @@ public class ModuleCompiler : AST_Visitor
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           VisitChildren(ast);
           Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
-          Emit(Opcodes.CallNative, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
         }
         else if(ast.nname2 != module_path.id)
         {
@@ -1052,7 +1045,7 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         
         Emit(Opcodes.GetMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
-        Emit(Opcodes.CallNative, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
@@ -1068,13 +1061,13 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.ARR_IDX:
       {
         Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]")}, (int)ast.line_num);
-        Emit(Opcodes.CallNative, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
         Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")});
-        Emit(Opcodes.CallNative, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC_PTR_POP:
@@ -1097,6 +1090,13 @@ public class ModuleCompiler : AST_Visitor
         if(func2ip.TryGetValue(ast.name, out offset))
         {
           Emit(Opcodes.GetFunc, new int[] {offset}, (int)ast.line_num);
+        }
+        else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
+        {
+          int func_idx = globs.GetMembers().IndexOf(fsymb);
+          if(func_idx == -1)
+            throw new Exception("Func '" + ast.name + "' idx not found in symbols");
+          Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
         }
         else
           throw new Exception("Not found func IP");
@@ -1303,7 +1303,7 @@ public class ModuleCompiler : AST_Visitor
       if(c is AST_JsonArrAddItem)
       {
         Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
-        Emit(Opcodes.CallNative, new int[] {0});
+        Emit(Opcodes.Call, new int[] {0});
       }
       else
         Visit(c);
@@ -1313,7 +1313,7 @@ public class ModuleCompiler : AST_Visitor
     if(ast.children.Count > 0)
     {
       Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
-      Emit(Opcodes.CallNative, new int[] {0});
+      Emit(Opcodes.Call, new int[] {0});
     }
   }
 
