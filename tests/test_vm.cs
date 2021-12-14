@@ -8652,6 +8652,39 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestParalAllForComplexStatement()
+  {
+    string bhl = @"
+
+    func int foo(int a)
+    {
+      return a
+    }
+
+    func float test() 
+    {
+      Color c = new Color
+      int a = 0
+      float s = 0
+      paral_all {
+        c.r = 142
+        s = c.mult_summ(a)
+        a = foo(10)
+      }
+      return a+c.r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 152);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestYieldWhileInParal()
   {
     string bhl = @"
