@@ -248,7 +248,6 @@ public class VM
     public int start_ip;
     public int return_ip;
     public List<DeferBlock> defers;
-    public bool returned;
 
     static public Frame New(VM vm)
     {
@@ -311,7 +310,6 @@ public class VM
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;
-      this.returned = false;
     }
 
     public void Clear()
@@ -744,7 +742,7 @@ public class VM
           //    and we should take this into account
           //
 
-          if(curr_frame.returned)
+          if(curr_frame.refs == -1)
           {
             frames.Pop();
             if(frames.Count > 0)
@@ -946,7 +944,6 @@ public class VM
             ip = curr_frame.return_ip;
             curr_frame.Clear();
             curr_frame.Release();
-            curr_frame.returned = true;
             //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
             frames.Pop();
             if(frames.Count > 0)
@@ -972,7 +969,6 @@ public class VM
             curr_frame.ExitScope(this);
             curr_frame.Clear();
             curr_frame.Release();
-            curr_frame.returned = true;
             frames.Pop();
             if(frames.Count > 0)
               curr_frame = frames.Peek();
@@ -1778,7 +1774,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope, ITraversab
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
       }
-      else if(status == BHS.FAILURE || frm.returned)
+      else if(status == BHS.FAILURE || frm.refs == -1/*checking if 'return' was executed*/)
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);

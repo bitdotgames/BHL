@@ -10140,6 +10140,33 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestParalAllNestedReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      paral_all {
+        seq {
+          paral_all {
+            suspend()
+            seq {
+              return 1
+            }
+          }
+        }
+        suspend()
+      }
+      return 0
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestLambdaDefer()
