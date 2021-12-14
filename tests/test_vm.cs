@@ -5807,6 +5807,81 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestStartLambdaCaptureVarsNested()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      float a = 10
+      float b = 20
+      start(
+        func()
+        { 
+          float k = a 
+
+          void^() fn = func() 
+          {
+            trace((string)k + (string)b)
+          }
+
+          fn()
+        }             
+      ) 
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1020", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaCaptureVarsNested2()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      float a = 10
+      float b = 20
+      start(
+        func()
+        { 
+          float k = a 
+
+          void^() fn = func() 
+          {
+            void^() fn = func() 
+            {
+              trace((string)k + (string)b)
+            }
+
+            fn()
+          }
+
+          fn()
+        }             
+      ) 
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1020", log.ToString());
+    CommonChecks(vm);
+  }
+
   public void TestClosure()
   {
     string bhl = @"
