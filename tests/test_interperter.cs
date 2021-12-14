@@ -1828,46 +1828,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestParalForComplexStatement()
-  {
-    string bhl = @"
-
-    func int foo(int a)
-    {
-      return a
-    }
-
-    func float test() 
-    {
-      Color c = new Color
-      int a = 0
-      float s = 0
-      paral {
-        a = foo(10)
-        c.r = 142
-        s = c.mult_summ(a)
-      }
-      return a
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindWaitTicks(globs);
-    BindTrace(globs, trace_stream);
-    BindColor(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExtractNum(ExecNode(node));
-    //NodeDump(node);
-
-    AssertEqual(res, 10);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestParalAllFailure()
   {
     string bhl = @"
