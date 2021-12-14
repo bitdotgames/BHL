@@ -5113,6 +5113,85 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes3()
+  {
+    string bhl = @"
+    func int foo(int a)
+    {
+      int^(int) p = 
+        func int (int a) {
+          return a
+        }
+
+      return p(a)
+    }
+
+    func int test(int a) 
+    {
+      return foo(a) + foo(a)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(6, Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num);
+    AssertEqual(8, Execute(vm, "test", Val.NewNum(vm, 4)).stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes4()
+  {
+    string bhl = @"
+    func int foo(int a)
+    {
+      int^(int) p = 
+        func int (int a) {
+          return a
+        }
+
+      int tmp = p(a)
+
+      p = func int (int a) {
+          return a * 2
+      }
+
+      return tmp + p(a)
+    }
+
+    func int test(int a) 
+    {
+      return foo(a) + foo(a+1)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(9+12, Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num);
+    AssertEqual(12+15, Execute(vm, "test", Val.NewNum(vm, 4)).stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestComplexFuncPtrSeveralTimes5()
+  {
+    string bhl = @"
+    func int foo(int^(int) p, int a)
+    {
+      return p(a)
+    }
+
+    func int test(int a) 
+    {
+      return foo(func int(int a) { return a }, a) + 
+             foo(func int(int a) { return a * 2 }, a + 1)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3+8, Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num);
+    AssertEqual(4+10, Execute(vm, "test", Val.NewNum(vm, 4)).stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
   public void TestClosure()
   {
     string bhl = @"
