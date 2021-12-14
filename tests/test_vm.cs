@@ -611,7 +611,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestFailureInBindFunction()
+  public void TestFailureInNativeFunction()
   {
     string bhl = @"
 
@@ -1057,6 +1057,29 @@ public class BHL_TestVM : BHL_TestBase
         Compile(bhl);
       },
       "multi return size doesn't match destination"
+    );
+  }
+
+  [IsTested()]
+  public void TestReturnNotAllPathsReturnValue()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      paral_all {
+        seq {
+          return 1
+        }
+        yield()
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "matching 'return' statement not found"
     );
   }
 
@@ -8312,41 +8335,6 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSequenceSuccess()
-  {
-    string bhl = @"
-
-    func foo()
-    {
-      trace(""FOO"")
-    }
-
-    func bar()
-    {
-      trace(""BAR"")
-    }
-
-    func test() 
-    {
-      seq {
-        bar()
-        foo()
-      }
-    }
-    ";
-
-    var globs = SymbolTable.VM_CreateBuiltins();
-    var log = new StringBuilder();
-
-    BindTrace(globs, log);
-
-    var vm = MakeVM(bhl, globs);
-    Execute(vm, "test");
-    AssertEqual("BARFOO", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
   public void TestBasicParalAutoSeqWrap()
   {
     string bhl = @"
@@ -8661,6 +8649,78 @@ public class BHL_TestVM : BHL_TestBase
     AssertFalse(vm.Tick());
     var val = fb.stack.PopRelease();
     AssertEqual(3, val.num);
+  }
+
+  [IsTested()]
+  public void TestSeqSuccess()
+  {
+    string bhl = @"
+
+    func foo()
+    {
+      trace(""FOO"")
+    }
+
+    func bar()
+    {
+      trace(""BAR"")
+    }
+
+    func test() 
+    {
+      seq {
+        bar()
+        foo()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("BARFOO", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSeqFailure()
+  {
+    string bhl = @"
+
+    func foo()
+    {
+      trace(""FOO"")
+      fail()
+    }
+
+    func bar()
+    {
+      trace(""BAR"")
+    }
+
+    func test() 
+    {
+      seq {
+        bar()
+        foo()
+        bar()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("BARFOO", log.ToString());
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -10007,6 +10067,50 @@ public class BHL_TestVM : BHL_TestBase
     //      regardless of their individual exit status
     AssertFalse(vm.Tick());
     AssertEqual("54231", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestParalReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      paral {
+        seq {
+          return 1
+        }
+        suspend()
+      }
+      return 0
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestParalAllReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      paral_all {
+        seq {
+          return 1
+        }
+        suspend()
+      }
+      return 0
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
     CommonChecks(vm);
   }
 

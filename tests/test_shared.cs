@@ -96,11 +96,11 @@ public class BHL_TestRunner
     Run(args, new BHL_TestVM());
   }
 
-  static void Run(string[] args, BHL_TestBase test)
+  static void Run(string[] args, BHL_TestBase test, bool verbose = false)
   {
     try
     {
-      _Run(args, test);
+      _Run(args, test, verbose);
     }
     catch(Exception e)
     {
@@ -111,7 +111,7 @@ public class BHL_TestRunner
     }
   }
 
-  static void _Run(string[] args, BHL_TestBase test)
+  static void _Run(string[] args, BHL_TestBase test, bool verbose)
   {
     int c = 0;
     foreach(var method in test.GetType().GetMethods())
@@ -121,8 +121,8 @@ public class BHL_TestRunner
         Util.SetupASTFactory();
         if(IsAllowedToRun(args, test, method))
         {
-          if(c == 0)
-            Console.WriteLine(">>>> Testing " + test.GetType().Name + " <<<<");
+          if(verbose)
+            Console.WriteLine(">>>> Testing " + test.GetType().Name + "." + method.Name + " <<<<");
 
           ++c;
           method.Invoke(test, new object[] {});

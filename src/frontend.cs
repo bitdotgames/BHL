@@ -2693,7 +2693,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(new_local_scope)
       curr_scope = new LocalScope(curr_scope); 
 
-    bool may_need_group = 
+    bool is_paral = 
       type == EnumBlock.PARAL || 
       type == EnumBlock.PARAL_ALL;
 
@@ -2704,7 +2704,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       //NOTE: we need to understand if we need to wrap statements
       //      with a group 
-      if(may_need_group)
+      if(is_paral)
       {
         PushAST(tmp);
 
@@ -2741,6 +2741,9 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(new_local_scope)
       curr_scope = curr_scope.GetEnclosingScope();
+
+    if(is_paral)
+      PeekFuncDecl().return_statement_found = false;
 
     if(auto_add)
       PeekAST().AddChild(ast);

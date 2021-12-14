@@ -131,6 +131,9 @@ public class VM
   public const int MAX_IP = int.MaxValue;
   public const int STOP_IP = MAX_IP - 1;
 
+  public const int CALL_USER   = 0;
+  public const int CALL_NATIVE = 1;
+
   public class Fiber
   {
     internal VM vm;
@@ -309,6 +312,11 @@ public class VM
       this.return_ip = -1;
     }
 
+    public bool IsReleased()
+    {
+      return refs == -1;
+    }
+
     public void Clear()
     {
       for(int i=locals.Count;i-- > 0;)
@@ -372,7 +380,7 @@ public class VM
 
     public void Release()
     {
-      //Console.WriteLine("REL " + GetHashCode());
+      //Console.WriteLine("REL " + GetHashCode() + " " + Environment.StackTrace);
 
       if(refs == -1)
         throw new Exception("Invalid state(-1)");
@@ -691,7 +699,7 @@ public class VM
   { 
     while(curr_frame != null && ip < max_ip)
     {
-      //Console.WriteLine("EXECUTE " + frames.Count + ", IP " + ip + " MAX " + max_ip);
+      //Console.WriteLine("EXECUTE " + frames.Count + ", IP " + ip + " MAX " + max_ip/* + " " + Environment.StackTrace*/);
 
       var status = BHS.SUCCESS;
 
@@ -722,12 +730,34 @@ public class VM
             ++ip;
           Instructions.Del(this, instruction);
           instruction = null;
+
+          //NOTE: after instruction successful execution we might be in a situation  
+          //      that instruction has already exited the current frame (e.g. after 'return')
+          //      and it's released, for example in the following case:
+          //
+          //      paral {
+          //         seq {
+          //           return
+          //         }
+          //         seq {
+          //          ...
+          //         }
+          //      }
+          //
+          //    ...after 'return' is executed the current frame will be in the released state 
+          //    and we should take this into account
+          //
+          if(curr_frame.IsReleased())
+          {
+            frames.Pop();
+            return status;
+          }
         }
       }
 
       {
         var opcode = (Opcodes)curr_frame.bytecode[ip];
-        //Console.WriteLine(string.Format("OP {0:00} 0x{0:x2} {2} {1}", ip, curr_frame.module.name, opcode));
+        //Console.WriteLine(string.Format("OP {0:00} 0x{0:x2} {2} {1}", ip, curr_frame.module.name, opcode)/* + " " + Environment.StackTrace*/);
         switch(opcode)
         {
           case Opcodes.Constant:
@@ -960,8 +990,7 @@ public class VM
             int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
             var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
             var fn_val = Val.NewObj(this, func_symb);
-            //marking it a native call
-            fn_val._num = 1;
+            fn_val._num = CALL_NATIVE;
             curr_frame.stack.Push(fn_val);
           }
           break;
@@ -975,8 +1004,7 @@ public class VM
             var class_symb = (ClassSymbol)symbols.Resolve(class_type);
             var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
             var fn_val = Val.NewObj(this, func_symb);
-            //marking it a native call
-            fn_val._num = 1;
+            fn_val._num = CALL_NATIVE;
             curr_frame.stack.Push(fn_val);
           }
           break;
@@ -1051,7 +1079,7 @@ public class VM
 
             var val = curr_frame.stack.Pop();
             //checking if it's a userland or native func call
-            if(val._num == 0)
+            if(val._num == CALL_USER)
             {
               var fr = (Frame)val._obj;
               //NOTE: it will be released once return is invoked
@@ -1643,7 +1671,7 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
       var branch = branches[i];
       branch.Tick(frm, ref status);
       //Console.WriteLine("CHILD " + i + " " + status + " " + child.GetType().Name);
-      if(status != BHS.RUNNING)
+      if(status != BHS.RUNNING || frm.IsReleased())
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
@@ -1692,7 +1720,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
       }
-      else if(status == BHS.FAILURE)
+      else if(status == BHS.FAILURE || frm.IsReleased())
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
