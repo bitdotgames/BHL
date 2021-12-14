@@ -1778,42 +1778,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLambdaVarSeveralTimes()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      void^() fun = 
-        func()
-        { 
-          trace(""HERE"")
-        }             
-
-      fun()
-      fun()
-      fun()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-    BindStartScript(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("HEREHEREHERE", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestLambdaSeveralTimes()
+  public void TestStartScriptLambdaSeveralTimes()
   {
     string bhl = @"
     func void test() 
@@ -1847,7 +1812,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSeveralLambdas()
+  public void TestStartScriptSeveralLambdas()
   {
     string bhl = @"
     func void test() 
@@ -1888,7 +1853,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLambdaCaptureVars()
+  public void TestStartScriptLambdaCaptureVars()
   {
     string bhl = @"
     func void test() 
@@ -1920,80 +1885,6 @@ public class BHL_TestInterpreter : BHL_TestBase
 
     AssertEqual("1020", str);
     CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestLambdaCaptureVarsHiding()
-  {
-    string bhl = @"
-
-    func float time()
-    {
-      return 42
-    }
-
-    func void foo(float time)
-    {
-      void^() fn = func()
-      {
-        float b = time
-        trace((string)b)
-      }
-      fn()
-    }
-
-    func void test() 
-    {
-      foo(10)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    AssertEqual("10", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestLambdaCaptureSelfVars()
-  {
-    string bhl = @"
-    func void test() 
-    {
-      float a = 10
-      float b = 20
-      StartScript(
-        func()
-        { 
-          float a = a 
-          trace((string)a + (string)b)
-        }             
-      ) 
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-    BindStartScript(globs);
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret(bhl, globs);
-      },
-      "already defined symbol 'a'"
-    );
   }
 
   [IsTested()]

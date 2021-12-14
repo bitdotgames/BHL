@@ -5696,10 +5696,8 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
-
-    BindTrace(globs, log);
 
     {
       var fn = new FuncSymbolNative("foo", globs.Type("void"), null, 
@@ -5716,6 +5714,97 @@ public class BHL_TestVM : BHL_TestBase
     Execute(vm, "test");
     AssertEqual("FOO", log.ToString());
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaVarSeveralTimes()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      void^() fun = 
+        func()
+        { 
+          trace(""HERE"")
+        }             
+
+      fun()
+      fun()
+      fun()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("HEREHEREHERE", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaCaptureVarsHiding()
+  {
+    string bhl = @"
+
+    func float time()
+    {
+      return 42
+    }
+
+    func void foo(float time)
+    {
+      void^() fn = func()
+      {
+        float b = time
+        trace((string)b)
+      }
+      fn()
+    }
+
+    func void test() 
+    {
+      foo(10)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("10", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaLocalVarsConflict()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      float a = 10
+      float b = 20
+      start(
+        func()
+        { 
+          float a = a 
+        }             
+      ) 
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'a'"
+    );
   }
 
   public void TestClosure()
