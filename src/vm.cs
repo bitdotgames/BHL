@@ -248,6 +248,7 @@ public class VM
     public int start_ip;
     public int return_ip;
     public List<DeferBlock> defers;
+    public bool returned;
 
     static public Frame New(VM vm)
     {
@@ -310,11 +311,7 @@ public class VM
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;
-    }
-
-    public bool IsReleased()
-    {
-      return refs == -1;
+      this.returned = false;
     }
 
     public void Clear()
@@ -706,6 +703,8 @@ public class VM
       //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
       if(instruction != null)
       {
+        //Instructions.Dump(instruction);
+
         instruction.Tick(curr_frame, ref status);
 
         if(status == BHS.RUNNING)
@@ -728,6 +727,7 @@ public class VM
           //      to increment the ip upon its completion
           if(!(instruction is IExitableScope))
             ++ip;
+          //Instructions.Dump(instruction);
           Instructions.Del(this, instruction);
           instruction = null;
 
@@ -747,10 +747,15 @@ public class VM
           //    ...after 'return' is executed the current frame will be in the released state 
           //    and we should take this into account
           //
-          if(curr_frame.IsReleased())
+
+          if(curr_frame.returned)
           {
             frames.Pop();
-            return status;
+            if(frames.Count > 0)
+              curr_frame = frames.Peek();
+            else 
+              curr_frame = null;
+            continue;
           }
         }
       }
@@ -945,6 +950,7 @@ public class VM
             ip = curr_frame.return_ip;
             curr_frame.Clear();
             curr_frame.Release();
+            curr_frame.returned = true;
             //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
             frames.Pop();
             if(frames.Count > 0)
@@ -970,6 +976,7 @@ public class VM
             curr_frame.ExitScope(this);
             curr_frame.Clear();
             curr_frame.Release();
+            curr_frame.returned = true;
             frames.Pop();
             if(frames.Count > 0)
               curr_frame = frames.Peek();
@@ -1191,7 +1198,9 @@ public class VM
           break;
           case Opcodes.Block:
           {
-            VisitBlock(ref ip, curr_frame, ref instruction, defer_scope);
+            var new_instr = VisitBlock(ref ip, curr_frame, defer_scope);
+            if(new_instr != null)
+              AttachInstruction(ref instruction, new_instr);
           }
           break;
           case Opcodes.New:
@@ -1251,15 +1260,21 @@ public class VM
     if(instruction != null)
     {
       if(instruction is IMultiInstruction mi)
+      {
+        //Console.WriteLine("ATTACH " + mi.GetHashCode() + " " + candidate.GetHashCode());
         mi.Attach(candidate);
+      }
       else
         throw new Exception("Can't attach to current instruction");
     }
     else
+    {
+      //Console.WriteLine("REPL " + candidate.GetHashCode());
       instruction = candidate;
+    }
   }
 
-  IInstruction VisitBlock(ref int ip, Frame curr_frame, ref IInstruction instruction, IExitableScope defer_scope)
+  IInstruction VisitBlock(ref int ip, Frame curr_frame, IExitableScope defer_scope)
   {
     var type = (EnumBlock)Bytecode.Decode8(curr_frame.bytecode, ref ip);
     int size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
@@ -1272,18 +1287,16 @@ public class VM
       else
         paral = Instructions.New<ParalAllInstruction>(this);
 
-      AttachInstruction(ref instruction, paral);
       int tmp_ip = ip;
       while(tmp_ip < (ip + size))
       {
         ++tmp_ip;
         var opcode = (Opcodes)curr_frame.bytecode[tmp_ip]; 
         if(opcode != Opcodes.Block)
-          throw new Exception("Expected PushBlock got " + opcode);
-        IInstruction dummy = null;
-        var sub = VisitBlock(ref tmp_ip, curr_frame, ref dummy, (IExitableScope)paral);
-        if(sub != null)
-          paral.Attach(sub);
+          throw new Exception("Expected Opcodes.Block got " + opcode);
+        var branch = VisitBlock(ref tmp_ip, curr_frame, (IExitableScope)paral);
+        if(branch != null)
+          paral.Attach(branch);
       }
       ip += size;
       return paral;
@@ -1292,8 +1305,6 @@ public class VM
     {
       var seq = Instructions.New<SeqInstruction>(this);
       seq.Init(curr_frame, ip + 1, ip + size);
-
-      AttachInstruction(ref instruction, seq);
       ip += size;
       return seq;
     }
@@ -1498,6 +1509,24 @@ public class Instructions
       throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
   }
 
+  static public void Dump(IInstruction instruction, int level = 0)
+  {
+    if(level == 0)
+      Console.WriteLine("<<<<<<<<<<<<<<<");
+
+    string str = new String(' ', level);
+    Console.WriteLine(str + instruction.GetType().Name + " " + instruction.GetHashCode());
+
+    if(instruction is ITraversableInstruction ti)
+    {
+      foreach(var part in ti.Parts)
+        Dump(part, level + 1);
+    }
+
+    if(level == 0)
+      Console.WriteLine(">>>>>>>>>>>>>>>");
+  }
+
   public int Allocs
   {
     get {
@@ -1528,6 +1557,11 @@ public interface IExitableScope
 public interface IMultiInstruction : IInstruction
 {
   void Attach(IInstruction ex);
+}
+
+public interface ITraversableInstruction 
+{
+  IList<IInstruction> Parts {get;}
 }
 
 class CoroutineSuspend : IInstruction
@@ -1603,13 +1637,22 @@ public struct DeferBlock
   }
 }
 
-public class SeqInstruction : IInstruction, IExitableScope
+public class SeqInstruction : IInstruction, IExitableScope, ITraversableInstruction
 {
   public int ip;
   public int max_ip;
   public FixedStack<VM.Frame> frames = new FixedStack<VM.Frame>(256);
   public IInstruction instruction;
   public List<DeferBlock> defers;
+
+  public IList<IInstruction> Parts {
+    get {
+      if(instruction != null)
+        return new List<IInstruction>() { instruction };
+      else
+        return new List<IInstruction>();
+    }
+  }
 
   public void Init(VM.Frame frm, int ip, int max_ip)
   {
@@ -1657,10 +1700,16 @@ public class SeqInstruction : IInstruction, IExitableScope
   }
 }
 
-public class ParalInstruction : IMultiInstruction, IExitableScope
+public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableInstruction
 {
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
+
+  public IList<IInstruction> Parts {
+    get {
+      return branches;
+    }
+  }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
@@ -1671,8 +1720,10 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
       var branch = branches[i];
       branch.Tick(frm, ref status);
       //Console.WriteLine("CHILD " + i + " " + status + " " + child.GetType().Name);
-      if(status != BHS.RUNNING || frm.IsReleased())
+      if(status != BHS.RUNNING)
       {
+        //Console.WriteLine("DONE " + i + " " + branch.GetHashCode() + " " + branch.GetType().Name + " " + GetHashCode());
+        //Instructions.Dump(branch);
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
         break;
@@ -1704,10 +1755,16 @@ public class ParalInstruction : IMultiInstruction, IExitableScope
   }
 }
 
-public class ParalAllInstruction : IMultiInstruction, IExitableScope
+public class ParalAllInstruction : IMultiInstruction, IExitableScope, ITraversableInstruction
 {
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
+
+  public IList<IInstruction> Parts {
+    get {
+      return branches;
+    }
+  }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
@@ -1720,7 +1777,7 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
       }
-      else if(status == BHS.FAILURE || frm.IsReleased())
+      else if(status == BHS.FAILURE || frm.returned)
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
