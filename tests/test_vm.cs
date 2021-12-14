@@ -5192,6 +5192,78 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestArrayOfComplexFuncPtrs()
+  {
+    string bhl = @"
+    func int test(int a) 
+    {
+      int^(int,string)[] ptrs = new int^(int,string)[]
+      ptrs.Add(func int(int a, string b) { 
+          trace(b) 
+          return a*2 
+      })
+      ptrs.Add(func int(int a, string b) { 
+          trace(b)
+          return a*10
+      })
+
+      return ptrs[0](a, ""what"") + ptrs[1](a, ""hey"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(3*2 + 3*10, Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num);
+    AssertEqual("whathey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnComplexFuncPtr()
+  {
+    string bhl = @"
+    func bool^(int) foo()
+    {
+      return func bool(int a) { return a > 2 } 
+    }
+
+    func bool test(int a) 
+    {
+      bool^(int) ptr = foo()
+      return ptr(a)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnAndCallComplexFuncPtr()
+  {
+    string bhl = @"
+    func bool^(int) foo()
+    {
+      return func bool(int a) { return a > 2 } 
+    }
+
+    func bool test(int a) 
+    {
+      return foo()(a)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
   public void TestClosure()
   {
     string bhl = @"
