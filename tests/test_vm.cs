@@ -5808,6 +5808,99 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartSeveralLambdas()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      start(
+        func()
+        { 
+          trace(""HERE"")
+        }             
+      ) 
+    }
+
+    func void test2() 
+    {
+      start(
+        func()
+        { 
+          trace(""HERE2"")
+        }             
+      ) 
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    Execute(vm, "test2");
+    AssertEqual("HEREHERE2", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaSeveralTimes()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      start(
+        func()
+        { 
+          trace(""HERE"")
+        }             
+      ) 
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    Execute(vm, "test");
+    AssertEqual("HEREHERE", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaCaptureVars()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      float a = 10
+      float b = 20
+      start(
+        func()
+        { 
+          float k = a 
+          trace((string)k + (string)b)
+        }             
+      ) 
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1020", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartLambdaCaptureVarsNested()
   {
     string bhl = @"
@@ -5879,6 +5972,60 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
     AssertEqual("1020", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaCaptureVars2()
+  {
+    string bhl = @"
+
+    func call(void^() fn, void^() fn2)
+    {
+      start(fn2)
+    }
+
+    func void foo(float a = 1, float b = 2)
+    {
+      call(fn2 :
+        func()
+        { 
+          float k = a 
+          trace((string)k + (string)b)
+        },
+        fn : func() { }
+      ) 
+    }
+
+    func void bar()
+    {
+      call(
+        fn2 :
+        func()
+        { 
+          trace(""HEY!"")
+        },             
+        fn : func() { }
+      ) 
+    }
+
+    func void test() 
+    {
+      foo(10, 20)
+      bar()
+      foo()
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1020HEY!12HEY!", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8161,6 +8308,41 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
     AssertEqual(fb.stack.PopRelease().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSequenceSuccess()
+  {
+    string bhl = @"
+
+    func foo()
+    {
+      trace(""FOO"")
+    }
+
+    func bar()
+    {
+      trace(""BAR"")
+    }
+
+    func test() 
+    {
+      seq {
+        bar()
+        foo()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("BARFOO", log.ToString());
     CommonChecks(vm);
   }
 
