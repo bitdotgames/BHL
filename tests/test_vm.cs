@@ -3964,7 +3964,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestParalBreak()
   {
     string bhl = @"
@@ -3989,13 +3989,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(bhl, null, false, true);
     var num = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(num, 1);
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestParalAllBreak()
   {
     string bhl = @"
@@ -13453,7 +13453,7 @@ public class BHL_TestVM : BHL_TestBase
   public static void Print(ModuleCompiler c)
   {
     var bs = c.GetByteCode();
-    ModuleCompiler.OpDefinition op = null;
+    ModuleCompiler.Definition op = null;
     int op_size = 0;
 
     for(int i=0;i<bs.Length;i++)
@@ -13525,7 +13525,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string res = "";
 
-    ModuleCompiler.OpDefinition aop = null;
+    ModuleCompiler.Definition aop = null;
     int aop_size = 0;
 
     for(int i=0;i<a?.Length;i++)
@@ -13539,9 +13539,14 @@ public class BHL_TestVM : BHL_TestBase
       }
       else
       {
-        aop = ModuleCompiler.LookupOpcode((Opcodes)a[i]);
-        aop_size = PredictOpcodeSize(aop, a, i);
-        res += "(" + aop.name.ToString() + ")";
+        if(a[i] != 0)
+        {
+          aop = ModuleCompiler.LookupOpcode((Opcodes)a[i]);
+          aop_size = PredictOpcodeSize(aop, a, i);
+          res += "(" + aop.name.ToString() + ")";
+        }
+        else
+          res += "(???)";
         if(aop_size == 0)
           aop = null;
       }
@@ -13553,9 +13558,9 @@ public class BHL_TestVM : BHL_TestBase
 
   static bool CompareCode(byte[] a, byte[] b, out string cmp)
   {
-    ModuleCompiler.OpDefinition aop = null;
+    ModuleCompiler.Definition aop = null;
     int aop_size = 0;
-    ModuleCompiler.OpDefinition bop = null;
+    ModuleCompiler.Definition bop = null;
     int bop_size = 0;
 
     bool equal = true;
@@ -13667,7 +13672,7 @@ public class BHL_TestVM : BHL_TestBase
     return fb;
   }
 
-  static int PredictOpcodeSize(ModuleCompiler.OpDefinition op, byte[] bytes, int start_pos)
+  static int PredictOpcodeSize(ModuleCompiler.Definition op, byte[] bytes, int start_pos)
   {
     if(op.operand_width == null)
       return 0;

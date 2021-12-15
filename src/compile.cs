@@ -6,12 +6,6 @@ namespace bhl {
 
 public class ModuleCompiler : AST_Visitor
 {
-  public class OpDefinition
-  {
-    public Opcodes name;
-    public int[] operand_width; //each array item represents the size of the operand in bytes
-  }
-
   AST ast;
   ModulePath module_path;
   public ModulePath Module {
@@ -36,15 +30,14 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  Bytecode initcode = new Bytecode();
-  Bytecode bytecode = new Bytecode();
-  List<Bytecode> code_stack = new List<Bytecode>() { null };
+  List<Instruction> init = new List<Instruction>();
+  List<Instruction> code = new List<Instruction>();
   Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
-  Stack<Bytecode> loop_blocks = new Stack<Bytecode>();
+  Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
   internal struct NonPatchedJump
   {
-    internal Bytecode block;
-    internal int jump_opcode_end_pos;
+    internal AST_Block block;
+    internal Instruction jump_op;
   }
   Dictionary<Bytecode, int> continue_jump_markers = new Dictionary<Bytecode, int>();
   List<NonPatchedJump> non_patched_breaks = new List<NonPatchedJump>();
@@ -68,7 +61,98 @@ public class ModuleCompiler : AST_Visitor
 
   Dictionary<uint, string> imports = new Dictionary<uint, string>();
   
-  static Dictionary<byte, OpDefinition> opcode_decls = new Dictionary<byte, OpDefinition>();
+  static Dictionary<byte, Definition> opcode_decls = new Dictionary<byte, Definition>();
+
+  public class Definition
+  {
+    public Opcodes name { get; }
+     //each array item represents the size of the operand in bytes
+    public int[] operand_width { get; }
+    public int size { get; }
+
+    public Definition(Opcodes name, params int[] operand_width)
+    {
+      this.name = name;
+      this.operand_width = operand_width;
+
+      size = 1;//op itself
+      for(int i=0;i<operand_width.Length;++i)
+        size += operand_width[i];
+    }
+  }
+
+  public class Instruction
+  {
+    public Definition def { get; }
+    public Opcodes op { get; }
+    public int[] operands { get; }
+    public int line_num;
+
+    public Instruction(Opcodes op)
+    {
+      def = LookupOpcode(op);
+      this.op = op;
+      operands = new int[def.operand_width.Length];
+    }
+
+    public Instruction SetOperand(int idx, int op_val)
+    {
+      if(def.operand_width == null || def.operand_width.Length <= idx)
+        throw new Exception("Invalid operand for opcode:" + op + ", at index:" + idx);
+
+      int width = def.operand_width[idx];
+
+      switch(width)
+      {
+        case 1:
+          if(op_val < sbyte.MinValue || op_val > sbyte.MaxValue)
+            throw new Exception("Operand value(1 byte) is out of bounds: " + op_val);
+        break;
+        case 2:
+          if(op_val < short.MinValue || op_val > short.MaxValue)
+            throw new Exception("Operand value(2 bytes) is out of bounds: " + op_val);
+        break;
+        case 3:
+          if(op_val < -8388607 || op_val > 8388607)
+            throw new Exception("Operand value(3 bytes) is out of bounds: " + op_val);
+        break;
+        case 4:
+        break;
+        default:
+          throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
+      }
+
+      operands[idx] = op_val;
+
+      return this;
+    }
+    
+    public void Write(Bytecode code)
+    {
+      for(int i=0;i<operands.Length;++i)
+      {
+        int op_val = operands[i];
+        int width = def.operand_width[i];
+        switch(width)
+        {
+          case 1:
+            code.Write8((uint)op_val);
+          break;
+          case 2:
+            code.Write16((uint)op_val);
+          break;
+          case 3:
+            code.Write24((uint)op_val);
+          break;
+          case 4:
+            code.Write32((uint)op_val);
+          break;
+          default:
+            throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
+        }
+      }
+    }
+  }
 
   static ModuleCompiler()
   {
@@ -123,43 +207,31 @@ public class ModuleCompiler : AST_Visitor
       );
   }
 
-  Bytecode PeekCode()
+  int GetCodeSize()
   {
-    return code_stack[code_stack.Count-1];
+    int size = 0;
+    for(int i=0;i<code.Count;++i)
+      size += code[i].def.size;
+    return size;
   }
 
-  Bytecode PushCode()
+  int GetPosition(Instruction inst)
   {
-    var code = new Bytecode();
-    code_stack.Add(code);
-    return code;
-  }
- 
-  Bytecode PopCode(bool auto_append = true)
-  {
-    var curr_scope = PeekCode();
-    if(auto_append)
-      code_stack[0].Write(curr_scope);
-    code_stack.RemoveAt(code_stack.Count-1);
-    return curr_scope;
-  }
-
-  int GetPositionRelativeToParent(Bytecode parent)
-  {
-    int i = code_stack.Count - 1;
-    Bytecode tmp = code_stack[i];
-    int pos = tmp.Position;
-    while(tmp != parent && i > 0)
+    int pos = 0;
+    bool found = false;
+    for(int i=0;i<code.Count;++i)
     {
-      tmp = code_stack[--i];
-      pos += tmp.Position;
+      var tmp = code[i];
+      pos += tmp.def.size;
+      if(inst == tmp)
+      {
+        found = true;
+        break;
+      }
     }
+    if(!found)
+      throw new Exception("Instruction was not found: " + inst.op);
     return pos;
-  }
-
-  int GetAbsPosition()
-  {
-    return GetPositionRelativeToParent(null);
   }
 
   int AddConstant(AST_Literal lt)
@@ -188,446 +260,347 @@ public class ModuleCompiler : AST_Visitor
   static void DeclareOpcodes()
   {
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Constant,
-        operand_width = new int[] { 3/*const idx*/ }
-      }
+      new Definition(
+        Opcodes.Constant,
+        3/*const idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.And
-      }
+      new Definition(
+        Opcodes.And
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Or
-      }
+      new Definition(
+        Opcodes.Or
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.BitAnd
-      }
+      new Definition(
+        Opcodes.BitAnd
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.BitOr
-      }
+      new Definition(
+        Opcodes.BitOr
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Mod
-      }
+      new Definition(
+        Opcodes.Mod
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Add
-      }
+      new Definition(
+        Opcodes.Add
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Sub
-      }
+      new Definition(
+        Opcodes.Sub
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Div
-      }
+      new Definition(
+        Opcodes.Div
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Mul
-      }
+      new Definition(
+        Opcodes.Mul
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Equal
-      }
+      new Definition(
+        Opcodes.Equal
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.NotEqual
-      }
+      new Definition(
+        Opcodes.NotEqual
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.LT
-      }
+      new Definition(
+        Opcodes.LT
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.LTE
-      }
+      new Definition(
+        Opcodes.LTE
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GT
-      }
+      new Definition(
+        Opcodes.GT
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GTE
-      }
+      new Definition(
+        Opcodes.GTE
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.UnaryNot
-      }
+      new Definition(
+        Opcodes.UnaryNot
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.UnaryNeg
-      }
+      new Definition(
+        Opcodes.UnaryNeg
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.DeclVar,
-        operand_width = new int[] { 1 /*local idx*/, 1 /*Val type*/ }
-      }
+      new Definition(
+        Opcodes.DeclVar,
+        1 /*local idx*/, 1 /*Val type*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.ArgVar,
-        operand_width = new int[] { 1 /*local idx*/ }
-      }
+      new Definition(
+        Opcodes.ArgVar,
+        1 /*local idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.SetVar,
-        operand_width = new int[] { 1 /*local idx*/ }
-      }
+      new Definition(
+        Opcodes.SetVar,
+        1 /*local idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetVar,
-        operand_width = new int[] { 1 /*local idx*/ }
-      }
+      new Definition(
+        Opcodes.GetVar,
+        1 /*local idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.ArgRef,
-        operand_width = new int[] { 1 /*local idx*/ }
-      }
+      new Definition(
+        Opcodes.ArgRef,
+        1 /*local idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.SetAttr,
-        operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
-      }
+      new Definition(
+        Opcodes.SetAttr,
+        3/*class type idx*/, 2/*member idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.SetAttrInplace,
-        operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
-      }
+      new Definition(
+        Opcodes.SetAttrInplace,
+        3/*class type idx*/, 2/*member idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetAttr,
-        operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
-      }
+      new Definition(
+        Opcodes.GetAttr,
+        3/*class type idx*/, 2/*member idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.RefAttr,
-        operand_width = new int[] { 3/*class type idx*/, 2/*member idx*/ }
-      }
+      new Definition(
+        Opcodes.RefAttr,
+        3/*class type idx*/, 2/*member idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetFunc,
-        operand_width = new int[] { 3/*module ip*/ }
-      }
+      new Definition(
+        Opcodes.GetFunc,
+        3/*module ip*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetFuncNative,
-        operand_width = new int[] { 3/*globs idx*/ }
-      }
+      new Definition(
+        Opcodes.GetFuncNative,
+        3/*globs idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetMethodNative,
-        operand_width = new int[] { 2/*class member idx*/, 3/*type literal idx*/ }
-      }
+      new Definition(
+        Opcodes.GetMethodNative,
+        2/*class member idx*/, 3/*type literal idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetLambda,
-        operand_width = new int[] { 4/*args bits*/ }
-      }
+      new Definition(
+        Opcodes.GetLambda,
+        4/*args bits*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetFuncFromVar,
-        operand_width = new int[] { 1/*local idx*/ }
-      }
+      new Definition(
+        Opcodes.GetFuncFromVar,
+        1/*local idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.GetFuncImported,
-        operand_width = new int[] { 3/*module name idx*/, 3/*func name idx*/ }
-      }
+      new Definition(
+        Opcodes.GetFuncImported,
+        3/*module name idx*/, 3/*func name idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Call,
-        operand_width = new int[] { 4/*args bits*/ }
-      }
+      new Definition(
+        Opcodes.Call,
+        4/*args bits*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Lambda,
-        operand_width = new int[] { 2/*rel.offset skip lambda pos*/ }
-      }
+      new Definition(
+        Opcodes.Lambda,
+        2/*rel.offset skip lambda pos*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.UseUpval,
-        operand_width = new int[] { 1/*upval src idx*/, 1/*local dst idx*/ }
-      }
+      new Definition(
+        Opcodes.UseUpval,
+        1/*upval src idx*/, 1/*local dst idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.InitFrame,
-        operand_width = new int[] { 1/*total local vars*/ }
-      }
+      new Definition(
+        Opcodes.InitFrame,
+        1/*total local vars*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Block,
-        operand_width = new int[] { 1/*type*/, 2/*len*/ }
-      }
+      new Definition(
+        Opcodes.Block,
+        1/*type*/, 2/*len*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Return
-      }
+      new Definition(
+        Opcodes.Return
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.ReturnVal,
-        operand_width = new int[] { 1/*returned amount*/ }
-      }
+      new Definition(
+        Opcodes.ReturnVal,
+        1/*returned amount*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Pop
-      }
+      new Definition(
+        Opcodes.Pop
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Jump,
-        operand_width = new int[] { 2 /*rel.offset*/}
-      }
+      new Definition(
+        Opcodes.Jump,
+        2 /*rel.offset*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.CondJump,
-        operand_width = new int[] { 2/*rel.offset*/ }
-      }
+      new Definition(
+        Opcodes.CondJump,
+        2/*rel.offset*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.DefArg,
-        operand_width = new int[] { 1/*local scope idx*/, 2/*jump out of def.arg calc pos*/ }
-      }
+      new Definition(
+        Opcodes.DefArg,
+        1/*local scope idx*/, 2/*jump out of def.arg calc pos*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.New,
-        operand_width = new int[] { 3/*type idx*/ }
-      }
+      new Definition(
+        Opcodes.New,
+        3/*type idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.TypeCast,
-        operand_width = new int[] { 3/*type idx*/ }
-      }
+      new Definition(
+        Opcodes.TypeCast,
+        3/*type idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Inc,
-        operand_width = new int[] { 1/*local idx*/ }
-      }
+      new Definition(
+        Opcodes.Inc,
+        1/*local idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Dec,
-        operand_width = new int[] { 1/*local idx*/ }
-      }
+      new Definition(
+        Opcodes.Dec,
+        1/*local idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.ClassBegin,
-        operand_width = new int[] { 4/*type idx*/, 4/*parent type idx*/ }
-      }
+      new Definition(
+        Opcodes.ClassBegin,
+        4/*type idx*/, 4/*parent type idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.ClassMember,
-        operand_width = new int[] { 4/*name idx*/, 4/*type idx*/ }
-      }
+      new Definition(
+        Opcodes.ClassMember,
+        4/*name idx*/, 4/*type idx*/
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.ClassEnd
-      }
+      new Definition(
+        Opcodes.ClassEnd
+      )
     );
     DeclareOpcode(
-      new OpDefinition()
-      {
-        name = Opcodes.Import,
-        operand_width = new int[] { 4/*name idx*/}
-      }
+      new Definition(
+        Opcodes.Import,
+        4/*name idx*/
+      )
     );
   }
 
-  static void DeclareOpcode(OpDefinition def)
+  static void DeclareOpcode(Definition def)
   {
     opcode_decls.Add((byte)def.name, def);
   }
 
-  static public OpDefinition LookupOpcode(Opcodes op)
+  static public Definition LookupOpcode(Opcodes op)
   {
-    OpDefinition def;
+    Definition def;
     if(!opcode_decls.TryGetValue((byte)op, out def))
        throw new Exception("No such opcode definition: " + op);
     return def;
   }
 
-  //NOTE: public for testing purposes only
-  public ModuleCompiler Emit(Opcodes op, int[] operands = null, int line_num = 0)
+  Instruction Emit(Opcodes op, int[] operands = null, int line_num = 0)
   {
-    var curr_scope = PeekCode();
-    Emit(curr_scope, op, line_num, operands);
+    var inst = new Instruction(op);
+    inst.line_num = line_num;
+    for(int i=0;i<operands?.Length;++i)
+      inst.SetOperand(i, operands[i]);
+    code.Add(inst);
+    return inst;
+  }
 
-    int ip_pos = GetAbsPosition()-1;
-    //Console.WriteLine("EMT " + op + " " + ip_pos + " -> " + module_path.name + "@" + line_num);
-    ip2src_line[ip_pos] = line_num; 
-
+  //NOTE: for testing purposes only
+  public ModuleCompiler TestEmit(Opcodes op, int[] operands = null)
+  {
+    var inst = Emit(op, operands);
     return this;
   }
 
-  void Emit(Bytecode code, Opcodes op, int line_num, int[] operands = null)
-  {
-    var def = LookupOpcode(op);
-
-    code.Write((byte)op);
-
-    if(def.operand_width != null && (operands == null || operands.Length != def.operand_width.Length))
-      throw new Exception("Invalid number of operands for opcode:" + op + ", expected:" + def.operand_width.Length);
-
-    for(int i = 0; operands != null && i < operands.Length; ++i)
-    {
-      if(def.operand_width == null || def.operand_width.Length <= i)
-        throw new Exception("Invalid operand for opcode:" + op + ", at index:" + i);
-
-      int width = def.operand_width[i];
-      int op_val = operands[i];
-
-      switch(width)
-      {
-        case 1:
-          if(op_val < sbyte.MinValue || op_val > sbyte.MaxValue)
-            throw new Exception("Operand value(1 byte) is out of bounds: " + op_val);
-          code.Write8((uint)op_val);
-        break;
-        case 2:
-          if(op_val < short.MinValue || op_val > short.MaxValue)
-            throw new Exception("Operand value(2 bytes) is out of bounds: " + op_val);
-          code.Write16((uint)op_val);
-        break;
-        case 3:
-          if(op_val < -8388607 || op_val > 8388607)
-            throw new Exception("Operand value(3 bytes) is out of bounds: " + op_val);
-          code.Write24((uint)op_val);
-        break;
-        case 4:
-          code.Write32((uint)op_val);
-        break;
-        default:
-          throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
-      }
-    }
-  }
-
-  //NOTE: returns position of the opcode argument for 
-  //      the jump index to be patched later
-  int EmitConditionPlaceholderAndBody(AST_Block ast, int idx)
+  //NOTE: returns jump instruction to be patched later
+  Instruction EmitConditionPlaceholderAndBody(AST_Block ast, int idx)
   {
     //condition
     Visit(ast.children[idx]);
-    Emit(Opcodes.CondJump, new int[] { 0/*dummy placeholder*/});
-    int patch_pos = PeekCode().Position;
-    //body
+    var inst = Emit(Opcodes.CondJump);
     Visit(ast.children[idx+1]);
-    return patch_pos;
+    return inst;
   }
 
-  void PatchBreaks(Bytecode curr_scope)
+  void PatchBreaks(AST_Block block)
   {
-    int curr_pos = curr_scope.Position;
-
     for(int i=non_patched_breaks.Count;i-- > 0;)
     {
       var npb = non_patched_breaks[i];
-      if(npb.block == curr_scope)
+      if(npb.block == block)
       {
-        int offset = curr_pos - npb.jump_opcode_end_pos;
-        if(offset < short.MinValue || offset > short.MaxValue)
-          throw new Exception("Too large jump offset: " + offset);
-        curr_scope.PatchAt(npb.jump_opcode_end_pos - 2/*to offset bytes*/, (uint)offset, num_bytes: 2);
+        PatchJumpOffsetToCurrPos(npb.jump_op);
         non_patched_breaks.RemoveAt(i);
       }
     }
@@ -650,13 +623,10 @@ public class ModuleCompiler : AST_Visitor
     continue_jump_markers.Clear();
   }
 
-  void PatchJumpOffsetToCurrPos(int jump_opcode_end_pos)
+  void PatchJumpOffsetToCurrPos(Instruction op)
   {
-    var curr_scope = PeekCode();
-    int offset = curr_scope.Position - jump_opcode_end_pos;
-    if(offset < sbyte.MinValue || offset > sbyte.MaxValue) 
-      throw new Exception("Too large jump offset: " + offset);
-    curr_scope.PatchAt(jump_opcode_end_pos - 2/*go to jump address bytes*/, (uint)offset, num_bytes: 1);
+    int offset = GetCodeSize() - GetPosition(op);
+    op.SetOperand(0, offset);
   }
 
   public byte[] GetByteCode()
@@ -697,37 +667,23 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     func_decls.Add(ast);
-    PushCode();
-    int ip = (int)code_stack[0].Length;
+    int ip = GetCodeSize();
     func2ip.Add(ast.name, ip);
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    PopCode();
     func_decls.RemoveAt(func_decls.Count-1);
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
-    PushCode();
-    Emit(Opcodes.Lambda, new int[] { 0 /*dummy placeholder*/});
+    var lmb_op = Emit(Opcodes.Lambda);
+    //skipping lambda opcode
+    func2ip.Add(ast.name, GetCodeSize());
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    var bytecode = PopCode(auto_append: false);
-
-    long jump_out_pos = bytecode.Length - 3/*jump op code length*/;
-    if(jump_out_pos > short.MaxValue)
-      throw new Exception("Too large lambda body");
-    //let's patch the jump placeholder with the actual jump position
-    bytecode.PatchAt(1, (uint)jump_out_pos, num_bytes: 2);
-
-    int ip = 3;//taking into account 'jump out of lambda'
-    for(int i=0;i<code_stack.Count;++i)
-      ip += (int)code_stack[i].Length;
-    func2ip.Add(ast.name, ip);
-
-    PeekCode().Write(bytecode);
+    PatchJumpOffsetToCurrPos(lmb_op);
 
     foreach(var p in ast.uses)
       Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
@@ -798,7 +754,7 @@ public class ModuleCompiler : AST_Visitor
         //{
         //}
 
-        int last_jmp_op_pos = -1;
+        Instruction last_jmp_op = null;
         int i = 0;
         //NOTE: amount of children is even if there's no 'else'
         for(;i < ast.children.Count; i += 2)
@@ -807,26 +763,25 @@ public class ModuleCompiler : AST_Visitor
           if((i + 2) > ast.children.Count)
             break;
 
-          int if_op_pos = EmitConditionPlaceholderAndBody(ast, i);
-          if(last_jmp_op_pos != -1)
-            PatchJumpOffsetToCurrPos(last_jmp_op_pos);
+          var if_op = EmitConditionPlaceholderAndBody(ast, i);
+          if(last_jmp_op != null)
+            PatchJumpOffsetToCurrPos(last_jmp_op);
 
           //check if uncoditional jump out of 'if body' is required,
           //it's required only if there are other 'else if' or 'else'
           if(ast.children.Count > 2)
           {
-            Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-            last_jmp_op_pos = PeekCode().Position;
-            PatchJumpOffsetToCurrPos(if_op_pos);
+            last_jmp_op = Emit(Opcodes.Jump, 0);
+            PatchJumpOffsetToCurrPos(if_op);
           }
           else
-            PatchJumpOffsetToCurrPos(if_op_pos);
+            PatchJumpOffsetToCurrPos(if_op);
         }
         //check fo 'else leftover'
         if(i != ast.children.Count)
         {
           Visit(ast.children[i]);
-          PatchJumpOffsetToCurrPos(last_jmp_op_pos);
+          PatchJumpOffsetToCurrPos(last_jmp_op);
         }
       break;
       case EnumBlock.WHILE:
@@ -834,25 +789,19 @@ public class ModuleCompiler : AST_Visitor
         if(ast.children.Count != 2)
          throw new Exception("Unexpected amount of children (must be 2)");
 
-        loop_blocks.Push(PeekCode());
+        loop_blocks.Push(ast);
 
-        int while_start_pos = PeekCode().Position;
+        var cond_op = EmitConditionPlaceholderAndBody(ast, 0);
 
-        int cond_opcode_end_pos = EmitConditionPlaceholderAndBody(ast, 0);
-
-        int while_begin_offset_pos = 
-          while_start_pos - 
-          (PeekCode().Position + 3/*jump itself opcode size*/)
-          ;
         //to the beginning of the loop
-        Emit(Opcodes.Jump, new int[] { while_begin_offset_pos });
+        Emit(Opcodes.Jump, new int[] {GetPosition(cond_op) - cond_op.def.size});
 
         //patch 'jump out of the loop' position
-        PatchJumpOffsetToCurrPos(cond_opcode_end_pos);
+        PatchJumpOffsetToCurrPos(cond_op);
 
-        PatchContinues(PeekCode());
+        //PatchContinues(PeekCode());
 
-        PatchBreaks(PeekCode());
+        PatchBreaks(ast);
 
         loop_blocks.Pop();
       }
@@ -903,7 +852,9 @@ public class ModuleCompiler : AST_Visitor
 
       //NOTE: let's automatically wrap all children with sequence if 
       //      they are inside paral block
-      if(is_paral && (!(child is AST_Block child_block) || (child_block.type != EnumBlock.SEQ && child_block.type != EnumBlock.DEFER)))
+      if(is_paral && 
+          (!(child is AST_Block child_block) || 
+           (child_block.type != EnumBlock.SEQ && child_block.type != EnumBlock.DEFER)))
       {
         var seq_child = new AST_Block();
         seq_child.type = EnumBlock.SEQ;
@@ -914,12 +865,12 @@ public class ModuleCompiler : AST_Visitor
       Visit(child);
     }
 
-    bool need_to_enter_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
-
     code_stack.RemoveAt(code_stack.Count-1);
     ctrl_blocks.Pop();
 
-    if(need_to_enter_block)
+    bool emit_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
+
+    if(emit_block)
       Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
     PeekCode().Write(block_code);
   }
@@ -1116,7 +1067,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Break ast)
   {
     Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-    int patch_pos = GetPositionRelativeToParent(loop_blocks.Peek());
+    int patch_pos = GetCodePosition();
     non_patched_breaks.Add(
       new NonPatchedJump() 
         { block = loop_blocks.Peek(), 
@@ -1130,13 +1081,13 @@ public class ModuleCompiler : AST_Visitor
     var loop_block = loop_blocks.Peek();
     if(ast.jump_marker)
     {
-      int pos = GetPositionRelativeToParent(loop_block);
+      int pos = GetPositionUpToParent(loop_block);
       continue_jump_markers.Add(loop_block, pos);
     }
     else
     {
       Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-      int pos = GetPositionRelativeToParent(loop_block);
+      int pos = GetPositionUpToParent(loop_block);
       non_patched_continues.Add(
         new NonPatchedJump() 
           { block = loop_block, 
