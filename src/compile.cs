@@ -39,7 +39,7 @@ public class ModuleCompiler : AST_Visitor
     internal AST_Block block;
     internal Instruction jump_op;
   }
-  Dictionary<Bytecode, int> continue_jump_markers = new Dictionary<Bytecode, int>();
+  Dictionary<AST_Block, Instruction> continue_jump_markers = new Dictionary<AST_Block, Instruction>();
   List<NonPatchedJump> non_patched_breaks = new List<NonPatchedJump>();
   List<NonPatchedJump> non_patched_continues = new List<NonPatchedJump>();
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
@@ -577,9 +577,9 @@ public class ModuleCompiler : AST_Visitor
   }
 
   //NOTE: for testing purposes only
-  public ModuleCompiler TestEmit(Opcodes op, int[] operands = null)
+  public ModuleCompiler EmitThen(Opcodes op, int[] operands = null)
   {
-    var inst = Emit(op, operands);
+    Emit(op, operands);
     return this;
   }
 
@@ -606,17 +606,17 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  void PatchContinues(Bytecode curr_scope)
+  void PatchContinues(AST_Block block)
   {
     for(int i=non_patched_continues.Count;i-- > 0;)
     {
       var npc = non_patched_continues[i];
-      if(npc.block == curr_scope)
+      if(npc.block == block)
       {
-        int offset = continue_jump_markers[npc.block] - npc.jump_opcode_end_pos;
-        if(offset < short.MinValue || offset > short.MaxValue)
-          throw new Exception("Too large jump offset: " + offset);
-        curr_scope.PatchAt(npc.jump_opcode_end_pos - 2/*to offset bytes*/, (uint)offset, num_bytes: 2);
+        int offset = GetPosition(continue_jump_markers[npc.block]) - GetPosition(npc.jump_op);
+        npc.jump_op.SetOperand(0, offset);
+        //TODO:
+        //PatchJumpFromTo(npc.jump_op, continue_jump_markers[npc.block]);
         non_patched_continues.RemoveAt(i);
       }
     }
@@ -796,10 +796,12 @@ public class ModuleCompiler : AST_Visitor
         //to the beginning of the loop
         Emit(Opcodes.Jump, new int[] {GetPosition(cond_op) - cond_op.def.size});
 
+        //TODO:
+        //PatchJumpFromTo(cond_op, PeekInstruction());
         //patch 'jump out of the loop' position
         PatchJumpOffsetToCurrPos(cond_op);
 
-        //PatchContinues(PeekCode());
+        PatchContinues(ast);
 
         PatchBreaks(ast);
 
@@ -842,9 +844,9 @@ public class ModuleCompiler : AST_Visitor
       ast.type == EnumBlock.PARAL || 
       ast.type == EnumBlock.PARAL_ALL;
 
-    var block_code = new Bytecode();
-    code_stack.Add(block_code);
     ctrl_blocks.Push(ast);
+
+    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
 
     for(int i=0;i<ast.children.Count;++i)
     {
@@ -865,14 +867,14 @@ public class ModuleCompiler : AST_Visitor
       Visit(child);
     }
 
-    code_stack.RemoveAt(code_stack.Count-1);
     ctrl_blocks.Pop();
 
     bool emit_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
 
     if(emit_block)
-      Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
-    PeekCode().Write(block_code);
+      block_op.SetOperand(1, GetPosition(PeekInstruction()));
+    else
+      code.Remove(block_op); 
   }
 
   void VisitDefer(AST_Block ast)
@@ -1066,12 +1068,11 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Break ast)
   {
-    Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-    int patch_pos = GetCodePosition();
+    var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
     non_patched_breaks.Add(
       new NonPatchedJump() 
         { block = loop_blocks.Peek(), 
-          jump_opcode_end_pos = patch_pos
+          jump_op = jump
         }
     );
   }
@@ -1081,17 +1082,15 @@ public class ModuleCompiler : AST_Visitor
     var loop_block = loop_blocks.Peek();
     if(ast.jump_marker)
     {
-      int pos = GetPositionUpToParent(loop_block);
-      continue_jump_markers.Add(loop_block, pos);
+      continue_jump_markers.Add(loop_block, PeekInstruction());
     }
     else
     {
-      Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
-      int pos = GetPositionUpToParent(loop_block);
+      var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
       non_patched_continues.Add(
         new NonPatchedJump() 
           { block = loop_block, 
-            jump_opcode_end_pos = pos
+            jump_op = jump_op
           }
       );
     }
