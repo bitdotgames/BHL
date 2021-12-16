@@ -691,8 +691,7 @@ public class ModuleCompiler : AST_Visitor
 
     ip2src_line = new Dictionary<int, int>();
     int pos = 0;
-    for(int i=0;i<init.Count;++i)
-      pos += init[i].def.size;
+    //TODO: should we take into account init code?
     for(int i=0;i<code.Count;++i)
     {
       pos += code[i].def.size;
