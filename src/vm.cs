@@ -1157,7 +1157,6 @@ public class VM
           {
             short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
             ip += offset;
-            //Console.WriteLine("JMP IP " + ip + " " + max_ip + " " + (Opcodes)curr_frame.bytecode[ip+1]);
           }
           break;
           case Opcodes.CondJump:
@@ -1293,9 +1292,10 @@ public class VM
         var opcode = (Opcodes)curr_frame.bytecode[tmp_ip]; 
         if(opcode != Opcodes.Block)
           throw new Exception("Expected Opcodes.Block got " + opcode);
+        //peeking into upcoming block size info
         int branch_size = 
-            (int)((uint)curr_frame.bytecode[tmp_ip + 1] | 
-            (uint)curr_frame.bytecode[tmp_ip + 2] << 8);
+            (int)((uint)curr_frame.bytecode[tmp_ip + 2] | 
+            (uint)curr_frame.bytecode[tmp_ip + 3] << 8);
         var branch = VisitBlock(ref tmp_ip, curr_frame, (IExitableScope)iparal);
         tmp_ip += branch_size;
         if(branch != null)
