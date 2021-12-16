@@ -9852,6 +9852,43 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //[IsTested()]
+  public void TestWhileBreakDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""hey"")
+      }
+      int i = 0
+      while(i < 3) {
+        defer {
+          trace(""while"")
+        }
+        i = i + 1
+        if(i == 2) {
+          break
+        }
+      }
+      trace(""foo"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var c = Compile(bhl, globs);
+
+    var vm = MakeVM(c);
+    vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual("whilewhilefoohey", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestParalDefer()
   {
