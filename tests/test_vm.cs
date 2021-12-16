@@ -12853,7 +12853,7 @@ public class BHL_TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var vm = new VM();
-    vm.RegisterModule(new CompiledModule(c.Module.name, c.GetCodeBytes(), c.Constants, c.Func2Ip));
+    vm.RegisterModule(c.Compile());
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.stack.PopRelease().num, 123);
@@ -13452,7 +13452,7 @@ public class BHL_TestVM : BHL_TestBase
 
   public static void Print(ModuleCompiler c)
   {
-    var bs = c.GetCodeBytes();
+    var bs = c.Compile().bytecode;
     ModuleCompiler.Definition op = null;
     int op_size = 0;
 
@@ -13480,12 +13480,12 @@ public class BHL_TestVM : BHL_TestBase
 
   public static void AssertEqual(ModuleCompiler ca, ModuleCompiler cb)
   {
-    AssertEqual(ca.GetModule(), cb.GetModule());
+    AssertEqual(ca.Compile(), cb.Compile());
   }
 
   public static void AssertEqual(CompiledModule ca, ModuleCompiler cb)
   {
-    AssertEqual(ca, cb.GetModule());
+    AssertEqual(ca, cb.Compile());
   }
 
   public static void AssertEqual(CompiledModule ca, CompiledModule cb)
@@ -13507,7 +13507,7 @@ public class BHL_TestVM : BHL_TestBase
 
   static void Dump(ModuleCompiler c)
   {
-    Dump(c.GetModule());
+    Dump(c.Compile());
   }
 
   static void Dump(CompiledModule c)
@@ -13645,7 +13645,7 @@ public class BHL_TestVM : BHL_TestBase
   static VM MakeVM(ModuleCompiler c)
   {
     var vm = new VM(c.Globs);
-    var m = c.GetModule();
+    var m = c.Compile();
     vm.RegisterModule(m);
     return vm;
   }

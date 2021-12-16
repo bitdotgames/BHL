@@ -1292,21 +1292,18 @@ public class VM
         var opcode = (Opcodes)curr_frame.bytecode[tmp_ip]; 
         if(opcode != Opcodes.Block)
           throw new Exception("Expected Opcodes.Block got " + opcode);
-        //peeking into upcoming block size info
-        int branch_size = 
-            (int)((uint)curr_frame.bytecode[tmp_ip + 2] | 
-            (uint)curr_frame.bytecode[tmp_ip + 3] << 8);
         var branch = VisitBlock(ref tmp_ip, curr_frame, (IExitableScope)iparal);
-        tmp_ip += branch_size;
         if(branch != null)
           iparal.Attach(branch);
       }
+      ip += size;
       return iparal;
     }
     else if(type == EnumBlock.SEQ)
     {
       var seq = Instructions.New<SeqInstruction>(this);
       seq.Init(curr_frame, ip + 1, ip + size);
+      ip += size;
       return seq;
     }
     else if(type == EnumBlock.DEFER)
@@ -1316,7 +1313,6 @@ public class VM
         defer_scope.RegisterDefer(cb);
       else 
         curr_frame.RegisterDefer(cb);
-      //we need to skip the block execution right now
       ip += size;
       return null;
     }
@@ -1613,8 +1609,7 @@ public struct DeferBlock
 
   public BHS Execute(VM vm, ref IInstruction instruction)
   {
-    frm.fb.ip = ip;
-    var status = vm.Execute(ref frm.fb.ip, frm, frm.fb.frames, ref instruction, max_ip + 1, null);
+    var status = vm.Execute(ref ip, frm, frm.fb.frames, ref instruction, max_ip + 1, null);
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
     return status;
@@ -1670,12 +1665,7 @@ public class SeqInstruction : IInstruction, IExitableScope, ITraversableInstruct
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    frm.fb.ip = ip;
-    status = frm.vm.Execute(ref frm.fb.ip, frames.Peek(), frames, ref instruction, max_ip+1, this);
-    ip = frm.fb.ip;
-    
-    if(status != BHS.RUNNING)
-      frm.fb.ip = max_ip; 
+    status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, max_ip+1, this);
   }
 
   public void Cleanup(VM vm)
@@ -1809,8 +1799,6 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope, ITraversab
 
     if(branches.Count > 0)
       status = BHS.RUNNING;
-    else
-      frm.fb.ip = max_ip; 
   }
 
   public void Cleanup(VM vm)

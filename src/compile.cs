@@ -7,6 +7,8 @@ namespace bhl {
 public class ModuleCompiler : AST_Visitor
 {
   AST ast;
+  CompiledModule compiled;
+
   ModulePath module_path;
   public ModulePath Module {
     get {
@@ -61,13 +63,6 @@ public class ModuleCompiler : AST_Visitor
   public Dictionary<string, int> Func2Ip {
     get {
       return func2ip;
-    }
-  }
-
-  Dictionary<int, int> ip2src_line = new Dictionary<int, int>();
-  public Dictionary<int, int> Ip2SrcLine {
-    get {
-      return ip2src_line;
     }
   }
 
@@ -205,20 +200,29 @@ public class ModuleCompiler : AST_Visitor
 
   public CompiledModule Compile()
   {
-    Visit(ast);
-    return GetModule();
-  }
+    if(compiled == null)
+    {
+      //special case for tests where we
+      //don't have any AST
+      if(ast != null)
+        Visit(ast);
 
-  public CompiledModule GetModule()
-  {
-    return new CompiledModule(
+      byte[] init_bytes;
+      byte[] code_bytes;
+      Dictionary<int, int> ip2src_line;
+      Bake(out init_bytes, out code_bytes, out ip2src_line);
+
+      compiled = new CompiledModule(
         Module.name, 
-        GetCodeBytes(), 
+        code_bytes,
         Constants, 
         Func2Ip, 
-        GetInitBytes(),
-        Ip2SrcLine
-      );
+        init_bytes,
+        ip2src_line
+      );    
+    }
+
+    return compiled;
   }
 
   int GetCodeSize()
@@ -667,24 +671,33 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  public byte[] GetCodeBytes()
+  public void Bake(out byte[] init_bytes, out byte[] code_bytes, out Dictionary<int, int> ip2src_line)
   {
     PatchJumps();
 
-    var bytecode = new Bytecode();
-    for(int i=0;i<code.Count;++i)
-      code[i].Write(bytecode);
+    {
+      var bytecode = new Bytecode();
+      for(int i=0;i<init.Count;++i)
+        init[i].Write(bytecode);
+      init_bytes = bytecode.GetBytes();
+    }
 
-    return bytecode.GetBytes();
-  }
+    {
+      var bytecode = new Bytecode();
+      for(int i=0;i<code.Count;++i)
+        code[i].Write(bytecode);
+      code_bytes = bytecode.GetBytes();
+    }
 
-  public byte[] GetInitBytes()
-  {
-    var bytecode = new Bytecode();
+    ip2src_line = new Dictionary<int, int>();
+    int pos = 0;
     for(int i=0;i<init.Count;++i)
-      init[i].Write(bytecode);
-
-    return bytecode.GetBytes();
+      pos += init[i].def.size;
+    for(int i=0;i<code.Count;++i)
+    {
+      pos += code[i].def.size;
+      ip2src_line.Add(pos-1, code[i].line_num);
+    }
   }
 
 #region Visits
