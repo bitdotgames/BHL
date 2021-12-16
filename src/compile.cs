@@ -32,18 +32,30 @@ public class ModuleCompiler : AST_Visitor
 
   List<Instruction> init = new List<Instruction>();
   List<Instruction> code = new List<Instruction>();
+  List<Instruction> head = null;
+
   Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
   Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
-  internal struct NonPatchedJump
+
+  internal struct BlockJump
   {
     internal AST_Block block;
     internal Instruction jump_op;
   }
+  List<BlockJump> non_patched_breaks = new List<BlockJump>();
+  List<BlockJump> non_patched_continues = new List<BlockJump>();
   Dictionary<AST_Block, Instruction> continue_jump_markers = new Dictionary<AST_Block, Instruction>();
-  List<NonPatchedJump> non_patched_breaks = new List<NonPatchedJump>();
-  List<NonPatchedJump> non_patched_continues = new List<NonPatchedJump>();
+
   List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
+
+  internal struct Jump
+  {
+    internal Instruction jump_op;
+    internal Instruction dst;
+    internal int operand_idx;
+  }
+  List<Jump> jumps = new List<Jump>();
 
   Dictionary<string, int> func2ip = new Dictionary<string, int>();
   public Dictionary<string, int> Func2Ip {
@@ -87,6 +99,10 @@ public class ModuleCompiler : AST_Visitor
     public Opcodes op { get; }
     public int[] operands { get; }
     public int line_num;
+    //It's set automatically during final code traversal
+    //and reflects an actual absolute instruction byte position in
+    //a module. Used for post patching of jump instructions.
+    public int pos;
 
     public Instruction(Opcodes op)
     {
@@ -129,6 +145,8 @@ public class ModuleCompiler : AST_Visitor
     
     public void Write(Bytecode code)
     {
+      code.Write8((uint)op);
+
       for(int i=0;i<operands.Length;++i)
       {
         int op_val = operands[i];
@@ -168,24 +186,20 @@ public class ModuleCompiler : AST_Visitor
       module_path = new ModulePath("", "");
     this.module_path = module_path;
 
-    UseByteCode();
+    UseCode();
   }
 
   //NOTE: public for testing purposes only
-  public ModuleCompiler UseByteCode()
+  public ModuleCompiler UseCode()
   {
-    if(code_stack.Count != 1)
-      throw new Exception("Invalid state");
-    code_stack[0] = bytecode;
+    head = code;
     return this;
   }
 
   //NOTE: public for testing purposes only
-  public ModuleCompiler UseInitCode()
+  public ModuleCompiler UseInit()
   {
-    if(code_stack.Count != 1)
-      throw new Exception("Invalid state");
-    code_stack[0] = initcode;
+    head = init;
     return this;
   }
 
@@ -199,10 +213,10 @@ public class ModuleCompiler : AST_Visitor
   {
     return new CompiledModule(
         Module.name, 
-        GetByteCode(), 
+        GetCodeBytes(), 
         Constants, 
         Func2Ip, 
-        GetInitCode(),
+        GetInitBytes(),
         Ip2SrcLine
       );
   }
@@ -210,8 +224,8 @@ public class ModuleCompiler : AST_Visitor
   int GetCodeSize()
   {
     int size = 0;
-    for(int i=0;i<code.Count;++i)
-      size += code[i].def.size;
+    for(int i=0;i<head.Count;++i)
+      size += head[i].def.size;
     return size;
   }
 
@@ -219,9 +233,9 @@ public class ModuleCompiler : AST_Visitor
   {
     int pos = 0;
     bool found = false;
-    for(int i=0;i<code.Count;++i)
+    for(int i=0;i<head.Count;++i)
     {
-      var tmp = code[i];
+      var tmp = head[i];
       pos += tmp.def.size;
       if(inst == tmp)
       {
@@ -566,18 +580,23 @@ public class ModuleCompiler : AST_Visitor
     return def;
   }
 
+  Instruction Peek()
+  {
+    return head[head.Count-1];
+  }
+
   Instruction Emit(Opcodes op, int[] operands = null, int line_num = 0)
   {
     var inst = new Instruction(op);
-    inst.line_num = line_num;
     for(int i=0;i<operands?.Length;++i)
       inst.SetOperand(i, operands[i]);
-    code.Add(inst);
+    inst.line_num = line_num;
+    head.Add(inst);
     return inst;
   }
 
   //NOTE: for testing purposes only
-  public ModuleCompiler EmitThen(Opcodes op, int[] operands = null)
+  public ModuleCompiler EmitThen(Opcodes op, params int[] operands)
   {
     Emit(op, operands);
     return this;
@@ -588,9 +607,9 @@ public class ModuleCompiler : AST_Visitor
   {
     //condition
     Visit(ast.children[idx]);
-    var inst = Emit(Opcodes.CondJump);
+    var jump_op = Emit(Opcodes.CondJump);
     Visit(ast.children[idx+1]);
-    return inst;
+    return jump_op;
   }
 
   void PatchBreaks(AST_Block block)
@@ -600,7 +619,7 @@ public class ModuleCompiler : AST_Visitor
       var npb = non_patched_breaks[i];
       if(npb.block == block)
       {
-        PatchJumpOffsetToCurrPos(npb.jump_op);
+        AddJumpFromTo(npb.jump_op, Peek());
         non_patched_breaks.RemoveAt(i);
       }
     }
@@ -623,20 +642,52 @@ public class ModuleCompiler : AST_Visitor
     continue_jump_markers.Clear();
   }
 
-  void PatchJumpOffsetToCurrPos(Instruction op)
+  void AddJumpFromTo(Instruction jump_op, Instruction dst, int operand_idx = 0)
   {
-    int offset = GetCodeSize() - GetPosition(op);
-    op.SetOperand(0, offset);
+    jumps.Add(new Jump() {
+      jump_op = jump_op,
+      dst = dst,
+      operand_idx = operand_idx
+    });
   }
 
-  public byte[] GetByteCode()
+  void PatchJumps()
   {
+    //1. let's calculate absolute positions of all instructions
+    int pos = 0;
+    for(int i=0;i<code.Count;++i)
+    {
+      pos += code[i].def.size;
+      code[i].pos = pos; 
+    }
+
+    //2. let's patch jump candidates
+    for(int i=0;i<jumps.Count;++i)
+    {
+      var jp = jumps[i];
+      int offset = jp.dst.pos - jp.jump_op.pos;
+      jp.jump_op.SetOperand(jp.operand_idx, offset);
+    }
+  }
+
+  public byte[] GetCodeBytes()
+  {
+    PatchJumps();
+
+    var bytecode = new Bytecode();
+    for(int i=0;i<code.Count;++i)
+      code[i].Write(bytecode);
+
     return bytecode.GetBytes();
   }
 
-  public byte[] GetInitCode()
+  public byte[] GetInitBytes()
   {
-    return initcode.GetBytes();
+    var bytecode = new Bytecode();
+    for(int i=0;i<init.Count;++i)
+      init[i].Write(bytecode);
+
+    return bytecode.GetBytes();
   }
 
 #region Visits
@@ -658,9 +709,9 @@ public class ModuleCompiler : AST_Visitor
       imports.Add(ast.module_ids[i], ast.module_names[i]);
       int module_idx = AddConstant(ast.module_names[i]);
 
-      UseInitCode();
+      UseInit();
       Emit(Opcodes.Import, new int[] { module_idx });
-      UseByteCode();
+      UseCode();
     }
   }
 
@@ -677,13 +728,13 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
-    var lmb_op = Emit(Opcodes.Lambda);
+    var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
     func2ip.Add(ast.name, GetCodeSize());
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    PatchJumpOffsetToCurrPos(lmb_op);
+    AddJumpFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.uses)
       Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
@@ -691,7 +742,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_ClassDecl ast)
   {
-    UseInitCode();
+    UseInit();
 
     var name = ast.Name();
     //TODO:?
@@ -717,7 +768,7 @@ public class ModuleCompiler : AST_Visitor
     }
     Emit(Opcodes.ClassEnd);
 
-    UseByteCode();
+    UseCode();
   }
 
   public override void DoVisit(AST_EnumDecl ast)
@@ -765,23 +816,23 @@ public class ModuleCompiler : AST_Visitor
 
           var if_op = EmitConditionPlaceholderAndBody(ast, i);
           if(last_jmp_op != null)
-            PatchJumpOffsetToCurrPos(last_jmp_op);
+            AddJumpFromTo(last_jmp_op, Peek());
 
           //check if uncoditional jump out of 'if body' is required,
           //it's required only if there are other 'else if' or 'else'
           if(ast.children.Count > 2)
           {
-            last_jmp_op = Emit(Opcodes.Jump, 0);
-            PatchJumpOffsetToCurrPos(if_op);
+            last_jmp_op = Emit(Opcodes.Jump);
+            AddJumpFromTo(if_op, Peek());
           }
           else
-            PatchJumpOffsetToCurrPos(if_op);
+            AddJumpFromTo(if_op, Peek());
         }
         //check fo 'else leftover'
         if(i != ast.children.Count)
         {
           Visit(ast.children[i]);
-          PatchJumpOffsetToCurrPos(last_jmp_op);
+          AddJumpFromTo(last_jmp_op, Peek());
         }
       break;
       case EnumBlock.WHILE:
@@ -796,10 +847,8 @@ public class ModuleCompiler : AST_Visitor
         //to the beginning of the loop
         Emit(Opcodes.Jump, new int[] {GetPosition(cond_op) - cond_op.def.size});
 
-        //TODO:
-        //PatchJumpFromTo(cond_op, PeekInstruction());
         //patch 'jump out of the loop' position
-        PatchJumpOffsetToCurrPos(cond_op);
+        AddJumpFromTo(cond_op, Peek());
 
         PatchContinues(ast);
 
@@ -869,12 +918,12 @@ public class ModuleCompiler : AST_Visitor
 
     ctrl_blocks.Pop();
 
-    bool emit_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
+    bool need_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
 
-    if(emit_block)
-      block_op.SetOperand(1, GetPosition(PeekInstruction()));
+    if(need_block)
+      block_op.SetOperand(1, GetPosition(Peek()));
     else
-      code.Remove(block_op); 
+      head.Remove(block_op); 
   }
 
   void VisitDefer(AST_Block ast)
@@ -883,13 +932,9 @@ public class ModuleCompiler : AST_Visitor
     if(parent_block != null)
       block_has_defers.Add(parent_block);
 
-    var block_code = new Bytecode();
-    code_stack.Add(block_code);
+    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
     VisitChildren(ast);
-    code_stack.RemoveAt(code_stack.Count-1);
-
-    Emit(Opcodes.Block, new int[] { (int)ast.type, block_code.Position});
-    PeekCode().Write(block_code);
+    block_op.SetOperand(1, GetPosition(Peek()));
   }
 
   public override void DoVisit(AST_TypeCast ast)
@@ -1019,7 +1064,7 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")});
+        Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")}, (int)ast.line_num);
         Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
       }
       break;
@@ -1068,11 +1113,11 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Break ast)
   {
-    var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
+    var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/});
     non_patched_breaks.Add(
-      new NonPatchedJump() 
+      new BlockJump() 
         { block = loop_blocks.Peek(), 
-          jump_op = jump
+          jump_op = jump_op
         }
     );
   }
@@ -1082,13 +1127,13 @@ public class ModuleCompiler : AST_Visitor
     var loop_block = loop_blocks.Peek();
     if(ast.jump_marker)
     {
-      continue_jump_markers.Add(loop_block, PeekInstruction());
+      continue_jump_markers.Add(loop_block, Peek());
     }
     else
     {
-      var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*dummy placeholder*/});
+      var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/});
       non_patched_continues.Add(
-        new NonPatchedJump() 
+        new BlockJump() 
           { block = loop_block, 
             jump_op = jump_op
           }
@@ -1211,10 +1256,9 @@ public class ModuleCompiler : AST_Visitor
     if(ast.is_func_arg && ast.children.Count > 0)
     {                  
       var func_decl = func_decls[func_decls.Count-1];
-      Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - func_decl.required_args_num, 0 /*dummy placeholder*/ });
-      var pos = PeekCode().Position;
+      var arg_op = Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - func_decl.required_args_num, 0 /*patched later*/ });
       VisitChildren(ast);
-      PatchJumpOffsetToCurrPos(pos);
+      AddJumpFromTo(arg_op, Peek(), operand_idx: 1);
     }
 
     if(!ast.is_func_arg)

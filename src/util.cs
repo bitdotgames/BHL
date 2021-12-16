@@ -1595,7 +1595,6 @@ public class HashedName2Value<T>
 public class Bytecode
 {
   public ushort Position { get { return (ushort)stream.Position; } }
-  public long Length { get { return stream.Length; } }
 
   MemoryStream stream = new MemoryStream();
 
