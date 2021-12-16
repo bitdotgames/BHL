@@ -96,7 +96,7 @@ public class BHL_TestRunner
     Run(args, new BHL_TestVM());
   }
 
-  static void Run(string[] args, BHL_TestBase test, bool verbose = false)
+  static void Run(string[] args, BHL_TestBase test, bool verbose = true)
   {
     try
     {
