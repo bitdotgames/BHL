@@ -934,7 +934,7 @@ public class ModuleCompiler : AST_Visitor
 
     var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
     VisitChildren(ast);
-    block_op.SetOperand(1, GetPosition(Peek()));
+    AddJumpFromTo(block_op, Peek(), operand_idx: 1);
   }
 
   public override void DoVisit(AST_TypeCast ast)

@@ -1316,6 +1316,8 @@ public class VM
         defer_scope.RegisterDefer(cb);
       else 
         curr_frame.RegisterDefer(cb);
+      //we need to skip the block execution right now
+      ip += size;
       return null;
     }
     else
