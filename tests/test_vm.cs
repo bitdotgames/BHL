@@ -3989,7 +3989,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, null, false, true);
+    var vm = MakeVM(bhl);
     var num = Execute(vm, "test").stack.PopRelease().num;
     AssertEqual(num, 1);
     CommonChecks(vm);

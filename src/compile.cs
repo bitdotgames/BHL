@@ -632,10 +632,7 @@ public class ModuleCompiler : AST_Visitor
       var npc = non_patched_continues[i];
       if(npc.block == block)
       {
-        int offset = GetPosition(continue_jump_markers[npc.block]) - GetPosition(npc.jump_op);
-        npc.jump_op.SetOperand(0, offset);
-        //TODO:
-        //PatchJumpFromTo(npc.jump_op, continue_jump_markers[npc.block]);
+        AddJumpFromTo(npc.jump_op, continue_jump_markers[npc.block]);
         non_patched_continues.RemoveAt(i);
       }
     }
@@ -842,10 +839,13 @@ public class ModuleCompiler : AST_Visitor
 
         loop_blocks.Push(ast);
 
+        var begin_op = Peek();
+
         var cond_op = EmitConditionPlaceholderAndBody(ast, 0);
 
         //to the beginning of the loop
-        Emit(Opcodes.Jump, new int[] {GetPosition(cond_op) - cond_op.def.size});
+        var jump_op = Emit(Opcodes.Jump);
+        AddJumpFromTo(jump_op, begin_op);
 
         //patch 'jump out of the loop' position
         AddJumpFromTo(cond_op, Peek());
@@ -921,7 +921,7 @@ public class ModuleCompiler : AST_Visitor
     bool need_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
 
     if(need_block)
-      block_op.SetOperand(1, GetPosition(Peek()));
+      AddJumpFromTo(block_op, Peek(), operand_idx: 1);
     else
       head.Remove(block_op); 
   }
