@@ -29,7 +29,8 @@ public enum Opcodes
   GetFuncImported = 0x15,
   GetMethodNative = 0x16,
   GetLambda       = 0x17,
-  CondJump        = 0x19,
+  CondJump        = 0x18,
+  LongJump        = 0x19,
   SetAttr         = 0x20,
   SetAttrInplace  = 0x21,
   ArgRef          = 0x22,
@@ -1167,6 +1168,13 @@ public class VM
               ip += offset;
           }
           break;
+          case Opcodes.LongJump:
+          {
+            short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+            ip += offset;
+            curr_frame.fb.ip = ip;
+          }
+          break;
           case Opcodes.DefArg:
           {
             byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
@@ -1729,7 +1737,6 @@ public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableI
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
-        frm.fb.ip = max_ip; 
         break;
       }
     }
