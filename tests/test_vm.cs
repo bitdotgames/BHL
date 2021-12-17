@@ -3530,7 +3530,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 80) })
       .EmitThen(Opcodes.LT)
       .EmitThen(Opcodes.CondJump, new int[] { 3 })
-      .EmitThen(Opcodes.Jump, new int[] { 3 })
+      .EmitThen(Opcodes.LongJump, new int[] { 3 })
       .EmitThen(Opcodes.Jump, new int[] { -35 })
       //__//
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -3853,7 +3853,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.Sub)
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Jump, new int[] { 12 })
+      .EmitThen(Opcodes.LongJump, new int[] { 12 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.Add)
@@ -3907,7 +3907,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
       .EmitThen(Opcodes.LT)
       .EmitThen(Opcodes.CondJump, new int[] { 22 })
-      .EmitThen(Opcodes.Jump, new int[] { 7 })
+      .EmitThen(Opcodes.LongJump, new int[] { 7 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.Sub)
@@ -3964,7 +3964,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestParalBreak()
   {
     string bhl = @"
