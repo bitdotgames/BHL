@@ -3995,7 +3995,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestParalAllBreak()
   {
     string bhl = @"
@@ -4010,7 +4010,7 @@ public class BHL_TestVM : BHL_TestBase
             break
             suspend()
           }
-          {
+          seq {
             n = 2
             suspend()
           }
@@ -9889,7 +9889,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestParalDefer()
   {
     string bhl = @"

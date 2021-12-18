@@ -1272,46 +1272,33 @@ public class VM
     }
   }
 
-  IInstruction VisitBlock(ref int ip, Frame curr_frame, IExitableScope defer_scope)
+  static void ReadBlockHeader(ref int ip, Frame curr_frame, out EnumBlock type, out int size)
   {
-    var type = (EnumBlock)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-    int size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+    type = (EnumBlock)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+    size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+  }
 
-    if(type == EnumBlock.PARAL || type == EnumBlock.PARAL_ALL) 
+  IInstruction TryMakeBlockInstruction(ref int ip, Frame curr_frame, out int size, IExitableScope defer_scope)
+  {
+    EnumBlock type;
+    ReadBlockHeader(ref ip, curr_frame, out type, out size);
+
+    if(type == EnumBlock.PARAL)
     {
-      IMultiInstruction iparal = null;
-      if(type == EnumBlock.PARAL)
-      {
-        var paral = Instructions.New<ParalInstruction>(this);
-        paral.Init(ip + size);
-        iparal = paral; 
-      }
-      else
-      {
-        var paral = Instructions.New<ParalAllInstruction>(this);
-        paral.Init(ip + size);
-        iparal = paral; 
-      }
-
-      int tmp_ip = ip;
-      while(tmp_ip < (ip + size))
-      {
-        ++tmp_ip;
-        var opcode = (Opcodes)curr_frame.bytecode[tmp_ip]; 
-        if(opcode != Opcodes.Block)
-          throw new Exception("Expected Opcodes.Block got " + opcode);
-        var branch = VisitBlock(ref tmp_ip, curr_frame, (IExitableScope)iparal);
-        if(branch != null)
-          iparal.Attach(branch);
-      }
-      ip += size;
-      return iparal;
+      var paral = Instructions.New<ParalInstruction>(this);
+      paral.Init(ip + 1, ip + size);
+      return paral;
+    }
+    else if(type == EnumBlock.PARAL_ALL) 
+    {
+      var paral = Instructions.New<ParalAllInstruction>(this);
+      paral.Init(ip + 1, ip + size);
+      return paral;
     }
     else if(type == EnumBlock.SEQ)
     {
       var seq = Instructions.New<SeqInstruction>(this);
       seq.Init(curr_frame, ip + 1, ip + size);
-      ip += size;
       return seq;
     }
     else if(type == EnumBlock.DEFER)
@@ -1321,11 +1308,38 @@ public class VM
         defer_scope.RegisterDefer(cb);
       else 
         curr_frame.RegisterDefer(cb);
+      //we need to skip defer block
       ip += size;
       return null;
     }
     else
       throw new Exception("Not supported block type: " + type);
+  }
+
+  IInstruction VisitBlock(ref int ip, Frame curr_frame, IExitableScope defer_scope)
+  {
+    int block_size;
+    var block_inst = TryMakeBlockInstruction(ref ip, curr_frame, out block_size, defer_scope);
+
+    if(block_inst is IMultiInstruction mi) 
+    {
+      int tmp_ip = ip;
+      while(tmp_ip < (ip + block_size))
+      {
+        ++tmp_ip;
+
+        int tmp_size;
+        var branch = TryMakeBlockInstruction(ref tmp_ip, curr_frame, out tmp_size, (IExitableScope)block_inst);
+
+        if(!(branch is IInstruction))
+          throw new Exception("Invalid block branch instruction");
+
+         mi.Attach(branch);
+
+         tmp_ip += tmp_size;
+      }
+    }
+    return block_inst; 
   }
 
   public bool Tick()
@@ -1648,8 +1662,9 @@ public struct DeferBlock
 
 public class SeqInstruction : IInstruction, IExitableScope, ITraversableInstruction
 {
-  public int ip;
+  public int min_ip;
   public int max_ip;
+  public int ip;
   public FixedStack<VM.Frame> frames = new FixedStack<VM.Frame>(256);
   public IInstruction instruction;
   public List<DeferBlock> defers;
@@ -1663,17 +1678,20 @@ public class SeqInstruction : IInstruction, IExitableScope, ITraversableInstruct
     }
   }
 
-  public void Init(VM.Frame frm, int ip, int max_ip)
+  public void Init(VM.Frame frm, int min_ip, int max_ip)
   {
     //Console.WriteLine("NEW SEQ " + ip + " " + max_ip + " " + GetHashCode());
-    this.ip = ip;
+    this.min_ip = min_ip;
     this.max_ip = max_ip;
+    this.ip = min_ip;
     frames.Push(frm);
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, max_ip+1, this);
+    if(status == BHS.SUCCESS && frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
+      frm.fb.ip = max_ip;
   }
 
   public void Cleanup(VM vm)
@@ -1710,6 +1728,7 @@ public class SeqInstruction : IInstruction, IExitableScope, ITraversableInstruct
 
 public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableInstruction
 {
+  public int min_ip;
   public int max_ip;
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
@@ -1720,13 +1739,16 @@ public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableI
     }
   }
 
-  public void Init(int max_ip)
+  public void Init(int min_ip, int max_ip)
   {
+    this.min_ip = min_ip;
     this.max_ip = max_ip;
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
+    frm.fb.ip = min_ip;
+
     status = BHS.RUNNING;
 
     for(int i=0;i<branches.Count;++i)
@@ -1737,6 +1759,8 @@ public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableI
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
+        if(frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
+          frm.fb.ip = max_ip;
         break;
       }
     }
@@ -1768,6 +1792,7 @@ public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableI
 
 public class ParalAllInstruction : IMultiInstruction, IExitableScope, ITraversableInstruction
 {
+  public int min_ip;
   public int max_ip;
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
@@ -1778,23 +1803,34 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope, ITraversab
     }
   }
 
-  public void Init(int max_ip)
+  public void Init(int min_ip, int max_ip)
   {
+    this.min_ip = min_ip;
     this.max_ip = max_ip;
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
+    frm.fb.ip = min_ip;
+
     for(int i=0;i<branches.Count;)
     {
       var branch = branches[i];
       branch.Tick(frm, ref status);
+      if(frm.refs == -1 /*return executed*/ || frm.fb.ip < min_ip || frm.fb.ip > max_ip)
+      {
+        Instructions.Del(frm.vm, branch);
+        branches.RemoveAt(i);
+        status = BHS.SUCCESS;
+        //Console.WriteLine("DONE " + frm.fb.ip + " min: " + min_ip + " max: " + max_ip + " " + frm.refs);
+        return;
+      }
       if(status == BHS.SUCCESS)
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
       }
-      else if(status == BHS.FAILURE || frm.refs == -1/*checking if 'return' was executed*/)
+      else if(status == BHS.FAILURE)
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
@@ -1806,6 +1842,8 @@ public class ParalAllInstruction : IMultiInstruction, IExitableScope, ITraversab
 
     if(branches.Count > 0)
       status = BHS.RUNNING;
+    else if(frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
+      frm.fb.ip = max_ip;
   }
 
   public void Cleanup(VM vm)
