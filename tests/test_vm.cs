@@ -9945,7 +9945,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestParalWithYieldDefer()
   {
     string bhl = @"
@@ -10060,7 +10060,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestParalAllDefer()
   {
     string bhl = @"
@@ -10116,7 +10116,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestParalAllWithYieldDefer()
   {
     string bhl = @"
@@ -12821,7 +12821,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestStopFiberExternallyWithProperDefersInParalsInModules()
   {
     string bhl2 = @"

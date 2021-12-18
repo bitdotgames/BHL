@@ -1303,12 +1303,13 @@ public class VM
     }
     else if(type == EnumBlock.DEFER)
     {
-      var cb = new DeferBlock(curr_frame, ip + 1, ip + size);
+      var d = new DeferBlock(curr_frame, ip + 1, ip + size);
       if(defer_scope != null)
-        defer_scope.RegisterDefer(cb);
+        defer_scope.RegisterDefer(d);
       else 
-        curr_frame.RegisterDefer(cb);
+        curr_frame.RegisterDefer(d);
       //we need to skip defer block
+      //Console.WriteLine("DEFER SKIP " + ip + " " + (ip+size) + " " + Environment.StackTrace);
       ip += size;
       return null;
     }
@@ -1690,8 +1691,10 @@ public class SeqInstruction : IInstruction, IExitableScope, ITraversableInstruct
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, max_ip+1, this);
-    if(status == BHS.SUCCESS && frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
+    if(status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))
+    {
       frm.fb.ip = max_ip;
+    }
   }
 
   public void Cleanup(VM vm)
