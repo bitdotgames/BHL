@@ -9061,6 +9061,106 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDeferAccessVar()
+  {
+    string bhl = @"
+
+    func foo(float k)
+    {
+      trace((string)k)
+    }
+
+    func test() 
+    {
+      float k = 142
+      defer {
+        foo(k)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("142", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //TODO: this is quite contraversary
+  //[IsTested()]
+  public void TestDeferNested()
+  {
+    string bhl = @"
+
+    func bar()
+    {
+      defer {
+        trace(""~BAR1"")
+        defer {
+          trace(""~BAR2"")
+        }
+      }
+      trace(""BAR"")
+    }
+
+    func test() 
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("BAR~BAR1~BAR2", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDeferAndReturn()
+  {
+    string bhl = @"
+
+    func void bar(float k)
+    {
+      defer {
+        trace(""~BAR"")
+      }
+      trace(""BAR"")
+    }
+
+    func float foo()
+    {
+      defer {
+        trace(""~FOO"")
+      }
+      return 3
+      trace(""FOO"")
+    }
+
+    func test() 
+    {
+      bar(foo())
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("~FOOBAR~BAR", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestReturnInDeferIsForbidden()
   {
     string bhl = @"
