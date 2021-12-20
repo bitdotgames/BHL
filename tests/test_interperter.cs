@@ -1778,44 +1778,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestForeverLoopBreak()
-  {
-    string bhl = @"
-
-    func int test() 
-    {
-      int i = 0
-      while(true) {
-        i = i + 1
-        if(i == 3) {
-          break
-        }
-        yield()
-      }
-      return i
-    }
-    ";
-
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-
-    var status = node.run();
-    AssertEqual(BHS.RUNNING, status);
-
-    status = node.run();
-    AssertEqual(BHS.RUNNING, status);
-
-    status = node.run();
-    AssertEqual(BHS.SUCCESS, status);
-
-    var res = intp.PopValue();
-    AssertEqual(res.num, 3);
-
-    CommonChecks(intp);
-  }
-  
-  [IsTested()]
   public void TestDeferInForeverWithBreak()
   {
     string bhl = @"

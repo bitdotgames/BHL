@@ -3990,6 +3990,29 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForeverLoopBreak()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      int i = 0
+      while(true) {
+        i = i + 1
+        if(i == 3) {
+          break
+        }
+        yield()
+      }
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 3);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
   public void TestParalBreak()
   {
     string bhl = @"
@@ -10107,6 +10130,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:?
   //[IsTested()]
   public void TestDeferInInfiniteLoop()
   {
@@ -10130,7 +10154,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(globs, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, globs, true, true);
     var fb = vm.Start("test");
 
     for(int i=0;i<3;++i)
