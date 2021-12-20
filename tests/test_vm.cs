@@ -1540,6 +1540,48 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDanglingBrackets()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      ()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "mismatched input '(' expecting '}'"
+    );
+  }
+
+  [IsTested()]
+  public void TestDanglingBrackets2()
+  {
+    string bhl = @"
+
+    func foo() 
+    {
+    }
+
+    func test() 
+    {
+      foo() ()
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "no func to call"
+    );
+  }
+
+  [IsTested()]
   public void TestWriteReadVar()
   {
     string bhl = @"
@@ -11673,6 +11715,62 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num;
     AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestOrShortCircuit()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c = null
+      if(c == null || c.r == 0) {
+        trace(""OK;"")
+      } else {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+
+    Execute(vm, "test");
+    AssertEqual("OK;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestAndShortCircuit()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c = null
+      if(c != null && c.r == 0) {
+        trace(""NEVER;"")
+      } else {
+        trace(""OK;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+
+    Execute(vm, "test");
+    AssertEqual("OK;", log.ToString());
     CommonChecks(vm);
   }
 
