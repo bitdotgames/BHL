@@ -2923,6 +2923,31 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestRecursion()
+  {
+    string bhl = @"
+      
+    func float mult(float k)
+    {
+      if(k == 0) {
+        return 1
+      }
+      return 2 * mult(k-1)
+    }
+
+    func float test(float k) 
+    {
+      return mult(k)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test", Val.NewNum(vm, 3)).stack.PopRelease().num;
+    AssertEqual(num, 8);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFuncAlreadyDeclaredArg()
   {
     string bhl = @"
@@ -9161,6 +9186,47 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDeferOnFailure()
+  {
+    string bhl = @"
+
+    func bar()
+    {
+      trace(""BAR"")
+      fail()
+    }
+
+    func hey()
+    {
+      trace(""HEY"")
+    }
+
+    func foo()
+    {
+      trace(""FOO"")
+    }
+
+    func test() 
+    {
+      defer {
+        foo()
+      }
+      bar()
+      hey()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("BARFOO", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestReturnInDeferIsForbidden()
   {
     string bhl = @"
@@ -10038,6 +10104,41 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("whilewhilefoohey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestDeferInInfiniteLoop()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      while(true) {
+        defer {
+          trace(""HEY;"")
+        }
+        yield()
+      }
+      defer {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+
+    for(int i=0;i<3;++i)
+      AssertTrue(vm.Tick());
+    //...will be running forever, well, we assume that :)
+
+    AssertEqual("HEY;HEY;", log.ToString());
+    vm.Stop(fb);
     CommonChecks(vm);
   }
 

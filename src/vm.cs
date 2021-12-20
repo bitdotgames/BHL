@@ -1693,10 +1693,10 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, max_ip+1, this);
+
+    //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
     if(status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))
-    {
       frm.fb.ip = max_ip;
-    }
   }
 
   public void Cleanup(VM vm)
@@ -1724,7 +1724,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
     //      explicitely released. We start from index 1 on purpose
-    //      since the frame at index 0 will be released as expected.
+    //      since the frame at index 0 will be released 'above'.
     for(int i=1;i<frames.Count;i++)
       frames[i].Release();
     frames.Clear();
@@ -1764,6 +1764,7 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
+        //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
         if(frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
           frm.fb.ip = max_ip;
         break;
@@ -1822,12 +1823,12 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
     {
       var branch = branches[i];
       branch.Tick(frm, ref status);
+      //let's check if we "jumped out" of the block (e.g return, break)
       if(frm.refs == -1 /*return executed*/ || frm.fb.ip < min_ip || frm.fb.ip > max_ip)
       {
         Instructions.Del(frm.vm, branch);
         branches.RemoveAt(i);
         status = BHS.SUCCESS;
-        //Console.WriteLine("DONE " + frm.fb.ip + " min: " + min_ip + " max: " + max_ip + " " + frm.refs);
         return;
       }
       if(status == BHS.SUCCESS)
@@ -1847,6 +1848,7 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
 
     if(branches.Count > 0)
       status = BHS.RUNNING;
+    //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
     else if(frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
       frm.fb.ip = max_ip;
   }
