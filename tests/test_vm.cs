@@ -10130,7 +10130,6 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:?
   //[IsTested()]
   public void TestDeferInInfiniteLoop()
   {
@@ -10154,7 +10153,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(globs, log);
 
-    var vm = MakeVM(bhl, globs, true, true);
+    var vm = MakeVM(bhl, globs);
     var fb = vm.Start("test");
 
     for(int i=0;i<3;++i)
@@ -10163,6 +10162,40 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertEqual("HEY;HEY;", log.ToString());
     vm.Stop(fb);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestDeferInForeverWithBreak()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      while(true) {
+        defer {
+          trace(""HEY;"")
+        }
+        i = i + 1
+        if(i == 2) {
+          break
+        }
+        yield()
+      }
+      defer {
+        trace(""YOU;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("HEY;YOU;", log.ToString());
     CommonChecks(vm);
   }
 

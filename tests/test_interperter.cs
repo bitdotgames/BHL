@@ -1776,48 +1776,6 @@ public class BHL_TestInterpreter : BHL_TestBase
 
     CommonChecks(intp);
   }
-
-  [IsTested()]
-  public void TestDeferInForeverWithBreak()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int i = 0
-      while(true) {
-        defer {
-          trace(""HEY;"")
-        }
-        i = i + 1
-        if(i == 2) {
-          break
-        }
-        yield()
-      }
-      defer {
-        trace(""YOU;"")
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    for(int i=0;i<2;++i)
-      node.run();
-
-    var str = GetString(trace_stream);
-    //TODO: in forever{..} it was as follows:
-    //AssertEqual("HEY;HEY;YOU;", str);
-    AssertEqual("HEY;YOU;", str);
-    CommonChecks(intp);
-  }
   
   [IsTested()]
   public void TestNodeWithDeferInForever()
