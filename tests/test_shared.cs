@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Collections.Generic;
+using Mono.Options;
 using bhl;
 
 public class IsTestedAttribute : Attribute
@@ -91,16 +92,24 @@ public class BHL_TestRunner
 {
   public static void Main(string[] args)
   {
-    Run(args, new BHL_TestNodes());
-    Run(args, new BHL_TestInterpreter());
-    Run(args, new BHL_TestVM());
+    bool verbose = false;
+    var p = new OptionSet() {
+      { "verbose", "don't use cache",
+        v => verbose = v != null },
+     };
+
+    var names = p.Parse(args);
+
+    Run(names, new BHL_TestNodes(), verbose);
+    Run(names, new BHL_TestInterpreter(), verbose);
+    Run(names, new BHL_TestVM(), verbose);
   }
 
-  static void Run(string[] args, BHL_TestBase test, bool verbose = true)
+  static void Run(IList<string> names, BHL_TestBase test, bool verbose)
   {
     try
     {
-      _Run(args, test, verbose);
+      _Run(names, test, verbose);
     }
     catch(Exception e)
     {
@@ -111,7 +120,7 @@ public class BHL_TestRunner
     }
   }
 
-  static void _Run(string[] args, BHL_TestBase test, bool verbose)
+  static void _Run(IList<string> names, BHL_TestBase test, bool verbose)
   {
     int c = 0;
     foreach(var method in test.GetType().GetMethods())
@@ -119,7 +128,7 @@ public class BHL_TestRunner
       if(IsMemberTested(method))
       {
         Util.SetupASTFactory();
-        if(IsAllowedToRun(args, test, method))
+        if(IsAllowedToRun(names, test, method))
         {
           if(verbose)
             Console.WriteLine(">>>> Testing " + test.GetType().Name + "." + method.Name + " <<<<");
@@ -134,14 +143,14 @@ public class BHL_TestRunner
       Console.WriteLine("Done running "  + c + " tests");
   }
 
-  static bool IsAllowedToRun(string[] args, BHL_TestBase test, MemberInfo member)
+  static bool IsAllowedToRun(IList<string> names, BHL_TestBase test, MemberInfo member)
   {
-    if(args == null || args.Length == 0)
+    if(names?.Count == 0)
       return true;
 
-    for(int i=0;i<args.Length;++i)
+    for(int i=0;i<names.Count;++i)
     {
-      var parts = args[i].Split('.');
+      var parts = names[i].Split('.');
 
       string test_filter = parts.Length >= 1 ? parts[0] : null;
       string method_filter = parts.Length > 1 ? parts[1] : null;

@@ -35,7 +35,7 @@ public class BHLC
     bool debug = false;
     ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
 
-    var p = new OptionSet () {
+    var p = new OptionSet() {
       { "dir=", "source dir",
         v => src_dir = v },
       { "files=", "source files list",

@@ -138,6 +138,7 @@ public static class Tasks
     MCSBuild(tm, 
      new string[] {
         $"{BHL_ROOT}/tests/*.cs",
+        $"{BHL_ROOT}/mono_opts.dll",
         $"{BHL_ROOT}/bhl_front.dll",
         $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
       },
