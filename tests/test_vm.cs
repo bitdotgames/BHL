@@ -8395,6 +8395,36 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestYieldInParal()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      paral {
+        while(i < 3) { yield() }
+        while(true) {
+          i = i + 1
+          yield()
+        }
+      }
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual(3, fb.stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBasicParal()
   {
     string bhl = @"
@@ -9134,6 +9164,42 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
     AssertEqual("142", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDeferScopes()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        trace(""0"")
+      }
+
+      {
+        defer {
+          trace(""1"")
+        }
+        trace(""2"")
+      }
+
+      trace(""3"")
+
+      defer {
+        trace(""4"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("21340", log.ToString());
     CommonChecks(vm);
   }
 
