@@ -8612,7 +8612,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBasicParalAllRunning()
+  public void TestParalAllRunning()
   {
     string bhl = @"
     func int test()
@@ -8660,7 +8660,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBasicParalAllFinished()
+  public void TestParalAllFinished()
   {
     string bhl = @"
     func int test()
@@ -8850,6 +8850,95 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual("BARFOO", log.ToString());
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestParalFailure()
+  {
+    string bhl = @"
+    func foo()
+    {
+      yield()
+      yield()
+      yield()
+      trace(""A"")
+    }
+
+    func bar()
+    {
+      yield()
+      yield()
+      fail()
+      trace(""B"")
+    }
+
+    func test() 
+    {
+      paral {
+        bar()
+        foo()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestParalAllFailure()
+  {
+    string bhl = @"
+    func foo()
+    {
+      yield()
+      yield()
+      yield()
+      trace(""A"")
+    }
+
+    func bar()
+    {
+      yield()
+      yield()
+      fail()
+      trace(""B"")
+    }
+
+    func test() 
+    {
+      paral_all {
+        bar()
+        foo()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
 
   [IsTested()]
   public void TestCleanFuncArgsStackOnFailure()
