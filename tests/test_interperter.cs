@@ -1778,30 +1778,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestRunningInDeferIsException()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      defer {
-        suspend()
-      }
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-
-    AssertError<Exception>(
-      delegate() { 
-        node.run();
-      },
-      "Node is RUNNING during defer"
-    );
-  }
-
-  [IsTested()]
   public void TestDeferAccessVar()
   {
     string bhl = @"

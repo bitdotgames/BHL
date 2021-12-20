@@ -10423,6 +10423,29 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestRunningInDeferIsException()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        suspend()
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    AssertError<Exception>(
+      delegate() { 
+        Execute(vm, "test");
+      },
+      "Defer execution invalid status: RUNNING"
+    );
+  }
+
+  [IsTested()]
   public void TestLambdaDefer()
   {
     string bhl = @"
