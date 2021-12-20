@@ -1257,10 +1257,10 @@ public class VM
   {
     if(instruction != null)
     {
-      if(instruction is IMultiInstruction mi)
+      if(instruction is IBranchyInstruction bi)
       {
         //Console.WriteLine("ATTACH " + mi.GetHashCode() + " " + candidate.GetHashCode());
-        mi.Attach(candidate);
+        bi.Attach(candidate);
       }
       else
         throw new Exception("Can't attach to current instruction");
@@ -1322,7 +1322,7 @@ public class VM
     int block_size;
     var block_inst = TryMakeBlockInstruction(ref ip, curr_frame, out block_size, defer_scope);
 
-    if(block_inst is IMultiInstruction mi) 
+    if(block_inst is IBranchyInstruction bi) 
     {
       int tmp_ip = ip;
       while(tmp_ip < (ip + block_size))
@@ -1332,12 +1332,14 @@ public class VM
         int tmp_size;
         var branch = TryMakeBlockInstruction(ref tmp_ip, curr_frame, out tmp_size, (IExitableScope)block_inst);
 
-        if(!(branch is IInstruction))
-          throw new Exception("Invalid block branch instruction");
-
-         mi.Attach(branch);
-
-         tmp_ip += tmp_size;
+        //NOTE: branch == null is a special case for defer {..} block
+        if(branch != null)
+        {
+          if(!(branch is IInstruction))
+            throw new Exception("Invalid block branch instruction");
+           bi.Attach(branch);
+           tmp_ip += tmp_size;
+        }
       }
     }
     return block_inst; 
@@ -1538,7 +1540,7 @@ public class Instructions
     string str = new String(' ', level);
     Console.WriteLine(str + instruction.GetType().Name + " " + instruction.GetHashCode());
 
-    if(instruction is ITraversableInstruction ti)
+    if(instruction is IInspectableInstruction ti)
     {
       foreach(var part in ti.Parts)
         Dump(part, level + 1);
@@ -1575,12 +1577,12 @@ public interface IExitableScope
   void ExitScope(VM vm);
 }
 
-public interface IMultiInstruction : IInstruction
+public interface IBranchyInstruction : IInstruction
 {
   void Attach(IInstruction ex);
 }
 
-public interface ITraversableInstruction 
+public interface IInspectableInstruction 
 {
   IList<IInstruction> Parts {get;}
 }
@@ -1661,7 +1663,7 @@ public struct DeferBlock
   }
 }
 
-public class SeqInstruction : IInstruction, IExitableScope, ITraversableInstruction
+public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruction
 {
   public int min_ip;
   public int max_ip;
@@ -1729,7 +1731,7 @@ public class SeqInstruction : IInstruction, IExitableScope, ITraversableInstruct
   }
 }
 
-public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableInstruction
+public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectableInstruction
 {
   public int min_ip;
   public int max_ip;
@@ -1793,7 +1795,7 @@ public class ParalInstruction : IMultiInstruction, IExitableScope, ITraversableI
   }
 }
 
-public class ParalAllInstruction : IMultiInstruction, IExitableScope, ITraversableInstruction
+public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspectableInstruction
 {
   public int min_ip;
   public int max_ip;
