@@ -10238,7 +10238,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestDeferInInfiniteLoop()
   {
     string bhl = @"
@@ -10268,7 +10268,7 @@ public class BHL_TestVM : BHL_TestBase
       AssertTrue(vm.Tick());
     //...will be running forever, well, we assume that :)
 
-    AssertEqual("HEY;HEY;", log.ToString());
+    AssertEqual("HEY;HEY;HEY;", log.ToString());
     vm.Stop(fb);
     CommonChecks(vm);
   }

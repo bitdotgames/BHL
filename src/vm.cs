@@ -691,11 +691,11 @@ public class VM
     }
   }
 
-  internal BHS Execute(ref int ip, Frame curr_frame, FixedStack<Frame> frames, ref IInstruction instruction, int max_ip, IExitableScope defer_scope)
+  internal BHS Execute(ref int ip, Frame curr_frame, FixedStack<Frame> frames, ref IInstruction instruction, int min_ip, int max_ip, IExitableScope defer_scope)
   { 
-    while(curr_frame != null && ip < max_ip)
+    while(curr_frame != null && ip > min_ip && ip < max_ip)
     {
-      //Console.WriteLine("EXECUTE " + frames.Count + ", IP " + ip + " MAX " + max_ip + " OP " + (Opcodes)curr_frame.bytecode[ip]/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("EXEC " + frames.Count + ", IP " + ip + " MIN " + min_ip + " MAX " + max_ip + " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name/* + " " + Environment.StackTrace*/);
 
       var status = BHS.SUCCESS;
 
@@ -1355,7 +1355,7 @@ public class VM
       if(fb.IsStopped())
         continue;
 
-      var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, MAX_IP, null);
+      var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, -1, MAX_IP, null);
       fb.status = status;
       
       if(status != BHS.RUNNING)
@@ -1634,7 +1634,7 @@ public struct DeferBlock
 
   public BHS Execute(VM vm, ref IInstruction instruction)
   {
-    var status = vm.Execute(ref ip, frm, frm.fb.frames, ref instruction, max_ip + 1, null);
+    var status = vm.Execute(ref ip, frm, frm.fb.frames, ref instruction, -1, max_ip + 1, null);
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
     return status;
@@ -1692,7 +1692,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, max_ip+1, this);
+    status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, min_ip-1, max_ip+1, this);
 
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
     if(status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))
