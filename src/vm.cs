@@ -697,9 +697,7 @@ public class VM
   { 
     while(curr_frame != null && ip > min_ip && ip < max_ip)
     {
-      //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + min_ip + ", max:" + max_ip + ")" +  
-      //    " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + 
-      //    " SCOPE " + defer_scope?.GetHashCode()/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + min_ip + ", max:" + max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetHashCode()/* + " " + Environment.StackTrace*/);
 
       var status = BHS.SUCCESS;
 
@@ -1328,6 +1326,7 @@ public class VM
     int block_size;
     var block_inst = TryMakeBlockInstruction(ref ip, curr_frame, out block_size, defer_scope);
 
+    //Console.WriteLine("BLOCK INST " + block_inst?.GetType().Name);
     if(block_inst is IBranchyInstruction bi) 
     {
       int tmp_ip = ip;
@@ -1337,6 +1336,8 @@ public class VM
 
         int tmp_size;
         var branch = TryMakeBlockInstruction(ref tmp_ip, curr_frame, out tmp_size, (IExitableScope)block_inst);
+
+       //Console.WriteLine("BRANCH INST " + tmp_ip + " " + branch?.GetType().Name);
 
         //NOTE: branch == null is a special case for defer {..} block
         if(branch != null)
@@ -1703,7 +1704,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   {
     status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, min_ip-1, max_ip+1, this);
 
-    //Console.WriteLine("SEQ " + status + " IP " + ip + " " + (min_ip-1) + " " + (max_ip+1));
+    //Console.WriteLine("SEQ " + status + " IP " + ip + " [" + (min_ip-1) + " " + (max_ip+1)+"]");
 
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
     if(status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))
