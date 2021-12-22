@@ -724,11 +724,13 @@ public class VM
         }
         else
         {
-          //NOTE: since we skip ip incrementing once the new instruction is 
-          //      attached we must increment the ip upon instruction completion
-          ++ip;
           Instructions.Del(curr_frame, instruction);
           instruction = null;
+          //NOTE: since we skip ip incrementing once the new instruction is 
+          //      attached we must increment the ip upon instruction completion
+          if(ip + 1 >= max_ip)
+            return status;
+          ++ip;
 
           //NOTE: after instruction successful execution we might be in a situation  
           //      that instruction has already exited the current frame (e.g. after 'return')
@@ -757,6 +759,7 @@ public class VM
 
       {
         var opcode = (Opcodes)curr_frame.bytecode[ip];
+        //Console.WriteLine("OP " + opcode + " " + ip);
         switch(opcode)
         {
           case Opcodes.Constant:
@@ -1638,9 +1641,11 @@ public struct DeferBlock
 
   BHS Execute(ref IInstruction instruction)
   {
+    //Console.WriteLine("EXIT SCOPE " + ip + " " + (max_ip + 1));
     var status = frm.vm.Execute(ref ip, frm, frm.fb.frames, ref instruction, -1, max_ip + 1, null);
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
+    //Console.WriteLine("EXIT SCOPE~ " + ip + " " + (max_ip + 1));
     return status;
   }
 
@@ -1648,7 +1653,6 @@ public struct DeferBlock
   {
     if(defers == null)
       return;
-    //Console.WriteLine("EXIT SCOPE");
 
     for(int i=defers.Count;i-- > 0;)
     {
@@ -1698,6 +1702,8 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, min_ip-1, max_ip+1, this);
+
+    //Console.WriteLine("SEQ " + status + " IP " + ip + " " + (min_ip-1) + " " + (max_ip+1));
 
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
     if(status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))

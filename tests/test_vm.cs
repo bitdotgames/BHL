@@ -10264,10 +10264,12 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     var fb = vm.Start("test");
 
-    for(int i=0;i<3;++i)
+    for(int i=0;i<4;++i)
       AssertTrue(vm.Tick());
     //...will be running forever, well, we assume that :)
 
+    //NOTE: on the first tick we yield() is executed and 
+    //      defer block is not run
     AssertEqual("HEY;HEY;HEY;", log.ToString());
     vm.Stop(fb);
     CommonChecks(vm);
