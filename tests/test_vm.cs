@@ -10275,8 +10275,8 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
-  public void TestDeferInForeverWithBreak()
+  [IsTested()]
+  public void TestDeferInInfiniteWithBreak()
   {
     string bhl = @"
 
@@ -10305,7 +10305,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
-    AssertEqual("HEY;YOU;", log.ToString());
+    AssertEqual("HEY;HEY;YOU;", log.ToString());
     CommonChecks(vm);
   }
 
