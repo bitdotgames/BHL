@@ -140,6 +140,7 @@ public class VM
     internal VM vm;
 
     internal int id;
+    internal int tick;
     internal int ip;
     internal IInstruction instruction;
     internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
@@ -181,17 +182,18 @@ public class VM
     {
       if(instruction != null)
       {
-        Instructions.Del(vm, instruction);
+        Instructions.Del(frames.Peek(), instruction);
         instruction = null;
       }
 
       for(int i=frames.Count;i-- > 0;)
       {
         var frm = frames[i];
-        frm.ExitScope(vm);
+        frm.ExitScope(frm);
         frm.Release();
       }
       frames.Clear();
+      tick = 0;
     }
 
     public bool IsStopped()
@@ -360,9 +362,9 @@ public class VM
       defers.Add(cb);
     }
 
-    public void ExitScope(VM vm)
+    public void ExitScope(VM.Frame frm)
     {
-      DeferBlock.ExitScope(vm, defers);
+      DeferBlock.ExitScope(frm, defers);
     }
 
     public void Retain()
@@ -695,7 +697,9 @@ public class VM
   { 
     while(curr_frame != null && ip > min_ip && ip < max_ip)
     {
-      //Console.WriteLine("EXEC " + frames.Count + ", IP " + ip + " MIN " + min_ip + " MAX " + max_ip + " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + min_ip + ", max:" + max_ip + ")" +  
+      //    " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + 
+      //    " SCOPE " + defer_scope?.GetHashCode()/* + " " + Environment.StackTrace*/);
 
       var status = BHS.SUCCESS;
 
@@ -708,10 +712,10 @@ public class VM
           return status;
         else if(status == BHS.FAILURE)
         {
-          Instructions.Del(this, instruction);
+          Instructions.Del(curr_frame, instruction);
           instruction = null;
 
-          curr_frame.ExitScope(this);
+          curr_frame.ExitScope(curr_frame);
           ip = curr_frame.return_ip;
           curr_frame.Release();
           frames.Pop();
@@ -723,7 +727,7 @@ public class VM
           //NOTE: since we skip ip incrementing once the new instruction is 
           //      attached we must increment the ip upon instruction completion
           ++ip;
-          Instructions.Del(this, instruction);
+          Instructions.Del(curr_frame, instruction);
           instruction = null;
 
           //NOTE: after instruction successful execution we might be in a situation  
@@ -753,7 +757,6 @@ public class VM
 
       {
         var opcode = (Opcodes)curr_frame.bytecode[ip];
-        //Console.WriteLine(string.Format("OP {0:00} 0x{0:x2} {2} {1} scope:{3}", ip, curr_frame.module.name, opcode, defer_scope?.GetHashCode())/* + " " + Environment.StackTrace*/);
         switch(opcode)
         {
           case Opcodes.Constant:
@@ -937,7 +940,7 @@ public class VM
           break;
           case Opcodes.Return:
           {
-            curr_frame.ExitScope(this);
+            curr_frame.ExitScope(curr_frame);
             ip = curr_frame.return_ip;
             curr_frame.Clear();
             curr_frame.Release();
@@ -960,7 +963,7 @@ public class VM
             }
 
             ip = curr_frame.return_ip;
-            curr_frame.ExitScope(this);
+            curr_frame.ExitScope(curr_frame);
             curr_frame.Clear();
             curr_frame.Release();
             frames.Pop();
@@ -1355,6 +1358,7 @@ public class VM
       if(fb.IsStopped())
         continue;
 
+      ++fb.tick;
       var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, -1, MAX_IP, null);
       fb.status = status;
       
@@ -1479,7 +1483,7 @@ public class CompiledModule
 public interface IInstruction
 {
   void Tick(VM.Frame frm, ref BHS status);
-  void Cleanup(VM vm);
+  void Cleanup(VM.Frame frm);
 }
 
 public class Instructions
@@ -1508,22 +1512,22 @@ public class Instructions
       inst = pool.stack.Pop();
     }
 
-    //Console.WriteLine("NEW " + typeof(T).Name + " " + inst.GetHashCode() + " " + Environment.StackTrace);
+    //Console.WriteLine("NEW " + typeof(T).Name + " " + inst.GetHashCode()/* + " " + Environment.StackTrace*/);
 
     return (T)inst;
   }
 
-  static public void Del(VM vm, IInstruction inst)
+  static public void Del(VM.Frame frm, IInstruction inst)
   {
-    //Console.WriteLine("DEL " + inst.GetType().Name + " " + inst.GetHashCode());
+    //Console.WriteLine("DEL " + inst.GetType().Name + " " + inst.GetHashCode()/* + " " + Environment.StackTrace*/);
 
-    inst.Cleanup(vm);
+    inst.Cleanup(frm);
 
     var t = inst.GetType();
 
     VM.Pool<IInstruction> pool;
     //ignoring instructions whch were not allocated via pool 
-    if(!vm.instr_pool.all.TryGetValue(t, out pool))
+    if(!frm.vm.instr_pool.all.TryGetValue(t, out pool))
       return;
 
     pool.stack.Push(inst);
@@ -1542,7 +1546,7 @@ public class Instructions
 
     if(instruction is IInspectableInstruction ti)
     {
-      foreach(var part in ti.Parts)
+      foreach(var part in ti.ForInspection)
         Dump(part, level + 1);
     }
 
@@ -1574,7 +1578,7 @@ public class Instructions
 public interface IExitableScope
 {
   void RegisterDefer(DeferBlock cb);
-  void ExitScope(VM vm);
+  void ExitScope(VM.Frame frm);
 }
 
 public interface IBranchyInstruction : IInstruction
@@ -1584,7 +1588,7 @@ public interface IBranchyInstruction : IInstruction
 
 public interface IInspectableInstruction 
 {
-  IList<IInstruction> Parts {get;}
+  IList<IInstruction> ForInspection {get;}
 }
 
 class CoroutineSuspend : IInstruction
@@ -1596,7 +1600,7 @@ class CoroutineSuspend : IInstruction
     status = BHS.RUNNING;
   }
 
-  public void Cleanup(VM vm)
+  public void Cleanup(VM.Frame frm)
   {}
 }
 
@@ -1613,7 +1617,7 @@ class CoroutineYield : IInstruction
     }
   }
 
-  public void Cleanup(VM vm)
+  public void Cleanup(VM.Frame frm)
   {
     first_time = true;
   }
@@ -1632,33 +1636,34 @@ public struct DeferBlock
     this.max_ip = max_ip;
   }
 
-  public BHS Execute(VM vm, ref IInstruction instruction)
+  BHS Execute(ref IInstruction instruction)
   {
-    var status = vm.Execute(ref ip, frm, frm.fb.frames, ref instruction, -1, max_ip + 1, null);
+    var status = frm.vm.Execute(ref ip, frm, frm.fb.frames, ref instruction, -1, max_ip + 1, null);
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
     return status;
   }
 
-  static internal void ExitScope(VM vm, List<DeferBlock> defers)
+  static internal void ExitScope(VM.Frame frm, List<DeferBlock> defers)
   {
     if(defers == null)
       return;
+    //Console.WriteLine("EXIT SCOPE");
 
     for(int i=defers.Count;i-- > 0;)
     {
       var d = defers[i];
       IInstruction dummy = null;
       //TODO: do we need ensure that status is SUCCESS?
-      d.Execute(vm, ref dummy);
+      d.Execute(ref dummy);
     }
     defers.Clear();
   }
 
-  static internal void DelInstructions(VM vm, List<IInstruction> iis)
+  static internal void DelInstructions(VM.Frame frm, List<IInstruction> iis)
   {
     for(int i=0;i<iis.Count;++i)
-      Instructions.Del(vm, iis[i]);
+      Instructions.Del(frm, iis[i]);
     iis.Clear();
   }
 }
@@ -1672,7 +1677,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   public IInstruction instruction;
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> Parts {
+  public IList<IInstruction> ForInspection {
     get {
       if(instruction != null)
         return new List<IInstruction>() { instruction };
@@ -1699,15 +1704,15 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
       frm.fb.ip = max_ip;
   }
 
-  public void Cleanup(VM vm)
+  public void Cleanup(VM.Frame frm)
   {
     if(instruction != null)
     {
-      Instructions.Del(vm, instruction);
+      Instructions.Del(frm, instruction);
       instruction = null;
     }
 
-    ExitScope(vm);
+    ExitScope(frm);
   }
 
   public void RegisterDefer(DeferBlock cb)
@@ -1717,9 +1722,9 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     defers.Add(cb);
   }
 
-  public void ExitScope(VM vm)
+  public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(vm, defers);
+    DeferBlock.ExitScope(frm, defers);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
@@ -1738,7 +1743,7 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> Parts {
+  public IList<IInstruction> ForInspection {
     get {
       return branches;
     }
@@ -1762,7 +1767,7 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
       branch.Tick(frm, ref status);
       if(status != BHS.RUNNING)
       {
-        Instructions.Del(frm.vm, branch);
+        Instructions.Del(frm, branch);
         branches.RemoveAt(i);
         //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
         if(frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
@@ -1772,10 +1777,10 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
     }
   }
 
-  public void Cleanup(VM vm)
+  public void Cleanup(VM.Frame frm)
   {
-    DeferBlock.DelInstructions(vm, branches);
-    ExitScope(vm);
+    DeferBlock.DelInstructions(frm, branches);
+    ExitScope(frm);
   }
 
   public void Attach(IInstruction inst)
@@ -1790,9 +1795,9 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
     defers.Add(cb);
   }
 
-  public void ExitScope(VM vm)
+  public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(vm, defers);
+    DeferBlock.ExitScope(frm, defers);
   }
 }
 
@@ -1803,7 +1808,7 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> Parts {
+  public IList<IInstruction> ForInspection {
     get {
       return branches;
     }
@@ -1826,19 +1831,19 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
       //let's check if we "jumped out" of the block (e.g return, break)
       if(frm.refs == -1 /*return executed*/ || frm.fb.ip < min_ip || frm.fb.ip > max_ip)
       {
-        Instructions.Del(frm.vm, branch);
+        Instructions.Del(frm, branch);
         branches.RemoveAt(i);
         status = BHS.SUCCESS;
         return;
       }
       if(status == BHS.SUCCESS)
       {
-        Instructions.Del(frm.vm, branch);
+        Instructions.Del(frm, branch);
         branches.RemoveAt(i);
       }
       else if(status == BHS.FAILURE)
       {
-        Instructions.Del(frm.vm, branch);
+        Instructions.Del(frm, branch);
         branches.RemoveAt(i);
         return;
       }
@@ -1853,10 +1858,10 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
       frm.fb.ip = max_ip;
   }
 
-  public void Cleanup(VM vm)
+  public void Cleanup(VM.Frame frm)
   {
-    DeferBlock.DelInstructions(vm, branches);
-    ExitScope(vm);
+    DeferBlock.DelInstructions(frm, branches);
+    ExitScope(frm);
   }
 
   public void Attach(IInstruction inst)
@@ -1871,9 +1876,9 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
     defers.Add(cb);
   }
 
-  public void ExitScope(VM vm)
+  public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(vm, defers);
+    DeferBlock.ExitScope(frm, defers);
   }
 }
 

@@ -14559,7 +14559,7 @@ public class BHL_TestVM : BHL_TestBase
         status = BHS.RUNNING;
     }
 
-    public void Cleanup(VM vm)
+    public void Cleanup(VM.Frame frm)
     {
       c = 0;
       ticks_ttl = 0;
