@@ -697,7 +697,7 @@ public class VM
   { 
     while(curr_frame != null && ip > min_ip && ip < max_ip)
     {
-      //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + min_ip + ", max:" + max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetHashCode()/* + " " + Environment.StackTrace*/);
+      //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + min_ip + ", max:" + max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
 
       var status = BHS.SUCCESS;
 
@@ -1693,7 +1693,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
 
   public void Init(VM.Frame frm, int min_ip, int max_ip)
   {
-    //Console.WriteLine("NEW SEQ " + ip + " " + max_ip + " " + GetHashCode());
+    //Console.WriteLine("NEW SEQ [" + min_ip + " " + max_ip + "] " + GetHashCode());
     this.min_ip = min_ip;
     this.max_ip = max_ip;
     this.ip = min_ip;
@@ -1704,7 +1704,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   {
     status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, min_ip-1, max_ip+1, this);
 
-    //Console.WriteLine("SEQ " + status + " IP " + ip + " [" + (min_ip-1) + " " + (max_ip+1)+"]");
+    //Console.WriteLine("SEQ " + status + " IP " + ip + " [" + (min_ip-1) + " " + (max_ip+1)+"] " + GetHashCode());
 
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
     if(status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))
