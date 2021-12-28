@@ -693,537 +693,588 @@ public class VM
     }
   }
 
-  internal BHS Execute(ref int ip, Frame curr_frame, FixedStack<Frame> frames, ref IInstruction instruction, int min_ip, int max_ip, IExitableScope defer_scope)
-  { 
-    while(curr_frame != null && ip > min_ip && ip < max_ip)
+  internal BHS Execute(
+    ref int ip, int min_ip, int max_ip, 
+    Frame curr_frame, FixedStack<Frame> frames, 
+    ref IInstruction instruction, 
+    IExitableScope defer_scope
+  )
+  {
+    while(curr_frame != null)
     {
-      //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + min_ip + ", max:" + max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
-
-      var status = BHS.SUCCESS;
-
-      //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
-      if(instruction != null)
+      BHS instruction_status = BHS.SUCCESS;
+      var res = ExecuteOnce(
+        ref ip, min_ip, max_ip,
+        ref curr_frame, frames,
+        ref instruction, ref instruction_status,
+        defer_scope
+      );
+      if(res == ExecuteResult.OutOfBounds)
+        return BHS.SUCCESS;
+      else if(res == ExecuteResult.CheckInstruction)
       {
-        instruction.Tick(curr_frame, ref status);
-
-        if(status == BHS.RUNNING)
-          return status;
-        else if(status == BHS.FAILURE)
+        if(instruction_status == BHS.SUCCESS)
         {
-          Instructions.Del(curr_frame, instruction);
-          instruction = null;
-
-          curr_frame.ExitScope(curr_frame);
-          ip = curr_frame.return_ip;
-          curr_frame.Release();
-          frames.Pop();
-
-          return status;
-        }
-        else
-        {
-          Instructions.Del(curr_frame, instruction);
-          instruction = null;
           //NOTE: since we skip ip incrementing once the new instruction is 
           //      attached we must increment the ip upon instruction completion
-          if(ip + 1 >= max_ip)
-            return status;
-          ++ip;
-
-          //NOTE: after instruction successful execution we might be in a situation  
-          //      that instruction has already exited the current frame (e.g. after 'return')
-          //      and it's released, for example in the following case:
-          //
-          //      paral {
-          //         seq {
-          //           return
-          //         }
-          //         seq {
-          //          ...
-          //         }
-          //      }
-          //
-          //    ...after 'return' is executed the current frame will be in the released state 
-          //    and we should take this into account
-          //
-          if(curr_frame.refs == -1) //checking if it's in a released state
-          {
-            frames.Pop();
-            curr_frame = frames.Count > 0 ? frames.Peek() : null;
-            continue;
-          }
+          if(ip + 1 < max_ip)
+            ++ip;
         }
+        else
+          return instruction_status;
       }
+    }
+    return BHS.SUCCESS;
+  }
 
-      {
-        var opcode = (Opcodes)curr_frame.bytecode[ip];
-        //Console.WriteLine("OP " + opcode + " " + ip);
-        switch(opcode)
-        {
-          case Opcodes.Constant:
-          {
-            int const_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+  internal enum ExecuteResult
+  {
+    Ok,
+    OutOfBounds,
+    NewInstruction,
+    CheckInstruction,
+  }
 
-            if(const_idx >= curr_frame.constants.Count)
-              throw new Exception("Index out of constants: " + const_idx + ", total: " + curr_frame.constants.Count);
+  internal ExecuteResult ExecuteOnce(
+    ref int ip, 
+    int min_ip, int max_ip, 
+    ref Frame curr_frame, 
+    FixedStack<Frame> frames, 
+    ref IInstruction instruction, 
+    ref BHS instruction_status,
+    IExitableScope defer_scope
+  )
+  { 
+    if(ip <= min_ip || ip >= max_ip)
+      return ExecuteResult.OutOfBounds;
 
-            var cn = curr_frame.constants[const_idx];
-            curr_frame.stack.Push(cn.ToVal(this));
-          }
-          break;
-          case Opcodes.TypeCast:
-          {
-            int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            string cast_type = curr_frame.constants[cast_type_idx].str;
+    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + min_ip + ", max:" + max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
 
-            HandleTypeCast(curr_frame, cast_type);
-          }
-          break;
-          case Opcodes.Inc:
-          {
-            int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            ++curr_frame.locals[var_idx]._num;
-          }
-          break;
-          case Opcodes.Dec:
-          {
-            int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            --curr_frame.locals[var_idx]._num;
-          }
-          break;
-          case Opcodes.Add:
-          case Opcodes.Sub:
-          case Opcodes.Div:
-          case Opcodes.Mod:
-          case Opcodes.Mul:
-          case Opcodes.And:
-          case Opcodes.Or:
-          case Opcodes.BitAnd:
-          case Opcodes.BitOr:
-          case Opcodes.Equal:
-          case Opcodes.NotEqual:
-          case Opcodes.LT:
-          case Opcodes.LTE:
-          case Opcodes.GT:
-          case Opcodes.GTE:
-          {
-            ExecuteBinaryOp(opcode, curr_frame);
-          }
-          break;
-          case Opcodes.UnaryNot:
-          case Opcodes.UnaryNeg:
-          {
-            ExecuteUnaryOp(opcode, curr_frame);
-          }
-          break;
-          case Opcodes.SetVar:
-          {
-            int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var new_val = curr_frame.stack.Pop();
-            curr_frame.SetLocal(local_idx, new_val);
-            new_val.Release();
-          }
-          break;
-          case Opcodes.GetVar:
-          {
-            int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.stack.PushRetain(curr_frame.locals[local_idx]);
-          }
-          break;
-          //TODO: this one looks pretty much like SetVar
-          case Opcodes.ArgVar:
-          {
-            int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var arg_val = curr_frame.stack.Pop();
-            var loc_var = Val.New(this);
-            loc_var.ValueCopyFrom(arg_val);
-            loc_var.RefMod(RefOp.USR_INC);
-            curr_frame.locals[local_idx] = loc_var;
-            arg_val.Release();
-          }
-          break;
-          case Opcodes.ArgRef:
-          {
-            int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            curr_frame.locals[local_idx] = curr_frame.stack.Pop();
-          }
-          break;
-          case Opcodes.DeclVar:
-          {
-            int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            byte type = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            Val v;
-            if(type == Val.NUMBER)
-              v = Val.NewNum(this, 0);
-            else if(type == Val.STRING)
-              v = Val.NewStr(this, "");
-            else if(type == Val.BOOL)
-              v = Val.NewBool(this, false);
-            else
-              v = Val.NewObj(this, null);
-            curr_frame.locals[local_idx] = v;
-          }
-          break;
-          case Opcodes.GetAttr:
-          {
-            int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            string class_type = curr_frame.constants[class_type_idx].str;
-            int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-            //TODO: this check must be in dev.version only
-            if(class_symb == null)
-              throw new Exception("Class type not found: " + class_type);
-
-            var obj = curr_frame.stack.Pop();
-            var res = Val.New(this);
-            var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-            field_symb.VM_getter(obj, ref res);
-            //NOTE: we retain only the payload since we make the copy of the value 
-            //      and the new res already has refs = 1 while payload's refcount 
-            //      is not incremented
-            res.RefMod(RefOp.USR_INC);
-            curr_frame.stack.Push(res);
-            obj.Release();
-          }
-          break;
-          case Opcodes.RefAttr:
-          {
-            int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            string class_type = curr_frame.constants[class_type_idx].str;
-            int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-            //TODO: this check must be in dev.version only
-            if(class_symb == null)
-              throw new Exception("Class type not found: " + class_type);
-
-            var obj = curr_frame.stack.Pop();
-            var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-            Val res;
-            field_symb.VM_getref(obj, out res);
-            curr_frame.stack.PushRetain(res);
-            obj.Release();
-          }
-          break;
-          case Opcodes.SetAttr:
-          {
-            int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            string class_type = curr_frame.constants[class_type_idx].str;
-            int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-            //TODO: this check must be in dev.version only
-            if(class_symb == null)
-              throw new Exception("Class type not found: " + class_type);
-
-            var obj = curr_frame.stack.Pop();
-            var val = curr_frame.stack.Pop();
-            var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-            field_symb.VM_setter(ref obj, val);
-            val.Release();
-            obj.Release();
-          }
-          break;
-          case Opcodes.SetAttrInplace:
-          {
-            int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            string class_type = curr_frame.constants[class_type_idx].str;
-            int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            var class_symb = symbols.Resolve(class_type) as ClassSymbol;
-            //TODO: this check must be in dev.version only
-            if(class_symb == null)
-              throw new Exception("Class type not found: " + class_type);
-
-            var val = curr_frame.stack.Pop();
-            var obj = curr_frame.stack.Peek();
-            var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-            field_symb.VM_setter(ref obj, val);
-            val.Release();
-          }
-          break;
-          case Opcodes.Return:
-          {
-            curr_frame.ExitScope(curr_frame);
-            ip = curr_frame.return_ip;
-            curr_frame.Clear();
-            curr_frame.Release();
-            //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
-            frames.Pop();
-            curr_frame = frames.Count > 0 ? frames.Peek() : null;
-          }
-          break;
-          case Opcodes.ReturnVal:
-          {
-            int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-
-            var ret_stack = frames.Count == 1 ? curr_frame.fb.stack : frames[frames.Count-2].stack;  
-            //TODO: make it more efficient?
-            int stack_offset = curr_frame.stack.Count; 
-            for(int i=0;i<ret_num;++i)
-            {
-              ret_stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
-              curr_frame.stack.Dec();
-            }
-
-            ip = curr_frame.return_ip;
-            curr_frame.ExitScope(curr_frame);
-            curr_frame.Clear();
-            curr_frame.Release();
-            frames.Pop();
-            curr_frame = frames.Count > 0 ? frames.Peek() : null;
-          }
-          break;
-          case Opcodes.GetFunc:
-          {
-            int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            var func_frame = Frame.New(this);
-            func_frame.Init(curr_frame, func_ip);
-            curr_frame.stack.Push(Val.NewObj(this, func_frame));
-          }
-          break;
-          case Opcodes.GetFuncNative:
-          {
-            int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
-            var fn_val = Val.NewObj(this, func_symb);
-            fn_val._num = CALL_NATIVE;
-            curr_frame.stack.Push(fn_val);
-          }
-          break;
-          case Opcodes.GetMethodNative:
-          {
-            int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-
-            int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            string class_type = curr_frame.constants[class_type_idx].str; 
-
-            var class_symb = (ClassSymbol)symbols.Resolve(class_type);
-            var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
-            var fn_val = Val.NewObj(this, func_symb);
-            fn_val._num = CALL_NATIVE;
-            curr_frame.stack.Push(fn_val);
-          }
-          break;
-          case Opcodes.GetFuncFromVar:
-          {
-            int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var val = curr_frame.locals[local_var_idx];
-            if(val._obj is Frame frm)
-            {
-              //NOTE: we need to make an authentic copy of the original Frame stored in a var 
-              //      in case it's already being executed. The simplest (but not the most smart one)
-              //      way to do that is to check ref.counter.
-              if(frm.refs > 1)
-              {
-                var frm_clone = Frame.New(this);
-                frm_clone.Init(frm, frm.start_ip);
-                curr_frame.stack.Push(Val.NewObj(this, frm_clone));
-              }
-              else
-              {
-                //NOTE: we need to call an extra Retain since Release will be called for this frame 
-                //      during its execution of Opcode.Return, however since this frame is stored in a var 
-                //      and this var will be released at some point we want to avoid 'double free' situation 
-                frm.Retain();
-                curr_frame.stack.Push(Val.NewObj(this, frm));
-              }
-            }
-            else
-            {
-              var func_symb = (FuncSymbolNative)val._obj;
-              var fn_val = Val.NewObj(this, func_symb);
-              //marking it a native call
-              fn_val._num = 1;
-              curr_frame.stack.Push(fn_val);
-            }
-          }
-          break;
-          case Opcodes.GetFuncImported:
-          {
-            int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-
-            string module_name = curr_frame.constants[module_idx].str;
-            string func_name = curr_frame.constants[func_idx].str;
-
-            var module = modules[module_name];
-            //TODO: during postprocessing retrieve func_ip and encode it into the opcode
-            //      so that there will be two Dictionary fetches less
-            int func_ip = module.func2ip[func_name];
-
-            var func_frame = Frame.New(this);
-            func_frame.Init(curr_frame.fb, module, func_ip);
-            curr_frame.stack.Push(Val.NewObj(this, func_frame));
-          }
-          break;
-          case Opcodes.GetLambda:
-          {
-            //NOTE: geting rid of Frame on the stack left after Opcode.Lambda.
-            //      Since lambda is called 'inplace' we need to generate proper 
-            //      opcode sequence required for Opcode.Call
-            uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-            var args_info = new FuncArgsInfo(args_bits);
-            int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-            var fr = curr_frame.stack[fr_idx];
-            curr_frame.stack.RemoveAt(fr_idx);
-            curr_frame.stack.Push(fr);
-          }
-          break;
-          case Opcodes.Call:
-          {
-            uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-
-            var val = curr_frame.stack.Pop();
-            //checking if it's a userland or native func call
-            if(val._num == CALL_USER)
-            {
-              var fr = (Frame)val._obj;
-              //NOTE: it will be released once return is invoked
-              fr.Retain();
-              val.Release();
-
-              var args_info = new FuncArgsInfo(args_bits);
-              for(int i = 0; i < args_info.CountArgs(); ++i)
-                fr.stack.Push(curr_frame.stack.Pop());
-              fr.stack.Push(Val.NewNum(this, args_bits));
-
-              //let's remember ip to return to
-              fr.return_ip = ip;
-              frames.Push(fr);
-              curr_frame = fr;
-              //since ip will be incremented below we decrement it intentionally here
-              ip = fr.start_ip - 1; 
-            }
-            else
-            {
-              var func_symb = (FuncSymbolNative)val._obj;
-              val.Release();
-
-              var args_info = new FuncArgsInfo(args_bits);
-              for(int i = 0; i < args_info.CountArgs(); ++i)
-                curr_frame.stack.Push(curr_frame.stack.Pop());
-
-              var sub_instruction = func_symb.VM_cb(curr_frame, args_info, ref status);
-              if(sub_instruction != null)
-                AttachInstruction(ref instruction, sub_instruction);
-
-              //NOTE: checking if new instruction was added and if so executing it immediately
-              if(instruction != null)
-                instruction.Tick(curr_frame, ref status);
-            }
-          }
-          break;
-          case Opcodes.InitFrame:
-          {
-            int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            var args_bits = curr_frame.stack.Pop(); 
-            curr_frame.locals.SetHead(local_vars_num);
-            //NOTE: we need to store arg info bits locally so that
-            //      this information will be available to func 
-            //      args related opcodes
-            curr_frame.locals[local_vars_num-1] = args_bits;
-          }
-          break;
-          case Opcodes.Lambda:
-          {             
-            short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            var fr = Frame.New(this);
-            fr.Init(curr_frame, ip+1/*func address*/);
-            curr_frame.stack.Push(Val.NewObj(this, fr));
-
-            ip += offset;
-          }
-          break;
-          case Opcodes.UseUpval:
-          {
-            int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-
-            var lmb = (Frame)curr_frame.stack.Peek()._obj;
-
-            //TODO: amount of local variables must be known ahead and
-            //      initialized during Frame initialization
-            //NOTE: we need to reflect the updated max amount of locals,
-            //      otherwise they might not be cleared upon Frame exit
-            lmb.locals.SetHead(local_idx+1);
-
-            var up_val = curr_frame.locals[up_idx];
-            up_val.Retain();
-            if(lmb.locals[local_idx] != null)
-              lmb.locals[local_idx].Release();
-            lmb.locals[local_idx] = up_val;
-
-          }
-          break;
-          case Opcodes.Pop:
-          {
-            curr_frame.stack.PopRelease();
-          }
-          break;
-          case Opcodes.Jump:
-          {
-            short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            ip += offset;
-          }
-          break;
-          case Opcodes.CondJump:
-          {
-            ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            //we need to jump only in case of false
-            if(curr_frame.stack.PopRelease().bval == false)
-              ip += offset;
-          }
-          break;
-          case Opcodes.LongJump:
-          {
-            short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            ip += offset;
-            curr_frame.fb.ip = ip;
-          }
-          break;
-          case Opcodes.DefArg:
-          {
-            byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-            int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-            var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
-            //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
-            //NOTE: if default argument is not used we need to jump out of default argument calculation code
-            if(!args_info.IsDefaultArgUsed(def_arg_idx))
-              ip += jump_pos;
-          }
-          break;
-          case Opcodes.Block:
-          {
-            var new_instr = VisitBlock(ref ip, curr_frame, defer_scope);
-            if(new_instr != null)
-            {
-              AttachInstruction(ref instruction, new_instr);
-              //NOTE: since there's a new instruction we want to skip ip incrementing
-              //      which happens below and proceed right to the execution of 
-              //      the new instruction in the beginning of the loop. If we don't 
-              //      skip it we simply might exit the loop without executing the
-              //      new instruction at all because we'll hit max_ip limit.
-              continue;
-            }
-          }
-          break;
-          case Opcodes.New:
-          {
-            int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-            string type = curr_frame.constants[type_idx].str;
-            HandleNew(curr_frame, type);
-          }
-          break;
-          default:
-            throw new Exception("Not supported opcode: " + opcode);
-        }
-      }
-
-      if(status == BHS.RUNNING || status == BHS.FAILURE)
-        return status;
-      else if(status == BHS.SUCCESS)
-        ++ip;
+    //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
+    if(instruction != null)
+    {
+      instruction_status = ExecuteInstruction(ref instruction, ref ip, curr_frame, frames);
+      return ExecuteResult.CheckInstruction; 
     }
 
-    return BHS.SUCCESS;
+    var opcode = (Opcodes)curr_frame.bytecode[ip];
+    //Console.WriteLine("OP " + opcode + " " + ip);
+    switch(opcode)
+    {
+      case Opcodes.Constant:
+        {
+          int const_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+
+          if(const_idx >= curr_frame.constants.Count)
+            throw new Exception("Index out of constants: " + const_idx + ", total: " + curr_frame.constants.Count);
+
+          var cn = curr_frame.constants[const_idx];
+          curr_frame.stack.Push(cn.ToVal(this));
+        }
+        break;
+      case Opcodes.TypeCast:
+        {
+          int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          string cast_type = curr_frame.constants[cast_type_idx].str;
+
+          HandleTypeCast(curr_frame, cast_type);
+        }
+        break;
+      case Opcodes.Inc:
+        {
+          int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          ++curr_frame.locals[var_idx]._num;
+        }
+        break;
+      case Opcodes.Dec:
+        {
+          int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          --curr_frame.locals[var_idx]._num;
+        }
+        break;
+      case Opcodes.Add:
+      case Opcodes.Sub:
+      case Opcodes.Div:
+      case Opcodes.Mod:
+      case Opcodes.Mul:
+      case Opcodes.And:
+      case Opcodes.Or:
+      case Opcodes.BitAnd:
+      case Opcodes.BitOr:
+      case Opcodes.Equal:
+      case Opcodes.NotEqual:
+      case Opcodes.LT:
+      case Opcodes.LTE:
+      case Opcodes.GT:
+      case Opcodes.GTE:
+        {
+          ExecuteBinaryOp(opcode, curr_frame);
+        }
+        break;
+      case Opcodes.UnaryNot:
+      case Opcodes.UnaryNeg:
+        {
+          ExecuteUnaryOp(opcode, curr_frame);
+        }
+        break;
+      case Opcodes.SetVar:
+        {
+          int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          var new_val = curr_frame.stack.Pop();
+          curr_frame.SetLocal(local_idx, new_val);
+          new_val.Release();
+        }
+        break;
+      case Opcodes.GetVar:
+        {
+          int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          curr_frame.stack.PushRetain(curr_frame.locals[local_idx]);
+        }
+        break;
+        //TODO: this one looks pretty much like SetVar
+      case Opcodes.ArgVar:
+        {
+          int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          var arg_val = curr_frame.stack.Pop();
+          var loc_var = Val.New(this);
+          loc_var.ValueCopyFrom(arg_val);
+          loc_var.RefMod(RefOp.USR_INC);
+          curr_frame.locals[local_idx] = loc_var;
+          arg_val.Release();
+        }
+        break;
+      case Opcodes.ArgRef:
+        {
+          int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          curr_frame.locals[local_idx] = curr_frame.stack.Pop();
+        }
+        break;
+      case Opcodes.DeclVar:
+        {
+          int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          byte type = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          Val v;
+          if(type == Val.NUMBER)
+            v = Val.NewNum(this, 0);
+          else if(type == Val.STRING)
+            v = Val.NewStr(this, "");
+          else if(type == Val.BOOL)
+            v = Val.NewBool(this, false);
+          else
+            v = Val.NewObj(this, null);
+          curr_frame.locals[local_idx] = v;
+        }
+        break;
+      case Opcodes.GetAttr:
+        {
+          int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          string class_type = curr_frame.constants[class_type_idx].str;
+          int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+          //TODO: this check must be in dev.version only
+          if(class_symb == null)
+            throw new Exception("Class type not found: " + class_type);
+
+          var obj = curr_frame.stack.Pop();
+          var res = Val.New(this);
+          var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+          field_symb.VM_getter(obj, ref res);
+          //NOTE: we retain only the payload since we make the copy of the value 
+          //      and the new res already has refs = 1 while payload's refcount 
+          //      is not incremented
+          res.RefMod(RefOp.USR_INC);
+          curr_frame.stack.Push(res);
+          obj.Release();
+        }
+        break;
+      case Opcodes.RefAttr:
+        {
+          int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          string class_type = curr_frame.constants[class_type_idx].str;
+          int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+          //TODO: this check must be in dev.version only
+          if(class_symb == null)
+            throw new Exception("Class type not found: " + class_type);
+
+          var obj = curr_frame.stack.Pop();
+          var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+          Val res;
+          field_symb.VM_getref(obj, out res);
+          curr_frame.stack.PushRetain(res);
+          obj.Release();
+        }
+        break;
+      case Opcodes.SetAttr:
+        {
+          int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          string class_type = curr_frame.constants[class_type_idx].str;
+          int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+          //TODO: this check must be in dev.version only
+          if(class_symb == null)
+            throw new Exception("Class type not found: " + class_type);
+
+          var obj = curr_frame.stack.Pop();
+          var val = curr_frame.stack.Pop();
+          var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+          field_symb.VM_setter(ref obj, val);
+          val.Release();
+          obj.Release();
+        }
+        break;
+      case Opcodes.SetAttrInplace:
+        {
+          int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          string class_type = curr_frame.constants[class_type_idx].str;
+          int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+          //TODO: this check must be in dev.version only
+          if(class_symb == null)
+            throw new Exception("Class type not found: " + class_type);
+
+          var val = curr_frame.stack.Pop();
+          var obj = curr_frame.stack.Peek();
+          var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+          field_symb.VM_setter(ref obj, val);
+          val.Release();
+        }
+        break;
+      case Opcodes.Return:
+        {
+          curr_frame.ExitScope(curr_frame);
+          ip = curr_frame.return_ip;
+          curr_frame.Clear();
+          curr_frame.Release();
+          //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
+          frames.Pop();
+          curr_frame = frames.Count > 0 ? frames.Peek() : null;
+        }
+        break;
+      case Opcodes.ReturnVal:
+        {
+          int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+
+          var ret_stack = frames.Count == 1 ? curr_frame.fb.stack : frames[frames.Count-2].stack;  
+          //TODO: make it more efficient?
+          int stack_offset = curr_frame.stack.Count; 
+          for(int i=0;i<ret_num;++i)
+          {
+            ret_stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
+            curr_frame.stack.Dec();
+          }
+
+          ip = curr_frame.return_ip;
+          curr_frame.ExitScope(curr_frame);
+          curr_frame.Clear();
+          curr_frame.Release();
+          frames.Pop();
+          curr_frame = frames.Count > 0 ? frames.Peek() : null;
+        }
+        break;
+      case Opcodes.GetFunc:
+        {
+          int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          var func_frame = Frame.New(this);
+          func_frame.Init(curr_frame, func_ip);
+          curr_frame.stack.Push(Val.NewObj(this, func_frame));
+        }
+        break;
+      case Opcodes.GetFuncNative:
+        {
+          int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
+          var fn_val = Val.NewObj(this, func_symb);
+          fn_val._num = CALL_NATIVE;
+          curr_frame.stack.Push(fn_val);
+        }
+        break;
+      case Opcodes.GetMethodNative:
+        {
+          int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+
+          int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          string class_type = curr_frame.constants[class_type_idx].str; 
+
+          var class_symb = (ClassSymbol)symbols.Resolve(class_type);
+          var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
+          var fn_val = Val.NewObj(this, func_symb);
+          fn_val._num = CALL_NATIVE;
+          curr_frame.stack.Push(fn_val);
+        }
+        break;
+      case Opcodes.GetFuncFromVar:
+        {
+          int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          var val = curr_frame.locals[local_var_idx];
+          if(val._obj is Frame frm)
+          {
+            //NOTE: we need to make an authentic copy of the original Frame stored in a var 
+            //      in case it's already being executed. The simplest (but not the most smart one)
+            //      way to do that is to check ref.counter.
+            if(frm.refs > 1)
+            {
+              var frm_clone = Frame.New(this);
+              frm_clone.Init(frm, frm.start_ip);
+              curr_frame.stack.Push(Val.NewObj(this, frm_clone));
+            }
+            else
+            {
+              //NOTE: we need to call an extra Retain since Release will be called for this frame 
+              //      during its execution of Opcode.Return, however since this frame is stored in a var 
+              //      and this var will be released at some point we want to avoid 'double free' situation 
+              frm.Retain();
+              curr_frame.stack.Push(Val.NewObj(this, frm));
+            }
+          }
+          else
+          {
+            var func_symb = (FuncSymbolNative)val._obj;
+            var fn_val = Val.NewObj(this, func_symb);
+            //marking it a native call
+            fn_val._num = 1;
+            curr_frame.stack.Push(fn_val);
+          }
+        }
+        break;
+      case Opcodes.GetFuncImported:
+        {
+          int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+
+          string module_name = curr_frame.constants[module_idx].str;
+          string func_name = curr_frame.constants[func_idx].str;
+
+          var module = modules[module_name];
+          //TODO: during postprocessing retrieve func_ip and encode it into the opcode
+          //      so that there will be two Dictionary fetches less
+          int func_ip = module.func2ip[func_name];
+
+          var func_frame = Frame.New(this);
+          func_frame.Init(curr_frame.fb, module, func_ip);
+          curr_frame.stack.Push(Val.NewObj(this, func_frame));
+        }
+        break;
+      case Opcodes.GetLambda:
+        {
+          //NOTE: geting rid of Frame on the stack left after Opcode.Lambda.
+          //      Since lambda is called 'inplace' we need to generate proper 
+          //      opcode sequence required for Opcode.Call
+          uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+          var args_info = new FuncArgsInfo(args_bits);
+          int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
+          var fr = curr_frame.stack[fr_idx];
+          curr_frame.stack.RemoveAt(fr_idx);
+          curr_frame.stack.Push(fr);
+        }
+        break;
+      case Opcodes.Call:
+        {
+          uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+          var val = curr_frame.stack.Pop();
+          //checking if it's a userland or native func call
+          if(val._num == CALL_USER)
+          {
+            var fr = (Frame)val._obj;
+            //NOTE: it will be released once return is invoked
+            fr.Retain();
+            val.Release();
+
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              fr.stack.Push(curr_frame.stack.Pop());
+            fr.stack.Push(Val.NewNum(this, args_bits));
+
+            //let's remember ip to return to
+            fr.return_ip = ip;
+            frames.Push(fr);
+            curr_frame = fr;
+            //since ip will be incremented below we decrement it intentionally here
+            ip = fr.start_ip - 1; 
+          }
+          else
+          {
+            var func_symb = (FuncSymbolNative)val._obj;
+            val.Release();
+
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              curr_frame.stack.Push(curr_frame.stack.Pop());
+
+            var new_instruction = func_symb.VM_cb(curr_frame, args_info, ref instruction_status);
+            if(new_instruction != null)
+              AttachInstruction(ref instruction, new_instruction);
+
+            if(instruction != null)
+              return ExecuteResult.NewInstruction;
+            else if(instruction_status != BHS.SUCCESS)
+              return ExecuteResult.CheckInstruction;
+          }
+        }
+        break;
+      case Opcodes.InitFrame:
+        {
+          int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          var args_bits = curr_frame.stack.Pop(); 
+          curr_frame.locals.SetHead(local_vars_num);
+          //NOTE: we need to store arg info bits locally so that
+          //      this information will be available to func 
+          //      args related opcodes
+          curr_frame.locals[local_vars_num-1] = args_bits;
+        }
+        break;
+      case Opcodes.Lambda:
+        {             
+          short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          var fr = Frame.New(this);
+          fr.Init(curr_frame, ip+1/*func address*/);
+          curr_frame.stack.Push(Val.NewObj(this, fr));
+
+          ip += offset;
+        }
+        break;
+      case Opcodes.UseUpval:
+        {
+          int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+
+          var lmb = (Frame)curr_frame.stack.Peek()._obj;
+
+          //TODO: amount of local variables must be known ahead and
+          //      initialized during Frame initialization
+          //NOTE: we need to reflect the updated max amount of locals,
+          //      otherwise they might not be cleared upon Frame exit
+          lmb.locals.SetHead(local_idx+1);
+
+          var up_val = curr_frame.locals[up_idx];
+          up_val.Retain();
+          if(lmb.locals[local_idx] != null)
+            lmb.locals[local_idx].Release();
+          lmb.locals[local_idx] = up_val;
+
+        }
+        break;
+      case Opcodes.Pop:
+        {
+          curr_frame.stack.PopRelease();
+        }
+        break;
+      case Opcodes.Jump:
+        {
+          short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          ip += offset;
+        }
+        break;
+      case Opcodes.CondJump:
+        {
+          ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          //we need to jump only in case of false
+          if(curr_frame.stack.PopRelease().bval == false)
+            ip += offset;
+        }
+        break;
+      case Opcodes.LongJump:
+        {
+          short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          ip += offset;
+          curr_frame.fb.ip = ip;
+        }
+        break;
+      case Opcodes.DefArg:
+        {
+          byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
+          //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
+          //NOTE: if default argument is not used we need to jump out of default argument calculation code
+          if(!args_info.IsDefaultArgUsed(def_arg_idx))
+            ip += jump_pos;
+        }
+        break;
+      case Opcodes.Block:
+        {
+          var new_instr = VisitBlock(ref ip, curr_frame, defer_scope);
+          if(new_instr != null)
+          {
+            AttachInstruction(ref instruction, new_instr);
+            //NOTE: since there's a new instruction we want to skip ip incrementing
+            //      which happens below and proceed right to the execution of 
+            //      the new instruction in the beginning of the loop. If we don't 
+            //      skip it we simply might exit the loop without executing the
+            //      new instruction at all because we'll hit max_ip limit.
+            return ExecuteResult.NewInstruction;
+          }
+        }
+        break;
+      case Opcodes.New:
+        {
+          int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          string type = curr_frame.constants[type_idx].str;
+          HandleNew(curr_frame, type);
+        }
+        break;
+      default:
+        throw new Exception("Not supported opcode: " + opcode);
+    }
+
+    ++ip;
+    return ExecuteResult.Ok;
+  }
+
+  internal BHS ExecuteInstruction(
+    ref IInstruction instruction, 
+    ref int ip, 
+    Frame curr_frame, FixedStack<Frame> frames
+  )
+  {
+    var status = BHS.SUCCESS;
+
+    instruction.Tick(curr_frame, ref status);
+
+    if(status == BHS.RUNNING)
+      return status;
+    else if(status == BHS.FAILURE)
+    {
+      Instructions.Del(curr_frame, instruction);
+      instruction = null;
+
+      curr_frame.ExitScope(curr_frame);
+      ip = curr_frame.return_ip;
+      curr_frame.Release();
+      frames.Pop();
+
+      return status;
+    }
+    else
+    {
+      Instructions.Del(curr_frame, instruction);
+      instruction = null;
+      
+      ////NOTE: after instruction successful execution we might be in a situation  
+      ////      that instruction has already exited the current frame (e.g. after 'return')
+      ////      and it's released, for example in the following case:
+      ////
+      ////      paral {
+      ////         seq {
+      ////           return
+      ////         }
+      ////         seq {
+      ////          ...
+      ////         }
+      ////      }
+      ////
+      ////    ...after 'return' is executed the current frame will be in the released state 
+      ////    and we should take this into account
+      ////
+      //if(curr_frame.refs == -1) //checking if it's in a released state
+      //{
+      //  frames.Pop();
+      //  curr_frame = frames.Count > 0 ? frames.Peek() : null;
+      //  continue;
+      //}
+      return status;
+    }
   }
 
   //TODO: make it more universal and robust
@@ -1363,10 +1414,14 @@ public class VM
         continue;
 
       ++fb.tick;
-      var status = Execute(ref fb.ip, fb.frames.Peek(), fb.frames, ref fb.instruction, -1, MAX_IP, null);
-      fb.status = status;
+      fb.status = Execute(
+        ref fb.ip, -1, MAX_IP, 
+        fb.frames.Peek(), fb.frames, 
+        ref fb.instruction, 
+        null
+      );
       
-      if(status != BHS.RUNNING)
+      if(fb.status != BHS.RUNNING)
         Stop(fb);
     }
 
@@ -1643,7 +1698,12 @@ public struct DeferBlock
   BHS Execute(ref IInstruction instruction)
   {
     //Console.WriteLine("EXIT SCOPE " + ip + " " + (max_ip + 1));
-    var status = frm.vm.Execute(ref ip, frm, frm.fb.frames, ref instruction, -1, max_ip + 1, null);
+    var status = frm.vm.Execute(
+      ref ip, -1, max_ip + 1, 
+      frm, frm.fb.frames, 
+      ref instruction, 
+      null
+    );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
     //Console.WriteLine("EXIT SCOPE~ " + ip + " " + (max_ip + 1));
@@ -1678,6 +1738,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   public int min_ip;
   public int max_ip;
   public int ip;
+  public VM.Frame origin;
   public FixedStack<VM.Frame> frames = new FixedStack<VM.Frame>(256);
   public IInstruction instruction;
   public List<DeferBlock> defers;
@@ -1697,17 +1758,53 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     this.min_ip = min_ip;
     this.max_ip = max_ip;
     this.ip = min_ip;
+    this.origin = frm;
     frames.Push(frm);
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    status = frm.vm.Execute(ref ip, frames.Peek(), frames, ref instruction, min_ip-1, max_ip+1, this);
-
+    var curr_frame = frames.Peek();
+      
+    while(curr_frame != null)
+    {
+      int tmp_min_ip = -1;
+      int tmp_max_ip = VM.MAX_IP;
+      if(this.origin == curr_frame)
+      {
+        tmp_min_ip = min_ip - 1;
+        tmp_max_ip = max_ip + 1;
+      }
+      status = BHS.SUCCESS;
+      var res = frm.vm.ExecuteOnce(
+        ref ip, tmp_min_ip, tmp_max_ip,
+        ref curr_frame, frames,
+        ref instruction, ref status,
+        this
+      );
+      //Console.WriteLine("RES " + res + " same: " + (curr_frame == this.origin) + " status: " + status + " " + ip + " " + instruction?.GetType().Name);
+      if(res == VM.ExecuteResult.OutOfBounds)
+      {
+        status = BHS.SUCCESS;
+        break;
+      }
+      else if(res == VM.ExecuteResult.CheckInstruction)
+      {
+        if(status == BHS.SUCCESS)
+        {
+          //NOTE: since we skip ip incrementing once the new instruction is 
+          //      attached we must increment the ip upon instruction completion
+          if(ip + 1 < tmp_max_ip)
+            ++ip;
+        }
+        else
+          break;
+      }
+    }
     //Console.WriteLine("SEQ " + status + " IP " + ip + " [" + (min_ip-1) + " " + (max_ip+1)+"] " + GetHashCode());
 
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
-    if(status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))
+    if(this.origin == curr_frame && status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))
       frm.fb.ip = max_ip;
   }
 

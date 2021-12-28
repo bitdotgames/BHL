@@ -586,7 +586,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestFaileBeforeReturn()
+  public void TestFailureBeforeReturn()
   {
     string bhl = @"
 
@@ -11361,21 +11361,6 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public struct IntStruct
-  {
-    public int n;
-
-    public static void Decode(Val v, ref IntStruct dst)
-    {
-      dst.n = (int)v._num;
-    }
-
-    public static void Encode(Val v, IntStruct dst)
-    {
-      v._num = dst.n;
-    }
-  }
-
   [IsTested()]
   public void TestNullWithStruct()
   {
@@ -14512,6 +14497,21 @@ public class BHL_TestVM : BHL_TestBase
 
         cl.Define(m);
       }
+    }
+  }
+
+  public struct IntStruct
+  {
+    public int n;
+
+    public static void Decode(Val v, ref IntStruct dst)
+    {
+      dst.n = (int)v._num;
+    }
+
+    public static void Encode(Val v, IntStruct dst)
+    {
+      v._num = dst.n;
     }
   }
 
