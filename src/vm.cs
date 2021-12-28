@@ -717,8 +717,7 @@ public class VM
         {
           //NOTE: since we skip ip incrementing once the new instruction is 
           //      attached we must increment the ip upon instruction completion
-          if(ip + 1 < max_ip)
-            ++ip;
+          ++ip;
         }
         else
           return instruction_status;
@@ -753,7 +752,7 @@ public class VM
     //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
     if(instruction != null)
     {
-      instruction_status = ExecuteInstruction(ref instruction, ref ip, curr_frame, frames);
+      instruction_status = ExecuteInstruction(ref instruction, ref ip, ref curr_frame, frames);
       return ExecuteResult.CheckInstruction; 
     }
 
@@ -1225,7 +1224,7 @@ public class VM
   internal BHS ExecuteInstruction(
     ref IInstruction instruction, 
     ref int ip, 
-    Frame curr_frame, FixedStack<Frame> frames
+    ref Frame curr_frame, FixedStack<Frame> frames
   )
   {
     var status = BHS.SUCCESS;
@@ -1267,12 +1266,12 @@ public class VM
       ////    ...after 'return' is executed the current frame will be in the released state 
       ////    and we should take this into account
       ////
-      //if(curr_frame.refs == -1) //checking if it's in a released state
-      //{
-      //  frames.Pop();
-      //  curr_frame = frames.Count > 0 ? frames.Peek() : null;
-      //  continue;
-      //}
+      //NOTE: checking if it's in a released state, return was executed
+      if(curr_frame.refs == -1)
+      {
+        frames.Pop();
+        curr_frame = frames.Count > 0 ? frames.Peek() : null;
+      }
       return status;
     }
   }
@@ -1776,13 +1775,14 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
         tmp_max_ip = max_ip + 1;
       }
       status = BHS.SUCCESS;
+
       var res = frm.vm.ExecuteOnce(
         ref ip, tmp_min_ip, tmp_max_ip,
         ref curr_frame, frames,
         ref instruction, ref status,
         this
       );
-      //Console.WriteLine("RES " + res + " same: " + (curr_frame == this.origin) + " status: " + status + " " + ip + " " + instruction?.GetType().Name);
+      //Console.WriteLine("RES " + res + " same: " + (curr_frame == this.origin) + " status: " + status + " " + ip + " " + instruction?.GetType().Name + " " + tmp_max_ip);
       if(res == VM.ExecuteResult.OutOfBounds)
       {
         status = BHS.SUCCESS;
@@ -1794,8 +1794,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
         {
           //NOTE: since we skip ip incrementing once the new instruction is 
           //      attached we must increment the ip upon instruction completion
-          if(ip + 1 < tmp_max_ip)
-            ++ip;
+          ++ip;
         }
         else
           break;
