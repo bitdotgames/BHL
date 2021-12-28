@@ -712,21 +712,34 @@ public class VM
   }
 
   internal BHS Execute(
-    ref int ip, int min_ip, int max_ip, 
-    Frame curr_frame, FixedStack<Frame> frames, 
+    ref int ip, int frame_min_ip, int frame_max_ip, 
+    FixedStack<Frame> frames, 
     ref IInstruction instruction, 
     IExitableScope defer_scope
   )
   {
+    var curr_frame = frames.Peek();
+    var orig_frame = curr_frame;
+
     while(curr_frame != null)
     {
-      BHS instruction_status = BHS.SUCCESS;
+      int min_ip = -1;
+      int max_ip = VM.MAX_IP;
+      if(orig_frame == curr_frame)
+      {
+        min_ip = frame_min_ip;
+        max_ip = frame_max_ip;
+      }
+
+      var instruction_status = BHS.SUCCESS;
+      
       var res = ExecuteOnce(
         ref ip, min_ip, max_ip,
         ref curr_frame, frames,
         ref instruction, ref instruction_status,
         defer_scope
       );
+
       if(res == ExecuteResult.OutOfBounds)
         return BHS.SUCCESS;
       else if(res == ExecuteResult.CheckInstruction)
@@ -1433,7 +1446,7 @@ public class VM
       ++fb.tick;
       fb.status = Execute(
         ref fb.ip, -1, MAX_IP, 
-        fb.frames.Peek(), fb.frames, 
+        fb.frames, 
         ref fb.instruction, 
         null
       );
@@ -1703,27 +1716,28 @@ public struct DeferBlock
 {
   public VM.Frame frm;
   public int ip;
-  public int max_ip;
+  public int end_ip;
 
-  public DeferBlock(VM.Frame frm, int ip, int max_ip)
+  public DeferBlock(VM.Frame frm, int ip, int end_ip)
   {
     this.frm = frm;
     this.ip = ip;
-    this.max_ip = max_ip;
+    this.end_ip = end_ip;
   }
 
   BHS Execute(ref IInstruction instruction)
   {
-    //Console.WriteLine("EXIT SCOPE " + ip + " " + (max_ip + 1));
+    //Console.WriteLine("EXIT SCOPE " + ip + " " + (end_ip + 1));
+    frm.fb.frames.Push(frm);
     var status = frm.vm.Execute(
-      ref ip, -1, max_ip + 1, 
-      frm, frm.fb.frames, 
+      ref ip, ip - 1, end_ip + 1, 
+      frm.fb.frames, 
       ref instruction, 
       null
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
-    //Console.WriteLine("EXIT SCOPE~ " + ip + " " + (max_ip + 1));
+    //Console.WriteLine("EXIT SCOPE~ " + ip + " " + (end_ip + 1));
     return status;
   }
 
