@@ -213,8 +213,9 @@ public class VM
 
         if(i == frames.Count-1)
         {
-          //NOTE: current ip of the last Frame is ip of its Fiber
-          item.ip = frm.fb.ip;
+          if(!TryGetInstructionIP(instruction, out item.ip))
+            item.ip = frm.fb.ip;
+
           frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
         }
         else
@@ -228,6 +229,23 @@ public class VM
 
         info.Insert(0, item);
       }
+    }
+
+    static bool TryGetInstructionIP(IInstruction i, out int ip)
+    {
+      ip = 0;
+      if(i is SeqInstruction si)
+      {
+        if(!TryGetInstructionIP(si.instruction, out ip))
+          ip = si.ip;
+        return true;
+      }
+      else if(i is ParalInstruction pi)
+        return TryGetInstructionIP(pi.branches[pi.i], out ip);
+      else if(i is ParalAllInstruction pai)
+        return TryGetInstructionIP(pai.branches[pai.i], out ip);
+      else
+        return false;
     }
   }
 
@@ -1604,7 +1622,7 @@ public class Instructions
 
     if(instruction is IInspectableInstruction ti)
     {
-      foreach(var part in ti.ForInspection)
+      foreach(var part in ti.Browse)
         Dump(part, level + 1);
     }
 
@@ -1646,7 +1664,7 @@ public interface IBranchyInstruction : IInstruction
 
 public interface IInspectableInstruction 
 {
-  IList<IInstruction> ForInspection {get;}
+  IList<IInstruction> Browse {get;}
 }
 
 class CoroutineSuspend : IInstruction
@@ -1742,7 +1760,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   public IInstruction instruction;
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> ForInspection {
+  public IList<IInstruction> Browse {
     get {
       if(instruction != null)
         return new List<IInstruction>() { instruction };
@@ -1840,10 +1858,11 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
 {
   public int bgn_ip;
   public int end_ip;
+  public int i;
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> ForInspection {
+  public IList<IInstruction> Browse {
     get {
       return branches;
     }
@@ -1861,7 +1880,7 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
 
     status = BHS.RUNNING;
 
-    for(int i=0;i<branches.Count;++i)
+    for(i=0;i<branches.Count;++i)
     {
       var branch = branches[i];
       branch.Tick(frm, ref status);
@@ -1905,10 +1924,11 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
 {
   public int bgn_ip;
   public int end_ip;
+  public int i;
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> ForInspection {
+  public IList<IInstruction> Browse {
     get {
       return branches;
     }
@@ -1924,7 +1944,7 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
   {
     frm.fb.ip = bgn_ip;
 
-    for(int i=0;i<branches.Count;)
+    for(i=0;i<branches.Count;)
     {
       var branch = branches[i];
       branch.Tick(frm, ref status);
