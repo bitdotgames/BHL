@@ -10762,6 +10762,26 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestParalAllYieldReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      paral_all {
+        yield()
+        return 1
+      }
+      return 0
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
   
   [IsTested()]
   public void TestParalAllNestedReturn()
@@ -13896,7 +13916,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(globs: globs, importer: importer);
     vm.ImportModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    vm.Start("test", Val.NewNum(vm, 3));
     AssertTrue(vm.Tick());
 
     AssertEqual(4, trace.Count);
