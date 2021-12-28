@@ -1734,9 +1734,9 @@ public struct DeferBlock
 
 public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruction
 {
-  public int min_ip;
-  public int max_ip;
   public int ip;
+  public int bgn_ip;
+  public int end_ip;
   public VM.Frame origin;
   public FixedStack<VM.Frame> frames = new FixedStack<VM.Frame>(256);
   public IInstruction instruction;
@@ -1751,12 +1751,12 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     }
   }
 
-  public void Init(VM.Frame frm, int min_ip, int max_ip)
+  public void Init(VM.Frame frm, int bgn_ip, int end_ip)
   {
-    //Console.WriteLine("NEW SEQ [" + min_ip + " " + max_ip + "] " + GetHashCode());
-    this.min_ip = min_ip;
-    this.max_ip = max_ip;
-    this.ip = min_ip;
+    //Console.WriteLine("NEW SEQ [" + bgn_ip + " " + end_ip + "] " + GetHashCode());
+    this.bgn_ip = bgn_ip;
+    this.end_ip = end_ip;
+    this.ip = bgn_ip;
     this.origin = frm;
     frames.Push(frm);
   }
@@ -1771,8 +1771,8 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
       int tmp_max_ip = VM.MAX_IP;
       if(this.origin == curr_frame)
       {
-        tmp_min_ip = min_ip - 1;
-        tmp_max_ip = max_ip + 1;
+        tmp_min_ip = bgn_ip - 1;
+        tmp_max_ip = end_ip + 1;
       }
       status = BHS.SUCCESS;
 
@@ -1782,7 +1782,6 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
         ref instruction, ref status,
         this
       );
-      //Console.WriteLine("RES " + res + " same: " + (curr_frame == this.origin) + " status: " + status + " " + ip + " " + instruction?.GetType().Name + " " + tmp_max_ip);
       if(res == VM.ExecuteResult.OutOfBounds)
       {
         status = BHS.SUCCESS;
@@ -1800,11 +1799,9 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
           break;
       }
     }
-    //Console.WriteLine("SEQ " + status + " IP " + ip + " [" + (min_ip-1) + " " + (max_ip+1)+"] " + GetHashCode());
-
-    //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
-    if(this.origin == curr_frame && status == BHS.SUCCESS && ip >= min_ip && ip <= (max_ip+1))
-      frm.fb.ip = max_ip;
+    //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+    if(this.origin == curr_frame && status == BHS.SUCCESS && ip >= bgn_ip && ip <= (end_ip+1))
+      frm.fb.ip = end_ip;
   }
 
   public void Cleanup(VM.Frame frm)
@@ -1841,8 +1838,8 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
 
 public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectableInstruction
 {
-  public int min_ip;
-  public int max_ip;
+  public int bgn_ip;
+  public int end_ip;
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
 
@@ -1852,15 +1849,15 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
     }
   }
 
-  public void Init(int min_ip, int max_ip)
+  public void Init(int bgn_ip, int end_ip)
   {
-    this.min_ip = min_ip;
-    this.max_ip = max_ip;
+    this.bgn_ip = bgn_ip;
+    this.end_ip = end_ip;
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    frm.fb.ip = min_ip;
+    frm.fb.ip = bgn_ip;
 
     status = BHS.RUNNING;
 
@@ -1872,9 +1869,9 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
       {
         Instructions.Del(frm, branch);
         branches.RemoveAt(i);
-        //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
-        if(frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
-          frm.fb.ip = max_ip;
+        //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+        if(frm.fb.ip >= bgn_ip && frm.fb.ip <= (end_ip+1))
+          frm.fb.ip = end_ip;
         break;
       }
     }
@@ -1906,8 +1903,8 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
 
 public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspectableInstruction
 {
-  public int min_ip;
-  public int max_ip;
+  public int bgn_ip;
+  public int end_ip;
   public List<IInstruction> branches = new List<IInstruction>();
   public List<DeferBlock> defers;
 
@@ -1917,22 +1914,22 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
     }
   }
 
-  public void Init(int min_ip, int max_ip)
+  public void Init(int bgn_ip, int end_ip)
   {
-    this.min_ip = min_ip;
-    this.max_ip = max_ip;
+    this.bgn_ip = bgn_ip;
+    this.end_ip = end_ip;
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    frm.fb.ip = min_ip;
+    frm.fb.ip = bgn_ip;
 
     for(int i=0;i<branches.Count;)
     {
       var branch = branches[i];
       branch.Tick(frm, ref status);
       //let's check if we "jumped out" of the block (e.g return, break)
-      if(frm.refs == -1 /*return executed*/ || frm.fb.ip < min_ip || frm.fb.ip > max_ip)
+      if(frm.refs == -1 /*return executed*/ || frm.fb.ip < bgn_ip || frm.fb.ip > end_ip)
       {
         Instructions.Del(frm, branch);
         branches.RemoveAt(i);
@@ -1956,9 +1953,9 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
 
     if(branches.Count > 0)
       status = BHS.RUNNING;
-    //if the execution didn't "jump out" of the block (e.g. break) proceed to the max_ip
-    else if(frm.fb.ip >= min_ip && frm.fb.ip <= max_ip)
-      frm.fb.ip = max_ip;
+    //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+    else if(frm.fb.ip >= bgn_ip && frm.fb.ip <= (end_ip+1))
+      frm.fb.ip = end_ip;
   }
 
   public void Cleanup(VM.Frame frm)
