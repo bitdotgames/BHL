@@ -1112,11 +1112,15 @@ public class VM
 
             var status = BHS.SUCCESS;
             var new_instruction = func_symb.VM_cb(curr_frame, args_info, ref status);
-            if(new_instruction != null)
-              AttachInstruction(ref instruction, new_instruction);
 
-            if(instruction != null)
+            if(new_instruction != null)
+            {
+              //NOTE: since there's a new instruction we want to skip ip incrementing
+              //      which happens below and proceed right to the execution of 
+              //      the new instruction
+              instruction = new_instruction;
               return BHS.SUCCESS;
+            }
             else if(status != BHS.SUCCESS)
               return status;
           }
@@ -1203,15 +1207,13 @@ public class VM
         break;
       case Opcodes.Block:
         {
-          var new_instr = VisitBlock(ref ip, curr_frame, defer_scope);
-          if(new_instr != null)
+          var new_instruction = VisitBlock(ref ip, curr_frame, defer_scope);
+          if(new_instruction != null)
           {
-            AttachInstruction(ref instruction, new_instr);
             //NOTE: since there's a new instruction we want to skip ip incrementing
             //      which happens below and proceed right to the execution of 
-            //      the new instruction in the beginning of the loop. If we don't 
-            //      skip it we simply might exit the loop without executing the
-            //      new instruction at all because we'll hit max_ip limit.
+            //      the new instruction
+            instruction = new_instruction;
             return BHS.SUCCESS;
           }
         }
@@ -1317,25 +1319,6 @@ public class VM
     var val = Val.New(this); 
     cls.VM_creator(curr_frame, ref val);
     curr_frame.stack.Push(val);
-  }
-
-  static void AttachInstruction(ref IInstruction instruction, IInstruction candidate)
-  {
-    if(instruction != null)
-    {
-      if(instruction is IBranchyInstruction bi)
-      {
-        //Console.WriteLine("ATTACH " + mi.GetHashCode() + " " + candidate.GetHashCode());
-        bi.Attach(candidate);
-      }
-      else
-        throw new Exception("Can't attach to current instruction");
-    }
-    else
-    {
-      //Console.WriteLine("REPL " + candidate.GetHashCode());
-      instruction = candidate;
-    }
   }
 
   static void ReadBlockHeader(ref int ip, Frame curr_frame, out EnumBlock type, out int size)
