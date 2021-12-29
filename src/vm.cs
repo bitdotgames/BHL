@@ -747,13 +747,7 @@ public class VM
         return BHS.SUCCESS;
       else if(res == ExecuteResult.CheckInstruction)
       {
-        if(instruction_status == BHS.SUCCESS)
-        {
-          //NOTE: since we skip ip incrementing once the new instruction is 
-          //      attached we must increment the ip upon instruction completion
-          ++ip;
-        }
-        else
+        if(instruction_status != BHS.SUCCESS)
           return instruction_status;
       }
     }
@@ -1280,32 +1274,37 @@ public class VM
 
       return status;
     }
-    else
+    else if(status == BHS.SUCCESS)
     {
       Instructions.Del(curr_frame, instruction);
       instruction = null;
       
-      ////NOTE: after instruction successful execution we might be in a situation  
-      ////      that instruction has already exited the current frame (e.g. after 'return')
-      ////      and it's released, for example in the following case:
-      ////
-      ////      paral {
-      ////         seq {
-      ////           return
-      ////         }
-      ////         seq {
-      ////          ...
-      ////         }
-      ////      }
-      ////
-      ////    ...after 'return' is executed the current frame will be in the released state 
-      ////    and we should take this into account
-      ////
-      //NOTE: checking if it's in a released state, return was executed
+      //NOTE: after instruction successful execution we might be in a situation  
+      //      that instruction has already exited the current frame (e.g. after 'return')
+      //      and it's released, for example in the following case:
+      //
+      //      paral {
+      //         seq {
+      //           return
+      //         }
+      //         seq {
+      //          ...
+      //         }
+      //      }
+      //
+      //    ...after 'return' is executed the current frame will be in the released state 
+      //    and we should take this into account
+      //
       if(curr_frame.refs == -1)
         ctxs.Pop();
+
+      //NOTE: we must increment the ip upon instruction completion
+      ++ip;
+
       return status;
     }
+    else
+      throw new Exception("Bad status: " + status);
   }
 
   //TODO: make it more universal and robust
