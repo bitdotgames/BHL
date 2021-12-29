@@ -766,7 +766,7 @@ public class VM
 
     //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
     if(instruction != null)
-      return ExecuteInstruction(ref instruction, ref ip, ctxs);
+      return ExecuteInstruction(ref ip, ref instruction, curr_frame, ctxs);
 
     var opcode = (Opcodes)curr_frame.bytecode[ip];
     //Console.WriteLine("OP " + opcode + " " + ip);
@@ -1232,15 +1232,13 @@ public class VM
   }
 
   static BHS ExecuteInstruction(
-    ref IInstruction instruction, 
     ref int ip, 
+    ref IInstruction instruction, 
+    Frame curr_frame,
     FixedStack<Context> ctxs
   )
   {
     var status = BHS.SUCCESS;
-
-    var curr_frame = ctxs.Peek().frame;
-
     instruction.Tick(curr_frame, ref status);
 
     if(status == BHS.RUNNING)
