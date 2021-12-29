@@ -743,9 +743,7 @@ public class VM
         defer_scope
       );
 
-      if(res == ExecuteResult.OutOfRange)
-        return BHS.SUCCESS;
-      else if(res == ExecuteResult.CheckInstruction)
+      if(res == ExecuteResult.CheckInstruction)
       {
         if(instruction_status != BHS.SUCCESS)
           return instruction_status;
@@ -773,7 +771,10 @@ public class VM
     var ctx = ctxs.Peek();
 
     if(ip <= ctx.min_ip || ip >= ctx.max_ip)
+    {
+      ctxs.Pop();
       return ExecuteResult.OutOfRange;
+    }
 
     var curr_frame = ctx.frame;
 
@@ -1736,7 +1737,6 @@ public struct DeferBlock
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
-    frm.fb.ctxs.Pop();
     //Console.WriteLine("EXIT SCOPE~ " + ip + " " + (end_ip + 1));
     return status;
   }
