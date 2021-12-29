@@ -254,6 +254,12 @@ public class VM
           ip = si.ip;
         return true;
       }
+      else if(i is BranchInstruction bi)
+      {
+        if(!TryGetInstructionIP(bi.instruction, out ip))
+          ip = bi.ip;
+        return true;
+      }
       else if(i is ParalInstruction pi)
         return TryGetInstructionIP(pi.branches[pi.i], out ip);
       else if(i is ParalAllInstruction pai)
@@ -762,7 +768,7 @@ public class VM
 
     var curr_frame = ctx.frame;
 
-    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + ctxs.Count + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
     if(instruction != null)
@@ -1346,9 +1352,18 @@ public class VM
     }
     else if(type == EnumBlock.SEQ)
     {
-      var seq = Instructions.New<SeqInstruction>(this);
-      seq.Init(curr_frame, ip + 1, ip + size);
-      return seq;
+      if(defer_scope is IBranchyInstruction)
+      {
+        var br = Instructions.New<BranchInstruction>(this);
+        br.Init(curr_frame, ip + 1, ip + size);
+        return br;
+      }
+      else
+      {
+        var seq = Instructions.New<SeqInstruction>(this);
+        seq.Init(curr_frame, ip + 1, ip + size);
+        return seq;
+      }
     }
     else if(type == EnumBlock.DEFER)
     {
@@ -1387,10 +1402,8 @@ public class VM
         //NOTE: branch == null is a special case for defer {..} block
         if(branch != null)
         {
-          if(!(branch is IInstruction))
-            throw new Exception("Invalid block branch instruction");
-           bi.Attach(branch);
-           tmp_ip += tmp_size;
+          bi.Attach(branch);
+          tmp_ip += tmp_size;
         }
       }
     }
@@ -1700,7 +1713,7 @@ public struct DeferBlock
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
-    //Console.WriteLine("EXIT SCOPE~ " + ip + " " + (end_ip + 1));
+    //Console.WriteLine("~EXIT SCOPE " + ip + " " + (end_ip + 1));
     return status;
   }
 
@@ -1733,6 +1746,82 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   public int bgn_ip;
   public int end_ip;
   public IInstruction instruction;
+  public List<DeferBlock> defers;
+  public int ctx_idx;
+
+  public IList<IInstruction> Browse {
+    get {
+      if(instruction != null)
+        return new List<IInstruction>() { instruction };
+      else
+        return new List<IInstruction>();
+    }
+  }
+
+  public void Init(VM.Frame frm, int bgn_ip, int end_ip)
+  {
+    this.bgn_ip = bgn_ip;
+    this.end_ip = end_ip;
+    this.ip = bgn_ip;
+    this.ctx_idx = frm.fb.ctxs.Count;
+    frm.fb.ip = bgn_ip;
+    frm.fb.ctxs.Push(new VM.Context(frm, bgn_ip-1, end_ip+1));
+  }
+
+  public void Tick(VM.Frame frm, ref BHS status)
+  {
+    status = frm.vm.Execute(
+      ref ip, frm.fb.ctxs, 
+      ref instruction, 
+      this,
+      ctx_idx
+    );
+      
+    //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+    if(status == BHS.SUCCESS && ip >= bgn_ip && ip <= (end_ip+1))
+      frm.fb.ip = end_ip;
+  }
+
+  public void Cleanup(VM.Frame frm)
+  {
+    if(instruction != null)
+    {
+      Instructions.Del(frm, instruction);
+      instruction = null;
+    }
+
+    ExitScope(frm);
+  }
+
+  public void RegisterDefer(DeferBlock cb)
+  {
+    if(defers == null)
+      defers = new List<DeferBlock>();
+    defers.Add(cb);
+  }
+
+  public void ExitScope(VM.Frame frm)
+  {
+    DeferBlock.ExitScope(frm, defers);
+
+    //NOTE: Let's release frames which were allocated but due to 
+    //      some control flow abruption (e.g return) should be 
+    //      explicitely released. Top frame is released 'above'.
+    for(int i=frm.fb.ctxs.Count;i-- > ctx_idx;)
+    {
+      if(i > ctx_idx + 1)
+        frm.fb.ctxs[i].frame.Release();
+      frm.fb.ctxs.RemoveAt(i);
+    }
+  }
+}
+
+public class BranchInstruction : IInstruction, IExitableScope, IInspectableInstruction
+{
+  public int ip;
+  public int bgn_ip;
+  public int end_ip;
+  public IInstruction instruction;
   public FixedStack<VM.Context> ctxs = new FixedStack<VM.Context>(256);
   public List<DeferBlock> defers;
 
@@ -1747,7 +1836,6 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
 
   public void Init(VM.Frame frm, int bgn_ip, int end_ip)
   {
-    //Console.WriteLine("NEW SEQ [" + bgn_ip + " " + end_ip + "] " + GetHashCode());
     this.bgn_ip = bgn_ip;
     this.end_ip = end_ip;
     this.ip = bgn_ip;
@@ -1793,7 +1881,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     //      some control flow abruption (e.g paral exited) should be 
     //      explicitely released. We start from index 1 on purpose
     //      since the frame at index 0 will be released 'above'.
-    for(int i=1;i<ctxs.Count;i++)
+    for(int i=ctxs.Count;i-- > 1;)
       ctxs[i].frame.Release();
     ctxs.Clear();
   }
