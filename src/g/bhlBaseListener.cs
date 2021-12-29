@@ -817,20 +817,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitReturn([NotNull] bhlParser.ReturnContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>Seq</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterSeq([NotNull] bhlParser.SeqContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>Seq</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitSeq([NotNull] bhlParser.SeqContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by the <c>Paral</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>

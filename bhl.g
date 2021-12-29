@@ -132,7 +132,6 @@ statement
   | 'break'                                                     #Break
   | 'continue'                                                  #Continue
   | 'return' explist?                                           #Return
-  | 'seq' block                                                 #Seq
   | 'paral' block                                               #Paral
   | 'paral_all' block                                           #ParalAll
   | 'defer' block                                               #Defer

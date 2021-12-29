@@ -4154,7 +4154,7 @@ public class BHL_TestInterpreter : BHL_TestBase
     func void test() 
     {
       paral {
-        seq {
+        {
           foo(1, ret_int(val: 2, ticks: 1))
           suspend()
         }
@@ -4202,7 +4202,7 @@ public class BHL_TestInterpreter : BHL_TestBase
     {
       int^(int,int) p = ret_int
       paral {
-        seq {
+        {
           foo(1, p(2, 1))
           suspend()
         }
@@ -4255,7 +4255,7 @@ public class BHL_TestInterpreter : BHL_TestBase
       Bar b = {}
       b.ptr = ret_int
       paral {
-        seq {
+        {
           foo(1, b.ptr(2, 1))
           suspend()
         }
@@ -4292,7 +4292,7 @@ public class BHL_TestInterpreter : BHL_TestBase
     func void test() 
     {
       paral {
-        seq {
+        {
           foo(1, 
               func int (int val, int ticks) {
                 while(ticks > 0) {
@@ -4365,7 +4365,7 @@ public class BHL_TestInterpreter : BHL_TestBase
     func void test() 
     {
       paral {
-        seq {
+        {
           foo(1, (new Foo).self().ret_int(val: 2, ticks: 1))
           suspend()
         }
@@ -4950,10 +4950,10 @@ public class BHL_TestInterpreter : BHL_TestBase
     {
       Foo f
       paral_all {
-        seq {
+        {
           f = MakeFoo({hey:10, colors:[{r:foo(2)}]})
         }
-        seq {
+        {
           f = MakeFoo({hey:20, colors:[{r:foo(3)}]})
         }
       }
@@ -5012,10 +5012,10 @@ public class BHL_TestInterpreter : BHL_TestBase
       int^(int) p = foo
       Foo f
       paral_all {
-        seq {
+        {
           f = MakeFoo({hey:10, colors:[{r:p(2)}]})
         }
-        seq {
+        {
           f = MakeFoo({hey:20, colors:[{r:p(3)}]})
         }
       }
@@ -5067,7 +5067,7 @@ public class BHL_TestInterpreter : BHL_TestBase
     {
       Foo f
       paral_all {
-        seq {
+        {
           f = MakeFoo({hey:10, colors:[{r:
               func int (int ticks) 
               { 
@@ -5077,7 +5077,7 @@ public class BHL_TestInterpreter : BHL_TestBase
               }(2) 
               }]})
         }
-        seq {
+        {
           f = MakeFoo({hey:20, colors:[{r:
               func int (int ticks) 
               { 
@@ -5142,11 +5142,11 @@ public class BHL_TestInterpreter : BHL_TestBase
     {
       Foo f
       paral_all {
-        seq {
+        {
           f = MakeFoo({hey:foo(3), colors:[]})
           trace((string)f.hey)
         }
-        seq {
+        {
           f = MakeFoo({hey:foo(2), colors:[]})
           trace((string)f.hey)
         }
@@ -8043,7 +8043,7 @@ public class BHL_TestInterpreter : BHL_TestBase
         int i = 0
         paral {
           A()
-          seq {
+          {
             while(i < 1) {
               yield()
               i = i + 1

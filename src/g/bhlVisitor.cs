@@ -423,13 +423,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitReturn([NotNull] bhlParser.ReturnContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>Seq</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSeq([NotNull] bhlParser.SeqContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>Paral</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
