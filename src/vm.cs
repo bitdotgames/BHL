@@ -135,6 +135,20 @@ public class VM
   public const int CALL_USER   = 0;
   public const int CALL_NATIVE = 1;
 
+  public struct Context
+  {
+    public Frame frame;
+    public int min_ip;
+    public int max_ip;
+
+    public Context(Frame frame, int min_ip = -1, int max_ip = MAX_IP)
+    {
+      this.frame = frame;
+      this.min_ip = min_ip;
+      this.max_ip = max_ip;
+    }
+  }
+
   public class Fiber
   {
     internal VM vm;
@@ -143,7 +157,7 @@ public class VM
     internal int tick;
     internal int ip;
     internal IInstruction instruction;
-    internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
+    internal FixedStack<Context> ctxs = new FixedStack<Context>(256);
 
     public FixedStack<Val> stack = new FixedStack<Val>(32);
     
@@ -182,17 +196,17 @@ public class VM
     {
       if(instruction != null)
       {
-        Instructions.Del(frames.Peek(), instruction);
+        Instructions.Del(ctxs.Peek().frame, instruction);
         instruction = null;
       }
 
-      for(int i=frames.Count;i-- > 0;)
+      for(int i=ctxs.Count;i-- > 0;)
       {
-        var frm = frames[i];
+        var frm = ctxs[i].frame;
         frm.ExitScope(frm);
         frm.Release();
       }
-      frames.Clear();
+      ctxs.Clear();
       tick = 0;
     }
 
@@ -203,15 +217,15 @@ public class VM
 
     public void GetStackTrace(List<VM.TraceItem> info)
     {
-      for(int i=0;i<frames.Count;++i)
+      for(int i=0;i<ctxs.Count;++i)
       {
-        var frm = frames[i];
+        var frm = ctxs[i].frame;
 
         var item = new TraceItem(); 
         item.file = frm.module.name + ".bhl";
         item.func = TraceItem.MapIp2Func(frm.start_ip, frm.module.func2ip);
 
-        if(i == frames.Count-1)
+        if(i == ctxs.Count-1)
         {
           if(!TryGetInstructionIP(instruction, out item.ip))
             item.ip = frm.fb.ip;
@@ -220,7 +234,7 @@ public class VM
         }
         else
         {
-          var next = frames[i+1];
+          var next = ctxs[i+1].frame;
           //NOTE: retrieving last ip for the current Frame which 
           //      turns out to be return_ip assigned to the next Frame
           item.ip = next.return_ip;
@@ -668,7 +682,7 @@ public class VM
     fb.ip = fr.start_ip;
 
     fr.fb = fb;
-    fb.frames.Push(fr);
+    fb.ctxs.Push(new Context(fr));
 
     fibers.Add(fb);
   }
@@ -712,35 +726,24 @@ public class VM
   }
 
   internal BHS Execute(
-    ref int ip, int frame_min_ip, int frame_max_ip, 
-    FixedStack<Frame> frames, 
+    ref int ip,
+    FixedStack<Context> ctxs, 
     ref IInstruction instruction, 
-    IExitableScope defer_scope
+    IExitableScope defer_scope,
+    int ctx_min_count = 0
   )
   {
-    var curr_frame = frames.Peek();
-    var orig_frame = curr_frame;
-
-    while(curr_frame != null)
+    while(ctxs.Count > ctx_min_count)
     {
-      int min_ip = -1;
-      int max_ip = VM.MAX_IP;
-      if(orig_frame == curr_frame)
-      {
-        min_ip = frame_min_ip;
-        max_ip = frame_max_ip;
-      }
-
       var instruction_status = BHS.SUCCESS;
-      
+
       var res = ExecuteOnce(
-        ref ip, min_ip, max_ip,
-        ref curr_frame, frames,
+        ref ip, ctxs,
         ref instruction, ref instruction_status,
         defer_scope
       );
 
-      if(res == ExecuteResult.OutOfBounds)
+      if(res == ExecuteResult.OutOfRange)
         return BHS.SUCCESS;
       else if(res == ExecuteResult.CheckInstruction)
       {
@@ -760,30 +763,32 @@ public class VM
   internal enum ExecuteResult
   {
     Ok,
-    OutOfBounds,
+    OutOfRange,
     NewInstruction,
     CheckInstruction,
   }
 
-  internal ExecuteResult ExecuteOnce(
+  ExecuteResult ExecuteOnce(
     ref int ip, 
-    int min_ip, int max_ip, 
-    ref Frame curr_frame, 
-    FixedStack<Frame> frames, 
+    FixedStack<Context> ctxs, 
     ref IInstruction instruction, 
     ref BHS instruction_status,
     IExitableScope defer_scope
   )
   { 
-    if(ip <= min_ip || ip >= max_ip)
-      return ExecuteResult.OutOfBounds;
+    var ctx = ctxs.Peek();
 
-    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + min_ip + ", max:" + max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
+    if(ip <= ctx.min_ip || ip >= ctx.max_ip)
+      return ExecuteResult.OutOfRange;
+
+    var curr_frame = ctx.frame;
+
+    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
     if(instruction != null)
     {
-      instruction_status = ExecuteInstruction(ref instruction, ref ip, ref curr_frame, frames);
+      instruction_status = ExecuteInstruction(ref instruction, ref ip, ctxs);
       return ExecuteResult.CheckInstruction; 
     }
 
@@ -977,15 +982,14 @@ public class VM
           curr_frame.Clear();
           curr_frame.Release();
           //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
-          frames.Pop();
-          curr_frame = frames.Count > 0 ? frames.Peek() : null;
+          ctxs.Pop();
         }
         break;
       case Opcodes.ReturnVal:
         {
           int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
-          var ret_stack = frames.Count == 1 ? curr_frame.fb.stack : frames[frames.Count-2].stack;  
+          var ret_stack = ctxs.Count == 1 ? curr_frame.fb.stack : ctxs[ctxs.Count-2].frame.stack;  
           //TODO: make it more efficient?
           int stack_offset = curr_frame.stack.Count; 
           for(int i=0;i<ret_num;++i)
@@ -998,8 +1002,7 @@ public class VM
           curr_frame.ExitScope(curr_frame);
           curr_frame.Clear();
           curr_frame.Release();
-          frames.Pop();
-          curr_frame = frames.Count > 0 ? frames.Peek() : null;
+          ctxs.Pop();
         }
         break;
       case Opcodes.GetFunc:
@@ -1118,8 +1121,7 @@ public class VM
 
             //let's remember ip to return to
             fr.return_ip = ip;
-            frames.Push(fr);
-            curr_frame = fr;
+            ctxs.Push(new Context(fr));
             //since ip will be incremented below we decrement it intentionally here
             ip = fr.start_ip - 1; 
           }
@@ -1252,13 +1254,15 @@ public class VM
     return ExecuteResult.Ok;
   }
 
-  internal BHS ExecuteInstruction(
+  static BHS ExecuteInstruction(
     ref IInstruction instruction, 
     ref int ip, 
-    ref Frame curr_frame, FixedStack<Frame> frames
+    FixedStack<Context> ctxs
   )
   {
     var status = BHS.SUCCESS;
+
+    var curr_frame = ctxs.Peek().frame;
 
     instruction.Tick(curr_frame, ref status);
 
@@ -1272,7 +1276,7 @@ public class VM
       curr_frame.ExitScope(curr_frame);
       ip = curr_frame.return_ip;
       curr_frame.Release();
-      frames.Pop();
+      ctxs.Pop();
 
       return status;
     }
@@ -1299,10 +1303,7 @@ public class VM
       ////
       //NOTE: checking if it's in a released state, return was executed
       if(curr_frame.refs == -1)
-      {
-        frames.Pop();
-        curr_frame = frames.Count > 0 ? frames.Peek() : null;
-      }
+        ctxs.Pop();
       return status;
     }
   }
@@ -1445,8 +1446,7 @@ public class VM
 
       ++fb.tick;
       fb.status = Execute(
-        ref fb.ip, -1, MAX_IP, 
-        fb.frames, 
+        ref fb.ip, fb.ctxs, 
         ref fb.instruction, 
         null
       );
@@ -1728,15 +1728,16 @@ public struct DeferBlock
   BHS Execute(ref IInstruction instruction)
   {
     //Console.WriteLine("EXIT SCOPE " + ip + " " + (end_ip + 1));
-    frm.fb.frames.Push(frm);
+    frm.fb.ctxs.Push(new VM.Context(frm, ip - 1, end_ip + 1));
     var status = frm.vm.Execute(
-      ref ip, ip - 1, end_ip + 1, 
-      frm.fb.frames, 
+      ref ip, frm.fb.ctxs, 
       ref instruction, 
-      null
+      null,
+      frm.fb.ctxs.Count-1
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
+    frm.fb.ctxs.Pop();
     //Console.WriteLine("EXIT SCOPE~ " + ip + " " + (end_ip + 1));
     return status;
   }
@@ -1769,9 +1770,8 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   public int ip;
   public int bgn_ip;
   public int end_ip;
-  public VM.Frame origin;
-  public FixedStack<VM.Frame> frames = new FixedStack<VM.Frame>(256);
   public IInstruction instruction;
+  public FixedStack<VM.Context> ctxs = new FixedStack<VM.Context>(256);
   public List<DeferBlock> defers;
 
   public IList<IInstruction> Browse {
@@ -1789,50 +1789,19 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     this.bgn_ip = bgn_ip;
     this.end_ip = end_ip;
     this.ip = bgn_ip;
-    this.origin = frm;
-    frames.Push(frm);
+    ctxs.Push(new VM.Context(frm, bgn_ip-1, end_ip+1));
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    var curr_frame = frames.Peek();
+    status = frm.vm.Execute(
+      ref ip, ctxs, 
+      ref instruction, 
+      this
+    );
       
-    while(curr_frame != null)
-    {
-      int tmp_min_ip = -1;
-      int tmp_max_ip = VM.MAX_IP;
-      if(this.origin == curr_frame)
-      {
-        tmp_min_ip = bgn_ip - 1;
-        tmp_max_ip = end_ip + 1;
-      }
-      status = BHS.SUCCESS;
-
-      var res = frm.vm.ExecuteOnce(
-        ref ip, tmp_min_ip, tmp_max_ip,
-        ref curr_frame, frames,
-        ref instruction, ref status,
-        this
-      );
-      if(res == VM.ExecuteResult.OutOfBounds)
-      {
-        status = BHS.SUCCESS;
-        break;
-      }
-      else if(res == VM.ExecuteResult.CheckInstruction)
-      {
-        if(status == BHS.SUCCESS)
-        {
-          //NOTE: since we skip ip incrementing once the new instruction is 
-          //      attached we must increment the ip upon instruction completion
-          ++ip;
-        }
-        else
-          break;
-      }
-    }
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-    if(this.origin == curr_frame && status == BHS.SUCCESS && ip >= bgn_ip && ip <= (end_ip+1))
+    if(status == BHS.SUCCESS && ip >= bgn_ip && ip <= (end_ip+1))
       frm.fb.ip = end_ip;
   }
 
@@ -1862,9 +1831,9 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     //      some control flow abruption (e.g paral exited) should be 
     //      explicitely released. We start from index 1 on purpose
     //      since the frame at index 0 will be released 'above'.
-    for(int i=1;i<frames.Count;i++)
-      frames[i].Release();
-    frames.Clear();
+    for(int i=1;i<ctxs.Count;i++)
+      ctxs[i].frame.Release();
+    ctxs.Clear();
   }
 }
 
