@@ -1067,7 +1067,7 @@ public class BHL_TestVM : BHL_TestBase
     func int test() 
     {
       paral_all {
-        seq {
+        {
           return 1
         }
         yield()
@@ -2796,11 +2796,11 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      seq {
+      {
         int i = 1
         i = i + 1
       }
-      seq {
+      {
         i = i + 2
       }
     }
@@ -2822,13 +2822,13 @@ public class BHL_TestVM : BHL_TestBase
     func test() 
     {
       paral_all {
-        seq {
+        {
           int i = 1
-          seq {
+          {
             i = i + 1
           }
         }
-        seq {
+        {
           if(i == 2) {
             suspend()
           }
@@ -4064,7 +4064,7 @@ public class BHL_TestVM : BHL_TestBase
       int n = 0
       while(true) {
         paral {
-          seq {
+          {
             n = 1
             break
             suspend()
@@ -4095,12 +4095,12 @@ public class BHL_TestVM : BHL_TestBase
       int n = 0
       while(true) {
         paral_all {
-          seq {
+          {
             n = 1
             break
             suspend()
           }
-          seq {
+          {
             n = 2
             suspend()
           }
@@ -8474,10 +8474,10 @@ public class BHL_TestVM : BHL_TestBase
     {
       int a
       paral {
-        seq {
+        {
           suspend() 
         }
-        seq {
+        {
           yield()
           a = 1
         }
@@ -8525,7 +8525,7 @@ public class BHL_TestVM : BHL_TestBase
       int a
       paral {
         suspend() 
-        seq {
+        {
           yield()
           a = 1
         }
@@ -8580,10 +8580,10 @@ public class BHL_TestVM : BHL_TestBase
     func int test() {
       int a
       paral {
-        seq {
+        {
           foo()
         }
-        seq {
+        {
           a = bar()
         }
       }
@@ -8739,10 +8739,10 @@ public class BHL_TestVM : BHL_TestBase
     {
       int a
       paral_all {
-        seq {
+        {
           suspend() 
         }
-        seq {
+        {
           yield()
           a = 1
         }
@@ -8787,11 +8787,11 @@ public class BHL_TestVM : BHL_TestBase
     {
       int a
       paral_all {
-        seq {
+        {
           yield()
           yield()
         }
-        seq {
+        {
           yield()
           a = 1
         }
@@ -8916,7 +8916,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      seq {
+      {
         bar()
         foo()
       }
@@ -8952,7 +8952,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      seq {
+      {
         bar()
         foo()
         bar()
@@ -8968,6 +8968,27 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
     AssertEqual("BARFOO", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSeqReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int a = 1
+      {
+        a = 2
+        return a
+      }
+      return a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(2, Execute(vm, "test").stack.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -9116,7 +9137,7 @@ public class BHL_TestVM : BHL_TestBase
     func test() 
     {
       paral {
-        seq {
+        {
           foo(1, ret_int(val: 2, ticks: ticky()))
           suspend()
         }
@@ -9570,7 +9591,7 @@ public class BHL_TestVM : BHL_TestBase
       defer {
         trace(""hey"")
       }
-      seq {
+      {
         defer {
           trace(""bar"")
         }
@@ -10415,7 +10436,7 @@ public class BHL_TestVM : BHL_TestBase
         defer {
           trace(""bar"")
         }
-        seq {
+        {
           yield()
           trace(""wow"")
         }
@@ -10476,19 +10497,19 @@ public class BHL_TestVM : BHL_TestBase
         trace(""1"")
       }
       paral {
-        seq {
+        {
           defer {
             trace(""2"")
           }
           suspend()
         }
-        seq {
+        {
           defer {
             trace(""3"")
           }
           suspend()
         }
-        seq {
+        {
           defer {
             trace(""4"")
           }
@@ -10587,7 +10608,7 @@ public class BHL_TestVM : BHL_TestBase
         defer {
           trace(""bar"")
         }
-        seq {
+        {
           yield()
           trace(""wow"")
         }
@@ -10648,19 +10669,19 @@ public class BHL_TestVM : BHL_TestBase
         trace(""1"")
       }
       paral_all {
-        seq {
+        {
           defer {
             trace(""2"")
           }
           suspend()
         }
-        seq {
+        {
           defer {
             trace(""3"")
           }
           suspend()
         }
-        seq {
+        {
           defer {
             trace(""4"")
           }
@@ -10700,7 +10721,7 @@ public class BHL_TestVM : BHL_TestBase
     func int test() 
     {
       paral {
-        seq {
+        {
           return 1
         }
         suspend()
@@ -10722,10 +10743,10 @@ public class BHL_TestVM : BHL_TestBase
     func int test() 
     {
       paral {
-        seq {
+        {
           paral {
             suspend()
-            seq {
+            {
               return 1
             }
           }
@@ -10749,7 +10770,7 @@ public class BHL_TestVM : BHL_TestBase
     func int test() 
     {
       paral_all {
-        seq {
+        {
           return 1
         }
         suspend()
@@ -10791,10 +10812,10 @@ public class BHL_TestVM : BHL_TestBase
     func int test() 
     {
       paral_all {
-        seq {
+        {
           paral_all {
             suspend()
-            seq {
+            {
               return 1
             }
           }
