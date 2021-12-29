@@ -733,38 +733,22 @@ public class VM
     int ctx_min_count = 0
   )
   {
-    while(ctxs.Count > ctx_min_count)
+    var status = BHS.SUCCESS;
+    while(ctxs.Count > ctx_min_count && status == BHS.SUCCESS)
     {
-      var instruction_status = BHS.SUCCESS;
-
-      var res = ExecuteOnce(
+      status = ExecuteOnce(
         ref ip, ctxs,
-        ref instruction, ref instruction_status,
+        ref instruction,
         defer_scope
       );
-
-      if(res == ExecuteResult.CheckInstruction)
-      {
-        if(instruction_status != BHS.SUCCESS)
-          return instruction_status;
-      }
     }
-    return BHS.SUCCESS;
+    return status;
   }
 
-  internal enum ExecuteResult
-  {
-    Ok,
-    OutOfRange,
-    NewInstruction,
-    CheckInstruction,
-  }
-
-  ExecuteResult ExecuteOnce(
+  BHS ExecuteOnce(
     ref int ip, 
     FixedStack<Context> ctxs, 
     ref IInstruction instruction, 
-    ref BHS instruction_status,
     IExitableScope defer_scope
   )
   { 
@@ -773,7 +757,7 @@ public class VM
     if(ip <= ctx.min_ip || ip >= ctx.max_ip)
     {
       ctxs.Pop();
-      return ExecuteResult.OutOfRange;
+      return BHS.SUCCESS;
     }
 
     var curr_frame = ctx.frame;
@@ -782,10 +766,7 @@ public class VM
 
     //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
     if(instruction != null)
-    {
-      instruction_status = ExecuteInstruction(ref instruction, ref ip, ctxs);
-      return ExecuteResult.CheckInstruction; 
-    }
+      return ExecuteInstruction(ref instruction, ref ip, ctxs);
 
     var opcode = (Opcodes)curr_frame.bytecode[ip];
     //Console.WriteLine("OP " + opcode + " " + ip);
@@ -1129,14 +1110,15 @@ public class VM
             for(int i = 0; i < args_info.CountArgs(); ++i)
               curr_frame.stack.Push(curr_frame.stack.Pop());
 
-            var new_instruction = func_symb.VM_cb(curr_frame, args_info, ref instruction_status);
+            var status = BHS.SUCCESS;
+            var new_instruction = func_symb.VM_cb(curr_frame, args_info, ref status);
             if(new_instruction != null)
               AttachInstruction(ref instruction, new_instruction);
 
             if(instruction != null)
-              return ExecuteResult.NewInstruction;
-            else if(instruction_status != BHS.SUCCESS)
-              return ExecuteResult.CheckInstruction;
+              return BHS.SUCCESS;
+            else if(status != BHS.SUCCESS)
+              return status;
           }
         }
         break;
@@ -1230,7 +1212,7 @@ public class VM
             //      the new instruction in the beginning of the loop. If we don't 
             //      skip it we simply might exit the loop without executing the
             //      new instruction at all because we'll hit max_ip limit.
-            return ExecuteResult.NewInstruction;
+            return BHS.SUCCESS;
           }
         }
         break;
@@ -1246,7 +1228,7 @@ public class VM
     }
 
     ++ip;
-    return ExecuteResult.Ok;
+    return BHS.SUCCESS;
   }
 
   static BHS ExecuteInstruction(
@@ -1728,7 +1710,7 @@ public struct DeferBlock
   BHS Execute(ref IInstruction instruction)
   {
     //Console.WriteLine("EXIT SCOPE " + ip + " " + (end_ip + 1));
-    frm.fb.ctxs.Push(new VM.Context(frm, ip - 1, end_ip + 1));
+    frm.fb.ctxs.Push(new VM.Context(frm, ip-1, end_ip+1));
     var status = frm.vm.Execute(
       ref ip, frm.fb.ctxs, 
       ref instruction, 
