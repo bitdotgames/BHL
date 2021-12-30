@@ -7,59 +7,63 @@ namespace bhl {
 
 public enum Opcodes
 {
-  Constant        = 0x1,
-  Add             = 0x2,
-  Sub             = 0x3,
-  Div             = 0x4,
-  Mul             = 0x5,
-  SetVar          = 0x6,
-  GetVar          = 0x7,
-  DeclVar         = 0x8,
-  ArgVar          = 0x9,
-  GetAttr         = 0xA,
-  RefAttr         = 0xB,
-  Return          = 0xC,
-  ReturnVal       = 0xD,
-  Jump            = 0xE,
-  Pop             = 0xF,
-  Call            = 0x10,
-  GetFunc         = 0x12,
-  GetFuncNative   = 0x13,
-  GetFuncFromVar  = 0x14,
-  GetFuncImported = 0x15,
-  GetMethodNative = 0x16,
-  GetLambda       = 0x17,
-  CondJump        = 0x18,
-  LongJump        = 0x19,
-  SetAttr         = 0x20,
-  SetAttrInplace  = 0x21,
-  ArgRef          = 0x22,
-  UnaryNot        = 0x31,
-  UnaryNeg        = 0x32,
-  And             = 0x33,
-  Or              = 0x34,
-  Mod             = 0x35,
-  BitOr           = 0x36,
-  BitAnd          = 0x37,
-  Equal           = 0x38,
-  NotEqual        = 0x39,
-  LT              = 0x3A,
-  LTE             = 0x3B,
-  GT              = 0x3C,
-  GTE             = 0x3D,
-  DefArg          = 0x3E, 
-  TypeCast        = 0x3F,
-  Block           = 0x40,
-  New             = 0x41,
-  Lambda          = 0x42,
-  UseUpval        = 0x43,
-  InitFrame       = 0x44,
-  Inc             = 0x45,
-  Dec             = 0x46,
-  ClassBegin      = 0x48,
-  ClassMember     = 0x49,
-  ClassEnd        = 0x4A,
-  Import          = 0x4B,
+  Constant         ,
+  Add              ,
+  Sub              ,
+  Div              ,
+  Mul              ,
+  SetVar           ,
+  GetVar           ,
+  DeclVar          ,
+  ArgVar           ,
+  GetAttr          ,
+  RefAttr          ,
+  Return           ,
+  ReturnVal        ,
+  Jump             ,
+  JumpZ            ,
+  JumpNZ           ,
+  JumpZ_Ex         , //TODO: do we really need these 2?
+  JumpNZ_Ex        ,
+  Break            ,
+  Continue         ,
+  Pop              ,
+  Call             ,
+  GetFunc          ,
+  GetFuncNative    ,
+  GetFuncFromVar   ,
+  GetFuncImported  ,
+  GetMethodNative  ,
+  GetLambda        ,
+  SetAttr          ,
+  SetAttrInplace   ,
+  ArgRef           ,
+  UnaryNot         ,
+  UnaryNeg         ,
+  And              ,
+  Or               ,
+  Mod              ,
+  BitOr            ,
+  BitAnd           ,
+  Equal            ,
+  NotEqual         ,
+  LT               ,
+  LTE              ,
+  GT               ,
+  GTE              ,
+  DefArg           , 
+  TypeCast         ,
+  Block            ,
+  New              ,
+  Lambda           ,
+  UseUpval         ,
+  InitFrame        ,
+  Inc              ,
+  Dec              ,
+  ClassBegin       ,
+  ClassMember      ,
+  ClassEnd         ,
+  Import           ,
 }
 
 public class Const
@@ -736,11 +740,11 @@ public class VM
     FixedStack<Context> ctxs, 
     ref IInstruction instruction, 
     IExitableScope defer_scope,
-    int ctx_min_count = 0
+    int ctx_limit = 0
   )
   {
     var status = BHS.SUCCESS;
-    while(ctxs.Count > ctx_min_count && status == BHS.SUCCESS)
+    while(ctxs.Count > ctx_limit && status == BHS.SUCCESS)
     {
       status = ExecuteOnce(
         ref ip, ctxs,
@@ -1185,15 +1189,44 @@ public class VM
           ip += offset;
         }
         break;
-      case Opcodes.CondJump:
+      case Opcodes.JumpZ:
         {
           ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
-          //we need to jump only in case of false
           if(curr_frame.stack.PopRelease().bval == false)
             ip += offset;
         }
         break;
-      case Opcodes.LongJump:
+      case Opcodes.JumpNZ:
+        {
+          ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          if(curr_frame.stack.PopRelease().bval == true)
+            ip += offset;
+        }
+        break;
+      case Opcodes.JumpZ_Ex:
+        {
+          ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          var v = curr_frame.stack.Peek();
+          if(v.bval == false)
+            ip += offset;
+        }
+        break;
+      case Opcodes.JumpNZ_Ex:
+        {
+          ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          var v = curr_frame.stack.Peek();
+          if(v.bval == true)
+            ip += offset;
+        }
+        break;
+      case Opcodes.Break:
+        {
+          short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          ip += offset;
+          curr_frame.fb.ip = ip;
+        }
+        break;
+      case Opcodes.Continue:
         {
           short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
           ip += offset;

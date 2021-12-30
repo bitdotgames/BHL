@@ -512,13 +512,37 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CondJump,
+        Opcodes.JumpZ,
         2/*rel.offset*/
       )
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.LongJump,
+        Opcodes.JumpNZ,
+        2/*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.JumpZ_Ex,
+        2/*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.JumpNZ_Ex,
+        2/*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Break,
+        2 /*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Continue,
         2 /*rel.offset*/
       )
     );
@@ -617,7 +641,7 @@ public class ModuleCompiler : AST_Visitor
   {
     //condition
     Visit(ast.children[idx]);
-    var jump_op = Emit(Opcodes.CondJump);
+    var jump_op = Emit(Opcodes.JumpZ);
     Visit(ast.children[idx+1]);
     return jump_op;
   }
@@ -1131,7 +1155,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Break ast)
   {
-    var jump_op = Emit(Opcodes.LongJump, new int[] { 0 /*patched later*/});
+    var jump_op = Emit(Opcodes.Break, new int[] { 0 /*patched later*/});
     non_patched_breaks.Add(
       new BlockJump() 
         { block = loop_blocks.Peek(), 
@@ -1149,7 +1173,7 @@ public class ModuleCompiler : AST_Visitor
     }
     else
     {
-      var jump_op = Emit(Opcodes.LongJump, new int[] { 0 /*patched later*/});
+      var jump_op = Emit(Opcodes.Continue, new int[] { 0 /*patched later*/});
       non_patched_continues.Add(
         new BlockJump() 
           { block = loop_block, 
@@ -1175,12 +1199,22 @@ public class ModuleCompiler : AST_Visitor
     switch(ast.type)
     {
       case EnumBinaryOp.AND:
-        VisitChildren(ast);
+      {
+        Visit(ast.children[0]);
+        var jump_op = Emit(Opcodes.JumpZ_Ex, new int[] { 0 /*patched later*/});
+        Visit(ast.children[1]);
         Emit(Opcodes.And);
+        AddJumpFromTo(jump_op, Peek());
+      }
       break;
       case EnumBinaryOp.OR:
-        VisitChildren(ast);
+      {
+        Visit(ast.children[0]);
+        var jump_op = Emit(Opcodes.JumpNZ_Ex, new int[] { 0 /*patched later*/});
+        Visit(ast.children[1]);
         Emit(Opcodes.Or);
+        AddJumpFromTo(jump_op, Peek());
+      }
       break;
       case EnumBinaryOp.BIT_AND:
         VisitChildren(ast);
