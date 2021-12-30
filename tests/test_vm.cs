@@ -8973,6 +8973,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertFalse(vm.Tick());
     var val = fb.stack.PopRelease();
     AssertEqual(3, val.num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -13512,6 +13513,90 @@ public class BHL_TestVM : BHL_TestBase
     vm.Stop(fb);
     AssertEqual("12", log.ToString());
     AssertFalse(vm.Tick());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFrameCache()
+  {
+    string bhl = @"
+      
+    func foo()
+    {
+      yield()
+    }
+
+    func test() 
+    {
+      foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    {
+      vm.Start("test");
+      AssertEqual(1, vm.frames_pool.Allocs);
+      AssertEqual(0, vm.frames_pool.Free);
+      vm.Tick();
+      AssertEqual(2, vm.frames_pool.Allocs);
+      AssertEqual(0, vm.frames_pool.Free);
+      vm.Tick();
+      AssertEqual(2, vm.frames_pool.Allocs);
+      AssertEqual(2, vm.frames_pool.Free);
+    }
+
+    //no new allocs
+    {
+      vm.Start("test");
+      vm.Tick();
+      vm.Tick();
+      AssertEqual(2, vm.frames_pool.Allocs);
+      AssertEqual(2, vm.frames_pool.Free);
+    }
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFiberCache()
+  {
+    string bhl = @"
+      
+    func foo()
+    {
+      yield()
+    }
+
+    func test() 
+    {
+      foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    {
+      vm.Start("test");
+      AssertEqual(1, vm.fibers_pool.Allocs);
+      AssertEqual(0, vm.fibers_pool.Free);
+      vm.Tick();
+      vm.Start("test");
+      AssertEqual(2, vm.fibers_pool.Allocs);
+      AssertEqual(0, vm.fibers_pool.Free);
+      vm.Tick();
+      AssertEqual(2, vm.fibers_pool.Allocs);
+      AssertEqual(1, vm.fibers_pool.Free);
+      vm.Tick();
+      AssertEqual(2, vm.fibers_pool.Allocs);
+      AssertEqual(2, vm.fibers_pool.Free);
+    }
+    //no new allocs
+    {
+      vm.Start("test");
+      vm.Tick();
+      vm.Tick();
+      AssertEqual(2, vm.fibers_pool.Allocs);
+      AssertEqual(2, vm.fibers_pool.Free);
+    }
     CommonChecks(vm);
   }
 
