@@ -22,9 +22,8 @@ public enum Opcodes
   ReturnVal        ,
   Jump             ,
   JumpZ            ,
-  JumpNZ           ,
-  JumpZ_Ex         , //TODO: do we really need these 2?
-  JumpNZ_Ex        ,
+  JumpPeekZ         ,
+  JumpPeekNZ        ,
   Break            ,
   Continue         ,
   Pop              ,
@@ -1196,14 +1195,7 @@ public class VM
             ip += offset;
         }
         break;
-      case Opcodes.JumpNZ:
-        {
-          ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
-          if(curr_frame.stack.PopRelease().bval == true)
-            ip += offset;
-        }
-        break;
-      case Opcodes.JumpZ_Ex:
+      case Opcodes.JumpPeekZ:
         {
           ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
           var v = curr_frame.stack.Peek();
@@ -1211,7 +1203,7 @@ public class VM
             ip += offset;
         }
         break;
-      case Opcodes.JumpNZ_Ex:
+      case Opcodes.JumpPeekNZ:
         {
           ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref ip);
           var v = curr_frame.stack.Peek();

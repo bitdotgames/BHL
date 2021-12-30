@@ -518,19 +518,13 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.JumpNZ,
+        Opcodes.JumpPeekZ,
         2/*rel.offset*/
       )
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.JumpZ_Ex,
-        2/*rel.offset*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.JumpNZ_Ex,
+        Opcodes.JumpPeekNZ,
         2/*rel.offset*/
       )
     );
@@ -1201,7 +1195,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumBinaryOp.AND:
       {
         Visit(ast.children[0]);
-        var jump_op = Emit(Opcodes.JumpZ_Ex, new int[] { 0 /*patched later*/});
+        var jump_op = Emit(Opcodes.JumpPeekZ, new int[] { 0 /*patched later*/});
         Visit(ast.children[1]);
         Emit(Opcodes.And);
         AddJumpFromTo(jump_op, Peek());
@@ -1210,7 +1204,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumBinaryOp.OR:
       {
         Visit(ast.children[0]);
-        var jump_op = Emit(Opcodes.JumpNZ_Ex, new int[] { 0 /*patched later*/});
+        var jump_op = Emit(Opcodes.JumpPeekNZ, new int[] { 0 /*patched later*/});
         Visit(ast.children[1]);
         Emit(Opcodes.Or);
         AddJumpFromTo(jump_op, Peek());
