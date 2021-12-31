@@ -11880,6 +11880,104 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestAndShortCircuitWithBoolNot()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      bool ready = false
+      bool activated = true
+      if(!ready && activated) {
+        trace(""OK;"")
+      } else {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+
+    Execute(vm, "test");
+    AssertEqual("OK;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAndShortCircuitWithBoolNotForClassMembers()
+  {
+    string bhl = @"
+
+    class Foo 
+    {
+      bool ready
+      bool activated
+    }
+      
+    func void test() 
+    {
+      Foo foo = {}
+      foo.ready = false
+      foo.activated = true
+      if(!foo.ready && foo.activated) {
+        trace(""OK;"")
+      } else {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+
+    Execute(vm, "test");
+    AssertEqual("OK;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestOrShortCircuitWithBoolNotForClassMembers()
+  {
+    string bhl = @"
+
+    class Foo 
+    {
+      bool ready
+      bool activated
+    }
+      
+    func void test() 
+    {
+      Foo foo = {}
+      foo.ready = false
+      foo.activated = true
+      if(foo.ready || foo.activated) {
+        trace(""OK;"")
+      } else {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+
+    Execute(vm, "test");
+    AssertEqual("OK;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestChainCall()
   {
     string bhl = @"
