@@ -11663,7 +11663,7 @@ public class BHL_TestVM : BHL_TestBase
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
-    Execute(vm, "test", Val.NewObj(vm, null));
+    Execute(vm, "test");
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }
@@ -11721,7 +11721,7 @@ public class BHL_TestVM : BHL_TestBase
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
-    Execute(vm, "test", Val.NewObj(vm, null));
+    Execute(vm, "test");
     AssertEqual("NULL;NOT NULL;EQ;", log.ToString());
     CommonChecks(vm);
   }
@@ -11746,7 +11746,7 @@ public class BHL_TestVM : BHL_TestBase
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
-    Execute(vm, "test", Val.NewObj(vm, null));
+    Execute(vm, "test");
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }
@@ -11780,7 +11780,7 @@ public class BHL_TestVM : BHL_TestBase
     BindTrace(globs, log);
 
     var vm = MakeVM(bhl, globs);
-    Execute(vm, "test", Val.NewObj(vm, null));
+    Execute(vm, "test");
     AssertEqual("NULL;NOT NULL;", log.ToString());
     CommonChecks(vm);
   }
@@ -11807,7 +11807,7 @@ public class BHL_TestVM : BHL_TestBase
     BindTrace(globs, log);
 
     var vm = MakeVM(bhl, globs);
-    Execute(vm, "test", Val.NewObj(vm, null));
+    Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
   }
@@ -11834,8 +11834,40 @@ public class BHL_TestVM : BHL_TestBase
     BindTrace(globs, log);
 
     var vm = MakeVM(bhl, globs);
-    Execute(vm, "test", Val.NewObj(vm, null));
+    Execute(vm, "test");
     AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNestedWhileArrLoopWithVarDecls()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] arr = [1,2]
+      int i = 0
+      while(i < arr.Count) {
+        int tmp = arr[i]
+        int j = 0
+        while(j < arr.Count) {
+          int tmp2 = arr[j]
+          trace((string)tmp + "","" + (string)tmp2 + "";"")
+          j = j + 1
+        }
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1,1;1,2;2,1;2,2;", log.ToString());
     CommonChecks(vm);
   }
 
