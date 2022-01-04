@@ -12067,6 +12067,177 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral {
+        for(int i = 0; i < 3; i = i + 1) {
+          trace((string)i)
+          yield()
+        }
+        suspend()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual("012", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForBadPreSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(i ; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      "no viable alternative at input 'i ;"
+    );
+  }
+
+  [IsTested()]
+  public void TestForEmptyPreSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("012", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForEmptyPostSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(; i < 3;) {
+        trace((string)i)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("012", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForBadPostSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0 ; i < 3; i) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "no viable alternative at input 'i)'"
+    );
+  }
+
+  [IsTested()]
+  public void TestForCondIsRequired()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(;;) {
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "no viable alternative at input ';'"
+    );
+  }
+
+  [IsTested()]
+  public void TestForNonBoolCond()
+  {
+    string bhl = @"
+
+    func int foo() 
+    {
+      return 14
+    }
+
+    func test() 
+    {
+      for(; foo() ;) {
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "foo():<int> have incompatible types"
+    );
+  }
+
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
