@@ -12013,6 +12013,58 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual("12", log.ToString());
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestForNested()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        for(int j = 0; j < 2; j = j + 1) {
+          trace((string)i + "","" + (string)j + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("0,0;0,1;1,0;1,1;2,0;2,1;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForSeveral()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+
+      for(i = 0; i < 30; i = i + 10) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("01201020", log.ToString());
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestBindNativeChildClass()

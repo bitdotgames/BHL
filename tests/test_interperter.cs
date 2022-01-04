@@ -1778,66 +1778,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestForNested()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(int i = 0; i < 3; i = i + 1) {
-        for(int j = 0; j < 2; j = j + 1) {
-          trace((string)i + "","" + (string)j + "";"")
-        }
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-    AssertEqual("0,0;0,1;1,0;1,1;2,0;2,1;", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestForSeveral()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(int i = 0; i < 3; i = i + 1) {
-        trace((string)i)
-      }
-
-      for(i = 0; i < 30; i = i + 10) {
-        trace((string)i)
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-    AssertEqual("01201020", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestForInParal()
   {
     string bhl = @"
