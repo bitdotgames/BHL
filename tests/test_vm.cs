@@ -12362,6 +12362,91 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForeachInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral {
+        foreach([1,2,3] as int it) {
+          trace((string)it)
+          yield()
+        }
+        suspend()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachBreak()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as int it) {
+        if(it == 3) {
+          break
+        }
+        trace((string)it)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("12", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestForeachSeveral()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] is = [1,2,3]
+      foreach(is as int it) {
+        trace((string)it)
+      }
+
+      foreach(is as int it2) {
+        trace((string)it2)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("123123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"

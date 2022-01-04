@@ -1778,41 +1778,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestForeachInParal()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      paral {
-        foreach([1,2,3] as int it) {
-          trace((string)it)
-          yield()
-        }
-        suspend()
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    AssertEqual(BHS.RUNNING, node.run());
-    AssertEqual(BHS.RUNNING, node.run());
-    AssertEqual(BHS.RUNNING, node.run());
-    AssertEqual(BHS.SUCCESS, node.run());
-
-    var str = GetString(trace_stream);
-    AssertEqual("123", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestForeachBreak()
   {
     string bhl = @"
