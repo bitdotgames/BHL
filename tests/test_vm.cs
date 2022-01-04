@@ -11872,6 +11872,149 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestWhileCounterOnTheTop()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      while(i < 3) {
+        i = i + 1
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestWhileFalse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      while(false) {
+        trace((string)i)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestFor()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("012", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForMultiExpression()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0, int j = 1; i < 3; i = i + 1, j = j + 2) {
+        trace((string)(i*j) + "";"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("0;3;10;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForReverse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 2; i >= 0; i = i - 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("210", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForUseExternalVar()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i
+      for(i = 1; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("12", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
