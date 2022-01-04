@@ -11406,6 +11406,29 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeClassCallMember()
+  {
+    string bhl = @"
+
+    func float test(float a)
+    {
+      return mkcolor(a).r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 10)).stack.PopRelease().num;
+    AssertEqual(res, 10);
+    res = Execute(vm, "test", Val.NewNum(vm, 20)).stack.PopRelease().num;
+    AssertEqual(res, 20);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestNativeAttributeIsNotAFunction()
   {
     string bhl = @"
@@ -14874,9 +14897,7 @@ public class BHL_TestVM : BHL_TestBase
         {
           var k = frm.stack.PopRelease().num;
           var c = (Color)frm.stack.PopRelease().obj;
-
           frm.stack.Push(Val.NewNum(frm.vm, (c.r * k) + (c.g * k)));
-
           return null;
         }
       );
@@ -14884,16 +14905,23 @@ public class BHL_TestVM : BHL_TestBase
 
       cl.Define(m);
     }
-    //
-    //{
-    //  var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"),
-    //      delegate() { return new MkColorNode(); }
-    //  );
-    //  fn.Define(new FuncArgSymbol("r", globs.Type("float")));
+    
+    {
+      var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+            var r = frm.stack.PopRelease().num;
+            var c = new Color();
+            c.r = (float)r;
+            var v = Val.NewObj(frm.vm, c);
+            frm.stack.Push(v);
+            return null;
+          }
+      );
+      fn.Define(new FuncArgSymbol("r", globs.Type("float")));
 
-    //  globs.Define(fn);
-    //}
-    //
+      globs.Define(fn);
+    }
+    
     //{
     //  var fn = new FuncSymbolSimpleNative("mkcolor_null", globs.Type("Color"),
     //      delegate() { 

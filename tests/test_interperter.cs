@@ -1778,35 +1778,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBindClassCallMember()
-  {
-    string bhl = @"
-
-    func float foo(float a)
-    {
-      return mkcolor(a).r
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    
-    BindColor(globs);
-
-    var intp = Interpret(bhl, globs);
-
-    var foo = intp.GetFuncCallNode("foo");
-    foo.SetArgs(DynVal.NewNum(10));
-    var res = ExtractNum(ExecNode(foo));
-    AssertEqual(res, 10);
-    CommonChecks(intp);
-
-    foo.SetArgs(DynVal.NewNum(20));
-    res = ExtractNum(ExecNode(foo));
-    AssertEqual(res, 20);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestNullPassedAsNullObj()
   {
     string bhl = @"
