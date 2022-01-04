@@ -11569,6 +11569,125 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNullPassedAsNewNil()
+  {
+    string bhl = @"
+      
+    func void test(StringClass c) 
+    {
+      if(c != null) {
+        trace(""NEVER;"")
+      }
+      if(c == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStringClass(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewObj(vm, null));
+    AssertEqual("NULL;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  ////TODO: do we really need this behavior supported?
+  ////[IsTested()]
+  //public void TestNullPassedAsCustomNull()
+  //{
+  //  string bhl = @"
+  //    
+  //  func void test(CustomNull c) 
+  //  {
+  //    if(c != null) {
+  //      trace(""NOTNULL;"")
+  //    }
+  //    if(c == null) {
+  //      trace(""NULL;"")
+  //    }
+
+  //    yield()
+
+  //    if(c != null) {
+  //      trace(""NOTNULL2;"")
+  //    }
+  //    if(c == null) {
+  //      trace(""NULL2;"")
+  //    }
+  //  }
+  //  ";
+
+  //  var globs = SymbolTable.CreateBuiltins();
+  //  var trace_stream = new MemoryStream();
+
+  //  BindTrace(globs, trace_stream);
+  //  BindCustomNull(globs);
+
+  //  var intp = Interpret(bhl, globs);
+  //  var node = intp.GetFuncCallNode("test");
+  //  var cn = new CustomNull();
+  //  node.SetArgs(DynVal.NewObj(cn));
+
+  //  cn.is_null = false;
+  //  node.run();
+
+  //  cn.is_null = true;
+  //  node.run();
+
+  //  var str = GetString(trace_stream);
+  //  AssertEqual("NOTNULL;NULL2;", str);
+  //  CommonChecks(intp);
+  //}
+
+  [IsTested()]
+  public void TestSetNullObjFromUserBinding()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color c = mkcolor_null()
+      if(c == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewObj(vm, null));
+    AssertEqual("NULL;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNullIncompatible()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      return 0 == null
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
@@ -14949,19 +15068,16 @@ public class BHL_TestVM : BHL_TestBase
       globs.Define(fn);
     }
     
-    //{
-    //  var fn = new FuncSymbolSimpleNative("mkcolor_null", globs.Type("Color"),
-    //      delegate() { 
-    //        var interp = Interpreter.instance;
-    //        var dv = DynVal.New();
-    //        dv.obj = null;
-    //        interp.PushValue(dv);
-    //        return BHS.SUCCESS;
-    //      }
-    //  );
+    {
+      var fn = new FuncSymbolNative("mkcolor_null", globs.Type("Color"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+            frm.stack.Push(Val.NewNil(frm.vm));
+            return null;
+          }
+      );
 
-    //  globs.Define(fn);
-    //}
+      globs.Define(fn);
+    }
 
     return cl;
   }
