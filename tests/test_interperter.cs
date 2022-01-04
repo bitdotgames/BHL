@@ -1778,38 +1778,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNullPassedAsNullObj()
-  {
-    string bhl = @"
-      
-    func void test(StringClass c) 
-    {
-      if(c != null) {
-        trace(""NEVER;"")
-      }
-      if(c == null) {
-        trace(""NULL;"")
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-    BindStringClass(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    node.SetArgs(DynVal.NewObj(null));
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-    AssertEqual("NULL;", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestNullPassedAsNewNil()
   {
     string bhl = @"

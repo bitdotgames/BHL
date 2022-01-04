@@ -11542,6 +11542,33 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNullPassedAsNullObj()
+  {
+    string bhl = @"
+      
+    func void test(StringClass c) 
+    {
+      if(c != null) {
+        trace(""NEVER;"")
+      }
+      if(c == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStringClass(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewObj(vm, null));
+    AssertEqual("NULL;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
@@ -15026,6 +15053,39 @@ public class BHL_TestVM : BHL_TestBase
           IntStruct.Decode(ctx, ref s);
           s.n = (int)v.num;
           IntStruct.Encode(ctx, s);
+        }
+      ));
+    }
+  }
+
+  public class StringClass
+  {
+    public string str;
+  }
+
+  void BindStringClass(GlobalScope globs)
+  {
+    {
+      var cl = new ClassSymbolNative("StringClass", null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          v.obj = new StringClass();
+        }
+      );
+
+      globs.Define(cl);
+
+      cl.Define(new FieldSymbol("str", globs.Type("string"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var c = (StringClass)ctx.obj;
+          v.str = c.str;
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var c = (StringClass)ctx.obj;
+          c.str = v.str; 
+          ctx.obj = c;
         }
       ));
     }
