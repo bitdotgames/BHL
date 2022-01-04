@@ -11786,6 +11786,60 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestWhileEmptyArrLoop()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] arr = []
+      int i = 0
+      while(i < arr.Count) {
+        int tmp = arr[i]
+        trace((string)tmp)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewObj(vm, null));
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestWhileArrLoop()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] arr = [1,2,3]
+      int i = 0
+      while(i < arr.Count) {
+        int tmp = arr[i]
+        trace((string)tmp)
+        i = i + 1
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewObj(vm, null));
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
