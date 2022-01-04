@@ -11688,6 +11688,104 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNullArray()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color[] cs = null
+      Color[] cs2 = new Color[]
+      if(cs == null) {
+        trace(""NULL;"")
+      }
+      if(cs2 == null) {
+        trace(""NULL2;"")
+      }
+      if(cs2 != null) {
+        trace(""NOT NULL;"")
+      }
+      cs = cs2
+      if(cs2 == cs) {
+        trace(""EQ;"")
+      }
+      if(cs2 == null) {
+        trace(""NEVER;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewObj(vm, null));
+    AssertEqual("NULL;NOT NULL;EQ;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNullArrayByDefault()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      Color[] cs
+      if(cs == null) {
+        trace(""NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewObj(vm, null));
+    AssertEqual("NULL;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNullFuncPtr()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      void^() fn = null
+      void^() fn2 = func () { }
+      if(fn == null) {
+        trace(""NULL;"")
+      }
+      if(fn != null) {
+        trace(""NEVER;"")
+      }
+      if(fn2 == null) {
+        trace(""NEVER2;"")
+      }
+      if(fn2 != null) {
+        trace(""NOT NULL;"")
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewObj(vm, null));
+    AssertEqual("NULL;NOT NULL;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
