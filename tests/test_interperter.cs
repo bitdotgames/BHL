@@ -1778,37 +1778,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestForeachNested()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int[] is = [1,2,3]
-      foreach(is as int it) {
-        foreach(is as int it2) {
-          trace((string)it + "","" + (string)it2 + "";"")
-        }
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-    AssertEqual("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestForeachNested2()
   {
     string bhl = @"
