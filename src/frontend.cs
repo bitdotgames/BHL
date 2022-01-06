@@ -2623,7 +2623,7 @@ public class Frontend : bhlBaseVisitor<object>
       arr_stype = arr_type.GetName().s;
     }
 
-    var arr_tmp_name = "$foreach_tmp" + ctx.Start.Line;
+    var arr_tmp_name = "$foreach_tmp" + loops_stack;
     var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
     if(arr_tmp_symb == null)
     {
@@ -2631,7 +2631,7 @@ public class Frontend : bhlBaseVisitor<object>
       curr_scope.Define(arr_tmp_symb);
     }
 
-    var arr_cnt_name = "$foreach_cnt" + ctx.Start.Line;
+    var arr_cnt_name = "$foreach_cnt" + loops_stack;
     var arr_cnt_symb = curr_scope.Resolve(arr_cnt_name) as VariableSymbol;
     if(arr_cnt_symb == null)
     {

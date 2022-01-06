@@ -882,6 +882,10 @@ public class VM
             v = Val.NewBool(this, false);
           else
             v = Val.NewObj(this, null);
+          var curr = curr_frame.locals[local_idx];
+          //NOTE: handling case when variables are 're-declared' within the nested loop
+          if(curr != null)
+            curr.Release();
           curr_frame.locals[local_idx] = v;
         }
         break;
