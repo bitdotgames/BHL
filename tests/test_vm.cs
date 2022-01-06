@@ -11276,6 +11276,68 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestJsonExplicitEmptyClass()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha c = new ColorAlpha {}
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonExplicitClass()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha c = new ColorAlpha {a: 1, g: 10, r: 100}
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(111, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonExplicitNoSuchClass()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      any c = new Foo {}
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"type 'Foo' not found"
+    );
+  }
+
+
+  [IsTested()]
   public void TestJsonArrInitForUserClass()
   {
     string bhl = @"
