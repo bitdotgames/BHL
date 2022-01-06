@@ -12473,6 +12473,160 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForeachNested2()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as int it) {
+        foreach([20,30] as int it2) {
+          trace((string)it + "","" + (string)it2 + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1,20;1,30;2,20;2,30;3,20;3,30;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachIteratorVarBadType()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as string it) {
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachArrBadType()
+  {
+    string bhl = @"
+
+    func float foo()
+    {
+      return 14
+    }
+
+    func test() 
+    {
+      foreach(foo() as float it) {
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachExternalIteratorVarBadType()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      string it
+      foreach([1,2,3] as it) {
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachRedeclareError()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      string it
+      foreach([1,2,3] as int it) {
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'it'"
+    );
+  }
+
+  [IsTested()]
+  public void TestBadBreak()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      break
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "not within loop construct"
+    );
+  }
+
+  [IsTested()]
+  public void TestBadBreakInDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      while(true) {
+        defer {
+          break
+        }
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "not within loop construct"
+    );
+  }
+
+  [IsTested()]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
