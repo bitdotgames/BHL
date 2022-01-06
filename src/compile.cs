@@ -1357,6 +1357,11 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
+  public override void DoVisit(bhl.AST_JsonArrAddItem ast)
+  {
+    //NOTE: it's handled above
+  }
+
   public override void DoVisit(bhl.AST_JsonPair ast)
   {
     VisitChildren(ast);

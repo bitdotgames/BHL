@@ -12418,7 +12418,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestForeachSeveral()
   {
     string bhl = @"
@@ -12443,6 +12443,32 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
     AssertEqual("123123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestForeachNested()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int[] is = [1,2,3]
+      foreach(is as int it) {
+        foreach(is as int it2) {
+          trace((string)it + "","" + (string)it2 + "";"")
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", log.ToString());
     CommonChecks(vm);
   }
 

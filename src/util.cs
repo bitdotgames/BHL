@@ -1298,6 +1298,11 @@ public class AST_Dumper : AST_Visitor
     VisitChildren(node);
     Console.Write(")");
   }
+
+  public override void DoVisit(AST_JsonArrAddItem node)
+  {
+    Console.Write("(JARDD)");
+  }
 }
 
 public class FixedStack<T>

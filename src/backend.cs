@@ -807,6 +807,11 @@ public class Interpreter : AST_Visitor
     }
   }
 
+  public override void DoVisit(bhl.AST_JsonArrAddItem ast)
+  {
+    //NOTE: it's handled above
+  }
+
   public override void DoVisit(bhl.AST_JsonPair node)
   {
     VisitChildren(node);
@@ -839,6 +844,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_Dec node);
   public abstract void DoVisit(AST_JsonObj node);
   public abstract void DoVisit(AST_JsonArr node);
+  public abstract void DoVisit(AST_JsonArrAddItem node);
   public abstract void DoVisit(AST_JsonPair node);
 
   public void Visit(AST_Base node)
@@ -889,6 +895,8 @@ public abstract class AST_Visitor
       DoVisit(node as AST_JsonObj);
     else if(node is AST_JsonArr)
       DoVisit(node as AST_JsonArr);
+    else if(node is AST_JsonArrAddItem)
+      DoVisit(node as AST_JsonArrAddItem);
     else if(node is AST_JsonPair)
       DoVisit(node as AST_JsonPair);
     else if(node is AST_Import)
