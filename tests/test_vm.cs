@@ -11176,6 +11176,106 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestJsonEmptyCtor()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color c = {}
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonPartialCtor()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color c = {g: 10}
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonFullCtor()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color c = {r: 1, g: 10}
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(11, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonCtorNotExpectedMember()
+  {
+    string bhl = @"
+    func void test()
+    {
+      Color c = {b: 10}
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"no such attribute 'b' in class 'Color"
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonCtorBadType()
+  {
+    string bhl = @"
+    func void test()
+    {
+      Color c = {r: ""what""}
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"float, @(4,20) ""what"":<string> have incompatible types"
+    );
+  }
+
+  [IsTested()]
   public void TestJsonArrInitForUserClass()
   {
     string bhl = @"
