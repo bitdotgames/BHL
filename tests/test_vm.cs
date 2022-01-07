@@ -11318,6 +11318,77 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestJsonExplicitSubClass()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Color c = new ColorAlpha {a: 1, g: 10, r: 100}
+      ColorAlpha ca = (ColorAlpha)c
+      return ca.r + ca.g + ca.a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(111, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonExplicitSubClassNotCompatible()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      ColorAlpha c = new Color {g: 10, r: 100}
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonReturnObject()
+  {
+    string bhl = @"
+
+    func Color make()
+    {
+      return {r: 42}
+    }
+      
+    func float test() 
+    {
+      Color c = make()
+      return c.r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(42, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestJsonExplicitNoSuchClass()
   {
     string bhl = @"
@@ -11335,7 +11406,6 @@ public class BHL_TestVM : BHL_TestBase
       @"type 'Foo' not found"
     );
   }
-
 
   [IsTested()]
   public void TestJsonArrInitForUserClass()
@@ -11442,6 +11512,436 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("2;15.1;Foo-10;14.2;Hey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonEmptyArrCtor()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int[] a = []
+      return a.Count 
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrCtor()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int[] a = [1,2,3]
+      return a[0] + a[1] + a[2]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(6, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrComplexCtor()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color[] cs = [{r:10, g:100}, {g:1000, r:1}]
+      return cs[0].r + cs[0].g + cs[1].r + cs[1].g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(1111, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonDefaultEmptyArg()
+  {
+    string bhl = @"
+    func float foo(Color c = {})
+    {
+      return c.r
+    }
+
+    func float test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonDefaultEmptyArgWithOtherDefaultArgs()
+  {
+    string bhl = @"
+    func float foo(Color c = {}, float a = 10)
+    {
+      return c.r
+    }
+
+    func float test()
+    {
+      return foo(a : 20)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonDefaultArgWithOtherDefaultArgs()
+  {
+    string bhl = @"
+    func float foo(Color c = {r:20}, float a = 10)
+    {
+      return c.r + a
+    }
+
+    func float test()
+    {
+      return foo(a : 20)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(40, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonDefaultArgIncompatibleType()
+  {
+    string bhl = @"
+    func float foo(ColorAlpha c = new Color{r:20})
+    {
+      return c.r
+    }
+
+    func float test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColorAlpha(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"have incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonArgTypeMismatch()
+  {
+    string bhl = @"
+    func float foo(float a = 10)
+    {
+      return a
+    }
+
+    func float test()
+    {
+      return foo(a : {})
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"can't be specified with {..}"
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonDefaultArg()
+  {
+    string bhl = @"
+    func float foo(Color c = {r:10})
+    {
+      return c.r
+    }
+
+    func float test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrDefaultArg()
+  {
+    string bhl = @"
+    func float foo(Color[] c = [{r:10}])
+    {
+      return c[0].r
+    }
+
+    func float test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrEmptyDefaultArg()
+  {
+    string bhl = @"
+    func int foo(Color[] c = [])
+    {
+      return c.Count
+    }
+
+    func int test()
+    {
+      return foo()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonObjReAssign()
+  {
+    string bhl = @"
+    func float test()
+    {
+      Color c = {r: 1}
+      c = {g:10}
+      return c.r + c.g
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrReAssign()
+  {
+    string bhl = @"
+    func float test()
+    {
+      float[] b = [1]
+      b = [2,3]
+      return b[0] + b[1]
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColor(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(5, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrayExplicit()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Color[] cs = [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
+      ColorAlpha ca = (ColorAlpha)cs[0]
+      return ca.a + cs[1].g + cs[2].r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColorAlpha(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(114, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrayReturn()
+  {
+    string bhl = @"
+
+    func Color[] make()
+    {
+      return [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
+    }
+      
+    func float test() 
+    {
+      Color[] cs = make()
+      ColorAlpha ca = (ColorAlpha)cs[0]
+      return ca.a + cs[1].g + cs[2].r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColorAlpha(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(114, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrayExplicitAsArg()
+  {
+    string bhl = @"
+
+    func float foo(Color[] cs)
+    {
+      ColorAlpha ca = (ColorAlpha)cs[0]
+      return ca.a + cs[1].g + cs[2].r
+    }
+      
+    func float test() 
+    {
+      return foo([new ColorAlpha {a:4}, {g:10}, new Color {r:100}])
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColorAlpha(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(114, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrayExplicitSubClass()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Color[] cs = [{r:1,g:2}, new ColorAlpha {g: 10, r: 100, a:2}]
+      ColorAlpha c = (ColorAlpha)cs[1]
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindColorAlpha(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(112, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonArrayExplicitSubClassNotCompatible()
+  {
+    string bhl = @"
+      
+    func void test() 
+    {
+      ColorAlpha[] c = [{r:1,g:2,a:100}, new Color {g: 10, r: 100}]
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    
+    BindColorAlpha(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"have incompatible types"
+    );
+  }
+
+  //[IsTested()]
+  public void TestJsonFuncArg()
+  {
+    string bhl = @"
+    func void test(float b) 
+    {
+      Foo f = MakeFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]})
+      trace((string)f.hey + (string)f.colors.Count + (string)f.colors[0].r + (string)f.colors[1].g + (string)f.colors[2].g)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+    BindFoo(globs);
+
+    {
+      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+            frm.stack.Push(frm.stack.Pop());
+            return null;
+          } );
+      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
+
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewNum(vm, 42));
+    AssertEqual("14232342", log.ToString());
     CommonChecks(vm);
   }
 
@@ -16303,6 +16803,73 @@ public class BHL_TestVM : BHL_TestBase
           var c = (StringClass)ctx.obj;
           c.str = v.str; 
           ctx.obj = c;
+        }
+      ));
+    }
+  }
+
+  public class Foo
+  {
+    public int hey;
+    public List<Color> colors = new List<Color>();
+    public Color sub_color = new Color();
+
+    public void reset()
+    {
+      hey = 0;
+      colors.Clear();
+      sub_color = new Color();
+    }
+  }
+
+  void BindFoo(GlobalScope globs)
+  {
+    {
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          v.obj = new Foo();
+        }
+      );
+      globs.Define(cl);
+
+      cl.Define(new FieldSymbol("hey", globs.Type("int"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var f = (Foo)ctx.obj;
+          v.SetNum(f.hey);
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var f = (Foo)ctx.obj;
+          f.hey = (int)v.num; 
+          ctx.obj = f;
+        }
+      ));
+      cl.Define(new FieldSymbol("colors", globs.Type("Color[]"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var f = (Foo)ctx.obj;
+          v.obj = f.colors;
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var f = (Foo)ctx.obj;
+          f.colors = (List<Color>)v.obj; 
+          ctx.obj = f;
+        }
+      ));
+      cl.Define(new FieldSymbol("sub_color", globs.Type("Color"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var f = (Foo)ctx.obj;
+          v.obj = f.sub_color;
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var f = (Foo)ctx.obj;
+          f.sub_color = (Color)v.obj; 
+          ctx.obj = f;
         }
       ));
     }
