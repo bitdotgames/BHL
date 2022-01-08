@@ -11916,7 +11916,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func void test(float b) 
     {
-      Foo f = MakeFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]})
+      Foo f = ReturnFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]})
       trace((string)f.hey + (string)f.colors.Count + (string)f.colors[0].r + (string)f.colors[1].g + (string)f.colors[2].g)
     }
     ";
@@ -11929,12 +11929,12 @@ public class BHL_TestVM : BHL_TestBase
     BindFoo(globs);
 
     {
-      var fn = new FuncSymbolNative("MakeFoo", globs.Type("Foo"), null,
+      var fn = new FuncSymbolNative("ReturnFoo", globs.Type("Foo"), null,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             frm.stack.Push(frm.stack.Pop());
             return null;
           } );
-      fn.Define(new FuncArgSymbol("conf", globs.Type("Foo")));
+      fn.Define(new FuncArgSymbol("foo", globs.Type("Foo")));
 
       globs.Define(fn);
     }
@@ -16184,9 +16184,9 @@ public class BHL_TestVM : BHL_TestBase
     if(vm.vals_pool.Allocs != vm.vals_pool.Free)
       Console.WriteLine(vm.vals_pool.Dump());
 
-    AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
-    AssertEqual(vm.vlsts_pool.Allocs, vm.vlsts_pool.Free);
     AssertEqual(vm.vdicts_pool.Allocs, vm.vdicts_pool.Free);
+    AssertEqual(vm.vlsts_pool.Allocs, vm.vlsts_pool.Free);
+    AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
     if(check_frames)
       AssertEqual(vm.frames_pool.Allocs, vm.frames_pool.Free);
     if(check_fibers)
@@ -16850,12 +16850,25 @@ public class BHL_TestVM : BHL_TestBase
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
-          v.obj = f.colors;
+          var vls = ValList.New(v.vm);
+          foreach(var c in f.colors)
+          {
+            var vl = Val.NewObj(v.vm, c);
+            vls.Add(vl);
+            vl.Release();
+          }
+          v.obj = vls;
         },
         delegate(ref Val ctx, Val v)
         {
           var f = (Foo)ctx.obj;
-          f.colors = (List<Color>)v.obj; 
+          f.colors.Clear();
+          var vls = (ValList)v.obj;
+          for(int i=0;i<vls.Count;++i)
+          {
+            var vl = vls[i]; 
+            f.colors.Add((Color)vl.obj);
+          }
           ctx.obj = f;
         }
       ));

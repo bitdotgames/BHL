@@ -2126,7 +2126,7 @@ public class Val
   public double _num;
   public object _obj;
 
-  internal VM vm;
+  public VM vm;
 
   //NOTE: use New() instead
   internal Val(VM vm)
@@ -2400,9 +2400,9 @@ public class ValList : IList<Val>, IValRefcounted
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection
-  internal int refs;
+  public int refs;
 
-  internal VM vm;
+  public VM vm;
 
   //////////////////IList//////////////////
 
@@ -2576,7 +2576,7 @@ public class ValDict : IValRefcounted
   //      public only for inspection
   public int refs;
 
-  internal VM vm;
+  public VM vm;
 
   //NOTE: use New() instead
   internal ValDict(VM vm)
