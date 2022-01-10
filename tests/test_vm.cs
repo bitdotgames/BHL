@@ -11361,6 +11361,54 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassDefaultInitArr()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] a
+    }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      return f.a == null
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassWithFuncPtr()
+  {
+    string bhl = @"
+
+    func int foo(int a)
+    {
+      return a + 1
+    }
+
+    class Foo { 
+      int^(int) ptr
+    }
+      
+    func int test() 
+    {
+      Foo f = {}
+      f.ptr = foo
+      return f.ptr(2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitFuncPtr()
   {
     string bhl = @"
@@ -11373,6 +11421,32 @@ public class BHL_TestVM : BHL_TestBase
     {
       Foo f = {}
       return f.ptr == null
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestUserClassDefaultInitEnum()
+  {
+    string bhl = @"
+
+    enum Bar {
+      NONE = 0
+      FOO  = 1
+    }
+
+    class Foo { 
+      Bar b
+    }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      return f.b == Bar::NONE
     }
     ";
 

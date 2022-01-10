@@ -57,6 +57,7 @@ public class TypeRef
     return type == null && name.n == 0;
   }
 
+  //TODO: get rid of this outdated version
   public Type Get()
   {
     if(type != null)
@@ -65,11 +66,23 @@ public class TypeRef
     if(name.n == 0)
       return null;
 
-    //TODO: get rid of this ugly hack
     if(bindings == null)
       type = (bhl.Type)Interpreter.instance.symbols.Resolve(name);
     else
       type = (bhl.Type)bindings.Resolve(name);
+
+    return type;
+  }
+
+  public Type Get(BaseScope symbols)
+  {
+    if(type != null)
+      return type;
+
+    if(name.n == 0)
+      return null;
+
+    type = (bhl.Type)symbols.Resolve(name);
 
     return type;
   }
@@ -1315,7 +1328,12 @@ public class ClassSymbolScript : ClassSymbol
       else if(m.type.name.IsEqual(SymbolTable.symb_bool.type.name))
         v.SetBool(false);
       else 
-        v.SetObj(null);
+      {
+        if(m.type.Get(frm.vm.Symbols) is EnumSymbol)
+          v.SetNum(0);
+        else
+          v.SetObj(null);
+      }
 
       vl.Add(v);
       v.Release();
@@ -1352,8 +1370,7 @@ public class EnumSymbolScript : EnumSymbol
 {
   public EnumSymbolScript(HashedName name)
     : base(null, name, null)
-  {
-  }
+  {}
 
   //0 - OK, 1 - duplicate key, 2 - duplicate value
   public int TryAddItem(string name, int val)

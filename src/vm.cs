@@ -483,6 +483,12 @@ public class VM
   }
 
   LocalScope symbols;
+  public LocalScope Symbols {
+    get {
+      return symbols;
+    }
+  }
+
   Dictionary<string, ModuleAddr> func2addr = new Dictionary<string, ModuleAddr>();
 
   int fibers_ids = 0;
