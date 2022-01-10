@@ -11429,7 +11429,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestUserClassDefaultInitEnum()
   {
     string bhl = @"
@@ -12549,14 +12549,14 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNullWithStruct()
+  public void TestNullWithEncodedStruct()
   {
     string bhl = @"
       
     func void test() 
     {
       IntStruct c = null
-      IntStruct c2 = new IntStruct
+      IntStruct c2 = {n: 1}
       if(c == null) {
         trace(""NULL;"")
       }

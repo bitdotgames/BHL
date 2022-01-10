@@ -1514,10 +1514,10 @@ public class VM
         curr_frame.stack.Push(Val.NewNum(this, l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
-        curr_frame.stack.Push(Val.NewBool(this, l_operand.IsEqual(r_operand)));
+        curr_frame.stack.Push(Val.NewBool(this, l_operand.IsValueEqual(r_operand)));
       break;
       case Opcodes.NotEqual:
-        curr_frame.stack.Push(Val.NewBool(this, !l_operand.IsEqual(r_operand)));
+        curr_frame.stack.Push(Val.NewBool(this, !l_operand.IsValueEqual(r_operand)));
       break;
       case Opcodes.LT:
         curr_frame.stack.Push(Val.NewBool(this, l_operand._num < r_operand._num));
@@ -2354,10 +2354,9 @@ public class Val
     _type = OBJ;
   }
 
-  public bool IsEqual(Val o)
+  public bool IsValueEqual(Val o)
   {
     bool res =
-      _type == o.type &&
       _num == o._num &&
       (_type == STRING ? (string)_obj == (string)o._obj : _obj == o._obj)
       ;
