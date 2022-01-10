@@ -11942,6 +11942,30 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestJsonMasterStructWithClass()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      MasterStruct n = {
+        child : {str : ""hey""},
+        child2 : {str : ""hey2""}
+      }
+      return n.child2.str
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindMasterStruct(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual("hey2", Execute(vm, "test").stack.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  //TODO:
   //[IsTested()]
   public void TestJsonFuncArg()
   {
@@ -16837,6 +16861,95 @@ public class BHL_TestVM : BHL_TestBase
           ctx.obj = c;
         }
       ));
+    }
+  }
+
+  public struct MasterStruct
+  {
+    public StringClass child;
+    public StringClass child2;
+    public IntStruct child_struct;
+    public IntStruct child_struct2;
+  }
+
+  void BindMasterStruct(GlobalScope globs)
+  {
+    BindStringClass(globs);
+    BindIntStruct(globs);
+
+    {
+      var cl = new ClassSymbolNative("MasterStruct", null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          var o = new MasterStruct();
+          o.child = new StringClass();
+          o.child2 = new StringClass();
+          v.obj = o;
+        }
+      );
+
+      globs.Define(cl);
+
+      cl.Define(new FieldSymbol("child", globs.Type("StringClass"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          v.SetObj(c.child);
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          c.child = (StringClass)v._obj; 
+          ctx.obj = c;
+        }
+      ));
+
+      cl.Define(new FieldSymbol("child2", globs.Type("StringClass"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          v.obj = c.child2;
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          c.child2 = (StringClass)v.obj; 
+          ctx.obj = c;
+        }
+      ));
+
+      cl.Define(new FieldSymbol("child_struct", globs.Type("IntStruct"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct.Encode(v, c.child_struct);
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct s = new IntStruct();
+          IntStruct.Decode(v, ref s);
+          c.child_struct = s;
+          ctx.obj = c;
+        }
+      ));
+
+      cl.Define(new FieldSymbol("child_struct2", globs.Type("IntStruct"), null, null, null,
+        delegate(Val ctx, ref Val v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct.Encode(v, c.child_struct2);
+        },
+        delegate(ref Val ctx, Val v)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct s = new IntStruct();
+          IntStruct.Decode(v, ref s);
+          c.child_struct2 = s;
+          ctx.obj = c;
+        }
+      ));
+
     }
   }
 

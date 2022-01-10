@@ -1788,34 +1788,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestJsonMasterStructWithClass()
-  {
-    string bhl = @"
-      
-    func string test() 
-    {
-      MasterStruct n = {
-        child : {str : ""hey""},
-        child2 : {str : ""hey2""}
-      }
-      return n.child2.str
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    
-    BindMasterStruct(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    var res = ExtractStr(ExecNode(node));
-
-    AssertEqual(res, "hey2");
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestJsonMasterStructWithStruct()
   {
     string bhl = @"
