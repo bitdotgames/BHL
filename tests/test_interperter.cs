@@ -1788,34 +1788,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestJsonMasterStructWithStruct()
-  {
-    string bhl = @"
-      
-    func int test() 
-    {
-      MasterStruct n = {
-        child_struct : {n: 1, n2:10},
-        child_struct2 : {n: 2, n2:20}
-      }
-      return n.child_struct2.n
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    
-    BindMasterStruct(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 2);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestInterleaveValuesStackInParal()
   {
     string bhl = @"

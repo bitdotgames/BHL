@@ -11965,6 +11965,29 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestJsonMasterStructWithStruct()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      MasterStruct n = {
+        child_struct : {n: 1},
+        child_struct2 : {n: 2}
+      }
+      return n.child_struct2.n
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    BindMasterStruct(globs);
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(2, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
   //TODO:
   //[IsTested()]
   public void TestJsonFuncArg()
