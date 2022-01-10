@@ -11317,6 +11317,29 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassDefaultInit()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+      int c
+      string s
+    }
+      
+    func string test() 
+    {
+      Foo f = {}
+      return (string)f.b + "";"" + (string)f.c + "";"" + f.s + "";""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("0;0;;", Execute(vm, "test").stack.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassWithArr()
   {
     string bhl = @"

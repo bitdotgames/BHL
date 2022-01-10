@@ -2722,40 +2722,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserClassDefaultInit()
-  {
-    string bhl = @"
-
-    class Foo { 
-      float b
-      int c
-      string s
-    }
-      
-    func void test() 
-    {
-      Foo f = {}
-      trace((string)f.b + "";"" + (string)f.c + "";"" + f.s + "";"")
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-
-    //NodeDump(node);
-    AssertEqual("0;0;;", str);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestUserClassMethodDecl()
   {
     string bhl = @"
