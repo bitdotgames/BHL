@@ -3718,6 +3718,38 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestWhileFailure()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      while(i < 3) {
+        trace((string)i)
+        i = i + 1
+        if(i == 2) {
+          fail()
+        }
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+
+    vm.Tick();
+    AssertEqual(fb.status, BHS.FAILURE);
+
+    AssertEqual("01", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestVarInInfiniteLoop()
   {
     string bhl = @"

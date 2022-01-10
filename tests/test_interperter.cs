@@ -1777,42 +1777,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
-  [IsTested()]
-  public void TestWhileFailure()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int i = 0
-      while(i < 3) {
-        trace((string)i)
-        i = i + 1
-        if(i == 2) {
-          fail()
-        }
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    var trace_stream = new MemoryStream();
-
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-
-    {
-      var status = node.run();
-      AssertEqual(BHS.FAILURE, status);
-    }
-
-    var str = GetString(trace_stream);
-    AssertEqual("01", str);
-    CommonChecks(intp);
-  }
-
   public class MakeFooNode : BehaviorTreeTerminalNode
   {
     public override void init()
