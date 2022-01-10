@@ -9259,11 +9259,50 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(globs, log);
 
-    var c = Compile(bhl, globs);
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1 2;10 20;", log.ToString());
+    CommonChecks(vm);
+  }
 
-    var vm = MakeVM(c);
-    vm.Start("test");
-    while(vm.Tick()) {}
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithPtrCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
+      int^(int,int) p = ret_int
+      paral {
+        {
+          foo(1, p(2, 1))
+          suspend()
+        }
+        foo(10, p(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
   }
@@ -11995,7 +12034,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func void test(float b) 
     {
-      Foo f = ReturnFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]})
+      Foo f = PassthruFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]})
       trace((string)f.hey + (string)f.colors.Count + (string)f.colors[0].r + (string)f.colors[1].g + (string)f.colors[2].g)
     }
     ";
@@ -12006,17 +12045,6 @@ public class BHL_TestVM : BHL_TestBase
     BindTrace(globs, log);
     BindColor(globs);
     BindFoo(globs);
-
-    {
-      var fn = new FuncSymbolNative("ReturnFoo", globs.Type("Foo"), null,
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-            frm.stack.Push(frm.stack.Pop());
-            return null;
-          } );
-      fn.Define(new FuncArgSymbol("foo", globs.Type("Foo")));
-
-      globs.Define(fn);
-    }
 
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test", Val.NewNum(vm, 42));
@@ -17053,6 +17081,17 @@ public class BHL_TestVM : BHL_TestBase
           ctx.obj = f;
         }
       ));
+    }
+
+    {
+      var fn = new FuncSymbolNative("PassthruFoo", globs.Type("Foo"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+            frm.stack.Push(frm.stack.Pop());
+            return null;
+          } );
+      fn.Define(new FuncArgSymbol("foo", globs.Type("Foo")));
+
+      globs.Define(fn);
     }
   }
 
