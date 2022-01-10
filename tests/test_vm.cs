@@ -9307,8 +9307,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestInterleaveValuesStackInParalWithMemberPtrCall()
   {
     string bhl = @"
@@ -9349,7 +9348,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(globs, log);
 
-    var vm = MakeVM(bhl, globs, true);
+    var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
@@ -9507,7 +9506,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO: this is quite contraversary
+  //TODO: this one must be forbidden
   //[IsTested()]
   public void TestDeferNested()
   {
@@ -17122,9 +17121,9 @@ public class BHL_TestVM : BHL_TestBase
       dst.n = (int)v._num;
     }
 
-    public static void Encode(Val v, IntStruct dst)
+    public static void Encode(Val v, IntStruct src)
     {
-      v._num = dst.n;
+      v._num = src.n;
     }
   }
 

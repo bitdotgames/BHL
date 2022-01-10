@@ -698,6 +698,7 @@ public enum EnumCall
   ARR_IDXW        = 40,
   FUNC2VAR        = 5,
   FUNC_PTR        = 6,
+  //TODO: bad name
   FUNC_PTR_POP    = 7,
   GVAR            = 50,
   GVARW           = 51,

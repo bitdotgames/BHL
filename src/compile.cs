@@ -894,6 +894,7 @@ public class ModuleCompiler : AST_Visitor
       }
       break;
       case EnumBlock.FUNC:
+      //TODO: get rid of GROUP
       case EnumBlock.GROUP:
       {
         VisitChildren(ast);

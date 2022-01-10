@@ -1038,7 +1038,7 @@ public class VM
           if(val._obj is Frame frm)
           {
             //NOTE: we need to make an authentic copy of the original Frame stored in a var 
-            //      in case it's already being executed. The simplest (but not the most smart one)
+            //      in case it's already being executed. The dumbest (but not the best one?)
             //      way to do that is to check ref.counter.
             if(frm.refs > 1)
             {
@@ -1091,9 +1091,20 @@ public class VM
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
           var args_info = new FuncArgsInfo(args_bits);
           int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-          var fr = curr_frame.stack[fr_idx];
+          var fr_val = curr_frame.stack[fr_idx];
           curr_frame.stack.RemoveAt(fr_idx);
-          curr_frame.stack.Push(fr);
+
+          //TODO: temp hack for passing tests
+          var fr = fr_val._obj as Frame;
+          if(fr.refs > 1)
+          {
+            var fr_clone = Frame.New(this);
+            fr_clone.Init(fr, fr.start_ip);
+            curr_frame.stack.Push(Val.NewObj(this, fr_clone));
+            fr_val.Release();
+          }
+          else
+            curr_frame.stack.Push(fr_val);
         }
         break;
       case Opcodes.Call:
