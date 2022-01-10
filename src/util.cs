@@ -1248,6 +1248,8 @@ public class AST_Dumper : AST_Visitor
       Console.Write(" (BOOL " + node.nval + ")");
     else if(node.type == EnumLiteral.STR)
       Console.Write(" (STR '" + node.sval + "')");
+    else if(node.type == EnumLiteral.NIL)
+      Console.Write(" (NULL)");
   }
 
   public override void DoVisit(AST_BinaryOpExp node)

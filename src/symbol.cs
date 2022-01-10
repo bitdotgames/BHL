@@ -1307,23 +1307,15 @@ public class ClassSymbolScript : ClassSymbol
       var m = members[i];
       var v = Val.New(res.vm);
       //NOTE: proper default init of built-in types
-      if(m.type.name.IsEqual(SymbolTable.symb_float.type.name))
-        v.SetNum(0);
-      else if(m.type.name.IsEqual(SymbolTable.symb_int.type.name))
+      if(m.type.name.IsEqual(SymbolTable.symb_float.type.name) || 
+         m.type.name.IsEqual(SymbolTable.symb_int.type.name))
         v.SetNum(0);
       else if(m.type.name.IsEqual(SymbolTable.symb_string.type.name))
         v.SetStr("");
       else if(m.type.name.IsEqual(SymbolTable.symb_bool.type.name))
         v.SetBool(false);
       else 
-      {
-        //TODO:???
-        //var t = m.type.Get();
-        //if(t is EnumSymbol)
-        //  dv.SetNum(0);
-        //else
-        //  dv.SetNil();
-      }
+        v.SetObj(null);
 
       vl.Add(v);
       v.Release();

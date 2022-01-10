@@ -9307,6 +9307,99 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
+  //[IsTested()]
+  public void TestInterleaveValuesStackInParalWithMemberPtrCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    class Bar { 
+      int^(int,int) ptr
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
+      Bar b = {}
+      b.ptr = ret_int
+      paral {
+        {
+          foo(1, b.ptr(2, 1))
+          suspend()
+        }
+        foo(10, b.ptr(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs, true);
+    Execute(vm, "test");
+    AssertEqual("1 2;10 20;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithLambdaCall()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func void test() 
+    {
+      paral {
+        {
+          foo(1, 
+              func int (int val, int ticks) {
+                while(ticks > 0) {
+                  yield()
+                  ticks = ticks - 1
+                }
+                return val
+              }(2, 1))
+          suspend()
+        }
+        foo(10, 
+            func int (int val, int ticks) {
+              while(ticks > 0) {
+                yield()
+                ticks = ticks - 1
+              }
+              return val
+            }(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1 2;10 20;", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestBasicDefer()
   {
@@ -11175,6 +11268,48 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("10;14.2;Hey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassWithArr()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] a
+    }
+      
+    func int test() 
+    {
+      Foo f = {a : [10, 20]}
+      return f.a[1]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(20, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassDefaultInitFuncPtr()
+  {
+    string bhl = @"
+
+    class Foo { 
+      void^(int) ptr
+    }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      return f.ptr == null
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").stack.PopRelease().bval);
     CommonChecks(vm);
   }
 
