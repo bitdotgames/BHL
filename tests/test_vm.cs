@@ -11222,6 +11222,27 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSeveralEmptyUserClasses()
+  {
+    string bhl = @"
+
+    class Foo { }
+    class Bar { }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      Bar b = {}
+      return f != null && b != null
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassWithSimpleMembers()
   {
     string bhl = @"

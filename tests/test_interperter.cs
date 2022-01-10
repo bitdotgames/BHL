@@ -2722,31 +2722,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSeveralEmptyUserClasses()
-  {
-    string bhl = @"
-
-    class Foo { }
-    class Bar { }
-      
-    func bool test() 
-    {
-      Foo f = {}
-      Bar b = {}
-      return f != null && b != null
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    bool res = ExtractBool(ExecNode(node));
-
-    //NodeDump(node);
-    AssertTrue(res);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestUserClassDefaultInit()
   {
     string bhl = @"
