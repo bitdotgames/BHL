@@ -2722,54 +2722,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestEmptyUserClass()
-  {
-    string bhl = @"
-
-    class Foo { }
-      
-    func bool test() 
-    {
-      Foo f = {}
-      return f != null
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    bool res = ExtractBool(ExecNode(node));
-
-    //NodeDump(node);
-    AssertTrue(res);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestUserClassBindConflict()
-  {
-    string bhl = @"
-
-    class Foo { }
-      
-    func bool test() 
-    {
-      Foo f = {}
-      return f != null
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-    BindFoo(globs);
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret(bhl, globs);
-      },
-      "already defined symbol 'Foo'"
-    );
-  }
-
-  [IsTested()]
   public void TestSeveralEmptyUserClasses()
   {
     string bhl = @"

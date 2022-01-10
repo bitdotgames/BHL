@@ -11198,6 +11198,30 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassBindConflict()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func void test() 
+    {
+      Foo f = {}
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindFoo(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      "already defined symbol 'Foo'"
+    );
+  }
+
+  [IsTested()]
   public void TestUserClassWithSimpleMembers()
   {
     string bhl = @"
