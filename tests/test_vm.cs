@@ -9210,12 +9210,10 @@ public class BHL_TestVM : BHL_TestBase
 
     var globs = SymbolTable.VM_CreateBuiltins();
 
-    var c = Compile(bhl, globs);
-
-    var vm = MakeVM(c); 
-    vm.Start("test");
+    var vm = MakeVM(bhl, globs); 
+    var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-
+    AssertEqual(0, fb.stack.Count);
     CommonChecks(vm);
   }
 
@@ -9251,7 +9249,7 @@ public class BHL_TestVM : BHL_TestBase
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
-    Execute(vm, "test");
+    AssertEqual(0, Execute(vm, "test").stack.Count);
     CommonChecks(vm);
   }
 
@@ -11351,6 +11349,28 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassMemberOperations()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+      
+    func float test() 
+    {
+      Foo f = { b : 101 }
+      f.b = f.b + 1
+      return f.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(102, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInit()
   {
     string bhl = @"
@@ -11485,6 +11505,78 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassWithFuncPtrsArray()
+  {
+    string bhl = @"
+
+    func int foo(int a)
+    {
+      return a + 1
+    }
+
+    func int foo2(int a)
+    {
+      return a + 10
+    }
+
+    class Foo { 
+      int^(int)[] ptrs
+    }
+      
+    func int test() 
+    {
+      Foo f = {ptrs: []}
+      f.ptrs.Add(foo)
+      f.ptrs.Add(foo2)
+      return f.ptrs[1](2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(12, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassWithFuncPtrsArrayCleanArgsStack()
+  {
+    string bhl = @"
+
+    func int foo(int a,int b)
+    {
+      return a + 1
+    }
+
+    func int foo2(int a,int b)
+    {
+      return a + 10
+    }
+
+    class Foo { 
+      int^(int,int)[] ptrs
+    }
+
+    func int bar()
+    {
+      fail()
+      return 1
+    }
+      
+    func void test() 
+    {
+      Foo f = {ptrs: []}
+      f.ptrs.Add(foo)
+      f.ptrs.Add(foo2)
+      f.ptrs[1](2, bar())
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(0, Execute(vm, "test").stack.Count);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitEnum()
   {
     string bhl = @"
@@ -11507,6 +11599,53 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertTrue(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassWithAnotherUserClassMember()
+  {
+    string bhl = @"
+
+    class Bar {
+      int[] a
+    }
+
+    class Foo { 
+      Bar b
+    }
+      
+    func int test() 
+    {
+      Foo f = {b : { a : [10, 21] } }
+      return f.b.a[1]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(21, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassDefaultInitStringConcat()
+  {
+    string bhl = @"
+
+    class Foo { 
+      string s1
+      string s2
+    }
+      
+    func string test() 
+    {
+      Foo f = {}
+      return f.s1 + f.s2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("", Execute(vm, "test").stack.PopRelease().str);
     CommonChecks(vm);
   }
 
