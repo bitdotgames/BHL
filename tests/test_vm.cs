@@ -9189,7 +9189,6 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [IsTested()]
   public void TestCleanFuncArgsStackOnFailure()
   {
@@ -9217,6 +9216,42 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertFalse(vm.Tick());
 
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackClassPtr()
+  {
+    string bhl = @"
+
+    class Foo
+    {
+      void^(int,int) ptr
+    }
+
+    func int foo()
+    {
+      fail()
+      return 10
+    }
+
+    func void bar(int a, int b)
+    {
+    }
+
+    func test() 
+    {
+      Foo f = {}
+      f.ptr = bar
+      f.ptr(10, foo())
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
     CommonChecks(vm);
   }
 

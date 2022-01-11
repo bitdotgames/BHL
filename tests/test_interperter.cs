@@ -3172,46 +3172,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCleanFuncArgsOnStackClassPtr()
-  {
-    string bhl = @"
-
-    class Foo
-    {
-      void^(int,int) ptr
-    }
-
-    func int foo()
-    {
-      fail()
-      return 10
-    }
-
-    func void bar(int a, int b)
-    {
-    }
-
-    func test() 
-    {
-      Foo f = {}
-      f.ptr = bar
-      f.ptr(10, foo())
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-    //NodeDump(node);
-    AssertEqual(intp.stack.Count, 0);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestUserClassWithFuncPtrsArray()
   {
     string bhl = @"
