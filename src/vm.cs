@@ -34,6 +34,7 @@ public enum Opcodes
   GetFuncImported  ,
   GetMethodNative  ,
   GetLambda        ,
+  GetFuncFromAttr      ,
   SetAttr          ,
   SetAttrInplace   ,
   ArgRef           ,
@@ -1039,7 +1040,7 @@ public class VM
           {
             //NOTE: we need to make an authentic copy of the original Frame stored in a var 
             //      in case it's already being executed. The dumbest (but not the best one?)
-            //      way to do that is to check ref.counter.
+            //      way to do that is to check ref counter.
             if(frm.refs > 1)
             {
               var frm_clone = Frame.New(this);
@@ -1060,7 +1061,7 @@ public class VM
             var func_symb = (FuncSymbolNative)val._obj;
             var fn_val = Val.NewObj(this, func_symb);
             //marking it a native call
-            fn_val._num = 1;
+            fn_val._num = CALL_NATIVE;
             curr_frame.stack.Push(fn_val);
           }
         }
@@ -1093,18 +1094,38 @@ public class VM
           int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
           var fr_val = curr_frame.stack[fr_idx];
           curr_frame.stack.RemoveAt(fr_idx);
+          curr_frame.stack.Push(fr_val);
+        }
+        break;
+      case Opcodes.GetFuncFromAttr:
+        {
+          uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+          var args_info = new FuncArgsInfo(args_bits);
+          int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
+          var fr_val = curr_frame.stack[fr_idx];
+          curr_frame.stack.RemoveAt(fr_idx);
 
-          //TODO: temp hack for passing tests
-          var fr = fr_val._obj as Frame;
-          if(fr.refs > 1)
+          //NOTE: we need to make an authentic copy of the original Frame stored in a var 
+          //      in case it's already being executed. The dumbest (but not the best one?)
+          //      way to do that is to check ref counter.
+          if(fr_val._obj is Frame frm)
           {
-            var fr_clone = Frame.New(this);
-            fr_clone.Init(fr, fr.start_ip);
-            curr_frame.stack.Push(Val.NewObj(this, fr_clone));
-            fr_val.Release();
+            if(frm.refs > 1)
+            {
+              fr_val.Release();
+
+              var frm_clone = Frame.New(this);
+              frm_clone.Init(frm, frm.start_ip);
+              fr_val = Val.NewObj(this, frm_clone); 
+            }
           }
           else
-            curr_frame.stack.Push(fr_val);
+          {
+            //marking it a native call
+            fr_val._num = CALL_NATIVE;
+          }
+
+          curr_frame.stack.Push(fr_val);
         }
         break;
       case Opcodes.Call:

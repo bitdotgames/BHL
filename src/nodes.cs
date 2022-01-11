@@ -1512,7 +1512,7 @@ public class CallFuncPtr : FuncBaseCallNode
   public override void init() 
   {
     var interp = Interpreter.instance;
-    var val = ast.type == EnumCall.FUNC_PTR_POP ? interp.PopValue() : interp.GetScopeValue(ast.Name()); 
+    var val = ast.type == EnumCall.LMBD ? interp.PopValue() : interp.GetScopeValue(ast.Name()); 
 
     var fct = ((FuncCtx)val.obj);
     //NOTE: Func ctx may be shared and we need to make sure 
@@ -1554,7 +1554,7 @@ public class CallFuncPtr : FuncBaseCallNode
 
   public override string inspect()
   {
-    if(ast.type == EnumCall.FUNC_PTR_POP)
+    if(ast.type == EnumCall.LMBD)
       return "<-";
     else
       return ""+ast.name;

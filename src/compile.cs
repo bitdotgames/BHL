@@ -460,6 +460,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.GetFuncFromAttr,
+        4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.Call,
         4/*args bits*/
       )
@@ -1105,21 +1111,28 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
       }
       break;
-      case EnumCall.FUNC_PTR_POP:
+      case EnumCall.LMBD:
       {
         VisitChildren(ast);
         Emit(Opcodes.GetLambda, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
         Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
-      case EnumCall.FUNC_PTR:
+      case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
         Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
         Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
-      case EnumCall.FUNC2VAR:
+      case EnumCall.FUNC_MVAR:
+      {
+        VisitChildren(ast);
+        Emit(Opcodes.GetFuncFromAttr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+      }
+      break;
+      case EnumCall.GET_ADDR:
       {
         int offset;
         if(func2ip.TryGetValue(ast.name, out offset))

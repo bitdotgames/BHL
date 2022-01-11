@@ -470,14 +470,14 @@ public class Frontend : bhlBaseVisitor<object>
 
           if(class_scope == null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC_PTR, line, var_symb);
+            ast = AST_Util.New_Call(EnumCall.FUNC_VAR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
             PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, var_symb, class_scope));
-            ast = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, line);
+            ast = AST_Util.New_Call(EnumCall.FUNC_MVAR, line);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
           }
@@ -530,7 +530,7 @@ public class Frontend : bhlBaseVisitor<object>
             FireError(Location(name) +  " : no such function found");
           var func_call_name = call_func_symb.name;
 
-          ast = AST_Util.New_Call(EnumCall.FUNC2VAR, line, func_call_name);
+          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, func_call_name);
           type = func_symb.type.Get();
         }
         else
@@ -545,7 +545,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(ftype == null)
         FireError(Location(cargs) +  " : no func to call");
       
-      ast = AST_Util.New_Call(EnumCall.FUNC_PTR_POP, line);
+      ast = AST_Util.New_Call(EnumCall.LMBD, line);
       AddCallArgs(ftype, cargs, ref ast, ref pre_call);
       type = ftype.ret_type.Get();
     }
@@ -757,8 +757,9 @@ public class Frontend : bhlBaseVisitor<object>
     if(ast is AST_Call call && 
         (call.type == EnumCall.FUNC || 
          call.type == EnumCall.MFUNC ||
-         call.type == EnumCall.FUNC_PTR ||
-         call.type == EnumCall.FUNC_PTR_POP
+         call.type == EnumCall.FUNC_VAR ||
+         call.type == EnumCall.FUNC_MVAR ||
+         call.type == EnumCall.LMBD
          ))
       return true;
     

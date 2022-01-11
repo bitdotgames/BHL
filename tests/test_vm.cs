@@ -17855,34 +17855,29 @@ public class BHL_TestVM : BHL_TestBase
     Dump(c.bytecode);
   }
 
-  static void Dump(byte[] a)
+  static void Dump(byte[] bs)
   {
     string res = "";
 
-    ModuleCompiler.Definition aop = null;
-    int aop_size = 0;
+    ModuleCompiler.Definition op = null;
+    int op_size = 0;
 
-    for(int i=0;i<a?.Length;i++)
+    for(int i=0;i<bs?.Length;i++)
     {
-      res += string.Format("{1:00} 0x{0:x2} {0}", a[i], i);
-      if(aop != null)
+      res += string.Format("{1:00} 0x{0:x2} {0}", bs[i], i);
+      if(op != null)
       {
-        --aop_size;
-        if(aop_size == 0)
-          aop = null; 
+        --op_size;
+        if(op_size == 0)
+          op = null; 
       }
       else
       {
-        if(a[i] != 0)
-        {
-          aop = ModuleCompiler.LookupOpcode((Opcodes)a[i]);
-          aop_size = PredictOpcodeSize(aop, a, i);
-          res += "(" + aop.name.ToString() + ")";
-        }
-        else
-          res += "(???)";
-        if(aop_size == 0)
-          aop = null;
+        op = ModuleCompiler.LookupOpcode((Opcodes)bs[i]);
+        op_size = PredictOpcodeSize(op, bs, i);
+        res += "(" + op.name.ToString() + ")";
+        if(op_size == 0)
+          op = null;
       }
       res += "\n";
     }

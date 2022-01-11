@@ -638,11 +638,11 @@ public class Interpreter : AST_Visitor
     {
       AddFuncCallNode(ast);
     }
-    else if(ast.type == EnumCall.FUNC_PTR || ast.type == EnumCall.FUNC_PTR_POP)
+    else if(ast.type == EnumCall.FUNC_VAR || ast.type == EnumCall.LMBD)
     {
       curr_node.addChild(new CallFuncPtr(ast));
     }
-    else if(ast.type == EnumCall.FUNC2VAR)
+    else if(ast.type == EnumCall.GET_ADDR)
     {
       var s = symbols.Resolve(ast.nname()) as FuncSymbol;
       if(s == null)

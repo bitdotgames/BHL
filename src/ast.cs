@@ -696,10 +696,10 @@ public enum EnumCall
   MFUNC           = 30,
   ARR_IDX         = 4,
   ARR_IDXW        = 40,
-  FUNC2VAR        = 5,
-  FUNC_PTR        = 6,
-  //TODO: bad name
-  FUNC_PTR_POP    = 7,
+  GET_ADDR        = 5,
+  FUNC_VAR        = 6,
+  FUNC_MVAR        = 7,
+  LMBD            = 8,
   GVAR            = 50,
   GVARW           = 51,
 }
