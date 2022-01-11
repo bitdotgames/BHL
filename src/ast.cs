@@ -983,7 +983,6 @@ public enum EnumBlock
   IF = 7,
   WHILE = 8,
   FOR = 9,
-  GROUP = 10,
 }
 
 public class AST_Block  : AST 

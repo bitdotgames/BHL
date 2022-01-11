@@ -543,12 +543,6 @@ public class Interpreter : AST_Visitor
       VisitChildren(ast);
       PopNode();
     }
-    else if(ast.type == EnumBlock.GROUP)
-    {
-      PushAttachNode(new GroupNode());
-      VisitChildren(ast);
-      PopNode();
-    }
     else if(ast.type == EnumBlock.PARAL)
     {
       PushAttachNode(new ParallelNode());

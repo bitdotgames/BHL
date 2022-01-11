@@ -1355,7 +1355,7 @@ public class Frontend : bhlBaseVisitor<object>
       Wrap(ctx).eval_type = SymbolTable.BopOverload(wlhs, wrhs, op_func);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
-      var over_ast = AST_Util.New_Block(EnumBlock.GROUP);
+      var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
       over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, class_symb));
@@ -2712,10 +2712,10 @@ public class Frontend : bhlBaseVisitor<object>
         //NOTE: wrapping in group only in case there are more than one child
         if(tmp.children.Count > 1)
         {
-          var g = AST_Util.New_Block(EnumBlock.GROUP);
+          var seq = AST_Util.New_Block(EnumBlock.SEQ);
           for(int c=0;c<tmp.children.Count;++c)
-            g.AddChild(tmp.children[c]);
-          ast.AddChild(g);
+            seq.AddChild(tmp.children[c]);
+          ast.AddChild(seq);
         }
         else
           ast.AddChild(tmp.children[0]);
