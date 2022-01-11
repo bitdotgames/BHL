@@ -1063,39 +1063,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  void BindNodeWithLog(GlobalScope globs, MemoryStream s, Dictionary<int, BHS> ctl)
-  {
-    {
-      var fn = new FuncSymbolNative("NodeWithLog", globs.Type("void"),
-          delegate() { return new NodeWithLog(s, ctl); } );
-
-      fn.Define(new FuncArgSymbol("id", globs.Type("int")));
-      globs.Define(fn);
-    }
-  }
-
-  public class NodeWithDefer : BehaviorTreeTerminalNode
-  {
-    Stream sm;
-
-    public NodeWithDefer(Stream sm)
-    {
-      this.sm = sm;
-    }
-
-    public override BHS execute()
-    {
-      return BHS.SUCCESS;
-    }
-
-    public override void defer()
-    {
-      var sw = new StreamWriter(sm);
-      sw.Write("DEFER!!!");
-      sw.Flush();
-    }
-  }
-
   void BindWaitTicks(GlobalScope globs)
   {
     {
