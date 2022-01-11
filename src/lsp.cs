@@ -11,25 +11,13 @@ namespace bhlsp
 {
   public class BHLSPServer
   {
-    byte[] buffer = new byte[4096];
-    
-    private const byte CR = (byte)13;
-    private const byte LF = (byte)10;
-    private readonly byte[] separator = { CR, LF };
-    
-    private Stream input;
-    private Stream output;
-
-    private BHLSPServerTarget target;
-    
-    private readonly object outputLock = new object();
+    private BHLSPConnection connection;
     
     public BHLSPServer(Stream output, Stream input)
     {
-      this.input = input;
-      this.output = output;
-
-      target = new BHLSPServerTarget(this);
+      var target = new BHLSPServerTarget(this);
+      
+      connection = new BHLSPConnection(output, input, target);
     }
     
     public async Task Listen()
@@ -38,7 +26,7 @@ namespace bhlsp
       {
         try
         {
-          var success = await ReadAndHandle();
+          var success = await connection.ReadAndHandle();
           if (!success)
             break;
         }
@@ -49,38 +37,62 @@ namespace bhlsp
       }
     }
     
-    async Task<bool> ReadAndHandle()
+    
+  }
+  
+  internal class BHLSPConnection
+  {
+    byte[] buffer = new byte[4096];
+    
+    private const byte CR = (byte)13;
+    private const byte LF = (byte)10;
+    
+    private readonly byte[] separator = { CR, LF };
+    
+    private Stream input;
+    private Stream output;
+    
+    private readonly object outputLock = new object();
+    
+    private BHLSPServerTarget target;
+    
+    public BHLSPConnection(Stream output, Stream input, BHLSPServerTarget target)
+    {
+      this.input = input;
+      this.output = output;
+      this.target = target;
+    }
+    
+    public async Task<bool> ReadAndHandle()
     {
       string json = await Read();
-      
-      var msg = JsonConvert.DeserializeObject<RequestMessage>(json); //TODO: Batch Mode
-      
-      if(msg == null)
+      var req = JsonConvert.DeserializeObject<RequestMessage>(json); //TODO: Batch Mode
+      if(req == null)
         return false;
 
-      object result = null;
-      
-      if(msg.IsMessage())
-      {
-        BHLSPC.Logger.WriteLine($"INCOMING {msg.method}");
-        
-        foreach(var method in target.GetType().GetMethods())
-        {
-          if(IsJsonRpcMethod(method, msg.method))
-          {  
-            result = method.Invoke(target, new object[] {msg.id, msg.@params});
-          }
-        }
-      }
-
-      if (result != null)
-      {
-        Write(JsonConvert.SerializeObject(result));
-      }
+      object result = HandleRequest(req);
+      if (result is ResponseMessage resp)
+        Write(JsonConvert.SerializeObject(resp));
       
       return true;
     }
+    
+    public object HandleRequest(RequestMessage req)
+    {
+      if(req.IsMessage())
+      {
+        //BHLSPC.Logger.WriteLine($"INCOMING {req.method} \r\n {json} \r\n");
+        
+        foreach(var method in target.GetType().GetMethods())
+        {
+          if (IsJsonRpcMethod(method, req.method))
+            return method.Invoke(target, new object[] {req.id, req.@params});
+        }
+      }
 
+      return null;
+    }
+    
     private bool IsJsonRpcMethod(MethodInfo method, string name)
     {
       foreach(var attribute in method.GetCustomAttributes(true))
@@ -191,8 +203,6 @@ namespace bhlsp
       BHLSPC.Logger.WriteLine(args.ToString());
       
       var init_params = args.ToObject<InitializeParams>();
-
-      bool enableCompletion = false;
       
       ServerCapabilities capabilities = new ServerCapabilities
       {
@@ -205,56 +215,29 @@ namespace bhlsp
             includeText = true
           }
         },
-
-        completionProvider =
-          enableCompletion
-            ? new CompletionOptions
-            {
-              resolveProvider = true,
-              triggerCharacters = new[] {",", "."}
-            }
-            : null,
-
-        hoverProvider = true,
-
-        signatureHelpProvider = null,
-
-        declarationProvider = null,
-
-        definitionProvider = true,
-
+        
+        hoverProvider = false,
+        declarationProvider = false,
+        definitionProvider = false,
         typeDefinitionProvider = false,
-
         implementationProvider = false,
-
-        referencesProvider = true,
-
-        documentHighlightProvider = true,
-
-        documentSymbolProvider = true,
-
-        codeLensProvider = null,
-
-        documentLinkProvider = null,
-
-        colorProvider = false,
-
-        documentFormattingProvider = true,
-
+        referencesProvider = false,
+        documentHighlightProvider = false,
+        documentSymbolProvider = false,
+        
+        colorProvider = true,
+        
+        documentFormattingProvider = false,
         documentRangeFormattingProvider = false,
-
-        renameProvider = true,
-
+        renameProvider = false,
         foldingRangeProvider = false,
-
-        executeCommandProvider = null,
-
-        selectionRangeProvider = null,
-
+        selectionRangeProvider = false,
+        codeActionProvider = false,
+        linkedEditingRangeProvider = false,
+        callHierarchyProvider = false,
+        monikerProvider = false,
         workspaceSymbolProvider = false,
         
-        codeActionProvider = false,
-
         semanticTokensProvider = new SemanticTokensOptions
         {
           full = true,
@@ -264,11 +247,11 @@ namespace bhlsp
             tokenTypes = new[]
             {
               "class",
-              "variable",
               "enum",
+              "variable",
               "comment",
               "string",
-              "keyword",
+              "function"
             },
             tokenModifiers = new[]
             {
@@ -281,11 +264,17 @@ namespace bhlsp
       
       InitializeResult result = new InitializeResult
       {
-        capabilities = capabilities
+        capabilities = capabilities,
+        serverInfo = new InitializeResult.InitializeResultsServerInfo
+        {
+          name = "bhlsp",
+          version = "0.0.1"
+        }
       };
       
       string json = JsonConvert.SerializeObject(result);
-      BHLSPC.Logger.WriteLine("<-- " + json);
+      BHLSPC.Logger.WriteLine("<-- Initialize");
+      BHLSPC.Logger.WriteLine(json);
       
       return new ResponseMessage { id = id, result = result };
     }
@@ -304,7 +293,7 @@ namespace bhlsp
     }
   }
 
-  internal class MessageBase
+  internal abstract class MessageBase
   {
     public string jsonrpc { get; set; } = "2.0";
 
@@ -368,6 +357,9 @@ namespace bhlsp
       object obj = ((ISumType)value).Value;
       if (obj == null)
       {
+        /*writer.WriteStartObject();
+          writer.WriteEnd();*/
+
         writer.WriteNull();
         return;
       }
@@ -1117,6 +1109,12 @@ namespace bhlsp
     }
     
     public ServerCapabilities capabilities { get; set; }
+    
+    /**
+	   * Information about the server.
+	   *
+	   * @since 3.15.0
+	   */
     public InitializeResultsServerInfo serverInfo { get; set; }
   }
   
