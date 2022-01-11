@@ -1032,6 +1032,24 @@ public class VM
           curr_frame.stack.Push(fn_val);
         }
         break;
+      case Opcodes.GetFuncImported:
+        {
+          int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+
+          string module_name = curr_frame.constants[module_idx].str;
+          string func_name = curr_frame.constants[func_idx].str;
+
+          var module = modules[module_name];
+          //TODO: during postprocessing retrieve func_ip and encode it into the opcode
+          //      so that there will be two Dictionary fetches less
+          int func_ip = module.func2ip[func_name];
+
+          var func_frame = Frame.New(this);
+          func_frame.Init(curr_frame.fb, module, func_ip);
+          curr_frame.stack.Push(Val.NewObj(this, func_frame));
+        }
+        break;
       case Opcodes.GetFuncFromVar:
         {
           int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
@@ -1064,24 +1082,6 @@ public class VM
             fn_val._num = CALL_NATIVE;
             curr_frame.stack.Push(fn_val);
           }
-        }
-        break;
-      case Opcodes.GetFuncImported:
-        {
-          int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-          int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-
-          string module_name = curr_frame.constants[module_idx].str;
-          string func_name = curr_frame.constants[func_idx].str;
-
-          var module = modules[module_name];
-          //TODO: during postprocessing retrieve func_ip and encode it into the opcode
-          //      so that there will be two Dictionary fetches less
-          int func_ip = module.func2ip[func_name];
-
-          var func_frame = Frame.New(this);
-          func_frame.Init(curr_frame.fb, module, func_ip);
-          curr_frame.stack.Push(Val.NewObj(this, func_frame));
         }
         break;
       case Opcodes.GetLambda:
