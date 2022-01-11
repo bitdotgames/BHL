@@ -2851,7 +2851,7 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserClassContainThisMemberNotAllowed()
+  public void TestUserClassNotAllowedToContainThisMember()
   {
     string bhl = @"
       class Foo {
@@ -2886,32 +2886,6 @@ public class BHL_TestInterpreter : BHL_TestBase
       },
       "the keyword \"this\" is reserved"
     );
-  }
-
-  [IsTested()]
-  public void TestUserClassDefaultInitInt()
-  {
-    string bhl = @"
-
-    class Foo { 
-      int c
-    }
-      
-    func bool test() 
-    {
-      Foo f = {}
-      return f.c == 0
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExtractBool(ExecNode(node));
-
-    AssertTrue(res);
-    CommonChecks(intp);
   }
 
   [IsTested()]
@@ -3195,84 +3169,6 @@ public class BHL_TestInterpreter : BHL_TestBase
       },
       @"mismatched input '(' expecting '}'"
     );
-  }
-
-  [IsTested()]
-  public void TestUserClassDefaultInitFloat()
-  {
-    string bhl = @"
-
-    class Foo { 
-      float c
-    }
-      
-    func bool test() 
-    {
-      Foo f = {}
-      return f.c == 0
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExtractBool(ExecNode(node));
-
-    AssertTrue(res);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestUserClassDefaultInitStr()
-  {
-    string bhl = @"
-
-    class Foo { 
-      string c
-    }
-      
-    func bool test() 
-    {
-      Foo f = {}
-      return f.c == """"
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExtractBool(ExecNode(node));
-
-    AssertTrue(res);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestUserClassDefaultInitBool()
-  {
-    string bhl = @"
-
-    class Foo { 
-      bool c
-    }
-      
-    func bool test() 
-    {
-      Foo f = {}
-      return f.c == false
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExtractBool(ExecNode(node));
-
-    AssertTrue(res);
-    CommonChecks(intp);
   }
 
   [IsTested()]
