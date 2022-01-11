@@ -1147,7 +1147,7 @@ public class ModuleCompiler : AST_Visitor
           Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
         }
         else
-          throw new Exception("Not found func IP");
+          throw new Exception("Not found func address");
       }
       break;
       default:

@@ -1099,6 +1099,9 @@ public class VM
         break;
       case Opcodes.GetFuncFromAttr:
         {
+          //NOTE: currently Frame stored in member attribute is passed the last
+          //      on the stack and arguments follow it, we need to put it first 
+          //      so that it fullfills Opcode.Call requirements 
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
           var args_info = new FuncArgsInfo(args_bits);
           int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
