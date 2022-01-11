@@ -920,38 +920,191 @@ namespace bhlsp
     
     public class ServerCapabilitiesWorkspace
     {
+      /**
+		   * The server supports workspace folder.
+		   *
+		   * @since 3.6.0
+		   */
       public WorkspaceFoldersServerCapabilities workspaceFolders { get; set; }
+      
+      /**
+		   * The server is interested in file notifications/requests.
+		   *
+		   * @since 3.16.0
+		   */
       public ServerCapabilitiesWorkspaceFileOperations fileOperations { get; set; }
     }
     
+    /**
+	   * Defines how text documents are synced. Is either a detailed structure
+	   * defining each notification or for backwards compatibility the
+	   * TextDocumentSyncKind number. If omitted it defaults to
+	   * `TextDocumentSyncKind.None`.
+	   */
     public SumType<TextDocumentSyncOptions, TextDocumentSyncKind> textDocumentSync { get; set; }
+    
+    /**
+	   * The server provides completion support.
+	   */
     public CompletionOptions completionProvider { get; set; }
+    
+    /**
+	   * The server provides hover support.
+	   */
     public SumType<bool, HoverOptions> hoverProvider { get; set; }
+    
+    /**
+	   * The server provides signature help support.
+	   */
     public SignatureHelpOptions signatureHelpProvider { get; set; }
+    
+    /**
+	   * The server provides go to declaration support.
+	   *
+	   * @since 3.14.0
+	   */
     public SumType<bool, DeclarationOptions, DeclarationRegistrationOptions> declarationProvider { get; set; }
+    
+    /**
+	   * The server provides goto definition support.
+	   */
     public SumType<bool, DefinitionOptions> definitionProvider { get; set; }
+    
+    /**
+	   * The server provides goto type definition support.
+	   *
+	   * @since 3.6.0
+	   */
     public SumType<bool, TypeDefinitionOptions, TypeDefinitionRegistrationOptions> typeDefinitionProvider { get; set; }
+    
+    /**
+	   * The server provides goto implementation support.
+	   *
+	   * @since 3.6.0
+	   */
     public SumType<bool, ImplementationOptions, ImplementationRegistrationOptions> implementationProvider { get; set; }
+    
+    /**
+	   * The server provides find references support.
+	   */
     public SumType<bool, ReferenceOptions> referencesProvider { get; set; }
+    
+    /**
+	   * The server provides document highlight support.
+	   */
     public SumType<bool, DocumentHighlightOptions> documentHighlightProvider { get; set; }
+    
+    /**
+	   * The server provides document symbol support.
+	   */
     public SumType<bool, DocumentSymbolOptions> documentSymbolProvider { get; set; }
+    
+    /**
+	   * The server provides code actions. The `CodeActionOptions` return type is
+	   * only valid if the client signals code action literal support via the
+	   * property `textDocument.codeAction.codeActionLiteralSupport`.
+	   */
     public SumType<bool, CodeActionOptions> codeActionProvider { get; set; }
+    
+    /**
+	   * The server provides code lens.
+	   */
     public CodeLensOptions codeLensProvider { get; set; }
+    
+    /**
+	   * The server provides document link support.
+	   */
     public DocumentLinkOptions documentLinkProvider { get; set; }
+    
+    /**
+	   * The server provides color provider support.
+	   *
+	   * @since 3.6.0
+	   */
     public SumType<bool, DocumentColorOptions, DocumentColorRegistrationOptions> colorProvider { get; set; }
+    
+    /**
+	   * The server provides document formatting.
+	   */
     public SumType<bool, DocumentFormattingOptions> documentFormattingProvider { get; set; }
+    
+    /**
+	   * The server provides document range formatting.
+	   */
     public SumType<bool, DocumentRangeFormattingOptions> documentRangeFormattingProvider { get; set; }
+    
+    /**
+	   * The server provides document formatting on typing.
+	   */
     public DocumentOnTypeFormattingOptions documentOnTypeFormattingProvider { get; set; }
+    
+    /**
+	   * The server provides rename support. RenameOptions may only be
+	   * specified if the client states that it supports
+	   * `prepareSupport` in its initial `initialize` request.
+	   */
     public SumType<bool, RenameOptions> renameProvider { get; set; }
+    
+    /**
+	   * The server provides folding provider support.
+	   *
+	   * @since 3.10.0
+	   */
     public SumType<bool, FoldingRangeOptions, FoldingRangeRegistrationOptions> foldingRangeProvider { get; set; }
+    
+    /**
+	   * The server provides execute command support.
+	   */
     public ExecuteCommandOptions executeCommandProvider { get; set; }
+    
+    /**
+	   * The server provides selection range support.
+	   *
+	   * @since 3.15.0
+	   */
     public SumType<bool, SelectionRangeOptions, SelectionRangeRegistrationOptions> selectionRangeProvider { get; set; }
+    
+    /**
+	   * The server provides linked editing range support.
+	   *
+	   * @since 3.16.0
+	   */
     public SumType<bool, LinkedEditingRangeOptions, LinkedEditingRangeRegistrationOptions> linkedEditingRangeProvider { get; set; }
+    
+    /**
+	   * The server provides call hierarchy support.
+	   *
+	   * @since 3.16.0
+	   */
     public SumType<bool, CallHierarchyOptions, CallHierarchyRegistrationOptions> callHierarchyProvider { get; set; }
+    
+    /**
+	   * The server provides semantic tokens support.
+	   *
+	   * @since 3.16.0
+	   */
     public SumType<SemanticTokensOptions, SemanticTokensRegistrationOptions> semanticTokensProvider { get; set; }
+    
+    /**
+	   * Whether server provides moniker support.
+	   *
+	   * @since 3.16.0
+	   */
     public SumType<bool, MonikerOptions, MonikerRegistrationOptions> monikerProvider { get; set; }
+    
+    /**
+     * The server provides workspace symbol support.
+     */
     public SumType<bool, WorkspaceSymbolOptions> workspaceSymbolProvider { get; set; }
+    
+    /**
+	   * Workspace specific server capabilities
+	   */
     public ServerCapabilitiesWorkspace workspace { get; set; }
+    
+    /**
+	   * Experimental server capabilities.
+	   */
     public object experimental { get; set; }
   }
   
