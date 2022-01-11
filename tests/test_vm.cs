@@ -11743,6 +11743,73 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassCast()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+      
+    func float test() 
+    {
+      Foo f = { b : 101 }
+      any a = f
+      Foo f1 = (Foo)a
+      return f1.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(101, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassInlineCast()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+      
+    func float test() 
+    {
+      Foo f = { b : 101 }
+      any a = f
+      return ((Foo)a).b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(101, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassInlineCastArr()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] b
+    }
+      
+    func int test() 
+    {
+      Foo f = { b : [101, 102] }
+      any a = f
+      return ((Foo)a).b[1]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(102, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestJsonInitForUserClass()
   {
     string bhl = @"
