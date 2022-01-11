@@ -11937,6 +11937,46 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestTmpUserClassReadDefaultField()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int c
+    }
+      
+    func int test() 
+    {
+      return (new Foo).c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTmpUserClassReadField()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int c
+    }
+      
+    func int test() 
+    {
+      return (new Foo{c: 10}).c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestChildUserClassAlreadyDefinedMember()
   {
     string bhl = @"
@@ -12021,7 +12061,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestExtendCSharpClassMemberAlreadyExists()
+  public void TestExtendNativeClassMemberAlreadyExists()
   {
     string bhl = @"
 
@@ -12046,6 +12086,43 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestUserClassNotAllowedToContainThisMember()
+  {
+    string bhl = @"
+      class Foo {
+        int this
+      }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "the keyword \"this\" is reserved"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserClassContainThisMethodNotAllowed()
+  {
+    string bhl = @"
+      class Foo {
+
+        func bool this()
+        {
+          return false
+        }
+      }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "the keyword \"this\" is reserved"
+    );
+  }
 
   [IsTested()]
   public void TestJsonInitForUserClass()
