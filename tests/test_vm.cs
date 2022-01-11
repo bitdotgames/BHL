@@ -11810,6 +11810,244 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassInlineCastArr2()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] b
+    }
+      
+    func int test() 
+    {
+      Foo f = { b : [101, 102] }
+      any a = f
+      return ((Foo)a).b.Count
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(2, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestChildUserClass()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base { 
+      float y
+    }
+      
+    func float test() {
+      Foo f = { x : 1, y : 2}
+      return f.x + f.y
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestChildUserClassDowncast()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      float y
+    }
+      
+    func float test() 
+    {
+      Foo f = { x : 1, y : 2}
+      Base b = (Foo)f
+      return b.x
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestChildUserClassUpcast()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      float y
+    }
+      
+    func float test() 
+    {
+      Foo f = { x : 1, y : 2}
+      Base b = (Foo)f
+      Foo f2 = (Foo)b
+      return f2.x + f2.y
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestChildUserClassDefaultInit()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      float y
+    }
+      
+    func float test() 
+    {
+      Foo f = { y : 2}
+      return f.x + f.y
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(2, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestChildUserClassAlreadyDefinedMember()
+  {
+    string bhl = @"
+
+    class Base {
+      float x 
+    }
+
+    class Foo : Base 
+    { 
+      int x
+    }
+      
+    func float test() 
+    {
+      Foo f = { x : 2}
+      return f.x
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"already defined symbol 'x'"
+    );
+  }
+
+  //[IsTested()]
+  public void TestChildUserClassOfNativeClass()
+  {
+    string bhl = @"
+
+    class ColorA : Color 
+    { 
+      float a
+    }
+      
+    func float test() 
+    {
+      ColorA c = { r : 1, g : 2, a : 3}
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(6, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestChildUserClassOfNativeClass2()
+  {
+    string bhl = @"
+
+    class ColorA : Color 
+    { 
+      float a
+    }
+
+    class ColorF : ColorA 
+    { 
+      float f
+    }
+      
+    func float test() 
+    {
+      ColorF c = { r : 1, g : 2, f : 3, a: 4}
+      return c.r + c.g + c.a + c.f
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestExtendCSharpClassMemberAlreadyExists()
+  {
+    string bhl = @"
+
+    class ColorA : Color 
+    { 
+      float g
+    }
+      
+    func float test() 
+    {
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    BindColor(globs);
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      "already defined symbol 'g'"
+    );
+  }
+
+
+  [IsTested()]
   public void TestJsonInitForUserClass()
   {
     string bhl = @"

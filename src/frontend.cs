@@ -1033,7 +1033,10 @@ public class Frontend : bhlBaseVisitor<object>
     if(member == null)
       FireError(Location(ctx) + ": no such attribute '" + name_str + "' in class '" + scoped_symb.name.s + "'");
 
-    var ast = AST_Util.New_JsonPair(curr_type.GetName(), name_str, scoped_symb.GetMembers().FindStringKeyIndex(name_str));
+    int name_idx = scoped_symb.GetMembers().FindStringKeyIndex(name_str);
+    if(name_idx == -1)
+      throw new Exception("Symbol index not found for '" + name_str + "'");
+    var ast = AST_Util.New_JsonPair(curr_type.GetName(), name_str, name_idx);
 
     PushJsonType(member.type.Get());
 
