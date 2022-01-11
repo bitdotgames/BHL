@@ -9208,10 +9208,140 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
+    var vm = MakeVM(bhl); 
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(0, fb.stack.Count);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForSubFailure()
+  {
+    string bhl = @"
+
+    func hey(int n, int m)
+    {
+    }
+
+    func int bar()
+    {
+      return 1
+    }
+
+    func int foo()
+    {
+      fail()
+      return 100
+    }
+
+    func test() 
+    {
+      hey(bar(), foo())
+    }
+    ";
+
+    var vm = MakeVM(bhl); 
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(0, fb.stack.Count);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForNativeBind()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      fail()
+      return 100
+    }
+
+    func test() 
+    {
+      hey(""bar"", foo())
+    }
+    ";
+
     var globs = SymbolTable.VM_CreateBuiltins();
+
+    {
+      var fn = new FuncSymbolNative("hey", globs.Type("void"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          { return null; }
+      );
+      fn.Define(new FuncArgSymbol("s", globs.Type("string")));
+      fn.Define(new FuncArgSymbol("i", globs.Type("int")));
+      globs.Define(fn);
+    }
 
     var vm = MakeVM(bhl, globs); 
     var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(0, fb.stack.Count);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForYield()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      yield()
+      return 100
+    }
+
+    func hey(string b, int a)
+    {
+    }
+
+    func test() 
+    {
+      hey(""bar"", 1 + foo())
+    }
+    ";
+
+    var vm = MakeVM(bhl); 
+    var fb = vm.Start("test");
+    AssertTrue(vm.Tick());
+    vm.Stop(fb);
+    AssertEqual(0, fb.stack.Count);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForYieldInWhile()
+  {
+    string bhl = @"
+
+    func int foo()
+    {
+      yield()
+      return 1
+    }
+
+    func doer(ref int c)
+    {
+      while(c < 2) {
+        c = c + foo()
+      }
+    }
+
+    func test() 
+    {
+      int c = 0
+      doer(ref c)
+    }
+    ";
+
+    var vm = MakeVM(bhl); 
+    var fb = vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
     AssertEqual(0, fb.stack.Count);
     CommonChecks(vm);
