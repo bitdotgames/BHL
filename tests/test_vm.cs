@@ -6154,6 +6154,36 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //[IsTested()]
+  public void TestStartSameFuncPtr()
+  {
+    string bhl = @"
+    func void foo() {
+      trace(""FOO1"")
+      yield()
+      trace(""FOO2"")
+    }
+
+    func void test() {
+      void^() fn = foo
+      paral_all {
+        start(fn)
+        start(fn)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs, true);
+    Execute(vm, "test");
+    AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestStartLambdaCaptureVars()
   {

@@ -1224,20 +1224,17 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Break node)
   {
-    Console.Write("(BRK ");
-    Console.Write(")");
+    Console.Write("(BRK)");
   }
 
   public override void DoVisit(AST_Continue node)
   {
-    Console.Write("(CONT ");
-    Console.Write(")");
+    Console.Write("(CONT)");
   }
 
   public override void DoVisit(AST_PopValue node)
   {
-    Console.Write("(POP ");
-    Console.Write(")");
+    Console.Write("(POP)");
   }
 
   public override void DoVisit(AST_Literal node)
