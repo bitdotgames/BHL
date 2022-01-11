@@ -1882,80 +1882,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestInterleaveValuesStackInParalAll()
-  {
-    string bhl = @"
-    func foo(int a, int b)
-    {
-      trace((string)a + "" "" + (string)b + "";"")
-    }
-
-    func int ret_int(int val, int ticks)
-    {
-      while(ticks > 0)
-      {
-        yield()
-        ticks = ticks - 1
-      }
-      return val
-    }
-
-    func void test() 
-    {
-      paral_all {
-        foo(1, ret_int(val: 2, ticks: 1))
-        foo(10, ret_int(val: 20, ticks: 2))
-      }
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var trace_stream = new MemoryStream();
-    BindTrace(globs, trace_stream);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-
-    var str = GetString(trace_stream);
-    AssertEqual("1 2;10 20;", str);
-
-    //NodeDump(node);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
-  public void TestCleanFuncArgsStack()
-  {
-    string bhl = @"
-    func int foo(int v) 
-    {
-      fail()
-      return v
-    }
-
-    func hey(int a, int b)
-    {
-    }
-
-    func void test() 
-    {
-      hey(1, foo(10))
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-
-    //NodeDump(node);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestCleanFuncArgsOnStackForFail()
   {
     string bhl = @"
@@ -2651,40 +2577,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCleanFuncStackInExpressionForYield()
-  {
-    string bhl = @"
-
-    func int sub_sub_call()
-    {
-      yield()
-      return 2
-    }
-
-    func int sub_call()
-    {
-      return 1 + 10 + 12 + sub_sub_call()
-    }
-
-    func test() 
-    {
-      int cost = 1 + sub_call()
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    AssertEqual(node.run(), BHS.RUNNING);
-    node.stop();
-    //NodeDump(node);
-
-    CommonChecks(intp);
-  }
-
-
-  [IsTested()]
   public void TestJsonFuncArgChainCall()
   {
     string bhl = @"
@@ -2817,7 +2709,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     AssertEqual(res, 0);
     CommonChecks(intp);
   }
-
 
   [IsTested()]
   public void TestUserClassMethodDeclVarLikeClassVar()

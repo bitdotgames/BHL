@@ -9254,6 +9254,35 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCleanFuncStackInExpressionForYield()
+  {
+    string bhl = @"
+
+    func int sub_sub_call()
+    {
+      yield()
+      return 2
+    }
+
+    func int sub_call()
+    {
+      return 1 + 10 + 12 + sub_sub_call()
+    }
+
+    func test() 
+    {
+      int cost = 1 + sub_call()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    AssertTrue(vm.Tick());
+    vm.Stop(fb);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestInterleaveValuesStackInParal()
   {
     string bhl = @"
@@ -9418,6 +9447,44 @@ public class BHL_TestVM : BHL_TestBase
               }
               return val
             }(20, 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1 2;10 20;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalAll()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func int ret_int(int val, int ticks)
+    {
+      while(ticks > 0)
+      {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func void test() 
+    {
+      paral_all {
+        foo(1, ret_int(val: 2, ticks: 1))
+        foo(10, ret_int(val: 20, ticks: 2))
       }
     }
     ";
