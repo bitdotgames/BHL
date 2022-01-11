@@ -57,8 +57,7 @@ public class TypeRef
     return type == null && name.n == 0;
   }
 
-  //TODO: get rid of this outdated version
-  public Type Get()
+  public Type Get(BaseScope symbols = null)
   {
     if(type != null)
       return type;
@@ -66,23 +65,10 @@ public class TypeRef
     if(name.n == 0)
       return null;
 
-    if(bindings == null)
-      type = (bhl.Type)Interpreter.instance.symbols.Resolve(name);
+    if(symbols != null)
+      type = (bhl.Type)symbols.Resolve(name);
     else
-      type = (bhl.Type)bindings.Resolve(name);
-
-    return type;
-  }
-
-  public Type Get(BaseScope symbols)
-  {
-    if(type != null)
-      return type;
-
-    if(name.n == 0)
-      return null;
-
-    type = (bhl.Type)symbols.Resolve(name);
+      type = (bhl.Type)bindings?.Resolve(name);
 
     return type;
   }
