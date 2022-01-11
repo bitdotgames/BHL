@@ -11371,6 +11371,34 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserSeveralClassMembersOperations()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+      int c
+    }
+
+     class Bar {
+       float a
+     }
+      
+    func float test() 
+    {
+      Foo f = { c : 2, b : 101.5 }
+      Bar b = { a : 10 }
+      f.b = f.b + f.c + b.a
+      return f.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(113.5, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInit()
   {
     string bhl = @"
@@ -11646,6 +11674,71 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual("", Execute(vm, "test").stack.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassAny()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func bool test() 
+    {
+      Foo f = {}
+      any foo = f
+      return foo != null
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassAnyCastBack()
+  {
+    string bhl = @"
+
+    class Foo { int x }
+      
+    func int test() 
+    {
+      Foo f = {x : 10}
+      any foo = f
+      Foo f1 = (Foo)foo
+      return f1.x
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestArrayOfUserClasses()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+      int c
+    }
+
+    func float test() 
+    {
+      Foo[] fs = [{b:1, c:2}]
+      fs.Add({b:10, c:20})
+
+      return fs[0].b + fs[0].c + fs[1].b + fs[1].c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(33, Execute(vm, "test").stack.PopRelease().num);
     CommonChecks(vm);
   }
 
