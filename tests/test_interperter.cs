@@ -2851,29 +2851,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestTmpUserClassWriteFieldNotAllowed()
-  {
-    string bhl = @"
-
-    class Foo { 
-      int c
-    }
-      
-    func test() 
-    {
-      (new Foo{c: 10}).c = 20
-    }
-    ";
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret(bhl);
-      },
-      @"mismatched input '(' expecting '}'"
-    );
-  }
-
-  [IsTested()]
   public void TestTypeidIsEncodedInUserClass()
   {
     string bhl = @"

@@ -11977,6 +11977,29 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestTmpUserClassWriteFieldNotAllowed()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int c
+    }
+      
+    func test() 
+    {
+      (new Foo{c: 10}).c = 20
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"mismatched input '(' expecting '}'"
+    );
+  }
+
+  [IsTested()]
   public void TestChildUserClassAlreadyDefinedMember()
   {
     string bhl = @"
