@@ -17039,6 +17039,52 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestWeirdMix()
+  {
+    string bhl = @"
+
+    func A(int b = 1)
+    {
+      trace(""A"" + (string)b)
+      suspend()
+    }
+
+    func test() 
+    {
+      while(true) {
+        int i = 0
+        paral {
+          A()
+          {
+            while(i < 1) {
+              yield()
+              i = i + 1
+            }
+          }
+        }
+        yield()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    vm.Stop(fb);
+
+    AssertEqual("A1A1", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestParseType()
   {
     {
@@ -17124,6 +17170,162 @@ public class BHL_TestVM : BHL_TestBase
       //var type = Frontend.ParseType("int]");
       //AssertTrue(type == null);
     }
+  }
+
+  [IsTested()]
+  public void TestHashedName()
+  {
+    {
+      var hn = new HashedName(0xBEAFDEADDEADBEAF);
+      AssertEqual(0xDEADBEAF, hn.n1);
+      AssertEqual(0xBEAFDEAD, hn.n2);
+      AssertEqual(0xBEAFDEADDEADBEAF, hn.n);
+      AssertEqual("", hn.s);
+    }
+
+    {
+      var hn = new HashedName("Foo");
+      AssertEqual(Hash.CRC28("Foo"), hn.n1);
+      AssertEqual(0, hn.n2);
+      AssertEqual(Hash.CRC28("Foo"), hn.n);
+      AssertEqual("Foo", hn.s);
+    }
+
+    {
+      var hn = new HashedName(0xBEAFDEADDEADBEAF, "Foo");
+      AssertEqual(0xDEADBEAF, hn.n1);
+      AssertEqual(0xBEAFDEAD, hn.n2);
+      AssertEqual(0xBEAFDEADDEADBEAF, hn.n);
+      AssertEqual("Foo", hn.s);
+    }
+
+    {
+      var hn = new HashedName("Foo", 0xDEADBEAF);
+      AssertEqual(Hash.CRC28("Foo"), hn.n1);
+      AssertEqual(0xDEADBEAF, hn.n2);
+      AssertEqual((ulong)0xDEADBEAF << 32 | (ulong)(Hash.CRC28("Foo")), hn.n);
+      AssertEqual("Foo", hn.s);
+    }
+  }
+
+  [IsTested()]
+  public void TestFixedStack()
+  {
+    //Push/PopFast
+    {
+      var st = new FixedStack<int>(16); 
+      st.Push(1);
+      st.Push(10);
+
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(10, st[1]);
+
+      AssertEqual(10, st.Pop());
+      AssertEqual(st.Count, 1);
+      AssertEqual(1, st[0]);
+
+      AssertEqual(1, st.Pop());
+      AssertEqual(st.Count, 0);
+    }
+    
+    //Push/Pop(repl)
+    {
+      var st = new FixedStack<int>(16); 
+      st.Push(1);
+      st.Push(10);
+
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(10, st[1]);
+
+      AssertEqual(10, st.Pop(0));
+      AssertEqual(st.Count, 1);
+      AssertEqual(1, st[0]);
+
+      AssertEqual(1, st.Pop(0));
+      AssertEqual(st.Count, 0);
+    }
+
+    //Push/Dec
+    {
+      var st = new FixedStack<int>(16); 
+      st.Push(1);
+      st.Push(10);
+
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(10, st[1]);
+
+      st.Dec();
+      AssertEqual(st.Count, 1);
+      AssertEqual(1, st[0]);
+
+      st.Dec();
+      AssertEqual(st.Count, 0);
+    }
+
+    //RemoveAt
+    {
+      var st = new FixedStack<int>(16); 
+      st.Push(1);
+      st.Push(2);
+      st.Push(3);
+
+      st.RemoveAt(1);
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(3, st[1]);
+    }
+
+    //RemoveAt
+    {
+      var st = new FixedStack<int>(16); 
+      st.Push(1);
+      st.Push(2);
+      st.Push(3);
+
+      st.RemoveAt(0);
+      AssertEqual(st.Count, 2);
+      AssertEqual(2, st[0]);
+      AssertEqual(3, st[1]);
+    }
+
+    //RemoveAt
+    {
+      var st = new FixedStack<int>(16); 
+      st.Push(1);
+      st.Push(2);
+      st.Push(3);
+
+      st.RemoveAt(2);
+      AssertEqual(st.Count, 2);
+      AssertEqual(1, st[0]);
+      AssertEqual(2, st[1]);
+    }
+  }
+  
+  [IsTested()]
+  public void TestValToAny()
+  {
+    string str = "str";
+    double num = 33.0;
+    bool bl = false;
+    object obj = new List<int>(33);
+
+    var vm = new VM();
+
+    var dv = Val.NewStr(vm, str);
+    Assert(dv.ToAny() == (object)str);
+    
+    dv = Val.NewNum(vm, num);
+    Assert((double)dv.ToAny() == num);
+
+    dv = Val.NewBool(vm, bl);
+    Assert((bool)dv.ToAny() == bl);
+
+    dv = Val.NewObj(vm, obj);
+    Assert(dv.ToAny() == obj);
   }
 
   [IsTested()]
