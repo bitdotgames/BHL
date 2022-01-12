@@ -6178,7 +6178,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindTrace(globs, log);
 
-    var vm = MakeVM(bhl, globs, true);
+    var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
     AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
     CommonChecks(vm);

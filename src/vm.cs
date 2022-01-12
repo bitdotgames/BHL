@@ -137,9 +137,6 @@ public class VM
   public const int MAX_IP = int.MaxValue;
   public const int STOP_IP = MAX_IP - 1;
 
-  public const int CALL_USER   = 0;
-  public const int CALL_NATIVE = 1;
-
   public struct Context
   {
     public Frame frame;
@@ -437,7 +434,7 @@ public class VM
   public struct FuncAddr
   {
     [StructLayout(LayoutKind.Explicit)]
-    public struct Double2Uint
+    struct Double2Uint
     {
       [FieldOffset(0)] public double d;
       [FieldOffset(0)] public uint u1;
@@ -446,35 +443,35 @@ public class VM
 
     static Double2Uint d2u;
 
-    int func_ip;
-    int module_idx;
-    FuncSymbolNative native;
+    public int func_ip_or_idx;
+    public int module_idx;
+    public FuncSymbolNative native;
 
-    public FuncAddr(int module_idx, int func_ip)
+    public FuncAddr(int module_idx, int func_idx)
     {
       this.module_idx = module_idx;
-      this.func_ip = func_ip;
+      this.func_ip_or_idx = func_idx;
       this.native = null;
     }
 
     public FuncAddr(int func_ip)
     {
       this.module_idx = -1;
-      this.func_ip = func_ip;
+      this.func_ip_or_idx = func_ip;
       this.native = null;
     }
 
     public FuncAddr(FuncSymbolNative native)
     {
       this.module_idx = -1;
-      this.func_ip = -1;
+      this.func_ip_or_idx = -1;
       this.native = native;
     }
 
     public FuncAddr(Val v)
     {
       native = null;
-      func_ip = -1;
+      func_ip_or_idx = -1;
       module_idx = -1;
 
       if(v._obj != null)
@@ -485,31 +482,55 @@ public class VM
         if(d2u.u1 == 0xFFFFFF)
         {
           module_idx = -1;
-          func_ip = (int)d2u.u2;
+          func_ip_or_idx = (int)d2u.u2;
         }
         else
         {
           module_idx = (int)d2u.u1;
-          func_ip = (int)d2u.u2;
+          func_ip_or_idx = (int)d2u.u2;
         }
       }
     }
 
-    public void Encode(Val v)
+    public Val Encode(VM vm)
     {
+      var v = Val.New(vm);
       if(native != null)
         v._obj = native;
       else if(module_idx != -1)
       {
         d2u.u1 = (uint)module_idx;
-        d2u.u2 = (uint)func_ip;
+        d2u.u2 = (uint)func_ip_or_idx;
         v._num = d2u.d;
       }
       else
       {
         d2u.u1 = 0xFFFFFF;
-        d2u.u2 = (uint)func_ip;
+        d2u.u2 = (uint)func_ip_or_idx;
         v._num = d2u.d;
+      }
+      return v;
+    }
+
+    public Frame MakeFrame(Frame origin)
+    {
+      if(module_idx == -1)
+      {
+        var fr = Frame.New(origin.vm);
+        fr.Init(origin, func_ip_or_idx);
+        return fr;
+      }
+      else
+      {
+        string module_name = origin.constants[module_idx].str;
+        var module = origin.vm.modules[module_name];
+        string func_name = origin.constants[func_ip_or_idx].str;
+
+        int func_ip = module.func2ip[func_name];
+
+        var fr = Frame.New(origin.vm);
+        fr.Init(origin.fb, origin.vm.modules[module_name], func_ip);
+        return fr;
       }
     }
   }
@@ -1085,18 +1106,16 @@ public class VM
       case Opcodes.GetFunc:
         {
           int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-          var func_frame = Frame.New(this);
-          func_frame.Init(curr_frame, func_ip);
-          curr_frame.stack.Push(Val.NewObj(this, func_frame));
+          var addr = new FuncAddr(func_ip);
+          curr_frame.stack.Push(addr.Encode(this));
         }
         break;
       case Opcodes.GetFuncNative:
         {
           int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
           var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
-          var fn_val = Val.NewObj(this, func_symb);
-          fn_val._num = CALL_NATIVE;
-          curr_frame.stack.Push(fn_val);
+          var addr = new FuncAddr(func_symb);
+          curr_frame.stack.Push(addr.Encode(this));
         }
         break;
       case Opcodes.GetMethodNative:
@@ -1107,10 +1126,8 @@ public class VM
           string class_type = curr_frame.constants[class_type_idx].str; 
 
           var class_symb = (ClassSymbol)symbols.Resolve(class_type);
-          var func_symb = (FuncSymbolNative)class_symb.members[func_idx];
-          var fn_val = Val.NewObj(this, func_symb);
-          fn_val._num = CALL_NATIVE;
-          curr_frame.stack.Push(fn_val);
+          var addr = new FuncAddr((FuncSymbolNative)class_symb.members[func_idx]);
+          curr_frame.stack.Push(addr.Encode(this));
         }
         break;
       case Opcodes.GetFuncImported:
@@ -1118,112 +1135,54 @@ public class VM
           int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
           int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
-          string module_name = curr_frame.constants[module_idx].str;
-          string func_name = curr_frame.constants[func_idx].str;
-
-          var module = modules[module_name];
-          //TODO: during postprocessing retrieve func_ip and encode it into the opcode
-          //      so that there will be two Dictionary fetches less
-          int func_ip = module.func2ip[func_name];
-
-          var func_frame = Frame.New(this);
-          func_frame.Init(curr_frame.fb, module, func_ip);
-          curr_frame.stack.Push(Val.NewObj(this, func_frame));
+          var addr = new FuncAddr(module_idx, func_idx);
+          curr_frame.stack.Push(addr.Encode(this));
         }
         break;
       case Opcodes.GetFuncFromVar:
         {
           int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
           var val = curr_frame.locals[local_var_idx];
-          if(val._obj is Frame frm)
-          {
-            //NOTE: we need to make an authentic copy of the original Frame stored in a var 
-            //      in case it's already being executed. The dumbest (but not the best one?)
-            //      way to do that is to check ref counter.
-            if(frm.refs > 1)
-            {
-              var frm_clone = Frame.New(this);
-              frm_clone.Init(frm, frm.start_ip);
-              curr_frame.stack.Push(Val.NewObj(this, frm_clone));
-            }
-            else
-            {
-              //NOTE: we need to call an extra Retain since Release will be called for this frame 
-              //      during its execution of Opcode.Return, however since this frame is stored in a var 
-              //      and this var will be released at some point we want to avoid 'double free' situation 
-              frm.Retain();
-              curr_frame.stack.Push(Val.NewObj(this, frm));
-            }
-          }
-          else
-          {
-            var func_symb = (FuncSymbolNative)val._obj;
-            var fn_val = Val.NewObj(this, func_symb);
-            //marking it a native call
-            fn_val._num = CALL_NATIVE;
-            curr_frame.stack.Push(fn_val);
-          }
+          val.Retain();
+          curr_frame.stack.Push(val);
         }
         break;
       case Opcodes.GetLambda:
         {
-          //NOTE: geting rid of Frame on the stack left after Opcode.Lambda.
+          //NOTE: geting rid of addr on the stack left after Opcode.Lambda.
           //      Since lambda is called 'inplace' we need to generate proper 
           //      opcode sequence required for Opcode.Call
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
           var args_info = new FuncArgsInfo(args_bits);
-          int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-          var fr_val = curr_frame.stack[fr_idx];
-          curr_frame.stack.RemoveAt(fr_idx);
-          curr_frame.stack.Push(fr_val);
+          int addr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
+          var addr = curr_frame.stack[addr_idx];
+          curr_frame.stack.RemoveAt(addr_idx);
+          curr_frame.stack.Push(addr);
         }
         break;
       case Opcodes.GetFuncFromAttr:
         {
-          //NOTE: currently Frame stored in member attribute is passed the last
+          //NOTE: currently addr stored in member attribute is passed the last
           //      on the stack and arguments follow it, we need to put it first 
           //      so that it fullfills Opcode.Call requirements 
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
           var args_info = new FuncArgsInfo(args_bits);
-          int fr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-          var fr_val = curr_frame.stack[fr_idx];
-          curr_frame.stack.RemoveAt(fr_idx);
-
-          //NOTE: we need to make an authentic copy of the original Frame stored in a var 
-          //      in case it's already being executed. The dumbest (but not the best one?)
-          //      way to do that is to check ref counter.
-          if(fr_val._obj is Frame frm)
-          {
-            if(frm.refs > 1)
-            {
-              fr_val.Release();
-
-              var frm_clone = Frame.New(this);
-              frm_clone.Init(frm, frm.start_ip);
-              fr_val = Val.NewObj(this, frm_clone); 
-            }
-          }
-          else
-          {
-            //marking it a native call
-            fr_val._num = CALL_NATIVE;
-          }
-
-          curr_frame.stack.Push(fr_val);
+          int addr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
+          var addr = curr_frame.stack[addr_idx];
+          curr_frame.stack.RemoveAt(addr_idx);
+          curr_frame.stack.Push(addr);
         }
         break;
       case Opcodes.Call:
         {
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-          var val = curr_frame.stack.Pop();
+          var addr = new FuncAddr(curr_frame.stack.PopRelease());
+
           //checking if it's a userland or native func call
-          if(val._num == CALL_USER)
+          if(addr.native == null)
           {
-            var fr = (Frame)val._obj;
-            //NOTE: it will be released once return is invoked
-            fr.Retain();
-            val.Release();
+            var fr = addr.MakeFrame(curr_frame);
 
             var args_info = new FuncArgsInfo(args_bits);
             for(int i = 0; i < args_info.CountArgs(); ++i)
@@ -1238,15 +1197,12 @@ public class VM
           }
           else
           {
-            var func_symb = (FuncSymbolNative)val._obj;
-            val.Release();
-
             var args_info = new FuncArgsInfo(args_bits);
             for(int i = 0; i < args_info.CountArgs(); ++i)
               curr_frame.stack.Push(curr_frame.stack.Pop());
 
             var status = BHS.SUCCESS;
-            var new_instruction = func_symb.VM_cb(curr_frame, args_info, ref status);
+            var new_instruction = addr.native.VM_cb(curr_frame, args_info, ref status);
 
             if(new_instruction != null)
             {
@@ -1275,9 +1231,8 @@ public class VM
       case Opcodes.Lambda:
         {             
           short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-          var fr = Frame.New(this);
-          fr.Init(curr_frame, ip+1/*func address*/);
-          curr_frame.stack.Push(Val.NewObj(this, fr));
+          var addr = new FuncAddr(ip+1);
+          curr_frame.stack.Push(addr.Encode(this));
 
           ip += offset;
         }

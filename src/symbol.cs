@@ -1608,11 +1608,10 @@ static public class SymbolTable
       var fn = new FuncSymbolNative("start", globals.Type("int"), null,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
-          var vfn = frm.stack.Pop();
-          //NOTE: we don't decrease ref.count for the payload
-          vfn.RefMod(RefOp.DEC);
-          int fid = frm.vm.Start((VM.Frame)vfn._obj).id;
-          frm.stack.Push(Val.NewNum(frm.vm, fid));
+          var addr = new VM.FuncAddr(frm.stack.PopRelease());
+          var new_frm = addr.MakeFrame(frm);
+          int id = frm.vm.Start(new_frm).id;
+          frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         } 
       );
