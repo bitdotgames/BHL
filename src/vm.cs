@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace bhl {
 
@@ -430,6 +431,86 @@ public class VM
       --refs;
       if(refs == 0)
         Del(this);
+    }
+  }
+
+  public struct FuncAddr
+  {
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Double2Uint
+    {
+      [FieldOffset(0)] public double d;
+      [FieldOffset(0)] public uint u1;
+      [FieldOffset(4)] public uint u2;
+    }
+
+    static Double2Uint d2u;
+
+    int func_ip;
+    int module_idx;
+    FuncSymbolNative native;
+
+    public FuncAddr(int module_idx, int func_ip)
+    {
+      this.module_idx = module_idx;
+      this.func_ip = func_ip;
+      this.native = null;
+    }
+
+    public FuncAddr(int func_ip)
+    {
+      this.module_idx = -1;
+      this.func_ip = func_ip;
+      this.native = null;
+    }
+
+    public FuncAddr(FuncSymbolNative native)
+    {
+      this.module_idx = -1;
+      this.func_ip = -1;
+      this.native = native;
+    }
+
+    public FuncAddr(Val v)
+    {
+      native = null;
+      func_ip = -1;
+      module_idx = -1;
+
+      if(v._obj != null)
+        native = (FuncSymbolNative)v._obj;
+      else
+      {
+        d2u.d = v._num;
+        if(d2u.u1 == 0xFFFFFF)
+        {
+          module_idx = -1;
+          func_ip = (int)d2u.u2;
+        }
+        else
+        {
+          module_idx = (int)d2u.u1;
+          func_ip = (int)d2u.u2;
+        }
+      }
+    }
+
+    public void Encode(Val v)
+    {
+      if(native != null)
+        v._obj = native;
+      else if(module_idx != -1)
+      {
+        d2u.u1 = (uint)module_idx;
+        d2u.u2 = (uint)func_ip;
+        v._num = d2u.d;
+      }
+      else
+      {
+        d2u.u1 = 0xFFFFFF;
+        d2u.u2 = (uint)func_ip;
+        v._num = d2u.d;
+      }
     }
   }
 

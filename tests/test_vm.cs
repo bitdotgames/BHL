@@ -6154,7 +6154,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestStartSameFuncPtr()
   {
     string bhl = @"
