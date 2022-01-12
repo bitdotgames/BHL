@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -15,7 +16,9 @@ namespace bhlsp
     
     public BHLSPServer(Stream output, Stream input)
     {
-      var target = new BHLSPServerTarget(this);
+      var target = new BHLSPServerTarget();
+
+      target.AttachRpcService(new BHLSPGeneralJsonRpcService());
       
       connection = new BHLSPConnection(output, input, target);
     }
@@ -36,8 +39,6 @@ namespace bhlsp
         }
       }
     }
-    
-    
   }
   
   internal class BHLSPConnection
@@ -66,44 +67,37 @@ namespace bhlsp
     public async Task<bool> ReadAndHandle()
     {
       string json = await Read();
-      var req = JsonConvert.DeserializeObject<RequestMessage>(json); //TODO: Batch Mode
-      if(req == null)
-        return false;
 
-      object result = HandleRequest(req);
-      if (result is ResponseMessage resp)
+      RequestMessage req = null;
+      ResponseMessage resp = null;
+
+      try
+      {
+        req = JsonConvert.DeserializeObject<RequestMessage>(json);
+        if(req == null)
+          return false;
+      }
+      catch
+      {
+        resp = new ResponseMessage
+        {
+          id = null, error = new ResponseError
+          {
+            code = (int)ErrorCodes.ParseError,
+            message = ""
+          }
+        };
+      }
+      
+      if(req != null && req.IsMessage())
+        resp = target.HandleMessage(req);
+      
+      if(resp != null)
         Write(JsonConvert.SerializeObject(resp));
       
       return true;
     }
     
-    public object HandleRequest(RequestMessage req)
-    {
-      if(req.IsMessage())
-      {
-        //BHLSPC.Logger.WriteLine($"INCOMING {req.method} \r\n {json} \r\n");
-        
-        foreach(var method in target.GetType().GetMethods())
-        {
-          if (IsJsonRpcMethod(method, req.method))
-            return method.Invoke(target, new object[] {req.id, req.@params});
-        }
-      }
-
-      return null;
-    }
-    
-    private bool IsJsonRpcMethod(MethodInfo method, string name)
-    {
-      foreach(var attribute in method.GetCustomAttributes(true))
-      {
-        if(attribute is JsonRpcMethodAttribute jsonRpcMethod && jsonRpcMethod.Method == name)
-          return true;
-      }
-      
-      return false;
-    }
-
     private async Task<string> Read()
     {
       int length = await FillBufferAsync();
@@ -174,6 +168,52 @@ namespace bhlsp
     }
   }
   
+  internal abstract class MessageBase
+  {
+    public string jsonrpc { get; set; } = "2.0";
+
+    public bool IsMessage()
+    {
+      return jsonrpc == "2.0";
+    }
+  }
+  
+  internal class RequestMessage : MessageBase
+  {
+    public SumType<int, string> id { get; set; }
+    public string method { get; set; }
+    public JToken @params { get; set; }
+  }
+  
+  public enum ErrorCodes
+  {
+    ParseError = -32700,
+    InvalidRequest = -32600,
+    MethodNotFound = -32601,
+    InvalidParams = -32602,
+    InternalError = -32603,
+    ServerErrorStart = -32099,
+    ServerErrorEnd = -32000,
+    ServerNotInitialized = -32002,
+    UnknownErrorCode = -32001,
+    RequestCancelled = -32800,
+    RequestFailed = -32803 // @since 3.17.0
+  }
+  
+  internal class ResponseError
+  {
+    public int code { get; set; }
+    public string message { get; set; }
+    public object data { get; set; }
+  }
+  
+  internal class ResponseMessage : MessageBase
+  {
+    public SumType<int, string> id { get; set; }
+    public object result { get; set; }
+    public ResponseError error { get; set; }
+  }
+  
   [AttributeUsage(AttributeTargets.Method)]
   public class JsonRpcMethodAttribute : Attribute
   {
@@ -186,24 +226,249 @@ namespace bhlsp
 
     public string Method => method;
   }
+
+  internal abstract class BHLSPJsonRpcService
+  {
+  }
+
+  internal abstract class BHLSPGeneralJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("initialize")]
+    public abstract RpcResult Initialize(InitializeParams args);
+
+    [JsonRpcMethod("initialized")]
+    public abstract RpcResult Initialized();
+
+    [JsonRpcMethod("shutdown")]
+    public abstract RpcResult Shutdown();
+
+    [JsonRpcMethod("exit")]
+    public abstract RpcResult Exit();
+  }
+
+  internal abstract class BHLSPTextDocumentJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("textDocument/didOpen")]
+    public abstract RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args);
+
+    [JsonRpcMethod("textDocument/didChange")]
+    public abstract RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args);
+
+    [JsonRpcMethod("textDocument/willSave")]
+    public abstract RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args);
+
+    [JsonRpcMethod("textDocument/willSaveWaitUntil")]
+    public abstract RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args);
+
+    [JsonRpcMethod("textDocument/didSave")]
+    public abstract RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args);
+
+    [JsonRpcMethod("textDocument/didClose")]
+    public abstract RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args);
+
+    [JsonRpcMethod("textDocument/completion")]
+    public abstract RpcResult Completion(CompletionParams args);
+
+    [JsonRpcMethod("completionItem/resolve")]
+    public abstract RpcResult ResolveCompletionItem(CompletionItem args);
+
+    [JsonRpcMethod("textDocument/hover")]
+    public abstract RpcResult Hover(TextDocumentPositionParams args);
+
+    [JsonRpcMethod("textDocument/signatureHelp")]
+    public abstract RpcResult SignatureHelp(TextDocumentPositionParams args);
+
+    [JsonRpcMethod("textDocument/references")]
+    public abstract RpcResult FindReferences(ReferenceParams args);
+
+    [JsonRpcMethod("textDocument/documentHighlight")]
+    public abstract RpcResult DocumentHighlight(TextDocumentPositionParams args);
+
+    [JsonRpcMethod("textDocument/documentSymbol")]
+    public abstract RpcResult DocumentSymbols(DocumentSymbolParams args);
+
+    [JsonRpcMethod("textDocument/documentColor")]
+    public abstract RpcResult DocumentColor(DocumentColorParams args);
+
+    [JsonRpcMethod("textDocument/colorPresentation")]
+    public abstract RpcResult ColorPresentation(ColorPresentationParams args);
+
+    [JsonRpcMethod("textDocument/formatting")]
+    public abstract RpcResult DocumentFormatting(DocumentFormattingParams args);
+
+    [JsonRpcMethod("textDocument/rangeFormatting")]
+    public abstract RpcResult DocumentRangeFormatting(DocumentRangeFormattingParams args);
+
+    [JsonRpcMethod("textDocument/onTypeFormatting")]
+    public abstract RpcResult DocumentOnTypeFormatting(DocumentOnTypeFormattingParams args);
+
+    [JsonRpcMethod("textDocument/definition")]
+    public abstract RpcResult GotoDefinition(TextDocumentPositionParams args);
+
+    [JsonRpcMethod("textDocument/typeDefinition")]
+    public abstract RpcResult GotoTypeDefinition(TextDocumentPositionParams args);
+
+    [JsonRpcMethod("textDocument/implementation")]
+    public abstract RpcResult GotoImplementation(TextDocumentPositionParams args);
+
+    [JsonRpcMethod("textDocument/codeAction")]
+    public abstract RpcResult CodeAction(CodeActionParams args);
+
+    [JsonRpcMethod("textDocument/codeLens")]
+    public abstract RpcResult CodeLens(CodeLensParams args);
+
+    [JsonRpcMethod("codeLens/resolve")]
+    public abstract RpcResult ResolveCodeLens(CodeLens args);
+
+    [JsonRpcMethod("textDocument/documentLink")]
+    public abstract RpcResult DocumentLink(DocumentLinkParams args);
+
+    [JsonRpcMethod("documentLink/resolve")]
+    public abstract RpcResult ResolveDocumentLink(DocumentLink args);
+
+    [JsonRpcMethod("textDocument/rename")]
+    public abstract RpcResult Rename(RenameParams args);
+
+    [JsonRpcMethod("textDocument/foldingRange")]
+    public abstract RpcResult FoldingRange(FoldingRangeParams args);
+  }
+
+  internal abstract class BHLSPWorkspaceJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("workspace/didChangeWorkspaceFolders")]
+    public abstract RpcResult DidChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams args);
+
+    [JsonRpcMethod("workspace/didChangeConfiguration")]
+    public abstract RpcResult DidChangeConfiguration(DidChangeConfigurationParams args);
+
+    [JsonRpcMethod("workspace/didChangeWatchedFiles")]
+    public abstract RpcResult DidChangeWatchedFiles(DidChangeWatchedFilesParams args);
+
+    [JsonRpcMethod("workspace/symbol")]
+    public abstract RpcResult Symbol(WorkspaceSymbolParams args);
+
+    [JsonRpcMethod("workspace/executeCommand")]
+    public abstract RpcResult ExecuteCommand(ExecuteCommandParams args);
+  }
   
   internal class BHLSPServerTarget
   {
-    private BHLSPServer server;
-    
-    public BHLSPServerTarget(BHLSPServer server)
+    List<BHLSPJsonRpcService> services = new List<BHLSPJsonRpcService>();
+
+    public BHLSPServerTarget AttachRpcService(BHLSPJsonRpcService service)
     {
-      this.server = server;
+      services.Add(service);
+      return this;
     }
     
-    [JsonRpcMethod("initialize")]
-    public object Initialize(SumType<int, string> id, JToken args)
+    public ResponseMessage HandleMessage(RequestMessage request)
     {
-      BHLSPC.Logger.WriteLine("--> Initialize");
-      BHLSPC.Logger.WriteLine(args.ToString());
+      BHLSPC.Logger.WriteLine($"--> {request.method}");
+
+      ResponseMessage response = null;
+      bool isNotification = request.id.Value == null;
       
-      var init_params = args.ToObject<InitializeParams>();
+      try
+      {
+        RpcResult result = CallRpcMethod(request.method, request.@params);
+          
+        if (!isNotification)
+        {
+          response = new ResponseMessage
+          {
+            id = request.id,
+            result = result.result,
+            error = result.error
+          };
+        }
+      }
+      catch (Exception e)
+      {
+        BHLSPC.Logger.WriteLine(e);
+        if(!isNotification)
+        {
+          response = new ResponseMessage
+          {
+            id = request.id, error = new ResponseError
+            {
+              code = (int)ErrorCodes.InternalError,
+              message = ""
+            }
+          };
+        }
+      }
       
+      if(response != null)
+        BHLSPC.Logger.WriteLine($"<-- {request.method}");
+      
+      return response;
+    }
+
+    private RpcResult CallRpcMethod(string name, JToken @params)
+    {
+      foreach (var service in services)
+      {
+        foreach (var method in service.GetType().GetMethods())
+        {
+          if (IsAllowedToInvoke(method, name))
+          {
+            object[] args = null;
+            var pms = method.GetParameters();
+            if(pms.Length > 0)
+              args = new[] { @params.ToObject(pms[0].ParameterType) };
+            
+            return (RpcResult)method.Invoke(service, args);
+          }
+        }
+      }
+      
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int)ErrorCodes.MethodNotFound,
+        message = ""
+      });
+    }
+
+    private bool IsAllowedToInvoke(MethodInfo m, string name)
+    {
+      foreach(var attribute in m.GetCustomAttributes(true))
+      {
+        if(attribute is JsonRpcMethodAttribute jsonRpcMethod && jsonRpcMethod.Method == name)
+          return true;
+      }
+
+      return false;
+    }
+  }
+  
+  internal class RpcResult
+  {
+    public object result;
+    public ResponseError error;
+    
+    public static RpcResult Success(object result)
+    {
+      return new RpcResult(result, null);
+    }
+
+    public static RpcResult Error(ResponseError error)
+    {
+      return new RpcResult(null, error);
+    }
+    
+    RpcResult(object result, ResponseError error)
+    {
+      this.result = result;
+      this.error = error;
+    }
+  }
+
+#region -- RPC SERVICES --
+
+  internal class BHLSPGeneralJsonRpcService : BHLSPGeneralJsonRpcServiceTemplate
+  {
+    public override RpcResult Initialize(InitializeParams args)
+    {
       ServerCapabilities capabilities = new ServerCapabilities
       {
         textDocumentSync = new TextDocumentSyncOptions
@@ -262,7 +527,7 @@ namespace bhlsp
         },
       };
       
-      InitializeResult result = new InitializeResult
+      return RpcResult.Success(new InitializeResult
       {
         capabilities = capabilities,
         serverInfo = new InitializeResult.InitializeResultsServerInfo
@@ -270,73 +535,26 @@ namespace bhlsp
           name = "bhlsp",
           version = "0.0.1"
         }
-      };
-      
-      string json = JsonConvert.SerializeObject(result);
-      BHLSPC.Logger.WriteLine("<-- Initialize");
-      BHLSPC.Logger.WriteLine(json);
-      
-      return new ResponseMessage { id = id, result = result };
+      });
     }
-    
-    [JsonRpcMethod("initialized")]
-    public void Initialized(SumType<int, string> id, JToken args)
+
+    public override RpcResult Initialized()
     {
-      BHLSPC.Logger.WriteLine("--> Initialized");
+      return RpcResult.Success(null);
     }
-    
-    [JsonRpcMethod("shutdown")]
-    public object Shutdown(SumType<int, string> id, JToken args)
+
+    public override RpcResult Shutdown()
     {
-      BHLSPC.Logger.WriteLine("--> Shutdown");
-      return new ResponseMessage { id = id };
+      return RpcResult.Success(null);
+    }
+
+    public override RpcResult Exit()
+    {
+      return RpcResult.Success(null);
     }
   }
 
-  internal abstract class MessageBase
-  {
-    public string jsonrpc { get; set; } = "2.0";
-
-    public bool IsMessage()
-    {
-      return jsonrpc == "2.0";
-    }
-  }
-
-  internal class RequestMessage : MessageBase
-  {
-    public SumType<int, string> id { get; set; }
-    public string method { get; set; }
-    public JToken @params { get; set; }
-  }
-  
-  public enum ErrorCodes
-  {
-    ParseError = -32700,
-    InvalidRequest = -32600,
-    MethodNotFound = -32601,
-    InvalidParams = -32602,
-    InternalError = -32603,
-    ServerErrorStart = -32099,
-    ServerErrorEnd = -32000,
-    ServerNotInitialized = -32002,
-    UnknownErrorCode = -32001,
-    RequestCancelled = -32800,
-  }
-  
-  internal class ResponseError
-  {
-    public ErrorCodes code { get; set; }
-    public string message { get; set; }
-    public object data { get; set; }
-  }
-  
-  internal class ResponseMessage : MessageBase
-  {
-    public SumType<int, string> id { get; set; }
-    public object result { get; set; }
-    public ResponseError error { get; set; }
-  }
+#endregion  
   
 #region -- PROTOCOL ---
   
@@ -1117,12 +1335,1013 @@ namespace bhlsp
 	   */
     public InitializeResultsServerInfo serverInfo { get; set; }
   }
-  
-  public enum InitializeErrorCode { UnknownProtocolVersion = 1 }
-  
+
   public class InitializeError
   {
     public bool retry { get; set; }
   }
+  
+  public class TextDocumentItem
+  {
+    /**
+     * The text document's URI.
+     */
+    public string uri { get; set; }
+
+    /**
+     * The text document's language identifier.
+     */
+    public string languageId { get; set; }
+
+    /**
+     * The version number of this document (it will increase after each
+     * change, including undo/redo).
+     */
+    public int version { get; set; }
+
+    /**
+     * The content of the opened text document.
+     */
+    public string text { get; set; }
+  }
+  
+  public class DidOpenTextDocumentParams
+  {
+    /**
+     * The document that was opened.
+     */
+    public TextDocumentItem textDocument { get; set; }
+  }
+  
+  public class TextDocumentIdentifier
+  {
+    /**
+     * The text document's URI.
+     */
+    public string uri { get; set; }
+  }
+  
+  public class VersionedTextDocumentIdentifier : TextDocumentIdentifier
+  {
+    /**
+     * The version number of this document.
+	   *
+	   * The version number of a document will increase after each change,
+	   * including undo/redo. The number doesn't need to be consecutive.
+     */
+    public int version { get; set; }
+  }
+  
+  public class Position
+  {
+    /**
+     * Line position in a document (zero-based).
+     */
+    public uint line { get; set; }
+
+    /**
+     * Character offset on a line in a document (zero-based). Assuming that
+	   * the line is represented as a string, the `character` value represents
+	   * the gap between the `character` and `character + 1`.
+	   *
+	   * If the character value is greater than the line length it defaults back
+	   * to the line length.
+     */
+    public uint character { get; set; }
+  }
+  
+  public class Range
+  {
+    /**
+     * The range's start position.
+     */
+    public Position start { get; set; }
+
+    /**
+     * The range's end position.
+     */
+    public Position end { get; set; }
+  }
+  
+  public class TextDocumentContentChangeEvent
+  {
+    /**
+     * The range of the document that changed.
+     */
+    public Range range { get; set; }
+
+    /**
+     * The optional length of the range that got replaced.
+     *
+     * @deprecated use range instead.
+     */
+    public uint? rangeLength { get; set; }
+
+    /**
+     * The new text for the provided range.
+     * or
+     * The new text of the whole document.
+     */
+    public string text { get; set; }
+  }
+  
+  public class DidChangeTextDocumentParams
+  {
+    /**
+     * The document that did change. The version number points
+     * to the version after all provided content changes have
+     * been applied.
+     */
+    public VersionedTextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * The actual content changes. The content changes describe single state
+	   * changes to the document. So if there are two content changes c1 (at
+	   * array index 0) and c2 (at array index 1) for a document in state S then
+	   * c1 moves the document from S to S' and c2 from S' to S''. So c1 is
+	   * computed on the state S and c2 is computed on the state S'.
+	   *
+       * To mirror the content of a document using change events use the following
+	   * approach:
+	   * - start with the same initial content
+     * - apply the 'textDocument/didChange' notifications in the order you
+	   *   receive them.
+	   * - apply the `TextDocumentContentChangeEvent`s in a single notification
+	   *   in the order you receive them.
+     */
+    public TextDocumentContentChangeEvent[] contentChanges { get; set; }
+  }
+  
+  public enum TextDocumentSaveReason { Manual = 1, AfterDelay = 2, FocusOut = 3 }
+  
+  public class WillSaveTextDocumentParams
+  {
+    /**
+     * The document that will be saved.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * The 'TextDocumentSaveReason'.
+     */
+    public TextDocumentSaveReason reason { get; set; }
+  }
+  
+  public class DidSaveTextDocumentParams
+  {
+    /**
+     * The document that was saved.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * Optional the content when saved. Depends on the includeText value
+     * when the save notification was requested.
+     */
+    public string text { get; set; }
+  }
+  
+  public class DidCloseTextDocumentParams
+  {
+    /**
+     * The document that was closed.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+  }
+  
+  public class TextDocumentPositionParams
+  {
+    /**
+     * The text document.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * The position inside the text document.
+     */
+    public Position position { get; set; }
+  }
+  
+  public enum CompletionTriggerKind { Invoked = 1, TriggerCharacter = 2, TriggerForIncompleteCompletions = 3 }
+  
+  public class CompletionContext
+  {
+    /**
+     * How the completion was triggered.
+     */
+    public CompletionTriggerKind triggerKind { get; set; }
+
+    /**
+     * The trigger character (a single character) that has trigger code
+	   * complete. Is undefined if
+	   * `triggerKind !== CompletionTriggerKind.TriggerCharacter`
+	   */
+    public string triggerCharacter { get; set; }
+  }
+  
+  public class CompletionParams : TextDocumentPositionParams
+  {
+    /**
+     * The completion context. This is only available if the client specifies
+     * to send this using the client capability
+	   * `completion.contextSupport === true`
+     */
+    public CompletionContext context { get; set; }
+
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    public SumType<string, int> workDoneToken { get; set; }
+        
+    /**
+     * An optional token that a server can use to report partial results (e.g. streaming) to
+     * the client.
+     */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public enum CompletionItemKind
+  {
+    Text = 1,
+    Method = 2,
+    Function = 3,
+    Constructor = 4,
+    Field = 5,
+    Variable = 6,
+    Class = 7,
+    Interface = 8,
+    Module = 9,
+    Property = 10,
+    Unit = 11,
+    Value = 12,
+    Enum = 13,
+    Keyword = 14,
+    Snippet = 15,
+    Color = 16,
+    File = 17,
+    Reference = 18,
+    Folder = 19,
+    EnumMember = 20,
+    Constant = 21,
+    Struct = 22,
+    Event = 23,
+    Operator = 24,
+    TypeParameter = 25,
+  }
+  
+  public enum CompletionItemTag { Deprecated = 1 }
+  
+  public class MarkupContent
+  {
+    /**
+     * The type of the Markup
+     * PlainText: 'plaintext' = 'plaintext';
+     * Markdown: 'markdown' = 'markdown';
+     * type MarkupKind = 'plaintext' | 'markdown';
+     */
+    public string kind { get; set; }
+
+    /**
+     * The content itself
+     */
+    public string value { get; set; }
+  }
+  
+  public enum InsertTextFormat { Plaintext = 1, Snippet = 2 }
+  
+  public enum InsertTextMode { AsIs = 1, AdjustIndentation = 2 }
+  
+  public class TextEdit
+  {
+    /**
+     * The range of the text document to be manipulated. To insert
+     * text into a document create a range where start === end.
+     */
+    public Range range { get; set; }
+
+    /**
+     * The string to be inserted. For delete operations use an
+     * empty string.
+     */
+    public string newText { get; set; }
+  }
+  
+  public class InsertReplaceEdit
+  {
+    /**
+	   * The string to be inserted.
+	   */
+    public string newText { get; set; }
+
+    /**
+	   * The range if the insert is requested
+	   */
+    public Range insert { get; set; }
+
+    /**
+	   * The range if the replace is requested.
+	   */
+    public Range replace { get; set; }
+  }
+  
+  public class Command
+  {
+    /**
+     * Title of the command, like `save`.
+     */
+    public string title { get; set; }
+
+    /**
+     * The identifier of the actual command handler.
+     */
+    public string command { get; set; }
+
+    /**
+     * Arguments that the command handler should be
+     * invoked with.
+     */
+    public object[] arguments { get; set; }
+  }
+  
+  public class CompletionItem
+  {
+    /**
+	   * The label of this completion item.
+	   *
+	   * The label property is also by default the text that
+	   * is inserted when selecting this completion.
+	   *
+	   * If label details are provided the label itself should
+	   * be an unqualified name of the completion item.
+	   */
+    public string label { get; set; }
+
+    /**
+	   * The kind of this completion item. Based of the kind
+	   * an icon is chosen by the editor. The standardized set
+	   * of available values is defined in `CompletionItemKind`.
+	   */
+    public CompletionItemKind? kind { get; set; }
+
+    /**
+     * Tags for this completion item.
+     *
+     * @since 3.15.0
+     */
+    public CompletionItemTag[] tags { get; set; }
+
+    /**
+     * A human-readable string with additional information
+     * about this item, like type or symbol information.
+     */
+    public string detail { get; set; }
+
+    /**
+     * A human-readable string that represents a doc-comment.
+     */
+    public SumType<string, MarkupContent> documentation { get; set; }
+
+    /**
+     * Indicates if this item is deprecated.
+     *
+     * @deprecated Use `tags` instead if supported.
+     */
+    public bool? deprecated { get; set; }
+
+    /**
+     * Select this item when showing.
+     *
+     * *Note* that only one completion item can be selected and that the
+     * tool / client decides which item that is. The rule is that the *first*
+     * item of those that match best is selected.
+     */
+    public bool? preselect { get; set; }
+
+    /**
+     * A string that should be used when comparing this item
+     * with other items. When `falsy` the label is used.
+     */
+    public string sortText { get; set; }
+
+    /**
+     * A string that should be used when filtering a set of
+     * completion items. When `falsy` the label is used.
+     */
+    public string filterText { get; set; }
+
+    /**
+     * A string that should be inserted into a document when selecting
+     * this completion. When `falsy` the label is used.
+     *
+     * The `insertText` is subject to interpretation by the client side.
+     * Some tools might not take the string literally. For example
+     * VS Code when code complete is requested in this example
+	   * `con<cursor position>` and a completion item with an `insertText` of
+	   * `console` is provided it will only insert `sole`. Therefore it is
+	   * recommended to use `textEdit` instead since it avoids additional client
+	   * side interpretation.
+     */
+    public string insertText { get; set; }
+
+    /**
+	   * The format of the insert text. The format applies to both the
+	   * `insertText` property and the `newText` property of a provided
+	   * `textEdit`. If omitted defaults to `InsertTextFormat.PlainText`.
+	   *
+	   * Please note that the insertTextFormat doesn't apply to
+	   * `additionalTextEdits`.
+	   */
+    public InsertTextFormat insertTextFormat { get; set; }
+
+    /**
+	   * How whitespace and indentation is handled during completion
+	   * item insertion. If not provided the client's default value depends on
+	   * the `textDocument.completion.insertTextMode` client capability.
+	   *
+	   * @since 3.16.0
+	   * @since 3.17.0 - support for `textDocument.completion.insertTextMode`
+	   */
+    public InsertTextMode? insertTextMode { get; set; }
+
+    /**
+     * An edit which is applied to a document when selecting this completion.
+	   * When an edit is provided the value of `insertText` is ignored.
+	   *
+	   * *Note:* The range of the edit must be a single line range and it must
+	   * contain the position at which completion has been requested.
+	   *
+	   * Most editors support two different operations when accepting a completion
+	   * item. One is to insert a completion text and the other is to replace an
+	   * existing text with a completion text. Since this can usually not be
+	   * predetermined by a server it can report both ranges. Clients need to
+	   * signal support for `InsertReplaceEdits` via the
+	   * `textDocument.completion.insertReplaceSupport` client capability
+	   * property.
+	   *
+	   * *Note 1:* The text edit's range as well as both ranges from an insert
+	   * replace edit must be a [single line] and they must contain the position
+	   * at which completion has been requested.
+	   * *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
+	   * must be a prefix of the edit's replace range, that means it must be
+	   * contained and starting at the same position.
+	   *
+	   * @since 3.16.0 additional type `InsertReplaceEdit`
+     */
+    public SumType<TextEdit, InsertReplaceEdit>? textEdit { get; set; }
+
+    /**
+     * An optional array of additional text edits that are applied when
+	   * selecting this completion. Edits must not overlap (including the same
+	   * insert position) with the main edit nor with themselves.
+	   *
+	   * Additional text edits should be used to change text unrelated to the
+	   * current cursor position (for example adding an import statement at the
+	   * top of the file if the completion item will insert an unqualified type).
+	   */
+    public TextEdit[] additionalTextEdits { get; set; }
+
+    /**
+     * An optional set of characters that when pressed while this completion is
+	   * active will accept it first and then type that character. *Note* that all
+	   * commit characters should have `length=1` and that superfluous characters
+	   * will be ignored.
+     */
+    public string[] commitCharacters { get; set; }
+
+    /**
+     * An optional command that is executed *after* inserting this completion.
+	   * *Note* that additional modifications to the current document should be
+	   * described with the additionalTextEdits-property.
+     */
+    public Command command { get; set; }
+
+    /**
+     * A data entry field that is preserved on a completion item between
+     * a completion and a completion resolve request.
+     */
+    public object data { get; set; }
+  }
+  
+  public class ReferenceContext
+  {
+    /**
+     * Include the declaration of the current symbol.
+     */
+    public bool includeDeclaration { get; set; }
+  }
+  
+  public class ReferenceParams : TextDocumentPositionParams
+  {
+    public ReferenceContext context { get; set; }
+
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    public SumType<string, int> workDoneToken { get; set; }
+
+    /**
+     * An optional token that a server can use to report partial results (e.g. streaming) to
+     * the client.
+     */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class DocumentSymbolParams : WorkDoneProgressParams
+  {
+    /**
+     * The text document.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * An optional token that a server can use to report partial results (e.g. streaming) to
+     * the client.
+     */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class DocumentColorParams : WorkDoneProgressParams
+  {
+    /**
+	   * The text document.
+	   */
+    public TextDocumentIdentifier textDocument { get; set; }
+    
+    /**
+	   * An optional token that a server can use to report partial results (e.g.
+	   * streaming) to the client.
+	   */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class Color
+  {
+    /**
+		 * The red component of this color in the range [0-1].
+		 */
+    public float red { get; set; }
+
+    /**
+		 * The green component of this color in the range [0-1].
+		 */
+    public float green { get; set; }
+
+    /**
+		 * The blue component of this color in the range [0-1].
+		 */
+    public float blue { get; set; }
+
+    /**
+		 * The alpha component of this color in the range [0-1].
+		 */
+    public float alpha { get; set; }
+  }
+  
+  public class ColorPresentationParams : WorkDoneProgressParams
+  {
+    /**
+	   * The text document.
+	   */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+	   * The color information to request presentations for.
+	   */
+    public Color color { get; set; }
+
+    /**
+	   * The range where the color would be inserted. Serves as a context.
+	   */
+    public Range range { get; set; }
+    
+    /**
+	   * An optional token that a server can use to report partial results (e.g.
+	   * streaming) to the client.
+	   */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class FormattingOptions
+  {
+    /**
+     * Size of a tab in spaces.
+     */
+    public uint tabSize { get; set; }
+
+    /**
+     * Prefer spaces over tabs.
+     */
+    public bool insertSpaces { get; set; }
+
+    /**
+     * Trim trailing whitespace on a line.
+     *
+     * @since 3.15.0
+     */
+    public bool? trimTrailingWhitespace { get; set; }
+
+    /**
+     * Insert a newline character at the end of the file if one does not exist.
+     *
+     * @since 3.15.0
+     */
+    public bool? insertFinalNewline { get; set; }
+
+    /**
+     * Trim all newlines after the final newline at the end of the file.
+     *
+     * @since 3.15.0
+     */
+    public bool? trimFinalNewlines { get; set; }
+
+    /**
+     * Signature for further properties.
+     * [key: string]: boolean | integer | string;
+     */
+    //public object properties { get; set; } //TODO: ...
+  }
+  
+  public class DocumentFormattingParams : WorkDoneProgressParams 
+  {
+    /**
+     * The document to format.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * The format options.
+     */
+    public FormattingOptions options { get; set; }
+  }
+  
+  public class DocumentRangeFormattingParams : WorkDoneProgressParams
+  {
+    /**
+     * The document to format.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * The range to format
+     */
+    public Range range { get; set; }
+
+    /**
+     * The format options
+     */
+    public FormattingOptions options { get; set; }
+  }
+  
+  public class DocumentOnTypeFormattingParams : TextDocumentPositionParams
+  {
+    /**
+     * The character that has been typed.
+     */
+    public string ch { get; set; }
+
+    /**
+     * The format options.
+     */
+    public FormattingOptions options { get; set; }
+  }
+  
+  public enum DiagnosticSeverity
+  {
+    Error = 1,
+    Warning = 2,
+    Information = 3,
+    Hint = 4
+  }
+  
+  public class CodeDescription
+  {
+    /**
+	   * An URI to open with more information about the diagnostic error.
+	   */
+    public string href { get; set; }
+  }
+  
+  public enum DiagnosticTag
+  {
+    Unnecessary = 1,
+    Deprecated = 2
+  }
+  
+  public class Location
+  {
+    public string uri { get; set; }
+    public Range range { get; set; }
+  }
+  
+  public class DiagnosticRelatedInformation
+  {
+    /**
+     * The location of this related diagnostic information.
+     */
+    public Location location { get; set; }
+
+    /**
+     * The message of this related diagnostic information.
+     */
+    public string message { get; set; }
+  }
+  
+  public class Diagnostic
+  {
+    /**
+     * The range at which the message applies.
+     */
+    public Range range { get; set; }
+
+    /**
+     * The diagnostic's severity. Can be omitted. If omitted it is up to the
+     * client to interpret diagnostics as error, warning, info or hint.
+     */
+    public DiagnosticSeverity severity { get; set; }
+
+    /**
+     * The diagnostic's code, which might appear in the user interface.
+     */
+    public SumType<string, int> code { get; set; }
+
+    /**
+	   * An optional property to describe the error code.
+	   *
+	   * @since 3.16.0
+	   */
+    public CodeDescription codeDescription { get; set; }
+
+    /**
+     * A human-readable string describing the source of this
+     * diagnostic, e.g. 'typescript' or 'super lint'.
+     */
+    public string source { get; set; }
+
+    /**
+     * The diagnostic's message.
+     */
+    public string message { get; set; }
+
+    /**
+     * Additional metadata about the diagnostic.
+     *
+     * @since 3.15.0
+     */
+    public DiagnosticTag[] tags { get; set; }
+
+    /**
+     * An array of related diagnostic information, e.g. when symbol-names within
+     * a scope collide all definitions can be marked via this property.
+     */
+    public DiagnosticRelatedInformation[] relatedInformation { get; set; }
+
+    /**
+     * A data entry field that is preserved between a
+     * `textDocument/publishDiagnostics` notification and
+     * `textDocument/codeAction` request.
+     *
+     * @since 3.16.0
+     */
+    public object data { get; set; }
+  }
+  
+  public class CodeActionContext
+  {
+    /**
+     * An array of diagnostics known on the client side overlapping the range
+	   * provided to the `textDocument/codeAction` request. They are provided so
+	   * that the server knows which errors are currently presented to the user
+	   * for the given range. There is no guarantee that these accurately reflect
+	   * the error state of the resource. The primary parameter
+	   * to compute code actions is the provided range.
+     */
+    public Diagnostic[] diagnostics { get; set; }
+
+    /**
+     * Requested kind of actions to return.
+     *
+     * Actions not of this kind are filtered out by the client before being
+	   * shown. So servers can omit computing them.
+	   */
+    public CodeActionKind[] only { get; set; }
+  }
+  
+  public class CodeActionParams : WorkDoneProgressParams
+  {
+    /**
+     * The document in which the command was invoked.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * The range for which the command was invoked.
+     */
+    public Range range { get; set; }
+
+    /**
+     * Context carrying additional information.
+     */
+    public CodeActionContext context { get; set; }
+
+    /**
+     * An optional token that a server can use to report partial results (e.g. streaming) to
+     * the client.
+     */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class CodeLensParams : WorkDoneProgressParams
+  {
+    /**
+     * The document to request code lens for.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * An optional token that a server can use to report partial results (e.g. streaming) to
+     * the client.
+     */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class CodeLens
+  {
+    /**
+     * The range in which this code lens is valid. Should only span a single
+	   * line.
+     */
+    public Range range { get; set; }
+
+    /**
+     * The command this code lens represents.
+     */
+    public Command command { get; set; }
+
+    /**
+     * A data entry field that is preserved on a code lens item between
+     * a code lens and a code lens resolve request.
+     */
+    public object data { get; set; }
+  }
+  
+  public class DocumentLinkParams : WorkDoneProgressParams
+  {
+    /**
+     * The document to provide document links for.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * An optional token that a server can use to report partial results (e.g. streaming) to
+     * the client.
+     */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class DocumentLink
+  {
+    /**
+     * The range this link applies to.
+     */
+    public Range range { get; set; }
+
+    /**
+     * The uri this link points to. If missing a resolve request is sent later.
+     */
+    public string target { get; set; }
+
+    /**
+     * The tooltip text when you hover over this link.
+     *
+     * If a tooltip is provided, is will be displayed in a string that includes
+	   * instructions on how to trigger the link, such as `{0} (ctrl + click)`.
+	   * The specific instructions vary depending on OS, user settings, and
+	   * localization.
+	   *
+     * @since 3.15.0
+     */
+    public string tooltip { get; set; }
+
+    /**
+     * A data entry field that is preserved on a document link between a
+     * DocumentLinkRequest and a DocumentLinkResolveRequest.
+     */
+    public object data { get; set; }
+  }
+  
+  public class RenameParams : TextDocumentPositionParams
+  {
+    /**
+     * The new name of the symbol. If the given name is not valid the
+     * request must return a [ResponseError](#ResponseError) with an
+     * appropriate message set.
+     */
+    public string newName { get; set; }
+
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    public SumType<string, int> workDoneToken { get; set; }
+  }
+  
+  public class FoldingRangeParams : WorkDoneProgressParams
+  {
+    /**
+     * The text document.
+     */
+    public TextDocumentIdentifier textDocument { get; set; }
+
+    /**
+     * An optional token that a server can use to report partial results (e.g. streaming) to
+     * the client.
+     */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class WorkspaceFoldersChangeEvent
+  {
+    /**
+     * The array of added workspace folders
+     */
+    public WorkspaceFolder[] added { get; set; }
+    
+    /**
+     * The array of the removed workspace folders
+     */
+    public WorkspaceFolder[] removed { get; set; }
+  }
+  
+  public class DidChangeWorkspaceFoldersParams
+  {
+    /**
+     * The actual workspace folder change event.
+     */
+    public WorkspaceFoldersChangeEvent @event { get; set; }
+  }
+  
+  public class DidChangeConfigurationParams
+  {
+    /**
+     * The actual changed settings
+     */
+    public object settings { get; set; }
+  }
+  
+  public enum FileChangeType
+  {
+    Created = 1,
+    Changed = 2,
+    Deleted = 3
+  }
+  
+  public class FileEvent
+  {
+    /**
+     * The file's URI.
+     */
+    public string uri { get; set; }
+
+    /**
+     * The change type.
+     */
+    public FileChangeType type { get; set; }
+  }
+  
+  public class DidChangeWatchedFilesParams
+  {
+    /**
+     * The actual file events.
+     */
+    public FileEvent[] changes { get; set; }
+  }
+  
+  public class WorkspaceSymbolParams : WorkDoneProgressParams
+  {
+    /**
+     * A query string to filter symbols by. Clients may send an empty
+     * string here to request all symbols.
+     */
+    public string query { get; set; }
+
+    /**
+     * An optional token that a server can use to report partial results (e.g. streaming) to
+     * the client.
+     */
+    public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class ExecuteCommandParams : WorkDoneProgressParams 
+  {
+    /**
+     * The identifier of the actual command handler.
+     */
+    public string command { get; set; }
+
+    /**
+     * Arguments that the command should be invoked with.
+     */
+    public object[] arguments { get; set; }
+  }
+  
 #endregion
 }
