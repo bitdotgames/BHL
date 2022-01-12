@@ -7,28 +7,25 @@ using bhlsp;
 
 public class BHLSPC
 {
-  class Program
+  public static void Main(string[] args)
   {
-    public static void Main(string[] args)
-    {
-      Console.OutputEncoding = new UTF8Encoding();
+    Console.OutputEncoding = new UTF8Encoding();
 
-      var stdin = Console.OpenStandardInput();
-      var stdout = Console.OpenStandardOutput();
+    var stdin = Console.OpenStandardInput();
+    var stdout = Console.OpenStandardOutput();
       
-      BHLSPServer server = new BHLSPServer(stdout, stdin);
+    BHLSPServer server = new BHLSPServer(stdout, stdin);
       
-      Logger.CleanUpLogFile();
+    Logger.CleanUpLogFile();
       
-      try
-      {
-        server.Listen().Wait();
-      }
-      catch (AggregateException ex)
-      {
-        Logger.WriteLine(ex.InnerExceptions[0]);
-        Environment.Exit(-1);
-      }
+    try
+    {
+      server.Listen().Wait();
+    }
+    catch (AggregateException ex)
+    {
+      Logger.WriteLine(ex.InnerExceptions[0]);
+      Environment.Exit(-1);
     }
   }
   
