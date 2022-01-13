@@ -156,7 +156,7 @@ namespace bhlsp
   
   internal class RequestMessage : MessageBase
   {
-    public SumType<int, string> id { get; set; }
+    public SumType<Int32, Int64, string> id { get; set; }
     public string method { get; set; }
     public JToken @params { get; set; }
   }
@@ -170,7 +170,7 @@ namespace bhlsp
   
   internal class ResponseMessage : MessageBase
   {
-    public SumType<int, string> id { get; set; }
+    public SumType<Int32, Int64, string> id { get; set; }
     public object result { get; set; }
     public ResponseError error { get; set; }
   }
@@ -545,10 +545,8 @@ namespace bhlsp
   
 #region -- PROTOCOL ---
   
-  public class SumTypeConverter : JsonConverter
+  public class SumTypeJsonConverter: JsonConverter
   {
-    private readonly object converterLock = new object();
-    
     public override bool CanConvert(Type objectType)
     {
       return true;
@@ -569,40 +567,11 @@ namespace bhlsp
       JToken.FromObject(obj).WriteTo(writer, Array.Empty<JsonConverter>());
     }
     
+    public override bool CanRead => false;
+    
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
-      JToken jtoken = JToken.ReadFrom(reader);
-      
-      try
-      {
-        lock (converterLock)
-        {
-          foreach (Type con in objectType.GenericTypeArguments)
-          {
-            try
-            {
-              var p = jtoken.ToObject(jtoken.Type == JTokenType.String ? typeof(string) : con, serializer);
-              Type[] ts = { p.GetType() };
-              ConstructorInfo c = objectType.GetConstructor(ts);
-              if (c != null)
-              {
-                object[] parameters = { p };
-                
-                var test = c.Invoke(parameters);
-                return test;
-              }
-            }
-            catch
-            {
-            }
-          }
-        }
-      }
-      finally
-      {
-      }
-      
-      throw new JsonSerializationException();
+      throw new NotImplementedException("Unnecessary because CanRead is false. The type will skip the converter.");
     }
   }
   
@@ -611,7 +580,7 @@ namespace bhlsp
     object Value { get; }
   }
   
-  [JsonConverter(typeof(SumTypeConverter))]
+  [JsonConverter(typeof(SumTypeJsonConverter))]
   public struct SumType<T1, T2> : IEquatable<SumType<T1, T2>>, ISumType
   {
     public SumType(T1 val)
@@ -676,22 +645,22 @@ namespace bhlsp
     }
   }
   
-  [JsonConverter(typeof(SumTypeConverter))]
+  [JsonConverter(typeof(SumTypeJsonConverter))]
   public struct SumType<T1, T2, T3> : IEquatable<SumType<T1, T2, T3>>, ISumType
   {
     public SumType(T1 val)
     {
-      this.Value = (object) val;
+      this.Value = (object)val;
     }
 
     public SumType(T2 val)
     {
-      this.Value = (object) val;
+      this.Value = (object)val;
     }
 
     public SumType(T3 val)
     {
-      this.Value = (object) val;
+      this.Value = (object)val;
     }
 
     public object Value { get; }
@@ -735,21 +704,7 @@ namespace bhlsp
     {
       return new SumType<T1, T2, T3>(val);
     }
-
-    public static implicit operator SumType<T1, T2, T3>(SumType<T1, T2> sum)
-    {
-      throw new NotImplementedException();
-    }
-
-    public static explicit operator SumType<T1, T2>(SumType<T1, T2, T3> sum)
-    {
-      if (sum.Value is T1 obj1)
-        return (SumType<T1, T2>) obj1;
-      if (sum.Value is T2 obj2)
-        return (SumType<T1, T2>) obj2;
-      throw new InvalidCastException();
-    }
-
+    
     public static explicit operator T1(SumType<T1, T2, T3> sum)
     {
       if (sum.Value is T1 obj)
