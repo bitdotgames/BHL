@@ -67,7 +67,7 @@ namespace bhlsp
       string json = await Read();
       
       string response = rpc.HandleMessage(json);
-      if(!string.IsNullOrEmpty(response))
+      if (!string.IsNullOrEmpty(response))
         Write(response);
       
       return true;
@@ -257,20 +257,35 @@ namespace bhlsp
       BHLSPC.Logger.WriteLine($"--> {request.method}");
 
       ResponseMessage response = null;
+      
+      //A processed notification message must not send a response back. They work like events.
       bool isNotification = request.id.Value == null;
       
       try
       {
-        RpcResult result = CallRpcMethod(request.method, request.@params);
+        if (!string.IsNullOrEmpty(request.method))
+        {
+          RpcResult result = CallRpcMethod(request.method, request.@params);
         
-        //A processed notification message must not send a response back. They work like events.
-        if (!isNotification)
+          if (!isNotification)
+          {
+            response = new ResponseMessage
+            {
+              id = request.id,
+              result = result.result,
+              error = result.error
+            };
+          }
+        }
+        else if(!isNotification)
         {
           response = new ResponseMessage
           {
-            id = request.id,
-            result = result.result,
-            error = result.error
+            id = request.id, error = new ResponseError
+            {
+              code = (int)ErrorCodes.InvalidRequest,
+              message = ""
+            }
           };
         }
       }
