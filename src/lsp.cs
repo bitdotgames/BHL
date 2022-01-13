@@ -16,11 +16,9 @@ namespace bhlsp
     
     public BHLSPServer(Stream output, Stream input)
     {
-      var target = new BHLSPServerTarget();
-
-      target.AttachRpcService(new BHLSPGeneralJsonRpcService());
-      
-      connection = new BHLSPConnection(output, input, target);
+      var rpc = new BHLSPJsonRpc();
+      rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
+      connection = new BHLSPConnection(output, input, rpc);
     }
     
     public async Task Listen()
@@ -33,7 +31,7 @@ namespace bhlsp
           if (!success)
             break;
         }
-        catch (Exception e)
+        catch(Exception e)
         {
           BHLSPC.Logger.WriteLine(e);
         }
@@ -55,45 +53,22 @@ namespace bhlsp
     
     private readonly object outputLock = new object();
     
-    private BHLSPServerTarget target;
+    private BHLSPJsonRpc rpc;
     
-    public BHLSPConnection(Stream output, Stream input, BHLSPServerTarget target)
+    public BHLSPConnection(Stream output, Stream input, BHLSPJsonRpc rpc)
     {
       this.input = input;
       this.output = output;
-      this.target = target;
+      this.rpc = rpc;
     }
     
     public async Task<bool> ReadAndHandle()
     {
       string json = await Read();
-
-      RequestMessage req = null;
-      ResponseMessage resp = null;
-
-      try
-      {
-        req = JsonConvert.DeserializeObject<RequestMessage>(json);
-        if(req == null)
-          return false;
-      }
-      catch
-      {
-        resp = new ResponseMessage
-        {
-          id = null, error = new ResponseError
-          {
-            code = (int)ErrorCodes.ParseError,
-            message = ""
-          }
-        };
-      }
       
-      if(req != null && req.IsMessage())
-        resp = target.HandleMessage(req);
-      
-      if(resp != null)
-        Write(JsonConvert.SerializeObject(resp));
+      string response = rpc.HandleMessage(json);
+      if(!string.IsNullOrEmpty(response))
+        Write(response);
       
       return true;
     }
@@ -168,6 +143,7 @@ namespace bhlsp
     }
   }
   
+#region -- MESSAGE --
   internal abstract class MessageBase
   {
     public string jsonrpc { get; set; } = "2.0";
@@ -183,21 +159,6 @@ namespace bhlsp
     public SumType<int, string> id { get; set; }
     public string method { get; set; }
     public JToken @params { get; set; }
-  }
-  
-  public enum ErrorCodes
-  {
-    ParseError = -32700,
-    InvalidRequest = -32600,
-    MethodNotFound = -32601,
-    InvalidParams = -32602,
-    InternalError = -32603,
-    ServerErrorStart = -32099,
-    ServerErrorEnd = -32000,
-    ServerNotInitialized = -32002,
-    UnknownErrorCode = -32001,
-    RequestCancelled = -32800,
-    RequestFailed = -32803 // @since 3.17.0
   }
   
   internal class ResponseError
@@ -226,8 +187,222 @@ namespace bhlsp
 
     public string Method => method;
   }
+#endregion
 
-  internal abstract class BHLSPJsonRpcService
+  public enum ErrorCodes
+  {
+    ParseError = -32700,
+    InvalidRequest = -32600,
+    MethodNotFound = -32601,
+    InvalidParams = -32602,
+    InternalError = -32603,
+    ServerErrorStart = -32099,
+    ServerErrorEnd = -32000,
+    ServerNotInitialized = -32002,
+    UnknownErrorCode = -32001,
+    RequestCancelled = -32800,
+    RequestFailed = -32803 // @since 3.17.0
+  }
+  
+  internal class BHLSPJsonRpc
+  {
+    List<BHLSPJsonRpcService> services = new List<BHLSPJsonRpcService>();
+
+    public BHLSPJsonRpc AttachRpcService(BHLSPJsonRpcService service)
+    {
+      services.Add(service);
+      return this;
+    }
+
+    public string HandleMessage(string json)
+    {
+      RequestMessage req = null;
+      ResponseMessage resp = null;
+      
+      try
+      {
+        req = JsonConvert.DeserializeObject<RequestMessage>(json);
+      }
+      catch(Exception e)
+      {
+        BHLSPC.Logger.WriteLine(e);
+        
+        resp = new ResponseMessage
+        {
+          error = new ResponseError
+          {
+            code = (int)ErrorCodes.ParseError,
+            message = ""
+          }
+        };
+      }
+      
+      if(req != null && req.IsMessage())
+        resp = HandleMessage(req);
+      
+      if (resp != null)
+      {
+        return JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None,
+          new JsonSerializerSettings
+          {
+            NullValueHandling = NullValueHandling.Ignore
+          });
+      }
+
+      return string.Empty;
+    }
+    
+    ResponseMessage HandleMessage(RequestMessage request)
+    {
+      BHLSPC.Logger.WriteLine($"--> {request.method}");
+
+      ResponseMessage response = null;
+      bool isNotification = request.id.Value == null;
+      
+      try
+      {
+        RpcResult result = CallRpcMethod(request.method, request.@params);
+        
+        //A processed notification message must not send a response back. They work like events.
+        if (!isNotification)
+        {
+          response = new ResponseMessage
+          {
+            id = request.id,
+            result = result.result,
+            error = result.error
+          };
+        }
+      }
+      catch (Exception e)
+      {
+        BHLSPC.Logger.WriteLine(e);
+        
+        if(!isNotification)
+        {
+          response = new ResponseMessage
+          {
+            id = request.id, error = new ResponseError
+            {
+              code = (int)ErrorCodes.InternalError,
+              message = ""
+            }
+          };
+        }
+      }
+      
+      if(response != null)
+        BHLSPC.Logger.WriteLine($"<-- {request.method}");
+      
+      return response;
+    }
+
+    private RpcResult CallRpcMethod(string name, JToken @params)
+    {
+      foreach (var service in services)
+      {
+        foreach (var method in service.GetType().GetMethods())
+        {
+          if (IsAllowedToInvoke(method, name))
+          {
+            object[] args = null;
+            var pms = method.GetParameters();
+            if(pms.Length > 0)
+              args = new[] { @params.ToObject(pms[0].ParameterType) };
+            
+            return (RpcResult)method.Invoke(service, args);
+          }
+        }
+      }
+      
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int)ErrorCodes.MethodNotFound,
+        message = ""
+      });
+    }
+
+    private bool IsAllowedToInvoke(MethodInfo m, string name)
+    {
+      foreach(var attribute in m.GetCustomAttributes(true))
+      {
+        if(attribute is JsonRpcMethodAttribute jsonRpcMethod && jsonRpcMethod.Method == name)
+          return true;
+      }
+
+      return false;
+    }
+  }
+  
+  internal class RpcResult
+  {
+    public object result;
+    public ResponseError error;
+    
+    public static RpcResult Success(object result)
+    {
+      return new RpcResult(result, null);
+    }
+
+    public static RpcResult Error(ResponseError error)
+    {
+      return new RpcResult(null, error);
+    }
+    
+    RpcResult(object result, ResponseError error)
+    {
+      this.result = result;
+      this.error = error;
+    }
+  }
+
+#region -- RPC SERVICES --
+
+  internal class BHLSPGeneralJsonRpcService : BHLSPGeneralJsonRpcServiceTemplate
+  {
+    public override RpcResult Initialize(InitializeParams args)
+    {
+      ServerCapabilities capabilities = new ServerCapabilities
+      {
+        textDocumentSync = new TextDocumentSyncOptions
+        {
+          openClose = true,
+          change = TextDocumentSyncKind.Incremental,
+          save = new SaveOptions
+          {
+            includeText = true
+          }
+        }
+      };
+      
+      return RpcResult.Success(new InitializeResult
+      {
+        capabilities = capabilities,
+        serverInfo = new InitializeResult.InitializeResultsServerInfo
+        {
+          name = "bhlsp",
+          version = "0.0.1"
+        }
+      });
+    }
+
+    public override RpcResult Initialized()
+    {
+      return RpcResult.Success(null);
+    }
+
+    public override RpcResult Shutdown()
+    {
+      return RpcResult.Success(null);
+    }
+
+    public override RpcResult Exit()
+    {
+      return RpcResult.Success(null);
+    }
+  }
+  
+   internal abstract class BHLSPJsonRpcService
   {
   }
 
@@ -351,209 +526,6 @@ namespace bhlsp
     public abstract RpcResult ExecuteCommand(ExecuteCommandParams args);
   }
   
-  internal class BHLSPServerTarget
-  {
-    List<BHLSPJsonRpcService> services = new List<BHLSPJsonRpcService>();
-
-    public BHLSPServerTarget AttachRpcService(BHLSPJsonRpcService service)
-    {
-      services.Add(service);
-      return this;
-    }
-    
-    public ResponseMessage HandleMessage(RequestMessage request)
-    {
-      BHLSPC.Logger.WriteLine($"--> {request.method}");
-
-      ResponseMessage response = null;
-      bool isNotification = request.id.Value == null;
-      
-      try
-      {
-        RpcResult result = CallRpcMethod(request.method, request.@params);
-          
-        if (!isNotification)
-        {
-          response = new ResponseMessage
-          {
-            id = request.id,
-            result = result.result,
-            error = result.error
-          };
-        }
-      }
-      catch (Exception e)
-      {
-        BHLSPC.Logger.WriteLine(e);
-        if(!isNotification)
-        {
-          response = new ResponseMessage
-          {
-            id = request.id, error = new ResponseError
-            {
-              code = (int)ErrorCodes.InternalError,
-              message = ""
-            }
-          };
-        }
-      }
-      
-      if(response != null)
-        BHLSPC.Logger.WriteLine($"<-- {request.method}");
-      
-      return response;
-    }
-
-    private RpcResult CallRpcMethod(string name, JToken @params)
-    {
-      foreach (var service in services)
-      {
-        foreach (var method in service.GetType().GetMethods())
-        {
-          if (IsAllowedToInvoke(method, name))
-          {
-            object[] args = null;
-            var pms = method.GetParameters();
-            if(pms.Length > 0)
-              args = new[] { @params.ToObject(pms[0].ParameterType) };
-            
-            return (RpcResult)method.Invoke(service, args);
-          }
-        }
-      }
-      
-      return RpcResult.Error(new ResponseError
-      {
-        code = (int)ErrorCodes.MethodNotFound,
-        message = ""
-      });
-    }
-
-    private bool IsAllowedToInvoke(MethodInfo m, string name)
-    {
-      foreach(var attribute in m.GetCustomAttributes(true))
-      {
-        if(attribute is JsonRpcMethodAttribute jsonRpcMethod && jsonRpcMethod.Method == name)
-          return true;
-      }
-
-      return false;
-    }
-  }
-  
-  internal class RpcResult
-  {
-    public object result;
-    public ResponseError error;
-    
-    public static RpcResult Success(object result)
-    {
-      return new RpcResult(result, null);
-    }
-
-    public static RpcResult Error(ResponseError error)
-    {
-      return new RpcResult(null, error);
-    }
-    
-    RpcResult(object result, ResponseError error)
-    {
-      this.result = result;
-      this.error = error;
-    }
-  }
-
-#region -- RPC SERVICES --
-
-  internal class BHLSPGeneralJsonRpcService : BHLSPGeneralJsonRpcServiceTemplate
-  {
-    public override RpcResult Initialize(InitializeParams args)
-    {
-      ServerCapabilities capabilities = new ServerCapabilities
-      {
-        textDocumentSync = new TextDocumentSyncOptions
-        {
-          openClose = true,
-          change = TextDocumentSyncKind.Incremental,
-          save = new SaveOptions
-          {
-            includeText = true
-          }
-        },
-        
-        hoverProvider = false,
-        declarationProvider = false,
-        definitionProvider = false,
-        typeDefinitionProvider = false,
-        implementationProvider = false,
-        referencesProvider = false,
-        documentHighlightProvider = false,
-        documentSymbolProvider = false,
-        
-        colorProvider = true,
-        
-        documentFormattingProvider = false,
-        documentRangeFormattingProvider = false,
-        renameProvider = false,
-        foldingRangeProvider = false,
-        selectionRangeProvider = false,
-        codeActionProvider = false,
-        linkedEditingRangeProvider = false,
-        callHierarchyProvider = false,
-        monikerProvider = false,
-        workspaceSymbolProvider = false,
-        
-        semanticTokensProvider = new SemanticTokensOptions
-        {
-          full = true,
-          range = false,
-          legend = new SemanticTokensLegend
-          {
-            tokenTypes = new[]
-            {
-              "class",
-              "enum",
-              "variable",
-              "comment",
-              "string",
-              "function"
-            },
-            tokenModifiers = new[]
-            {
-              "declaration",
-              "documentation",
-            }
-          }
-        },
-      };
-      
-      return RpcResult.Success(new InitializeResult
-      {
-        capabilities = capabilities,
-        serverInfo = new InitializeResult.InitializeResultsServerInfo
-        {
-          name = "bhlsp",
-          version = "0.0.1"
-        }
-      });
-    }
-
-    public override RpcResult Initialized()
-    {
-      return RpcResult.Success(null);
-    }
-
-    public override RpcResult Shutdown()
-    {
-      return RpcResult.Success(null);
-    }
-
-    public override RpcResult Exit()
-    {
-      return RpcResult.Success(null);
-    }
-  }
-
 #endregion  
   
 #region -- PROTOCOL ---
@@ -575,9 +547,6 @@ namespace bhlsp
       object obj = ((ISumType)value).Value;
       if (obj == null)
       {
-        /*writer.WriteStartObject();
-          writer.WriteEnd();*/
-
         writer.WriteNull();
         return;
       }
@@ -632,12 +601,12 @@ namespace bhlsp
   {
     public SumType(T1 val)
     {
-      this.Value = (object) val;
+      this.Value = (object)val;
     }
 
     public SumType(T2 val)
     {
-      this.Value = (object) val;
+      this.Value = (object)val;
     }
 
     public object Value { get; }
@@ -656,21 +625,7 @@ namespace bhlsp
     {
       return EqualityComparer<object>.Default.GetHashCode(this.Value) - 1937169414;
     }
-
-    public TResult Match<TResult>(Func<T1, TResult> firstMatch, Func<T2, TResult> secondMatch,
-      Func<TResult> defaultMatch = null)
-    {
-      if (firstMatch == null)
-        throw new ArgumentNullException(nameof(firstMatch));
-      if (secondMatch == null)
-        throw new ArgumentNullException(nameof(secondMatch));
-      if (this.Value is T1 obj1)
-        return firstMatch(obj1);
-      if (this.Value is T2 obj2)
-        return secondMatch(obj2);
-      return defaultMatch != null ? defaultMatch() : default(TResult);
-    }
-
+    
     public static bool operator ==(SumType<T1, T2> left, SumType<T1, T2> right)
     {
       return left.Equals(right);
@@ -740,25 +695,7 @@ namespace bhlsp
     {
       return EqualityComparer<object>.Default.GetHashCode(this.Value) - 1937169414;
     }
-
-    public TResult Match<TResult>(Func<T1, TResult> firstMatch, Func<T2, TResult> secondMatch,
-      Func<T3, TResult> thirdMatch, Func<TResult> defaultMatch = null)
-    {
-      if (firstMatch == null)
-        throw new ArgumentNullException(nameof(firstMatch));
-      if (secondMatch == null)
-        throw new ArgumentNullException(nameof(secondMatch));
-      if (thirdMatch == null)
-        throw new ArgumentNullException(nameof(thirdMatch));
-      if (this.Value is T1 obj1)
-        return firstMatch(obj1);
-      if (this.Value is T2 obj2)
-        return secondMatch(obj2);
-      if (this.Value is T3 obj3)
-        return thirdMatch(obj3);
-      return defaultMatch != null ? defaultMatch() : default(TResult);
-    }
-
+    
     public static bool operator ==(SumType<T1, T2, T3> left, SumType<T1, T2, T3> right)
     {
       return left.Equals(right);
