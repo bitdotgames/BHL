@@ -1608,9 +1608,9 @@ static public class SymbolTable
       var fn = new FuncSymbolNative("start", globals.Type("int"), null,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
-          var addr = new VM.FuncAddr(frm.stack.PopRelease());
-          var new_frm = addr.MakeFrame(frm);
-          int id = frm.vm.Start(new_frm).id;
+          var val_ptr = frm.stack.Pop();
+          int id = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm).id;
+          val_ptr.Release();
           frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         } 

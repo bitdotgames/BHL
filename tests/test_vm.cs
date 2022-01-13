@@ -17766,6 +17766,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(vm.vdicts_pool.Allocs, vm.vdicts_pool.Free);
     AssertEqual(vm.vlsts_pool.Allocs, vm.vlsts_pool.Free);
     AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
+    AssertEqual(vm.ptrs_pool.Allocs, vm.ptrs_pool.Free);
     if(check_frames)
       AssertEqual(vm.frames_pool.Allocs, vm.frames_pool.Free);
     if(check_fibers)

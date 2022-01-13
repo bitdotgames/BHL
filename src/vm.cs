@@ -2,7 +2,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 namespace bhl {
 
@@ -271,11 +270,11 @@ public class VM
     }
   }
 
-  public class Frame : IExitableScope, IValRefcounted
+  public class Frame : IExitableScope
   {
     public const int MAX_LOCALS = 64;
     public const int MAX_STACK = 32;
-
+    
     //NOTE: -1 means it's in released state,
     //      public only for inspection
     public int refs;
@@ -305,8 +304,8 @@ public class VM
         ++vm.frames_pool.hit;
         frm = vm.frames_pool.stack.Pop();
 
-      if(frm.refs != -1)
-        throw new Exception("Expected to be released, refs " + frm.refs);
+        if(frm.refs != -1)
+          throw new Exception("Expected to be released, refs " + frm.refs);
       }
 
       frm.refs = 1;
@@ -332,24 +331,20 @@ public class VM
       this.vm = vm;
     }
 
-    public void Init(Fiber fb, CompiledModule module, int start_ip)
-    {
-      this.fb = fb;
-      this.module = module;
-      constants = module.constants;
-      Init(module.bytecode, start_ip);
-    }
-
     public void Init(Frame origin, int start_ip)
     {
-      fb = origin.fb;
-      module = origin.module;
-      constants = origin.constants;
-      Init(origin.bytecode, start_ip);
+      Init(origin.fb, origin.constants, origin.bytecode, start_ip);
     }
 
-    void Init(byte[] bytecode, int start_ip)
+    public void Init(Fiber fb, CompiledModule module, int start_ip)
     {
+      Init(fb, module.constants, module.bytecode, start_ip);
+    }
+
+    public void Init(Fiber fb, List<Const> constants, byte[] bytecode, int start_ip)
+    {
+      this.fb = fb;
+      this.constants = constants;
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;
@@ -431,107 +426,132 @@ public class VM
     }
   }
 
-  public struct FuncAddr
+  public class FuncPtr : IValRefcounted
   {
-    [StructLayout(LayoutKind.Explicit)]
-    struct Double2Uint
-    {
-      [FieldOffset(0)] public double d;
-      [FieldOffset(0)] public uint u1;
-      [FieldOffset(4)] public uint u2;
-    }
+    //NOTE: -1 means it's in released state,
+    //      public only for inspection
+    public int refs;
 
-    static Double2Uint d2u;
+    public VM vm;
 
-    public int func_ip_or_idx;
-    public int module_idx;
+    public CompiledModule module;
+    public int func_ip;
     public FuncSymbolNative native;
+    public FixedStack<Val> upvals = new FixedStack<Val>(Frame.MAX_LOCALS);
 
-    public FuncAddr(int module_idx, int func_idx)
+    static public FuncPtr New(VM vm)
     {
-      this.module_idx = module_idx;
-      this.func_ip_or_idx = func_idx;
-      this.native = null;
+      FuncPtr ptr;
+      if(vm.ptrs_pool.stack.Count == 0)
+      {
+        ++vm.ptrs_pool.miss;
+        ptr = new FuncPtr(vm);
+      }
+      else
+      {
+        ++vm.ptrs_pool.hit;
+        ptr = vm.ptrs_pool.stack.Pop();
+
+        if(ptr.refs != -1)
+          throw new Exception("Expected to be released, refs " + ptr.refs);
+      }
+
+      ptr.refs = 1;
+
+      return ptr;
     }
 
-    public FuncAddr(int func_ip)
+    static void Del(FuncPtr ptr)
     {
-      this.module_idx = -1;
-      this.func_ip_or_idx = func_ip;
-      this.native = null;
+      if(ptr.refs != 0)
+        throw new Exception("Freeing invalid object, refs " + ptr.refs);
+
+      //Console.WriteLine("DEL " + ptr.GetHashCode() + " " + Environment.StackTrace);
+      ptr.refs = -1;
+
+      ptr.Clear();
+      ptr.vm.ptrs_pool.stack.Push(ptr);
     }
 
-    public FuncAddr(FuncSymbolNative native)
+    //NOTE: use New() instead
+    internal FuncPtr(VM vm)
     {
-      this.module_idx = -1;
-      this.func_ip_or_idx = -1;
+      this.vm = vm;
+    }
+
+    public void Init(Frame origin, int func_ip)
+    {
+      this.module = origin.module;
+      this.func_ip = func_ip;
+      this.native = null;
+      upvals.SetHead(0);
+    }
+
+    public void Init(CompiledModule module, int func_ip)
+    {
+      this.module = module;
+      this.func_ip = func_ip;
+      this.native = null;
+      upvals.SetHead(0);
+    }
+
+    public void Init(FuncSymbolNative native)
+    {
+      this.module = null;
+      this.func_ip = -1;
       this.native = native;
+      upvals.SetHead(0);
     }
 
-    public FuncAddr(Val v)
+    void Clear()
     {
-      native = null;
-      func_ip_or_idx = -1;
-      module_idx = -1;
+      this.module = null;
+      this.func_ip = -1;
+      this.native = null;
+      upvals.SetHead(0);
+    }
 
-      if(v._obj != null)
-        native = (FuncSymbolNative)v._obj;
+    public void Retain()
+    {
+      //Console.WriteLine("RTN " + GetHashCode() + " " + Environment.StackTrace);
+
+      if(refs == -1)
+        throw new Exception("Invalid state(-1)");
+      ++refs;
+    }
+
+    public void Release()
+    {
+      //Console.WriteLine("REL " + GetHashCode() + " " + Environment.StackTrace);
+
+      if(refs == -1)
+        throw new Exception("Invalid state(-1)");
+      if(refs == 0)
+        throw new Exception("Double free(0)");
+
+      --refs;
+      if(refs == 0)
+        Del(this);
+    }
+
+    public Frame MakeFrame(VM vm, Frame curr_frame)
+    {
+      var fr = Frame.New(vm);
+      if(module != null)
+        fr.Init(curr_frame.fb, module, func_ip);
       else
+        fr.Init(curr_frame, func_ip);
+
+      for(int i=0;i<upvals.Count;++i)
       {
-        d2u.d = v._num;
-        if(d2u.u1 == 0xFFFFFF)
+        var upval = upvals[i];
+        if(upval != null)
         {
-          module_idx = -1;
-          func_ip_or_idx = (int)d2u.u2;
-        }
-        else
-        {
-          module_idx = (int)d2u.u1;
-          func_ip_or_idx = (int)d2u.u2;
+          fr.locals.SetHead(i+1);
+          fr.locals[i] = upval;
         }
       }
-    }
-
-    public Val Encode(VM vm)
-    {
-      var v = Val.New(vm);
-      if(native != null)
-        v._obj = native;
-      else if(module_idx != -1)
-      {
-        d2u.u1 = (uint)module_idx;
-        d2u.u2 = (uint)func_ip_or_idx;
-        v._num = d2u.d;
-      }
-      else
-      {
-        d2u.u1 = 0xFFFFFF;
-        d2u.u2 = (uint)func_ip_or_idx;
-        v._num = d2u.d;
-      }
-      return v;
-    }
-
-    public Frame MakeFrame(Frame origin)
-    {
-      if(module_idx == -1)
-      {
-        var fr = Frame.New(origin.vm);
-        fr.Init(origin, func_ip_or_idx);
-        return fr;
-      }
-      else
-      {
-        string module_name = origin.constants[module_idx].str;
-        var module = origin.vm.modules[module_name];
-        string func_name = origin.constants[func_ip_or_idx].str;
-
-        int func_ip = module.func2ip[func_name];
-
-        var fr = Frame.New(origin.vm);
-        fr.Init(origin.fb, origin.vm.modules[module_name], func_ip);
-        return fr;
-      }
+      return fr;
     }
   }
 
@@ -658,6 +678,7 @@ public class VM
   public Pool<ValDict> vdicts_pool = new Pool<ValDict>();
   public Pool<Frame> frames_pool = new Pool<Frame>();
   public Pool<Fiber> fibers_pool = new Pool<Fiber>();
+  public Pool<FuncPtr> ptrs_pool = new Pool<FuncPtr>();
   public Instructions instr_pool = new Instructions();
 
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
@@ -785,23 +806,40 @@ public class VM
     return fb;
   }
 
-  public Fiber Start(Frame fr)
+  public Fiber Start(FuncPtr ptr, Frame curr_frame)
   {
     var fb = Fiber.New(this);
-    Register(fb, fr);
-    //cargs bits
-    fr.stack.Push(Val.NewNum(this, 0));
+
+    //checking native call
+    if(ptr.native != null)
+    {
+      Register(fb);
+      var args_info = new FuncArgsInfo(0);
+      fb.instruction = ptr.native.VM_cb(curr_frame, args_info, ref fb.status);
+    }
+    else
+    {
+      var fr = ptr.MakeFrame(this, curr_frame);
+      Register(fb, fr);
+      //cargs bits
+      fr.stack.Push(Val.NewNum(this, 0));
+    }
+
     return fb;
   }
 
   void Register(Fiber fb, Frame fr)
   {
-    fb.id = ++fibers_ids;
-    fb.ip = fr.start_ip;
+    Register(fb);
 
+    fb.ip = fr.start_ip;
     fr.fb = fb;
     fb.ctxs.Push(new Context(fr));
+  }
 
+  void Register(Fiber fb)
+  {
+    fb.id = ++fibers_ids;
     fibers.Add(fb);
   }
 
@@ -1106,16 +1144,18 @@ public class VM
       case Opcodes.GetFunc:
         {
           int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-          var addr = new FuncAddr(func_ip);
-          curr_frame.stack.Push(addr.Encode(this));
+          var ptr = FuncPtr.New(this);
+          ptr.Init(curr_frame, func_ip);
+          curr_frame.stack.Push(Val.NewObj(this, ptr));
         }
         break;
       case Opcodes.GetFuncNative:
         {
           int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
           var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
-          var addr = new FuncAddr(func_symb);
-          curr_frame.stack.Push(addr.Encode(this));
+          var ptr = FuncPtr.New(this);
+          ptr.Init(func_symb);
+          curr_frame.stack.Push(Val.NewObj(this, ptr));
         }
         break;
       case Opcodes.GetMethodNative:
@@ -1126,8 +1166,9 @@ public class VM
           string class_type = curr_frame.constants[class_type_idx].str; 
 
           var class_symb = (ClassSymbol)symbols.Resolve(class_type);
-          var addr = new FuncAddr((FuncSymbolNative)class_symb.members[func_idx]);
-          curr_frame.stack.Push(addr.Encode(this));
+          var ptr = FuncPtr.New(this);
+          ptr.Init((FuncSymbolNative)class_symb.members[func_idx]);
+          curr_frame.stack.Push(Val.NewObj(this, ptr));
         }
         break;
       case Opcodes.GetFuncImported:
@@ -1135,8 +1176,14 @@ public class VM
           int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
           int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
-          var addr = new FuncAddr(module_idx, func_idx);
-          curr_frame.stack.Push(addr.Encode(this));
+          string module_name = curr_frame.constants[module_idx].str;
+          var module = curr_frame.vm.modules[module_name];
+          string func_name = curr_frame.constants[func_idx].str;
+          int func_ip = module.func2ip[func_name];
+
+          var ptr = FuncPtr.New(this);
+          ptr.Init(module, func_ip);
+          curr_frame.stack.Push(Val.NewObj(this, ptr));
         }
         break;
       case Opcodes.GetFuncFromVar:
@@ -1154,10 +1201,10 @@ public class VM
           //      opcode sequence required for Opcode.Call
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
           var args_info = new FuncArgsInfo(args_bits);
-          int addr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-          var addr = curr_frame.stack[addr_idx];
-          curr_frame.stack.RemoveAt(addr_idx);
-          curr_frame.stack.Push(addr);
+          int ptr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
+          var ptr = curr_frame.stack[ptr_idx];
+          curr_frame.stack.RemoveAt(ptr_idx);
+          curr_frame.stack.Push(ptr);
         }
         break;
       case Opcodes.GetFuncFromAttr:
@@ -1167,42 +1214,30 @@ public class VM
           //      so that it fullfills Opcode.Call requirements 
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
           var args_info = new FuncArgsInfo(args_bits);
-          int addr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-          var addr = curr_frame.stack[addr_idx];
-          curr_frame.stack.RemoveAt(addr_idx);
-          curr_frame.stack.Push(addr);
+          int ptr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
+          var ptr = curr_frame.stack[ptr_idx];
+          curr_frame.stack.RemoveAt(ptr_idx);
+          curr_frame.stack.Push(ptr);
         }
         break;
       case Opcodes.Call:
         {
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-          var addr = new FuncAddr(curr_frame.stack.PopRelease());
+          var val_ptr = curr_frame.stack.Pop();
+          var ptr = (FuncPtr)val_ptr._obj;
 
-          //checking if it's a userland or native func call
-          if(addr.native == null)
-          {
-            var fr = addr.MakeFrame(curr_frame);
-
-            var args_info = new FuncArgsInfo(args_bits);
-            for(int i = 0; i < args_info.CountArgs(); ++i)
-              fr.stack.Push(curr_frame.stack.Pop());
-            fr.stack.Push(Val.NewNum(this, args_bits));
-
-            //let's remember ip to return to
-            fr.return_ip = ip;
-            ctxs.Push(new Context(fr));
-            //since ip will be incremented below we decrement it intentionally here
-            ip = fr.start_ip - 1; 
-          }
-          else
+          //checking native call
+          if(ptr.native != null)
           {
             var args_info = new FuncArgsInfo(args_bits);
             for(int i = 0; i < args_info.CountArgs(); ++i)
               curr_frame.stack.Push(curr_frame.stack.Pop());
 
             var status = BHS.SUCCESS;
-            var new_instruction = addr.native.VM_cb(curr_frame, args_info, ref status);
+            var new_instruction = ptr.native.VM_cb(curr_frame, args_info, ref status);
+
+            val_ptr.Release();
 
             if(new_instruction != null)
             {
@@ -1214,6 +1249,22 @@ public class VM
             }
             else if(status != BHS.SUCCESS)
               return status;
+          }
+          else
+          {
+            var fr = ptr.MakeFrame(this, curr_frame);
+            val_ptr.Release();
+            
+            var args_info = new FuncArgsInfo(args_bits);
+            for(int i = 0; i < args_info.CountArgs(); ++i)
+              fr.stack.Push(curr_frame.stack.Pop());
+            fr.stack.Push(Val.NewNum(this, args_bits));
+
+            //let's remember ip to return to
+            fr.return_ip = ip;
+            ctxs.Push(new Context(fr));
+            //since ip will be incremented below we decrement it intentionally here
+            ip = fr.start_ip - 1; 
           }
         }
         break;
@@ -1231,8 +1282,9 @@ public class VM
       case Opcodes.Lambda:
         {             
           short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-          var addr = new FuncAddr(ip+1);
-          curr_frame.stack.Push(addr.Encode(this));
+          var ptr = FuncPtr.New(this);
+          ptr.Init(curr_frame, ip+1);
+          curr_frame.stack.Push(Val.NewObj(this, ptr));
 
           ip += offset;
         }
@@ -1242,19 +1294,17 @@ public class VM
           int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
           int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
-          var lmb = (Frame)curr_frame.stack.Peek()._obj;
+          var addr = (FuncPtr)curr_frame.stack.Peek()._obj;
 
           //TODO: amount of local variables must be known ahead and
           //      initialized during Frame initialization
           //NOTE: we need to reflect the updated max amount of locals,
           //      otherwise they might not be cleared upon Frame exit
-          lmb.locals.SetHead(local_idx+1);
+          addr.upvals.SetHead(local_idx+1);
 
-          var up_val = curr_frame.locals[up_idx];
-          up_val.Retain();
-          if(lmb.locals[local_idx] != null)
-            lmb.locals[local_idx].Release();
-          lmb.locals[local_idx] = up_val;
+          var upval = curr_frame.locals[up_idx];
+          upval.Retain();
+          addr.upvals[local_idx] = upval;
 
         }
         break;
