@@ -31,10 +31,19 @@ namespace bhlsp
           if (!success)
             break;
         }
+
+#if BHLSP_SERVER
         catch(Exception e)
         {
           BHLSPC.Logger.WriteLine(e);
         }
+#else
+        catch
+        {
+          // ignored
+        }
+#endif
+        
       }
     }
   }
@@ -223,10 +232,14 @@ namespace bhlsp
       {
         req = JsonConvert.DeserializeObject<RequestMessage>(json);
       }
+#if BHLSP_SERVER
       catch(Exception e)
       {
         BHLSPC.Logger.WriteLine(e);
-        
+#else
+      catch
+      {
+#endif
         resp = new ResponseMessage
         {
           error = new ResponseError
@@ -254,7 +267,9 @@ namespace bhlsp
     
     ResponseMessage HandleMessage(RequestMessage request)
     {
+#if BHLSP_SERVER
       BHLSPC.Logger.WriteLine($"--> {request.method}");
+#endif
 
       ResponseMessage response = null;
       
@@ -289,10 +304,14 @@ namespace bhlsp
           };
         }
       }
-      catch (Exception e)
+#if BHLSP_SERVER
+      catch(Exception e)
       {
         BHLSPC.Logger.WriteLine(e);
-        
+#else
+      catch
+      {
+#endif
         if(!isNotification)
         {
           response = new ResponseMessage
@@ -305,9 +324,11 @@ namespace bhlsp
           };
         }
       }
-      
+
+#if BHLSP_SERVER
       if(response != null)
         BHLSPC.Logger.WriteLine($"<-- {request.method}");
+#endif
       
       return response;
     }

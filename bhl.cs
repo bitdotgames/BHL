@@ -155,12 +155,6 @@ public static class Tasks
     BuildBHLSPC(tm);
   }
   
-  [Task(deps: "build_lsp")]
-  public static void run_lsp(Taskman tm, string[] args)
-  {
-    MonoRun(tm, $"{BHL_ROOT}/bhlspc.exe", args, "--debug ");
-  }
-  
   /////////////////////////////////////////////////
 
   public static string BHL_ROOT {
@@ -197,7 +191,7 @@ public static class Tasks
         $"{BHL_ROOT}/Newtonsoft.Json.dll", 
       },
       $"{BHL_ROOT}/bhlspc.exe",
-      "-debug"
+      "-define:BHLSP_SERVER -debug"
     );
   }
   
