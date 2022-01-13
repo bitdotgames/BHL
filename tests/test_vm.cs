@@ -6113,6 +6113,32 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartNativeFunc()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      start(native)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    var fn = new FuncSymbolNative("native", globs.Type("void"), null,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+          log.Append("HERE");
+          return null;
+        } 
+    );
+    globs.Define(fn);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("HERE", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStartSeveralLambdas()
   {
     string bhl = @"
