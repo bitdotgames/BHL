@@ -333,17 +333,30 @@ public class VM
 
     public void Init(Frame origin, int start_ip)
     {
-      Init(origin.fb, origin.constants, origin.bytecode, start_ip);
+      Init(
+        origin.fb, 
+        origin.module, 
+        origin.constants, 
+        origin.bytecode, 
+        start_ip
+      );
     }
 
     public void Init(Fiber fb, CompiledModule module, int start_ip)
     {
-      Init(fb, module.constants, module.bytecode, start_ip);
+      Init(
+        fb, 
+        module, 
+        module.constants, 
+        module.bytecode, 
+        start_ip
+      );
     }
 
-    public void Init(Fiber fb, List<Const> constants, byte[] bytecode, int start_ip)
+    void Init(Fiber fb, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
     {
       this.fb = fb;
+      this.module = module;
       this.constants = constants;
       this.bytecode = bytecode;
       this.start_ip = start_ip;
@@ -508,6 +521,12 @@ public class VM
       this.module = null;
       this.func_ip = -1;
       this.native = null;
+      for(int i=upvals.Count;i-- > 0;)
+      {
+        var val = upvals[i];
+        if(val != null)
+          val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      }
       upvals.SetHead(0);
     }
 
@@ -548,6 +567,7 @@ public class VM
         if(upval != null)
         {
           fr.locals.SetHead(i+1);
+          upval.Retain();
           fr.locals[i] = upval;
         }
       }
