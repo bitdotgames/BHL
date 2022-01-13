@@ -497,7 +497,6 @@ public class VM
       this.module = origin.module;
       this.func_ip = func_ip;
       this.native = null;
-      upvals.SetHead(0);
     }
 
     public void Init(CompiledModule module, int func_ip)
@@ -505,7 +504,6 @@ public class VM
       this.module = module;
       this.func_ip = func_ip;
       this.native = null;
-      upvals.SetHead(0);
     }
 
     public void Init(FuncSymbolNative native)
@@ -513,7 +511,6 @@ public class VM
       this.module = null;
       this.func_ip = -1;
       this.native = native;
-      upvals.SetHead(0);
     }
 
     void Clear()
@@ -527,7 +524,7 @@ public class VM
         if(val != null)
           val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       }
-      upvals.SetHead(0);
+      upvals.Clear();
     }
 
     public void Retain()
