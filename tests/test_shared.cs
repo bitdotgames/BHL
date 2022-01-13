@@ -103,6 +103,7 @@ public class BHL_TestRunner
     Run(names, new BHL_TestNodes(), verbose);
     Run(names, new BHL_TestInterpreter(), verbose);
     Run(names, new BHL_TestVM(), verbose);
+    Run(names, new TestLSP(), verbose);
   }
 
   static void Run(IList<string> names, BHL_TestBase test, bool verbose)

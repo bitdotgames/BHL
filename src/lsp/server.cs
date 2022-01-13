@@ -43,7 +43,6 @@ namespace bhlsp
           // ignored
         }
 #endif
-        
       }
     }
   }
@@ -272,27 +271,25 @@ namespace bhlsp
 #endif
 
       ResponseMessage response = null;
-      
-      //A processed notification message must not send a response back. They work like events.
       bool isNotification = request.id.Value == null;
       
       try
       {
-        if (!string.IsNullOrEmpty(request.method))
+        if(!string.IsNullOrEmpty(request.method))
         {
           RpcResult result = CallRpcMethod(request.method, request.@params);
-        
-          if (!isNotification)
+
+          if (isNotification && result.error == null)
+            return null; //A processed notification message must not send a response back. They work like events.
+          
+          response = new ResponseMessage
           {
-            response = new ResponseMessage
-            {
-              id = request.id,
-              result = result.result,
-              error = result.error
-            };
-          }
+            id = request.id,
+            result = result.result,
+            error = result.error
+          };
         }
-        else if(!isNotification)
+        else
         {
           response = new ResponseMessage
           {
@@ -312,17 +309,14 @@ namespace bhlsp
       catch
       {
 #endif
-        if(!isNotification)
+        response = new ResponseMessage
         {
-          response = new ResponseMessage
+          id = request.id, error = new ResponseError
           {
-            id = request.id, error = new ResponseError
-            {
-              code = (int)ErrorCodes.InternalError,
-              message = ""
-            }
-          };
-        }
+            code = (int)ErrorCodes.InternalError,
+            message = ""
+          }
+        };
       }
 
 #if BHLSP_SERVER
@@ -335,6 +329,13 @@ namespace bhlsp
 
     private RpcResult CallRpcMethod(string name, JToken @params)
     {
+      if(double.TryParse(name, out _))
+        return RpcResult.Error(new ResponseError
+        {
+          code = (int)ErrorCodes.InvalidRequest,
+          message = ""
+        });
+      
       foreach (var service in services)
       {
         foreach (var method in service.GetType().GetMethods())
@@ -343,8 +344,27 @@ namespace bhlsp
           {
             object[] args = null;
             var pms = method.GetParameters();
-            if(pms.Length > 0)
-              args = new[] { @params.ToObject(pms[0].ParameterType) };
+            if (pms.Length > 0)
+            {
+              try
+              {
+                args = new[] { @params.ToObject(pms[0].ParameterType) };
+              }
+#if BHLSP_SERVER
+              catch(Exception e)
+              {
+                BHLSPC.Logger.WriteLine(e);
+#else
+              catch
+              {
+#endif
+                return RpcResult.Error(new ResponseError
+                {
+                  code = (int)ErrorCodes.InvalidParams,
+                  message = ""
+                });
+              }
+            }
             
             return (RpcResult)method.Invoke(service, args);
           }
@@ -357,7 +377,7 @@ namespace bhlsp
         message = ""
       });
     }
-
+    
     private bool IsAllowedToInvoke(MethodInfo m, string name)
     {
       foreach(var attribute in m.GetCustomAttributes(true))
