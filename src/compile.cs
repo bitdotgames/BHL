@@ -442,7 +442,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetLambda,
+        Opcodes.FuncPtrToTop,
         4/*args bits*/
       )
     );
@@ -456,12 +456,6 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.GetFuncImported,
         3/*module name idx*/, 3/*func name idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.GetFuncFromAttr,
-        4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1112,7 +1106,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.LMBD:
       {
         VisitChildren(ast);
-        Emit(Opcodes.GetLambda, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
         Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
@@ -1126,7 +1120,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.FUNC_MVAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.GetFuncFromAttr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
         Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;

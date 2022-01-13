@@ -33,8 +33,7 @@ public enum Opcodes
   GetFuncFromVar   ,
   GetFuncImported  ,
   GetMethodNative  ,
-  GetLambda        ,
-  GetFuncFromAttr  ,
+  FuncPtrToTop     ,
   SetAttr          ,
   SetAttrInplace   ,
   ArgRef           ,
@@ -1211,23 +1210,9 @@ public class VM
           curr_frame.stack.Push(val);
         }
         break;
-      case Opcodes.GetLambda:
+      case Opcodes.FuncPtrToTop:
         {
-          //NOTE: geting rid of addr on the stack left after Opcode.Lambda.
-          //      Since lambda is called 'inplace' we need to generate proper 
-          //      opcode sequence required for Opcode.Call
-          uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-          var args_info = new FuncArgsInfo(args_bits);
-          int ptr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-          var ptr = curr_frame.stack[ptr_idx];
-          curr_frame.stack.RemoveAt(ptr_idx);
-          curr_frame.stack.Push(ptr);
-        }
-        break;
-      case Opcodes.GetFuncFromAttr:
-        {
-          //NOTE: currently addr stored in member attribute is passed the last
-          //      on the stack and arguments follow it, we need to put it first 
+          //NOTE: we need to move ptr to the top of the stack
           //      so that it fullfills Opcode.Call requirements 
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
           var args_info = new FuncArgsInfo(args_bits);
