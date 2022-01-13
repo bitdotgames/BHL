@@ -3127,6 +3127,28 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeFuncPtrWithArgs()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      void^(string) ptr = trace
+      ptr(""Hey"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("Hey", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestIfCondition()
   {
     string bhl = @"
