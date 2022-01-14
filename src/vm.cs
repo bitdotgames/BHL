@@ -29,12 +29,12 @@ public enum Opcodes
   Pop              ,
   Call             ,
   CallNative       ,
+  CallMethodNative ,
   CallPtr          ,
   GetFunc          ,
   GetFuncNative    ,
   GetFuncFromVar   ,
   GetFuncImported  ,
-  GetMethodNative  ,
   FuncPtrToTop     ,
   SetAttr          ,
   SetAttrInplace   ,
@@ -1176,19 +1176,6 @@ public class VM
           curr_frame.stack.Push(Val.NewObj(this, ptr));
         }
         break;
-      case Opcodes.GetMethodNative:
-        {
-          int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-
-          int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-          string class_type = curr_frame.constants[class_type_idx].str; 
-
-          var class_symb = (ClassSymbol)symbols.Resolve(class_type);
-          var ptr = FuncPtr.New(this);
-          ptr.Init((FuncSymbolNative)class_symb.members[func_idx]);
-          curr_frame.stack.Push(Val.NewObj(this, ptr));
-        }
-        break;
       case Opcodes.GetFuncImported:
         {
           int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
@@ -1248,26 +1235,26 @@ public class VM
         {
           int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
           var native = (FuncSymbolNative)globs.GetMembers()[func_idx];
 
-          var args_info = new FuncArgsInfo(args_bits);
-          for(int i = 0; i < args_info.CountArgs(); ++i)
-            curr_frame.stack.Push(curr_frame.stack.Pop());
-
-          var status = BHS.SUCCESS;
-          var new_instruction = native.VM_cb(curr_frame, args_info, ref status);
-
-          if(new_instruction != null)
-          {
-            //NOTE: since there's a new instruction we want to skip ip incrementing
-            //      which happens below and proceed right to the execution of 
-            //      the new instruction
-            instruction = new_instruction;
-            return BHS.SUCCESS;
-          }
-          else if(status != BHS.SUCCESS)
+          BHS status;
+          if(CallNative(curr_frame, native, args_bits, out status, ref instruction))
             return status;
+        }
+        break;
+      case Opcodes.CallMethodNative:
+        {
+          int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+          int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
+          string class_type = curr_frame.constants[class_type_idx].str; 
+          var class_symb = (ClassSymbol)symbols.Resolve(class_type);
+
+          BHS status;
+          if(CallNative(curr_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref instruction))
+            return status;
         }
         break;
       case Opcodes.CallPtr:
@@ -1280,24 +1267,10 @@ public class VM
           //checking native call
           if(ptr.native != null)
           {
-            var args_info = new FuncArgsInfo(args_bits);
-            for(int i = 0; i < args_info.CountArgs(); ++i)
-              curr_frame.stack.Push(curr_frame.stack.Pop());
-
-            var status = BHS.SUCCESS;
-            var new_instruction = ptr.native.VM_cb(curr_frame, args_info, ref status);
-
+            BHS status;
+            bool return_status = CallNative(curr_frame, ptr.native, args_bits, out status, ref instruction);
             val_ptr.Release();
-
-            if(new_instruction != null)
-            {
-              //NOTE: since there's a new instruction we want to skip ip incrementing
-              //      which happens below and proceed right to the execution of 
-              //      the new instruction
-              instruction = new_instruction;
-              return BHS.SUCCESS;
-            }
-            else if(status != BHS.SUCCESS)
+            if(return_status)
               return status;
           }
           else
@@ -1443,6 +1416,29 @@ public class VM
 
     ++ip;
     return BHS.SUCCESS;
+  }
+
+  static bool CallNative(Frame curr_frame, FuncSymbolNative native, uint args_bits, out BHS status, ref IInstruction instruction)
+  {
+    var args_info = new FuncArgsInfo(args_bits);
+    for(int i = 0; i < args_info.CountArgs(); ++i)
+      curr_frame.stack.Push(curr_frame.stack.Pop());
+
+    status = BHS.SUCCESS;
+    var new_instruction = native.VM_cb(curr_frame, args_info, ref status);
+
+    if(new_instruction != null)
+    {
+      //NOTE: since there's a new instruction we want to skip ip incrementing
+      //      which happens below and proceed right to the execution of 
+      //      the new instruction
+      instruction = new_instruction;
+      return true;
+    }
+    else if(status != BHS.SUCCESS)
+      return true;
+    else 
+      return false;
   }
 
   static BHS ExecuteInstruction(

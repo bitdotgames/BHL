@@ -436,12 +436,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetMethodNative,
-        2/*class member idx*/, 3/*type literal idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.FuncPtrToTop,
         4/*args bits*/
       )
@@ -468,6 +462,12 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.CallNative,
         3/*globs idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallMethodNative,
+        2/*class member idx*/, 3/*type literal idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1075,8 +1075,7 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
         
-        Emit(Opcodes.GetMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
@@ -1091,14 +1090,12 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]")}, (int)ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]"), 0}, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")}, (int)ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]"), 0}, (int)ast.line_num);
       }
       break;
       case EnumCall.LMBD:
@@ -1364,8 +1361,7 @@ public class ModuleCompiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
-        Emit(Opcodes.CallPtr, new int[] {0});
+        Emit(Opcodes.CallMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 0});
       }
       else
         Visit(c);
@@ -1374,8 +1370,7 @@ public class ModuleCompiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
-      Emit(Opcodes.CallPtr, new int[] {0});
+      Emit(Opcodes.CallMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 0});
     }
   }
 
