@@ -1010,40 +1010,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.FUNC:
       {
-        int offset;
-        if(func2ip.TryGetValue(ast.name, out offset))
-        {
-          VisitChildren(ast);
-          Emit(Opcodes.GetFunc, new int[] {offset}, (int)ast.line_num);
-          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
-        }
-        else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
-        {
-          int func_idx = globs.GetMembers().IndexOf(fsymb);
-          if(func_idx == -1)
-            throw new Exception("Func '" + ast.name + "' idx not found in symbols");
-          VisitChildren(ast);
-          Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
-          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
-        }
-        else if(ast.nname2 != module_path.id)
-        {
-          VisitChildren(ast);
-
-          var import_name = imports[ast.nname2];
-
-          int module_idx = AddConstant(import_name);
-          if(module_idx > ushort.MaxValue)
-            throw new Exception("Can't encode module literal in ushort: " + module_idx);
-          int func_idx = AddConstant(ast.name);
-          if(func_idx > ushort.MaxValue)
-            throw new Exception("Can't encode func literal in ushort: " + func_idx);
-
-          Emit(Opcodes.GetFuncImported, new int[] {(int)module_idx, (int)func_idx}, (int)ast.line_num);
-          Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
-        }
-        else
-          throw new Exception("Func '" + ast.name + "' code not found");
+        VisitChildren(ast);
+        EmitGetFuncAddr(ast);
+        Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVAR:
@@ -1126,38 +1095,43 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GET_ADDR:
       {
-        int offset;
-        if(func2ip.TryGetValue(ast.name, out offset))
-        {
-          Emit(Opcodes.GetFunc, new int[] {offset}, (int)ast.line_num);
-        }
-        else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
-        {
-          int func_idx = globs.GetMembers().IndexOf(fsymb);
-          if(func_idx == -1)
-            throw new Exception("Func '" + ast.name + "' idx not found in symbols");
-          Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
-        }
-        else if(ast.nname2 != module_path.id)
-        {
-          var import_name = imports[ast.nname2];
-
-          int module_idx = AddConstant(import_name);
-          if(module_idx > ushort.MaxValue)
-            throw new Exception("Can't encode module literal in ushort: " + module_idx);
-          int func_idx = AddConstant(ast.name);
-          if(func_idx > ushort.MaxValue)
-            throw new Exception("Can't encode func literal in ushort: " + func_idx);
-
-          Emit(Opcodes.GetFuncImported, new int[] {(int)module_idx, (int)func_idx}, (int)ast.line_num);
-        }
-        else
-          throw new Exception("Not found func address");
+        EmitGetFuncAddr(ast);
       }
       break;
       default:
         throw new Exception("Not supported call: " + ast.type);
     }
+  }
+
+  Instruction EmitGetFuncAddr(AST_Call ast)
+  {
+    int offset;
+    if(func2ip.TryGetValue(ast.name, out offset))
+    {
+      return Emit(Opcodes.GetFunc, new int[] {offset}, (int)ast.line_num);
+    }
+    else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
+    {
+      int func_idx = globs.GetMembers().IndexOf(fsymb);
+      if(func_idx == -1)
+        throw new Exception("Func '" + ast.name + "' idx not found in symbols");
+      return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
+    }
+    else if(ast.nname2 != module_path.id)
+    {
+      var import_name = imports[ast.nname2];
+
+      int module_idx = AddConstant(import_name);
+      if(module_idx > ushort.MaxValue)
+        throw new Exception("Can't encode module literal in ushort: " + module_idx);
+      int func_idx = AddConstant(ast.name);
+      if(func_idx > ushort.MaxValue)
+        throw new Exception("Can't encode func literal in ushort: " + func_idx);
+
+      return Emit(Opcodes.GetFuncImported, new int[] {(int)module_idx, (int)func_idx}, (int)ast.line_num);
+    }
+    else
+      throw new Exception("Func '" + ast.name + "' code not found");
   }
 
   public override void DoVisit(AST_Return ast)
