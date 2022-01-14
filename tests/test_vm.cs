@@ -8043,7 +8043,7 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     var lst = fb.stack.Pop();
-    AssertEqual((lst.obj as ValList).Count, 0);
+    AssertEqual((lst.obj as IList<Val>).Count, 0);
     lst.Release();
     CommonChecks(vm);
   }
@@ -8182,7 +8182,7 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     var lst = fb.stack.Pop();
-    AssertEqual((lst.obj as ValList).Count, 1);
+    AssertEqual((lst.obj as IList<Val>).Count, 1);
     lst.Release();
     CommonChecks(vm);
   }
@@ -8302,7 +8302,7 @@ public class BHL_TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     var val = fb.stack.Pop();
-    var lst = val.obj as ValList;
+    var lst = val.obj as IList<Val>;
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "tst");
     AssertEqual(lst[1].str, "bar");
@@ -8417,7 +8417,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").stack.Pop();
 
-    var lst = res.obj as ValList;
+    var lst = res.obj as IList<Val>;
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
@@ -15984,7 +15984,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, globs);
     var res = Execute(vm, "test").stack.Pop();
-    var lst = res.obj as ValList;
+    var lst = res.obj as IList<Val>;
     AssertEqual(lst.Count, 2);
     AssertEqual(lst[0].num, 20);
     AssertEqual(lst[1].num, 10);
@@ -18433,7 +18433,7 @@ public class BHL_TestVM : BHL_TestBase
         {
           var f = (Foo)ctx.obj;
           f.colors.Clear();
-          var vls = (ValList)v.obj;
+          var vls = (IList<Val>)v.obj;
           for(int i=0;i<vls.Count;++i)
           {
             var vl = vls[i]; 

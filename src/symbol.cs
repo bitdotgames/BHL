@@ -456,9 +456,9 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return new Array_ClearNode();
   }
 
-  static ValList AsList(Val arr)
+  static IList<Val> AsList(Val arr)
   {
-    var lst = arr.obj as ValList;
+    var lst = arr.obj as IList<Val>;
     if(lst == null)
       throw new UserError("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
     return lst;
@@ -735,13 +735,13 @@ public class FieldSymbolScript : FieldSymbol
 
   void VM_Getter(Val ctx, ref Val v)
   {
-    var m = (ValList)ctx.obj;
+    var m = (IList<Val>)ctx.obj;
     v.ValueCopyFrom(m[VM_idx]);
   }
 
   void VM_Setter(ref Val ctx, Val v)
   {
-    var m = (ValList)ctx.obj;
+    var m = (IList<Val>)ctx.obj;
     var curr = m[VM_idx];
     for(int i=0;i<curr._refs;++i)
     {
@@ -753,7 +753,7 @@ public class FieldSymbolScript : FieldSymbol
 
   void VM_Getref(Val ctx, out Val v)
   {
-    var m = (ValList)ctx.obj;
+    var m = (IList<Val>)ctx.obj;
     v = m[VM_idx];
   }
 }
@@ -1286,11 +1286,11 @@ public class ClassSymbolScript : ClassSymbol
 
   void VM_ClassCreator(VM.Frame frm, ref Val res)
   {
-    ValList vl = null;
+    IList<Val> vl = null;
     if(super_class != null)
     {
       super_class.VM_creator(frm, ref res);
-      vl = (ValList)res.obj;
+      vl = (IList<Val>)res.obj;
     }
     else
     {
