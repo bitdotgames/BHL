@@ -837,7 +837,7 @@ public class VM
     return fb;
   }
 
-  //NOTE: adding fake bytecode which makes the current Frame to exit
+  //NOTE: adding special bytecode which makes the fake Frame to exit
   //      after executing the instruction: the first opcode is used
   //      if execution doesn't produce a stateful instruction,
   //      and the second one if it does (this is how VM works)
@@ -848,6 +848,7 @@ public class VM
     var fb = Fiber.New(this);
     Register(fb);
 
+    uint cargs_bits = 0;
     //checking native call
     if(ptr.native != null)
     {
@@ -855,14 +856,14 @@ public class VM
       var frame = Frame.New(this);
       frame.Init(fb, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
-      fb.instruction = ptr.native.VM_cb(curr_frame, new FuncArgsInfo(0), ref fb.status);
+      fb.instruction = ptr.native.VM_cb(curr_frame, new FuncArgsInfo(cargs_bits), ref fb.status);
     }
     else
     {
       var frame = ptr.MakeFrame(this, curr_frame);
       Attach(fb, frame);
       //cargs bits
-      frame.stack.Push(Val.NewNum(this, 0));
+      frame.stack.Push(Val.NewNum(this, cargs_bits));
     }
 
     return fb;
