@@ -1138,6 +1138,19 @@ public class ModuleCompiler : AST_Visitor
             throw new Exception("Func '" + ast.name + "' idx not found in symbols");
           Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
         }
+        else if(ast.nname2 != module_path.id)
+        {
+          var import_name = imports[ast.nname2];
+
+          int module_idx = AddConstant(import_name);
+          if(module_idx > ushort.MaxValue)
+            throw new Exception("Can't encode module literal in ushort: " + module_idx);
+          int func_idx = AddConstant(ast.name);
+          if(func_idx > ushort.MaxValue)
+            throw new Exception("Can't encode func literal in ushort: " + func_idx);
+
+          Emit(Opcodes.GetFuncImported, new int[] {(int)module_idx, (int)func_idx}, (int)ast.line_num);
+        }
         else
           throw new Exception("Not found func address");
       }

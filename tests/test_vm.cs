@@ -6234,6 +6234,50 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartImportedSameFuncPtr()
+  {
+    string bhl2 = @"
+    func void foo() {
+      trace(""FOO1"")
+      yield()
+      trace(""FOO2"")
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+
+    func void test() {
+      void^() fn = foo
+      void^() fn2 = fn
+      paral_all {
+        start(fn2)
+        start(fn2)
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+
+    BindTrace(globs, log);
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files, globs));
+
+    var vm = new VM(globs: globs, importer: importer);
+    vm.ImportModule("bhl1");
+    Execute(vm, "test");
+    AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
+    CommonChecks(vm);
+  }
+
+
+  [IsTested()]
   public void TestStartLambdaCaptureVars()
   {
     string bhl = @"
