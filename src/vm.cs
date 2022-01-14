@@ -841,7 +841,7 @@ public class VM
   //      after executing the instruction: the first opcode is used
   //      if execution doesn't produce a stateful instruction,
   //      and the second one if it does (this is how VM works)
-  static byte[] return_bytecode = new byte[] {(byte)Opcodes.Return, (byte)Opcodes.Return};
+  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.Return, (byte)Opcodes.Return};
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame)
   {
@@ -853,7 +853,7 @@ public class VM
     {
       //let's create a fake frame for a native call
       var frame = Frame.New(this);
-      frame.Init(fb, null, null, return_bytecode, 0);
+      frame.Init(fb, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
       fb.instruction = ptr.native.VM_cb(curr_frame, new FuncArgsInfo(0), ref fb.status);
     }
