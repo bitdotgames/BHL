@@ -466,6 +466,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.CallNative,
+        3/*globs idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.CallPtr,
         4/*args bits*/
       )
@@ -617,6 +623,11 @@ public class ModuleCompiler : AST_Visitor
   Instruction Peek()
   {
     return head[head.Count-1];
+  }
+
+  void Pop()
+  {
+    head.RemoveAt(head.Count-1);
   }
 
   Instruction Emit(Opcodes op, int[] operands = null, int line_num = 0)
@@ -1018,11 +1029,16 @@ public class ModuleCompiler : AST_Visitor
       {
         VisitChildren(ast);
         var instr = EmitGetFuncAddr(ast);
-        //let's optimize primitive calls
+        //let's optimize some primitive calls
         if(instr.op == Opcodes.GetFunc)
         {
-          head.RemoveAt(head.Count-1);
+          Pop();
           Emit(Opcodes.Call, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
+        }
+        else if(instr.op == Opcodes.GetFuncNative)
+        {
+          Pop();
+          Emit(Opcodes.CallNative, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
         }
         else
           Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);

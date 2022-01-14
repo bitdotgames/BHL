@@ -2979,8 +2979,7 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler(globs)
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
@@ -8532,8 +8531,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("suspend") })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -8566,8 +8564,7 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler(globs)
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
@@ -8596,8 +8593,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -8628,12 +8624,10 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -8706,13 +8700,11 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 32})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 9})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("suspend") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 15})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 30})
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 8})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0 })
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 14})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { 0 })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -8754,13 +8746,11 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 32})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 9})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("suspend") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 15})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 30})
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 8})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0})
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 14})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { 0 })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -8811,13 +8801,11 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       //foo
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("suspend") })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0 })
       .EmitThen(Opcodes.Return)
       //bar
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -8828,7 +8816,7 @@ public class BHL_TestVM : BHL_TestBase
         .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 8})
           .EmitThen(Opcodes.Call, new int[] { 0/*foo*/, 0 })
         .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 10})
-          .EmitThen(Opcodes.Call, new int[] { 12/*bar*/, 0})
+          .EmitThen(Opcodes.Call, new int[] { 11/*bar*/, 0})
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
@@ -8874,13 +8862,11 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       //foo
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("suspend") })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0 })
       .EmitThen(Opcodes.Return)
       //bar
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -8891,7 +8877,7 @@ public class BHL_TestVM : BHL_TestBase
         .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 8})
           .EmitThen(Opcodes.Call, new int[] { 0/*foo*/, 0 })
         .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 10})
-          .EmitThen(Opcodes.Call, new int[] { 12/*bar*/, 0 })
+          .EmitThen(Opcodes.Call, new int[] { 11/*bar*/, 0 })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
@@ -8967,13 +8953,11 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER  })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 32})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 9})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("suspend") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 15})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 30})
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 8})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0 })
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 14})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { 0 })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -9016,15 +9000,12 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER  })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 41})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 18})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 15})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 38})
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 16})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 14})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { 0 })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -9753,13 +9734,11 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { 1 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -10050,17 +10029,14 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 1 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { 2 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -10115,32 +10091,26 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       //foo
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { 1 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 2 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       //test
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 3 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Call, new int[] { 0, 0 })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 4 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { 5 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -10179,18 +10149,15 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 17})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 16})
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
           .EmitThen(Opcodes.Constant, new int[] { 1 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { 2 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -10965,22 +10932,18 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 34})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 32})
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
           .EmitThen(Opcodes.Constant, new int[] { 1 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 13})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 12})
           .EmitThen(Opcodes.Constant, new int[] { 2 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { 3 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -11024,24 +10987,19 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 43})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 40})
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
           .EmitThen(Opcodes.Constant, new int[] { 1 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 22})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 20})
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { 2 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { 3 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -11129,35 +11087,9 @@ public class BHL_TestVM : BHL_TestBase
 
     var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
+    BindTrace(globs, log);
 
-    var c = Compile(bhl, globs);
-
-    var expected = 
-      new ModuleCompiler()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
-        .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 34})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
-          .EmitThen(Opcodes.Constant, new int[] { 1 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 13})
-          .EmitThen(Opcodes.Constant, new int[] { 2 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Constant, new int[] { 3 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      ;
-
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
+    var vm = MakeVM(bhl, globs);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("wowbarfoohey", log.ToString());
@@ -11189,37 +11121,9 @@ public class BHL_TestVM : BHL_TestBase
 
     var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
+    BindTrace(globs, log);
 
-    var c = Compile(bhl, globs);
-
-    var expected = 
-      new ModuleCompiler()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
-        .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL_ALL, 43})
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
-          .EmitThen(Opcodes.Constant, new int[] { 1 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-        .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 22})
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf("yield") })
-          .EmitThen(Opcodes.CallPtr, new int[] { 0 })
-          .EmitThen(Opcodes.Constant, new int[] { 2 })
-          .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-          .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Constant, new int[] { 3 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      ;
-
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
+    var vm = MakeVM(bhl, globs);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertEqual("", log.ToString());
@@ -11453,26 +11357,22 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       //lambda
-      .EmitThen(Opcodes.Lambda, new int[] { 33 } )
+      .EmitThen(Opcodes.Lambda, new int[] { 31 } )
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 13})
+      .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { 1 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
         .EmitThen(Opcodes.Constant, new int[] { 2 })
-        .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-        .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       .EmitThen(Opcodes.FuncPtrToTop, new int[] { 0 })
       .EmitThen(Opcodes.CallPtr, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { 3 })
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -11632,8 +11532,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -12499,8 +12398,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -12808,8 +12706,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -13403,8 +13300,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -15320,8 +15216,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetFuncNative, new int[] { globs.GetMembers().IndexOf(fn) })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);

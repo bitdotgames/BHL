@@ -28,6 +28,7 @@ public enum Opcodes
   Continue         ,
   Pop              ,
   Call             ,
+  CallNative       ,
   CallPtr          ,
   GetFunc          ,
   GetFuncNative    ,
@@ -1227,6 +1228,7 @@ public class VM
         {
           int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip); 
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
           var fr = Frame.New(this);
           fr.Init(curr_frame, func_ip);
           
@@ -1240,6 +1242,32 @@ public class VM
           ctxs.Push(new Context(fr));
           //since ip will be incremented below we decrement it intentionally here
           ip = fr.start_ip - 1; 
+        }
+        break;
+      case Opcodes.CallNative:
+        {
+          int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+          var native = (FuncSymbolNative)globs.GetMembers()[func_idx];
+
+          var args_info = new FuncArgsInfo(args_bits);
+          for(int i = 0; i < args_info.CountArgs(); ++i)
+            curr_frame.stack.Push(curr_frame.stack.Pop());
+
+          var status = BHS.SUCCESS;
+          var new_instruction = native.VM_cb(curr_frame, args_info, ref status);
+
+          if(new_instruction != null)
+          {
+            //NOTE: since there's a new instruction we want to skip ip incrementing
+            //      which happens below and proceed right to the execution of 
+            //      the new instruction
+            instruction = new_instruction;
+            return BHS.SUCCESS;
+          }
+          else if(status != BHS.SUCCESS)
+            return status;
+
         }
         break;
       case Opcodes.CallPtr:
