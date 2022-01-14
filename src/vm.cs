@@ -226,8 +226,16 @@ public class VM
         var frm = frames[i].frame;
 
         var item = new TraceItem(); 
-        item.file = frm.module.name + ".bhl";
-        item.func = TraceItem.MapIp2Func(frm.start_ip, frm.module.func2ip);
+        if(frm.module != null)
+        {
+          item.file = frm.module.name + ".bhl";
+          item.func = TraceItem.MapIp2Func(frm.start_ip, frm.module.func2ip);
+        }
+        else
+        {
+          item.file = "?";
+          item.func = "?";
+        }
 
         if(i == frames.Count-1)
         {
@@ -356,7 +364,7 @@ public class VM
       );
     }
 
-    void Init(Fiber fb, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
+    internal void Init(Fiber fb, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
     {
       this.fb = fb;
       this.module = module;
@@ -811,47 +819,57 @@ public class VM
       return null;
 
     var fb = Fiber.New(this);
-    var fr = Frame.New(this);
-    fr.Init(fb, addr.module, addr.ip);
-    Register(fb, fr);
+    Register(fb);
+
+    var frame = Frame.New(this);
+    frame.Init(fb, addr.module, addr.ip);
 
     for(int i=args.Length;i-- > 0;)
     {
       var arg = args[i];
-      fr.stack.Push(arg);
+      frame.stack.Push(arg);
     }
     //cargs bits
-    fr.stack.Push(Val.NewNum(this, cargs_bits));
+    frame.stack.Push(Val.NewNum(this, cargs_bits));
+
+    Attach(fb, frame);
 
     return fb;
   }
+
+  //NOTE: adding fake bytecode which makes the current Frame to exit
+  //      after executing the instruction: the first opcode is used
+  //      if execution doesn't produce a stateful instruction,
+  //      and the second one if it does (this is how VM works)
+  static byte[] return_bytecode = new byte[] {(byte)Opcodes.Return, (byte)Opcodes.Return};
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame)
   {
     var fb = Fiber.New(this);
+    Register(fb);
 
     //checking native call
     if(ptr.native != null)
     {
-      Register(fb);
-      var args_info = new FuncArgsInfo(0);
-      fb.instruction = ptr.native.VM_cb(curr_frame, args_info, ref fb.status);
+      //let's create a fake frame for a native call
+      var frame = Frame.New(this);
+      frame.Init(fb, null, null, return_bytecode, 0);
+      Attach(fb, frame);
+      fb.instruction = ptr.native.VM_cb(curr_frame, new FuncArgsInfo(0), ref fb.status);
     }
     else
     {
-      var fr = ptr.MakeFrame(this, curr_frame);
-      Register(fb, fr);
+      var frame = ptr.MakeFrame(this, curr_frame);
+      Attach(fb, frame);
       //cargs bits
-      fr.stack.Push(Val.NewNum(this, 0));
+      frame.stack.Push(Val.NewNum(this, 0));
     }
 
     return fb;
   }
 
-  void Register(Fiber fb, Frame fr)
+  void Attach(Fiber fb, Frame fr)
   {
-    Register(fb);
-
     fb.ip = fr.start_ip;
     fr.fb = fb;
     fb.frames.Push(new FrameContext(fr));
@@ -938,7 +956,7 @@ public class VM
 
     var curr_frame = ctx.frame;
 
-    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + frames.Count + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
     if(instruction != null)

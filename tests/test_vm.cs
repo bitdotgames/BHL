@@ -6125,6 +6125,58 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  class TraceAfterYield : IInstruction
+  {
+    bool first_time = true;
+    public StringBuilder log;
+
+    public void Tick(VM.Frame frm, ref BHS status)
+    {
+      if(first_time)
+      {
+        status = BHS.RUNNING;
+        first_time = false;
+      }
+      else
+        log.Append("HERE");
+    }
+
+    public void Cleanup(VM.Frame frm)
+    {
+      first_time = true;
+    }
+  }
+
+  [IsTested()]
+  public void TestStartNativeStatefulFunc()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      start(yield_and_trace)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    {
+      var fn = new FuncSymbolNative("yield_and_trace", globs.Type("void"), null,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+        { 
+          var inst = Instructions.New<TraceAfterYield>(frm.vm);
+          inst.log = log;
+          return inst;
+        } 
+      );
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("HERE", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestStartSeveralLambdas()
   {
