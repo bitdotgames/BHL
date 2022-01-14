@@ -6214,9 +6214,10 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() {
       void^() fn = foo
+      void^() fn2 = fn
       paral_all {
-        start(fn)
-        start(fn)
+        start(fn2)
+        start(fn2)
       }
     }
     ";
