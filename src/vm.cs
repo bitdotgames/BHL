@@ -138,13 +138,13 @@ public class VM
   public const int MAX_IP = int.MaxValue;
   public const int STOP_IP = MAX_IP - 1;
 
-  public struct Context
+  public struct FrameContext
   {
     public Frame frame;
     public int min_ip;
     public int max_ip;
 
-    public Context(Frame frame, int min_ip = -1, int max_ip = MAX_IP)
+    public FrameContext(Frame frame, int min_ip = -1, int max_ip = MAX_IP)
     {
       this.frame = frame;
       this.min_ip = min_ip;
@@ -158,9 +158,10 @@ public class VM
 
     internal int id;
     internal int tick;
+
     internal int ip;
     internal IInstruction instruction;
-    internal FixedStack<Context> ctxs = new FixedStack<Context>(256);
+    internal FixedStack<FrameContext> frames = new FixedStack<FrameContext>(256);
 
     public FixedStack<Val> stack = new FixedStack<Val>(32);
     
@@ -199,17 +200,17 @@ public class VM
     {
       if(instruction != null)
       {
-        Instructions.Del(ctxs.Peek().frame, instruction);
+        Instructions.Del(frames.Peek().frame, instruction);
         instruction = null;
       }
 
-      for(int i=ctxs.Count;i-- > 0;)
+      for(int i=frames.Count;i-- > 0;)
       {
-        var frm = ctxs[i].frame;
+        var frm = frames[i].frame;
         frm.ExitScope(frm);
         frm.Release();
       }
-      ctxs.Clear();
+      frames.Clear();
       tick = 0;
     }
 
@@ -220,15 +221,15 @@ public class VM
 
     public void GetStackTrace(List<VM.TraceItem> info)
     {
-      for(int i=0;i<ctxs.Count;++i)
+      for(int i=0;i<frames.Count;++i)
       {
-        var frm = ctxs[i].frame;
+        var frm = frames[i].frame;
 
         var item = new TraceItem(); 
         item.file = frm.module.name + ".bhl";
         item.func = TraceItem.MapIp2Func(frm.start_ip, frm.module.func2ip);
 
-        if(i == ctxs.Count-1)
+        if(i == frames.Count-1)
         {
           if(!TryGetInstructionIP(instruction, out item.ip))
             item.ip = frm.fb.ip;
@@ -237,7 +238,7 @@ public class VM
         }
         else
         {
-          var next = ctxs[i+1].frame;
+          var next = frames[i+1].frame;
           //NOTE: retrieving last ip for the current Frame which 
           //      turns out to be return_ip assigned to the next Frame
           item.ip = next.return_ip;
@@ -853,7 +854,7 @@ public class VM
 
     fb.ip = fr.start_ip;
     fr.fb = fb;
-    fb.ctxs.Push(new Context(fr));
+    fb.frames.Push(new FrameContext(fr));
   }
 
   void Register(Fiber fb)
@@ -902,17 +903,17 @@ public class VM
 
   internal BHS Execute(
     ref int ip,
-    FixedStack<Context> ctxs, 
+    FixedStack<FrameContext> frames, 
     ref IInstruction instruction, 
     IExitableScope defer_scope,
-    int ctx_limit = 0
+    int frames_limit = 0
   )
   {
     var status = BHS.SUCCESS;
-    while(ctxs.Count > ctx_limit && status == BHS.SUCCESS)
+    while(frames.Count > frames_limit && status == BHS.SUCCESS)
     {
       status = ExecuteOnce(
-        ref ip, ctxs,
+        ref ip, frames,
         ref instruction,
         defer_scope
       );
@@ -922,26 +923,26 @@ public class VM
 
   BHS ExecuteOnce(
     ref int ip, 
-    FixedStack<Context> ctxs, 
+    FixedStack<FrameContext> frames, 
     ref IInstruction instruction, 
     IExitableScope defer_scope
   )
   { 
-    var ctx = ctxs.Peek();
+    var ctx = frames.Peek();
 
     if(ip <= ctx.min_ip || ip >= ctx.max_ip)
     {
-      ctxs.Pop();
+      frames.Pop();
       return BHS.SUCCESS;
     }
 
     var curr_frame = ctx.frame;
 
-    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + ctxs.Count + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + frames.Count + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
     if(instruction != null)
-      return ExecuteInstruction(ref ip, ref instruction, curr_frame, ctxs);
+      return ExecuteInstruction(ref ip, ref instruction, curr_frame, frames);
 
     var opcode = (Opcodes)curr_frame.bytecode[ip];
     //Console.WriteLine("OP " + opcode + " " + ip);
@@ -1137,14 +1138,14 @@ public class VM
           curr_frame.Clear();
           curr_frame.Release();
           //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
-          ctxs.Pop();
+          frames.Pop();
         }
         break;
       case Opcodes.ReturnVal:
         {
           int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
-          var ret_stack = ctxs.Count == 1 ? curr_frame.fb.stack : ctxs[ctxs.Count-2].frame.stack;  
+          var ret_stack = frames.Count == 1 ? curr_frame.fb.stack : frames[frames.Count-2].frame.stack;  
           //TODO: make it more efficient?
           int stack_offset = curr_frame.stack.Count; 
           for(int i=0;i<ret_num;++i)
@@ -1157,7 +1158,7 @@ public class VM
           curr_frame.ExitScope(curr_frame);
           curr_frame.Clear();
           curr_frame.Release();
-          ctxs.Pop();
+          frames.Pop();
         }
         break;
       case Opcodes.GetFunc:
@@ -1220,7 +1221,7 @@ public class VM
           var fr = Frame.New(this);
           fr.Init(curr_frame, func_ip);
 
-          Call(curr_frame, ctxs, fr, args_bits, ref ip);
+          Call(curr_frame, frames, fr, args_bits, ref ip);
         }
         break;
       case Opcodes.CallNative:
@@ -1248,7 +1249,7 @@ public class VM
 
           var fr = Frame.New(this);
           fr.Init(curr_frame.fb, module, func_ip);
-          Call(curr_frame, ctxs, fr, args_bits, ref ip);
+          Call(curr_frame, frames, fr, args_bits, ref ip);
         }
         break;
       case Opcodes.CallMethodNative:
@@ -1285,7 +1286,7 @@ public class VM
           {
             var fr = ptr.MakeFrame(this, curr_frame);
             val_ptr.Release();
-            Call(curr_frame, ctxs, fr, args_bits, ref ip);
+            Call(curr_frame, frames, fr, args_bits, ref ip);
           }
         }
         break;
@@ -1416,7 +1417,7 @@ public class VM
     return BHS.SUCCESS;
   }
 
-  void Call(Frame curr_frame, FixedStack<Context> ctxs, Frame new_frame, uint args_bits, ref int ip)
+  void Call(Frame curr_frame, FixedStack<FrameContext> frames, Frame new_frame, uint args_bits, ref int ip)
   {
     var args_info = new FuncArgsInfo(args_bits);
     for(int i = 0; i < args_info.CountArgs(); ++i)
@@ -1425,7 +1426,7 @@ public class VM
 
     //let's remember ip to return to
     new_frame.return_ip = ip;
-    ctxs.Push(new Context(new_frame));
+    frames.Push(new FrameContext(new_frame));
     //since ip will be incremented below we decrement it intentionally here
     ip = new_frame.start_ip - 1; 
   }
@@ -1457,7 +1458,7 @@ public class VM
     ref int ip, 
     ref IInstruction instruction, 
     Frame curr_frame,
-    FixedStack<Context> ctxs
+    FixedStack<FrameContext> frames
   )
   {
     var status = BHS.SUCCESS;
@@ -1473,7 +1474,7 @@ public class VM
       curr_frame.ExitScope(curr_frame);
       ip = curr_frame.return_ip;
       curr_frame.Release();
-      ctxs.Pop();
+      frames.Pop();
 
       return status;
     }
@@ -1499,7 +1500,7 @@ public class VM
       //    and we should take this into account
       //
       if(curr_frame.refs == -1)
-        ctxs.Pop();
+        frames.Pop();
 
       //NOTE: we must increment the ip upon instruction completion
       ++ip;
@@ -1636,7 +1637,7 @@ public class VM
 
       ++fb.tick;
       fb.status = Execute(
-        ref fb.ip, fb.ctxs, 
+        ref fb.ip, fb.frames, 
         ref fb.instruction, 
         null
       );
@@ -1918,12 +1919,12 @@ public struct DeferBlock
   BHS Execute(ref IInstruction instruction)
   {
     //Console.WriteLine("EXIT SCOPE " + ip + " " + (end_ip + 1));
-    frm.fb.ctxs.Push(new VM.Context(frm, ip-1, end_ip+1));
+    frm.fb.frames.Push(new VM.FrameContext(frm, ip-1, end_ip+1));
     var status = frm.vm.Execute(
-      ref ip, frm.fb.ctxs, 
+      ref ip, frm.fb.frames, 
       ref instruction, 
       null,
-      frm.fb.ctxs.Count-1
+      frm.fb.frames.Count-1
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
@@ -1961,7 +1962,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   public int end_ip;
   public IInstruction instruction;
   public List<DeferBlock> defers;
-  public int ctx_idx;
+  public int frames_idx;
 
   public IList<IInstruction> Browse {
     get {
@@ -1977,18 +1978,18 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     this.bgn_ip = bgn_ip;
     this.end_ip = end_ip;
     this.ip = bgn_ip;
-    this.ctx_idx = frm.fb.ctxs.Count;
+    this.frames_idx = frm.fb.frames.Count;
     frm.fb.ip = bgn_ip;
-    frm.fb.ctxs.Push(new VM.Context(frm, bgn_ip-1, end_ip+1));
+    frm.fb.frames.Push(new VM.FrameContext(frm, bgn_ip-1, end_ip+1));
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = frm.vm.Execute(
-      ref ip, frm.fb.ctxs, 
+      ref ip, frm.fb.frames, 
       ref instruction, 
       this,
-      ctx_idx
+      frames_idx
     );
       
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
@@ -2021,11 +2022,11 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g return) should be 
     //      explicitely released. Top frame is released 'above'.
-    for(int i=frm.fb.ctxs.Count;i-- > ctx_idx;)
+    for(int i=frm.fb.frames.Count;i-- > frames_idx;)
     {
-      if(i > ctx_idx + 1)
-        frm.fb.ctxs[i].frame.Release();
-      frm.fb.ctxs.RemoveAt(i);
+      if(i > frames_idx + 1)
+        frm.fb.frames[i].frame.Release();
+      frm.fb.frames.RemoveAt(i);
     }
   }
 }
@@ -2036,7 +2037,7 @@ public class BranchInstruction : IInstruction, IExitableScope, IInspectableInstr
   public int bgn_ip;
   public int end_ip;
   public IInstruction instruction;
-  public FixedStack<VM.Context> ctxs = new FixedStack<VM.Context>(256);
+  public FixedStack<VM.FrameContext> frames = new FixedStack<VM.FrameContext>(256);
   public List<DeferBlock> defers;
 
   public IList<IInstruction> Browse {
@@ -2053,13 +2054,13 @@ public class BranchInstruction : IInstruction, IExitableScope, IInspectableInstr
     this.bgn_ip = bgn_ip;
     this.end_ip = end_ip;
     this.ip = bgn_ip;
-    ctxs.Push(new VM.Context(frm, bgn_ip-1, end_ip+1));
+    frames.Push(new VM.FrameContext(frm, bgn_ip-1, end_ip+1));
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = frm.vm.Execute(
-      ref ip, ctxs, 
+      ref ip, frames, 
       ref instruction, 
       this
     );
@@ -2095,9 +2096,9 @@ public class BranchInstruction : IInstruction, IExitableScope, IInspectableInstr
     //      some control flow abruption (e.g paral exited) should be 
     //      explicitely released. We start from index 1 on purpose
     //      since the frame at index 0 will be released 'above'.
-    for(int i=ctxs.Count;i-- > 1;)
-      ctxs[i].frame.Release();
-    ctxs.Clear();
+    for(int i=frames.Count;i-- > 1;)
+      frames[i].frame.Release();
+    frames.Clear();
   }
 }
 
