@@ -29,6 +29,7 @@ public enum Opcodes
   Pop              ,
   Call             ,
   CallNative       ,
+  CallImported     ,
   CallMethodNative ,
   CallPtr          ,
   GetFunc          ,
@@ -1218,17 +1219,8 @@ public class VM
 
           var fr = Frame.New(this);
           fr.Init(curr_frame, func_ip);
-          
-          var args_info = new FuncArgsInfo(args_bits);
-          for(int i = 0; i < args_info.CountArgs(); ++i)
-            fr.stack.Push(curr_frame.stack.Pop());
-          fr.stack.Push(Val.NewNum(this, args_bits));
 
-          //let's remember ip to return to
-          fr.return_ip = ip;
-          ctxs.Push(new Context(fr));
-          //since ip will be incremented below we decrement it intentionally here
-          ip = fr.start_ip - 1; 
+          Call(curr_frame, ctxs, fr, args_bits, ref ip);
         }
         break;
       case Opcodes.CallNative:
@@ -1241,6 +1233,22 @@ public class VM
           BHS status;
           if(CallNative(curr_frame, native, args_bits, out status, ref instruction))
             return status;
+        }
+        break;
+      case Opcodes.CallImported:
+        {
+          int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+          string module_name = curr_frame.constants[module_idx].str;
+          var module = curr_frame.vm.modules[module_name];
+          string func_name = curr_frame.constants[func_idx].str;
+          int func_ip = module.func2ip[func_name];
+
+          var fr = Frame.New(this);
+          fr.Init(curr_frame.fb, module, func_ip);
+          Call(curr_frame, ctxs, fr, args_bits, ref ip);
         }
         break;
       case Opcodes.CallMethodNative:
@@ -1277,17 +1285,7 @@ public class VM
           {
             var fr = ptr.MakeFrame(this, curr_frame);
             val_ptr.Release();
-            
-            var args_info = new FuncArgsInfo(args_bits);
-            for(int i = 0; i < args_info.CountArgs(); ++i)
-              fr.stack.Push(curr_frame.stack.Pop());
-            fr.stack.Push(Val.NewNum(this, args_bits));
-
-            //let's remember ip to return to
-            fr.return_ip = ip;
-            ctxs.Push(new Context(fr));
-            //since ip will be incremented below we decrement it intentionally here
-            ip = fr.start_ip - 1; 
+            Call(curr_frame, ctxs, fr, args_bits, ref ip);
           }
         }
         break;
@@ -1416,6 +1414,20 @@ public class VM
 
     ++ip;
     return BHS.SUCCESS;
+  }
+
+  void Call(Frame curr_frame, FixedStack<Context> ctxs, Frame new_frame, uint args_bits, ref int ip)
+  {
+    var args_info = new FuncArgsInfo(args_bits);
+    for(int i = 0; i < args_info.CountArgs(); ++i)
+      new_frame.stack.Push(curr_frame.stack.Pop());
+    new_frame.stack.Push(Val.NewNum(this, args_bits));
+
+    //let's remember ip to return to
+    new_frame.return_ip = ip;
+    ctxs.Push(new Context(new_frame));
+    //since ip will be incremented below we decrement it intentionally here
+    ip = new_frame.start_ip - 1; 
   }
 
   static bool CallNative(Frame curr_frame, FuncSymbolNative native, uint args_bits, out BHS status, ref IInstruction instruction)

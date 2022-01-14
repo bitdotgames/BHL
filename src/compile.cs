@@ -466,6 +466,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.CallImported,
+        3/*module name idx*/, 3/*func name idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.CallMethodNative,
         2/*class member idx*/, 3/*type literal idx*/, 4/*args bits*/
       )
@@ -1039,6 +1045,11 @@ public class ModuleCompiler : AST_Visitor
         {
           Pop();
           Emit(Opcodes.CallNative, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
+        }
+        else if(instr.op == Opcodes.GetFuncImported)
+        {
+          Pop();
+          Emit(Opcodes.CallImported, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits}, (int)ast.line_num);
         }
         else
           Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);

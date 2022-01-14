@@ -16689,8 +16689,7 @@ public class BHL_TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { 1 })
-      .EmitThen(Opcodes.GetFuncImported, new int[] { 0, 0 })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallImported, new int[] { 0, 0, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
@@ -16702,8 +16701,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetFuncImported, new int[] { 0, 0 })
-      .EmitThen(Opcodes.CallPtr, new int[] { 1 })
+      .EmitThen(Opcodes.CallImported, new int[] { 0, 0, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
