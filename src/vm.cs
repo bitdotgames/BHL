@@ -28,6 +28,7 @@ public enum Opcodes
   Continue         ,
   Pop              ,
   Call             ,
+  CallPtr          ,
   GetFunc          ,
   GetFuncNative    ,
   GetFuncFromVar   ,
@@ -1223,6 +1224,25 @@ public class VM
         }
         break;
       case Opcodes.Call:
+        {
+          int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip); 
+          uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+          var fr = Frame.New(this);
+          fr.Init(curr_frame, func_ip);
+          
+          var args_info = new FuncArgsInfo(args_bits);
+          for(int i = 0; i < args_info.CountArgs(); ++i)
+            fr.stack.Push(curr_frame.stack.Pop());
+          fr.stack.Push(Val.NewNum(this, args_bits));
+
+          //let's remember ip to return to
+          fr.return_ip = ip;
+          ctxs.Push(new Context(fr));
+          //since ip will be incremented below we decrement it intentionally here
+          ip = fr.start_ip - 1; 
+        }
+        break;
+      case Opcodes.CallPtr:
         {
           uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 

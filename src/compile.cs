@@ -461,6 +461,12 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.Call,
+        3/*module ip*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallPtr,
         4/*args bits*/
       )
     );
@@ -1011,8 +1017,15 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.FUNC:
       {
         VisitChildren(ast);
-        EmitGetFuncAddr(ast);
-        Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        var instr = EmitGetFuncAddr(ast);
+        //let's optimize primitive calls
+        if(instr.op == Opcodes.GetFunc)
+        {
+          head.RemoveAt(head.Count-1);
+          Emit(Opcodes.Call, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
+        }
+        else
+          Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVAR:
@@ -1047,7 +1060,7 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         
         Emit(Opcodes.GetMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
-        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
@@ -1063,34 +1076,34 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.ARR_IDX:
       {
         Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]")}, (int)ast.line_num);
-        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
         Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]")}, (int)ast.line_num);
-        Emit(Opcodes.Call, new int[] {0}, (int)ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {0}, (int)ast.line_num);
       }
       break;
       case EnumCall.LMBD:
       {
         VisitChildren(ast);
         Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
-        Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
         Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
-        Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC_MVAR:
       {
         VisitChildren(ast);
         Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
-        Emit(Opcodes.Call, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.GET_ADDR:
@@ -1336,7 +1349,7 @@ public class ModuleCompiler : AST_Visitor
       if(c is AST_JsonArrAddItem)
       {
         Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
-        Emit(Opcodes.Call, new int[] {0});
+        Emit(Opcodes.CallPtr, new int[] {0});
       }
       else
         Visit(c);
@@ -1346,7 +1359,7 @@ public class ModuleCompiler : AST_Visitor
     if(ast.children.Count > 0)
     {
       Emit(Opcodes.GetMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type)});
-      Emit(Opcodes.Call, new int[] {0});
+      Emit(Opcodes.CallPtr, new int[] {0});
     }
   }
 
