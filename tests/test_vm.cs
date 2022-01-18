@@ -9539,6 +9539,240 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStackForFuncPtr()
+  {
+    string bhl = @"
+    func int foo(int v) 
+    {
+      fail()
+      return v
+    }
+
+    func bar()
+    {
+      int^(int) p = foo
+      Foo f = PassthruFoo({hey:1, colors:[{r:p(42)}]})
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+    BindFoo(globs);
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncArgsOnStackForLambda()
+  {
+    string bhl = @"
+    func bar()
+    {
+      Foo f = PassthruFoo({hey:1, colors:[{r:
+          func int (int v) { 
+            fail()
+            return v
+          }(42) 
+        }]})
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+    BindFoo(globs);
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanArgsStackInParal()
+  {
+    string bhl = @"
+    func int foo(int ticks) 
+    {
+      if(ticks == 2) {
+        yield()
+        yield()
+        fail()
+      } else if(ticks == 3) {
+        yield()
+        yield()
+        fail()
+      }
+      return 42
+    }
+
+    func bar()
+    {
+      Foo f
+      paral_all {
+        {
+          f = PassthruFoo({hey:10, colors:[{r:foo(2)}]})
+        }
+        {
+          f = PassthruFoo({hey:20, colors:[{r:foo(3)}]})
+        }
+      }
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+    BindFoo(globs);
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.status, BHS.FAILURE);
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanFuncPtrArgsStackInParal()
+  {
+    string bhl = @"
+    func int foo(int ticks) 
+    {
+      if(ticks == 2) {
+        yield()
+        yield()
+        fail()
+      } else if(ticks == 3) {
+        yield()
+        yield()
+        fail()
+      }
+      return 42
+    }
+
+    func bar()
+    {
+      int^(int) p = foo
+      Foo f
+      paral_all {
+        {
+          f = PassthruFoo({hey:10, colors:[{r:p(2)}]})
+        }
+        {
+          f = PassthruFoo({hey:20, colors:[{r:p(3)}]})
+        }
+      }
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+    BindFoo(globs);
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.status, BHS.FAILURE);
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCleanArgsStackInParalForLambda()
+  {
+    string bhl = @"
+    func bar()
+    {
+      Foo f
+      paral_all {
+        {
+          f = PassthruFoo({hey:10, colors:[{r:
+              func int (int n) 
+              { 
+                yield()
+                yield()
+                fail()
+                return n
+              }(2) 
+              }]})
+        }
+        {
+          f = PassthruFoo({hey:20, colors:[{r:
+              func int (int n) 
+              { 
+                yield()
+                yield()
+                yield()
+                fail()
+                return n
+              }(3) 
+              }]})
+        }
+      }
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+    BindFoo(globs);
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.status, BHS.FAILURE);
+    AssertEqual("", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestInterleaveValuesStackInParal()
   {
     string bhl = @"
@@ -9580,6 +9814,57 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestInterleaveFuncStackInParal()
+  {
+    string bhl = @"
+    func int foo(int ticks) 
+    {
+      if(ticks == 2) {
+        yield()
+        yield()
+      } else if(ticks == 3) {
+        yield()
+        yield()
+        yield()
+      }
+      return ticks
+    }
+
+    func bar()
+    {
+      Foo f
+      paral_all {
+        {
+          f = PassthruFoo({hey:foo(3), colors:[]})
+          trace((string)f.hey)
+        }
+        {
+          f = PassthruFoo({hey:foo(2), colors:[]})
+          trace((string)f.hey)
+        }
+      }
+      trace((string)f.hey)
+    }
+
+    func void test() 
+    {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+    BindFoo(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("233", log.ToString());
     CommonChecks(vm);
   }
 
@@ -13253,6 +13538,29 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test", Val.NewNum(vm, 42));
     AssertEqual("14232342", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestJsonFuncArgChainCall()
+  {
+    string bhl = @"
+    func void test(float b) 
+    {
+      trace((string)PassthruFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]}).colors.Count)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindColor(globs);
+    BindFoo(globs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test", Val.NewNum(vm, 42));
+    AssertEqual("3", log.ToString());
     CommonChecks(vm);
   }
 
