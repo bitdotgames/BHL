@@ -1683,46 +1683,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCleanFuncArgsOnStackUserBindInBinOp()
-  {
-    string bhl = @"
-    func test() 
-    {
-      bool res = foo(false) != bar(4)
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    {
-      var fn = new FuncSymbolSimpleNative("foo", globs.Type("int"),
-          delegate() { 
-            Interpreter.instance.PopValue();
-            Interpreter.instance.PushValue(DynVal.NewNum(42));
-            return BHS.SUCCESS; 
-          } );
-      fn.Define(new FuncArgSymbol("b", globs.Type("bool")));
-      globs.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolSimpleNative("bar", globs.Type("int"),
-          delegate() { 
-            Interpreter.instance.PopValue();
-            return BHS.FAILURE; 
-          } );
-      fn.Define(new FuncArgSymbol("n", globs.Type("int")));
-      globs.Define(fn);
-    }
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    AssertEqual(BHS.FAILURE, node.run());
-    //NodeDump(node);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestCleanFuncThisArgOnStackForMethod()
   {
     string bhl = @"

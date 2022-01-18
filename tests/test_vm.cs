@@ -9316,6 +9316,47 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStackUserBindInBinOp()
+  {
+    string bhl = @"
+    func test() 
+    {
+      bool res = foo(false) != bar_fail(4)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    {
+      var fn = new FuncSymbolNative("foo", globs.Type("int"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
+            frm.stack.PopRelease();
+            frm.stack.Push(Val.NewNum(frm.vm, 42));
+            return null;
+          } );
+      fn.Define(new FuncArgSymbol("b", globs.Type("bool")));
+      globs.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative("bar_fail", globs.Type("int"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
+            frm.stack.PopRelease();
+            status = BHS.FAILURE;
+            return null;
+          } );
+      fn.Define(new FuncArgSymbol("n", globs.Type("int")));
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(BHS.FAILURE, fb.status);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCleanFuncArgsStackOnFailure()
   {
     string bhl = @"
