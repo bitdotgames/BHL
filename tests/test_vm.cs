@@ -18439,6 +18439,96 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestRefCountReturn()
+  {
+    string bhl = @"
+
+    func RefC make()
+    {
+      RefC c = new RefC
+      return c
+    }
+
+    func void test() 
+    {
+      RefC c1 = make()
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountPass()
+  {
+    string bhl = @"
+
+    func void foo(RefC c)
+    { 
+      trace(""HERE;"")
+    }
+
+    func void test() 
+    {
+      foo(new RefC)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+    BindTrace(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;HERE;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountReturnPass()
+  {
+    string bhl = @"
+
+    func RefC make()
+    {
+      RefC c = new RefC
+      return c
+    }
+
+    func void foo(RefC c)
+    {
+      RefC c2 = c
+    }
+
+    func void test() 
+    {
+      RefC c1 = make()
+      foo(c1)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFibonacci()
   {
     string bhl = @"
