@@ -6125,7 +6125,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  class TraceAfterYield : IInstruction
+  class TraceAfterYield : ICoroutine
   {
     bool first_time = true;
     public StringBuilder log;
@@ -6163,7 +6163,7 @@ public class BHL_TestVM : BHL_TestBase
       var fn = new FuncSymbolNative("yield_and_trace", globs.Type("void"), null,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
-          var inst = Instructions.New<TraceAfterYield>(frm.vm);
+          var inst = CoroutinePool.New<TraceAfterYield>(frm.vm);
           inst.log = log;
           return inst;
         } 
@@ -17677,7 +17677,7 @@ public class BHL_TestVM : BHL_TestBase
     if(check_fibers)
       AssertEqual(vm.fibers_pool.Allocs, vm.fibers_pool.Free);
     if(check_instructions)
-      AssertEqual(vm.instr_pool.Allocs, vm.instr_pool.Free);
+      AssertEqual(vm.coro_pool.Allocs, vm.coro_pool.Free);
   }
 
   public static string ByteArrayToString(byte[] ba)
@@ -18456,7 +18456,7 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  class CoroutineWaitTicks : IInstruction
+  class CoroutineWaitTicks : ICoroutine
   {
     int c;
     int ticks_ttl;
@@ -18482,7 +18482,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"), null,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-          return Instructions.New<CoroutineWaitTicks>(frm.vm);
+          return CoroutinePool.New<CoroutineWaitTicks>(frm.vm);
         } 
     );
     fn.Define(new FuncArgSymbol("ticks", globs.Type("int")));

@@ -377,12 +377,12 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
   public abstract void VM_CreateArr(VM.Frame frame, ref Val v);
   public abstract void VM_GetCount(Val ctx, ref Val v);
-  public abstract IInstruction VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
 //NOTE: This one is used as a fallback for all arrays which
@@ -478,7 +478,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     v.SetNum(lst.Count);
   }
   
-  public override IInstruction VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Pop();
@@ -489,7 +489,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Peek();
@@ -499,7 +499,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -510,7 +510,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -522,7 +522,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -532,7 +532,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -622,7 +622,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     v.SetNum(((IList<T>)ctx.obj).Count);
   }
   
-  public override IInstruction VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Pop();
@@ -633,7 +633,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override IInstruction VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Peek();
@@ -644,7 +644,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override IInstruction VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -655,7 +655,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override IInstruction VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -667,7 +667,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override IInstruction VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -677,7 +677,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override IInstruction VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -1200,7 +1200,7 @@ public class FuncSymbolNative : FuncSymbol
 {
   public Interpreter.FuncNodeCreator func_creator;
 
-  public delegate IInstruction VM_Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
+  public delegate ICoroutine VM_Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
   public VM_Cb VM_cb;
 
   public int def_args_num;
@@ -1627,7 +1627,7 @@ static public class SymbolTable
       var fn = new FuncSymbolNative("yield", globals.Type("void"), null,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
-          return Instructions.New<CoroutineYield>(frm.vm);
+          return CoroutinePool.New<CoroutineYield>(frm.vm);
         } 
       );
       globals.Define(fn);

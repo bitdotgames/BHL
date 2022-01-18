@@ -160,7 +160,7 @@ public class VM
     internal int tick;
 
     internal int ip;
-    internal IInstruction instruction;
+    internal ICoroutine coroutine;
     internal FixedStack<FrameContext> frames = new FixedStack<FrameContext>(256);
 
     public FixedStack<Val> stack = new FixedStack<Val>(32);
@@ -198,10 +198,10 @@ public class VM
 
     internal void Clear()
     {
-      if(instruction != null)
+      if(coroutine != null)
       {
-        Instructions.Del(frames.Peek().frame, instruction);
-        instruction = null;
+        CoroutinePool.Del(frames.Peek().frame, coroutine);
+        coroutine = null;
       }
 
       for(int i=frames.Count;i-- > 0;)
@@ -239,7 +239,7 @@ public class VM
 
         if(i == frames.Count-1)
         {
-          if(!TryGetInstructionIP(instruction, out item.ip))
+          if(!TryGetCoroutineIP(coroutine, out item.ip))
             item.ip = frm.fb.ip;
 
           frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
@@ -257,25 +257,25 @@ public class VM
       }
     }
 
-    static bool TryGetInstructionIP(IInstruction i, out int ip)
+    static bool TryGetCoroutineIP(ICoroutine i, out int ip)
     {
       ip = 0;
-      if(i is SeqInstruction si)
+      if(i is SeqBlock si)
       {
-        if(!TryGetInstructionIP(si.instruction, out ip))
+        if(!TryGetCoroutineIP(si.coroutine, out ip))
           ip = si.ip;
         return true;
       }
-      else if(i is BranchInstruction bi)
+      else if(i is ParalBranchBlock bi)
       {
-        if(!TryGetInstructionIP(bi.instruction, out ip))
+        if(!TryGetCoroutineIP(bi.coroutine, out ip))
           ip = bi.ip;
         return true;
       }
-      else if(i is ParalInstruction pi)
-        return TryGetInstructionIP(pi.branches[pi.i], out ip);
-      else if(i is ParalAllInstruction pai)
-        return TryGetInstructionIP(pai.branches[pai.i], out ip);
+      else if(i is ParalBlock pi)
+        return TryGetCoroutineIP(pi.branches[pi.i], out ip);
+      else if(i is ParalAllBlock pai)
+        return TryGetCoroutineIP(pai.branches[pai.i], out ip);
       else
         return false;
     }
@@ -707,7 +707,7 @@ public class VM
   public Pool<Frame> frames_pool = new Pool<Frame>();
   public Pool<Fiber> fibers_pool = new Pool<Fiber>();
   public Pool<FuncPtr> ptrs_pool = new Pool<FuncPtr>();
-  public Instructions instr_pool = new Instructions();
+  public CoroutinePool coro_pool = new CoroutinePool();
 
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
@@ -838,8 +838,8 @@ public class VM
   }
 
   //NOTE: adding special bytecode which makes the fake Frame to exit
-  //      after executing the instruction: the first opcode is used
-  //      if execution doesn't produce a stateful instruction,
+  //      after executing the coroutine: the first opcode is used
+  //      if execution doesn't produce a stateful coroutine,
   //      and the second one if it does (this is how VM works)
   static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.Return, (byte)Opcodes.Return};
 
@@ -856,7 +856,7 @@ public class VM
       var frame = Frame.New(this);
       frame.Init(fb, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
-      fb.instruction = ptr.native.VM_cb(curr_frame, new FuncArgsInfo(cargs_bits), ref fb.status);
+      fb.coroutine = ptr.native.VM_cb(curr_frame, new FuncArgsInfo(cargs_bits), ref fb.status);
     }
     else
     {
@@ -923,7 +923,7 @@ public class VM
   internal BHS Execute(
     ref int ip,
     FixedStack<FrameContext> frames, 
-    ref IInstruction instruction, 
+    ref ICoroutine coroutine, 
     IExitableScope defer_scope,
     int frames_limit = 0
   )
@@ -933,7 +933,7 @@ public class VM
     {
       status = ExecuteOnce(
         ref ip, frames,
-        ref instruction,
+        ref coroutine,
         defer_scope
       );
     }
@@ -943,7 +943,7 @@ public class VM
   BHS ExecuteOnce(
     ref int ip, 
     FixedStack<FrameContext> frames, 
-    ref IInstruction instruction, 
+    ref ICoroutine coroutine, 
     IExitableScope defer_scope
   )
   { 
@@ -957,11 +957,11 @@ public class VM
 
     var curr_frame = ctx.frame;
 
-    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " INST " + instruction?.GetType().Name + "(" + instruction?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
 
-    //NOTE: if there's an active instruction it has priority over simple 'code following' via ip
-    if(instruction != null)
-      return ExecuteInstruction(ref ip, ref instruction, curr_frame, frames);
+    //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
+    if(coroutine != null)
+      return ExecuteCoroutine(ref ip, ref coroutine, curr_frame, frames);
 
     var opcode = (Opcodes)curr_frame.bytecode[ip];
     //Console.WriteLine("OP " + opcode + " " + ip);
@@ -1251,7 +1251,7 @@ public class VM
           var native = (FuncSymbolNative)globs.GetMembers()[func_idx];
 
           BHS status;
-          if(CallNative(curr_frame, native, args_bits, out status, ref instruction))
+          if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))
             return status;
         }
         break;
@@ -1281,7 +1281,7 @@ public class VM
           var class_symb = (ClassSymbol)symbols.Resolve(class_type);
 
           BHS status;
-          if(CallNative(curr_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref instruction))
+          if(CallNative(curr_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine))
             return status;
         }
         break;
@@ -1296,7 +1296,7 @@ public class VM
           if(ptr.native != null)
           {
             BHS status;
-            bool return_status = CallNative(curr_frame, ptr.native, args_bits, out status, ref instruction);
+            bool return_status = CallNative(curr_frame, ptr.native, args_bits, out status, ref coroutine);
             val_ptr.Release();
             if(return_status)
               return status;
@@ -1410,13 +1410,13 @@ public class VM
         break;
       case Opcodes.Block:
         {
-          var new_instruction = VisitBlock(ref ip, curr_frame, defer_scope);
-          if(new_instruction != null)
+          var new_coroutine = VisitBlock(ref ip, curr_frame, defer_scope);
+          if(new_coroutine != null)
           {
-            //NOTE: since there's a new instruction we want to skip ip incrementing
+            //NOTE: since there's a new coroutine we want to skip ip incrementing
             //      which happens below and proceed right to the execution of 
-            //      the new instruction
-            instruction = new_instruction;
+            //      the new coroutine
+            coroutine = new_coroutine;
             return BHS.SUCCESS;
           }
         }
@@ -1450,21 +1450,21 @@ public class VM
     ip = new_frame.start_ip - 1; 
   }
 
-  static bool CallNative(Frame curr_frame, FuncSymbolNative native, uint args_bits, out BHS status, ref IInstruction instruction)
+  static bool CallNative(Frame curr_frame, FuncSymbolNative native, uint args_bits, out BHS status, ref ICoroutine coroutine)
   {
     var args_info = new FuncArgsInfo(args_bits);
     for(int i = 0; i < args_info.CountArgs(); ++i)
       curr_frame.stack.Push(curr_frame.stack.Pop());
 
     status = BHS.SUCCESS;
-    var new_instruction = native.VM_cb(curr_frame, args_info, ref status);
+    var new_coroutine = native.VM_cb(curr_frame, args_info, ref status);
 
-    if(new_instruction != null)
+    if(new_coroutine != null)
     {
-      //NOTE: since there's a new instruction we want to skip ip incrementing
+      //NOTE: since there's a new coroutine we want to skip ip incrementing
       //      which happens below and proceed right to the execution of 
-      //      the new instruction
-      instruction = new_instruction;
+      //      the new coroutine
+      coroutine = new_coroutine;
       return true;
     }
     else if(status != BHS.SUCCESS)
@@ -1473,22 +1473,22 @@ public class VM
       return false;
   }
 
-  static BHS ExecuteInstruction(
+  static BHS ExecuteCoroutine(
     ref int ip, 
-    ref IInstruction instruction, 
+    ref ICoroutine coroutine, 
     Frame curr_frame,
     FixedStack<FrameContext> frames
   )
   {
     var status = BHS.SUCCESS;
-    instruction.Tick(curr_frame, ref status);
+    coroutine.Tick(curr_frame, ref status);
 
     if(status == BHS.RUNNING)
       return status;
     else if(status == BHS.FAILURE)
     {
-      Instructions.Del(curr_frame, instruction);
-      instruction = null;
+      CoroutinePool.Del(curr_frame, coroutine);
+      coroutine = null;
 
       curr_frame.ExitScope(curr_frame);
       ip = curr_frame.return_ip;
@@ -1499,11 +1499,11 @@ public class VM
     }
     else if(status == BHS.SUCCESS)
     {
-      Instructions.Del(curr_frame, instruction);
-      instruction = null;
+      CoroutinePool.Del(curr_frame, coroutine);
+      coroutine = null;
       
-      //NOTE: after instruction successful execution we might be in a situation  
-      //      that instruction has already exited the current frame (e.g. after 'return')
+      //NOTE: after coroutine successful execution we might be in a situation  
+      //      that coroutine has already exited the current frame (e.g. after 'return')
       //      and it's released, for example in the following case:
       //
       //      paral {
@@ -1521,7 +1521,7 @@ public class VM
       if(curr_frame.refs == -1)
         frames.Pop();
 
-      //NOTE: we must increment the ip upon instruction completion
+      //NOTE: we must increment the ip upon coroutine completion
       ++ip;
 
       return status;
@@ -1567,34 +1567,34 @@ public class VM
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
   }
 
-  IInstruction TryMakeBlockInstruction(ref int ip, Frame curr_frame, out int size, IExitableScope defer_scope)
+  ICoroutine TryMakeBlockCoroutine(ref int ip, Frame curr_frame, out int size, IExitableScope defer_scope)
   {
     EnumBlock type;
     ReadBlockHeader(ref ip, curr_frame, out type, out size);
 
     if(type == EnumBlock.PARAL)
     {
-      var paral = Instructions.New<ParalInstruction>(this);
+      var paral = CoroutinePool.New<ParalBlock>(this);
       paral.Init(ip + 1, ip + size);
       return paral;
     }
     else if(type == EnumBlock.PARAL_ALL) 
     {
-      var paral = Instructions.New<ParalAllInstruction>(this);
+      var paral = CoroutinePool.New<ParalAllBlock>(this);
       paral.Init(ip + 1, ip + size);
       return paral;
     }
     else if(type == EnumBlock.SEQ)
     {
-      if(defer_scope is IBranchyInstruction)
+      if(defer_scope is IBranchyCoroutine)
       {
-        var br = Instructions.New<BranchInstruction>(this);
+        var br = CoroutinePool.New<ParalBranchBlock>(this);
         br.Init(curr_frame, ip + 1, ip + size);
         return br;
       }
       else
       {
-        var seq = Instructions.New<SeqInstruction>(this);
+        var seq = CoroutinePool.New<SeqBlock>(this);
         seq.Init(curr_frame, ip + 1, ip + size);
         return seq;
       }
@@ -1615,13 +1615,13 @@ public class VM
       throw new Exception("Not supported block type: " + type);
   }
 
-  IInstruction VisitBlock(ref int ip, Frame curr_frame, IExitableScope defer_scope)
+  ICoroutine VisitBlock(ref int ip, Frame curr_frame, IExitableScope defer_scope)
   {
     int block_size;
-    var block_inst = TryMakeBlockInstruction(ref ip, curr_frame, out block_size, defer_scope);
+    var block_coro = TryMakeBlockCoroutine(ref ip, curr_frame, out block_size, defer_scope);
 
-    //Console.WriteLine("BLOCK INST " + block_inst?.GetType().Name);
-    if(block_inst is IBranchyInstruction bi) 
+    //Console.WriteLine("BLOCK CORO " + block_coro?.GetType().Name);
+    if(block_coro is IBranchyCoroutine bi) 
     {
       int tmp_ip = ip;
       while(tmp_ip < (ip + block_size))
@@ -1629,7 +1629,7 @@ public class VM
         ++tmp_ip;
 
         int tmp_size;
-        var branch = TryMakeBlockInstruction(ref tmp_ip, curr_frame, out tmp_size, (IExitableScope)block_inst);
+        var branch = TryMakeBlockCoroutine(ref tmp_ip, curr_frame, out tmp_size, (IExitableScope)block_coro);
 
        //Console.WriteLine("BRANCH INST " + tmp_ip + " " + branch?.GetType().Name);
 
@@ -1641,7 +1641,7 @@ public class VM
         }
       }
     }
-    return block_inst; 
+    return block_coro; 
   }
 
   public bool Tick()
@@ -1657,7 +1657,7 @@ public class VM
       ++fb.tick;
       fb.status = Execute(
         ref fb.ip, fb.frames, 
-        ref fb.instruction, 
+        ref fb.coroutine, 
         null
       );
       
@@ -1779,74 +1779,74 @@ public class CompiledModule
   }
 }
 
-public interface IInstruction
+public interface ICoroutine
 {
   void Tick(VM.Frame frm, ref BHS status);
   void Cleanup(VM.Frame frm);
 }
 
-public class Instructions
+public class CoroutinePool
 {
-  Dictionary<System.Type, VM.Pool<IInstruction>> all = new Dictionary<System.Type, VM.Pool<IInstruction>>(); 
+  Dictionary<System.Type, VM.Pool<ICoroutine>> all = new Dictionary<System.Type, VM.Pool<ICoroutine>>(); 
 
-  static public T New<T>(VM vm) where T : IInstruction, new()
+  static public T New<T>(VM vm) where T : ICoroutine, new()
   {
     var t = typeof(T); 
-    VM.Pool<IInstruction> pool;
-    if(!vm.instr_pool.all.TryGetValue(t, out pool))
+    VM.Pool<ICoroutine> pool;
+    if(!vm.coro_pool.all.TryGetValue(t, out pool))
     {
-      pool = new VM.Pool<IInstruction>();
-      vm.instr_pool.all.Add(t, pool);
+      pool = new VM.Pool<ICoroutine>();
+      vm.coro_pool.all.Add(t, pool);
     }
 
-    IInstruction inst = null;
+    ICoroutine coro = null;
     if(pool.stack.Count == 0)
     {
       ++pool.miss;
-      inst = new T();
+      coro = new T();
     }
     else
     {
       ++pool.hit;
-      inst = pool.stack.Pop();
+      coro = pool.stack.Pop();
     }
 
-    //Console.WriteLine("NEW " + typeof(T).Name + " " + inst.GetHashCode()/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("NEW " + typeof(T).Name + " " + coro.GetHashCode()/* + " " + Environment.StackTrace*/);
 
-    return (T)inst;
+    return (T)coro;
   }
 
-  static public void Del(VM.Frame frm, IInstruction inst)
+  static public void Del(VM.Frame frm, ICoroutine coro)
   {
-    //Console.WriteLine("DEL " + inst.GetType().Name + " " + inst.GetHashCode()/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("DEL " + coro.GetType().Name + " " + coro.GetHashCode()/* + " " + Environment.StackTrace*/);
 
-    inst.Cleanup(frm);
+    coro.Cleanup(frm);
 
-    var t = inst.GetType();
+    var t = coro.GetType();
 
-    VM.Pool<IInstruction> pool;
-    //ignoring instructions whch were not allocated via pool 
-    if(!frm.vm.instr_pool.all.TryGetValue(t, out pool))
+    VM.Pool<ICoroutine> pool;
+    //ignoring coroutine whch were not allocated via pool 
+    if(!frm.vm.coro_pool.all.TryGetValue(t, out pool))
       return;
 
-    pool.stack.Push(inst);
+    pool.stack.Push(coro);
 
     if(pool.stack.Count > pool.miss)
       throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
   }
 
-  static public void Dump(IInstruction instruction, int level = 0)
+  static public void Dump(ICoroutine coro, int level = 0)
   {
     if(level == 0)
       Console.WriteLine("<<<<<<<<<<<<<<<");
 
     string str = new String(' ', level);
-    Console.WriteLine(str + instruction.GetType().Name + " " + instruction.GetHashCode());
+    Console.WriteLine(str + coro.GetType().Name + " " + coro.GetHashCode());
 
-    if(instruction is IInspectableInstruction ti)
+    if(coro is IInspectableCoroutine ti)
     {
-      foreach(var part in ti.Browse)
-        Dump(part, level + 1);
+      for(int i=0;i<ti.Count;++i)
+        Dump(ti.At(i), level + 1);
     }
 
     if(level == 0)
@@ -1880,19 +1880,20 @@ public interface IExitableScope
   void ExitScope(VM.Frame frm);
 }
 
-public interface IBranchyInstruction : IInstruction
+public interface IBranchyCoroutine : ICoroutine
 {
-  void Attach(IInstruction ex);
+  void Attach(ICoroutine ex);
 }
 
-public interface IInspectableInstruction 
+public interface IInspectableCoroutine 
 {
-  IList<IInstruction> Browse {get;}
+  int Count { get; }
+  ICoroutine At(int i);
 }
 
-class CoroutineSuspend : IInstruction
+class CoroutineSuspend : ICoroutine
 {
-  public static readonly IInstruction Instance = new CoroutineSuspend();
+  public static readonly ICoroutine Instance = new CoroutineSuspend();
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
@@ -1903,7 +1904,7 @@ class CoroutineSuspend : IInstruction
   {}
 }
 
-class CoroutineYield : IInstruction
+class CoroutineYield : ICoroutine
 {
   bool first_time = true;
 
@@ -1935,13 +1936,13 @@ public struct DeferBlock
     this.end_ip = end_ip;
   }
 
-  BHS Execute(ref IInstruction instruction)
+  BHS Execute(ref ICoroutine coro)
   {
     //Console.WriteLine("EXIT SCOPE " + ip + " " + (end_ip + 1));
     frm.fb.frames.Push(new VM.FrameContext(frm, ip-1, end_ip+1));
     var status = frm.vm.Execute(
       ref ip, frm.fb.frames, 
-      ref instruction, 
+      ref coro, 
       null,
       frm.fb.frames.Count-1
     );
@@ -1959,37 +1960,39 @@ public struct DeferBlock
     for(int i=defers.Count;i-- > 0;)
     {
       var d = defers[i];
-      IInstruction dummy = null;
+      ICoroutine dummy = null;
       //TODO: do we need ensure that status is SUCCESS?
       d.Execute(ref dummy);
     }
     defers.Clear();
   }
 
-  static internal void DelInstructions(VM.Frame frm, List<IInstruction> iis)
+  static internal void DelCoroutines(VM.Frame frm, List<ICoroutine> coros)
   {
-    for(int i=0;i<iis.Count;++i)
-      Instructions.Del(frm, iis[i]);
-    iis.Clear();
+    for(int i=0;i<coros.Count;++i)
+      CoroutinePool.Del(frm, coros[i]);
+    coros.Clear();
   }
 }
 
-public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruction
+public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 {
   public int ip;
   public int bgn_ip;
   public int end_ip;
-  public IInstruction instruction;
+  public ICoroutine coroutine;
   public List<DeferBlock> defers;
   public int frames_idx;
 
-  public IList<IInstruction> Browse {
+  public int Count {
     get {
-      if(instruction != null)
-        return new List<IInstruction>() { instruction };
-      else
-        return new List<IInstruction>();
+      return 0;
     }
+  }
+
+  public ICoroutine At(int i) 
+  {
+    return coroutine;
   }
 
   public void Init(VM.Frame frm, int bgn_ip, int end_ip)
@@ -2006,7 +2009,7 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   {
     status = frm.vm.Execute(
       ref ip, frm.fb.frames, 
-      ref instruction, 
+      ref coroutine, 
       this,
       frames_idx
     );
@@ -2018,10 +2021,10 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
 
   public void Cleanup(VM.Frame frm)
   {
-    if(instruction != null)
+    if(coroutine != null)
     {
-      Instructions.Del(frm, instruction);
-      instruction = null;
+      CoroutinePool.Del(frm, coroutine);
+      coroutine = null;
     }
 
     ExitScope(frm);
@@ -2050,22 +2053,24 @@ public class SeqInstruction : IInstruction, IExitableScope, IInspectableInstruct
   }
 }
 
-public class BranchInstruction : IInstruction, IExitableScope, IInspectableInstruction
+public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 {
   public int ip;
   public int bgn_ip;
   public int end_ip;
-  public IInstruction instruction;
+  public ICoroutine coroutine;
   public FixedStack<VM.FrameContext> frames = new FixedStack<VM.FrameContext>(256);
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> Browse {
+  public int Count {
     get {
-      if(instruction != null)
-        return new List<IInstruction>() { instruction };
-      else
-        return new List<IInstruction>();
+      return 0;
     }
+  }
+
+  public ICoroutine At(int i) 
+  {
+    return coroutine;
   }
 
   public void Init(VM.Frame frm, int bgn_ip, int end_ip)
@@ -2080,7 +2085,7 @@ public class BranchInstruction : IInstruction, IExitableScope, IInspectableInstr
   {
     status = frm.vm.Execute(
       ref ip, frames, 
-      ref instruction, 
+      ref coroutine, 
       this
     );
       
@@ -2091,10 +2096,10 @@ public class BranchInstruction : IInstruction, IExitableScope, IInspectableInstr
 
   public void Cleanup(VM.Frame frm)
   {
-    if(instruction != null)
+    if(coroutine != null)
     {
-      Instructions.Del(frm, instruction);
-      instruction = null;
+      CoroutinePool.Del(frm, coroutine);
+      coroutine = null;
     }
 
     ExitScope(frm);
@@ -2121,18 +2126,23 @@ public class BranchInstruction : IInstruction, IExitableScope, IInspectableInstr
   }
 }
 
-public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectableInstruction
+public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCoroutine
 {
   public int bgn_ip;
   public int end_ip;
   public int i;
-  public List<IInstruction> branches = new List<IInstruction>();
+  public List<ICoroutine> branches = new List<ICoroutine>();
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> Browse {
+  public int Count {
     get {
-      return branches;
+      return branches.Count;
     }
+  }
+
+  public ICoroutine At(int i) 
+  {
+    return branches[i];
   }
 
   public void Init(int bgn_ip, int end_ip)
@@ -2153,7 +2163,7 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
       branch.Tick(frm, ref status);
       if(status != BHS.RUNNING)
       {
-        Instructions.Del(frm, branch);
+        CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
         //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
         if(frm.fb.ip >= bgn_ip && frm.fb.ip <= (end_ip+1))
@@ -2165,13 +2175,13 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
 
   public void Cleanup(VM.Frame frm)
   {
-    DeferBlock.DelInstructions(frm, branches);
+    DeferBlock.DelCoroutines(frm, branches);
     ExitScope(frm);
   }
 
-  public void Attach(IInstruction inst)
+  public void Attach(ICoroutine coro)
   {
-    branches.Add(inst);
+    branches.Add(coro);
   }
 
   public void RegisterDefer(DeferBlock cb)
@@ -2187,18 +2197,23 @@ public class ParalInstruction : IBranchyInstruction, IExitableScope, IInspectabl
   }
 }
 
-public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspectableInstruction
+public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoroutine
 {
   public int bgn_ip;
   public int end_ip;
   public int i;
-  public List<IInstruction> branches = new List<IInstruction>();
+  public List<ICoroutine> branches = new List<ICoroutine>();
   public List<DeferBlock> defers;
 
-  public IList<IInstruction> Browse {
+  public int Count {
     get {
-      return branches;
+      return branches.Count;
     }
+  }
+
+  public ICoroutine At(int i) 
+  {
+    return branches[i];
   }
 
   public void Init(int bgn_ip, int end_ip)
@@ -2218,19 +2233,19 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
       //let's check if we "jumped out" of the block (e.g return, break)
       if(frm.refs == -1 /*return executed*/ || frm.fb.ip < bgn_ip || frm.fb.ip > end_ip)
       {
-        Instructions.Del(frm, branch);
+        CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
         status = BHS.SUCCESS;
         return;
       }
       if(status == BHS.SUCCESS)
       {
-        Instructions.Del(frm, branch);
+        CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
       }
       else if(status == BHS.FAILURE)
       {
-        Instructions.Del(frm, branch);
+        CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
         return;
       }
@@ -2247,13 +2262,13 @@ public class ParalAllInstruction : IBranchyInstruction, IExitableScope, IInspect
 
   public void Cleanup(VM.Frame frm)
   {
-    DeferBlock.DelInstructions(frm, branches);
+    DeferBlock.DelCoroutines(frm, branches);
     ExitScope(frm);
   }
 
-  public void Attach(IInstruction inst)
+  public void Attach(ICoroutine coro)
   {
-    branches.Add(inst);
+    branches.Add(coro);
   }
 
   public void RegisterDefer(DeferBlock cb)
