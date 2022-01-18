@@ -13135,8 +13135,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestJsonFuncArg()
   {
     string bhl = @"
@@ -18161,6 +18160,8 @@ public class BHL_TestVM : BHL_TestBase
       globs.Define(fn);
     }
 
+    globs.Define(new ArrayTypeSymbolT<Color>(globs, "ArrayT_Color", globs.Type("Color"), delegate() { return new List<Color>(); } ));
+
     return cl;
   }
 
@@ -18416,30 +18417,16 @@ public class BHL_TestVM : BHL_TestBase
           ctx.obj = f;
         }
       ));
-      cl.Define(new FieldSymbol("colors", globs.Type("Color[]"), null, null, null,
+      cl.Define(new FieldSymbol("colors", globs.Type("ArrayT_Color"), null, null, null,
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
-          var vls = ValList.New(v.vm);
-          foreach(var c in f.colors)
-          {
-            var vl = Val.NewObj(v.vm, c);
-            vls.Add(vl);
-            vl.Release();
-          }
-          v.obj = vls;
+          v.obj = f.colors;
         },
         delegate(ref Val ctx, Val v)
         {
           var f = (Foo)ctx.obj;
-          f.colors.Clear();
-          var vls = (IList<Val>)v.obj;
-          for(int i=0;i<vls.Count;++i)
-          {
-            var vl = vls[i]; 
-            f.colors.Add((Color)vl.obj);
-          }
-          ctx.obj = f;
+          f.colors = (List<Color>)v.obj;
         }
       ));
       cl.Define(new FieldSymbol("sub_color", globs.Type("Color"), null, null, null,

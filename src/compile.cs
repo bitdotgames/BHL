@@ -1101,12 +1101,14 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.ARR_IDX:
       {
-        Emit(Opcodes.CallMethodNative, new int[] {GenericArrayTypeSymbol.IDX_At, AddConstant("[]"), 0}, (int)ast.line_num);
+        var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_At, AddConstant(arr_symb.name.s), 0 }, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        Emit(Opcodes.CallMethodNative, new int[] {GenericArrayTypeSymbol.IDX_SetAt, AddConstant("[]"), 0}, (int)ast.line_num);
+        var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_SetAt, AddConstant(arr_symb.name.s), 0}, (int)ast.line_num);
       }
       break;
       case EnumCall.LMBD:
@@ -1372,7 +1374,7 @@ public class ModuleCompiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.CallMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 0});
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 0 });
       }
       else
         Visit(c);
@@ -1381,7 +1383,7 @@ public class ModuleCompiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.CallMethodNative, new int[] {GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 0});
+      Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 0 });
     }
   }
 

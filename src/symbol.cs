@@ -312,8 +312,8 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public const int IDX_Count      = 5;
   public const int IDX_AddInplace = 6;
 
-  public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
-    : base(null, item_type.name.s + "[]", new TypeRef(), null)
+  public ArrayTypeSymbol(BaseScope scope, string name, TypeRef item_type)     
+    : base(null, name, new TypeRef(), null)
   {
     this.item_type = item_type;
 
@@ -360,8 +360,11 @@ abstract public class ArrayTypeSymbol : ClassSymbol
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
-
   }
+
+  public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
+    : this(scope, item_type.name.s + "[]", item_type)
+  {}
 
   public abstract void CreateArr(ref DynVal v);
   public abstract void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v);
@@ -557,13 +560,16 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
       res = (T)dv.obj;
   }
 
-  public ArrayTypeSymbolT(BaseScope scope, TypeRef item_type, CreatorCb creator, ConverterCb converter = null) 
-    : base(scope, item_type)
+  public ArrayTypeSymbolT(BaseScope scope, string name, TypeRef item_type, CreatorCb creator, ConverterCb converter = null) 
+    : base(scope, name, item_type)
   {
     Convert = converter == null ? DefaultConverter : converter;
-
     Creator = creator;
   }
+
+  public ArrayTypeSymbolT(BaseScope scope, TypeRef item_type, CreatorCb creator, ConverterCb converter = null) 
+    : base(scope, item_type.name.s + "[]", item_type)
+  {}
 
   public override void CreateArr(ref DynVal v)
   {
@@ -608,42 +614,77 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
   public override void VM_CreateArr(VM.Frame frm, ref Val v)
   {
-    throw new Exception("Not implemented");
+    v.obj = Creator();
   }
 
   public override void VM_GetCount(Val ctx, ref Val v)
   {
-    throw new Exception("Not implemented");
+    v.SetNum(((IList<T>)ctx.obj).Count);
   }
   
   public override IInstruction VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    var val = frame.stack.Pop();
+    var arr = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst.Add((T)val.obj);
+    val.Release();
+    arr.Release();
+    return null;
   }
 
   public override IInstruction VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    var val = frame.stack.Pop();
+    var arr = frame.stack.Peek();
+    var lst = (IList<T>)arr.obj;
+    T obj = (T)val.obj;
+    lst.Add(obj);
+    val.Release();
+    return null;
   }
 
   public override IInstruction VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    var res = Val.NewObj(frame.vm, lst[idx]);
+    frame.stack.Push(res);
+    arr.Release();
+    return null;
   }
 
   public override IInstruction VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var val = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst[idx] = (T)val.obj;
+    val.Release();
+    arr.Release();
+    return null;
   }
 
   public override IInstruction VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst.RemoveAt(idx); 
+    arr.Release();
+    return null;
   }
 
   public override IInstruction VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst.Clear();
+    arr.Release();
+    return null;
   }
 }
 

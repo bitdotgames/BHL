@@ -572,6 +572,7 @@ public class Frontend : bhlBaseVisitor<object>
     type = arr_type.item_type.Get();
 
     var ast = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
+    ast.scope_type = arr_type.Type().s;
     ast.scope_ntype = (uint)arr_type.Type().n;
 
     PeekAST().AddChild(ast);
