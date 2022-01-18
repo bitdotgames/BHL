@@ -809,40 +809,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  [IsTested()]
-  public void TestNativeSubClassArray()
-  {
-    string bhl = @"
-      
-    func string test(float k) 
-    {
-      Foo f = new Foo
-      f.hey = 10
-      Color c1 = new Color
-      c1.r = 20
-      Color c2 = new Color
-      c2.g = 30
-      f.colors.Add(c1)
-      f.colors.Add(c2)
-      return (string)f.colors.Count + (string)f.hey + (string)f.colors[0].r + (string)f.colors[1].g
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-    BindFoo(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    //NodeDump(node);
-    node.SetArgs(DynVal.NewNum(2));
-    var res = ExecNode(node).val;
-
-    AssertEqual(res.str, "2102030");
-    CommonChecks(intp);
-  }
-
   public class StartScriptNode : BehaviorTreeDecoratorNode
   {
     FuncCtx fct;
