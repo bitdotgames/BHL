@@ -1604,35 +1604,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
-  [IsTested()]
-  public void TestCleanFuncThisArgOnStackForMethod()
-  {
-    string bhl = @"
-
-    func float foo()
-    {
-      fail()
-      return 10
-    }
-
-    func test() 
-    {
-      Color c = new Color
-      c.mult_summ(foo())
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    BindColor(globs);
-
-    var intp = Interpret(bhl, globs);
-    var node = intp.GetFuncCallNode("test");
-    ExecNode(node, 0);
-    //NodeDump(node);
-    CommonChecks(intp);
-  }
-
   public class NodeTakingFunc : BehaviorTreeTerminalNode
   {
     MemoryStream stream;

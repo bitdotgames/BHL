@@ -9551,6 +9551,32 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCleanFuncThisArgOnStackForMethod()
+  {
+    string bhl = @"
+
+    func float foo()
+    {
+      fail()
+      return 10
+    }
+
+    func test() 
+    {
+      Color c = new Color
+      c.mult_summ(foo())
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    AssertEqual(0, Execute(vm, "test").stack.Count);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCleanFuncStackInExpressionForYield()
   {
     string bhl = @"
