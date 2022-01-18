@@ -382,54 +382,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  void BindColorAlpha(GlobalScope globs, bool bind_parent = true)
-  {
-    if(bind_parent)
-      BindColor(globs);
-
-    {
-      var cl = new ClassSymbolNative("ColorAlpha", globs.Type("Color"),
-        delegate(ref DynVal v) 
-        { 
-          v.obj = new ColorAlpha();
-        }
-      );
-
-      globs.Define(cl);
-
-      cl.Define(new FieldSymbol("a", globs.Type("float"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var c = (ColorAlpha)ctx.obj;
-          v.SetNum(c.a);
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var c = (ColorAlpha)ctx.obj;
-          c.a = (float)v.num; 
-          ctx.obj = c;
-        }
-      ));
-
-      {
-        var m = new FuncSymbolSimpleNative("mult_summ_alpha", globs.Type("float"),
-          delegate()
-          {
-            var interp = Interpreter.instance;
-
-            var c = (ColorAlpha)interp.PopValue().obj;
-
-            interp.PushValue(DynVal.NewNum((c.r * c.a) + (c.g * c.a)));
-
-            return BHS.SUCCESS;
-          }
-        );
-
-        cl.Define(m);
-      }
-    }
-  }
-
   public class RefC : DynValRefcounted
   {
     public int refs;
@@ -583,17 +535,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     s.Position = 0;
     var sr = new StreamReader(s);
     return sr.ReadToEnd();
-  }
-
-  void BindStartScript(GlobalScope globs)
-  {
-    {
-      var fn = new FuncSymbolNative("StartScript", globs.Type("void"),
-          delegate() { return new StartScriptNode(); } );
-      fn.Define(new FuncArgSymbol("script", globs.Type("void^()")));
-
-      globs.Define(fn);
-    }
   }
 
   void BindStartScriptInMgr(GlobalScope globs)
