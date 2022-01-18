@@ -492,65 +492,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  void BindFoo(GlobalScope globs)
-  {
-    {
-      var cl = new ClassSymbolNative("Foo",
-        delegate(ref DynVal v) 
-        { 
-          v.obj = new Foo();
-        }
-      );
-      globs.Define(cl);
-      globs.Define(new ArrayTypeSymbolT<Foo>(globs, new TypeRef(cl), delegate() { return new List<Foo>(); } ));
-
-      cl.Define(new FieldSymbol("hey", globs.Type("int"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (Foo)ctx.obj;
-          v.SetNum(f.hey);
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (Foo)ctx.obj;
-          f.hey = (int)v.num; 
-          ctx.obj = f;
-        }
-      ));
-      cl.Define(new FieldSymbol("colors", globs.Type("Color[]"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (Foo)ctx.obj;
-          v.obj = f.colors;
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (Foo)ctx.obj;
-          f.colors = (List<Color>)v.obj; 
-          ctx.obj = f;
-        }
-      ));
-      cl.Define(new FieldSymbol("sub_color", globs.Type("Color"),
-        delegate(DynVal ctx, ref DynVal v)
-        {
-          var f = (Foo)ctx.obj;
-          v.obj = f.sub_color;
-        },
-        delegate(ref DynVal ctx, DynVal v)
-        {
-          var f = (Foo)ctx.obj;
-          f.sub_color = (Color)v.obj; 
-          ctx.obj = f;
-        }
-      ));
-    }
-  }
-
-  public class DynValContainer
-  {
-    public DynVal dv;
-  }
-
   [IsTested()]
   public void TestDynValListOwnership()
   {
@@ -602,16 +543,6 @@ public class BHL_TestInterpreter : BHL_TestBase
 
   public class BaseScript
   {}
-
-  public class TestPtr 
-  {
-    public object obj;
-  }
-
-  public class BaseLambda : BaseScript
-  {
-    public TestPtr fct = new TestPtr();
-  }
 
   public class Foo
   {
