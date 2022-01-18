@@ -10155,6 +10155,101 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  public class Bar_ret_int : ICoroutine
+  {
+    bool first_time = true;
+
+    int ticks;
+    int ret;
+
+    public void Tick(VM.Frame frm, ref BHS status)
+    {
+      if(first_time)
+      {
+        ticks = (int)frm.stack.PopRelease().num;
+        ret = (int)frm.stack.PopRelease().num;
+        //self
+        frm.stack.PopRelease();
+        first_time = false;
+      }
+
+      if(ticks-- > 0)
+        status = BHS.RUNNING;
+      else
+        frm.stack.Push(Val.NewNum(frm.vm, ret));
+    }
+
+    public void Cleanup(VM.Frame frm)
+    {
+      first_time = true;
+    }
+  }
+
+  [IsTested()]
+  public void TestInterleaveValuesStackInParalWithMethods()
+  {
+    string bhl = @"
+    func foo(int a, int b)
+    {
+      trace((string)a + "" "" + (string)b + "";"")
+    }
+
+    func void test() 
+    {
+      paral {
+        {
+          foo(1, (new Bar).self().ret_int(val: 2, ticks: 1))
+          suspend()
+        }
+        foo(10, (new Bar).self().ret_int(val: 20, ticks: 2))
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    {
+      var cl = new ClassSymbolNative("Bar", null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          //fake object
+          v.obj = null;
+        }
+      );
+      globs.Define(cl);
+
+      {
+        var m = new FuncSymbolNative("self", globs.Type("Bar"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
+            var obj = frm.stack.PopRelease().obj;
+            frm.stack.Push(Val.NewObj(frm.vm, obj));
+            return null;
+          }
+        );
+        cl.Define(m);
+      }
+
+      {
+        var m = new FuncSymbolNative("ret_int", globs.Type("int"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          {
+            return CoroutinePool.New<Bar_ret_int>(frm.vm);
+          }
+        );
+        m.Define(new FuncArgSymbol("val", globs.Type("int")));
+        m.Define(new FuncArgSymbol("ticks", globs.Type("int")));
+        cl.Define(m);
+      }
+    }
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("1 2;10 20;", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestBasicDefer()
   {
@@ -18078,6 +18173,60 @@ public class BHL_TestVM : BHL_TestBase
 
     dv = Val.NewObj(vm, obj);
     Assert(dv.ToAny() == obj);
+  }
+
+  [IsTested()]
+  public void TestValListOwnership()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    {
+      var dv = Val.New(vm);
+      lst.Add(dv);
+      AssertEqual(dv._refs, 2);
+
+      lst.Clear();
+      AssertEqual(dv._refs, 1);
+      dv.Release();
+    }
+
+    {
+      var dv = Val.New(vm);
+      lst.Add(dv);
+      AssertEqual(dv._refs, 2);
+
+      lst.RemoveAt(0);
+      AssertEqual(dv._refs, 1);
+
+      lst.Clear();
+      AssertEqual(dv._refs, 1);
+      dv.Release();
+    }
+
+    {
+      var dv0 = Val.New(vm);
+      var dv1 = Val.New(vm);
+      lst.Add(dv0);
+      lst.Add(dv1);
+      AssertEqual(dv0._refs, 2);
+      AssertEqual(dv1._refs, 2);
+
+      lst.RemoveAt(1);
+      AssertEqual(dv0._refs, 2);
+      AssertEqual(dv1._refs, 1);
+
+      lst.Clear();
+      AssertEqual(dv0._refs, 1);
+      AssertEqual(dv1._refs, 1);
+      dv0.Release();
+      dv1.Release();
+    }
+
+    lst.Release();
+
+    CommonChecks(vm);
   }
 
   [IsTested()]
