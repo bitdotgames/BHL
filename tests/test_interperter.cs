@@ -1588,16 +1588,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     CommonChecks(intp);
   }
 
-  public class MakeFooNode : BehaviorTreeTerminalNode
-  {
-    public override void init()
-    {
-      var interp = Interpreter.instance;
-      var foo = interp.PopValue().ValueClone();
-      interp.PushValue(foo);
-    }
-  }
-
   public class Foo_ret_int  : BehaviorTreeTerminalNode
   {
     int ticks;
