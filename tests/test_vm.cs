@@ -9606,6 +9606,54 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCleanFuncArgsOnStackForFuncPtrPassedAsArg()
+  {
+    string bhl = @"
+
+    func int[] make_ints(int n, int k)
+    {
+      int[] res = []
+      return res
+    }
+
+    func int do_fail()
+    {
+      fail()
+      return 10
+    }
+
+    func void test() 
+    {
+      foo(func int[] () { return make_ints(2, do_fail()) } )
+      trace(""HERE"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    {
+      var fn = new FuncSymbolNative("foo", globs.Type("Foo"), null,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
+          var fn_ptr = frm.stack.Pop();
+          frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
+          fn_ptr.Release();
+          return null;
+        }
+      );
+      fn.Define(new FuncArgSymbol("fn", globs.Type("int[]^()")));
+
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual(log.ToString(), "HERE");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCleanFuncArgsOnStackForFuncPtr()
   {
     string bhl = @"
