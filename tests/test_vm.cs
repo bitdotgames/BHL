@@ -18230,6 +18230,215 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestRefCountSimple()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC r = new RefC
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountReturnResult()
+  {
+    string bhl = @"
+    func RefC test() 
+    {
+      return new RefC
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test").stack.PopRelease();
+    AssertEqual("INC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountAssignSame()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC r1 = new RefC
+      RefC r2 = r1
+      r2 = r1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountAssignSelf()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC r1 = new RefC
+      r1 = r1
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;DEC2;DEC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountAssignOverwrite()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC r1 = new RefC
+      RefC r2 = new RefC
+      r1 = r2
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;INC2;INC3;DEC0;DEC2;DEC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountSeveral()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC r1 = new RefC
+      RefC r2 = new RefC
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;DEC0;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountInLambda()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC r1 = new RefC
+
+      trace(""REFS"" + (string)r1.refs + "";"")
+
+      void^() fn = func() {
+        trace(""REFS"" + (string)r1.refs + "";"")
+      }
+      
+      fn()
+      trace(""REFS"" + (string)r1.refs + "";"")
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+    BindTrace(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;INC2;DEC1;REFS2;INC2;INC3;INC4;DEC3;REFS4;DEC2;INC3;DEC2;REFS3;DEC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountInArray()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC[] rs = new RefC[]
+      rs.Add(new RefC)
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRefCountSeveralInArrayAccess()
+  {
+    string bhl = @"
+    func void test() 
+    {
+      RefC[] rs = new RefC[]
+      rs.Add(new RefC)
+      rs.Add(new RefC)
+      float refs = rs[1].refs
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+
+    var logs = new StringBuilder();
+    BindRefC(globs, logs);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;INC2;DEC1;DEC0;DEC0;", logs.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFibonacci()
   {
     string bhl = @"
@@ -19217,6 +19426,55 @@ public class BHL_TestVM : BHL_TestBase
     ));
 
     return cl;
+  }
+
+  public class RefC : IValRefcounted
+  {
+    public int refs;
+    public StringBuilder logs;
+
+    public RefC(StringBuilder logs)
+    {
+      ++refs;
+      logs.Append("INC" + refs + ";");
+      this.logs = logs;
+    }
+
+    public void Retain()
+    {
+      ++refs;
+      logs.Append("INC" + refs + ";");
+    }
+
+    public void Release()
+    {
+      --refs;
+      logs.Append("DEC" + refs + ";");
+    }
+  }
+
+  void BindRefC(GlobalScope globs, StringBuilder logs)
+  {
+    {
+      var cl = new ClassSymbolNative("RefC", null,
+        delegate(VM.Frame frm, ref Val v) 
+        { 
+          v.obj = new RefC(logs);
+        }
+      );
+      {
+        var vs = new bhl.FieldSymbol("refs", globs.Type("int"), null, null, null,
+          delegate(Val ctx, ref Val v)
+          {
+            v.num = ((RefC)ctx.obj).refs;
+          },
+          //read only property
+          null
+        );
+        cl.Define(vs);
+      }
+      globs.Define(cl);
+    }
   }
 
   static string TestDirPath()
