@@ -8463,6 +8463,74 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeClassArray()
+  {
+    string bhl = @"
+      
+    func string test(float k) 
+    {
+      ArrayT_Color cs = new ArrayT_Color
+      Color c0 = new Color
+      cs.Add(c0)
+      cs.RemoveAt(0)
+      Color c1 = new Color
+      c1.r = 10
+      Color c2 = new Color
+      c2.g = 20
+      cs.Add(c1)
+      cs.Add(c2)
+      Color c3 = new Color
+      cs.Add(c3)
+      cs[2].r = 30
+      Color c4 = new Color
+      cs.Add(c4)
+      cs.RemoveAt(3)
+      return (string)cs.Count + (string)cs[0].r + (string)cs[1].g + (string)cs[2].r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().str;
+    AssertEqual(res, "3102030");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeClassTmpArray()
+  {
+    string bhl = @"
+
+    func ArrayT_Color mkarray()
+    {
+      ArrayT_Color cs = new ArrayT_Color
+      Color c0 = new Color
+      c0.g = 1
+      cs.Add(c0)
+      Color c1 = new Color
+      c1.r = 10
+      cs.Add(c1)
+      return cs
+    }
+      
+    func float test() 
+    {
+      return mkarray()[1].r
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var res = Execute(vm, "test").stack.PopRelease().num;
+    AssertEqual(res, 10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSuspend()
   {
     string bhl = @"
