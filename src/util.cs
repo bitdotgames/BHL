@@ -1154,7 +1154,9 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_LambdaDecl node)
   {
     Console.Write("(LMBD ");
-    Console.Write(node.type + " " + node.name + " " + node.nname() + " USE:");
+    Console.Write(node.type + " " + node.name + " " + node.nname());
+    if(node.uses.Count > 0)
+      Console.Write(" USE:");
     for(int i=0;i<node.uses.Count;++i)
       Console.Write(" " + node.uses[i].name + " " + node.uses[i].nname);
     VisitChildren(node);

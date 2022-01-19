@@ -17788,8 +17788,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestStartLambdaManyTimesInScriptMgrWithValCopies()
   {
     string bhl = @"
@@ -17798,13 +17797,13 @@ public class BHL_TestVM : BHL_TestBase
     {
       float a = 0
       StartScriptInMgr(
-        script: func void^() (float a) { 
-          return func() { 
-            a = a + 1
-            trace((string) a + "";"") 
-            suspend()
-          } }(a),
-
+        script: func() { 
+            func (float a) { 
+              a = a + 1
+              trace((string) a + "";"") 
+              suspend()
+          }(a)
+        },
         spawns : 3
       )
     }

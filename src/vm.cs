@@ -1038,18 +1038,18 @@ public class VM
           ExecuteUnaryOp(opcode, curr_frame);
         }
         break;
+      case Opcodes.GetVar:
+        {
+          int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+          curr_frame.stack.PushRetain(curr_frame.locals[local_idx]);
+        }
+        break;
       case Opcodes.SetVar:
         {
           int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
           var new_val = curr_frame.stack.Pop();
           curr_frame.SetLocal(local_idx, new_val);
           new_val.Release();
-        }
-        break;
-      case Opcodes.GetVar:
-        {
-          int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-          curr_frame.stack.PushRetain(curr_frame.locals[local_idx]);
         }
         break;
         //TODO: this one looks pretty much like SetVar
