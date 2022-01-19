@@ -1235,13 +1235,6 @@ public class FuncSymbolNative : FuncSymbol
   }
 }
 
-public class FuncSymbolSimpleNative : FuncSymbolNative
-{
-  public FuncSymbolSimpleNative(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
-    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, null, def_args_num)
-  {}
-}
-
 public class ClassSymbolNative : ClassSymbol
 {
   public ClassSymbolNative(HashedName name, Interpreter.ClassCreator creator, VM.ClassCreator VM_creator = null)

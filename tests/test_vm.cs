@@ -1526,6 +1526,25 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEmptyParenExpression()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      ().foo
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"mismatched input '(' expecting '}'"
+    );
+  }
+
+  [IsTested()]
   public void TestSimpleExpression()
   {
     string bhl = @"

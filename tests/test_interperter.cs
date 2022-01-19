@@ -143,68 +143,12 @@ public class BHL_TestInterpreter : BHL_TestBase
       }
     ));
 
-    {
-      var m = new FuncSymbolSimpleNative("Add", globs.Type("Color"),
-        delegate()
-        {
-          var interp = Interpreter.instance;
-
-          var k = (float)interp.PopValue().num;
-          var c = (Color)interp.PopValue().obj;
-
-          var newc = new Color();
-          newc.r = c.r + k;
-          newc.g = c.g + k;
-
-          var dv = DynVal.NewObj(newc);
-          interp.PushValue(dv);
-
-          return BHS.SUCCESS;
-        }
-      );
-      m.Define(new FuncArgSymbol("k", globs.Type("float")));
-
-      cl.Define(m);
-    }
-
-    {
-      var m = new FuncSymbolSimpleNative("mult_summ", globs.Type("float"),
-        delegate()
-        {
-          var interp = Interpreter.instance;
-
-          var k = interp.PopValue().num;
-          var c = (Color)interp.PopValue().obj;
-
-          interp.PushValue(DynVal.NewNum((c.r * k) + (c.g * k)));
-
-          return BHS.SUCCESS;
-        }
-      );
-      m.Define(new FuncArgSymbol("k", globs.Type("float")));
-
-      cl.Define(m);
-    }
-
+    
     {
       var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"),
           delegate() { return new MkColorNode(); }
       );
       fn.Define(new FuncArgSymbol("r", globs.Type("float")));
-
-      globs.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolSimpleNative("mkcolor_null", globs.Type("Color"),
-          delegate() { 
-            var interp = Interpreter.instance;
-            var dv = DynVal.New();
-            dv.obj = null;
-            interp.PushValue(dv);
-            return BHS.SUCCESS;
-          }
-      );
 
       globs.Define(fn);
     }
@@ -855,25 +799,6 @@ public class BHL_TestInterpreter : BHL_TestBase
         Interpret(bhl);
       },
       @"type 'Foo' not found"
-    );
-  }
-
-  [IsTested()]
-  public void TestEmptyParenExpression()
-  {
-    string bhl = @"
-
-    func void test() 
-    {
-      ().foo
-    }
-    ";
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret(bhl);
-      },
-      @"mismatched input '(' expecting '}'"
     );
   }
 
