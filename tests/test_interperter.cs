@@ -156,32 +156,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     return cl;
   }
 
-  public class StartScriptNode : BehaviorTreeDecoratorNode
-  {
-    FuncCtx fct;
-
-    public override void init()
-    {
-      var interp = Interpreter.instance;
-      var dv = interp.PopValue(); 
-      fct = (FuncCtx)dv.obj;
-      fct.Retain();
-
-      var func_node = fct.GetCallNode();
-
-      this.setSlave(func_node);
-
-      base.init();
-    }
-
-    public override void deinit()
-    {
-      base.deinit();
-      fct.Release();
-      fct = null;
-    }
-  }
-
   public class TraceNode : BehaviorTreeTerminalNode
   {
     Stream sm;
@@ -204,26 +178,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  public class WaitTicksNode : BehaviorTreeTerminalNode
-  {
-    int ticks;
-    BHS result;
-
-    public override void init()
-    {
-      var interp = Interpreter.instance;
-      var s = interp.PopValue();
-      var v = interp.PopValue();
-      ticks = (int)v.num;
-      result = s.bval ? BHS.SUCCESS : BHS.FAILURE;
-    }
-
-    public override BHS execute()
-    {
-      return --ticks > 0 ? BHS.RUNNING : result;
-    }
-  }
-
   void BindTrace(GlobalScope globs, MemoryStream trace_stream)
   {
     {
@@ -233,13 +187,6 @@ public class BHL_TestInterpreter : BHL_TestBase
 
       globs.Define(fn);
     }
-  }
-
-  void AddString(MemoryStream s, string str)
-  {
-    var sw = new StreamWriter(s);
-    sw.Write(str);
-    sw.Flush();
   }
 
   string GetString(MemoryStream s)
