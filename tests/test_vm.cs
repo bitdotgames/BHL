@@ -17724,6 +17724,101 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartLambdaManyTimesInScriptMgrWithUpVals()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      float a = 0
+      StartScriptInMgr(
+        script: func() { 
+          a = a + 1
+          trace((string) a + "";"") 
+          suspend()
+        },
+        spawns : 3
+      )
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStartScriptInMgr(globs);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+
+    AssertFalse(vm.Tick());
+    ScriptMgr.instance.Tick();
+
+    var cs = ScriptMgr.instance.active;
+    AssertEqual(3, cs.Count); 
+    AssertTrue(cs[0] != cs[1]);
+    AssertTrue(cs[1] != cs[2]);
+    AssertTrue(cs[0] != cs[2]);
+
+    AssertEqual("1;2;3;", log.ToString());
+
+    ScriptMgr.instance.Stop();
+    AssertTrue(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
+
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestStartLambdaManyTimesInScriptMgrWithValCopies()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      float a = 0
+      StartScriptInMgr(
+        script: func void^() (float a) { 
+          return func() { 
+            a = a + 1
+            trace((string) a + "";"") 
+            suspend()
+          } }(a),
+
+        spawns : 3
+      )
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStartScriptInMgr(globs);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+
+    AssertFalse(vm.Tick());
+    ScriptMgr.instance.Tick();
+
+    var cs = ScriptMgr.instance.active;
+    AssertEqual(3, cs.Count); 
+    AssertTrue(cs[0] != cs[1]);
+    AssertTrue(cs[1] != cs[2]);
+    AssertTrue(cs[0] != cs[2]);
+
+    AssertEqual("1;1;1;", log.ToString());
+
+    ScriptMgr.instance.Stop();
+    AssertTrue(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestGetStackTrace()
   {
     string bhl3 = @"
