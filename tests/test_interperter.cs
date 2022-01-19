@@ -16,95 +16,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     }
   }
 
-  public class ColorAlpha : Color
-  {
-    public float a;
-
-    public override string ToString()
-    {
-      return "[r="+r+",g="+g+",a="+a+"]";
-    }
-  }
-
-  public class ColorNested
-  {
-    public Color c = new Color();
-  }
-
-  public class StringClass
-  {
-    public string str;
-  }
-
-  public class CustomNull
-  {
-    public bool is_null;
-
-    public static bool operator ==(CustomNull b1, CustomNull b2)
-    {
-      return b1.Equals(b2);
-    }
-
-    public static bool operator !=(CustomNull b1, CustomNull b2)
-    {
-      return !(b1 == b2);
-    }
-
-    public override bool Equals(System.Object obj)
-    {
-      if(obj == null && is_null)
-        return true;
-      return false;
-    }
-
-    public override int GetHashCode()
-    {
-      return 0;
-    }
-  }
-
-  public struct IntStruct
-  {
-    public int n;
-    public int n2;
-
-    public static void Decode(DynVal dv, ref IntStruct dst)
-    {
-      dst.n = (int)dv._num;
-      dst.n2 = (int)dv._num2;
-    }
-
-    public static void Encode(DynVal dv, IntStruct dst)
-    {
-      dv._type = DynVal.ENCODED;
-      dv._num = dst.n;
-      dv._num2 = dst.n2;
-    }
-  }
-
-  public struct MasterStruct
-  {
-    public StringClass child;
-    public StringClass child2;
-    public IntStruct child_struct;
-    public IntStruct child_struct2;
-  }
-
-  public class MkColorNode : BehaviorTreeTerminalNode
-  {
-    public override void init()
-    {
-      var interp = Interpreter.instance;
-
-      var r = interp.PopValue().num;
-      var c = new Color();
-      c.r = (float)r;
-      var dv = DynVal.NewObj(c);
-
-      interp.PushValue(dv);
-    }
-  }
-
   ClassSymbolNative BindColor(GlobalScope globs)
   {
     var cl = new ClassSymbolNative("Color",
@@ -144,15 +55,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     ));
 
     
-    {
-      var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"),
-          delegate() { return new MkColorNode(); }
-      );
-      fn.Define(new FuncArgSymbol("r", globs.Type("float")));
-
-      globs.Define(fn);
-    }
-
     return cl;
   }
 
