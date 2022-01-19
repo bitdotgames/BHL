@@ -18290,6 +18290,28 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
+  //[IsTested()]
+  public void TestGlobalVariableRead()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    Foo foo = {b : 100}
+      
+    func float test() 
+    {
+      return foo.b
+    }
+    ";
+
+    var vm = MakeVM(bhl, null, true);
+    AssertEqual(100, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestWeirdMix()
   {

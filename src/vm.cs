@@ -18,6 +18,8 @@ public enum Opcodes
   ArgVar           ,
   GetAttr          ,
   RefAttr          ,
+  SetGVar          ,
+  GetGVar          ,
   Return           ,
   ReturnVal        ,
   Jump             ,

@@ -394,6 +394,18 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.SetGVar,
+        3/*module name idx*/, 3/*idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetGVar,
+        3/*module name idx*/, 3/*idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.ArgRef,
         1 /*local idx*/
       )
@@ -792,7 +804,7 @@ public class ModuleCompiler : AST_Visitor
     Emit(Opcodes.Return);
     AddJumpFromTo(lmbd_op, Peek());
 
-    foreach(var p in ast.uses)
+    foreach(var p in ast.upvals)
       Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
   }
 
@@ -1031,6 +1043,15 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.GetVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
       }
       break;
+      case EnumCall.GVAR:
+      {
+        var import_name = imports[ast.nname2];
+        int module_idx = AddConstant(import_name);
+        int var_idx = AddConstant(ast.name);
+
+        Emit(Opcodes.GetGVar, new int[] {module_idx, var_idx}, (int)ast.line_num);
+      }
+      break;
       case EnumCall.FUNC:
       {
         VisitChildren(ast);
@@ -1159,15 +1180,10 @@ public class ModuleCompiler : AST_Visitor
     else if(ast.nname2 != module_path.id)
     {
       var import_name = imports[ast.nname2];
-
       int module_idx = AddConstant(import_name);
-      if(module_idx > ushort.MaxValue)
-        throw new Exception("Can't encode module literal in ushort: " + module_idx);
       int func_idx = AddConstant(ast.name);
-      if(func_idx > ushort.MaxValue)
-        throw new Exception("Can't encode func literal in ushort: " + func_idx);
 
-      return Emit(Opcodes.GetFuncImported, new int[] {(int)module_idx, (int)func_idx}, (int)ast.line_num);
+      return Emit(Opcodes.GetFuncImported, new int[] {module_idx, func_idx}, (int)ast.line_num);
     }
     else
       throw new Exception("Func '" + ast.name + "' code not found");

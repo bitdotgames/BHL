@@ -564,13 +564,12 @@ public class AST_EnumDecl  : AST
   }
 }
 
-public class AST_UseParam  :  BaseMetaStruct 
+public class AST_UpVal  :  BaseMetaStruct 
 {
   public uint nname;
   public string name = "";
   public uint symb_idx;
   public uint upsymb_idx;
-  public bool is_ref;
 
   static public  uint STATIC_CLASS_ID = 121447213;
 
@@ -579,7 +578,7 @@ public class AST_UseParam  :  BaseMetaStruct
     return 121447213; 
   }
 
-  public AST_UseParam()
+  public AST_UpVal()
   {
     reset();
   }
@@ -590,7 +589,6 @@ public class AST_UseParam  :  BaseMetaStruct
     name = "";
     symb_idx = 0;
     upsymb_idx = 0;
-    is_ref = false;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -601,18 +599,17 @@ public class AST_UseParam  :  BaseMetaStruct
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref symb_idx);
     MetaHelper.sync(ctx, ref upsymb_idx);
-    MetaHelper.sync(ctx, ref is_ref);
   }
 
   public override int getFieldsCount() 
   {
-    return 5; 
+    return 4; 
   }
 }
 
 public class AST_LambdaDecl  : AST_FuncDecl 
 {
-  public List<AST_UseParam> uses = new List<AST_UseParam>();
+  public List<AST_UpVal> upvals = new List<AST_UpVal>();
 
   static public  new  uint STATIC_CLASS_ID = 44443142;
 
@@ -630,14 +627,14 @@ public class AST_LambdaDecl  : AST_FuncDecl
   {
     base.reset();
 
-    if(uses == null) uses = new List<AST_UseParam>(); 
-    uses.Clear();
+    if(upvals == null) upvals = new List<AST_UpVal>(); 
+    upvals.Clear();
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, uses);
+    MetaHelper.sync(ctx, upvals);
   }
 
   public override int getFieldsCount() 
@@ -1229,7 +1226,7 @@ public static class AST_Factory
       case 168955538: { return new AST_ClassDecl(); };
       case 42971075: { return new AST_EnumItem(); };
       case 207366473: { return new AST_EnumDecl(); };
-      case 121447213: { return new AST_UseParam(); };
+      case 121447213: { return new AST_UpVal(); };
       case 44443142: { return new AST_LambdaDecl(); };
       case 234453676: { return new AST_TypeCast(); };
       case 42771415: { return new AST_Call(); };

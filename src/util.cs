@@ -779,19 +779,18 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_UseParam New_UseParam(HashedName name, bool is_ref, int symb_idx, int upsymb_idx)
+  static public AST_UpVal New_UpVal(HashedName name, int symb_idx, int upsymb_idx)
   {
-    var n = new AST_UseParam();
+    var n = new AST_UpVal();
     n.nname = (uint)name.n;
     n.name = name.s;
-    n.is_ref = is_ref;
     n.symb_idx = (uint)symb_idx;
     n.upsymb_idx = (uint)upsymb_idx;
 
     return n;
   }
 
-  static public HashedName Name(this AST_UseParam n)
+  static public HashedName Name(this AST_UpVal n)
   {
     return new HashedName(n.nname, n.name);
   }
@@ -1155,10 +1154,10 @@ public class AST_Dumper : AST_Visitor
   {
     Console.Write("(LMBD ");
     Console.Write(node.type + " " + node.name + " " + node.nname());
-    if(node.uses.Count > 0)
+    if(node.upvals.Count > 0)
       Console.Write(" USE:");
-    for(int i=0;i<node.uses.Count;++i)
-      Console.Write(" " + node.uses[i].name + " " + node.uses[i].nname);
+    for(int i=0;i<node.upvals.Count;++i)
+      Console.Write(" " + node.upvals[i].name + " " + node.upvals[i].nname);
     VisitChildren(node);
     Console.Write(")");
   }

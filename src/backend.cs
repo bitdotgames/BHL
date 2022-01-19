@@ -989,11 +989,11 @@ public class FuncCtx : DynValRefcounted
     if(fs is LambdaSymbol)
     {
       var ldecl = (fs as LambdaSymbol).decl as AST_LambdaDecl;
-      for(int i=0;i<ldecl.uses.Count;++i)
+      for(int i=0;i<ldecl.upvals.Count;++i)
       {
-        var up = ldecl.uses[i];
+        var up = ldecl.upvals[i];
         var val = mem.Get(up.Name());
-        dup.mem.Set(up.Name(), up.is_ref ? val : val.ValueClone());
+        dup.mem.Set(up.Name(), val);
       }
     }
 

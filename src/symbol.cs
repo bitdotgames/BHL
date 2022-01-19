@@ -692,8 +692,6 @@ public class VariableSymbol : Symbol
 {
   public int scope_idx = -1;
 
-  public VariableSymbol up_src;
-
   public VariableSymbol(WrappedNode n, HashedName name, TypeRef type) 
     : base(n, name, type) 
   {}
@@ -1054,15 +1052,14 @@ public class LambdaSymbol : FuncSymbol
     this.fdecl_stack = null;
   }
 
-  public VariableSymbol AddUseParam(VariableSymbol src, bool is_ref)
+  public VariableSymbol AddUpValue(VariableSymbol src)
   {
     var local = new VariableSymbol(src.node, src.name, src.type);
-    local.up_src = src;
 
     this.Define(local);
 
-    var up = AST_Util.New_UseParam(local.name, is_ref, local.scope_idx, src.scope_idx); 
-    decl.uses.Add(up);
+    var up = AST_Util.New_UpVal(local.name, local.scope_idx, src.scope_idx); 
+    decl.upvals.Add(up);
 
     return local;
   }
@@ -1123,7 +1120,7 @@ public class LambdaSymbol : FuncSymbol
     {
       if(fdecl_stack[j] is LambdaSymbol lmb)
       {
-        vs = lmb.AddUseParam(vs, is_ref: false);
+        vs = lmb.AddUpValue(vs);
         if(res == null)
           res = vs;
       }

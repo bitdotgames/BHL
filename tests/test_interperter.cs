@@ -420,31 +420,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestGlobalVariableRead()
-  {
-    string bhl = @"
-
-    class Foo { 
-      float b
-    }
-
-    Foo foo = {b : 100}
-      
-    func float test() 
-    {
-      return foo.b
-    }
-    ";
-
-    var intp = Interpret(bhl);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 100);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestGlobalVariableWrite()
   {
     string bhl = @"
