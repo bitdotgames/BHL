@@ -17629,6 +17629,101 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartNativeFuncPtrManyTimesInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      StartScriptInMgr(
+        script: say_here,
+        spawns : 2
+      )
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStartScriptInMgr(globs);
+
+    {
+      var fn = new FuncSymbolNative("say_here", globs.Type("void"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          {
+            log.Append("HERE;");
+            return null;
+          }
+          );
+      globs.Define(fn);
+    }
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+
+    AssertFalse(vm.Tick());
+    ScriptMgr.instance.Tick();
+
+    var cs = ScriptMgr.instance.active;
+    AssertEqual(0, cs.Count); 
+
+    AssertEqual("HERE;HERE;", log.ToString());
+
+    ScriptMgr.instance.Stop();
+    AssertTrue(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStartLambdaVarManyTimesInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      void^() fn = func() {
+        trace(""HERE;"")
+        suspend()
+      }
+
+      StartScriptInMgr(
+        script: func() { 
+          fn()
+        },
+        spawns : 2
+      )
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStartScriptInMgr(globs);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+
+    AssertFalse(vm.Tick());
+    ScriptMgr.instance.Tick();
+
+    var cs = ScriptMgr.instance.active;
+    AssertEqual(2, cs.Count); 
+    AssertTrue(cs[0] != cs[1]);
+
+    AssertEqual("HERE;HERE;", log.ToString());
+
+    ScriptMgr.instance.Stop();
+    AssertTrue(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestGetStackTrace()
   {
     string bhl3 = @"

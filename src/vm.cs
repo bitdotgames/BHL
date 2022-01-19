@@ -845,10 +845,11 @@ public class VM
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame)
   {
+    uint cargs_bits = 0;
+
     var fb = Fiber.New(this);
     Register(fb);
 
-    uint cargs_bits = 0;
     //checking native call
     if(ptr.native != null)
     {
@@ -1464,6 +1465,7 @@ public class VM
     ip = new_frame.start_ip - 1; 
   }
 
+  //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   static bool CallNative(Frame curr_frame, FuncSymbolNative native, uint args_bits, out BHS status, ref ICoroutine coroutine)
   {
     var args_info = new FuncArgsInfo(args_bits);
