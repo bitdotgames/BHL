@@ -620,12 +620,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitNames([NotNull] bhlParser.NamesContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.useBlock"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitUseBlock([NotNull] bhlParser.UseBlockContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcParams"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

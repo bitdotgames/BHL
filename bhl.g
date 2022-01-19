@@ -235,7 +235,7 @@ funcBlock
   ;
 
 funcLambda
-  : 'func' retType? '(' funcParams? ')' useBlock? funcBlock chainExp*
+  : 'func' retType? '(' funcParams? ')' funcBlock chainExp*
   ;
 
 refName
@@ -248,10 +248,6 @@ retType
 
 names
   : refName (',' refName)*
-  ;
-
-useBlock
-  : 'use' '(' refName (',' refName)* ')'
   ;
 
 funcParams

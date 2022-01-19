@@ -859,21 +859,6 @@ public class Frontend : bhlBaseVisitor<object>
 
     PushFuncDecl(symb);
 
-    var useblock = funcLambda.useBlock();
-    if(useblock != null)
-    {
-      for(int i=0;i<useblock.refName().Length;++i)
-      {
-        var un = useblock.refName()[i]; 
-        var un_name_str = un.NAME().GetText(); 
-        var un_symb = curr_scope.Resolve(un_name_str) as VariableSymbol;
-        if(un_symb == null)
-          FireError(Location(un) +  " : symbol '" + un_name_str + "' not defined in parent scope");
-
-        symb.AddUseParam(un_symb, un.isRef() != null);
-      }
-    }
-
     var scope_backup = curr_scope;
     curr_scope = symb;
 
