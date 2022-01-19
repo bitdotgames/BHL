@@ -512,7 +512,11 @@ public class Frontend : bhlBaseVisitor<object>
           ast = AST_Util.New_Call(class_scope != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
-            line, var_symb, class_scope
+            line, 
+            var_symb.name,
+            class_scope != null ? (uint)class_scope.Type().n : 0,
+            class_scope != null ? (string)class_scope.Type().s : "",
+            var_symb.scope_idx
           );
           //handling passing by ref for class fields
           if(class_scope != null && PeekCallByRef())

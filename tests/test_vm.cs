@@ -18290,6 +18290,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
+  //TODO:
   //[IsTested()]
   public void TestGlobalVariableRead()
   {

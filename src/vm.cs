@@ -1054,7 +1054,6 @@ public class VM
           new_val.Release();
         }
         break;
-        //TODO: this one looks pretty much like SetVar
       case Opcodes.ArgVar:
         {
           int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
@@ -1165,6 +1164,16 @@ public class VM
           var field_symb = (FieldSymbol)class_symb.members[fld_idx];
           field_symb.VM_setter(ref obj, val);
           val.Release();
+        }
+        break;
+      case Opcodes.GetGVar:
+        {
+          //int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          //int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+
+          //string module_name = curr_frame.constants[module_idx].str;
+
+          //var module = curr_frame.vm.modules[module_name];
         }
         break;
       case Opcodes.Return:

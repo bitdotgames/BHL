@@ -1045,11 +1045,15 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        var import_name = imports[ast.nname2];
-        int module_idx = AddConstant(import_name);
+        uint module_idx = module_path.id;
+        if(ast.nname2 != module_idx)
+        {
+          var import_name = imports[ast.nname2];
+          module_idx = (uint)AddConstant(import_name);
+        }
         int var_idx = AddConstant(ast.name);
 
-        Emit(Opcodes.GetGVar, new int[] {module_idx, var_idx}, (int)ast.line_num);
+        Emit(Opcodes.GetGVar, new int[] {(int)module_idx, var_idx}, (int)ast.line_num);
       }
       break;
       case EnumCall.FUNC:
