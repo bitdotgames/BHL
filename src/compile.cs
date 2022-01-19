@@ -395,12 +395,24 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.SetGVar,
-        3/*module name idx*/, 3/*idx*/
+        3/*idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetGVar,
+        3/*idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetGVarImported,
+        3/*module name idx*/, 3/*idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetGVarImported,
         3/*module name idx*/, 3/*idx*/
       )
     );
@@ -1045,15 +1057,17 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        uint module_idx = module_path.id;
-        if(ast.nname2 != module_idx)
+        if(ast.nname2 != module_path.id)
         {
           var import_name = imports[ast.nname2];
-          module_idx = (uint)AddConstant(import_name);
+          int module_idx = AddConstant(import_name);
+          int name_idx = AddConstant(ast.name);
+          Emit(Opcodes.GetGVarImported, new int[] {module_idx, name_idx}, (int)ast.line_num);
         }
-        int var_idx = AddConstant(ast.name);
-
-        Emit(Opcodes.GetGVar, new int[] {(int)module_idx, var_idx}, (int)ast.line_num);
+        else 
+        {
+          Emit(Opcodes.GetGVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
+        }
       }
       break;
       case EnumCall.FUNC:

@@ -20,6 +20,8 @@ public enum Opcodes
   RefAttr          ,
   SetGVar          ,
   GetGVar          ,
+  SetGVarImported  ,
+  GetGVarImported  ,
   Return           ,
   ReturnVal        ,
   Jump             ,
@@ -1168,12 +1170,9 @@ public class VM
         break;
       case Opcodes.GetGVar:
         {
-          //int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-          //int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+          int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
-          //string module_name = curr_frame.constants[module_idx].str;
-
-          //var module = curr_frame.vm.modules[module_name];
+          curr_frame.stack.Push(Val.NewNum(curr_frame.vm, var_idx));
         }
         break;
       case Opcodes.Return:
