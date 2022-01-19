@@ -17544,6 +17544,91 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartLambdaManyTimesInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      StartScriptInMgr(
+        script: func() { 
+          suspend()
+        },
+        spawns : 3
+      )
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStartScriptInMgr(globs);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+
+    AssertFalse(vm.Tick());
+    ScriptMgr.instance.Tick();
+
+    var cs = ScriptMgr.instance.active;
+    AssertEqual(3, cs.Count); 
+    AssertTrue(cs[0] != cs[1]);
+    AssertTrue(cs[1] != cs[2]);
+    AssertTrue(cs[0] != cs[2]);
+
+    ScriptMgr.instance.Stop();
+    AssertTrue(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStartFuncPtrManyTimesInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      void^() fn = func() {
+        trace(""HERE;"")
+        suspend()
+      }
+
+      StartScriptInMgr(
+        script: fn,
+        spawns : 2
+      )
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStartScriptInMgr(globs);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+
+    AssertFalse(vm.Tick());
+    ScriptMgr.instance.Tick();
+
+    var cs = ScriptMgr.instance.active;
+    AssertEqual(2, cs.Count); 
+    AssertTrue(cs[0] != cs[1]);
+
+    AssertEqual("HERE;HERE;", log.ToString());
+
+    ScriptMgr.instance.Stop();
+    AssertTrue(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestGetStackTrace()
   {
     string bhl3 = @"
