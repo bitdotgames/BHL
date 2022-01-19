@@ -17432,6 +17432,61 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartLambdaInScriptMgr()
+  {
+    string bhl = @"
+
+    func void test() 
+    {
+      while(true) {
+        StartScriptInMgr(
+          script: func() { 
+            trace(""HERE;"") 
+          },
+          spawns : 1
+        )
+        yield()
+      }
+    }
+    ";
+
+    var globs = SymbolTable.VM_CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+    BindStartScriptInMgr(globs);
+
+    var vm = MakeVM(bhl, globs);
+    var fb = vm.Start("test");
+
+    {
+      AssertTrue(vm.Tick());
+      ScriptMgr.instance.Tick();
+
+      AssertEqual("HERE;", log.ToString());
+
+      var cs = ScriptMgr.instance.active;
+      AssertEqual(0, cs.Count); 
+    }
+
+    {
+      AssertTrue(vm.Tick());
+      ScriptMgr.instance.Tick();
+
+      AssertEqual("HERE;HERE;", log.ToString());
+
+      var cs = ScriptMgr.instance.active;
+      AssertEqual(0, cs.Count); 
+    }
+
+    ScriptMgr.instance.Stop();
+    AssertTrue(!ScriptMgr.instance.Busy);
+
+    vm.Stop(fb);
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestGetStackTrace()
   {
     string bhl3 = @"
@@ -19564,6 +19619,64 @@ public class BHL_TestVM : BHL_TestBase
         cl.Define(vs);
       }
       globs.Define(cl);
+    }
+  }
+
+  void BindStartScriptInMgr(GlobalScope globs)
+  {
+    {
+      var fn = new FuncSymbolNative("StartScriptInMgr", globs.Type("void"), null,
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
+            int spawns = (int)frm.stack.PopRelease().num;
+            var ptr = frm.stack.Pop();
+
+            for(int i=0;i<spawns;++i)
+              ScriptMgr.instance.Start(frm, (VM.FuncPtr)ptr.obj);
+
+            ptr.Release();
+
+            return null;
+          }
+      );
+
+      fn.Define(new FuncArgSymbol("script", globs.Type("void^()")));
+      fn.Define(new FuncArgSymbol("spawns", globs.Type("int")));
+
+      globs.Define(fn);
+    }
+  }
+
+  public class ScriptMgr
+  {
+    public static ScriptMgr instance = new ScriptMgr();
+    public List<VM.Fiber> active = new List<VM.Fiber>();
+
+    public bool Busy {
+      get {
+        return active.Count > 0;
+      }
+    }
+
+    public void Start(VM.Frame origin, VM.FuncPtr ptr)
+    {
+      var fb = origin.vm.Start(ptr, origin);
+      origin.vm.Detach(fb);
+      active.Add(fb);
+    }
+
+    public void Tick()
+    {
+      if(active.Count > 0)
+        active[0].vm.Tick(active);
+    }
+
+    public void Stop()
+    {
+      for(int i=active.Count;i-- > 0;)
+      {
+        active[i].vm.Stop(active[i]);
+        active.RemoveAt(i);
+      }
     }
   }
 

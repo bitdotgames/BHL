@@ -154,7 +154,7 @@ public class VM
 
   public class Fiber
   {
-    internal VM vm;
+    public VM vm;
 
     internal int id;
     internal int tick;
@@ -869,6 +869,11 @@ public class VM
     return fb;
   }
 
+  public void Detach(Fiber fb)
+  {
+    fibers.Remove(fb);
+  }
+
   void Attach(Fiber fb, Frame fr)
   {
     fb.ip = fr.start_ip;
@@ -899,6 +904,15 @@ public class VM
     if(fb == null)
       return;
     Stop(fb);
+  }
+
+  public void Stop()
+  {
+    for(int i=fibers.Count;i-- > 0;)
+    {
+      Stop(fibers[i]);
+      fibers.RemoveAt(i);
+    }
   }
 
   Fiber FindFiber(int fid)
@@ -1645,6 +1659,11 @@ public class VM
   }
 
   public bool Tick()
+  {
+    return Tick(fibers);
+  }
+
+  public bool Tick(List<Fiber> fibers)
   {
     for(int i=0;i<fibers.Count;++i)
     {
