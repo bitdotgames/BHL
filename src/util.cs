@@ -1414,7 +1414,7 @@ public class FixedStack<T>
     --head;
   }
 
-  public void SetHead(int pos)
+  public void Resize(int pos)
   {
     head = pos;
   }

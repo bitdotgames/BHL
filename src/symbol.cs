@@ -695,6 +695,18 @@ public class VariableSymbol : Symbol
   public VariableSymbol(WrappedNode n, HashedName name, TypeRef type) 
     : base(n, name, type) 
   {}
+
+  public void CalcVariableScopeIdx(SymbolsDictionary members)
+  {
+    //let's ignore already assigned ones
+    if(scope_idx != -1)
+      return;
+    int c = 0;
+    for(int i=0;i<members.Count;++i)
+      if(members[i] is VariableSymbol)
+        ++c;
+    scope_idx = c; 
+  }
 }
 
 public class FuncArgSymbol : VariableSymbol
@@ -989,22 +1001,10 @@ public class FuncSymbol : ScopedSymbol
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
 #endif
 
-  void CalcVariableScopeIdx(VariableSymbol sym)
-  {
-    //let's ignore already assigned ones
-    if(sym.scope_idx != -1)
-      return;
-    int c = 0;
-    for(int i=0;i<GetMembers().Count;++i)
-      if(GetMembers()[i] is VariableSymbol)
-        ++c;
-    sym.scope_idx = c; 
-  }
-
   public override void Define(Symbol sym)
   {
     if(sym is VariableSymbol vs)
-      CalcVariableScopeIdx(vs);
+      vs.CalcVariableScopeIdx(GetMembers());
     base.Define(sym);
   }
 }

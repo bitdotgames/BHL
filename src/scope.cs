@@ -201,6 +201,7 @@ public abstract class BaseScope : Scope
   {
     return new TypeRef(t);
   }
+
 }
 
 public class GlobalScope : BaseScope 
@@ -225,6 +226,8 @@ public class LocalScope : BaseScope
     if(enclosing_scope != null && enclosing_scope.Resolve(sym.name) != null)
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
 
+    if(sym is VariableSymbol vs)
+      vs.CalcVariableScopeIdx(GetMembers());
     base.Define(sym);
   }
 }

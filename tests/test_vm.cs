@@ -18290,8 +18290,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
-  //TODO
-  //[IsTested()]
+  [IsTested()]
   public void TestSimpleGlobalVariableRead()
   {
     string bhl = @"
@@ -18304,8 +18303,23 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, null, true);
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseInit()
+      .EmitThen(Opcodes.DeclVar, new int[] { 0 })
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+      .EmitThen(Opcodes.GetGVar, new int[] { 0 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
     AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    vm.UnloadModules();
     CommonChecks(vm);
   }
 

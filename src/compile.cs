@@ -1378,12 +1378,19 @@ public class ModuleCompiler : AST_Visitor
       byte val_type = MapToValType(ast.type);
       Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)val_type });
     }
-    else
+    //check if it's not a module scope var (global)
+    else if(func_decls.Count > 0)
     {
       if(ast.is_ref)
         Emit(Opcodes.ArgRef, new int[] { (int)ast.symb_idx });
       else
         Emit(Opcodes.ArgVar, new int[] { (int)ast.symb_idx });
+    }
+    else
+    {
+      UseInit();
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)0});
+      UseCode();
     }
   }
 

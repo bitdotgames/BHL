@@ -383,7 +383,6 @@ public class VM
       for(int i=locals.Count;i-- > 0;)
       {
         var val = locals[i];
-        //for now allowing null gaps?
         if(val != null)
           val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       }
@@ -578,7 +577,7 @@ public class VM
         var upval = upvals[i];
         if(upval != null)
         {
-          fr.locals.SetHead(i+1);
+          fr.locals.Resize(i+1);
           upval.Retain();
           fr.locals[i] = upval;
         }
@@ -746,6 +745,35 @@ public class VM
       ExecInit(m);
   }
 
+  public void UnloadModule(string module_name)
+  {
+    CompiledModule m;
+    if(!modules.TryGetValue(module_name, out m))
+      return;
+
+    foreach(var kv in m.func2ip)
+      func2addr.Remove(kv.Key);
+
+    for(int i=0;i<m.globals.Count;++i)
+    {
+      var val = m.globals[i];
+      if(val != null)
+        val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    }
+    m.globals.Clear();
+
+    modules.Remove(module_name);
+  }
+
+  public void UnloadModules()
+  {
+    var keys = new List<string>();
+    foreach(var kv in modules)
+      keys.Add(kv.Key);
+    foreach(string key in keys)
+      UnloadModule(key);
+  }
+
   void ExecInit(CompiledModule module)
   {
     byte[] bytecode = module.initcode;
@@ -760,7 +788,17 @@ public class VM
         {
           int module_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           string module_name = module.constants[module_idx].str;
+
           ImportModule(module_name);
+        }
+        break;
+        case Opcodes.DeclVar:
+        {
+          int glob_idx = (int)Bytecode.Decode8(bytecode, ref ip);
+          byte type = (byte)Bytecode.Decode8(bytecode, ref ip);
+
+          module.globals.Resize(glob_idx+1);
+          module.globals[glob_idx] = MakeValByType(type);
         }
         break;
         case Opcodes.ClassBegin:
@@ -1077,20 +1115,11 @@ public class VM
         {
           int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
           byte type = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-          Val v;
-          if(type == Val.NUMBER)
-            v = Val.NewNum(this, 0);
-          else if(type == Val.STRING)
-            v = Val.NewStr(this, "");
-          else if(type == Val.BOOL)
-            v = Val.NewBool(this, false);
-          else
-            v = Val.NewObj(this, null);
           var curr = curr_frame.locals[local_idx];
           //NOTE: handling case when variables are 're-declared' within the nested loop
           if(curr != null)
             curr.Release();
-          curr_frame.locals[local_idx] = v;
+          curr_frame.locals[local_idx] = MakeValByType(type);
         }
         break;
       case Opcodes.GetAttr:
@@ -1172,7 +1201,7 @@ public class VM
         {
           int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
-          curr_frame.stack.Push(Val.NewNum(curr_frame.vm, var_idx));
+          curr_frame.stack.PushRetain(curr_frame.module.globals[var_idx]);
         }
         break;
       case Opcodes.Return:
@@ -1338,7 +1367,7 @@ public class VM
         {
           int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
           var args_bits = curr_frame.stack.Pop(); 
-          curr_frame.locals.SetHead(local_vars_num);
+          curr_frame.locals.Resize(local_vars_num);
           //NOTE: we need to store arg info bits locally so that
           //      this information will be available to func 
           //      args related opcodes
@@ -1366,7 +1395,7 @@ public class VM
           //      initialized during Frame initialization
           //NOTE: we need to reflect the updated max amount of locals,
           //      otherwise they might not be cleared upon Frame exit
-          addr.upvals.SetHead(local_idx+1);
+          addr.upvals.Resize(local_idx+1);
 
           var upval = curr_frame.locals[up_idx];
           upval.Retain();
@@ -1459,6 +1488,18 @@ public class VM
 
     ++ip;
     return BHS.SUCCESS;
+  }
+
+  Val MakeValByType(byte type)
+  {
+    if(type == Val.NUMBER)
+      return Val.NewNum(this, 0);
+    else if(type == Val.STRING)
+      return Val.NewStr(this, "");
+    else if(type == Val.BOOL)
+      return Val.NewBool(this, false);
+    else
+      return Val.NewObj(this, null);
   }
 
   void Call(Frame curr_frame, FixedStack<FrameContext> frames, Frame new_frame, uint args_bits, ref int ip)
@@ -1785,10 +1826,13 @@ public class VM
 
 public class CompiledModule
 {
+  public const int MAX_GLOBALS = 128;
+
   public string name;
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
+  public FixedStack<Val> globals = new FixedStack<Val>(MAX_GLOBALS);
   public Dictionary<string, int> func2ip;
   public Dictionary<int, int> ip2src_line;
 
