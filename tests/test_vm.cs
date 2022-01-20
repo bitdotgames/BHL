@@ -17795,7 +17795,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      float a = 0
+      float a = 1
       StartScriptInMgr(
         script: func() { 
             func (float a) { 
@@ -17826,7 +17826,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertTrue(cs[1] != cs[2]);
     AssertTrue(cs[0] != cs[2]);
 
-    AssertEqual("1;1;1;", log.ToString());
+    AssertEqual("2;2;2;", log.ToString());
 
     ScriptMgr.instance.Stop();
     AssertTrue(!ScriptMgr.instance.Busy);
