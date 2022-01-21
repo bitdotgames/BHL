@@ -181,7 +181,7 @@ public class ModuleCompiler : AST_Visitor
       module_path = new ModulePath("", "");
     this.module_path = module_path;
 
-    UseCode();
+    UseInit();
   }
 
   //NOTE: public for testing purposes only
@@ -789,14 +789,14 @@ public class ModuleCompiler : AST_Visitor
       imports.Add(ast.module_ids[i], ast.module_names[i]);
       int module_idx = AddConstant(ast.module_names[i]);
 
-      UseInit();
       Emit(Opcodes.Import, new int[] { module_idx });
-      UseCode();
     }
   }
 
   public override void DoVisit(AST_FuncDecl ast)
   {
+    UseCode();
+
     func_decls.Add(ast);
     int ip = GetCodeSize();
     func2ip.Add(ast.name, ip);
@@ -847,8 +847,6 @@ public class ModuleCompiler : AST_Visitor
       }
     }
     Emit(Opcodes.ClassEnd);
-
-    UseCode();
   }
 
   public override void DoVisit(AST_EnumDecl ast)
@@ -1388,9 +1386,7 @@ public class ModuleCompiler : AST_Visitor
     }
     else
     {
-      UseInit();
       Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)0});
-      UseCode();
     }
   }
 

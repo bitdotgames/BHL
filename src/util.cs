@@ -210,6 +210,27 @@ public static class Extensions
     val.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(val);
   }
+
+  public static void SetLocal(this FixedStack<Val> s, VM vm, int idx, Val val)
+  {
+    var curr = s[idx];
+    if(curr != null)
+    {
+      for(int i=0;i<curr._refs;++i)
+      {
+        val.RefMod(RefOp.USR_INC);
+        curr.RefMod(RefOp.USR_DEC);
+      }
+      curr.ValueCopyFrom(val);
+    }
+    else
+    {
+      curr = Val.New(vm);
+      curr.ValueCopyFrom(val);
+      curr.RefMod(RefOp.USR_INC);
+      s[idx] = curr;
+    }
+  }
 }
 
 static public class Util
