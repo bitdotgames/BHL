@@ -18496,6 +18496,29 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGlobalVariableAlreadyDeclared()
+  {
+    string bhl = @"
+
+    int foo = 0
+    int foo = 1
+      
+    func int test() 
+    {
+      return foo
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"already defined symbol 'foo'"
+    );
+  }
+
+
+  [IsTested()]
   public void TestWeirdMix()
   {
     string bhl = @"

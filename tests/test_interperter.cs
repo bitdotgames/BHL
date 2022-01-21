@@ -420,28 +420,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestGlobalVariableAlreadyDeclared()
-  {
-    string bhl = @"
-
-    int foo = 0
-    int foo = 1
-      
-    func int test() 
-    {
-      return foo
-    }
-    ";
-
-    AssertError<UserError>(
-      delegate() { 
-        Interpret(bhl);
-      },
-      @"already defined symbol 'foo'"
-    );
-  }
-
-  [IsTested()]
   public void TestLocalVariableHasPriorityOverGlobalOne()
   {
     string bhl = @"
