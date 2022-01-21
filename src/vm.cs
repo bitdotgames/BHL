@@ -691,6 +691,9 @@ public class VM
   public Pool<FuncPtr> ptrs_pool = new Pool<FuncPtr>();
   public CoroutinePool coro_pool = new CoroutinePool();
 
+  //fake frame used for module's init code
+  Frame init_frame;
+
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
     if(globs == null)
@@ -698,6 +701,8 @@ public class VM
     this.globs = globs;
     this.importer = importer;
     symbols = new LocalScope(globs);
+
+    init_frame = new Frame(this);
   }
 
   public void ImportModule(string module_name)
@@ -755,8 +760,10 @@ public class VM
 
   void ExecInit(CompiledModule module)
   {
-   var stack = new FixedStack<Val>(Frame.MAX_STACK);
-    byte[] bytecode = module.initcode;
+    var bytecode = module.initcode;
+    var constants = module.constants;
+    var stack = init_frame.stack;
+
     int ip = 0;
     AST_ClassDecl curr_decl = null;
     while(ip < bytecode.Length)
@@ -767,7 +774,7 @@ public class VM
         case Opcodes.Import:
         {
           int module_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          string module_name = module.constants[module_idx].str;
+          string module_name = constants[module_idx].str;
 
           ImportModule(module_name);
         }
@@ -786,7 +793,7 @@ public class VM
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
 
           module.globals.Resize(var_idx+1);
-          var new_val = stack.Pop();
+          var new_val = init_frame.stack.Pop();
           module.globals.SetLocal(this, var_idx, new_val);
           new_val.Release();
         }
@@ -794,8 +801,32 @@ public class VM
         case Opcodes.Constant:
         {
           int const_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          var cn = module.constants[const_idx];
+          var cn = constants[const_idx];
           stack.Push(cn.ToVal(this));
+        }
+        break;
+        case Opcodes.New:
+        {
+          int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
+          string type = constants[type_idx].str;
+          HandleNew(init_frame, type);
+        }
+        break;
+        case Opcodes.SetAttrInplace:
+        {
+          int class_type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
+          string class_type = constants[class_type_idx].str;
+          int fld_idx = (int)Bytecode.Decode16(bytecode, ref ip);
+          var class_symb = symbols.Resolve(class_type) as ClassSymbol;
+          //TODO: this check must be in dev.version only
+          if(class_symb == null)
+            throw new Exception("Class type not found: " + class_type);
+
+          var val = stack.Pop();
+          var obj = stack.Peek();
+          var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+          field_symb.VM_setter(ref obj, val);
+          val.Release();
         }
         break;
         case Opcodes.ClassBegin:
@@ -803,9 +834,9 @@ public class VM
           int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int parent_type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           curr_decl = new AST_ClassDecl();
-          curr_decl.name = module.constants[type_idx].str;
+          curr_decl.name = constants[type_idx].str;
           if(parent_type_idx != -1)
-            curr_decl.parent = module.constants[parent_type_idx].str;
+            curr_decl.parent = constants[parent_type_idx].str;
         }
         break;
         case Opcodes.ClassMember:
@@ -814,8 +845,8 @@ public class VM
           int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
 
           var mdecl = new AST_VarDecl();
-          mdecl.type = module.constants[type_idx].str;
-          mdecl.name = module.constants[name_idx].str;
+          mdecl.type = constants[type_idx].str;
+          mdecl.name = constants[name_idx].str;
           mdecl.symb_idx = (uint)curr_decl.children.Count;
           curr_decl.children.Add(mdecl);
         }

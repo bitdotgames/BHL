@@ -18377,7 +18377,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSimpleGlobalVariableRead()
+  public void TestSimpleGlobalVariableDecl()
   {
     string bhl = @"
 
@@ -18410,7 +18410,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestGlobalVariableAssign()
+  public void TestGlobalVariableAssignConst()
   {
     string bhl = @"
 
@@ -18443,9 +18443,8 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO
-  //[IsTested()]
-  public void TestGlobalVariableRead()
+  [IsTested()]
+  public void TestGlobalVariableAssignAndReadObject()
   {
     string bhl = @"
 
@@ -18461,8 +18460,38 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, null, true);
+    var vm = MakeVM(bhl);
     AssertEqual(100, Execute(vm, "test").stack.PopRelease().num);
+    vm.UnloadModules();
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestGlobalVariableWrite()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    Foo foo = {b : 100}
+
+    func float bar()
+    {
+      return foo.b
+    }
+      
+    func float test() 
+    {
+      foo.b = 101
+      return bar()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(101, Execute(vm, "test").stack.PopRelease().num);
+    vm.UnloadModules();
     CommonChecks(vm);
   }
 
