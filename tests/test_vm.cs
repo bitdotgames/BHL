@@ -18405,7 +18405,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(c);
     AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
-    vm.UnloadModules();
     CommonChecks(vm);
   }
 
@@ -18439,7 +18438,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(c);
     AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
-    vm.UnloadModules();
     CommonChecks(vm);
   }
 
@@ -18462,7 +18460,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(100, Execute(vm, "test").stack.PopRelease().num);
-    vm.UnloadModules();
     CommonChecks(vm);
   }
 
@@ -18491,7 +18488,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(101, Execute(vm, "test").stack.PopRelease().num);
-    vm.UnloadModules();
     CommonChecks(vm);
   }
 
@@ -18517,6 +18513,55 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestLocalVariableHasPriorityOverGlobalOne()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    Foo foo = {b : 100}
+      
+    func float test() 
+    {
+      Foo foo = {b : 200}
+      return foo.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(200, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //TODO: do we really need this?
+  //[IsTested()]
+  public void TestGlobalVariableInitWithSubCall()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    func float bar(float f) {
+      return f
+    }
+
+    Foo foo = {b : bar(100)}
+      
+    func float test() 
+    {
+      return foo.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(100, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestWeirdMix()
@@ -19265,6 +19310,9 @@ public class BHL_TestVM : BHL_TestBase
 
   void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)
   {
+    //cleaning globals
+    vm.UnloadModules();
+
     //for extra debug
     if(vm.vals_pool.Allocs != vm.vals_pool.Free)
       Console.WriteLine(vm.vals_pool.Dump());

@@ -804,6 +804,8 @@ public class ModuleCompiler : AST_Visitor
     VisitChildren(ast);
     Emit(Opcodes.Return);
     func_decls.RemoveAt(func_decls.Count-1);
+
+    UseInit();
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
