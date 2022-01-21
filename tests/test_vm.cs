@@ -6385,7 +6385,7 @@ public class BHL_TestVM : BHL_TestBase
     var importer = new ModuleImporter(CompileFiles(files, globs));
 
     var vm = new VM(globs: globs, importer: importer);
-    vm.ImportModule("bhl1");
+    vm.LoadModule("bhl1");
     Execute(vm, "test");
     AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
     CommonChecks(vm);
@@ -17302,7 +17302,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(globs: globs, importer: importer);
 
-    vm.ImportModule("bhl1");
+    vm.LoadModule("bhl1");
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -17411,9 +17411,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM();
     vm.RegisterModule(c.Compile());
-    var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
-    AssertEqual(fb.stack.PopRelease().num, 123);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 123);
     CommonChecks(vm);
   }
 
@@ -17486,10 +17484,8 @@ public class BHL_TestVM : BHL_TestBase
     );
 
     var vm = new VM(globs: null, importer: importer);
-    vm.ImportModule("bhl1");
-    var fb = vm.Start("bhl1");
-    AssertFalse(vm.Tick());
-    AssertEqual(fb.stack.PopRelease().num, 23);
+    vm.LoadModule("bhl1");
+    AssertEqual(Execute(vm, "bhl1").stack.PopRelease().num, 23);
     CommonChecks(vm);
   }
 
@@ -17529,11 +17525,256 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = new VM(globs: globs, importer: importer);
 
-    vm.ImportModule("bhl2");
-    vm.Start("test");
-    AssertFalse(vm.Tick());
+    vm.LoadModule("bhl2");
+    Execute(vm, "test");
     AssertEqual("10;14.2;Hey", log.ToString());
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportClassMoreComplex()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float test(float k) 
+    {
+      Foo f = { x : k }
+      return bar(f)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+
+    class Foo
+    {
+      float x
+    }
+
+    func float bar(Foo f)
+    {
+      return hey(f.x)
+    }
+    ";
+
+    string bhl3 = @"
+    func float hey(float k)
+    {
+      return k
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files));
+
+    var vm = new VM(globs: null, importer: importer);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(42, Execute(vm, "test", Val.NewNum(vm, 42)).stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportClassConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    class Bar { }
+
+    func test() { }
+    ";
+
+    string bhl2 = @"
+    class Bar { }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    
+    AssertError<UserError>(
+      delegate() { 
+        CompileFiles(files);
+      },
+      @"already defined symbol 'Bar'"
+    );
+  }
+
+  [IsTested()]
+  public void TestImportEnum()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    func float test() 
+    {
+      Foo f = Foo::B
+      return bar(f)
+    }
+    ";
+
+    string bhl2 = @"
+    enum Foo
+    {
+      A = 2
+      B = 3
+    }
+
+    func int bar(Foo f)
+    {
+      return (int)f * 10
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files));
+
+    var vm = new VM(globs: null, importer: importer);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(30, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportMixed()
+  {
+    string bhl1 = @"
+    import ""bhl3""
+    func float what(float k)
+    {
+      return hey(k)
+    }
+
+    import ""bhl2""  
+    func float test(float k) 
+    {
+      return bar(k) * what(k)
+    }
+
+    ";
+
+    string bhl2 = @"
+    func float bar(float k)
+    {
+      return k
+    }
+    ";
+
+    string bhl3 = @"
+    func float hey(float k)
+    {
+      return k
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files));
+
+    var vm = new VM(globs: null, importer: importer);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(4, Execute(vm, "test", Val.NewNum(vm, 2)).stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportWithCycles()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    import ""bhl3""  
+
+    func float test(float k) 
+    {
+      return bar(k)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+
+    func float bar(float k)
+    {
+      return hey(k)
+    }
+    ";
+
+    string bhl3 = @"
+    import ""bhl2""
+
+    func float hey(float k)
+    {
+      return k
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files));
+
+    var vm = new VM(globs: null, importer: importer);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(23, Execute(vm, "test", Val.NewNum(vm, 23)).stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    func float bar() 
+    {
+      return 1
+    }
+
+    func float test() 
+    {
+      return bar()
+    }
+    ";
+
+    string bhl2 = @"
+    func float bar()
+    {
+      return 2
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    AssertError<UserError>(
+      delegate() { 
+        CompileFiles(files);
+      },
+      @"already defined symbol 'bar'"
+    );
   }
 
   [IsTested()]
@@ -17974,7 +18215,7 @@ public class BHL_TestVM : BHL_TestBase
     var importer = new ModuleImporter(CompileFiles(files, globs));
 
     var vm = new VM(globs: globs, importer: importer);
-    vm.ImportModule("bhl1");
+    vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
     AssertEqual(fb.stack.PopRelease().num, 3);
@@ -18052,7 +18293,7 @@ public class BHL_TestVM : BHL_TestBase
     var importer = new ModuleImporter(CompileFiles(files, globs));
 
     var vm = new VM(globs: globs, importer: importer);
-    vm.ImportModule("bhl1");
+    vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
     AssertEqual(fb.stack.PopRelease().num, 3);
@@ -18104,7 +18345,7 @@ public class BHL_TestVM : BHL_TestBase
     var importer = new ModuleImporter(CompileFiles(files, globs));
 
     var vm = new VM(globs: globs, importer: importer);
-    vm.ImportModule("bhl1");
+    vm.LoadModule("bhl1");
     var fb = vm.Start("test");
     
     var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
@@ -18186,7 +18427,7 @@ public class BHL_TestVM : BHL_TestBase
     var importer = new ModuleImporter(CompileFiles(files, globs));
 
     var vm = new VM(globs: globs, importer: importer);
-    vm.ImportModule("bhl1");
+    vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     try
     {
@@ -18274,7 +18515,7 @@ public class BHL_TestVM : BHL_TestBase
     var importer = new ModuleImporter(CompileFiles(files, globs));
 
     var vm = new VM(globs: globs, importer: importer);
-    vm.ImportModule("bhl1");
+    vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
     AssertEqual(fb.stack.PopRelease().num, 3);
@@ -18353,7 +18594,7 @@ public class BHL_TestVM : BHL_TestBase
     var importer = new ModuleImporter(CompileFiles(files, globs));
 
     var vm = new VM(globs: globs, importer: importer);
-    vm.ImportModule("bhl1");
+    vm.LoadModule("bhl1");
     vm.Start("test", Val.NewNum(vm, 3));
     AssertTrue(vm.Tick());
 

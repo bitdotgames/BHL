@@ -705,7 +705,7 @@ public class VM
     init_frame = new Frame(this);
   }
 
-  public void ImportModule(string module_name)
+  public void LoadModule(string module_name)
   {
     var imported_module = importer.Import(module_name);
     RegisterModule(imported_module);
@@ -776,7 +776,7 @@ public class VM
           int module_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           string module_name = constants[module_idx].str;
 
-          ImportModule(module_name);
+          LoadModule(module_name);
         }
         break;
         case Opcodes.DeclVar:
