@@ -420,40 +420,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportEnumConflict()
-  {
-    string bhl1 = @"
-    import ""bhl2""  
-
-    enum Bar { 
-      FOO = 1
-    }
-
-    func test() { }
-    ";
-
-    string bhl2 = @"
-    enum Bar { 
-      BAR = 2
-    }
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    TestCleanDir();
-    var files = new List<string>();
-    TestNewFile("bhl1.bhl", bhl1, files);
-    TestNewFile("bhl2.bhl", bhl2, files);
-    
-    AssertError<UserError>(
-      delegate() { 
-        CompileFiles(files, globs);
-      },
-      @"already defined symbol 'Bar'"
-    );
-  }
-
-  [IsTested()]
   public void TestImportGlobalVar()
   {
     string bhl1 = @"

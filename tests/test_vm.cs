@@ -17648,6 +17648,38 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportEnumConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    enum Bar { 
+      FOO = 1
+    }
+
+    func test() { }
+    ";
+
+    string bhl2 = @"
+    enum Bar { 
+      BAR = 2
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    AssertError<UserError>(
+      delegate() { 
+        CompileFiles(files);
+      },
+      @"already defined symbol 'Bar'"
+    );
+  }
+
+  [IsTested()]
   public void TestImportMixed()
   {
     string bhl1 = @"
