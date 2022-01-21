@@ -17680,6 +17680,48 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportGlobalVar()
+  {
+    string bhl1 = @"
+    import ""bhl3""  
+    func float test() 
+    {
+      return foo.x
+    }
+    ";
+
+    string bhl2 = @"
+
+    class Foo
+    {
+      float x
+    }
+
+    ";
+
+    string bhl3 = @"
+    import ""bhl2""  
+
+    Foo foo = {x : 10}
+
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files));
+
+    var vm = new VM(globs: null, importer: importer);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestImportMixed()
   {
     string bhl1 = @"

@@ -420,51 +420,6 @@ public class BHL_TestInterpreter : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportGlobalVar()
-  {
-    string bhl1 = @"
-    import ""bhl3""  
-    func float test() 
-    {
-      return foo.x
-    }
-    ";
-
-    string bhl2 = @"
-
-    class Foo
-    {
-      float x
-    }
-
-    ";
-
-    string bhl3 = @"
-    import ""bhl2""  
-
-    Foo foo = {x : 10}
-
-    ";
-
-    var globs = SymbolTable.CreateBuiltins();
-
-    TestCleanDir();
-    var files = new List<string>();
-    TestNewFile("bhl1.bhl", bhl1, files);
-    TestNewFile("bhl2.bhl", bhl2, files);
-    TestNewFile("bhl3.bhl", bhl3, files);
-    
-    var intp = CompileFiles(files, globs);
-
-    var node = intp.GetFuncCallNode("bhl1", "test");
-    //NodeDump(node);
-    var res = ExecNode(node).val;
-
-    AssertEqual(res.num, 10);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestImportGlobalVarConflict()
   {
     string bhl1 = @"

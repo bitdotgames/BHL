@@ -23,7 +23,7 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  LocalScope symbols;
+  ModuleScope symbols;
 
   List<Const> constants = new List<Const>();
   public List<Const> Constants {
@@ -175,10 +175,10 @@ public class ModuleCompiler : AST_Visitor
   public ModuleCompiler(GlobalScope globs = null, AST ast = null, ModulePath module_path = null)
   {
     this.globs = globs;
-    this.symbols = new LocalScope(globs);
-    this.ast = ast;
     if(module_path == null)
       module_path = new ModulePath("", "");
+    this.symbols = new ModuleScope(module_path.id, globs);
+    this.ast = ast;
     this.module_path = module_path;
 
     UseInit();
@@ -1061,8 +1061,7 @@ public class ModuleCompiler : AST_Visitor
         {
           var import_name = imports[ast.nname2];
           int module_idx = AddConstant(import_name);
-          int name_idx = AddConstant(ast.name);
-          Emit(Opcodes.GetGVarImported, new int[] {module_idx, name_idx}, (int)ast.line_num);
+          Emit(Opcodes.GetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, (int)ast.line_num);
         }
         else 
         {

@@ -211,7 +211,7 @@ public static class Extensions
     stack.Push(val);
   }
 
-  public static void SetLocal(this FixedStack<Val> s, VM vm, int idx, Val val)
+  public static void Assign(this FixedStack<Val> s, VM vm, int idx, Val val)
   {
     var curr = s[idx];
     if(curr != null)

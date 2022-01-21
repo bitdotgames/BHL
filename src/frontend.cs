@@ -73,7 +73,7 @@ public class Frontend : bhlBaseVisitor<object>
   //NOTE: current module's scope, it contains only symbols which belong to the current module
   //      and symbols which were imported from other modules, it fallbacks to the global scope
   //      if symbol is not found
-  LocalScope locals;
+  ModuleScope locals;
   Scope curr_scope;
   int scope_level;
 
@@ -186,7 +186,7 @@ public class Frontend : bhlBaseVisitor<object>
     this.decls_only = decls_only;
     if(globs == null)
       throw new Exception("Global scope is not set");
-    this.locals = new LocalScope(globs);
+    this.locals = new ModuleScope(module.id, globs);
     this.mreg = mreg;
 
     curr_scope = this.locals;
@@ -509,6 +509,7 @@ public class Frontend : bhlBaseVisitor<object>
         {
           bool is_write = write && arracc == null;
           bool is_global = var_symb.scope.GetParentScope() is GlobalScope;
+
           ast = AST_Util.New_Call(class_scope != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 

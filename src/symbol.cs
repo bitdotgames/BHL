@@ -696,14 +696,14 @@ public class VariableSymbol : Symbol
     : base(n, name, type) 
   {}
 
-  public void CalcVariableScopeIdx(SymbolsDictionary members)
+  public void CalcVariableScopeIdx(Scope scope)
   {
     //let's ignore already assigned ones
     if(scope_idx != -1)
       return;
     int c = 0;
-    for(int i=0;i<members.Count;++i)
-      if(members[i] is VariableSymbol)
+    for(int i=0;i<scope.GetMembers().Count;++i)
+      if(scope.GetMembers()[i] is VariableSymbol)
         ++c;
     scope_idx = c; 
   }
@@ -1004,7 +1004,7 @@ public class FuncSymbol : ScopedSymbol
   public override void Define(Symbol sym)
   {
     if(sym is VariableSymbol vs)
-      vs.CalcVariableScopeIdx(GetMembers());
+      vs.CalcVariableScopeIdx(this);
     base.Define(sym);
   }
 }
@@ -1140,7 +1140,7 @@ public class FuncSymbolScript : FuncSymbol
   //frontend version
 #if BHL_FRONT
   public FuncSymbolScript(
-    LocalScope locals,
+    ModuleScope mscope,
     Scope parent, 
     AST_FuncDecl decl, 
     WrappedNode n, 
@@ -1161,7 +1161,7 @@ public class FuncSymbolScript : FuncSymbol
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
         {
           var vd = fparams.funcParamDeclare()[i];
-          var type = locals.Type(vd.type());
+          var type = mscope.Type(vd.type());
           type.is_ref = vd.isRef() != null;
           ft.arg_types.Add(type);
         }
