@@ -13,10 +13,17 @@ public class BHLSPC
 
     var stdin = Console.OpenStandardInput();
     var stdout = Console.OpenStandardOutput();
-      
-    BHLSPServer server = new BHLSPServer(stdout, stdin);
-      
+    
+    var connection = new BHLSPConnectionStdIO(stdout, stdin);
+    
+    var rpc = new BHLSPJsonRpc();
+    rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
+    
+    BHLSPServer server = new BHLSPServer(connection, rpc);
+
+#if DEBUG
     Logger.CleanUpLogFile();
+#endif
       
     try
     {

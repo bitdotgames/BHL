@@ -6,11 +6,12 @@ using bhlsp;
 
 public class TestLSP : BHL_TestBase
 {
+  private const string version = "0.0.1";
+  
   [IsTested()]
-  public void TestResponseErrors()
+  public void TestRpcResponseErrors()
   {
     string json = "";
-    
     var rpc = new BHLSPJsonRpc();
     
     //ParseError

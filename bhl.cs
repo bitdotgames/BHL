@@ -154,7 +154,7 @@ public static class Tasks
   [Task()]
   public static void build_lsp(Taskman tm, string[] args)
   {
-    BuildBHLSPC(tm);
+    BuildBHLSPC(tm, args);
   }
   
   /////////////////////////////////////////////////
@@ -184,8 +184,16 @@ public static class Tasks
     return left;
   }
   
-  public static void BuildBHLSPC(Taskman tm)
+  public static void BuildBHLSPC(Taskman tm, string[] args)
   {
+    var extra_args = "";
+    for(int i = 0; i < args.Length; i++)
+    {
+      extra_args += args[i];
+      if(i != args.Length - 1)
+        extra_args += " ";
+    }
+    
     MCSBuild(tm, 
       new string[] {
         $"{BHL_ROOT}/bhlspc.cs",
@@ -193,7 +201,7 @@ public static class Tasks
         $"{BHL_ROOT}/Newtonsoft.Json.dll", 
       },
       $"{BHL_ROOT}/bhlspc.exe",
-      "-define:BHLSP_SERVER -debug"
+      $"{extra_args} -define:DEBUG -define:DEBUG_JSON_LOG -debug"
     );
   }
   
