@@ -17754,6 +17754,34 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportGlobalVarConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    int foo = 10
+
+    func test() { }
+    ";
+
+    string bhl2 = @"
+    float foo = 100
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    AssertError<UserError>(
+      delegate() { 
+        CompileFiles(files);
+      },
+      @"already defined symbol 'foo'"
+    );
+  }
+
+  [IsTested()]
   public void TestImportMixed()
   {
     string bhl1 = @"
