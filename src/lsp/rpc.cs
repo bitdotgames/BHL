@@ -43,13 +43,27 @@ namespace bhlsp
           error = new ResponseError
           {
             code = (int)ErrorCodes.ParseError,
-            message = ""
+            message = "Parse error"
           }
         };
       }
       
-      if(req != null && req.IsMessage())
-        resp = HandleMessage(req);
+      if(req != null)
+      {
+        if(req.IsMessage())
+          resp = HandleMessage(req);
+      }
+      else if(resp == null)
+      {
+        resp = new ResponseMessage
+        {
+          error = new ResponseError
+          {
+            code = (int)ErrorCodes.InvalidRequest,
+            message = ""
+          }
+        };
+      }
       
       if (resp != null)
       {
@@ -173,7 +187,7 @@ namespace bhlsp
       return RpcResult.Error(new ResponseError
       {
         code = (int)ErrorCodes.MethodNotFound,
-        message = ""
+        message = "Method not found"
       });
     }
     

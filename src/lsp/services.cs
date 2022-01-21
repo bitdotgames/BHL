@@ -130,8 +130,12 @@ namespace bhlsp
   
   public class BHLSPGeneralJsonRpcService : BHLSPGeneralJsonRpcServiceTemplate
   {
+    private int? processId;
+    
     public override RpcResult Initialize(InitializeParams args)
     {
+      processId = args.processId;
+      
       ServerCapabilities capabilities = new ServerCapabilities
       {
         textDocumentSync = new TextDocumentSyncOptions
@@ -156,7 +160,7 @@ namespace bhlsp
         serverInfo = new InitializeResult.InitializeResultsServerInfo
         {
           name = "bhlsp",
-          version = "0.0.1"
+          version = "0.1"
         }
       });
     }
@@ -168,12 +172,14 @@ namespace bhlsp
 
     public override RpcResult Shutdown()
     {
-      return RpcResult.Success(null);
+      return RpcResult.Success("null");
     }
 
     public override RpcResult Exit()
     {
-      Environment.Exit(0);
+      if(processId != null)
+        Environment.Exit(0);
+      
       return RpcResult.Success(null);
     }
   }
