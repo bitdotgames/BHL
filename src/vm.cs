@@ -1238,6 +1238,27 @@ public class VM
         curr_frame.stack.PushRetain(module.globals[var_idx]);
       }
       break;
+      case Opcodes.SetGVar:
+      {
+        int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+
+        var new_val = curr_frame.stack.Pop();
+        curr_frame.module.globals.Assign(this, var_idx, new_val);
+        new_val.Release();
+      }
+      break;
+      case Opcodes.SetGVarImported:
+      {
+        int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+
+        string module_name = curr_frame.constants[module_idx].str;
+        var module = curr_frame.vm.modules[module_name];
+        var new_val = curr_frame.stack.Pop();
+        module.globals.Assign(this, var_idx, new_val);
+        new_val.Release();
+      }
+      break;
       case Opcodes.Return:
       {
         curr_frame.ExitScope(curr_frame);

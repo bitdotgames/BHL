@@ -17680,6 +17680,38 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportReadWriteGlobalVar()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float test() 
+    {
+      foo = 10
+      return foo
+    }
+    ";
+
+    string bhl2 = @"
+
+    float foo = 1
+
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files));
+
+    var vm = new VM(globs: null, importer: importer);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestImportGlobalVar()
   {
     string bhl1 = @"
@@ -18720,6 +18752,42 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(c);
     AssertEqual(0, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestGlobalVariableWriteRead()
+  {
+    string bhl = @"
+
+    float foo = 10
+      
+    func float test() 
+    {
+      foo = 20
+      return foo
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseInit()
+      .EmitThen(Opcodes.Constant, new int[] { 0 })
+      .EmitThen(Opcodes.SetVar, new int[] { 0 })
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+      .EmitThen(Opcodes.Constant, new int[] { 1 })
+      .EmitThen(Opcodes.SetGVar, new int[] { 0 })
+      .EmitThen(Opcodes.GetGVar, new int[] { 0 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    AssertEqual(20, Execute(vm, "test").stack.PopRelease().num);
     CommonChecks(vm);
   }
 

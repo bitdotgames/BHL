@@ -1069,6 +1069,20 @@ public class ModuleCompiler : AST_Visitor
         }
       }
       break;
+      case EnumCall.GVARW:
+      {
+        if(ast.nname2 != module_path.id)
+        {
+          var import_name = imports[ast.nname2];
+          int module_idx = AddConstant(import_name);
+          Emit(Opcodes.SetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, (int)ast.line_num);
+        }
+        else 
+        {
+          Emit(Opcodes.SetGVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
+        }
+      }
+      break;
       case EnumCall.FUNC:
       {
         VisitChildren(ast);
