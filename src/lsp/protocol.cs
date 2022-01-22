@@ -448,6 +448,81 @@ namespace bhlsp
     public SumType<string, int> workDoneToken { get; set; }
   }
   
+  public class SignatureHelpClientCapabilities
+  {
+	  public class SignatureHelpClientCapabilitiesParameterInformation
+	  {
+		  /**
+			   * The client supports processing label offsets instead of a
+			   * simple label string.
+			   *
+			   * @since 3.14.0
+			   */
+		  public bool? labelOffsetSupport { get; set; }
+	  }
+	  
+	  public class SignatureHelpClientCapabilitiesSignatureInformation
+	  {
+		  /**
+		   * Client supports the follow content formats for the documentation
+		   * property. The order describes the preferred format of the client.
+		   *
+		   * MarkupKind = 'plaintext' | 'markdown';
+		   */
+		  public string[] documentationFormat { get; set; }
+
+		  /**
+		   * Client capabilities specific to parameter information.
+		   */
+		  public SignatureHelpClientCapabilitiesParameterInformation parameterInformation { get; set; }
+
+		  /**
+		   * The client supports the `activeParameter` property on
+		   * `SignatureInformation` literal.
+		   *
+		   * @since 3.16.0
+		   */
+		  public bool? activeParameterSupport { get; set; }
+	  }
+	  
+	  /**
+		 * Whether signature help supports dynamic registration.
+		 */
+	  public bool? dynamicRegistration { get; set; }
+
+	  /**
+		 * The client supports the following `SignatureInformation`
+		 * specific properties.
+		 */
+	  public SignatureHelpClientCapabilitiesSignatureInformation signatureInformation { get; set; }
+
+	  /**
+	   * The client supports to send additional context information for a
+	   * `textDocument/signatureHelp` request. A client that opts into
+	   * contextSupport will also support the `retriggerCharacters` on
+	   * `SignatureHelpOptions`.
+	   *
+	   * @since 3.15.0
+	   */
+	  public bool? contextSupport { get; set; }
+	}
+  
+  public class TextDocumentClientCapabilities
+  {
+	  /**
+		 * Capabilities specific to the `textDocument/signatureHelp` request.
+		 */
+	  public SignatureHelpClientCapabilities signatureHelp;
+  }
+  
+  public class ClientCapabilities
+  {
+	  /**
+		 * Text document specific client capabilities.
+		 */
+	  public TextDocumentClientCapabilities textDocument;
+  }
+  
   public class InitializeParams : WorkDoneProgressParams
   {
     public class InitializeParamsClientInfo
@@ -455,14 +530,74 @@ namespace bhlsp
       public string name { get; set; }
       public string version { get; set; }
     }
-
+    
+    /**
+		 * The process Id of the parent process that started the server. Is null if
+		 * the process has not been started by another process. If the parent
+		 * process is not alive then the server should exit (see exit notification)
+		 * its process.
+		 */
     public int? processId { get; set; }
+    
+    /**
+		 * Information about the client
+		 *
+		 * @since 3.15.0
+		 */
     public InitializeParamsClientInfo clientInfo { get; set; }
-    public string locale { get; set; } //(See https://en.wikipedia.org/wiki/IETF_language_tag)
+    
+    /**
+		 * The locale the client is currently showing the user interface
+		 * in. This must not necessarily be the locale of the operating
+		 * system.
+		 *
+		 * Uses IETF language tags as the value's syntax
+		 * (See https://en.wikipedia.org/wiki/IETF_language_tag)
+		 *
+		 * @since 3.16.0
+		 */
+    public string locale { get; set; }
+    
+    /**
+		 * The rootPath of the workspace. Is null
+		 * if no folder is open.
+		 *
+		 * @deprecated in favour of `rootUri`.
+		 */
     public string rootPath { get; set; }
+    
+    /**
+		 * The rootUri of the workspace. Is null if no
+		 * folder is open. If both `rootPath` and `rootUri` are set
+		 * `rootUri` wins.
+		 *
+		 * @deprecated in favour of `workspaceFolders`
+		 */
     public Uri rootUri { get; set; }
+    
+    /**
+		 * User provided initialization options.
+		 */
     public object initializationOptions { get; set; }
+    
+    /**
+		 * The capabilities provided by the client (editor or tool)
+		 */
+    public ClientCapabilities capabilities { get; set; }
+    
+    /**
+		 * The initial trace setting. If omitted trace is disabled ('off').
+		 */
     public string trace { get; set; }
+    
+    /**
+		 * The workspace folders configured in the client when the server starts.
+		 * This property is only available if the client supports workspace folders.
+		 * It can be `null` if the client supports workspace folders but none are
+		 * configured.
+		 *
+		 * @since 3.6.0
+		 */
     public WorkspaceFolder[] workspaceFolders { get; set; }
   }
   
@@ -1722,5 +1857,147 @@ namespace bhlsp
      * Arguments that the command should be invoked with.
      */
     public object[] arguments { get; set; }
+  }
+
+  public enum SignatureHelpTriggerKind
+  {
+    Invoked = 1,
+    TriggerCharacter = 2,
+    ContentChange = 3
+  }
+  
+  public class ParameterInformation
+  {
+	  /**
+		 * The label of this parameter information.
+		 *
+		 * Either a string or an inclusive start and exclusive end offsets within
+		 * its containing signature label. (see SignatureInformation.label). The
+		 * offsets are based on a UTF-16 string representation as `Position` and
+		 * `Range` does.
+		 *
+		 * *Note*: a label of type string should be a substring of its containing
+		 * signature label. Its intended use case is to highlight the parameter
+		 * label part in the `SignatureInformation.label`.
+		 */
+	  public SumType<string, List<uint>> label { get; set; }
+
+	  /**
+		 * The human-readable doc-comment of this parameter. Will be shown
+		 * in the UI but can be omitted.
+		 */
+	  public SumType<string, MarkupContent> documentation { get; set; }
+  }
+  
+  public class SignatureInformation
+  {
+	  /**
+		 * The label of this signature. Will be shown in
+		 * the UI.
+		 */
+	  public string label { get; set; }
+
+	  /**
+		 * The human-readable doc-comment of this signature. Will be shown
+		 * in the UI but can be omitted.
+		 */
+	  public SumType<string, MarkupContent> documentation { get; set; }
+
+	  /**
+		 * The parameters of this signature.
+		 */
+	  public ParameterInformation[] parameters { get; set; }
+
+	  /**
+		 * The index of the active parameter.
+		 *
+		 * If provided, this is used in place of `SignatureHelp.activeParameter`.
+		 *
+		 * @since 3.16.0
+		 */
+	  public uint? activeParameter { get; set; }
+  }
+  
+  public class SignatureHelp
+  {
+    /**
+		 * One or more signatures. If no signatures are available the signature help
+		 * request should return `null`.
+		 */
+    public SignatureInformation[] signatures { get; set; }
+
+    /**
+		 * The active signature. If omitted or the value lies outside the
+		 * range of `signatures` the value defaults to zero or is ignore if
+		 * the `SignatureHelp` as no signatures.
+		 *
+		 * Whenever possible implementors should make an active decision about
+		 * the active signature and shouldn't rely on a default value.
+		 *
+		 * In future version of the protocol this property might become
+		 * mandatory to better express this.
+		 */
+    public uint? activeSignature { get; set; }
+
+    /**
+		 * The active parameter of the active signature. If omitted or the value
+		 * lies outside the range of `signatures[activeSignature].parameters`
+		 * defaults to 0 if the active signature has parameters. If
+		 * the active signature has no parameters it is ignored.
+		 * In future version of the protocol this property might become
+		 * mandatory to better express the active parameter if the
+		 * active signature does have any.
+		 */
+    public uint? activeParameter { get; set; }
+  }
+  
+  public class SignatureHelpContext
+  {
+    /**
+	   * Action that caused signature help to be triggered.
+	   */
+    public SignatureHelpTriggerKind triggerKind { get; set; }
+
+    /**
+	   * Character that caused signature help to be triggered.
+	   *
+	   * This is undefined when triggerKind !==
+	   * SignatureHelpTriggerKind.TriggerCharacter
+	   */
+    public string triggerCharacter { get; set; }
+
+    /**
+	   * `true` if signature help was already showing when it was triggered.
+	   *
+	   * Retriggers occur when the signature help is already active and can be
+	   * caused by actions such as typing a trigger character, a cursor move, or
+	   * document content changes.
+	   */
+    public bool isRetrigger { get; set; }
+
+    /**
+	   * The currently active `SignatureHelp`.
+	   *
+	   * The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field
+	   * updated based on the user navigating through available signatures.
+	   */
+    public SignatureHelp activeSignatureHelp { get; set; }
+  }
+  
+  public class SignatureHelpParams : TextDocumentPositionParams
+  {
+    /**
+	   * The signature help context. This is only available if the client
+	   * specifies to send this using the client capability
+	   * `textDocument.signatureHelp.contextSupport === true`
+	   *
+	   * @since 3.15.0
+	   */
+    public SignatureHelpContext context { get; set; }
+    
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    public SumType<string, int> workDoneToken { get; set; }
   }
 }

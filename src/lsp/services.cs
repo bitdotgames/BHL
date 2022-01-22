@@ -22,26 +22,35 @@ namespace bhlsp
     public abstract RpcResult Exit();
   }
 
-  public abstract class BHLSPTextDocumentJsonRpcServiceTemplate : BHLSPJsonRpcService
+  public abstract class BHLSPTextDocumentSynchronizationJsonRpcServiceTemplate : BHLSPJsonRpcService
   {
     [JsonRpcMethod("textDocument/didOpen")]
     public abstract RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args);
-
+    
     [JsonRpcMethod("textDocument/didChange")]
     public abstract RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args);
-
+    
     [JsonRpcMethod("textDocument/willSave")]
     public abstract RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args);
-
+    
     [JsonRpcMethod("textDocument/willSaveWaitUntil")]
     public abstract RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args);
-
+    
     [JsonRpcMethod("textDocument/didSave")]
     public abstract RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args);
-
+    
     [JsonRpcMethod("textDocument/didClose")]
     public abstract RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args);
+  }
 
+  public abstract class BHLSPTextDocumentSignatureHelpJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("textDocument/signatureHelp")]
+    public abstract RpcResult SignatureHelp(SignatureHelpParams args);
+  }
+  
+  public abstract class BHLSPTextDocumentJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
     [JsonRpcMethod("textDocument/completion")]
     public abstract RpcResult Completion(CompletionParams args);
 
@@ -50,10 +59,7 @@ namespace bhlsp
 
     [JsonRpcMethod("textDocument/hover")]
     public abstract RpcResult Hover(TextDocumentPositionParams args);
-
-    [JsonRpcMethod("textDocument/signatureHelp")]
-    public abstract RpcResult SignatureHelp(TextDocumentPositionParams args);
-
+    
     [JsonRpcMethod("textDocument/references")]
     public abstract RpcResult FindReferences(ReferenceParams args);
 
@@ -136,23 +142,18 @@ namespace bhlsp
     {
       processId = args.processId;
       
-      ServerCapabilities capabilities = new ServerCapabilities
+      ServerCapabilities capabilities = new ServerCapabilities();
+
+      if(args.capabilities.textDocument != null)
       {
-        textDocumentSync = new TextDocumentSyncOptions
+        if(args.capabilities.textDocument.signatureHelp != null)
         {
-          openClose = true,
-          change = TextDocumentSyncKind.Incremental,
-          save = new SaveOptions
+          capabilities.signatureHelpProvider = new SignatureHelpOptions
           {
-            includeText = true
-          }
-        },
-        
-        signatureHelpProvider = new SignatureHelpOptions
-        {
-          triggerCharacters = new []{"(", ","}
+            triggerCharacters = new[] {"(", ","}
+          };
         }
-      };
+      }
       
       return RpcResult.Success(new InitializeResult
       {
@@ -181,6 +182,18 @@ namespace bhlsp
         Environment.Exit(0);
       
       return RpcResult.Success(null);
+    }
+  }
+
+  public class BHLSPTextDocumentSignatureHelpJsonRpcService : BHLSPTextDocumentSignatureHelpJsonRpcServiceTemplate
+  {
+    public override RpcResult SignatureHelp(SignatureHelpParams args)
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int)ErrorCodes.RequestFailed,
+        message = "Not implemented"
+      });
     }
   }
 }

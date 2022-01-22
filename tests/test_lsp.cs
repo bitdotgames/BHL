@@ -69,9 +69,41 @@ public class TestLSP : BHL_TestBase
     var rpc = new BHLSPJsonRpc();
     rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
     
-    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {}}";
-    rsp = rpc.HandleMessage(json);
-    Assert(rsp.IndexOf("id") != -1 && rsp.IndexOf("result") != -1 && rsp.IndexOf("capabilities") != -1);
+    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
+    
+    rsp = "{\"id\":1,\"result\":{" +
+            "\"capabilities\":{" +
+              "\"textDocumentSync\":null," +
+              "\"hoverProvider\":null," +
+              "\"declarationProvider\":null," +
+              "\"definitionProvider\":null," +
+              "\"typeDefinitionProvider\":null," +
+              "\"implementationProvider\":null," +
+              "\"referencesProvider\":null," +
+              "\"documentHighlightProvider\":null," +
+              "\"documentSymbolProvider\":null," +
+              "\"codeActionProvider\":null," +
+              "\"colorProvider\":null," +
+              "\"documentFormattingProvider\":null," +
+              "\"documentRangeFormattingProvider\":null," +
+              "\"renameProvider\":null," +
+              "\"foldingRangeProvider\":null," +
+              "\"selectionRangeProvider\":null," +
+              "\"linkedEditingRangeProvider\":null," +
+              "\"callHierarchyProvider\":null," +
+              "\"semanticTokensProvider\":null," +
+              "\"monikerProvider\":null," +
+              "\"workspaceSymbolProvider\":null}," +
+            "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"0.1\"}}," +
+            "\"jsonrpc\":\"2.0\"}";
+
+    AssertEqual(rpc.HandleMessage(json), rsp);
+    
+    json = "{\"params\":{},\"method\":\"initialized\",\"jsonrpc\":\"2.0\"}";
+    AssertEqual(
+      rpc.HandleMessage(json),
+      string.Empty
+    );
     
     json = "{\"id\":1,\"params\":null,\"method\":\"shutdown\",\"jsonrpc\":\"2.0\"}";
     AssertEqual(

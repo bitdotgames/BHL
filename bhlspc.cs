@@ -18,6 +18,7 @@ public class BHLSPC
     
     var rpc = new BHLSPJsonRpc();
     rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
+    rpc.AttachRpcService(new BHLSPTextDocumentSignatureHelpJsonRpcService());
     
     BHLSPServer server = new BHLSPServer(connection, rpc);
 
