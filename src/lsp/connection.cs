@@ -77,7 +77,7 @@ namespace bhlsp
         int length = await input.ReadAsync(buffer, 0, buffer.Length);
         return length;
       }
-#if DEBUG
+#if BHLSP_DEBUG
       catch(Exception e)
       {
         BHLSPC.Logger.WriteLine(e);

@@ -22,7 +22,7 @@ public class BHLSPC
     
     BHLSPServer server = new BHLSPServer(connection, rpc);
 
-#if DEBUG
+#if BHLSP_DEBUG
     Logger.CleanUpLogFile();
 #endif
       

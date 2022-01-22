@@ -30,7 +30,7 @@ namespace bhlsp
       {
         req = JsonConvert.DeserializeObject<RequestMessage>(json);
       }
-#if DEBUG
+#if BHLSP_DEBUG
       catch(Exception e)
       {
         BHLSPC.Logger.WriteLine(e);
@@ -79,7 +79,7 @@ namespace bhlsp
     
     ResponseMessage HandleMessage(RequestMessage request)
     {
-#if DEBUG
+#if BHLSP_DEBUG
       BHLSPC.Logger.WriteLine($"--> {request.method}");
 #endif
 
@@ -114,7 +114,7 @@ namespace bhlsp
           };
         }
       }
-#if DEBUG
+#if BHLSP_DEBUG
       catch(Exception e)
       {
         BHLSPC.Logger.WriteLine(e);
@@ -132,7 +132,7 @@ namespace bhlsp
         };
       }
 
-#if DEBUG
+#if BHLSP_DEBUG
       if(response != null)
         BHLSPC.Logger.WriteLine($"<-- {request.method}");
 #endif
@@ -163,7 +163,7 @@ namespace bhlsp
               {
                 args = new[] { @params.ToObject(pms[0].ParameterType) };
               }
-#if DEBUG
+#if BHLSP_DEBUG
               catch(Exception e)
               {
                 BHLSPC.Logger.WriteLine(e);
@@ -208,9 +208,9 @@ namespace bhlsp
     public object result;
     public ResponseError error;
     
-    public static RpcResult Success(object result)
+    public static RpcResult Success(object result = null)
     {
-      return new RpcResult(result, null);
+      return new RpcResult(result ?? "null", null);
     }
 
     public static RpcResult Error(ResponseError error)

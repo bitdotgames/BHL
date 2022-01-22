@@ -195,6 +195,9 @@ namespace bhlsp
   
   public class SaveOptions
   {
+	  /**
+		 * The client is supposed to include the content on save.
+		 */
     public bool? includeText { get; set; }
   }
   
@@ -271,15 +274,60 @@ namespace bhlsp
     public bool? workDoneProgress { get; set; }
     public string id { get; set; }
   }
-  
-  public enum TextDocumentSyncKind { None=0, Full=1, Incremental=2 }
+
+  public enum TextDocumentSyncKind
+  {
+	  /**
+		 * Documents should not be synced at all.
+		 */
+	  None = 0,
+	  
+	  /**
+		 * Documents are synced by always sending the full content
+		 * of the document.
+		 */
+	  Full = 1,
+	  
+	  /**
+		 * Documents are synced by sending the full content on open.
+		 * After that only incremental updates to the document are
+		 * send.
+		 */
+	  Incremental = 2
+  }
   
   public class TextDocumentSyncOptions
   {
+	  /**
+		 * Open and close notifications are sent to the server. If omitted open
+		 * close notification should not be sent.
+		 */
     public bool? openClose { get; set; }
-    public TextDocumentSyncKind? change { get; set; }
-    public bool? willSave { get; set; }
+    
+	  /**
+		 * Change notifications are sent to the server. See
+		 * TextDocumentSyncKind.None, TextDocumentSyncKind.Full and
+		 * TextDocumentSyncKind.Incremental. If omitted it defaults to
+		 * TextDocumentSyncKind.None.
+		 */
+	  public TextDocumentSyncKind? change { get; set; }
+    
+	  /**
+		 * If present will save notifications are sent to the server. If omitted
+		 * the notification should not be sent.
+		 */
+	  public bool? willSave { get; set; }
+	  
+	  /**
+		 * If present will save wait until requests are sent to the server. If
+		 * omitted the request should not be sent.
+		 */
     public bool? willSaveWaitUntil { get; set; }
+    
+	  /**
+		 * If present save notifications are sent to the server. If omitted the
+		 * notification should not be sent.
+		 */
     public SumType<bool, SaveOptions> save { get; set; }
   }
   
@@ -507,12 +555,39 @@ namespace bhlsp
 	  public bool? contextSupport { get; set; }
 	}
   
+  public class TextDocumentSyncClientCapabilities
+  {
+	  /**
+		 * Whether text document synchronization supports dynamic registration.
+		 */
+	  public bool? dynamicRegistration { get; set; }
+
+	  /**
+		 * The client supports sending will save notifications.
+		 */
+	  public bool? willSave { get; set; }
+
+	  /**
+		 * The client supports sending a will save request and
+		 * waits for a response providing text edits which will
+		 * be applied to the document before it is saved.
+		 */
+	  public bool? willSaveWaitUntil { get; set; }
+
+	  /**
+		 * The client supports did save notifications.
+		 */
+	  public bool? didSave { get; set; }
+  }
+  
   public class TextDocumentClientCapabilities
   {
 	  /**
 		 * Capabilities specific to the `textDocument/signatureHelp` request.
 		 */
-	  public SignatureHelpClientCapabilities signatureHelp;
+	  public SignatureHelpClientCapabilities signatureHelp { get; set; }
+	  
+	  public TextDocumentSyncClientCapabilities synchronization { get; set; }
   }
   
   public class ClientCapabilities
@@ -894,7 +969,7 @@ namespace bhlsp
     /**
      * The text document's URI.
      */
-    public string uri { get; set; }
+    public Uri uri { get; set; }
   }
   
   public class VersionedTextDocumentIdentifier : TextDocumentIdentifier

@@ -30,7 +30,7 @@ namespace bhlsp
             break;
         }
 
-#if DEBUG
+#if BHLSP_DEBUG
         catch(Exception e)
         {
           BHLSPC.Logger.WriteLine(e);
@@ -48,14 +48,14 @@ namespace bhlsp
     {
       string json = await connection.Read();
       
-#if DEBUG_JSON_LOG
+#if BHLSP_DEBUG_JSON_LOG
       BHLSPC.Logger.WriteLine($"--> {json}");
 #endif
       
       string response = rpc.HandleMessage(json);
       if(!string.IsNullOrEmpty(response))
       {
-#if DEBUG_JSON_LOG
+#if BHLSP_DEBUG_JSON_LOG
         BHLSPC.Logger.WriteLine($"<-- {response}");
 #endif
         connection.Write(response);

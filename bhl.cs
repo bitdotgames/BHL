@@ -151,10 +151,28 @@ public static class Tasks
     MonoRun(tm, $"{BHL_ROOT}/test.exe", args, "--debug ");
   }
   
-  [Task()]
+  [Task(deps: "build_front_dll")]
   public static void build_lsp(Taskman tm, string[] args)
   {
-    BuildBHLSPC(tm, args);
+    var extra_args = "";
+    for(int i = 0; i < args.Length; i++)
+    {
+      extra_args += args[i];
+      if(i != args.Length - 1)
+        extra_args += " ";
+    }
+    
+    MCSBuild(tm, 
+      new string[] {
+        $"{BHL_ROOT}/bhlspc.cs",
+        $"{BHL_ROOT}/src/lsp/*.cs",
+        $"{BHL_ROOT}/bhl_front.dll",
+        $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll",
+        $"{BHL_ROOT}/Newtonsoft.Json.dll",
+      },
+      $"{BHL_ROOT}/bhlspc.exe",
+      $"{extra_args} -define:BHLSP_DEBUG -define:BHLSP_DEBUG_JSON_LOG -debug"
+    );
   }
   
   /////////////////////////////////////////////////
@@ -182,27 +200,6 @@ public static class Tasks
 
     var left = p.Parse(args);
     return left;
-  }
-  
-  public static void BuildBHLSPC(Taskman tm, string[] args)
-  {
-    var extra_args = "";
-    for(int i = 0; i < args.Length; i++)
-    {
-      extra_args += args[i];
-      if(i != args.Length - 1)
-        extra_args += " ";
-    }
-    
-    MCSBuild(tm, 
-      new string[] {
-        $"{BHL_ROOT}/bhlspc.cs",
-        $"{BHL_ROOT}/src/lsp/*.cs",
-        $"{BHL_ROOT}/Newtonsoft.Json.dll", 
-      },
-      $"{BHL_ROOT}/bhlspc.exe",
-      $"{extra_args} -define:DEBUG -define:DEBUG_JSON_LOG -debug"
-    );
   }
   
   public static string BuildBHLC(Taskman tm, List<string> user_sources, List<string> postproc_sources, ref List<string> runtime_args)
