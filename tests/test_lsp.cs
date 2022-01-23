@@ -148,7 +148,7 @@ public class TestLSP : BHL_TestBase
     var rpc = new BHLSPJsonRpc();
     rpc.AttachRpcService(new BHLSPTextDocumentSynchronizationJsonRpcService());
 
-    TextDocuments.self.Clear();
+    BHLSPWorkspace.self.Shutdown();
     
     string dir = GetDirPath();
     if(Directory.Exists(dir))
@@ -157,10 +157,10 @@ public class TestLSP : BHL_TestBase
     var files = new List<string>();
     NewTestDocument("bhl1.bhl", bhl1, files);
 
-    string uri = GetUri(files[0]);
+    Uri uri = GetUri(files[0]);
 
     string json =
-      "{\"params\":{\"textDocument\":{\"languageId\":\"txt\",\"version\":0,\"uri\":\"" + uri +
+      "{\"params\":{\"textDocument\":{\"languageId\":\"bhl\",\"version\":0,\"uri\":\"" + uri.ToString() +
       "\",\"text\":\"" + bhl1 +
       "\"}},\"method\":\"textDocument/didOpen\",\"jsonrpc\":\"2.0\"}";
     
@@ -169,7 +169,7 @@ public class TestLSP : BHL_TestBase
       string.Empty
     );
 
-    var document = TextDocuments.self.MakeTextDocument(uri);
+    var document = BHLSPWorkspace.self.GetTextDocument(uri);
     
     AssertEqual(
       document.GetLine(1),
@@ -183,7 +183,7 @@ public class TestLSP : BHL_TestBase
 
     uri = GetUri(files[1]);
 
-    json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri +
+    json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri.ToString() +
            "\"},\"contentChanges\":[{\"text\":\"" + bhl2 +
            "\"}]},\"method\":\"textDocument/didChange\",\"jsonrpc\":\"2.0\"}";
     
@@ -224,7 +224,7 @@ public class TestLSP : BHL_TestBase
     var rpc = new BHLSPJsonRpc();
     rpc.AttachRpcService(new BHLSPTextDocumentSignatureHelpJsonRpcService());
     
-    TextDocuments.self.Clear();
+    BHLSPWorkspace.self.Shutdown();
     
     string dir = GetDirPath();
     if(Directory.Exists(dir))
@@ -233,10 +233,10 @@ public class TestLSP : BHL_TestBase
     var files = new List<string>();
     NewTestDocument("bhl1.bhl", bhl1, files);
 
-    string uri = GetUri(files[0]);
+    Uri uri = GetUri(files[0]);
 
     var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
-    json += "{\"textDocument\": {\"uri\": \"" + uri;
+    json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
     json += "\"}, \"position\": {\"line\": 8, \"character\": 12}}}";
     
     AssertEqual(
@@ -247,9 +247,9 @@ public class TestLSP : BHL_TestBase
     );
   }
 
-  static string GetUri(string path)
+  static Uri GetUri(string path)
   {
-    return "file://" + path;
+    return new Uri("file://" + path);
   }
   
   static string GetDirPath()

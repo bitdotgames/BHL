@@ -1,9 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace bhlsp
@@ -33,7 +28,7 @@ namespace bhlsp
 #if BHLSP_DEBUG
         catch(Exception e)
         {
-          BHLSPC.Logger.WriteLine(e);
+          BHLSPLogger.WriteLine(e);
         }
 #else
         catch
@@ -48,18 +43,9 @@ namespace bhlsp
     {
       string json = await connection.Read();
       
-#if BHLSP_DEBUG_JSON_LOG
-      BHLSPC.Logger.WriteLine($"--> {json}");
-#endif
-      
       string response = rpc.HandleMessage(json);
       if(!string.IsNullOrEmpty(response))
-      {
-#if BHLSP_DEBUG_JSON_LOG
-        BHLSPC.Logger.WriteLine($"<-- {response}");
-#endif
         connection.Write(response);
-      }
       
       return true;
     }

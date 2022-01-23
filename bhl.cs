@@ -171,7 +171,7 @@ public static class Tasks
         $"{BHL_ROOT}/Newtonsoft.Json.dll",
       },
       $"{BHL_ROOT}/bhlspc.exe",
-      $"{extra_args} -define:BHLSP_DEBUG -define:BHLSP_DEBUG_JSON_LOG -debug"
+      $"{extra_args} -define:BHLSP_DEBUG -debug"
     );
   }
   

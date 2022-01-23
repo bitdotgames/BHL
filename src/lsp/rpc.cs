@@ -33,7 +33,7 @@ namespace bhlsp
 #if BHLSP_DEBUG
       catch(Exception e)
       {
-        BHLSPC.Logger.WriteLine(e);
+        BHLSPLogger.WriteLine(e);
 #else
       catch
       {
@@ -48,10 +48,16 @@ namespace bhlsp
         };
       }
       
+#if BHLSP_DEBUG
       if(req != null)
+        BHLSPLogger.WriteLine($":: bhlsp <-- {req.method}: {json}");
+      else
+        BHLSPLogger.WriteLine($":: bhlsp <-- {json}");
+#endif
+      
+      if(req != null && req.IsMessage())
       {
-        if(req.IsMessage())
-          resp = HandleMessage(req);
+        resp = HandleMessage(req);
       }
       else if(resp == null)
       {
@@ -64,36 +70,38 @@ namespace bhlsp
           }
         };
       }
+
+      string response = string.Empty;
+      bool isNotification = req != null && req.id.Value == null; //A processed notification message must not send a response back. They work like events.
       
-      if (resp != null)
+      if(!isNotification || resp.error != null) 
       {
-        return JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None,
+        response = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None,
           new JsonSerializerSettings
           {
             NullValueHandling = NullValueHandling.Ignore
           });
+        
+#if BHLSP_DEBUG
+        if(req != null && resp.error == null)
+          BHLSPLogger.WriteLine($":: bhlsp --> {req.method}: {response}");
+        else
+          BHLSPLogger.WriteLine($":: bhlsp --> {response}");
+#endif
       }
-
-      return string.Empty;
+      
+      return response;
     }
     
     ResponseMessage HandleMessage(RequestMessage request)
     {
-#if BHLSP_DEBUG
-      BHLSPC.Logger.WriteLine($"--> {request.method}");
-#endif
-
-      ResponseMessage response = null;
-      bool isNotification = request.id.Value == null;
+      ResponseMessage response;
       
       try
       {
         if(!string.IsNullOrEmpty(request.method))
         {
           RpcResult result = CallRpcMethod(request.method, request.@params);
-
-          if (isNotification && result.error == null)
-            return null; //A processed notification message must not send a response back. They work like events.
           
           response = new ResponseMessage
           {
@@ -117,7 +125,7 @@ namespace bhlsp
 #if BHLSP_DEBUG
       catch(Exception e)
       {
-        BHLSPC.Logger.WriteLine(e);
+        BHLSPLogger.WriteLine(e);
 #else
       catch
       {
@@ -131,11 +139,6 @@ namespace bhlsp
           }
         };
       }
-
-#if BHLSP_DEBUG
-      if(response != null)
-        BHLSPC.Logger.WriteLine($"<-- {request.method}");
-#endif
       
       return response;
     }
@@ -166,7 +169,7 @@ namespace bhlsp
 #if BHLSP_DEBUG
               catch(Exception e)
               {
-                BHLSPC.Logger.WriteLine(e);
+                BHLSPLogger.WriteLine(e);
 #else
               catch
               {

@@ -189,7 +189,15 @@ namespace bhlsp
   
   public class WorkspaceFolder
   {
-    public string uri { get; set; }
+	  /**
+		 * The associated URI for this workspace folder.
+		 */
+    public Uri uri { get; set; }
+	  
+	  /**
+		 * The name of the workspace folder. Used to refer to this
+		 * workspace folder in the user interface.
+		 */
     public string name { get; set; }
   }
   
@@ -1027,7 +1035,7 @@ namespace bhlsp
     /**
      * The text document's URI.
      */
-    public string uri { get; set; }
+    public Uri uri { get; set; }
 
     /**
      * The text document's language identifier.

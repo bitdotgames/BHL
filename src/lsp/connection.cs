@@ -80,7 +80,7 @@ namespace bhlsp
 #if BHLSP_DEBUG
       catch(Exception e)
       {
-        BHLSPC.Logger.WriteLine(e);
+        BHLSPLogger.WriteLine(e);
 #else
       catch
       {
