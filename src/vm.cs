@@ -829,7 +829,7 @@ public class VM
           val.Release();
         }
         break;
-        //TODO: it's used for array init
+        //TODO: it's used for array init, maybe it should not be here
         case Opcodes.CallMethodNative:
         {
           int func_idx = (int)Bytecode.Decode16(bytecode, ref ip);
