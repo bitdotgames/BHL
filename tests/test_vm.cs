@@ -18875,6 +18875,28 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGlobalVariableAssignAndReadArray()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    Foo[] foos = [{b : 100}, {b: 200}]
+      
+    func float test() 
+    {
+      return foos[1].b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(200, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestGlobalVariableWrite()
   {
     string bhl = @"

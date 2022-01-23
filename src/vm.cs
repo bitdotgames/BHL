@@ -829,6 +829,21 @@ public class VM
           val.Release();
         }
         break;
+        //TODO: it's used for array init
+        case Opcodes.CallMethodNative:
+        {
+          int func_idx = (int)Bytecode.Decode16(bytecode, ref ip);
+          int class_type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
+          uint args_bits = Bytecode.Decode32(bytecode, ref ip); 
+
+          string class_type = constants[class_type_idx].str; 
+          var class_symb = (ClassSymbol)symbols.Resolve(class_type);
+
+          BHS status;
+          ICoroutine coroutine = null;
+          CallNative(init_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine);
+        }
+        break;
         case Opcodes.ClassBegin:
         {
           int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
