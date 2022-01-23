@@ -58,6 +58,21 @@ namespace bhlsp
     [JsonRpcMethod("textDocument/signatureHelp")]
     public abstract RpcResult SignatureHelp(SignatureHelpParams args);
   }
+
+  public abstract class BHLSPTextDocumentGoToJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("textDocument/declaration")]
+    public abstract RpcResult GotoDeclaration(DeclarationParams args);
+    
+    [JsonRpcMethod("textDocument/definition")]
+    public abstract RpcResult GotoDefinition(DefinitionParams args);
+
+    [JsonRpcMethod("textDocument/typeDefinition")]
+    public abstract RpcResult GotoTypeDefinition(TypeDefinitionParams args);
+
+    [JsonRpcMethod("textDocument/implementation")]
+    public abstract RpcResult GotoImplementation(ImplementationParams args);
+  }
   
   public abstract class BHLSPTextDocumentJsonRpcServiceTemplate : BHLSPJsonRpcService
   {
@@ -93,16 +108,7 @@ namespace bhlsp
 
     [JsonRpcMethod("textDocument/onTypeFormatting")]
     public abstract RpcResult DocumentOnTypeFormatting(DocumentOnTypeFormattingParams args);
-
-    [JsonRpcMethod("textDocument/definition")]
-    public abstract RpcResult GotoDefinition(TextDocumentPositionParams args);
-
-    [JsonRpcMethod("textDocument/typeDefinition")]
-    public abstract RpcResult GotoTypeDefinition(TextDocumentPositionParams args);
-
-    [JsonRpcMethod("textDocument/implementation")]
-    public abstract RpcResult GotoImplementation(TextDocumentPositionParams args);
-
+    
     [JsonRpcMethod("textDocument/codeAction")]
     public abstract RpcResult CodeAction(CodeActionParams args);
 
@@ -174,6 +180,38 @@ namespace bhlsp
           {
             triggerCharacters = new[] {"(", ","}
           };
+        }
+
+        if(args.capabilities.textDocument.declaration != null)
+        {
+          if(args.capabilities.textDocument.declaration.linkSupport != null)
+            TextDocuments.self.declarationLinkSupport = (bool)args.capabilities.textDocument.declaration.linkSupport;
+
+          capabilities.declarationProvider = false; //textDocument/declaration
+        }
+
+        if(args.capabilities.textDocument.definition != null)
+        {
+          if(args.capabilities.textDocument.definition.linkSupport != null)
+            TextDocuments.self.definitionLinkSupport = (bool)args.capabilities.textDocument.definition.linkSupport;
+
+          capabilities.definitionProvider = false; //textDocument/definition
+        }
+
+        if(args.capabilities.textDocument.typeDefinition != null)
+        {
+          if(args.capabilities.textDocument.typeDefinition.linkSupport != null)
+            TextDocuments.self.typeDefinitionLinkSupport = (bool)args.capabilities.textDocument.typeDefinition.linkSupport;
+
+          capabilities.typeDefinitionProvider = false; //textDocument/typeDefinition
+        }
+        
+        if(args.capabilities.textDocument.implementation != null)
+        {
+          if(args.capabilities.textDocument.implementation.linkSupport != null)
+            TextDocuments.self.implementationLinkSupport = (bool)args.capabilities.textDocument.implementation.linkSupport;
+          
+          capabilities.implementationProvider = false; //textDocument/implementation
         }
       }
       
@@ -390,6 +428,12 @@ namespace bhlsp
         return self_;
       }
     }
+
+    public bool declarationLinkSupport;
+    public bool definitionLinkSupport;
+    public bool typeDefinitionLinkSupport;
+    public bool implementationLinkSupport;
+    
     
     public bool IsBhl(Uri uri, string languageId = null)
     {
@@ -499,6 +543,61 @@ namespace bhlsp
     }
 
     public override RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args)
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int) ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
+    }
+  }
+  
+  public class BHLSPTextDocumentGoToJsonRpcService : BHLSPTextDocumentGoToJsonRpcServiceTemplate
+  {
+    /**
+     * The result type LocationLink[] got introduced with version 3.14.0
+     * and depends on the corresponding client capability textDocument.declaration.linkSupport.
+     */
+    public override RpcResult GotoDeclaration(DeclarationParams args)
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int) ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
+    }
+    
+    /**
+     * The result type LocationLink[] got introduced with version 3.14.0
+     * and depends on the corresponding client capability textDocument.definition.linkSupport.
+     */
+    public override RpcResult GotoDefinition(DefinitionParams args)
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int) ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
+    }
+    
+    /**
+     * The result type LocationLink[] got introduced with version 3.14.0
+     * and depends on the corresponding client capability textDocument.typeDefinition.linkSupport.
+     */
+    public override RpcResult GotoTypeDefinition(TypeDefinitionParams args)
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int) ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
+    }
+    
+    /**
+     * The result type LocationLink[] got introduced with version 3.14.0
+     * and depends on the corresponding client capability textDocument.implementation.linkSupport.
+     */
+    public override RpcResult GotoImplementation(ImplementationParams args)
     {
       return RpcResult.Error(new ResponseError
       {

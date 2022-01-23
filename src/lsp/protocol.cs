@@ -580,14 +580,104 @@ namespace bhlsp
 	  public bool? didSave { get; set; }
   }
   
+  public class DeclarationClientCapabilities
+  {
+	  /**
+		 * Whether declaration supports dynamic registration. If this is set to
+		 * `true` the client supports the new `DeclarationRegistrationOptions`
+		 * return value for the corresponding server capability as well.
+		 */
+	  public bool? dynamicRegistration;
+
+	  /**
+		 * The client supports additional metadata in the form of declaration links.
+		 */
+	  public bool? linkSupport;
+  }
+  
+  public class DefinitionClientCapabilities
+  {
+	  /**
+		 * Whether definition supports dynamic registration.
+		 */
+	  public bool? dynamicRegistration;
+
+	  /**
+		 * The client supports additional metadata in the form of definition links.
+		 *
+		 * @since 3.14.0
+		 */
+	  public bool? linkSupport;
+  }
+  
+  public class TypeDefinitionClientCapabilities
+  {
+	  /**
+		 * Whether implementation supports dynamic registration. If this is set to
+		 * `true` the client supports the new `TypeDefinitionRegistrationOptions`
+		 * return value for the corresponding server capability as well.
+		 */
+	  public bool? dynamicRegistration;
+
+	  /**
+		 * The client supports additional metadata in the form of definition links.
+		 *
+		 * @since 3.14.0
+		 */
+	  public bool? linkSupport;
+  }
+  
+  public class ImplementationClientCapabilities
+  {
+	  /**
+		 * Whether implementation supports dynamic registration. If this is set to
+		 * `true` the client supports the new `ImplementationRegistrationOptions`
+		 * return value for the corresponding server capability as well.
+		 */
+	  public bool? dynamicRegistration;
+
+	  /**
+		 * The client supports additional metadata in the form of definition links.
+		 *
+		 * @since 3.14.0
+		 */
+	  public bool? linkSupport;
+  }
+  
   public class TextDocumentClientCapabilities
   {
+	  public TextDocumentSyncClientCapabilities synchronization { get; set; }
+	  
 	  /**
 		 * Capabilities specific to the `textDocument/signatureHelp` request.
 		 */
 	  public SignatureHelpClientCapabilities signatureHelp { get; set; }
 	  
-	  public TextDocumentSyncClientCapabilities synchronization { get; set; }
+	  /**
+		 * Capabilities specific to the `textDocument/declaration` request.
+		 *
+		 * @since 3.14.0
+		 */
+	  public DeclarationClientCapabilities declaration { get; set; }
+	  
+	  /**
+		 * Capabilities specific to the `textDocument/definition` request.
+		 */
+	  public DefinitionClientCapabilities definition { get; set; }
+	  
+	  /**
+		 * Capabilities specific to the `textDocument/typeDefinition` request.
+		 *
+		 * @since 3.6.0
+		 */
+	  public TypeDefinitionClientCapabilities typeDefinition { get; set; }
+	  
+	  /**
+		 * Capabilities specific to the `textDocument/implementation` request.
+		 *
+		 * @since 3.6.0
+		 */
+	  public ImplementationClientCapabilities implementation { get; set; }
   }
   
   public class ClientCapabilities
@@ -2074,5 +2164,61 @@ namespace bhlsp
      * An optional token that a server can use to report work done progress.
      */
     public SumType<string, int> workDoneToken { get; set; }
+  }
+  
+  public class DeclarationParams : TextDocumentPositionParams
+  {
+	  /**
+     * An optional token that a server can use to report work done progress.
+     */
+	  public SumType<string, int> workDoneToken { get; set; }
+	  
+	  /**
+		 * An optional token that a server can use to report partial results (e.g.
+		 * streaming) to the client.
+		 */
+	  public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class DefinitionParams : TextDocumentPositionParams
+  {
+	  /**
+     * An optional token that a server can use to report work done progress.
+     */
+	  public SumType<string, int> workDoneToken { get; set; }
+	  
+	  /**
+		 * An optional token that a server can use to report partial results (e.g.
+		 * streaming) to the client.
+		 */
+	  public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class TypeDefinitionParams : TextDocumentPositionParams
+  {
+	  /**
+     * An optional token that a server can use to report work done progress.
+     */
+	  public SumType<string, int> workDoneToken { get; set; }
+	  
+	  /**
+		 * An optional token that a server can use to report partial results (e.g.
+		 * streaming) to the client.
+		 */
+	  public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class ImplementationParams : TextDocumentPositionParams
+  {
+	  /**
+     * An optional token that a server can use to report work done progress.
+     */
+	  public SumType<string, int> workDoneToken { get; set; }
+	  
+	  /**
+		 * An optional token that a server can use to report partial results (e.g.
+		 * streaming) to the client.
+		 */
+	  public SumType<int, string> partialResultToken { get; set; }
   }
 }
