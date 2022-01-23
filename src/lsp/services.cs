@@ -6,6 +6,7 @@ using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Dfa;
 using Antlr4.Runtime.Sharpen;
 using Antlr4.Runtime.Tree;
+using System.Text.RegularExpressions;
 using bhl;
 
 namespace bhlsp
@@ -298,15 +299,26 @@ namespace bhlsp
       return signature;
     }
 
-    bhlParser.FuncDeclContext FindFuncDecl(string[] document, Position position)
+    bhlParser.FuncDeclContext FindFuncDecl(string[] document, Position position, out int startIndex)
     {
+      startIndex = -1;
+      
       var funcDecls = FindFuncDecls(document);
       string line = document[position.line];
       
+      string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
+      MatchCollection matches = Regex.Matches(line, pattern, RegexOptions.Multiline);
+      
       for(int i = 0; i < funcDecls.Count; i++)
       {
-        if(-1 != line.IndexOf(funcDecls[i].NAME().GetText()) && line.IndexOf("func ") == -1)
-          return funcDecls[i];
+        foreach (Match m in matches)
+        {
+          if(funcDecls[i].NAME().GetText() + "(" == m.Value)
+          {
+            startIndex = m.Index;
+            return funcDecls[i];
+          }
+        }
       }
       
       return null;
@@ -317,12 +329,15 @@ namespace bhlsp
       if(args.textDocument.uri.IsFile)
       {
         string[] document = System.IO.File.ReadAllLines(args.textDocument.uri.LocalPath);
-        var funcDecl = FindFuncDecl(document, args.position);
+        var funcDecl = FindFuncDecl(document, args.position, out var startIndex);
         if(funcDecl != null)
         {
+          string line = document[args.position.line];
+          var funcDeclStr = line.Substring(startIndex, Math.Max(0, (int) args.position.character - startIndex));
+          
           var result = new SignatureHelp();
           result.activeSignature = 0;
-          result.activeParameter = 0; //TODO: ...
+          result.activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1); 
 
           var signature = GetSignInfo(funcDecl);
           signature.activeParameter = result.activeParameter;
