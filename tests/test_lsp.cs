@@ -119,6 +119,94 @@ public class TestLSP : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSyncDocument()
+  {
+    string bhl1 = @"
+    func float test1(float k) 
+    {
+      return 0
+    }
+
+    func test2() 
+    {
+      test1()
+    }
+    ";
+    
+    string bhl2 = @"
+    func float test1(float k, int j) 
+    {
+      return 0
+    }
+
+    func test2() 
+    {
+      test1()
+    }
+    ";
+    
+    var rpc = new BHLSPJsonRpc();
+    rpc.AttachRpcService(new BHLSPTextDocumentSynchronizationJsonRpcService());
+
+    TextDocuments.self.Clear();
+    
+    string dir = GetDirPath();
+    if(Directory.Exists(dir))
+      Directory.Delete(dir, true/*recursive*/);
+    
+    var files = new List<string>();
+    NewTestDocument("bhl1.bhl", bhl1, files);
+
+    string uri = GetUri(files[0]);
+
+    string json =
+      "{\"params\":{\"textDocument\":{\"languageId\":\"txt\",\"version\":0,\"uri\":\"" + uri +
+      "\",\"text\":\"" + bhl1 +
+      "\"}},\"method\":\"textDocument/didOpen\",\"jsonrpc\":\"2.0\"}";
+    
+    AssertEqual(
+      rpc.HandleMessage(json),
+      string.Empty
+    );
+
+    var document = TextDocuments.self.MakeTextDocument(uri);
+    
+    AssertEqual(
+      document.GetLine(1),
+      "    func float test1(float k) "
+    );
+    
+    if(Directory.Exists(dir))
+      Directory.Delete(dir, true/*recursive*/);
+    
+    NewTestDocument("bhl1.bhl", bhl2, files);
+
+    uri = GetUri(files[1]);
+
+    json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri +
+           "\"},\"contentChanges\":[{\"text\":\"" + bhl2 +
+           "\"}]},\"method\":\"textDocument/didChange\",\"jsonrpc\":\"2.0\"}";
+    
+    AssertEqual(
+      rpc.HandleMessage(json),
+      string.Empty
+    );
+    
+    AssertEqual(
+      document.GetLine(1),
+      "    func float test1(float k, int j) "
+    );
+    
+    json = "{\"params\":{\"textDocument\":{\"uri\":\"" + uri +
+           "\"}},\"method\":\"textDocument/didClose\",\"jsonrpc\":\"2.0\"}";
+    
+    AssertEqual(
+      rpc.HandleMessage(json),
+      string.Empty
+    );
+  }
+  
+  [IsTested()]
   public void TestSignatureHelp()
   {
     string bhl1 = @"
@@ -136,6 +224,8 @@ public class TestLSP : BHL_TestBase
     var rpc = new BHLSPJsonRpc();
     rpc.AttachRpcService(new BHLSPTextDocumentSignatureHelpJsonRpcService());
     
+    TextDocuments.self.Clear();
+    
     string dir = GetDirPath();
     if(Directory.Exists(dir))
       Directory.Delete(dir, true/*recursive*/);
@@ -143,7 +233,7 @@ public class TestLSP : BHL_TestBase
     var files = new List<string>();
     NewTestDocument("bhl1.bhl", bhl1, files);
 
-    string uri = "file://" + files[0];
+    string uri = GetUri(files[0]);
 
     var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
     json += "{\"textDocument\": {\"uri\": \"" + uri;
@@ -155,6 +245,11 @@ public class TestLSP : BHL_TestBase
       "{\"label\":\"float k\",\"documentation\":\"\"}]," +
       "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
     );
+  }
+
+  static string GetUri(string path)
+  {
+    return "file://" + path;
   }
   
   static string GetDirPath()

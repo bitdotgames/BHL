@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Dfa;
@@ -161,8 +162,8 @@ namespace bhlsp
         {
           capabilities.textDocumentSync = new TextDocumentSyncOptions
           {
-            openClose = false, //didOpen, didClose
-            change = TextDocumentSyncKind.None, //didChange
+            openClose = true, //didOpen, didClose
+            change = TextDocumentSyncKind.Full, //didChange
             save = false //didSave
           };
         }
@@ -208,42 +209,6 @@ namespace bhlsp
 
   public class BHLSPTextDocumentSignatureHelpJsonRpcService : BHLSPTextDocumentSignatureHelpJsonRpcServiceTemplate
   {
-    List<bhlParser.FuncDeclContext> FindFuncDecls(string[] document)
-    {
-      string file = "";
-      for(int i = 0; i < document.Length; i++)
-        file += document[i];
-      
-      List<bhlParser.FuncDeclContext> fndecls = new List<bhlParser.FuncDeclContext>();
-
-      var ais = new AntlrInputStream(file.ToStream());
-      var lex = new bhlLexer(ais);
-        
-      lex.RemoveErrorListeners();
-        
-      var tokens = new CommonTokenStream(lex);
-      var p = new bhlParser(tokens);
-        
-      p.RemoveErrorListeners();
-      
-      var progblock = p.program().progblock();
-      if(progblock.Length == 0)
-        return fndecls;
-      
-      for(int i = 0; i < progblock.Length; ++i)
-      {
-        var decls = progblock[i].decls().decl();
-        for (int j = 0; j < decls.Length; j++)
-        {
-          var fndecl = decls[j].funcDecl();
-          if(fndecl != null)
-            fndecls.Add(fndecl);
-        }
-      }
-      
-      return fndecls;
-    }
-
     SignatureInformation GetSignInfo(bhlParser.FuncDeclContext funcDecl)
     {
       var signature = new SignatureInformation();
@@ -298,41 +263,14 @@ namespace bhlsp
       
       return signature;
     }
-
-    bhlParser.FuncDeclContext FindFuncDecl(string[] document, Position position, out int startIndex)
-    {
-      startIndex = -1;
-      
-      var funcDecls = FindFuncDecls(document);
-      string line = document[position.line];
-      
-      string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
-      MatchCollection matches = Regex.Matches(line, pattern, RegexOptions.Multiline);
-      
-      for(int i = 0; i < funcDecls.Count; i++)
-      {
-        foreach (Match m in matches)
-        {
-          if(funcDecls[i].NAME().GetText() + "(" == m.Value)
-          {
-            startIndex = m.Index;
-            return funcDecls[i];
-          }
-        }
-      }
-      
-      return null;
-    }
     
     public override RpcResult SignatureHelp(SignatureHelpParams args)
     {
-      if(args.textDocument.uri.IsFile)
+      if(TextDocuments.self.MakeTextDocument(args.textDocument.uri) is TextDocuments.TextDocument document)
       {
-        string[] document = System.IO.File.ReadAllLines(args.textDocument.uri.LocalPath);
-        var funcDecl = FindFuncDecl(document, args.position, out var startIndex);
-        if(funcDecl != null)
+        if(document.FindFuncDecl(args.position, out var startIndex) is bhlParser.FuncDeclContext funcDecl)
         {
-          string line = document[args.position.line];
+          string line = document.GetLine(args.position.line);
           var funcDeclStr = line.Substring(startIndex, Math.Max(0, (int) args.position.character - startIndex));
           
           var result = new SignatureHelp();
@@ -349,6 +287,224 @@ namespace bhlsp
       }
 
       return RpcResult.Success();
+    }
+  }
+
+  public class TextDocuments
+  {
+    public class TextDocument
+    {
+      private string[] lines;
+      private string text;
+      
+      List<bhlParser.FuncDeclContext> funcDecls = new List<bhlParser.FuncDeclContext>();
+      
+      public void Sync(string text)
+      {
+        lines = text.Split('\n');
+        this.text = text;
+
+        FindFuncDecls();
+      }
+      
+      public void Sync(string[] lines)
+      {
+        this.lines = lines;
+        for(int i = 0; i < lines.Length; i++)
+          text += lines[i];
+        
+        FindFuncDecls();
+      }
+
+      public string GetLine(uint idx)
+      {
+        return lines[idx];
+      }
+      
+      public bhlParser.FuncDeclContext FindFuncDecl(Position position, out int startIndex)
+      {
+        startIndex = -1;
+        
+        string line = lines[position.line];
+      
+        string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
+        MatchCollection matches = Regex.Matches(line, pattern, RegexOptions.Multiline);
+      
+        for(int i = 0; i < funcDecls.Count; i++)
+        {
+          foreach (Match m in matches)
+          {
+            if(funcDecls[i].NAME().GetText() + "(" == m.Value)
+            {
+              startIndex = m.Index;
+              return funcDecls[i];
+            }
+          }
+        }
+      
+        return null;
+      }
+      
+      void FindFuncDecls(bool errors = false)
+      {
+        funcDecls.Clear();
+        
+        var ais = new AntlrInputStream(text.ToStream());
+        var lex = new bhlLexer(ais);
+        
+        if(!errors)
+          lex.RemoveErrorListeners();
+        
+        var tokens = new CommonTokenStream(lex);
+        var p = new bhlParser(tokens);
+        
+        if(!errors)
+          p.RemoveErrorListeners();
+      
+        var progblock = p.program().progblock();
+        if(progblock.Length == 0)
+          return;
+      
+        for(int i = 0; i < progblock.Length; ++i)
+        {
+          var decls = progblock[i].decls().decl();
+          for (int j = 0; j < decls.Length; j++)
+          {
+            var fndecl = decls[j].funcDecl();
+            if(fndecl != null)
+              funcDecls.Add(fndecl);
+          }
+        }
+      }
+    }
+    
+    private static TextDocuments self_;
+
+    public static TextDocuments self
+    {
+      get
+      {
+        if(self_ == null)
+          self_ = new TextDocuments();
+
+        return self_;
+      }
+    }
+    
+    public bool IsBhl(Uri uri, string languageId = null)
+    {
+      if(!string.IsNullOrEmpty(languageId))
+      {
+        bool ok = languageId == "txt" || languageId == "bhl";
+        if (!ok)
+          return false;
+      }
+      
+      return uri.IsFile &&
+             (!string.IsNullOrEmpty(Path.GetExtension(uri.LocalPath)) ||
+              Path.GetExtension(uri.LocalPath) != ".bhl");
+    }
+
+    private Dictionary<string, TextDocument> documents = new Dictionary<string, TextDocument>();
+    
+    public void Clear()
+    {
+      documents.Clear();
+    }
+    
+    public TextDocument MakeTextDocument(string uri, string text = null, string languageId = null)
+    {
+      return MakeTextDocument(new Uri(uri), text);
+    }
+
+    public TextDocument MakeTextDocument(Uri uri, string text = null, string languageId = null)
+    {
+      if(!IsBhl(uri))
+        return null;
+
+      if(!documents.ContainsKey(uri.LocalPath))
+      {
+        var document = new TextDocument();
+        
+        if(!string.IsNullOrEmpty(text))
+          document.Sync(text);
+        else
+          document.Sync(System.IO.File.ReadAllLines(uri.LocalPath));
+          
+        documents.Add(uri.LocalPath, document);
+      }
+      
+      return documents[uri.LocalPath];
+    }
+    
+    public void Open(TextDocumentItem textDocument)
+    {
+      MakeTextDocument(textDocument.uri, textDocument.text, textDocument.languageId);
+    }
+    
+    public void Change(VersionedTextDocumentIdentifier textDocument, TextDocumentContentChangeEvent[] contentChanges)
+    {
+      if(MakeTextDocument(textDocument.uri) is TextDocument document)
+      {
+        for (int i = 0; i < contentChanges.Length; i++)
+          document.Sync(contentChanges[i].text);
+      }
+    }
+    
+    public void Close(TextDocumentIdentifier textDocument)
+    {
+      
+    }
+  }
+  
+  public class BHLSPTextDocumentSynchronizationJsonRpcService : BHLSPTextDocumentSynchronizationJsonRpcServiceTemplate
+  {
+    public override RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
+    {
+      TextDocuments.self.Open(args.textDocument);
+      
+      return RpcResult.Success();
+    }
+    
+    public override RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
+    {
+      TextDocuments.self.Change(args.textDocument, args.contentChanges);
+      
+      return RpcResult.Success();
+    }
+
+    public override RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args)
+    {
+      TextDocuments.self.Close(args.textDocument);
+      
+      return RpcResult.Success();
+    }
+    
+    public override RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args)
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int) ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
+    }
+
+    public override RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args)
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int) ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
+    }
+
+    public override RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args)
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int) ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
     }
   }
 }
