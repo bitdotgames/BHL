@@ -101,7 +101,6 @@ public class BHL_TestRunner
     var names = p.Parse(args);
 
     Run(names, new BHL_TestNodes(), verbose);
-    Run(names, new BHL_TestInterpreter(), verbose);
     Run(names, new BHL_TestVM(), verbose);
   }
 

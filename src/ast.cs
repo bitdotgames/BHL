@@ -1,6 +1,105 @@
+using System;
 using System.Collections.Generic;
 
 namespace bhl {
+
+public abstract class AST_Visitor
+{
+  public abstract void DoVisit(AST_Interim node);
+  public abstract void DoVisit(AST_Import node);
+  public abstract void DoVisit(AST_Module node);
+  public abstract void DoVisit(AST_VarDecl node);
+  public abstract void DoVisit(AST_FuncDecl node);
+  public abstract void DoVisit(AST_LambdaDecl node);
+  public abstract void DoVisit(AST_ClassDecl node);
+  public abstract void DoVisit(AST_EnumDecl node);
+  public abstract void DoVisit(AST_Block node);
+  public abstract void DoVisit(AST_TypeCast node);
+  public abstract void DoVisit(AST_Call node);
+  public abstract void DoVisit(AST_Return node);
+  public abstract void DoVisit(AST_Break node);
+  public abstract void DoVisit(AST_Continue node);
+  public abstract void DoVisit(AST_PopValue node);
+  public abstract void DoVisit(AST_Literal node);
+  public abstract void DoVisit(AST_BinaryOpExp node);
+  public abstract void DoVisit(AST_UnaryOpExp node);
+  public abstract void DoVisit(AST_New node);
+  public abstract void DoVisit(AST_Inc node);
+  public abstract void DoVisit(AST_Dec node);
+  public abstract void DoVisit(AST_JsonObj node);
+  public abstract void DoVisit(AST_JsonArr node);
+  public abstract void DoVisit(AST_JsonArrAddItem node);
+  public abstract void DoVisit(AST_JsonPair node);
+
+  public void Visit(AST_Base node)
+  {
+    if(node == null)
+      throw new Exception("NULL node");
+
+    if(node is AST_Interim)
+      DoVisit(node as AST_Interim);
+    else if(node is AST_Block)
+      DoVisit(node as AST_Block);
+    else if(node is AST_Literal)
+      DoVisit(node as AST_Literal);
+    else if(node is AST_Call)
+      DoVisit(node as AST_Call);
+    else if(node is AST_VarDecl)
+      DoVisit(node as AST_VarDecl);
+    else if(node is AST_LambdaDecl)
+      DoVisit(node as AST_LambdaDecl);
+    //NOTE: base class must be handled after AST_LambdaDecl
+    else if(node is AST_FuncDecl)
+      DoVisit(node as AST_FuncDecl);
+    else if(node is AST_ClassDecl)
+      DoVisit(node as AST_ClassDecl);
+    else if(node is AST_EnumDecl)
+      DoVisit(node as AST_EnumDecl);
+    else if(node is AST_TypeCast)
+      DoVisit(node as AST_TypeCast);
+    else if(node is AST_Return)
+      DoVisit(node as AST_Return);
+    else if(node is AST_Break)
+      DoVisit(node as AST_Break);
+    else if(node is AST_Continue)
+      DoVisit(node as AST_Continue);
+    else if(node is AST_PopValue)
+      DoVisit(node as AST_PopValue);
+    else if(node is AST_BinaryOpExp)
+      DoVisit(node as AST_BinaryOpExp);
+    else if(node is AST_UnaryOpExp)
+      DoVisit(node as AST_UnaryOpExp);
+    else if(node is AST_New)
+      DoVisit(node as AST_New);
+    else if(node is AST_Inc)
+      DoVisit(node as AST_Inc);
+    else if(node is AST_Dec)
+      DoVisit(node as AST_Dec);
+    else if(node is AST_JsonObj)
+      DoVisit(node as AST_JsonObj);
+    else if(node is AST_JsonArr)
+      DoVisit(node as AST_JsonArr);
+    else if(node is AST_JsonArrAddItem)
+      DoVisit(node as AST_JsonArrAddItem);
+    else if(node is AST_JsonPair)
+      DoVisit(node as AST_JsonPair);
+    else if(node is AST_Import)
+      DoVisit(node as AST_Import);
+    else if(node is AST_Module)
+      DoVisit(node as AST_Module);
+    else 
+      throw new Exception("Not known type: " + node.GetType().Name);
+  }
+
+  public void VisitChildren(AST node)
+  {
+    if(node == null)
+      return;
+    var children = node.children;
+    for(int i=0;i<children.Count;++i)
+      Visit(children[i]);
+  }
+}
 
 public class AST_Base : BaseMetaStruct 
 {

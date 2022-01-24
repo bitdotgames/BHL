@@ -209,39 +209,6 @@ public class BHL_TestNodes : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestGroupNode()
-  {
-    var events = new TestEvents();
-
-    var t = new TestNode();
-    t.events = events;
-    t.status = BHS.RUNNING;
-    var g = new GroupNode();
-    g.addChild(t);
-
-    AssertEqual(g.run(), BHS.RUNNING);
-    AssertEqual(events.Count, 2);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-
-    t.status = BHS.SUCCESS;
-    AssertEqual(g.run(), BHS.SUCCESS);
-    AssertEqual(events.Count, 4);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-    AssertEqual(events[2].type, "E");
-    AssertEqual(events[3].type, "D");
-
-    g.defer();
-    AssertEqual(events.Count, 5);
-    AssertEqual(events[0].type, "I");
-    AssertEqual(events[1].type, "E");
-    AssertEqual(events[2].type, "E");
-    AssertEqual(events[3].type, "D");
-    AssertEqual(events[4].type, "F");
-  }
-
-  [IsTested()]
   public void TestRunNodeWithSuccess()
   {
     var t = new TestNode();
