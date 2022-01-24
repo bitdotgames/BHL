@@ -489,15 +489,6 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  static public void DefaultConverter(DynVal dv, ref T res)
-  {
-    //TODO: is there a non-allocating way to achieve the same?
-    if(typeof(T).IsEnum)
-      res = (T)Enum.ToObject(typeof(T), (int)dv.num);
-    else
-      res = (T)dv.obj;
-  }
-
   public ArrayTypeSymbolT(BaseScope scope, string name, TypeRef item_type, CreatorCb creator) 
     : base(scope, name, item_type)
   {
