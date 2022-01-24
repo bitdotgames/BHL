@@ -473,33 +473,6 @@ static public class Util
     new AST_Dumper().Visit(ast);
     Console.WriteLine("\n=============");
   }
-
-  public static void NodeDump(BehaviorTreeNode node, bool only_running = false, int level = 0, bool is_term = true)
-  {
-    var fnode = node as FuncNodeScript;
-    if(fnode != null)
-      fnode.Inflate();
-
-    var name = node.GetType().Name;
-    var status = node.currStatus;
-
-    var spaces = new String('_', level);
-    var indent_str = spaces + (is_term ? "`" : "|");
-    Console.WriteLine(indent_str + "-" + name + " (" + status + ") " + node.inspect());
-
-    if(!only_running || (only_running && status == BHS.RUNNING))
-    {
-      var inode = node as BehaviorTreeInternalNode;
-      if(inode != null)
-      {
-        for(int i=0;i<inode.children.Count;++i)
-        {
-          var child = inode.children[i]; 
-          NodeDump(child, only_running, level + 1, i == inode.children.Count-1);
-        }
-      }
-    }
-  }
 }
 
 public struct FuncArgsInfo

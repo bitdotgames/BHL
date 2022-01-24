@@ -395,27 +395,6 @@ public class BHL_TestInterpreter : BHL_TestBase
 
   ////////////////////////////////////////////////
 
-  static string TestDirPath()
-  {
-    string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
-    return Path.GetDirectoryName(self_bin) + "/tmp/tests";
-  }
-
-  static void TestCleanDir()
-  {
-    string dir = TestDirPath();
-    if(Directory.Exists(dir))
-      Directory.Delete(dir, true/*recursive*/);
-  }
-
-  static void TestNewFile(string path, string text, List<string> files)
-  {
-    string full_path = TestDirPath() + "/" + path;
-    Directory.CreateDirectory(Path.GetDirectoryName(full_path));
-    File.WriteAllText(full_path, text);
-    files.Add(full_path);
-  }
-
   static void SharedInit()
   {
     DynVal.PoolClear();
@@ -423,43 +402,6 @@ public class BHL_TestInterpreter : BHL_TestBase
     DynValDict.PoolClear();
     FuncCallNode.PoolClear();
     FuncCtx.PoolClear();
-  }
-
-  static Interpreter CompileFiles(List<string> test_files, GlobalScope globs = null)
-  {
-    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
-    //NOTE: we want interpreter to work with original globs
-    var globs_copy = globs.Clone();
-    SharedInit();
-
-    var conf = new BuildConf();
-    conf.compile_fmt = CompileFormat.AST;
-    conf.globs = globs;
-    conf.files = test_files;
-    conf.res_file = TestDirPath() + "/result.bin";
-    conf.inc_dir = TestDirPath();
-    conf.cache_dir = TestDirPath() + "/cache";
-    conf.err_file = TestDirPath() + "/error.log";
-    conf.use_cache = false;
-    conf.debug = true;
-
-    var bld = new Build();
-    int res = bld.Exec(conf);
-    if(res != 0)
-      throw new UserError(File.ReadAllText(conf.err_file));
-
-    var intp = Interpreter.instance;
-    var bin = new MemoryStream(File.ReadAllBytes(conf.res_file));
-    var mloader = new ModuleLoader(bin);
-
-    intp.Init(globs_copy, mloader);
-
-    return intp;
-  }
-
-  static void NodeDump(BehaviorTreeNode node)
-  {
-    Util.NodeDump(node);
   }
 
   public struct Result
