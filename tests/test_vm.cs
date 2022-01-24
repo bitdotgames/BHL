@@ -12112,6 +12112,171 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestTypeidForBuiltinType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(int)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, Hash.CRC28("int"));
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidForBuiltinArrType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(int[])
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, Hash.CRC28("int[]"));
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidForUserClass()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func int test() 
+    {
+      return typeid(Foo)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, Hash.CRC28("Foo"));
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidEqual()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func bool test() 
+    {
+      return typeid(Foo) == typeid(Foo)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidNotEqual()
+  {
+    string bhl = @"
+
+    class Foo { }
+    class Bar { }
+      
+    func bool test() 
+    {
+      return typeid(Foo) == typeid(Bar)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertFalse(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidNotEqualArrType()
+  {
+    string bhl = @"
+
+    func bool test() 
+    {
+      return typeid(int[]) == typeid(float[])
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertFalse(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidBadType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(Foo)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"type 'Foo' not found"
+    );
+  }
+
+  //TODO: do we really need it?
+  //[IsTested()]
+  public void TestTypeidIsEncodedInUserClassObj()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func Foo test() 
+    {
+      return {}
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var val = Execute(vm, "test").stack.Pop();
+    AssertEqual(val.num, Hash.CRC28("Foo"));
+    val.Release();
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestTypeidIsEncodedInUserClassInHierarchy()
+  {
+    string bhl = @"
+
+    class Foo { }
+    class Bar : Foo { }
+      
+    func Bar test() 
+    {
+      return {}
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var val = Execute(vm, "test").stack.Pop();
+    AssertEqual(val.num, Hash.CRC28("Bar"));
+    val.Release();
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassWithSimpleMembers()
   {
     string bhl = @"
