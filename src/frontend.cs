@@ -1794,7 +1794,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var func_ast = CommonFuncDecl(ctx, locals, class_scope: null);
+    var func_ast = CommonFuncDecl(ctx, locals);
     PeekAST().AddChild(func_ast);
     return null;
   }
@@ -1814,13 +1814,12 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     var ast = AST_Util.New_ClassDecl(class_name, parent == null ? new HashedName() : parent.name);
-    var symb = new ClassSymbolScript(class_name, ast, parent);
+    var class_symb = new ClassSymbolScript(class_name, ast, parent);
 
     if(decls_only)
-      curr_module.symbols.Define(symb);
+      curr_module.symbols.Define(class_symb);
 
-    locals.Define(symb);
-    curr_scope = symb;
+    locals.Define(class_symb);
 
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
@@ -1832,7 +1831,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(vd.NAME().GetText() == "this")
           FireError("the keyword \"this\" is reserved");
 
-        var decl = CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
+        var decl = CommonDeclVar(class_symb, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
         //NOTE: forcing name to be always present due to current class members declaration requirement
         (decl as AST_VarDecl).name = vd.NAME().GetText();
         ast.AddChild(decl);
@@ -1844,18 +1843,17 @@ public class Frontend : bhlBaseVisitor<object>
         if(fd.NAME().GetText() == "this")
           FireError("the keyword \"this\" is reserved");
 
-        var func_ast = CommonFuncDecl(fd, symb, symb);
+        var func_ast = CommonFuncDecl(fd, class_symb);
         ast.AddChild(func_ast);
       }
     }
 
-    curr_scope = locals;
     PeekAST().AddChild(ast);
 
     return null;
   }
 
-  private AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, Scope scope, ClassSymbolScript class_scope)
+  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, Scope scope)
   {
     var tr = locals.Type(context.retType());
 
@@ -1870,10 +1868,17 @@ public class Frontend : bhlBaseVisitor<object>
     var func_name = new HashedName(fstr_name, curr_module.id);
     var ast = AST_Util.New_FuncDecl(func_name, tr.name);
 
-    var func_symb = new FuncSymbolScript(locals, scope, ast, func_node, func_name, tr, context.funcParams());
+    var func_symb = new FuncSymbolScript(
+      locals, 
+      ast, 
+      func_node, 
+      func_name, 
+      tr, 
+      context.funcParams()
+    );
     scope.Define(func_symb);
 
-    if(class_scope != null)
+    if(scope is ClassSymbolScript class_scope)
     {
       var this_symb = new VariableSymbol(func_node, "this", new TypeRef(class_scope));
       func_symb.Define(this_symb);
@@ -1985,7 +1990,7 @@ public class Frontend : bhlBaseVisitor<object>
         PopAST();
       }
 
-      var ast = CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: true, write: assign_exp != null);
+      var ast = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: true, write: assign_exp != null);
 
       if(exp_ast != null)
         PeekAST().AddChild(exp_ast);
@@ -2035,7 +2040,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitVarDecl(bhlParser.VarDeclContext ctx)
   {
     var vd = ctx.varDeclare(); 
-    PeekAST().AddChild(CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
+    PeekAST().AddChild(CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
     return null;
   }
 
@@ -2086,7 +2091,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else
         {
-          var ast = CommonDeclVar(vd.NAME(), vd_type, is_ref: false, func_arg: false, write: assign_exp != null);
+          var ast = CommonDeclVar(curr_scope, vd.NAME(), vd_type, is_ref: false, func_arg: false, write: assign_exp != null);
           root.AddChild(ast);
 
           is_decl = true;
@@ -2208,7 +2213,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    var ast = CommonDeclVar(name, ctx.type(), is_ref, func_arg: true, write: false);
+    var ast = CommonDeclVar(curr_scope, name, ctx.type(), is_ref, func_arg: true, write: false);
     if(exp_ast != null)
       ast.AddChild(exp_ast);
     PeekAST().AddChild(ast);
@@ -2218,7 +2223,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST CommonDeclVar(ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg, bool write)
+  AST CommonDeclVar(Scope curr_scope, ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg, bool write)
   {
     var str_name = name.GetText();
 
@@ -2597,7 +2602,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       iter_str_name = vd.NAME().GetText();
       iter_str_type = vd.type().GetText();
-      iter_ast_decl = CommonDeclVar(vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
+      iter_ast_decl = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
       iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
     }
     var arr_type = (ClassSymbol)locals.Type(iter_str_type+"[]").Get();

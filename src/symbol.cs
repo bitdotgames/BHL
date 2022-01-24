@@ -955,8 +955,8 @@ public class FuncSymbol : ScopedSymbol
 
   public bool return_statement_found = false;
 
-  public FuncSymbol(WrappedNode n, HashedName name, FuncType type, Scope parent) 
-    : base(n, name, new TypeRef(type), parent)
+  public FuncSymbol(WrappedNode n, HashedName name, FuncType type, Scope enclosing_scope) 
+    : base(n, name, new TypeRef(type), enclosing_scope)
   {}
 
   public override SymbolsDictionary GetMembers() { return members; }
@@ -1018,7 +1018,7 @@ public class LambdaSymbol : FuncSymbol
 #if BHL_FRONT
   //frontend version
   public LambdaSymbol(
-    BaseScope parent,
+    BaseScope enclosing_scope,
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
     WrappedNode n, 
@@ -1026,7 +1026,7 @@ public class LambdaSymbol : FuncSymbol
     TypeRef ret_type, 
     bhlParser.FuncLambdaContext lmb_ctx
   ) 
-    : base(n, name, new FuncType(ret_type), parent)
+    : base(n, name, new FuncType(ret_type), enclosing_scope)
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
@@ -1037,7 +1037,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        ft.arg_types.Add(parent.Type(vd.type()));
+        ft.arg_types.Add(enclosing_scope.Type(vd.type()));
       }
     }
     ft.Update();
@@ -1045,8 +1045,8 @@ public class LambdaSymbol : FuncSymbol
 #endif
 
   //backend version
-  public LambdaSymbol(BaseScope parent, AST_LambdaDecl decl) 
-    : base(null, decl.Name(), new FuncType(), parent)
+  public LambdaSymbol(BaseScope enclosing_scope, AST_LambdaDecl decl) 
+    : base(null, decl.Name(), new FuncType(), enclosing_scope)
   {
     this.decl = decl;
     this.fdecl_stack = null;
@@ -1141,14 +1141,13 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
   public FuncSymbolScript(
     ModuleScope mscope,
-    Scope parent, 
     AST_FuncDecl decl, 
     WrappedNode n, 
     HashedName name, 
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
-    : base(n, name, new FuncType(ret_type), parent)
+    : base(n, name, new FuncType(ret_type), mscope)
   {
     this.decl = decl;
     this.fparams = fparams;
@@ -1172,8 +1171,8 @@ public class FuncSymbolScript : FuncSymbol
 #endif
 
   //backend version
-  public FuncSymbolScript(Scope parent, AST_FuncDecl decl)
-    : base(null, decl.Name(), new FuncType(), parent)
+  public FuncSymbolScript(Scope enclosing_scope, AST_FuncDecl decl)
+    : base(null, decl.Name(), new FuncType(), enclosing_scope)
   {
     this.decl = decl;
   }

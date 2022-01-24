@@ -12611,6 +12611,118 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSeveralUserClassMethodDecl()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+      int b
+
+      func int getA()
+      {
+        return this.b
+      }
+
+      func int getB() 
+      {
+        return this.a
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      f.b = 10
+      return f.getA() + f.getB()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(20, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassMethodNamedLikeClass()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      func int Foo()
+      {
+        return 2
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      return f.Foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(2, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassMethodLocalVariableNotDeclared()
+  {
+    string bhl = @"
+      class Foo {
+        
+        int a
+
+        func int Summ()
+        {
+          a = 1
+          return this.a + a
+        }
+      }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "a : symbol not resolved"
+    );
+  }
+
+  [IsTested()]
+  public void TestUserClassMethodLocalVarAndAttribute()
+  {
+    string bhl = @"
+      class Foo {
+        
+        int a
+
+        func int Foo()
+        {
+          int a = 1
+          return this.a + a
+        }
+      }
+
+      func int test()
+      {
+        Foo f = {}
+        f.a = 10
+        return f.Foo()
+      }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(11, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestArrayOfUserClasses()
   {
     string bhl = @"
