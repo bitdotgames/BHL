@@ -16,8 +16,6 @@ public enum Opcodes
   GetVar           ,
   DeclVar          ,
   ArgVar           ,
-  GetAttr          ,
-  RefAttr          ,
   SetGVar          ,
   GetGVar          ,
   SetGVarImported  ,
@@ -34,6 +32,7 @@ public enum Opcodes
   Call             ,
   CallNative       ,
   CallImported     ,
+  CallMethod       ,
   CallMethodNative ,
   CallPtr          ,
   GetFunc          ,
@@ -41,6 +40,8 @@ public enum Opcodes
   GetFuncFromVar   ,
   GetFuncImported  ,
   FuncPtrToTop     ,
+  GetAttr          ,
+  RefAttr          ,
   SetAttr          ,
   SetAttrInplace   ,
   ArgRef           ,
@@ -68,6 +69,7 @@ public enum Opcodes
   Dec              ,
   ClassBegin       ,
   ClassMember      ,
+  ClassMethod      ,
   ClassEnd         ,
   Import           ,
 }
@@ -859,10 +861,24 @@ public class VM
           int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
 
+          //TODO: maybe we should rather serialize/unserialize AST_VarDecl?
           var mdecl = new AST_VarDecl();
           mdecl.type = constants[type_idx].str;
           mdecl.name = constants[name_idx].str;
           mdecl.symb_idx = (uint)curr_decl.children.Count;
+          curr_decl.children.Add(mdecl);
+        }
+        break;
+        case Opcodes.ClassMethod:
+        {
+          int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
+          int ip_addr = (int)Bytecode.Decode24(bytecode, ref ip);
+
+          //TODO: maybe we should rather serialize/unserialize AST_FuncDecl?
+          var mdecl = new AST_FuncDecl();
+          mdecl.name = constants[name_idx].str;
+          //TODO: remove this temporary hack
+          mdecl.nname2 = (uint)ip_addr;
           curr_decl.children.Add(mdecl);
         }
         break;
@@ -873,8 +889,11 @@ public class VM
           var curr_class = new ClassSymbolScript(new HashedName(curr_decl.name), curr_decl, parent);
           for(int i=0;i<curr_decl.children.Count;++i)
           {
-            var mdecl = (AST_VarDecl)curr_decl.children[i];
-            curr_class.Define(new FieldSymbolScript(mdecl.name, mdecl.type, (int)mdecl.symb_idx));
+            var child = curr_decl.children[i];
+            if(child is AST_VarDecl vd)
+              curr_class.Define(new FieldSymbolScript(vd.name, vd.type, (int)vd.symb_idx));
+            else if(child is AST_FuncDecl fd)
+              curr_class.Define(new FuncSymbolScript(curr_class, fd));
           }
           symbols.Define(curr_class);
           curr_class = null;
@@ -1407,6 +1426,28 @@ public class VM
         BHS status;
         if(CallNative(curr_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine))
           return status;
+      }
+      break;
+      case Opcodes.CallMethod:
+      {
+        int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+        string class_type = curr_frame.constants[class_type_idx].str; 
+        var class_symb = (ClassSymbol)symbols.Resolve(class_type);
+
+        var field_symb = (FuncSymbolScript)class_symb.members[func_idx];
+        int func_ip = (int)field_symb.decl.nname2;
+
+        var self = curr_frame.stack.Pop();
+
+        var fr = Frame.New(this);
+        fr.Init(curr_frame, func_ip);
+
+        fr.locals[0] = self;
+
+        Call(curr_frame, frames, fr, args_bits, ref ip);
       }
       break;
       case Opcodes.CallPtr:

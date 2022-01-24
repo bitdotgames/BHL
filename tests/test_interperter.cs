@@ -6,37 +6,6 @@ using bhl;
 public class BHL_TestInterpreter : BHL_TestBase
 {
   [IsTested()]
-  public void TestUserClassMethodDecl()
-  {
-    string bhl = @"
-
-    class Foo {
-      
-      int a
-
-      func int getA() 
-      {
-        return this.a
-      }
-    }
-
-    func int test()
-    {
-      Foo f = {}
-      f.a = 10
-      return f.getA()
-    }
-    ";
-
-    var intp = Interpret(bhl, null);
-    var node = intp.GetFuncCallNode("test");
-    var res = ExtractNum(ExecNode(node));
-
-    AssertEqual(res, 10);
-    CommonChecks(intp);
-  }
-
-  [IsTested()]
   public void TestSeveralUserClassMethodDecl()
   {
     string bhl = @"

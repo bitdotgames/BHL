@@ -12555,6 +12555,62 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassMethodDecl()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+
+      func int getA() 
+      {
+        return this.a
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      return f.getA()
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseInit()
+      .EmitThen(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Foo"), -1 })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "a") })
+      .EmitThen(Opcodes.ClassMethod, new int[] { ConstIdx(c, "getA") })
+      .EmitThen(Opcodes.ClassEnd)
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
+      .EmitThen(Opcodes.SetVar, new int[] { 0 })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.CallMethod, new int[] { 1, ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    AssertEqual(10, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestArrayOfUserClasses()
   {
     string bhl = @"
@@ -17712,7 +17768,40 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportGlobalVar()
+  public void TestImportReadWriteSeveralGlobalVars()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float test() 
+    {
+      foo = 10
+      return foo + boo
+    }
+    ";
+
+    string bhl2 = @"
+
+    float foo = 1
+    float boo = 2
+
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files));
+
+    var vm = new VM(globs: null, importer: importer);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(12, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportGlobalObjectVar()
   {
     string bhl1 = @"
     import ""bhl3""  

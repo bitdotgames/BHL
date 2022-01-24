@@ -479,7 +479,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.Call,
-        3/*module ip*/, 4/*args bits*/
+        3/*func ip*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -492,6 +492,12 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.CallImported,
         3/*module name idx*/, 3/*func name idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallMethod,
+        2/*class member idx*/, 3/*type literal idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -621,7 +627,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.ClassMember,
-        4/*name idx*/, 4/*type idx*/
+        4/*type idx*/, 4/*name idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ClassMethod,
+        4/*name idx*/, 3/*ip addr*/
       )
     );
     DeclareOpcode(
@@ -841,11 +853,20 @@ public class ModuleCompiler : AST_Visitor
     for(int i=0;i<ast.children.Count;++i)
     {
       var child = ast.children[i];
-      var vd = child as AST_VarDecl;
-      if(vd != null)
+      if(child is AST_VarDecl vd)
       {
         cl.Define(new FieldSymbolScript(vd.name, vd.type));
         Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name) });
+      }
+      else if(child is AST_FuncDecl fd)
+      {
+        cl.Define(new FuncSymbolScript(cl, fd));
+
+        Emit(Opcodes.ClassMethod, new int[] { AddConstant(fd.name) });
+
+        UseCode();
+        Visit(child);
+        UseInit();
       }
     }
     Emit(Opcodes.ClassEnd);
@@ -1132,13 +1153,20 @@ public class ModuleCompiler : AST_Visitor
         var class_symb = symbols.Resolve(ast.scope_type) as ClassSymbol;
         if(class_symb == null)
           throw new Exception("Class type not found: " + ast.scope_type);
+
+        var mfunc = class_symb.members.Find(ast.name) as FuncSymbol;
+
+        //TODO: why not storing index in mfunc?
         int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
         if(memb_idx == -1)
           throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_type);
 
         VisitChildren(ast);
         
-        Emit(Opcodes.CallMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
+        if(mfunc is FuncSymbolScript)
+          Emit(Opcodes.CallMethod, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
+        else
+          Emit(Opcodes.CallMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
