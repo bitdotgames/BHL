@@ -816,16 +816,6 @@ static public class AST_Util
     return n;
   }
 
-  static public HashedName Name(this AST_Call n)
-  {
-    return new HashedName(n.nname(), n.name);
-  }
-
-  static public ulong nname(this AST_Call n)
-  {
-    return ((ulong)n.nname2 << 32) | ((ulong)n.nname1);
-  }
-
   static public ulong FuncId(this AST_Call n)
   {
     if(n.nname2 == 0)
@@ -1189,7 +1179,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Call node)
   {
     Console.Write("(CALL ");
-    Console.Write(node.type + " " + node.name + " " + node.nname());
+    Console.Write(node.type + " " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
