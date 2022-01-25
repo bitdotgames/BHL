@@ -453,10 +453,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), null, 
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
@@ -495,10 +495,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), null, 
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
@@ -532,10 +532,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), null, 
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var a = args_info.IsDefaultArgUsed(0) ? 14 : frm.stack.PopRelease().num;
@@ -567,10 +567,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), null, 
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(1) ? 2 : frm.stack.PopRelease().num;
@@ -630,10 +630,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("foo", globs.Type("float"), null,
+      var fn = new FuncSymbolNative("foo", globs.Type("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             status = BHS.FAILURE; 
             return null;
@@ -855,7 +855,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -909,7 +909,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -1151,7 +1151,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_mult", globs.Type("float,string"), null, 
+      var fn = new FuncSymbolNative("func_mult", globs.Type("float,string"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
             frm.stack.Push(Val.NewStr(frm.vm, "foo"));
@@ -1203,7 +1203,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_mult", globs.Type("float,string,int,float"), null, 
+      var fn = new FuncSymbolNative("func_mult", globs.Type("float,string,int,float"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
             frm.stack.Push(Val.NewNum(frm.vm, 42.5));
@@ -3055,7 +3055,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var globs = SymbolTable.VM_CreateBuiltins();
     
-    var fn = new FuncSymbolNative("answer42", globs.Type("int"), null,
+    var fn = new FuncSymbolNative("answer42", globs.Type("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.stack.Push(Val.NewNum(frm.vm, 42));
           return null;
@@ -4028,10 +4028,10 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -6068,7 +6068,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
 
     {
-      var fn = new FuncSymbolNative("foo", globs.Type("void"), null, 
+      var fn = new FuncSymbolNative("foo", globs.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS _)
           {
             log.Append("FOO");
@@ -6187,7 +6187,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
-    var fn = new FuncSymbolNative("native", globs.Type("void"), null,
+    var fn = new FuncSymbolNative("native", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           log.Append("HERE");
           return null;
@@ -6236,7 +6236,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
     {
-      var fn = new FuncSymbolNative("yield_and_trace", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("yield_and_trace", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var inst = CoroutinePool.New<TraceAfterYield>(frm.vm);
@@ -7175,7 +7175,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_ref", globs.Type("void"), null, 
+      var fn = new FuncSymbolNative("func_with_ref", globs.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = frm.stack.Pop();
@@ -8151,10 +8151,10 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "test") })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -8218,10 +8218,10 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -8229,7 +8229,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Call, new int[] { 0, 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -8368,14 +8368,14 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "tst") })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrSetIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrSetIdx, ConstIdx(c, "[]"), 3 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -9422,7 +9422,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("foo", globs.Type("int"), null,
+      var fn = new FuncSymbolNative("foo", globs.Type("int"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             frm.stack.PopRelease();
             frm.stack.Push(Val.NewNum(frm.vm, 42));
@@ -9433,7 +9433,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     {
-      var fn = new FuncSymbolNative("bar_fail", globs.Type("int"), null,
+      var fn = new FuncSymbolNative("bar_fail", globs.Type("int"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             frm.stack.PopRelease();
             status = BHS.FAILURE;
@@ -9529,7 +9529,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("hey", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("hey", globs.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           { return null; }
       );
@@ -9728,7 +9728,7 @@ public class BHL_TestVM : BHL_TestBase
     BindTrace(globs, log);
 
     {
-      var fn = new FuncSymbolNative("foo", globs.Type("Foo"), null,
+      var fn = new FuncSymbolNative("foo", globs.Type("Foo"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
           var fn_ptr = frm.stack.Pop();
           frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
@@ -10315,7 +10315,7 @@ public class BHL_TestVM : BHL_TestBase
       globs.Define(cl);
 
       {
-        var m = new FuncSymbolNative("self", globs.Type("Bar"), null,
+        var m = new FuncSymbolNative("self", globs.Type("Bar"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             var obj = frm.stack.PopRelease().obj;
             frm.stack.Push(Val.NewObj(frm.vm, obj));
@@ -10326,7 +10326,7 @@ public class BHL_TestVM : BHL_TestBase
       }
 
       {
-        var m = new FuncSymbolNative("ret_int", globs.Type("int"), null,
+        var m = new FuncSymbolNative("ret_int", globs.Type("int"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             return CoroutinePool.New<Bar_ret_int>(frm.vm);
@@ -11009,7 +11009,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11385,7 +11385,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -12112,6 +12112,171 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestTypeidForBuiltinType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(int)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, Hash.CRC28("int"));
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidForBuiltinArrType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(int[])
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, Hash.CRC28("int[]"));
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidForUserClass()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func int test() 
+    {
+      return typeid(Foo)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, Hash.CRC28("Foo"));
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidEqual()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func bool test() 
+    {
+      return typeid(Foo) == typeid(Foo)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidNotEqual()
+  {
+    string bhl = @"
+
+    class Foo { }
+    class Bar { }
+      
+    func bool test() 
+    {
+      return typeid(Foo) == typeid(Bar)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertFalse(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidNotEqualArrType()
+  {
+    string bhl = @"
+
+    func bool test() 
+    {
+      return typeid(int[]) == typeid(float[])
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertFalse(Execute(vm, "test").stack.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestTypeidBadType()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      return typeid(Foo)
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"type 'Foo' not found"
+    );
+  }
+
+  //TODO: do we really need it?
+  //[IsTested()]
+  public void TestTypeidIsEncodedInUserClassObj()
+  {
+    string bhl = @"
+
+    class Foo { }
+      
+    func Foo test() 
+    {
+      return {}
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var val = Execute(vm, "test").stack.Pop();
+    AssertEqual(val.num, Hash.CRC28("Foo"));
+    val.Release();
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestTypeidIsEncodedInUserClassInHierarchy()
+  {
+    string bhl = @"
+
+    class Foo { }
+    class Bar : Foo { }
+      
+    func Bar test() 
+    {
+      return {}
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var val = Execute(vm, "test").stack.Pop();
+    AssertEqual(val.num, Hash.CRC28("Bar"));
+    val.Release();
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassWithSimpleMembers()
   {
     string bhl = @"
@@ -12555,7 +12720,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserClassMethodDecl()
+  public void TestUserClassMethod()
   {
     string bhl = @"
 
@@ -12584,7 +12749,7 @@ public class BHL_TestVM : BHL_TestBase
       .UseInit()
       .EmitThen(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Foo"), -1 })
       .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "a") })
-      .EmitThen(Opcodes.ClassMethod, new int[] { ConstIdx(c, "getA") })
+      .EmitThen(Opcodes.ClassMethod, new int[] { ConstIdx(c, "getA"), 0 })
       .EmitThen(Opcodes.ClassEnd)
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
@@ -12611,7 +12776,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSeveralUserClassMethodDecl()
+  public void TestSeveralUserClassMethods()
   {
     string bhl = @"
 
@@ -12622,12 +12787,12 @@ public class BHL_TestVM : BHL_TestBase
 
       func int getA()
       {
-        return this.b
+        return this.a
       }
 
       func int getB() 
       {
-        return this.a
+        return this.b
       }
     }
 
@@ -12635,13 +12800,13 @@ public class BHL_TestVM : BHL_TestBase
     {
       Foo f = {}
       f.a = 10
-      f.b = 10
+      f.b = 20
       return f.getA() + f.getB()
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(20, Execute(vm, "test").stack.PopRelease().num);
+    AssertEqual(30, Execute(vm, "test").stack.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -13108,7 +13273,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     BindColor(globs);
 
     AssertError<UserError>(
@@ -13498,11 +13663,11 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 2 })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
@@ -14388,7 +14553,7 @@ public class BHL_TestVM : BHL_TestBase
   //  }
   //  ";
 
-  //  var globs = SymbolTable.CreateBuiltins();
+  //  var globs = SymbolTable.VM_CreateBuiltins();
   //  var trace_stream = new MemoryStream();
 
   //  BindTrace(globs, trace_stream);
@@ -14878,7 +15043,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
 
     AssertError<UserError>(
       delegate() { 
@@ -15641,7 +15806,7 @@ public class BHL_TestVM : BHL_TestBase
     BindColor(globs);
 
     {
-      var cl = new ClassSymbolNative("ColorNested", null, null,
+      var cl = new ClassSymbolNative("ColorNested", null,
         delegate(VM.Frame frm, ref Val v) 
         { 
           v.obj = new ColorNested();
@@ -15650,7 +15815,7 @@ public class BHL_TestVM : BHL_TestBase
 
       globs.Define(cl);
 
-      cl.Define(new FieldSymbol("c", globs.Type("Color"), null, null, null,
+      cl.Define(new FieldSymbol("c", globs.Type("Color"), 
         delegate(Val ctx, ref Val v)
         {
           var cn = (ColorNested)ctx.obj;
@@ -16031,11 +16196,11 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 2 })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 0 })
@@ -16514,7 +16679,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     
     var cl = BindColor(globs);
-    var op = new FuncSymbolNative("+", globs.Type("Color"), null,
+    var op = new FuncSymbolNative("+", globs.Type("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var r = (Color)frm.stack.PopRelease().obj;
@@ -16556,7 +16721,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     
     var cl = BindColor(globs);
-    var op = new FuncSymbolNative("*", globs.Type("Color"), null,
+    var op = new FuncSymbolNative("*", globs.Type("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var k = (float)frm.stack.PopRelease().num;
@@ -16600,7 +16765,7 @@ public class BHL_TestVM : BHL_TestBase
     
     var cl = BindColor(globs);
     {
-      var op = new FuncSymbolNative("*", globs.Type("Color"), null,
+      var op = new FuncSymbolNative("*", globs.Type("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var k = (float)frm.stack.PopRelease().num;
@@ -16621,7 +16786,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     
     {
-      var op = new FuncSymbolNative("+", globs.Type("Color"), null,
+      var op = new FuncSymbolNative("+", globs.Type("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var r = (Color)frm.stack.PopRelease().obj;
@@ -16672,7 +16837,7 @@ public class BHL_TestVM : BHL_TestBase
     BindTrace(globs, log);
     
     var cl = BindColor(globs);
-    var op = new FuncSymbolNative("==", globs.Type("bool"), null,
+    var op = new FuncSymbolNative("==", globs.Type("bool"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var arg = (Color)frm.stack.PopRelease().obj;
@@ -16708,7 +16873,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     
     var cl = BindColor(globs);
-    var op = new FuncSymbolNative("*", globs.Type("Color"), null, null);
+    var op = new FuncSymbolNative("*", globs.Type("Color"), null);
     op.Define(new FuncArgSymbol("k", globs.Type("float")));
     cl.OverloadBinaryOperator(op);
 
@@ -16900,7 +17065,7 @@ public class BHL_TestVM : BHL_TestBase
     BindEnum(globs);
 
     {
-      var fn = new FuncSymbolNative("StateIs", globs.Type("bool"), null,
+      var fn = new FuncSymbolNative("StateIs", globs.Type("bool"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           var n = frm.stack.PopRelease().num;
           frm.stack.Push(Val.NewBool(frm.vm, n == 20));
@@ -17124,7 +17289,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.CreateBuiltins();
+    var globs = SymbolTable.VM_CreateBuiltins();
     AssertError<UserError>(
       delegate() { 
         Compile(bhl, globs);
@@ -18335,7 +18500,7 @@ public class BHL_TestVM : BHL_TestBase
     BindStartScriptInMgr(globs);
 
     {
-      var fn = new FuncSymbolNative("say_here", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("say_here", globs.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             log.Append("HERE;");
@@ -18539,7 +18704,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -18617,7 +18782,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -18749,7 +18914,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
     {
-      var fn = new FuncSymbolNative("throw", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("throw", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           //emulating null reference
           frm = null;
@@ -18839,7 +19004,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -18918,7 +19083,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.VM_CreateBuiltins();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -18976,7 +19141,7 @@ public class BHL_TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseInit()
-      .EmitThen(Opcodes.DeclVar, new int[] { 0 })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, (int)Val.NUMBER })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.GetGVar, new int[] { 0 })
@@ -20279,7 +20444,7 @@ public class BHL_TestVM : BHL_TestBase
 
   FuncSymbolNative BindTrace(GlobalScope globs, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("trace", globs.Type("void"), null,
+    var fn = new FuncSymbolNative("trace", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           string str = frm.stack.PopRelease().str;
           log.Append(str);
@@ -20295,7 +20460,7 @@ public class BHL_TestVM : BHL_TestBase
   void BindLog(GlobalScope globs)
   {
     {
-      var fn = new FuncSymbolNative("log", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("log", globs.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             string str = frm.stack.PopRelease().str;
             Console.WriteLine(str); 
@@ -20309,7 +20474,7 @@ public class BHL_TestVM : BHL_TestBase
 
   void BindMin(GlobalScope globs)
   {
-    var fn = new FuncSymbolNative("min", globs.Type("float"), null,
+    var fn = new FuncSymbolNative("min", globs.Type("float"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           var b = (float)frm.stack.PopRelease().num;
           var a = (float)frm.stack.PopRelease().num;
@@ -20350,7 +20515,7 @@ public class BHL_TestVM : BHL_TestBase
 
   ClassSymbolNative BindColor(GlobalScope globs)
   {
-    var cl = new ClassSymbolNative("Color", null, null,
+    var cl = new ClassSymbolNative("Color", null,
       delegate(VM.Frame frm, ref Val v) 
       { 
         v.obj = new Color();
@@ -20358,7 +20523,7 @@ public class BHL_TestVM : BHL_TestBase
     );
 
     globs.Define(cl);
-    cl.Define(new FieldSymbol("r", globs.Type("float"), null, null, null,
+    cl.Define(new FieldSymbol("r", globs.Type("float"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Color)ctx.obj;
@@ -20371,7 +20536,7 @@ public class BHL_TestVM : BHL_TestBase
         ctx.obj = c;
       }
     ));
-    cl.Define(new FieldSymbol("g", globs.Type("float"), null, null, null,
+    cl.Define(new FieldSymbol("g", globs.Type("float"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Color)ctx.obj;
@@ -20386,7 +20551,7 @@ public class BHL_TestVM : BHL_TestBase
     ));
 
     {
-      var m = new FuncSymbolNative("Add", globs.Type("Color"), null,
+      var m = new FuncSymbolNative("Add", globs.Type("Color"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
           var k = (float)frm.stack.PopRelease().num;
@@ -20408,7 +20573,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     
     {
-      var m = new FuncSymbolNative("mult_summ", globs.Type("float"), null,
+      var m = new FuncSymbolNative("mult_summ", globs.Type("float"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
           var k = frm.stack.PopRelease().num;
@@ -20423,7 +20588,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     
     {
-      var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"), null,
+      var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             var r = frm.stack.PopRelease().num;
             var c = new Color();
@@ -20439,7 +20604,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     
     {
-      var fn = new FuncSymbolNative("mkcolor_null", globs.Type("Color"), null,
+      var fn = new FuncSymbolNative("mkcolor_null", globs.Type("Color"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             frm.stack.Push(Val.NewNil(frm.vm));
             return null;
@@ -20460,7 +20625,7 @@ public class BHL_TestVM : BHL_TestBase
       BindColor(globs);
 
     {
-      var cl = new ClassSymbolNative("ColorAlpha", globs.Type("Color"), null,
+      var cl = new ClassSymbolNative("ColorAlpha", globs.Type("Color"),
         delegate(VM.Frame frm, ref Val v) 
         { 
           v.obj = new ColorAlpha();
@@ -20469,7 +20634,7 @@ public class BHL_TestVM : BHL_TestBase
 
       globs.Define(cl);
 
-      cl.Define(new FieldSymbol("a", globs.Type("float"), null, null, null,
+      cl.Define(new FieldSymbol("a", globs.Type("float"),
         delegate(Val ctx, ref Val v)
         {
           var c = (ColorAlpha)ctx.obj;
@@ -20484,7 +20649,7 @@ public class BHL_TestVM : BHL_TestBase
       ));
 
       {
-        var m = new FuncSymbolNative("mult_summ_alpha", globs.Type("float"), null,
+        var m = new FuncSymbolNative("mult_summ_alpha", globs.Type("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var c = (ColorAlpha)frm.stack.PopRelease().obj;
@@ -20528,7 +20693,7 @@ public class BHL_TestVM : BHL_TestBase
 
       globs.Define(cl);
 
-      cl.Define(new FieldSymbol("n", globs.Type("int"), null, null, null,
+      cl.Define(new FieldSymbol("n", globs.Type("int"),
         delegate(Val ctx, ref Val v)
         {
           var s = new IntStruct();
@@ -20563,7 +20728,7 @@ public class BHL_TestVM : BHL_TestBase
 
       globs.Define(cl);
 
-      cl.Define(new FieldSymbol("str", globs.Type("string"), null, null, null,
+      cl.Define(new FieldSymbol("str", globs.Type("string"),
         delegate(Val ctx, ref Val v)
         {
           var c = (StringClass)ctx.obj;
@@ -20605,7 +20770,7 @@ public class BHL_TestVM : BHL_TestBase
 
       globs.Define(cl);
 
-      cl.Define(new FieldSymbol("child", globs.Type("StringClass"), null, null, null,
+      cl.Define(new FieldSymbol("child", globs.Type("StringClass"),
         delegate(Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -20619,7 +20784,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child2", globs.Type("StringClass"), null, null, null,
+      cl.Define(new FieldSymbol("child2", globs.Type("StringClass"),
         delegate(Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -20633,7 +20798,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child_struct", globs.Type("IntStruct"), null, null, null,
+      cl.Define(new FieldSymbol("child_struct", globs.Type("IntStruct"),
         delegate(Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -20649,7 +20814,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child_struct2", globs.Type("IntStruct"), null, null, null,
+      cl.Define(new FieldSymbol("child_struct2", globs.Type("IntStruct"),
         delegate(Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -20693,7 +20858,7 @@ public class BHL_TestVM : BHL_TestBase
       );
       globs.Define(cl);
 
-      cl.Define(new FieldSymbol("hey", globs.Type("int"), null, null, null,
+      cl.Define(new FieldSymbol("hey", globs.Type("int"),
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
@@ -20706,7 +20871,7 @@ public class BHL_TestVM : BHL_TestBase
           ctx.obj = f;
         }
       ));
-      cl.Define(new FieldSymbol("colors", globs.Type("ArrayT_Color"), null, null, null,
+      cl.Define(new FieldSymbol("colors", globs.Type("ArrayT_Color"),
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
@@ -20718,7 +20883,7 @@ public class BHL_TestVM : BHL_TestBase
           f.colors = (List<Color>)v.obj;
         }
       ));
-      cl.Define(new FieldSymbol("sub_color", globs.Type("Color"), null, null, null,
+      cl.Define(new FieldSymbol("sub_color", globs.Type("Color"),
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
@@ -20734,7 +20899,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     {
-      var fn = new FuncSymbolNative("PassthruFoo", globs.Type("Foo"), null,
+      var fn = new FuncSymbolNative("PassthruFoo", globs.Type("Foo"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             frm.stack.Push(frm.stack.Pop());
             return null;
@@ -20769,7 +20934,7 @@ public class BHL_TestVM : BHL_TestBase
 
   FuncSymbolNative BindWaitTicks(GlobalScope globs, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"), null,
+    var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           return CoroutinePool.New<CoroutineWaitTicks>(frm.vm);
         } 
@@ -20796,7 +20961,7 @@ public class BHL_TestVM : BHL_TestBase
     );
 
     globs.Define(cl);
-    cl.Define(new FieldSymbol("Int", globs.Type("int"), null, null, null,
+    cl.Define(new FieldSymbol("Int", globs.Type("int"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
@@ -20809,7 +20974,7 @@ public class BHL_TestVM : BHL_TestBase
         ctx.obj = c;
       }
     ));
-    cl.Define(new FieldSymbol("Flt", globs.Type("float"), null, null, null,
+    cl.Define(new FieldSymbol("Flt", globs.Type("float"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
@@ -20822,7 +20987,7 @@ public class BHL_TestVM : BHL_TestBase
         ctx.obj = c;
       }
     ));
-    cl.Define(new FieldSymbol("Str", globs.Type("string"), null, null, null,
+    cl.Define(new FieldSymbol("Str", globs.Type("string"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
@@ -20874,7 +21039,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
       {
-        var vs = new bhl.FieldSymbol("refs", globs.Type("int"), null, null, null,
+        var vs = new bhl.FieldSymbol("refs", globs.Type("int"),
           delegate(Val ctx, ref Val v)
           {
             v.num = ((RefC)ctx.obj).refs;
@@ -20891,7 +21056,7 @@ public class BHL_TestVM : BHL_TestBase
   void BindStartScriptInMgr(GlobalScope globs)
   {
     {
-      var fn = new FuncSymbolNative("StartScriptInMgr", globs.Type("void"), null,
+      var fn = new FuncSymbolNative("StartScriptInMgr", globs.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             int spawns = (int)frm.stack.PopRelease().num;
             var ptr = frm.stack.Pop();

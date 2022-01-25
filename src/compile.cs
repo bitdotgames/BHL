@@ -675,6 +675,8 @@ public class ModuleCompiler : AST_Visitor
   Instruction Emit(Opcodes op, int[] operands = null, int line_num = 0)
   {
     var inst = new Instruction(op);
+    if(inst.operands.Length != (operands == null ? 0 : operands.Length))
+      throw new Exception("Invalid operands amount for opcode:" + op);
     for(int i=0;i<operands?.Length;++i)
       inst.SetOperand(i, operands[i]);
     inst.line_num = line_num;
@@ -694,7 +696,7 @@ public class ModuleCompiler : AST_Visitor
   {
     //condition
     Visit(ast.children[idx]);
-    var jump_op = Emit(Opcodes.JumpZ);
+    var jump_op = Emit(Opcodes.JumpZ, new int[] { 0 });
     Visit(ast.children[idx+1]);
     return jump_op;
   }
@@ -853,6 +855,7 @@ public class ModuleCompiler : AST_Visitor
     for(int i=0;i<ast.children.Count;++i)
     {
       var child = ast.children[i];
+
       if(child is AST_VarDecl vd)
       {
         cl.Define(new FieldSymbolScript(vd.name, vd.type));
@@ -862,10 +865,12 @@ public class ModuleCompiler : AST_Visitor
       {
         cl.Define(new FuncSymbolScript(cl, fd));
 
-        Emit(Opcodes.ClassMethod, new int[] { AddConstant(fd.name) });
+        var inst = Emit(Opcodes.ClassMethod, new int[] { AddConstant(fd.name), 0/*ip addr*/ });
 
         UseCode();
-        Visit(child);
+        //patching class method's ip address
+        inst.SetOperand(1, GetCodeSize());
+        Visit(fd);
         UseInit();
       }
     }
@@ -923,7 +928,7 @@ public class ModuleCompiler : AST_Visitor
           //it's required only if there are other 'else if' or 'else'
           if(ast.children.Count > 2)
           {
-            last_jmp_op = Emit(Opcodes.Jump);
+            last_jmp_op = Emit(Opcodes.Jump, new int[] { 0 });
             AddJumpFromTo(if_op, Peek());
           }
           else
@@ -948,7 +953,7 @@ public class ModuleCompiler : AST_Visitor
         var cond_op = EmitConditionPlaceholderAndBody(ast, 0);
 
         //to the beginning of the loop
-        var jump_op = Emit(Opcodes.Jump);
+        var jump_op = Emit(Opcodes.Jump, new int[] { 0 });
         AddJumpFromTo(jump_op, begin_op);
 
         //patch 'jump out of the loop' position
@@ -1164,9 +1169,9 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         
         if(mfunc is FuncSymbolScript)
-          Emit(Opcodes.CallMethod, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
+          Emit(Opcodes.CallMethod, new int[] {memb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, (int)ast.line_num);
         else
-          Emit(Opcodes.CallMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type)}, (int)ast.line_num);
+          Emit(Opcodes.CallMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
@@ -1182,13 +1187,13 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.ARR_IDX:
       {
         var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_At, AddConstant(arr_symb.name.s), 0 }, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_At, AddConstant(arr_symb.name.s), 1 }, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
         var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_SetAt, AddConstant(arr_symb.name.s), 0}, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_SetAt, AddConstant(arr_symb.name.s), 3 }, (int)ast.line_num);
       }
       break;
       case EnumCall.LMBD:
@@ -1429,7 +1434,8 @@ public class ModuleCompiler : AST_Visitor
     }
     else
     {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)0});
+      byte val_type = MapToValType(ast.type);
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)val_type });
     }
   }
 
@@ -1454,7 +1460,7 @@ public class ModuleCompiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 0 });
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 1 });
       }
       else
         Visit(c);
@@ -1463,7 +1469,7 @@ public class ModuleCompiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 0 });
+      Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_AddInplace, AddConstant(ast.type), 1 });
     }
   }
 
