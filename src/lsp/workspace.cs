@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 using Antlr4.Runtime;
 using bhl;
 
@@ -9,48 +8,13 @@ namespace bhlsp
 {
   public abstract class BHLSPTextDocument
   {
-    protected string[] lines;
-    protected string text;
+    public string text;
     
-    public virtual void Sync(string text)
-    {
-      lines = text.Split('\n');
-      this.text = text;
-    }
-    
-    public virtual void Sync(string[] lines)
-    {
-      this.lines = lines;
-      for(int i = 0; i < lines.Length; i++)
-        text += lines[i];
-    }
-    
-    public virtual void Sync(TextDocumentContentChangeEvent changeEvent)
-    {
-      if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Full)
-      {
-        Sync(changeEvent.text);
-      }
-      else if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Incremental)
-      {
-        //TODO: ...
-      }
-    }
-
-    public abstract TextDocumentSignatureHelpContext GetSignatureHelp(Position position);
-    public abstract List<IFuncDecl> GetFuncDeclsByName(string funcName);
-  }
-
-  public class TextDocumentSignatureHelpContext
-  {
-    public string line;
-    public string funcName;
-    public int funcNameStartIdx;
+    public abstract List<IFuncDecl> FindFuncDeclsByName(string funcName);
   }
   
   public interface IFuncDecl
   {
-    
   }
   
   public class BHLFuncDecl : IFuncDecl
@@ -67,61 +31,19 @@ namespace bhlsp
   {
     List<BHLFuncDecl> funcDecls = new List<BHLFuncDecl>();
     
-    public override void Sync(string text)
+    public override List<IFuncDecl> FindFuncDeclsByName(string funcName)
     {
-      base.Sync(text);
       FindFuncDecls();
-    }
-    
-    public override void Sync(string[] lines)
-    {
-      base.Sync(lines);
-      FindFuncDecls();
-    }
-
-    public override void Sync(TextDocumentContentChangeEvent changeEvent)
-    {
-      base.Sync(changeEvent);
-      FindFuncDecls();
-    }
-
-    public override TextDocumentSignatureHelpContext GetSignatureHelp(Position position)
-    {
-      TextDocumentSignatureHelpContext result = new TextDocumentSignatureHelpContext();
-
-      result.line = lines[position.line];
       
-      string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
-      MatchCollection matches = Regex.Matches(result.line, pattern, RegexOptions.Multiline);
-      for(int i = matches.Count-1; i >= 0; i--)
-      {
-        var m = matches[i];
-        if(m.Index < position.character)
-        {
-          string v = m.Value;
-          int len = v.Length - 1;
-
-          if(len > 0)
-          {
-            result.funcName = result.line.Substring(m.Index, len);
-            result.funcNameStartIdx = m.Index;
-            break;
-          }
-        }
-      }
-      
-      return result;
-    }
-
-    public override List<IFuncDecl> GetFuncDeclsByName(string funcName)
-    {
       List<IFuncDecl> result = new List<IFuncDecl>();
       if(!string.IsNullOrEmpty(funcName))
       {
         for(int i = 0; i < funcDecls.Count; i++)
         {
           var funcDecl = funcDecls[i];
-          if(funcDecl.ctx.NAME().GetText() == funcName)
+          var name = funcDecl.ctx.NAME();
+          
+          if(name != null && name.GetText() == funcName)
             result.Add(funcDecl);
         }
       }
@@ -151,7 +73,7 @@ namespace bhlsp
       for(int i = 0; i < progblock.Length; ++i)
       {
         var decls = progblock[i].decls().decl();
-        for (int j = 0; j < decls.Length; j++)
+        for(int j = 0; j < decls.Length; j++)
         {
           var fndecl = decls[j].funcDecl();
           if(fndecl != null)
@@ -176,7 +98,6 @@ namespace bhlsp
       }
     }
     
-    private Dictionary<string, WorkspaceFolder> folders = new Dictionary<string, WorkspaceFolder>();
     private Dictionary<string, BHLSPTextDocument> documents = new Dictionary<string, BHLSPTextDocument>();
 
     public TextDocumentSyncKind syncKind { get; set; } = TextDocumentSyncKind.Full;
@@ -188,47 +109,49 @@ namespace bhlsp
     
     public void Shutdown()
     {
-      folders.Clear();
       documents.Clear();
     }
     
-    public void TryAddFolder(string path)
+    public void TryAddTextDocuments(string pathFolder)
     {
-      TryAddFolder(new Uri(path));
+      TryAddTextDocuments(new Uri(pathFolder));
     }
     
-    public void TryAddFolder(Uri uri)
+    public void TryAddTextDocuments(WorkspaceFolder folder)
     {
-      TryAddFolder(new WorkspaceFolder
-      {
-        uri = uri,
-        name = uri.LocalPath.Substring(uri.LocalPath.LastIndexOf("/") + 1)
-      });
+      TryAddTextDocuments(folder.uri);
     }
     
-    public void TryAddFolder(WorkspaceFolder folder)
+    public void TryAddTextDocuments(Uri uriFolder)
     {
-      if(!Directory.Exists(folder.uri.LocalPath) || folders.ContainsKey(folder.uri.LocalPath))
+      if(!Directory.Exists(uriFolder.LocalPath))
         return;
       
-      folders.Add(folder.uri.LocalPath, folder);
-      //TryAddTextDocuments(folder);
-    }
+      var sw = new System.Diagnostics.Stopwatch();
+      sw.Start();
 
-    public void TryAddTextDocument(string path, string text = null)
-    {
-      TryAddTextDocument(new Uri($"file://{path}"), text);
+      SearchFolderFiles(uriFolder.LocalPath, path => TryAddTextDocument(path));
+      
+      sw.Stop();
+      BHLSPLogger.WriteLine($"SearchFolderFiles done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
     
-    public void TryAddTextDocument(Uri uri, string text = null)
+    void SearchFolderFiles(string targetDirectory, Action<string> onFile)
     {
-      if(!File.Exists(uri.LocalPath))
-        return;
-      
+      foreach(string filePath in Directory.GetFiles(targetDirectory, "*", SearchOption.AllDirectories))
+        onFile?.Invoke(filePath);
+    }
+    
+    public void TryAddTextDocument(string path)
+    {
+      TryAddTextDocument(new Uri(String.Concat("file://", path)));
+    }
+    
+    public void TryAddTextDocument(Uri uri)
+    {
       if(!documents.ContainsKey(uri.LocalPath))
       {
         BHLSPTextDocument document;
-
         string ext = Path.GetExtension(uri.LocalPath);
         switch(ext)
         {
@@ -236,80 +159,38 @@ namespace bhlsp
             document = new BHLTextDocument();
             break;
           default:
-              return;
+            return;
         }
         
-        if(!string.IsNullOrEmpty(text))
-          document.Sync(text);
-        else
-          document.Sync(System.IO.File.ReadAllLines(uri.LocalPath));
+        document.text = System.IO.File.ReadAllText(uri.LocalPath);
         
         documents.Add(uri.LocalPath, document);
       }
     }
 
-    public List<BHLSPTextDocument> FindTextDocuments(TextDocumentSignatureHelpContext signatureHelp)
+    public List<IFuncDecl> FindFuncDeclsByName(string funcName)
     {
-      List<BHLSPTextDocument> result = new List<BHLSPTextDocument>();
+      List<IFuncDecl> result = new List<IFuncDecl>();
       foreach(var document in documents.Values)
       {
-        if(!string.IsNullOrEmpty(signatureHelp.funcName))
-        {
-          var decls = document.GetFuncDeclsByName(signatureHelp.funcName);
-          if(decls.Count > 0)
-            result.Add(document);
-        }
+        var decls = document.FindFuncDeclsByName(funcName);
+        if(decls.Count > 0)
+          result.AddRange(decls);
       }
       return result;
     }
     
-    public BHLSPTextDocument GetTextDocument(Uri uri)
+    public BHLSPTextDocument FindTextDocument(Uri uri)
     {
-      return GetTextDocument(uri.LocalPath);
+      return FindTextDocument(uri.LocalPath);
     }
     
-    public BHLSPTextDocument GetTextDocument(string path)
+    public BHLSPTextDocument FindTextDocument(string path)
     {
       if(documents.ContainsKey(path))
         return documents[path];
 
       return null;
-    }
-    
-    public void OpenTextDocument(TextDocumentItem textDocument)
-    {
-      TryAddTextDocument(textDocument.uri, textDocument.text);
-    }
-    
-    public void ChangeTextDocument(VersionedTextDocumentIdentifier textDocument, TextDocumentContentChangeEvent[] contentChanges)
-    {
-      if(syncKind != TextDocumentSyncKind.None && GetTextDocument(textDocument.uri) is BHLSPTextDocument document)
-      {
-        for (int i = 0; i < contentChanges.Length; i++)
-          document.Sync(contentChanges[i]);
-      }
-    }
-    
-    public void CloseTextDocument(TextDocumentIdentifier textDocument)
-    {
-      
-    }
-    
-    void TryAddTextDocuments(WorkspaceFolder folder)
-    {
-      SearchFolderFiles(folder.uri.LocalPath, path => TryAddTextDocument(path));
-    }
-    
-    void SearchFolderFiles(string targetDirectory, Action<string> on_file, bool recursive = true)
-    {
-      foreach(string fileName in Directory.GetFiles(targetDirectory))
-        on_file?.Invoke(fileName);
-
-      if(recursive)
-      {
-        foreach(string subdirectory in Directory.GetDirectories(targetDirectory))
-          SearchFolderFiles(subdirectory, on_file);
-      }
     }
   }
 }

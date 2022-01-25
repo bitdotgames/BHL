@@ -173,11 +173,11 @@ public class TestLSP : BHL_TestBase
       string.Empty
     );
 
-    var document = BHLSPWorkspace.self.GetTextDocument(uri);
-    var signatureHelp = document.GetSignatureHelp(new Position{line = 1});
+    var document = BHLSPWorkspace.self.FindTextDocument(uri);
+    string line = document.Text.Split('\n')[1];
     
     AssertEqual(
-      signatureHelp.line,
+      line,
       "    func float test1(float k) "
     );
     
@@ -197,10 +197,10 @@ public class TestLSP : BHL_TestBase
       string.Empty
     );
     
-    signatureHelp = document.GetSignatureHelp(new Position{line = 1});
+    line = document.Text.Split('\n')[1];
     
     AssertEqual(
-      signatureHelp.line,
+      line,
       "    func float test1(float k, int j) "
     );
     
@@ -244,7 +244,7 @@ public class TestLSP : BHL_TestBase
     
     var files = new List<string>();
     NewTestDocument("bhl1.bhl", bhl1, files);
-
+    
     Uri uri = GetUri(files[0]);
 
     var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
