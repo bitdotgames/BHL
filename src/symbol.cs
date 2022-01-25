@@ -77,7 +77,7 @@ public class TypeRef
   }
 }
 
-public class WrappedNode
+public class ParserWrappedNode
 {
 #if BHL_FRONT
   public IParseTree tree;
@@ -133,7 +133,7 @@ public class WrappedNode
 public class Symbol 
 {
   // Location in parse tree, can be null if it's a binding
-  public WrappedNode node;
+  public ParserWrappedNode node;
   // All symbols at least have a name
   public HashedName name;
   public TypeRef type;
@@ -144,13 +144,13 @@ public class Symbol
   public int scope_level;
   public bool is_out_of_scope;
 
-  public Symbol(WrappedNode node, HashedName name) 
+  public Symbol(ParserWrappedNode node, HashedName name) 
   { 
     this.node = node;
     this.name = name; 
   }
 
-  public Symbol(WrappedNode node, HashedName name, TypeRef type) 
+  public Symbol(ParserWrappedNode node, HashedName name, TypeRef type) 
     : this(node, name) 
   { 
     this.type = type; 
@@ -197,7 +197,7 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   public VM.ClassCreator creator;
 
   public ClassSymbol(
-    WrappedNode n, 
+    ParserWrappedNode n, 
     HashedName name, 
     ClassSymbol super_class, 
     Scope enclosing_scope, 
@@ -576,7 +576,7 @@ public class VariableSymbol : Symbol
 {
   public int scope_idx = -1;
 
-  public VariableSymbol(WrappedNode n, HashedName name, TypeRef type) 
+  public VariableSymbol(ParserWrappedNode n, HashedName name, TypeRef type) 
     : base(n, name, type) 
   {}
 
@@ -597,7 +597,7 @@ public class FuncArgSymbol : VariableSymbol
 {
   public bool is_ref;
 
-  public FuncArgSymbol(WrappedNode n, HashedName name, TypeRef type, bool is_ref = false)
+  public FuncArgSymbol(ParserWrappedNode n, HashedName name, TypeRef type, bool is_ref = false)
     : base(n, name, type)
   {
     this.is_ref = is_ref;
@@ -667,13 +667,13 @@ public abstract class ScopedSymbol : Symbol, Scope
 
   public abstract SymbolsDictionary GetMembers();
 
-  public ScopedSymbol(WrappedNode n, HashedName name, TypeRef type, Scope enclosing_scope) 
+  public ScopedSymbol(ParserWrappedNode n, HashedName name, TypeRef type, Scope enclosing_scope) 
     : base(n, name, type)
   {
     this.enclosing_scope = enclosing_scope;
   }
 
-  public ScopedSymbol(WrappedNode n, HashedName name, Scope enclosing_scope) 
+  public ScopedSymbol(ParserWrappedNode n, HashedName name, Scope enclosing_scope) 
     : base(n, name)
   {
     this.enclosing_scope = enclosing_scope;
@@ -807,7 +807,7 @@ public class FuncSymbol : ScopedSymbol
 
   public bool return_statement_found = false;
 
-  public FuncSymbol(WrappedNode n, HashedName name, FuncType type, Scope enclosing_scope) 
+  public FuncSymbol(ParserWrappedNode n, HashedName name, FuncType type, Scope enclosing_scope) 
     : base(n, name, new TypeRef(type), enclosing_scope)
   {}
 
@@ -873,7 +873,7 @@ public class LambdaSymbol : FuncSymbol
     BaseScope enclosing_scope,
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
-    WrappedNode n, 
+    ParserWrappedNode n, 
     HashedName name, 
     TypeRef ret_type, 
     bhlParser.FuncLambdaContext lmb_ctx
@@ -994,7 +994,7 @@ public class FuncSymbolScript : FuncSymbol
   public FuncSymbolScript(
     ModuleScope mscope,
     AST_FuncDecl decl, 
-    WrappedNode n, 
+    ParserWrappedNode n, 
     HashedName name, 
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
@@ -1159,7 +1159,7 @@ public class EnumSymbol : ScopedSymbol, Scope, Type
 {
   public SymbolsDictionary members = new SymbolsDictionary();
 
-  public EnumSymbol(WrappedNode n, HashedName name, Scope enclosing_scope)
+  public EnumSymbol(ParserWrappedNode n, HashedName name, Scope enclosing_scope)
       : base(n, name, enclosing_scope)
   {}
 
@@ -1209,7 +1209,7 @@ public class EnumItemSymbol : Symbol, Type
   public EnumSymbol en;
   public int val;
 
-  public EnumItemSymbol(WrappedNode n, EnumSymbol en, string name, int val = 0) 
+  public EnumItemSymbol(ParserWrappedNode n, EnumSymbol en, string name, int val = 0) 
     : base(n, name) 
   {
     this.en = en;
@@ -1401,7 +1401,7 @@ static public class SymbolTable
 
   }
 
-  static public Type GetResultType(Type[,] typeTable, WrappedNode a, WrappedNode b) 
+  static public Type GetResultType(Type[,] typeTable, ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(a.eval_type == b.eval_type)
       return a.eval_type;
@@ -1458,7 +1458,7 @@ static public class SymbolTable
     return cb.IsSubclassOf(ca) || ca.IsSubclassOf(cb);
   }
 
-  static public void CheckAssign(WrappedNode lhs, WrappedNode rhs) 
+  static public void CheckAssign(ParserWrappedNode lhs, ParserWrappedNode rhs) 
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
@@ -1472,7 +1472,7 @@ static public class SymbolTable
     }
   }
 
-  static public void CheckAssign(Type lhs, WrappedNode rhs) 
+  static public void CheckAssign(Type lhs, ParserWrappedNode rhs) 
   {
     int tlhs = lhs.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
@@ -1486,7 +1486,7 @@ static public class SymbolTable
     }
   }
 
-  static public void CheckAssign(WrappedNode lhs, Type rhs) 
+  static public void CheckAssign(ParserWrappedNode lhs, Type rhs) 
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.GetTypeIndex();
@@ -1500,7 +1500,7 @@ static public class SymbolTable
     }
   }
 
-  static public void CheckCast(WrappedNode type, WrappedNode exp) 
+  static public void CheckCast(ParserWrappedNode type, ParserWrappedNode exp) 
   {
     int tlhs = type.eval_type.GetTypeIndex();
     int trhs = exp.eval_type.GetTypeIndex();
@@ -1537,7 +1537,7 @@ static public class SymbolTable
            type == symb_float;
   }
 
-  static public Type Bop(WrappedNode a, WrappedNode b) 
+  static public Type Bop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(!IsBopCompatibleType(a.eval_type))
       throw new UserError(
@@ -1552,7 +1552,7 @@ static public class SymbolTable
     return GetResultType(arithmetic_res_type, a, b);
   }
 
-  static public Type BopOverload(Scope scope, WrappedNode a, WrappedNode b, FuncSymbol op_func) 
+  static public Type BopOverload(Scope scope, ParserWrappedNode a, ParserWrappedNode b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
     CheckAssign(op_func_arg.type.Get(scope), b);
@@ -1565,7 +1565,7 @@ static public class SymbolTable
            type == symb_float;
   }
 
-  static public Type Relop(WrappedNode a, WrappedNode b) 
+  static public Type Relop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(!IsRelopCompatibleType(a.eval_type))
       throw new UserError(
@@ -1583,13 +1583,13 @@ static public class SymbolTable
     return symb_bool;
   }
 
-  static public Type Eqop(WrappedNode a, WrappedNode b) 
+  static public Type Eqop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     GetResultType(equality_res_type, a, b);
     return symb_bool;
   }
 
-  static public Type Uminus(WrappedNode a) 
+  static public Type Uminus(ParserWrappedNode a) 
   {
     if(!(a.eval_type == symb_int || a.eval_type == symb_float)) 
       throw new UserError(a.Location()+" must be numeric type");
@@ -1597,7 +1597,7 @@ static public class SymbolTable
     return a.eval_type;
   }
 
-  static public Type Bitop(WrappedNode a, WrappedNode b) 
+  static public Type Bitop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(a.eval_type != symb_int) 
       throw new UserError(a.Location()+" must be int type");
@@ -1608,7 +1608,7 @@ static public class SymbolTable
     return symb_int;
   }
 
-  static public Type Lop(WrappedNode a, WrappedNode b) 
+  static public Type Lop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(a.eval_type != symb_bool) 
       throw new UserError(a.Location()+" must be bool type");
@@ -1619,7 +1619,7 @@ static public class SymbolTable
     return symb_bool;
   }
 
-  static public Type Unot(WrappedNode a) 
+  static public Type Unot(ParserWrappedNode a) 
   {
     if(a.eval_type != symb_bool) 
       throw new UserError(a.Location()+" must be bool type");

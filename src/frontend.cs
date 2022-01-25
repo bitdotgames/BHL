@@ -69,7 +69,7 @@ public class Frontend : bhlBaseVisitor<object>
   Module curr_module;
   ModuleRegistry mreg;
   ITokenStream tokens;
-  ParseTreeProperty<WrappedNode> nodes = new ParseTreeProperty<WrappedNode>();
+  ParseTreeProperty<ParserWrappedNode> nodes = new ParseTreeProperty<ParserWrappedNode>();
   //NOTE: current module's scope, it contains only symbols which belong to the current module
   //      and symbols which were imported from other modules, it fallbacks to the global scope
   //      if symbol is not found
@@ -241,12 +241,12 @@ public class Frontend : bhlBaseVisitor<object>
     return Wrap(t).LocationAfter();
   }
 
-  public WrappedNode Wrap(IParseTree t)
+  public ParserWrappedNode Wrap(IParseTree t)
   {
     var n = nodes.Get(t);
     if(n == null)
     {
-      n = new WrappedNode();
+      n = new ParserWrappedNode();
       n.tree = t;
       n.tokens = tokens;
       n.builder = this;
@@ -2056,7 +2056,7 @@ public class Frontend : bhlBaseVisitor<object>
       var cexp = tmp.callExp();
       var vd = tmp.varDeclare();
 
-      WrappedNode wnode = null;
+      ParserWrappedNode wnode = null;
       Type curr_type = null;
       bool is_decl = false;
 
