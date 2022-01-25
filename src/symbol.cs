@@ -1111,7 +1111,7 @@ public class ClassSymbolScript : ClassSymbol
     }
     //TODO: this should be more robust
     //NOTE: storing class name hash in _num attribute
-    res._num = decl.nname; 
+    res._num = Hash.CRC28(decl.name); 
 
     for(int i=0;i<members.Count;++i)
     {
@@ -1606,18 +1606,6 @@ static public class SymbolTable
 
     return a.eval_type;
   }
-
-  // 'this' and 'super' need to know about enclosing class
-  //static public ClassSymbol GetEnclosingClass(Scope s) 
-  //{
-  //  // walk upwards from s looking for a class
-  //  while(s != null) 
-  //  {
-  //    if (s is ClassSymbol) return (ClassSymbol)s;
-  //    s = s.GetParentScope();
-  //  }
-  //  return null;
-  //}
 }
 
 public class SymbolsDictionary

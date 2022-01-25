@@ -840,20 +840,16 @@ public class ModuleCompiler : AST_Visitor
   {
     UseInit();
 
-    var name = ast.Name();
-    //TODO:?
-    //CheckNameIsUnique(name);
-
     ClassSymbol parent = null;
-    if(ast.nparent != 0)
+    if(!string.IsNullOrEmpty(ast.parent))
     {
-      parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
+      parent = symbols.Resolve(ast.parent) as ClassSymbol;
     }
 
-    var cl = new ClassSymbolScript(name, ast, parent);
+    var cl = new ClassSymbolScript(ast.name, ast, parent);
     symbols.Define(cl);
 
-    Emit(Opcodes.ClassBegin, new int[] { AddConstant(name.s), (int)(parent == null ? -1 : AddConstant(parent.GetName().s)) });
+    Emit(Opcodes.ClassBegin, new int[] { AddConstant(ast.name), (int)(parent == null ? -1 : AddConstant(parent.name.s)) });
     for(int i=0;i<ast.children.Count;++i)
     {
       var child = ast.children[i];

@@ -192,7 +192,7 @@ public class AST_Interim  : AST
 
   public override int getFieldsCount() 
   {
-    return 1; 
+    return base.getFieldsCount(); 
   }
 }
 
@@ -269,7 +269,7 @@ public class AST_Module  : AST
 
   public override int getFieldsCount() 
   {
-    return 3; 
+    return base.getFieldsCount() + 2; 
   }
 }
 
@@ -312,7 +312,7 @@ public class AST_UnaryOpExp  : AST
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return base.getFieldsCount() + 1; 
   }
 }
 
@@ -368,7 +368,7 @@ public class AST_BinaryOpExp  : AST
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return base.getFieldsCount() + 1; 
   }
 }
 
@@ -473,7 +473,7 @@ public class AST_New  : AST
 
   public override int getFieldsCount() 
   {
-    return 3; 
+    return base.getFieldsCount() + 2; 
   }
 }
 
@@ -530,15 +530,13 @@ public class AST_FuncDecl  : AST
 
   public override int getFieldsCount() 
   {
-    return 9; 
+    return base.getFieldsCount() + 8; 
   }
 }
 
 public class AST_ClassDecl  : AST 
 {
-  public uint nname;
   public string name = "";
-  public uint nparent;
   public string parent = "";
 
   static public  new  uint STATIC_CLASS_ID = 168955538;
@@ -557,9 +555,7 @@ public class AST_ClassDecl  : AST
   {
     base.reset();
 
-    nname = 0;
     name = "";
-    nparent = 0;
     parent = "";
   }
 
@@ -567,15 +563,13 @@ public class AST_ClassDecl  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
-    MetaHelper.sync(ctx, ref nparent);
     MetaHelper.sync(ctx, ref parent);
   }
 
   public override int getFieldsCount() 
   {
-    return 5; 
+    return base.getFieldsCount() + 2; 
   }
 }
 
@@ -653,7 +647,7 @@ public class AST_EnumDecl  : AST
 
   public override int getFieldsCount() 
   {
-    return 3; 
+    return base.getFieldsCount() + 2; 
   }
 }
 
@@ -771,7 +765,7 @@ public class AST_TypeCast  : AST
 
   public override int getFieldsCount() 
   {
-    return 3; 
+    return base.getFieldsCount() + 2; 
   }
 }
 
@@ -853,7 +847,7 @@ public class AST_Call  : AST
 
   public override int getFieldsCount() 
   {
-    return 10; 
+    return base.getFieldsCount() + 9; 
   }
 }
 
@@ -887,7 +881,7 @@ public class AST_Return  : AST
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return base.getFieldsCount() + 1; 
   }
 }
 
@@ -1059,7 +1053,7 @@ public class AST_VarDecl  : AST
 
   public override int getFieldsCount() 
   {
-    return 8; 
+    return base.getFieldsCount() + 7; 
   }
 }
 
@@ -1108,7 +1102,7 @@ public class AST_Block  : AST
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return base.getFieldsCount() + 1; 
   }
 }
 
@@ -1147,7 +1141,7 @@ public class AST_JsonObj  : AST
 
   public override int getFieldsCount() 
   {
-    return 3; 
+    return base.getFieldsCount() + 2; 
   }
 }
 
@@ -1186,7 +1180,7 @@ public class AST_JsonArr  : AST
 
   public override int getFieldsCount() 
   {
-    return 3; 
+    return base.getFieldsCount() + 2; 
   }
 }
 
@@ -1264,7 +1258,7 @@ public class AST_JsonPair  : AST
 
   public override int getFieldsCount() 
   {
-    return 6; 
+    return base.getFieldsCount() + 5; 
   }
 }
 

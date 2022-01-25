@@ -1808,7 +1808,7 @@ public class Frontend : bhlBaseVisitor<object>
         FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
     }
 
-    var ast = AST_Util.New_ClassDecl(class_name, parent == null ? new HashedName() : parent.name);
+    var ast = AST_Util.New_ClassDecl(class_name.s, parent == null ? "" : parent.name.s);
     var class_symb = new ClassSymbolScript(class_name, ast, parent);
 
     if(decls_only)

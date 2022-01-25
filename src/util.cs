@@ -700,27 +700,13 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_ClassDecl New_ClassDecl(HashedName name, HashedName parent)
+  static public AST_ClassDecl New_ClassDecl(string name, string parent)
   {
     var n = new AST_ClassDecl();
-
-    n.nname = (uint)name.n;
-    n.name = name.s;
-
-    n.nparent = (uint)parent.n;
-    n.parent = parent.s;
+    n.name = name;
+    n.parent = parent;
 
     return n;
-  }
-
-  static public HashedName Name(this AST_ClassDecl n)
-  {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname, n.name);
-  }
-
-  static public HashedName ParentName(this AST_ClassDecl n)
-  {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nparent, n.parent);
   }
 
   ////////////////////////////////////////////////////////
@@ -1147,7 +1133,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_ClassDecl node)
   {
     Console.Write("(CLASS ");
-    Console.Write(node.name + " " + node.nname);
+    Console.Write(node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1155,7 +1141,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_EnumDecl node)
   {
     Console.Write("(ENUM ");
-    Console.Write(node.name + " " + node.nname);
+    Console.Write(node.name);
     VisitChildren(node);
     Console.Write(")");
   }
