@@ -192,7 +192,7 @@ namespace bhlsp
           if(args.capabilities.textDocument.declaration.linkSupport != null)
             BHLSPWorkspace.self.declarationLinkSupport = (bool)args.capabilities.textDocument.declaration.linkSupport;
 
-          capabilities.declarationProvider = false; //textDocument/declaration
+          //capabilities.declarationProvider = new DeclarationOptions(); //textDocument/declaration
         }
 
         if(args.capabilities.textDocument.definition != null)
@@ -254,82 +254,98 @@ namespace bhlsp
 
   public class BHLSPTextDocumentSignatureHelpJsonRpcService : BHLSPTextDocumentSignatureHelpJsonRpcServiceTemplate
   {
-    SignatureInformation GetSignInfo(bhlParser.FuncDeclContext funcDecl)
-    {
-      var signature = new SignatureInformation();
-      List<ParameterInformation> parameters = new List<ParameterInformation>();
-      
-      signature.label = funcDecl.NAME().GetText()+"(";
-      
-      if (funcDecl.funcParams() is bhlParser.FuncParamsContext funcParams)
-      {
-        var funcParamDeclares = funcParams.funcParamDeclare();
-        for (int i = 0; i < funcParamDeclares.Length; i++)
-        {
-          var fpd = funcParamDeclares[i];
-          if(fpd.exception != null)
-            continue;
-
-          var fpdl = $"{(fpd.isRef() != null ? "ref " : "")}{fpd.type().NAME().GetText()} {fpd.NAME().GetText()}";
-          
-          parameters.Add(new ParameterInformation
-          {
-            label = fpdl,
-            documentation = ""
-          });
-
-          signature.label += fpdl;
-          if (i != funcParamDeclares.Length - 1)
-            signature.label += ", ";
-        }
-      }
-      else
-        signature.label += "<no parameters>";
-
-      signature.label += ")";
-      
-      if(funcDecl.retType() is bhlParser.RetTypeContext retType)
-      {
-        signature.label += ":";
-        
-        var types = retType.type();
-        for (int i = 0; i < types.Length; i++)
-        {
-          if(types[i].exception != null)
-            continue;
-
-          signature.label += types[i].NAME().GetText() + " ";
-        }
-      }
-      else
-        signature.label += ":void";
-      
-      signature.parameters = parameters.ToArray();
-      
-      return signature;
-    }
-    
     public override RpcResult SignatureHelp(SignatureHelpParams args)
     {
       BHLSPWorkspace.self.TryAddTextDocument(args.textDocument.uri);
       
       if(BHLSPWorkspace.self.GetTextDocument(args.textDocument.uri) is BHLTextDocument document)
       {
-        if(document.FindFuncDecl(args.position, out var startIndex) is bhlParser.FuncDeclContext funcDecl)
+        var signatureHelp = document.GetSignatureHelp(args.position);
+        var documents = BHLSPWorkspace.self.FindTextDocuments(signatureHelp);
+        if(documents.Count > 0)
         {
-          string line = document.GetLine(args.position.line);
-          var funcDeclStr = line.Substring(startIndex, Math.Max(0, (int) args.position.character - startIndex));
+          List<SignatureInformation> signatures = new List<SignatureInformation>();
+          uint activeSignature = 0;
           
-          var result = new SignatureHelp();
-          result.activeSignature = 0;
-          result.activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1); 
+          for(int i = 0; i < documents.Count; i++)
+          {
+            if(documents[i] is BHLTextDocument bhlDocument)
+            {
+              if(!string.IsNullOrEmpty(signatureHelp.funcName))
+              {
+                var funcDecls = bhlDocument.GetFuncDeclsByName(signatureHelp.funcName);
+                for(int j = 0; j < funcDecls.Count; j++)
+                {
+                  if(funcDecls[j] is BHLFuncDecl funcDecl)
+                  {
+                    SignatureInformation funcSignature = new SignatureInformation();
+                    List<ParameterInformation> funcParameters = new List<ParameterInformation>();
+                  
+                    funcSignature.label = funcDecl.ctx.NAME().GetText()+"(";
+    
+                    if(funcDecl.ctx.funcParams() is bhlParser.FuncParamsContext funcParams)
+                    {
+                      var funcParamDeclares = funcParams.funcParamDeclare();
+                      for (int k = 0; k < funcParamDeclares.Length; k++)
+                      {
+                        var fpd = funcParamDeclares[k];
+                        if(fpd.exception != null)
+                          continue;
 
-          var signature = GetSignInfo(funcDecl);
-          signature.activeParameter = result.activeParameter;
+                        var fpdl = $"{(fpd.isRef() != null ? "ref " : "")}{fpd.type().NAME().GetText()} {fpd.NAME().GetText()}";
+        
+                        funcParameters.Add(new ParameterInformation
+                        {
+                          label = fpdl,
+                          documentation = ""
+                        });
 
-          result.signatures = new[] {signature};
-          
-          return RpcResult.Success(result);
+                        funcSignature.label += fpdl;
+                        if(k != funcParamDeclares.Length - 1)
+                          funcSignature.label += ", ";
+                      }
+                      
+                      var funcDeclStr = signatureHelp.line.Substring(signatureHelp.funcNameStartIdx, Math.Max(0, (int) args.position.character - signatureHelp.funcNameStartIdx));
+                      funcSignature.activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1);
+                    }
+                    else
+                      funcSignature.label += "<no parameters>";
+
+                    funcSignature.label += ")";
+    
+                    if(funcDecl.ctx.retType() is bhlParser.RetTypeContext retType)
+                    {
+                      funcSignature.label += ":";
+      
+                      var types = retType.type();
+                      for (int n = 0; n < types.Length; n++)
+                      {
+                        if(types[n].exception != null)
+                          continue;
+
+                        funcSignature.label += types[n].NAME().GetText() + " ";
+                      }
+                    }
+                    else
+                      funcSignature.label += ":void";
+    
+                    funcSignature.parameters = funcParameters.ToArray();
+                    signatures.Add(funcSignature);
+                  }
+                }
+              }
+            }
+          }
+
+          if(signatures.Count > 0)
+          {
+            var result = new SignatureHelp();
+            result.activeSignature = activeSignature;
+            result.signatures = signatures.ToArray();
+            result.activeParameter = result.signatures[activeSignature].activeParameter;
+            
+            return RpcResult.Success(result);
+          }
         }
       }
 

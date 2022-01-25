@@ -170,9 +170,10 @@ public class TestLSP : BHL_TestBase
     );
 
     var document = BHLSPWorkspace.self.GetTextDocument(uri);
+    var signatureHelp = document.GetSignatureHelp(new Position{line = 1});
     
     AssertEqual(
-      document.GetLine(1),
+      signatureHelp.line,
       "    func float test1(float k) "
     );
     
@@ -192,8 +193,10 @@ public class TestLSP : BHL_TestBase
       string.Empty
     );
     
+    signatureHelp = document.GetSignatureHelp(new Position{line = 1});
+    
     AssertEqual(
-      document.GetLine(1),
+      signatureHelp.line,
       "    func float test1(float k, int j) "
     );
     
@@ -210,7 +213,7 @@ public class TestLSP : BHL_TestBase
   public void TestSignatureHelp()
   {
     string bhl1 = @"
-    func float test1(float k) 
+    func float test1(float k, float n) 
     {
       return 0
     }
@@ -218,6 +221,11 @@ public class TestLSP : BHL_TestBase
     func test2() 
     {
       test1()
+    }
+
+    func test3() 
+    {
+      test1(5.2,)
     }
     ";
     
@@ -241,9 +249,20 @@ public class TestLSP : BHL_TestBase
     
     AssertEqual(
       rpc.HandleMessage(json),
-      "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k):float \",\"documentation\":null,\"parameters\":[" +
-      "{\"label\":\"float k\",\"documentation\":\"\"}]," +
+      "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
+      "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
       "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
+    );
+    
+    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
+    json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
+    json += "\"}, \"position\": {\"line\": 13, \"character\": 16}}}";
+    
+    AssertEqual(
+      rpc.HandleMessage(json),
+      "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
+      "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
+      "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
     );
   }
 

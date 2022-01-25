@@ -24,53 +24,90 @@ namespace bhlsp
       for(int i = 0; i < lines.Length; i++)
         text += lines[i];
     }
+
+    public abstract TextDocumentSignatureHelpContext GetSignatureHelp(Position position);
+    public abstract List<IFuncDecl> GetFuncDeclsByName(string funcName);
+  }
+
+  public class TextDocumentSignatureHelpContext
+  {
+    public string line;
+    public string funcName;
+    public int funcNameStartIdx;
+  }
+  
+  public interface IFuncDecl
+  {
     
-    public string GetLine(uint idx)
+  }
+  
+  public class BHLFuncDecl : IFuncDecl
+  {
+    public bhlParser.FuncDeclContext ctx;
+
+    public BHLFuncDecl(bhlParser.FuncDeclContext ctx)
     {
-      return lines[idx];
+      this.ctx = ctx;
     }
   }
   
   public class BHLTextDocument : BHLSPTextDocument
   {
-    List<bhlParser.FuncDeclContext> funcDecls = new List<bhlParser.FuncDeclContext>();
+    List<BHLFuncDecl> funcDecls = new List<BHLFuncDecl>();
     
     public override void Sync(string text)
     {
       base.Sync(text);
-      
       FindFuncDecls();
     }
     
     public override void Sync(string[] lines)
     {
       base.Sync(lines);
-      
       FindFuncDecls();
     }
-    
-    public bhlParser.FuncDeclContext FindFuncDecl(Position position, out int startIndex)
+
+    public override TextDocumentSignatureHelpContext GetSignatureHelp(Position position)
     {
-      startIndex = -1;
+      TextDocumentSignatureHelpContext result = new TextDocumentSignatureHelpContext();
+
+      result.line = lines[position.line];
       
-      string line = lines[position.line];
-    
       string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
-      MatchCollection matches = Regex.Matches(line, pattern, RegexOptions.Multiline);
-    
-      for(int i = 0; i < funcDecls.Count; i++)
+      MatchCollection matches = Regex.Matches(result.line, pattern, RegexOptions.Multiline);
+      for(int i = matches.Count-1; i >= 0; i--)
       {
-        foreach (Match m in matches)
+        var m = matches[i];
+        if(m.Index < position.character)
         {
-          if(funcDecls[i].NAME().GetText() + "(" == m.Value)
+          string v = m.Value;
+          int len = v.Length - 1;
+
+          if(len > 0)
           {
-            startIndex = m.Index;
-            return funcDecls[i];
+            result.funcName = result.line.Substring(m.Index, len);
+            result.funcNameStartIdx = m.Index;
+            break;
           }
         }
       }
-    
-      return null;
+      
+      return result;
+    }
+
+    public override List<IFuncDecl> GetFuncDeclsByName(string funcName)
+    {
+      List<IFuncDecl> result = new List<IFuncDecl>();
+      if(!string.IsNullOrEmpty(funcName))
+      {
+        for(int i = 0; i < funcDecls.Count; i++)
+        {
+          var funcDecl = funcDecls[i];
+          if(funcDecl.ctx.NAME().GetText() == funcName)
+            result.Add(funcDecl);
+        }
+      }
+      return result;
     }
     
     void FindFuncDecls(bool errors = false)
@@ -100,7 +137,7 @@ namespace bhlsp
         {
           var fndecl = decls[j].funcDecl();
           if(fndecl != null)
-            funcDecls.Add(fndecl);
+            funcDecls.Add(new BHLFuncDecl(fndecl));
         }
       }
     }
@@ -189,6 +226,21 @@ namespace bhlsp
         
         documents.Add(uri.LocalPath, document);
       }
+    }
+
+    public List<BHLSPTextDocument> FindTextDocuments(TextDocumentSignatureHelpContext signatureHelp)
+    {
+      List<BHLSPTextDocument> result = new List<BHLSPTextDocument>();
+      foreach(var document in documents.Values)
+      {
+        if(!string.IsNullOrEmpty(signatureHelp.funcName))
+        {
+          var decls = document.GetFuncDeclsByName(signatureHelp.funcName);
+          if(decls.Count > 0)
+            result.Add(document);
+        }
+      }
+      return result;
     }
     
     public BHLSPTextDocument GetTextDocument(Uri uri)
