@@ -24,6 +24,18 @@ namespace bhlsp
       for(int i = 0; i < lines.Length; i++)
         text += lines[i];
     }
+    
+    public virtual void Sync(TextDocumentContentChangeEvent changeEvent)
+    {
+      if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Full)
+      {
+        Sync(changeEvent.text);
+      }
+      else if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Incremental)
+      {
+        //TODO: ...
+      }
+    }
 
     public abstract TextDocumentSignatureHelpContext GetSignatureHelp(Position position);
     public abstract List<IFuncDecl> GetFuncDeclsByName(string funcName);
@@ -64,6 +76,12 @@ namespace bhlsp
     public override void Sync(string[] lines)
     {
       base.Sync(lines);
+      FindFuncDecls();
+    }
+
+    public override void Sync(TextDocumentContentChangeEvent changeEvent)
+    {
+      base.Sync(changeEvent);
       FindFuncDecls();
     }
 
@@ -160,7 +178,9 @@ namespace bhlsp
     
     private Dictionary<string, WorkspaceFolder> folders = new Dictionary<string, WorkspaceFolder>();
     private Dictionary<string, BHLSPTextDocument> documents = new Dictionary<string, BHLSPTextDocument>();
-    
+
+    public TextDocumentSyncKind syncKind { get; set; } = TextDocumentSyncKind.Full;
+
     public bool declarationLinkSupport;
     public bool definitionLinkSupport;
     public bool typeDefinitionLinkSupport;
@@ -263,10 +283,10 @@ namespace bhlsp
     
     public void ChangeTextDocument(VersionedTextDocumentIdentifier textDocument, TextDocumentContentChangeEvent[] contentChanges)
     {
-      if(GetTextDocument(textDocument.uri) is BHLSPTextDocument document)
+      if(syncKind != TextDocumentSyncKind.None && GetTextDocument(textDocument.uri) is BHLSPTextDocument document)
       {
         for (int i = 0; i < contentChanges.Length; i++)
-          document.Sync(contentChanges[i].text);
+          document.Sync(contentChanges[i]);
       }
     }
     

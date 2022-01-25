@@ -174,7 +174,7 @@ namespace bhlsp
           capabilities.textDocumentSync = new TextDocumentSyncOptions
           {
             openClose = true, //didOpen, didClose
-            change = TextDocumentSyncKind.Full, //didChange
+            change = BHLSPWorkspace.self.syncKind, //didChange
             save = false //didSave
           };
         }

@@ -11,7 +11,9 @@ public class TestLSP : BHL_TestBase
   {
     string json = "";
     var rpc = new BHLSPJsonRpc();
-
+    
+    BHLSPWorkspace.self.Shutdown();
+    
     //ParseError
     json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
     AssertEqual(
@@ -68,6 +70,8 @@ public class TestLSP : BHL_TestBase
     
     var rpc = new BHLSPJsonRpc();
     rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
+    
+    BHLSPWorkspace.self.Shutdown();
     
     json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
     
