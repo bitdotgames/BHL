@@ -191,14 +191,14 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
 
   public SymbolsDictionary members = new SymbolsDictionary();
 
-  public VM.ClassCreator VM_creator;
+  public VM.ClassCreator creator;
 
   public ClassSymbol(
     WrappedNode n, 
     HashedName name, 
     TypeRef super_class_ref, 
     Scope enclosing_scope, 
-    VM.ClassCreator VM_creator = null
+    VM.ClassCreator creator = null
   )
     : base(n, name, enclosing_scope)
   {
@@ -209,13 +209,13 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
         throw new UserError("parent class not resolved for " + GetName()); 
     }
 
-    this.VM_creator = VM_creator;
+    this.creator = creator;
 
     //NOTE: this looks at the moment a bit like a hack:
     //      We define parent members in the current class
     //      scope as well. We do this since we want to  
     //      address members in VM simply by numeric integer
-    if(VM_creator != null && super_class != null)
+    if(creator != null && super_class != null)
     {
       for(int i=0;i<super_class.GetMembers().Count;++i)
       {
@@ -314,45 +314,45 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   {
     this.item_type = item_type;
 
-    this.VM_creator = VM_CreateArr;
+    this.creator = CreateArr;
 
     {
-      var fn = new FuncSymbolNative("Add", scope.Type("void"), VM_Add);
+      var fn = new FuncSymbolNative("Add", scope.Type("void"), Add);
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("At", item_type, VM_At);
+      var fn = new FuncSymbolNative("At", item_type, At);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("SetAt", item_type, VM_SetAt);
+      var fn = new FuncSymbolNative("SetAt", item_type, SetAt);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("RemoveAt", scope.Type("void"), VM_RemoveAt);
+      var fn = new FuncSymbolNative("RemoveAt", scope.Type("void"), RemoveAt);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Clear", scope.Type("void"), VM_Clear);
+      var fn = new FuncSymbolNative("Clear", scope.Type("void"), Clear);
       this.Define(fn);
     }
 
     {
-      var vs = new FieldSymbol("Count", scope.Type("int"), VM_GetCount, null);
+      var vs = new FieldSymbol("Count", scope.Type("int"), GetCount, null);
       this.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative("$AddInplace", scope.Type("void"),VM_AddInplace);
+      var fn = new FuncSymbolNative("$AddInplace", scope.Type("void"), AddInplace);
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
@@ -362,14 +362,14 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     : this(scope, item_type.name.s + "[]", item_type)
   {}
 
-  public abstract void VM_CreateArr(VM.Frame frame, ref Val v);
-  public abstract void VM_GetCount(Val ctx, ref Val v);
-  public abstract ICoroutine VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract void CreateArr(VM.Frame frame, ref Val v);
+  public abstract void GetCount(Val ctx, ref Val v);
+  public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
 //NOTE: This one is used as a fallback for all arrays which
@@ -408,18 +408,18 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return lst;
   }
 
-  public override void VM_CreateArr(VM.Frame frm, ref Val v)
+  public override void CreateArr(VM.Frame frm, ref Val v)
   {
     v.SetObj(ValList.New(frm.vm));
   }
 
-  public override void VM_GetCount(Val ctx, ref Val v)
+  public override void GetCount(Val ctx, ref Val v)
   {
     var lst = AsList(ctx);
     v.SetNum(lst.Count);
   }
   
-  public override ICoroutine VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Pop();
@@ -430,7 +430,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Peek();
@@ -440,7 +440,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -451,7 +451,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -463,7 +463,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -473,7 +473,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -499,17 +499,17 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     : base(scope, item_type.name.s + "[]", item_type)
   {}
 
-  public override void VM_CreateArr(VM.Frame frm, ref Val v)
+  public override void CreateArr(VM.Frame frm, ref Val v)
   {
     v.obj = Creator();
   }
 
-  public override void VM_GetCount(Val ctx, ref Val v)
+  public override void GetCount(Val ctx, ref Val v)
   {
     v.SetNum(((IList<T>)ctx.obj).Count);
   }
   
-  public override ICoroutine VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Pop();
@@ -520,7 +520,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Peek();
@@ -531,7 +531,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -542,7 +542,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -554,7 +554,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -564,7 +564,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -613,42 +613,42 @@ public class FuncArgSymbol : VariableSymbol
 
 public class FieldSymbol : VariableSymbol
 {
-  public VM.FieldGetter VM_getter;
-  public VM.FieldSetter VM_setter;
-  public VM.FieldRef VM_getref;
+  public VM.FieldGetter getter;
+  public VM.FieldSetter setter;
+  public VM.FieldRef getref;
 
-  public FieldSymbol(HashedName name, TypeRef type, VM.FieldGetter VM_getter = null, VM.FieldSetter VM_setter = null, VM.FieldRef VM_getref = null) 
+  public FieldSymbol(HashedName name, TypeRef type, VM.FieldGetter getter = null, VM.FieldSetter setter = null, VM.FieldRef getref = null) 
     : base(null, name, type)
   {
-    this.VM_getter = VM_getter;
-    this.VM_setter = VM_setter;
-    this.VM_getref = VM_getref;
+    this.getter = getter;
+    this.setter = setter;
+    this.getref = getref;
   }
 }
 
 public class FieldSymbolScript : FieldSymbol
 {
-  public int VM_idx;
+  public int idx;
 
-  public FieldSymbolScript(HashedName name, HashedName type, int VM_idx = -1) 
+  public FieldSymbolScript(HashedName name, HashedName type, int idx = -1) 
     : base(name, new TypeRef(null, type), null, null, null)
   {
-    this.VM_idx = VM_idx;
-    this.VM_getter = VM_Getter;
-    this.VM_setter = VM_Setter;
-    this.VM_getref = VM_Getref;
+    this.idx = idx;
+    this.getter = Getter;
+    this.setter = Setter;
+    this.getref = Getref;
   }
 
-  void VM_Getter(Val ctx, ref Val v)
+  void Getter(Val ctx, ref Val v)
   {
     var m = (IList<Val>)ctx.obj;
-    v.ValueCopyFrom(m[VM_idx]);
+    v.ValueCopyFrom(m[idx]);
   }
 
-  void VM_Setter(ref Val ctx, Val v)
+  void Setter(ref Val ctx, Val v)
   {
     var m = (IList<Val>)ctx.obj;
-    var curr = m[VM_idx];
+    var curr = m[idx];
     for(int i=0;i<curr._refs;++i)
     {
       v.RefMod(RefOp.USR_INC);
@@ -657,10 +657,10 @@ public class FieldSymbolScript : FieldSymbol
     curr.ValueCopyFrom(v);
   }
 
-  void VM_Getref(Val ctx, out Val v)
+  void Getref(Val ctx, out Val v)
   {
     var m = (IList<Val>)ctx.obj;
-    v = m[VM_idx];
+    v = m[idx];
   }
 }
 
@@ -1049,20 +1049,20 @@ public class FuncSymbolScript : FuncSymbol
 
 public class FuncSymbolNative : FuncSymbol
 {
-  public delegate ICoroutine VM_Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
-  public VM_Cb VM_cb;
+  public delegate ICoroutine Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
+  public Cb cb;
 
   public int def_args_num;
 
   public FuncSymbolNative(
     HashedName name, 
     TypeRef ret_type, 
-    VM_Cb VM_cb = null, 
+    Cb cb = null, 
     int def_args_num = 0
   ) 
     : base(null, name, new FuncType(ret_type), null)
   {
-    this.VM_cb = VM_cb;
+    this.cb = cb;
     this.def_args_num = def_args_num;
   }
 
@@ -1084,12 +1084,12 @@ public class FuncSymbolNative : FuncSymbol
 
 public class ClassSymbolNative : ClassSymbol
 {
-  public ClassSymbolNative(HashedName name, VM.ClassCreator VM_creator = null)
-    : base(null, name, null, null, VM_creator)
+  public ClassSymbolNative(HashedName name, VM.ClassCreator creator = null)
+    : base(null, name, null, null, creator)
   {}
 
-  public ClassSymbolNative(HashedName name, TypeRef super_class, VM.ClassCreator VM_creator = null)
-    : base(null, name, super_class, null, VM_creator)
+  public ClassSymbolNative(HashedName name, TypeRef super_class, VM.ClassCreator creator = null)
+    : base(null, name, super_class, null, creator)
   {}
 
   public void OverloadBinaryOperator(FuncSymbol s)
@@ -1112,15 +1112,15 @@ public class ClassSymbolScript : ClassSymbol
     : base(null, name, parent == null ? null : new TypeRef(parent), null, null)
   {
     this.decl = decl;
-    this.VM_creator = VM_ClassCreator;
+    this.creator = ClassCreator;
   }
 
-  void VM_ClassCreator(VM.Frame frm, ref Val res)
+  void ClassCreator(VM.Frame frm, ref Val res)
   {
     IList<Val> vl = null;
     if(super_class != null)
     {
-      super_class.VM_creator(frm, ref res);
+      super_class.creator(frm, ref res);
       vl = (IList<Val>)res.obj;
     }
     else
@@ -1321,14 +1321,14 @@ static public class SymbolTable
       /*any*/     {null,  symb_bool,symb_string, symb_int,   null,   null,  null,  symb_any}
   };
 
-  static public GlobalScope VM_CreateBuiltins()
+  static public GlobalScope CreateBuiltins()
   {
     var globals = new GlobalScope();
-    VM_InitBuiltins(globals);
+    InitBuiltins(globals);
     return globals;
   }
 
-  static public void VM_InitBuiltins(GlobalScope globals) 
+  static public void InitBuiltins(GlobalScope globals) 
   {
     foreach(Type t in index2type) 
     {

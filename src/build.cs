@@ -66,7 +66,7 @@ public class Build
 
     var globs = conf.globs;
     if(globs == null)
-      globs = SymbolTable.VM_CreateBuiltins();
+      globs = SymbolTable.CreateBuiltins();
     conf.userbindings.Register(globs);
 
     Util.SetupASTFactory();

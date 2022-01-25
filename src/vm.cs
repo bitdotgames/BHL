@@ -698,7 +698,7 @@ public class VM
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
     if(globs == null)
-      globs = SymbolTable.VM_CreateBuiltins();
+      globs = SymbolTable.CreateBuiltins();
     this.globs = globs;
     this.importer = importer;
     symbols = new LocalScope(globs);
@@ -826,7 +826,7 @@ public class VM
           var val = stack.Pop();
           var obj = stack.Peek();
           var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-          field_symb.VM_setter(ref obj, val);
+          field_symb.setter(ref obj, val);
           val.Release();
         }
         break;
@@ -960,7 +960,7 @@ public class VM
       var frame = Frame.New(this);
       frame.Init(fb, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
-      fb.coroutine = ptr.native.VM_cb(curr_frame, new FuncArgsInfo(cargs_bits), ref fb.status);
+      fb.coroutine = ptr.native.cb(curr_frame, new FuncArgsInfo(cargs_bits), ref fb.status);
     }
     else
     {
@@ -1188,7 +1188,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var res = Val.New(this);
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.VM_getter(obj, ref res);
+        field_symb.getter(obj, ref res);
         //NOTE: we retain only the payload since we make the copy of the value 
         //      and the new res already has refs = 1 while payload's refcount 
         //      is not incremented
@@ -1210,7 +1210,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         Val res;
-        field_symb.VM_getref(obj, out res);
+        field_symb.getref(obj, out res);
         curr_frame.stack.PushRetain(res);
         obj.Release();
       }
@@ -1228,7 +1228,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var val = curr_frame.stack.Pop();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.VM_setter(ref obj, val);
+        field_symb.setter(ref obj, val);
         val.Release();
         obj.Release();
       }
@@ -1246,7 +1246,7 @@ public class VM
         var val = curr_frame.stack.Pop();
         var obj = curr_frame.stack.Peek();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.VM_setter(ref obj, val);
+        field_symb.setter(ref obj, val);
         val.Release();
       }
       break;
@@ -1630,7 +1630,7 @@ public class VM
       curr_frame.stack.Push(curr_frame.stack.Pop());
 
     status = BHS.SUCCESS;
-    var new_coroutine = native.VM_cb(curr_frame, args_info, ref status);
+    var new_coroutine = native.cb(curr_frame, args_info, ref status);
 
     if(new_coroutine != null)
     {
@@ -1730,7 +1730,7 @@ public class VM
       throw new Exception("Could not find class symbol: " + class_type);
 
     var val = Val.New(this); 
-    cls.VM_creator(curr_frame, ref val);
+    cls.creator(curr_frame, ref val);
     curr_frame.stack.Push(val);
   }
 

@@ -433,7 +433,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindMin(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -453,7 +453,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
@@ -495,7 +495,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
@@ -532,7 +532,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
@@ -567,7 +567,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
@@ -630,7 +630,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("foo", globs.Type("float"),
@@ -743,7 +743,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     
@@ -855,7 +855,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -909,7 +909,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -1148,7 +1148,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("func_mult", globs.Type("float,string"),
@@ -1200,7 +1200,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("func_mult", globs.Type("float,string,int,float"),
@@ -1296,7 +1296,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
 
@@ -3020,7 +3020,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
 
@@ -3053,7 +3053,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     var fn = new FuncSymbolNative("answer42", globs.Type("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
@@ -3078,7 +3078,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3188,7 +3188,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3385,7 +3385,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3412,7 +3412,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3439,7 +3439,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3464,7 +3464,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3492,7 +3492,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3812,7 +3812,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3841,7 +3841,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -3893,7 +3893,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var vm = MakeVM(bhl, globs);
     var fb = vm.Start("test");
@@ -5380,7 +5380,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5416,7 +5416,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5445,7 +5445,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5475,7 +5475,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5503,7 +5503,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5639,7 +5639,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5710,7 +5710,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5737,7 +5737,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5768,7 +5768,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -5903,7 +5903,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     {
@@ -6009,7 +6009,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6042,7 +6042,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6064,7 +6064,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     {
@@ -6102,7 +6102,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6139,7 +6139,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6185,7 +6185,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = new FuncSymbolNative("native", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
@@ -6233,7 +6233,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     {
       var fn = new FuncSymbolNative("yield_and_trace", globs.Type("void"),
@@ -6278,7 +6278,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6305,7 +6305,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6337,7 +6337,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6372,7 +6372,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6410,7 +6410,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6445,7 +6445,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6485,7 +6485,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -6539,7 +6539,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -7172,7 +7172,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("func_with_ref", globs.Type("void"),
@@ -7617,7 +7617,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -8573,7 +8573,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -8605,7 +8605,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -8633,7 +8633,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
     BindFoo(globs);
 
@@ -8653,7 +8653,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -8683,7 +8683,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindWaitTicks(globs, log);
 
@@ -8717,7 +8717,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -8749,7 +8749,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -8825,7 +8825,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -8872,7 +8872,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -8928,7 +8928,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -8990,7 +8990,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -9053,7 +9053,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
 
@@ -9082,7 +9082,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -9130,7 +9130,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -9185,7 +9185,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
 
@@ -9213,7 +9213,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var vm = MakeVM(c);
@@ -9252,7 +9252,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -9289,7 +9289,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -9350,7 +9350,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -9394,7 +9394,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -9419,7 +9419,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("foo", globs.Type("int"),
@@ -9526,7 +9526,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     {
       var fn = new FuncSymbolNative("hey", globs.Type("void"),
@@ -9636,7 +9636,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -9662,7 +9662,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -9723,7 +9723,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -9770,7 +9770,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
     BindFoo(globs);
     var log = new StringBuilder();
@@ -9803,7 +9803,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
     BindFoo(globs);
     var log = new StringBuilder();
@@ -9853,7 +9853,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
     BindFoo(globs);
     var log = new StringBuilder();
@@ -9908,7 +9908,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
     BindFoo(globs);
     var log = new StringBuilder();
@@ -9965,7 +9965,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
     BindFoo(globs);
     var log = new StringBuilder();
@@ -10016,7 +10016,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10065,7 +10065,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindColor(globs);
@@ -10109,7 +10109,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10156,7 +10156,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10201,7 +10201,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10239,7 +10239,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10300,7 +10300,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10358,7 +10358,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
 
@@ -10404,7 +10404,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10440,7 +10440,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10473,7 +10473,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10511,7 +10511,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10552,7 +10552,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10575,7 +10575,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     AssertError<UserError>(
       delegate() { 
@@ -10600,7 +10600,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     Compile(bhl, globs);
   }
@@ -10623,7 +10623,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10654,7 +10654,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
 
@@ -10716,7 +10716,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
 
@@ -10776,7 +10776,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
 
@@ -10830,7 +10830,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -10866,7 +10866,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11009,7 +11009,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11385,7 +11385,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11420,7 +11420,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11452,7 +11452,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11494,7 +11494,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11528,7 +11528,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11560,7 +11560,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
 
@@ -11616,7 +11616,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
 
@@ -11689,7 +11689,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11724,7 +11724,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11758,7 +11758,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11808,7 +11808,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -11987,7 +11987,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
 
@@ -12039,7 +12039,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var c = Compile(bhl, globs);
 
     var expected = 
@@ -12079,7 +12079,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindFoo(globs);
 
     AssertError<UserError>(
@@ -12297,7 +12297,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
     var c = Compile(bhl, globs);
@@ -13219,7 +13219,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -13250,7 +13250,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -13273,7 +13273,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     AssertError<UserError>(
@@ -13340,7 +13340,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
     var c = Compile(bhl, globs);
@@ -13400,7 +13400,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -13419,7 +13419,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -13438,7 +13438,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -13456,7 +13456,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     AssertError<UserError>(
@@ -13477,7 +13477,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
 
@@ -13501,7 +13501,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -13522,7 +13522,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -13544,7 +13544,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -13564,7 +13564,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -13593,7 +13593,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -13640,7 +13640,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
     var c = Compile(bhl, globs);
@@ -13714,7 +13714,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     var c = Compile(bhl, globs);
@@ -13769,7 +13769,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -13792,7 +13792,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -13815,7 +13815,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -13838,7 +13838,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -13861,7 +13861,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColorAlpha(globs);
 
@@ -13911,7 +13911,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -13934,7 +13934,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -13957,7 +13957,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -13977,7 +13977,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -13997,7 +13997,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
     var vm = MakeVM(bhl, globs);
@@ -14018,7 +14018,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColorAlpha(globs);
     var vm = MakeVM(bhl, globs);
@@ -14044,7 +14044,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColorAlpha(globs);
     var vm = MakeVM(bhl, globs);
@@ -14069,7 +14069,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColorAlpha(globs);
     var vm = MakeVM(bhl, globs);
@@ -14090,7 +14090,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColorAlpha(globs);
     var vm = MakeVM(bhl, globs);
@@ -14109,7 +14109,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -14136,7 +14136,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindMasterStruct(globs);
     var vm = MakeVM(bhl, globs);
@@ -14159,7 +14159,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindMasterStruct(globs);
     var vm = MakeVM(bhl, globs);
@@ -14178,7 +14178,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var log = new StringBuilder();
     BindTrace(globs, log);
@@ -14201,7 +14201,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var log = new StringBuilder();
     BindTrace(globs, log);
@@ -14226,7 +14226,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindBar(globs);
     var c = Compile(bhl, globs);
 
@@ -14266,7 +14266,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
     BindBar(globs);
@@ -14327,7 +14327,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -14348,7 +14348,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -14377,7 +14377,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
 
@@ -14423,7 +14423,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindColor(globs);
@@ -14462,7 +14462,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindIntStruct(globs);
@@ -14489,7 +14489,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStringClass(globs);
@@ -14516,7 +14516,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStringClass(globs);
@@ -14553,7 +14553,7 @@ public class BHL_TestVM : BHL_TestBase
   //  }
   //  ";
 
-  //  var globs = SymbolTable.VM_CreateBuiltins();
+  //  var globs = SymbolTable.CreateBuiltins();
   //  var trace_stream = new MemoryStream();
 
   //  BindTrace(globs, trace_stream);
@@ -14589,7 +14589,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindColor(globs);
@@ -14647,7 +14647,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindColor(globs);
@@ -14672,7 +14672,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindColor(globs);
@@ -14707,7 +14707,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14734,7 +14734,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14761,7 +14761,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14793,7 +14793,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14818,7 +14818,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14843,7 +14843,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14866,7 +14866,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14889,7 +14889,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14912,7 +14912,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14936,7 +14936,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14961,7 +14961,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -14988,7 +14988,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15015,7 +15015,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15043,7 +15043,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     AssertError<UserError>(
       delegate() { 
@@ -15067,7 +15067,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15092,7 +15092,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15182,7 +15182,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15206,7 +15206,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindColor(globs);
@@ -15232,7 +15232,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15255,7 +15255,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15283,7 +15283,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15310,7 +15310,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15340,7 +15340,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15368,7 +15368,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15394,7 +15394,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15419,7 +15419,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15573,7 +15573,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -15586,7 +15586,7 @@ public class BHL_TestVM : BHL_TestBase
   [IsTested()]
   public void TestNativeChildClassLazilyNotAllowed()
   {
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     AssertError<UserError>(
       delegate() { 
@@ -15610,7 +15610,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -15635,7 +15635,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -15659,7 +15659,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -15683,7 +15683,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -15710,7 +15710,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColorAlpha(globs);
 
@@ -15732,7 +15732,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -15765,7 +15765,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -15801,7 +15801,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
 
@@ -15854,7 +15854,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -15879,7 +15879,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindColor(globs);
@@ -15907,7 +15907,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindColor(globs);
@@ -15936,7 +15936,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -15971,7 +15971,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -16006,7 +16006,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -16035,7 +16035,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -16062,7 +16062,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -16089,7 +16089,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -16116,7 +16116,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -16156,7 +16156,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     BindColor(globs);
 
     var vm = MakeVM(bhl, globs);
@@ -16178,7 +16178,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     var fn = BindTrace(globs, log);
     BindBar(globs);
@@ -16242,7 +16242,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16268,7 +16268,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindColor(globs);
 
@@ -16327,7 +16327,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16352,7 +16352,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16377,7 +16377,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16402,7 +16402,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16427,7 +16427,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16452,7 +16452,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16477,7 +16477,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16502,7 +16502,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16526,7 +16526,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16551,7 +16551,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16576,7 +16576,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16601,7 +16601,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16626,7 +16626,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16650,7 +16650,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     BindColor(globs);
 
@@ -16676,7 +16676,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     var cl = BindColor(globs);
     var op = new FuncSymbolNative("+", globs.Type("Color"),
@@ -16718,7 +16718,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     var cl = BindColor(globs);
     var op = new FuncSymbolNative("*", globs.Type("Color"),
@@ -16761,7 +16761,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     var cl = BindColor(globs);
     {
@@ -16832,7 +16832,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     
@@ -16870,7 +16870,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     
     var cl = BindColor(globs);
     var op = new FuncSymbolNative("*", globs.Type("Color"), null);
@@ -16906,7 +16906,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindEnum(globs);
 
@@ -16927,7 +16927,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindEnum(globs);
 
@@ -16948,7 +16948,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindEnum(globs);
 
@@ -16969,7 +16969,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindEnum(globs);
 
@@ -16990,7 +16990,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindEnum(globs);
 
@@ -17011,7 +17011,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindEnum(globs);
 
@@ -17035,7 +17035,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindEnum(globs);
 
@@ -17060,7 +17060,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     BindEnum(globs);
 
@@ -17289,7 +17289,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     AssertError<UserError>(
       delegate() { 
         Compile(bhl, globs);
@@ -17393,7 +17393,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -17437,7 +17437,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -17482,7 +17482,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -17528,7 +17528,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -17577,7 +17577,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -17633,7 +17633,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -17856,7 +17856,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
 
@@ -18302,7 +18302,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStartScriptInMgr(globs);
@@ -18358,7 +18358,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStartScriptInMgr(globs);
@@ -18411,7 +18411,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStartScriptInMgr(globs);
@@ -18455,7 +18455,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStartScriptInMgr(globs);
@@ -18494,7 +18494,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStartScriptInMgr(globs);
@@ -18550,7 +18550,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStartScriptInMgr(globs);
@@ -18594,7 +18594,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStartScriptInMgr(globs);
@@ -18642,7 +18642,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
     BindTrace(globs, log);
     BindStartScriptInMgr(globs);
@@ -18701,7 +18701,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var trace = new List<VM.TraceItem>();
     {
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
@@ -18779,7 +18779,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var trace = new List<VM.TraceItem>();
     {
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
@@ -18841,7 +18841,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     CleanTestDir();
     var files = new List<string>();
@@ -18911,7 +18911,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
     {
       var fn = new FuncSymbolNative("throw", globs.Type("void"),
@@ -19001,7 +19001,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var trace = new List<VM.TraceItem>();
     {
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
@@ -19080,7 +19080,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var trace = new List<VM.TraceItem>();
     {
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
@@ -19397,7 +19397,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
     var log = new StringBuilder();
 
     BindTrace(globs, log);
@@ -19722,7 +19722,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19743,7 +19743,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19766,7 +19766,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19788,7 +19788,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19811,7 +19811,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19833,7 +19833,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19863,7 +19863,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19886,7 +19886,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19910,7 +19910,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19938,7 +19938,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -19965,7 +19965,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -20000,7 +20000,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = SymbolTable.VM_CreateBuiltins();
+    var globs = SymbolTable.CreateBuiltins();
 
     var logs = new StringBuilder();
     BindRefC(globs, logs);
@@ -20052,7 +20052,7 @@ public class BHL_TestVM : BHL_TestBase
 
   static ModuleCompiler MakeCompiler(GlobalScope globs = null)
   {
-    globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
+    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
     var globs_copy = globs.Clone();
     return new ModuleCompiler(globs_copy);
@@ -20060,7 +20060,7 @@ public class BHL_TestVM : BHL_TestBase
 
   Stream CompileFiles(List<string> files, GlobalScope globs = null)
   {
-    globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
+    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
     var globs_copy = globs.Clone();
 
@@ -20086,7 +20086,7 @@ public class BHL_TestVM : BHL_TestBase
 
   ModuleCompiler Compile(string bhl, GlobalScope globs = null, bool show_ast = false, bool show_bytes = false)
   {
-    globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
+    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
     //NOTE: we don't want to affect the original globs
     var globs_copy = globs.Clone();
 
@@ -20104,7 +20104,7 @@ public class BHL_TestVM : BHL_TestBase
 
   AST Src2AST(string src, bhl.Module mdl, ModuleRegistry mreg, GlobalScope globs = null)
   {
-    globs = globs == null ? SymbolTable.VM_CreateBuiltins() : globs;
+    globs = globs == null ? SymbolTable.CreateBuiltins() : globs;
 
     var ms = new MemoryStream();
     Frontend.Source2Bin(mdl, src.ToStream(), ms, globs, mreg);
