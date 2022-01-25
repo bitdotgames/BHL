@@ -57,7 +57,6 @@ public static class Tasks
       $"{BHL_ROOT}/src/vm.cs", 
       $"{BHL_ROOT}/src/symbol.cs", 
       $"{BHL_ROOT}/src/scope.cs", 
-      $"{BHL_ROOT}/src/backend.cs", 
       $"{BHL_ROOT}/src/loader.cs", 
       $"{BHL_ROOT}/src/storage.cs", 
       $"{BHL_ROOT}/src/nodes.cs", 

@@ -32,7 +32,7 @@ public class Build
   const uint FILE_VERSION = 1;
   const int ERROR_EXIT_CODE = 2;
 
-  UniqueSymbols uniq_symbols = new UniqueSymbols();
+  Dictionary<string, string> name2file = new Dictionary<string, string>();
 
   public int Exec(BuildConf conf)
   {
@@ -256,50 +256,10 @@ public class Build
     return lz4_bytes;
   }
 
-  public class UniqueSymbols
-  {
-    Dictionary<ulong, string> hash2path = new Dictionary<ulong, string>();
-    Dictionary<string, string> str2path = new Dictionary<string, string>();
-
-    public bool TryGetValue(HashedName key, out string path)
-    {
-      if(hash2path.TryGetValue(key.n, out path))
-        return true;
-      return str2path.TryGetValue(key.s, out path);
-    }
-
-    public void Add(HashedName name, string path)
-    {
-      // Dictionary operation first, so exception thrown if key already exists.
-      if(!string.IsNullOrEmpty(name.s))
-        str2path.Add(name.s, path);
-      hash2path.Add(name.n, path);
-    }
-
-    public void Clear()
-    {
-      str2path.Clear();
-      hash2path.Clear();
-    }
-  }
-
-  public struct Symbol2File
-  {
-    public HashedName name;
-    public string file;
-
-    public Symbol2File(HashedName name, string file)
-    {
-      this.name = name;
-      this.file = file;
-    }
-  }
-
   public class Symbols : IMetaStruct
   {
     //all collections have the same amount ot items
     public List<string> names = new List<string>();
-    public List<ulong> nnames = new List<ulong>();
     public List<string> files = new List<string>();
 
     public int Count => names.Count;
@@ -311,32 +271,24 @@ public class Build
 
     public int getFieldsCount()
     {
-      return 3;
+      return 2;
     }
 
     public void reset() 
     {
       names.Clear();
-      nnames.Clear();
       files.Clear();
     }
 
     public void syncFields(MetaSyncContext ctx) 
     {
       MetaHelper.sync(ctx, names);
-      MetaHelper.sync(ctx, nnames);
       MetaHelper.sync(ctx, files);
     }
 
-    public HashedName GetNameAt(int idx)
+    public void Add(string name, string file)
     {
-      return new HashedName(nnames[idx], names[idx]);
-    }
-
-    public void Add(HashedName name, string file)
-    {
-      names.Add(name.s);
-      nnames.Add(name.n);
+      names.Add(name);
       files.Add(file);
     }
   }
@@ -345,18 +297,18 @@ public class Build
   {
     for(int i=0;i<w.symbols.Count; ++i)
     {
-      var name = w.symbols.GetNameAt(i);
+      var name = w.symbols.names[i];
       var file = w.symbols.files[i];
 
       string fpath;
-      if(uniq_symbols.TryGetValue(name, out fpath))
+      if(name2file.TryGetValue(name, out fpath))
       {
         w.error = new UserError(file, "Symbol '" + name + "' is already declared in '" + fpath + "'");
         break;
       }
       else
       {
-        uniq_symbols.Add(name, file);
+        name2file.Add(name, file);
       }
     }
   }
@@ -774,19 +726,19 @@ public class Build
           var fn = c as AST_FuncDecl;
           if(fn != null)
           {
-            symbols.Add(fn.Name(), file);
+            symbols.Add(fn.name, file);
             continue;
           }
           var cd = c as AST_ClassDecl;
           if(cd != null)
           {
-            symbols.Add(cd.Name(), file);
+            symbols.Add(cd.name, file);
             continue;
           }
           var vd = c as AST_VarDecl;
           if(vd != null)
           {
-            symbols.Add(vd.Name(), file);
+            symbols.Add(vd.name, file);
             continue;
           }
         }

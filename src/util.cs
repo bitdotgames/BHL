@@ -210,6 +210,27 @@ public static class Extensions
     val.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(val);
   }
+
+  public static void Assign(this FixedStack<Val> s, VM vm, int idx, Val val)
+  {
+    var curr = s[idx];
+    if(curr != null)
+    {
+      for(int i=0;i<curr._refs;++i)
+      {
+        val.RefMod(RefOp.USR_INC);
+        curr.RefMod(RefOp.USR_DEC);
+      }
+      curr.ValueCopyFrom(val);
+    }
+    else
+    {
+      curr = Val.New(vm);
+      curr.ValueCopyFrom(val);
+      curr.RefMod(RefOp.USR_INC);
+      s[idx] = curr;
+    }
+  }
 }
 
 static public class Util
@@ -451,33 +472,6 @@ static public class Util
   {
     new AST_Dumper().Visit(ast);
     Console.WriteLine("\n=============");
-  }
-
-  public static void NodeDump(BehaviorTreeNode node, bool only_running = false, int level = 0, bool is_term = true)
-  {
-    var fnode = node as FuncNodeScript;
-    if(fnode != null)
-      fnode.Inflate();
-
-    var name = node.GetType().Name;
-    var status = node.currStatus;
-
-    var spaces = new String('_', level);
-    var indent_str = spaces + (is_term ? "`" : "|");
-    Console.WriteLine(indent_str + "-" + name + " (" + status + ") " + node.inspect());
-
-    if(!only_running || (only_running && status == BHS.RUNNING))
-    {
-      var inode = node as BehaviorTreeInternalNode;
-      if(inode != null)
-      {
-        for(int i=0;i<inode.children.Count;++i)
-        {
-          var child = inode.children[i]; 
-          NodeDump(child, only_running, level + 1, i == inode.children.Count-1);
-        }
-      }
-    }
   }
 }
 
@@ -779,19 +773,18 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_UseParam New_UseParam(HashedName name, bool is_ref, int symb_idx, int upsymb_idx)
+  static public AST_UpVal New_UpVal(HashedName name, int symb_idx, int upsymb_idx)
   {
-    var n = new AST_UseParam();
+    var n = new AST_UpVal();
     n.nname = (uint)name.n;
     n.name = name.s;
-    n.is_ref = is_ref;
     n.symb_idx = (uint)symb_idx;
     n.upsymb_idx = (uint)upsymb_idx;
 
     return n;
   }
 
-  static public HashedName Name(this AST_UseParam n)
+  static public HashedName Name(this AST_UpVal n)
   {
     return new HashedName(n.nname, n.name);
   }
@@ -821,16 +814,6 @@ static public class AST_Util
     n.symb_idx = (uint)symb_idx;
 
     return n;
-  }
-
-  static public HashedName Name(this AST_Call n)
-  {
-    return new HashedName(n.nname(), n.name);
-  }
-
-  static public ulong nname(this AST_Call n)
-  {
-    return ((ulong)n.nname2 << 32) | ((ulong)n.nname1);
   }
 
   static public ulong FuncId(this AST_Call n)
@@ -925,7 +908,6 @@ static public class AST_Util
   static public AST_Inc New_Inc(VariableSymbol symb)
   {
     var n = new AST_Inc();
-    n.nname = (uint)symb.name.n;
     n.symb_idx = (uint)symb.scope_idx;
 
     return n;
@@ -936,7 +918,6 @@ static public class AST_Util
   static public AST_Dec New_Dec(VariableSymbol symb)
   {
     var n = new AST_Dec();
-    n.nname = (uint)symb.name.n;
     n.symb_idx = (uint)symb.scope_idx;
 
     return n;
@@ -1154,9 +1135,11 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_LambdaDecl node)
   {
     Console.Write("(LMBD ");
-    Console.Write(node.type + " " + node.name + " " + node.nname() + " USE:");
-    for(int i=0;i<node.uses.Count;++i)
-      Console.Write(" " + node.uses[i].name + " " + node.uses[i].nname);
+    Console.Write(node.type + " " + node.name + " " + node.nname());
+    if(node.upvals.Count > 0)
+      Console.Write(" USE:");
+    for(int i=0;i<node.upvals.Count;++i)
+      Console.Write(" " + node.upvals[i].name + " " + node.upvals[i].nname);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1196,7 +1179,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Call node)
   {
     Console.Write("(CALL ");
-    Console.Write(node.type + " " + node.name + " " + node.nname());
+    Console.Write(node.type + " " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1204,14 +1187,14 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Inc node)
   {
     Console.Write("(INC ");
-    Console.Write(node.nname);
+    Console.Write(node.symb_idx);
     Console.Write(")");
   }
   
   public override void DoVisit(AST_Dec node)
   {
     Console.Write("(DEC ");
-    Console.Write(node.nname);
+    Console.Write(node.symb_idx);
     Console.Write(")");
   }
 
@@ -1224,20 +1207,17 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Break node)
   {
-    Console.Write("(BRK ");
-    Console.Write(")");
+    Console.Write("(BRK)");
   }
 
   public override void DoVisit(AST_Continue node)
   {
-    Console.Write("(CONT ");
-    Console.Write(")");
+    Console.Write("(CONT)");
   }
 
   public override void DoVisit(AST_PopValue node)
   {
-    Console.Write("(POP ");
-    Console.Write(")");
+    Console.Write("(POP)");
   }
 
   public override void DoVisit(AST_Literal node)
@@ -1248,6 +1228,8 @@ public class AST_Dumper : AST_Visitor
       Console.Write(" (BOOL " + node.nval + ")");
     else if(node.type == EnumLiteral.STR)
       Console.Write(" (STR '" + node.sval + "')");
+    else if(node.type == EnumLiteral.NIL)
+      Console.Write(" (NULL)");
   }
 
   public override void DoVisit(AST_BinaryOpExp node)
@@ -1414,7 +1396,7 @@ public class FixedStack<T>
     --head;
   }
 
-  public void SetHead(int pos)
+  public void Resize(int pos)
   {
     head = pos;
   }

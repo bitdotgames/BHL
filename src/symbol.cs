@@ -17,8 +17,6 @@ public interface Type
 
 public class TypeRef
 {
-  public BaseScope bindings;
-
   public Type type;
   public bool is_ref;
   public HashedName name;
@@ -30,9 +28,8 @@ public class TypeRef
   public TypeRef()
   {}
 
-  public TypeRef(BaseScope bindings, HashedName name)
+  public TypeRef(HashedName name)
   {
-    this.bindings = bindings;
     this.name = name;
     this.type = null;
     this.is_ref = false;
@@ -43,7 +40,6 @@ public class TypeRef
 
   public TypeRef(Type type)
   {
-    this.bindings = null;
     this.name = type.GetName();
     this.type = type;
     this.is_ref = false;
@@ -57,7 +53,7 @@ public class TypeRef
     return type == null && name.n == 0;
   }
 
-  public Type Get()
+  public Type Get(Scope symbols)
   {
     if(type != null)
       return type;
@@ -65,11 +61,7 @@ public class TypeRef
     if(name.n == 0)
       return null;
 
-    //TODO: get rid of this ugly hack
-    if(bindings == null)
-      type = (bhl.Type)Interpreter.instance.symbols.Resolve(name);
-    else
-      type = (bhl.Type)bindings.Resolve(name);
+    type = (bhl.Type)symbols.Resolve(name);
 
     return type;
   }
@@ -192,34 +184,25 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
 
   public SymbolsDictionary members = new SymbolsDictionary();
 
-  public Interpreter.ClassCreator creator;
-  public VM.ClassCreator VM_creator;
+  public VM.ClassCreator creator;
 
   public ClassSymbol(
     WrappedNode n, 
     HashedName name, 
-    TypeRef super_class_ref, 
+    ClassSymbol super_class, 
     Scope enclosing_scope, 
-    Interpreter.ClassCreator creator = null,
-    VM.ClassCreator VM_creator = null
+    VM.ClassCreator creator = null
   )
     : base(n, name, enclosing_scope)
   {
-    if(super_class_ref != null && !super_class_ref.IsEmpty())
-    {
-      this.super_class = (ClassSymbol)super_class_ref.Get();
-      if(super_class == null)
-        throw new UserError("parent class not resolved for " + GetName()); 
-    }
-
+    this.super_class = super_class;
     this.creator = creator;
-    this.VM_creator = VM_creator;
 
     //NOTE: this looks at the moment a bit like a hack:
     //      We define parent members in the current class
     //      scope as well. We do this since we want to  
     //      address members in VM simply by numeric integer
-    if(VM_creator != null && super_class != null)
+    if(super_class != null)
     {
       for(int i=0;i<super_class.GetMembers().Count;++i)
       {
@@ -299,7 +282,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
 #if BHL_FRONT
   public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
-    : this(scope, new TypeRef(scope, node.NAME().GetText()))
+    : this(scope, new TypeRef(node.NAME().GetText()))
   {}
 #endif
 
@@ -313,74 +296,67 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public const int IDX_Count      = 5;
   public const int IDX_AddInplace = 6;
 
-  public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
-    : base(null, item_type.name.s + "[]", new TypeRef(), null)
+  public ArrayTypeSymbol(BaseScope scope, string name, TypeRef item_type)     
+    : base(null, name, null, null)
   {
     this.item_type = item_type;
 
     this.creator = CreateArr;
-    this.VM_creator = VM_CreateArr;
 
     {
-      var fn = new FuncSymbolNative("Add", scope.Type("void"), Create_Add, VM_Add);
+      var fn = new FuncSymbolNative("Add", scope.Type("void"), Add);
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("At", item_type, Create_At, VM_At);
+      var fn = new FuncSymbolNative("At", item_type, At);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("SetAt", item_type, null, VM_SetAt);
+      var fn = new FuncSymbolNative("SetAt", item_type, SetAt);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("RemoveAt", scope.Type("void"), Create_RemoveAt, VM_RemoveAt);
+      var fn = new FuncSymbolNative("RemoveAt", scope.Type("void"), RemoveAt);
       fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Clear", scope.Type("void"), null, VM_Clear);
+      var fn = new FuncSymbolNative("Clear", scope.Type("void"), Clear);
       this.Define(fn);
     }
 
     {
-      var vs = new FieldSymbol("Count", scope.Type("int"), Create_Count, null, null, VM_GetCount, null);
+      var vs = new FieldSymbol("Count", scope.Type("int"), GetCount, null);
       this.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative("$AddInplace", scope.Type("void"), null, VM_AddInplace);
+      var fn = new FuncSymbolNative("$AddInplace", scope.Type("void"), AddInplace);
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
-
   }
 
-  public abstract void CreateArr(ref DynVal v);
-  public abstract void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v);
-  public abstract BehaviorTreeNode Create_New();
-  public abstract BehaviorTreeNode Create_Add();
-  public abstract BehaviorTreeNode Create_At();
-  public abstract BehaviorTreeNode Create_SetAt();
-  public abstract BehaviorTreeNode Create_RemoveAt();
-  public abstract BehaviorTreeNode Create_Clear();
+  public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
+    : this(scope, item_type.name.s + "[]", item_type)
+  {}
 
-  public abstract void VM_CreateArr(VM.Frame frame, ref Val v);
-  public abstract void VM_GetCount(Val ctx, ref Val v);
-  public abstract IInstruction VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract IInstruction VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract void CreateArr(VM.Frame frame, ref Val v);
+  public abstract void GetCount(Val ctx, ref Val v);
+  public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
 //NOTE: This one is used as a fallback for all arrays which
@@ -408,75 +384,29 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   {}
 
   public GenericArrayTypeSymbol(BaseScope scope) 
-    : base(scope, new TypeRef(scope, ""))
+    : base(scope, new TypeRef(""))
   {}
 
-  public override void CreateArr(ref DynVal v)
+  static IList<Val> AsList(Val arr)
   {
-    v.SetObj(DynValList.New());
-  }
-
-  public override void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v)
-  {
-    var lst = ctx.obj as DynValList;
-    if(lst == null)
-      throw new UserError("Not a DynValList: " + (ctx.obj != null ? ctx.obj.GetType().Name : ""));
-    v.SetNum(lst.Count);
-    //NOTE: this can be an operation for the temp. array,
-    //      we need to try del the array if so
-    lst.TryDel();
-  }
-
-  public override BehaviorTreeNode Create_New()
-  {
-    return new Array_NewNode();
-  }
-
-  public override BehaviorTreeNode Create_Add()
-  {
-    return new Array_AddNode();
-  }
-
-  public override BehaviorTreeNode Create_At()
-  {
-    return new Array_AtNode();
-  }
-
-  public override BehaviorTreeNode Create_SetAt()
-  {
-    return new Array_SetAtNode();
-  }
-
-  public override BehaviorTreeNode Create_RemoveAt()
-  {
-    return new Array_RemoveAtNode();
-  }
-
-  public override BehaviorTreeNode Create_Clear()
-  {
-    return new Array_ClearNode();
-  }
-
-  static ValList AsList(Val arr)
-  {
-    var lst = arr.obj as ValList;
+    var lst = arr.obj as IList<Val>;
     if(lst == null)
       throw new UserError("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
     return lst;
   }
 
-  public override void VM_CreateArr(VM.Frame frm, ref Val v)
+  public override void CreateArr(VM.Frame frm, ref Val v)
   {
     v.SetObj(ValList.New(frm.vm));
   }
 
-  public override void VM_GetCount(Val ctx, ref Val v)
+  public override void GetCount(Val ctx, ref Val v)
   {
     var lst = AsList(ctx);
     v.SetNum(lst.Count);
   }
   
-  public override IInstruction VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Pop();
@@ -487,7 +417,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
     var arr = frame.stack.Peek();
@@ -497,7 +427,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -508,7 +438,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -520,7 +450,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -530,7 +460,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override IInstruction VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -543,108 +473,92 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
 public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 {
-  public delegate void ConverterCb(DynVal dv, ref T res);
-  public static ConverterCb Convert;
-
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  static public void DefaultConverter(DynVal dv, ref T res)
+  public ArrayTypeSymbolT(BaseScope scope, string name, TypeRef item_type, CreatorCb creator) 
+    : base(scope, name, item_type)
   {
-    //TODO: is there a non-allocating way to achieve the same?
-    if(typeof(T).IsEnum)
-      res = (T)Enum.ToObject(typeof(T), (int)dv.num);
-    else
-      res = (T)dv.obj;
-  }
-
-  public ArrayTypeSymbolT(BaseScope scope, TypeRef item_type, CreatorCb creator, ConverterCb converter = null) 
-    : base(scope, item_type)
-  {
-    Convert = converter == null ? DefaultConverter : converter;
-
     Creator = creator;
   }
 
-  public override void CreateArr(ref DynVal v)
+  public ArrayTypeSymbolT(BaseScope scope, TypeRef item_type, CreatorCb creator) 
+    : base(scope, item_type.name.s + "[]", item_type)
+  {}
+
+  public override void CreateArr(VM.Frame frm, ref Val v)
   {
     v.obj = Creator();
   }
 
-  public override void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v)
+  public override void GetCount(Val ctx, ref Val v)
   {
-    var lst = (IList)ctx.obj;
-    v.SetNum(lst.Count);
-  }
-
-  public override BehaviorTreeNode Create_New()
-  {
-    return new Array_NewNodeT<T>();
-  }
-
-  public override BehaviorTreeNode Create_Add()
-  {
-    return new Array_AddNodeT<T>();
-  }
-
-  public override BehaviorTreeNode Create_At()
-  {
-    return new Array_AtNodeT<T>();
-  }
-
-  public override BehaviorTreeNode Create_SetAt()
-  {
-    return new Array_SetAtNodeT<T>();
-  }
-
-  public override BehaviorTreeNode Create_RemoveAt()
-  {
-    return new Array_RemoveAtNodeT();
-  }
-
-  public override BehaviorTreeNode Create_Clear()
-  {
-    return new Array_ClearNodeT();
-  }
-
-  public override void VM_CreateArr(VM.Frame frm, ref Val v)
-  {
-    throw new Exception("Not implemented");
-  }
-
-  public override void VM_GetCount(Val ctx, ref Val v)
-  {
-    throw new Exception("Not implemented");
+    v.SetNum(((IList<T>)ctx.obj).Count);
   }
   
-  public override IInstruction VM_Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    var val = frame.stack.Pop();
+    var arr = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst.Add((T)val.obj);
+    val.Release();
+    arr.Release();
+    return null;
   }
 
-  public override IInstruction VM_AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    var val = frame.stack.Pop();
+    var arr = frame.stack.Peek();
+    var lst = (IList<T>)arr.obj;
+    T obj = (T)val.obj;
+    lst.Add(obj);
+    val.Release();
+    return null;
   }
 
-  public override IInstruction VM_At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    var res = Val.NewObj(frame.vm, lst[idx]);
+    frame.stack.Push(res);
+    arr.Release();
+    return null;
   }
 
-  public override IInstruction VM_SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var val = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst[idx] = (T)val.obj;
+    val.Release();
+    arr.Release();
+    return null;
   }
 
-  public override IInstruction VM_RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst.RemoveAt(idx); 
+    arr.Release();
+    return null;
   }
 
-  public override IInstruction VM_Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    throw new Exception("Not implemented");
+    int idx = (int)frame.stack.PopRelease().num;
+    var arr = frame.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst.Clear();
+    arr.Release();
+    return null;
   }
 }
 
@@ -652,11 +566,21 @@ public class VariableSymbol : Symbol
 {
   public int scope_idx = -1;
 
-  public VariableSymbol up_src;
-
   public VariableSymbol(WrappedNode n, HashedName name, TypeRef type) 
     : base(n, name, type) 
   {}
+
+  public void CalcVariableScopeIdx(Scope scope)
+  {
+    //let's ignore already assigned ones
+    if(scope_idx != -1)
+      return;
+    int c = 0;
+    for(int i=0;i<scope.GetMembers().Count;++i)
+      if(scope.GetMembers()[i] is VariableSymbol)
+        ++c;
+    scope_idx = c; 
+  }
 }
 
 public class FuncArgSymbol : VariableSymbol
@@ -676,74 +600,42 @@ public class FuncArgSymbol : VariableSymbol
 
 public class FieldSymbol : VariableSymbol
 {
-  public Interpreter.FieldGetter getter;
-  public Interpreter.FieldSetter setter;
-  public Interpreter.FieldRef getref;
+  public VM.FieldGetter getter;
+  public VM.FieldSetter setter;
+  public VM.FieldRef getref;
 
-  public VM.FieldGetter VM_getter;
-  public VM.FieldSetter VM_setter;
-  public VM.FieldRef VM_getref;
-
-  public FieldSymbol(HashedName name, TypeRef type, Interpreter.FieldGetter getter, Interpreter.FieldSetter setter = null, Interpreter.FieldRef getref = null, VM.FieldGetter VM_getter = null, VM.FieldSetter VM_setter = null, VM.FieldRef VM_getref = null) 
+  public FieldSymbol(HashedName name, TypeRef type, VM.FieldGetter getter = null, VM.FieldSetter setter = null, VM.FieldRef getref = null) 
     : base(null, name, type)
   {
     this.getter = getter;
     this.setter = setter;
     this.getref = getref;
-
-    this.VM_getter = VM_getter;
-    this.VM_setter = VM_setter;
-    this.VM_getref = VM_getref;
   }
 }
 
 public class FieldSymbolScript : FieldSymbol
 {
-  public int VM_idx;
+  public int idx;
 
-  public FieldSymbolScript(HashedName name, HashedName type, int VM_idx = -1) 
-    : base(name, new TypeRef(null, type), null, null, null)
+  public FieldSymbolScript(HashedName name, HashedName type, int idx = -1) 
+    : base(name, new TypeRef(type), null, null, null)
   {
+    this.idx = idx;
     this.getter = Getter;
     this.setter = Setter;
     this.getref = Getref;
-
-    this.VM_idx = VM_idx;
-    this.VM_getter = VM_Getter;
-    this.VM_setter = VM_Setter;
-    this.VM_getref = VM_Getref;
   }
 
-  void Getter(DynVal ctx, ref DynVal v)
+  void Getter(Val ctx, ref Val v)
   {
-    var m = (DynValDict)ctx.obj;
-    v.ValueCopyFrom(m.Get(name));
+    var m = (IList<Val>)ctx.obj;
+    v.ValueCopyFrom(m[idx]);
   }
 
-  void Setter(ref DynVal ctx, DynVal v)
+  void Setter(ref Val ctx, Val v)
   {
-    var m = (DynValDict)ctx.obj;
-    var tmp = v.ValueClone();
-    m.Set(name, tmp);
-    tmp.RefMod(RefOp.TRY_DEL);
-  }
-
-  void Getref(DynVal ctx, out DynVal v)
-  {
-    var m = (DynValDict)ctx.obj;
-    v = m.Get(name);
-  }
-
-  void VM_Getter(Val ctx, ref Val v)
-  {
-    var m = (ValList)ctx.obj;
-    v.ValueCopyFrom(m[VM_idx]);
-  }
-
-  void VM_Setter(ref Val ctx, Val v)
-  {
-    var m = (ValList)ctx.obj;
-    var curr = m[VM_idx];
+    var m = (IList<Val>)ctx.obj;
+    var curr = m[idx];
     for(int i=0;i<curr._refs;++i)
     {
       v.RefMod(RefOp.USR_INC);
@@ -752,10 +644,10 @@ public class FieldSymbolScript : FieldSymbol
     curr.ValueCopyFrom(v);
   }
 
-  void VM_Getref(Val ctx, out Val v)
+  void Getref(Val ctx, out Val v)
   {
-    var m = (ValList)ctx.obj;
-    v = m[VM_idx];
+    var m = (IList<Val>)ctx.obj;
+    v = m[idx];
   }
 }
 
@@ -905,20 +797,20 @@ public class FuncSymbol : ScopedSymbol
 
   public bool return_statement_found = false;
 
-  public FuncSymbol(WrappedNode n, HashedName name, FuncType type, Scope parent) 
-    : base(n, name, new TypeRef(type), parent)
+  public FuncSymbol(WrappedNode n, HashedName name, FuncType type, Scope enclosing_scope) 
+    : base(n, name, new TypeRef(type), enclosing_scope)
   {}
 
   public override SymbolsDictionary GetMembers() { return members; }
 
   public FuncType GetFuncType()
   {
-    return (FuncType)this.type.Get();
+    return (FuncType)this.type.Get(this);
   }
 
   public Type GetReturnType()
   {
-    return GetFuncType().ret_type.Get();
+    return GetFuncType().ret_type.Get(this);
   }
 
   public SymbolsDictionary GetArgs()
@@ -951,22 +843,10 @@ public class FuncSymbol : ScopedSymbol
   public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
 #endif
 
-  void CalcVariableScopeIdx(VariableSymbol sym)
-  {
-    //let's ignore already assigned ones
-    if(sym.scope_idx != -1)
-      return;
-    int c = 0;
-    for(int i=0;i<GetMembers().Count;++i)
-      if(GetMembers()[i] is VariableSymbol)
-        ++c;
-    sym.scope_idx = c; 
-  }
-
   public override void Define(Symbol sym)
   {
     if(sym is VariableSymbol vs)
-      CalcVariableScopeIdx(vs);
+      vs.CalcVariableScopeIdx(this);
     base.Define(sym);
   }
 }
@@ -980,7 +860,7 @@ public class LambdaSymbol : FuncSymbol
 #if BHL_FRONT
   //frontend version
   public LambdaSymbol(
-    BaseScope parent,
+    BaseScope enclosing_scope,
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
     WrappedNode n, 
@@ -988,7 +868,7 @@ public class LambdaSymbol : FuncSymbol
     TypeRef ret_type, 
     bhlParser.FuncLambdaContext lmb_ctx
   ) 
-    : base(n, name, new FuncType(ret_type), parent)
+    : base(n, name, new FuncType(ret_type), enclosing_scope)
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
@@ -999,7 +879,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        ft.arg_types.Add(parent.Type(vd.type()));
+        ft.arg_types.Add(enclosing_scope.Type(vd.type()));
       }
     }
     ft.Update();
@@ -1007,22 +887,21 @@ public class LambdaSymbol : FuncSymbol
 #endif
 
   //backend version
-  public LambdaSymbol(BaseScope parent, AST_LambdaDecl decl) 
-    : base(null, decl.Name(), new FuncType(), parent)
+  public LambdaSymbol(BaseScope enclosing_scope, AST_LambdaDecl decl) 
+    : base(null, decl.Name(), new FuncType(), enclosing_scope)
   {
     this.decl = decl;
     this.fdecl_stack = null;
   }
 
-  public VariableSymbol AddUseParam(VariableSymbol src, bool is_ref)
+  public VariableSymbol AddUpValue(VariableSymbol src)
   {
     var local = new VariableSymbol(src.node, src.name, src.type);
-    local.up_src = src;
 
     this.Define(local);
 
-    var up = AST_Util.New_UseParam(local.name, is_ref, local.scope_idx, src.scope_idx); 
-    decl.uses.Add(up);
+    var up = AST_Util.New_UpVal(local.name, local.scope_idx, src.scope_idx); 
+    decl.upvals.Add(up);
 
     return local;
   }
@@ -1083,7 +962,7 @@ public class LambdaSymbol : FuncSymbol
     {
       if(fdecl_stack[j] is LambdaSymbol lmb)
       {
-        vs = lmb.AddUseParam(vs, is_ref: false);
+        vs = lmb.AddUpValue(vs);
         if(res == null)
           res = vs;
       }
@@ -1103,15 +982,14 @@ public class FuncSymbolScript : FuncSymbol
   //frontend version
 #if BHL_FRONT
   public FuncSymbolScript(
-    LocalScope locals,
-    Scope parent, 
+    ModuleScope mscope,
     AST_FuncDecl decl, 
     WrappedNode n, 
     HashedName name, 
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
-    : base(n, name, new FuncType(ret_type), parent)
+    : base(n, name, new FuncType(ret_type), mscope)
   {
     this.decl = decl;
     this.fparams = fparams;
@@ -1124,7 +1002,7 @@ public class FuncSymbolScript : FuncSymbol
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
         {
           var vd = fparams.funcParamDeclare()[i];
-          var type = locals.Type(vd.type());
+          var type = mscope.Type(vd.type());
           type.is_ref = vd.isRef() != null;
           ft.arg_types.Add(type);
         }
@@ -1135,8 +1013,8 @@ public class FuncSymbolScript : FuncSymbol
 #endif
 
   //backend version
-  public FuncSymbolScript(Scope parent, AST_FuncDecl decl)
-    : base(null, decl.Name(), new FuncType(), parent)
+  public FuncSymbolScript(Scope enclosing_scope, AST_FuncDecl decl)
+    : base(null, decl.Name(), new FuncType(), enclosing_scope)
   {
     this.decl = decl;
   }
@@ -1158,24 +1036,20 @@ public class FuncSymbolScript : FuncSymbol
 
 public class FuncSymbolNative : FuncSymbol
 {
-  public Interpreter.FuncNodeCreator func_creator;
-
-  public delegate IInstruction VM_Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
-  public VM_Cb VM_cb;
+  public delegate ICoroutine Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
+  public Cb cb;
 
   public int def_args_num;
 
   public FuncSymbolNative(
     HashedName name, 
     TypeRef ret_type, 
-    Interpreter.FuncNodeCreator func_creator, 
-    VM_Cb VM_cb = null, 
+    Cb cb = null, 
     int def_args_num = 0
   ) 
     : base(null, name, new FuncType(ret_type), null)
   {
-    this.func_creator = func_creator;
-    this.VM_cb = VM_cb;
+    this.cb = cb;
     this.def_args_num = def_args_num;
   }
 
@@ -1195,21 +1069,14 @@ public class FuncSymbolNative : FuncSymbol
   }
 }
 
-public class FuncSymbolSimpleNative : FuncSymbolNative
-{
-  public FuncSymbolSimpleNative(HashedName name, TypeRef ret_type, SimpleFunctorNode.Functor fn, int def_args_num = 0) 
-    : base(name, ret_type, delegate() { return new SimpleFunctorNode(fn, name); }, null, def_args_num)
-  {}
-}
-
 public class ClassSymbolNative : ClassSymbol
 {
-  public ClassSymbolNative(HashedName name, Interpreter.ClassCreator creator, VM.ClassCreator VM_creator = null)
-    : base(null, name, null, null, creator, VM_creator)
+  public ClassSymbolNative(HashedName name, VM.ClassCreator creator = null)
+    : base(null, name, null, null, creator)
   {}
 
-  public ClassSymbolNative(HashedName name, TypeRef super_class, Interpreter.ClassCreator creator, VM.ClassCreator VM_creator = null)
-    : base(null, name, super_class, null, creator, VM_creator)
+  public ClassSymbolNative(HashedName name, ClassSymbol super_class, VM.ClassCreator creator = null)
+    : base(null, name, super_class, null, creator)
   {}
 
   public void OverloadBinaryOperator(FuncSymbol s)
@@ -1229,69 +1096,19 @@ public class ClassSymbolScript : ClassSymbol
   public AST_ClassDecl decl;
 
   public ClassSymbolScript(HashedName name, AST_ClassDecl decl, ClassSymbol parent = null)
-    : base(null, name, parent == null ? null : new TypeRef(parent), null, null)
+    : base(null, name, parent, null)
   {
     this.decl = decl;
     this.creator = ClassCreator;
-    this.VM_creator = VM_ClassCreator;
   }
 
-  void ClassCreator(ref DynVal res)
+  void ClassCreator(VM.Frame frm, ref Val res)
   {
-    DynValDict tb = null;
+    IList<Val> vl = null;
     if(super_class != null)
     {
-      super_class.creator(ref res);
-      if(super_class is ClassSymbolNative)
-      {
-        tb = DynValDict.New();
-        tb.Set(0, DynVal.NewObj(res.obj));
-        res.SetObj(tb);
-      }
-      else
-      tb = (DynValDict)res.obj;
-    }
-    else
-    {
-      tb = DynValDict.New();
-      res.SetObj(tb);
-    }
-    //NOTE: storing class name hash in _num attribute
-    res._num = decl.nname; 
-
-    for(int i=0;i<members.Count;++i)
-    {
-      var m = members[i];
-      var dv = DynVal.New();
-      //NOTE: proper default init of built-in types
-      if(m.type.name.IsEqual(SymbolTable.symb_float.type.name))
-        dv.SetNum(0);
-      else if(m.type.name.IsEqual(SymbolTable.symb_int.type.name))
-        dv.SetNum(0);
-      else if(m.type.name.IsEqual(SymbolTable.symb_string.type.name))
-        dv.SetStr("");
-      else if(m.type.name.IsEqual(SymbolTable.symb_bool.type.name))
-        dv.SetBool(false);
-      else 
-      {
-        var t = m.type.Get();
-        if(t is EnumSymbol)
-          dv.SetNum(0);
-        else
-          dv.SetNil();
-      }
-
-      tb.Set(m.name, dv);
-    }
-  }
-
-  void VM_ClassCreator(VM.Frame frm, ref Val res)
-  {
-    ValList vl = null;
-    if(super_class != null)
-    {
-      super_class.VM_creator(frm, ref res);
-      vl = (ValList)res.obj;
+      super_class.creator(frm, ref res);
+      vl = (IList<Val>)res.obj;
     }
     else
     {
@@ -1307,9 +1124,8 @@ public class ClassSymbolScript : ClassSymbol
       var m = members[i];
       var v = Val.New(res.vm);
       //NOTE: proper default init of built-in types
-      if(m.type.name.IsEqual(SymbolTable.symb_float.type.name))
-        v.SetNum(0);
-      else if(m.type.name.IsEqual(SymbolTable.symb_int.type.name))
+      if(m.type.name.IsEqual(SymbolTable.symb_float.type.name) || 
+         m.type.name.IsEqual(SymbolTable.symb_int.type.name))
         v.SetNum(0);
       else if(m.type.name.IsEqual(SymbolTable.symb_string.type.name))
         v.SetStr("");
@@ -1317,12 +1133,10 @@ public class ClassSymbolScript : ClassSymbol
         v.SetBool(false);
       else 
       {
-        //TODO:???
-        //var t = m.type.Get();
-        //if(t is EnumSymbol)
-        //  dv.SetNum(0);
-        //else
-        //  dv.SetNil();
+        if(m.type.Get(frm.vm.Symbols) is EnumSymbol)
+          v.SetNum(0);
+        else
+          v.SetObj(null);
       }
 
       vl.Add(v);
@@ -1360,8 +1174,7 @@ public class EnumSymbolScript : EnumSymbol
 {
   public EnumSymbolScript(HashedName name)
     : base(null, name, null)
-  {
-  }
+  {}
 
   //0 - OK, 1 - duplicate key, 2 - duplicate value
   public int TryAddItem(string name, int val)
@@ -1517,68 +1330,7 @@ static public class SymbolTable
     globals.Define(new GenericArrayTypeSymbol(globals));
 
     {
-      var fn = new FuncSymbolNative("suspend", globals.Type("void"),
-        delegate() { return new suspend(); } 
-      );
-      globals.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("yield", globals.Type("void"),
-        delegate() { return new yield(); } 
-      );
-      globals.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("nop", globals.Type("void"),
-        delegate() { return new nop(); } 
-      );
-
-      globals.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("fail", globals.Type("void"),
-        delegate() { return new fail(); } 
-      );
-
-      globals.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("check", globals.Type("void"),
-        delegate() { return new check(); } 
-      );
-      fn.Define(new FuncArgSymbol("cond", globals.Type("bool")));
-
-      globals.Define(fn);
-    }
-  }
-
-  static public GlobalScope VM_CreateBuiltins()
-  {
-    var globals = new GlobalScope();
-    VM_InitBuiltins(globals);
-    return globals;
-  }
-
-  static public void VM_InitBuiltins(GlobalScope globals) 
-  {
-    foreach(Type t in index2type) 
-    {
-      if(t != null) 
-      {
-        var blt = (BuiltInTypeSymbol)t; 
-        globals.Define(blt);
-      }
-    }
-
-    //for all generic arrays
-    globals.Define(new GenericArrayTypeSymbol(globals));
-
-    {
-      var fn = new FuncSymbolNative("suspend", globals.Type("void"), null,
+      var fn = new FuncSymbolNative("suspend", globals.Type("void"), 
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutineSuspend.Instance;
@@ -1588,10 +1340,10 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncSymbolNative("yield", globals.Type("void"), null,
+      var fn = new FuncSymbolNative("yield", globals.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
-          return Instructions.New<CoroutineYield>(frm.vm);
+          return CoroutinePool.New<CoroutineYield>(frm.vm);
         } 
       );
       globals.Define(fn);
@@ -1599,7 +1351,7 @@ static public class SymbolTable
 
     //TODO: this one is controversary, it's defined for BC for now
     {
-      var fn = new FuncSymbolNative("fail", globals.Type("void"), null,
+      var fn = new FuncSymbolNative("fail", globals.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           status = BHS.FAILURE;
@@ -1610,14 +1362,13 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncSymbolNative("start", globals.Type("int"), null,
+      var fn = new FuncSymbolNative("start", globals.Type("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
-          var vfn = frm.stack.Pop();
-          //NOTE: we don't decrease ref.count for the payload
-          vfn.RefMod(RefOp.DEC);
-          int fid = frm.vm.Start((VM.Frame)vfn._obj).id;
-          frm.stack.Push(Val.NewNum(frm.vm, fid));
+          var val_ptr = frm.stack.Pop();
+          int id = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm).id;
+          val_ptr.Release();
+          frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         } 
       );
@@ -1626,7 +1377,7 @@ static public class SymbolTable
     }
 
     {
-      var fn = new FuncSymbolNative("stop", globals.Type("void"), null,
+      var fn = new FuncSymbolNative("stop", globals.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var fid = (int)frm.stack.PopRelease().num;
@@ -1663,15 +1414,15 @@ static public class SymbolTable
     return result;
   }
 
-  static public bool CanAssignTo(Type valueType, Type destType, Type promotion) 
+  static public bool CanAssignTo(Type src, Type dst, Type promotion) 
   {
-    return valueType == destType || 
-           promotion == destType || 
-           destType == symb_any ||
-           (destType is ClassSymbol && valueType == symb_null) ||
-           (destType is FuncType && valueType == symb_null) || 
-           valueType.GetName().n == destType.GetName().n ||
-           IsChildClass(valueType, destType)
+    return src == dst || 
+           promotion == dst || 
+           dst == symb_any ||
+           (dst is ClassSymbol && src == symb_null) ||
+           (dst is FuncType && src == symb_null) || 
+           src.GetName().n == dst.GetName().n ||
+           IsChildClass(src, dst)
            ;
   }
 
@@ -1791,10 +1542,10 @@ static public class SymbolTable
     return GetResultType(arithmetic_res_type, a, b);
   }
 
-  static public Type BopOverload(WrappedNode a, WrappedNode b, FuncSymbol op_func) 
+  static public Type BopOverload(Scope scope, WrappedNode a, WrappedNode b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
-    CheckAssign(op_func_arg.type.Get(), b);
+    CheckAssign(op_func_arg.type.Get(scope), b);
     return op_func.GetReturnType();
   }
 

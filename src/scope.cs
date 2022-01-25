@@ -119,7 +119,6 @@ public abstract class BaseScope : Scope
     }
 
     var tr = new TypeRef();
-    tr.bindings = this;
     tr.type = type;
     tr.name = str;
     tr.node = node;
@@ -147,7 +146,6 @@ public abstract class BaseScope : Scope
     }
 
     var tr = new TypeRef();
-    tr.bindings = this;
     tr.type = type;
     tr.name = str;
     tr.node = node;
@@ -189,7 +187,7 @@ public abstract class BaseScope : Scope
       }
       else
 #endif
-        tr = new TypeRef(this, name);
+        tr = new TypeRef(name);
     }
 
     type_cache.Add(name, tr);
@@ -201,6 +199,7 @@ public abstract class BaseScope : Scope
   {
     return new TypeRef(t);
   }
+
 }
 
 public class GlobalScope : BaseScope 
@@ -224,7 +223,35 @@ public class LocalScope : BaseScope
   {
     if(enclosing_scope != null && enclosing_scope.Resolve(sym.name) != null)
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
+    base.Define(sym);
+  }
+}
 
+public class ModuleScope : BaseScope 
+{
+  uint module_id;
+
+  public ModuleScope(uint module_id, GlobalScope parent) 
+    : base(parent) 
+  {
+    this.module_id = module_id;
+  }
+
+  public override HashedName GetScopeName() { return new HashedName("module"); }
+
+  public override void Define(Symbol sym) 
+  {
+    if(enclosing_scope != null && enclosing_scope.Resolve(sym.name) != null)
+      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
+
+    if(sym is VariableSymbol vs)
+    {
+      //NOTE: adding module id to variable name if it's not added already
+      //TODO: make code below more clean 
+      if(vs.name.n2 == 0)
+        vs.name = new HashedName(vs.name.s, module_id);
+      vs.CalcVariableScopeIdx(this);
+    }
     base.Define(sym);
   }
 }

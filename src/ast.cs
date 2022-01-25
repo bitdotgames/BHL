@@ -1,6 +1,105 @@
+using System;
 using System.Collections.Generic;
 
 namespace bhl {
+
+public abstract class AST_Visitor
+{
+  public abstract void DoVisit(AST_Interim node);
+  public abstract void DoVisit(AST_Import node);
+  public abstract void DoVisit(AST_Module node);
+  public abstract void DoVisit(AST_VarDecl node);
+  public abstract void DoVisit(AST_FuncDecl node);
+  public abstract void DoVisit(AST_LambdaDecl node);
+  public abstract void DoVisit(AST_ClassDecl node);
+  public abstract void DoVisit(AST_EnumDecl node);
+  public abstract void DoVisit(AST_Block node);
+  public abstract void DoVisit(AST_TypeCast node);
+  public abstract void DoVisit(AST_Call node);
+  public abstract void DoVisit(AST_Return node);
+  public abstract void DoVisit(AST_Break node);
+  public abstract void DoVisit(AST_Continue node);
+  public abstract void DoVisit(AST_PopValue node);
+  public abstract void DoVisit(AST_Literal node);
+  public abstract void DoVisit(AST_BinaryOpExp node);
+  public abstract void DoVisit(AST_UnaryOpExp node);
+  public abstract void DoVisit(AST_New node);
+  public abstract void DoVisit(AST_Inc node);
+  public abstract void DoVisit(AST_Dec node);
+  public abstract void DoVisit(AST_JsonObj node);
+  public abstract void DoVisit(AST_JsonArr node);
+  public abstract void DoVisit(AST_JsonArrAddItem node);
+  public abstract void DoVisit(AST_JsonPair node);
+
+  public void Visit(AST_Base node)
+  {
+    if(node == null)
+      throw new Exception("NULL node");
+
+    if(node is AST_Interim)
+      DoVisit(node as AST_Interim);
+    else if(node is AST_Block)
+      DoVisit(node as AST_Block);
+    else if(node is AST_Literal)
+      DoVisit(node as AST_Literal);
+    else if(node is AST_Call)
+      DoVisit(node as AST_Call);
+    else if(node is AST_VarDecl)
+      DoVisit(node as AST_VarDecl);
+    else if(node is AST_LambdaDecl)
+      DoVisit(node as AST_LambdaDecl);
+    //NOTE: base class must be handled after AST_LambdaDecl
+    else if(node is AST_FuncDecl)
+      DoVisit(node as AST_FuncDecl);
+    else if(node is AST_ClassDecl)
+      DoVisit(node as AST_ClassDecl);
+    else if(node is AST_EnumDecl)
+      DoVisit(node as AST_EnumDecl);
+    else if(node is AST_TypeCast)
+      DoVisit(node as AST_TypeCast);
+    else if(node is AST_Return)
+      DoVisit(node as AST_Return);
+    else if(node is AST_Break)
+      DoVisit(node as AST_Break);
+    else if(node is AST_Continue)
+      DoVisit(node as AST_Continue);
+    else if(node is AST_PopValue)
+      DoVisit(node as AST_PopValue);
+    else if(node is AST_BinaryOpExp)
+      DoVisit(node as AST_BinaryOpExp);
+    else if(node is AST_UnaryOpExp)
+      DoVisit(node as AST_UnaryOpExp);
+    else if(node is AST_New)
+      DoVisit(node as AST_New);
+    else if(node is AST_Inc)
+      DoVisit(node as AST_Inc);
+    else if(node is AST_Dec)
+      DoVisit(node as AST_Dec);
+    else if(node is AST_JsonObj)
+      DoVisit(node as AST_JsonObj);
+    else if(node is AST_JsonArr)
+      DoVisit(node as AST_JsonArr);
+    else if(node is AST_JsonArrAddItem)
+      DoVisit(node as AST_JsonArrAddItem);
+    else if(node is AST_JsonPair)
+      DoVisit(node as AST_JsonPair);
+    else if(node is AST_Import)
+      DoVisit(node as AST_Import);
+    else if(node is AST_Module)
+      DoVisit(node as AST_Module);
+    else 
+      throw new Exception("Not known type: " + node.GetType().Name);
+  }
+
+  public void VisitChildren(AST node)
+  {
+    if(node == null)
+      return;
+    var children = node.children;
+    for(int i=0;i<children.Count;++i)
+      Visit(children[i]);
+  }
+}
 
 public class AST_Base : BaseMetaStruct 
 {
@@ -275,7 +374,6 @@ public class AST_BinaryOpExp  : AST
 
 public class AST_Inc  : AST_Base 
 {
-  public uint nname;
   public uint symb_idx;
 
   static public  new  uint STATIC_CLASS_ID = 192507281;
@@ -293,26 +391,23 @@ public class AST_Inc  : AST_Base
   public override void reset() 
   {
     base.reset();
-    nname = 0;
     symb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return 1; 
   }
 }
 
 public class AST_Dec  : AST_Base 
 {
-  public uint nname;
   public uint symb_idx;
 
   static public  new  uint STATIC_CLASS_ID = 5580553;
@@ -330,20 +425,18 @@ public class AST_Dec  : AST_Base
   public override void reset() 
   {
     base.reset();
-    nname = 0;
     symb_idx = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
   {
-    return 2; 
+    return 1; 
   }
 }
 
@@ -564,13 +657,12 @@ public class AST_EnumDecl  : AST
   }
 }
 
-public class AST_UseParam  :  BaseMetaStruct 
+public class AST_UpVal  :  BaseMetaStruct 
 {
   public uint nname;
   public string name = "";
   public uint symb_idx;
   public uint upsymb_idx;
-  public bool is_ref;
 
   static public  uint STATIC_CLASS_ID = 121447213;
 
@@ -579,7 +671,7 @@ public class AST_UseParam  :  BaseMetaStruct
     return 121447213; 
   }
 
-  public AST_UseParam()
+  public AST_UpVal()
   {
     reset();
   }
@@ -590,7 +682,6 @@ public class AST_UseParam  :  BaseMetaStruct
     name = "";
     symb_idx = 0;
     upsymb_idx = 0;
-    is_ref = false;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -601,18 +692,17 @@ public class AST_UseParam  :  BaseMetaStruct
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref symb_idx);
     MetaHelper.sync(ctx, ref upsymb_idx);
-    MetaHelper.sync(ctx, ref is_ref);
   }
 
   public override int getFieldsCount() 
   {
-    return 5; 
+    return 4; 
   }
 }
 
 public class AST_LambdaDecl  : AST_FuncDecl 
 {
-  public List<AST_UseParam> uses = new List<AST_UseParam>();
+  public List<AST_UpVal> upvals = new List<AST_UpVal>();
 
   static public  new  uint STATIC_CLASS_ID = 44443142;
 
@@ -630,14 +720,14 @@ public class AST_LambdaDecl  : AST_FuncDecl
   {
     base.reset();
 
-    if(uses == null) uses = new List<AST_UseParam>(); 
-    uses.Clear();
+    if(upvals == null) upvals = new List<AST_UpVal>(); 
+    upvals.Clear();
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, uses);
+    MetaHelper.sync(ctx, upvals);
   }
 
   public override int getFieldsCount() 
@@ -696,9 +786,10 @@ public enum EnumCall
   MFUNC           = 30,
   ARR_IDX         = 4,
   ARR_IDXW        = 40,
-  FUNC2VAR        = 5,
-  FUNC_PTR        = 6,
-  FUNC_PTR_POP    = 7,
+  GET_ADDR        = 5,
+  FUNC_VAR        = 6,
+  FUNC_MVAR        = 7,
+  LMBD            = 8,
   GVAR            = 50,
   GVARW           = 51,
 }
@@ -982,7 +1073,6 @@ public enum EnumBlock
   IF = 7,
   WHILE = 8,
   FOR = 9,
-  GROUP = 10,
 }
 
 public class AST_Block  : AST 
@@ -1229,7 +1319,7 @@ public static class AST_Factory
       case 168955538: { return new AST_ClassDecl(); };
       case 42971075: { return new AST_EnumItem(); };
       case 207366473: { return new AST_EnumDecl(); };
-      case 121447213: { return new AST_UseParam(); };
+      case 121447213: { return new AST_UpVal(); };
       case 44443142: { return new AST_LambdaDecl(); };
       case 234453676: { return new AST_TypeCast(); };
       case 42771415: { return new AST_Call(); };
