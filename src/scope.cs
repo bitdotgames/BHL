@@ -95,62 +95,52 @@ public abstract class BaseScope : Scope
   }
 
 #if BHL_FRONT
-  public TypeRef Type(bhlParser.TypeContext node)
+  public TypeRef Type(bhlParser.TypeContext parsed)
   {
-    var str = node.GetText();
+    var str = parsed.GetText();
     var type = Resolve(str) as Type;
 
-    if(type == null && node != null)
+    if(type == null && parsed != null)
     {    
-      if(node.fnargs() != null)
-        type = new FuncType(this, node);
+      if(parsed.fnargs() != null)
+        type = new FuncType(this, parsed);
 
       //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
-      if(node.ARR() != null)
+      if(parsed.ARR() != null)
       {
         //checking if it's an array of func ptrs
         if(type != null)
           type = new GenericArrayTypeSymbol(this, new TypeRef(type));
         else
         {
-          type = new GenericArrayTypeSymbol(this, node);
+          type = new GenericArrayTypeSymbol(this, parsed);
         }
       }
     }
 
-    var tr = new TypeRef();
-    tr.type = type;
-    tr.name = str;
-    tr.node = node;
-
-    return tr;
+    return new TypeRef(type, str, parsed);
   }
 
-  public TypeRef Type(bhlParser.RetTypeContext node)
+  public TypeRef Type(bhlParser.RetTypeContext parsed)
   {
-    var str = node == null ? "void" : node.GetText();
+    var str = parsed == null ? "void" : parsed.GetText();
     var type = Resolve(str) as Type;
 
-    if(type == null && node != null)
+    if(type == null && parsed != null)
     {    
-      if(node.type().Length > 1)
+      if(parsed.type().Length > 1)
       {
         var mtype = new MultiType();
-        for(int i=0;i<node.type().Length;++i)
-          mtype.items.Add(this.Type(node.type()[i]));
+        for(int i=0;i<parsed.type().Length;++i)
+          mtype.items.Add(this.Type(parsed.type()[i]));
         mtype.Update();
         type = mtype;
       }
       else
-        return this.Type(node.type()[0]);
+        return this.Type(parsed.type()[0]);
     }
 
-    var tr = new TypeRef();
-    tr.type = type;
-    tr.name = str;
-    tr.node = node;
-
-    return tr;
+    return new TypeRef(type, str, parsed);
   }
 #endif
 
@@ -199,7 +189,6 @@ public abstract class BaseScope : Scope
   {
     return new TypeRef(t);
   }
-
 }
 
 public class GlobalScope : BaseScope 

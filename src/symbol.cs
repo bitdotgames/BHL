@@ -22,7 +22,7 @@ public class TypeRef
   public HashedName name;
 #if BHL_FRONT
   //NOTE: parse location of the type
-  public IParseTree node;
+  public IParseTree parsed;
 #endif
 
   public TypeRef()
@@ -34,7 +34,7 @@ public class TypeRef
     this.type = null;
     this.is_ref = false;
 #if BHL_FRONT
-    this.node = null;
+    this.parsed = null;
 #endif
   }
 
@@ -44,9 +44,19 @@ public class TypeRef
     this.type = type;
     this.is_ref = false;
 #if BHL_FRONT
-    this.node = null;
+    this.parsed = null;
 #endif
   }
+
+#if BHL_FRONT
+  public TypeRef(Type type, HashedName name, IParseTree parsed)
+  {
+    this.type = type;
+    this.name = name;
+    this.is_ref = false;
+    this.parsed = parsed;
+  }
+#endif
 
   public bool IsEmpty()
   {

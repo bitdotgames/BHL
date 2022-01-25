@@ -852,7 +852,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tr = locals.Type(funcLambda.retType());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
+      FireError(Location(tr.parsed) + ": type '" + tr.name.s + "' not found");
 
     var func_name = new HashedName(curr_module.id + "_lmb_" + NextLambdaId(), curr_module.id); 
     var ast = AST_Util.New_LambdaDecl(func_name, tr.name);
@@ -1072,7 +1072,7 @@ public class Frontend : bhlBaseVisitor<object>
     var type = ctx.typeid().type();
     var tr = locals.Type(type);
     if(tr.type == null)
-      FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
+      FireError(Location(tr.parsed) +  ": type '" + tr.name.s + "' not found");
 
     Wrap(ctx).eval_type = SymbolTable.symb_int;
 
@@ -1119,7 +1119,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tr = locals.Type(ctx.newExp().type());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
+      FireError(Location(tr.parsed) + ": type '" + tr.name.s + "' not found");
 
     var ast = AST_Util.New_New((ClassSymbol)tr.type);
     Wrap(ctx).eval_type = tr.type;
@@ -1141,7 +1141,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tr = locals.Type(ctx.type());
     if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
+      FireError(Location(tr.parsed) + ": type '" + tr.name.s + "' not found");
 
     var ast = AST_Util.New_TypeCast(tr.name);
     var exp = ctx.exp();
@@ -1858,7 +1858,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tr = locals.Type(context.retType());
 
     if(tr.type == null)
-      FireError(Location(tr.node) + ": type '" + tr.name.s + "' not found");
+      FireError(Location(tr.parsed) + ": type '" + tr.name.s + "' not found");
 
     var fstr_name = context.NAME().GetText();
 
@@ -1980,7 +1980,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var tr = locals.Type(vd.type());
         if(tr.type == null)
-          FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
+          FireError(Location(tr.parsed) +  ": type '" + tr.name.s + "' not found");
 
         exp_ast = new AST_Interim();
         PushAST(exp_ast);
@@ -2229,7 +2229,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var tr = locals.Type(type);
     if(tr.type == null)
-      FireError(Location(tr.node) +  ": type '" + tr.name.s + "' not found");
+      FireError(Location(tr.parsed) +  ": type '" + tr.name.s + "' not found");
 
     var var_node = Wrap(name); 
     var_node.eval_type = tr.type;
