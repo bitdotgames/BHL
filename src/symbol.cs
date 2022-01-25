@@ -94,29 +94,13 @@ public class ParserWrappedNode
 #if BHL_FRONT
   public string Location()
   {
-    string ts = "";
-    if(eval_type != null) 
-      ts = ":<"+eval_type.GetName().s+">";
-
     var interval = tree.SourceInterval;
     var begin = tokens.Get(interval.a);
 
-    string line = string.Format("@({0},{1}) ", begin.Line, begin.Column);
-    return line + tree.GetText() + ts;
+    string line = string.Format("@({0},{1})", begin.Line, begin.Column);
+    return line;
   }
 
-  public string LocationAfter()
-  {
-    string ts = "";
-    if(eval_type != null) 
-      ts = ":<"+eval_type.GetName()+">";
-
-    var interval = tree.SourceInterval;
-    var end = tokens.Get(interval.b);
-
-    string line = string.Format("@({0},{1}) ", end.Line, end.Column);
-    return line + tree.GetText() + ts;
-  }
 #else
   public string Location()
   {
@@ -1413,7 +1397,7 @@ static public class SymbolTable
     if(result == symb_void) 
     {
       throw new UserError(
-        a.Location()+", "+ b.Location()+" have incompatible types"// + ta + " " + tb
+        a.Location()+" : incompatible types"
       );
     }
     else 
@@ -1466,8 +1450,7 @@ static public class SymbolTable
     if(!CanAssignTo(rhs.eval_type, lhs.eval_type, rhs.promote_to_type)) 
     {
       throw new UserError(
-        lhs.Location()+", "+
-        rhs.Location()+" have incompatible types"
+        lhs.Location()+" : incompatible types"
       );
     }
   }
@@ -1480,8 +1463,7 @@ static public class SymbolTable
     if(!CanAssignTo(rhs.eval_type, lhs, rhs.promote_to_type)) 
     {
       throw new UserError(
-        lhs.GetName().s+", "+
-        rhs.Location()+" have incompatible types"// + rhs.eval_type + " vs " + lhs
+        rhs.Location()+" : incompatible types"
       );
     }
   }
@@ -1494,8 +1476,7 @@ static public class SymbolTable
     if(!CanAssignTo(rhs, lhs.eval_type, promote_to_type)) 
     {
       throw new UserError(
-        lhs.Location()+", "+
-        rhs.GetName().s+" have incompatible types "
+        lhs.Location()+" : incompatible types"
       );
     }
   }
@@ -1524,8 +1505,7 @@ static public class SymbolTable
       return;
     
     throw new UserError(
-      type.Location()+", "+
-      exp.Location()+" have incompatible types for casting "
+      type.Location()+" : incompatible types for casting"
     );
   }
 
@@ -1569,12 +1549,12 @@ static public class SymbolTable
   {
     if(!IsRelopCompatibleType(a.eval_type))
       throw new UserError(
-        a.Location()+" operator is not overloaded"
+        a.Location()+" : operator is not overloaded"
       );
 
     if(!IsRelopCompatibleType(b.eval_type))
       throw new UserError(
-        b.Location()+" operator is not overloaded"
+        b.Location()+" : operator is not overloaded"
       );
 
     GetResultType(relational_res_type, a, b);
@@ -1592,7 +1572,7 @@ static public class SymbolTable
   static public Type Uminus(ParserWrappedNode a) 
   {
     if(!(a.eval_type == symb_int || a.eval_type == symb_float)) 
-      throw new UserError(a.Location()+" must be numeric type");
+      throw new UserError(a.Location()+" : must be numeric type");
 
     return a.eval_type;
   }
@@ -1600,10 +1580,10 @@ static public class SymbolTable
   static public Type Bitop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(a.eval_type != symb_int) 
-      throw new UserError(a.Location()+" must be int type");
+      throw new UserError(a.Location()+" : must be int type");
 
     if(b.eval_type != symb_int)
-      throw new UserError(b.Location()+" must be int type");
+      throw new UserError(b.Location()+" : must be int type");
 
     return symb_int;
   }
@@ -1611,10 +1591,10 @@ static public class SymbolTable
   static public Type Lop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(a.eval_type != symb_bool) 
-      throw new UserError(a.Location()+" must be bool type");
+      throw new UserError(a.Location()+" : must be bool type");
 
     if(b.eval_type != symb_bool)
-      throw new UserError(b.Location()+" must be bool type");
+      throw new UserError(b.Location()+" : must be bool type");
 
     return symb_bool;
   }
@@ -1622,7 +1602,7 @@ static public class SymbolTable
   static public Type Unot(ParserWrappedNode a) 
   {
     if(a.eval_type != symb_bool) 
-      throw new UserError(a.Location()+" must be bool type");
+      throw new UserError(a.Location()+" : must be bool type");
 
     return a.eval_type;
   }

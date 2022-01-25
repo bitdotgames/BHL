@@ -940,7 +940,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "s : symbol not resolved"
+      "symbol not resolved"
     );
   }
 
@@ -979,7 +979,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -999,7 +999,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -1109,7 +1109,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"float, @(5,13) ""bar"":<string> have incompatible types"
+      "@(5,13) : incompatible types"
     );
   }
 
@@ -1133,7 +1133,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "a:<string>, float have incompatible types"
+      "@(10,13) : incompatible types"
     );
   }
 
@@ -2726,7 +2726,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      " : incompatible variable type"
+      "incompatible types"
     );
   }
 
@@ -2746,7 +2746,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      " : incompatible variable type"
+      "incompatible types"
     );
   }
 
@@ -2766,7 +2766,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      " : incompatible variable type"
+      "incompatible types"
     );
   }
 
@@ -2786,7 +2786,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      " : incompatible variable type"
+      "incompatible types"
     );
   }
 
@@ -2807,7 +2807,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      " have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -2936,7 +2936,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "i : symbol not resolved"
+      "symbol not resolved"
     );
   }
 
@@ -2967,7 +2967,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "i : symbol not resolved"
+      "symbol not resolved"
     );
   }
 
@@ -3128,7 +3128,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "@(2,29) k:<int>: already defined symbol 'k'"
+      "already defined symbol 'k'"
     );
   }
 
@@ -3584,7 +3584,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -5796,7 +5796,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "@(6,17) ptr:<bool^(int)>, @(6,21) =foo:<void^(int)> have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -5816,7 +5816,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "@(6,19) ptr:<void^(float)>, @(6,23) =foo:<void^(int)> have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -5837,7 +5837,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      @"int, @(7,10) ""hey"":<string> have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -5859,7 +5859,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      @"b:<float>: 'ref' is missing"
+      "'ref' is missing"
     );
   }
 
@@ -5881,7 +5881,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "ptr:<void^(int,float)>, @(7,28) =foo:<void^(int,ref float)> have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -5920,7 +5920,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() {
         Compile(bhl, globs);
       },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -6729,7 +6729,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "k: already passed before"
+      "argument already passed before"
     );
   }
 
@@ -6940,7 +6940,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "f: no such named argument"
+      "no such named argument"
     );
   }
 
@@ -10900,14 +10900,14 @@ public class BHL_TestVM : BHL_TestBase
       delegate() {
         Compile(bhl1);
       },
-      "@(4,26) \"Foo\":<string>, @(4,34) 1:<int> have incompatible types"
+      "incompatible types"
     );
 
     AssertError<UserError>(
       delegate() {
         Compile(bhl2);
       },
-      "@(2,4) funcinttest(){returntrue?\"Foo\":\"Bar\"}:<int>, @(4,13) true?\"Foo\":\"Bar\":<string> have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -12855,7 +12855,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "a : symbol not resolved"
+      "symbol not resolved"
     );
   }
 
@@ -13197,7 +13197,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"already defined symbol 'x'"
+      "already defined symbol 'x'"
     );
   }
 
@@ -13485,7 +13485,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, globs);
       },
-      @"float, @(4,20) ""what"":<string> have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -13572,7 +13572,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, globs);
       },
-      @"have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -13869,7 +13869,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, globs);
       },
-      @"have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -14117,7 +14117,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, globs);
       },
-      @"have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -14615,7 +14615,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -15164,7 +15164,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "foo():<int> have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -15445,7 +15445,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -15470,7 +15470,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -15491,7 +15491,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -15737,7 +15737,7 @@ public class BHL_TestVM : BHL_TestBase
        delegate() {
          Compile(bhl, globs);
        },
-      "have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -15770,7 +15770,7 @@ public class BHL_TestVM : BHL_TestBase
        delegate() {
          Compile(bhl, globs);
        },
-      "have incompatible types for casting"
+      "incompatible types for casting"
     );
   }
 
@@ -16868,7 +16868,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, globs);
       },
-      @"<string> have incompatible types"
+      "incompatible types"
     );
   }
 
@@ -17281,7 +17281,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, globs);
       },
-      "int : symbol is not a function"
+      "symbol is not a function"
     );
   }
 
