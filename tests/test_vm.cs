@@ -12835,6 +12835,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
   //[IsTested()]
   public void TestChildUserClass()
   {
@@ -12859,6 +12860,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
   //[IsTested()]
   public void TestChildUserClassDowncast()
   {
@@ -12886,6 +12888,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
   //[IsTested()]
   public void TestChildUserClassUpcast()
   {
@@ -12914,6 +12917,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
   //[IsTested()]
   public void TestChildUserClassDefaultInit()
   {
@@ -13032,6 +13036,7 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
+  //TODO:
   //[IsTested()]
   public void TestChildUserClassOfNativeClass()
   {
@@ -13057,6 +13062,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
   //[IsTested()]
   public void TestChildUserClassOfNativeClass2()
   {
