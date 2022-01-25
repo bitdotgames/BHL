@@ -119,7 +119,6 @@ public abstract class BaseScope : Scope
     }
 
     var tr = new TypeRef();
-    tr.bindings = this;
     tr.type = type;
     tr.name = str;
     tr.node = node;
@@ -147,7 +146,6 @@ public abstract class BaseScope : Scope
     }
 
     var tr = new TypeRef();
-    tr.bindings = this;
     tr.type = type;
     tr.name = str;
     tr.node = node;
@@ -189,7 +187,7 @@ public abstract class BaseScope : Scope
       }
       else
 #endif
-        tr = new TypeRef(this, name);
+        tr = new TypeRef(name);
     }
 
     type_cache.Add(name, tr);

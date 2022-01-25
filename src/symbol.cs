@@ -17,8 +17,6 @@ public interface Type
 
 public class TypeRef
 {
-  public BaseScope bindings;
-
   public Type type;
   public bool is_ref;
   public HashedName name;
@@ -30,9 +28,8 @@ public class TypeRef
   public TypeRef()
   {}
 
-  public TypeRef(BaseScope bindings, HashedName name)
+  public TypeRef(HashedName name)
   {
-    this.bindings = bindings;
     this.name = name;
     this.type = null;
     this.is_ref = false;
@@ -43,7 +40,6 @@ public class TypeRef
 
   public TypeRef(Type type)
   {
-    this.bindings = null;
     this.name = type.GetName();
     this.type = type;
     this.is_ref = false;
@@ -57,7 +53,7 @@ public class TypeRef
     return type == null && name.n == 0;
   }
 
-  public Type Get(BaseScope symbols = null)
+  public Type Get(Scope symbols)
   {
     if(type != null)
       return type;
@@ -65,10 +61,7 @@ public class TypeRef
     if(name.n == 0)
       return null;
 
-    if(symbols != null)
-      type = (bhl.Type)symbols.Resolve(name);
-    else
-      type = (bhl.Type)bindings?.Resolve(name);
+    type = (bhl.Type)symbols.Resolve(name);
 
     return type;
   }
@@ -196,26 +189,20 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   public ClassSymbol(
     WrappedNode n, 
     HashedName name, 
-    TypeRef super_class_ref, 
+    ClassSymbol super_class, 
     Scope enclosing_scope, 
     VM.ClassCreator creator = null
   )
     : base(n, name, enclosing_scope)
   {
-    if(super_class_ref != null && !super_class_ref.IsEmpty())
-    {
-      this.super_class = (ClassSymbol)super_class_ref.Get();
-      if(super_class == null)
-        throw new UserError("parent class not resolved for " + GetName()); 
-    }
-
+    this.super_class = super_class;
     this.creator = creator;
 
     //NOTE: this looks at the moment a bit like a hack:
     //      We define parent members in the current class
     //      scope as well. We do this since we want to  
     //      address members in VM simply by numeric integer
-    if(creator != null && super_class != null)
+    if(super_class != null)
     {
       for(int i=0;i<super_class.GetMembers().Count;++i)
       {
@@ -295,7 +282,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
 #if BHL_FRONT
   public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
-    : this(scope, new TypeRef(scope, node.NAME().GetText()))
+    : this(scope, new TypeRef(node.NAME().GetText()))
   {}
 #endif
 
@@ -310,7 +297,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public const int IDX_AddInplace = 6;
 
   public ArrayTypeSymbol(BaseScope scope, string name, TypeRef item_type)     
-    : base(null, name, new TypeRef(), null)
+    : base(null, name, null, null)
   {
     this.item_type = item_type;
 
@@ -397,7 +384,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   {}
 
   public GenericArrayTypeSymbol(BaseScope scope) 
-    : base(scope, new TypeRef(scope, ""))
+    : base(scope, new TypeRef(""))
   {}
 
   static IList<Val> AsList(Val arr)
@@ -631,7 +618,7 @@ public class FieldSymbolScript : FieldSymbol
   public int idx;
 
   public FieldSymbolScript(HashedName name, HashedName type, int idx = -1) 
-    : base(name, new TypeRef(null, type), null, null, null)
+    : base(name, new TypeRef(type), null, null, null)
   {
     this.idx = idx;
     this.getter = Getter;
@@ -818,12 +805,12 @@ public class FuncSymbol : ScopedSymbol
 
   public FuncType GetFuncType()
   {
-    return (FuncType)this.type.Get();
+    return (FuncType)this.type.Get(this);
   }
 
   public Type GetReturnType()
   {
-    return GetFuncType().ret_type.Get();
+    return GetFuncType().ret_type.Get(this);
   }
 
   public SymbolsDictionary GetArgs()
@@ -1088,7 +1075,7 @@ public class ClassSymbolNative : ClassSymbol
     : base(null, name, null, null, creator)
   {}
 
-  public ClassSymbolNative(HashedName name, TypeRef super_class, VM.ClassCreator creator = null)
+  public ClassSymbolNative(HashedName name, ClassSymbol super_class, VM.ClassCreator creator = null)
     : base(null, name, super_class, null, creator)
   {}
 
@@ -1109,7 +1096,7 @@ public class ClassSymbolScript : ClassSymbol
   public AST_ClassDecl decl;
 
   public ClassSymbolScript(HashedName name, AST_ClassDecl decl, ClassSymbol parent = null)
-    : base(null, name, parent == null ? null : new TypeRef(parent), null, null)
+    : base(null, name, parent, null)
   {
     this.decl = decl;
     this.creator = ClassCreator;
@@ -1427,15 +1414,15 @@ static public class SymbolTable
     return result;
   }
 
-  static public bool CanAssignTo(Type valueType, Type destType, Type promotion) 
+  static public bool CanAssignTo(Type src, Type dst, Type promotion) 
   {
-    return valueType == destType || 
-           promotion == destType || 
-           destType == symb_any ||
-           (destType is ClassSymbol && valueType == symb_null) ||
-           (destType is FuncType && valueType == symb_null) || 
-           valueType.GetName().n == destType.GetName().n ||
-           IsChildClass(valueType, destType)
+    return src == dst || 
+           promotion == dst || 
+           dst == symb_any ||
+           (dst is ClassSymbol && src == symb_null) ||
+           (dst is FuncType && src == symb_null) || 
+           src.GetName().n == dst.GetName().n ||
+           IsChildClass(src, dst)
            ;
   }
 
@@ -1555,10 +1542,10 @@ static public class SymbolTable
     return GetResultType(arithmetic_res_type, a, b);
   }
 
-  static public Type BopOverload(WrappedNode a, WrappedNode b, FuncSymbol op_func) 
+  static public Type BopOverload(Scope scope, WrappedNode a, WrappedNode b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
-    CheckAssign(op_func_arg.type.Get(), b);
+    CheckAssign(op_func_arg.type.Get(scope), b);
     return op_func.GetReturnType();
   }
 

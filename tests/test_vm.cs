@@ -15584,19 +15584,6 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNativeChildClassLazilyNotAllowed()
-  {
-    var globs = SymbolTable.CreateBuiltins();
-    
-    AssertError<UserError>(
-      delegate() { 
-        BindColorAlpha(globs, bind_parent: false);
-      },
-      @"parent class not resolved"
-    );
-  }
-
-  [IsTested()]
   public void TestNativeChildClassCallParentMethod()
   {
     string bhl = @"
@@ -20619,13 +20606,12 @@ public class BHL_TestVM : BHL_TestBase
     return cl;
   }
 
-  void BindColorAlpha(GlobalScope globs, bool bind_parent = true)
+  void BindColorAlpha(GlobalScope globs)
   {
-    if(bind_parent)
-      BindColor(globs);
+    BindColor(globs);
 
     {
-      var cl = new ClassSymbolNative("ColorAlpha", globs.Type("Color"),
+      var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)globs.Type("Color").Get(globs),
         delegate(VM.Frame frm, ref Val v) 
         { 
           v.obj = new ColorAlpha();

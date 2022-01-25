@@ -846,7 +846,9 @@ public class ModuleCompiler : AST_Visitor
 
     ClassSymbol parent = null;
     if(ast.nparent != 0)
+    {
       parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
+    }
 
     var cl = new ClassSymbolScript(name, ast, parent);
     symbols.Define(cl);
