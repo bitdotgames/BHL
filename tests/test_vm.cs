@@ -19490,42 +19490,6 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestHashedName()
-  {
-    {
-      var hn = new HashedName(0xBEAFDEADDEADBEAF);
-      AssertEqual(0xDEADBEAF, hn.n1);
-      AssertEqual(0xBEAFDEAD, hn.n2);
-      AssertEqual(0xBEAFDEADDEADBEAF, hn.n);
-      AssertEqual("", hn.s);
-    }
-
-    {
-      var hn = new HashedName("Foo");
-      AssertEqual(Hash.CRC28("Foo"), hn.n1);
-      AssertEqual(0, hn.n2);
-      AssertEqual(Hash.CRC28("Foo"), hn.n);
-      AssertEqual("Foo", hn.s);
-    }
-
-    {
-      var hn = new HashedName(0xBEAFDEADDEADBEAF, "Foo");
-      AssertEqual(0xDEADBEAF, hn.n1);
-      AssertEqual(0xBEAFDEAD, hn.n2);
-      AssertEqual(0xBEAFDEADDEADBEAF, hn.n);
-      AssertEqual("Foo", hn.s);
-    }
-
-    {
-      var hn = new HashedName("Foo", 0xDEADBEAF);
-      AssertEqual(Hash.CRC28("Foo"), hn.n1);
-      AssertEqual(0xDEADBEAF, hn.n2);
-      AssertEqual((ulong)0xDEADBEAF << 32 | (ulong)(Hash.CRC28("Foo")), hn.n);
-      AssertEqual("Foo", hn.s);
-    }
-  }
-
-  [IsTested()]
   public void TestFixedStack()
   {
     //Push/PopFast
@@ -20109,7 +20073,6 @@ public class BHL_TestVM : BHL_TestBase
     if(vm.vals_pool.Allocs != vm.vals_pool.Free)
       Console.WriteLine(vm.vals_pool.Dump());
 
-    AssertEqual(vm.vdicts_pool.Allocs, vm.vdicts_pool.Free);
     AssertEqual(vm.vlsts_pool.Allocs, vm.vlsts_pool.Free);
     AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
     AssertEqual(vm.ptrs_pool.Allocs, vm.ptrs_pool.Free);
@@ -20422,11 +20385,6 @@ public class BHL_TestVM : BHL_TestBase
     get {
       return GenericArrayTypeSymbol.IDX_AddInplace;
     }
-  }
-
-  static int H(string name)
-  {
-    return (int)(new HashedName(name).n1);
   }
 
   FuncSymbolNative BindTrace(GlobalScope globs, StringBuilder log)

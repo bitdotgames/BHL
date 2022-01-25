@@ -686,7 +686,6 @@ public class VM
 
   public ValPool vals_pool = new ValPool();
   public Pool<ValList> vlsts_pool = new Pool<ValList>();
-  public Pool<ValDict> vdicts_pool = new Pool<ValDict>();
   public Pool<Frame> frames_pool = new Pool<Frame>();
   public Pool<Fiber> fibers_pool = new Pool<Fiber>();
   public Pool<FuncPtr> ptrs_pool = new Pool<FuncPtr>();
@@ -876,8 +875,8 @@ public class VM
           //TODO: maybe we should rather serialize/unserialize AST_FuncDecl?
           var mdecl = new AST_FuncDecl();
           mdecl.name = constants[name_idx].str;
-          //TODO: remove this temporary hack
-          mdecl.nname2 = (uint)ip_addr;
+          //TODO: maybe it should rather be in AST_MethodDecl?
+          mdecl.method_ip_addr = ip_addr;
           curr_decl.children.Add(mdecl);
         }
         break;
@@ -885,7 +884,7 @@ public class VM
         {
           //TODO: add parent support
           ClassSymbolScript parent = null;
-          var curr_class = new ClassSymbolScript(new HashedName(curr_decl.name), curr_decl, parent);
+          var curr_class = new ClassSymbolScript(curr_decl.name, curr_decl, parent);
           for(int i=0;i<curr_decl.children.Count;++i)
           {
             var child = curr_decl.children[i];
@@ -1433,7 +1432,7 @@ public class VM
         var class_symb = (ClassSymbol)symbols.Resolve(class_type);
 
         var field_symb = (FuncSymbolScript)class_symb.members[func_idx];
-        int func_ip = (int)field_symb.decl.nname2;
+        int func_ip = field_symb.decl.method_ip_addr;
 
         var self = curr_frame.stack.Pop();
 

@@ -849,7 +849,7 @@ public class ModuleCompiler : AST_Visitor
     var cl = new ClassSymbolScript(ast.name, ast, parent);
     symbols.Define(cl);
 
-    Emit(Opcodes.ClassBegin, new int[] { AddConstant(ast.name), (int)(parent == null ? -1 : AddConstant(parent.name.s)) });
+    Emit(Opcodes.ClassBegin, new int[] { AddConstant(ast.name), (int)(parent == null ? -1 : AddConstant(parent.name)) });
     for(int i=0;i<ast.children.Count;++i)
     {
       var child = ast.children[i];
@@ -877,11 +877,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_EnumDecl ast)
   {
-    var name = ast.Name();
-    //TODO:?
-    //CheckNameIsUnique(name);
-
-    var es = new EnumSymbolScript(name);
+    var es = new EnumSymbolScript(ast.name);
     symbols.Define(es);
   }
 
@@ -1081,9 +1077,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        if(ast.nname2 != module_path.id)
+        if(ast.module_id != module_path.id)
         {
-          var import_name = imports[ast.nname2];
+          var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
           Emit(Opcodes.GetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, (int)ast.line_num);
         }
@@ -1095,9 +1091,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVARW:
       {
-        if(ast.nname2 != module_path.id)
+        if(ast.module_id != module_path.id)
         {
-          var import_name = imports[ast.nname2];
+          var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
           Emit(Opcodes.SetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, (int)ast.line_num);
         }
@@ -1185,13 +1181,13 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.ARR_IDX:
       {
         var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_At, AddConstant(arr_symb.name.s), 1 }, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_At, AddConstant(arr_symb.name), 1 }, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
         var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_SetAt, AddConstant(arr_symb.name.s), 3 }, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_SetAt, AddConstant(arr_symb.name), 3 }, (int)ast.line_num);
       }
       break;
       case EnumCall.LMBD:
@@ -1239,9 +1235,9 @@ public class ModuleCompiler : AST_Visitor
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
       return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
     }
-    else if(ast.nname2 != module_path.id)
+    else if(ast.module_id != module_path.id)
     {
-      var import_name = imports[ast.nname2];
+      var import_name = imports[ast.module_id];
       int module_idx = AddConstant(import_name);
       int func_idx = AddConstant(ast.name);
 
