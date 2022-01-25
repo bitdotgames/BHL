@@ -192,7 +192,7 @@ namespace bhlsp
         return;
       
       folders.Add(folder.uri.LocalPath, folder);
-      TryAddTextDocuments(folder);
+      //TryAddTextDocuments(folder);
     }
 
     public void TryAddTextDocument(string path, string text = null)

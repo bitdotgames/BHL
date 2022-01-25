@@ -33,14 +33,61 @@ namespace bhlsp
     
     public async Task<string> Read()
     {
-      int length = await FillBufferAsync();
+      string result = string.Empty;
+
+      int length = 0;
+      
+      try
+      {
+        length = await input.ReadAsync(buffer, 0, buffer.Length);
+      }
+#if BHLSP_DEBUG
+      catch(Exception e)
+      {
+        BHLSPLogger.WriteLine(e);
+#else
+      catch
+      {
+#endif
+      }
+      
       int offset = 0;
       
-      //skip header
       while(ReadToSeparator(offset, length, out int count))
         offset += count + separator.Length;
+
+      if(offset > 0)
+      {
+        var header = Encoding.ASCII.GetString(buffer, 0, offset);
+        var lenPos = header.IndexOf(": ", StringComparison.Ordinal);
+        int contentLength = 0;
+        
+        if(lenPos >= 0)
+        {
+          var name = header.Substring(0, lenPos);
+          var value = header.Substring(lenPos + 2);
+          if(string.Equals(name, "Content-Length", StringComparison.Ordinal))
+            int.TryParse(value, out contentLength);
+        }
+
+        result = Encoding.UTF8.GetString(buffer, offset, length - offset);
+        contentLength -= length - offset;
+
+        while(contentLength > 0)
+        {
+          int readLen = contentLength <= buffer.Length ? contentLength : buffer.Length;
+          length = await input.ReadAsync(buffer, 0, readLen);
+          
+          if(contentLength >= length)
+            result += Encoding.UTF8.GetString(buffer, 0, length);
+          else
+            result += Encoding.UTF8.GetString(buffer, 0, contentLength);
+          
+          contentLength -= length;
+        }
+      }
       
-      return Encoding.UTF8.GetString(buffer, offset, length - offset);
+      return result;
     }
 
     private bool ReadToSeparator(int offset, int length, out int count)
@@ -68,25 +115,6 @@ namespace bhlsp
       }
       
       return true;
-    }
-    
-    async Task<int> FillBufferAsync()
-    {
-      try
-      {
-        int length = await input.ReadAsync(buffer, 0, buffer.Length);
-        return length;
-      }
-#if BHLSP_DEBUG
-      catch(Exception e)
-      {
-        BHLSPLogger.WriteLine(e);
-#else
-      catch
-      {
-#endif
-        return 0;
-      }
     }
     
     public void Write(string json)
