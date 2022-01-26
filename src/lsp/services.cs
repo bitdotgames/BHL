@@ -155,16 +155,16 @@ namespace bhlsp
       
       if(args.workspaceFolders != null)
       {
-        for (int i = 0; i < args.workspaceFolders.Length; i++)
-          BHLSPWorkspace.self.TryAddTextDocuments(args.workspaceFolders[i]);
+        for(int i = 0; i < args.workspaceFolders.Length; i++)
+          BHLSPWorkspace.self.TryAddDocuments(args.workspaceFolders[i]);
       }
       else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
       {
-        BHLSPWorkspace.self.TryAddTextDocuments(args.rootUri);
+        BHLSPWorkspace.self.TryAddDocuments(args.rootUri);
       }
       else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
       {
-        BHLSPWorkspace.self.TryAddTextDocuments(args.rootPath);
+        BHLSPWorkspace.self.TryAddDocuments(args.rootPath);
       }
       
       ServerCapabilities capabilities = new ServerCapabilities();
@@ -183,10 +183,7 @@ namespace bhlsp
         
         if(args.capabilities.textDocument.signatureHelp != null)
         {
-          capabilities.signatureHelpProvider = new SignatureHelpOptions
-          {
-            triggerCharacters = new[] {"(", ","}
-          };
+          //capabilities.signatureHelpProvider = new SignatureHelpOptions { triggerCharacters = new[] {"(", ","} };
         }
 
         if(args.capabilities.textDocument.declaration != null)
@@ -194,7 +191,7 @@ namespace bhlsp
           if(args.capabilities.textDocument.declaration.linkSupport != null)
             BHLSPWorkspace.self.declarationLinkSupport = (bool)args.capabilities.textDocument.declaration.linkSupport;
 
-          //capabilities.declarationProvider = new DeclarationOptions(); //textDocument/declaration
+          capabilities.declarationProvider = false; //textDocument/declaration
         }
 
         if(args.capabilities.textDocument.definition != null)
@@ -256,133 +253,13 @@ namespace bhlsp
   
   public class BHLSPTextDocumentSignatureHelpJsonRpcService : BHLSPTextDocumentSignatureHelpJsonRpcServiceTemplate
   {
-    (uint, string) FindFuncInfo(BHLTextDocument document, Position position)
-    {
-      string line = document.Text.Split('\n')[position.line];
-      string funcName = string.Empty;
-      uint activeParameter = 0;
-      
-      string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
-      MatchCollection matches = Regex.Matches(line, pattern, RegexOptions.Multiline);
-      for(int i = matches.Count-1; i >= 0; i--)
-      {
-        var m = matches[i];
-        if(m.Index < position.character)
-        {
-          string v = m.Value;
-          int len = v.Length - 1;
-
-          if(len > 0)
-          {
-            funcName = line.Substring(m.Index, len);
-            var funcDeclStr = line.Substring(m.Index, Math.Max(0, (int)position.character - m.Index));
-            activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1);
-            break;
-          }
-        }
-      }
-      
-      return (activeParameter, funcName);
-    }
-
-    SignatureInformation GetFuncSignInfo(IFuncDecl funcDecl)
-    {
-      if(funcDecl is BHLFuncDecl bhlFuncDecl)
-      {
-        SignatureInformation funcSignature = new SignatureInformation();
-        List<ParameterInformation> funcParameters = new List<ParameterInformation>();
-      
-        funcSignature.label = bhlFuncDecl.ctx.NAME().GetText()+"(";
-
-        if(bhlFuncDecl.ctx.funcParams() is bhlParser.FuncParamsContext funcParams)
-        {
-          var funcParamDeclares = funcParams.funcParamDeclare();
-          for (int k = 0; k < funcParamDeclares.Length; k++)
-          {
-            var fpd = funcParamDeclares[k];
-            if(fpd.exception != null)
-              continue;
-
-            var fpdl = $"{(fpd.isRef() != null ? "ref " : "")}{fpd.type().NAME().GetText()} {fpd.NAME().GetText()}";
-
-            funcParameters.Add(new ParameterInformation
-            {
-              label = fpdl,
-              documentation = ""
-            });
-
-            funcSignature.label += fpdl;
-            if(k != funcParamDeclares.Length - 1)
-              funcSignature.label += ", ";
-          }
-        }
-        else
-          funcSignature.label += "<no parameters>";
-
-        funcSignature.label += ")";
-
-        if(bhlFuncDecl.ctx.retType() is bhlParser.RetTypeContext retType)
-        {
-          funcSignature.label += ":";
-
-          var types = retType.type();
-          for (int n = 0; n < types.Length; n++)
-          {
-            var t = types[n];
-            if(t.exception != null)
-              continue;
-
-            funcSignature.label += t.NAME().GetText() + " ";
-          }
-        }
-        else
-          funcSignature.label += ":void";
-
-        funcSignature.parameters = funcParameters.ToArray();
-        return funcSignature;
-      }
-
-      return null;
-    }
-    
     public override RpcResult SignatureHelp(SignatureHelpParams args)
     {
-      BHLSPWorkspace.self.TryAddTextDocument(args.textDocument.uri);
-      if(BHLSPWorkspace.self.FindTextDocument(args.textDocument.uri) is BHLTextDocument document)
+      return RpcResult.Error(new ResponseError
       {
-        var funcInfo = FindFuncInfo(document, args.position);
-        if(!string.IsNullOrEmpty(funcInfo.Item2))
-        {
-          List<IFuncDecl> funcDecls = document.FindFuncDeclsByName(funcInfo.Item2);
-          if(funcDecls.Count == 0)
-            funcDecls = BHLSPWorkspace.self.FindFuncDeclsByName(funcInfo.Item2);
-          
-          List<SignatureInformation> signatures = new List<SignatureInformation>();
-          uint activeSignature = 0;
-          
-          for(int j = 0; j < funcDecls.Count; j++)
-          {
-            var funcSign = GetFuncSignInfo(funcDecls[j]);
-            if(funcSign != null)
-            {
-              funcSign.activeParameter = funcInfo.Item1;
-              signatures.Add(funcSign);
-            }
-          }
-          
-          if(signatures.Count > 0)
-          {
-            var result = new SignatureHelp();
-            result.activeSignature = activeSignature;
-            result.signatures = signatures.ToArray();
-            result.activeParameter = result.signatures[activeSignature].activeParameter;
-            
-            return RpcResult.Success(result);
-          }
-        }
-      }
-      
-      return RpcResult.Success();
+        code = (int) ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
     }
   }
   
@@ -390,13 +267,13 @@ namespace bhlsp
   {
     public override RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
     {
-      BHLSPWorkspace.self.TryAddTextDocument(args.textDocument.uri, args.textDocument.text);
+      BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri, args.textDocument.text);
       return RpcResult.Success();
     }
     
     public override RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
     {
-      if(BHLSPWorkspace.self.FindTextDocument(args.textDocument.uri) is BHLSPTextDocument document)
+      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLSPTextDocument document)
       {
         if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Full)
         {

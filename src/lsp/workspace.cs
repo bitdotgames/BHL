@@ -9,95 +9,26 @@ namespace bhlsp
 {
   public abstract class BHLSPTextDocument
   {
-    protected string text;
-    public string Text => text;
+    public Uri uri { get; set; }
+    public string text { get;  protected set; }
 
     public virtual void Sync(string text)
     {
       this.text = text;
     }
-    
-    public abstract List<IFuncDecl> FindFuncDeclsByName(string funcName);
-  }
-  
-  public interface IFuncDecl
-  {
-  }
-  
-  public class BHLFuncDecl : IFuncDecl
-  {
-    public bhlParser.FuncDeclContext ctx;
-
-    public BHLFuncDecl(bhlParser.FuncDeclContext ctx)
-    {
-      this.ctx = ctx;
-    }
   }
   
   public class BHLTextDocument : BHLSPTextDocument
   {
-    List<BHLFuncDecl> funcDecls = new List<BHLFuncDecl>();
-    
     public override void Sync(string text)
     {
       base.Sync(text);
-      FindFuncDecls();
-    }
-    
-    public override List<IFuncDecl> FindFuncDeclsByName(string funcName)
-    {
-      List<IFuncDecl> result = new List<IFuncDecl>();
-      if(!string.IsNullOrEmpty(funcName))
-      {
-        for(int i = 0; i < funcDecls.Count; i++)
-        {
-          var funcDecl = funcDecls[i];
-          var name = funcDecl.ctx.NAME();
-          
-          if(name != null && name.GetText() == funcName)
-            result.Add(funcDecl);
-        }
-      }
-      return result;
-    }
-    
-    void FindFuncDecls(bool errors = false)
-    {
-      funcDecls.Clear();
-      
-      var ais = new AntlrInputStream(text.ToStream());
-      var lex = new bhlLexer(ais);
-      
-      if(!errors)
-        lex.RemoveErrorListeners();
-      
-      var tokens = new CommonTokenStream(lex);
-      var p = new bhlParser(tokens);
-      
-      if(!errors)
-        p.RemoveErrorListeners();
-    
-      var progblock = p.program().progblock();
-      if(progblock.Length == 0)
-        return;
-    
-      for(int i = 0; i < progblock.Length; ++i)
-      {
-        var decls = progblock[i].decls().decl();
-        for(int j = 0; j < decls.Length; j++)
-        {
-          var fndecl = decls[j].funcDecl();
-          if(fndecl != null)
-            funcDecls.Add(new BHLFuncDecl(fndecl));
-        }
-      }
     }
   }
   
   public class BHLSPWorkspace
   {
     private static BHLSPWorkspace self_;
-
     public static BHLSPWorkspace self
     {
       get
@@ -123,27 +54,37 @@ namespace bhlsp
       documents.Clear();
     }
     
-    public void TryAddTextDocuments(string pathFolder)
+    public void TryAddDocuments(string pathFolder)
     {
-      TryAddTextDocuments(new Uri(pathFolder));
+      TryAddDocuments(new Uri(pathFolder));
     }
     
-    public void TryAddTextDocuments(WorkspaceFolder folder)
+    public void TryAddDocuments(WorkspaceFolder folder)
     {
-      TryAddTextDocuments(folder.uri);
+      TryAddDocuments(folder.uri);
     }
     
-    public void TryAddTextDocuments(Uri uriFolder)
+    public void TryAddDocuments(Uri uriFolder)
     {
       if(!Directory.Exists(uriFolder.LocalPath))
         return;
       
       Dictionary<string, string> contents = new Dictionary<string, string>();
       
+#if BHLSP_DEBUG
       var sw = new System.Diagnostics.Stopwatch();
       sw.Start();
+#endif
       
       var files = Directory.GetFiles(uriFolder.LocalPath, "*.bhl", SearchOption.AllDirectories);
+      
+#if BHLSP_DEBUG
+      sw.Stop();
+      BHLSPLogger.WriteLine($"SearchFiles done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      
+      sw = new System.Diagnostics.Stopwatch();
+      sw.Start();
+#endif
       
       var tasks = new List<Task>();
       for (int i = 0; i < files.Length; i++)
@@ -155,19 +96,29 @@ namespace bhlsp
       
       Task.WhenAll(tasks).Wait();
       
+#if BHLSP_DEBUG
+      sw.Stop();
+      BHLSPLogger.WriteLine($"ReadFiles done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      
+      sw = new System.Diagnostics.Stopwatch();
+      sw.Start();
+#endif
+      
       tasks.Clear();
       foreach(var path in contents.Keys)
-        tasks.Add(TryAddAsyncTextDocument(path, contents[path]));
+        tasks.Add(TryAddAsyncDocument(path, contents[path]));
       
       Task.WhenAll(tasks).Wait();
       
+#if BHLSP_DEBUG
       sw.Stop();
-      BHLSPLogger.WriteLine($"SearchFolderFiles done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      BHLSPLogger.WriteLine($"AddDocuments done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+#endif
     }
     
-    public async Task TryAddAsyncTextDocument(string path, string text)
+    async Task TryAddAsyncDocument(string path, string text)
     {
-      var task = Task.Run(() => TryAddTextDocument(path, text));
+      var task = Task.Run(() => TryAddDocument(path, text));
       await task;
     }
     
@@ -190,14 +141,14 @@ namespace bhlsp
       }
     }
     
-    public void TryAddTextDocument(string path, string text)
+    public void TryAddDocument(string path, string text)
     {
-      TryAddTextDocument(new Uri($"file://{path}"), text);
+      TryAddDocument(new Uri($"file://{path}"), text);
     }
     
     object lockAddDocument = new object();
     
-    public void TryAddTextDocument(Uri uri, string text = null)
+    public void TryAddDocument(Uri uri, string text = null)
     {
       string path = uri.LocalPath;
 
@@ -217,24 +168,12 @@ namespace bhlsp
       }
     }
     
-    public List<IFuncDecl> FindFuncDeclsByName(string funcName)
+    public BHLSPTextDocument FindDocument(Uri uri)
     {
-      List<IFuncDecl> result = new List<IFuncDecl>();
-      foreach(var document in documents.Values)
-      {
-        var decls = document.FindFuncDeclsByName(funcName);
-        if(decls.Count > 0)
-          result.AddRange(decls);
-      }
-      return result;
+      return FindDocument(uri.LocalPath);
     }
     
-    public BHLSPTextDocument FindTextDocument(Uri uri)
-    {
-      return FindTextDocument(uri.LocalPath);
-    }
-    
-    public BHLSPTextDocument FindTextDocument(string path)
+    public BHLSPTextDocument FindDocument(string path)
     {
       if(documents.ContainsKey(path))
         return documents[path];
