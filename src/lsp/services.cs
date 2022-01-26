@@ -258,7 +258,7 @@ namespace bhlsp
   {
     (uint, string) FindFuncInfo(BHLTextDocument document, Position position)
     {
-      string line = document.text.Split('\n')[position.line];
+      string line = document.Text.Split('\n')[position.line];
       string funcName = string.Empty;
       uint activeParameter = 0;
       
@@ -390,11 +390,7 @@ namespace bhlsp
   {
     public override RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
     {
-      BHLSPWorkspace.self.TryAddTextDocument(args.textDocument.uri);
-
-      if(BHLSPWorkspace.self.FindTextDocument(args.textDocument.uri) is BHLSPTextDocument document)
-        document.text = args.textDocument.text;
-      
+      BHLSPWorkspace.self.TryAddTextDocument(args.textDocument.uri, args.textDocument.text);
       return RpcResult.Success();
     }
     
@@ -405,7 +401,7 @@ namespace bhlsp
         if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Full)
         {
           for(int i = 0; i < args.contentChanges.Length; i++)
-            document.text = args.contentChanges[i].text;
+            document.Sync(args.contentChanges[i].text);
         }
         else if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Incremental)
         {

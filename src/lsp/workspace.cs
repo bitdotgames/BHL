@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Antlr4.Runtime;
 using bhl;
 
@@ -8,7 +9,13 @@ namespace bhlsp
 {
   public abstract class BHLSPTextDocument
   {
-    public string text;
+    protected string text;
+    public string Text => text;
+
+    public virtual void Sync(string text)
+    {
+      this.text = text;
+    }
     
     public abstract List<IFuncDecl> FindFuncDeclsByName(string funcName);
   }
@@ -31,10 +38,14 @@ namespace bhlsp
   {
     List<BHLFuncDecl> funcDecls = new List<BHLFuncDecl>();
     
+    public override void Sync(string text)
+    {
+      base.Sync(text);
+      FindFuncDecls();
+    }
+    
     public override List<IFuncDecl> FindFuncDeclsByName(string funcName)
     {
-      FindFuncDecls();
-      
       List<IFuncDecl> result = new List<IFuncDecl>();
       if(!string.IsNullOrEmpty(funcName))
       {
@@ -127,47 +138,103 @@ namespace bhlsp
       if(!Directory.Exists(uriFolder.LocalPath))
         return;
       
+      SearchFolderFiles(uriFolder.LocalPath);
+    }
+    
+    void SearchFolderFiles(string targetDirectory)
+    {
+      Dictionary<string, string> contents = new Dictionary<string, string>();
+      
       var sw = new System.Diagnostics.Stopwatch();
       sw.Start();
-
-      SearchFolderFiles(uriFolder.LocalPath, path => TryAddTextDocument(path));
+      
+      var files = Directory.GetFiles(targetDirectory, "*.bhl", SearchOption.AllDirectories);
+      
+      var tasks = new List<Task>();
+      for (int i = 0; i < files.Length; i++)
+      {
+        string path = files[i];
+        if(!documents.ContainsKey(path))
+          tasks.Add(ReadAsyncFile(files[i], contents));
+      }
+      
+      Task.WhenAll(tasks).Wait();
+      
+      tasks.Clear();
+      foreach(var path in contents.Keys)
+        tasks.Add(TryAddAsyncTextDocument(path, contents[path]));
+      
+      Task.WhenAll(tasks).Wait();
       
       sw.Stop();
       BHLSPLogger.WriteLine($"SearchFolderFiles done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
     
-    void SearchFolderFiles(string targetDirectory, Action<string> onFile)
+    public async Task TryAddAsyncTextDocument(string path, string text)
     {
-      foreach(string filePath in Directory.GetFiles(targetDirectory, "*", SearchOption.AllDirectories))
-        onFile?.Invoke(filePath);
+      var task = Task.Run(() => TryAddTextDocument(path, text));
+      await task;
     }
     
-    public void TryAddTextDocument(string path)
-    {
-      TryAddTextDocument(new Uri(String.Concat("file://", path)));
-    }
+    object lockRead = new object();
     
-    public void TryAddTextDocument(Uri uri)
+    async Task ReadAsyncFile(string file, Dictionary<string, string> map)
     {
-      if(!documents.ContainsKey(uri.LocalPath))
+      byte[] buffer;
+      using (FileStream sourceStream = new FileStream(file, FileMode.Open, FileAccess.Read))
       {
-        BHLSPTextDocument document;
-        string ext = Path.GetExtension(uri.LocalPath);
-        switch(ext)
+        buffer = new byte[sourceStream.Length];
+        await sourceStream.ReadAsync(buffer, 0, (int)sourceStream.Length);
+      }
+
+      string content = System.Text.Encoding.ASCII.GetString(buffer);
+      
+      lock(lockRead)
+      {
+        map.Add(file, content);
+      }
+    }
+    
+    public void TryAddTextDocument(string path, string text)
+    {
+      TryAddTextDocument(new Uri($"file://{path}"), text);
+    }
+    
+    object lockAddDocument = new object();
+    
+    public void TryAddTextDocument(Uri uri, string text = null)
+    {
+      string path = uri.LocalPath;
+
+      if(!documents.ContainsKey(path))
+      {
+        
+      }
+      
+      BHLSPTextDocument document = CreateDocument(path);
+      if(document != null)
+      {
+        document.Sync(string.IsNullOrEmpty(text) ? System.IO.File.ReadAllText(path) : text);
+        
+        lock(lockAddDocument)
         {
-          case ".bhl":
-            document = new BHLTextDocument();
-            break;
-          default:
-            return;
+          if(!documents.ContainsKey(path))
+            documents.Add(path, document);
         }
-        
-        document.text = System.IO.File.ReadAllText(uri.LocalPath);
-        
-        documents.Add(uri.LocalPath, document);
       }
     }
 
+    BHLSPTextDocument CreateDocument(string path)
+    {
+      string ext = Path.GetExtension(path);
+      switch(ext)
+      {
+        case ".bhl": return new BHLTextDocument();
+      }
+
+      return null;
+    }
+    
     public List<IFuncDecl> FindFuncDeclsByName(string funcName)
     {
       List<IFuncDecl> result = new List<IFuncDecl>();
