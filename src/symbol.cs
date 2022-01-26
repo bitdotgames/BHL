@@ -789,6 +789,8 @@ public class FuncSymbol : ScopedSymbol
   SymbolsDictionary members = new SymbolsDictionary();
   SymbolsDictionary args = new SymbolsDictionary();
 
+  public uint module_id;
+
   public bool return_statement_found = false;
 
   public FuncSymbol(ParserWrappedNode n, string name, FuncType type, Scope enclosing_scope) 
@@ -981,13 +983,13 @@ public class FuncSymbolScript : FuncSymbol
     AST_FuncDecl decl, 
     ParserWrappedNode n, 
     string name, 
-    uint module_id,
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
     : base(n, name, new FuncType(ret_type), mscope)
   {
     this.decl = decl;
+    this.module_id = decl.module_id;
     this.fparams = fparams;
 
     if(n != null)
@@ -1013,6 +1015,7 @@ public class FuncSymbolScript : FuncSymbol
     : base(null, decl.name, new FuncType(), enclosing_scope)
   {
     this.decl = decl;
+    this.module_id = decl.module_id;
   }
 
   public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }

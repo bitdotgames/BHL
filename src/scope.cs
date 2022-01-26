@@ -235,10 +235,16 @@ public class ModuleScope : BaseScope
 
     if(sym is VariableSymbol vs)
     {
-      //NOTE: adding module id to variable name if it's not added already
+      //NOTE: adding module id if it's not added already
       if(vs.module_id == 0)
         vs.module_id = module_id;
       vs.CalcVariableScopeIdx(this);
+    } 
+    else if(sym is FuncSymbol fs)
+    {
+      //NOTE: adding module id if it's not added already
+      if(fs.module_id == 0)
+        fs.module_id = module_id;
     }
     base.Define(sym);
   }

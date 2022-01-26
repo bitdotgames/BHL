@@ -479,7 +479,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, class_scope);
+          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, func_symb.module_id, class_scope);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -489,7 +489,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = locals.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name);
+            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, func_symb.module_id);
             AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
             type = func_symb.GetReturnType();
           }
@@ -511,7 +511,8 @@ public class Frontend : bhlBaseVisitor<object>
             line, 
             var_symb.name,
             class_scope != null ? class_scope.Type() : "",
-            var_symb.scope_idx
+            var_symb.scope_idx,
+            var_symb.module_id
           );
           //handling passing by ref for class fields
           if(class_scope != null && PeekCallByRef())
@@ -529,7 +530,7 @@ public class Frontend : bhlBaseVisitor<object>
             FireError(Location(name) +  " : no such function found");
           var func_call_name = call_func_symb.name;
 
-          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, func_call_name);
+          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, func_call_name, call_func_symb.module_id);
           type = func_symb.type.Get(locals);
         }
         else
@@ -1342,7 +1343,7 @@ public class Frontend : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, class_symb));
+      over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, 0, class_symb));
       ast = over_ast;
     }
     else if(
@@ -1863,7 +1864,6 @@ public class Frontend : bhlBaseVisitor<object>
       ast, 
       func_node, 
       fstr_name, 
-      curr_module.id,
       tr, 
       context.funcParams()
     );

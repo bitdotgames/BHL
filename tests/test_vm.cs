@@ -6391,7 +6391,6 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [IsTested()]
   public void TestStartLambdaCaptureVars()
   {
