@@ -208,18 +208,16 @@ namespace bhlsp
 
       if(!documents.ContainsKey(path))
       {
-        
-      }
-      
-      BHLSPTextDocument document = CreateDocument(path);
-      if(document != null)
-      {
-        document.Sync(string.IsNullOrEmpty(text) ? System.IO.File.ReadAllText(path) : text);
-        
-        lock(lockAddDocument)
+        BHLSPTextDocument document = CreateDocument(path);
+        if(document != null)
         {
-          if(!documents.ContainsKey(path))
-            documents.Add(path, document);
+          document.Sync(string.IsNullOrEmpty(text) ? System.IO.File.ReadAllText(path) : text);
+        
+          lock(lockAddDocument)
+          {
+            if(!documents.ContainsKey(path))
+              documents.Add(path, document);
+          }
         }
       }
     }
