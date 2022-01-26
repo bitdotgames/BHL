@@ -138,17 +138,12 @@ namespace bhlsp
       if(!Directory.Exists(uriFolder.LocalPath))
         return;
       
-      SearchFolderFiles(uriFolder.LocalPath);
-    }
-    
-    void SearchFolderFiles(string targetDirectory)
-    {
       Dictionary<string, string> contents = new Dictionary<string, string>();
       
       var sw = new System.Diagnostics.Stopwatch();
       sw.Start();
       
-      var files = Directory.GetFiles(targetDirectory, "*.bhl", SearchOption.AllDirectories);
+      var files = Directory.GetFiles(uriFolder.LocalPath, "*.bhl", SearchOption.AllDirectories);
       
       var tasks = new List<Task>();
       for (int i = 0; i < files.Length; i++)
@@ -221,17 +216,6 @@ namespace bhlsp
         }
       }
     }
-
-    BHLSPTextDocument CreateDocument(string path)
-    {
-      string ext = Path.GetExtension(path);
-      switch(ext)
-      {
-        case ".bhl": return new BHLTextDocument();
-      }
-
-      return null;
-    }
     
     public List<IFuncDecl> FindFuncDeclsByName(string funcName)
     {
@@ -254,6 +238,17 @@ namespace bhlsp
     {
       if(documents.ContainsKey(path))
         return documents[path];
+
+      return null;
+    }
+    
+    BHLSPTextDocument CreateDocument(string path)
+    {
+      string ext = Path.GetExtension(path);
+      switch(ext)
+      {
+        case ".bhl": return new BHLTextDocument();
+      }
 
       return null;
     }
