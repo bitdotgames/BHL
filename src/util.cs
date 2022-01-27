@@ -1050,21 +1050,21 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_New node)
   {
-    Console.Write("(NEW " + node.type + " " + node.ntype);
+    Console.Write("(NEW " + node.type);
     VisitChildren(node);
     Console.Write(")");
   }
 
   public override void DoVisit(AST_VarDecl node)
   {
-    Console.Write("(VARDECL " + node.name + " " + node.nname);
+    Console.Write("(VARDECL " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
 
   public override void DoVisit(AST_JsonObj node)
   {
-    Console.Write("(JOBJ " + node.ntype);
+    Console.Write("(JOBJ " + node.type);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1078,7 +1078,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_JsonPair node)
   {
-    Console.Write("(JPAIR " + node.name + " " + node.nname);
+    Console.Write("(JPAIR " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
