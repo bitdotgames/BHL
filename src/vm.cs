@@ -876,7 +876,7 @@ public class VM
           var mdecl = new AST_FuncDecl();
           mdecl.name = constants[name_idx].str;
           //TODO: maybe it should rather be in AST_MethodDecl?
-          mdecl.method_ip_addr = ip_addr;
+          mdecl.ip_addr = ip_addr;
           curr_decl.children.Add(mdecl);
         }
         break;
@@ -1432,7 +1432,7 @@ public class VM
         var class_symb = (ClassSymbol)symbols.Resolve(class_type);
 
         var field_symb = (FuncSymbolScript)class_symb.members[func_idx];
-        int func_ip = field_symb.decl.method_ip_addr;
+        int func_ip = field_symb.decl.ip_addr;
 
         var self = curr_frame.stack.Pop();
 

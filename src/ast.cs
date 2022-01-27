@@ -237,7 +237,7 @@ public class AST_Import  : AST_Base
 
 public class AST_Module  : AST 
 {
-  public uint nname;
+  public uint id;
   public string name = "";
 
   static public  new  uint STATIC_CLASS_ID = 127311748;
@@ -256,14 +256,14 @@ public class AST_Module  : AST
   {
     base.reset();
 
-    nname = 0;
+    id = 0;
     name = "";
   }
 
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, ref nname);
+    MetaHelper.sync(ctx, ref id);
     MetaHelper.sync(ctx, ref name);
   }
 
@@ -482,7 +482,7 @@ public class AST_FuncDecl  : AST
   public uint local_vars_num;
   public byte required_args_num;
   public byte default_args_num;
-  public int method_ip_addr;
+  public int ip_addr;
 
   static public  new  uint STATIC_CLASS_ID = 19638951;
 
@@ -506,7 +506,7 @@ public class AST_FuncDecl  : AST
     local_vars_num = 0;
     required_args_num = 0;
     default_args_num = 0;
-    method_ip_addr = -1;
+    ip_addr = -1;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -519,7 +519,7 @@ public class AST_FuncDecl  : AST
     MetaHelper.sync(ctx, ref local_vars_num);
     MetaHelper.sync(ctx, ref required_args_num);
     MetaHelper.sync(ctx, ref default_args_num);
-    MetaHelper.sync(ctx, ref method_ip_addr);
+    MetaHelper.sync(ctx, ref ip_addr);
   }
 
   public override int getFieldsCount() 
@@ -644,7 +644,6 @@ public class AST_EnumDecl  : AST
 
 public class AST_UpVal  :  BaseMetaStruct 
 {
-  public uint nname;
   public string name = "";
   public uint symb_idx;
   public uint upsymb_idx;
@@ -663,7 +662,6 @@ public class AST_UpVal  :  BaseMetaStruct
 
   public override void reset() 
   {
-    nname = 0;
     name = "";
     symb_idx = 0;
     upsymb_idx = 0;
@@ -673,7 +671,6 @@ public class AST_UpVal  :  BaseMetaStruct
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref nname);
     MetaHelper.sync(ctx, ref name);
     MetaHelper.sync(ctx, ref symb_idx);
     MetaHelper.sync(ctx, ref upsymb_idx);
@@ -681,7 +678,7 @@ public class AST_UpVal  :  BaseMetaStruct
 
   public override int getFieldsCount() 
   {
-    return 4; 
+    return 3; 
   }
 }
 

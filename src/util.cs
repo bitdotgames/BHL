@@ -480,10 +480,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Module New_Module(uint nname, string name)
+  static public AST_Module New_Module(uint id, string name)
   {
     var n = new AST_Module();
-    n.nname = nname;
+    n.id = id;
     n.name = name;
     return n;
   }
@@ -913,7 +913,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Module node)
   {
-    Console.Write("(MODULE " + node.nname);
+    Console.Write("(MODULE " + node.id + " " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -941,7 +941,7 @@ public class AST_Dumper : AST_Visitor
     if(node.upvals.Count > 0)
       Console.Write(" USE:");
     for(int i=0;i<node.upvals.Count;++i)
-      Console.Write(" " + node.upvals[i].name + " " + node.upvals[i].nname);
+      Console.Write(" " + node.upvals[i].name);
     VisitChildren(node);
     Console.Write(")");
   }
