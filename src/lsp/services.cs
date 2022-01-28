@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 using bhl;
+using bhlsp;
 
 namespace bhlsp
 {
@@ -183,7 +186,7 @@ namespace bhlsp
         
         if(args.capabilities.textDocument.signatureHelp != null)
         {
-          //capabilities.signatureHelpProvider = new SignatureHelpOptions { triggerCharacters = new[] {"(", ","} };
+          capabilities.signatureHelpProvider = new SignatureHelpOptions { triggerCharacters = new[] {"(", ","} };
         }
 
         if(args.capabilities.textDocument.declaration != null)
@@ -255,11 +258,31 @@ namespace bhlsp
   {
     public override RpcResult SignatureHelp(SignatureHelpParams args)
     {
-      return RpcResult.Error(new ResponseError
+      BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri);
+      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
       {
-        code = (int) ErrorCodes.RequestFailed,
-        message = "Not supported"
-      });
+        int line = (int)args.position.line;
+        int character = (int)args.position.character;
+        int index = document.GetIndex(line, character);
+        
+        ITerminalNode ref_pt = null;
+        foreach(IParseTree node in document.DFS(document.ToParser().program()))
+        {
+          TerminalNodeImpl leaf = node as TerminalNodeImpl;
+          if(leaf.Symbol.StartIndex <= index && index <= leaf.Symbol.StopIndex)
+          {
+            ref_pt = leaf;
+            break;
+          }
+        }
+
+        if(ref_pt != null)
+        {
+          //TODO: ...
+        }
+      }
+      
+      return RpcResult.Success();
     }
   }
   

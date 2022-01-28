@@ -1718,7 +1718,7 @@ namespace bhlsp
   
   public class Location
   {
-    public string uri { get; set; }
+    public Uri uri { get; set; }
     public Range range { get; set; }
   }
   
