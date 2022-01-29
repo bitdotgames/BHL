@@ -197,72 +197,70 @@ namespace bhlsp
       documents.Clear();
     }
     
-    public void TryAddDocuments(string pathFolder)
+    public async void TryAddDocuments(string pathFolder)
     {
-      TryAddDocuments(new Uri(pathFolder));
+      if(Directory.Exists(pathFolder))
+      {
+        string[] files = new string[0];
+        
+#if BHLSP_DEBUG
+        var sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+#endif
+        
+        await Task.Run(() =>
+        {
+          files = Directory.GetFiles(pathFolder, "*.bhl", SearchOption.AllDirectories);
+        });
+        
+#if BHLSP_DEBUG
+        sw.Stop();
+        BHLSPLogger.WriteLine($"SearchFiles ({files.Length}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      
+        sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+#endif
+        Dictionary<string, string> map = new Dictionary<string, string>();
+        
+        var tasks = new List<Task>();
+        for(int i = 0; i < files.Length; i++)
+        {
+          string path = files[i];
+          if(!documents.ContainsKey(path))
+            tasks.Add(ReadAsyncFile(files[i], map));
+        }
+        
+        await Task.WhenAll(tasks);
+        
+#if BHLSP_DEBUG
+        sw.Stop();
+        BHLSPLogger.WriteLine($"ReadFiles ({map.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+        
+        sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+#endif
+        
+        tasks.Clear();
+        foreach (var path in map.Keys)
+          tasks.Add(Task.Run(() => TryAddDocument(path, map[path])));
+      
+        await Task.WhenAll(tasks);
+        
+#if BHLSP_DEBUG
+        sw.Stop();
+        BHLSPLogger.WriteLine($"AddDocuments ({map.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+#endif
+      }
     }
     
     public void TryAddDocuments(WorkspaceFolder folder)
     {
-      TryAddDocuments(folder.uri);
+      TryAddDocuments(folder.uri.LocalPath);
     }
-    
+
     public void TryAddDocuments(Uri uriFolder)
     {
-      if(!Directory.Exists(uriFolder.LocalPath))
-        return;
-      
-      Dictionary<string, string> map = new Dictionary<string, string>();
-      
-#if BHLSP_DEBUG
-      var sw = new System.Diagnostics.Stopwatch();
-      sw.Start();
-#endif
-      
-      var files = Directory.GetFiles(uriFolder.LocalPath, "*.bhl", SearchOption.AllDirectories);
-      
-#if BHLSP_DEBUG
-      sw.Stop();
-      BHLSPLogger.WriteLine($"SearchFiles done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-      
-      sw = new System.Diagnostics.Stopwatch();
-      sw.Start();
-#endif
-      
-      var tasks = new List<Task>();
-      for(int i = 0; i < files.Length; i++)
-      {
-        string path = files[i];
-        if(!documents.ContainsKey(path))
-          tasks.Add(ReadAsyncFile(files[i], map));
-      }
-      
-      Task.WhenAll(tasks).Wait();
-      
-#if BHLSP_DEBUG
-      sw.Stop();
-      BHLSPLogger.WriteLine($"ReadFiles done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-#endif
-
-      TryAddDocuments(map);
-    }
-
-    async void TryAddDocuments(Dictionary<string, string> map)
-    {
-#if BHLSP_DEBUG
-      var sw = new System.Diagnostics.Stopwatch();
-      sw.Start();
-#endif
-      
-      foreach (var path in map.Keys)
-      {
-        await Task.Run(() => TryAddDocument(path, map[path]));
-      }
-      
-#if BHLSP_DEBUG
-      sw.Stop();
-      BHLSPLogger.WriteLine($"AddDocuments done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-#endif
+      TryAddDocuments(uriFolder.LocalPath);
     }
     
     object lockRead = new object();
