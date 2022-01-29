@@ -620,6 +620,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.Func,
+        4/*name idx*/, 3/*ip addr*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.ClassBegin,
         4/*type idx*/, 4/*parent type idx*/
       )
@@ -809,10 +815,14 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
-    UseCode();
+    UseInit();
+    symbols.Define(new FuncSymbolScript(symbols, ast));
+    var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
 
+    UseCode();
     func_decls.Add(ast);
     int ip = GetCodeSize();
+    inst.SetOperand(1, ip);
     func2ip.Add(ast.name, ip);
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);

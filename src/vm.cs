@@ -66,6 +66,7 @@ public enum Opcodes
   InitFrame        ,
   Inc              ,
   Dec              ,
+  Func             ,
   ClassBegin       ,
   ClassMember      ,
   ClassMethod      ,
@@ -844,6 +845,17 @@ public class VM
           CallNative(init_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine);
         }
         break;
+        case Opcodes.Func:
+        {
+          int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
+          int ip_addr = (int)Bytecode.Decode24(bytecode, ref ip);
+
+          var fdecl = new AST_FuncDecl();
+          fdecl.name = constants[name_idx].str;
+          fdecl.ip_addr = ip_addr;
+          //TODO: use it for func ip resolving 
+        }
+        break;
         case Opcodes.ClassBegin:
         {
           int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
@@ -859,7 +871,6 @@ public class VM
           int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
 
-          //TODO: maybe we should rather serialize/unserialize AST_VarDecl?
           var mdecl = new AST_VarDecl();
           mdecl.type = constants[type_idx].str;
           mdecl.name = constants[name_idx].str;
@@ -872,10 +883,8 @@ public class VM
           int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int ip_addr = (int)Bytecode.Decode24(bytecode, ref ip);
 
-          //TODO: maybe we should rather serialize/unserialize AST_FuncDecl?
           var mdecl = new AST_FuncDecl();
           mdecl.name = constants[name_idx].str;
-          //TODO: maybe it should rather be in AST_MethodDecl?
           mdecl.ip_addr = ip_addr;
           curr_decl.children.Add(mdecl);
         }
