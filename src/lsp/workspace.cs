@@ -109,17 +109,28 @@ namespace bhlsp
 
   public class BHLTextDocument : BHLSPTextDocument
   {
+    List<bhlParser.FuncDeclContext> funcDecls = new List<bhlParser.FuncDeclContext>();
+    
     public override void Sync(string text)
     {
       base.Sync(text);
-      ToParser().program();
-    }
-
-    public IEnumerable<IParseTree> DFS(IParseTree root = null)
-    {
-      if(root == null)
-        root = ToParser().program();
       
+      funcDecls.Clear();
+      
+      foreach(var progblock in ToParser().program().progblock())
+      {
+        var decls = progblock.decls().decl();
+        foreach(var decl in decls)
+        {
+          var fndecl = decl.funcDecl();
+          if(fndecl != null)
+            funcDecls.Add(fndecl);
+        }
+      }
+    }
+    
+    public IEnumerable<IParseTree> DFS(IParseTree root)
+    {
       Stack<IParseTree> toVisit = new Stack<IParseTree>();
       Stack<IParseTree> visitedAncestors = new Stack<IParseTree>();
       toVisit.Push(root);
