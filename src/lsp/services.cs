@@ -503,7 +503,7 @@ namespace bhlsp
           
           foreach(var fd in document.funcDecls)
           {
-            if(callExp.NAME().GetText() == fd.NAME().GetText())
+            if(fd.NAME() != null && callExp.NAME().GetText() == fd.NAME().GetText())
             {
               funcDecl = fd;
               funcDeclBhlDocument = document;
@@ -519,7 +519,7 @@ namespace bhlsp
               {
                 foreach(var fd in bhlDocument.funcDecls)
                 {
-                  if(callExp.NAME().GetText() == fd.NAME().GetText())
+                  if(fd.NAME() != null && callExp.NAME().GetText() == fd.NAME().GetText())
                   {
                     funcDecl = fd;
                     funcDeclBhlDocument = bhlDocument;

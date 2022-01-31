@@ -270,6 +270,70 @@ public class TestLSP : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestGoToDefinition()
+  {
+    string bhl1 = @"
+    func float test1(float k) 
+    {
+      return 0
+    }
+
+    func test2() 
+    {
+      test1()
+    }
+    ";
+    
+    string bhl2 = @"
+    func float test3(float k, int j) 
+    {
+      return 0
+    }
+
+    func test4() 
+    {
+      test2()
+    }
+    ";
+    
+    var rpc = new BHLSPJsonRpc();
+    rpc.AttachRpcService(new BHLSPTextDocumentGoToJsonRpcService());
+
+    BHLSPWorkspace.self.Shutdown();
+    
+    string dir = GetDirPath();
+    if(Directory.Exists(dir))
+      Directory.Delete(dir, true/*recursive*/);
+    
+    var files = new List<string>();
+    NewTestDocument("bhl1.bhl", bhl1, files);
+    NewTestDocument("bhl2.bhl", bhl2, files);
+    
+    Uri uri1 = GetUri(files[0]);
+    Uri uri2 = GetUri(files[1]);
+
+    var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
+    json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
+    json += "\"}, \"position\": {\"line\": 8, \"character\": 8}}}";
+    
+    AssertEqual(
+      rpc.HandleMessage(json),
+      "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
+      "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
+    );
+    
+    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
+    json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
+    json += "\"}, \"position\": {\"line\": 8, \"character\": 8}}}";
+    
+    AssertEqual(
+      rpc.HandleMessage(json),
+      "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
+      "\",\"range\":{\"start\":{\"line\":6,\"character\":4},\"end\":{\"line\":6,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
+    );
+  }
+  
   static Uri GetUri(string path)
   {
     return new Uri("file://" + path);
