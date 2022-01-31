@@ -36,6 +36,8 @@ public class ModuleCompiler : AST_Visitor
   List<Instruction> code = new List<Instruction>();
   List<Instruction> head = null;
 
+  ClassSymbol curr_class_symb = null;
+
   Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
   Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
 
@@ -638,12 +640,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.ClassMethod,
-        4/*name idx*/, 3/*ip addr*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.ClassEnd
       )
     );
@@ -816,17 +812,27 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     UseInit();
-    symbols.Define(new FuncSymbolScript(symbols, ast));
+    if(curr_class_symb != null)
+      curr_class_symb.Define(new FuncSymbolScript(curr_class_symb, ast));
+    else
+      symbols.Define(new FuncSymbolScript(symbols, ast));
+
     var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
 
     UseCode();
+
     func_decls.Add(ast);
+
     int ip = GetCodeSize();
+    //let's patch the func address
     inst.SetOperand(1, ip);
+
     func2ip.Add(ast.name, ip);
+
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
+
     func_decls.RemoveAt(func_decls.Count-1);
 
     UseInit();
@@ -856,8 +862,8 @@ public class ModuleCompiler : AST_Visitor
       parent = symbols.Resolve(ast.parent) as ClassSymbol;
     }
 
-    var cl = new ClassSymbolScript(ast.name, ast, parent);
-    symbols.Define(cl);
+    curr_class_symb = new ClassSymbolScript(ast.name, ast, parent);
+    symbols.Define(curr_class_symb);
 
     Emit(Opcodes.ClassBegin, new int[] { AddConstant(ast.name), (int)(parent == null ? -1 : AddConstant(parent.name)) });
     for(int i=0;i<ast.children.Count;++i)
@@ -866,23 +872,16 @@ public class ModuleCompiler : AST_Visitor
 
       if(child is AST_VarDecl vd)
       {
-        cl.Define(new FieldSymbolScript(vd.name, vd.type));
+        curr_class_symb.Define(new FieldSymbolScript(vd.name, vd.type));
         Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name) });
       }
       else if(child is AST_FuncDecl fd)
       {
-        cl.Define(new FuncSymbolScript(cl, fd));
-
-        var inst = Emit(Opcodes.ClassMethod, new int[] { AddConstant(fd.name), 0/*ip addr*/ });
-
-        UseCode();
-        //patching class method's ip address
-        inst.SetOperand(1, GetCodeSize());
         Visit(fd);
-        UseInit();
       }
     }
     Emit(Opcodes.ClassEnd);
+    curr_class_symb = null;
   }
 
   public override void DoVisit(AST_EnumDecl ast)

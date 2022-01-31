@@ -69,7 +69,6 @@ public enum Opcodes
   Func             ,
   ClassBegin       ,
   ClassMember      ,
-  ClassMethod      ,
   ClassEnd         ,
   Import           ,
 }
@@ -766,7 +765,7 @@ public class VM
     var stack = init_frame.stack;
 
     int ip = 0;
-    AST_ClassDecl curr_decl = null;
+    AST_ClassDecl curr_class_decl = null;
     while(ip < bytecode.Length)
     {
       var opcode = (Opcodes)bytecode[ip];
@@ -852,18 +851,20 @@ public class VM
 
           var fdecl = new AST_FuncDecl();
           fdecl.name = constants[name_idx].str;
-          fdecl.ip_addr = ip_addr;
           //TODO: use it for func ip resolving 
+          fdecl.ip_addr = ip_addr;
+          if(curr_class_decl != null)
+            curr_class_decl.children.Add(fdecl);
         }
         break;
         case Opcodes.ClassBegin:
         {
           int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int parent_type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          curr_decl = new AST_ClassDecl();
-          curr_decl.name = constants[type_idx].str;
+          curr_class_decl = new AST_ClassDecl();
+          curr_class_decl.name = constants[type_idx].str;
           if(parent_type_idx != -1)
-            curr_decl.parent = constants[parent_type_idx].str;
+            curr_class_decl.parent = constants[parent_type_idx].str;
         }
         break;
         case Opcodes.ClassMember:
@@ -874,29 +875,18 @@ public class VM
           var mdecl = new AST_VarDecl();
           mdecl.type = constants[type_idx].str;
           mdecl.name = constants[name_idx].str;
-          mdecl.symb_idx = (uint)curr_decl.children.Count;
-          curr_decl.children.Add(mdecl);
-        }
-        break;
-        case Opcodes.ClassMethod:
-        {
-          int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          int ip_addr = (int)Bytecode.Decode24(bytecode, ref ip);
-
-          var mdecl = new AST_FuncDecl();
-          mdecl.name = constants[name_idx].str;
-          mdecl.ip_addr = ip_addr;
-          curr_decl.children.Add(mdecl);
+          mdecl.symb_idx = (uint)curr_class_decl.children.Count;
+          curr_class_decl.children.Add(mdecl);
         }
         break;
         case Opcodes.ClassEnd:
         {
           //TODO: add parent support
           ClassSymbolScript parent = null;
-          var curr_class = new ClassSymbolScript(curr_decl.name, curr_decl, parent);
-          for(int i=0;i<curr_decl.children.Count;++i)
+          var curr_class = new ClassSymbolScript(curr_class_decl.name, curr_class_decl, parent);
+          for(int i=0;i<curr_class_decl.children.Count;++i)
           {
-            var child = curr_decl.children[i];
+            var child = curr_class_decl.children[i];
             if(child is AST_VarDecl vd)
               curr_class.Define(new FieldSymbolScript(vd.name, vd.type, (int)vd.symb_idx));
             else if(child is AST_FuncDecl fd)
@@ -904,6 +894,7 @@ public class VM
           }
           symbols.Define(curr_class);
           curr_class = null;
+          curr_class_decl = null;
         }
         break;
         default:
