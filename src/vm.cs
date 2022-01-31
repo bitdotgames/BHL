@@ -849,9 +849,9 @@ public class VM
           int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int ip_addr = (int)Bytecode.Decode24(bytecode, ref ip);
 
+          //TODO: define symbol as well?
           var fdecl = new AST_FuncDecl();
           fdecl.name = constants[name_idx].str;
-          //TODO: use it for func ip resolving 
           fdecl.ip_addr = ip_addr;
           if(curr_class_decl == null)
             func2addr.Add(fdecl.name, new ModuleAddr() { module = module, ip = ip_addr });

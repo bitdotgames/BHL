@@ -61,8 +61,6 @@ public class ModuleCompiler : AST_Visitor
   }
   List<Jump> jumps = new List<Jump>();
 
-  Dictionary<string, int> func2ip = new Dictionary<string, int>();
-
   Dictionary<uint, string> imports = new Dictionary<uint, string>();
   
   static Dictionary<byte, Definition> opcode_decls = new Dictionary<byte, Definition>();
@@ -806,10 +804,17 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     UseInit();
+    FuncSymbolScript fsymb = null;
     if(curr_class_symb != null)
-      curr_class_symb.Define(new FuncSymbolScript(curr_class_symb, ast));
+    {
+      fsymb = new FuncSymbolScript(curr_class_symb, ast);
+      curr_class_symb.Define(fsymb);
+    }
     else
-      symbols.Define(new FuncSymbolScript(symbols, ast));
+    {
+      fsymb = new FuncSymbolScript(symbols, ast); 
+      symbols.Define(fsymb);
+    }
 
     var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
 
@@ -821,7 +826,7 @@ public class ModuleCompiler : AST_Visitor
     //let's patch the func address
     inst.SetOperand(1, ip);
 
-    func2ip.Add(ast.name, ip);
+    fsymb.decl.ip_addr = ip;
 
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
@@ -836,7 +841,6 @@ public class ModuleCompiler : AST_Visitor
   {
     var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
-    func2ip.Add(ast.name, GetCodeSize());
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
@@ -1226,10 +1230,10 @@ public class ModuleCompiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    int offset;
-    if(func2ip.TryGetValue(ast.name, out offset))
+    var func_symb = symbols.Resolve(ast.name) as FuncSymbolScript;
+    if(func_symb != null)
     {
-      return Emit(Opcodes.GetFunc, new int[] {offset}, (int)ast.line_num);
+      return Emit(Opcodes.GetFunc, new int[] {func_symb.decl.ip_addr}, (int)ast.line_num);
     }
     else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
     {
