@@ -202,7 +202,7 @@ namespace bhlsp
           if(args.capabilities.textDocument.definition.linkSupport != null)
             BHLSPWorkspace.self.definitionLinkSupport = (bool)args.capabilities.textDocument.definition.linkSupport;
 
-          capabilities.definitionProvider = false; //textDocument/definition
+          capabilities.definitionProvider = true; //textDocument/definition
         }
 
         if(args.capabilities.textDocument.typeDefinition != null)
@@ -217,7 +217,7 @@ namespace bhlsp
         {
           if(args.capabilities.textDocument.implementation.linkSupport != null)
             BHLSPWorkspace.self.implementationLinkSupport = (bool)args.capabilities.textDocument.implementation.linkSupport;
-          
+
           capabilities.implementationProvider = false; //textDocument/implementation
         }
       }
@@ -471,22 +471,94 @@ namespace bhlsp
   {
     /**
      * The result type LocationLink[] got introduced with version 3.14.0
-     * and depends on the corresponding client capability textDocument.declaration.linkSupport.
+     * and depends on the corresponding client capability textDocument.definition.linkSupport.
      */
-    public override RpcResult GotoDeclaration(DeclarationParams args)
+    public override RpcResult GotoDefinition(DefinitionParams args)
     {
-      return RpcResult.Error(new ResponseError
+      BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri);
+      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
       {
-        code = (int) ErrorCodes.RequestFailed,
-        message = "Not supported"
-      });
+        int line = (int)args.position.line;
+        int character = (int)args.position.character;
+        
+        int idx = document.GetIndex(line, character);
+
+        bhlParser.CallExpContext callExp = null;
+        foreach(IParseTree node in document.DFS())
+        {
+          if(node is ParserRuleContext prc)
+          {
+            if(prc.Start.StartIndex <= idx && idx <= prc.Stop.StopIndex)
+            {
+              callExp = prc as bhlParser.CallExpContext;
+              break;
+            }
+          }
+        }
+        
+        if(callExp != null)
+        {
+          bhlParser.FuncDeclContext funcDecl = null;
+          BHLTextDocument funcDeclBhlDocument = null;
+          
+          foreach(var fd in document.funcDecls)
+          {
+            if(callExp.NAME().GetText() == fd.NAME().GetText())
+            {
+              funcDecl = fd;
+              funcDeclBhlDocument = document;
+              break;
+            }
+          }
+
+          if(funcDecl == null)
+          {
+            foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
+            {
+              if(doc is BHLTextDocument bhlDocument)
+              {
+                foreach(var fd in bhlDocument.funcDecls)
+                {
+                  if(callExp.NAME().GetText() == fd.NAME().GetText())
+                  {
+                    funcDecl = fd;
+                    funcDeclBhlDocument = bhlDocument;
+                    break;
+                  }
+                }
+              }
+              
+              if(funcDecl != null)
+                break;
+            }
+          }
+
+          if(funcDecl != null)
+          {
+            var start = funcDeclBhlDocument.GetLineColumn(funcDecl.Start.StartIndex);
+            var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
+            
+            return RpcResult.Success(new Location
+            {
+              uri = funcDeclBhlDocument.uri,
+              range = new Range
+              {
+                start = startPos,
+                end = startPos
+              }
+            });
+          }
+        }
+      }
+      
+      return RpcResult.Success();
     }
     
     /**
      * The result type LocationLink[] got introduced with version 3.14.0
-     * and depends on the corresponding client capability textDocument.definition.linkSupport.
+     * and depends on the corresponding client capability textDocument.declaration.linkSupport.
      */
-    public override RpcResult GotoDefinition(DefinitionParams args)
+    public override RpcResult GotoDeclaration(DeclarationParams args)
     {
       return RpcResult.Error(new ResponseError
       {

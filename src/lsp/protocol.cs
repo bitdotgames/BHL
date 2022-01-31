@@ -264,8 +264,6 @@ namespace bhlsp
   
   public class DefinitionOptions : WorkDoneProgressOptions
   {
-    public DocumentFilter[] documentSelector { get; set; }
-    public string id { get; set; }
   }
   
   public class TypeDefinitionOptions : WorkDoneProgressOptions
@@ -283,6 +281,12 @@ namespace bhlsp
     public string id { get; set; }
   }
 
+  public class DefinitionRegistrationOptions : TextDocumentRegistrationOptions
+  {
+	  public bool? workDoneProgress { get; set; }
+	  public string id { get; set; }
+  }
+  
   public enum TextDocumentSyncKind
   {
 	  /**
@@ -867,7 +871,7 @@ namespace bhlsp
     /**
 	   * The server provides goto definition support.
 	   */
-    public SumType<bool, DefinitionOptions> definitionProvider { get; set; }
+    public SumType<bool, DefinitionOptions, DefinitionRegistrationOptions> definitionProvider { get; set; }
     
     /**
 	   * The server provides goto type definition support.
