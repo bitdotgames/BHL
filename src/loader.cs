@@ -15,7 +15,7 @@ public class EmptyUserBindings : UserBindings {}
 public interface IModuleLoader
 {
   //NOTE: must return null if no such module
-  AST_Module LoadModule(HashedName id);
+  AST_Module LoadModule(uint id);
 }
 
 public enum CompileFormat
@@ -48,7 +48,7 @@ public class ModuleLoader : IModuleLoader
     public long stream_pos;
   }
 
-  Dictionary<ulong, Entry> entries = new Dictionary<ulong, Entry>();
+  Dictionary<uint, Entry> entries = new Dictionary<uint, Entry>();
 
   public ModuleLoader(Stream source, bool strict = true)
   {
@@ -101,10 +101,10 @@ public class ModuleLoader : IModuleLoader
     }
   }
 
-  public AST_Module LoadModule(HashedName id)
+  public AST_Module LoadModule(uint id)
   {
     Entry ent;
-    if(!entries.TryGetValue(id.n, out ent))
+    if(!entries.TryGetValue(id, out ent))
       return null;
 
     byte[] res = null;
@@ -184,7 +184,7 @@ public class ExtensibleModuleLoader : IModuleLoader
 {
   public List<IModuleLoader> loaders = new List<IModuleLoader>();
 
-  public AST_Module LoadModule(HashedName id)
+  public AST_Module LoadModule(uint id)
   {
     for(int i=0;i<loaders.Count;++i)
     {

@@ -36,6 +36,8 @@ public class ModuleCompiler : AST_Visitor
   List<Instruction> code = new List<Instruction>();
   List<Instruction> head = null;
 
+  ClassSymbol curr_class_symb = null;
+
   Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
   Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
 
@@ -58,13 +60,6 @@ public class ModuleCompiler : AST_Visitor
     internal int operand_idx;
   }
   List<Jump> jumps = new List<Jump>();
-
-  Dictionary<string, int> func2ip = new Dictionary<string, int>();
-  public Dictionary<string, int> Func2Ip {
-    get {
-      return func2ip;
-    }
-  }
 
   Dictionary<uint, string> imports = new Dictionary<uint, string>();
   
@@ -216,7 +211,6 @@ public class ModuleCompiler : AST_Visitor
         Module.name, 
         code_bytes,
         Constants, 
-        Func2Ip, 
         init_bytes,
         ip2src_line
       );    
@@ -473,7 +467,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncImported,
-        3/*module name idx*/, 3/*func name idx*/
+        3/*func name idx*/
       )
     );
     DeclareOpcode(
@@ -491,7 +485,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.CallImported,
-        3/*module name idx*/, 3/*func name idx*/, 4/*args bits*/
+        3/*func name idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -620,6 +614,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.Func,
+        4/*name idx*/, 3/*ip addr*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.ClassBegin,
         4/*type idx*/, 4/*parent type idx*/
       )
@@ -628,12 +628,6 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.ClassMember,
         4/*type idx*/, 4/*name idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.ClassMethod,
-        4/*name idx*/, 3/*ip addr*/
       )
     );
     DeclareOpcode(
@@ -809,14 +803,35 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
+    UseInit();
+    FuncSymbolScript fsymb = null;
+    if(curr_class_symb != null)
+    {
+      fsymb = new FuncSymbolScript(curr_class_symb, ast);
+      curr_class_symb.Define(fsymb);
+    }
+    else
+    {
+      fsymb = new FuncSymbolScript(symbols, ast); 
+      symbols.Define(fsymb);
+    }
+
+    var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
+
     UseCode();
 
     func_decls.Add(ast);
+
     int ip = GetCodeSize();
-    func2ip.Add(ast.name, ip);
+    //let's patch the func address
+    inst.SetOperand(1, ip);
+
+    fsymb.decl.ip_addr = ip;
+
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
+
     func_decls.RemoveAt(func_decls.Count-1);
 
     UseInit();
@@ -826,7 +841,6 @@ public class ModuleCompiler : AST_Visitor
   {
     var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
-    func2ip.Add(ast.name, GetCodeSize());
     Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
@@ -840,52 +854,37 @@ public class ModuleCompiler : AST_Visitor
   {
     UseInit();
 
-    var name = ast.Name();
-    //TODO:?
-    //CheckNameIsUnique(name);
-
     ClassSymbol parent = null;
-    if(ast.nparent != 0)
+    if(!string.IsNullOrEmpty(ast.parent))
     {
-      parent = symbols.Resolve(ast.ParentName()) as ClassSymbol;
+      parent = symbols.Resolve(ast.parent) as ClassSymbol;
     }
 
-    var cl = new ClassSymbolScript(name, ast, parent);
-    symbols.Define(cl);
+    curr_class_symb = new ClassSymbolScript(ast.name, ast, parent);
+    symbols.Define(curr_class_symb);
 
-    Emit(Opcodes.ClassBegin, new int[] { AddConstant(name.s), (int)(parent == null ? -1 : AddConstant(parent.GetName().s)) });
+    Emit(Opcodes.ClassBegin, new int[] { AddConstant(ast.name), (int)(parent == null ? -1 : AddConstant(parent.name)) });
     for(int i=0;i<ast.children.Count;++i)
     {
       var child = ast.children[i];
 
       if(child is AST_VarDecl vd)
       {
-        cl.Define(new FieldSymbolScript(vd.name, vd.type));
+        curr_class_symb.Define(new FieldSymbolScript(vd.name, vd.type));
         Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name) });
       }
       else if(child is AST_FuncDecl fd)
       {
-        cl.Define(new FuncSymbolScript(cl, fd));
-
-        var inst = Emit(Opcodes.ClassMethod, new int[] { AddConstant(fd.name), 0/*ip addr*/ });
-
-        UseCode();
-        //patching class method's ip address
-        inst.SetOperand(1, GetCodeSize());
         Visit(fd);
-        UseInit();
       }
     }
     Emit(Opcodes.ClassEnd);
+    curr_class_symb = null;
   }
 
   public override void DoVisit(AST_EnumDecl ast)
   {
-    var name = ast.Name();
-    //TODO:?
-    //CheckNameIsUnique(name);
-
-    var es = new EnumSymbolScript(name);
+    var es = new EnumSymbolScript(ast.name);
     symbols.Define(es);
   }
 
@@ -1085,9 +1084,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        if(ast.nname2 != module_path.id)
+        if(ast.module_id != module_path.id)
         {
-          var import_name = imports[ast.nname2];
+          var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
           Emit(Opcodes.GetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, (int)ast.line_num);
         }
@@ -1099,9 +1098,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVARW:
       {
-        if(ast.nname2 != module_path.id)
+        if(ast.module_id != module_path.id)
         {
-          var import_name = imports[ast.nname2];
+          var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
           Emit(Opcodes.SetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, (int)ast.line_num);
         }
@@ -1129,7 +1128,7 @@ public class ModuleCompiler : AST_Visitor
         else if(instr.op == Opcodes.GetFuncImported)
         {
           Pop();
-          Emit(Opcodes.CallImported, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallImported, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
         }
         else
           Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
@@ -1189,13 +1188,13 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.ARR_IDX:
       {
         var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_At, AddConstant(arr_symb.name.s), 1 }, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_At, AddConstant(arr_symb.name), 1 }, (int)ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
         var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_SetAt, AddConstant(arr_symb.name.s), 3 }, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { GenericArrayTypeSymbol.IDX_SetAt, AddConstant(arr_symb.name), 3 }, (int)ast.line_num);
       }
       break;
       case EnumCall.LMBD:
@@ -1231,10 +1230,10 @@ public class ModuleCompiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    int offset;
-    if(func2ip.TryGetValue(ast.name, out offset))
+    var func_symb = symbols.Resolve(ast.name) as FuncSymbolScript;
+    if(func_symb != null)
     {
-      return Emit(Opcodes.GetFunc, new int[] {offset}, (int)ast.line_num);
+      return Emit(Opcodes.GetFunc, new int[] {func_symb.decl.ip_addr}, (int)ast.line_num);
     }
     else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
     {
@@ -1243,13 +1242,11 @@ public class ModuleCompiler : AST_Visitor
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
       return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
     }
-    else if(ast.nname2 != module_path.id)
+    else if(ast.module_id != module_path.id)
     {
-      var import_name = imports[ast.nname2];
-      int module_idx = AddConstant(import_name);
       int func_idx = AddConstant(ast.name);
 
-      return Emit(Opcodes.GetFuncImported, new int[] {module_idx, func_idx}, (int)ast.line_num);
+      return Emit(Opcodes.GetFuncImported, new int[] {func_idx}, (int)ast.line_num);
     }
     else
       throw new Exception("Func '" + ast.name + "' code not found");

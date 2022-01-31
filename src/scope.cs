@@ -5,7 +5,7 @@ namespace bhl {
 
 public interface Scope
 {
-  HashedName GetScopeName();
+  string GetScopeName();
 
   // Where to look next for symbols: superclass or enclosing scope
   Scope GetParentScope();
@@ -15,7 +15,7 @@ public interface Scope
   // Define a symbol in the current scope
   void Define(Symbol sym);
   // Look up name in this scope or in parent scope if not here
-  Symbol Resolve(HashedName name);
+  Symbol Resolve(string name);
 
   // Readonly collection of members
   SymbolsDictionary GetMembers();
@@ -35,7 +35,7 @@ public abstract class BaseScope : Scope
 
   public SymbolsDictionary GetMembers() { return members; }
 
-  public Symbol Resolve(HashedName name) 
+  public Symbol Resolve(string name) 
   {
     Symbol s = null;
     members.TryGetValue(name, out s);
@@ -52,7 +52,7 @@ public abstract class BaseScope : Scope
   public virtual void Define(Symbol sym) 
   {
     if(members.Contains(sym.name))
-      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'(" + sym.name.n1 + ")"); 
+      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym);
 
@@ -72,7 +72,7 @@ public abstract class BaseScope : Scope
   public Scope GetParentScope() { return enclosing_scope; }
   public Scope GetEnclosingScope() { return enclosing_scope; }
 
-  public abstract HashedName GetScopeName();
+  public abstract string GetScopeName();
 
   public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }
 
@@ -95,62 +95,52 @@ public abstract class BaseScope : Scope
   }
 
 #if BHL_FRONT
-  public TypeRef Type(bhlParser.TypeContext node)
+  public TypeRef Type(bhlParser.TypeContext parsed)
   {
-    var str = node.GetText();
+    var str = parsed.GetText();
     var type = Resolve(str) as Type;
 
-    if(type == null && node != null)
+    if(type == null && parsed != null)
     {    
-      if(node.fnargs() != null)
-        type = new FuncType(this, node);
+      if(parsed.fnargs() != null)
+        type = new FuncType(this, parsed);
 
       //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
-      if(node.ARR() != null)
+      if(parsed.ARR() != null)
       {
         //checking if it's an array of func ptrs
         if(type != null)
           type = new GenericArrayTypeSymbol(this, new TypeRef(type));
         else
         {
-          type = new GenericArrayTypeSymbol(this, node);
+          type = new GenericArrayTypeSymbol(this, parsed);
         }
       }
     }
 
-    var tr = new TypeRef();
-    tr.type = type;
-    tr.name = str;
-    tr.node = node;
-
-    return tr;
+    return new TypeRef(type, str, parsed);
   }
 
-  public TypeRef Type(bhlParser.RetTypeContext node)
+  public TypeRef Type(bhlParser.RetTypeContext parsed)
   {
-    var str = node == null ? "void" : node.GetText();
+    var str = parsed == null ? "void" : parsed.GetText();
     var type = Resolve(str) as Type;
 
-    if(type == null && node != null)
+    if(type == null && parsed != null)
     {    
-      if(node.type().Length > 1)
+      if(parsed.type().Length > 1)
       {
         var mtype = new MultiType();
-        for(int i=0;i<node.type().Length;++i)
-          mtype.items.Add(this.Type(node.type()[i]));
+        for(int i=0;i<parsed.type().Length;++i)
+          mtype.items.Add(this.Type(parsed.type()[i]));
         mtype.Update();
         type = mtype;
       }
       else
-        return this.Type(node.type()[0]);
+        return this.Type(parsed.type()[0]);
     }
 
-    var tr = new TypeRef();
-    tr.type = type;
-    tr.name = str;
-    tr.node = node;
-
-    return tr;
+    return new TypeRef(type, str, parsed);
   }
 #endif
 
@@ -199,7 +189,6 @@ public abstract class BaseScope : Scope
   {
     return new TypeRef(t);
   }
-
 }
 
 public class GlobalScope : BaseScope 
@@ -208,7 +197,7 @@ public class GlobalScope : BaseScope
     : base(null) 
   {}
 
-  public override HashedName GetScopeName() { return new HashedName("global"); }
+  public override string GetScopeName() { return "global"; }
 }
 
 public class LocalScope : BaseScope 
@@ -217,12 +206,12 @@ public class LocalScope : BaseScope
     : base(parent) 
   {}
 
-  public override HashedName GetScopeName() { return new HashedName("local"); }
+  public override string GetScopeName() { return "local"; }
 
   public override void Define(Symbol sym) 
   {
     if(enclosing_scope != null && enclosing_scope.Resolve(sym.name) != null)
-      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
+      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
     base.Define(sym);
   }
 }
@@ -237,20 +226,25 @@ public class ModuleScope : BaseScope
     this.module_id = module_id;
   }
 
-  public override HashedName GetScopeName() { return new HashedName("module"); }
+  public override string GetScopeName() { return "module"; }
 
   public override void Define(Symbol sym) 
   {
     if(enclosing_scope != null && enclosing_scope.Resolve(sym.name) != null)
-      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name.s + "'"); 
+      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
 
     if(sym is VariableSymbol vs)
     {
-      //NOTE: adding module id to variable name if it's not added already
-      //TODO: make code below more clean 
-      if(vs.name.n2 == 0)
-        vs.name = new HashedName(vs.name.s, module_id);
+      //NOTE: adding module id if it's not added already
+      if(vs.module_id == 0)
+        vs.module_id = module_id;
       vs.CalcVariableScopeIdx(this);
+    } 
+    else if(sym is FuncSymbol fs)
+    {
+      //NOTE: adding module id if it's not added already
+      if(fs.module_id == 0)
+        fs.module_id = module_id;
     }
     base.Define(sym);
   }

@@ -46,11 +46,6 @@ public static class Hash
     return CRC32(id) & 0xFFFFFFF;
   }
 
-  static public uint CRC20(string id)
-  {
-    return CRC32(id) & 0xFFFFF;
-  }
-
   static public uint CRC32(byte[] bytes)
   {
     return Crc32.Compute(bytes, bytes.Length);
@@ -59,97 +54,6 @@ public static class Hash
   static public uint CRC28(byte[] bytes)
   {
     return CRC32(bytes) & 0xFFFFFFF;
-  }
-
-  static public uint CRC20(byte[] bytes)
-  {
-    return CRC32(bytes) & 0xFFFFF;
-  }
-}
-
-public struct HashedName
-{
-  public string s;
-  ulong _n;
-  public ulong n {
-    get {
-      if(_n == 0) {
-        _n = Hash.CRC28(s);
-      }
-      return _n;
-    }
-  }
-
-  public uint n1 {
-    get {
-      return (uint)(n & 0xFFFFFFFF);
-    }
-  }
-
-  public uint n2 {
-    get {
-      return (uint)(n >> 32);
-    }
-  }
-
-  public HashedName(ulong n, string s = "")
-  {
-    this._n = n;
-    this.s = s;
-  }
-
-  public HashedName(string s)
-    : this(0, s)
-  {}
-
-  public HashedName(uint n1, uint n2, string s = "")
-    : this(((ulong)n2 << 32) | ((ulong)n1), s)
-  {}
-
-  public HashedName(string n1, uint n2)
-    : this(Hash.CRC28(n1), n2, n1)
-  {}
-
-  static public void Split(ulong n, out uint n1, out uint n2)
-  {
-    n1 = (uint)(n & 0xFFFFFFFF);
-    n2 = (uint)(n >> 32);
-  }
-
-  public void Split(out uint n1, out uint n2)
-  {
-    n1 = (uint)(n & 0xFFFFFFFF);
-    n2 = (uint)(n >> 32);
-  }
-
-  public static implicit operator HashedName(ulong n)
-  {
-    return new HashedName(n);
-  }
-
-  public static implicit operator HashedName(uint n)
-  {
-    return new HashedName((ulong)n);
-  }
-
-  public static implicit operator HashedName(string s)
-  {
-    return new HashedName(s);
-  }
-
-  public bool IsEmpty()
-  {
-    return n == 0;
-  }
-
-  public override string ToString() 
-  {
-    return (s == null ? "" : s) + ":" + n;
-  }
-
-  public bool IsEqual(HashedName o)
-  {
-    return n == o.n;
   }
 }
 
@@ -373,13 +277,6 @@ static public class Util
           w.Write(cn.num);
       }
 
-      w.Write(m.func2ip.Count);
-      foreach(var kv in m.func2ip)
-      {
-        w.Write(kv.Key);
-        w.Write(kv.Value);
-      }
-
       //TODO: add this info only for development builds
       w.Write(m.ip2src_line.Count);
       foreach(var kv in m.ip2src_line)
@@ -434,38 +331,13 @@ static public class Util
         constants.Add(cn);
       }
 
-      var func2ip = new Dictionary<string, int>();
-      int func2ip_len = r.ReadInt32();
-      for(int i=0;i<func2ip_len;++i)
-        func2ip.Add(r.ReadString(), r.ReadInt32());
-
       var ip2src_line = new Dictionary<int, int>();
       int ip2src_line_len = r.ReadInt32();
       for(int i=0;i<ip2src_line_len;++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
 
-      return new CompiledModule(name, bytecode, constants, func2ip, initcode, ip2src_line);
+      return new CompiledModule(name, bytecode, constants, initcode, ip2src_line);
     }
-  }
-
-  static public HashedName GetFuncId(uint mod_id, string name)
-  {
-    return new HashedName(name, mod_id);
-  }
-
-  static public HashedName GetFuncId(uint mod_id, uint name)
-  {
-    return new HashedName(name, mod_id);
-  }
-
-  static public HashedName GetFuncId(string module, string name)
-  {
-    return GetFuncId(Hash.CRC32(module), name);
-  }
-
-  static public HashedName GetModuleId(string module)
-  {
-    return new HashedName(Hash.CRC32(module), module);
   }
 
   public static void ASTDump(AST ast)
@@ -596,10 +468,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Module New_Module(uint nname, string name)
+  static public AST_Module New_Module(uint id, string name)
   {
     var n = new AST_Module();
-    n.nname = nname;
+    n.id = id;
     n.name = name;
     return n;
   }
@@ -614,24 +486,18 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_FuncDecl New_FuncDecl(HashedName name, HashedName type)
+  static public AST_FuncDecl New_FuncDecl(string name, uint module_id, string type)
   {
     var n = new AST_FuncDecl();
-    Init_FuncDecl(n, name, type);
+    Init_FuncDecl(n, name, module_id, type);
     return n;
   }
 
-  static void Init_FuncDecl(AST_FuncDecl n, HashedName name, HashedName type)
+  static void Init_FuncDecl(AST_FuncDecl n, string name, uint module_id, string type)
   {
-    n.ntype = (uint)type.n; 
-    n.type = type.s;
-
-    n.nname1 = name.n1;
-    //module id
-    n.nname2 = name.n2;
-
-    n.name = name.s;
-
+    n.type = type;
+    n.module_id = module_id;
+    n.name = name;
     //fparams
     n.NewInterimChild();
     //block
@@ -673,71 +539,35 @@ static public class AST_Util
     return num;
   }
 
-  static public HashedName Name(this AST_FuncDecl n)
-  {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname1, n.nname2, n.name);
-  }
-
-  static public ulong nname(this AST_FuncDecl n)
-  {
-    return ((ulong)n.nname2 << 32) | ((ulong)n.nname1);
-  }
-
   ////////////////////////////////////////////////////////
 
-  static public AST_LambdaDecl New_LambdaDecl(HashedName name, HashedName type)
+  static public AST_LambdaDecl New_LambdaDecl(string name, uint module_id, string type)
   {
     var n = new AST_LambdaDecl();
-    Init_FuncDecl(n, name, type);
+    Init_FuncDecl(n, name, module_id, type);
 
     return n;
   }
 
-  static public HashedName Name(this AST_LambdaDecl n)
-  {
-    return new HashedName(n.nname1, n.nname2, n.name);
-  }
-
   ////////////////////////////////////////////////////////
 
-  static public AST_ClassDecl New_ClassDecl(HashedName name, HashedName parent)
+  static public AST_ClassDecl New_ClassDecl(string name, string parent)
   {
     var n = new AST_ClassDecl();
-
-    n.nname = (uint)name.n;
-    n.name = name.s;
-
-    n.nparent = (uint)parent.n;
-    n.parent = parent.s;
+    n.name = name;
+    n.parent = parent;
 
     return n;
-  }
-
-  static public HashedName Name(this AST_ClassDecl n)
-  {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname, n.name);
-  }
-
-  static public HashedName ParentName(this AST_ClassDecl n)
-  {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nparent, n.parent);
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_EnumDecl New_EnumDecl(HashedName name)
+  static public AST_EnumDecl New_EnumDecl(string name)
   {
     var n = new AST_EnumDecl();
-
-    n.nname = (uint)name.n;
-    n.name = name.s;
+    n.name = name;
 
     return n;
-  }
-
-  static public HashedName Name(this AST_EnumDecl n)
-  {
-    return (n == null) ? new HashedName(0, "?") : new HashedName(n.nname, n.name);
   }
 
   ////////////////////////////////////////////////////////
@@ -762,66 +592,49 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_TypeCast New_TypeCast(HashedName type)
+  static public AST_TypeCast New_TypeCast(string type)
   {
     var n = new AST_TypeCast();
-    n.ntype = (uint)type.n;
-    n.type = type.s;
+    n.type = type;
 
     return n;
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_UpVal New_UpVal(HashedName name, int symb_idx, int upsymb_idx)
+  static public AST_UpVal New_UpVal(string name, int symb_idx, int upsymb_idx)
   {
     var n = new AST_UpVal();
-    n.nname = (uint)name.n;
-    n.name = name.s;
+    n.name = name;
     n.symb_idx = (uint)symb_idx;
     n.upsymb_idx = (uint)upsymb_idx;
 
     return n;
   }
 
-  static public HashedName Name(this AST_UpVal n)
-  {
-    return new HashedName(n.nname, n.name);
-  }
-
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name = new HashedName(), ClassSymbol scope_symb = null, int symb_idx = 0)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", uint module_id = 0, ClassSymbol scope_symb = null, int symb_idx = 0)
   {
-    return New_Call(type, line_num, name, scope_symb != null ? (uint)scope_symb.Type().n : 0, scope_symb != null ? (string)scope_symb.Type().s : "", symb_idx);
+    return New_Call(type, line_num, name, scope_symb != null ? scope_symb.Type() : "", symb_idx, module_id);
   }
 
   static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, ClassSymbol scope_symb = null)
   {
-    return New_Call(type, line_num, symb.name, scope_symb != null ? (uint)scope_symb.Type().n : 0, scope_symb != null ? (string)scope_symb.Type().s : "", symb.scope_idx);
+    return New_Call(type, line_num, symb.name, scope_symb != null ? scope_symb.Type() : "", symb.scope_idx, symb.module_id);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, HashedName name, uint scope_ntype, string scope_type, int symb_idx = 0)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name, string scope_type, int symb_idx = 0, uint module_id = 0)
   {
     var n = new AST_Call();
     n.type = type;
-    n.nname1 = name.n1;
-    n.nname2 = name.n2;
-    n.name = name.s;
-    n.scope_ntype = scope_ntype;
+    n.name = name;
     n.scope_type = scope_type;
     n.line_num = (uint)line_num;
     n.symb_idx = (uint)symb_idx;
+    n.module_id = module_id;
 
     return n;
-  }
-
-  static public ulong FuncId(this AST_Call n)
-  {
-    if(n.nname2 == 0)
-      return ((ulong)n.scope_ntype << 32) | ((ulong)n.nname1);
-    else
-      return ((ulong)n.nname2 << 32) | ((ulong)n.nname1);
   }
 
   ////////////////////////////////////////////////////////
@@ -855,16 +668,9 @@ static public class AST_Util
   static public AST_New New_New(ClassSymbol type)
   {
     var n = new AST_New();
-    var type_name = type.Type(); 
-    n.ntype = (uint)type_name.n;
-    n.type = type_name.s;
+    n.type = type.Type();
 
     return n;
-  }
-
-  static public HashedName Name(this AST_New n)
-  {
-    return new HashedName(n.ntype, n.type);
   }
 
   ////////////////////////////////////////////////////////
@@ -881,26 +687,19 @@ static public class AST_Util
 
   static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref)
   {
-    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.name.n1, symb.type.name.s, symb.scope_idx);
+    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.name, symb.scope_idx);
   }
 
-  static public AST_VarDecl New_VarDecl(HashedName name, bool is_ref, bool is_func_arg, uint ntype, string type, int symb_idx)
+  static public AST_VarDecl New_VarDecl(string name, bool is_ref, bool is_func_arg, string type, int symb_idx)
   {
     var n = new AST_VarDecl();
-    n.nname = (uint)name.n;
-    n.name = name.s;
-    n.ntype = ntype;
+    n.name = name;
     n.type = type;
     n.is_ref = is_ref;
     n.is_func_arg = is_func_arg;
     n.symb_idx = (uint)symb_idx;
 
     return n;
-  }
-
-  static public HashedName Name(this AST_VarDecl n)
-  {
-    return new HashedName(n.nname, n.name);
   }
 
   ////////////////////////////////////////////////////////
@@ -934,19 +733,17 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_JsonObj New_JsonObj(HashedName root_type_name)
+  static public AST_JsonObj New_JsonObj(string root_type_name)
   {
     var n = new AST_JsonObj();
-    n.ntype = (uint)root_type_name.n;
-    n.type = root_type_name.s;
+    n.type = root_type_name;
     return n;
   }
 
   static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type)
   {
     var n = new AST_JsonArr();
-    n.ntype = (uint)arr_type.Type().n;
-    n.type = arr_type.Type().s;
+    n.type = arr_type.Type();
     return n;
   }
 
@@ -956,21 +753,14 @@ static public class AST_Util
     return n;
   }
 
-  static public AST_JsonPair New_JsonPair(HashedName scope_type, HashedName name, int symb_idx)
+  static public AST_JsonPair New_JsonPair(string scope_type, string name, int symb_idx)
   {
     var n = new AST_JsonPair();
-    n.scope_ntype = (uint)scope_type.n;
-    n.scope_type = scope_type.s;
-    n.nname = (uint)name.n;
-    n.name = name.s;
+    n.scope_type = scope_type;
+    n.name = name;
     n.symb_idx = (uint)symb_idx;
 
     return n;
-  }
-
-  static public HashedName Name(this AST_JsonPair n)
-  {
-    return new HashedName(n.nname, n.name);
   }
 }
 
@@ -1111,7 +901,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Module node)
   {
-    Console.Write("(MODULE " + node.nname);
+    Console.Write("(MODULE " + node.id + " " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1127,7 +917,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_FuncDecl node)
   {
     Console.Write("(FUNC ");
-    Console.Write(node.type + " " + node.name + " " + node.nname());
+    Console.Write(node.type + " " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1135,11 +925,11 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_LambdaDecl node)
   {
     Console.Write("(LMBD ");
-    Console.Write(node.type + " " + node.name + " " + node.nname());
+    Console.Write(node.type + " " + node.name);
     if(node.upvals.Count > 0)
       Console.Write(" USE:");
     for(int i=0;i<node.upvals.Count;++i)
-      Console.Write(" " + node.upvals[i].name + " " + node.upvals[i].nname);
+      Console.Write(" " + node.upvals[i].name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1147,7 +937,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_ClassDecl node)
   {
     Console.Write("(CLASS ");
-    Console.Write(node.name + " " + node.nname);
+    Console.Write(node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1155,7 +945,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_EnumDecl node)
   {
     Console.Write("(ENUM ");
-    Console.Write(node.name + " " + node.nname);
+    Console.Write(node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1248,21 +1038,21 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_New node)
   {
-    Console.Write("(NEW " + node.type + " " + node.ntype);
+    Console.Write("(NEW " + node.type);
     VisitChildren(node);
     Console.Write(")");
   }
 
   public override void DoVisit(AST_VarDecl node)
   {
-    Console.Write("(VARDECL " + node.name + " " + node.nname);
+    Console.Write("(VARDECL " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
 
   public override void DoVisit(AST_JsonObj node)
   {
-    Console.Write("(JOBJ " + node.ntype);
+    Console.Write("(JOBJ " + node.type);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1276,7 +1066,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_JsonPair node)
   {
-    Console.Write("(JPAIR " + node.name + " " + node.nname);
+    Console.Write("(JPAIR " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -1528,54 +1318,6 @@ public class OrderedDictionary<TKey, TValue>
   {
     dict.Clear();
     keys.Clear();
-  }
-}
-
-public class HashedName2Value<T>
-{
-  Dictionary<ulong, T> hash2val = new Dictionary<ulong, T>();
-  Dictionary<string, T> str2val = new Dictionary<string, T>();
-
-  public int Count
-  {
-    get {
-      return hash2val.Count;
-    }
-  }
-
-  public bool Contains(HashedName name)
-  {
-    if(hash2val.ContainsKey(name.n))
-      return true;
-    return str2val.ContainsKey(name.s);
-  }
-
-  public bool TryGetValue(HashedName name, out T val)
-  {
-    if(hash2val.TryGetValue(name.n, out val))
-      return true;
-    return str2val.TryGetValue(name.s, out val);
-  }
-
-  public void Add(HashedName name, T v)
-  {
-    // Dictionary operation first, so exception thrown if key already exists.
-    if(!string.IsNullOrEmpty(name.s))
-      str2val.Add(name.s, v);
-    hash2val.Add(name.n, v);
-  }
-
-  public void Remove(HashedName name)
-  {
-    if(!string.IsNullOrEmpty(name.s))
-      str2val.Remove(name.s);
-    hash2val.Remove(name.n);
-  }
-
-  public void Clear()
-  {
-    str2val.Clear();
-    hash2val.Clear();
   }
 }
 
