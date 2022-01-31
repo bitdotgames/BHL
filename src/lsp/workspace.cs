@@ -86,6 +86,14 @@ namespace bhlsp
       return 0;
     }
     
+    public int GetIndex(int line)
+    {
+      if(indices.Count > 0)
+        return indices[line];
+
+      return 0;
+    }
+    
     public (int, int) GetLineColumn(int index)
     {
       // Binary search.
@@ -109,7 +117,7 @@ namespace bhlsp
 
   public class BHLTextDocument : BHLSPTextDocument
   {
-    List<bhlParser.FuncDeclContext> funcDecls = new List<bhlParser.FuncDeclContext>();
+    public List<bhlParser.FuncDeclContext> funcDecls = new List<bhlParser.FuncDeclContext>();
     
     public override void Sync(string text)
     {
@@ -129,8 +137,11 @@ namespace bhlsp
       }
     }
     
-    public IEnumerable<IParseTree> DFS(IParseTree root)
+    public IEnumerable<IParseTree> DFS(IParseTree root = null)
     {
+      if (root == null)
+        root = ToParser().program();
+      
       Stack<IParseTree> toVisit = new Stack<IParseTree>();
       Stack<IParseTree> visitedAncestors = new Stack<IParseTree>();
       toVisit.Push(root);
@@ -343,6 +354,17 @@ namespace bhlsp
         return documents[path];
 
       return null;
+    }
+
+    public IEnumerable<BHLSPTextDocument> ForEachDocuments()
+    {
+      lock(lockAdd)
+      {
+        foreach(var document in documents.Values)
+        {
+          yield return document;
+        }
+      }
     }
   }
 }
