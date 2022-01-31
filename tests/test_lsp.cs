@@ -173,8 +173,8 @@ public class TestLSP : BHL_TestBase
       string.Empty
     );
 
-    var document = BHLSPWorkspace.self.FindTextDocument(uri);
-    string line = document.Text.Split('\n')[1];
+    var document = BHLSPWorkspace.self.FindDocument(uri);
+    string line = document.text.Split('\n')[1];
     
     AssertEqual(
       line,
@@ -197,7 +197,7 @@ public class TestLSP : BHL_TestBase
       string.Empty
     );
     
-    line = document.Text.Split('\n')[1];
+    line = document.text.Split('\n')[1];
     
     AssertEqual(
       line,
