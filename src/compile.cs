@@ -62,11 +62,6 @@ public class ModuleCompiler : AST_Visitor
   List<Jump> jumps = new List<Jump>();
 
   Dictionary<string, int> func2ip = new Dictionary<string, int>();
-  public Dictionary<string, int> Func2Ip {
-    get {
-      return func2ip;
-    }
-  }
 
   Dictionary<uint, string> imports = new Dictionary<uint, string>();
   
@@ -218,7 +213,6 @@ public class ModuleCompiler : AST_Visitor
         Module.name, 
         code_bytes,
         Constants, 
-        Func2Ip, 
         init_bytes,
         ip2src_line
       );    
@@ -475,7 +469,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncImported,
-        3/*module name idx*/, 3/*func name idx*/
+        3/*func name idx*/
       )
     );
     DeclareOpcode(
@@ -493,7 +487,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.CallImported,
-        3/*module name idx*/, 3/*func name idx*/, 4/*args bits*/
+        3/*func name idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1130,7 +1124,7 @@ public class ModuleCompiler : AST_Visitor
         else if(instr.op == Opcodes.GetFuncImported)
         {
           Pop();
-          Emit(Opcodes.CallImported, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallImported, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
         }
         else
           Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
@@ -1246,11 +1240,9 @@ public class ModuleCompiler : AST_Visitor
     }
     else if(ast.module_id != module_path.id)
     {
-      var import_name = imports[ast.module_id];
-      int module_idx = AddConstant(import_name);
       int func_idx = AddConstant(ast.name);
 
-      return Emit(Opcodes.GetFuncImported, new int[] {module_idx, func_idx}, (int)ast.line_num);
+      return Emit(Opcodes.GetFuncImported, new int[] {func_idx}, (int)ast.line_num);
     }
     else
       throw new Exception("Func '" + ast.name + "' code not found");

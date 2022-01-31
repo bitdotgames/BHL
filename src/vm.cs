@@ -234,7 +234,7 @@ public class VM
         if(frm.module != null)
         {
           item.file = frm.module.name + ".bhl";
-          item.func = TraceItem.MapIp2Func(frm.start_ip, frm.module.func2ip);
+          item.func = TraceItem.MapIp2Func(frm.module.name, frm.start_ip, frm.vm.func2addr);
         }
         else
         {
@@ -573,11 +573,11 @@ public class VM
     public int line;
     public int ip; 
 
-    static public string MapIp2Func(int ip, Dictionary<string, int> func2ip)
+    static public string MapIp2Func(string module_name, int ip, Dictionary<string, ModuleAddr> func2addr)
     {
-      foreach(var kv in func2ip)
+      foreach(var kv in func2addr)
       {
-        if(kv.Value == ip)
+        if(kv.Value.module.name == module_name && kv.Value.ip == ip)
           return kv.Key;
       }
       return "?";
@@ -601,12 +601,6 @@ public class VM
     }
   }
 
-  internal struct ModuleAddr
-  {
-    internal CompiledModule module;
-    internal int ip;
-  }
-
   Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
 
   GlobalScope globs;
@@ -621,6 +615,12 @@ public class VM
     get {
       return symbols;
     }
+  }
+
+  public struct ModuleAddr
+  {
+    public CompiledModule module;
+    public int ip;
   }
 
   Dictionary<string, ModuleAddr> func2addr = new Dictionary<string, ModuleAddr>();
@@ -717,16 +717,7 @@ public class VM
       return;
     modules.Add(m.name, m);
 
-    foreach(var kv in m.func2ip)
-    {
-      func2addr.Add(kv.Key, new ModuleAddr() {
-            module = m,
-            ip = kv.Value
-          });
-    }
-
-    if(m.initcode != null && m.initcode.Length != 0)
-      ExecInit(m);
+    ExecInit(m);
   }
 
   public void UnloadModule(string module_name)
@@ -735,16 +726,24 @@ public class VM
     if(!modules.TryGetValue(module_name, out m))
       return;
 
-    foreach(var kv in m.func2ip)
-      func2addr.Remove(kv.Key);
+    //NOTE: we can't modify dictionary during traversal,
+    //      for this reason we have to collect removed keys 
+    //      into a seperate list and remove them below
+    var keys_to_remove = new List<string>();
+    foreach(var kv in func2addr)
+      if(kv.Value.module.name == module_name)
+        keys_to_remove.Add(kv.Key);
 
-    for(int i=0;i<m.globals.Count;++i)
+    foreach(var name in keys_to_remove)
+      func2addr.Remove(name);
+
+    for(int i=0;i<m.gvars.Count;++i)
     {
-      var val = m.globals[i];
+      var val = m.gvars[i];
       if(val != null)
         val.RefMod(RefOp.DEC | RefOp.USR_DEC);
     }
-    m.globals.Clear();
+    m.gvars.Clear();
 
     modules.Remove(module_name);
   }
@@ -766,6 +765,7 @@ public class VM
 
     int ip = 0;
     AST_ClassDecl curr_class_decl = null;
+
     while(ip < bytecode.Length)
     {
       var opcode = (Opcodes)bytecode[ip];
@@ -784,17 +784,17 @@ public class VM
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
           byte type = (byte)Bytecode.Decode8(bytecode, ref ip);
 
-          module.globals.Resize(var_idx+1);
-          module.globals[var_idx] = MakeValByType(type);
+          module.gvars.Resize(var_idx+1);
+          module.gvars[var_idx] = MakeValByType(type);
         }
         break;
         case Opcodes.SetVar:
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
 
-          module.globals.Resize(var_idx+1);
+          module.gvars.Resize(var_idx+1);
           var new_val = init_frame.stack.Pop();
-          module.globals.Assign(this, var_idx, new_val);
+          module.gvars.Assign(this, var_idx, new_val);
           new_val.Release();
         }
         break;
@@ -853,7 +853,9 @@ public class VM
           fdecl.name = constants[name_idx].str;
           //TODO: use it for func ip resolving 
           fdecl.ip_addr = ip_addr;
-          if(curr_class_decl != null)
+          if(curr_class_decl == null)
+            func2addr.Add(fdecl.name, new ModuleAddr() { module = module, ip = ip_addr });
+          else
             curr_class_decl.children.Add(fdecl);
         }
         break;
@@ -1253,7 +1255,7 @@ public class VM
       {
         int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
-        curr_frame.stack.PushRetain(curr_frame.module.globals[var_idx]);
+        curr_frame.stack.PushRetain(curr_frame.module.gvars[var_idx]);
       }
       break;
       case Opcodes.GetGVarImported:
@@ -1263,7 +1265,7 @@ public class VM
 
         string module_name = curr_frame.constants[module_idx].str;
         var module = curr_frame.vm.modules[module_name];
-        curr_frame.stack.PushRetain(module.globals[var_idx]);
+        curr_frame.stack.PushRetain(module.gvars[var_idx]);
       }
       break;
       case Opcodes.SetGVar:
@@ -1271,7 +1273,7 @@ public class VM
         int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
         var new_val = curr_frame.stack.Pop();
-        curr_frame.module.globals.Assign(this, var_idx, new_val);
+        curr_frame.module.gvars.Assign(this, var_idx, new_val);
         new_val.Release();
       }
       break;
@@ -1283,7 +1285,7 @@ public class VM
         string module_name = curr_frame.constants[module_idx].str;
         var module = curr_frame.vm.modules[module_name];
         var new_val = curr_frame.stack.Pop();
-        module.globals.Assign(this, var_idx, new_val);
+        module.gvars.Assign(this, var_idx, new_val);
         new_val.Release();
       }
       break;
@@ -1336,16 +1338,13 @@ public class VM
       break;
       case Opcodes.GetFuncImported:
       {
-        int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
-        string module_name = curr_frame.constants[module_idx].str;
-        var module = curr_frame.vm.modules[module_name];
         string func_name = curr_frame.constants[func_idx].str;
-        int func_ip = module.func2ip[func_name];
+        var maddr = func2addr[func_name];
 
         var ptr = FuncPtr.New(this);
-        ptr.Init(module, func_ip);
+        ptr.Init(maddr.module, maddr.ip);
         curr_frame.stack.Push(Val.NewObj(this, ptr));
       }
       break;
@@ -1394,17 +1393,14 @@ public class VM
       break;
       case Opcodes.CallImported:
       {
-        int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string module_name = curr_frame.constants[module_idx].str;
-        var module = curr_frame.vm.modules[module_name];
         string func_name = curr_frame.constants[func_idx].str;
-        int func_ip = module.func2ip[func_name];
+        var maddr = func2addr[func_name];
 
         var fr = Frame.New(this);
-        fr.Init(curr_frame.fb, module, func_ip);
+        fr.Init(curr_frame.fb, maddr.module, maddr.ip);
         Call(curr_frame, frames, fr, args_bits, ref ip);
       }
       break;
@@ -1937,16 +1933,14 @@ public class CompiledModule
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
-  public FixedStack<Val> globals = new FixedStack<Val>(MAX_GLOBALS);
-  public Dictionary<string, int> func2ip;
+  public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
   public Dictionary<int, int> ip2src_line;
 
   public CompiledModule(
     string name,
     byte[] bytecode, 
     List<Const> constants, 
-    Dictionary<string, int> func2ip,
-    byte[] initcode = null,
+    byte[] initcode,
     Dictionary<int, int> ip2src_line = null
   )
   {
@@ -1954,7 +1948,6 @@ public class CompiledModule
     this.initcode = initcode;
     this.bytecode = bytecode;
     this.constants = constants;
-    this.func2ip = func2ip;
     this.ip2src_line = ip2src_line;
   }
 }
