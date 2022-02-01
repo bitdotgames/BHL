@@ -12,6 +12,7 @@ namespace bhl {
 public interface IType 
 {
   string GetName();
+  //TODO: get rid of this rigid method
   int GetTypeIndex();
 }
 
@@ -79,27 +80,18 @@ public class ParserWrappedNode
   //TODO: why keep it?
   public IType promote_to_type;
 
-#if BHL_FRONT
   public string Location()
   {
+#if BHL_FRONT
     var interval = tree.SourceInterval;
     var begin = tokens.Get(interval.a);
 
     string line = string.Format("@({0},{1})", begin.Line, begin.Column);
     return line;
-  }
-
 #else
-  public string Location()
-  {
     return "";
-  }
-
-  public string LocationAfter()
-  {
-    return "";
-  }
 #endif
+  }
 }
 
 public class Symbol 
@@ -269,50 +261,50 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public const int IDX_Count      = 5;
   public const int IDX_AddInplace = 6;
 
-  public ArrayTypeSymbol(Scope scope, string name, TypeRef item_type)     
-    : base(null, name, null, null)
+  public ArrayTypeSymbol(Scope origin, string name, TypeRef item_type)     
+    : base(null, name, null, origin)
   {
     this.item_type = item_type;
 
     this.creator = CreateArr;
 
     {
-      var fn = new FuncSymbolNative("Add", scope.Type("void"), Add);
+      var fn = new FuncSymbolNative("Add", origin.Type("void"), Add);
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
 
     {
       var fn = new FuncSymbolNative("At", item_type, At);
-      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      fn.Define(new FuncArgSymbol("idx", origin.Type("int")));
       this.Define(fn);
     }
 
     {
       var fn = new FuncSymbolNative("SetAt", item_type, SetAt);
-      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      fn.Define(new FuncArgSymbol("idx", origin.Type("int")));
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("RemoveAt", scope.Type("void"), RemoveAt);
-      fn.Define(new FuncArgSymbol("idx", scope.Type("int")));
+      var fn = new FuncSymbolNative("RemoveAt", origin.Type("void"), RemoveAt);
+      fn.Define(new FuncArgSymbol("idx", origin.Type("int")));
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Clear", scope.Type("void"), Clear);
+      var fn = new FuncSymbolNative("Clear", origin.Type("void"), Clear);
       this.Define(fn);
     }
 
     {
-      var vs = new FieldSymbol("Count", scope.Type("int"), GetCount, null);
+      var vs = new FieldSymbol("Count", origin.Type("int"), GetCount, null);
       this.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative("$AddInplace", scope.Type("void"), AddInplace);
+      var fn = new FuncSymbolNative("$AddInplace", origin.Type("void"), AddInplace);
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
     }
@@ -345,12 +337,12 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return CLASS_TYPE;
   }
 
-  public GenericArrayTypeSymbol(Scope scope, TypeRef item_type) 
-    : base(scope, item_type)
+  public GenericArrayTypeSymbol(Scope origin, TypeRef item_type) 
+    : base(origin, item_type)
   {}
 
-  public GenericArrayTypeSymbol(Scope scope) 
-    : base(scope, new TypeRef(""))
+  public GenericArrayTypeSymbol(Scope origin) 
+    : base(origin, new TypeRef(""))
   {}
 
   static IList<Val> AsList(Val arr)
