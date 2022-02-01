@@ -790,14 +790,13 @@ public class FuncSymbol : ScopedSymbol
   }
 }
 
+#if BHL_FRONT
 public class LambdaSymbol : FuncSymbol
 {
   public AST_LambdaDecl decl;
 
   List<FuncSymbol> fdecl_stack;
 
-#if BHL_FRONT
-  //frontend version
   public LambdaSymbol(
     Scope origin,
     AST_LambdaDecl decl, 
@@ -811,6 +810,7 @@ public class LambdaSymbol : FuncSymbol
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
+
     var ft = GetFuncType();
     var fparams = lmb_ctx.funcParams();
     if(fparams != null)
@@ -822,15 +822,6 @@ public class LambdaSymbol : FuncSymbol
       }
     }
     ft.Update();
-  }
-#endif
-
-  //backend version
-  public LambdaSymbol(Scope origin, AST_LambdaDecl decl) 
-    : base(null, decl.name, new FuncType(new TypeRef(decl.type)), origin)
-  {
-    this.decl = decl;
-    this.fdecl_stack = null;
   }
 
   public VariableSymbol AddUpValue(VariableSymbol src)
@@ -909,6 +900,7 @@ public class LambdaSymbol : FuncSymbol
     return res;
   }
 }
+#endif
 
 public class FuncSymbolScript : FuncSymbol
 {
