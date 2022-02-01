@@ -932,13 +932,13 @@ public class FuncSymbolScript : FuncSymbol
   //frontend version
 #if BHL_FRONT
   public FuncSymbolScript(
-    ModuleScope mscope,
+    BaseScope origin,
     AST_FuncDecl decl, 
     ParserWrappedNode n, 
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
-    : base(n, decl.name, new FuncType(ret_type), mscope)
+    : base(n, decl.name, new FuncType(ret_type), origin)
   {
     this.decl = decl;
     this.module_id = decl.module_id;
@@ -952,7 +952,7 @@ public class FuncSymbolScript : FuncSymbol
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
         {
           var vd = fparams.funcParamDeclare()[i];
-          var type = mscope.Type(vd.type());
+          var type = origin.Type(vd.type());
           type.is_ref = vd.isRef() != null;
           ft.arg_types.Add(type);
         }
