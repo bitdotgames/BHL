@@ -8,7 +8,7 @@ public interface Scope
   string GetScopeName();
 
   // Scope in which this scope defined. For global scope, it's null
-  Scope GetOriginScope();
+  Scope GetParentScope();
   // Where to look next for symbols: superclass or enclosing scope
   Scope GetFallbackScope();
 
@@ -24,13 +24,13 @@ public interface Scope
 public abstract class BaseScope : Scope 
 {
   // null if global (outermost) scope
-  protected Scope enclosing_scope;
+  protected Scope parent;
 
   protected SymbolsDictionary members = new SymbolsDictionary();
 
   public BaseScope(Scope parent) 
   { 
-    enclosing_scope = parent;  
+    this.parent = parent;  
   }
 
   public SymbolsDictionary GetMembers() { return members; }
@@ -43,8 +43,8 @@ public abstract class BaseScope : Scope
       return s;
 
     // if not here, check any enclosing scope
-    if(enclosing_scope != null) 
-      return enclosing_scope.Resolve(name);
+    if(parent != null) 
+      return parent.Resolve(name);
 
     return null;
   }
@@ -69,8 +69,8 @@ public abstract class BaseScope : Scope
     }
   }
 
-  public Scope GetFallbackScope() { return enclosing_scope; }
-  public Scope GetOriginScope() { return enclosing_scope; }
+  public Scope GetParentScope() { return parent; }
+  public Scope GetFallbackScope() { return parent; }
 
   public abstract string GetScopeName();
 
@@ -238,7 +238,7 @@ public class LocalScope : BaseScope
 
   public override void Define(Symbol sym) 
   {
-    if(enclosing_scope != null && enclosing_scope.Resolve(sym.name) != null)
+    if(parent != null && parent.Resolve(sym.name) != null)
       throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
     base.Define(sym);
   }
@@ -258,7 +258,7 @@ public class ModuleScope : BaseScope
 
   public override void Define(Symbol sym) 
   {
-    if(enclosing_scope != null && enclosing_scope.Resolve(sym.name) != null)
+    if(parent != null && parent.Resolve(sym.name) != null)
       throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
 
     if(sym is VariableSymbol vs)

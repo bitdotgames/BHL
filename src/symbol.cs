@@ -668,8 +668,8 @@ public abstract class ScopedSymbol : Symbol, Scope
     sym.scope = this; // track the scope in each symbol
   }
 
-  public virtual Scope GetFallbackScope() { return GetOriginScope(); }
-  public virtual Scope GetOriginScope() { return enclosing_scope; }
+  public virtual Scope GetFallbackScope() { return GetParentScope(); }
+  public virtual Scope GetParentScope() { return enclosing_scope; }
 
   public string GetScopeName() { return name; }
 }

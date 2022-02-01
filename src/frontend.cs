@@ -306,7 +306,7 @@ public class Frontend : bhlBaseVisitor<object>
     //removing quotes
     import = import.Substring(1, import.Length-2);
     
-    var module = mreg.ImportModule(curr_module, (GlobalScope)locals.GetOriginScope(), import);
+    var module = mreg.ImportModule(curr_module, (GlobalScope)locals.GetParentScope(), import);
     //NOTE: null means module is already imported
     if(module != null)
     {
@@ -2721,7 +2721,7 @@ public class Frontend : bhlBaseVisitor<object>
     --scope_level;
 
     if(new_local_scope)
-      curr_scope = curr_scope.GetOriginScope();
+      curr_scope = curr_scope.GetParentScope();
 
     if(is_paral)
       PeekFuncDecl().return_statement_found = false;
