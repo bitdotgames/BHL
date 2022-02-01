@@ -16286,12 +16286,12 @@ public class BHL_TestVM : BHL_TestBase
 
   void BindEnum(GlobalScope globs)
   {
-    var en = new EnumSymbol(null, "EnumState", null);
+    var en = new EnumSymbol(globs, "EnumState");
     globs.Define(en);
     globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(en)));
 
-    en.Define(new EnumItemSymbol(null, en, "SPAWNED",  10));
-    en.Define(new EnumItemSymbol(null, en, "SPAWNED2", 20));
+    en.Define(new EnumItemSymbol(en, "SPAWNED",  10));
+    en.Define(new EnumItemSymbol(en, "SPAWNED2", 20));
   }
 
   [IsTested()]

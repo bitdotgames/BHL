@@ -12,19 +12,17 @@ public class Example
     bnd.Register(symbols);
 
     var bytes = new MemoryStream(File.ReadAllBytes("tmp/bhl.bytes"));
-    var ml = new ModuleLoader(bytes);
+    var mi = new ModuleImporter(bytes);
 
-    var intp = Interpreter.instance;
-
-    intp.Init(symbols, ml);
-
-    var node = intp.GetFuncNode("unit", "Unit");
+    var vm = new VM(symbols, mi);
+    vm.LoadModule("unit");
+    vm.Start("Unit");
 
     //NOTE: emulating update game loop
     Time.dt = 0.016f;
     while(true)
     {
-      node.run();
+      vm.Tick();
       Thread.Sleep(16);
     }
   }

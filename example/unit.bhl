@@ -60,7 +60,7 @@ func StateChanged(ref int state)
 
 func RandomStateChanger(ref int state)
 {
-  forever {
+  while(true) {
     Wait(1 + Rand() * 4)
     state = state + 1
   }
@@ -76,15 +76,17 @@ func Unit() {
 
     RandomStateChanger(ref state)
 
-    forever {
+    while(true) {
       paral {
         StateChanged(ref state)
-        prio {
+        //TODO: prio selection
+        //prio {
           AttackTarget(ref target_id)
           FindTarget(ref target_id)
           Idle()
-        }
+        //}
       }
+      yield()
     }
 
   }
