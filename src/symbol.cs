@@ -9,7 +9,7 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl {
 
-public interface Type 
+public interface IType 
 {
   string GetName();
   int GetTypeIndex();
@@ -17,7 +17,7 @@ public interface Type
 
 public class TypeRef
 {
-  public Type type;
+  public IType type;
   public bool is_ref;
   public string name;
 #if BHL_FRONT
@@ -32,14 +32,14 @@ public class TypeRef
     this.is_ref = false;
   }
 
-  public TypeRef(Type type)
+  public TypeRef(IType type)
   {
     this.name = type.GetName();
     this.type = type;
     this.is_ref = false;
   }
 
-  public TypeRef(Type type, string name)
+  public TypeRef(IType type, string name)
   {
     this.type = type;
     this.name = name;
@@ -51,7 +51,7 @@ public class TypeRef
     return type == null && string.IsNullOrEmpty(name);
   }
 
-  public Type Get(Scope symbols)
+  public IType Get(IScope symbols)
   {
     if(type != null)
       return type;
@@ -59,7 +59,7 @@ public class TypeRef
     if(string.IsNullOrEmpty(name))
       return null;
 
-    type = (bhl.Type)symbols.Resolve(name);
+    type = (bhl.IType)symbols.Resolve(name);
 
     return type;
   }
@@ -73,11 +73,11 @@ public class ParserWrappedNode
   public Frontend builder;
 #endif
 
-  public Scope scope;
+  public IScope scope;
   public Symbol symbol;
-  public Type eval_type;
+  public IType eval_type;
   //TODO: why keep it?
-  public Type promote_to_type;
+  public IType promote_to_type;
 
 #if BHL_FRONT
   public string Location()
@@ -110,7 +110,7 @@ public class Symbol
   public ParserWrappedNode parsed;
   public TypeRef type;
   // All symbols know what scope contains them
-  public Scope scope;
+  public IScope scope;
   // Symbols also know their 'scope level', 
   // e.g. for  { { int a = 1 } } scope level will be 2
   public int scope_level;
@@ -145,7 +145,7 @@ public class Symbol
 }
 
 // A symbol to represent built in types such int, float primitive types
-public class BuiltInTypeSymbol : Symbol, Type 
+public class BuiltInTypeSymbol : Symbol, IType 
 {
   public int type_index;
 
@@ -160,7 +160,7 @@ public class BuiltInTypeSymbol : Symbol, Type
   public int GetTypeIndex() { return type_index; }
 }
 
-public class ClassSymbol : ScopedSymbol, Scope, Type 
+public class ClassSymbol : ScopedSymbol, IScope, IType 
 {
   internal ClassSymbol super_class;
 
@@ -172,7 +172,7 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     ParserWrappedNode n, 
     string name, 
     ClassSymbol super_class, 
-    Scope origin, 
+    IScope origin, 
     VM.ClassCreator creator = null
   )
     : base(n, name, origin)
@@ -214,12 +214,9 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     return false;
   }
 
-  public override Scope GetFallbackScope() 
+  public override IScope GetFallbackScope() 
   {
-    if(super_class == null) 
-      return this.origin; // globals
-
-    return super_class;
+    return super_class == null ? origin : super_class;
   }
 
   public Symbol ResolveMember(string name)
@@ -272,7 +269,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public const int IDX_Count      = 5;
   public const int IDX_AddInplace = 6;
 
-  public ArrayTypeSymbol(BaseScope scope, string name, TypeRef item_type)     
+  public ArrayTypeSymbol(Scope scope, string name, TypeRef item_type)     
     : base(null, name, null, null)
   {
     this.item_type = item_type;
@@ -321,7 +318,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
+  public ArrayTypeSymbol(Scope scope, TypeRef item_type) 
     : this(scope, item_type.name + "[]", item_type)
   {}
 
@@ -348,11 +345,11 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return CLASS_TYPE;
   }
 
-  public GenericArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
+  public GenericArrayTypeSymbol(Scope scope, TypeRef item_type) 
     : base(scope, item_type)
   {}
 
-  public GenericArrayTypeSymbol(BaseScope scope) 
+  public GenericArrayTypeSymbol(Scope scope) 
     : base(scope, new TypeRef(""))
   {}
 
@@ -445,13 +442,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(BaseScope scope, string name, TypeRef item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Scope scope, string name, TypeRef item_type, CreatorCb creator) 
     : base(scope, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(BaseScope scope, TypeRef item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Scope scope, TypeRef item_type, CreatorCb creator) 
     : base(scope, item_type.name + "[]", item_type)
   {}
 
@@ -540,7 +537,7 @@ public class VariableSymbol : Symbol
     : base(n, name, type) 
   {}
 
-  public void CalcVariableScopeIdx(Scope scope)
+  public void CalcVariableScopeIdx(IScope scope)
   {
     //let's ignore already assigned ones
     if(scope_idx != -1)
@@ -621,19 +618,19 @@ public class FieldSymbolScript : FieldSymbol
   }
 }
 
-public abstract class ScopedSymbol : Symbol, Scope 
+public abstract class ScopedSymbol : Symbol, IScope 
 {
-  protected Scope origin;
+  protected IScope origin;
 
   public abstract SymbolsDictionary GetMembers();
 
-  public ScopedSymbol(ParserWrappedNode n, string name, TypeRef type, Scope origin) 
+  public ScopedSymbol(ParserWrappedNode n, string name, TypeRef type, IScope origin) 
     : base(n, name, type)
   {
     this.origin = origin;
   }
 
-  public ScopedSymbol(ParserWrappedNode n, string name, Scope origin) 
+  public ScopedSymbol(ParserWrappedNode n, string name, IScope origin) 
     : base(n, name)
   {
     this.origin = origin;
@@ -651,9 +648,9 @@ public abstract class ScopedSymbol : Symbol, Scope
         return s;
     }
 
-    var pscope = GetFallbackScope();
-    if(pscope != null)
-      return pscope.Resolve(name);
+    var fback = GetFallbackScope();
+    if(fback != null)
+      return fback.Resolve(name);
 
     return null;
   }
@@ -668,13 +665,13 @@ public abstract class ScopedSymbol : Symbol, Scope
     sym.scope = this; // track the scope in each symbol
   }
 
-  public virtual Scope GetFallbackScope() { return GetOriginScope(); }
-  public virtual Scope GetOriginScope() { return origin; }
+  public virtual IScope GetFallbackScope() { return GetOriginScope(); }
+  public virtual IScope GetOriginScope() { return origin; }
 
   public string GetScopeName() { return name; }
 }
 
-public class MultiType : Type
+public class MultiType : IType
 {
   public string name;
 
@@ -698,7 +695,7 @@ public class MultiType : Type
   }
 }
 
-public class FuncType : Type
+public class FuncType : IType
 {
   public string name;
 
@@ -747,7 +744,7 @@ public class FuncSymbol : ScopedSymbol
 
   public bool return_statement_found = false;
 
-  public FuncSymbol(ParserWrappedNode n, string name, FuncType type, Scope origin) 
+  public FuncSymbol(ParserWrappedNode n, string name, FuncType type, IScope origin) 
     : base(n, name, new TypeRef(type), origin)
   {}
 
@@ -758,7 +755,7 @@ public class FuncSymbol : ScopedSymbol
     return (FuncType)this.type.Get(this);
   }
 
-  public Type GetReturnType()
+  public IType GetReturnType()
   {
     return GetFuncType().ret_type.Get(this);
   }
@@ -810,7 +807,7 @@ public class LambdaSymbol : FuncSymbol
 #if BHL_FRONT
   //frontend version
   public LambdaSymbol(
-    BaseScope origin,
+    Scope origin,
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
     ParserWrappedNode n, 
@@ -837,7 +834,7 @@ public class LambdaSymbol : FuncSymbol
 #endif
 
   //backend version
-  public LambdaSymbol(BaseScope origin, AST_LambdaDecl decl) 
+  public LambdaSymbol(Scope origin, AST_LambdaDecl decl) 
     : base(null, decl.name, new FuncType(new TypeRef(decl.type)), origin)
   {
     this.decl = decl;
@@ -867,9 +864,9 @@ public class LambdaSymbol : FuncSymbol
     if(s != null)
       return s;
 
-    var pscope = GetFallbackScope();
-    if(pscope != null)
-      return pscope.Resolve(name);
+    var fback = GetFallbackScope();
+    if(fback != null)
+      return fback.Resolve(name);
 
     return null;
   }
@@ -932,7 +929,7 @@ public class FuncSymbolScript : FuncSymbol
   //frontend version
 #if BHL_FRONT
   public FuncSymbolScript(
-    BaseScope origin,
+    Scope origin,
     AST_FuncDecl decl, 
     ParserWrappedNode n, 
     TypeRef ret_type, 
@@ -963,7 +960,7 @@ public class FuncSymbolScript : FuncSymbol
 #endif
 
   //backend version
-  public FuncSymbolScript(Scope origin, AST_FuncDecl decl)
+  public FuncSymbolScript(IScope origin, AST_FuncDecl decl)
     : base(null, decl.name, new FuncType(new TypeRef(decl.type)), origin)
   {
     this.decl = decl;
@@ -1096,11 +1093,11 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public class EnumSymbol : ScopedSymbol, Scope, Type 
+public class EnumSymbol : ScopedSymbol, IScope, IType 
 {
   public SymbolsDictionary members = new SymbolsDictionary();
 
-  public EnumSymbol(ParserWrappedNode n, string name, Scope origin)
+  public EnumSymbol(ParserWrappedNode n, string name, IScope origin)
       : base(n, name, origin)
   {}
 
@@ -1145,7 +1142,7 @@ public class EnumSymbolScript : EnumSymbol
   }
 }
 
-public class EnumItemSymbol : Symbol, Type 
+public class EnumItemSymbol : Symbol, IType 
 {
   public EnumSymbol en;
   public int val;
@@ -1183,7 +1180,7 @@ static public class SymbolTable
   static public BuiltInTypeSymbol symb_null = new BuiltInTypeSymbol("null", TIDX_USER);
 
   // Arithmetic types defined in order from narrowest to widest
-  public static Type[] index2type = new Type[] {
+  public static IType[] index2type = new IType[] {
       // 0,  1,        2,           3,        4,          5,          6          7
       null, symb_bool, symb_string, symb_int, symb_float, symb_void,  symb_enum, symb_any
   };
@@ -1194,7 +1191,7 @@ static public class SymbolTable
   };
 
   // Map t1 op t2 to result type (_void implies illegal)
-  public static Type[,] arithmetic_res_type = new Type[,] {
+  public static IType[,] arithmetic_res_type = new IType[,] {
       /*          struct  boolean  string   int     float    void    enum    any */
       /*struct*/  {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
       /*boolean*/ {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
@@ -1206,7 +1203,7 @@ static public class SymbolTable
       /*any*/     {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void}
   };
 
-  public static Type[,] relational_res_type = new Type[,] {
+  public static IType[,] relational_res_type = new IType[,] {
       /*          struct  boolean string    int       float     void    enum    any */
       /*struct*/  {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
       /*boolean*/ {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
@@ -1218,7 +1215,7 @@ static public class SymbolTable
       /*any*/     {symb_void, symb_void,   symb_void,   symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
   };
 
-  public static Type[,] equality_res_type = new Type[,] {
+  public static IType[,] equality_res_type = new IType[,] {
       /*           struct boolean   string    int       float     void    enum     any */
       /*struct*/  {symb_bool,symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
       /*boolean*/ {symb_void,   symb_bool, symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
@@ -1235,7 +1232,7 @@ static public class SymbolTable
   //  error--it implies no promotion.  This works for
   //  arithmetic, equality, and relational operators in bhl
   // 
-  public static Type[,] promote_from_to = new Type[,] {
+  public static IType[,] promote_from_to = new IType[,] {
       /*          struct  boolean  string  int     float    void   enum   any*/
       /*struct*/  {null,  null,    null,   null,   null,    null,  null,  null},
       /*boolean*/ {null,  null,    null,   null,   null,    null,  null,  null},
@@ -1247,7 +1244,7 @@ static public class SymbolTable
       /*any*/     {null,  null,    null,   null,    null,   null,  null,  null}
   };
 
-  public static Type[,] cast_from_to = new Type[,] {
+  public static IType[,] cast_from_to = new IType[,] {
       /*          struct  boolean  string   int     float   void   enum   any*/
       /*struct*/  {null,  null,    null,    null,   null,   null,  null,  symb_any},
       /*boolean*/ {null,  null,    symb_string, symb_int,   symb_float, null,  null,  symb_any},
@@ -1268,7 +1265,7 @@ static public class SymbolTable
 
   static public void InitBuiltins(GlobalScope globals) 
   {
-    foreach(Type t in index2type) 
+    foreach(IType t in index2type) 
     {
       if(t != null) 
       {
@@ -1342,7 +1339,7 @@ static public class SymbolTable
 
   }
 
-  static public Type GetResultType(Type[,] typeTable, ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType GetResultType(IType[,] typeTable, ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(a.eval_type == b.eval_type)
       return a.eval_type;
@@ -1350,7 +1347,7 @@ static public class SymbolTable
     int ta = a.eval_type.GetTypeIndex(); // type index of left operand
     int tb = b.eval_type.GetTypeIndex(); // type index of right operand
 
-    Type result = typeTable[ta,tb];    // operation result type
+    IType result = typeTable[ta,tb];    // operation result type
     if(result == symb_void) 
     {
       throw new UserError(
@@ -1365,7 +1362,7 @@ static public class SymbolTable
     return result;
   }
 
-  static public bool CanAssignTo(Type src, Type dst, Type promotion) 
+  static public bool CanAssignTo(IType src, IType dst, IType promotion) 
   {
     return src == dst || 
            promotion == dst || 
@@ -1377,7 +1374,7 @@ static public class SymbolTable
            ;
   }
 
-  static public bool IsChildClass(Type t, Type pt) 
+  static public bool IsChildClass(IType t, IType pt) 
   {
     var cl = t as ClassSymbol;
     if(cl == null)
@@ -1388,7 +1385,7 @@ static public class SymbolTable
     return cl.IsSubclassOf(pcl);
   }
 
-  static public bool IsInSameClassHierarchy(Type a, Type b) 
+  static public bool IsInSameClassHierarchy(IType a, IType b) 
   {
     var ca = a as ClassSymbol;
     if(ca == null)
@@ -1412,7 +1409,7 @@ static public class SymbolTable
     }
   }
 
-  static public void CheckAssign(Type lhs, ParserWrappedNode rhs) 
+  static public void CheckAssign(IType lhs, ParserWrappedNode rhs) 
   {
     int tlhs = lhs.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
@@ -1425,7 +1422,7 @@ static public class SymbolTable
     }
   }
 
-  static public void CheckAssign(ParserWrappedNode lhs, Type rhs) 
+  static public void CheckAssign(ParserWrappedNode lhs, IType rhs) 
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.GetTypeIndex();
@@ -1466,7 +1463,7 @@ static public class SymbolTable
     );
   }
 
-  static public bool IsBopCompatibleType(Type type)
+  static public bool IsBopCompatibleType(IType type)
   {
     return type == symb_bool || 
            type == symb_string ||
@@ -1474,7 +1471,7 @@ static public class SymbolTable
            type == symb_float;
   }
 
-  static public Type Bop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Bop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(!IsBopCompatibleType(a.eval_type))
       throw new UserError(
@@ -1489,20 +1486,20 @@ static public class SymbolTable
     return GetResultType(arithmetic_res_type, a, b);
   }
 
-  static public Type BopOverload(Scope scope, ParserWrappedNode a, ParserWrappedNode b, FuncSymbol op_func) 
+  static public IType BopOverload(IScope scope, ParserWrappedNode a, ParserWrappedNode b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
     CheckAssign(op_func_arg.type.Get(scope), b);
     return op_func.GetReturnType();
   }
 
-  static public bool IsRelopCompatibleType(Type type)
+  static public bool IsRelopCompatibleType(IType type)
   {
     return type == symb_int ||
            type == symb_float;
   }
 
-  static public Type Relop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Relop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(!IsRelopCompatibleType(a.eval_type))
       throw new UserError(
@@ -1520,13 +1517,13 @@ static public class SymbolTable
     return symb_bool;
   }
 
-  static public Type Eqop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Eqop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     GetResultType(equality_res_type, a, b);
     return symb_bool;
   }
 
-  static public Type Uminus(ParserWrappedNode a) 
+  static public IType Uminus(ParserWrappedNode a) 
   {
     if(!(a.eval_type == symb_int || a.eval_type == symb_float)) 
       throw new UserError(a.Location()+" : must be numeric type");
@@ -1534,7 +1531,7 @@ static public class SymbolTable
     return a.eval_type;
   }
 
-  static public Type Bitop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Bitop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(a.eval_type != symb_int) 
       throw new UserError(a.Location()+" : must be int type");
@@ -1545,7 +1542,7 @@ static public class SymbolTable
     return symb_int;
   }
 
-  static public Type Lop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Lop(ParserWrappedNode a, ParserWrappedNode b) 
   {
     if(a.eval_type != symb_bool) 
       throw new UserError(a.Location()+" : must be bool type");
@@ -1556,7 +1553,7 @@ static public class SymbolTable
     return symb_bool;
   }
 
-  static public Type Unot(ParserWrappedNode a) 
+  static public IType Unot(ParserWrappedNode a) 
   {
     if(a.eval_type != symb_bool) 
       throw new UserError(a.Location()+" : must be bool type");

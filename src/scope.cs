@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public interface Scope
+public interface IScope
 {
   string GetScopeName();
 
   // Scope in which this scope defined. For global scope, it's null
-  Scope GetOriginScope();
+  IScope GetOriginScope();
   // Where to look next for symbols: superclass or origin (parent) scope
-  Scope GetFallbackScope();
+  IScope GetFallbackScope();
 
   // Define a symbol in the current scope
   void Define(Symbol sym);
@@ -21,14 +21,16 @@ public interface Scope
   SymbolsDictionary GetMembers();
 }
 
-public abstract class BaseScope : Scope 
+public abstract class Scope : IScope 
 {
   // null if global (outermost) scope
-  protected Scope origin;
+  protected IScope origin;
 
   protected SymbolsDictionary members = new SymbolsDictionary();
 
-  public BaseScope(Scope origin) 
+  Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
+
+  public Scope(IScope origin) 
   { 
     this.origin = origin;  
   }
@@ -59,7 +61,7 @@ public abstract class BaseScope : Scope
     sym.scope = this; // track the scope in each symbol
   }
 
-  public void Append(BaseScope other)
+  public void Append(Scope other)
   {
     var ms = other.GetMembers();
     for(int i=0;i<ms.Count;++i)
@@ -69,8 +71,8 @@ public abstract class BaseScope : Scope
     }
   }
 
-  public Scope GetOriginScope() { return origin; }
-  public Scope GetFallbackScope() { return origin; }
+  public IScope GetOriginScope() { return origin; }
+  public IScope GetFallbackScope() { return origin; }
 
   public abstract string GetScopeName();
 
@@ -95,7 +97,7 @@ public abstract class BaseScope : Scope
   }
 
 #if BHL_FRONT
-  static FuncType GetFuncType(BaseScope scope, bhlParser.TypeContext ctx)
+  static FuncType GetFuncType(Scope scope, bhlParser.TypeContext ctx)
   {
     var fnargs = ctx.fnargs();
 
@@ -124,7 +126,7 @@ public abstract class BaseScope : Scope
   public TypeRef Type(bhlParser.TypeContext parsed)
   {
     var str = parsed.GetText();
-    var type = Resolve(str) as Type;
+    var type = Resolve(str) as IType;
 
     if(type == null && parsed != null)
     {    
@@ -142,15 +144,15 @@ public abstract class BaseScope : Scope
       }
     }
 
-    var tp = new TypeRef(type, str);
-    tp.parsed = parsed;
-    return tp;
+    var tr = new TypeRef(type, str);
+    tr.parsed = parsed;
+    return tr;
   }
 
   public TypeRef Type(bhlParser.RetTypeContext parsed)
   {
     var str = parsed == null ? "void" : parsed.GetText();
-    var type = Resolve(str) as Type;
+    var type = Resolve(str) as IType;
 
     if(type == null && parsed != null)
     {    
@@ -166,13 +168,11 @@ public abstract class BaseScope : Scope
         return this.Type(parsed.type()[0]);
     }
 
-    var tp = new TypeRef(type, str);
-    tp.parsed = parsed;
-    return tp;
+    var tr = new TypeRef(type, str);
+    tr.parsed = parsed;
+    return tr;
   }
 #endif
-
-  Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
 
   public TypeRef Type(string name)
   {
@@ -184,7 +184,7 @@ public abstract class BaseScope : Scope
       return tr;
     
     //let's check if the type was already explicitely defined
-    var t = Resolve(name) as Type;
+    var t = Resolve(name) as IType;
     if(t != null)
     {
       tr = new TypeRef(t);
@@ -213,13 +213,13 @@ public abstract class BaseScope : Scope
     return tr;
   }
 
-  public TypeRef Type(Type t)
+  public TypeRef Type(IType t)
   {
     return new TypeRef(t);
   }
 }
 
-public class GlobalScope : BaseScope 
+public class GlobalScope : Scope 
 {
   public GlobalScope() 
     : base(null) 
@@ -228,9 +228,9 @@ public class GlobalScope : BaseScope
   public override string GetScopeName() { return "global"; }
 }
 
-public class LocalScope : BaseScope 
+public class LocalScope : Scope 
 {
-  public LocalScope(Scope origin) 
+  public LocalScope(IScope origin) 
     : base(origin) 
   {}
 
@@ -244,7 +244,7 @@ public class LocalScope : BaseScope
   }
 }
 
-public class ModuleScope : BaseScope 
+public class ModuleScope : Scope 
 {
   uint module_id;
 

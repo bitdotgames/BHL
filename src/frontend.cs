@@ -74,7 +74,7 @@ public class Frontend : bhlBaseVisitor<object>
   //      and symbols which were imported from other modules, it fallbacks to the global scope
   //      if symbol is not found
   ModuleScope locals;
-  Scope curr_scope;
+  IScope curr_scope;
   int scope_level;
 
   public static CommonTokenStream Source2Tokens(Stream s)
@@ -338,7 +338,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitCallExp(bhlParser.CallExpContext ctx)
   {
-    Type curr_type = null;
+    IType curr_type = null;
 
     ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type, ctx.Start.Line, write: false);
 
@@ -355,7 +355,7 @@ public class Frontend : bhlBaseVisitor<object>
   void ProcChainedCall(
     ITerminalNode root_name, 
     bhlParser.ChainExpContext[] chain, 
-    ref Type curr_type, 
+    ref IType curr_type, 
     int line, 
     bool write
    )
@@ -434,7 +434,7 @@ public class Frontend : bhlBaseVisitor<object>
     bhlParser.CallArgsContext cargs, 
     bhlParser.ArrAccessContext arracc, 
     ClassSymbol class_scope, 
-    ref Type type, 
+    ref IType type, 
     ref AST_Interim pre_call,
     int line, 
     bool write
@@ -557,7 +557,7 @@ public class Frontend : bhlBaseVisitor<object>
       AddArrIndex(arracc, ref type, line, write);
   }
 
-  void AddArrIndex(bhlParser.ArrAccessContext arracc, ref Type type, int line, bool write)
+  void AddArrIndex(bhlParser.ArrAccessContext arracc, ref IType type, int line, bool write)
   {
     var arr_type = type as ArrayTypeSymbol;
     if(arr_type == null)
@@ -800,7 +800,7 @@ public class Frontend : bhlBaseVisitor<object>
   //
   //      Since in this case there is no stack interleaving possible (only one argument) 
   //      and we really want to avoid introduction of the new temp local variable
-  void TryProtectStackInterleaving(bhlParser.CallArgContext ca, Type func_arg_type, int i, ref AST_Interim pre_call)
+  void TryProtectStackInterleaving(bhlParser.CallArgContext ca, IType func_arg_type, int i, ref AST_Interim pre_call)
   {
     var arg_ast = PeekAST();
     if(i == 0 || !HasFuncCalls(arg_ast))
@@ -1553,9 +1553,9 @@ public class Frontend : bhlBaseVisitor<object>
     return func_decl_stack[func_decl_stack.Count-1];
   }
 
-  Stack<Type> json_type_stack = new Stack<Type>();
+  Stack<IType> json_type_stack = new Stack<IType>();
 
-  void PushJsonType(Type type)
+  void PushJsonType(IType type)
   {
     json_type_stack.Push(type);
   }
@@ -1565,7 +1565,7 @@ public class Frontend : bhlBaseVisitor<object>
     json_type_stack.Pop();
   }
 
-  Type PeekJsonType()
+  IType PeekJsonType()
   {
     if(json_type_stack.Count == 0)
       return null;
@@ -1845,7 +1845,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, Scope scope)
+  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
   {
     var tr = locals.Type(context.retType());
 
@@ -2038,7 +2038,7 @@ public class Frontend : bhlBaseVisitor<object>
     var root = PeekAST();
     int root_first_idx = root.children.Count;
 
-    Type assign_type = null;
+    IType assign_type = null;
     for(int i=0;i<vdecls.Length;++i)
     {
       var tmp = vdecls[i];
@@ -2046,7 +2046,7 @@ public class Frontend : bhlBaseVisitor<object>
       var vd = tmp.varDeclare();
 
       ParserWrappedNode wnode = null;
-      Type curr_type = null;
+      IType curr_type = null;
       bool is_decl = false;
 
       if(cexp != null)
@@ -2212,7 +2212,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST CommonDeclVar(Scope curr_scope, ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg, bool write)
+  AST CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg, bool write)
   {
     var str_name = name.GetText();
 
