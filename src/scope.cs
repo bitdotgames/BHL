@@ -112,9 +112,7 @@ public abstract class BaseScope : Scope
         if(type != null)
           type = new GenericArrayTypeSymbol(this, new TypeRef(type));
         else
-        {
-          type = new GenericArrayTypeSymbol(this, parsed);
-        }
+          type = new GenericArrayTypeSymbol(this, new TypeRef(parsed.NAME().GetText()));
       }
     }
 

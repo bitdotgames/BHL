@@ -262,12 +262,6 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 {
   public TypeRef item_type;
 
-#if BHL_FRONT
-  public ArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
-    : this(scope, new TypeRef(node.NAME().GetText()))
-  {}
-#endif
-
   //NOTE: indices below are synchronized with an actual order 
   //      of class members initialized later
   public const int IDX_Add        = 0;
@@ -353,12 +347,6 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   {
     return CLASS_TYPE;
   }
-
-#if BHL_FRONT
-  public GenericArrayTypeSymbol(BaseScope scope, bhlParser.TypeContext node)
-    : base(scope, node)
-  {}
-#endif
 
   public GenericArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
     : base(scope, item_type)
