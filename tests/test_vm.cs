@@ -9963,9 +9963,8 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO: this one must be forbidden
-  //[IsTested()]
-  public void TestDeferNested()
+  [IsTested()]
+  public void TestDeferNestedNotAllowed()
   {
     string bhl = @"
 
@@ -9977,7 +9976,6 @@ public class BHL_TestVM : BHL_TestBase
           trace(""~BAR2"")
         }
       }
-      trace(""BAR"")
     }
 
     func test() 
@@ -9990,9 +9988,43 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(globs, log);
 
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl, globs);
+      },
+      @"nested defers are not allowed"
+    );
+  }
+
+  [IsTested()]
+  public void TestDeferNestedSubCall()
+  {
+    string bhl = @"
+    func foo() {
+      defer {
+        trace(""~FOO"")
+      }
+    }
+
+    func bar() {
+      defer {
+        trace(""~BAR"")
+        foo()
+      }
+    }
+
+    func test() {
+      bar()
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
     var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
-    AssertEqual("BAR~BAR1~BAR2", log.ToString());
+    AssertEqual("~BAR~FOO", log.ToString());
     CommonChecks(vm);
   }
 

@@ -2267,6 +2267,8 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitDefer(bhlParser.DeferContext ctx)
   {
     ++defer_stack;
+    if(defer_stack > 1)
+      FireError(Location(ctx) + " : nested defers are not allowed");
     CommonVisitBlock(EnumBlock.DEFER, ctx.block().statement(), new_local_scope: false);
     --defer_stack;
     return null;
