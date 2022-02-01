@@ -118,7 +118,9 @@ public abstract class BaseScope : Scope
       }
     }
 
-    return new TypeRef(type, str, parsed);
+    var tp = new TypeRef(type, str);
+    tp.parsed = parsed;
+    return tp;
   }
 
   public TypeRef Type(bhlParser.RetTypeContext parsed)
@@ -140,7 +142,9 @@ public abstract class BaseScope : Scope
         return this.Type(parsed.type()[0]);
     }
 
-    return new TypeRef(type, str, parsed);
+    var tp = new TypeRef(type, str);
+    tp.parsed = parsed;
+    return tp;
   }
 #endif
 

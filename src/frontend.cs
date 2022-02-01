@@ -853,7 +853,7 @@ public class Frontend : bhlBaseVisitor<object>
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(
       locals, ast, this.func_decl_stack, 
-      lambda_node, func_name, curr_module.id, tr, funcLambda
+      lambda_node, curr_module.id, tr, funcLambda
     );
 
     PushFuncDecl(symb);
@@ -1863,7 +1863,6 @@ public class Frontend : bhlBaseVisitor<object>
       locals, 
       ast, 
       func_node, 
-      fstr_name, 
       tr, 
       context.funcParams()
     );

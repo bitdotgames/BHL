@@ -25,17 +25,11 @@ public class TypeRef
   public IParseTree parsed;
 #endif
 
-  public TypeRef()
-  {}
-
   public TypeRef(string name)
   {
     this.name = name;
     this.type = null;
     this.is_ref = false;
-#if BHL_FRONT
-    this.parsed = null;
-#endif
   }
 
   public TypeRef(Type type)
@@ -43,20 +37,14 @@ public class TypeRef
     this.name = type.GetName();
     this.type = type;
     this.is_ref = false;
-#if BHL_FRONT
-    this.parsed = null;
-#endif
   }
 
-#if BHL_FRONT
-  public TypeRef(Type type, string name, IParseTree parsed)
+  public TypeRef(Type type, string name)
   {
     this.type = type;
     this.name = name;
     this.is_ref = false;
-    this.parsed = parsed;
   }
-#endif
 
   public bool IsEmpty()
   {
@@ -860,12 +848,11 @@ public class LambdaSymbol : FuncSymbol
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
     ParserWrappedNode n, 
-    string name, 
     uint module_id,
     TypeRef ret_type, 
     bhlParser.FuncLambdaContext lmb_ctx
   ) 
-    : base(n, name, new FuncType(ret_type), enclosing_scope)
+    : base(n, decl.name, new FuncType(ret_type), enclosing_scope)
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
@@ -982,11 +969,10 @@ public class FuncSymbolScript : FuncSymbol
     ModuleScope mscope,
     AST_FuncDecl decl, 
     ParserWrappedNode n, 
-    string name, 
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
-    : base(n, name, new FuncType(ret_type), mscope)
+    : base(n, decl.name, new FuncType(ret_type), mscope)
   {
     this.decl = decl;
     this.module_id = decl.module_id;
