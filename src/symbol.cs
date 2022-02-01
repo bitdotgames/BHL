@@ -217,7 +217,7 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
   public override Scope GetFallbackScope() 
   {
     if(super_class == null) 
-      return this.enclosing_scope; // globals
+      return this.origin; // globals
 
     return super_class;
   }
@@ -623,20 +623,20 @@ public class FieldSymbolScript : FieldSymbol
 
 public abstract class ScopedSymbol : Symbol, Scope 
 {
-  protected Scope enclosing_scope;
+  protected Scope origin;
 
   public abstract SymbolsDictionary GetMembers();
 
-  public ScopedSymbol(ParserWrappedNode n, string name, TypeRef type, Scope enclosing_scope) 
+  public ScopedSymbol(ParserWrappedNode n, string name, TypeRef type, Scope origin) 
     : base(n, name, type)
   {
-    this.enclosing_scope = enclosing_scope;
+    this.origin = origin;
   }
 
-  public ScopedSymbol(ParserWrappedNode n, string name, Scope enclosing_scope) 
+  public ScopedSymbol(ParserWrappedNode n, string name, Scope origin) 
     : base(n, name)
   {
-    this.enclosing_scope = enclosing_scope;
+    this.origin = origin;
   }
 
   public virtual Symbol Resolve(string name) 
@@ -669,7 +669,7 @@ public abstract class ScopedSymbol : Symbol, Scope
   }
 
   public virtual Scope GetFallbackScope() { return GetOriginScope(); }
-  public virtual Scope GetOriginScope() { return enclosing_scope; }
+  public virtual Scope GetOriginScope() { return origin; }
 
   public string GetScopeName() { return name; }
 }
@@ -747,8 +747,8 @@ public class FuncSymbol : ScopedSymbol
 
   public bool return_statement_found = false;
 
-  public FuncSymbol(ParserWrappedNode n, string name, FuncType type, Scope enclosing_scope) 
-    : base(n, name, new TypeRef(type), enclosing_scope)
+  public FuncSymbol(ParserWrappedNode n, string name, FuncType type, Scope origin) 
+    : base(n, name, new TypeRef(type), origin)
   {}
 
   public override SymbolsDictionary GetMembers() { return members; }
@@ -810,7 +810,7 @@ public class LambdaSymbol : FuncSymbol
 #if BHL_FRONT
   //frontend version
   public LambdaSymbol(
-    BaseScope enclosing_scope,
+    BaseScope origin,
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
     ParserWrappedNode n, 
@@ -818,7 +818,7 @@ public class LambdaSymbol : FuncSymbol
     TypeRef ret_type, 
     bhlParser.FuncLambdaContext lmb_ctx
   ) 
-    : base(n, decl.name, new FuncType(ret_type), enclosing_scope)
+    : base(n, decl.name, new FuncType(ret_type), origin)
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
@@ -829,7 +829,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        ft.arg_types.Add(enclosing_scope.Type(vd.type()));
+        ft.arg_types.Add(origin.Type(vd.type()));
       }
     }
     ft.Update();
@@ -837,8 +837,8 @@ public class LambdaSymbol : FuncSymbol
 #endif
 
   //backend version
-  public LambdaSymbol(BaseScope enclosing_scope, AST_LambdaDecl decl) 
-    : base(null, decl.name, new FuncType(new TypeRef(decl.type)), enclosing_scope)
+  public LambdaSymbol(BaseScope origin, AST_LambdaDecl decl) 
+    : base(null, decl.name, new FuncType(new TypeRef(decl.type)), origin)
   {
     this.decl = decl;
     this.fdecl_stack = null;
@@ -963,8 +963,8 @@ public class FuncSymbolScript : FuncSymbol
 #endif
 
   //backend version
-  public FuncSymbolScript(Scope enclosing_scope, AST_FuncDecl decl)
-    : base(null, decl.name, new FuncType(new TypeRef(decl.type)), enclosing_scope)
+  public FuncSymbolScript(Scope origin, AST_FuncDecl decl)
+    : base(null, decl.name, new FuncType(new TypeRef(decl.type)), origin)
   {
     this.decl = decl;
     this.module_id = decl.module_id;
@@ -1100,8 +1100,8 @@ public class EnumSymbol : ScopedSymbol, Scope, Type
 {
   public SymbolsDictionary members = new SymbolsDictionary();
 
-  public EnumSymbol(ParserWrappedNode n, string name, Scope enclosing_scope)
-      : base(n, name, enclosing_scope)
+  public EnumSymbol(ParserWrappedNode n, string name, Scope origin)
+      : base(n, name, origin)
   {}
 
   public string GetName() { return name; }
