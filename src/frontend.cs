@@ -306,7 +306,7 @@ public class Frontend : bhlBaseVisitor<object>
     //removing quotes
     import = import.Substring(1, import.Length-2);
     
-    var module = mreg.ImportModule(curr_module, (GlobalScope)locals.GetEnclosingScope(), import);
+    var module = mreg.ImportModule(curr_module, (GlobalScope)locals.GetOriginScope(), import);
     //NOTE: null means module is already imported
     if(module != null)
     {
@@ -503,7 +503,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(var_symb != null)
         {
           bool is_write = write && arracc == null;
-          bool is_global = var_symb.scope.GetParentScope() is GlobalScope;
+          bool is_global = var_symb.scope.GetFallbackScope() is GlobalScope;
 
           ast = AST_Util.New_Call(class_scope != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
@@ -2721,7 +2721,7 @@ public class Frontend : bhlBaseVisitor<object>
     --scope_level;
 
     if(new_local_scope)
-      curr_scope = curr_scope.GetEnclosingScope();
+      curr_scope = curr_scope.GetOriginScope();
 
     if(is_paral)
       PeekFuncDecl().return_statement_found = false;

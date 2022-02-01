@@ -7,10 +7,10 @@ public interface Scope
 {
   string GetScopeName();
 
-  // Where to look next for symbols: superclass or enclosing scope
-  Scope GetParentScope();
   // Scope in which this scope defined. For global scope, it's null
-  Scope GetEnclosingScope();
+  Scope GetOriginScope();
+  // Where to look next for symbols: superclass or enclosing scope
+  Scope GetFallbackScope();
 
   // Define a symbol in the current scope
   void Define(Symbol sym);
@@ -69,8 +69,8 @@ public abstract class BaseScope : Scope
     }
   }
 
-  public Scope GetParentScope() { return enclosing_scope; }
-  public Scope GetEnclosingScope() { return enclosing_scope; }
+  public Scope GetFallbackScope() { return enclosing_scope; }
+  public Scope GetOriginScope() { return enclosing_scope; }
 
   public abstract string GetScopeName();
 
@@ -95,6 +95,32 @@ public abstract class BaseScope : Scope
   }
 
 #if BHL_FRONT
+  static FuncType GetFuncType(BaseScope scope, bhlParser.TypeContext ctx)
+  {
+    var fnargs = ctx.fnargs();
+
+    string ret_type_str = ctx.NAME().GetText();
+    if(fnargs.ARR() != null)
+      ret_type_str += "[]";
+    
+    var ret_type = scope.Type(ret_type_str);
+
+    var arg_types = new List<TypeRef>();
+    var fnames = fnargs.names();
+    if(fnames != null)
+    {
+      for(int i=0;i<fnames.refName().Length;++i)
+      {
+        var name = fnames.refName()[i];
+        var arg_type = scope.Type(name.NAME().GetText());
+        arg_type.is_ref = name.isRef() != null; 
+        arg_types.Add(arg_type);
+      }
+    }
+
+    return new FuncType(ret_type, arg_types);
+  }
+
   public TypeRef Type(bhlParser.TypeContext parsed)
   {
     var str = parsed.GetText();
@@ -103,7 +129,7 @@ public abstract class BaseScope : Scope
     if(type == null && parsed != null)
     {    
       if(parsed.fnargs() != null)
-        type = new FuncType(this, parsed);
+        type = GetFuncType(this, parsed);
 
       //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
       if(parsed.ARR() != null)

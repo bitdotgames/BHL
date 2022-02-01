@@ -214,7 +214,7 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     return false;
   }
 
-  public override Scope GetParentScope() 
+  public override Scope GetFallbackScope() 
   {
     if(super_class == null) 
       return this.enclosing_scope; // globals
@@ -651,7 +651,7 @@ public abstract class ScopedSymbol : Symbol, Scope
         return s;
     }
 
-    var pscope = GetParentScope();
+    var pscope = GetFallbackScope();
     if(pscope != null)
       return pscope.Resolve(name);
 
@@ -668,8 +668,8 @@ public abstract class ScopedSymbol : Symbol, Scope
     sym.scope = this; // track the scope in each symbol
   }
 
-  public virtual Scope GetParentScope() { return GetEnclosingScope(); }
-  public virtual Scope GetEnclosingScope() { return enclosing_scope; }
+  public virtual Scope GetFallbackScope() { return GetOriginScope(); }
+  public virtual Scope GetOriginScope() { return enclosing_scope; }
 
   public string GetScopeName() { return name; }
 }
@@ -708,34 +708,12 @@ public class FuncType : Type
   public int GetTypeIndex() { return SymbolTable.TIDX_USER; }
   public string GetName() { return name; }
 
-  public FuncType()
-  {}
-
-#if BHL_FRONT
-  public FuncType(BaseScope scope, bhlParser.TypeContext node)
+  public FuncType(TypeRef ret_type, List<TypeRef> arg_types)
   {
-    var fnargs = node.fnargs();
-
-    string ret_type_str = node.NAME().GetText();
-    if(fnargs.ARR() != null)
-      ret_type_str += "[]";
-    
-    ret_type = scope.Type(ret_type_str);
-
-    var fnames = fnargs.names();
-    if(fnames != null)
-    {
-      for(int i=0;i<fnames.refName().Length;++i)
-      {
-        var name = fnames.refName()[i];
-        var arg_type = scope.Type(name.NAME().GetText());
-        arg_type.is_ref = name.isRef() != null; 
-        arg_types.Add(arg_type);
-      }
-    }
+    this.ret_type = ret_type;
+    this.arg_types = arg_types;
     Update();
   }
-#endif
 
   public FuncType(TypeRef ret_type)
   {
@@ -860,7 +838,7 @@ public class LambdaSymbol : FuncSymbol
 
   //backend version
   public LambdaSymbol(BaseScope enclosing_scope, AST_LambdaDecl decl) 
-    : base(null, decl.name, new FuncType(), enclosing_scope)
+    : base(null, decl.name, new FuncType(new TypeRef(decl.type)), enclosing_scope)
   {
     this.decl = decl;
     this.fdecl_stack = null;
@@ -889,7 +867,7 @@ public class LambdaSymbol : FuncSymbol
     if(s != null)
       return s;
 
-    var pscope = GetParentScope();
+    var pscope = GetFallbackScope();
     if(pscope != null)
       return pscope.Resolve(name);
 
@@ -986,7 +964,7 @@ public class FuncSymbolScript : FuncSymbol
 
   //backend version
   public FuncSymbolScript(Scope enclosing_scope, AST_FuncDecl decl)
-    : base(null, decl.name, new FuncType(), enclosing_scope)
+    : base(null, decl.name, new FuncType(new TypeRef(decl.type)), enclosing_scope)
   {
     this.decl = decl;
     this.module_id = decl.module_id;
