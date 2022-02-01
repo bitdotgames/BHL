@@ -268,7 +268,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public const int IDX_AddInplace = 6;
 
   public ArrayTypeSymbol(Scope origin, string name, TypeRef item_type)     
-    : base(origin, name, null)
+    : base(origin, name, super_class: null)
   {
     this.item_type = item_type;
 
@@ -332,7 +332,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
 //NOTE: This one is used as a fallback for all arrays which
 //      were not explicitely re-defined. Fallback happens during
-//      compilation phase in BaseScope.Type(..) method
+//      compilation phase in Scope.Type(..) method
 //     
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
@@ -345,10 +345,6 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public GenericArrayTypeSymbol(Scope origin, TypeRef item_type) 
     : base(origin, item_type)
-  {}
-
-  public GenericArrayTypeSymbol(Scope origin) 
-    : base(origin, new TypeRef(""))
   {}
 
   static IList<Val> AsList(Val arr)
@@ -757,12 +753,17 @@ public class FuncSymbol : ScopedSymbol
 
   public uint module_id;
 
+#if BHL_FRONT
   public bool return_statement_found = false;
 
-#if BHL_FRONT
   public FuncSymbol(IScope origin, ParserWrappedNode parsed, string name, FuncType type) 
-    : base(origin, parsed, name, new TypeRef(type))
-  {}
+    : this(origin, name, type)
+  {
+    this.parsed = parsed;
+  }
+
+  public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
+
 #endif
 
   public FuncSymbol(IScope origin, string name, FuncType type) 
@@ -806,10 +807,6 @@ public class FuncSymbol : ScopedSymbol
     var farg = members[idx] as FuncArgSymbol;
     return farg != null && farg.is_ref;
   }
-
-#if BHL_FRONT
-  public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
-#endif
 
   public override void Define(Symbol sym)
   {
@@ -934,6 +931,7 @@ public class LambdaSymbol : FuncSymbol
 public class FuncSymbolScript : FuncSymbol
 {
   public AST_FuncDecl decl;
+
 #if BHL_FRONT
   //NOTE: storing fparams so it can be accessed later for misc things, e.g. default args
   public bhlParser.FuncParamsContext fparams;
@@ -945,11 +943,9 @@ public class FuncSymbolScript : FuncSymbol
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
-    : base(origin, parsed, decl.name, new FuncType(ret_type))
+    : this(origin, decl, ret_type)
   {
-    this.decl = decl;
-    this.module_id = decl.module_id;
-
+    this.parsed = parsed;
     this.fparams = fparams;
 
     if(parsed != null)
@@ -968,18 +964,7 @@ public class FuncSymbolScript : FuncSymbol
       ft.Update();
     }
   }
-#endif
 
-  public FuncSymbolScript(IScope origin, AST_FuncDecl decl)
-    : base(origin, decl.name, new FuncType(new TypeRef(decl.type)))
-  {
-    this.decl = decl;
-    this.module_id = decl.module_id;
-  }
-
-  public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }
-  public override int GetDefaultArgsNum() { return decl.GetDefaultArgsNum(); }
-#if BHL_FRONT
   public override IParseTree GetDefaultArgsExprAt(int idx) 
   { 
     if(fparams == null)
@@ -990,6 +975,16 @@ public class FuncSymbolScript : FuncSymbol
     return vinit;
   }
 #endif
+
+  public FuncSymbolScript(IScope origin, AST_FuncDecl decl, TypeRef ret_type = null)
+    : base(origin, decl.name, new FuncType(ret_type == null ? new TypeRef(decl.type) : ret_type))
+  {
+    this.decl = decl;
+    this.module_id = decl.module_id;
+  }
+
+  public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }
+  public override int GetDefaultArgsNum() { return decl.GetDefaultArgsNum(); }
 }
 
 public class FuncSymbolNative : FuncSymbol
@@ -1105,7 +1100,7 @@ public class EnumSymbol : ScopedSymbol, IScope, IType
 
 #if BHL_FRONT
   public EnumSymbol(IScope origin, ParserWrappedNode parsed, string name)
-      : this(origin, name)
+    : this(origin, name)
   {
     this.parsed = parsed;
   }
@@ -1297,7 +1292,7 @@ static public class SymbolTable
     }
 
     //for all generic arrays
-    globals.Define(new GenericArrayTypeSymbol(globals));
+    globals.Define(new GenericArrayTypeSymbol(globals, new TypeRef("")));
 
     {
       var fn = new FuncSymbolNative("suspend", globals.Type("void"), 
