@@ -8,13 +8,13 @@ public interface Scope
   string GetScopeName();
 
   // Scope in which this scope defined. For global scope, it's null
-  Scope GetParentScope();
-  // Where to look next for symbols: superclass or enclosing scope
+  Scope GetOriginScope();
+  // Where to look next for symbols: superclass or origin (parent) scope
   Scope GetFallbackScope();
 
   // Define a symbol in the current scope
   void Define(Symbol sym);
-  // Look up name in this scope or in parent scope if not here
+  // Look up name in this scope or in origin scope if not here
   Symbol Resolve(string name);
 
   // Readonly collection of members
@@ -24,13 +24,13 @@ public interface Scope
 public abstract class BaseScope : Scope 
 {
   // null if global (outermost) scope
-  protected Scope parent;
+  protected Scope origin;
 
   protected SymbolsDictionary members = new SymbolsDictionary();
 
-  public BaseScope(Scope parent) 
+  public BaseScope(Scope origin) 
   { 
-    this.parent = parent;  
+    this.origin = origin;  
   }
 
   public SymbolsDictionary GetMembers() { return members; }
@@ -42,9 +42,9 @@ public abstract class BaseScope : Scope
     if(s != null)
       return s;
 
-    // if not here, check any enclosing scope
-    if(parent != null) 
-      return parent.Resolve(name);
+    // if not here, check any origin scope
+    if(origin != null) 
+      return origin.Resolve(name);
 
     return null;
   }
@@ -69,8 +69,8 @@ public abstract class BaseScope : Scope
     }
   }
 
-  public Scope GetParentScope() { return parent; }
-  public Scope GetFallbackScope() { return parent; }
+  public Scope GetOriginScope() { return origin; }
+  public Scope GetFallbackScope() { return origin; }
 
   public abstract string GetScopeName();
 
@@ -230,15 +230,15 @@ public class GlobalScope : BaseScope
 
 public class LocalScope : BaseScope 
 {
-  public LocalScope(Scope parent) 
-    : base(parent) 
+  public LocalScope(Scope origin) 
+    : base(origin) 
   {}
 
   public override string GetScopeName() { return "local"; }
 
   public override void Define(Symbol sym) 
   {
-    if(parent != null && parent.Resolve(sym.name) != null)
+    if(origin != null && origin.Resolve(sym.name) != null)
       throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
     base.Define(sym);
   }
@@ -248,8 +248,8 @@ public class ModuleScope : BaseScope
 {
   uint module_id;
 
-  public ModuleScope(uint module_id, GlobalScope parent) 
-    : base(parent) 
+  public ModuleScope(uint module_id, GlobalScope origin) 
+    : base(origin) 
   {
     this.module_id = module_id;
   }
@@ -258,7 +258,7 @@ public class ModuleScope : BaseScope
 
   public override void Define(Symbol sym) 
   {
-    if(parent != null && parent.Resolve(sym.name) != null)
+    if(origin != null && origin.Resolve(sym.name) != null)
       throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
 
     if(sym is VariableSymbol vs)

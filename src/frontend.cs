@@ -306,7 +306,7 @@ public class Frontend : bhlBaseVisitor<object>
     //removing quotes
     import = import.Substring(1, import.Length-2);
     
-    var module = mreg.ImportModule(curr_module, (GlobalScope)locals.GetParentScope(), import);
+    var module = mreg.ImportModule(curr_module, (GlobalScope)locals.GetOriginScope(), import);
     //NOTE: null means module is already imported
     if(module != null)
     {
@@ -1797,16 +1797,16 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var class_name = ctx.NAME().GetText();
 
-    ClassSymbol parent = null;
+    ClassSymbol super_class = null;
     if(ctx.classEx() != null)
     {
-      parent = locals.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
-      if(parent == null)
+      super_class = locals.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
+      if(super_class == null)
         FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
     }
 
-    var ast = AST_Util.New_ClassDecl(class_name, parent == null ? "" : parent.name);
-    var class_symb = new ClassSymbolScript(class_name, ast, parent);
+    var ast = AST_Util.New_ClassDecl(class_name, super_class == null ? "" : super_class.name);
+    var class_symb = new ClassSymbolScript(class_name, ast, super_class);
 
     if(decls_only)
       curr_module.symbols.Define(class_symb);
@@ -2721,7 +2721,7 @@ public class Frontend : bhlBaseVisitor<object>
     --scope_level;
 
     if(new_local_scope)
-      curr_scope = curr_scope.GetParentScope();
+      curr_scope = curr_scope.GetOriginScope();
 
     if(is_paral)
       PeekFuncDecl().return_statement_found = false;

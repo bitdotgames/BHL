@@ -172,10 +172,10 @@ public class ClassSymbol : ScopedSymbol, Scope, Type
     ParserWrappedNode n, 
     string name, 
     ClassSymbol super_class, 
-    Scope enclosing_scope, 
+    Scope origin, 
     VM.ClassCreator creator = null
   )
-    : base(n, name, enclosing_scope)
+    : base(n, name, origin)
   {
     this.super_class = super_class;
     this.creator = creator;
@@ -668,8 +668,8 @@ public abstract class ScopedSymbol : Symbol, Scope
     sym.scope = this; // track the scope in each symbol
   }
 
-  public virtual Scope GetFallbackScope() { return GetParentScope(); }
-  public virtual Scope GetParentScope() { return enclosing_scope; }
+  public virtual Scope GetFallbackScope() { return GetOriginScope(); }
+  public virtual Scope GetOriginScope() { return enclosing_scope; }
 
   public string GetScopeName() { return name; }
 }
@@ -1046,8 +1046,8 @@ public class ClassSymbolScript : ClassSymbol
 {
   public AST_ClassDecl decl;
 
-  public ClassSymbolScript(string name, AST_ClassDecl decl, ClassSymbol parent = null)
-    : base(null, name, parent, null)
+  public ClassSymbolScript(string name, AST_ClassDecl decl, ClassSymbol super_class = null)
+    : base(null, name, super_class, origin: null)
   {
     this.decl = decl;
     this.creator = ClassCreator;

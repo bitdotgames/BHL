@@ -884,8 +884,8 @@ public class VM
         case Opcodes.ClassEnd:
         {
           //TODO: add parent support
-          ClassSymbolScript parent = null;
-          var curr_class = new ClassSymbolScript(curr_class_decl.name, curr_class_decl, parent);
+          ClassSymbolScript super_class = null;
+          var curr_class = new ClassSymbolScript(curr_class_decl.name, curr_class_decl, super_class);
           for(int i=0;i<curr_class_decl.children.Count;++i)
           {
             var child = curr_class_decl.children[i];
