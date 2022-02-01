@@ -118,21 +118,34 @@ namespace bhlsp
   public class BHLTextDocument : BHLSPTextDocument
   {
     public List<bhlParser.FuncDeclContext> funcDecls = new List<bhlParser.FuncDeclContext>();
+    public List<string> imports = new List<string>();
     
     public override void Sync(string text)
     {
       base.Sync(text);
       
+      imports.Clear();
       funcDecls.Clear();
       
       foreach(var progblock in ToParser().program().progblock())
       {
-        var decls = progblock.decls().decl();
-        foreach(var decl in decls)
+        foreach(var decl in progblock.decls().decl())
         {
           var fndecl = decl.funcDecl();
           if(fndecl != null)
             funcDecls.Add(fndecl);
+        }
+
+        var imports = progblock.imports();
+        if(imports != null)
+        {
+          foreach(var mimport in imports.mimport())
+          {
+            var import = mimport.NORMALSTRING().GetText();
+            //removing quotes
+            import = import.Substring(1, import.Length-2);
+            this.imports.Add(import);
+          }
         }
       }
     }
@@ -176,7 +189,7 @@ namespace bhlsp
         toVisit.Pop();
       }
     }
-
+    
     public bhlParser ToParser()
     {
       var ais = new AntlrInputStream(text.ToStream());
@@ -205,6 +218,7 @@ namespace bhlsp
       }
     }
     
+    private List<string> root = new List<string>();
     private Dictionary<string, BHLSPTextDocument> documents = new Dictionary<string, BHLSPTextDocument>();
 
     public TextDocumentSyncKind syncKind { get; set; } = TextDocumentSyncKind.Full;
@@ -217,12 +231,16 @@ namespace bhlsp
     public void Shutdown()
     {
       documents.Clear();
+      root.Clear();
     }
     
     public async void TryAddDocuments(string pathFolder)
     {
+      pathFolder = Util.NormalizeFilePath(pathFolder);
       if(Directory.Exists(pathFolder))
       {
+        root.Add(pathFolder);
+        
         string[] files = new string[0];
         
 #if BHLSP_DEBUG
@@ -248,8 +266,7 @@ namespace bhlsp
         for(int i = 0; i < files.Length; i++)
         {
           string path = files[i];
-          if(!documents.ContainsKey(path))
-            tasks.Add(ReadAsyncFile(files[i], map));
+          tasks.Add(ReadAsyncFile(path, map));
         }
         
         await Task.WhenAll(tasks);
@@ -314,7 +331,8 @@ namespace bhlsp
     public void TryAddDocument(Uri uri, string text = null)
     {
       string path = uri.LocalPath;
-
+      path = Util.NormalizeFilePath(path);
+      
       if(!documents.ContainsKey(path))
       {
         BHLSPTextDocument document = CreateDocument(path);
@@ -334,12 +352,15 @@ namespace bhlsp
     
     BHLSPTextDocument CreateDocument(string path)
     {
-      string ext = Path.GetExtension(path);
-      switch(ext)
+      if(File.Exists(path))
       {
-        case ".bhl": return new BHLTextDocument();
+        string ext = Path.GetExtension(path);
+        switch(ext)
+        {
+          case ".bhl": return new BHLTextDocument();
+        }
       }
-
+      
       return null;
     }
     
@@ -350,6 +371,8 @@ namespace bhlsp
     
     public BHLSPTextDocument FindDocument(string path)
     {
+      path = Util.NormalizeFilePath(path);
+      
       if(documents.ContainsKey(path))
         return documents[path];
 
@@ -365,6 +388,61 @@ namespace bhlsp
           yield return document;
         }
       }
+    }
+    
+    public IEnumerable<BHLTextDocument> forEachImports(BHLTextDocument root)
+    {
+      Queue<BHLTextDocument> toVisit = new Queue<BHLTextDocument>();
+      
+      toVisit.Enqueue(root);
+      while(toVisit.Count > 0)
+      {
+        BHLTextDocument document = toVisit.Dequeue();
+        
+        string ext = Path.GetExtension(document.uri.AbsolutePath);
+        foreach(var import in document.imports)
+        {
+          string path = ResolveImportPath(import, ext);
+          if(!string.IsNullOrEmpty(path))
+          {
+            TryAddDocument(path, null);
+            if(FindDocument(path) is BHLTextDocument doc)
+              toVisit.Enqueue(doc);
+          }
+        }
+        
+        yield return document;
+      }
+    }
+
+    string ResolveImportPath(string import, string ext)
+    {
+      var filePath = string.Empty;
+      foreach(var root in this.root)
+      {
+        string path = string.Empty;
+        if(!Path.IsPathRooted(import))
+        {
+          var dir = Path.GetDirectoryName(root);
+          path = Path.GetFullPath(Path.Combine(dir, import) + ext);
+          if(File.Exists(path))
+          {
+            filePath = path;
+            break;
+          }
+        }
+        else
+        {
+          path = Path.GetFullPath(root + "/" + import.Substring(import.LastIndexOf("/") + 1) + ext);
+          if(File.Exists(path))
+          {
+            filePath = path;
+            break;
+          }
+        }
+      }
+      
+      return filePath;
     }
   }
 }

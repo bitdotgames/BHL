@@ -295,15 +295,21 @@ namespace bhlsp
         bhlParser.FuncDeclContext funcDecl = null;
         if(!string.IsNullOrEmpty(funcName))
         {
-          foreach(var fd in document.funcDecls)
+          foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(document))
           {
-            if(funcName == fd.NAME().GetText())
+            foreach(var fd in doc.funcDecls)
             {
-              funcDecl = fd;
-              break;
+              if(funcName == fd.NAME().GetText())
+              {
+                funcDecl = fd;
+                break;
+              }
             }
+              
+            if(funcDecl != null)
+              break;
           }
-
+          
           if(funcDecl == null)
           {
             foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
@@ -325,17 +331,12 @@ namespace bhlsp
             }
           }
         }
-
-        SignatureInformation signInfo = null;
         
         if(funcDecl != null)
         {
-          signInfo = GetFuncSignInfo(funcDecl);
+          SignatureInformation signInfo = GetFuncSignInfo(funcDecl);
           signInfo.activeParameter = activeParameter;
-        }
-        
-        if(signInfo != null)
-        {
+          
           var result = new SignatureHelp();
           result.activeSignature = 0;
           result.signatures = new[] { signInfo };
@@ -501,16 +502,22 @@ namespace bhlsp
           bhlParser.FuncDeclContext funcDecl = null;
           BHLTextDocument funcDeclBhlDocument = null;
           
-          foreach(var fd in document.funcDecls)
+          foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(document))
           {
-            if(fd.NAME() != null && callExp.NAME().GetText() == fd.NAME().GetText())
+            foreach(var fd in doc.funcDecls)
             {
-              funcDecl = fd;
-              funcDeclBhlDocument = document;
-              break;
+              if(fd.NAME() != null && callExp.NAME().GetText() == fd.NAME().GetText())
+              {
+                funcDecl = fd;
+                funcDeclBhlDocument = doc;
+                break;
+              }
             }
+              
+            if(funcDecl != null)
+              break;
           }
-
+          
           if(funcDecl == null)
           {
             foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
@@ -532,7 +539,7 @@ namespace bhlsp
                 break;
             }
           }
-
+          
           if(funcDecl != null)
           {
             var start = funcDeclBhlDocument.GetLineColumn(funcDecl.Start.StartIndex);
