@@ -12,7 +12,7 @@ public class BHLC
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--module_fmt=<1,2>] [--compile_fmt=<1,2>]");
+    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--module_fmt=<1,2>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -25,7 +25,6 @@ public class BHLC
     string res_file = "";
     string cache_dir = "";
     bool use_cache = true;
-    CompileFormat compile_fmt = CompileFormat.AST;
     string err_file = "";
     string postproc_dll_path = "";
     string userbindings_dll_path = "";
@@ -61,9 +60,7 @@ public class BHLC
       { "d", "debug version",
         v => debug = v != null },
       { "module_fmt=", "binary module format",
-        v => module_fmt = (ModuleBinaryFormat)int.Parse(v) },
-      { "compile_fmt=", "compile format",
-        v => compile_fmt = (CompileFormat)int.Parse(v) }
+        v => module_fmt = (ModuleBinaryFormat)int.Parse(v) }
      };
 
     var extra = new List<string>();
@@ -127,7 +124,6 @@ public class BHLC
     Console.WriteLine("Total files {0}(debug: {1})", files.Count, debug);
     var conf = new BuildConf();
     conf.args = string.Join(";", args);
-    conf.compile_fmt = compile_fmt;
     conf.module_fmt = module_fmt;
     conf.use_cache = use_cache;
     conf.self_file = GetSelfFile();

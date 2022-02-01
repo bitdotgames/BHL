@@ -124,10 +124,8 @@ public class Symbol
 #if BHL_FRONT
     if(parsed != null)
       return parsed.Location();
-    return name + "(?)";
-#else
-    return "";
 #endif
+    return name + "(?)";
   }
 }
 

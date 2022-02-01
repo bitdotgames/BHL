@@ -19435,7 +19435,6 @@ public class BHL_TestVM : BHL_TestBase
     var globs_copy = globs.Clone();
 
     var conf = new BuildConf();
-    conf.compile_fmt = CompileFormat.VM;
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.globs = globs_copy;
     conf.files = files;

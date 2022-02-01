@@ -12,7 +12,6 @@ public class BuildConf
   public string args = ""; 
   public List<string> files = new List<string>();
   public GlobalScope globs;
-  public CompileFormat compile_fmt = CompileFormat.AST;
   public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
@@ -29,6 +28,7 @@ public class BuildConf
  
 public class Build
 {
+  const byte COMPILE_FMT = 2;
   const uint FILE_VERSION = 1;
   const int ERROR_EXIT_CODE = 2;
 
@@ -141,7 +141,6 @@ public class Build
       var cw = new CompilerWorker();
       cw.id = pw.id;
       cw.parsed_cache = parsed_cache;
-      cw.compile_fmt = conf.compile_fmt;
       cw.inc_dir = conf.inc_dir;
       cw.cache_dir = pw.cache_dir;
       cw.use_cache = pw.use_cache;
@@ -180,7 +179,7 @@ public class Build
     {
       var mwriter = new MsgPack.MsgPackWriter(dfs);
 
-      mwriter.Write((byte)conf.compile_fmt);
+      mwriter.Write(ModuleImporter.COMPILE_FMT);
       mwriter.Write(FILE_VERSION);
 
       int total_modules = 0;
@@ -216,10 +215,7 @@ public class Build
             var compiled_file = w.file2compiled[file];
 
             mwriter.Write((byte)conf.module_fmt);
-            if(conf.compile_fmt == CompileFormat.VM)
-              mwriter.Write(module.name);
-            else
-              mwriter.Write(module.id);
+            mwriter.Write(module.name);
 
             if(conf.module_fmt == ModuleBinaryFormat.FMT_BIN)
               mwriter.Write(File.ReadAllBytes(compiled_file));
@@ -519,7 +515,6 @@ public class Build
     public int id;
     public Dictionary<string, Parsed> parsed_cache;
     public Thread th;
-    public CompileFormat compile_fmt;
     public string inc_dir;
     public bool use_cache;
     public string cache_dir;
@@ -689,13 +684,10 @@ public class Build
 
           string compiled_file = w.postproc.Patch(lazy_ast, file, cache_file);
 
-          if(w.compile_fmt == CompileFormat.VM)
-          {
-            var ast = lazy_ast.Get();
-            var c  = new ModuleCompiler(w.globs, ast, file_module.path);
-            var cm = c.Compile();
-            Util.Compiled2File(cm, compiled_file);
-          }
+          var ast = lazy_ast.Get();
+          var c  = new ModuleCompiler(w.globs, ast, file_module.path);
+          var cm = c.Compile();
+          Util.Compiled2File(cm, compiled_file);
 
           w.file2compiled.Add(file, compiled_file);
         }

@@ -18,12 +18,6 @@ public interface IModuleLoader
   AST_Module LoadModule(uint id);
 }
 
-public enum CompileFormat
-{
-  AST = 1,
-  VM  = 2
-}
-
 public enum ModuleBinaryFormat
 {
   FMT_BIN      = 0,
@@ -38,6 +32,8 @@ public interface IModuleImporter
 
 public class ModuleImporter : IModuleImporter
 {
+  public const byte COMPILE_FMT = 2;
+
   Stream source;
   MsgPackDataReader reader;
   Lz4DecoderStream decoder = new Lz4DecoderStream();
@@ -69,7 +65,7 @@ public class ModuleImporter : IModuleImporter
 
     byte file_format = 0;
     Util.Verify(reader.ReadU8(ref file_format) == MetaIoError.SUCCESS);
-    Util.Verify((CompileFormat)file_format == CompileFormat.VM);
+    Util.Verify(file_format == COMPILE_FMT);
 
     uint file_version = 0;
     Util.Verify(reader.ReadU32(ref file_version) == MetaIoError.SUCCESS);
