@@ -50,7 +50,7 @@ public class ModuleCompiler : AST_Visitor
   List<BlockJump> non_patched_continues = new List<BlockJump>();
   Dictionary<AST_Block, Instruction> continue_jump_markers = new Dictionary<AST_Block, Instruction>();
 
-  List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
+  Stack<FuncSymbol> func_decls = new Stack<FuncSymbol>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
 
   internal struct Jump
@@ -814,7 +814,7 @@ public class ModuleCompiler : AST_Visitor
 
     UseCode();
 
-    func_decls.Add(ast);
+    func_decls.Push(fsymb);
 
     int ip = GetCodeSize();
     //let's patch the func address
@@ -826,7 +826,7 @@ public class ModuleCompiler : AST_Visitor
     VisitChildren(ast);
     Emit(Opcodes.Return);
 
-    func_decls.RemoveAt(func_decls.Count-1);
+    func_decls.Pop();
 
     UseInit();
   }
@@ -1405,8 +1405,8 @@ public class ModuleCompiler : AST_Visitor
     //checking of there are default args
     if(ast.is_func_arg && ast.children.Count > 0)
     {                  
-      var func_decl = func_decls[func_decls.Count-1];
-      var arg_op = Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - func_decl.required_args_num, 0 /*patched later*/ });
+      var fsymb = func_decls.Peek();
+      var arg_op = Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - fsymb.GetRequiredArgsNum(), 0 /*patched later*/ });
       VisitChildren(ast);
       AddJumpFromTo(arg_op, Peek(), operand_idx: 1);
     }
