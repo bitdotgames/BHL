@@ -118,6 +118,7 @@ namespace bhlsp
   public class BHLTextDocument : BHLSPTextDocument
   {
     public Dictionary<string, bhlParser.FuncDeclContext> funcDecls = new Dictionary<string, bhlParser.FuncDeclContext>();
+    public Dictionary<string, bhlParser.ClassDeclContext> classDecls = new Dictionary<string, bhlParser.ClassDeclContext>();
     public List<string> imports = new List<string>();
     
     public override void Sync(string text)
@@ -126,6 +127,7 @@ namespace bhlsp
       
       imports.Clear();
       funcDecls.Clear();
+      classDecls.Clear();
       
       foreach(var progblock in ToParser().program().progblock())
       {
@@ -149,47 +151,12 @@ namespace bhlsp
             var fndecl = decl.funcDecl();
             if(fndecl?.NAME() != null)
               funcDecls.Add(fndecl.NAME().GetText(), fndecl);
+            
+            var classDecl = decl.classDecl();
+            if(classDecl?.NAME() != null)
+              classDecls.Add(classDecl.NAME().GetText(), classDecl);
           }
         }
-      }
-    }
-    
-    public IEnumerable<IParseTree> DFS()
-    {
-      IParseTree root = ToParser().program();
-      
-      Stack<IParseTree> toVisit = new Stack<IParseTree>();
-      Stack<IParseTree> visitedAncestors = new Stack<IParseTree>();
-      toVisit.Push(root);
-      while(toVisit.Count > 0)
-      {
-        IParseTree node = toVisit.Peek();
-        if(node.ChildCount > 0)
-        {
-          if(visitedAncestors.Count == 0 || visitedAncestors.Peek() != node)
-          {
-            visitedAncestors.Push(node);
-
-            if(node as TerminalNodeImpl == null)
-            {
-              ParserRuleContext internal_node = node as ParserRuleContext;
-              int child_count = internal_node.children.Count;
-              for(int i = child_count - 1; i >= 0; --i)
-              {
-                IParseTree o = internal_node.children[i];
-                toVisit.Push(o);
-              }
-              
-              continue;
-            }
-          }
-          
-          visitedAncestors.Pop();
-        }
-        
-        yield return node;
-        
-        toVisit.Pop();
       }
     }
     

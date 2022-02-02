@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.IO;
+using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 
 namespace bhl {
 
@@ -344,6 +346,44 @@ static public class Util
   {
     new AST_Dumper().Visit(ast);
     Console.WriteLine("\n=============");
+  }
+  
+  ////////////////////////////////////////////////////////
+  public static IEnumerable<IParseTree> DFS(IParseTree root)
+  {
+    Stack<IParseTree> toVisit = new Stack<IParseTree>();
+    Stack<IParseTree> visitedAncestors = new Stack<IParseTree>();
+    toVisit.Push(root);
+    while(toVisit.Count > 0)
+    {
+      IParseTree node = toVisit.Peek();
+      if(node.ChildCount > 0)
+      {
+        if(visitedAncestors.Count == 0 || visitedAncestors.Peek() != node)
+        {
+          visitedAncestors.Push(node);
+
+          if(node as TerminalNodeImpl == null)
+          {
+            ParserRuleContext internal_node = node as ParserRuleContext;
+            int child_count = internal_node.children.Count;
+            for(int i = child_count - 1; i >= 0; --i)
+            {
+              IParseTree o = internal_node.children[i];
+              toVisit.Push(o);
+            }
+              
+            continue;
+          }
+        }
+          
+        visitedAncestors.Pop();
+      }
+        
+      yield return node;
+        
+      toVisit.Pop();
+    }
   }
 }
 

@@ -478,9 +478,8 @@ namespace bhlsp
         bhlParser.CallExpContext callExp = null;
         bhlParser.MemberAccessContext memberAccess = null;
         bhlParser.TypeContext t = null;
-        bhlParser.VarDeclareContext varDeclare = null;
-        
-        foreach(IParseTree node in document.DFS())
+
+        foreach(IParseTree node in Util.DFS(document.ToParser().program()))
         {
           if(node is ParserRuleContext prc)
           {
@@ -489,8 +488,132 @@ namespace bhlsp
               callExp      = prc as bhlParser.CallExpContext;
               memberAccess = prc as bhlParser.MemberAccessContext;
               t            = prc as bhlParser.TypeContext;
-              varDeclare   = prc as bhlParser.VarDeclareContext;
               break;
+            }
+          }
+        }
+
+        if(memberAccess != null)
+        {
+          bhlParser.CallExpContext callExpMemberAccess = null;
+          bhlParser.FuncDeclContext memberAccessParentFuncDecl = null;
+
+          string memberAccessName = memberAccess.NAME().GetText();
+          
+          for(RuleContext parent = memberAccess.Parent; parent != null; parent = parent.Parent)
+          {
+            if(callExpMemberAccess == null && parent is bhlParser.CallExpContext)
+              callExpMemberAccess = parent as bhlParser.CallExpContext;
+
+            if(parent is bhlParser.FuncDeclContext)
+            {
+              memberAccessParentFuncDecl = parent as bhlParser.FuncDeclContext;
+              break;
+            }
+          }
+
+          if(callExpMemberAccess != null)
+          {
+            string callExpMemberAccessName = callExpMemberAccess.NAME().GetText();
+            string classTypeName = string.Empty;
+            
+            if(memberAccessParentFuncDecl?.NAME() != null)
+            {
+              foreach(IParseTree node in Util.DFS(memberAccessParentFuncDecl))
+              {
+                if(node is bhlParser.FuncParamDeclareContext funcParamDeclare)
+                {
+                  bhlParser.TypeContext funcParamDeclareType = funcParamDeclare.type();
+                  if(funcParamDeclareType.fnargs() != null || funcParamDeclareType.ARR() != null)
+                    continue;
+                  
+                  if(funcParamDeclare.NAME()?.GetText() == callExpMemberAccessName)
+                  {
+                    classTypeName = funcParamDeclareType.GetText();
+                    break;
+                  }
+                }
+
+                if(node is bhlParser.VarDeclareContext varDeclare && varDeclare?.NAME().GetText() == callExpMemberAccessName)
+                {
+                  classTypeName = varDeclare.type().NAME().GetText();
+                  break;
+                }
+              }
+            }
+
+            if(!string.IsNullOrEmpty(classTypeName))
+            {
+              bhlParser.ClassDeclContext classDecl = null;
+              BHLTextDocument classDeclBhlDocument = null;
+              
+              foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(document))
+              {
+                if(doc.classDecls.ContainsKey(classTypeName))
+                {
+                  classDecl = doc.classDecls[classTypeName];
+                  classDeclBhlDocument = doc;
+                  break;
+                }
+              }
+              
+              if(classDecl == null)
+              {
+                foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
+                {
+                  if(doc is BHLTextDocument bhlDocument)
+                  {
+                    if(bhlDocument.classDecls.ContainsKey(classTypeName))
+                    {
+                      classDecl = bhlDocument.classDecls[classTypeName];
+                      classDeclBhlDocument = bhlDocument;
+                      break;
+                    }
+                  }
+                }
+              }
+              
+              if(classDecl != null && classDeclBhlDocument != null)
+              {
+                bhlParser.ClassMemberContext classMember = null;
+                
+                foreach(var classMemberContext in classDecl.classBlock().classMembers().classMember())
+                {
+                  if(classMemberContext.funcDecl()?.NAME()?.GetText() != null)
+                  {
+                    if(classMemberContext.funcDecl().NAME().GetText() == memberAccessName)
+                    {
+                      classMember = classMemberContext;
+                      break;
+                    }
+                  }
+                  
+                  if(classMemberContext.varDeclare()?.NAME()?.GetText() != null)
+                  {
+                    if(classMemberContext.varDeclare().NAME().GetText() == memberAccessName)
+                    {
+                      classMember = classMemberContext;
+                      break;
+                    }
+                  }
+                }
+
+                if(classMember != null)
+                {
+                  var start = classDeclBhlDocument.GetLineColumn(classMember.Start.StartIndex);
+                  var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
+            
+                  return RpcResult.Success(new Location
+                  {
+                    uri = classDeclBhlDocument.uri,
+                    range = new Range
+                    {
+                      start = startPos,
+                      end = startPos
+                    }
+                  });
+                }
+              }
             }
           }
         }
