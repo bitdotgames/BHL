@@ -5,8 +5,6 @@ namespace bhl {
 
 public interface IScope
 {
-  // Scope in which this scope defined. For global scope, it's null
-  IScope GetOriginScope();
   // Where to look next for symbols in case if not found (e.g super class) 
   IScope GetFallbackScope();
 
@@ -71,7 +69,6 @@ public class Scope : IScope
     }
   }
 
-  public IScope GetOriginScope() { return null; }
   public IScope GetFallbackScope() { return fallback; }
 
   public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }

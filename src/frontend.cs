@@ -2720,7 +2720,7 @@ public class Frontend : bhlBaseVisitor<object>
     --scope_level;
 
     if(new_local_scope)
-      curr_scope = curr_scope.GetOriginScope();
+      curr_scope = curr_scope.GetFallbackScope();
 
     if(is_paral)
       PeekFuncDecl().return_statement_found = false;

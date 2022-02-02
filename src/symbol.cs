@@ -643,7 +643,6 @@ public abstract class EnclosingSymbol : Symbol, IScope
   }
 
   public virtual IScope GetFallbackScope() { return origin; }
-  public virtual IScope GetOriginScope() { return origin; }
 
   public virtual Symbol Resolve(string name) 
   {
