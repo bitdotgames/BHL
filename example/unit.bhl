@@ -1,5 +1,5 @@
 
-func Idle()
+func bool Idle()
 {
   bool done = false
   defer {
@@ -15,18 +15,17 @@ func Idle()
 
   Wait(sec)
 
-  defer {
-    done = true
-  }
+  done = true
+  return true
 }
 
-func FindTarget(ref int target_id)
+func bool FindTarget(ref int target_id)
 {
   target_id = 0
 
   if(Rand() < 0.6) {
     Trace("No target in range")
-    fail()
+    return false
   }
 
   int tmp_target_id = (int)(Rand() * 1000)
@@ -35,26 +34,26 @@ func FindTarget(ref int target_id)
   int sec = (int)(1 + Rand() * 3)
   Wait(sec)
   target_id = tmp_target_id
+  return true
 }
 
-func AttackTarget(ref int target_id)
+func bool AttackTarget(ref int target_id)
 {
   if(target_id == 0) {
-    fail()
+    return false
   }
 
   Trace("Attacking target " + (string)target_id + "")
   Wait(0.2)
   Trace("Target " + (string)target_id + " is dead!")
   target_id = 0
+  return true
 }
 
 func StateChanged(ref int state)
 {
   int last_state = state
-  while(last_state == state) {
-    yield()
-  }
+  yield while(last_state == state)
   Trace("State changed!")
 }
 
@@ -66,6 +65,16 @@ func RandomStateChanger(ref int state)
   }
 }
 
+func Selector(bool^()[] fns) {
+  foreach(fns as bool^() fn) {
+    if(!fn()) {
+      continue
+    } else {
+      break
+    }
+  }
+}
+
 func Unit() {
   Trace("Unit starts...")
 
@@ -73,18 +82,17 @@ func Unit() {
   int target_id = 0
 
   paral {
-
     RandomStateChanger(ref state)
-
     while(true) {
       paral {
         StateChanged(ref state)
-        //TODO: prio selection
-        //prio {
-          AttackTarget(ref target_id)
-          FindTarget(ref target_id)
-          Idle()
-        //}
+        Selector(
+            [
+              func bool() { return AttackTarget(ref target_id) }, 
+              func bool() { return FindTarget(ref target_id) }, 
+              func bool() { return Idle() }
+            ]
+          )
       }
       yield()
     }

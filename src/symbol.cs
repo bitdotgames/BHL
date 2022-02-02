@@ -1002,7 +1002,7 @@ public class FuncSymbolNative : FuncSymbol
     int def_args_num,
     Cb cb
   ) 
-    : base(null, name, new FuncType(ret_type))
+    : base(name, new FuncType(ret_type))
   {
     this.cb = cb;
     this.def_args_num = def_args_num;
@@ -1029,7 +1029,7 @@ public class FuncSymbolNative : FuncSymbol
 public class ClassSymbolNative : ClassSymbol
 {
   public ClassSymbolNative(string name, ClassSymbol super_class, VM.ClassCreator creator = null)
-    : base(null, name, super_class, creator)
+    : base(name, super_class, creator)
   {}
 
   public void OverloadBinaryOperator(FuncSymbol s)
@@ -1049,7 +1049,7 @@ public class ClassSymbolScript : ClassSymbol
   public AST_ClassDecl decl;
 
   public ClassSymbolScript(string name, AST_ClassDecl decl, ClassSymbol super_class = null)
-    : base(null, name, super_class)
+    : base(name, super_class)
   {
     this.decl = decl;
     this.creator = ClassCreator;
