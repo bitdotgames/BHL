@@ -1918,7 +1918,7 @@ public class Frontend : bhlBaseVisitor<object>
     //      type info this will be justified.
     var ast = AST_Util.New_EnumDecl(enum_name);
 
-    var symb = new EnumSymbolScript(enum_name);
+    var symb = new EnumSymbolScript(mscope, enum_name);
     if(decls_only)
       curr_module.symbols.Define(symb);
     mscope.Define(symb);

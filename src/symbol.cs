@@ -162,6 +162,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   )
     : base(origin, name)
   {
+    this.type = new TypeRef(this);
     this.super_class = super_class;
     this.creator = creator;
 
@@ -623,18 +624,20 @@ public abstract class EnclosingSymbol : Symbol, IScope
 {
   protected IScope origin;
 
-  public abstract SymbolsDictionary GetMembers();
+  abstract public SymbolsDictionary GetMembers();
 
 #if BHL_FRONT
-  public EnclosingSymbol(IScope origin, WrappedParseTree parsed, string name, TypeRef type = null) 
-    : this(origin, name, type)
+  public EnclosingSymbol(IScope origin, WrappedParseTree parsed, string name) 
+    : this(origin, name)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public EnclosingSymbol(IScope origin, string name, TypeRef type = null) 
-    : base(name, type)
+  //TODO: why passing origin if it can be set once 
+  //      the symbol is actually defined in a scope?
+  public EnclosingSymbol(IScope origin, string name) 
+    : base(name, type: null)
   {
     this.origin = origin;
   }
@@ -757,8 +760,10 @@ public class FuncSymbol : EnclosingSymbol
 #endif
 
   public FuncSymbol(IScope origin, string name, FuncType type) 
-    : base(origin, name, new TypeRef(type))
-  {}
+    : base(origin, name)
+  {
+    this.type = new TypeRef(type);
+  }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
@@ -1092,7 +1097,7 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public class EnumSymbol : EnclosingSymbol, IScope, IType 
+public class EnumSymbol : EnclosingSymbol, IType
 {
   public SymbolsDictionary members = new SymbolsDictionary();
 
@@ -1106,7 +1111,9 @@ public class EnumSymbol : EnclosingSymbol, IScope, IType
 
   public EnumSymbol(IScope origin, string name)
       : base(origin, name)
-  {}
+  {
+    this.type = new TypeRef(this);
+  }
 
   public string GetName() { return name; }
   public int GetTypeIndex() { return TypeSystem.TIDX_ENUM; }
@@ -1127,8 +1134,8 @@ public class EnumSymbol : EnclosingSymbol, IScope, IType
 
 public class EnumSymbolScript : EnumSymbol
 {
-  public EnumSymbolScript(string name)
-    : base(null, name)
+  public EnumSymbolScript(IScope origin, string name)
+    : base(origin, name)
   {}
 
   //0 - OK, 1 - duplicate key, 2 - duplicate value
@@ -1151,26 +1158,26 @@ public class EnumSymbolScript : EnumSymbol
 
 public class EnumItemSymbol : Symbol, IType 
 {
-  public EnumSymbol en;
+  public EnumSymbol owner;
   public int val;
 
 #if BHL_FRONT
-  public EnumItemSymbol(WrappedParseTree parsed, EnumSymbol en, string name, int val = 0) 
-    : this(en, name, val) 
+  public EnumItemSymbol(WrappedParseTree parsed, EnumSymbol owner, string name, int val = 0) 
+    : this(owner, name, val) 
   {
     this.parsed = parsed;
   }
 #endif
 
-  public EnumItemSymbol(EnumSymbol en, string name, int val = 0) 
-    : base(name, null/*should it be int?*/) 
+  public EnumItemSymbol(EnumSymbol owner, string name, int val = 0) 
+    : base(name, new TypeRef(owner)) 
   {
-    this.en = en;
+    this.owner = owner;
     this.val = val;
   }
 
-  public string GetName() { return en.name; }
-  public int GetTypeIndex() { return en.GetTypeIndex(); }
+  public string GetName() { return owner.name; }
+  public int GetTypeIndex() { return owner.GetTypeIndex(); }
 }
 
 static public class TypeSystem

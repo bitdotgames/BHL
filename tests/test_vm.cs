@@ -16663,7 +16663,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"bad chain call"
+      @"symbol usage is not valid"
     );
   }
 

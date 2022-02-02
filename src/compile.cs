@@ -884,7 +884,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_EnumDecl ast)
   {
-    var es = new EnumSymbolScript(ast.name);
+    var es = new EnumSymbolScript(symbols, ast.name);
     symbols.Define(es);
   }
 
