@@ -1202,11 +1202,6 @@ static public class SymbolTable
       null, symb_bool, symb_string, symb_int, symb_float, symb_void,  symb_enum, symb_any
   };
 
-  public static uint[] hash2type = new uint[] {
-      // 0_null  1_bool   2_string   3_int     4_float    5_void    6_enum     7_any
-      97254479, 92354194, 247378601, 72473265, 161832597, 41671150, 247377489, 83097524 
-  };
-
   // Map t1 op t2 to result type (_void implies illegal)
   public static IType[,] arithmetic_res_type = new IType[,] {
       /*          struct  boolean  string   int     float    void    enum    any */
