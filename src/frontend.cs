@@ -2714,9 +2714,8 @@ public class Frontend : bhlBaseVisitor<object>
     var scope_members = curr_scope.GetMembers();
     for(int m=scope_members.Count;m-- > 0;)
     {
-      var sym = scope_members[m];
-      if(sym.scope_level == scope_level)
-        sym.is_out_of_scope = true;
+      if(scope_members[m] is VariableSymbol vs && vs.scope_level == scope_level)
+        vs.is_out_of_scope = true;
     }
     --scope_level;
 

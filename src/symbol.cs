@@ -99,10 +99,6 @@ public class Symbol
 #if BHL_FRONT
   // Location in parse tree, can be null if it's a native symbol
   public ParserWrappedNode parsed;
-  // Symbols also know their 'scope level', 
-  // e.g. for  { { int a = 1 } } scope level will be 2
-  public int scope_level;
-  public bool is_out_of_scope;
 #endif
 
   public Symbol(string name, TypeRef type) 
@@ -529,6 +525,12 @@ public class VariableSymbol : Symbol
   public int scope_idx = -1;
 
 #if BHL_FRONT
+  //e.g. for  { { int a = 1 } } scope level will be 2
+  public int scope_level;
+  //once we leave the scope level the variable was defined at   
+  //we mark this symbol as 'out of scope'
+  public bool is_out_of_scope;
+
   public VariableSymbol(ParserWrappedNode parsed, string name, TypeRef type) 
     : this(name, type) 
   {
@@ -652,7 +654,7 @@ public abstract class ScopedSymbol : Symbol, IScope
     if(s != null)
     {
 #if BHL_FRONT
-      if(s.is_out_of_scope)
+      if(s is VariableSymbol vs && vs.is_out_of_scope)
         return null;
       else
 #endif
@@ -893,7 +895,7 @@ public class LambdaSymbol : FuncSymbol
       //NOTE: only variable symbols are considered
       Symbol res = null;
       decl.GetMembers().TryGetValue(name, out res);
-      if(res is VariableSymbol vs && !res.is_out_of_scope)
+      if(res is VariableSymbol vs && !vs.is_out_of_scope)
         return AssignUpValues(vs, i+1, my_idx);
     }
 
@@ -1219,24 +1221,24 @@ static public class SymbolTable
       /*          struct  boolean string    int       float     void    enum    any */
       /*struct*/  {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
       /*boolean*/ {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*string*/  {symb_void, symb_void,  symb_bool, symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*int*/     {symb_void, symb_void,  symb_void,    symb_bool, symb_bool, symb_void,  symb_void,  symb_void},
-      /*float*/   {symb_void, symb_void,  symb_void,    symb_bool, symb_bool, symb_void,  symb_void,  symb_void},
+      /*string*/  {symb_void, symb_void,  symb_bool,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*int*/     {symb_void, symb_void,  symb_void,    symb_bool,    symb_bool,    symb_void,  symb_void,  symb_void},
+      /*float*/   {symb_void, symb_void,  symb_void,    symb_bool,    symb_bool,    symb_void,  symb_void,  symb_void},
       /*void*/    {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
       /*enum*/    {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*any*/     {symb_void, symb_void,   symb_void,   symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
+      /*any*/     {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
   };
 
   public static IType[,] equality_res_type = new IType[,] {
       /*           struct boolean   string    int       float     void    enum     any */
-      /*struct*/  {symb_bool,symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*boolean*/ {symb_void,   symb_bool, symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*string*/  {symb_void,   symb_void,    symb_bool, symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*int*/     {symb_void,   symb_void,    symb_void,    symb_bool, symb_bool, symb_void,  symb_void,  symb_void},
-      /*float*/   {symb_void,   symb_void,    symb_void,    symb_bool, symb_bool, symb_void,  symb_void,  symb_void},
+      /*struct*/  {symb_bool,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*boolean*/ {symb_void,   symb_bool,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*string*/  {symb_void,   symb_void,    symb_bool,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
+      /*int*/     {symb_void,   symb_void,    symb_void,    symb_bool,    symb_bool,    symb_void,  symb_void,  symb_void},
+      /*float*/   {symb_void,   symb_void,    symb_void,    symb_bool,    symb_bool,    symb_void,  symb_void,  symb_void},
       /*void*/    {symb_void,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
       /*enum*/    {symb_void,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*any*/     {symb_bool,symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
+      /*any*/     {symb_bool,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
   };
 
   // Indicate whether a type needs a promotion to a wider type.
