@@ -5,8 +5,6 @@ namespace bhl {
 
 public interface IScope
 {
-  string GetScopeName();
-
   // Scope in which this scope defined. For global scope, it's null
   IScope GetOriginScope();
   // Where to look next for symbols: superclass or origin (parent) scope
@@ -73,8 +71,6 @@ public abstract class Scope : IScope
 
   public IScope GetOriginScope() { return origin; }
   public IScope GetFallbackScope() { return origin; }
-
-  public abstract string GetScopeName();
 
   public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }
 
@@ -224,8 +220,6 @@ public class GlobalScope : Scope
   public GlobalScope() 
     : base(null) 
   {}
-
-  public override string GetScopeName() { return "global"; }
 }
 
 public class LocalScope : Scope 
@@ -233,8 +227,6 @@ public class LocalScope : Scope
   public LocalScope(IScope origin) 
     : base(origin) 
   {}
-
-  public override string GetScopeName() { return "local"; }
 
   public override void Define(Symbol sym) 
   {
@@ -254,8 +246,6 @@ public class ModuleScope : Scope
     this.module_id = module_id;
   }
 
-  public override string GetScopeName() { return "module"; }
-
   public override void Define(Symbol sym) 
   {
     if(origin != null && origin.Resolve(sym.name) != null)
@@ -268,7 +258,7 @@ public class ModuleScope : Scope
         vs.module_id = module_id;
       vs.CalcVariableScopeIdx(this);
     } 
-    else if(sym is FuncSymbol fs)
+    else if(sym is FuncSymbolScript fs)
     {
       //NOTE: adding module id if it's not added already
       if(fs.module_id == 0)

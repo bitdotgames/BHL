@@ -109,10 +109,7 @@ public class Symbol
 
   public override string ToString() 
   {
-    string s = "";
-    if(scope != null) 
-      s = scope.GetScopeName() + ".";
-    return '<' + s + name + ':' + type + '>';
+    return '<' + name + ':' + type + '>';
   }
 
   public string Location()
@@ -648,6 +645,9 @@ public abstract class EnclosingSymbol : Symbol, IScope
     this.origin = origin;
   }
 
+  public virtual IScope GetFallbackScope() { return GetOriginScope(); }
+  public virtual IScope GetOriginScope() { return origin; }
+
   public virtual Symbol Resolve(string name) 
   {
     Symbol s = null;
@@ -678,11 +678,6 @@ public abstract class EnclosingSymbol : Symbol, IScope
     members.Add(sym);
     sym.scope = this; // track the scope in each symbol
   }
-
-  public virtual IScope GetFallbackScope() { return GetOriginScope(); }
-  public virtual IScope GetOriginScope() { return origin; }
-
-  public string GetScopeName() { return name; }
 }
 
 public class MultiType : IType
@@ -754,7 +749,7 @@ public class FuncSymbol : EnclosingSymbol
   SymbolsDictionary members = new SymbolsDictionary();
   SymbolsDictionary args = new SymbolsDictionary();
 
-  public uint module_id;
+  //public uint module_id;
 
 #if BHL_FRONT
   public bool return_statement_found = false;
@@ -935,8 +930,11 @@ public class FuncSymbolScript : FuncSymbol
 {
   public AST_FuncDecl decl;
 
+  //module id this function is defined in
+  public uint module_id;
+
 #if BHL_FRONT
-  //NOTE: storing fparams so it can be accessed later for misc things, e.g. default args
+  //storing fparams so it can be accessed later for misc things, e.g. default args
   public bhlParser.FuncParamsContext fparams;
 
   public FuncSymbolScript(
