@@ -19,7 +19,7 @@ public interface IScope
   SymbolsDictionary GetMembers();
 }
 
-public abstract class BaseScope : IScope 
+public class Scope : IScope 
 {
   protected IScope fallback;
 
@@ -27,7 +27,7 @@ public abstract class BaseScope : IScope
 
   Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
 
-  public BaseScope(IScope fallback = null) 
+  public Scope(IScope fallback = null) 
   { 
     this.fallback = fallback;  
   }
@@ -50,6 +50,9 @@ public abstract class BaseScope : IScope
 
   public virtual void Define(Symbol sym) 
   {
+    if(fallback != null && fallback.Resolve(sym.name) != null)
+      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+
     if(members.Contains(sym.name))
       throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
 
@@ -58,7 +61,7 @@ public abstract class BaseScope : IScope
     sym.scope = this; // track the scope in each symbol
   }
 
-  public void Append(BaseScope other)
+  public void Append(Scope other)
   {
     var ms = other.GetMembers();
     for(int i=0;i<ms.Count;++i)
@@ -170,21 +173,7 @@ public abstract class BaseScope : IScope
   }
 }
 
-public class Scope : BaseScope 
-{
-  public Scope(IScope fallback = null) 
-    : base(fallback) 
-  {}
-
-  public override void Define(Symbol sym) 
-  {
-    if(fallback != null && fallback.Resolve(sym.name) != null)
-      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
-    base.Define(sym);
-  }
-}
-
-public class GlobalScope : BaseScope 
+public class GlobalScope : Scope 
 {
   public GlobalScope() 
     : base(null) 
