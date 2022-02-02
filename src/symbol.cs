@@ -71,12 +71,7 @@ public class WrappedParseTree
 {
   public IParseTree tree;
   public ITokenStream tokens;
-
-  public IScope scope;
-  public Symbol symbol;
   public IType eval_type;
-  //TODO: why keep it?
-  public IType promote_to_type;
 
   public string Location()
   {
@@ -1370,11 +1365,6 @@ static public class SymbolTable
         a.Location()+" : incompatible types"
       );
     }
-    else 
-    {
-      a.promote_to_type = promote_from_to[ta,tb];
-      b.promote_to_type = promote_from_to[tb,ta];
-    }
     return result;
   }
 #endif
@@ -1418,8 +1408,8 @@ static public class SymbolTable
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
-    rhs.promote_to_type = promote_from_to[trhs,tlhs];
-    if(!CanAssignTo(rhs.eval_type, lhs.eval_type, rhs.promote_to_type)) 
+    var promote_to_type = promote_from_to[trhs,tlhs];
+    if(!CanAssignTo(rhs.eval_type, lhs.eval_type, promote_to_type)) 
     {
       throw new UserError(
         lhs.Location()+" : incompatible types"
@@ -1431,8 +1421,8 @@ static public class SymbolTable
   {
     int tlhs = lhs.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
-    rhs.promote_to_type = promote_from_to[trhs,tlhs];
-    if(!CanAssignTo(rhs.eval_type, lhs, rhs.promote_to_type)) 
+    var promote_to_type = promote_from_to[trhs,tlhs];
+    if(!CanAssignTo(rhs.eval_type, lhs, promote_to_type)) 
     {
       throw new UserError(
         rhs.Location()+" : incompatible types"
