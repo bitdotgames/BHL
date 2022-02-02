@@ -824,7 +824,6 @@ public class LambdaSymbol : FuncSymbol
     Scope origin,
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
-    uint module_id,
     TypeRef ret_type, 
     bhlParser.FuncLambdaContext lmb_ctx
   ) 
@@ -928,9 +927,6 @@ public class FuncSymbolScript : FuncSymbol
 {
   public AST_FuncDecl decl;
 
-  //module id this function is defined in
-  public uint module_id;
-
 #if BHL_FRONT
   //storing fparams so it can be accessed later for misc things, e.g. default args
   public bhlParser.FuncParamsContext fparams;
@@ -979,7 +975,6 @@ public class FuncSymbolScript : FuncSymbol
     : base(origin, decl.name, new FuncType(ret_type == null ? new TypeRef(decl.type) : ret_type))
   {
     this.decl = decl;
-    this.module_id = decl.module_id;
   }
 
   public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }

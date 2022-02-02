@@ -479,7 +479,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_id : 0), class_scope);
+          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0), class_scope);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -489,7 +489,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = locals.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_id : 0));
+            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0));
             AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
             type = func_symb.GetReturnType();
           }
@@ -530,7 +530,7 @@ public class Frontend : bhlBaseVisitor<object>
             FireError(Location(name) +  " : no such function found");
           var func_call_name = call_func_symb.name;
 
-          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, func_call_name, (call_func_symb is FuncSymbolScript fss ? fss.module_id : 0));
+          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, func_call_name, (call_func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0));
           type = func_symb.type.Get(locals);
         }
         else
@@ -853,7 +853,7 @@ public class Frontend : bhlBaseVisitor<object>
     var lambda_node = Wrap(ctx);
     var symb = new LambdaSymbol(lambda_node,
       locals, ast, this.func_decl_stack, 
-      curr_module.id, tr, funcLambda
+      tr, funcLambda
     );
 
     PushFuncDecl(symb);

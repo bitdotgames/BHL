@@ -261,8 +261,8 @@ public class ModuleScope : Scope
     else if(sym is FuncSymbolScript fs)
     {
       //NOTE: adding module id if it's not added already
-      if(fs.module_id == 0)
-        fs.module_id = module_id;
+      if(fs.decl.module_id == 0)
+        fs.decl.module_id = module_id;
     }
     base.Define(sym);
   }
