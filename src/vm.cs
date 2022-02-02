@@ -697,7 +697,7 @@ public class VM
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
     if(globs == null)
-      globs = SymbolTable.CreateBuiltins();
+      globs = TypeSystem.CreateBuiltins();
     this.globs = globs;
     this.importer = importer;
     symbols = new LocalScope(globs);

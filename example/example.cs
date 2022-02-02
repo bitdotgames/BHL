@@ -7,7 +7,7 @@ public class Example
 {
   public static void Main(string[] args)
   {
-    var symbols = SymbolTable.CreateBuiltins();
+    var symbols = TypeSystem.CreateBuiltins();
     var bnd = new MyBindings();
     bnd.Register(symbols);
 

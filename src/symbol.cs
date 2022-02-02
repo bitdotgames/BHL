@@ -229,7 +229,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   }
 
   public string GetName() { return name; }
-  public int GetTypeIndex() { return SymbolTable.TIDX_USER; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_USER; }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
@@ -680,7 +680,7 @@ public class MultiType : IType
 
   public List<TypeRef> items = new List<TypeRef>();
 
-  public int GetTypeIndex() { return SymbolTable.TIDX_USER; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_USER; }
   public string GetName() { return name; }
 
   public void Update()
@@ -705,7 +705,7 @@ public class FuncType : IType
   public TypeRef ret_type;
   public List<TypeRef> arg_types = new List<TypeRef>();
 
-  public int GetTypeIndex() { return SymbolTable.TIDX_USER; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_USER; }
   public string GetName() { return name; }
 
   public FuncType(TypeRef ret_type, List<TypeRef> arg_types)
@@ -1031,7 +1031,7 @@ public class ClassSymbolNative : ClassSymbol
     if(s.GetArgs().Count != 1)
       throw new UserError("Operator overload must have exactly one argument");
 
-    if(s.GetReturnType() == SymbolTable.symb_void)
+    if(s.GetReturnType() == TypeSystem.Void)
       throw new UserError("Operator overload return value can't be void");
 
     Define(s);
@@ -1071,12 +1071,12 @@ public class ClassSymbolScript : ClassSymbol
       var m = members[i];
       var v = Val.New(res.vm);
       //NOTE: proper default init of built-in types
-      if(m.type.name == SymbolTable.symb_float.type.name || 
-         m.type.name == SymbolTable.symb_int.type.name)
+      if(m.type.name == TypeSystem.Float.type.name || 
+         m.type.name == TypeSystem.Int.type.name)
         v.SetNum(0);
-      else if(m.type.name == SymbolTable.symb_string.type.name)
+      else if(m.type.name == TypeSystem.String.type.name)
         v.SetStr("");
-      else if(m.type.name == SymbolTable.symb_bool.type.name)
+      else if(m.type.name == TypeSystem.Bool.type.name)
         v.SetBool(false);
       else 
       {
@@ -1109,7 +1109,7 @@ public class EnumSymbol : EnclosingSymbol, IScope, IType
   {}
 
   public string GetName() { return name; }
-  public int GetTypeIndex() { return SymbolTable.TIDX_ENUM; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_ENUM; }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
@@ -1173,7 +1173,7 @@ public class EnumItemSymbol : Symbol, IType
   public int GetTypeIndex() { return en.GetTypeIndex(); }
 }
 
-static public class SymbolTable 
+static public class TypeSystem
 {
   // arithmetic types defined in order from narrowest to widest
   public const int TIDX_USER      = 0; // user-defined type
@@ -1185,56 +1185,56 @@ static public class SymbolTable
   public const int TIDX_ENUM      = 6;
   public const int TIDX_ANY       = 7;
 
-  static public BuiltInTypeSymbol symb_bool = new BuiltInTypeSymbol("bool", TIDX_BOOLEAN);
-  static public BuiltInTypeSymbol symb_string = new BuiltInTypeSymbol("string", TIDX_STRING);
-  static public BuiltInTypeSymbol symb_int = new BuiltInTypeSymbol("int", TIDX_INT);
-  static public BuiltInTypeSymbol symb_float = new BuiltInTypeSymbol("float", TIDX_FLOAT);
-  static public BuiltInTypeSymbol symb_void = new BuiltInTypeSymbol("void", TIDX_VOID);
-  static public BuiltInTypeSymbol symb_enum = new BuiltInTypeSymbol("enum", TIDX_ENUM);
-  static public BuiltInTypeSymbol symb_any = new BuiltInTypeSymbol("any", TIDX_ANY);
-  static public BuiltInTypeSymbol symb_null = new BuiltInTypeSymbol("null", TIDX_USER);
+  static public BuiltInTypeSymbol Bool = new BuiltInTypeSymbol("bool", TIDX_BOOLEAN);
+  static public BuiltInTypeSymbol String = new BuiltInTypeSymbol("string", TIDX_STRING);
+  static public BuiltInTypeSymbol Int = new BuiltInTypeSymbol("int", TIDX_INT);
+  static public BuiltInTypeSymbol Float = new BuiltInTypeSymbol("float", TIDX_FLOAT);
+  static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void", TIDX_VOID);
+  static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum", TIDX_ENUM);
+  static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any", TIDX_ANY);
+  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_USER);
 
   // Arithmetic types defined in order from narrowest to widest
   public static IType[] index2type = new IType[] {
-      // 0,  1,        2,           3,        4,          5,          6          7
-      null, symb_bool, symb_string, symb_int, symb_float, symb_void,  symb_enum, symb_any
+      // 0,  1,   2,      3,   4,     5,     6     7
+      null, Bool, String, Int, Float, Void,  Enum, Any
   };
 
   // Map t1 op t2 to result type (_void implies illegal)
   public static IType[,] arithmetic_res_type = new IType[,] {
-      /*          struct  boolean  string   int     float    void    enum    any */
-      /*struct*/  {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
-      /*boolean*/ {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
-      /*string*/  {symb_void, symb_void,   symb_string, symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
-      /*int*/     {symb_void, symb_void,   symb_void,   symb_int,   symb_float,  symb_void,  symb_void,  symb_void},
-      /*float*/   {symb_void, symb_void,   symb_void,   symb_float, symb_float,  symb_void,  symb_void,  symb_void},
-      /*void*/    {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
-      /*enum*/    {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void},
-      /*any*/     {symb_void, symb_void,   symb_void,   symb_void,  symb_void,   symb_void,  symb_void,  symb_void}
+      /*          struct bool    string  int    float   void   enum   any */
+      /*struct*/  {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void},
+      /*bool*/    {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void},
+      /*string*/  {Void, Void,   String, Void,  Void,   Void,  Void,  Void},
+      /*int*/     {Void, Void,   Void,   Int,   Float,  Void,  Void,  Void},
+      /*float*/   {Void, Void,   Void,   Float, Float,  Void,  Void,  Void},
+      /*void*/    {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void},
+      /*enum*/    {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void},
+      /*any*/     {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void}
   };
 
   public static IType[,] relational_res_type = new IType[,] {
-      /*          struct  boolean string    int       float     void    enum    any */
-      /*struct*/  {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*boolean*/ {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*string*/  {symb_void, symb_void,  symb_bool,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*int*/     {symb_void, symb_void,  symb_void,    symb_bool,    symb_bool,    symb_void,  symb_void,  symb_void},
-      /*float*/   {symb_void, symb_void,  symb_void,    symb_bool,    symb_bool,    symb_void,  symb_void,  symb_void},
-      /*void*/    {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*enum*/    {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*any*/     {symb_void, symb_void,  symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
+      /*          struct bool   string   int     float     void    enum    any */
+      /*struct*/  {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void},
+      /*bool*/    {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void},
+      /*string*/  {Void, Void,  Bool,    Void,    Void,    Void,  Void,  Void},
+      /*int*/     {Void, Void,  Void,    Bool,    Bool,    Void,  Void,  Void},
+      /*float*/   {Void, Void,  Void,    Bool,    Bool,    Void,  Void,  Void},
+      /*void*/    {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void},
+      /*enum*/    {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void},
+      /*any*/     {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void}
   };
 
   public static IType[,] equality_res_type = new IType[,] {
-      /*           struct boolean   string    int       float     void    enum     any */
-      /*struct*/  {symb_bool,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*boolean*/ {symb_void,   symb_bool,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*string*/  {symb_void,   symb_void,    symb_bool,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*int*/     {symb_void,   symb_void,    symb_void,    symb_bool,    symb_bool,    symb_void,  symb_void,  symb_void},
-      /*float*/   {symb_void,   symb_void,    symb_void,    symb_bool,    symb_bool,    symb_void,  symb_void,  symb_void},
-      /*void*/    {symb_void,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*enum*/    {symb_void,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void},
-      /*any*/     {symb_bool,   symb_void,    symb_void,    symb_void,    symb_void,    symb_void,  symb_void,  symb_void}
+      /*          struct   bool     string   int      float    void   enum   any */
+      /*struct*/  {Bool,   Void,    Void,    Void,    Void,    Void,  Void,  Void},
+      /*bool*/    {Void,   Bool,    Void,    Void,    Void,    Void,  Void,  Void},
+      /*string*/  {Void,   Void,    Bool,    Void,    Void,    Void,  Void,  Void},
+      /*int*/     {Void,   Void,    Void,    Bool,    Bool,    Void,  Void,  Void},
+      /*float*/   {Void,   Void,    Void,    Bool,    Bool,    Void,  Void,  Void},
+      /*void*/    {Void,   Void,    Void,    Void,    Void,    Void,  Void,  Void},
+      /*enum*/    {Void,   Void,    Void,    Void,    Void,    Void,  Void,  Void},
+      /*any*/     {Bool,   Void,    Void,    Void,    Void,    Void,  Void,  Void}
   };
 
   // Indicate whether a type needs a promotion to a wider type.
@@ -1243,11 +1243,11 @@ static public class SymbolTable
   //  arithmetic, equality, and relational operators in bhl
   // 
   public static IType[,] promote_from_to = new IType[,] {
-      /*          struct  boolean  string  int     float    void   enum   any*/
+      /*          struct  bool     string  int     float    void   enum   any*/
       /*struct*/  {null,  null,    null,   null,   null,    null,  null,  null},
-      /*boolean*/ {null,  null,    null,   null,   null,    null,  null,  null},
+      /*bool*/    {null,  null,    null,   null,   null,    null,  null,  null},
       /*string*/  {null,  null,    null,   null,   null,    null,  null,  null},
-      /*int*/     {null,  null,    null,   null,   symb_float,  null,  null,  null},
+      /*int*/     {null,  null,    null,   null,   Float,  null,  null,  null},
       /*float*/   {null,  null,    null,   null,    null,   null,  null,  null},
       /*void*/    {null,  null,    null,   null,    null,   null,  null,  null},
       /*enum*/    {null,  null,    null,   null,    null,   null,  null,  null},
@@ -1255,15 +1255,15 @@ static public class SymbolTable
   };
 
   public static IType[,] cast_from_to = new IType[,] {
-      /*          struct  boolean  string   int     float   void   enum   any*/
-      /*struct*/  {null,  null,    null,    null,   null,   null,  null,  symb_any},
-      /*boolean*/ {null,  null,    symb_string, symb_int,   symb_float, null,  null,  symb_any},
-      /*string*/  {null,  null,    symb_string, null,   null,   null,  null,  symb_any},
-      /*int*/     {null,  symb_bool,symb_string, symb_int,   symb_float, null,  null,  symb_any},
-      /*float*/   {null,  symb_bool,symb_string, symb_int,   symb_float, null,  symb_enum,  symb_any},
+      /*          struct  bool     string   int     float   void   enum   any*/
+      /*struct*/  {null,  null,    null,    null,   null,   null,  null,  Any},
+      /*bool*/    {null,  null,    String,  Int,    Float,  null,  null,  Any},
+      /*string*/  {null,  null,    String,  null,   null,   null,  null,  Any},
+      /*int*/     {null,  Bool,    String,  Int,    Float,  null,  null,  Any},
+      /*float*/   {null,  Bool,    String,  Int,    Float,  null,  Enum,  Any},
       /*void*/    {null,  null,    null,    null,   null,   null,  null,  null},
-      /*enum*/    {null,  null,    symb_string, symb_int,   symb_float,   null,  null,  symb_any},
-      /*any*/     {null,  symb_bool,symb_string, symb_int,   null,   null,  null,  symb_any}
+      /*enum*/    {null,  null,    String,  Int,    Float,  null,  null,  Any},
+      /*any*/     {null,  Bool,    String,  Int,    null,   null,  null,  Any}
   };
 
   static public GlobalScope CreateBuiltins()
@@ -1346,36 +1346,15 @@ static public class SymbolTable
       fn.Define(new FuncArgSymbol("fid", globals.Type("int")));
       globals.Define(fn);
     }
-
   }
-
-#if BHL_FRONT
-  static public IType GetResultType(IType[,] typeTable, WrappedParseTree a, WrappedParseTree b) 
-  {
-    if(a.eval_type == b.eval_type)
-      return a.eval_type;
-
-    int ta = a.eval_type.GetTypeIndex(); // type index of left operand
-    int tb = b.eval_type.GetTypeIndex(); // type index of right operand
-
-    IType result = typeTable[ta,tb];    // operation result type
-    if(result == symb_void) 
-    {
-      throw new UserError(
-        a.Location()+" : incompatible types"
-      );
-    }
-    return result;
-  }
-#endif
 
   static public bool CanAssignTo(IType src, IType dst, IType promotion) 
   {
     return src == dst || 
            promotion == dst || 
-           dst == symb_any ||
-           (dst is ClassSymbol && src == symb_null) ||
-           (dst is FuncType && src == symb_null) || 
+           dst == Any ||
+           (dst is ClassSymbol && src == Null) ||
+           (dst is FuncType && src == Null) || 
            src.GetName() == dst.GetName() ||
            IsChildClass(src, dst)
            ;
@@ -1403,7 +1382,39 @@ static public class SymbolTable
     return cb.IsSubclassOf(ca) || ca.IsSubclassOf(cb);
   }
 
+  static public bool IsBinOpCompatible(IType type)
+  {
+    return type == Bool || 
+           type == String ||
+           type == Int ||
+           type == Float;
+  }
+
+  static public bool IsRtlOpCompatible(IType type)
+  {
+    return type == Int ||
+           type == Float;
+  }
+
 #if BHL_FRONT
+  static public IType GetResultType(IType[,] table, WrappedParseTree a, WrappedParseTree b) 
+  {
+    if(a.eval_type == b.eval_type)
+      return a.eval_type;
+
+    int ta = a.eval_type.GetTypeIndex(); // type index of left operand
+    int tb = b.eval_type.GetTypeIndex(); // type index of right operand
+
+    IType result = table[ta,tb];    // operation result type
+    if(result == Void) 
+    {
+      throw new UserError(
+        a.Location()+" : incompatible types"
+      );
+    }
+    return result;
+  }
+
   static public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
@@ -1449,13 +1460,13 @@ static public class SymbolTable
     int trhs = exp.eval_type.GetTypeIndex();
 
     //special case: we allow to cast from 'any' to any user type
-    if(trhs == SymbolTable.TIDX_ANY && tlhs == SymbolTable.TIDX_USER)
+    if(trhs == TIDX_ANY && tlhs == TIDX_USER)
       return;
 
     //special case: we allow to cast from 'any' numeric type to enum
-    if((trhs == SymbolTable.TIDX_FLOAT || 
-        trhs == SymbolTable.TIDX_INT) && 
-        tlhs == SymbolTable.TIDX_ENUM)
+    if((trhs == TIDX_FLOAT || 
+        trhs == TIDX_INT) && 
+        tlhs == TIDX_ENUM)
       return;
 
     var cast_type = cast_from_to[trhs,tlhs];
@@ -1471,14 +1482,14 @@ static public class SymbolTable
     );
   }
 
-  static public IType Bop(WrappedParseTree a, WrappedParseTree b) 
+  static public IType TypeForBinOp(WrappedParseTree a, WrappedParseTree b) 
   {
-    if(!IsBopCompatibleType(a.eval_type))
+    if(!IsBinOpCompatible(a.eval_type))
       throw new UserError(
         a.Location()+" operator is not overloaded"
       );
 
-    if(!IsBopCompatibleType(b.eval_type))
+    if(!IsBinOpCompatible(b.eval_type))
       throw new UserError(
         b.Location()+" operator is not overloaded"
       );
@@ -1486,21 +1497,21 @@ static public class SymbolTable
     return GetResultType(arithmetic_res_type, a, b);
   }
 
-  static public IType BopOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
+  static public IType TypeForBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
     CheckAssign(op_func_arg.type.Get(scope), b);
     return op_func.GetReturnType();
   }
 
-  static public IType Relop(WrappedParseTree a, WrappedParseTree b) 
+  static public IType TypeForRtlOp(WrappedParseTree a, WrappedParseTree b) 
   {
-    if(!IsRelopCompatibleType(a.eval_type))
+    if(!IsRtlOpCompatible(a.eval_type))
       throw new UserError(
         a.Location()+" : operator is not overloaded"
       );
 
-    if(!IsRelopCompatibleType(b.eval_type))
+    if(!IsRtlOpCompatible(b.eval_type))
       throw new UserError(
         b.Location()+" : operator is not overloaded"
       );
@@ -1508,18 +1519,18 @@ static public class SymbolTable
     GetResultType(relational_res_type, a, b);
     // even if the operands are incompatible, the type of
     // this operation must be boolean
-    return symb_bool;
+    return Bool;
   }
 
-  static public IType Eqop(WrappedParseTree a, WrappedParseTree b) 
+  static public IType TypeForEqOp(WrappedParseTree a, WrappedParseTree b) 
   {
     GetResultType(equality_res_type, a, b);
-    return symb_bool;
+    return Bool;
   }
 
   static public IType Uminus(WrappedParseTree a) 
   {
-    if(!(a.eval_type == symb_int || a.eval_type == symb_float)) 
+    if(!(a.eval_type == Int || a.eval_type == Float)) 
       throw new UserError(a.Location()+" : must be numeric type");
 
     return a.eval_type;
@@ -1527,48 +1538,34 @@ static public class SymbolTable
 
   static public IType Bitop(WrappedParseTree a, WrappedParseTree b) 
   {
-    if(a.eval_type != symb_int) 
+    if(a.eval_type != Int) 
       throw new UserError(a.Location()+" : must be int type");
 
-    if(b.eval_type != symb_int)
+    if(b.eval_type != Int)
       throw new UserError(b.Location()+" : must be int type");
 
-    return symb_int;
+    return Int;
   }
 
   static public IType Lop(WrappedParseTree a, WrappedParseTree b) 
   {
-    if(a.eval_type != symb_bool) 
+    if(a.eval_type != Bool) 
       throw new UserError(a.Location()+" : must be bool type");
 
-    if(b.eval_type != symb_bool)
+    if(b.eval_type != Bool)
       throw new UserError(b.Location()+" : must be bool type");
 
-    return symb_bool;
+    return Bool;
   }
 
   static public IType Unot(WrappedParseTree a) 
   {
-    if(a.eval_type != symb_bool) 
+    if(a.eval_type != Bool) 
       throw new UserError(a.Location()+" : must be bool type");
 
     return a.eval_type;
   }
 #endif
-
-  static public bool IsBopCompatibleType(IType type)
-  {
-    return type == symb_bool || 
-           type == symb_string ||
-           type == symb_int ||
-           type == symb_float;
-  }
-
-  static public bool IsRelopCompatibleType(IType type)
-  {
-    return type == symb_int ||
-           type == symb_float;
-  }
 }
 
 public class SymbolsDictionary

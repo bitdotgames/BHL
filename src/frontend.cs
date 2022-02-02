@@ -320,7 +320,7 @@ public class Frontend : bhlBaseVisitor<object>
     var exp = ctx.callExp(); 
     Visit(exp);
     var eval_type = Wrap(exp).eval_type;
-    if(eval_type != null && eval_type != SymbolTable.symb_void)
+    if(eval_type != null && eval_type != TypeSystem.Void)
     {
       //TODO: add a warning?
       var mtype = eval_type as MultiType;
@@ -565,7 +565,7 @@ public class Frontend : bhlBaseVisitor<object>
     var arr_exp = arracc.exp();
     Visit(arr_exp);
 
-    if(Wrap(arr_exp).eval_type != SymbolTable.symb_int)
+    if(Wrap(arr_exp).eval_type != TypeSystem.Int)
       FireError(Location(arr_exp) +  " : array index expression is not of type int");
 
     type = arr_type.item_type.Get(mscope);
@@ -688,10 +688,10 @@ public class Frontend : bhlBaseVisitor<object>
         {
           if(func_arg_symb.type.Get(mscope) == null)
             FireError(Location(ca) +  " : invalid type");
-          SymbolTable.CheckAssign(func_arg_symb.type.Get(mscope), wca);
+          TypeSystem.CheckAssign(func_arg_symb.type.Get(mscope), wca);
         }
         else
-          SymbolTable.CheckAssign(func_arg_symb.parsed, wca);
+          TypeSystem.CheckAssign(func_arg_symb.parsed, wca);
       }
     }
 
@@ -731,7 +731,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopJsonType();
 
       var wca = Wrap(ca);
-      SymbolTable.CheckAssign(arg_type, wca);
+      TypeSystem.CheckAssign(arg_type, wca);
 
       if(arg_type_ref.is_ref && ca.isRef() == null)
         FireError(Location(ca) +  " : 'ref' is missing");
@@ -1050,7 +1050,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(exp);
       Wrap(ctx).eval_type = Wrap(exp).eval_type;
 
-      SymbolTable.CheckAssign(curr_type, Wrap(exp));
+      TypeSystem.CheckAssign(curr_type, Wrap(exp));
     }
     else if(jobj != null)
       Visit(jobj);
@@ -1067,7 +1067,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(tr.type == null)
       FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
 
-    Wrap(ctx).eval_type = SymbolTable.symb_int;
+    Wrap(ctx).eval_type = TypeSystem.Int;
 
     var ast = AST_Util.New_Literal(EnumLiteral.NUM);
     ast.nval = Hash.CRC28(tr.name);
@@ -1144,7 +1144,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = tr.type;
 
-    SymbolTable.CheckCast(Wrap(ctx), Wrap(exp)); 
+    TypeSystem.CheckCast(Wrap(ctx), Wrap(exp)); 
 
     PeekAST().AddChild(ast);
 
@@ -1169,8 +1169,8 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
 
     Wrap(ctx).eval_type = type == EnumUnaryOp.NEG ? 
-      SymbolTable.Uminus(Wrap(exp)) : 
-      SymbolTable.Unot(Wrap(exp));
+      TypeSystem.Uminus(Wrap(exp)) : 
+      TypeSystem.Unot(Wrap(exp));
 
     PeekAST().AddChild(ast);
 
@@ -1205,7 +1205,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(vlhs == null)
       FireError(Location(ctx.NAME()) + " : symbol not resolved");
 
-    if(!SymbolTable.IsRelopCompatibleType(vlhs.type.type))
+    if(!TypeSystem.IsRtlOpCompatible(vlhs.type.type))
       throw new UserError(Location(ctx.NAME()) + " : incompatible types");
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
@@ -1217,7 +1217,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    SymbolTable.CheckAssign(vlhs.type.type, Wrap(ctx.exp()));
+    TypeSystem.CheckAssign(vlhs.type.type, Wrap(ctx.exp()));
 
     PeekAST().AddChild(bin_op_ast);
     PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vlhs));
@@ -1261,7 +1261,7 @@ public class Frontend : bhlBaseVisitor<object>
     var wv = Wrap(v);
     bool is_negative = ctx.decrementOperator() != null;
     
-    if(!SymbolTable.IsRelopCompatibleType(vs.type.type)) // only numeric types
+    if(!TypeSystem.IsRtlOpCompatible(vs.type.type)) // only numeric types
     {
       throw new UserError(
         $"{wv.Location()} : operator {(is_negative ? "--" : "++")} is not supported for {vs.type.name} type"
@@ -1273,7 +1273,7 @@ public class Frontend : bhlBaseVisitor<object>
     else
       ast.AddChild(AST_Util.New_Inc(vs));
     
-    Wrap(ctx).eval_type = SymbolTable.symb_void;
+    Wrap(ctx).eval_type = TypeSystem.Void;
     PeekAST().AddChild(ast);
   }
   
@@ -1336,7 +1336,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
 
-      Wrap(ctx).eval_type = SymbolTable.BopOverload(mscope, wlhs, wrhs, op_func);
+      Wrap(ctx).eval_type = TypeSystem.TypeForBinOpOverload(mscope, wlhs, wrhs, op_func);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
@@ -1349,16 +1349,16 @@ public class Frontend : bhlBaseVisitor<object>
       op_type == EnumBinaryOp.EQ || 
       op_type == EnumBinaryOp.NQ
     )
-      Wrap(ctx).eval_type = SymbolTable.Eqop(wlhs, wrhs);
+      Wrap(ctx).eval_type = TypeSystem.TypeForEqOp(wlhs, wrhs);
     else if(
       op_type == EnumBinaryOp.GT || 
       op_type == EnumBinaryOp.GTE ||
       op_type == EnumBinaryOp.LT || 
       op_type == EnumBinaryOp.LTE
     )
-      Wrap(ctx).eval_type = SymbolTable.Relop(wlhs, wrhs);
+      Wrap(ctx).eval_type = TypeSystem.TypeForRtlOp(wlhs, wrhs);
     else
-      Wrap(ctx).eval_type = SymbolTable.Bop(wlhs, wrhs);
+      Wrap(ctx).eval_type = TypeSystem.TypeForBinOp(wlhs, wrhs);
 
     PeekAST().AddChild(ast);
   }
@@ -1374,7 +1374,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp_1);
     PopAST();
 
-    Wrap(ctx).eval_type = SymbolTable.Bitop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.Bitop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1392,7 +1392,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp_1);
     PopAST();
 
-    Wrap(ctx).eval_type = SymbolTable.Bitop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.Bitop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1418,7 +1418,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
     ast.AddChild(tmp1);
 
-    Wrap(ctx).eval_type = SymbolTable.Lop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.Lop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1444,7 +1444,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
     ast.AddChild(tmp1);
 
-    Wrap(ctx).eval_type = SymbolTable.Lop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.Lop(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1462,17 +1462,17 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(int_num != null)
     {
-      Wrap(ctx).eval_type = SymbolTable.symb_int;
+      Wrap(ctx).eval_type = TypeSystem.Int;
       ast.nval = double.Parse(int_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(flt_num != null)
     {
-      Wrap(ctx).eval_type = SymbolTable.symb_float;
+      Wrap(ctx).eval_type = TypeSystem.Float;
       ast.nval = double.Parse(flt_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(hex_num != null)
     {
-      Wrap(ctx).eval_type = SymbolTable.symb_int;
+      Wrap(ctx).eval_type = TypeSystem.Int;
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
     }
 
@@ -1483,7 +1483,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
   {
-    Wrap(ctx).eval_type = SymbolTable.symb_bool;
+    Wrap(ctx).eval_type = TypeSystem.Bool;
 
     var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
     ast.nval = 0;
@@ -1494,7 +1494,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
   {
-    Wrap(ctx).eval_type = SymbolTable.symb_null;
+    Wrap(ctx).eval_type = TypeSystem.Null;
 
     var ast = AST_Util.New_Literal(EnumLiteral.NIL);
     PeekAST().AddChild(ast);
@@ -1504,7 +1504,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralTrue(bhlParser.ExpLiteralTrueContext ctx)
   {
-    Wrap(ctx).eval_type = SymbolTable.symb_bool;
+    Wrap(ctx).eval_type = TypeSystem.Bool;
 
     var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
     ast.nval = 1;
@@ -1515,7 +1515,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
   {
-    Wrap(ctx).eval_type = SymbolTable.symb_string;
+    Wrap(ctx).eval_type = TypeSystem.String;
 
     var ast = AST_Util.New_Literal(EnumLiteral.STR);
     ast.sval = ctx.@string().NORMALSTRING().GetText();
@@ -1643,7 +1643,7 @@ public class Frontend : bhlBaseVisitor<object>
       var fret_type = func_symb.GetReturnType();
 
       //NOTE: immediately adding return node in case of void return type
-      if(fret_type == SymbolTable.symb_void)
+      if(fret_type == TypeSystem.Void)
         PeekAST().AddChild(ret_ast);
       else
         PushAST(ret_ast);
@@ -1669,10 +1669,10 @@ public class Frontend : bhlBaseVisitor<object>
         //      where exp has void type, in this case
         //      we simply ignore exp_node since return will take
         //      effect right before it
-        if(Wrap(exp_item).eval_type != SymbolTable.symb_void)
+        if(Wrap(exp_item).eval_type != TypeSystem.Void)
           ret_ast.num = fmret_type != null ? fmret_type.items.Count : 1;
 
-        SymbolTable.CheckAssign(func_symb.parsed, Wrap(exp_item));
+        TypeSystem.CheckAssign(func_symb.parsed, Wrap(exp_item));
         Wrap(ctx).eval_type = Wrap(exp_item).eval_type;
       }
       else
@@ -1698,7 +1698,7 @@ public class Frontend : bhlBaseVisitor<object>
         for(int i=0;i<explen;++i)
         {
           var exp = explist.exp()[i];
-          SymbolTable.CheckAssign(fmret_type.items[i].Get(mscope), Wrap(exp));
+          TypeSystem.CheckAssign(fmret_type.items[i].Get(mscope), Wrap(exp));
         }
 
         ret_type.Update();
@@ -1707,7 +1707,7 @@ public class Frontend : bhlBaseVisitor<object>
         ret_ast.num = fmret_type.items.Count;
       }
 
-      if(fret_type != SymbolTable.symb_void)
+      if(fret_type != TypeSystem.Void)
       {
         PopAST();
         PeekAST().AddChild(ret_ast);
@@ -1715,9 +1715,9 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
     {
-      if(func_symb.GetReturnType() != SymbolTable.symb_void)
+      if(func_symb.GetReturnType() != TypeSystem.Void)
         FireError(Location(ctx) + " : return value is missing");
-      Wrap(ctx).eval_type = SymbolTable.symb_void;
+      Wrap(ctx).eval_type = TypeSystem.Void;
       PeekAST().AddChild(ret_ast);
     }
 
@@ -1892,7 +1892,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(context.funcBlock());
       PopAST();
 
-      if(tr.type != SymbolTable.symb_void && !func_symb.return_statement_found)
+      if(tr.type != TypeSystem.Void && !func_symb.return_statement_found)
         FireError(Location(context.NAME()) + " : matching 'return' statement not found");
     }
     
@@ -1985,7 +1985,7 @@ public class Frontend : bhlBaseVisitor<object>
       PeekAST().AddChild(ast);
 
       if(assign_exp != null)
-        SymbolTable.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
+        TypeSystem.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
     }
 
     return null;
@@ -2159,9 +2159,9 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var mtype = assign_type as MultiType;
         if(mtype != null)
-          SymbolTable.CheckAssign(ptree, mtype.items[i].Get(mscope));
+          TypeSystem.CheckAssign(ptree, mtype.items[i].Get(mscope));
         else
-          SymbolTable.CheckAssign(ptree, Wrap(assign_exp));
+          TypeSystem.CheckAssign(ptree, Wrap(assign_exp));
       }
     }
   }
@@ -2207,7 +2207,7 @@ public class Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     if(assign_exp != null && !is_null_ref)
-      SymbolTable.CheckAssign(Wrap(name), Wrap(assign_exp));
+      TypeSystem.CheckAssign(Wrap(name), Wrap(assign_exp));
     return null;
   }
 
@@ -2283,7 +2283,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(main.exp());
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(main.exp()));
+    TypeSystem.CheckAssign(TypeSystem.Bool, Wrap(main.exp()));
 
     var func_symb = PeekFuncDecl();
     bool seen_return = func_symb.return_statement_found;
@@ -2336,7 +2336,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(item.exp());
       PopAST();
 
-      SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(item.exp()));
+      TypeSystem.CheckAssign(TypeSystem.Bool, Wrap(item.exp()));
 
       seen_return = func_symb.return_statement_found;
       func_symb.return_statement_found = false;
@@ -2382,7 +2382,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp_0);
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(exp_0));
+    TypeSystem.CheckAssign(TypeSystem.Bool, Wrap(exp_0));
 
     ast.AddChild(condition);
 
@@ -2403,7 +2403,7 @@ public class Frontend : bhlBaseVisitor<object>
     var wrap_exp_1 = Wrap(exp_1);
     Wrap(ctx).eval_type = wrap_exp_1.eval_type;
 
-    SymbolTable.CheckAssign(wrap_exp_1, Wrap(exp_2));
+    TypeSystem.CheckAssign(wrap_exp_1, Wrap(exp_2));
     PeekAST().AddChild(ast);
     return null;
   }
@@ -2419,7 +2419,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(ctx.exp()));
+    TypeSystem.CheckAssign(TypeSystem.Bool, Wrap(ctx.exp()));
 
     ast.AddChild(cond);
 
@@ -2482,7 +2482,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(for_cond);
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(for_cond.exp()));
+    TypeSystem.CheckAssign(TypeSystem.Bool, Wrap(for_cond.exp()));
 
     ast.AddChild(cond);
 
@@ -2546,7 +2546,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    SymbolTable.CheckAssign(SymbolTable.symb_bool, Wrap(ctx.exp()));
+    TypeSystem.CheckAssign(TypeSystem.Bool, Wrap(ctx.exp()));
 
     ast.AddChild(cond);
 
@@ -2602,7 +2602,7 @@ public class Frontend : bhlBaseVisitor<object>
     //evaluating array expression
     Visit(exp);
     PopJsonType();
-    SymbolTable.CheckAssign(Wrap(exp), arr_type);
+    TypeSystem.CheckAssign(Wrap(exp), arr_type);
 
     //generic fallback if the concrete type is not found 
     string arr_stype = GenericArrayTypeSymbol.CLASS_TYPE;
