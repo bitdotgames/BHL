@@ -477,7 +477,7 @@ namespace bhlsp
 
         bhlParser.CallExpContext callExp = null;
         bhlParser.MemberAccessContext memberAccess = null;
-        bhlParser.TypeContext t = null;
+        bhlParser.TypeContext type = null;
 
         foreach(IParseTree node in Util.DFS(document.ToParser().program()))
         {
@@ -487,18 +487,25 @@ namespace bhlsp
             {
               callExp      = prc as bhlParser.CallExpContext;
               memberAccess = prc as bhlParser.MemberAccessContext;
-              t            = prc as bhlParser.TypeContext;
+              type         = prc as bhlParser.TypeContext;
               break;
             }
           }
         }
-
-        if(memberAccess != null)
+        
+        string classTypeName = string.Empty;
+        string memberClassName = string.Empty;
+        
+        if(type?.NAME() != null)
+        {
+          classTypeName = type.NAME().GetText();
+        }
+        else if(memberAccess != null)
         {
           bhlParser.CallExpContext callExpMemberAccess = null;
           bhlParser.FuncDeclContext memberAccessParentFuncDecl = null;
 
-          string memberAccessName = memberAccess.NAME().GetText();
+          memberClassName = memberAccess.NAME().GetText();
           
           for(RuleContext parent = memberAccess.Parent; parent != null; parent = parent.Parent)
           {
@@ -515,7 +522,6 @@ namespace bhlsp
           if(callExpMemberAccess != null)
           {
             string callExpMemberAccessName = callExpMemberAccess.NAME().GetText();
-            string classTypeName = string.Empty;
             
             if(memberAccessParentFuncDecl?.NAME() != null)
             {
@@ -541,80 +547,81 @@ namespace bhlsp
                 }
               }
             }
-
-            if(!string.IsNullOrEmpty(classTypeName))
+          }
+        }
+        
+        if(!string.IsNullOrEmpty(classTypeName))
+        {
+          bhlParser.ClassDeclContext classDecl = null;
+          BHLTextDocument classDeclBhlDocument = null;
+          
+          foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(document))
+          {
+            if(doc.classDecls.ContainsKey(classTypeName))
             {
-              bhlParser.ClassDeclContext classDecl = null;
-              BHLTextDocument classDeclBhlDocument = null;
-              
-              foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(document))
+              classDecl = doc.classDecls[classTypeName];
+              classDeclBhlDocument = doc;
+              break;
+            }
+          }
+          
+          if(classDecl == null)
+          {
+            foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
+            {
+              if(doc is BHLTextDocument bhlDocument)
               {
-                if(doc.classDecls.ContainsKey(classTypeName))
+                if(bhlDocument.classDecls.ContainsKey(classTypeName))
                 {
-                  classDecl = doc.classDecls[classTypeName];
-                  classDeclBhlDocument = doc;
+                  classDecl = bhlDocument.classDecls[classTypeName];
+                  classDeclBhlDocument = bhlDocument;
                   break;
                 }
               }
-              
-              if(classDecl == null)
-              {
-                foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
-                {
-                  if(doc is BHLTextDocument bhlDocument)
-                  {
-                    if(bhlDocument.classDecls.ContainsKey(classTypeName))
-                    {
-                      classDecl = bhlDocument.classDecls[classTypeName];
-                      classDeclBhlDocument = bhlDocument;
-                      break;
-                    }
-                  }
-                }
-              }
-              
-              if(classDecl != null && classDeclBhlDocument != null)
-              {
-                bhlParser.ClassMemberContext classMember = null;
-                
-                foreach(var classMemberContext in classDecl.classBlock().classMembers().classMember())
-                {
-                  if(classMemberContext.funcDecl()?.NAME()?.GetText() != null)
-                  {
-                    if(classMemberContext.funcDecl().NAME().GetText() == memberAccessName)
-                    {
-                      classMember = classMemberContext;
-                      break;
-                    }
-                  }
-                  
-                  if(classMemberContext.varDeclare()?.NAME()?.GetText() != null)
-                  {
-                    if(classMemberContext.varDeclare().NAME().GetText() == memberAccessName)
-                    {
-                      classMember = classMemberContext;
-                      break;
-                    }
-                  }
-                }
+            }
+          }
+          
+          if(classDecl != null)
+          {
+            bhlParser.ClassMemberContext classMember = null;
 
-                if(classMember != null)
+            if(!string.IsNullOrEmpty(memberClassName))
+            {
+              foreach(var classMemberContext in classDecl.classBlock().classMembers().classMember())
+              {
+                if(classMemberContext.funcDecl()?.NAME()?.GetText() != null)
                 {
-                  var start = classDeclBhlDocument.GetLineColumn(classMember.Start.StartIndex);
-                  var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
-            
-                  return RpcResult.Success(new Location
+                  if(classMemberContext.funcDecl().NAME().GetText() == memberClassName)
                   {
-                    uri = classDeclBhlDocument.uri,
-                    range = new Range
-                    {
-                      start = startPos,
-                      end = startPos
-                    }
-                  });
+                    classMember = classMemberContext;
+                    break;
+                  }
+                }
+              
+                if(classMemberContext.varDeclare()?.NAME()?.GetText() != null)
+                {
+                  if(classMemberContext.varDeclare().NAME().GetText() == memberClassName)
+                  {
+                    classMember = classMemberContext;
+                    break;
+                  }
                 }
               }
             }
+
+            int classDeclIdx = classMember?.Start.StartIndex ?? classDecl.Start.StartIndex;
+            var start = classDeclBhlDocument.GetLineColumn(classDeclIdx);
+            var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
+        
+            return RpcResult.Success(new Location
+            {
+              uri = classDeclBhlDocument.uri,
+              range = new Range
+              {
+                start = startPos,
+                end = startPos
+              }
+            });
           }
         }
         
