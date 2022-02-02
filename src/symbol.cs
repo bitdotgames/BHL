@@ -254,7 +254,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public const int IDX_Count      = 5;
   public const int IDX_AddInplace = 6;
 
-  public ArrayTypeSymbol(Scope origin, string name, TypeRef item_type)     
+  public ArrayTypeSymbol(BaseScope origin, string name, TypeRef item_type)     
     : base(origin, name, super_class: null)
   {
     this.item_type = item_type;
@@ -303,7 +303,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(Scope scope, TypeRef item_type) 
+  public ArrayTypeSymbol(BaseScope scope, TypeRef item_type) 
     : this(scope, item_type.name + "[]", item_type)
   {}
 
@@ -330,7 +330,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return CLASS_TYPE;
   }
 
-  public GenericArrayTypeSymbol(Scope origin, TypeRef item_type) 
+  public GenericArrayTypeSymbol(BaseScope origin, TypeRef item_type) 
     : base(origin, item_type)
   {}
 
@@ -423,13 +423,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(Scope scope, string name, TypeRef item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(BaseScope scope, string name, TypeRef item_type, CreatorCb creator) 
     : base(scope, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(Scope scope, TypeRef item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(BaseScope scope, TypeRef item_type, CreatorCb creator) 
     : base(scope, item_type.name + "[]", item_type)
   {}
 
@@ -816,7 +816,7 @@ public class LambdaSymbol : FuncSymbol
   public LambdaSymbol(
     WrappedParseTree parsed, 
     bhlParser.FuncLambdaContext lmb_ctx,
-    Scope origin,
+    BaseScope origin,
     AST_LambdaDecl decl, 
     TypeRef ret_type,
     List<FuncSymbol> fdecl_stack
@@ -926,7 +926,7 @@ public class FuncSymbolScript : FuncSymbol
   public bhlParser.FuncParamsContext fparams;
 
   public FuncSymbolScript(
-    Scope origin,
+    BaseScope origin,
     AST_FuncDecl decl, 
     WrappedParseTree parsed, 
     TypeRef ret_type, 
@@ -1528,7 +1528,7 @@ static public class TypeSystem
     return Bool;
   }
 
-  static public IType Uminus(WrappedParseTree a) 
+  static public IType TypeForUnaryMinus(WrappedParseTree a) 
   {
     if(!(a.eval_type == Int || a.eval_type == Float)) 
       throw new UserError(a.Location()+" : must be numeric type");
@@ -1536,7 +1536,7 @@ static public class TypeSystem
     return a.eval_type;
   }
 
-  static public IType Bitop(WrappedParseTree a, WrappedParseTree b) 
+  static public IType TypeForBitOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type != Int) 
       throw new UserError(a.Location()+" : must be int type");
@@ -1547,7 +1547,7 @@ static public class TypeSystem
     return Int;
   }
 
-  static public IType Lop(WrappedParseTree a, WrappedParseTree b) 
+  static public IType TypeForLogicalOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type != Bool) 
       throw new UserError(a.Location()+" : must be bool type");
@@ -1558,7 +1558,7 @@ static public class TypeSystem
     return Bool;
   }
 
-  static public IType Unot(WrappedParseTree a) 
+  static public IType TypeForLogicalNot(WrappedParseTree a) 
   {
     if(a.eval_type != Bool) 
       throw new UserError(a.Location()+" : must be bool type");

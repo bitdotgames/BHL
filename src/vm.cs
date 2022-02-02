@@ -610,8 +610,8 @@ public class VM
     }
   }
 
-  LocalScope symbols;
-  public LocalScope Symbols {
+  Scope symbols;
+  public Scope Symbols {
     get {
       return symbols;
     }
@@ -700,7 +700,7 @@ public class VM
       globs = TypeSystem.CreateBuiltins();
     this.globs = globs;
     this.importer = importer;
-    symbols = new LocalScope(globs);
+    symbols = new Scope(globs);
 
     init_frame = new Frame(this);
   }

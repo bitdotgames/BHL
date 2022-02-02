@@ -180,12 +180,13 @@ public class Frontend : bhlBaseVisitor<object>
 
   public Frontend(Module module, ITokenStream tokens, GlobalScope globs, ModuleRegistry mreg, bool decls_only = false)
   {
+    if(globs == null)
+      throw new Exception("Global scope is not set");
+
     this.curr_module = module;
 
     this.tokens = tokens;
     this.decls_only = decls_only;
-    if(globs == null)
-      throw new Exception("Global scope is not set");
     this.mscope = new ModuleScope(module.id, globs);
     this.mreg = mreg;
 
@@ -305,7 +306,7 @@ public class Frontend : bhlBaseVisitor<object>
     //removing quotes
     import = import.Substring(1, import.Length-2);
     
-    var module = mreg.ImportModule(curr_module, (GlobalScope)mscope.GetOriginScope(), import);
+    var module = mreg.ImportModule(curr_module, mscope.globs, import);
     //NOTE: null means module is already imported
     if(module != null)
     {
@@ -1169,8 +1170,8 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
 
     Wrap(ctx).eval_type = type == EnumUnaryOp.NEG ? 
-      TypeSystem.Uminus(Wrap(exp)) : 
-      TypeSystem.Unot(Wrap(exp));
+      TypeSystem.TypeForUnaryMinus(Wrap(exp)) : 
+      TypeSystem.TypeForLogicalNot(Wrap(exp));
 
     PeekAST().AddChild(ast);
 
@@ -1374,7 +1375,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp_1);
     PopAST();
 
-    Wrap(ctx).eval_type = TypeSystem.Bitop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.TypeForBitOp(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1392,7 +1393,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp_1);
     PopAST();
 
-    Wrap(ctx).eval_type = TypeSystem.Bitop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.TypeForBitOp(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1418,7 +1419,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
     ast.AddChild(tmp1);
 
-    Wrap(ctx).eval_type = TypeSystem.Lop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.TypeForLogicalOp(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1444,7 +1445,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
     ast.AddChild(tmp1);
 
-    Wrap(ctx).eval_type = TypeSystem.Lop(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.TypeForLogicalOp(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -2671,7 +2672,7 @@ public class Frontend : bhlBaseVisitor<object>
     ++scope_level;
 
     if(new_local_scope)
-      curr_scope = new LocalScope(curr_scope); 
+      curr_scope = new Scope(curr_scope); 
 
     bool is_paral = 
       type == EnumBlock.PARAL || 
@@ -2769,7 +2770,7 @@ public class Module
   }
   public ModulePath path;
   public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
-  public LocalScope symbols = new LocalScope(null);
+  public Scope symbols = new Scope();
 
   public Module(ModulePath module_path)
   {

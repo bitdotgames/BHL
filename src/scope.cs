@@ -7,30 +7,29 @@ public interface IScope
 {
   // Scope in which this scope defined. For global scope, it's null
   IScope GetOriginScope();
-  // Where to look next for symbols: superclass or origin (parent) scope
+  // Where to look next for symbols in case if not found (e.g super class) 
   IScope GetFallbackScope();
 
   // Define a symbol in the current scope
   void Define(Symbol sym);
-  // Look up name in this scope or in origin scope if not here
+  // Look up name in this scope or in fallback scope if not here
   Symbol Resolve(string name);
 
   // Readonly collection of members
   SymbolsDictionary GetMembers();
 }
 
-public abstract class Scope : IScope 
+public abstract class BaseScope : IScope 
 {
-  // null if global (outermost) scope
-  protected IScope origin;
+  protected IScope fallback;
 
   protected SymbolsDictionary members = new SymbolsDictionary();
 
   Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
 
-  public Scope(IScope origin) 
+  public BaseScope(IScope fallback = null) 
   { 
-    this.origin = origin;  
+    this.fallback = fallback;  
   }
 
   public SymbolsDictionary GetMembers() { return members; }
@@ -42,9 +41,9 @@ public abstract class Scope : IScope
     if(s != null)
       return s;
 
-    // if not here, check any origin scope
-    if(origin != null) 
-      return origin.Resolve(name);
+    // if not here, check any fallback scope
+    if(fallback != null) 
+      return fallback.Resolve(name);
 
     return null;
   }
@@ -59,7 +58,7 @@ public abstract class Scope : IScope
     sym.scope = this; // track the scope in each symbol
   }
 
-  public void Append(Scope other)
+  public void Append(BaseScope other)
   {
     var ms = other.GetMembers();
     for(int i=0;i<ms.Count;++i)
@@ -69,8 +68,8 @@ public abstract class Scope : IScope
     }
   }
 
-  public IScope GetOriginScope() { return origin; }
-  public IScope GetFallbackScope() { return origin; }
+  public IScope GetOriginScope() { return null; }
+  public IScope GetFallbackScope() { return fallback; }
 
   public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }
 
@@ -93,7 +92,7 @@ public abstract class Scope : IScope
   }
 
 #if BHL_FRONT
-  static FuncType GetFuncType(Scope scope, bhlParser.TypeContext ctx)
+  static FuncType GetFuncType(BaseScope scope, bhlParser.TypeContext ctx)
   {
     var fnargs = ctx.fnargs();
 
@@ -215,42 +214,41 @@ public abstract class Scope : IScope
   }
 }
 
-public class GlobalScope : Scope 
+public class Scope : BaseScope 
+{
+  public Scope(IScope fallback = null) 
+    : base(fallback) 
+  {}
+
+  public override void Define(Symbol sym) 
+  {
+    if(fallback != null && fallback.Resolve(sym.name) != null)
+      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+    base.Define(sym);
+  }
+}
+
+public class GlobalScope : BaseScope 
 {
   public GlobalScope() 
     : base(null) 
   {}
 }
 
-public class LocalScope : Scope 
-{
-  public LocalScope(IScope origin) 
-    : base(origin) 
-  {}
-
-  public override void Define(Symbol sym) 
-  {
-    if(origin != null && origin.Resolve(sym.name) != null)
-      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
-    base.Define(sym);
-  }
-}
-
-public class ModuleScope : Scope 
+public class ModuleScope : Scope
 {
   uint module_id;
+  public GlobalScope globs;
 
-  public ModuleScope(uint module_id, GlobalScope origin) 
-    : base(origin) 
+  public ModuleScope(uint module_id, GlobalScope fallback) 
+    : base(fallback) 
   {
+    this.globs = fallback;
     this.module_id = module_id;
   }
 
   public override void Define(Symbol sym) 
   {
-    if(origin != null && origin.Resolve(sym.name) != null)
-      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
-
     if(sym is VariableSymbol vs)
     {
       //NOTE: adding module id if it's not added already
