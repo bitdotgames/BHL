@@ -892,7 +892,7 @@ public class VM
             if(child is AST_VarDecl vd)
               curr_class.Define(new FieldSymbolScript(vd.name, vd.type, (int)vd.symb_idx));
             else if(child is AST_FuncDecl fd)
-              curr_class.Define(new FuncSymbolScript(curr_class, fd));
+              curr_class.Define(new FuncSymbolScript(fd));
           }
           symbols.Define(curr_class);
           curr_class = null;

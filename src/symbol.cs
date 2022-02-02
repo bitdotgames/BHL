@@ -142,25 +142,23 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
 
 #if BHL_FRONT
   public ClassSymbol(
-    IScope origin, 
     WrappedParseTree parsed, 
     string name, 
     ClassSymbol super_class, 
     VM.ClassCreator creator = null
   )
-    : this(origin, name, super_class, creator)
+    : this(name, super_class, creator)
   {
     this.parsed = parsed;
   }
 #endif
 
   public ClassSymbol(
-    IScope origin, 
     string name, 
     ClassSymbol super_class, 
     VM.ClassCreator creator = null
   )
-    : base(origin, name)
+    : base(name)
   {
     this.type = new TypeRef(this);
     this.super_class = super_class;
@@ -202,7 +200,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
 
   public override IScope GetFallbackScope() 
   {
-    return super_class == null ? origin : super_class;
+    return super_class == null ? this.scope : super_class;
   }
 
   public Symbol ResolveMember(string name)
@@ -256,7 +254,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public const int IDX_AddInplace = 6;
 
   public ArrayTypeSymbol(Scope origin, string name, TypeRef item_type)     
-    : base(origin, name, super_class: null)
+    : base(name, super_class: null)
   {
     this.item_type = item_type;
 
@@ -622,27 +620,21 @@ public class FieldSymbolScript : FieldSymbol
 
 public abstract class EnclosingSymbol : Symbol, IScope 
 {
-  protected IScope origin;
-
   abstract public SymbolsDictionary GetMembers();
 
 #if BHL_FRONT
-  public EnclosingSymbol(IScope origin, WrappedParseTree parsed, string name) 
-    : this(origin, name)
+  public EnclosingSymbol(WrappedParseTree parsed, string name) 
+    : this(name)
   {
     this.parsed = parsed;
   }
 #endif
 
-  //TODO: why passing origin if it can be set once 
-  //      the symbol is actually defined in a scope?
-  public EnclosingSymbol(IScope origin, string name) 
+  public EnclosingSymbol(string name) 
     : base(name, type: null)
-  {
-    this.origin = origin;
-  }
+  {}
 
-  public virtual IScope GetFallbackScope() { return origin; }
+  public virtual IScope GetFallbackScope() { return this.scope; }
 
   public virtual Symbol Resolve(string name) 
   {
@@ -748,8 +740,8 @@ public class FuncSymbol : EnclosingSymbol
 #if BHL_FRONT
   public bool return_statement_found = false;
 
-  public FuncSymbol(WrappedParseTree parsed, IScope origin, string name, FuncType type) 
-    : this(origin, name, type)
+  public FuncSymbol(WrappedParseTree parsed, string name, FuncType type) 
+    : this(name, type)
   {
     this.parsed = parsed;
   }
@@ -758,13 +750,23 @@ public class FuncSymbol : EnclosingSymbol
 
 #endif
 
-  public FuncSymbol(IScope origin, string name, FuncType type) 
-    : base(origin, name)
+  public FuncSymbol(string name, FuncType type) 
+    : base(name)
   {
     this.type = new TypeRef(type);
   }
 
   public override SymbolsDictionary GetMembers() { return members; }
+
+  public override IScope GetFallbackScope() 
+  { 
+    //NOTE: we forbid resolving class members 
+    //      inside methods without 'this.' prefix on purpose
+    if(this.scope is ClassSymbol cs)
+      return cs.scope;
+    else
+      return this.scope; 
+  }
 
   public FuncType GetFuncType()
   {
@@ -825,7 +827,7 @@ public class LambdaSymbol : FuncSymbol
     TypeRef ret_type,
     List<FuncSymbol> fdecl_stack
   ) 
-    : base(parsed, origin, decl.name, new FuncType(ret_type))
+    : base(parsed, decl.name, new FuncType(ret_type))
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
@@ -936,7 +938,7 @@ public class FuncSymbolScript : FuncSymbol
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
-    : this(origin, decl, ret_type)
+    : this(decl, ret_type)
   {
     this.parsed = parsed;
     this.fparams = fparams;
@@ -969,8 +971,8 @@ public class FuncSymbolScript : FuncSymbol
   }
 #endif
 
-  public FuncSymbolScript(IScope origin, AST_FuncDecl decl, TypeRef ret_type = null)
-    : base(origin, decl.name, new FuncType(ret_type == null ? new TypeRef(decl.type) : ret_type))
+  public FuncSymbolScript(AST_FuncDecl decl, TypeRef ret_type = null)
+    : base(decl.name, new FuncType(ret_type == null ? new TypeRef(decl.type) : ret_type))
   {
     this.decl = decl;
   }
@@ -1101,15 +1103,15 @@ public class EnumSymbol : EnclosingSymbol, IType
   public SymbolsDictionary members = new SymbolsDictionary();
 
 #if BHL_FRONT
-  public EnumSymbol(IScope origin, WrappedParseTree parsed, string name)
-    : this(origin, name)
+  public EnumSymbol(WrappedParseTree parsed, string name)
+    : this(name)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public EnumSymbol(IScope origin, string name)
-      : base(origin, name)
+  public EnumSymbol(string name)
+      : base(name)
   {
     this.type = new TypeRef(this);
   }
@@ -1133,8 +1135,8 @@ public class EnumSymbol : EnclosingSymbol, IType
 
 public class EnumSymbolScript : EnumSymbol
 {
-  public EnumSymbolScript(IScope origin, string name)
-    : base(origin, name)
+  public EnumSymbolScript(string name)
+    : base(name)
   {}
 
   //0 - OK, 1 - duplicate key, 2 - duplicate value

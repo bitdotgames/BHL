@@ -1860,11 +1860,7 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_FuncDecl(fstr_name, curr_module.id, tr.name);
 
     var func_symb = new FuncSymbolScript(
-      mscope, 
-      ast, 
-      func_node, 
-      tr, 
-      context.funcParams()
+      mscope, ast, func_node, tr, context.funcParams()
     );
     scope.Define(func_symb);
 
@@ -1918,7 +1914,7 @@ public class Frontend : bhlBaseVisitor<object>
     //      type info this will be justified.
     var ast = AST_Util.New_EnumDecl(enum_name);
 
-    var symb = new EnumSymbolScript(mscope, enum_name);
+    var symb = new EnumSymbolScript(enum_name);
     if(decls_only)
       curr_module.symbols.Define(symb);
     mscope.Define(symb);

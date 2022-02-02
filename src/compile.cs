@@ -804,17 +804,11 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     UseInit();
-    FuncSymbolScript fsymb = null;
+    var fsymb = new FuncSymbolScript(ast);
     if(curr_class_symb != null)
-    {
-      fsymb = new FuncSymbolScript(curr_class_symb, ast);
       curr_class_symb.Define(fsymb);
-    }
     else
-    {
-      fsymb = new FuncSymbolScript(symbols, ast); 
       symbols.Define(fsymb);
-    }
 
     var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
 
@@ -884,8 +878,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_EnumDecl ast)
   {
-    var es = new EnumSymbolScript(symbols, ast.name);
-    symbols.Define(es);
+    symbols.Define(new EnumSymbolScript(ast.name));
   }
 
   public override void DoVisit(AST_Block ast)
