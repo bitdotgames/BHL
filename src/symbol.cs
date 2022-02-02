@@ -692,7 +692,7 @@ public class MultiType : IType
   public void Update()
   {
     string tmp = "";
-    //TODO: guess, this can be more optimal?
+    //TODO: can this be more optimal?
     for(int i=0;i<items.Count;++i)
     {
       if(i > 0)
@@ -749,12 +749,10 @@ public class FuncSymbol : EnclosingSymbol
   SymbolsDictionary members = new SymbolsDictionary();
   SymbolsDictionary args = new SymbolsDictionary();
 
-  //public uint module_id;
-
 #if BHL_FRONT
   public bool return_statement_found = false;
 
-  public FuncSymbol(IScope origin, ParserWrappedNode parsed, string name, FuncType type) 
+  public FuncSymbol(ParserWrappedNode parsed, IScope origin, string name, FuncType type) 
     : this(origin, name, type)
   {
     this.parsed = parsed;
@@ -822,15 +820,15 @@ public class LambdaSymbol : FuncSymbol
   List<FuncSymbol> fdecl_stack;
 
   public LambdaSymbol(
+    ParserWrappedNode parsed, 
     Scope origin,
     AST_LambdaDecl decl, 
     List<FuncSymbol> fdecl_stack, 
-    ParserWrappedNode parsed, 
     uint module_id,
     TypeRef ret_type, 
     bhlParser.FuncLambdaContext lmb_ctx
   ) 
-    : base(origin, parsed, decl.name, new FuncType(ret_type))
+    : base(parsed, origin, decl.name, new FuncType(ret_type))
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
@@ -998,8 +996,16 @@ public class FuncSymbolNative : FuncSymbol
   public FuncSymbolNative(
     string name, 
     TypeRef ret_type, 
-    Cb cb = null, 
-    int def_args_num = 0
+    Cb cb
+  ) 
+    : this(name, ret_type, 0, cb)
+  {}
+
+  public FuncSymbolNative(
+    string name, 
+    TypeRef ret_type, 
+    int def_args_num,
+    Cb cb
   ) 
     : base(null, name, new FuncType(ret_type))
   {
@@ -1014,12 +1020,14 @@ public class FuncSymbolNative : FuncSymbol
   {
     base.Define(sym);
 
-    //NOTE: for bind funcs every defined symbol is assumed to be an argument
-    DefineArg(sym.name);
+    if(sym is FuncArgSymbol)
+    {
+      DefineArg(sym.name);
 
-    var ft = GetFuncType();
-    ft.arg_types.Add(sym.type);
-    ft.Update();
+      var ft = GetFuncType();
+      ft.arg_types.Add(sym.type);
+      ft.Update();
+    }
   }
 }
 

@@ -851,9 +851,9 @@ public class Frontend : bhlBaseVisitor<object>
     var func_name = curr_module.id + "_lmb_" + NextLambdaId(); 
     var ast = AST_Util.New_LambdaDecl(func_name, curr_module.id, tr.name);
     var lambda_node = Wrap(ctx);
-    var symb = new LambdaSymbol(
+    var symb = new LambdaSymbol(lambda_node,
       locals, ast, this.func_decl_stack, 
-      lambda_node, curr_module.id, tr, funcLambda
+      curr_module.id, tr, funcLambda
     );
 
     PushFuncDecl(symb);

@@ -472,7 +472,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
@@ -481,8 +481,7 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, a + b));
 
             return null;
-          },
-          1);
+          });
       fn.Define(new FuncArgSymbol("a", globs.Type("float")));
       fn.Define(new FuncArgSymbol("b", globs.Type("float")));
 
@@ -514,7 +513,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
@@ -523,8 +522,7 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, a + b));
 
             return null;
-          },
-          1);
+          });
       fn.Define(new FuncArgSymbol("a", globs.Type("float")));
       fn.Define(new FuncArgSymbol("b", globs.Type("float")));
 
@@ -551,7 +549,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var a = args_info.IsDefaultArgUsed(0) ? 14 : frm.stack.PopRelease().num;
@@ -559,8 +557,7 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, a));
 
             return null;
-          },
-          1);
+          });
       fn.Define(new FuncArgSymbol("a", globs.Type("float")));
 
       globs.Define(fn);
@@ -586,7 +583,7 @@ public class BHL_TestVM : BHL_TestBase
     var globs = SymbolTable.CreateBuiltins();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"),
+      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), 2,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(1) ? 2 : frm.stack.PopRelease().num;
@@ -595,8 +592,7 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, a + b));
 
             return null;
-          },
-          2);
+          });
       fn.Define(new FuncArgSymbol("a", globs.Type("int")));
       fn.Define(new FuncArgSymbol("b", globs.Type("int")));
 
