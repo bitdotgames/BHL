@@ -639,7 +639,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
     this.origin = origin;
   }
 
-  public virtual IScope GetFallbackScope() { return GetOriginScope(); }
+  public virtual IScope GetFallbackScope() { return origin; }
   public virtual IScope GetOriginScope() { return origin; }
 
   public virtual Symbol Resolve(string name) 

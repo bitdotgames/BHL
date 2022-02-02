@@ -503,7 +503,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(var_symb != null)
         {
           bool is_write = write && arracc == null;
-          bool is_global = var_symb.scope.GetFallbackScope() is GlobalScope;
+          bool is_global = var_symb.scope is ModuleScope;
 
           ast = AST_Util.New_Call(class_scope != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
