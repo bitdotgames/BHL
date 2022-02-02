@@ -141,7 +141,7 @@ public class BuiltInTypeSymbol : Symbol, IType
   public int GetTypeIndex() { return type_index; }
 }
 
-public class ClassSymbol : ScopedSymbol, IScope, IType 
+public class ClassSymbol : EnclosingSymbol, IScope, IType 
 {
   internal ClassSymbol super_class;
 
@@ -520,8 +520,9 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
 public class VariableSymbol : Symbol 
 {
+  //if variable is global in a module it stores its id
   public uint module_id;
-
+  //index of variable in a scope
   public int scope_idx = -1;
 
 #if BHL_FRONT
@@ -627,21 +628,21 @@ public class FieldSymbolScript : FieldSymbol
   }
 }
 
-public abstract class ScopedSymbol : Symbol, IScope 
+public abstract class EnclosingSymbol : Symbol, IScope 
 {
   protected IScope origin;
 
   public abstract SymbolsDictionary GetMembers();
 
 #if BHL_FRONT
-  public ScopedSymbol(IScope origin, ParserWrappedNode parsed, string name, TypeRef type = null) 
+  public EnclosingSymbol(IScope origin, ParserWrappedNode parsed, string name, TypeRef type = null) 
     : this(origin, name, type)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public ScopedSymbol(IScope origin, string name, TypeRef type = null) 
+  public EnclosingSymbol(IScope origin, string name, TypeRef type = null) 
     : base(name, type)
   {
     this.origin = origin;
@@ -748,7 +749,7 @@ public class FuncType : IType
   }
 }
 
-public class FuncSymbol : ScopedSymbol
+public class FuncSymbol : EnclosingSymbol
 {
   SymbolsDictionary members = new SymbolsDictionary();
   SymbolsDictionary args = new SymbolsDictionary();
@@ -1096,7 +1097,7 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public class EnumSymbol : ScopedSymbol, IScope, IType 
+public class EnumSymbol : EnclosingSymbol, IScope, IType 
 {
   public SymbolsDictionary members = new SymbolsDictionary();
 
