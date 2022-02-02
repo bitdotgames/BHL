@@ -69,11 +69,11 @@ public class Frontend : bhlBaseVisitor<object>
   Module curr_module;
   ModuleRegistry mreg;
   ITokenStream tokens;
-  ParseTreeProperty<ParserWrappedNode> nodes = new ParseTreeProperty<ParserWrappedNode>();
+  ParseTreeProperty<WrappedParseTree> trees = new ParseTreeProperty<WrappedParseTree>();
   //NOTE: current module's scope, it contains only symbols which belong to the current module
   //      and symbols which were imported from other modules, it fallbacks to the global scope
   //      if symbol is not found
-  ModuleScope locals;
+  ModuleScope mscope;
   IScope curr_scope;
   int scope_level;
 
@@ -186,10 +186,10 @@ public class Frontend : bhlBaseVisitor<object>
     this.decls_only = decls_only;
     if(globs == null)
       throw new Exception("Global scope is not set");
-    this.locals = new ModuleScope(module.id, globs);
+    this.mscope = new ModuleScope(module.id, globs);
     this.mreg = mreg;
 
-    curr_scope = this.locals;
+    curr_scope = this.mscope;
   }
 
   Stack<AST> ast_stack = new Stack<AST>();
@@ -236,16 +236,15 @@ public class Frontend : bhlBaseVisitor<object>
     return Wrap(t).Location();
   }
 
-  public ParserWrappedNode Wrap(IParseTree t)
+  public WrappedParseTree Wrap(IParseTree t)
   {
-    var n = nodes.Get(t);
+    var n = trees.Get(t);
     if(n == null)
     {
-      n = new ParserWrappedNode();
+      n = new WrappedParseTree();
       n.tree = t;
       n.tokens = tokens;
-      n.builder = this;
-      nodes.Put(t, n);
+      trees.Put(t, n);
     }
     return n;
   }
@@ -306,11 +305,11 @@ public class Frontend : bhlBaseVisitor<object>
     //removing quotes
     import = import.Substring(1, import.Length-2);
     
-    var module = mreg.ImportModule(curr_module, (GlobalScope)locals.GetOriginScope(), import);
+    var module = mreg.ImportModule(curr_module, (GlobalScope)mscope.GetOriginScope(), import);
     //NOTE: null means module is already imported
     if(module != null)
     {
-      locals.Append(module.symbols);
+      mscope.Append(module.symbols);
       ast.module_ids.Add(module.id);
       ast.module_names.Add(import);
     }
@@ -376,7 +375,7 @@ public class Frontend : bhlBaseVisitor<object>
         FireError(Location(root_name) + " : symbol not resolved");
       if(name_symb.type == null)
         FireError(Location(root_name) + " : bad chain call");
-      curr_type = name_symb.type.Get(locals);
+      curr_type = name_symb.type.Get(mscope);
     }
 
     if(chain != null)
@@ -459,22 +458,22 @@ public class Frontend : bhlBaseVisitor<object>
           FireError(Location(name) + " : symbol is not a function");
 
         //func ptr
-        if(var_symb != null && var_symb.type.Get(locals) is FuncType)
+        if(var_symb != null && var_symb.type.Get(mscope) is FuncType)
         {
-          var ftype = var_symb.type.Get(locals) as FuncType;
+          var ftype = var_symb.type.Get(mscope) as FuncType;
 
           if(class_scope == null)
           {
             ast = AST_Util.New_Call(EnumCall.FUNC_VAR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-            type = ftype.ret_type.Get(locals);
+            type = ftype.ret_type.Get(mscope);
           }
           else //func ptr member of class
           {
             PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, var_symb, class_scope));
             ast = AST_Util.New_Call(EnumCall.FUNC_MVAR, line);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-            type = ftype.ret_type.Get(locals);
+            type = ftype.ret_type.Get(mscope);
           }
         }
         else if(func_symb != null)
@@ -486,7 +485,7 @@ public class Frontend : bhlBaseVisitor<object>
         else
         {
           //NOTE: let's try fetching func symbol from the module scope
-          func_symb = locals.Resolve(str_name) as FuncSymbol;
+          func_symb = mscope.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
             ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0));
@@ -521,17 +520,17 @@ public class Frontend : bhlBaseVisitor<object>
               FireError(Location(name) +  " : getting field by 'ref' not supported for this class");
             ast.type = EnumCall.MVARREF; 
           }
-          type = var_symb.type.Get(locals);
+          type = var_symb.type.Get(mscope);
         }
         else if(func_symb != null)
         {
-          var call_func_symb = locals.Resolve(str_name) as FuncSymbol;
+          var call_func_symb = mscope.Resolve(str_name) as FuncSymbol;
           if(call_func_symb == null)
             FireError(Location(name) +  " : no such function found");
           var func_call_name = call_func_symb.name;
 
           ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, func_call_name, (call_func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0));
-          type = func_symb.type.Get(locals);
+          type = func_symb.type.Get(mscope);
         }
         else
         {
@@ -547,7 +546,7 @@ public class Frontend : bhlBaseVisitor<object>
       
       ast = AST_Util.New_Call(EnumCall.LMBD, line);
       AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-      type = ftype.ret_type.Get(locals);
+      type = ftype.ret_type.Get(mscope);
     }
 
     if(ast != null)
@@ -569,7 +568,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(Wrap(arr_exp).eval_type != SymbolTable.symb_int)
       FireError(Location(arr_exp) +  " : array index expression is not of type int");
 
-    type = arr_type.item_type.Get(locals);
+    type = arr_type.item_type.Get(mscope);
 
     var ast = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
     ast.scope_type = arr_type.Type();
@@ -665,7 +664,7 @@ public class Frontend : bhlBaseVisitor<object>
           FireError(Location(ca) +  " : max arguments reached");
 
         var func_arg_symb = (Symbol)func_args[i];
-        var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get(locals) : func_arg_symb.parsed.eval_type;  
+        var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get(mscope) : func_arg_symb.parsed.eval_type;  
 
         bool is_ref = ca.isRef() != null;
         if(!is_ref && func_symb.IsArgRefAt(i))
@@ -687,9 +686,9 @@ public class Frontend : bhlBaseVisitor<object>
         //NOTE: if symbol is from bindings we don't have a source node attached to it
         if(func_arg_symb.parsed == null)
         {
-          if(func_arg_symb.type.Get(locals) == null)
+          if(func_arg_symb.type.Get(mscope) == null)
             FireError(Location(ca) +  " : invalid type");
-          SymbolTable.CheckAssign(func_arg_symb.type.Get(locals), wca);
+          SymbolTable.CheckAssign(func_arg_symb.type.Get(mscope), wca);
         }
         else
           SymbolTable.CheckAssign(func_arg_symb.parsed, wca);
@@ -723,7 +722,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(ca_name != null)
         FireError(Location(ca_name) +  " : named arguments not supported for function pointers");
 
-      var arg_type = arg_type_ref.Get(locals);
+      var arg_type = arg_type_ref.Get(mscope);
       PushJsonType(arg_type);
       PushAST(new AST_Interim());
       Visit(ca);
@@ -844,16 +843,16 @@ public class Frontend : bhlBaseVisitor<object>
 
   void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
   {
-    var tr = locals.Type(funcLambda.retType());
+    var tr = mscope.Type(funcLambda.retType());
     if(tr.type == null)
       FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
 
     var func_name = curr_module.id + "_lmb_" + NextLambdaId(); 
     var ast = AST_Util.New_LambdaDecl(func_name, curr_module.id, tr.name);
-    var lambda_node = Wrap(ctx);
-    var symb = new LambdaSymbol(lambda_node,
-      locals, ast, this.func_decl_stack, 
-      tr, funcLambda
+    var symb = new LambdaSymbol(
+      Wrap(ctx), funcLambda,
+      mscope, ast, tr, 
+      this.func_decl_stack
     );
 
     PushFuncDecl(symb);
@@ -869,7 +868,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    locals.Define(symb);
+    mscope.Define(symb);
 
     //NOTE: while we are inside lambda the eval type is the return type of
     Wrap(ctx).eval_type = symb.GetReturnType();
@@ -881,7 +880,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopFuncDecl();
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
-    var curr_type = symb.type.Get(locals); 
+    var curr_type = symb.type.Get(mscope); 
     Wrap(ctx).eval_type = curr_type;
 
     curr_scope = scope_backup;
@@ -934,7 +933,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(new_exp != null)
     {
-      var tr = locals.Type(new_exp.type());
+      var tr = mscope.Type(new_exp.type());
       if(tr.type == null)
         FireError(Location(new_exp.type()) + " : type '" + tr.name + "' not found");
       PushJsonType(tr.type);
@@ -979,7 +978,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx) + " : [..] is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
-    var orig_type = arr_type.item_type.Get(locals);
+    var orig_type = arr_type.item_type.Get(mscope);
     if(orig_type == null)
       FireError(Location(ctx) + " : type '" + arr_type.item_type.name + "' not found");
     PushJsonType(orig_type);
@@ -1024,7 +1023,7 @@ public class Frontend : bhlBaseVisitor<object>
       throw new Exception("Symbol index not found for '" + name_str + "'");
     var ast = AST_Util.New_JsonPair(curr_type.GetName(), name_str, name_idx);
 
-    PushJsonType(member.type.Get(locals));
+    PushJsonType(member.type.Get(mscope));
 
     var jval = ctx.jsonValue(); 
     PushAST(ast);
@@ -1033,7 +1032,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PopJsonType();
 
-    Wrap(ctx).eval_type = member.type.Get(locals);
+    Wrap(ctx).eval_type = member.type.Get(mscope);
 
     PeekAST().AddChild(ast);
     return null;
@@ -1064,7 +1063,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
   {
     var type = ctx.typeid().type();
-    var tr = locals.Type(type);
+    var tr = mscope.Type(type);
     if(tr.type == null)
       FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
 
@@ -1081,7 +1080,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var exp = ctx.staticCallExp(); 
     var ctx_name = exp.NAME();
-    var enum_symb = locals.Resolve(ctx_name.GetText()) as EnumSymbol;
+    var enum_symb = mscope.Resolve(ctx_name.GetText()) as EnumSymbol;
     if(enum_symb == null)
       FireError(Location(ctx) + " : type '" + ctx_name + "' not found");
 
@@ -1111,7 +1110,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tr = locals.Type(ctx.newExp().type());
+    var tr = mscope.Type(ctx.newExp().type());
     if(tr.type == null)
       FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
 
@@ -1133,7 +1132,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
-    var tr = locals.Type(ctx.type());
+    var tr = mscope.Type(ctx.type());
     if(tr.type == null)
       FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
 
@@ -1337,7 +1336,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
 
-      Wrap(ctx).eval_type = SymbolTable.BopOverload(locals, wlhs, wrhs, op_func);
+      Wrap(ctx).eval_type = SymbolTable.BopOverload(mscope, wlhs, wrhs, op_func);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
@@ -1699,7 +1698,7 @@ public class Frontend : bhlBaseVisitor<object>
         for(int i=0;i<explen;++i)
         {
           var exp = explist.exp()[i];
-          SymbolTable.CheckAssign(fmret_type.items[i].Get(locals), Wrap(exp));
+          SymbolTable.CheckAssign(fmret_type.items[i].Get(mscope), Wrap(exp));
         }
 
         ret_type.Update();
@@ -1788,7 +1787,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var func_ast = CommonFuncDecl(ctx, locals);
+    var func_ast = CommonFuncDecl(ctx, mscope);
     PeekAST().AddChild(func_ast);
     return null;
   }
@@ -1800,7 +1799,7 @@ public class Frontend : bhlBaseVisitor<object>
     ClassSymbol super_class = null;
     if(ctx.classEx() != null)
     {
-      super_class = locals.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
+      super_class = mscope.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
       if(super_class == null)
         FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
     }
@@ -1811,7 +1810,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(decls_only)
       curr_module.symbols.Define(class_symb);
 
-    locals.Define(class_symb);
+    mscope.Define(class_symb);
 
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
@@ -1847,7 +1846,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
   {
-    var tr = locals.Type(context.retType());
+    var tr = mscope.Type(context.retType());
 
     if(tr.type == null)
       FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
@@ -1860,7 +1859,7 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_FuncDecl(fstr_name, curr_module.id, tr.name);
 
     var func_symb = new FuncSymbolScript(
-      locals, 
+      mscope, 
       ast, 
       func_node, 
       tr, 
@@ -1921,7 +1920,7 @@ public class Frontend : bhlBaseVisitor<object>
     var symb = new EnumSymbolScript(enum_name);
     if(decls_only)
       curr_module.symbols.Define(symb);
-    locals.Define(symb);
+    mscope.Define(symb);
     curr_scope = symb;
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
@@ -1942,7 +1941,7 @@ public class Frontend : bhlBaseVisitor<object>
       ast.AddChild(ast_item);
     }
 
-    curr_scope = locals;
+    curr_scope = mscope;
 
     PeekAST().AddChild(ast);
 
@@ -1955,10 +1954,10 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(decls_only)
     {
-      var tr = locals.Type(vd.type().GetText());
+      var tr = mscope.Type(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
       curr_module.symbols.Define(symb);
-      locals.Define(symb);
+      mscope.Define(symb);
     }
     else
     {
@@ -1967,7 +1966,7 @@ public class Frontend : bhlBaseVisitor<object>
       AST_Interim exp_ast = null;
       if(assign_exp != null)
       {
-        var tr = locals.Type(vd.type());
+        var tr = mscope.Type(vd.type());
         if(tr.type == null)
           FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
 
@@ -2010,8 +2009,8 @@ public class Frontend : bhlBaseVisitor<object>
       bool pop_json_type = false;
       if(found_default_arg)
       {
-        var tr = locals.Type(fp.type());
-        PushJsonType(tr.Get(locals));
+        var tr = mscope.Type(fp.type());
+        PushJsonType(tr.Get(mscope));
         pop_json_type = true;
       }
 
@@ -2045,7 +2044,7 @@ public class Frontend : bhlBaseVisitor<object>
       var cexp = tmp.callExp();
       var vd = tmp.varDeclare();
 
-      ParserWrappedNode wnode = null;
+      WrappedParseTree ptree = null;
       IType curr_type = null;
       bool is_decl = false;
 
@@ -2056,8 +2055,8 @@ public class Frontend : bhlBaseVisitor<object>
 
         ProcChainedCall(cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
 
-        wnode = Wrap(cexp.NAME());
-        wnode.eval_type = curr_type;
+        ptree = Wrap(cexp.NAME());
+        ptree.eval_type = curr_type;
       }
       else 
       {
@@ -2070,10 +2069,10 @@ public class Frontend : bhlBaseVisitor<object>
           var vd_symb = curr_scope.Resolve(vd_name) as VariableSymbol;
           if(vd_symb == null)
             FireError(Location(vd) + " : symbol not resolved");
-          curr_type = vd_symb.type.Get(locals);
+          curr_type = vd_symb.type.Get(mscope);
 
-          wnode = Wrap(vd.NAME());
-          wnode.eval_type = curr_type;
+          ptree = Wrap(vd.NAME());
+          ptree.eval_type = curr_type;
 
           var ast = AST_Util.New_Call(EnumCall.VARW, start_line, vd_symb);
           root.AddChild(ast);
@@ -2085,8 +2084,8 @@ public class Frontend : bhlBaseVisitor<object>
 
           is_decl = true;
 
-          wnode = Wrap(vd.NAME()); 
-          curr_type = wnode.eval_type;
+          ptree = Wrap(vd.NAME()); 
+          curr_type = ptree.eval_type;
         }
       }
 
@@ -2160,9 +2159,9 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var mtype = assign_type as MultiType;
         if(mtype != null)
-          SymbolTable.CheckAssign(wnode, mtype.items[i].Get(locals));
+          SymbolTable.CheckAssign(ptree, mtype.items[i].Get(mscope));
         else
-          SymbolTable.CheckAssign(wnode, Wrap(assign_exp));
+          SymbolTable.CheckAssign(ptree, Wrap(assign_exp));
       }
     }
   }
@@ -2216,7 +2215,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = name.GetText();
 
-    var tr = locals.Type(type);
+    var tr = mscope.Type(type);
     if(tr.type == null)
       FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
 
@@ -2596,7 +2595,7 @@ public class Frontend : bhlBaseVisitor<object>
       iter_ast_decl = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
       iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
     }
-    var arr_type = (ClassSymbol)locals.Type(iter_str_type+"[]").Get(locals);
+    var arr_type = (ClassSymbol)mscope.Type(iter_str_type+"[]").Get(mscope);
 
     PushJsonType(arr_type);
     var exp = ctx.foreachExp().exp();
@@ -2614,7 +2613,7 @@ public class Frontend : bhlBaseVisitor<object>
     var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
     if(arr_tmp_symb == null)
     {
-      arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, locals.Type(iter_str_type));
+      arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, mscope.Type(iter_str_type));
       curr_scope.Define(arr_tmp_symb);
     }
 
@@ -2622,7 +2621,7 @@ public class Frontend : bhlBaseVisitor<object>
     var arr_cnt_symb = curr_scope.Resolve(arr_cnt_name) as VariableSymbol;
     if(arr_cnt_symb == null)
     {
-      arr_cnt_symb = new VariableSymbol(Wrap(exp), arr_cnt_name, locals.Type("int"));
+      arr_cnt_symb = new VariableSymbol(Wrap(exp), arr_cnt_name, mscope.Type("int"));
       curr_scope.Define(arr_cnt_symb);
     }
 

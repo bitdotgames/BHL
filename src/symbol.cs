@@ -67,11 +67,10 @@ public class TypeRef
 }
 
 #if BHL_FRONT
-public class ParserWrappedNode
+public class WrappedParseTree
 {
   public IParseTree tree;
   public ITokenStream tokens;
-  public Frontend builder;
 
   public IScope scope;
   public Symbol symbol;
@@ -98,7 +97,7 @@ public class Symbol
   public IScope scope;
 #if BHL_FRONT
   // Location in parse tree, can be null if it's a native symbol
-  public ParserWrappedNode parsed;
+  public WrappedParseTree parsed;
 #endif
 
   public Symbol(string name, TypeRef type) 
@@ -149,7 +148,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
 #if BHL_FRONT
   public ClassSymbol(
     IScope origin, 
-    ParserWrappedNode parsed, 
+    WrappedParseTree parsed, 
     string name, 
     ClassSymbol super_class, 
     VM.ClassCreator creator = null
@@ -529,7 +528,7 @@ public class VariableSymbol : Symbol
   //we mark this symbol as 'out of scope'
   public bool is_out_of_scope;
 
-  public VariableSymbol(ParserWrappedNode parsed, string name, TypeRef type) 
+  public VariableSymbol(WrappedParseTree parsed, string name, TypeRef type) 
     : this(name, type) 
   {
     this.parsed = parsed;
@@ -558,7 +557,7 @@ public class FuncArgSymbol : VariableSymbol
   public bool is_ref;
 
 #if BHL_FRONT
-  public FuncArgSymbol(ParserWrappedNode parsed, string name, TypeRef type, bool is_ref = false)
+  public FuncArgSymbol(WrappedParseTree parsed, string name, TypeRef type, bool is_ref = false)
     : this(name, type, is_ref)
   {
     this.parsed = parsed;
@@ -632,7 +631,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
   public abstract SymbolsDictionary GetMembers();
 
 #if BHL_FRONT
-  public EnclosingSymbol(IScope origin, ParserWrappedNode parsed, string name, TypeRef type = null) 
+  public EnclosingSymbol(IScope origin, WrappedParseTree parsed, string name, TypeRef type = null) 
     : this(origin, name, type)
   {
     this.parsed = parsed;
@@ -752,7 +751,7 @@ public class FuncSymbol : EnclosingSymbol
 #if BHL_FRONT
   public bool return_statement_found = false;
 
-  public FuncSymbol(ParserWrappedNode parsed, IScope origin, string name, FuncType type) 
+  public FuncSymbol(WrappedParseTree parsed, IScope origin, string name, FuncType type) 
     : this(origin, name, type)
   {
     this.parsed = parsed;
@@ -820,12 +819,12 @@ public class LambdaSymbol : FuncSymbol
   List<FuncSymbol> fdecl_stack;
 
   public LambdaSymbol(
-    ParserWrappedNode parsed, 
+    WrappedParseTree parsed, 
+    bhlParser.FuncLambdaContext lmb_ctx,
     Scope origin,
     AST_LambdaDecl decl, 
-    List<FuncSymbol> fdecl_stack, 
-    TypeRef ret_type, 
-    bhlParser.FuncLambdaContext lmb_ctx
+    TypeRef ret_type,
+    List<FuncSymbol> fdecl_stack
   ) 
     : base(parsed, origin, decl.name, new FuncType(ret_type))
   {
@@ -934,7 +933,7 @@ public class FuncSymbolScript : FuncSymbol
   public FuncSymbolScript(
     Scope origin,
     AST_FuncDecl decl, 
-    ParserWrappedNode parsed, 
+    WrappedParseTree parsed, 
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
@@ -986,7 +985,7 @@ public class FuncSymbolNative : FuncSymbol
   public delegate ICoroutine Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
   public Cb cb;
 
-  public int def_args_num;
+  int def_args_num;
 
   public FuncSymbolNative(
     string name, 
@@ -1103,7 +1102,7 @@ public class EnumSymbol : EnclosingSymbol, IScope, IType
   public SymbolsDictionary members = new SymbolsDictionary();
 
 #if BHL_FRONT
-  public EnumSymbol(IScope origin, ParserWrappedNode parsed, string name)
+  public EnumSymbol(IScope origin, WrappedParseTree parsed, string name)
     : this(origin, name)
   {
     this.parsed = parsed;
@@ -1161,7 +1160,7 @@ public class EnumItemSymbol : Symbol, IType
   public int val;
 
 #if BHL_FRONT
-  public EnumItemSymbol(ParserWrappedNode parsed, EnumSymbol en, string name, int val = 0) 
+  public EnumItemSymbol(WrappedParseTree parsed, EnumSymbol en, string name, int val = 0) 
     : this(en, name, val) 
   {
     this.parsed = parsed;
@@ -1356,7 +1355,7 @@ static public class SymbolTable
   }
 
 #if BHL_FRONT
-  static public IType GetResultType(IType[,] typeTable, ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType GetResultType(IType[,] typeTable, WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type == b.eval_type)
       return a.eval_type;
@@ -1415,7 +1414,7 @@ static public class SymbolTable
   }
 
 #if BHL_FRONT
-  static public void CheckAssign(ParserWrappedNode lhs, ParserWrappedNode rhs) 
+  static public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
@@ -1428,7 +1427,7 @@ static public class SymbolTable
     }
   }
 
-  static public void CheckAssign(IType lhs, ParserWrappedNode rhs) 
+  static public void CheckAssign(IType lhs, WrappedParseTree rhs) 
   {
     int tlhs = lhs.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.eval_type.GetTypeIndex();
@@ -1441,7 +1440,7 @@ static public class SymbolTable
     }
   }
 
-  static public void CheckAssign(ParserWrappedNode lhs, IType rhs) 
+  static public void CheckAssign(WrappedParseTree lhs, IType rhs) 
   {
     int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
     int trhs = rhs.GetTypeIndex();
@@ -1454,7 +1453,7 @@ static public class SymbolTable
     }
   }
 
-  static public void CheckCast(ParserWrappedNode type, ParserWrappedNode exp) 
+  static public void CheckCast(WrappedParseTree type, WrappedParseTree exp) 
   {
     int tlhs = type.eval_type.GetTypeIndex();
     int trhs = exp.eval_type.GetTypeIndex();
@@ -1482,7 +1481,7 @@ static public class SymbolTable
     );
   }
 
-  static public IType Bop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Bop(WrappedParseTree a, WrappedParseTree b) 
   {
     if(!IsBopCompatibleType(a.eval_type))
       throw new UserError(
@@ -1497,14 +1496,14 @@ static public class SymbolTable
     return GetResultType(arithmetic_res_type, a, b);
   }
 
-  static public IType BopOverload(IScope scope, ParserWrappedNode a, ParserWrappedNode b, FuncSymbol op_func) 
+  static public IType BopOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
     CheckAssign(op_func_arg.type.Get(scope), b);
     return op_func.GetReturnType();
   }
 
-  static public IType Relop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Relop(WrappedParseTree a, WrappedParseTree b) 
   {
     if(!IsRelopCompatibleType(a.eval_type))
       throw new UserError(
@@ -1522,13 +1521,13 @@ static public class SymbolTable
     return symb_bool;
   }
 
-  static public IType Eqop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Eqop(WrappedParseTree a, WrappedParseTree b) 
   {
     GetResultType(equality_res_type, a, b);
     return symb_bool;
   }
 
-  static public IType Uminus(ParserWrappedNode a) 
+  static public IType Uminus(WrappedParseTree a) 
   {
     if(!(a.eval_type == symb_int || a.eval_type == symb_float)) 
       throw new UserError(a.Location()+" : must be numeric type");
@@ -1536,7 +1535,7 @@ static public class SymbolTable
     return a.eval_type;
   }
 
-  static public IType Bitop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Bitop(WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type != symb_int) 
       throw new UserError(a.Location()+" : must be int type");
@@ -1547,7 +1546,7 @@ static public class SymbolTable
     return symb_int;
   }
 
-  static public IType Lop(ParserWrappedNode a, ParserWrappedNode b) 
+  static public IType Lop(WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type != symb_bool) 
       throw new UserError(a.Location()+" : must be bool type");
@@ -1558,7 +1557,7 @@ static public class SymbolTable
     return symb_bool;
   }
 
-  static public IType Unot(ParserWrappedNode a) 
+  static public IType Unot(WrappedParseTree a) 
   {
     if(a.eval_type != symb_bool) 
       throw new UserError(a.Location()+" : must be bool type");
