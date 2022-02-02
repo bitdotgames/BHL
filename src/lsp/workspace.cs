@@ -129,13 +129,6 @@ namespace bhlsp
       
       foreach(var progblock in ToParser().program().progblock())
       {
-        foreach(var decl in progblock.decls().decl())
-        {
-          var fndecl = decl.funcDecl();
-          if(fndecl != null)
-            funcDecls.Add(fndecl);
-        }
-
         var imports = progblock.imports();
         if(imports != null)
         {
@@ -145,6 +138,17 @@ namespace bhlsp
             //removing quotes
             import = import.Substring(1, import.Length-2);
             this.imports.Add(import);
+          }
+        }
+
+        var decls = progblock.decls();
+        if(decls != null)
+        {
+          foreach(var decl in decls.decl())
+          {
+            var fndecl = decl.funcDecl();
+            if(fndecl != null && fndecl.NAME() != null)
+              funcDecls.Add(fndecl);
           }
         }
       }
@@ -217,8 +221,14 @@ namespace bhlsp
         return self_;
       }
     }
+
+    struct RootPath
+    {
+      public string path;
+      public bool cleanup;
+    }
     
-    private List<string> root = new List<string>();
+    private List<RootPath> root = new List<RootPath>();
     private Dictionary<string, BHLSPTextDocument> documents = new Dictionary<string, BHLSPTextDocument>();
 
     public TextDocumentSyncKind syncKind { get; set; } = TextDocumentSyncKind.Full;
@@ -231,7 +241,19 @@ namespace bhlsp
     public void Shutdown()
     {
       documents.Clear();
-      root.Clear();
+      for(int i = root.Count - 1; i >= 0; i--)
+      {
+        if(root[i].cleanup)
+          root.RemoveAt(i);
+      }
+    }
+
+    public void AddRoot(string pathFolder, bool cleanup, bool check = true)
+    {
+      if(check && !Directory.Exists(pathFolder))
+        return;
+      
+      root.Add(new RootPath {path = pathFolder, cleanup = cleanup});
     }
     
     public async void TryAddDocuments(string pathFolder)
@@ -239,7 +261,7 @@ namespace bhlsp
       pathFolder = Util.NormalizeFilePath(pathFolder);
       if(Directory.Exists(pathFolder))
       {
-        root.Add(pathFolder);
+        AddRoot(pathFolder, true, false);
         
         string[] files = new string[0];
         
@@ -423,7 +445,7 @@ namespace bhlsp
         string path = string.Empty;
         if(!Path.IsPathRooted(import))
         {
-          var dir = Path.GetDirectoryName(root);
+          var dir = Path.GetDirectoryName(root.path);
           path = Path.GetFullPath(Path.Combine(dir, import) + ext);
           if(File.Exists(path))
           {
@@ -433,7 +455,7 @@ namespace bhlsp
         }
         else
         {
-          path = Path.GetFullPath(root + "/" + import.Substring(import.LastIndexOf("/") + 1) + ext);
+          path = Path.GetFullPath(root.path + "/" + import.Substring(import.LastIndexOf("/") + 1) + ext);
           if(File.Exists(path))
           {
             filePath = path;

@@ -271,27 +271,30 @@ namespace bhlsp
         var txtLine = text.Substring(start, stop - start);
         string funcName = string.Empty;
         uint activeParameter = 0;
-      
-        string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
-        MatchCollection matches = Regex.Matches(txtLine, pattern, RegexOptions.Multiline);
-        for(int i = matches.Count-1; i >= 0; i--)
+        
+        if(txtLine.IndexOf("func", StringComparison.Ordinal) == -1)
         {
-          var m = matches[i];
-          if(m.Index < character)
+          string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
+          MatchCollection matches = Regex.Matches(txtLine, pattern, RegexOptions.Multiline);
+          for(int i = matches.Count-1; i >= 0; i--)
           {
-            string v = m.Value;
-            int len = v.Length - 1;
-
-            if(len > 0)
+            var m = matches[i];
+            if(m.Index < character)
             {
-              funcName = txtLine.Substring(m.Index, len);
-              var funcDeclStr = txtLine.Substring(m.Index, Math.Max(0, character - m.Index));
-              activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1);
-              break;
+              string v = m.Value;
+              int len = v.Length - 1;
+
+              if(len > 0)
+              {
+                funcName = txtLine.Substring(m.Index, len);
+                var funcDeclStr = txtLine.Substring(m.Index, Math.Max(0, character - m.Index));
+                activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1);
+                break;
+              }
             }
           }
         }
-
+        
         bhlParser.FuncDeclContext funcDecl = null;
         if(!string.IsNullOrEmpty(funcName))
         {
@@ -506,7 +509,7 @@ namespace bhlsp
           {
             foreach(var fd in doc.funcDecls)
             {
-              if(fd.NAME() != null && callExp.NAME().GetText() == fd.NAME().GetText())
+              if(callExp.NAME().GetText() == fd.NAME().GetText())
               {
                 funcDecl = fd;
                 funcDeclBhlDocument = doc;
@@ -526,7 +529,7 @@ namespace bhlsp
               {
                 foreach(var fd in bhlDocument.funcDecls)
                 {
-                  if(fd.NAME() != null && callExp.NAME().GetText() == fd.NAME().GetText())
+                  if(callExp.NAME().GetText() == fd.NAME().GetText())
                   {
                     funcDecl = fd;
                     funcDeclBhlDocument = bhlDocument;

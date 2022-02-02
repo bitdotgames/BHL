@@ -1,11 +1,37 @@
 using System;
 using System.Text;
+using Mono.Options;
 using bhlsp;
 
 public class BHLSPC
 {
   public static void Main(string[] args)
   {
+#if BHLSP_DEBUG
+    BHLSPLogger.CleanUpLogFile();
+#endif
+    
+    var p = new OptionSet
+    {
+      { "root=", "bhl root dir",
+        v => BHLSPWorkspace.self.AddRoot(v, false) }
+    };
+    
+    try
+    {
+      p.Parse(args);
+    }
+#if BHLSP_DEBUG
+    catch(OptionException e)
+    {
+      BHLSPLogger.WriteLine(e);
+#else
+    catch
+    {
+      // ignored
+#endif
+    }
+
     Console.OutputEncoding = new UTF8Encoding();
 
     var stdin = Console.OpenStandardInput();
@@ -20,11 +46,7 @@ public class BHLSPC
     rpc.AttachRpcService(new BHLSPTextDocumentGoToJsonRpcService());
     
     BHLSPServer server = new BHLSPServer(connection, rpc);
-
-#if BHLSP_DEBUG
-    BHLSPLogger.CleanUpLogFile();
-#endif
-      
+    
     try
     {
       server.Listen().Wait();
