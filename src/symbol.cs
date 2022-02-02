@@ -1348,6 +1348,24 @@ static public class TypeSystem
     }
   }
 
+  static bool IsBuiltin(Symbol s)
+  {
+    return ((s is BuiltInTypeSymbol) || 
+            (s is ArrayTypeSymbol)
+           );
+  }
+
+  static public bool IsCompoundType(string name)
+  {
+    for(int i=0;i<name.Length;++i)
+    {
+      char c = name[i];
+      if(!(Char.IsLetterOrDigit(c) || c == '_'))
+        return true;
+    }
+    return false;
+  }
+
   static public bool CanAssignTo(IType src, IType dst, IType promotion) 
   {
     return src == dst || 
@@ -1397,6 +1415,32 @@ static public class TypeSystem
   }
 
 #if BHL_FRONT
+  static public FuncType GetFuncType(BaseScope scope, bhlParser.TypeContext ctx)
+  {
+    var fnargs = ctx.fnargs();
+
+    string ret_type_str = ctx.NAME().GetText();
+    if(fnargs.ARR() != null)
+      ret_type_str += "[]";
+    
+    var ret_type = scope.Type(ret_type_str);
+
+    var arg_types = new List<TypeRef>();
+    var fnames = fnargs.names();
+    if(fnames != null)
+    {
+      for(int i=0;i<fnames.refName().Length;++i)
+      {
+        var name = fnames.refName()[i];
+        var arg_type = scope.Type(name.NAME().GetText());
+        arg_type.is_ref = name.isRef() != null; 
+        arg_types.Add(arg_type);
+      }
+    }
+
+    return new FuncType(ret_type, arg_types);
+  }
+
   static public IType GetResultType(IType[,] table, WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type == b.eval_type)

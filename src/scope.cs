@@ -73,51 +73,7 @@ public abstract class BaseScope : IScope
 
   public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }
 
-  static bool IsBuiltin(Symbol s)
-  {
-    return ((s is BuiltInTypeSymbol) || 
-            (s is ArrayTypeSymbol)
-           );
-  }
-
-  public static bool IsCompoundType(string name)
-  {
-    for(int i=0;i<name.Length;++i)
-    {
-      char c = name[i];
-      if(!(Char.IsLetterOrDigit(c) || c == '_'))
-        return true;
-    }
-    return false;
-  }
-
 #if BHL_FRONT
-  static FuncType GetFuncType(BaseScope scope, bhlParser.TypeContext ctx)
-  {
-    var fnargs = ctx.fnargs();
-
-    string ret_type_str = ctx.NAME().GetText();
-    if(fnargs.ARR() != null)
-      ret_type_str += "[]";
-    
-    var ret_type = scope.Type(ret_type_str);
-
-    var arg_types = new List<TypeRef>();
-    var fnames = fnargs.names();
-    if(fnames != null)
-    {
-      for(int i=0;i<fnames.refName().Length;++i)
-      {
-        var name = fnames.refName()[i];
-        var arg_type = scope.Type(name.NAME().GetText());
-        arg_type.is_ref = name.isRef() != null; 
-        arg_types.Add(arg_type);
-      }
-    }
-
-    return new FuncType(ret_type, arg_types);
-  }
-
   public TypeRef Type(bhlParser.TypeContext parsed)
   {
     var str = parsed.GetText();
@@ -126,7 +82,7 @@ public abstract class BaseScope : IScope
     if(type == null && parsed != null)
     {    
       if(parsed.fnargs() != null)
-        type = GetFuncType(this, parsed);
+        type = TypeSystem.GetFuncType(this, parsed);
 
       //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
       if(parsed.ARR() != null)
@@ -187,7 +143,7 @@ public abstract class BaseScope : IScope
     else
     {
 #if BHL_FRONT
-      if(IsCompoundType(name))
+      if(TypeSystem.IsCompoundType(name))
       {
         var node = Frontend.ParseType(name);
         if(node == null)
