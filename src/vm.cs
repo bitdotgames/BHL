@@ -146,12 +146,14 @@ public class VM
   public struct FrameContext
   {
     public Frame frame;
+    public bool is_call;
     public int min_ip;
     public int max_ip;
 
-    public FrameContext(Frame frame, int min_ip = -1, int max_ip = MAX_IP)
+    public FrameContext(Frame frame, bool is_call, int min_ip = -1, int max_ip = MAX_IP)
     {
       this.frame = frame;
+      this.is_call = is_call;
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
@@ -171,7 +173,7 @@ public class VM
 
     internal int ip;
     internal ICoroutine coroutine;
-    internal FixedStack<FrameContext> frames = new FixedStack<FrameContext>(256);
+    internal FixedStack<FrameContext> ctx_frames = new FixedStack<FrameContext>(256);
 
     public FixedStack<Val> stack = new FixedStack<Val>(32);
     
@@ -210,17 +212,17 @@ public class VM
     {
       if(coroutine != null)
       {
-        CoroutinePool.Del(frames.Peek().frame, coroutine);
+        CoroutinePool.Del(ctx_frames.Peek().frame, coroutine);
         coroutine = null;
       }
 
-      for(int i=frames.Count;i-- > 0;)
+      for(int i=ctx_frames.Count;i-- > 0;)
       {
-        var frm = frames[i].frame;
+        var frm = ctx_frames[i].frame;
         frm.ExitScope(frm);
         frm.Release();
       }
-      frames.Clear();
+      ctx_frames.Clear();
       tick = 0;
     }
 
@@ -231,9 +233,14 @@ public class VM
 
     public void GetStackTrace(List<VM.TraceItem> info)
     {
-      for(int i=0;i<frames.Count;++i)
+      var calls = new List<VM.Frame>();
+      for(int i=0;i<ctx_frames.Count;++i)
+        if(ctx_frames[i].is_call)
+          calls.Add(ctx_frames[i].frame);
+
+      for(int i=0;i<calls.Count;++i)
       {
-        var frm = frames[i].frame;
+        var frm = calls[i];
 
         var item = new TraceItem(); 
 
@@ -241,7 +248,7 @@ public class VM
         //      for the last frame we have a special case. In this case there's no
         //      'next' frame and we should consider taking ip from Fiber or an active
         //      coroutine
-        if(i == frames.Count-1)
+        if(i == calls.Count-1)
         {
           if(!TryGetCoroutineIP(coroutine, out item.ip))
             item.ip = frm.fb.ip;
@@ -250,18 +257,14 @@ public class VM
         {
           //NOTE: retrieving last ip for the current Frame which 
           //      turns out to be return_ip assigned to the next Frame
-          //NOTE: let's ignore 'local' context frames which are not 
-          //      actual func calls
-          if(!frames[i+1].IsFuncCall())
-            continue;
-          var next = frames[i+1].frame;
+          var next = calls[i+1];
           item.ip = next.return_ip;
         }
 
         if(frm.module != null)
         {
           item.file = frm.module.name + ".bhl";
-          item.func = TraceItem.MapIp2Func(frm.module.name, frm.start_ip, frm.vm.func2addr);
+          item.func = TraceItem.MapIp2Func(frm.module.name, calls[i].start_ip, frm.vm.func2addr);
           frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
         }
         else
@@ -610,7 +613,7 @@ public class VM
     {
       string s = "\n";
       foreach(var t in trace)
-        s += "at " + t.func + "(..) in " + t.file + ":" + t.line + "\n";
+        s += "at " + t.func + "(..) in " + t.file + ":" + t.line + ", ip " + t.ip + "\n";
       return s;
     }
   }
@@ -1014,7 +1017,7 @@ public class VM
   {
     fb.ip = fr.start_ip;
     fr.fb = fb;
-    fb.frames.Push(new FrameContext(fr));
+    fb.ctx_frames.Push(new FrameContext(fr, true));
   }
 
   void Register(Fiber fb)
@@ -1072,17 +1075,17 @@ public class VM
 
   internal BHS Execute(
     ref int ip,
-    FixedStack<FrameContext> frames, 
+    FixedStack<FrameContext> ctx_frames, 
     ref ICoroutine coroutine, 
     IExitableScope defer_scope,
     int frames_limit = 0
   )
   {
     var status = BHS.SUCCESS;
-    while(frames.Count > frames_limit && status == BHS.SUCCESS)
+    while(ctx_frames.Count > frames_limit && status == BHS.SUCCESS)
     {
       status = ExecuteOnce(
-        ref ip, frames,
+        ref ip, ctx_frames,
         ref coroutine,
         defer_scope
       );
@@ -1634,7 +1637,7 @@ public class VM
       return Val.NewObj(this, null);
   }
 
-  void Call(Frame curr_frame, FixedStack<FrameContext> frames, Frame new_frame, uint args_bits, ref int ip)
+  void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip)
   {
     var args_info = new FuncArgsInfo(args_bits);
     for(int i = 0; i < args_info.CountArgs(); ++i)
@@ -1643,7 +1646,7 @@ public class VM
 
     //let's remember ip to return to
     new_frame.return_ip = ip;
-    frames.Push(new FrameContext(new_frame));
+    ctx_frames.Push(new FrameContext(new_frame, true));
     //since ip will be incremented below we decrement it intentionally here
     ip = new_frame.start_ip - 1; 
   }
@@ -1676,7 +1679,7 @@ public class VM
     ref int ip, 
     ref ICoroutine coroutine, 
     Frame curr_frame,
-    FixedStack<FrameContext> frames
+    FixedStack<FrameContext> ctx_frames
   )
   {
     var status = BHS.SUCCESS;
@@ -1692,7 +1695,7 @@ public class VM
       curr_frame.ExitScope(curr_frame);
       ip = curr_frame.return_ip;
       curr_frame.Release();
-      frames.Pop();
+      ctx_frames.Pop();
 
       return status;
     }
@@ -1718,7 +1721,7 @@ public class VM
       //    and we should take this into account
       //
       if(curr_frame.refs == -1)
-        frames.Pop();
+        ctx_frames.Pop();
 
       //NOTE: we must increment the ip upon coroutine completion
       ++ip;
@@ -1862,7 +1865,7 @@ public class VM
       {
         ++fb.tick;
         fb.status = Execute(
-          ref fb.ip, fb.frames, 
+          ref fb.ip, fb.ctx_frames, 
           ref fb.coroutine, 
           null
         );
@@ -2154,13 +2157,13 @@ public struct DeferBlock
     int ip_copy = ip;
     ip = this.ip;
 
-    frm.fb.frames.Push(new VM.FrameContext(frm, ip-1, end_ip+1));
+    frm.fb.ctx_frames.Push(new VM.FrameContext(frm, false, ip-1, end_ip+1));
     //Console.WriteLine("ENTER SCOPE " + ip + " " + (end_ip + 1) + " " + frames.Count);
     var status = frm.vm.Execute(
-      ref ip, frm.fb.frames, 
+      ref ip, frm.fb.ctx_frames, 
       ref coro, 
       null,
-      frm.fb.frames.Count-1
+      frm.fb.ctx_frames.Count-1
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
@@ -2219,15 +2222,15 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     this.bgn_ip = bgn_ip;
     this.end_ip = end_ip;
     this.ip = bgn_ip;
-    this.frames_idx = frm.fb.frames.Count;
+    this.frames_idx = frm.fb.ctx_frames.Count;
     frm.fb.ip = bgn_ip;
-    frm.fb.frames.Push(new VM.FrameContext(frm, bgn_ip-1, end_ip+1));
+    frm.fb.ctx_frames.Push(new VM.FrameContext(frm, false, bgn_ip-1, end_ip+1));
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = frm.vm.Execute(
-      ref ip, frm.fb.frames, 
+      ref ip, frm.fb.ctx_frames, 
       ref coroutine, 
       this,
       frames_idx
@@ -2263,11 +2266,11 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g return) should be 
     //      explicitely released. Top frame is released 'above'.
-    for(int i=frm.fb.frames.Count;i-- > frames_idx;)
+    for(int i=frm.fb.ctx_frames.Count;i-- > frames_idx;)
     {
       if(i > frames_idx + 1)
-        frm.fb.frames[i].frame.Release();
-      frm.fb.frames.RemoveAt(i);
+        frm.fb.ctx_frames[i].frame.Release();
+      frm.fb.ctx_frames.RemoveAt(i);
     }
   }
 }
@@ -2278,7 +2281,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
   public int bgn_ip;
   public int end_ip;
   public ICoroutine coroutine;
-  public FixedStack<VM.FrameContext> frames = new FixedStack<VM.FrameContext>(256);
+  public FixedStack<VM.FrameContext> ctx_frames = new FixedStack<VM.FrameContext>(256);
   public List<DeferBlock> defers;
 
   public int Count {
@@ -2297,13 +2300,13 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     this.bgn_ip = bgn_ip;
     this.end_ip = end_ip;
     this.ip = bgn_ip;
-    frames.Push(new VM.FrameContext(frm, bgn_ip-1, end_ip+1));
+    ctx_frames.Push(new VM.FrameContext(frm, false, bgn_ip-1, end_ip+1));
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
     status = frm.vm.Execute(
-      ref ip, frames, 
+      ref ip, ctx_frames, 
       ref coroutine, 
       this
     );
@@ -2339,9 +2342,9 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     //      some control flow abruption (e.g paral exited) should be 
     //      explicitely released. We start from index 1 on purpose
     //      since the frame at index 0 will be released 'above'.
-    for(int i=frames.Count;i-- > 1;)
-      frames[i].frame.Release();
-    frames.Clear();
+    for(int i=ctx_frames.Count;i-- > 1;)
+      ctx_frames[i].frame.Release();
+    ctx_frames.Clear();
   }
 }
 

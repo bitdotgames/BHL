@@ -18604,11 +18604,16 @@ public class BHL_TestVM : BHL_TestBase
   public void TestGetStackTraceInParalDefer()
   {
     string bhl3 = @"
+    func hey()
+    {
+      record_callstack()
+    }
+
     func wow(float b)
     {
 
       defer {
-        record_callstack()
+        hey()
       }
     }
     ";
@@ -18642,6 +18647,7 @@ public class BHL_TestVM : BHL_TestBase
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
+          Console.WriteLine(VM.Error.ToString(trace));
           return null;
         });
       globs.Define(fn);
@@ -18668,7 +18674,7 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(5, trace[1].line);
+    AssertEqual(6, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
