@@ -200,7 +200,7 @@ public class BHL_TestBase
     }
 
     AssertTrue(err != null, "Error didn't occur"); 
-    var idx = err.Message.IndexOf(msg);
-    AssertTrue(idx != -1, "Error message is: " + err.Message);
+    var idx = err.ToString().IndexOf(msg);
+    AssertTrue(idx != -1, "Error message is: " + err);
   }
 }

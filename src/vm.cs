@@ -584,6 +584,25 @@ public class VM
     }
   }
 
+  public class Error : Exception
+  {
+    public List<TraceItem> trace;
+
+    public Error(List<TraceItem> trace, Exception e)
+      : base(ToString(trace), e)
+    {
+      this.trace = trace;
+    }
+
+    static public string ToString(List<TraceItem> trace)
+    {
+      string s = "\n";
+      foreach(var t in trace)
+        s += "at " + t.func + " in " + t.file + ":" + t.line + "\n";
+      return s;
+    }
+  }
+
   public class Pool<T> where T : class
   {
     public Stack<T> stack = new Stack<T>();
@@ -1827,15 +1846,24 @@ public class VM
       if(fb.IsStopped())
         continue;
 
-      ++fb.tick;
-      fb.status = Execute(
-        ref fb.ip, fb.frames, 
-        ref fb.coroutine, 
-        null
-      );
-      
-      if(fb.status != BHS.RUNNING)
-        Stop(fb);
+      try
+      {
+        ++fb.tick;
+        fb.status = Execute(
+          ref fb.ip, fb.frames, 
+          ref fb.coroutine, 
+          null
+        );
+        
+        if(fb.status != BHS.RUNNING)
+          Stop(fb);
+      }
+      catch(Exception e)
+      {
+        var trace = new List<VM.TraceItem>();
+        fb.GetStackTrace(trace);
+        throw new Error(trace, e); 
+      }
     }
 
     for(int i=fibers.Count;i-- > 0;)
