@@ -119,6 +119,8 @@ namespace bhlsp
   {
     public Dictionary<string, bhlParser.FuncDeclContext> funcDecls = new Dictionary<string, bhlParser.FuncDeclContext>();
     public Dictionary<string, bhlParser.ClassDeclContext> classDecls = new Dictionary<string, bhlParser.ClassDeclContext>();
+    public Dictionary<string, bhlParser.VarDeclareAssignContext> varDeclars = new Dictionary<string, bhlParser.VarDeclareAssignContext>();
+    
     public List<string> imports = new List<string>();
     
     public override void Sync(string text)
@@ -128,6 +130,7 @@ namespace bhlsp
       imports.Clear();
       funcDecls.Clear();
       classDecls.Clear();
+      varDeclars.Clear();
       
       foreach(var progblock in ToParser().program().progblock())
       {
@@ -155,6 +158,17 @@ namespace bhlsp
             var classDecl = decl.classDecl();
             if(classDecl?.NAME() != null)
               classDecls.Add(classDecl.NAME().GetText(), classDecl);
+            
+            var varDeclareAssign = decl.varDeclareAssign();
+            if(varDeclareAssign != null)
+            {
+              string varDeclareAssignName = varDeclareAssign.varDeclare()?.NAME()?.GetText();
+              if(!string.IsNullOrEmpty(varDeclareAssignName))
+              {
+                if(!varDeclars.ContainsKey(varDeclareAssignName))
+                  varDeclars.Add(varDeclareAssignName, varDeclareAssign);
+              }
+            }
           }
         }
       }

@@ -518,7 +518,7 @@ namespace bhlsp
               break;
             }
           }
-
+          
           if(callExpMemberAccess != null)
           {
             string callExpMemberAccessName = callExpMemberAccess.NAME().GetText();
@@ -547,6 +547,19 @@ namespace bhlsp
                 }
               }
             }
+            
+            if(string.IsNullOrEmpty(classTypeName) && !string.IsNullOrEmpty(callExpMemberAccessName))
+            {
+              foreach(var doc in ForEachDocuments(document))
+              {
+                if(doc.varDeclars.ContainsKey(callExpMemberAccessName))
+                {
+                  var varDeclareAssign = doc.varDeclars[callExpMemberAccessName];
+                  classTypeName = varDeclareAssign.varDeclare().type().NAME().GetText();
+                  break;
+                }
+              }
+            }
           }
         }
         
@@ -555,29 +568,13 @@ namespace bhlsp
           bhlParser.ClassDeclContext classDecl = null;
           BHLTextDocument classDeclBhlDocument = null;
           
-          foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(document))
+          foreach(var doc in ForEachDocuments(document))
           {
             if(doc.classDecls.ContainsKey(classTypeName))
             {
               classDecl = doc.classDecls[classTypeName];
               classDeclBhlDocument = doc;
               break;
-            }
-          }
-          
-          if(classDecl == null)
-          {
-            foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
-            {
-              if(doc is BHLTextDocument bhlDocument)
-              {
-                if(bhlDocument.classDecls.ContainsKey(classTypeName))
-                {
-                  classDecl = bhlDocument.classDecls[classTypeName];
-                  classDeclBhlDocument = bhlDocument;
-                  break;
-                }
-              }
             }
           }
           
@@ -627,34 +624,18 @@ namespace bhlsp
         
         if(callExp != null)
         {
+          string callExpName = callExp.NAME().GetText();
+          
           bhlParser.FuncDeclContext funcDecl = null;
           BHLTextDocument funcDeclBhlDocument = null;
           
-          string callExpName = callExp.NAME().GetText();
-          
-          foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(document))
+          foreach(var doc in ForEachDocuments(document))
           {
             if(doc.funcDecls.ContainsKey(callExpName))
             {
               funcDecl = doc.funcDecls[callExpName];
               funcDeclBhlDocument = doc;
               break;
-            }
-          }
-          
-          if(funcDecl == null)
-          {
-            foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
-            {
-              if(doc is BHLTextDocument bhlDocument)
-              {
-                if(bhlDocument.funcDecls.ContainsKey(callExpName))
-                {
-                  funcDecl = bhlDocument.funcDecls[callExpName];
-                  funcDeclBhlDocument = bhlDocument;
-                  break;
-                }
-              }
             }
           }
           
@@ -716,6 +697,20 @@ namespace bhlsp
         code = (int) ErrorCodes.RequestFailed,
         message = "Not supported"
       });
+    }
+    
+    IEnumerable<BHLTextDocument> ForEachDocuments(BHLTextDocument root)
+    {
+      foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(root))
+      {
+        yield return doc;
+      }
+      
+      foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
+      {
+        if(doc is BHLTextDocument bhlDocument)
+          yield return bhlDocument;
+      }
     }
   }
 }
