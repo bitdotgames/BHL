@@ -11043,6 +11043,37 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDeferAccessVarInParal()
+  {
+    string bhl = @"
+
+    func foo() {
+      float k = 1
+      defer {
+        trace((string)k)
+      }
+      k = 10
+    }
+
+    func test() 
+    {
+      paral {
+        foo()
+      }
+    }
+    ";
+
+    var globs = TypeSystem.CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    Execute(vm, "test");
+    AssertEqual("10", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestParalWithYieldDefer()
   {
     string bhl = @"
@@ -18600,6 +18631,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
+  //TODO:
   //[IsTested()]
   public void TestGetStackTraceInParalDefer()
   {

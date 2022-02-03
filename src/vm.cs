@@ -1082,12 +1082,15 @@ public class VM
   )
   {
     var status = BHS.SUCCESS;
+    int ctx_num = ctx_frames.Count;
     while(ctx_frames.Count > frames_limit && status == BHS.SUCCESS)
     {
       status = ExecuteOnce(
         ref ip, ctx_frames,
         ref coroutine,
-        defer_scope
+        //TODO: pass it by ref 
+        //NOTE: we consider newly added Frames to be the new defer scopes (these are func calls)
+        ctx_num == ctx_frames.Count ? defer_scope : ctx_frames.Peek().frame
       );
     }
     return status;
@@ -1409,7 +1412,6 @@ public class VM
 
         var fr = Frame.New(this);
         fr.Init(curr_frame, func_ip);
-
         Call(curr_frame, frames, fr, args_bits, ref ip);
       }
       break;
