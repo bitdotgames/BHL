@@ -409,7 +409,7 @@ public class VM
 
     public void ExitScope(VM.Frame frm)
     {
-      DeferBlock.ExitScope(frm, defers, ref fb.ip);
+      DeferBlock.ExitScope(frm, defers, ref fb.ip, fb.frames);
     }
 
     public void Retain()
@@ -2140,18 +2140,18 @@ public struct DeferBlock
     this.end_ip = end_ip;
   }
 
-  BHS Execute(ref ICoroutine coro, ref int ip)
+  BHS Execute(ref ICoroutine coro, ref int ip, FixedStack<VM.FrameContext> frames)
   {
     int ip_copy = ip;
     ip = this.ip;
 
-    frm.fb.frames.Push(new VM.FrameContext(frm, ip-1, end_ip+1));
+    frames.Push(new VM.FrameContext(frm, ip-1, end_ip+1));
     //Console.WriteLine("EXIT SCOPE " + ip + " " + (end_ip + 1) + " " + frm.fb.frames.Count);
     var status = frm.vm.Execute(
-      ref ip, frm.fb.frames, 
+      ref ip, frames, 
       ref coro, 
       null,
-      frm.fb.frames.Count-1
+      frames.Count-1
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
@@ -2162,7 +2162,7 @@ public struct DeferBlock
     return status;
   }
 
-  static internal void ExitScope(VM.Frame frm, List<DeferBlock> defers, ref int ip)
+  static internal void ExitScope(VM.Frame frm, List<DeferBlock> defers, ref int ip, FixedStack<VM.FrameContext> frames)
   {
     if(defers == null)
       return;
@@ -2172,7 +2172,7 @@ public struct DeferBlock
       var d = defers[i];
       ICoroutine dummy = null;
       //TODO: do we need ensure that status is SUCCESS?
-      d.Execute(ref dummy, ref ip);
+      d.Execute(ref dummy, ref ip, frames);
     }
     defers.Clear();
   }
@@ -2249,7 +2249,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 
   public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(frm, defers, ref ip);
+    DeferBlock.ExitScope(frm, defers, ref ip, frm.fb.frames);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g return) should be 
@@ -2324,7 +2324,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
   public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(frm, defers, ref ip);
+    DeferBlock.ExitScope(frm, defers, ref ip, frames);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
@@ -2403,8 +2403,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
 
   public void ExitScope(VM.Frame frm)
   {
-    int dummy_ip = 0;
-    DeferBlock.ExitScope(frm, defers, ref dummy_ip);
+    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip, frm.fb.frames);
   }
 }
 
@@ -2491,8 +2490,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
 
   public void ExitScope(VM.Frame frm)
   {
-    int dummy_ip = 0;
-    DeferBlock.ExitScope(frm, defers, ref dummy_ip);
+    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip, frm.fb.frames);
   }
 }
 
