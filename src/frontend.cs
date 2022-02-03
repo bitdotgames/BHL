@@ -878,6 +878,9 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(funcLambda.funcBlock());
     PopAST();
 
+    if(tr.type != TypeSystem.Void && !symb.return_statement_found)
+      FireError(Location(funcLambda.funcBlock()) + " : matching 'return' statement not found");
+
     PopFuncDecl();
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
@@ -901,6 +904,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
       PeekAST().AddChild(ast);
+
   }
   
   public override object VisitCallArg(bhlParser.CallArgContext ctx)

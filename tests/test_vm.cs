@@ -1113,6 +1113,26 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestReturnNotFoundInLambda()
+  {
+    string bhl = @"
+    func foo() { }
+
+    func test() 
+    {
+      func bool() { foo() }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "matching 'return' statement not found"
+    );
+  }
+
+  [IsTested()]
   public void TestReturnMultipleInFuncBadCast()
   {
     string bhl = @"
