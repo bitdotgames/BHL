@@ -18523,6 +18523,83 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGetStackTraceInDefer()
+  {
+    string bhl3 = @"
+    func float wow(float b)
+    {
+      defer {
+        record_callstack()
+      }
+      return b
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+    func float bar(float b)
+    {
+      return wow(b)
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func float foo(float k)
+    {
+      return bar(k)
+    }
+
+    func float test(float k) 
+    {
+      return foo(k)
+    }
+    ";
+
+    var globs = TypeSystem.CreateBuiltins();
+    var trace = new List<VM.TraceItem>();
+    {
+      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+          frm.fb.GetStackTrace(trace); 
+          return null;
+        });
+      globs.Define(fn);
+    }
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files, globs));
+
+    var vm = new VM(globs: globs, importer: importer);
+    vm.LoadModule("bhl1");
+    vm.Start("test", Val.NewNum(vm, 3));
+    AssertFalse(vm.Tick());
+
+    AssertEqual(4, trace.Count);
+
+    AssertEqual("wow", trace[0].func);
+    AssertEqual("bhl3.bhl", trace[0].file);
+    AssertEqual(5, trace[0].line);
+
+    AssertEqual("bar", trace[1].func);
+    AssertEqual("bhl2.bhl", trace[1].file);
+    AssertEqual(5, trace[1].line);
+
+    AssertEqual("foo", trace[2].func);
+    AssertEqual("bhl1.bhl", trace[2].file);
+    AssertEqual(5, trace[2].line);
+
+    AssertEqual("test", trace[3].func);
+    AssertEqual("bhl1.bhl", trace[3].file);
+    AssertEqual(10, trace[3].line);
+  }
+
+  [IsTested()]
   public void TestSimpleGlobalVariableDecl()
   {
     string bhl = @"
