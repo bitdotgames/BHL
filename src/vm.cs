@@ -155,6 +155,11 @@ public class VM
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
+
+    public bool IsFuncCall()
+    {
+      return min_ip == -1 && max_ip == MAX_IP;
+    }
   }
 
   public class Fiber
@@ -228,14 +233,36 @@ public class VM
     {
       for(int i=0;i<frames.Count;++i)
       {
-        var ctx = frames[i];
-        var frm = ctx.frame;
+        var frm = frames[i].frame;
 
         var item = new TraceItem(); 
+
+        //NOTE: information about frame ip is taken from the 'next' frame, however 
+        //      for the last frame we have a special case. In this case there's no
+        //      'next' frame and we should consider taking ip from Fiber or an active
+        //      coroutine
+        if(i == frames.Count-1)
+        {
+          if(!TryGetCoroutineIP(coroutine, out item.ip))
+            item.ip = frm.fb.ip;
+        }
+        else
+        {
+          //NOTE: retrieving last ip for the current Frame which 
+          //      turns out to be return_ip assigned to the next Frame
+          //NOTE: let's ignore 'local' context frames which are not 
+          //      actual func calls
+          if(!frames[i+1].IsFuncCall())
+            continue;
+          var next = frames[i+1].frame;
+          item.ip = next.return_ip;
+        }
+
         if(frm.module != null)
         {
           item.file = frm.module.name + ".bhl";
           item.func = TraceItem.MapIp2Func(frm.module.name, frm.start_ip, frm.vm.func2addr);
+          frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
         }
         else
         {
@@ -243,25 +270,7 @@ public class VM
           item.func = "?";
         }
 
-        if(i == frames.Count-1)
-        {
-          if(!TryGetCoroutineIP(coroutine, out item.ip))
-            item.ip = frm.fb.ip;
-
-          frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
-        }
-        else
-        {
-          var next = frames[i+1].frame;
-          //NOTE: retrieving last ip for the current Frame which 
-          //      turns out to be return_ip assigned to the next Frame
-          item.ip = next.return_ip;
-          frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
-        }
-
-        //TODO: get rid of this temp hack
-        if(item.line != 0)
-          info.Insert(0, item);
+        info.Insert(0, item);
       }
     }
 
@@ -409,7 +418,7 @@ public class VM
 
     public void ExitScope(VM.Frame frm)
     {
-      DeferBlock.ExitScope(frm, defers, ref fb.ip, fb.frames);
+      DeferBlock.ExitScope(frm, defers, ref fb.ip);
     }
 
     public void Retain()
@@ -2140,18 +2149,18 @@ public struct DeferBlock
     this.end_ip = end_ip;
   }
 
-  BHS Execute(ref ICoroutine coro, ref int ip, FixedStack<VM.FrameContext> frames)
+  BHS Execute(ref ICoroutine coro, ref int ip)
   {
     int ip_copy = ip;
     ip = this.ip;
 
-    frames.Push(new VM.FrameContext(frm, ip-1, end_ip+1));
-    //Console.WriteLine("EXIT SCOPE " + ip + " " + (end_ip + 1) + " " + frm.fb.frames.Count);
+    frm.fb.frames.Push(new VM.FrameContext(frm, ip-1, end_ip+1));
+    //Console.WriteLine("ENTER SCOPE " + ip + " " + (end_ip + 1) + " " + frames.Count);
     var status = frm.vm.Execute(
-      ref ip, frames, 
+      ref ip, frm.fb.frames, 
       ref coro, 
       null,
-      frames.Count-1
+      frm.fb.frames.Count-1
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
@@ -2162,7 +2171,7 @@ public struct DeferBlock
     return status;
   }
 
-  static internal void ExitScope(VM.Frame frm, List<DeferBlock> defers, ref int ip, FixedStack<VM.FrameContext> frames)
+  static internal void ExitScope(VM.Frame frm, List<DeferBlock> defers, ref int ip)
   {
     if(defers == null)
       return;
@@ -2172,7 +2181,7 @@ public struct DeferBlock
       var d = defers[i];
       ICoroutine dummy = null;
       //TODO: do we need ensure that status is SUCCESS?
-      d.Execute(ref dummy, ref ip, frames);
+      d.Execute(ref dummy, ref ip);
     }
     defers.Clear();
   }
@@ -2249,7 +2258,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 
   public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(frm, defers, ref ip, frm.fb.frames);
+    DeferBlock.ExitScope(frm, defers, ref ip);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g return) should be 
@@ -2324,7 +2333,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
   public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(frm, defers, ref ip, frames);
+    DeferBlock.ExitScope(frm, defers, ref ip);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
@@ -2403,7 +2412,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
 
   public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip, frm.fb.frames);
+    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip);
   }
 }
 
@@ -2490,7 +2499,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
 
   public void ExitScope(VM.Frame frm)
   {
-    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip, frm.fb.frames);
+    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip);
   }
 }
 
