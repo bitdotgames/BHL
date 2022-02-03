@@ -478,6 +478,7 @@ namespace bhlsp
         bhlParser.CallExpContext callExp = null;
         bhlParser.MemberAccessContext memberAccess = null;
         bhlParser.TypeContext type = null;
+        bhlParser.StatementContext statement = null;
 
         foreach(IParseTree node in Util.DFS(document.ToParser().program()))
         {
@@ -488,6 +489,7 @@ namespace bhlsp
               callExp      = prc as bhlParser.CallExpContext;
               memberAccess = prc as bhlParser.MemberAccessContext;
               type         = prc as bhlParser.TypeContext;
+              statement    = prc as bhlParser.StatementContext;
               break;
             }
           }
@@ -622,12 +624,12 @@ namespace bhlsp
           }
         }
         
+        bhlParser.FuncDeclContext funcDecl = null;
+        BHLTextDocument funcDeclBhlDocument = null;
+        
         if(callExp != null)
         {
           string callExpName = callExp.NAME().GetText();
-          
-          bhlParser.FuncDeclContext funcDecl = null;
-          BHLTextDocument funcDeclBhlDocument = null;
           
           foreach(var doc in ForEachDocuments(document))
           {
@@ -638,22 +640,54 @@ namespace bhlsp
               break;
             }
           }
+        }
+        
+        if(statement != null && funcDecl == null)
+        {
+          string funcName = string.Empty;
           
-          if(funcDecl != null)
+          string pattern = @"([a-zA-Z_][a-zA-Z_0-9]*)(\({1}.*?)";
+          MatchCollection matches = Regex.Matches(statement.GetText(), pattern, RegexOptions.Multiline);
+          for(int i = 0; i < matches.Count; i++)
           {
-            var start = funcDeclBhlDocument.GetLineColumn(funcDecl.Start.StartIndex);
-            var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
-            
-            return RpcResult.Success(new Location
+            var m = matches[i];
+            if(m.Groups.Count > 1)
             {
-              uri = funcDeclBhlDocument.uri,
-              range = new Range
-              {
-                start = startPos,
-                end = startPos
-              }
-            });
+              Group g = m.Groups[1];
+              funcName = g.Value;
+              break;
+            }
           }
+
+          if(!string.IsNullOrEmpty(funcName))
+          {
+          
+            foreach(var doc in ForEachDocuments(document))
+            {
+              if(doc.funcDecls.ContainsKey(funcName))
+              {
+                funcDecl = doc.funcDecls[funcName];
+                funcDeclBhlDocument = doc;
+                break;
+              }
+            }
+          }
+        }
+        
+        if(funcDecl != null)
+        {
+          var start = funcDeclBhlDocument.GetLineColumn(funcDecl.Start.StartIndex);
+          var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
+            
+          return RpcResult.Success(new Location
+          {
+            uri = funcDeclBhlDocument.uri,
+            range = new Range
+            {
+              start = startPos,
+              end = startPos
+            }
+          });
         }
       }
       
