@@ -274,6 +274,14 @@ public class TestLSP : BHL_TestBase
   public void TestGoToDefinition()
   {
     string bhl1 = @"
+    class Foo {
+      int BAR
+    }
+
+    Foo foo = {
+      BAR : 0
+    }
+
     func float test1(float k) 
     {
       return 0
@@ -294,6 +302,7 @@ public class TestLSP : BHL_TestBase
     func test4() 
     {
       test2()
+      foo.BAR = 1
     }
     ";
     
@@ -315,12 +324,12 @@ public class TestLSP : BHL_TestBase
 
     var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
     json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
-    json += "\"}, \"position\": {\"line\": 8, \"character\": 8}}}";
+    json += "\"}, \"position\": {\"line\": 16, \"character\": 8}}}";
     
     AssertEqual(
       rpc.HandleMessage(json),
       "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-      "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
+      "\",\"range\":{\"start\":{\"line\":9,\"character\":4},\"end\":{\"line\":9,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
     );
     
     json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
@@ -330,7 +339,27 @@ public class TestLSP : BHL_TestBase
     AssertEqual(
       rpc.HandleMessage(json),
       "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-      "\",\"range\":{\"start\":{\"line\":6,\"character\":4},\"end\":{\"line\":6,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
+      "\",\"range\":{\"start\":{\"line\":14,\"character\":4},\"end\":{\"line\":14,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
+    );
+    
+    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
+    json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
+    json += "\"}, \"position\": {\"line\": 9, \"character\": 11}}}";
+    
+    AssertEqual(
+      rpc.HandleMessage(json),
+      "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
+      "\",\"range\":{\"start\":{\"line\":2,\"character\":6},\"end\":{\"line\":2,\"character\":6}}},\"jsonrpc\":\"2.0\"}"
+    );
+    
+    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
+    json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
+    json += "\"}, \"position\": {\"line\": 5, \"character\": 5}}}";
+    
+    AssertEqual(
+      rpc.HandleMessage(json),
+      "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
+      "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
     );
   }
   
