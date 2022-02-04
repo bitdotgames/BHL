@@ -219,7 +219,7 @@ public class VM
       for(int i=ctx_frames.Count;i-- > 0;)
       {
         var frm = ctx_frames[i].frame;
-        frm.ExitScope(frm);
+        frm.ExitScope(frm, ctx_frames);
         frm.Release();
       }
       ctx_frames.Clear();
@@ -231,12 +231,19 @@ public class VM
       return ip >= STOP_IP;
     }
 
-    public void GetStackTrace(List<VM.TraceItem> info)
+    static void GetCalls(FixedStack<VM.FrameContext> ctx_frames, List<VM.Frame> calls)
     {
-      var calls = new List<VM.Frame>();
       for(int i=0;i<ctx_frames.Count;++i)
         if(ctx_frames[i].is_call)
           calls.Add(ctx_frames[i].frame);
+    }
+
+    public void GetStackTrace(List<VM.TraceItem> info)
+    {
+      var calls = new List<VM.Frame>();
+      int coroutine_ip = -1; 
+      GetCalls(ctx_frames, calls);
+      TryGetTraceInfo(coroutine, ref coroutine_ip, calls);
 
       for(int i=0;i<calls.Count;++i)
       {
@@ -250,8 +257,7 @@ public class VM
         //      coroutine
         if(i == calls.Count-1)
         {
-          if(!TryGetCoroutineIP(coroutine, out item.ip))
-            item.ip = frm.fb.ip;
+          item.ip = coroutine_ip == -1 ? frm.fb.ip : coroutine_ip;
         }
         else
         {
@@ -277,25 +283,25 @@ public class VM
       }
     }
 
-    static bool TryGetCoroutineIP(ICoroutine i, out int ip)
+    static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
     {
-      ip = 0;
       if(i is SeqBlock si)
       {
-        if(!TryGetCoroutineIP(si.coroutine, out ip))
+        if(!TryGetTraceInfo(si.coroutine, ref ip, calls))
           ip = si.ip;
         return true;
       }
       else if(i is ParalBranchBlock bi)
       {
-        if(!TryGetCoroutineIP(bi.coroutine, out ip))
+        GetCalls(bi.ctx_frames, calls);
+        if(!TryGetTraceInfo(bi.coroutine, ref ip, calls))
           ip = bi.ip;
         return true;
       }
       else if(i is ParalBlock pi)
-        return TryGetCoroutineIP(pi.branches[pi.i], out ip);
+        return TryGetTraceInfo(pi.branches[pi.i], ref ip, calls);
       else if(i is ParalAllBlock pai)
-        return TryGetCoroutineIP(pai.branches[pai.i], out ip);
+        return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
       else
         return false;
     }
@@ -419,9 +425,9 @@ public class VM
       defers.Add(cb);
     }
 
-    public void ExitScope(VM.Frame frm)
+    public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
     {
-      DeferBlock.ExitScope(frm, defers, ref fb.ip);
+      DeferBlock.ExitScope(frm, defers, ref fb.ip, ctx_frames);
     }
 
     public void Retain()
@@ -1332,7 +1338,7 @@ public class VM
       break;
       case Opcodes.Return:
       {
-        curr_frame.ExitScope(curr_frame);
+        curr_frame.ExitScope(curr_frame, frames);
         ip = curr_frame.return_ip;
         curr_frame.Clear();
         curr_frame.Release();
@@ -1356,7 +1362,7 @@ public class VM
         }
 
         ip = curr_frame.return_ip;
-        curr_frame.ExitScope(curr_frame);
+        curr_frame.ExitScope(curr_frame, frames);
         curr_frame.Clear();
         curr_frame.Release();
         frames.Pop();
@@ -1704,7 +1710,7 @@ public class VM
       CoroutinePool.Del(curr_frame, coroutine);
       coroutine = null;
 
-      curr_frame.ExitScope(curr_frame);
+      curr_frame.ExitScope(curr_frame, ctx_frames);
       ip = curr_frame.return_ip;
       curr_frame.Release();
       ctx_frames.Pop();
@@ -2102,7 +2108,7 @@ public class CoroutinePool
 public interface IExitableScope
 {
   void RegisterDefer(DeferBlock cb);
-  void ExitScope(VM.Frame frm);
+  void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames);
 }
 
 public interface IBranchyCoroutine : ICoroutine
@@ -2161,18 +2167,18 @@ public struct DeferBlock
     this.end_ip = end_ip;
   }
 
-  BHS Execute(ref ICoroutine coro, ref int ip)
+  BHS Execute(ref ICoroutine coro, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
     int ip_copy = ip;
     ip = this.ip;
 
-    frm.fb.ctx_frames.Push(new VM.FrameContext(frm, false, ip-1, end_ip+1));
+    ctx_frames.Push(new VM.FrameContext(frm, false, ip-1, end_ip+1));
     //Console.WriteLine("ENTER SCOPE " + ip + " " + (end_ip + 1) + " " + frames.Count);
     var status = frm.vm.Execute(
-      ref ip, frm.fb.ctx_frames, 
+      ref ip, ctx_frames, 
       ref coro, 
       null,
-      frm.fb.ctx_frames.Count-1
+      ctx_frames.Count-1
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
@@ -2183,7 +2189,7 @@ public struct DeferBlock
     return status;
   }
 
-  static internal void ExitScope(VM.Frame frm, List<DeferBlock> defers, ref int ip)
+  static internal void ExitScope(VM.Frame frm, List<DeferBlock> defers, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
     if(defers == null)
       return;
@@ -2193,7 +2199,7 @@ public struct DeferBlock
       var d = defers[i];
       ICoroutine dummy = null;
       //TODO: do we need ensure that status is SUCCESS?
-      d.Execute(ref dummy, ref ip);
+      d.Execute(ref dummy, ref ip, ctx_frames);
     }
     defers.Clear();
   }
@@ -2258,7 +2264,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       coroutine = null;
     }
 
-    ExitScope(frm);
+    ExitScope(frm, frm.fb.ctx_frames);
   }
 
   public void RegisterDefer(DeferBlock cb)
@@ -2268,9 +2274,9 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     defers.Add(cb);
   }
 
-  public void ExitScope(VM.Frame frm)
+  public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.ExitScope(frm, defers, ref ip);
+    DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g return) should be 
@@ -2333,7 +2339,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
       coroutine = null;
     }
 
-    ExitScope(frm);
+    ExitScope(frm, ctx_frames);
   }
 
   public void RegisterDefer(DeferBlock cb)
@@ -2343,9 +2349,9 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     defers.Add(cb);
   }
 
-  public void ExitScope(VM.Frame frm)
+  public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.ExitScope(frm, defers, ref ip);
+    DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
@@ -2407,7 +2413,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
   public void Cleanup(VM.Frame frm)
   {
     DeferBlock.DelCoroutines(frm, branches);
-    ExitScope(frm);
+    ExitScope(frm, frm.fb.ctx_frames);
   }
 
   public void Attach(ICoroutine coro)
@@ -2422,9 +2428,9 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     defers.Add(cb);
   }
 
-  public void ExitScope(VM.Frame frm)
+  public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip);
+    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip, ctx_frames);
   }
 }
 
@@ -2494,7 +2500,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
   public void Cleanup(VM.Frame frm)
   {
     DeferBlock.DelCoroutines(frm, branches);
-    ExitScope(frm);
+    ExitScope(frm, frm.fb.ctx_frames);
   }
 
   public void Attach(ICoroutine coro)
@@ -2509,9 +2515,9 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     defers.Add(cb);
   }
 
-  public void ExitScope(VM.Frame frm)
+  public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip);
+    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip, ctx_frames);
   }
 }
 

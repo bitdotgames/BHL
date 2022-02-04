@@ -18687,8 +18687,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestGetStackTraceInParalDefer()
   {
     string bhl3 = @"
@@ -18735,7 +18734,7 @@ public class BHL_TestVM : BHL_TestBase
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
-          Console.WriteLine(VM.Error.ToString(trace));
+          Console.WriteLine(VM.Error.ToString(trace) + " " + Environment.StackTrace);
           return null;
         });
       globs.Define(fn);
@@ -18754,7 +18753,11 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertFalse(vm.Tick());
 
-    AssertEqual(4, trace.Count);
+    AssertEqual(5, trace.Count);
+
+    AssertEqual("hey", trace[0].func);
+    AssertEqual("bhl3.bhl", trace[0].file);
+    AssertEqual(4, trace[0].line);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
