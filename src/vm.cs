@@ -1816,10 +1816,7 @@ public class VM
     else if(type == EnumBlock.DEFER)
     {
       var d = new DeferBlock(curr_frame, ip + 1, ip + size);
-      if(defer_scope != null)
-        defer_scope.RegisterDefer(d);
-      else 
-        curr_frame.RegisterDefer(d);
+      defer_scope.RegisterDefer(d);
       //we need to skip defer block
       //Console.WriteLine("DEFER SKIP " + ip + " " + (ip+size) + " " + Environment.StackTrace);
       ip += size;
@@ -1879,7 +1876,7 @@ public class VM
         fb.status = Execute(
           ref fb.ip, fb.ctx_frames, 
           ref fb.coroutine, 
-          null
+          fb.ctx_frames[0].frame
         );
         
         if(fb.status != BHS.RUNNING)
