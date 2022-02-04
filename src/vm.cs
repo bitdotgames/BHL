@@ -1077,7 +1077,7 @@ public class VM
     ref int ip,
     FixedStack<FrameContext> ctx_frames, 
     ref ICoroutine coroutine, 
-    IExitableScope defer_scope,
+    ref IExitableScope defer_scope,
     int frames_limit = 0
   )
   {
@@ -1088,9 +1088,7 @@ public class VM
       status = ExecuteOnce(
         ref ip, ctx_frames,
         ref coroutine,
-        //TODO: pass it by ref 
-        //NOTE: we consider newly added Frames to be the new defer scopes (these are func calls)
-        ctx_num == ctx_frames.Count ? defer_scope : ctx_frames.Peek().frame
+        ref defer_scope
       );
     }
     return status;
@@ -1100,7 +1098,7 @@ public class VM
     ref int ip, 
     FixedStack<FrameContext> frames, 
     ref ICoroutine coroutine, 
-    IExitableScope defer_scope
+    ref IExitableScope defer_scope
   )
   { 
     var ctx = frames.Peek();
@@ -1334,6 +1332,8 @@ public class VM
         curr_frame.Release();
         //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
         frames.Pop();
+        if(frames.Count > 0)
+          defer_scope = frames.Peek().frame;
       }
       break;
       case Opcodes.ReturnVal:
@@ -1354,6 +1354,8 @@ public class VM
         curr_frame.Clear();
         curr_frame.Release();
         frames.Pop();
+        if(frames.Count > 0)
+          defer_scope = frames.Peek().frame;
       }
       break;
       case Opcodes.GetFunc:
@@ -1412,7 +1414,7 @@ public class VM
 
         var fr = Frame.New(this);
         fr.Init(curr_frame, func_ip);
-        Call(curr_frame, frames, fr, args_bits, ref ip);
+        Call(curr_frame, frames, fr, args_bits, ref ip, ref defer_scope);
       }
       break;
       case Opcodes.CallNative:
@@ -1437,7 +1439,7 @@ public class VM
 
         var fr = Frame.New(this);
         fr.Init(curr_frame.fb, maddr.module, maddr.ip);
-        Call(curr_frame, frames, fr, args_bits, ref ip);
+        Call(curr_frame, frames, fr, args_bits, ref ip, ref defer_scope);
       }
       break;
       case Opcodes.CallMethodNative:
@@ -1473,7 +1475,7 @@ public class VM
 
         fr.locals[0] = self;
 
-        Call(curr_frame, frames, fr, args_bits, ref ip);
+        Call(curr_frame, frames, fr, args_bits, ref ip, ref defer_scope);
       }
       break;
       case Opcodes.CallPtr:
@@ -1496,7 +1498,7 @@ public class VM
         {
           var fr = ptr.MakeFrame(this, curr_frame);
           val_ptr.Release();
-          Call(curr_frame, frames, fr, args_bits, ref ip);
+          Call(curr_frame, frames, fr, args_bits, ref ip, ref defer_scope);
         }
       }
       break;
@@ -1639,7 +1641,7 @@ public class VM
       return Val.NewObj(this, null);
   }
 
-  void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip)
+  void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip, ref IExitableScope defer_scope)
   {
     var args_info = new FuncArgsInfo(args_bits);
     for(int i = 0; i < args_info.CountArgs(); ++i)
@@ -1651,6 +1653,8 @@ public class VM
     ctx_frames.Push(new FrameContext(new_frame, true));
     //since ip will be incremented below we decrement it intentionally here
     ip = new_frame.start_ip - 1; 
+
+    defer_scope = new_frame;
   }
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
@@ -1866,10 +1870,11 @@ public class VM
       try
       {
         ++fb.tick;
+        IExitableScope defer_scope = null;
         fb.status = Execute(
           ref fb.ip, fb.ctx_frames, 
           ref fb.coroutine, 
-          null
+          ref defer_scope
         );
         
         if(fb.status != BHS.RUNNING)
@@ -2161,10 +2166,11 @@ public struct DeferBlock
 
     frm.fb.ctx_frames.Push(new VM.FrameContext(frm, false, ip-1, end_ip+1));
     //Console.WriteLine("ENTER SCOPE " + ip + " " + (end_ip + 1) + " " + frames.Count);
+    IExitableScope defer_scope = null;
     var status = frm.vm.Execute(
       ref ip, frm.fb.ctx_frames, 
       ref coro, 
-      null,
+      ref defer_scope,
       frm.fb.ctx_frames.Count-1
     );
     if(status != BHS.SUCCESS)
@@ -2231,10 +2237,11 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
+    IExitableScope defer_scope = this;
     status = frm.vm.Execute(
       ref ip, frm.fb.ctx_frames, 
       ref coroutine, 
-      this,
+      ref defer_scope,
       frames_idx
     );
       
@@ -2307,10 +2314,11 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
+    IExitableScope defer_scope = this;
     status = frm.vm.Execute(
       ref ip, ctx_frames, 
       ref coroutine, 
-      this
+      ref defer_scope
     );
       
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
