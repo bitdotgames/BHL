@@ -10299,6 +10299,42 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSequenceDeferAfterSubCall()
+  {
+    string bhl = @"
+    func bar()
+    {
+      defer {
+        trace(""4"")
+      }
+    }
+    func test() 
+    {
+      defer {
+        trace(""1"")
+      }
+      {
+        bar()
+        defer {
+          trace(""2"")
+        }
+      }
+      trace(""3"")
+    }
+    ";
+
+    var globs = TypeSystem.CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs);
+    vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual("4231", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestIfTrueDefer()
   {
     string bhl = @"

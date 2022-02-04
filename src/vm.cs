@@ -1077,18 +1077,24 @@ public class VM
     ref int ip,
     FixedStack<FrameContext> ctx_frames, 
     ref ICoroutine coroutine, 
-    ref IExitableScope defer_scope,
+    IExitableScope defer_scope,
     int frames_limit = 0
   )
   {
     var status = BHS.SUCCESS;
-    int ctx_num = ctx_frames.Count;
-    while(ctx_frames.Count > frames_limit && status == BHS.SUCCESS)
+    IExitableScope tmp_defer_scope = null;
+    int init_ctx_num = ctx_frames.Count;
+    int tmp_ctx_num = 0;
+    while((tmp_ctx_num = ctx_frames.Count) > frames_limit && status == BHS.SUCCESS)
     {
+      //NOTE: we need to restore the original defer scope
+      //      once we pop all frames which were generated during execution 
+      if(tmp_ctx_num == init_ctx_num)
+        tmp_defer_scope = defer_scope;
       status = ExecuteOnce(
         ref ip, ctx_frames,
         ref coroutine,
-        ref defer_scope
+        ref tmp_defer_scope
       );
     }
     return status;
@@ -1870,11 +1876,10 @@ public class VM
       try
       {
         ++fb.tick;
-        IExitableScope defer_scope = null;
         fb.status = Execute(
           ref fb.ip, fb.ctx_frames, 
           ref fb.coroutine, 
-          ref defer_scope
+          null
         );
         
         if(fb.status != BHS.RUNNING)
@@ -2166,11 +2171,10 @@ public struct DeferBlock
 
     frm.fb.ctx_frames.Push(new VM.FrameContext(frm, false, ip-1, end_ip+1));
     //Console.WriteLine("ENTER SCOPE " + ip + " " + (end_ip + 1) + " " + frames.Count);
-    IExitableScope defer_scope = null;
     var status = frm.vm.Execute(
       ref ip, frm.fb.ctx_frames, 
       ref coro, 
-      ref defer_scope,
+      null,
       frm.fb.ctx_frames.Count-1
     );
     if(status != BHS.SUCCESS)
@@ -2237,11 +2241,10 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    IExitableScope defer_scope = this;
     status = frm.vm.Execute(
       ref ip, frm.fb.ctx_frames, 
       ref coroutine, 
-      ref defer_scope,
+      this,
       frames_idx
     );
       
@@ -2314,11 +2317,10 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
-    IExitableScope defer_scope = this;
     status = frm.vm.Execute(
       ref ip, ctx_frames, 
       ref coroutine, 
-      ref defer_scope
+      this
     );
       
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
