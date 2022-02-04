@@ -219,7 +219,7 @@ public class VM
       for(int i=ctx_frames.Count;i-- > 0;)
       {
         var frm = ctx_frames[i].frame;
-        frm.ExitScope(frm, ctx_frames);
+        frm.ExitScope(frm, ref ip, ctx_frames);
         frm.Release();
       }
       ctx_frames.Clear();
@@ -425,9 +425,9 @@ public class VM
       defers.Add(cb);
     }
 
-    public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
+    public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
     {
-      DeferBlock.ExitScope(frm, defers, ref fb.ip, ctx_frames);
+      DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
     }
 
     public void Retain()
@@ -1338,7 +1338,7 @@ public class VM
       break;
       case Opcodes.Return:
       {
-        curr_frame.ExitScope(curr_frame, frames);
+        curr_frame.ExitScope(curr_frame, ref ip, frames);
         ip = curr_frame.return_ip;
         curr_frame.Clear();
         curr_frame.Release();
@@ -1362,7 +1362,7 @@ public class VM
         }
 
         ip = curr_frame.return_ip;
-        curr_frame.ExitScope(curr_frame, frames);
+        curr_frame.ExitScope(curr_frame, ref ip, frames);
         curr_frame.Clear();
         curr_frame.Release();
         frames.Pop();
@@ -1710,7 +1710,7 @@ public class VM
       CoroutinePool.Del(curr_frame, coroutine);
       coroutine = null;
 
-      curr_frame.ExitScope(curr_frame, ctx_frames);
+      curr_frame.ExitScope(curr_frame, ref ip, ctx_frames);
       ip = curr_frame.return_ip;
       curr_frame.Release();
       ctx_frames.Pop();
@@ -2108,7 +2108,7 @@ public class CoroutinePool
 public interface IExitableScope
 {
   void RegisterDefer(DeferBlock cb);
-  void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames);
+  void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames);
 }
 
 public interface IBranchyCoroutine : ICoroutine
@@ -2264,7 +2264,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       coroutine = null;
     }
 
-    ExitScope(frm, frm.fb.ctx_frames);
+    ExitScope(frm, ref ip, frm.fb.ctx_frames);
   }
 
   public void RegisterDefer(DeferBlock cb)
@@ -2274,7 +2274,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     defers.Add(cb);
   }
 
-  public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
+  public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
     DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
 
@@ -2339,7 +2339,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
       coroutine = null;
     }
 
-    ExitScope(frm, ctx_frames);
+    ExitScope(frm, ref ip, ctx_frames);
   }
 
   public void RegisterDefer(DeferBlock cb)
@@ -2349,7 +2349,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     defers.Add(cb);
   }
 
-  public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
+  public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
     DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
 
@@ -2413,7 +2413,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
   public void Cleanup(VM.Frame frm)
   {
     DeferBlock.DelCoroutines(frm, branches);
-    ExitScope(frm, frm.fb.ctx_frames);
+    ExitScope(frm, ref frm.fb.ip, frm.fb.ctx_frames);
   }
 
   public void Attach(ICoroutine coro)
@@ -2428,9 +2428,9 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     defers.Add(cb);
   }
 
-  public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
+  public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip, ctx_frames);
+    DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
   }
 }
 
@@ -2500,7 +2500,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
   public void Cleanup(VM.Frame frm)
   {
     DeferBlock.DelCoroutines(frm, branches);
-    ExitScope(frm, frm.fb.ctx_frames);
+    ExitScope(frm, ref frm.fb.ip, frm.fb.ctx_frames);
   }
 
   public void Attach(ICoroutine coro)
@@ -2515,9 +2515,9 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     defers.Add(cb);
   }
 
-  public void ExitScope(VM.Frame frm, FixedStack<VM.FrameContext> ctx_frames)
+  public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.ExitScope(frm, defers, ref frm.fb.ip, ctx_frames);
+    DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
   }
 }
 

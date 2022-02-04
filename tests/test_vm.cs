@@ -18734,7 +18734,6 @@ public class BHL_TestVM : BHL_TestBase
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
-          Console.WriteLine(VM.Error.ToString(trace) + " " + Environment.StackTrace);
           return null;
         });
       globs.Define(fn);
@@ -18759,21 +18758,21 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual("bhl3.bhl", trace[0].file);
     AssertEqual(4, trace[0].line);
 
-    AssertEqual("wow", trace[0].func);
-    AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(6, trace[0].line);
+    AssertEqual("wow", trace[1].func);
+    AssertEqual("bhl3.bhl", trace[1].file);
+    AssertEqual(11, trace[1].line);
 
-    AssertEqual("bar", trace[1].func);
-    AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(6, trace[1].line);
+    AssertEqual("bar", trace[2].func);
+    AssertEqual("bhl2.bhl", trace[2].file);
+    AssertEqual(6, trace[2].line);
 
-    AssertEqual("foo", trace[2].func);
-    AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
-
-    AssertEqual("test", trace[3].func);
+    AssertEqual("foo", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    AssertEqual(5, trace[3].line);
+
+    AssertEqual("test", trace[4].func);
+    AssertEqual("bhl1.bhl", trace[4].file);
+    AssertEqual(10, trace[4].line);
   }
 
   [IsTested()]
