@@ -18775,6 +18775,95 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(10, trace[4].line);
   }
 
+  //[IsTested()]
+  public void TestGetStackTraceInSubParal()
+  {
+    string bhl3 = @"
+    func hey()
+    {
+      record_callstack()
+    }
+
+    func wow(float b)
+    {
+
+      paral {
+        hey()
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+    func bar(float b)
+    {
+      paral_all {
+        wow(b)
+      }
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func foo(float k)
+    {
+      bar(k)
+    }
+
+    func test() 
+    {
+      foo(14)
+    }
+    ";
+
+    var globs = TypeSystem.CreateBuiltins();
+    var trace = new List<VM.TraceItem>();
+    {
+      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+          frm.fb.GetStackTrace(trace); 
+          Console.WriteLine(VM.Error.ToString(trace));
+          return null;
+        });
+      globs.Define(fn);
+    }
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var importer = new ModuleImporter(CompileFiles(files, globs));
+
+    var vm = new VM(globs: globs, importer: importer);
+    vm.LoadModule("bhl1");
+    vm.Start("test");
+    AssertFalse(vm.Tick());
+
+    AssertEqual(5, trace.Count);
+
+    AssertEqual("hey", trace[0].func);
+    AssertEqual("bhl3.bhl", trace[0].file);
+    AssertEqual(4, trace[0].line);
+
+    AssertEqual("wow", trace[1].func);
+    AssertEqual("bhl3.bhl", trace[1].file);
+    AssertEqual(11, trace[1].line);
+
+    AssertEqual("bar", trace[2].func);
+    AssertEqual("bhl2.bhl", trace[2].file);
+    AssertEqual(6, trace[2].line);
+
+    AssertEqual("foo", trace[3].func);
+    AssertEqual("bhl1.bhl", trace[3].file);
+    AssertEqual(5, trace[3].line);
+
+    AssertEqual("test", trace[4].func);
+    AssertEqual("bhl1.bhl", trace[4].file);
+    AssertEqual(10, trace[4].line);
+  }
+
   [IsTested()]
   public void TestSimpleGlobalVariableDecl()
   {

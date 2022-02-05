@@ -2390,6 +2390,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
+    //TODO: this doesn't look safe
     frm.fb.ip = bgn_ip;
 
     status = BHS.RUNNING;
@@ -2461,8 +2462,9 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
 
   public void Tick(VM.Frame frm, ref BHS status)
   {
+    //TODO: this doesn't look safe
     frm.fb.ip = bgn_ip;
-
+    
     for(i=0;i<branches.Count;)
     {
       var branch = branches[i];
