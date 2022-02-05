@@ -19,6 +19,7 @@
     <Compile Include="src\lsp\rpc.cs" />
     <Compile Include="src\lsp\server.cs" />
     <Compile Include="src\lsp\services.cs" />
+    <Compile Include="src\lsp\util.cs" />
     <Compile Include="src\lsp\workspace.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

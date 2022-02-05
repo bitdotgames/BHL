@@ -71,6 +71,12 @@ namespace bhlsp
     [JsonRpcMethod("textDocument/implementation")]
     public abstract RpcResult GotoImplementation(ImplementationParams args);
   }
+
+  public abstract class BHLSPTextDocumentHoverJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("textDocument/hover")]
+    public abstract RpcResult Hover(TextDocumentPositionParams args);
+  }
   
   public abstract class BHLSPTextDocumentJsonRpcServiceTemplate : BHLSPJsonRpcService
   {
@@ -79,9 +85,6 @@ namespace bhlsp
 
     [JsonRpcMethod("completionItem/resolve")]
     public abstract RpcResult ResolveCompletionItem(CompletionItem args);
-
-    [JsonRpcMethod("textDocument/hover")]
-    public abstract RpcResult Hover(TextDocumentPositionParams args);
     
     [JsonRpcMethod("textDocument/references")]
     public abstract RpcResult FindReferences(ReferenceParams args);
@@ -220,6 +223,11 @@ namespace bhlsp
 
           capabilities.implementationProvider = false; //textDocument/implementation
         }
+
+        if(args.capabilities.textDocument.hover != null)
+        {
+          capabilities.hoverProvider = true; //textDocument/hover
+        }
       }
       
       return RpcResult.Success(new InitializeResult
@@ -259,7 +267,7 @@ namespace bhlsp
     public override RpcResult SignatureHelp(SignatureHelpParams args)
     {
       BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri);
-      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document && document.funcDecls.Count > 0)
+      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
       {
         int line = (int)args.position.line;
         int character = (int)args.position.character;
@@ -298,27 +306,12 @@ namespace bhlsp
         bhlParser.FuncDeclContext funcDecl = null;
         if(!string.IsNullOrEmpty(funcName))
         {
-          foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(document))
+          foreach(var doc in BHLSPUtil.ForEachDocuments(document))
           {
             if(doc.funcDecls.ContainsKey(funcName))
             {
               funcDecl = doc.funcDecls[funcName];
               break;
-            }
-          }
-          
-          if(funcDecl == null)
-          {
-            foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
-            {
-              if(doc is BHLTextDocument bhlDocument)
-              {
-                if(bhlDocument.funcDecls.ContainsKey(funcName))
-                {
-                  funcDecl = bhlDocument.funcDecls[funcName];
-                  break;
-                }
-              }
             }
           }
         }
@@ -343,42 +336,29 @@ namespace bhlsp
     SignatureInformation GetFuncSignInfo(bhlParser.FuncDeclContext funcDecl)
     {
       SignatureInformation funcSignature = new SignatureInformation();
-      List<ParameterInformation> funcParameters = new List<ParameterInformation>();
       
-      funcSignature.label = funcDecl.NAME().GetText()+"(";
-
-      if(funcDecl.funcParams() is bhlParser.FuncParamsContext funcParams)
+      string label = funcDecl.NAME().GetText()+"(";
+      
+      List<ParameterInformation> funcParameters = BHLSPUtil.GetInfoParams(funcDecl);
+      
+      if(funcParameters.Count > 0)
       {
-        var funcParamDeclares = funcParams.funcParamDeclare();
-        for (int k = 0; k < funcParamDeclares.Length; k++)
+        for(int k = 0; k < funcParameters.Count; k++)
         {
-          var fpd = funcParamDeclares[k];
-          if(fpd.exception != null)
-            continue;
-
-          var fpdl = $"{(fpd.isRef() != null ? "ref " : "")}{fpd.type().NAME().GetText()} {fpd.NAME().GetText()}";
-          if(fpd.assignExp() is bhlParser.AssignExpContext assignExp)
-            fpdl += assignExp.GetText();
-          
-          funcParameters.Add(new ParameterInformation
-          {
-            label = fpdl,
-            documentation = ""
-          });
-
-          funcSignature.label += fpdl;
-          if(k != funcParamDeclares.Length - 1)
-            funcSignature.label += ", ";
+          var funcParameter = funcParameters[k];
+          label += funcParameter.label.Value;
+          if(k != funcParameters.Count - 1)
+            label += ", ";
         }
       }
       else
-        funcSignature.label += "<no parameters>";
+        label += "<no parameters>";
 
-      funcSignature.label += ")";
+      label += ")";
 
       if(funcDecl.retType() is bhlParser.RetTypeContext retType)
       {
-        funcSignature.label += ":";
+        label += ":";
 
         var types = retType.type();
         for (int n = 0; n < types.Length; n++)
@@ -387,12 +367,13 @@ namespace bhlsp
           if(t.exception != null)
             continue;
 
-          funcSignature.label += t.NAME().GetText() + " ";
+          label += t.NAME().GetText() + " ";
         }
       }
       else
-        funcSignature.label += ":void";
+        label += ":void";
 
+      funcSignature.label = label;
       funcSignature.parameters = funcParameters.ToArray();
       return funcSignature;
     }
@@ -480,7 +461,7 @@ namespace bhlsp
         bhlParser.TypeContext type = null;
         bhlParser.StatementContext statement = null;
 
-        foreach(IParseTree node in Util.DFS(document.ToParser().program()))
+        foreach(IParseTree node in BHLSPUtil.DFS(document.ToParser().program()))
         {
           if(node is ParserRuleContext prc)
           {
@@ -527,7 +508,7 @@ namespace bhlsp
             
             if(memberAccessParentFuncDecl?.NAME() != null)
             {
-              foreach(IParseTree node in Util.DFS(memberAccessParentFuncDecl))
+              foreach(IParseTree node in BHLSPUtil.DFS(memberAccessParentFuncDecl))
               {
                 if(node is bhlParser.FuncParamDeclareContext funcParamDeclare)
                 {
@@ -552,7 +533,7 @@ namespace bhlsp
             
             if(string.IsNullOrEmpty(classTypeName) && !string.IsNullOrEmpty(callExpMemberAccessName))
             {
-              foreach(var doc in ForEachDocuments(document))
+              foreach(var doc in BHLSPUtil.ForEachDocuments(document))
               {
                 if(doc.varDeclars.ContainsKey(callExpMemberAccessName))
                 {
@@ -570,7 +551,7 @@ namespace bhlsp
           bhlParser.ClassDeclContext classDecl = null;
           BHLTextDocument classDeclBhlDocument = null;
           
-          foreach(var doc in ForEachDocuments(document))
+          foreach(var doc in BHLSPUtil.ForEachDocuments(document))
           {
             if(doc.classDecls.ContainsKey(classTypeName))
             {
@@ -631,7 +612,7 @@ namespace bhlsp
         {
           string callExpName = callExp.NAME().GetText();
           
-          foreach(var doc in ForEachDocuments(document))
+          foreach(var doc in BHLSPUtil.ForEachDocuments(document))
           {
             if(doc.funcDecls.ContainsKey(callExpName))
             {
@@ -662,7 +643,7 @@ namespace bhlsp
           if(!string.IsNullOrEmpty(funcName))
           {
           
-            foreach(var doc in ForEachDocuments(document))
+            foreach(var doc in BHLSPUtil.ForEachDocuments(document))
             {
               if(doc.funcDecls.ContainsKey(funcName))
               {
@@ -732,19 +713,100 @@ namespace bhlsp
         message = "Not supported"
       });
     }
-    
-    IEnumerable<BHLTextDocument> ForEachDocuments(BHLTextDocument root)
+  }
+
+  public class BHLSPTextDocumentHoverJsonRpcService : BHLSPTextDocumentHoverJsonRpcServiceTemplate
+  {
+    public override RpcResult Hover(TextDocumentPositionParams args)
     {
-      foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(root))
+      BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri);
+      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
       {
-        yield return doc;
+        int line = (int)args.position.line;
+        int character = (int)args.position.character;
+        
+        int idx = document.GetIndex(line, character);
+
+        bhlParser.CallExpContext callExp = null;
+        
+        foreach(IParseTree node in BHLSPUtil.DFS(document.ToParser().program()))
+        {
+          if(node is ParserRuleContext prc)
+          {
+            if(prc.Start.StartIndex <= idx && idx <= prc.Stop.StopIndex)
+            {
+              callExp = prc as bhlParser.CallExpContext;
+              break;
+            }
+          }
+        }
+        
+        bhlParser.FuncDeclContext funcDecl = null;
+        
+        if(callExp != null)
+        {
+          string callExpName = callExp.NAME().GetText();
+          
+          foreach(var doc in BHLSPUtil.ForEachDocuments(document))
+          {
+            if(doc.funcDecls.ContainsKey(callExpName))
+            {
+              funcDecl = doc.funcDecls[callExpName];
+              break;
+            }
+          }
+        }
+        
+        if(funcDecl != null)
+        {
+          string label = funcDecl.NAME().GetText()+"(";
+      
+          List<ParameterInformation> funcParameters = BHLSPUtil.GetInfoParams(funcDecl);
+      
+          if(funcParameters.Count > 0)
+          {
+            for(int k = 0; k < funcParameters.Count; k++)
+            {
+              var funcParameter = funcParameters[k];
+              label += funcParameter.label.Value;
+              if(k != funcParameters.Count - 1)
+                label += ", ";
+            }
+          }
+          else
+            label += "<no parameters>";
+
+          label += ")";
+
+          if(funcDecl.retType() is bhlParser.RetTypeContext retType)
+          {
+            label += ":";
+
+            var types = retType.type();
+            for (int n = 0; n < types.Length; n++)
+            {
+              var t = types[n];
+              if(t.exception != null)
+                continue;
+
+              label += t.NAME().GetText() + " ";
+            }
+          }
+          else
+            label += ":void";
+          
+          return RpcResult.Success(new Hover
+          {
+            contents = new MarkupContent
+            {
+              kind = "plaintext",
+              value = label
+            }
+          });
+        }
       }
       
-      foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
-      {
-        if(doc is BHLTextDocument bhlDocument)
-          yield return bhlDocument;
-      }
+      return RpcResult.Success();
     }
   }
 }

@@ -656,9 +656,31 @@ namespace bhlsp
 	  public bool? linkSupport;
   }
   
+  public class HoverClientCapabilities
+  {
+  	/**
+  	 * Whether hover supports dynamic registration.
+  	 */
+    public bool? dynamicRegistration;
+  
+  	/**
+  	 * Client supports the follow content formats if the content
+  	 * property refers to a `literal of type MarkupContent`.
+  	 * The order describes the preferred format of the client.
+  	 * 
+  	 * MarkupKind = 'plaintext' | 'markdown';
+  	 */
+    public string[] contentFormat { get; set; }
+  }
+  
   public class TextDocumentClientCapabilities
   {
 	  public TextDocumentSyncClientCapabilities synchronization { get; set; }
+	  
+	  /**
+		 * Capabilities specific to the `textDocument/hover` request.
+		 */
+	  public HoverClientCapabilities hover { get; set; }
 	  
 	  /**
 		 * Capabilities specific to the `textDocument/signatureHelp` request.
@@ -2232,5 +2254,19 @@ namespace bhlsp
 		 * streaming) to the client.
 		 */
 	  public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class Hover
+  {
+	  /**
+		 * The hover's content
+		 */
+	  public MarkupContent contents { get; set; }
+
+	  /**
+		 * An optional range is a range inside a text document
+		 * that is used to visualize a hover, e.g. by changing the background color.
+		 */
+	  public Range range { get; set; }
   }
 }
