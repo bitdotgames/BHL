@@ -236,13 +236,10 @@ namespace bhlsp
       root.Add(new RootPath {path = pathFolder, cleanup = cleanup});
     }
     
-    public async void TryAddDocuments(string pathFolder)
+    public async void TryAddDocuments()
     {
-      pathFolder = Util.NormalizeFilePath(pathFolder);
-      if(Directory.Exists(pathFolder))
+      foreach(var rootPath in root)
       {
-        AddRoot(pathFolder, true, false);
-        
         string[] files = new string[0];
         
 #if BHLSP_DEBUG
@@ -252,78 +249,30 @@ namespace bhlsp
         
         await Task.Run(() =>
         {
-          files = Directory.GetFiles(pathFolder, "*.bhl", SearchOption.AllDirectories);
+          files = Directory.GetFiles(rootPath.path, "*.bhl", SearchOption.AllDirectories);
         });
         
 #if BHLSP_DEBUG
         sw.Stop();
         BHLSPLogger.WriteLine($"SearchFiles ({files.Length}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-      
+        
         sw = new System.Diagnostics.Stopwatch();
         sw.Start();
 #endif
-        Dictionary<string, string> map = new Dictionary<string, string>();
         
         var tasks = new List<Task>();
-        for(int i = 0; i < files.Length; i++)
-        {
-          string path = files[i];
-          tasks.Add(ReadAsyncFile(path, map));
-        }
-        
+        foreach(var path in files)
+          tasks.Add(Task.Run(() => TryAddDocument(path)));
         await Task.WhenAll(tasks);
         
 #if BHLSP_DEBUG
         sw.Stop();
-        BHLSPLogger.WriteLine($"ReadFiles ({map.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-        
-        sw = new System.Diagnostics.Stopwatch();
-        sw.Start();
-#endif
-        
-        tasks.Clear();
-        foreach (var path in map.Keys)
-          tasks.Add(Task.Run(() => TryAddDocument(path, map[path])));
-      
-        await Task.WhenAll(tasks);
-        
-#if BHLSP_DEBUG
-        sw.Stop();
-        BHLSPLogger.WriteLine($"AddDocuments ({map.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+        BHLSPLogger.WriteLine($"AddDocuments ({files.Length}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 #endif
       }
     }
     
-    public void TryAddDocuments(WorkspaceFolder folder)
-    {
-      TryAddDocuments(folder.uri.LocalPath);
-    }
-
-    public void TryAddDocuments(Uri uriFolder)
-    {
-      TryAddDocuments(uriFolder.LocalPath);
-    }
-    
-    object lockRead = new object();
-    
-    async Task ReadAsyncFile(string file, Dictionary<string, string> map)
-    {
-      byte[] buffer;
-      using (FileStream sourceStream = new FileStream(file, FileMode.Open, FileAccess.Read))
-      {
-        buffer = new byte[sourceStream.Length];
-        await sourceStream.ReadAsync(buffer, 0, (int)sourceStream.Length);
-      }
-
-      string content = System.Text.Encoding.ASCII.GetString(buffer);
-      
-      lock(lockRead)
-      {
-        map.Add(file, content);
-      }
-    }
-    
-    public void TryAddDocument(string path, string text)
+    public void TryAddDocument(string path, string text = null)
     {
       TryAddDocument(new Uri($"file://{path}"), text);
     }
@@ -341,8 +290,15 @@ namespace bhlsp
         if(document != null)
         {
           document.uri = uri;
-          document.Sync(string.IsNullOrEmpty(text) ? System.IO.File.ReadAllText(path) : text);
 
+          if(string.IsNullOrEmpty(text))
+          {
+            byte[] buffer = File.ReadAllBytes(path);
+            text = System.Text.Encoding.Default.GetString(buffer);
+          }
+          
+          document.Sync(text);
+          
           lock(lockAdd)
           {
             if(!documents.ContainsKey(path))
@@ -392,7 +348,7 @@ namespace bhlsp
       }
     }
     
-    public IEnumerable<BHLTextDocument> forEachImports(BHLTextDocument root)
+    public IEnumerable<BHLTextDocument> forEachBhlImports(BHLTextDocument root)
     {
       Queue<BHLTextDocument> toVisit = new Queue<BHLTextDocument>();
       
@@ -404,10 +360,10 @@ namespace bhlsp
         string ext = Path.GetExtension(document.uri.AbsolutePath);
         foreach(var import in document.imports)
         {
-          string path = ResolveImportPath(import, ext);
+          string path = ResolveImportPath(document.uri.LocalPath, import, ext);
           if(!string.IsNullOrEmpty(path))
           {
-            TryAddDocument(path, null);
+            TryAddDocument(path);
             if(FindDocument(path) is BHLTextDocument doc)
               toVisit.Enqueue(doc);
           }
@@ -417,15 +373,16 @@ namespace bhlsp
       }
     }
 
-    string ResolveImportPath(string import, string ext)
+    public string ResolveImportPath(string docpath, string import, string ext)
     {
       var filePath = string.Empty;
+
       foreach(var root in this.root)
       {
         string path = string.Empty;
         if(!Path.IsPathRooted(import))
         {
-          var dir = Path.GetDirectoryName(root.path);
+          var dir = Path.GetDirectoryName(docpath);
           path = Path.GetFullPath(Path.Combine(dir, import) + ext);
           if(File.Exists(path))
           {
@@ -435,7 +392,7 @@ namespace bhlsp
         }
         else
         {
-          path = Path.GetFullPath(root.path + "/" + import.Substring(import.LastIndexOf("/") + 1) + ext);
+          path = Path.GetFullPath(root.path + "/" + import + ext);
           if(File.Exists(path))
           {
             filePath = path;
@@ -443,6 +400,9 @@ namespace bhlsp
           }
         }
       }
+      
+      if(!string.IsNullOrEmpty(filePath))
+        filePath = Util.NormalizeFilePath(filePath);
       
       return filePath;
     }

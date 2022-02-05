@@ -45,6 +45,7 @@ public class BHLSPC
     rpc.AttachRpcService(new BHLSPTextDocumentSignatureHelpJsonRpcService());
     rpc.AttachRpcService(new BHLSPTextDocumentGoToJsonRpcService());
     rpc.AttachRpcService(new BHLSPTextDocumentHoverJsonRpcService());
+    rpc.AttachRpcService(new BHLSPTextDocumentFindReferencesJsonRpcService());
     
     BHLSPServer server = new BHLSPServer(connection, rpc);
     

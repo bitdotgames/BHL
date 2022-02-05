@@ -673,6 +673,14 @@ namespace bhlsp
     public string[] contentFormat { get; set; }
   }
   
+  public class ReferenceClientCapabilities
+  {
+		/**
+		 * Whether references supports dynamic registration.
+		 */
+		public bool? dynamicRegistration;
+  }
+  
   public class TextDocumentClientCapabilities
   {
 	  public TextDocumentSyncClientCapabilities synchronization { get; set; }
@@ -712,6 +720,11 @@ namespace bhlsp
 		 * @since 3.6.0
 		 */
 	  public ImplementationClientCapabilities implementation { get; set; }
+	  
+		/**
+		 * Capabilities specific to the `textDocument/references` request.
+		 */
+	  public ReferenceClientCapabilities references { get; set; }
   }
   
   public class ClientCapabilities

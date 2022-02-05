@@ -8,23 +8,23 @@ namespace bhlsp
   public class BHLSPLogTextWriter : TextWriter
   {
     public override Encoding Encoding => throw new NotImplementedException();
-    private static readonly string home = System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile);
+    private static readonly string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     private static readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
     private static bool done = false;
     
     public void CleanUpLogFile()
     {
-      if (done)
+      if(done)
         return;
       
       done = true;
-      var log = home + System.IO.Path.DirectorySeparatorChar + ".bhlsplog";
+      var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
       cacheLock.EnterWriteLock();
       
       try
       {
         File.Delete(log);
-        using (StreamWriter w = File.AppendText(log))
+        using(StreamWriter w = File.AppendText(log))
         {
           w.WriteLine($"{DateTime.Now} Logging for BHLSPC started");
         }
@@ -37,12 +37,12 @@ namespace bhlsp
 
     public override void Write(string message)
     {
-      var log = home + System.IO.Path.DirectorySeparatorChar + ".bhlsplog";
+      var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
       cacheLock.EnterWriteLock();
       
       try
       {
-        using (StreamWriter w = File.AppendText(log))
+        using(StreamWriter w = File.AppendText(log))
         {
           w.Write(message);
         }
@@ -55,11 +55,11 @@ namespace bhlsp
 
     public override void WriteLine(string message)
     {
-      var log = home + System.IO.Path.DirectorySeparatorChar + ".bhlsplog";
+      var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
       cacheLock.EnterWriteLock();
       try
       {
-        using (StreamWriter w = File.AppendText(log))
+        using(StreamWriter w = File.AppendText(log))
         {
           w.WriteLine($"{DateTime.Now} {message}");
         }
@@ -75,23 +75,17 @@ namespace bhlsp
   {
     public static void WriteLine(object value)
     {
-      if (value == null)
+      if(value == null)
         Log.WriteLine();
       else
-      {
-        IFormattable f = value as IFormattable;
-        if (f != null)
-          Log.WriteLine(f.ToString(null, Log.FormatProvider));
-        else
-          Log.WriteLine(value.ToString());
-      }
+        Log.WriteLine(value is IFormattable f ? f.ToString(null, Log.FormatProvider) : value.ToString());
     }
 
     public static void CleanUpLogFile()
     {
       Log.CleanUpLogFile();
     }
-    
-    static BHLSPLogTextWriter Log { get; set; } = new BHLSPLogTextWriter();
+
+    private static BHLSPLogTextWriter Log { get; set; } = new BHLSPLogTextWriter();
   }
 }

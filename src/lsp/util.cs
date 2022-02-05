@@ -46,11 +46,14 @@ namespace bhlsp
       }
     }
     
-    public static IEnumerable<BHLTextDocument> ForEachDocuments(BHLTextDocument root)
+    public static IEnumerable<BHLTextDocument> ForEachBhlDocuments(BHLTextDocument root = null)
     {
-      foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachImports(root))
+      if(root != null)
       {
-        yield return doc;
+        foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachBhlImports(root))
+        {
+          yield return doc;
+        }
       }
       
       foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())

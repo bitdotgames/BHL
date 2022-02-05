@@ -77,6 +77,12 @@ namespace bhlsp
     [JsonRpcMethod("textDocument/hover")]
     public abstract RpcResult Hover(TextDocumentPositionParams args);
   }
+
+  public abstract class BHLSPTextDocumentFindReferencesJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("textDocument/references")]
+    public abstract RpcResult FindReferences(ReferenceParams args);
+  }
   
   public abstract class BHLSPTextDocumentJsonRpcServiceTemplate : BHLSPJsonRpcService
   {
@@ -86,9 +92,6 @@ namespace bhlsp
     [JsonRpcMethod("completionItem/resolve")]
     public abstract RpcResult ResolveCompletionItem(CompletionItem args);
     
-    [JsonRpcMethod("textDocument/references")]
-    public abstract RpcResult FindReferences(ReferenceParams args);
-
     [JsonRpcMethod("textDocument/documentHighlight")]
     public abstract RpcResult DocumentHighlight(TextDocumentPositionParams args);
 
@@ -162,16 +165,18 @@ namespace bhlsp
       if(args.workspaceFolders != null)
       {
         for(int i = 0; i < args.workspaceFolders.Length; i++)
-          BHLSPWorkspace.self.TryAddDocuments(args.workspaceFolders[i]);
+          BHLSPWorkspace.self.AddRoot(args.workspaceFolders[i].uri.LocalPath, true);
       }
       else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
       {
-        BHLSPWorkspace.self.TryAddDocuments(args.rootUri);
+        BHLSPWorkspace.self.AddRoot(args.rootUri.LocalPath, true, false);
       }
       else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
       {
-        BHLSPWorkspace.self.TryAddDocuments(args.rootPath);
+        BHLSPWorkspace.self.AddRoot(args.rootPath, true, false);
       }
+      
+      BHLSPWorkspace.self.TryAddDocuments();
       
       ServerCapabilities capabilities = new ServerCapabilities();
 
@@ -227,6 +232,11 @@ namespace bhlsp
         if(args.capabilities.textDocument.hover != null)
         {
           capabilities.hoverProvider = true; //textDocument/hover
+        }
+        
+        if(args.capabilities.textDocument.references != null)
+        {
+          capabilities.referencesProvider = true; //textDocument/references
         }
       }
       
@@ -306,7 +316,7 @@ namespace bhlsp
         bhlParser.FuncDeclContext funcDecl = null;
         if(!string.IsNullOrEmpty(funcName))
         {
-          foreach(var doc in BHLSPUtil.ForEachDocuments(document))
+          foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
           {
             if(doc.funcDecls.ContainsKey(funcName))
             {
@@ -533,7 +543,7 @@ namespace bhlsp
             
             if(string.IsNullOrEmpty(classTypeName) && !string.IsNullOrEmpty(callExpMemberAccessName))
             {
-              foreach(var doc in BHLSPUtil.ForEachDocuments(document))
+              foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
               {
                 if(doc.varDeclars.ContainsKey(callExpMemberAccessName))
                 {
@@ -551,7 +561,7 @@ namespace bhlsp
           bhlParser.ClassDeclContext classDecl = null;
           BHLTextDocument classDeclBhlDocument = null;
           
-          foreach(var doc in BHLSPUtil.ForEachDocuments(document))
+          foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
           {
             if(doc.classDecls.ContainsKey(classTypeName))
             {
@@ -612,7 +622,7 @@ namespace bhlsp
         {
           string callExpName = callExp.NAME().GetText();
           
-          foreach(var doc in BHLSPUtil.ForEachDocuments(document))
+          foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
           {
             if(doc.funcDecls.ContainsKey(callExpName))
             {
@@ -643,7 +653,7 @@ namespace bhlsp
           if(!string.IsNullOrEmpty(funcName))
           {
           
-            foreach(var doc in BHLSPUtil.ForEachDocuments(document))
+            foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
             {
               if(doc.funcDecls.ContainsKey(funcName))
               {
@@ -747,7 +757,7 @@ namespace bhlsp
         {
           string callExpName = callExp.NAME().GetText();
           
-          foreach(var doc in BHLSPUtil.ForEachDocuments(document))
+          foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
           {
             if(doc.funcDecls.ContainsKey(callExpName))
             {
@@ -807,6 +817,90 @@ namespace bhlsp
       }
       
       return RpcResult.Success();
+    }
+  }
+
+  public class BHLSPTextDocumentFindReferencesJsonRpcService : BHLSPTextDocumentFindReferencesJsonRpcServiceTemplate
+  {
+    public override RpcResult FindReferences(ReferenceParams args)
+    {
+      BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri);
+      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+      {
+        int line = (int)args.position.line;
+        int character = (int)args.position.character;
+        
+        int idx = document.GetIndex(line, character);
+
+        bhlParser.FuncDeclContext funcDecl = null;
+        
+        foreach(IParseTree node in BHLSPUtil.DFS(document.ToParser().program()))
+        {
+          if(node is ParserRuleContext prc)
+          {
+            if(prc.Start.StartIndex <= idx && idx <= prc.Stop.StopIndex)
+            {
+              funcDecl = prc as bhlParser.FuncDeclContext;
+              break;
+            }
+          }
+        }
+
+        if(funcDecl?.NAME() != null)
+        {
+          string funcDeclName = funcDecl.NAME().GetText();
+          List<Location> result = new List<Location>();
+          
+          foreach(BHLTextDocument bhlDocument in BHLSPUtil.ForEachBhlDocuments()) //TODO: too long
+          {
+            if(!CanCheck(bhlDocument, document.uri.LocalPath))
+              continue;
+            
+            foreach(var bhlDocumentFuncDecl in bhlDocument.funcDecls.Values)
+            {
+              foreach(IParseTree node in BHLSPUtil.DFS(bhlDocumentFuncDecl))
+              {
+                if(node is bhlParser.CallExpContext callExp)
+                {
+                  if(funcDeclName == callExp.NAME().GetText())
+                  {
+                    var start = bhlDocument.GetLineColumn(callExp.Start.StartIndex);
+                    var end = bhlDocument.GetLineColumn(callExp.Stop.StopIndex);
+                    var startPos = new Position {line = (uint)start.Item1, character = (uint)start.Item2};
+                    var endPos = new Position {line = (uint)end.Item1, character = (uint)end.Item2};
+                    
+                    result.Add(new Location
+                    {
+                      uri = bhlDocument.uri,
+                      range = new Range
+                      {
+                        start = startPos,
+                        end = endPos
+                      }
+                    });
+                  }
+                }
+              }
+            }
+          }
+          
+          if(result.Count > 0)
+            return RpcResult.Success(result.ToArray());
+        }
+      }
+      return RpcResult.Success();
+    }
+
+    bool CanCheck(BHLTextDocument document, string path)
+    {
+      foreach(var import in document.imports)
+      {
+        string importPath = BHLSPWorkspace.self.ResolveImportPath(document.uri.LocalPath, import, ".bhl");
+        if(importPath == path)
+          return true;
+      }
+
+      return false;
     }
   }
 }
