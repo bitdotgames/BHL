@@ -11455,6 +11455,37 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //[IsTested()]
+  public void TestParalAllNestedParalInFunc()
+  {
+    string bhl = @"
+    func bar() {
+      trace(""bar"")
+    }
+
+    func foo() {
+      paral {
+        bar()
+      }
+    }
+
+    func test() {
+      paral_all {
+        foo()
+      }
+    }
+    ";
+
+    var globs = TypeSystem.CreateBuiltins();
+    var log = new StringBuilder();
+    BindTrace(globs, log);
+
+    var vm = MakeVM(bhl, globs, false, true);
+    Execute(vm, "test");
+    AssertEqual("bar", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestRunningInDeferIsException()
   {
