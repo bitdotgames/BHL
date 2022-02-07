@@ -4377,6 +4377,38 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestContinueFromNestedSequences()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      int i = 0
+      while(i == 0) {
+        {
+          //without defer{..} sequence block won't be created
+          //for optimization purposes
+          defer {
+            i = 1
+          }
+          {
+            defer {
+              i = 2
+            }
+            i = 3
+            continue
+          }
+        }
+      }
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBooleanInCondition()
   {
     string bhl = @"
