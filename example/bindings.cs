@@ -65,7 +65,7 @@ public class WaitNode : ICoroutine
   bool first_time = true;
   float time_left;
 
-  public void Tick(VM.Frame frm, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ip, ref BHS status)
   {
     if(first_time)
     {
@@ -78,6 +78,8 @@ public class WaitNode : ICoroutine
       time_left -= Time.dt;
       if(time_left > 0)
         status = BHS.RUNNING; 
+      else
+        ++ip;
     }
   }
 

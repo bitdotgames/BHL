@@ -5971,7 +5971,7 @@ public class BHL_TestVM : BHL_TestBase
     bool first_time = true;
     public StringBuilder log;
 
-    public void Tick(VM.Frame frm, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, ref BHS status)
     {
       if(first_time)
       {
@@ -5979,7 +5979,10 @@ public class BHL_TestVM : BHL_TestBase
         first_time = false;
       }
       else
+      {
+        ++ip;
         log.Append("HERE");
+      }
     }
 
     public void Cleanup(VM.Frame frm)
@@ -9783,7 +9786,7 @@ public class BHL_TestVM : BHL_TestBase
     int ticks;
     int ret;
 
-    public void Tick(VM.Frame frm, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, ref BHS status)
     {
       if(first_time)
       {
@@ -9797,7 +9800,10 @@ public class BHL_TestVM : BHL_TestBase
       if(ticks-- > 0)
         status = BHS.RUNNING;
       else
+      {
+        ++ip;
         frm.stack.Push(Val.NewNum(frm.vm, ret));
+      }
     }
 
     public void Cleanup(VM.Frame frm)
@@ -11480,7 +11486,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(globs, log);
 
-    var vm = MakeVM(bhl, globs, false, true);
+    var vm = MakeVM(bhl, globs);
     Execute(vm, "test");
     AssertEqual("bar", log.ToString());
     CommonChecks(vm);
@@ -18806,7 +18812,7 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(10, trace[4].line);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestGetStackTraceInSubParal()
   {
     string bhl3 = @"
@@ -18853,7 +18859,6 @@ public class BHL_TestVM : BHL_TestBase
       var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
-          Console.WriteLine(VM.Error.ToString(trace));
           return null;
         });
       globs.Define(fn);
@@ -20124,8 +20129,14 @@ public class BHL_TestVM : BHL_TestBase
   VM.Fiber Execute(VM vm, string fn_name, uint cargs_bits, params Val[] args)
   {
     var fb = vm.Start(fn_name, cargs_bits, args);
-    while(vm.Tick()) {}
-    return fb;
+    const int LIMIT = 20;
+    int c = 0;
+    for(;c<LIMIT;++c)
+    {
+      if(!vm.Tick())
+        return fb;
+    }
+    throw new Exception("Too many iterations: " + c);
   }
 
   static int PredictOpcodeSize(ModuleCompiler.Definition op, byte[] bytes, int start_pos)
@@ -20646,7 +20657,7 @@ public class BHL_TestVM : BHL_TestBase
     int c;
     int ticks_ttl;
 
-    public void Tick(VM.Frame frm, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, ref BHS status)
     {
       //first time
       if(c++ == 0)
@@ -20654,6 +20665,8 @@ public class BHL_TestVM : BHL_TestBase
 
       if(ticks_ttl-- > 0)
         status = BHS.RUNNING;
+      else
+        ++ip;
     }
 
     public void Cleanup(VM.Frame frm)

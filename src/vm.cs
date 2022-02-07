@@ -1587,14 +1587,12 @@ public class VM
       {
         short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         ip += offset;
-        curr_frame.fb.ip = ip;
       }
       break;
       case Opcodes.Continue:
       {
         short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         ip += offset;
-        curr_frame.fb.ip = ip;
       }
       break;
       case Opcodes.DefArg:
@@ -1696,7 +1694,7 @@ public class VM
   )
   {
     var status = BHS.SUCCESS;
-    coroutine.Tick(curr_frame, ref status);
+    coroutine.Tick(curr_frame, ref ip, ref status);
 
     if(status == BHS.RUNNING)
       return status;
@@ -1735,9 +1733,6 @@ public class VM
       //
       if(curr_frame.refs == -1)
         ctx_frames.Pop();
-
-      //NOTE: we must increment the ip upon coroutine completion
-      ++ip;
 
       return status;
     }
@@ -1790,13 +1785,13 @@ public class VM
     if(type == EnumBlock.PARAL)
     {
       var paral = CoroutinePool.New<ParalBlock>(this);
-      paral.Init(ip + 1, ip + size);
+      paral.Init(ip + 1, ip + size + 1);
       return paral;
     }
     else if(type == EnumBlock.PARAL_ALL) 
     {
       var paral = CoroutinePool.New<ParalAllBlock>(this);
-      paral.Init(ip + 1, ip + size);
+      paral.Init(ip + 1, ip + size + 1);
       return paral;
     }
     else if(type == EnumBlock.SEQ)
@@ -1804,19 +1799,19 @@ public class VM
       if(defer_scope is IBranchyCoroutine)
       {
         var br = CoroutinePool.New<ParalBranchBlock>(this);
-        br.Init(curr_frame, ip + 1, ip + size);
+        br.Init(curr_frame, ip + 1, ip + size + 1);
         return br;
       }
       else
       {
         var seq = CoroutinePool.New<SeqBlock>(this);
-        seq.Init(curr_frame, ip + 1, ip + size);
+        seq.Init(curr_frame, ip + 1, ip + size + 1);
         return seq;
       }
     }
     else if(type == EnumBlock.DEFER)
     {
-      var d = new DeferBlock(curr_frame, ip + 1, ip + size);
+      var d = new DeferBlock(curr_frame, ip + 1, ip + size + 1);
       defer_scope.RegisterDefer(d);
       //we need to skip defer block
       //Console.WriteLine("DEFER SKIP " + ip + " " + (ip+size) + " " + Environment.StackTrace);
@@ -2007,7 +2002,7 @@ public class CompiledModule
 
 public interface ICoroutine
 {
-  void Tick(VM.Frame frm, ref BHS status);
+  void Tick(VM.Frame frm, ref int ip, ref BHS status);
   void Cleanup(VM.Frame frm);
 }
 
@@ -2121,7 +2116,7 @@ class CoroutineSuspend : ICoroutine
 {
   public static readonly ICoroutine Instance = new CoroutineSuspend();
 
-  public void Tick(VM.Frame frm, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ip, ref BHS status)
   {
     status = BHS.RUNNING;
   }
@@ -2134,13 +2129,15 @@ class CoroutineYield : ICoroutine
 {
   bool first_time = true;
 
-  public void Tick(VM.Frame frm, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ip, ref BHS status)
   {
     if(first_time)
     {
       status = BHS.RUNNING;
       first_time = false;
     }
+    else
+      ++ip;
   }
 
   public void Cleanup(VM.Frame frm)
@@ -2164,11 +2161,11 @@ public struct DeferBlock
 
   BHS Execute(ref ICoroutine coro, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
-    int ip_copy = ip;
+    int ip_orig = ip;
     ip = this.ip;
 
-    ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: ip-1, max_ip: end_ip+1));
-    //Console.WriteLine("ENTER SCOPE " + ip + " " + (end_ip + 1) + " " + frames.Count);
+    ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: ip-1, max_ip: end_ip));
+    //Console.WriteLine("ENTER SCOPE " + ip + " " + end_ip + " " + frames.Count);
     var status = frm.vm.Execute(
       ref ip, ctx_frames, 
       ref coro, 
@@ -2177,9 +2174,9 @@ public struct DeferBlock
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
-    //Console.WriteLine("~EXIT SCOPE " + ip + " " + (end_ip + 1));
+    //Console.WriteLine("~EXIT SCOPE " + ip + " " + end_ip);
 
-    ip = ip_copy;
+    ip = ip_orig;
 
     return status;
   }
@@ -2233,11 +2230,12 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     this.end_ip = end_ip;
     this.ip = bgn_ip;
     this.frames_idx = frm.fb.ctx_frames.Count;
+    //TODO: this is quite questionable
     frm.fb.ip = bgn_ip;
-    frm.fb.ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: bgn_ip-1, max_ip: end_ip+1));
+    frm.fb.ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: bgn_ip-1, max_ip: end_ip));
   }
 
-  public void Tick(VM.Frame frm, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ext_ip, ref BHS status)
   {
     status = frm.vm.Execute(
       ref ip, frm.fb.ctx_frames, 
@@ -2246,9 +2244,15 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       frames_idx
     );
       
-    //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-    if(status == BHS.SUCCESS && ip >= bgn_ip && ip <= (end_ip+1))
-      frm.fb.ip = end_ip;
+    if(status == BHS.SUCCESS)
+    {
+      //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+      if(ip >= bgn_ip && ip <= end_ip)
+        ext_ip = end_ip;
+      //otherwise just assign ext_ip the last ip result (this is needed for break, continue) 
+      else
+        ext_ip = ip;
+    }
   }
 
   public void Cleanup(VM.Frame frm)
@@ -2310,20 +2314,26 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     this.bgn_ip = bgn_ip;
     this.end_ip = end_ip;
     this.ip = bgn_ip;
-    ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: bgn_ip-1, max_ip: end_ip+1));
+    ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: bgn_ip-1, max_ip: end_ip));
   }
 
-  public void Tick(VM.Frame frm, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ext_ip, ref BHS status)
   {
     status = frm.vm.Execute(
       ref ip, ctx_frames, 
       ref coroutine, 
       this
     );
-      
-    //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-    if(status == BHS.SUCCESS && ip >= bgn_ip && ip <= (end_ip+1))
-      frm.fb.ip = end_ip;
+
+    if(status == BHS.SUCCESS)
+    {
+      //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+      if(ip >= bgn_ip && ip <= end_ip)
+        ext_ip = end_ip;
+      //otherwise just assign ext_ip the last ip result (this is needed for break, continue) 
+      else
+        ext_ip = ip;
+    }
   }
 
   public void Cleanup(VM.Frame frm)
@@ -2383,24 +2393,23 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     this.end_ip = end_ip;
   }
 
-  public void Tick(VM.Frame frm, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ip, ref BHS status)
   {
-    //TODO: this doesn't look safe
-    frm.fb.ip = bgn_ip;
+    ip = bgn_ip;
 
     status = BHS.RUNNING;
 
     for(i=0;i<branches.Count;++i)
     {
       var branch = branches[i];
-      branch.Tick(frm, ref status);
+      branch.Tick(frm, ref ip, ref status);
       if(status != BHS.RUNNING)
       {
         CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
         //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-        if(frm.fb.ip >= bgn_ip && frm.fb.ip <= (end_ip+1))
-          frm.fb.ip = end_ip;
+        if(ip >= bgn_ip && ip <= end_ip)
+          ip = end_ip;
         break;
       }
     }
@@ -2409,6 +2418,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
   public void Cleanup(VM.Frame frm)
   {
     DeferBlock.DelCoroutines(frm, branches);
+    //TODO: pass ip and ctx frames from above?
     ExitScope(frm, ref frm.fb.ip, frm.fb.ctx_frames);
   }
 
@@ -2455,17 +2465,16 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     this.end_ip = end_ip;
   }
 
-  public void Tick(VM.Frame frm, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ip, ref BHS status)
   {
-    //TODO: this doesn't look safe
-    frm.fb.ip = bgn_ip;
+    ip = bgn_ip;
     
     for(i=0;i<branches.Count;)
     {
       var branch = branches[i];
-      branch.Tick(frm, ref status);
+      branch.Tick(frm, ref ip, ref status);
       //let's check if we "jumped out" of the block (e.g return, break)
-      if(frm.refs == -1 /*return executed*/ || frm.fb.ip < bgn_ip || frm.fb.ip > end_ip)
+      if(frm.refs == -1 /*return executed*/ || ip < bgn_ip || ip > end_ip)
       {
         CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
@@ -2490,13 +2499,14 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     if(branches.Count > 0)
       status = BHS.RUNNING;
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-    else if(frm.fb.ip >= bgn_ip && frm.fb.ip <= (end_ip+1))
-      frm.fb.ip = end_ip;
+    else if(ip >= bgn_ip && ip <= end_ip)
+      ip = end_ip;
   }
 
   public void Cleanup(VM.Frame frm)
   {
     DeferBlock.DelCoroutines(frm, branches);
+    //TODO: pass ip and ctx frames from above?
     ExitScope(frm, ref frm.fb.ip, frm.fb.ctx_frames);
   }
 
