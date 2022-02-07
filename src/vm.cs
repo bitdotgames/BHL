@@ -1120,7 +1120,7 @@ public class VM
 
     var curr_frame = ctx.frame;
 
-    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
+    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(coroutine != null)
