@@ -6035,7 +6035,7 @@ public class BHL_TestVM : BHL_TestBase
     bool first_time = true;
     public StringBuilder log;
 
-    public void Tick(VM.Frame frm, ref int ip, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames, ref BHS status)
     {
       if(first_time)
       {
@@ -8785,6 +8785,49 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //[IsTested()]
+  public void TestParalAllForNestedSeqs()
+  {
+    string bhl = @"
+
+    func int foo(int a)
+    {
+      paral {
+        return a
+      }
+      return 0
+    }
+
+    func int test() 
+    {
+      int i = 0
+      paral_all {
+        {
+          yield()
+          if(i == 1) {
+            i = foo(2)
+          }
+        }
+        {
+          if(i == 0) {
+            i = foo(1)
+          }
+          yield()
+        }
+      }
+      return i
+    }
+    ";
+
+    var globs = TypeSystem.CreateBuiltins();
+
+    BindColor(globs);
+
+    var vm = MakeVM(bhl, globs, false, true);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 2);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestYieldWhileInParal()
   {
@@ -9847,7 +9890,7 @@ public class BHL_TestVM : BHL_TestBase
     int ticks;
     int ret;
 
-    public void Tick(VM.Frame frm, ref int ip, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)
     {
       if(first_time)
       {
@@ -11407,6 +11450,25 @@ public class BHL_TestVM : BHL_TestBase
 
   [IsTested()]
   public void TestParalReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      paral {
+        return 1
+      }
+      return 0
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").stack.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestParalReturn2()
   {
     string bhl = @"
 
@@ -20719,7 +20781,7 @@ public class BHL_TestVM : BHL_TestBase
     int c;
     int ticks_ttl;
 
-    public void Tick(VM.Frame frm, ref int ip, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames, ref BHS status)
     {
       //first time
       if(c++ == 0)
