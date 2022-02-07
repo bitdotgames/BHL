@@ -4314,6 +4314,30 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBreakFromNestedSequences()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      int i = 0
+      while(true) {
+        {
+          {
+            i = 1
+            break
+          }
+        }
+      }
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").stack.PopRelease().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestContinueInForeachLoop()
   {
     string bhl = @"

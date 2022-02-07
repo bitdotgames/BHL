@@ -2214,8 +2214,6 @@ public struct DeferBlock
 public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 {
   public int ip;
-  public int min_ip;
-  public int max_ip;
   public ICoroutine coroutine;
   public List<DeferBlock> defers;
   public int frames_idx;
@@ -2233,12 +2231,9 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 
   public void Init(VM.Frame frm, int min_ip, int max_ip)
   {
-    this.min_ip = min_ip;
-    this.max_ip = max_ip;
     this.ip = min_ip;
     this.frames_idx = frm.fb.ctx_frames.Count;
-    //TODO: this is quite questionable
-    frm.fb.ip = min_ip;
+    frm.fb.ip = ip;
     frm.fb.ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
@@ -2250,16 +2245,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       this,
       frames_idx
     );
-      
-    if(status == BHS.SUCCESS)
-    {
-      //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-      if(ip > min_ip && ip < max_ip)
-        ext_ip = max_ip;
-      //otherwise just assign ext_ip the last ip result (this is needed for break, continue) 
-      else
-        ext_ip = ip;
-    }
+    ext_ip = ip;
   }
 
   public void Cleanup(VM.Frame frm)
@@ -2505,7 +2491,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
 
     if(branches.Count > 0)
       status = BHS.RUNNING;
-    //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+    //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after this block
     else if(ip > min_ip && ip < max_ip)
       ip = max_ip + 1;
   }
