@@ -2254,7 +2254,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     if(status == BHS.SUCCESS)
     {
       //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-      if(ip >= min_ip && ip <= max_ip)
+      if(ip > min_ip && ip < max_ip)
         ext_ip = max_ip;
       //otherwise just assign ext_ip the last ip result (this is needed for break, continue) 
       else
@@ -2335,7 +2335,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     if(status == BHS.SUCCESS)
     {
       //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-      if(ip >= min_ip && ip <= max_ip)
+      if(ip > min_ip && ip < max_ip)
         ext_ip = max_ip + 1;
       //otherwise just assign ext_ip the last ip result (this is needed for break, continue) 
       else
@@ -2415,7 +2415,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
         CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
         //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-        if(ip >= min_ip && ip <= max_ip)
+        if(ip > min_ip && ip < max_ip)
           ip = max_ip + 1;
         break;
       }
@@ -2506,7 +2506,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     if(branches.Count > 0)
       status = BHS.RUNNING;
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-    else if(ip >= min_ip && ip <= max_ip)
+    else if(ip > min_ip && ip < max_ip)
       ip = max_ip + 1;
   }
 
