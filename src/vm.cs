@@ -157,11 +157,6 @@ public class VM
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
-
-    public bool IsFuncCall()
-    {
-      return min_ip == -1 && max_ip == MAX_IP;
-    }
   }
 
   public class Fiber
@@ -1023,7 +1018,7 @@ public class VM
   {
     fb.ip = fr.start_ip;
     fr.fb = fb;
-    fb.ctx_frames.Push(new FrameContext(fr, true));
+    fb.ctx_frames.Push(new FrameContext(fr, is_call: true));
   }
 
   void Register(Fiber fb)
@@ -1662,7 +1657,7 @@ public class VM
 
     //let's remember ip to return to
     new_frame.return_ip = ip;
-    ctx_frames.Push(new FrameContext(new_frame, true));
+    ctx_frames.Push(new FrameContext(new_frame, is_call: true));
     //since ip will be incremented below we decrement it intentionally here
     ip = new_frame.start_ip - 1; 
 
@@ -2172,7 +2167,7 @@ public struct DeferBlock
     int ip_copy = ip;
     ip = this.ip;
 
-    ctx_frames.Push(new VM.FrameContext(frm, false, ip-1, end_ip+1));
+    ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: ip-1, max_ip: end_ip+1));
     //Console.WriteLine("ENTER SCOPE " + ip + " " + (end_ip + 1) + " " + frames.Count);
     var status = frm.vm.Execute(
       ref ip, ctx_frames, 
@@ -2239,7 +2234,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     this.ip = bgn_ip;
     this.frames_idx = frm.fb.ctx_frames.Count;
     frm.fb.ip = bgn_ip;
-    frm.fb.ctx_frames.Push(new VM.FrameContext(frm, false, bgn_ip-1, end_ip+1));
+    frm.fb.ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: bgn_ip-1, max_ip: end_ip+1));
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
@@ -2315,7 +2310,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     this.bgn_ip = bgn_ip;
     this.end_ip = end_ip;
     this.ip = bgn_ip;
-    ctx_frames.Push(new VM.FrameContext(frm, false, bgn_ip-1, end_ip+1));
+    ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: bgn_ip-1, max_ip: end_ip+1));
   }
 
   public void Tick(VM.Frame frm, ref BHS status)
