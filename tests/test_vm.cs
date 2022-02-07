@@ -6007,14 +6007,12 @@ public class BHL_TestVM : BHL_TestBase
     {
       if(first_time)
       {
+        --ip;
         status = BHS.RUNNING;
         first_time = false;
       }
       else
-      {
-        ++ip;
         log.Append("HERE");
-      }
     }
 
     public void Cleanup(VM.Frame frm)
@@ -9830,10 +9828,12 @@ public class BHL_TestVM : BHL_TestBase
       }
 
       if(ticks-- > 0)
+      {
+        --ip;
         status = BHS.RUNNING;
+      }
       else
       {
-        ++ip;
         frm.stack.Push(Val.NewNum(frm.vm, ret));
       }
     }
@@ -20696,9 +20696,10 @@ public class BHL_TestVM : BHL_TestBase
         ticks_ttl = (int)frm.stack.PopRelease().num;
 
       if(ticks_ttl-- > 0)
+      {
+        --ip;
         status = BHS.RUNNING;
-      else
-        ++ip;
+      }
     }
 
     public void Cleanup(VM.Frame frm)

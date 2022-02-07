@@ -69,6 +69,7 @@ public class WaitNode : ICoroutine
   {
     if(first_time)
     {
+      --ip;
       status = BHS.RUNNING;
       time_left = (float)frm.stack.PopRelease().num;
       first_time = false;
@@ -77,9 +78,10 @@ public class WaitNode : ICoroutine
     {
       time_left -= Time.dt;
       if(time_left > 0)
+      {
+        --ip;
         status = BHS.RUNNING; 
-      else
-        ++ip;
+      }
     }
   }
 

@@ -1696,6 +1696,9 @@ public class VM
   )
   {
     var status = BHS.SUCCESS;
+    //NOTE: optimistically stepping forward so that for simple  
+    //      bindings you won't have to deal with it
+    ++ip;
     coroutine.Tick(curr_frame, ref ip, ref status);
 
     if(status == BHS.RUNNING)
@@ -2120,6 +2123,7 @@ class CoroutineSuspend : ICoroutine
 
   public void Tick(VM.Frame frm, ref int ip, ref BHS status)
   {
+    --ip;
     status = BHS.RUNNING;
   }
 
@@ -2135,11 +2139,10 @@ class CoroutineYield : ICoroutine
   {
     if(first_time)
     {
+      --ip;
       status = BHS.RUNNING;
       first_time = false;
     }
-    else
-      ++ip;
   }
 
   public void Cleanup(VM.Frame frm)
@@ -2386,23 +2389,23 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     this.max_ip = max_ip;
   }
 
-  public void Tick(VM.Frame frm, ref int ip, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ext_ip, ref BHS status)
   {
-    ip = min_ip;
+    ext_ip = min_ip;
 
     status = BHS.RUNNING;
 
     for(i=0;i<branches.Count;++i)
     {
       var branch = branches[i];
-      branch.Tick(frm, ref ip, ref status);
+      branch.Tick(frm, ref ext_ip, ref status);
       if(status != BHS.RUNNING)
       {
         CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
         //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
-        if(ip > min_ip && ip < max_ip)
-          ip = max_ip + 1;
+        if(ext_ip > min_ip && ext_ip < max_ip)
+          ext_ip = max_ip + 1;
         break;
       }
     }
@@ -2458,16 +2461,16 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     this.max_ip = max_ip;
   }
 
-  public void Tick(VM.Frame frm, ref int ip, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ext_ip, ref BHS status)
   {
-    ip = min_ip;
+    ext_ip = min_ip;
     
     for(i=0;i<branches.Count;)
     {
       var branch = branches[i];
-      branch.Tick(frm, ref ip, ref status);
+      branch.Tick(frm, ref ext_ip, ref status);
       //let's check if we "jumped out" of the block (e.g return, break)
-      if(frm.refs == -1 /*return executed*/ || ip < (min_ip-1) || ip > (max_ip+1))
+      if(frm.refs == -1 /*return executed*/ || ext_ip < (min_ip-1) || ext_ip > (max_ip+1))
       {
         CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
@@ -2492,8 +2495,8 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     if(branches.Count > 0)
       status = BHS.RUNNING;
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after this block
-    else if(ip > min_ip && ip < max_ip)
-      ip = max_ip + 1;
+    else if(ext_ip > min_ip && ext_ip < max_ip)
+      ext_ip = max_ip + 1;
   }
 
   public void Cleanup(VM.Frame frm)
