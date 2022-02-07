@@ -1702,7 +1702,10 @@ public class VM
     coroutine.Tick(curr_frame, ref ip, ref status);
 
     if(status == BHS.RUNNING)
+    {
+      --ip;
       return status;
+    }
     else if(status == BHS.FAILURE)
     {
       CoroutinePool.Del(curr_frame, coroutine);
@@ -2123,7 +2126,6 @@ class CoroutineSuspend : ICoroutine
 
   public void Tick(VM.Frame frm, ref int ip, ref BHS status)
   {
-    --ip;
     status = BHS.RUNNING;
   }
 
@@ -2139,7 +2141,6 @@ class CoroutineYield : ICoroutine
   {
     if(first_time)
     {
-      --ip;
       status = BHS.RUNNING;
       first_time = false;
     }

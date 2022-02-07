@@ -6007,7 +6007,6 @@ public class BHL_TestVM : BHL_TestBase
     {
       if(first_time)
       {
-        --ip;
         status = BHS.RUNNING;
         first_time = false;
       }
@@ -9829,7 +9828,6 @@ public class BHL_TestVM : BHL_TestBase
 
       if(ticks-- > 0)
       {
-        --ip;
         status = BHS.RUNNING;
       }
       else
@@ -20697,7 +20695,6 @@ public class BHL_TestVM : BHL_TestBase
 
       if(ticks_ttl-- > 0)
       {
-        --ip;
         status = BHS.RUNNING;
       }
     }
