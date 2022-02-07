@@ -4322,8 +4322,16 @@ public class BHL_TestVM : BHL_TestBase
       int i = 0
       while(true) {
         {
-          {
+          //without defer{..} sequence block won't be created
+          //for optimization purposes
+          defer {
             i = 1
+          }
+          {
+            defer {
+              i = 2
+            }
+            i = 3
             break
           }
         }
