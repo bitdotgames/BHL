@@ -147,6 +147,9 @@ public class VM
   {
     public Frame frame;
     public bool is_call;
+    //NOTE: if current ip is not withing range of these values 
+    //      (excluding border values!)
+    //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
 
@@ -2164,8 +2167,10 @@ public struct DeferBlock
     int ip_orig = ip;
     ip = this.ip;
 
+    //1. let's create the execution context
     ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: ip-1, max_ip: end_ip));
-    //Console.WriteLine("ENTER SCOPE " + ip + " " + end_ip + " " + frames.Count);
+    //Console.WriteLine("ENTER SCOPE " + ip + " " + end_ip + " " + ctx_frames.Count);
+    //2. and execute it
     var status = frm.vm.Execute(
       ref ip, ctx_frames, 
       ref coro, 
