@@ -1105,14 +1105,14 @@ public class VM
     FixedStack<FrameContext> ctx_frames, 
     ref ICoroutine coroutine, 
     IExitableScope defer_scope,
-    int frames_limit = 0
+    int frames_waterline_idx = 0
   )
   {
     var status = BHS.SUCCESS;
     IExitableScope tmp_defer_scope = null;
     int init_ctx_num = ctx_frames.Count;
     int tmp_ctx_num = 0;
-    while((tmp_ctx_num = ctx_frames.Count) > frames_limit && status == BHS.SUCCESS)
+    while((tmp_ctx_num = ctx_frames.Count) > frames_waterline_idx && status == BHS.SUCCESS)
     {
       //NOTE: we need to restore the original defer scope
       //      once we pop all frames which were generated during execution 
