@@ -65,7 +65,7 @@ public class WaitNode : ICoroutine
   bool first_time = true;
   float time_left;
 
-  public void Tick(VM.Frame frm, ref int ip, ref BHS status)
+  public void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames, ref BHS status)
   {
     if(first_time)
     {
