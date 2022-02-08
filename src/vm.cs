@@ -2251,7 +2251,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
   public int ip;
   public ICoroutine coroutine;
   public List<DeferBlock> defers;
-  public int frames_idx;
+  public int waterline_idx;
 
   public int Count {
     get {
@@ -2270,7 +2270,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     ext_ip = ip;
     //NOTE: pushing origin frame to connect return values
     ext_frames.Push(new VM.FrameContext(frm.origin, is_call: false));
-    this.frames_idx = ext_frames.Count;
+    this.waterline_idx = ext_frames.Count;
     ext_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
@@ -2280,23 +2280,23 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       ref ip, ext_frames, 
       ref coroutine, 
       this,
-      frames_idx
+      waterline_idx
     );
     ext_ip = ip;
-    //removing dummy origin frame
-    if(status != BHS.RUNNING)
-      ext_frames.Pop();
   }
 
-  public void Cleanup(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ctx_frames)
+  public void Cleanup(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames)
   {
+    //NOTE: removing dummy origin frame
+    ext_frames.Pop();
+
     if(coroutine != null)
     {
-      CoroutinePool.Del(frm, ref ip, ctx_frames, coroutine);
+      CoroutinePool.Del(frm, ref ip, ext_frames, coroutine);
       coroutine = null;
     }
 
-    ExitScope(frm, ref ip, ctx_frames);
+    ExitScope(frm, ref ip, ext_frames);
   }
 
   public void RegisterDefer(DeferBlock cb)
@@ -2313,9 +2313,9 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g return) should be 
     //      explicitely released. Top frame is released 'above'.
-    for(int i=ctx_frames.Count;i-- > frames_idx;)
+    for(int i=ctx_frames.Count;i-- > waterline_idx;)
     {
-      if(i > frames_idx + 1)
+      if(i > waterline_idx + 1)
         ctx_frames[i].frame.Release();
       ctx_frames.RemoveAt(i);
     }
