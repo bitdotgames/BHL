@@ -217,7 +217,7 @@ public class VM
     {
       if(coroutine != null)
       {
-        CoroutinePool.Del(ctx_frames.Peek().frame, coroutine);
+        CoroutinePool.Del(ctx_frames.Peek().frame, ref ip, ctx_frames, coroutine);
         coroutine = null;
       }
 
@@ -1737,7 +1737,7 @@ public class VM
     }
     else if(status == BHS.FAILURE)
     {
-      CoroutinePool.Del(curr_frame, coroutine);
+      CoroutinePool.Del(curr_frame, ref ip, ctx_frames, coroutine);
       coroutine = null;
 
       curr_frame.ExitScope(curr_frame, ref ip, ctx_frames);
@@ -1749,7 +1749,7 @@ public class VM
     }
     else if(status == BHS.SUCCESS)
     {
-      CoroutinePool.Del(curr_frame, coroutine);
+      CoroutinePool.Del(curr_frame, ref ip, ctx_frames, coroutine);
       coroutine = null;
       
       //NOTE: after coroutine successful execution we might be in a situation  
@@ -2042,7 +2042,7 @@ public class CompiledModule
 public interface ICoroutine
 {
   void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames, ref BHS status);
-  void Cleanup(VM.Frame frm);
+  void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames);
 }
 
 public class CoroutinePool
@@ -2076,11 +2076,11 @@ public class CoroutinePool
     return (T)coro;
   }
 
-  static public void Del(VM.Frame frm, ICoroutine coro)
+  static public void Del(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames, ICoroutine coro)
   {
     //Console.WriteLine("DEL " + coro.GetType().Name + " " + coro.GetHashCode()/* + " " + Environment.StackTrace*/);
 
-    coro.Cleanup(frm);
+    coro.Cleanup(frm, ref ip, frames);
 
     var t = coro.GetType();
 
@@ -2160,7 +2160,7 @@ class CoroutineSuspend : ICoroutine
     status = BHS.RUNNING;
   }
 
-  public void Cleanup(VM.Frame frm)
+  public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
   {}
 }
 
@@ -2177,7 +2177,7 @@ class CoroutineYield : ICoroutine
     }
   }
 
-  public void Cleanup(VM.Frame frm)
+  public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
   {
     first_time = true;
   }
@@ -2238,10 +2238,10 @@ public struct DeferBlock
     defers.Clear();
   }
 
-  static internal void DelCoroutines(VM.Frame frm, List<ICoroutine> coros)
+  static internal void DelCoroutines(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames, List<ICoroutine> coros)
   {
     for(int i=0;i<coros.Count;++i)
-      CoroutinePool.Del(frm, coros[i]);
+      CoroutinePool.Del(frm, ref ip, ctx_frames, coros[i]);
     coros.Clear();
   }
 }
@@ -2288,15 +2288,15 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       ext_frames.Pop();
   }
 
-  public void Cleanup(VM.Frame frm)
+  public void Cleanup(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ctx_frames)
   {
     if(coroutine != null)
     {
-      CoroutinePool.Del(frm, coroutine);
+      CoroutinePool.Del(frm, ref ip, ctx_frames, coroutine);
       coroutine = null;
     }
 
-    ExitScope(frm, ref ip, frm.fb.ctx_frames);
+    ExitScope(frm, ref ip, ctx_frames);
   }
 
   public void RegisterDefer(DeferBlock cb)
@@ -2372,14 +2372,14 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     }
   }
 
-  public void Cleanup(VM.Frame frm)
+  public void Cleanup(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames)
   {
     //removing dummy origin frame
     ctx_frames.RemoveAt(0);
 
     if(coroutine != null)
     {
-      CoroutinePool.Del(frm, coroutine);
+      CoroutinePool.Del(frm, ref ip, ctx_frames, coroutine);
       coroutine = null;
     }
 
@@ -2444,7 +2444,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
       branch.Tick(frm, ref ext_ip, ext_frames, ref status);
       if(status != BHS.RUNNING)
       {
-        CoroutinePool.Del(frm, branch);
+        CoroutinePool.Del(frm, ref ext_ip, ext_frames, branch);
         branches.RemoveAt(i);
         //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after the block
         if(ext_ip > min_ip && ext_ip < max_ip)
@@ -2454,11 +2454,10 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     }
   }
 
-  public void Cleanup(VM.Frame frm)
+  public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.DelCoroutines(frm, branches);
-    //TODO: pass ip and ctx frames from above?
-    ExitScope(frm, ref frm.fb.ip, frm.fb.ctx_frames);
+    DeferBlock.DelCoroutines(frm, ref ip, ctx_frames, branches);
+    ExitScope(frm, ref ip, ctx_frames);
   }
 
   public void Attach(ICoroutine coro)
@@ -2515,19 +2514,19 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
       //let's check if we "jumped out" of the block (e.g return, break)
       if(frm.refs == -1 /*return executed*/ || ext_ip < (min_ip-1) || ext_ip > (max_ip+1))
       {
-        CoroutinePool.Del(frm, branch);
+        CoroutinePool.Del(frm, ref ext_ip, ext_frames, branch);
         branches.RemoveAt(i);
         status = BHS.SUCCESS;
         return;
       }
       if(status == BHS.SUCCESS)
       {
-        CoroutinePool.Del(frm, branch);
+        CoroutinePool.Del(frm, ref ext_ip, ext_frames, branch);
         branches.RemoveAt(i);
       }
       else if(status == BHS.FAILURE)
       {
-        CoroutinePool.Del(frm, branch);
+        CoroutinePool.Del(frm, ref ext_ip, ext_frames, branch);
         branches.RemoveAt(i);
         return;
       }
@@ -2542,11 +2541,10 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
       ext_ip = max_ip + 1;
   }
 
-  public void Cleanup(VM.Frame frm)
+  public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.DelCoroutines(frm, branches);
-    //TODO: pass ip and ctx frames from above?
-    ExitScope(frm, ref frm.fb.ip, frm.fb.ctx_frames);
+    DeferBlock.DelCoroutines(frm, ref ip, ctx_frames, branches);
+    ExitScope(frm, ref ip, ctx_frames);
   }
 
   public void Attach(ICoroutine coro)

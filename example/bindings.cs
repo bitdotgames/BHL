@@ -81,7 +81,7 @@ public class WaitNode : ICoroutine
     }
   }
 
-  public void Cleanup(VM.Frame frm)
+  public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
   {
     first_time = true;
   }

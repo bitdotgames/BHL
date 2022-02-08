@@ -6072,7 +6072,7 @@ public class BHL_TestVM : BHL_TestBase
         log.Append("HERE");
     }
 
-    public void Cleanup(VM.Frame frm)
+    public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
     {
       first_time = true;
     }
@@ -9937,7 +9937,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     }
 
-    public void Cleanup(VM.Frame frm)
+    public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
     {
       first_time = true;
     }
@@ -20888,7 +20888,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     }
 
-    public void Cleanup(VM.Frame frm)
+    public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
     {
       c = 0;
       ticks_ttl = 0;
