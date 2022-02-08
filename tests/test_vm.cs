@@ -8969,10 +8969,44 @@ public class BHL_TestVM : BHL_TestBase
     {
       int a = 1
       {
+        defer { } //this will make sure seq is created
         a = 2
         return a
       }
       return a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNestedSeqReturn()
+  {
+    string bhl = @"
+
+    func int foo() {
+      {
+        defer { } //this will make sure seq is created
+        {
+          defer { } //this will make sure seq is created
+          return 2
+        }
+      }
+      return 0
+    }
+
+    func int test() {
+      {
+        defer { } //this will make sure seq is created
+        {
+          defer { } //this will make sure seq is created
+          return foo()
+        }
+      }
+      return 0
     }
     ";
 
@@ -11123,13 +11157,13 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl, globs);
     var fb = vm.Start("test");
 
-    for(int i=0;i<4;++i)
+    for(int i=0;i<5;++i)
       AssertTrue(vm.Tick());
     //...will be running forever, well, we assume that :)
 
     //NOTE: on the first tick we yield() is executed and 
     //      defer block is not run
-    AssertEqual("HEY;HEY;HEY;", log.ToString());
+    AssertEqual("HEY;HEY;HEY;HEY;", log.ToString());
     vm.Stop(fb);
     CommonChecks(vm);
   }
