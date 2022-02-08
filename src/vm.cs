@@ -241,9 +241,11 @@ public class VM
         frm.Release();
       }
 
+      //let's explicitely release 0 index frame
       frame0.Release();
 
       ctx_frames.Clear();
+
       tick = 0;
     }
 
