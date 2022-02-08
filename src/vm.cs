@@ -1009,10 +1009,8 @@ public class VM
   }
 
   //NOTE: adding special bytecode which makes the fake Frame to exit
-  //      after executing the coroutine: the first opcode is used
-  //      if execution doesn't produce a stateful coroutine,
-  //      and the second one if it does (this is how VM works)
-  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.Return, (byte)Opcodes.Return};
+  //      after executing the coroutine
+  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.Return};
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame)
   {
@@ -1029,6 +1027,11 @@ public class VM
       frame.Init(fb, curr_frame, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
       fb.coroutine = ptr.native.cb(curr_frame, new FuncArgsInfo(cargs_bits), ref fb.status);
+      //NOTE: before executing a coroutine VM will increment ip optimistically
+      //      but we need it to remain at the same position so that it points at
+      //      the fake return opcode
+      if(fb.coroutine != null)
+        --fb.ip;
     }
     else
     {
@@ -1726,7 +1729,7 @@ public class VM
   {
     var status = BHS.SUCCESS;
     //NOTE: optimistically stepping forward so that for simple  
-    //      bindings you won't have to deal with it
+    //      bindings you won't forget to do it
     ++ip;
     coroutine.Tick(curr_frame, ref ip, ctx_frames, ref status);
 
