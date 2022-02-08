@@ -1111,12 +1111,12 @@ public class VM
     var status = BHS.SUCCESS;
     IExitableScope tmp_defer_scope = null;
     int init_ctx_num = ctx_frames.Count;
-    int tmp_ctx_num = 0;
-    while((tmp_ctx_num = ctx_frames.Count) > frames_waterline_idx && status == BHS.SUCCESS)
+    int ctx_num = 0;
+    while((ctx_num = ctx_frames.Count) > frames_waterline_idx && status == BHS.SUCCESS)
     {
       //NOTE: we need to restore the original defer scope
       //      once we pop all frames which were generated during execution 
-      if(tmp_ctx_num == init_ctx_num)
+      if(ctx_num == init_ctx_num)
         tmp_defer_scope = defer_scope;
       status = ExecuteOnce(
         ref ip, ctx_frames,
@@ -1366,8 +1366,7 @@ public class VM
         //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
         ctx_frames.Pop();
         //let's restore the defer scope
-        if(ctx_frames.Count > 0)
-          defer_scope = ctx_frames.Peek().frame;
+        defer_scope = ctx_frames.Peek().frame;
       }
       break;
       case Opcodes.ReturnVal:
@@ -1389,8 +1388,7 @@ public class VM
         curr_frame.Release();
         ctx_frames.Pop();
         //let's restore the defer scope
-        if(ctx_frames.Count > 0)
-          defer_scope = ctx_frames.Peek().frame;
+        defer_scope = ctx_frames.Peek().frame;
       }
       break;
       case Opcodes.GetFunc:
@@ -2340,7 +2338,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     this.min_ip = min_ip;
     this.max_ip = max_ip;
     this.ip = min_ip;
-    //NOTE: pushing dummy origin frame to connect return values
+    //NOTE: pushing origin frame to connect return values
     ctx_frames.Push(new VM.FrameContext(frm.origin, is_call: false));
     ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
@@ -2351,7 +2349,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
       ref ip, ctx_frames, 
       ref coroutine, 
       this,
-      1 /*ignoring origin frame*/
+      1 //ignoring origin frame
     );
 
     if(status == BHS.SUCCESS)
