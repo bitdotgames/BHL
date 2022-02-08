@@ -172,7 +172,12 @@ public class VM
     internal ICoroutine coroutine;
     internal FixedStack<FrameContext> ctx_frames = new FixedStack<FrameContext>(256);
 
-    public FixedStack<Val> stack = new FixedStack<Val>(32);
+    public VM.Frame frame {
+      get {
+        return ctx_frames[0].frame;
+      }
+    }
+    public FixedStack<Val> result = new FixedStack<Val>(Frame.MAX_STACK);
     
     public BHS status;
 
@@ -189,6 +194,9 @@ public class VM
         ++vm.fibers_pool.hit;
         fb = vm.fibers_pool.stack.Pop();
       }
+
+      //0 index frame used for consistency
+      fb.ctx_frames.Push(new VM.FrameContext(Frame.New(vm), is_call: false));
 
       return fb;
     }
@@ -213,12 +221,24 @@ public class VM
         coroutine = null;
       }
 
+      //we need to copy 0 index frame returned values 
+      {
+        result.Clear();
+        var frm = ctx_frames[0].frame; 
+        for(int c=0;c<frm.stack.Count;++c)
+          result.Push(frm.stack[c]);
+        //let's clear the frame's stack so that values 
+        //won't be released below
+        frm.stack.Clear();
+      }
+
       for(int i=ctx_frames.Count;i-- > 0;)
       {
         var frm = ctx_frames[i].frame;
         frm.ExitScope(frm, ref ip, ctx_frames);
         frm.Release();
       }
+
       ctx_frames.Clear();
       tick = 0;
     }
@@ -323,6 +343,7 @@ public class VM
     public FixedStack<Val> stack = new FixedStack<Val>(MAX_STACK);
     public int start_ip;
     public int return_ip;
+    public Frame origin;
     public List<DeferBlock> defers;
 
     static public Frame New(VM vm)
@@ -374,6 +395,7 @@ public class VM
         origin.bytecode, 
         start_ip
       );
+      this.origin = origin;
     }
 
     public void Init(Fiber fb, CompiledModule module, int start_ip)
@@ -385,6 +407,7 @@ public class VM
         module.bytecode, 
         start_ip
       );
+      this.origin = fb.frame;
     }
 
     internal void Init(Fiber fb, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
@@ -395,6 +418,7 @@ public class VM
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;
+      this.origin = null;
     }
 
     public void Clear()
@@ -1350,13 +1374,12 @@ public class VM
       {
         int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
-        var ret_stack = ctx_frames.Count == 1 ? curr_frame.fb.stack : ctx_frames[ctx_frames.Count-2].frame.stack;  
+        var dst_stack = ctx_frames[ctx_frames.Count-2].frame.stack;  
 
-        //TODO: make it more efficient?
         int stack_offset = curr_frame.stack.Count; 
         for(int i=0;i<ret_num;++i)
         {
-          ret_stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
+          dst_stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
           curr_frame.stack.Dec();
         }
 
@@ -1884,7 +1907,9 @@ public class VM
         fb.status = Execute(
           ref fb.ip, fb.ctx_frames, 
           ref fb.coroutine, 
-          fb.ctx_frames[0].frame
+          //NOTE: we exclude the special case 0 frame
+          fb.ctx_frames[1].frame,
+          1
         );
         
         if(fb.status != BHS.RUNNING)
@@ -2315,6 +2340,8 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     this.min_ip = min_ip;
     this.max_ip = max_ip;
     this.ip = min_ip;
+    //NOTE: pushing dummy origin frame to connect return values
+    ctx_frames.Push(new VM.FrameContext(frm.origin, is_call: false));
     ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
@@ -2323,7 +2350,8 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     status = frm.vm.Execute(
       ref ip, ctx_frames, 
       ref coroutine, 
-      this
+      this,
+      1 /*ignoring origin frame*/
     );
 
     if(status == BHS.SUCCESS)
@@ -2339,6 +2367,9 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
   public void Cleanup(VM.Frame frm)
   {
+    //removing dummy origin frame
+    ctx_frames.RemoveAt(0);
+
     if(coroutine != null)
     {
       CoroutinePool.Del(frm, coroutine);
