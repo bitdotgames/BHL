@@ -396,35 +396,35 @@ public class VM
     {
       Init(
         origin.fb, 
+        origin,
         origin.module, 
         origin.constants, 
         origin.bytecode, 
         start_ip
       );
-      this.origin = origin;
     }
 
-    public void Init(Fiber fb, CompiledModule module, int start_ip)
+    public void Init(Fiber fb, Frame origin, CompiledModule module, int start_ip)
     {
       Init(
         fb, 
+        origin,
         module, 
         module.constants, 
         module.bytecode, 
         start_ip
       );
-      this.origin = fb.frame0;
     }
 
-    internal void Init(Fiber fb, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
+    internal void Init(Fiber fb, Frame origin, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
     {
       this.fb = fb;
+      this.origin = origin;
       this.module = module;
       this.constants = constants;
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;
-      this.origin = null;
     }
 
     public void Clear()
@@ -596,7 +596,7 @@ public class VM
     {
       var frm = Frame.New(vm);
       if(module != null)
-        frm.Init(curr_frame.fb, module, func_ip);
+        frm.Init(curr_frame.fb, curr_frame, module, func_ip);
       else
         frm.Init(curr_frame, func_ip);
 
@@ -993,7 +993,7 @@ public class VM
     Register(fb);
 
     var frame = Frame.New(this);
-    frame.Init(fb, addr.module, addr.ip);
+    frame.Init(fb, fb.frame0, addr.module, addr.ip);
 
     for(int i=args.Length;i-- > 0;)
     {
@@ -1026,7 +1026,7 @@ public class VM
     {
       //let's create a fake frame for a native call
       var frame = Frame.New(this);
-      frame.Init(fb, null, null, RETURN_BYTES, 0);
+      frame.Init(fb, curr_frame, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
       fb.coroutine = ptr.native.cb(curr_frame, new FuncArgsInfo(cargs_bits), ref fb.status);
     }
@@ -1372,19 +1372,17 @@ public class VM
         //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
         ctx_frames.Pop();
         //let's restore the defer scope
-        defer_scope = ctx_frames.Peek().frame;
+        defer_scope = curr_frame.origin;
       }
       break;
       case Opcodes.ReturnVal:
       {
         int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
 
-        var dst_stack = ctx_frames[ctx_frames.Count-2].frame.stack;  
-
         int stack_offset = curr_frame.stack.Count; 
         for(int i=0;i<ret_num;++i)
         {
-          dst_stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
+          curr_frame.origin.stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
           curr_frame.stack.Dec();
         }
 
@@ -1394,7 +1392,7 @@ public class VM
         curr_frame.Release();
         ctx_frames.Pop();
         //let's restore the defer scope
-        defer_scope = ctx_frames.Peek().frame;
+        defer_scope = curr_frame.origin;
       }
       break;
       case Opcodes.GetFunc:
@@ -1477,7 +1475,7 @@ public class VM
         var maddr = func2addr[func_name];
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, maddr.module, maddr.ip);
+        frm.Init(curr_frame.fb, curr_frame, maddr.module, maddr.ip);
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
       }
       break;
@@ -2270,8 +2268,6 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
   {
     this.ip = min_ip;
     ext_ip = ip;
-    //NOTE: pushing origin frame to connect return values
-    ext_frames.Push(new VM.FrameContext(frm.origin, is_call: false));
     this.waterline_idx = ext_frames.Count;
     ext_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
@@ -2289,9 +2285,6 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 
   public void Cleanup(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames)
   {
-    //NOTE: removing dummy origin frame
-    ext_frames.Pop();
-
     if(coroutine != null)
     {
       CoroutinePool.Del(frm, ref ip, ext_frames, coroutine);
@@ -2349,8 +2342,6 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     this.min_ip = min_ip;
     this.max_ip = max_ip;
     this.ip = min_ip;
-    //NOTE: pushing origin frame to connect return values
-    ctx_frames.Push(new VM.FrameContext(frm.origin, is_call: false));
     ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
@@ -2359,8 +2350,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     status = frm.vm.Execute(
       ref ip, ctx_frames, 
       ref coroutine, 
-      this,
-      1 //ignoring origin frame
+      this
     );
 
     if(status == BHS.SUCCESS)
@@ -2376,9 +2366,6 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
   public void Cleanup(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames)
   {
-    //removing dummy origin frame
-    ctx_frames.RemoveAt(0);
-
     if(coroutine != null)
     {
       CoroutinePool.Del(frm, ref ip, ctx_frames, coroutine);
