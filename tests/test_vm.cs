@@ -11522,8 +11522,37 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestParalNestedReturnFromSubFuncWithSeq()
+  {
+    string bhl = @"
+
+    func int foo() {
+      {
+        defer { }
+        return 1
+      }
+      return 0
+    }
+
+    func int test() 
+    {
+      paral {
+        paral {
+          return foo()
+        }
+      }
+      return 0
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestParalNestedReturnFromSubFuncWithParalAllSeq()
   {
     string bhl = @"
 

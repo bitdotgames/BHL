@@ -172,7 +172,7 @@ public class VM
     internal ICoroutine coroutine;
     internal FixedStack<FrameContext> ctx_frames = new FixedStack<FrameContext>(256);
 
-    public VM.Frame frame {
+    public VM.Frame frame0 {
       get {
         return ctx_frames[0].frame;
       }
@@ -234,10 +234,14 @@ public class VM
 
       for(int i=ctx_frames.Count;i-- > 0;)
       {
+        if(!ctx_frames[i].is_call)
+          continue;
         var frm = ctx_frames[i].frame;
         frm.ExitScope(frm, ref ip, ctx_frames);
         frm.Release();
       }
+
+      frame0.Release();
 
       ctx_frames.Clear();
       tick = 0;
@@ -407,7 +411,7 @@ public class VM
         module.bytecode, 
         start_ip
       );
-      this.origin = fb.frame;
+      this.origin = fb.frame0;
     }
 
     internal void Init(Fiber fb, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
@@ -2263,8 +2267,9 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
   public void Init(VM.Frame frm, int min_ip, int max_ip, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames)
   {
     this.ip = min_ip;
-    this.frames_idx = ext_frames.Count;
     ext_ip = ip;
+    ext_frames.Push(new VM.FrameContext(frm.origin, is_call: false));
+    this.frames_idx = ext_frames.Count;
     ext_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
@@ -2277,6 +2282,8 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       frames_idx
     );
     ext_ip = ip;
+    if(status != BHS.RUNNING)
+      ext_frames.Pop();
   }
 
   public void Cleanup(VM.Frame frm)
@@ -2354,7 +2361,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
     if(status == BHS.SUCCESS)
     {
-      //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+      //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after block
       if(ip > min_ip && ip < max_ip)
         ext_ip = max_ip + 1;
       //otherwise just assign ext_ip the last ip result (this is needed for break, continue) 
@@ -2437,7 +2444,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
       {
         CoroutinePool.Del(frm, branch);
         branches.RemoveAt(i);
-        //if the execution didn't "jump out" of the block (e.g. break) proceed to the block end ip
+        //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after the block
         if(ext_ip > min_ip && ext_ip < max_ip)
           ext_ip = max_ip + 1;
         break;
