@@ -2268,6 +2268,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
   {
     this.ip = min_ip;
     ext_ip = ip;
+    //NOTE: pushing origin frame to connect return values
     ext_frames.Push(new VM.FrameContext(frm.origin, is_call: false));
     this.frames_idx = ext_frames.Count;
     ext_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
@@ -2282,6 +2283,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       frames_idx
     );
     ext_ip = ip;
+    //removing dummy origin frame
     if(status != BHS.RUNNING)
       ext_frames.Pop();
   }
