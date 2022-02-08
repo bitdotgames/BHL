@@ -195,7 +195,7 @@ public class VM
         fb = vm.fibers_pool.stack.Pop();
       }
 
-      //0 index frame used for consistency
+      //0 index frame used for return values consistency
       fb.ctx_frames.Push(new VM.FrameContext(Frame.New(vm), is_call: false));
 
       return fb;
@@ -224,16 +224,16 @@ public class VM
       //we need to copy 0 index frame returned values 
       {
         result.Clear();
-        var frm = ctx_frames[0].frame; 
-        for(int c=0;c<frm.stack.Count;++c)
-          result.Push(frm.stack[c]);
+        for(int c=0;c<frame0.stack.Count;++c)
+          result.Push(frame0.stack[c]);
         //let's clear the frame's stack so that values 
         //won't be released below
-        frm.stack.Clear();
+        frame0.stack.Clear();
       }
 
       for(int i=ctx_frames.Count;i-- > 0;)
       {
+        //let's ignore temporary ctx.frames which are not calls
         if(!ctx_frames[i].is_call)
           continue;
         var frm = ctx_frames[i].frame;
@@ -592,23 +592,23 @@ public class VM
 
     public Frame MakeFrame(VM vm, Frame curr_frame)
     {
-      var fr = Frame.New(vm);
+      var frm = Frame.New(vm);
       if(module != null)
-        fr.Init(curr_frame.fb, module, func_ip);
+        frm.Init(curr_frame.fb, module, func_ip);
       else
-        fr.Init(curr_frame, func_ip);
+        frm.Init(curr_frame, func_ip);
 
       for(int i=0;i<upvals.Count;++i)
       {
         var upval = upvals[i];
         if(upval != null)
         {
-          fr.locals.Resize(i+1);
+          frm.locals.Resize(i+1);
           upval.Retain();
-          fr.locals[i] = upval;
+          frm.locals[i] = upval;
         }
       }
-      return fr;
+      return frm;
     }
   }
 
@@ -1044,11 +1044,11 @@ public class VM
     fibers.Remove(fb);
   }
 
-  void Attach(Fiber fb, Frame fr)
+  void Attach(Fiber fb, Frame frm)
   {
-    fb.ip = fr.start_ip;
-    fr.fb = fb;
-    fb.ctx_frames.Push(new FrameContext(fr, is_call: true));
+    fb.ip = frm.start_ip;
+    frm.fb = fb;
+    fb.ctx_frames.Push(new FrameContext(frm, is_call: true));
   }
 
   void Register(Fiber fb)
@@ -1449,9 +1449,9 @@ public class VM
         int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip); 
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        var fr = Frame.New(this);
-        fr.Init(curr_frame, func_ip);
-        Call(curr_frame, ctx_frames, fr, args_bits, ref ip, ref defer_scope);
+        var frm = Frame.New(this);
+        frm.Init(curr_frame, func_ip);
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
       }
       break;
       case Opcodes.CallNative:
@@ -1474,9 +1474,9 @@ public class VM
         string func_name = curr_frame.constants[func_idx].str;
         var maddr = func2addr[func_name];
 
-        var fr = Frame.New(this);
-        fr.Init(curr_frame.fb, maddr.module, maddr.ip);
-        Call(curr_frame, ctx_frames, fr, args_bits, ref ip, ref defer_scope);
+        var frm = Frame.New(this);
+        frm.Init(curr_frame.fb, maddr.module, maddr.ip);
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
       }
       break;
       case Opcodes.CallMethodNative:
@@ -1507,12 +1507,12 @@ public class VM
 
         var self = curr_frame.stack.Pop();
 
-        var fr = Frame.New(this);
-        fr.Init(curr_frame, func_ip);
+        var frm = Frame.New(this);
+        frm.Init(curr_frame, func_ip);
 
-        fr.locals[0] = self;
+        frm.locals[0] = self;
 
-        Call(curr_frame, ctx_frames, fr, args_bits, ref ip, ref defer_scope);
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
       }
       break;
       case Opcodes.CallPtr:
@@ -1533,9 +1533,9 @@ public class VM
         }
         else
         {
-          var fr = ptr.MakeFrame(this, curr_frame);
+          var frm = ptr.MakeFrame(this, curr_frame);
           val_ptr.Release();
-          Call(curr_frame, ctx_frames, fr, args_bits, ref ip, ref defer_scope);
+          Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
         }
       }
       break;
