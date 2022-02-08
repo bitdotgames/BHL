@@ -8811,7 +8811,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestParalAllForNestedSeqs()
   {
     string bhl = @"
@@ -8849,7 +8849,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindColor(globs);
 
-    var vm = MakeVM(bhl, globs, false, true);
+    var vm = MakeVM(bhl, globs);
     AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
     CommonChecks(vm);
   }
