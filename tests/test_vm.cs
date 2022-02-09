@@ -12794,8 +12794,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestChildUserClassDowncast()
   {
     string bhl = @"
@@ -12822,8 +12821,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestChildUserClassUpcast()
   {
     string bhl = @"
@@ -12851,8 +12849,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestChildUserClassDefaultInit()
   {
     string bhl = @"
