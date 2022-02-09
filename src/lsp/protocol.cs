@@ -474,11 +474,23 @@ namespace bhlsp
     public string[] tokenModifiers { get; set; }
   }
   
+  public class SemanticTokensOptionRange
+  {
+  }
+  
+  public class SemanticTokensOptionFull
+  {
+		/**
+		 * The server supports deltas for full documents.
+		 */
+	  public bool? delta { get; set; }
+  }
+  
   public class SemanticTokensOptions : WorkDoneProgressOptions
   {
     public SemanticTokensLegend legend { get; set; }
-    public SumType<bool, object> range { get; set; }
-    public SumType<bool, object> full { get; set; }
+    public SumType<bool, SemanticTokensOptionRange> range { get; set; }
+    public SumType<bool, SemanticTokensOptionFull> full { get; set; }
   }
   
   public class SemanticTokensRegistrationOptions : TextDocumentRegistrationOptions
@@ -678,8 +690,97 @@ namespace bhlsp
 		/**
 		 * Whether references supports dynamic registration.
 		 */
-		public bool? dynamicRegistration;
+		public bool? dynamicRegistration { get; set; }
   }
+  
+  public class SemanticTokensClientCapabilities
+  {
+	  public class SemanticTokensClientCapabilitiesRequests
+	  {
+			/**
+			 * The client will send the `textDocument/semanticTokens/range` request
+			 * if the server provides a corresponding handler.
+			 */
+			public SumType<bool, object> range { get; set; }
+
+			/**
+			 * The client will send the `textDocument/semanticTokens/full` request
+			 * if the server provides a corresponding handler.
+			 */
+			public SumType<bool, object> full { get; set; }
+	  }
+	  
+		/**
+		 * Whether implementation supports dynamic registration. If this is set to
+		 * `true` the client supports the new `(TextDocumentRegistrationOptions &
+		 * StaticRegistrationOptions)` return value for the corresponding server
+		 * capability as well.
+		 */
+		public bool? dynamicRegistration { get; set; }
+
+		/**
+		 * Which requests the client supports and might send to the server
+		 * depending on the server's capability. Please note that clients might not
+		 * show semantic tokens or degrade some of the user experience if a range
+		 * or full request is advertised by the client but not provided by the
+		 * server. If for example the client capability `requests.full` and
+		 * `request.range` are both set to true but the server only provides a
+		 * range provider the client might not render a minimap correctly or might
+		 * even decide to not show any semantic tokens at all.
+		 */
+		public SemanticTokensClientCapabilitiesRequests requests { get; set; }
+
+		/**
+		 * The token types that the client supports.
+		 */
+		public string[] tokenTypes { get; set; }
+
+		/**
+		 * The token modifiers that the client supports.
+		 */
+		public string[] tokenModifiers { get; set; }
+
+		/**
+		 * The formats the clients supports.
+		 *
+		 * type TokenFormat = 'relative'
+		 */
+		public string[] formats { get; set; }
+
+		/**
+		 * Whether the client supports tokens that can overlap each other.
+		 */
+		public bool? overlappingTokenSupport { get; set; }
+
+		/**
+		 * Whether the client supports tokens that can span multiple lines.
+		 */
+		public bool? multilineTokenSupport { get; set; }
+
+		/**
+		 * Whether the client allows the server to actively cancel a
+		 * semantic token request, e.g. supports returning
+		 * ErrorCodes.ServerCancelled. If a server does the client
+		 * needs to retrigger the request.
+		 *
+		 * @since 3.17.0
+		 */
+		public bool? serverCancelSupport { get; set; }
+
+		/**
+		 * Whether the client uses semantic tokens to augment existing
+		 * syntax tokens. If set to `true` client side created syntax
+		 * tokens and semantic tokens are both used for colorization. If
+		 * set to `false` the client only uses the returned semantic tokens
+		 * for colorization.
+		 *
+		 * If the value is `undefined` then the client behavior is not
+		 * specified.
+		 *
+		 * @since 3.17.0
+		 */
+		public bool? augmentsSyntaxTokens { get; set; }
+	}
   
   public class TextDocumentClientCapabilities
   {
@@ -725,6 +826,13 @@ namespace bhlsp
 		 * Capabilities specific to the `textDocument/references` request.
 		 */
 	  public ReferenceClientCapabilities references { get; set; }
+		
+		/**
+		 * Capabilities specific to the various semantic token requests.
+		 *
+		 * @since 3.16.0
+		 */
+		public SemanticTokensClientCapabilities semanticTokens { get; set; }
   }
   
   public class ClientCapabilities
