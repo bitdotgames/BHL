@@ -1052,17 +1052,15 @@ public class ClassSymbolScript : ClassSymbol
 
   void ClassCreator(VM.Frame frm, ref Val res)
   {
-    IList<Val> vl = null;
-    if(super_class != null)
-    {
-      super_class.creator(frm, ref res);
-      vl = (IList<Val>)res.obj;
-    }
-    else
-    {
-      vl = ValList.New(res.vm);
-      res.SetObj(vl);
-    }
+    //if(super_class is ClassSymbolNative cn)
+    //{
+    ////TODO: add handling of native super class?
+    //}
+
+    //NOTE: object data is a list
+    var vl = ValList.New(res.vm);
+    res.SetObj(vl);
+    
     //TODO: this should be more robust
     //NOTE: storing class name hash in _num attribute
     res._num = Hash.CRC28(name); 

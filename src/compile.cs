@@ -1428,7 +1428,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
     VisitChildren(ast);
   }
 
@@ -1438,7 +1438,7 @@ public class ModuleCompiler : AST_Visitor
     if(arr_symb == null)
       throw new Exception("Could not find class binding: " + ast.type);
 
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
 
     for(int i=0;i<ast.children.Count;++i)
     {

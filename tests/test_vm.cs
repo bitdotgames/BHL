@@ -12967,7 +12967,7 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
-  //TODO:
+  //TODO: do we really need this one?
   //[IsTested()]
   public void TestChildUserClassOfNativeClass()
   {

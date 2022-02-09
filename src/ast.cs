@@ -1082,6 +1082,7 @@ public class AST_Block  : AST
 public class AST_JsonObj  : AST 
 {
   public string type = "";
+  public int line_num;
 
   static public  new  uint STATIC_CLASS_ID = 31901170;
 
@@ -1100,6 +1101,7 @@ public class AST_JsonObj  : AST
     base.reset();
 
     type = "";
+    line_num = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -1107,17 +1109,19 @@ public class AST_JsonObj  : AST
     base.syncFields(ctx);
 
     MetaHelper.sync(ctx, ref type);
+    MetaHelper.sync(ctx, ref line_num);
   }
 
   public override int getFieldsCount() 
   {
-    return base.getFieldsCount() + 1; 
+    return base.getFieldsCount() + 2; 
   }
 }
 
 public class AST_JsonArr  : AST 
 {
   public string type;
+  public int line_num;
 
   static public  new  uint STATIC_CLASS_ID = 47604479;
 
@@ -1136,6 +1140,7 @@ public class AST_JsonArr  : AST
     base.reset();
 
     type = "";
+    line_num = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -1143,11 +1148,12 @@ public class AST_JsonArr  : AST
     base.syncFields(ctx);
 
     MetaHelper.sync(ctx, ref type);
+    MetaHelper.sync(ctx, ref line_num);
   }
 
   public override int getFieldsCount() 
   {
-    return base.getFieldsCount() + 1; 
+    return base.getFieldsCount() + 2; 
   }
 }
 

@@ -733,17 +733,19 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_JsonObj New_JsonObj(string root_type_name)
+  static public AST_JsonObj New_JsonObj(string root_type_name, int line_num)
   {
     var n = new AST_JsonObj();
     n.type = root_type_name;
+    n.line_num = line_num;
     return n;
   }
 
-  static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type)
+  static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type, int line_num)
   {
     var n = new AST_JsonArr();
     n.type = arr_type.Type();
+    n.line_num = line_num;
     return n;
   }
 

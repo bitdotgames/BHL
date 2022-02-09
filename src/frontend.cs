@@ -956,7 +956,7 @@ public class Frontend : bhlBaseVisitor<object>
     Wrap(ctx).eval_type = curr_type;
     var root_type_name = curr_type.GetName();
 
-    var ast = AST_Util.New_JsonObj(root_type_name);
+    var ast = AST_Util.New_JsonObj(root_type_name, ctx.Start.Line);
 
     PushAST(ast);
     var pairs = ctx.jsonPair();
@@ -989,7 +989,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(Location(ctx) + " : type '" + arr_type.item_type.name + "' not found");
     PushJsonType(orig_type);
 
-    var ast = AST_Util.New_JsonArr(arr_type);
+    var ast = AST_Util.New_JsonArr(arr_type, ctx.Start.Line);
 
     PushAST(ast);
     var vals = ctx.jsonValue();
