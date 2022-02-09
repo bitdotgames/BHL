@@ -222,7 +222,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
 
     if(sym is VariableSymbol vs)
-      vs.CalcVariableScopeIdx(this);
+      vs.CalcScopeIdx(this);
 
     base.Define(sym);
   }
@@ -533,7 +533,7 @@ public class VariableSymbol : Symbol
     : base(name, type) 
   {}
 
-  public void CalcVariableScopeIdx(IScope scope)
+  public void CalcScopeIdx(IScope scope)
   {
     //let's ignore already assigned ones
     if(scope_idx != -1)
@@ -803,7 +803,7 @@ public class FuncSymbol : EnclosingSymbol
   {
     //should be called before actual defining
     if(sym is VariableSymbol vs)
-      vs.CalcVariableScopeIdx(this);
+      vs.CalcScopeIdx(this);
     base.Define(sym);
   }
 }
