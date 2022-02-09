@@ -20396,37 +20396,49 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrAddIdx {
     get {
-      return GenericArrayTypeSymbol.IDX_Add;
+      var globs = TypeSystem.CreateBuiltins();
+      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      return ((IScopeIndexed)class_symb.Resolve("Add")).scope_idx;
     }
   }
 
   public static int ArrSetIdx {
     get {
-      return GenericArrayTypeSymbol.IDX_SetAt;
+      var globs = TypeSystem.CreateBuiltins();
+      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      return ((IScopeIndexed)class_symb.Resolve("SetAt")).scope_idx;
     }
   }
 
   public static int ArrRemoveIdx {
     get {
-      return GenericArrayTypeSymbol.IDX_RemoveAt;
+      var globs = TypeSystem.CreateBuiltins();
+      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      return ((IScopeIndexed)class_symb.Resolve("RemoveAt")).scope_idx;
     }
   }
 
   public static int ArrCountIdx {
     get {
-      return GenericArrayTypeSymbol.IDX_Count;
+      var globs = TypeSystem.CreateBuiltins();
+      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      return ((IScopeIndexed)class_symb.Resolve("Count")).scope_idx;
     }
   }
 
   public static int ArrAtIdx {
     get {
-      return GenericArrayTypeSymbol.IDX_At;
+      var globs = TypeSystem.CreateBuiltins();
+      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      return ((IScopeIndexed)class_symb.Resolve("At")).scope_idx;
     }
   }
 
   public static int ArrAddInplaceIdx {
     get {
-      return GenericArrayTypeSymbol.IDX_AddInplace;
+      var globs = TypeSystem.CreateBuiltins();
+      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      return ((IScopeIndexed)class_symb.Resolve("$AddInplace")).scope_idx;
     }
   }
 

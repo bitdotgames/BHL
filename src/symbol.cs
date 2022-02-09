@@ -240,16 +240,6 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 {
   public TypeRef item_type;
 
-  //NOTE: indices below are synchronized with an actual order 
-  //      of class members initialized later
-  public const int IDX_Add        = 0;
-  public const int IDX_At         = 1;
-  public const int IDX_SetAt      = 2;
-  public const int IDX_RemoveAt   = 3;
-  public const int IDX_Clear      = 4;
-  public const int IDX_Count      = 5;
-  public const int IDX_AddInplace = 6;
-
   public ArrayTypeSymbol(Scope origin, string name, TypeRef item_type)     
     : base(name, super_class: null)
   {
@@ -293,6 +283,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     }
 
     {
+      //hidden system method not available directly
       var fn = new FuncSymbolNative("$AddInplace", origin.Type("void"), AddInplace);
       fn.Define(new FuncArgSymbol("o", item_type));
       this.Define(fn);
