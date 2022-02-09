@@ -221,10 +221,10 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
     if(super_class != null && super_class.GetMembers().Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
 
-    base.Define(sym);
-
     if(sym is VariableSymbol vs)
-      vs.scope_idx = members.FindStringKeyIndex(sym.name);
+      vs.CalcVariableScopeIdx(this);
+
+    base.Define(sym);
   }
 
   public string GetName() { return name; }
@@ -538,11 +538,7 @@ public class VariableSymbol : Symbol
     //let's ignore already assigned ones
     if(scope_idx != -1)
       return;
-    int c = 0;
-    for(int i=0;i<scope.GetMembers().Count;++i)
-      if(scope.GetMembers()[i] is VariableSymbol)
-        ++c;
-    scope_idx = c; 
+    scope_idx = scope.GetMembers().Count;
   }
 }
 
@@ -582,27 +578,26 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolScript : FieldSymbol
 {
-  public int idx;
-
-  public FieldSymbolScript(string name, string type, int idx = -1) 
+  public FieldSymbolScript(string name, string type, int scope_idx = -1) 
     : base(name, new TypeRef(type), null, null, null)
   {
-    this.idx = idx;
     this.getter = Getter;
     this.setter = Setter;
     this.getref = Getref;
+
+    this.scope_idx = scope_idx;
   }
 
   void Getter(Val ctx, ref Val v)
   {
     var m = (IList<Val>)ctx.obj;
-    v.ValueCopyFrom(m[idx]);
+    v.ValueCopyFrom(m[scope_idx]);
   }
 
   void Setter(ref Val ctx, Val v)
   {
     var m = (IList<Val>)ctx.obj;
-    var curr = m[idx];
+    var curr = m[scope_idx];
     for(int i=0;i<curr._refs;++i)
     {
       v.RefMod(RefOp.USR_INC);
@@ -614,7 +609,7 @@ public class FieldSymbolScript : FieldSymbol
   void Getref(Val ctx, out Val v)
   {
     var m = (IList<Val>)ctx.obj;
-    v = m[idx];
+    v = m[scope_idx];
   }
 }
 
@@ -806,6 +801,7 @@ public class FuncSymbol : EnclosingSymbol
 
   public override void Define(Symbol sym)
   {
+    //should be called before actual defining
     if(sym is VariableSymbol vs)
       vs.CalcVariableScopeIdx(this);
     base.Define(sym);
@@ -1070,7 +1066,7 @@ public class ClassSymbolScript : ClassSymbol
     }
     //TODO: this should be more robust
     //NOTE: storing class name hash in _num attribute
-    res._num = Hash.CRC28(decl.name); 
+    res._num = Hash.CRC28(name); 
 
     for(int i=0;i<members.Count;++i)
     {

@@ -627,7 +627,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.ClassMember,
-        4/*type idx*/, 4/*name idx*/
+        4/*type idx*/, 4/*name idx*/, 2/*symb idx*/
       )
     );
     DeclareOpcode(
@@ -850,9 +850,7 @@ public class ModuleCompiler : AST_Visitor
 
     ClassSymbol parent = null;
     if(!string.IsNullOrEmpty(ast.parent))
-    {
-      parent = symbols.Resolve(ast.parent) as ClassSymbol;
-    }
+      parent = (ClassSymbol)symbols.Resolve(ast.parent);
 
     curr_class_symb = new ClassSymbolScript(ast.name, ast, parent);
     symbols.Define(curr_class_symb);
@@ -865,7 +863,7 @@ public class ModuleCompiler : AST_Visitor
       if(child is AST_VarDecl vd)
       {
         curr_class_symb.Define(new FieldSymbolScript(vd.name, vd.type));
-        Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name) });
+        Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name), (int)vd.symb_idx });
       }
       else if(child is AST_FuncDecl fd)
       {

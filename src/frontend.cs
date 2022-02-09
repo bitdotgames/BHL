@@ -1827,9 +1827,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(vd.NAME().GetText() == "this")
           FireError("the keyword \"this\" is reserved");
 
-        var decl = CommonDeclVar(class_symb, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
-        //NOTE: forcing name to be always present due to current class members declaration requirement
-        (decl as AST_VarDecl).name = vd.NAME().GetText();
+        var decl = (AST_VarDecl)CommonDeclVar(class_symb, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
         ast.AddChild(decl);
       }
 

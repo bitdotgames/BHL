@@ -196,6 +196,7 @@ public class ModuleScope : Scope
       //NOTE: adding module id if it's not added already
       if(vs.module_id == 0)
         vs.module_id = module_id;
+      //should be called before actual defining
       vs.CalcVariableScopeIdx(this);
     } 
     else if(sym is FuncSymbolScript fs)

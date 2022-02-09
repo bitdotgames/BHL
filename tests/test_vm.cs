@@ -5246,26 +5246,19 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:?
+  //TODO: think about alternative Go-alike types notation?
   //[IsTested()]
   public void TestFuncPtrReturningArrOfArrLambda()
   {
     string bhl = @"
 
-    typedef string[]^()[] arr_of_funcs
-
-    func arr_of_func^() hey() {
-      return func() {
-        func string[]() { return [""a"",""b""] },
-        func string[]() { return [""c"",""d""] }
-      }
-    }
-
-    func void test() 
+    func test()
     {
+      //TODO:
+      //[]func()[]string ptr = [
       string[]^()[] ptr = [
-        func string[]() { return [""a"",""b""] },
-        func string[]() { return [""c"",""d""] }
+        func string[] () { return [""a"",""b""] },
+        func string[] () { return [""c"",""d""] }
       ]
       trace(ptr[1]()[0])
     }
@@ -6411,7 +6404,7 @@ public class BHL_TestVM : BHL_TestBase
     func float test() 
     {
       //TODO: need more flexible types support for this:
-      //float^(float)^(float)
+      //func(float)func(float)
       
       return func float^(float) (float a) {
         return func float (float b) { return a + b }
@@ -7324,10 +7317,10 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Wow"), -1 })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "c") })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "c"), 0 })
       .EmitThen(Opcodes.ClassEnd)
       .EmitThen(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Bar"), -1 })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "Wow"), ConstIdx(c, "w") })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "Wow"), ConstIdx(c, "w"), 0 })
       .EmitThen(Opcodes.ClassEnd)
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "foo"), 0 })
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 14 })
@@ -12081,9 +12074,9 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Foo"), -1 })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "Int") })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "Flt") })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "string"), ConstIdx(c, "Str") })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "Int"), 0 })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "Flt"), 1 })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "string"), ConstIdx(c, "Str"), 2 })
       .EmitThen(Opcodes.ClassEnd)
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()
@@ -12524,7 +12517,7 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Foo"), -1 })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "a") })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "a"), 0 })
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "getA"), 0 })
       .EmitThen(Opcodes.ClassEnd)
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 13 })
@@ -12777,8 +12770,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestChildUserClass()
   {
     string bhl = @"
@@ -12793,7 +12785,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test() {
       Foo f = { x : 1, y : 2}
-      return f.x + f.y
+      return f.y + f.x
     }
     ";
 
@@ -13126,9 +13118,9 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Foo"), -1 })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "Int") })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "Flt") })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "string"), ConstIdx(c, "Str") })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "Int"), 0 })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "Flt"), 1 })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "string"), ConstIdx(c, "Str"), 2 })
       .EmitThen(Opcodes.ClassEnd)
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()
@@ -13427,9 +13419,9 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.ClassBegin, new int[] { ConstIdx(c, "Foo"), -1 })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "Int") })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "Flt") })
-      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "string"), ConstIdx(c, "Str") })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "int"), ConstIdx(c, "Int"), 0 })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "float"), ConstIdx(c, "Flt"), 1 })
+      .EmitThen(Opcodes.ClassMember, new int[] { ConstIdx(c, "string"), ConstIdx(c, "Str"), 2 })
       .EmitThen(Opcodes.ClassEnd)
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()

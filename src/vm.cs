@@ -831,7 +831,7 @@ public class VM
     var stack = init_frame.stack;
 
     int ip = 0;
-    AST_ClassDecl curr_class_decl = null;
+    ClassSymbolScript curr_class = null;
 
     while(ip < bytecode.Length)
     {
@@ -917,53 +917,59 @@ public class VM
           int ip_addr = (int)Bytecode.Decode24(bytecode, ref ip);
 
           //TODO: define symbol as well?
-          var fdecl = new AST_FuncDecl();
-          fdecl.name = constants[name_idx].str;
-          fdecl.ip_addr = ip_addr;
-          if(curr_class_decl == null)
-            func2addr.Add(fdecl.name, new ModuleAddr() { module = module, ip = ip_addr });
+          var fd = new AST_FuncDecl();
+          fd.name = constants[name_idx].str;
+          fd.ip_addr = ip_addr;
+          if(curr_class != null)
+          {
+            curr_class.decl.children.Add(fd);
+            curr_class.Define(new FuncSymbolScript(fd));
+          }
           else
-            curr_class_decl.children.Add(fdecl);
+            func2addr.Add(fd.name, new ModuleAddr() { module = module, ip = ip_addr });
         }
         break;
         case Opcodes.ClassBegin:
         {
           int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int parent_type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          curr_class_decl = new AST_ClassDecl();
-          curr_class_decl.name = constants[type_idx].str;
+
+          var class_decl = new AST_ClassDecl();
+          class_decl.name = constants[type_idx].str;
           if(parent_type_idx != -1)
-            curr_class_decl.parent = constants[parent_type_idx].str;
+            class_decl.parent = constants[parent_type_idx].str;
+
+          ClassSymbol super_class = null;
+          if(!string.IsNullOrEmpty(class_decl.parent))
+            super_class = (ClassSymbol)symbols.Resolve(class_decl.parent);
+
+          curr_class = new ClassSymbolScript(class_decl.name, class_decl, super_class);
         }
         break;
         case Opcodes.ClassMember:
         {
           int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
+          int symb_idx = (int)Bytecode.Decode16(bytecode, ref ip);
 
-          var mdecl = new AST_VarDecl();
-          mdecl.type = constants[type_idx].str;
-          mdecl.name = constants[name_idx].str;
-          mdecl.symb_idx = (uint)curr_class_decl.children.Count;
-          curr_class_decl.children.Add(mdecl);
+          var vd = new AST_VarDecl();
+          vd.type = constants[type_idx].str;
+          vd.name = constants[name_idx].str;
+          vd.symb_idx = (uint)symb_idx;
+
+          curr_class.decl.children.Add(vd);
+
+          var fld = new FieldSymbolScript(vd.name, vd.type, (int)vd.symb_idx);
+          curr_class.Define(fld);
+          //TODO: this check must be in dev.version only
+          if(curr_class.members[(int)vd.symb_idx].name != vd.name)
+            throw new Exception("Symbol index is not valid");
         }
         break;
         case Opcodes.ClassEnd:
         {
-          //TODO: add parent support
-          ClassSymbolScript super_class = null;
-          var curr_class = new ClassSymbolScript(curr_class_decl.name, curr_class_decl, super_class);
-          for(int i=0;i<curr_class_decl.children.Count;++i)
-          {
-            var child = curr_class_decl.children[i];
-            if(child is AST_VarDecl vd)
-              curr_class.Define(new FieldSymbolScript(vd.name, vd.type, (int)vd.symb_idx));
-            else if(child is AST_FuncDecl fd)
-              curr_class.Define(new FuncSymbolScript(fd));
-          }
           symbols.Define(curr_class);
           curr_class = null;
-          curr_class_decl = null;
         }
         break;
         default:
