@@ -310,6 +310,8 @@ public class Frontend : bhlBaseVisitor<object>
     //NOTE: null means module is already imported
     if(module != null)
     {
+      //TODO: we should rather add it to 'fallback sources'
+      //      but not just append values into one storage
       mscope.Append(module.symbols);
       ast.module_ids.Add(module.id);
       ast.module_names.Add(import);
@@ -479,7 +481,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0), class_scope);
+          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0), class_scope, func_symb.scope_idx);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -489,7 +491,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = mscope.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0));
+            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0), null, func_symb.scope_idx);
             AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
             type = func_symb.GetReturnType();
           }
@@ -528,9 +530,8 @@ public class Frontend : bhlBaseVisitor<object>
           var call_func_symb = mscope.Resolve(str_name) as FuncSymbol;
           if(call_func_symb == null)
             FireError(Location(name) +  " : no such function found");
-          var func_call_name = call_func_symb.name;
 
-          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, func_call_name, (call_func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0));
+          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0));
           type = func_symb.type.Get(mscope);
         }
         else
@@ -1344,7 +1345,7 @@ public class Frontend : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, 0, class_symb));
+      over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, 0, class_symb, op_func.scope_idx));
       ast = over_ast;
     }
     else if(
@@ -2104,7 +2105,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
 
         //TODO: below is quite an ugly hack, fix it traversing the expression first
-        //NOTE: temporarily replacing just declared variable with dummy one when visiting 
+        //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
         //      assignment expression in order to avoid error like: float k = k
         Symbol disabled_symbol = null;
         Symbol subst_symbol = null;
@@ -2646,7 +2647,7 @@ public class Frontend : bhlBaseVisitor<object>
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_stype));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_stype, ((FuncSymbol)arr_type.Resolve("At")).scope_idx));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
 

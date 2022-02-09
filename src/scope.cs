@@ -54,9 +54,9 @@ public class Scope : IScope
     if(members.Contains(sym.name))
       throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
 
-    members.Add(sym);
-
     sym.scope = this; // track the scope in each symbol
+
+    members.Add(sym);
   }
 
   public void Append(Scope other)
@@ -196,8 +196,18 @@ public class ModuleScope : Scope
       //NOTE: adding module id if it's not added already
       if(vs.module_id == 0)
         vs.module_id = module_id;
-      //should be called before actual defining
-      vs.CalcScopeIdx(this);
+
+      //NOTE: calculating scope idx only for global variables for now
+      //      (we are not interested in calculating scope indices for global
+      //      funcs for now so that these indices won't clash)
+      if(vs.scope_idx == -1)
+      {
+        int c = 0;
+        for(int i=0;i<members.Count;++i)
+          if(members[i] is VariableSymbol)
+            ++c;
+        vs.scope_idx = c;
+      }
     } 
     else if(sym is FuncSymbolScript fs)
     {

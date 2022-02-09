@@ -1151,19 +1151,16 @@ public class ModuleCompiler : AST_Visitor
         if(class_symb == null)
           throw new Exception("Class type not found: " + ast.scope_type);
 
-        var mfunc = class_symb.members.Find(ast.name) as FuncSymbol;
-
-        //TODO: why not storing index in mfunc?
-        int memb_idx = class_symb.members.FindStringKeyIndex(ast.name);
-        if(memb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' not found in class: " + ast.scope_type);
+        var mfunc = class_symb.members.TryAt((int)ast.symb_idx) as FuncSymbol;
+        if(mfunc == null)
+          throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type + "' by index " + (int)ast.symb_idx);
 
         VisitChildren(ast);
         
         if(mfunc is FuncSymbolScript)
-          Emit(Opcodes.CallMethod, new int[] {memb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallMethod, new int[] { (int)ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, (int)ast.line_num);
         else
-          Emit(Opcodes.CallMethodNative, new int[] {memb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallMethodNative, new int[] { (int)ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, (int)ast.line_num);
       }
       break;
       case EnumCall.MVARREF:

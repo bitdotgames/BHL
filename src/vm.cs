@@ -959,8 +959,7 @@ public class VM
 
           curr_class.decl.children.Add(vd);
 
-          var fld = new FieldSymbolScript(vd.name, vd.type, (int)vd.symb_idx);
-          curr_class.Define(fld);
+          curr_class.Define(new FieldSymbolScript(vd.name, vd.type));
           //TODO: this check must be in dev.version only
           if(curr_class.members[(int)vd.symb_idx].name != vd.name)
             throw new Exception("Symbol index is not valid");

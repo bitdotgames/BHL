@@ -221,9 +221,6 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
     if(super_class != null && super_class.GetMembers().Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
 
-    if(sym is VariableSymbol vs)
-      vs.CalcScopeIdx(this);
-
     base.Define(sym);
   }
 
@@ -508,12 +505,26 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   }
 }
 
-public class VariableSymbol : Symbol 
+public interface IScopeIndexed
+{
+  //index in an enclosing scope
+  int scope_idx { get; set; }
+}
+
+public class VariableSymbol : Symbol, IScopeIndexed
 {
   //if variable is global in a module it stores its id
   public uint module_id;
-  //index of variable in a scope
-  public int scope_idx = -1;
+
+  int _scope_idx = -1;
+  public int scope_idx {
+    get {
+      return _scope_idx;
+    }
+    set {
+      _scope_idx = value;
+    }
+  }
 
 #if BHL_FRONT
   //e.g. for  { { int a = 1 } } scope level will be 2
@@ -532,14 +543,6 @@ public class VariableSymbol : Symbol
   public VariableSymbol(string name, TypeRef type) 
     : base(name, type) 
   {}
-
-  public void CalcScopeIdx(IScope scope)
-  {
-    //let's ignore already assigned ones
-    if(scope_idx != -1)
-      return;
-    scope_idx = scope.GetMembers().Count;
-  }
 }
 
 public class FuncArgSymbol : VariableSymbol
@@ -578,14 +581,12 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolScript : FieldSymbol
 {
-  public FieldSymbolScript(string name, string type, int scope_idx = -1) 
+  public FieldSymbolScript(string name, string type) 
     : base(name, new TypeRef(type), null, null, null)
   {
     this.getter = Getter;
     this.setter = Setter;
     this.getref = Getref;
-
-    this.scope_idx = scope_idx;
   }
 
   void Getter(Val ctx, ref Val v)
@@ -613,6 +614,8 @@ public class FieldSymbolScript : FieldSymbol
   }
 }
 
+//TODO: the code in Resolve(..) and Define(..) is quite similar to the one
+//      in Scope.Resolve(..) and Scope.Define(..)
 public abstract class EnclosingSymbol : Symbol, IScope 
 {
   abstract public SymbolsDictionary GetMembers();
@@ -633,7 +636,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
   public virtual Symbol Resolve(string name) 
   {
-    Symbol s = null;
+    Symbol s;
     GetMembers().TryGetValue(name, out s);
     if(s != null)
     {
@@ -645,9 +648,9 @@ public abstract class EnclosingSymbol : Symbol, IScope
         return s;
     }
 
-    var fback = GetFallbackScope();
-    if(fback != null)
-      return fback.Resolve(name);
+    var fallback = GetFallbackScope();
+    if(fallback != null)
+      return fallback.Resolve(name);
 
     return null;
   }
@@ -658,8 +661,11 @@ public abstract class EnclosingSymbol : Symbol, IScope
     if(members.Contains(sym.name))
       throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
 
-    members.Add(sym);
+    if(sym is IScopeIndexed si && si.scope_idx == -1)
+      si.scope_idx = members.Count; 
     sym.scope = this; // track the scope in each symbol
+
+    members.Add(sym);
   }
 }
 
@@ -727,10 +733,20 @@ public class FuncType : IType
   }
 }
 
-public class FuncSymbol : EnclosingSymbol
+public class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
   SymbolsDictionary members = new SymbolsDictionary();
   SymbolsDictionary args = new SymbolsDictionary();
+
+  int _scope_idx = -1;
+  public int scope_idx {
+    get {
+      return _scope_idx;
+    }
+    set {
+      _scope_idx = value;
+    }
+  }
 
 #if BHL_FRONT
   public bool return_statement_found = false;
@@ -797,14 +813,6 @@ public class FuncSymbol : EnclosingSymbol
   {
     var farg = members[idx] as FuncArgSymbol;
     return farg != null && farg.is_ref;
-  }
-
-  public override void Define(Symbol sym)
-  {
-    //should be called before actual defining
-    if(sym is VariableSymbol vs)
-      vs.CalcScopeIdx(this);
-    base.Define(sym);
   }
 }
 
@@ -1663,6 +1671,13 @@ public class SymbolsDictionary
     var s = list[index];
     str2symb.Remove(s.name);
     list.RemoveAt(index);
+  }
+
+  public Symbol TryAt(int index)
+  {
+    if(index < 0 || index >= list.Count)
+      return null;
+    return list[index];
   }
 
   public int IndexOf(Symbol s)
