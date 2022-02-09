@@ -120,9 +120,9 @@ namespace bhlsp
     public void Write(string json)
     {
       var utf8 = Encoding.UTF8.GetBytes(json);
-      lock (outputLock)
+      lock(outputLock)
       {
-        using (var writer = new StreamWriter(output, Encoding.ASCII, 1024, true))
+        using(var writer = new StreamWriter(output, Encoding.ASCII, 1024, true))
         {
           writer.Write($"Content-Length: {utf8.Length}\r\n");
           writer.Write("\r\n");

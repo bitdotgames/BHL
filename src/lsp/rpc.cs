@@ -49,10 +49,10 @@ namespace bhlsp
       }
       
 #if BHLSP_DEBUG
-      /*if(req != null)
+      if(req != null)
         BHLSPLogger.WriteLine($":: bhlsp <-- {req.method}: {json}");
       else
-        BHLSPLogger.WriteLine($":: bhlsp <-- {json}");*/
+        BHLSPLogger.WriteLine($":: bhlsp <-- {json}");
 #endif
       
       if(req != null && req.IsMessage())
@@ -83,10 +83,10 @@ namespace bhlsp
           });
         
 #if BHLSP_DEBUG
-        /*if(req != null && resp.error == null)
+        if(req != null && resp.error == null)
           BHLSPLogger.WriteLine($":: bhlsp --> {req.method}: {response}");
         else
-          BHLSPLogger.WriteLine($":: bhlsp --> {response}");*/
+          BHLSPLogger.WriteLine($":: bhlsp --> {response}");
 #endif
       }
       

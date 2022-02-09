@@ -42,10 +42,29 @@ namespace bhlsp
     async Task<bool> ReadAndHandle()
     {
       string json = await connection.Read();
+      if(string.IsNullOrEmpty(json))
+        return false;
       
       string response = rpc.HandleMessage(json);
-      if(!string.IsNullOrEmpty(response))
-        connection.Write(response);
+      
+      try
+      {
+        if(!string.IsNullOrEmpty(response))
+          connection.Write(response);
+      }
+
+#if BHLSP_DEBUG
+      catch(Exception e)
+      {
+        BHLSPLogger.WriteLine(e);
+        return false;
+      }
+#else
+      catch
+      {
+        return false;
+      }
+#endif
       
       return true;
     }
