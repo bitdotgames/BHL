@@ -1065,12 +1065,12 @@ public class ModuleCompiler : AST_Visitor
     {
       case EnumCall.VARW:
       {
-        Emit(Opcodes.SetVar, new int[] {(int)ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.SetVar, new int[] {ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.VAR:
       {
-        Emit(Opcodes.GetVar, new int[] {(int)ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.GVAR:
@@ -1079,11 +1079,11 @@ public class ModuleCompiler : AST_Visitor
         {
           var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
-          Emit(Opcodes.GetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, ast.line_num);
+          Emit(Opcodes.GetGVarImported, new int[] {module_idx, ast.symb_idx}, ast.line_num);
         }
         else 
         {
-          Emit(Opcodes.GetGVar, new int[] {(int)ast.symb_idx}, ast.line_num);
+          Emit(Opcodes.GetGVar, new int[] {ast.symb_idx}, ast.line_num);
         }
       }
       break;
@@ -1093,11 +1093,11 @@ public class ModuleCompiler : AST_Visitor
         {
           var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
-          Emit(Opcodes.SetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, ast.line_num);
+          Emit(Opcodes.SetGVarImported, new int[] {module_idx, ast.symb_idx}, ast.line_num);
         }
         else 
         {
-          Emit(Opcodes.SetGVar, new int[] {(int)ast.symb_idx}, ast.line_num);
+          Emit(Opcodes.SetGVar, new int[] {ast.symb_idx}, ast.line_num);
         }
       }
       break;
@@ -1127,22 +1127,22 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.MVAR:
       {
-        if((int)ast.symb_idx == -1)
+        if(ast.symb_idx == -1)
           throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
 
         VisitChildren(ast);
 
-        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MVARW:
       {
-        if((int)ast.symb_idx == -1)
+        if(ast.symb_idx == -1)
           throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
 
         VisitChildren(ast);
 
-        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MFUNC:
@@ -1151,26 +1151,26 @@ public class ModuleCompiler : AST_Visitor
         if(class_symb == null)
           throw new Exception("Class type not found: " + ast.scope_type);
 
-        var mfunc = class_symb.members.TryAt((int)ast.symb_idx) as FuncSymbol;
+        var mfunc = class_symb.members.TryAt(ast.symb_idx) as FuncSymbol;
         if(mfunc == null)
-          throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type + "' by index " + (int)ast.symb_idx);
+          throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type + "' by index " + ast.symb_idx);
 
         VisitChildren(ast);
         
         if(mfunc is FuncSymbolScript)
-          Emit(Opcodes.CallMethod, new int[] { (int)ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
         else
-          Emit(Opcodes.CallMethodNative, new int[] { (int)ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
       {
-        if((int)ast.symb_idx == -1)
+        if(ast.symb_idx == -1)
           throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
 
         VisitChildren(ast);
 
-        Emit(Opcodes.RefAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.RefAttr, new int[] {AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDX:
@@ -1195,7 +1195,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.GetFuncFromVar, new int[] {ast.symb_idx}, ast.line_num);
         Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;

@@ -780,7 +780,7 @@ public class AST_Call  : AST
   public uint module_id;
   public uint cargs_bits;
   public int line_num;
-  public uint symb_idx;
+  public int symb_idx;
   public string scope_type = "";
 
   static public  new  uint STATIC_CLASS_ID = 42771415;
