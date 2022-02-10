@@ -1187,12 +1187,6 @@ static public class TypeSystem
   static public BuiltInTypeSymbol Obj = new BuiltInTypeSymbol("object", TIDX_OBJ);
   static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_OBJ);
 
-  // Arithmetic types defined in order from narrowest to widest
-  public static IType[] index2type = new IType[] {
-      // 0,  1,   2,      3,   4,     5,     6     7
-      null, Bool, String, Int, Float, Void,  Enum, Any
-  };
-
   // Map t1 op t2 to result type (_void implies illegal)
   public static IType[,] arithmetic_res_type = new IType[,] {
       /*          struct bool    string  int    float   void   enum   any */
@@ -1268,14 +1262,12 @@ static public class TypeSystem
 
   static public void InitBuiltins(GlobalScope globals) 
   {
-    foreach(IType t in index2type) 
-    {
-      if(t != null) 
-      {
-        var blt = (BuiltInTypeSymbol)t; 
-        globals.Define(blt);
-      }
-    }
+    globals.Define(Int);
+    globals.Define(Float);
+    globals.Define(Bool);
+    globals.Define(String);
+    globals.Define(Void);
+    globals.Define(Any);
 
     //for all generic arrays
     globals.Define(new GenericArrayTypeSymbol(globals, new TypeRef("")));
@@ -1339,13 +1331,6 @@ static public class TypeSystem
       fn.Define(new FuncArgSymbol("fid", globals.Type("int")));
       globals.Define(fn);
     }
-  }
-
-  static bool IsBuiltin(Symbol s)
-  {
-    return ((s is BuiltInTypeSymbol) || 
-            (s is ArrayTypeSymbol)
-           );
   }
 
   static public bool IsCompoundType(string name)
