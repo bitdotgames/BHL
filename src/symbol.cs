@@ -1077,7 +1077,7 @@ public class ClassSymbolScript : ClassSymbol
         v.Release();
       }
       else
-        vl.Add(frm.vm.nil);
+        vl.Add(frm.vm.Null);
     }
   }
 }
@@ -1184,8 +1184,8 @@ static public class TypeSystem
   static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void", TIDX_VOID);
   static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum", TIDX_ENUM);
   static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any", TIDX_ANY);
-  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_OBJ);
   static public BuiltInTypeSymbol Obj = new BuiltInTypeSymbol("object", TIDX_OBJ);
+  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_OBJ);
 
   // Arithmetic types defined in order from narrowest to widest
   public static IType[] index2type = new IType[] {

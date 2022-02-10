@@ -125,7 +125,7 @@ public class Const
     else if(type == EnumLiteral.STR)
       return Val.NewStr(vm, str);
     else if(type == EnumLiteral.NIL)
-      return Val.NewNil(vm);
+      return vm.Null;
     else
       throw new Exception("Bad type");
   }
@@ -762,7 +762,13 @@ public class VM
   Frame init_frame;
 
   //special case 'null' value
-  internal Val nil = null;
+  Val null_val = null;
+  public Val Null {
+    get {
+      null_val.Retain();
+      return null_val;
+    }
+  }
 
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
@@ -774,12 +780,12 @@ public class VM
 
     init_frame = new Frame(this);
 
-    nil = new Val(this);
-    nil.SetNil();
+    null_val = new Val(this);
+    null_val.SetObj(null);
     //NOTE: we don't want to store it in the values pool,
     //      still we need to retain it so that it's never 
     //      accidentally released when pushed/popped
-    nil.Retain();
+    null_val.Retain();
   }
 
   public void LoadModule(string module_name)

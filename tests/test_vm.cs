@@ -20726,7 +20726,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       var fn = new FuncSymbolNative("mkcolor_null", globs.Type("Color"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-            frm.stack.Push(Val.NewNil(frm.vm));
+            frm.stack.Push(frm.vm.Null);
             return null;
           }
       );

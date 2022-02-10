@@ -255,19 +255,6 @@ public class Val
     _obj = o;
   }
 
-  static public Val NewNil(VM vm)
-  {
-    Val dv = New(vm);
-    dv.SetNil();
-    return dv;
-  }
-
-  public void SetNil()
-  {
-    Reset();
-    _type = TypeSystem.Null;
-  }
-
   public bool IsValueEqual(Val o)
   {
     bool res =
