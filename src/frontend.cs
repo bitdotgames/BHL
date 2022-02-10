@@ -277,6 +277,7 @@ public class Frontend : bhlBaseVisitor<object>
       
       Visit(ctx.decls()); 
     }
+    //TODO: preserve original error stacktrace!
     catch(UserError e)
     {
       //NOTE: if file is not set we need to update it and re-throw the exception

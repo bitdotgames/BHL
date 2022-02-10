@@ -724,6 +724,7 @@ public class FuncType : IType
   }
 }
 
+//TODO: why there's a separate FuncType?  
 public class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
   SymbolsDictionary members = new SymbolsDictionary();
@@ -1185,58 +1186,40 @@ static public class TypeSystem
   static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any", TIDX_ANY);
   static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_ANY);
 
-  // Map t1 op t2 to result type (_void implies illegal)
-  public static IType[,] arithmetic_res_type = new IType[,] {
-      /*          struct bool    string  int    float   void   enum   any */
-      /*struct*/  {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void},
-      /*bool*/    {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void},
-      /*string*/  {Void, Void,   String, Void,  Void,   Void,  Void,  Void},
-      /*int*/     {Void, Void,   Void,   Int,   Float,  Void,  Void,  Void},
-      /*float*/   {Void, Void,   Void,   Float, Float,  Void,  Void,  Void},
-      /*void*/    {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void},
-      /*enum*/    {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void},
-      /*any*/     {Void, Void,   Void,   Void,  Void,   Void,  Void,  Void}
+  static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
+  {
+    { new Tuple<IType, IType>(String, String), String },
+    { new Tuple<IType, IType>(Int, Int),       Int },
+    { new Tuple<IType, IType>(Int, Float),     Float },
+    { new Tuple<IType, IType>(Float, Float),   Float },
+    { new Tuple<IType, IType>(Float, Int),     Float },
   };
 
-  public static IType[,] relational_res_type = new IType[,] {
-      /*          struct bool   string   int     float     void    enum    any */
-      /*struct*/  {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void},
-      /*bool*/    {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void},
-      /*string*/  {Void, Void,  Bool,    Void,    Void,    Void,  Void,  Void},
-      /*int*/     {Void, Void,  Void,    Bool,    Bool,    Void,  Void,  Void},
-      /*float*/   {Void, Void,  Void,    Bool,    Bool,    Void,  Void,  Void},
-      /*void*/    {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void},
-      /*enum*/    {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void},
-      /*any*/     {Void, Void,  Void,    Void,    Void,    Void,  Void,  Void}
+  static Dictionary<Tuple<IType, IType>, IType> rtl_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
+  {
+    { new Tuple<IType, IType>(String, String), Bool },
+    { new Tuple<IType, IType>(Int, Int),       Bool },
+    { new Tuple<IType, IType>(Int, Float),     Bool },
+    { new Tuple<IType, IType>(Float, Float),   Bool },
+    { new Tuple<IType, IType>(Float, Int),     Bool },
   };
 
-  public static IType[,] equality_res_type = new IType[,] {
-      /*          struct   bool     string   int      float    void   enum   any */
-      /*struct*/  {Bool,   Void,    Void,    Void,    Void,    Void,  Void,  Void},
-      /*bool*/    {Void,   Bool,    Void,    Void,    Void,    Void,  Void,  Void},
-      /*string*/  {Void,   Void,    Bool,    Void,    Void,    Void,  Void,  Void},
-      /*int*/     {Void,   Void,    Void,    Bool,    Bool,    Void,  Void,  Void},
-      /*float*/   {Void,   Void,    Void,    Bool,    Bool,    Void,  Void,  Void},
-      /*void*/    {Void,   Void,    Void,    Void,    Void,    Void,  Void,  Void},
-      /*enum*/    {Void,   Void,    Void,    Void,    Void,    Void,  Void,  Void},
-      /*any*/     {Bool,   Void,    Void,    Void,    Void,    Void,  Void,  Void}
+  static Dictionary<Tuple<IType, IType>, IType> eq_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
+  {
+    { new Tuple<IType, IType>(String, String), Bool },
+    { new Tuple<IType, IType>(Int, Int),       Bool },
+    { new Tuple<IType, IType>(Int, Float),     Bool },
+    { new Tuple<IType, IType>(Float, Float),   Bool },
+    { new Tuple<IType, IType>(Float, Int),     Bool },
+    { new Tuple<IType, IType>(Any, Any),       Bool },
+    { new Tuple<IType, IType>(Null, Any),      Bool },
+    { new Tuple<IType, IType>(Any, Null),      Bool },
   };
 
-  // Indicate whether a type needs a promotion to a wider type.
-  //  If not null, implies promotion required.  Null does NOT imply
-  //  error--it implies no promotion.  This works for
-  //  arithmetic, equality, and relational operators in bhl
-  // 
-  public static IType[,] promote_from_to = new IType[,] {
-      /*          struct  bool     string  int     float    void   enum   any*/
-      /*struct*/  {null,  null,    null,   null,   null,    null,  null,  null},
-      /*bool*/    {null,  null,    null,   null,   null,    null,  null,  null},
-      /*string*/  {null,  null,    null,   null,   null,    null,  null,  null},
-      /*int*/     {null,  null,    null,   null,   Float,  null,  null,  null},
-      /*float*/   {null,  null,    null,   null,    null,   null,  null,  null},
-      /*void*/    {null,  null,    null,   null,    null,   null,  null,  null},
-      /*enum*/    {null,  null,    null,   null,    null,   null,  null,  null},
-      /*any*/     {null,  null,    null,   null,    null,   null,  null,  null}
+  // Indicate whether a type supports a promotion to a wider type.
+  static Dictionary<Tuple<IType, IType>, IType> promote_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
+  {
+    { new Tuple<IType, IType>(Int, Float), Float }
   };
 
   public static IType[,] cast_from_to = new IType[,] {
@@ -1417,6 +1400,21 @@ static public class TypeSystem
     return new FuncType(ret_type, arg_types);
   }
 
+  static public IType GetResultType(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree a, WrappedParseTree b) 
+  {
+    if(a.eval_type == b.eval_type)
+      return a.eval_type;
+
+    IType result;
+    if(!table.TryGetValue(new Tuple<IType, IType>(a.eval_type, b.eval_type), out result))
+    {
+      throw new UserError(
+        a.Location()+" : incompatible types"
+      );
+    }
+    return result;
+  }
+
   static public IType GetResultType(IType[,] table, WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type == b.eval_type)
@@ -1437,9 +1435,8 @@ static public class TypeSystem
 
   static public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
-    int trhs = rhs.eval_type.GetTypeIndex();
-    var promote_to_type = promote_from_to[trhs,tlhs];
+    IType promote_to_type = null;
+    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs.eval_type), out promote_to_type);
     if(!CanAssignTo(rhs.eval_type, lhs.eval_type, promote_to_type)) 
     {
       throw new UserError(
@@ -1450,9 +1447,8 @@ static public class TypeSystem
 
   static public void CheckAssign(IType lhs, WrappedParseTree rhs) 
   {
-    int tlhs = lhs.GetTypeIndex(); // promote right to left type?
-    int trhs = rhs.eval_type.GetTypeIndex();
-    var promote_to_type = promote_from_to[trhs,tlhs];
+    IType promote_to_type = null;
+    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs), out promote_to_type);
     if(!CanAssignTo(rhs.eval_type, lhs, promote_to_type)) 
     {
       throw new UserError(
@@ -1463,9 +1459,8 @@ static public class TypeSystem
 
   static public void CheckAssign(WrappedParseTree lhs, IType rhs) 
   {
-    int tlhs = lhs.eval_type.GetTypeIndex(); // promote right to left type?
-    int trhs = rhs.GetTypeIndex();
-    var promote_to_type = promote_from_to[trhs,tlhs];
+    IType promote_to_type = null;
+    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs, lhs.eval_type), out promote_to_type);
     if(!CanAssignTo(rhs, lhs.eval_type, promote_to_type)) 
     {
       throw new UserError(
@@ -1519,7 +1514,7 @@ static public class TypeSystem
         b.Location()+" operator is not overloaded"
       );
 
-    return GetResultType(arithmetic_res_type, a, b);
+    return GetResultType(bin_op_res_type, a, b);
   }
 
   static public IType TypeForBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
@@ -1541,15 +1536,27 @@ static public class TypeSystem
         b.Location()+" : operator is not overloaded"
       );
 
-    GetResultType(relational_res_type, a, b);
-    // even if the operands are incompatible, the type of
-    // this operation must be boolean
+    GetResultType(rtl_op_res_type, a, b);
+    //TODO: due to some weirdness of GetResultType
+    //      (which might return non table type in case arguments are the same) 
+    //      we need to enforce bool type
     return Bool;
   }
 
   static public IType TypeForEqOp(WrappedParseTree a, WrappedParseTree b) 
   {
-    GetResultType(equality_res_type, a, b);
+    if(a.eval_type is ClassSymbol && b.eval_type is ClassSymbol)
+      return Bool;
+
+    //TODO: add INullableType?
+    if(((a.eval_type is ClassSymbol || a.eval_type is FuncType) && b.eval_type == Null) ||
+        ((b.eval_type is ClassSymbol || b.eval_type is FuncType) && a.eval_type == Null))
+      return Bool;
+
+    GetResultType(eq_op_res_type, a, b);
+    //TODO: due to some weirdness of GetResultType
+    //      (which might return non table type in case arguments are the same) 
+    //      we need to enforce bool type
     return Bool;
   }
 
