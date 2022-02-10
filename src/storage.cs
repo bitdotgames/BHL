@@ -303,7 +303,8 @@ public class Val
 
 public class ValList : IList<Val>, IValRefcounted
 {
-  //NOTE: exposed to allow manipulations like Reverse(). Use with caution.
+  //NOTE: exposed to allow manipulations like Reverse(). 
+  //      Use with caution.
   public readonly List<Val> lst = new List<Val>();
 
   //NOTE: -1 means it's in released state,

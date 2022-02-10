@@ -761,6 +761,9 @@ public class VM
   //fake frame used for module's init code
   Frame init_frame;
 
+  //special case 'null' value
+  internal Val nil = null;
+
   public VM(GlobalScope globs = null, IModuleImporter importer = null)
   {
     if(globs == null)
@@ -770,6 +773,13 @@ public class VM
     symbols = new Scope(globs);
 
     init_frame = new Frame(this);
+
+    nil = new Val(this);
+    nil.SetNil();
+    //NOTE: we don't want to store it in the values pool,
+    //      still we need to retain it so that it's never 
+    //      accidentally released when pushed/popped
+    nil.Retain();
   }
 
   public void LoadModule(string module_name)

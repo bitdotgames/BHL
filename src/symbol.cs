@@ -1058,33 +1058,39 @@ public class ClassSymbolScript : ClassSymbol
     //}
 
     //NOTE: object's raw data is a list
-    var vl = ValList.New(data.vm);
+    var vl = ValList.New(frm.vm);
     data.SetObj(vl);
     
     for(int i=0;i<members.Count;++i)
     {
       var m = members[i];
-      var v = Val.New(data.vm);
-
-      ////NOTE: proper default init of members
-      if(m.type.name == TypeSystem.Float.type.name || 
-         m.type.name == TypeSystem.Int.type.name)
-        v.SetNum(0);
-      else if(m.type.name == TypeSystem.String.type.name)
-        v.SetStr("");
-      else if(m.type.name == TypeSystem.Bool.type.name)
-        v.SetBool(false);
-      else 
+      //NOTE: Members contain all kinds of symbols: methods and attributes,
+      //      however we need to properly setup attributes only. 
+      //      Methods will be initialized with special case 'nil' value.
+      //      Maybe we should track data members and methods separately someday. 
+      if(m is VariableSymbol)
       {
-        if(m.type.Get(frm.vm.Symbols) is EnumSymbol)
+
+        var tp = m.type.Get(frm.vm.Symbols);
+
+        var v = Val.New(data.vm);
+        if(tp == TypeSystem.Float || tp == TypeSystem.Int)
+          v.SetNum(0);
+        else if(tp == TypeSystem.String)
+          v.SetStr("");
+        else if(tp == TypeSystem.Bool)
+          v.SetBool(false);
+        else if(tp is EnumSymbol)
           v.SetNum(0);
         else
           v.SetObj(null);
-      }
 
-      vl.Add(v);
-      //ownership was passed to list, let's release it
-      v.Release();
+        vl.Add(v);
+        //ownership was passed to list, let's release it
+        v.Release();
+      }
+      else
+        vl.Add(frm.vm.nil);
     }
   }
 }
