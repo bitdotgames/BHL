@@ -12746,6 +12746,32 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserChildClassMethodAlreadyDefined()
+  {
+    string bhl = @"
+    class Foo {
+      int a
+      func int getA() {
+        return this.a
+      }
+    }
+
+    class Bar : Foo {
+      func int getA() {
+        return this.a
+      }
+    }
+    ";
+
+    AssertError<UserError>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"already defined symbol 'getA'"
+    );
+  }
+
+  [IsTested()]
   public void TestArrayOfUserClasses()
   {
     string bhl = @"
