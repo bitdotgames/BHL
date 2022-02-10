@@ -225,7 +225,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   }
 
   public string GetName() { return name; }
-  public int GetTypeIndex() { return TypeSystem.TIDX_OBJ; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_ANY; }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
@@ -666,7 +666,7 @@ public class MultiType : IType
 
   public List<TypeRef> items = new List<TypeRef>();
 
-  public int GetTypeIndex() { return TypeSystem.TIDX_OBJ; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_ANY; }
   public string GetName() { return name; }
 
   public void Update()
@@ -691,7 +691,7 @@ public class FuncType : IType
   public TypeRef ret_type;
   public List<TypeRef> arg_types = new List<TypeRef>();
 
-  public int GetTypeIndex() { return TypeSystem.TIDX_OBJ; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_ANY; }
   public string GetName() { return name; }
 
   public FuncType(TypeRef ret_type, List<TypeRef> arg_types)
@@ -1168,14 +1168,13 @@ public class EnumItemSymbol : Symbol, IType
 static public class TypeSystem
 {
   //TODO: get rid of these rigid inidices used in type tables below
-  public const int TIDX_OBJ       = 0;
+  public const int TIDX_ANY       = 0;
   public const int TIDX_BOOLEAN   = 1;
   public const int TIDX_STRING    = 2;
   public const int TIDX_INT       = 3;
   public const int TIDX_FLOAT     = 4;
   public const int TIDX_VOID      = 5;
   public const int TIDX_ENUM      = 6;
-  public const int TIDX_ANY       = 7;
 
   static public BuiltInTypeSymbol Bool = new BuiltInTypeSymbol("bool", TIDX_BOOLEAN);
   static public BuiltInTypeSymbol String = new BuiltInTypeSymbol("string", TIDX_STRING);
@@ -1184,7 +1183,7 @@ static public class TypeSystem
   static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void", TIDX_VOID);
   static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum", TIDX_ENUM);
   static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any", TIDX_ANY);
-  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_OBJ);
+  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_ANY);
 
   // Map t1 op t2 to result type (_void implies illegal)
   public static IType[,] arithmetic_res_type = new IType[,] {
@@ -1477,16 +1476,21 @@ static public class TypeSystem
 
   static public void CheckCast(WrappedParseTree type, WrappedParseTree exp) 
   {
-    int tlhs = type.eval_type.GetTypeIndex();
-    int trhs = exp.eval_type.GetTypeIndex();
+    var ltype = type.eval_type;
+    var rtype = exp.eval_type;
 
-    //special case: we allow to cast from 'any' to any user type
-    if(trhs == TIDX_ANY && tlhs == TIDX_OBJ)
+    if(ltype == rtype)
       return;
 
+    //special case: we allow to cast from 'any' to any user type
+    if(ltype == Any || rtype == Any)
+      return;
+
+    int tlhs = ltype.GetTypeIndex();
+    int trhs = rtype.GetTypeIndex();
+
     //special case: we allow to cast from 'any' numeric type to enum
-    if((trhs == TIDX_FLOAT || 
-        trhs == TIDX_INT) && 
+    if((trhs == TIDX_FLOAT || trhs == TIDX_INT) && 
         tlhs == TIDX_ENUM)
       return;
 

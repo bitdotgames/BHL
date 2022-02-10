@@ -356,7 +356,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCastIntToAny2()
+  public void TestCastIntToAnyFuncArg()
   {
     string bhl = @"
 
@@ -15664,7 +15664,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func float test() 
+    func test() 
     {
       Foo tmp = (Foo)new Color
     }
