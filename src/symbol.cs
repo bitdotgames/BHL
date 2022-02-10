@@ -1070,21 +1070,8 @@ public class ClassSymbolScript : ClassSymbol
       //      Maybe we should track data members and methods separately someday. 
       if(m is VariableSymbol)
       {
-
-        var tp = m.type.Get(frm.vm.Symbols);
-
-        var v = Val.New(data.vm);
-        if(tp == TypeSystem.Float || tp == TypeSystem.Int)
-          v.SetNum(0);
-        else if(tp == TypeSystem.String)
-          v.SetStr("");
-        else if(tp == TypeSystem.Bool)
-          v.SetBool(false);
-        else if(tp is EnumSymbol)
-          v.SetNum(0);
-        else
-          v.SetObj(null);
-
+        var type = m.type.Get(frm.vm.Symbols);
+        var v = frm.vm.MakeDefaultVal(type);
         vl.Add(v);
         //ownership was passed to list, let's release it
         v.Release();

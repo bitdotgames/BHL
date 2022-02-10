@@ -863,7 +863,7 @@ public class VM
           string type = constants[type_idx].str;
 
           module.gvars.Resize(var_idx+1);
-          module.gvars[var_idx] = MakeValByType(type);
+          module.gvars[var_idx] = MakeDefaultVal(type);
         }
         break;
         case Opcodes.SetVar:
@@ -1272,7 +1272,7 @@ public class VM
         //NOTE: handling case when variables are 're-declared' within the nested loop
         if(curr != null)
           curr.Release();
-        curr_frame.locals[local_idx] = MakeValByType(type);
+        curr_frame.locals[local_idx] = MakeDefaultVal(type);
       }
       break;
       case Opcodes.GetAttr:
@@ -1685,18 +1685,27 @@ public class VM
     return BHS.SUCCESS;
   }
 
-  Val MakeValByType(string type)
+  internal Val MakeDefaultVal(string type)
   {
-    if(type == "float")
-      return Val.NewNum(this, (double)0);
-    else if(type == "int")
-      return Val.NewNum(this, 0);
-    else if(type == "string")
-      return Val.NewStr(this, "");
-    else if(type == "bool")
-      return Val.NewBool(this, false);
+    return MakeDefaultVal((IType)symbols.Resolve(type));
+  }
+
+  internal Val MakeDefaultVal(IType type)
+  {
+    var v = Val.New(this);
+    if(type == TypeSystem.Int)
+      v.SetNum(0);
+    else if(type == TypeSystem.Float)
+      v.SetNum((double)0);
+    else if(type == TypeSystem.String)
+      v.SetStr("");
+    else if(type == TypeSystem.Bool)
+      v.SetBool(false);
+    else if(type is EnumSymbol)
+      v.SetNum(0);
     else
-      return Val.NewObj(this, null);
+      v.SetObj(null);
+    return v;
   }
 
   void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip, ref IExitableScope defer_scope)
