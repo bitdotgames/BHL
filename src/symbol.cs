@@ -12,8 +12,6 @@ namespace bhl {
 public interface IType 
 {
   string GetName();
-  //TODO: get rid of this rigid method
-  int GetTypeIndex();
 }
 
 public class TypeRef
@@ -119,17 +117,13 @@ public class Symbol
 // A symbol to represent built in types such int, float primitive types
 public class BuiltInTypeSymbol : Symbol, IType 
 {
-  public int type_index;
-
-  public BuiltInTypeSymbol(string name, int type_index) 
+  public BuiltInTypeSymbol(string name) 
     : base(name, null/*set below*/) 
   {
     this.type = new TypeRef(this);
-    this.type_index = type_index;
   }
 
   public string GetName() { return name; }
-  public int GetTypeIndex() { return type_index; }
 }
 
 public class ClassSymbol : EnclosingSymbol, IScope, IType 
@@ -225,7 +219,6 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   }
 
   public string GetName() { return name; }
-  public int GetTypeIndex() { return TypeSystem.TIDX_ANY; }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
@@ -666,7 +659,6 @@ public class MultiType : IType
 
   public List<TypeRef> items = new List<TypeRef>();
 
-  public int GetTypeIndex() { return TypeSystem.TIDX_ANY; }
   public string GetName() { return name; }
 
   public void Update()
@@ -691,7 +683,6 @@ public class FuncType : IType
   public TypeRef ret_type;
   public List<TypeRef> arg_types = new List<TypeRef>();
 
-  public int GetTypeIndex() { return TypeSystem.TIDX_ANY; }
   public string GetName() { return name; }
 
   public FuncType(TypeRef ret_type, List<TypeRef> arg_types)
@@ -1102,7 +1093,6 @@ public class EnumSymbol : EnclosingSymbol, IType
   }
 
   public string GetName() { return name; }
-  public int GetTypeIndex() { return TypeSystem.TIDX_ENUM; }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
@@ -1161,30 +1151,19 @@ public class EnumItemSymbol : Symbol, IType
     this.owner = owner;
     this.val = val;
   }
-
   public string GetName() { return owner.name; }
-  public int GetTypeIndex() { return owner.GetTypeIndex(); }
 }
 
 static public class TypeSystem
 {
-  //TODO: get rid of these rigid inidices used in type tables below
-  public const int TIDX_ANY       = 0;
-  public const int TIDX_BOOLEAN   = 1;
-  public const int TIDX_STRING    = 2;
-  public const int TIDX_INT       = 3;
-  public const int TIDX_FLOAT     = 4;
-  public const int TIDX_VOID      = 5;
-  public const int TIDX_ENUM      = 6;
-
-  static public BuiltInTypeSymbol Bool = new BuiltInTypeSymbol("bool", TIDX_BOOLEAN);
-  static public BuiltInTypeSymbol String = new BuiltInTypeSymbol("string", TIDX_STRING);
-  static public BuiltInTypeSymbol Int = new BuiltInTypeSymbol("int", TIDX_INT);
-  static public BuiltInTypeSymbol Float = new BuiltInTypeSymbol("float", TIDX_FLOAT);
-  static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void", TIDX_VOID);
-  static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum", TIDX_ENUM);
-  static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any", TIDX_ANY);
-  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_ANY);
+  static public BuiltInTypeSymbol Bool = new BuiltInTypeSymbol("bool");
+  static public BuiltInTypeSymbol String = new BuiltInTypeSymbol("string");
+  static public BuiltInTypeSymbol Int = new BuiltInTypeSymbol("int");
+  static public BuiltInTypeSymbol Float = new BuiltInTypeSymbol("float");
+  static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void");
+  static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum");
+  static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any");
+  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null");
 
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
   {
@@ -1219,19 +1198,32 @@ static public class TypeSystem
   // Indicate whether a type supports a promotion to a wider type.
   static Dictionary<Tuple<IType, IType>, IType> promote_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
   {
-    { new Tuple<IType, IType>(Int, Float), Float }
+    { new Tuple<IType, IType>(Int, Float), Float },
   };
 
-  public static IType[,] cast_from_to = new IType[,] {
-      /*          struct  bool     string   int     float   void   enum   any*/
-      /*struct*/  {null,  null,    null,    null,   null,   null,  null,  Any},
-      /*bool*/    {null,  null,    String,  Int,    Float,  null,  null,  Any},
-      /*string*/  {null,  null,    String,  null,   null,   null,  null,  Any},
-      /*int*/     {null,  Bool,    String,  Int,    Float,  null,  null,  Any},
-      /*float*/   {null,  Bool,    String,  Int,    Float,  null,  Enum,  Any},
-      /*void*/    {null,  null,    null,    null,   null,   null,  null,  null},
-      /*enum*/    {null,  null,    String,  Int,    Float,  null,  null,  Any},
-      /*any*/     {null,  Bool,    String,  Int,    null,   null,  null,  Any}
+  static Dictionary<Tuple<IType, IType>, IType> cast_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
+  {
+    { new Tuple<IType, IType>(Bool,   String),    String },
+    { new Tuple<IType, IType>(Bool,   Int),       Int    },
+    { new Tuple<IType, IType>(Bool,   Float),     Float  },
+    { new Tuple<IType, IType>(Bool,   Any),       Any    },
+    { new Tuple<IType, IType>(String, String),    String },
+    { new Tuple<IType, IType>(String, Any),       Any    },
+    { new Tuple<IType, IType>(Int,    Bool),      Bool   },
+    { new Tuple<IType, IType>(Int,    String),    String },
+    { new Tuple<IType, IType>(Int,    Int),       Int    },
+    { new Tuple<IType, IType>(Int,    Float),     Float  },
+    { new Tuple<IType, IType>(Int,    Any),       Any    },
+    { new Tuple<IType, IType>(Float,  Bool),      Bool   },
+    { new Tuple<IType, IType>(Float,  String),    String },
+    { new Tuple<IType, IType>(Float,  Int),       Int    },
+    { new Tuple<IType, IType>(Float,  Float),     Float  },
+    { new Tuple<IType, IType>(Float,  Any),       Any    },
+    { new Tuple<IType, IType>(Any,    Bool),      Bool   },
+    { new Tuple<IType, IType>(Any,    String),    String },
+    { new Tuple<IType, IType>(Any,    Int),       Int    },
+    { new Tuple<IType, IType>(Any,    Float),     Float  },
+    { new Tuple<IType, IType>(Any,    Any),       Any    },
   };
 
   static public GlobalScope CreateBuiltins()
@@ -1415,24 +1407,6 @@ static public class TypeSystem
     return result;
   }
 
-  static public IType GetResultType(IType[,] table, WrappedParseTree a, WrappedParseTree b) 
-  {
-    if(a.eval_type == b.eval_type)
-      return a.eval_type;
-
-    int ta = a.eval_type.GetTypeIndex(); // type index of left operand
-    int tb = b.eval_type.GetTypeIndex(); // type index of right operand
-
-    IType result = table[ta,tb];    // operation result type
-    if(result == Void) 
-    {
-      throw new UserError(
-        a.Location()+" : incompatible types"
-      );
-    }
-    return result;
-  }
-
   static public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
     IType promote_to_type = null;
@@ -1481,20 +1455,21 @@ static public class TypeSystem
     if(ltype == Any || rtype == Any)
       return;
 
-    int tlhs = ltype.GetTypeIndex();
-    int trhs = rtype.GetTypeIndex();
-
-    //special case: we allow to cast from 'any' numeric type to enum
-    if((trhs == TIDX_FLOAT || trhs == TIDX_INT) && 
-        tlhs == TIDX_ENUM)
+    if((rtype == Float || rtype == Int) && ltype is EnumSymbol)
+      return;
+    if((ltype == Float || ltype == Int) && rtype is EnumSymbol)
       return;
 
-    var cast_type = cast_from_to[trhs,tlhs];
-
-    if(cast_type == type.eval_type)
+    if(ltype == String && rtype is EnumSymbol)
       return;
 
-    if(IsInSameClassHierarchy(exp.eval_type, type.eval_type))
+    IType cast_type = null;
+    cast_from_to.TryGetValue(new Tuple<IType, IType>(rtype, ltype), out cast_type);
+
+    if(cast_type == ltype)
+      return;
+
+    if(IsInSameClassHierarchy(rtype, ltype))
       return;
     
     throw new UserError(
