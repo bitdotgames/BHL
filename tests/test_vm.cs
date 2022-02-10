@@ -12967,75 +12967,14 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
-  //TODO: do we really need this one?
-  //[IsTested()]
-  public void TestChildUserClassOfNativeClass()
-  {
-    string bhl = @"
-
-    class ColorA : Color 
-    { 
-      float a
-    }
-      
-    func float test() 
-    {
-      ColorA c = { r : 1, g : 2, a : 3}
-      return c.r + c.g + c.a
-    }
-    ";
-
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
-
-    var vm = MakeVM(bhl, globs);
-    AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
-  }
-
-  //TODO:
-  //[IsTested()]
-  public void TestChildUserClassOfNativeClass2()
-  {
-    string bhl = @"
-
-    class ColorA : Color 
-    { 
-      float a
-    }
-
-    class ColorF : ColorA 
-    { 
-      float f
-    }
-      
-    func float test() 
-    {
-      ColorF c = { r : 1, g : 2, f : 3, a: 4}
-      return c.r + c.g + c.a + c.f
-    }
-    ";
-
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
-
-    var vm = MakeVM(bhl, globs);
-    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
-  }
-
   [IsTested()]
-  public void TestExtendNativeClassMemberAlreadyExists()
+  public void TestChildUserClassOfNativeClassIsForbidden()
   {
     string bhl = @"
 
     class ColorA : Color 
     { 
-      float g
-    }
-      
-    func float test() 
-    {
+      float a
     }
     ";
 
@@ -13046,7 +12985,7 @@ public class BHL_TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, globs);
       },
-      "already defined symbol 'g'"
+      "extending native classes is not supported"
     );
   }
 

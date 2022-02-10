@@ -1805,6 +1805,9 @@ public class Frontend : bhlBaseVisitor<object>
       super_class = mscope.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
       if(super_class == null)
         FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
+
+      if(super_class is ClassSymbolNative)
+        FireError(Location(ctx.classEx()) + " : extending native classes is not supported");
     }
 
     var ast = AST_Util.New_ClassDecl(class_name, super_class == null ? "" : super_class.name);
