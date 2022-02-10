@@ -1709,10 +1709,9 @@ public class VM
       v.SetStr("");
     else if(type == TypeSystem.Bool)
       v.SetBool(false);
-    else if(type is EnumSymbol)
-      v.SetNum(0);
     else
-      v.SetObj(null);
+      v.type = type;
+
     return v;
   }
 
