@@ -32,7 +32,7 @@ public class Scope : IScope
 
   public SymbolsDictionary GetMembers() { return members; }
 
-  public Symbol Resolve(string name) 
+  public virtual Symbol Resolve(string name) 
   {
     Symbol s = null;
     members.TryGetValue(name, out s);
@@ -57,16 +57,6 @@ public class Scope : IScope
     sym.scope = this; // track the scope in each symbol
 
     members.Add(sym);
-  }
-
-  public void Append(Scope other)
-  {
-    var ms = other.GetMembers();
-    for(int i=0;i<ms.Count;++i)
-    {
-      var s = ms[i];
-      Define(s);
-    }
   }
 
   public IScope GetFallbackScope() { return fallback; }
@@ -182,11 +172,37 @@ public class ModuleScope : Scope
   uint module_id;
   public GlobalScope globs;
 
+  List<Scope> imports = new List<Scope>();
+
   public ModuleScope(uint module_id, GlobalScope fallback) 
     : base(fallback) 
   {
     this.globs = fallback;
     this.module_id = module_id;
+  }
+
+  public void Import(Scope other)
+  {
+    if(other == this)
+      return;
+    if(imports.Contains(other))
+      return;
+    imports.Add(other);
+  }
+
+  public override Symbol Resolve(string name) 
+  {
+    var s = base.Resolve(name);
+    if(s != null)
+      return s;
+
+    foreach(var imp in imports)
+    {
+      s = imp.Resolve(name);
+      if(s != null)
+        return s;
+    }
+    return null;
   }
 
   public override void Define(Symbol sym) 
@@ -215,6 +231,13 @@ public class ModuleScope : Scope
       if(fs.decl.module_id == 0)
         fs.decl.module_id = module_id;
     }
+
+    foreach(var imp in imports)
+    {
+      if(imp.Resolve(sym.name) != null)
+        throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+    }
+
     base.Define(sym);
   }
 }
