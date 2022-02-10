@@ -12700,6 +12700,51 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserSubChildClassMethod()
+  {
+    string bhl = @"
+
+    class Base {
+      int a
+
+      func int getA() {
+        return this.a
+      }
+    }
+
+    class Foo : Base {
+      
+      int b
+
+      func int getB() {
+        return this.b
+      }
+    }
+
+    class Bar : Foo {
+      int c
+
+      func int getC() {
+        return this.c
+      }
+    }
+
+    func int test()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.c = 100
+      return b.getA() + b.getB() + b.getC()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserChildClassMethodAccessesParent()
   {
     string bhl = @"
@@ -12712,6 +12757,54 @@ public class BHL_TestVM : BHL_TestBase
       func int getA() {
         return this.a
       }
+
+      func int getB() {
+        return this.b
+      }
+    }
+
+    class Bar : Foo {
+      int c
+
+      func int getC() {
+        return this.c
+      }
+
+      func int getSumm() {
+        return this.getC() + this.getB() + this.getA() 
+      }
+    }
+
+    func int test()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.c = 100
+      return b.getSumm()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserSubChildClassMethodAccessesParent()
+  {
+    string bhl = @"
+    class Base {
+      int a
+
+      func int getA() {
+        return this.a
+      }
+    }
+
+    class Foo : Base {
+      
+      int b
 
       func int getB() {
         return this.b

@@ -164,15 +164,15 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
     this.super_class = super_class;
     this.creator = creator;
 
-    //NOTE: this looks at the moment a bit like a hack:
-    //      We define parent members in the current class
+    //NOTE: we define parent members in the current class
     //      scope as well. We do this since we want to  
-    //      address members in VM simply by numeric integer
+    //      address its members simply by int index
     if(super_class != null)
     {
-      for(int i=0;i<super_class.GetMembers().Count;++i)
+      var super_members = super_class.GetMembers();
+      for(int i=0;i<super_members.Count;++i)
       {
-        var sym = super_class.GetMembers()[i];
+        var sym = super_members[i];
         //NOTE: using base Define instead of our own version
         //      since we want to avoid 'already defined' checks
         base.Define(sym);
