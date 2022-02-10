@@ -19766,29 +19766,6 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(2, st[1]);
     }
   }
-  
-  [IsTested()]
-  public void TestValToAny()
-  {
-    string str = "str";
-    double num = 33.0;
-    bool bl = false;
-    object obj = new List<int>(33);
-
-    var vm = new VM();
-
-    var dv = Val.NewStr(vm, str);
-    Assert(dv.ToAny() == (object)str);
-    
-    dv = Val.NewNum(vm, num);
-    Assert((double)dv.ToAny() == num);
-
-    dv = Val.NewBool(vm, bl);
-    Assert((bool)dv.ToAny() == bl);
-
-    dv = Val.NewObj(vm, obj);
-    Assert(dv.ToAny() == obj);
-  }
 
   [IsTested()]
   public void TestValListOwnership()

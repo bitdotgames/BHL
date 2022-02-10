@@ -195,7 +195,7 @@ public class Val
   public void SetStr(string s)
   {
     Reset();
-    _type = TypeSystem.Bool;
+    _type = TypeSystem.String;
     _obj = s;
   }
 
@@ -238,7 +238,7 @@ public class Val
   {
     Reset();
     _type = TypeSystem.Bool;
-    _num = b ? 1.0f : 0.0f;
+    _num = b ? 1 : 0;
   }
 
   static public Val NewObj(VM vm, object o)
@@ -272,7 +272,8 @@ public class Val
   {
     bool res =
       _num == o._num &&
-      (_type == TypeSystem.Bool ? (string)_obj == (string)o._obj : _obj == o._obj)
+      //TODO: delegate comparison to type?
+      (_type == TypeSystem.String ? (string)_obj == (string)o._obj : _obj == o._obj)
       ;
 
     return res;
@@ -297,14 +298,6 @@ public class Val
       str = "Val: type:"+type;
 
     return str;// + " " + GetHashCode();//for extra debug
-  }
-
-  public object ToAny() 
-  {
-    if(_obj != null)
-      return _obj;
-    else
-      return (object)_num;
   }
 }
 
