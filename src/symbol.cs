@@ -225,7 +225,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   }
 
   public string GetName() { return name; }
-  public int GetTypeIndex() { return TypeSystem.TIDX_USER; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_OBJ; }
 
   public override SymbolsDictionary GetMembers() { return members; }
 
@@ -666,7 +666,7 @@ public class MultiType : IType
 
   public List<TypeRef> items = new List<TypeRef>();
 
-  public int GetTypeIndex() { return TypeSystem.TIDX_USER; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_OBJ; }
   public string GetName() { return name; }
 
   public void Update()
@@ -691,7 +691,7 @@ public class FuncType : IType
   public TypeRef ret_type;
   public List<TypeRef> arg_types = new List<TypeRef>();
 
-  public int GetTypeIndex() { return TypeSystem.TIDX_USER; }
+  public int GetTypeIndex() { return TypeSystem.TIDX_OBJ; }
   public string GetName() { return name; }
 
   public FuncType(TypeRef ret_type, List<TypeRef> arg_types)
@@ -1050,26 +1050,23 @@ public class ClassSymbolScript : ClassSymbol
     this.creator = ClassCreator;
   }
 
-  void ClassCreator(VM.Frame frm, ref Val res)
+  void ClassCreator(VM.Frame frm, ref Val data)
   {
+    //TODO: add handling of native super class
     //if(super_class is ClassSymbolNative cn)
     //{
-    ////TODO: add handling of native super class?
     //}
 
-    //NOTE: object data is a list
-    var vl = ValList.New(res.vm);
-    res.SetObj(vl);
+    //NOTE: object's raw data is a list
+    var vl = ValList.New(data.vm);
+    data.SetObj(vl);
     
-    //TODO: this should be more robust
-    //NOTE: storing class name hash in _num attribute
-    res._num = Hash.CRC28(name); 
-
     for(int i=0;i<members.Count;++i)
     {
       var m = members[i];
-      var v = Val.New(res.vm);
-      //NOTE: proper default init of built-in types
+      var v = Val.New(data.vm);
+
+      ////NOTE: proper default init of members
       if(m.type.name == TypeSystem.Float.type.name || 
          m.type.name == TypeSystem.Int.type.name)
         v.SetNum(0);
@@ -1086,6 +1083,7 @@ public class ClassSymbolScript : ClassSymbol
       }
 
       vl.Add(v);
+      //ownership was passed to list, let's release it
       v.Release();
     }
   }
@@ -1177,7 +1175,7 @@ public class EnumItemSymbol : Symbol, IType
 static public class TypeSystem
 {
   // arithmetic types defined in order from narrowest to widest
-  public const int TIDX_USER      = 0; // user-defined type
+  public const int TIDX_OBJ       = 0;
   public const int TIDX_BOOLEAN   = 1;
   public const int TIDX_STRING    = 2;
   public const int TIDX_INT       = 3;
@@ -1193,7 +1191,8 @@ static public class TypeSystem
   static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void", TIDX_VOID);
   static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum", TIDX_ENUM);
   static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any", TIDX_ANY);
-  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_USER);
+  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_OBJ);
+  static public BuiltInTypeSymbol Obj = new BuiltInTypeSymbol("object", TIDX_OBJ);
 
   // Arithmetic types defined in order from narrowest to widest
   public static IType[] index2type = new IType[] {
@@ -1505,7 +1504,7 @@ static public class TypeSystem
     int trhs = exp.eval_type.GetTypeIndex();
 
     //special case: we allow to cast from 'any' to any user type
-    if(trhs == TIDX_ANY && tlhs == TIDX_USER)
+    if(trhs == TIDX_ANY && tlhs == TIDX_OBJ)
       return;
 
     //special case: we allow to cast from 'any' numeric type to enum

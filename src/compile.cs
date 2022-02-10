@@ -365,7 +365,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.DeclVar,
-        1 /*local idx*/, 1 /*Val type*/
+        1 /*local idx*/, 3 /*type string idx*/
       )
     );
     DeclareOpcode(
@@ -1383,18 +1383,6 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  public byte MapToValType(string type)
-  {
-    if(type == "int" || type == "float")
-      return Val.NUMBER;
-    else if(type == "string")
-      return Val.STRING;
-    else if(type == "bool")
-      return Val.BOOL;
-    else
-      return Val.OBJ;
-  }
-
   public override void DoVisit(AST_VarDecl ast)
   {
     //checking of there are default args
@@ -1408,8 +1396,7 @@ public class ModuleCompiler : AST_Visitor
 
     if(!ast.is_func_arg)
     {
-      byte val_type = MapToValType(ast.type);
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)val_type });
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type) });
     }
     //check if it's not a module scope var (global)
     else if(func_decls.Count > 0)
@@ -1421,8 +1408,7 @@ public class ModuleCompiler : AST_Visitor
     }
     else
     {
-      byte val_type = MapToValType(ast.type);
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, (int)val_type });
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type)});
     }
   }
 

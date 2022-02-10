@@ -21,15 +21,15 @@ public interface IValRefcounted
 
 public class Val
 {
-  public const byte NONE      = 0;
-  public const byte NUMBER    = 1;
-  public const byte BOOL      = 2;
-  public const byte STRING    = 3;
-  public const byte OBJ       = 4;
+  //NOTE: below members are semi-public, one can use them for 
+  //      fast access in case you know what you are doing
+  public IType _type;
+  //NOTE: -1 means it's in released state
+  public int _refs;
+  public double _num;
+  public object _obj;
 
-  public bool IsEmpty { get { return type == NONE; } }
-
-  public byte type { get { return _type; } }
+  public IType type { get { return _type; } }
 
   public double num {
     get {
@@ -66,14 +66,6 @@ public class Val
       SetBool(value);
     }
   }
-
-  //NOTE: below members are semi-public, one can use them for 
-  //      fast access or non-allocating storage of structs(e.g vectors, quaternions)
-  //NOTE: -1 means it's in released state
-  public int _refs;
-  public byte _type;
-  public double _num;
-  public object _obj;
 
   public VM vm;
 
@@ -129,7 +121,7 @@ public class Val
   //NOTE: refcount is not reset
   void Reset()
   {
-    _type = NONE;
+    _type = null;
     _num = 0;
     _obj = null;
   }
@@ -203,7 +195,7 @@ public class Val
   public void SetStr(string s)
   {
     Reset();
-    _type = STRING;
+    _type = TypeSystem.Bool;
     _obj = s;
   }
 
@@ -217,7 +209,7 @@ public class Val
   public void SetNum(int n)
   {
     Reset();
-    _type = NUMBER;
+    _type = TypeSystem.Int;
     _num = n;
   }
 
@@ -231,7 +223,7 @@ public class Val
   public void SetNum(double n)
   {
     Reset();
-    _type = NUMBER;
+    _type = TypeSystem.Float;
     _num = n;
   }
 
@@ -245,7 +237,7 @@ public class Val
   public void SetBool(bool b)
   {
     Reset();
-    _type = BOOL;
+    _type = TypeSystem.Bool;
     _num = b ? 1.0f : 0.0f;
   }
 
@@ -259,7 +251,7 @@ public class Val
   public void SetObj(object o)
   {
     Reset();
-    _type = OBJ;
+    _type = TypeSystem.Obj;
     _obj = o;
   }
 
@@ -273,14 +265,14 @@ public class Val
   public void SetNil()
   {
     Reset();
-    _type = OBJ;
+    _type = TypeSystem.Null;
   }
 
   public bool IsValueEqual(Val o)
   {
     bool res =
       _num == o._num &&
-      (_type == STRING ? (string)_obj == (string)o._obj : _obj == o._obj)
+      (_type == TypeSystem.Bool ? (string)_obj == (string)o._obj : _obj == o._obj)
       ;
 
     return res;
@@ -289,15 +281,17 @@ public class Val
   public override string ToString() 
   {
     string str = "";
-    if(type == NUMBER)
-      str = _num + ":<NUMBER>";
-    else if(type == BOOL)
+    if(type == TypeSystem.Int)
+      str = _num + ":<INT>";
+    else if(type == TypeSystem.Float)
+      str = _num + ":<FLOAT>";
+    else if(type == TypeSystem.Bool)
       str = bval + ":<BOOL>";
-    else if(type == STRING)
+    else if(type == TypeSystem.String)
       str = this.str + ":<STRING>";
-    else if(type == OBJ)
+    else if(type == TypeSystem.Obj)
       str = _obj?.GetType().Name + ":<OBJ>";
-    else if(type == NONE)
+    else if(type == null)
       str = "<NONE>";
     else
       str = "Val: type:"+type;
@@ -307,16 +301,10 @@ public class Val
 
   public object ToAny() 
   {
-    if(type == NUMBER)
-      return (object)_num;
-    else if(type == BOOL)
-      return (object)bval;
-    else if(type == STRING)
-      return (string)_obj;
-    else if(type == OBJ)
+    if(_obj != null)
       return _obj;
     else
-      throw new Exception("ToAny(): please support type: " + type);
+      return (object)_num;
   }
 }
 

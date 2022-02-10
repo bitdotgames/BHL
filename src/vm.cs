@@ -849,7 +849,8 @@ public class VM
         case Opcodes.DeclVar:
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
-          byte type = (byte)Bytecode.Decode8(bytecode, ref ip);
+          int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
+          string type = constants[type_idx].str;
 
           module.gvars.Resize(var_idx+1);
           module.gvars[var_idx] = MakeValByType(type);
@@ -1254,7 +1255,9 @@ public class VM
       case Opcodes.DeclVar:
       {
         int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-        byte type = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        string type = curr_frame.constants[type_idx].str;
+
         var curr = curr_frame.locals[local_idx];
         //NOTE: handling case when variables are 're-declared' within the nested loop
         if(curr != null)
@@ -1672,13 +1675,15 @@ public class VM
     return BHS.SUCCESS;
   }
 
-  Val MakeValByType(byte type)
+  Val MakeValByType(string type)
   {
-    if(type == Val.NUMBER)
+    if(type == "float")
+      return Val.NewNum(this, (double)0);
+    else if(type == "int")
       return Val.NewNum(this, 0);
-    else if(type == Val.STRING)
+    else if(type == "string")
       return Val.NewStr(this, "");
-    else if(type == Val.BOOL)
+    else if(type == "bool")
       return Val.NewBool(this, false);
     else
       return Val.NewObj(this, null);
@@ -1793,7 +1798,7 @@ public class VM
 
     if(cast_type == "int")
       new_val.SetNum((int)val.num);
-    else if(cast_type == "string" && val.type != Val.STRING)
+    else if(cast_type == "string" && val.type != TypeSystem.String)
       new_val.SetStr(val.num.ToString());
     else
     {
@@ -1966,7 +1971,7 @@ public class VM
     {
       case Opcodes.Add:
         //TODO: add Opcodes.Concat?
-        if((r_operand._type == Val.STRING) && (l_operand._type == Val.STRING))
+        if((r_operand._type == TypeSystem.String) && (l_operand._type == TypeSystem.String))
           curr_frame.stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
         else
           curr_frame.stack.Push(Val.NewNum(this, l_operand._num + r_operand._num));
