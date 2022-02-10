@@ -630,7 +630,7 @@ static public class AST_Util
     n.type = type;
     n.name = name;
     n.scope_type = scope_type;
-    n.line_num = (uint)line_num;
+    n.line_num = line_num;
     n.symb_idx = (uint)symb_idx;
     n.module_id = module_id;
 

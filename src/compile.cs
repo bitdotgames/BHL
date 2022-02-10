@@ -1065,12 +1065,12 @@ public class ModuleCompiler : AST_Visitor
     {
       case EnumCall.VARW:
       {
-        Emit(Opcodes.SetVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
+        Emit(Opcodes.SetVar, new int[] {(int)ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.VAR:
       {
-        Emit(Opcodes.GetVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
+        Emit(Opcodes.GetVar, new int[] {(int)ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.GVAR:
@@ -1079,11 +1079,11 @@ public class ModuleCompiler : AST_Visitor
         {
           var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
-          Emit(Opcodes.GetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, (int)ast.line_num);
+          Emit(Opcodes.GetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, ast.line_num);
         }
         else 
         {
-          Emit(Opcodes.GetGVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
+          Emit(Opcodes.GetGVar, new int[] {(int)ast.symb_idx}, ast.line_num);
         }
       }
       break;
@@ -1093,11 +1093,11 @@ public class ModuleCompiler : AST_Visitor
         {
           var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
-          Emit(Opcodes.SetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, (int)ast.line_num);
+          Emit(Opcodes.SetGVarImported, new int[] {module_idx, (int)ast.symb_idx}, ast.line_num);
         }
         else 
         {
-          Emit(Opcodes.SetGVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
+          Emit(Opcodes.SetGVar, new int[] {(int)ast.symb_idx}, ast.line_num);
         }
       }
       break;
@@ -1109,20 +1109,20 @@ public class ModuleCompiler : AST_Visitor
         if(instr.op == Opcodes.GetFunc)
         {
           Pop();
-          Emit(Opcodes.Call, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.Call, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
         }
         else if(instr.op == Opcodes.GetFuncNative)
         {
           Pop();
-          Emit(Opcodes.CallNative, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
         }
         else if(instr.op == Opcodes.GetFuncImported)
         {
           Pop();
-          Emit(Opcodes.CallImported, new int[] {instr.operands[0], (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallImported, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
         }
         else
-          Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.MVAR:
@@ -1132,7 +1132,7 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, (int)ast.line_num);
+        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MVARW:
@@ -1142,7 +1142,7 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, (int)ast.line_num);
+        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MFUNC:
@@ -1158,9 +1158,9 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         
         if(mfunc is FuncSymbolScript)
-          Emit(Opcodes.CallMethod, new int[] { (int)ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallMethod, new int[] { (int)ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
         else
-          Emit(Opcodes.CallMethodNative, new int[] { (int)ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, (int)ast.line_num);
+          Emit(Opcodes.CallMethodNative, new int[] { (int)ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
@@ -1170,40 +1170,40 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.RefAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, (int)ast.line_num);
+        Emit(Opcodes.RefAttr, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDX:
       {
         var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, AddConstant(arr_symb.name), 1 }, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, AddConstant(arr_symb.name), 1 }, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
         var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, AddConstant(arr_symb.name), 3 }, (int)ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, AddConstant(arr_symb.name), 3 }, ast.line_num);
       }
       break;
       case EnumCall.LMBD:
       {
         VisitChildren(ast);
-        Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx}, (int)ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.GetFuncFromVar, new int[] {(int)ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.FUNC_MVAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, (int)ast.line_num);
+        Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.GET_ADDR:
@@ -1221,20 +1221,20 @@ public class ModuleCompiler : AST_Visitor
     var func_symb = symbols.Resolve(ast.name) as FuncSymbolScript;
     if(func_symb != null)
     {
-      return Emit(Opcodes.GetFunc, new int[] {func_symb.decl.ip_addr}, (int)ast.line_num);
+      return Emit(Opcodes.GetFunc, new int[] {func_symb.decl.ip_addr}, ast.line_num);
     }
     else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
     {
       int func_idx = globs.GetMembers().IndexOf(fsymb);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
-      return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, (int)ast.line_num);
+      return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, ast.line_num);
     }
     else if(ast.module_id != module_path.id)
     {
       int func_idx = AddConstant(ast.name);
 
-      return Emit(Opcodes.GetFuncImported, new int[] {func_idx}, (int)ast.line_num);
+      return Emit(Opcodes.GetFuncImported, new int[] {func_idx}, ast.line_num);
     }
     else
       throw new Exception("Func '" + ast.name + "' code not found");

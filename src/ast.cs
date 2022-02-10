@@ -779,7 +779,7 @@ public class AST_Call  : AST
   public string name = "";
   public uint module_id;
   public uint cargs_bits;
-  public uint line_num;
+  public int line_num;
   public uint symb_idx;
   public string scope_type = "";
 
