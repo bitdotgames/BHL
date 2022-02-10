@@ -21092,7 +21092,7 @@ public class BHL_TestVM : BHL_TestBase
       {
         var c = (Bar)ctx.obj;
         c.Int = (int)v.num; 
-        ctx.obj = c;
+        ctx.SetObj(c);
       }
     ));
     cl.Define(new FieldSymbol("Flt", globs.Type("float"),

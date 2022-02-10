@@ -457,7 +457,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = (IList<T>)arr.obj;
-    var res = Val.NewObj(frame.vm, lst[idx]);
+    var res = Val.NewObj(frame.vm, lst[idx], TypeSystem.Any);
     frame.stack.Push(res);
     arr.Release();
     return null;
@@ -1167,7 +1167,7 @@ public class EnumItemSymbol : Symbol, IType
 
 static public class TypeSystem
 {
-  // arithmetic types defined in order from narrowest to widest
+  //TODO: get rid of these rigid inidices used in type tables below
   public const int TIDX_OBJ       = 0;
   public const int TIDX_BOOLEAN   = 1;
   public const int TIDX_STRING    = 2;
@@ -1184,7 +1184,6 @@ static public class TypeSystem
   static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void", TIDX_VOID);
   static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum", TIDX_ENUM);
   static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any", TIDX_ANY);
-  static public BuiltInTypeSymbol Obj = new BuiltInTypeSymbol("object", TIDX_OBJ);
   static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null", TIDX_OBJ);
 
   // Map t1 op t2 to result type (_void implies illegal)

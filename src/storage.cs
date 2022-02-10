@@ -21,15 +21,14 @@ public interface IValRefcounted
 
 public class Val
 {
+  public IType type;
+
   //NOTE: below members are semi-public, one can use them for 
   //      fast access in case you know what you are doing
-  public IType _type;
   //NOTE: -1 means it's in released state
   public int _refs;
   public double _num;
   public object _obj;
-
-  public IType type { get { return _type; } }
 
   public double num {
     get {
@@ -54,7 +53,7 @@ public class Val
       return _obj;
     }
     set {
-      SetObj(value);
+      SetObj(value, TypeSystem.Any);
     }
   }
 
@@ -121,14 +120,14 @@ public class Val
   //NOTE: refcount is not reset
   void Reset()
   {
-    _type = null;
+    type = null;
     _num = 0;
     _obj = null;
   }
 
   public void ValueCopyFrom(Val dv)
   {
-    _type = dv._type;
+    type = dv.type;
     _num = dv._num;
     _obj = dv._obj;
   }
@@ -195,7 +194,7 @@ public class Val
   public void SetStr(string s)
   {
     Reset();
-    _type = TypeSystem.String;
+    type = TypeSystem.String;
     _obj = s;
   }
 
@@ -209,7 +208,7 @@ public class Val
   public void SetNum(int n)
   {
     Reset();
-    _type = TypeSystem.Int;
+    type = TypeSystem.Int;
     _num = n;
   }
 
@@ -223,7 +222,7 @@ public class Val
   public void SetNum(double n)
   {
     Reset();
-    _type = TypeSystem.Float;
+    type = TypeSystem.Float;
     _num = n;
   }
 
@@ -237,8 +236,22 @@ public class Val
   public void SetBool(bool b)
   {
     Reset();
-    _type = TypeSystem.Bool;
+    type = TypeSystem.Bool;
     _num = b ? 1 : 0;
+  }
+
+  static public Val NewObj(VM vm, object o, IType type)
+  {
+    Val dv = New(vm);
+    dv.SetObj(o, type);
+    return dv;
+  }
+
+  public void SetObj(object o, IType type)
+  {
+    Reset();
+    this.type = type;
+    _obj = o;
   }
 
   static public Val NewObj(VM vm, object o)
@@ -250,9 +263,7 @@ public class Val
 
   public void SetObj(object o)
   {
-    Reset();
-    _type = TypeSystem.Obj;
-    _obj = o;
+    SetObj(o, TypeSystem.Any);
   }
 
   public bool IsValueEqual(Val o)
@@ -260,7 +271,7 @@ public class Val
     bool res =
       _num == o._num &&
       //TODO: delegate comparison to type?
-      (_type == TypeSystem.String ? (string)_obj == (string)o._obj : _obj == o._obj)
+      (type == TypeSystem.String ? (string)_obj == (string)o._obj : _obj == o._obj)
       ;
 
     return res;
@@ -277,7 +288,7 @@ public class Val
       str = bval + ":<BOOL>";
     else if(type == TypeSystem.String)
       str = this.str + ":<STRING>";
-    else if(type == TypeSystem.Obj)
+    else if(type == TypeSystem.Any)
       str = _obj?.GetType().Name + ":<OBJ>";
     else if(type == null)
       str = "<NONE>";

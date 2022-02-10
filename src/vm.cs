@@ -1427,7 +1427,7 @@ public class VM
         int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, func_ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, TypeSystem.Any));
       }
       break;
       case Opcodes.GetFuncNative:
@@ -1436,7 +1436,7 @@ public class VM
         var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
-        curr_frame.stack.Push(Val.NewObj(this, ptr));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, TypeSystem.Any));
       }
       break;
       case Opcodes.GetFuncImported:
@@ -1448,7 +1448,7 @@ public class VM
 
         var ptr = FuncPtr.New(this);
         ptr.Init(maddr.module, maddr.ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, TypeSystem.Any));
       }
       break;
       case Opcodes.GetFuncFromVar:
@@ -1582,7 +1582,7 @@ public class VM
         short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, ip+1);
-        curr_frame.stack.Push(Val.NewObj(this, ptr));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, TypeSystem.Any));
 
         ip += offset;
       }
@@ -1699,6 +1699,8 @@ public class VM
   internal Val MakeDefaultVal(IType type)
   {
     var v = Val.New(this);
+    //TODO: make type responsible for default initialization 
+    //      of the value
     if(type == TypeSystem.Int)
       v.SetNum(0);
     else if(type == TypeSystem.Float)
@@ -1996,7 +1998,7 @@ public class VM
     {
       case Opcodes.Add:
         //TODO: add Opcodes.Concat?
-        if((r_operand._type == TypeSystem.String) && (l_operand._type == TypeSystem.String))
+        if((r_operand.type == TypeSystem.String) && (l_operand.type == TypeSystem.String))
           curr_frame.stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
         else
           curr_frame.stack.Push(Val.NewNum(this, l_operand._num + r_operand._num));
