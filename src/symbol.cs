@@ -227,27 +227,31 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     this.creator = CreateArr;
 
     {
-      var fn = new FuncSymbolNative("Add", ts.Type("void"), Add);
-      fn.Define(new FuncArgSymbol("o", item_type));
+      var fn = new FuncSymbolNative("Add", ts.Type("void"), Add,
+        new FuncArgSymbol("o", item_type)
+      );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("At", item_type, At);
-      fn.Define(new FuncArgSymbol("idx", ts.Type("int")));
+      var fn = new FuncSymbolNative("At", item_type, At,
+        new FuncArgSymbol("idx", ts.Type("int"))
+      );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("SetAt", item_type, SetAt);
-      fn.Define(new FuncArgSymbol("idx", ts.Type("int")));
-      fn.Define(new FuncArgSymbol("o", item_type));
+      var fn = new FuncSymbolNative("SetAt", item_type, SetAt,
+        new FuncArgSymbol("idx", ts.Type("int")),
+        new FuncArgSymbol("o", item_type)
+      );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("RemoveAt", ts.Type("void"), RemoveAt);
-      fn.Define(new FuncArgSymbol("idx", ts.Type("int")));
+      var fn = new FuncSymbolNative("RemoveAt", ts.Type("void"), RemoveAt,
+        new FuncArgSymbol("idx", ts.Type("int"))
+      );
       this.Define(fn);
     }
 
@@ -263,8 +267,9 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      var fn = new FuncSymbolNative("$AddInplace", ts.Type("void"), AddInplace);
-      fn.Define(new FuncArgSymbol("o", item_type));
+      var fn = new FuncSymbolNative("$AddInplace", ts.Type("void"), AddInplace,
+        new FuncArgSymbol("o", item_type)
+      );
       this.Define(fn);
     }
   }
@@ -684,7 +689,13 @@ public class FuncType : IType
     Update();
   }
 
-  public void Update()
+  public void AddArg(TypeRef arg_type)
+  {
+    arg_types.Add(arg_type);
+    Update();
+  }
+
+  void Update()
   {
     string tmp = ret_type.name + "^("; 
     for(int i=0;i<arg_types.Count;++i)
@@ -805,17 +816,15 @@ public class LambdaSymbol : FuncSymbol
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
 
-    var ft = GetFuncType();
     var fparams = lmb_ctx.funcParams();
     if(fparams != null)
     {
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        ft.arg_types.Add(ts.Type(vd.type()));
+        GetFuncType().AddArg(ts.Type(vd.type()));
       }
     }
-    ft.Update();
   }
 
   public VariableSymbol AddUpValue(VariableSymbol src)
@@ -918,7 +927,6 @@ public class FuncSymbolScript : FuncSymbol
 
     if(parsed != null)
     {
-      var ft = GetFuncType();
       if(fparams != null)
       {
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
@@ -926,10 +934,9 @@ public class FuncSymbolScript : FuncSymbol
           var vd = fparams.funcParamDeclare()[i];
           var type = ts.Type(vd.type());
           type.is_ref = vd.isRef() != null;
-          ft.arg_types.Add(type);
+          GetFuncType().AddArg(type);
         }
       }
-      ft.Update();
     }
   }
 
@@ -964,21 +971,30 @@ public class FuncSymbolNative : FuncSymbol
   public FuncSymbolNative(
     string name, 
     TypeRef ret_type, 
-    Cb cb
+    Cb cb,
+    params FuncArgSymbol[] args
   ) 
-    : this(name, ret_type, 0, cb)
+    : this(name, ret_type, 0, cb, args)
   {}
 
   public FuncSymbolNative(
     string name, 
     TypeRef ret_type, 
     int def_args_num,
-    Cb cb
+    Cb cb,
+    params FuncArgSymbol[] args
   ) 
     : base(name, new FuncType(ret_type))
   {
     this.cb = cb;
     this.def_args_num = def_args_num;
+
+    foreach(var arg in args)
+    {
+      base.Define(arg);
+      DefineArg(arg.name);
+      GetFuncType().AddArg(arg.type);
+    }
   }
 
   public override int GetTotalArgsNum() { return GetMembers().Count; }
@@ -986,16 +1002,7 @@ public class FuncSymbolNative : FuncSymbol
 
   public override void Define(Symbol sym) 
   {
-    base.Define(sym);
-
-    if(sym is FuncArgSymbol)
-    {
-      DefineArg(sym.name);
-
-      var ft = GetFuncType();
-      ft.arg_types.Add(sym.type);
-      ft.Update();
-    }
+    throw new Exception("Defining symbols here is not allowed");
   }
 }
 
@@ -1285,9 +1292,9 @@ public class TypeSystem
           val_ptr.Release();
           frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
-        } 
+        }, 
+        new FuncArgSymbol("p", Type("void^()"))
       );
-      fn.Define(new FuncArgSymbol("p", Type("void^()")));
       globs.Define(fn);
     }
 
@@ -1298,9 +1305,9 @@ public class TypeSystem
           var fid = (int)frm.stack.PopRelease().num;
           frm.vm.Stop(fid);
           return null;
-        } 
+        }, 
+        new FuncArgSymbol("fid", Type("int"))
       );
-      fn.Define(new FuncArgSymbol("fid", Type("int")));
       globs.Define(fn);
     }
   }

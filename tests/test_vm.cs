@@ -434,7 +434,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImplicitIntArgsCastBindFunc()
+  public void TestImplicitIntArgsCasNativeFunc()
   {
     string bhl = @"
 
@@ -481,9 +481,10 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, a + b));
 
             return null;
-          });
-      fn.Define(new FuncArgSymbol("a", ts.Type("float")));
-      fn.Define(new FuncArgSymbol("b", ts.Type("float")));
+          },
+          new FuncArgSymbol("a", ts.Type("float")),
+          new FuncArgSymbol("b", ts.Type("float"))
+        );
 
       ts.Define(fn);
     }
@@ -522,9 +523,10 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, a + b));
 
             return null;
-          });
-      fn.Define(new FuncArgSymbol("a", ts.Type("float")));
-      fn.Define(new FuncArgSymbol("b", ts.Type("float")));
+          },
+          new FuncArgSymbol("a", ts.Type("float")),
+          new FuncArgSymbol("b", ts.Type("float"))
+        );
 
       ts.Define(fn);
     }
@@ -557,8 +559,9 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, a));
 
             return null;
-          });
-      fn.Define(new FuncArgSymbol("a", ts.Type("float")));
+          },
+          new FuncArgSymbol("a", ts.Type("float"))
+        );
 
       ts.Define(fn);
     }
@@ -592,9 +595,10 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, a + b));
 
             return null;
-          });
-      fn.Define(new FuncArgSymbol("a", ts.Type("int")));
-      fn.Define(new FuncArgSymbol("b", ts.Type("int")));
+          },
+          new FuncArgSymbol("a", ts.Type("int")),
+          new FuncArgSymbol("b", ts.Type("int"))
+        );
 
       ts.Define(fn);
     }
@@ -7015,10 +7019,10 @@ public class BHL_TestVM : BHL_TestBase
             b.num = a * 2;
             b.Release();
             return null;
-          }
-          );
-      fn.Define(new FuncArgSymbol("a", ts.Type("float")));
-      fn.Define(new FuncArgSymbol("b", ts.Type("float"), true/*is ref*/));
+          },
+          new FuncArgSymbol("a", ts.Type("float")),
+          new FuncArgSymbol("b", ts.Type("float"), true/*is ref*/)
+        );
 
       ts.Define(fn);
     }
@@ -9114,8 +9118,9 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.PopRelease();
             frm.stack.Push(Val.NewNum(frm.vm, 42));
             return null;
-          } );
-      fn.Define(new FuncArgSymbol("b", ts.Type("bool")));
+          },
+          new FuncArgSymbol("b", ts.Type("bool"))
+        );
       ts.Define(fn);
     }
 
@@ -9125,8 +9130,9 @@ public class BHL_TestVM : BHL_TestBase
             frm.stack.PopRelease();
             status = BHS.FAILURE;
             return null;
-          } );
-      fn.Define(new FuncArgSymbol("n", ts.Type("int")));
+          },
+          new FuncArgSymbol("n", ts.Type("int"))
+        );
       ts.Define(fn);
     }
 
@@ -9218,10 +9224,10 @@ public class BHL_TestVM : BHL_TestBase
     {
       var fn = new FuncSymbolNative("hey", ts.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
-          { return null; }
-      );
-      fn.Define(new FuncArgSymbol("s", ts.Type("string")));
-      fn.Define(new FuncArgSymbol("i", ts.Type("int")));
+          { return null; },
+          new FuncArgSymbol("s", ts.Type("string")),
+          new FuncArgSymbol("i", ts.Type("int"))
+        );
       ts.Define(fn);
     }
 
@@ -9421,9 +9427,9 @@ public class BHL_TestVM : BHL_TestBase
           frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
           fn_ptr.Release();
           return null;
-        }
+        },
+        new FuncArgSymbol("fn", ts.Type("int[]^()"))
       );
-      fn.Define(new FuncArgSymbol("fn", ts.Type("int[]^()")));
 
       ts.Define(fn);
     }
@@ -10021,10 +10027,10 @@ public class BHL_TestVM : BHL_TestBase
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             return CoroutinePool.New<Bar_ret_int>(frm.vm);
-          }
+          },
+          new FuncArgSymbol("val", ts.Type("int")),
+          new FuncArgSymbol("ticks", ts.Type("int"))
         );
-        m.Define(new FuncArgSymbol("val", ts.Type("int")));
-        m.Define(new FuncArgSymbol("ticks", ts.Type("int")));
         cl.Define(m);
       }
     }
@@ -16600,9 +16606,9 @@ public class BHL_TestVM : BHL_TestBase
         frm.stack.Push(v);
 
         return null;
-      }
+      },
+      new FuncArgSymbol("r", ts.Type("Color"))
     );
-    op.Define(new FuncArgSymbol("r", ts.Type("Color")));
     cl.OverloadBinaryOperator(op);
 
     var vm = MakeVM(bhl, ts);
@@ -16642,9 +16648,9 @@ public class BHL_TestVM : BHL_TestBase
         frm.stack.Push(v);
 
         return null;
-      }
+      },
+      new FuncArgSymbol("k", ts.Type("float"))
     );
-    op.Define(new FuncArgSymbol("k", ts.Type("float")));
     cl.OverloadBinaryOperator(op);
 
     var vm = MakeVM(bhl, ts);
@@ -16686,9 +16692,9 @@ public class BHL_TestVM : BHL_TestBase
         frm.stack.Push(v);
 
         return null;
-      }
+      },
+      new FuncArgSymbol("k", ts.Type("float"))
       );
-      op.Define(new FuncArgSymbol("k", ts.Type("float")));
       cl.OverloadBinaryOperator(op);
     }
     
@@ -16707,9 +16713,9 @@ public class BHL_TestVM : BHL_TestBase
         frm.stack.Push(v);
 
         return null;
-      }
+      },
+      new FuncArgSymbol("r", ts.Type("Color"))
       );
-      op.Define(new FuncArgSymbol("r", ts.Type("Color")));
       cl.OverloadBinaryOperator(op);
     }
 
@@ -16754,9 +16760,9 @@ public class BHL_TestVM : BHL_TestBase
         frm.stack.Push(v);
 
         return null;
-      }
+      },
+      new FuncArgSymbol("arg", ts.Type("Color"))
     );
-    op.Define(new FuncArgSymbol("arg", ts.Type("Color")));
     cl.OverloadBinaryOperator(op);
 
     var vm = MakeVM(bhl, ts);
@@ -16780,8 +16786,9 @@ public class BHL_TestVM : BHL_TestBase
     var ts = new TypeSystem();
     
     var cl = BindColor(ts);
-    var op = new FuncSymbolNative("*", ts.Type("Color"), null);
-    op.Define(new FuncArgSymbol("k", ts.Type("float")));
+    var op = new FuncSymbolNative("*", ts.Type("Color"), null,
+      new FuncArgSymbol("k", ts.Type("float"))
+    );
     cl.OverloadBinaryOperator(op);
 
     AssertError<UserError>(
@@ -16977,8 +16984,9 @@ public class BHL_TestVM : BHL_TestBase
           var n = frm.stack.PopRelease().num;
           frm.stack.Push(Val.NewBool(frm.vm, n == 20));
           return null;
-        });
-      fn.Define(new FuncArgSymbol("state", ts.Type("EnumState")));
+        },
+        new FuncArgSymbol("state", ts.Type("EnumState"))
+        );
 
       ts.Define(fn);
     }
@@ -20573,9 +20581,9 @@ public class BHL_TestVM : BHL_TestBase
           string str = frm.stack.PopRelease().str;
           log.Append(str);
           return null;
-        } 
+        }, 
+        new FuncArgSymbol("str", ts.Type("string"))
     );
-    fn.Define(new FuncArgSymbol("str", ts.Type("string")));
     ts.Define(fn);
     return fn;
   }
@@ -20589,9 +20597,9 @@ public class BHL_TestVM : BHL_TestBase
             string str = frm.stack.PopRelease().str;
             Console.WriteLine(str); 
             return null;
-          } 
+          },
+          new FuncArgSymbol("str", ts.Type("string"))
       );
-      fn.Define(new FuncArgSymbol("str", ts.Type("string")));
       ts.Define(fn);
     }
   }
@@ -20604,10 +20612,10 @@ public class BHL_TestVM : BHL_TestBase
           var a = (float)frm.stack.PopRelease().num;
           frm.stack.Push(Val.NewNum(frm.vm, a > b ? b : a)); 
           return null;
-        } 
+        },
+        new FuncArgSymbol("a", ts.Type("float")),
+        new FuncArgSymbol("b", ts.Type("float"))
     );
-    fn.Define(new FuncArgSymbol("a", ts.Type("float")));
-    fn.Define(new FuncArgSymbol("b", ts.Type("float")));
     ts.Define(fn);
   }
 
@@ -20689,9 +20697,9 @@ public class BHL_TestVM : BHL_TestBase
           frm.stack.Push(v);
 
           return null;
-        }
+        },
+        new FuncArgSymbol("k", ts.Type("float"))
       );
-      m.Define(new FuncArgSymbol("k", ts.Type("float")));
 
       cl.Define(m);
     }
@@ -20704,9 +20712,9 @@ public class BHL_TestVM : BHL_TestBase
           var c = (Color)frm.stack.PopRelease().obj;
           frm.stack.Push(Val.NewNum(frm.vm, (c.r * k) + (c.g * k)));
           return null;
-        }
+        },
+        new FuncArgSymbol("k", ts.Type("float"))
       );
-      m.Define(new FuncArgSymbol("k", ts.Type("float")));
 
       cl.Define(m);
     }
@@ -20720,9 +20728,9 @@ public class BHL_TestVM : BHL_TestBase
             var v = Val.NewObj(frm.vm, c);
             frm.stack.Push(v);
             return null;
-          }
+          },
+        new FuncArgSymbol("r", ts.Type("float"))
       );
-      fn.Define(new FuncArgSymbol("r", ts.Type("float")));
 
       ts.Define(fn);
     }
@@ -21026,8 +21034,9 @@ public class BHL_TestVM : BHL_TestBase
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             frm.stack.Push(frm.stack.Pop());
             return null;
-          } );
-      fn.Define(new FuncArgSymbol("foo", ts.Type("Foo")));
+          },
+          new FuncArgSymbol("foo", ts.Type("Foo"))
+      );
 
       ts.Define(fn);
     }
@@ -21062,9 +21071,9 @@ public class BHL_TestVM : BHL_TestBase
     var fn = new FuncSymbolNative("WaitTicks", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           return CoroutinePool.New<CoroutineWaitTicks>(frm.vm);
-        } 
+        }, 
+        new FuncArgSymbol("ticks", ts.Type("int"))
     );
-    fn.Define(new FuncArgSymbol("ticks", ts.Type("int")));
     ts.Define(fn);
     return fn;
   }
@@ -21192,11 +21201,10 @@ public class BHL_TestVM : BHL_TestBase
             ptr.Release();
 
             return null;
-          }
+          },
+        new FuncArgSymbol("script", ts.Type("void^()")),
+        new FuncArgSymbol("spawns", ts.Type("int"))
       );
-
-      fn.Define(new FuncArgSymbol("script", ts.Type("void^()")));
-      fn.Define(new FuncArgSymbol("spawns", ts.Type("int")));
 
       ts.Define(fn);
     }
