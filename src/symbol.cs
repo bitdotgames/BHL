@@ -16,12 +16,7 @@ public interface IType
 
 public class TypeRef
 {
-  IType _type;
-  public IType type { 
-    get {
-      return Get();
-    }
-  }
+  IType type;
   public string name { get ; private set;}
   public bool is_ref;
   TypeSystem ts;
@@ -34,25 +29,24 @@ public class TypeRef
   {
     this.ts = ts;
     this.name = name;
-    this._type = null;
   }
 
   public TypeRef(IType type)
   {
     this.name = type.GetName();
-    this._type = type;
+    this.type = type;
   }
 
   public IType Get()
   {
-    if(_type != null)
-      return _type;
+    if(type != null)
+      return type;
 
     if(string.IsNullOrEmpty(name))
       return null;
 
-    _type = (bhl.IType)ts.Resolve(name);
-    return _type;
+    type = (bhl.IType)ts.Resolve(name);
+    return type;
   }
 }
 

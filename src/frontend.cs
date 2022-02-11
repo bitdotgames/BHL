@@ -848,7 +848,7 @@ public class Frontend : bhlBaseVisitor<object>
   void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
   {
     var tr = types.Type(funcLambda.retType());
-    if(tr.type == null)
+    if(tr.Get() == null)
       FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
 
     var func_name = curr_module.id + "_lmb_" + NextLambdaId(); 
@@ -882,7 +882,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(funcLambda.funcBlock());
     PopAST();
 
-    if(tr.type != TypeSystem.Void && !symb.return_statement_found)
+    if(tr.Get() != TypeSystem.Void && !symb.return_statement_found)
       FireError(Location(funcLambda.funcBlock()) + " : matching 'return' statement not found");
 
     PopFuncDecl();
@@ -943,9 +943,9 @@ public class Frontend : bhlBaseVisitor<object>
     if(new_exp != null)
     {
       var tr = types.Type(new_exp.type());
-      if(tr.type == null)
+      if(tr.Get() == null)
         FireError(Location(new_exp.type()) + " : type '" + tr.name + "' not found");
-      PushJsonType(tr.type);
+      PushJsonType(tr.Get());
     }
 
     var curr_type = PeekJsonType();
@@ -1068,9 +1068,8 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
   {
-    var type = ctx.typeid().type();
-    var tr = types.Type(type);
-    if(tr.type == null)
+    var tr = types.Type(ctx.typeid().type());
+    if(tr.Get() == null)
       FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
 
     Wrap(ctx).eval_type = TypeSystem.Int;
@@ -1117,11 +1116,11 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
     var tr = types.Type(ctx.newExp().type());
-    if(tr.type == null)
+    if(tr.Get() == null)
       FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
 
-    var ast = AST_Util.New_New((ClassSymbol)tr.type);
-    Wrap(ctx).eval_type = tr.type;
+    var ast = AST_Util.New_New((ClassSymbol)tr.Get());
+    Wrap(ctx).eval_type = tr.Get();
     PeekAST().AddChild(ast);
 
     return null;
@@ -1139,7 +1138,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
     var tr = types.Type(ctx.type());
-    if(tr.type == null)
+    if(tr.Get() == null)
       FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
 
     var ast = AST_Util.New_TypeCast(tr.name);
@@ -1148,7 +1147,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = tr.type;
+    Wrap(ctx).eval_type = tr.Get();
 
     types.CheckCast(Wrap(ctx), Wrap(exp)); 
 
@@ -1211,7 +1210,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(vlhs == null)
       FireError(Location(ctx.NAME()) + " : symbol not resolved");
 
-    if(!TypeSystem.IsRtlOpCompatible(vlhs.type.type))
+    if(!TypeSystem.IsRtlOpCompatible(vlhs.type.Get()))
       throw new UserError(Location(ctx.NAME()) + " : incompatible types");
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
@@ -1223,7 +1222,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    types.CheckAssign(vlhs.type.type, Wrap(ctx.exp()));
+    types.CheckAssign(vlhs.type.Get(), Wrap(ctx.exp()));
 
     PeekAST().AddChild(bin_op_ast);
     PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vlhs));
@@ -1267,7 +1266,7 @@ public class Frontend : bhlBaseVisitor<object>
     var wv = Wrap(v);
     bool is_negative = ctx.decrementOperator() != null;
     
-    if(!TypeSystem.IsRtlOpCompatible(vs.type.type)) // only numeric types
+    if(!TypeSystem.IsRtlOpCompatible(vs.type.Get())) // only numeric types
     {
       throw new UserError(
         $"{wv.Location()} : operator {(is_negative ? "--" : "++")} is not supported for {vs.type.name} type"
@@ -1855,13 +1854,13 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tr = types.Type(context.retType());
 
-    if(tr.type == null)
+    if(tr.Get() == null)
       FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
 
     var fstr_name = context.NAME().GetText();
 
     var func_node = Wrap(context);
-    func_node.eval_type = tr.type;
+    func_node.eval_type = tr.Get();
 
     var ast = AST_Util.New_FuncDecl(fstr_name, curr_module.id, tr.name);
 
@@ -1895,7 +1894,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(context.funcBlock());
       PopAST();
 
-      if(tr.type != TypeSystem.Void && !func_symb.return_statement_found)
+      if(tr.Get() != TypeSystem.Void && !func_symb.return_statement_found)
         FireError(Location(context.NAME()) + " : matching 'return' statement not found");
     }
     
@@ -1970,12 +1969,12 @@ public class Frontend : bhlBaseVisitor<object>
       if(assign_exp != null)
       {
         var tr = types.Type(vd.type());
-        if(tr.type == null)
+        if(tr.Get() == null)
           FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
 
         exp_ast = new AST_Interim();
         PushAST(exp_ast);
-        PushJsonType(tr.type);
+        PushJsonType(tr.Get());
         Visit(assign_exp);
         PopJsonType();
         PopAST();
@@ -2214,16 +2213,16 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type, bool is_ref, bool func_arg, bool write)
+  AST CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
   {
     var str_name = name.GetText();
 
-    var tr = types.Type(type);
-    if(tr.type == null)
+    var tr = types.Type(type_ctx);
+    if(tr.Get() == null)
       FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
 
     var var_node = Wrap(name); 
-    var_node.eval_type = tr.type;
+    var_node.eval_type = tr.Get();
 
     if(is_ref && !func_arg)
       FireError(Location(name) +  " : 'ref' is only allowed in function declaration");
