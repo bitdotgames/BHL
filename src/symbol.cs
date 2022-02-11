@@ -778,7 +778,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   }
 
   public int GetTotalArgsNum() { return GetSignature().arg_types.Count; }
-  public virtual int GetDefaultArgsNum() { return 0; }
+  public abstract int GetDefaultArgsNum();
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
 }
 
