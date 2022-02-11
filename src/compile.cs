@@ -1227,7 +1227,7 @@ public class ModuleCompiler : AST_Visitor
     }
     else if(types.Resolve(ast.name) is FuncSymbolNative fsymb)
     {
-      int func_idx = types.GetMembers().IndexOf(fsymb);
+      int func_idx = types.globs.GetMembers().IndexOf(fsymb);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
       return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, ast.line_num);

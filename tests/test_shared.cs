@@ -17,9 +17,9 @@ public static class BHL_TestExt
   public static TypeSystem Clone(this TypeSystem ts)
   {
     var ts_copy = new TypeSystem();
-    var ms = ts.GetMembers();
+    var ms = ts.globs.GetMembers();
     //let's skip already defined built-ins
-    for(int i=ts_copy.GetMembers().Count;i<ms.Count;++i)
+    for(int i=ts_copy.globs.GetMembers().Count;i<ms.Count;++i)
       ts_copy.Define(ms[i]);
     return ts_copy;
   }

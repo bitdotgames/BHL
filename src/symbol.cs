@@ -291,7 +291,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
 //NOTE: This one is used as a fallback for all arrays which
 //      were not explicitely re-defined. Fallback happens during
-//      compilation phase in Scope.Type(..) method
+//      compilation phase in TypeSystem.Type(..) method
 //     
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
@@ -1311,11 +1311,6 @@ public class TypeSystem
     }
   }
 
-  public SymbolsDictionary GetMembers()
-  {
-    return globs.GetMembers();
-  }
-
   public Symbol Resolve(string name) 
   {
     var s = globs.Resolve(name);
@@ -1355,13 +1350,7 @@ public class TypeSystem
 
       //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
       if(parsed.ARR() != null)
-      {
-        //checking if it's an array of func ptrs
-        if(type != null)
-          type = new GenericArrayTypeSymbol(this, new TypeRef(type));
-        else
-          type = new GenericArrayTypeSymbol(this, Type(parsed.NAME().GetText()));
-      }
+        type = new GenericArrayTypeSymbol(this, type != null ? new TypeRef(type) : Type(parsed.NAME().GetText()));
     }
 
     var tr = type != null ? new TypeRef(type) : new TypeRef(this, str);
@@ -1412,7 +1401,7 @@ public class TypeSystem
     else
     {
 #if BHL_FRONT
-      if(TypeSystem.IsCompoundType(name))
+      if(IsCompoundType(name))
       {
         var node = Frontend.ParseType(name);
         if(node == null)
