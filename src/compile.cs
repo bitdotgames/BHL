@@ -806,7 +806,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_FuncDecl ast)
   {
     UseInit();
-    var fsymb = new FuncSymbolScript(ast);
+    var fsymb = new FuncSymbolScript(types, ast);
     if(curr_class_symb != null)
       curr_class_symb.Define(fsymb);
     else
@@ -864,7 +864,7 @@ public class ModuleCompiler : AST_Visitor
 
       if(child is AST_VarDecl vd)
       {
-        curr_class_symb.Define(new FieldSymbolScript(vd.name, vd.type));
+        curr_class_symb.Define(new FieldSymbolScript(types, vd.name, vd.type));
         Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name), (int)vd.symb_idx });
       }
       else if(child is AST_FuncDecl fd)

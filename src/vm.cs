@@ -949,7 +949,7 @@ public class VM
           if(curr_class != null)
           {
             curr_class.decl.children.Add(fd);
-            curr_class.Define(new FuncSymbolScript(fd));
+            curr_class.Define(new FuncSymbolScript(types, fd));
           }
           else
             func2addr.Add(fd.name, new ModuleAddr() { module = module, ip = ip_addr });
@@ -985,7 +985,7 @@ public class VM
 
           curr_class.decl.children.Add(vd);
 
-          curr_class.Define(new FieldSymbolScript(vd.name, vd.type));
+          curr_class.Define(new FieldSymbolScript(types, vd.name, vd.type));
           //TODO: this check must be in dev.version only
           if(curr_class.members[(int)vd.symb_idx].name != vd.name)
             throw new Exception("Symbol index is not valid");

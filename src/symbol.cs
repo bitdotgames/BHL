@@ -19,13 +19,15 @@ public class TypeRef
   public IType type;
   public bool is_ref;
   public string name;
+  TypeSystem ts;
 #if BHL_FRONT
   //NOTE: parse location of the type
   public IParseTree parsed;
 #endif
 
-  public TypeRef(string name)
+  public TypeRef(TypeSystem ts, string name)
   {
+    this.ts = ts;
     this.name = name;
     this.type = null;
     this.is_ref = false;
@@ -50,7 +52,7 @@ public class TypeRef
     return type == null && string.IsNullOrEmpty(name);
   }
 
-  public IType Get(TypeSystem ts)
+  public IType Get()
   {
     if(type != null)
       return type;
@@ -565,8 +567,8 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolScript : FieldSymbol
 {
-  public FieldSymbolScript(string name, string type) 
-    : base(name, new TypeRef(type), null, null, null)
+  public FieldSymbolScript(TypeSystem ts, string name, string type) 
+    : base(name, ts.Type(type), null, null, null)
   {
     this.getter = Getter;
     this.setter = Setter;
@@ -762,14 +764,14 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
       return this.scope; 
   }
 
-  public FuncType GetFuncType(TypeSystem ts)
+  public FuncType GetFuncType()
   {
-    return (FuncType)this.type.Get(ts);
+    return (FuncType)this.type.Get();
   }
 
-  public IType GetReturnType(TypeSystem ts)
+  public IType GetReturnType()
   {
-    return GetFuncType(ts).ret_type.Get(ts);
+    return GetFuncType().ret_type.Get();
   }
 
   public SymbolsDictionary GetArgs()
@@ -819,7 +821,7 @@ public class LambdaSymbol : FuncSymbol
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
 
-    var ft = GetFuncType(ts);
+    var ft = GetFuncType();
     var fparams = lmb_ctx.funcParams();
     if(fparams != null)
     {
@@ -925,14 +927,14 @@ public class FuncSymbolScript : FuncSymbol
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
-    : this(decl, ret_type)
+    : this(ts, decl, ret_type)
   {
     this.parsed = parsed;
     this.fparams = fparams;
 
     if(parsed != null)
     {
-      var ft = GetFuncType(ts);
+      var ft = GetFuncType();
       if(fparams != null)
       {
         for(int i=0;i<fparams.funcParamDeclare().Length;++i)
@@ -958,8 +960,8 @@ public class FuncSymbolScript : FuncSymbol
   }
 #endif
 
-  public FuncSymbolScript(AST_FuncDecl decl, TypeRef ret_type = null)
-    : base(decl.name, new FuncType(ret_type == null ? new TypeRef(decl.type) : ret_type))
+  public FuncSymbolScript(TypeSystem ts, AST_FuncDecl decl, TypeRef ret_type = null)
+    : base(decl.name, new FuncType(ret_type == null ? ts.Type(decl.type) : ret_type))
   {
     this.decl = decl;
   }
@@ -1006,7 +1008,7 @@ public class FuncSymbolNative : FuncSymbol
     {
       DefineArg(sym.name);
 
-      var ft = GetFuncType(((ModuleScope)sym.scope/*temp hack*/).ts);
+      var ft = GetFuncType();
       ft.arg_types.Add(sym.type);
       ft.Update();
     }
@@ -1024,7 +1026,7 @@ public class ClassSymbolNative : ClassSymbol
     if(s.GetArgs().Count != 1)
       throw new UserError("Operator overload must have exactly one argument");
 
-    if(s.GetReturnType(((ModuleScope)s.scope/*temp hack*/).ts) == TypeSystem.Void)
+    if(s.GetReturnType() == TypeSystem.Void)
       throw new UserError("Operator overload return value can't be void");
 
     Define(s);
@@ -1062,7 +1064,7 @@ public class ClassSymbolScript : ClassSymbol
       //      Maybe we should track data members and methods separately someday. 
       if(m is VariableSymbol)
       {
-        var type = m.type.Get(frm.vm.Types);
+        var type = m.type.Get();
         var v = frm.vm.MakeDefaultVal(type);
         vl.Add(v);
         //ownership was passed to list, let's release it
@@ -1247,7 +1249,7 @@ public class TypeSystem
     globs.Define(Any);
 
     //for all generic arrays
-    globs.Define(new GenericArrayTypeSymbol(this, new TypeRef("")));
+    globs.Define(new GenericArrayTypeSymbol(this, Type("")));
 
     {
       var fn = new FuncSymbolNative("suspend", Type("void"), 
@@ -1343,7 +1345,7 @@ public class TypeSystem
         if(type != null)
           type = new GenericArrayTypeSymbol(this, new TypeRef(type));
         else
-          type = new GenericArrayTypeSymbol(this, new TypeRef(parsed.NAME().GetText()));
+          type = new GenericArrayTypeSymbol(this, Type(parsed.NAME().GetText()));
       }
     }
 
@@ -1408,7 +1410,7 @@ public class TypeSystem
       }
       else
 #endif
-        tr = new TypeRef(name);
+        tr = new TypeRef(this, name);
     }
 
     type_cache.Add(name, tr);
@@ -1606,8 +1608,8 @@ public class TypeSystem
   public IType CheckBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
-    CheckAssign(op_func_arg.type.Get(this), b);
-    return op_func.GetReturnType(this);
+    CheckAssign(op_func_arg.type.Get(), b);
+    return op_func.GetReturnType();
   }
 
   public IType CheckRtlBinOp(WrappedParseTree a, WrappedParseTree b) 

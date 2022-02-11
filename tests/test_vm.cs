@@ -20748,7 +20748,7 @@ public class BHL_TestVM : BHL_TestBase
     BindColor(ts);
 
     {
-      var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.Type("Color").Get(ts),
+      var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.Type("Color").Get(),
         delegate(VM.Frame frm, ref Val v) 
         { 
           v.obj = new ColorAlpha();
