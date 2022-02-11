@@ -463,9 +463,9 @@ public class Frontend : bhlBaseVisitor<object>
           FireError(Location(name) + " : symbol is not a function");
 
         //func ptr
-        if(var_symb != null && var_symb.type.Get() is FuncType)
+        if(var_symb != null && var_symb.type.Get() is FuncSignature)
         {
-          var ftype = var_symb.type.Get() as FuncType;
+          var ftype = var_symb.type.Get() as FuncSignature;
 
           if(class_scope == null)
           {
@@ -544,7 +544,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else if(cargs != null)
     {
-      var ftype = type as FuncType;
+      var ftype = type as FuncSignature;
       if(ftype == null)
         FireError(Location(cargs) +  " : no func to call");
       
@@ -671,9 +671,9 @@ public class Frontend : bhlBaseVisitor<object>
         var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
         bool is_ref = ca.isRef() != null;
-        if(!is_ref && func_symb.IsArgRefAt(i))
+        if(!is_ref && func_symb.GetArg(i).is_ref)
           FireError(Location(ca) +  " : 'ref' is missing");
-        else if(is_ref && !func_symb.IsArgRefAt(i))
+        else if(is_ref && !func_symb.GetArg(i).is_ref)
           FireError(Location(ca) +  " : argument is not a 'ref'");
 
         PushCallByRef(is_ref);
@@ -704,7 +704,7 @@ public class Frontend : bhlBaseVisitor<object>
     call.cargs_bits = args_info.bits;
   }
 
-  void AddCallArgs(FuncType func_type, bhlParser.CallArgsContext cargs, ref AST_Call call, ref AST_Interim pre_call)
+  void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsContext cargs, ref AST_Call call, ref AST_Interim pre_call)
   {     
     var func_args = func_type.arg_types;
     int ca_len = cargs.callArg().Length; 
@@ -2021,7 +2021,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(pop_json_type)
         PopJsonType();
 
-      func.DefineArg(fp.NAME().GetText());
+      func.ConnectArg(fp.NAME().GetText());
     }
 
     return null;

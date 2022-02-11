@@ -667,7 +667,7 @@ public class MultiType : IType
   }
 }
 
-public class FuncType : IType
+public class FuncSignature : IType
 {
   public string name;
 
@@ -676,14 +676,14 @@ public class FuncType : IType
 
   public string GetName() { return name; }
 
-  public FuncType(TypeRef ret_type, List<TypeRef> arg_types)
+  public FuncSignature(TypeRef ret_type, List<TypeRef> arg_types)
   {
     this.ret_type = ret_type;
     this.arg_types = arg_types;
     Update();
   }
 
-  public FuncType(TypeRef ret_type)
+  public FuncSignature(TypeRef ret_type)
   {
     this.ret_type = ret_type;
     Update();
@@ -712,7 +712,6 @@ public class FuncType : IType
   }
 }
 
-//TODO: why there's a separate FuncType?  
 public class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
   SymbolsDictionary members = new SymbolsDictionary();
@@ -731,8 +730,8 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
 #if BHL_FRONT
   public bool return_statement_found = false;
 
-  public FuncSymbol(WrappedParseTree parsed, string name, FuncType type) 
-    : this(name, type)
+  public FuncSymbol(WrappedParseTree parsed, string name, FuncSignature sig) 
+    : this(name, sig)
   {
     this.parsed = parsed;
   }
@@ -741,10 +740,10 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
 #endif
 
-  public FuncSymbol(string name, FuncType type) 
+  public FuncSymbol(string name, FuncSignature sig) 
     : base(name)
   {
-    this.type = new TypeRef(type);
+    this.type = new TypeRef(sig);
   }
 
   public override SymbolsDictionary GetMembers() { return members; }
@@ -759,14 +758,14 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
       return this.scope; 
   }
 
-  public FuncType GetFuncType()
+  public FuncSignature GetSignature()
   {
-    return (FuncType)this.type.Get();
+    return (FuncSignature)this.type.Get();
   }
 
   public IType GetReturnType()
   {
-    return GetFuncType().ret_type.Get();
+    return GetSignature().ret_type.Get();
   }
 
   public SymbolsDictionary GetArgs()
@@ -774,7 +773,12 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
     return args;
   }
 
-  public void DefineArg(string name) 
+  public FuncArgSymbol GetArg(int idx) 
+  {
+    return args[idx] as FuncArgSymbol;
+  }
+
+  public void ConnectArg(string name) 
   {
     Symbol sym = null;
     if(!members.TryGetValue(name, out sym))
@@ -788,12 +792,6 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public virtual int GetTotalArgsNum() { return 0; }
   public virtual int GetDefaultArgsNum() { return 0; }
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
-
-  public bool IsArgRefAt(int idx) 
-  {
-    var farg = members[idx] as FuncArgSymbol;
-    return farg != null && farg.is_ref;
-  }
 }
 
 #if BHL_FRONT
@@ -811,7 +809,7 @@ public class LambdaSymbol : FuncSymbol
     TypeRef ret_type,
     List<FuncSymbol> fdecl_stack
   ) 
-    : base(parsed, decl.name, new FuncType(ret_type))
+    : base(parsed, decl.name, new FuncSignature(ret_type))
   {
     this.decl = decl;
     this.fdecl_stack = fdecl_stack;
@@ -822,7 +820,7 @@ public class LambdaSymbol : FuncSymbol
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        GetFuncType().AddArg(ts.Type(vd.type()));
+        GetSignature().AddArg(ts.Type(vd.type()));
       }
     }
   }
@@ -934,7 +932,7 @@ public class FuncSymbolScript : FuncSymbol
           var vd = fparams.funcParamDeclare()[i];
           var type = ts.Type(vd.type());
           type.is_ref = vd.isRef() != null;
-          GetFuncType().AddArg(type);
+          GetSignature().AddArg(type);
         }
       }
     }
@@ -952,7 +950,7 @@ public class FuncSymbolScript : FuncSymbol
 #endif
 
   public FuncSymbolScript(TypeSystem ts, AST_FuncDecl decl, TypeRef ret_type = null)
-    : base(decl.name, new FuncType(ret_type == null ? ts.Type(decl.type) : ret_type))
+    : base(decl.name, new FuncSignature(ret_type == null ? ts.Type(decl.type) : ret_type))
   {
     this.decl = decl;
   }
@@ -984,7 +982,7 @@ public class FuncSymbolNative : FuncSymbol
     Cb cb,
     params FuncArgSymbol[] args
   ) 
-    : base(name, new FuncType(ret_type))
+    : base(name, new FuncSignature(ret_type))
   {
     this.cb = cb;
     this.def_args_num = def_args_num;
@@ -992,8 +990,8 @@ public class FuncSymbolNative : FuncSymbol
     foreach(var arg in args)
     {
       base.Define(arg);
-      DefineArg(arg.name);
-      GetFuncType().AddArg(arg.type);
+      ConnectArg(arg.name);
+      GetSignature().AddArg(arg.type);
     }
   }
 
@@ -1347,7 +1345,7 @@ public class TypeSystem
     if(type == null && parsed != null)
     {    
       if(parsed.fnargs() != null)
-        type = GetFuncType(parsed);
+        type = GetFuncSignature(parsed);
 
       //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
       if(parsed.ARR() != null)
@@ -1445,7 +1443,7 @@ public class TypeSystem
            promotion == dst || 
            dst == Any ||
            (dst is ClassSymbol && src == Null) ||
-           (dst is FuncType && src == Null) || 
+           (dst is FuncSignature && src == Null) || 
            src.GetName() == dst.GetName() ||
            IsChildClass(src, dst)
            ;
@@ -1488,7 +1486,7 @@ public class TypeSystem
   }
 
 #if BHL_FRONT
-  public FuncType GetFuncType(bhlParser.TypeContext ctx)
+  public FuncSignature GetFuncSignature(bhlParser.TypeContext ctx)
   {
     var fnargs = ctx.fnargs();
 
@@ -1511,7 +1509,7 @@ public class TypeSystem
       }
     }
 
-    return new FuncType(ret_type, arg_types);
+    return new FuncSignature(ret_type, arg_types);
   }
 
   static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree a, WrappedParseTree b) 
@@ -1643,8 +1641,8 @@ public class TypeSystem
       return Bool;
 
     //TODO: add INullableType?
-    if(((a.eval_type is ClassSymbol || a.eval_type is FuncType) && b.eval_type == Null) ||
-        ((b.eval_type is ClassSymbol || b.eval_type is FuncType) && a.eval_type == Null))
+    if(((a.eval_type is ClassSymbol || a.eval_type is FuncSignature) && b.eval_type == Null) ||
+        ((b.eval_type is ClassSymbol || b.eval_type is FuncSignature) && a.eval_type == Null))
       return Bool;
 
     MatchTypes(eq_op_res_type, a, b);
