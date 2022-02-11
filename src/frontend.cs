@@ -856,8 +856,10 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_LambdaDecl(func_name, curr_module.id, tr.name);
     var symb = new LambdaSymbol(
       types,
-      Wrap(ctx), funcLambda,
-      ast, tr, 
+      Wrap(ctx), 
+      ast,
+      tr, 
+      funcLambda.funcParams(),
       this.func_decl_stack
     );
 
@@ -1996,7 +1998,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncParams(bhlParser.FuncParamsContext ctx)
   {
-    var func = curr_scope as FuncSymbol;
+    var func = curr_scope as FuncSymbolScript;
 
     var fparams = ctx.funcParamDeclare();
     bool found_default_arg = false;

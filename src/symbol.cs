@@ -775,51 +775,101 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
     return args[idx] as FuncArgSymbol;
   }
 
-  public void ConnectArg(string name) 
-  {
-    Symbol sym = null;
-    if(!members.TryGetValue(name, out sym))
-      throw new Exception("No such member: " + name);
-    var fsym = sym as FuncArgSymbol;
-    if(fsym == null)
-      throw new Exception("Bad symbol");
-    args.Add(fsym);
-  }
-
   public virtual int GetTotalArgsNum() { return 0; }
   public virtual int GetDefaultArgsNum() { return 0; }
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
 }
 
-#if BHL_FRONT
-public class LambdaSymbol : FuncSymbol
+public class FuncSymbolScript : FuncSymbol
 {
-  public AST_LambdaDecl decl;
+  public AST_FuncDecl decl;
+
+#if BHL_FRONT
+  //storing fparams so it can be accessed later for misc things, e.g. default args
+  public bhlParser.FuncParamsContext fparams;
+
+  public FuncSymbolScript(
+    TypeSystem ts,
+    AST_FuncDecl decl, 
+    WrappedParseTree parsed, 
+    TypeRef ret_type, 
+    bhlParser.FuncParamsContext fparams
+  ) 
+    : this(ts, decl, ret_type)
+  {
+    this.parsed = parsed;
+    this.fparams = fparams;
+
+    if(parsed != null)
+    {
+      if(fparams != null)
+      {
+        for(int i=0;i<fparams.funcParamDeclare().Length;++i)
+        {
+          var vd = fparams.funcParamDeclare()[i];
+          var type = ts.Type(vd.type());
+          type.is_ref = vd.isRef() != null;
+          GetSignature().AddArg(type);
+        }
+      }
+    }
+  }
+
+  public IParseTree GetDefaultArgsExprAt(int idx) 
+  { 
+    if(fparams == null)
+      return null; 
+
+    var vdecl = fparams.funcParamDeclare()[idx];
+    var vinit = vdecl.assignExp(); 
+    return vinit;
+  }
+#endif
+
+  public FuncSymbolScript(TypeSystem ts, AST_FuncDecl decl, TypeRef ret_type = null)
+    : base(decl.name, new FuncSignature(ret_type == null ? ts.Type(decl.type) : ret_type))
+  {
+    this.decl = decl;
+  }
+
+  public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }
+  public override int GetDefaultArgsNum() { return decl.GetDefaultArgsNum(); }
+
+  public void ConnectArg(string name) 
+  {
+    Symbol sym = null;
+    if(!GetMembers().TryGetValue(name, out sym))
+      throw new Exception("No such member: " + name);
+    var fsym = sym as FuncArgSymbol;
+    if(fsym == null)
+      throw new Exception("Bad symbol");
+    GetArgs().Add(fsym);
+  }
+}
+
+#if BHL_FRONT
+public class LambdaSymbol : FuncSymbolScript
+{
+  public AST_LambdaDecl ldecl 
+  {
+    get {
+      return (AST_LambdaDecl)decl;
+    }
+  }
 
   List<FuncSymbol> fdecl_stack;
 
   public LambdaSymbol(
     TypeSystem ts,
     WrappedParseTree parsed, 
-    bhlParser.FuncLambdaContext lmb_ctx,
     AST_LambdaDecl decl, 
     TypeRef ret_type,
+    bhlParser.FuncParamsContext fparams,
     List<FuncSymbol> fdecl_stack
   ) 
-    : base(parsed, decl.name, new FuncSignature(ret_type))
+    : base(ts, decl, parsed, ret_type, fparams)
   {
-    this.decl = decl;
     this.fdecl_stack = fdecl_stack;
-
-    var fparams = lmb_ctx.funcParams();
-    if(fparams != null)
-    {
-      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
-      {
-        var vd = fparams.funcParamDeclare()[i];
-        GetSignature().AddArg(ts.Type(vd.type()));
-      }
-    }
   }
 
   public VariableSymbol AddUpValue(VariableSymbol src)
@@ -829,7 +879,7 @@ public class LambdaSymbol : FuncSymbol
     this.Define(local);
 
     var up = AST_Util.New_UpVal(local.name, local.scope_idx, src.scope_idx); 
-    decl.upvals.Add(up);
+    ldecl.upvals.Add(up);
 
     return local;
   }
@@ -900,62 +950,6 @@ public class LambdaSymbol : FuncSymbol
 }
 #endif
 
-public class FuncSymbolScript : FuncSymbol
-{
-  public AST_FuncDecl decl;
-
-#if BHL_FRONT
-  //storing fparams so it can be accessed later for misc things, e.g. default args
-  public bhlParser.FuncParamsContext fparams;
-
-  public FuncSymbolScript(
-    TypeSystem ts,
-    AST_FuncDecl decl, 
-    WrappedParseTree parsed, 
-    TypeRef ret_type, 
-    bhlParser.FuncParamsContext fparams
-  ) 
-    : this(ts, decl, ret_type)
-  {
-    this.parsed = parsed;
-    this.fparams = fparams;
-
-    if(parsed != null)
-    {
-      if(fparams != null)
-      {
-        for(int i=0;i<fparams.funcParamDeclare().Length;++i)
-        {
-          var vd = fparams.funcParamDeclare()[i];
-          var type = ts.Type(vd.type());
-          type.is_ref = vd.isRef() != null;
-          GetSignature().AddArg(type);
-        }
-      }
-    }
-  }
-
-  public IParseTree GetDefaultArgsExprAt(int idx) 
-  { 
-    if(fparams == null)
-      return null; 
-
-    var vdecl = fparams.funcParamDeclare()[idx];
-    var vinit = vdecl.assignExp(); 
-    return vinit;
-  }
-#endif
-
-  public FuncSymbolScript(TypeSystem ts, AST_FuncDecl decl, TypeRef ret_type = null)
-    : base(decl.name, new FuncSignature(ret_type == null ? ts.Type(decl.type) : ret_type))
-  {
-    this.decl = decl;
-  }
-
-  public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }
-  public override int GetDefaultArgsNum() { return decl.GetDefaultArgsNum(); }
-}
-
 public class FuncSymbolNative : FuncSymbol
 {
   public delegate ICoroutine Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
@@ -987,7 +981,7 @@ public class FuncSymbolNative : FuncSymbol
     foreach(var arg in args)
     {
       base.Define(arg);
-      ConnectArg(arg.name);
+      GetArgs().Add(arg);
       GetSignature().AddArg(arg.type);
     }
   }
