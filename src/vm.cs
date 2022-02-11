@@ -942,10 +942,7 @@ public class VM
           int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           int ip_addr = (int)Bytecode.Decode24(bytecode, ref ip);
 
-          //TODO: define symbol as well?
-          var fd = new AST_FuncDecl();
-          fd.name = constants[name_idx].str;
-          fd.type = "void"; //TODO: temp hack
+          var fd = AST_Util.New_FuncDecl(constants[name_idx].str, 0, "void"/*for now*/); 
           fd.ip_addr = ip_addr;
           if(curr_class != null)
           {

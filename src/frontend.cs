@@ -1998,8 +1998,6 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncParams(bhlParser.FuncParamsContext ctx)
   {
-    var func = curr_scope as FuncSymbolScript;
-
     var fparams = ctx.funcParamDeclare();
     bool found_default_arg = false;
 
@@ -2023,8 +2021,6 @@ public class Frontend : bhlBaseVisitor<object>
 
       if(pop_json_type)
         PopJsonType();
-
-      func.ConnectArg(fp.NAME().GetText());
     }
 
     return null;

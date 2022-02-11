@@ -712,10 +712,9 @@ public class FuncSignature : IType
   }
 }
 
-public class FuncSymbol : EnclosingSymbol, IScopeIndexed
+public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
   SymbolsDictionary members = new SymbolsDictionary();
-  SymbolsDictionary args = new SymbolsDictionary();
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -765,17 +764,20 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
     return GetSignature().ret_type.Get();
   }
 
+  public FuncArgSymbol GetArg(int idx)
+  {
+    return (FuncArgSymbol)members[idx];
+  }
+
   public SymbolsDictionary GetArgs()
   {
+    var args = new SymbolsDictionary();
+    for(int i=0;i<GetSignature().arg_types.Count;++i)
+      args.Add(members[i]);
     return args;
   }
 
-  public FuncArgSymbol GetArg(int idx) 
-  {
-    return args[idx] as FuncArgSymbol;
-  }
-
-  public virtual int GetTotalArgsNum() { return 0; }
+  public int GetTotalArgsNum() { return GetSignature().arg_types.Count; }
   public virtual int GetDefaultArgsNum() { return 0; }
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
 }
@@ -800,17 +802,17 @@ public class FuncSymbolScript : FuncSymbol
     this.parsed = parsed;
     this.fparams = fparams;
 
-    if(parsed != null)
+    //NOTE: code below duplicates alternative ctor logic,
+    //      it's ivoked by the frontend when decl it not 
+    //      filled yet but we do have parsed tree
+    if(parsed != null && fparams != null)
     {
-      if(fparams != null)
+      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
-        for(int i=0;i<fparams.funcParamDeclare().Length;++i)
-        {
-          var vd = fparams.funcParamDeclare()[i];
-          var type = ts.Type(vd.type());
-          type.is_ref = vd.isRef() != null;
-          GetSignature().AddArg(type);
-        }
+        var vd = fparams.funcParamDeclare()[i];
+        var type = ts.Type(vd.type());
+        type.is_ref = vd.isRef() != null;
+        GetSignature().AddArg(type);
       }
     }
   }
@@ -830,21 +832,18 @@ public class FuncSymbolScript : FuncSymbol
     : base(decl.name, new FuncSignature(ret_type == null ? ts.Type(decl.type) : ret_type))
   {
     this.decl = decl;
+
+    for(int i=0;i<decl.GetTotalArgsNum();++i)
+    {
+      var tmp = (AST_Interim)decl.children[0];
+      var var_decl = (AST_VarDecl)tmp.children[i];
+      var arg_type = ts.Type(var_decl.type);
+      arg_type.is_ref = var_decl.is_ref;
+      GetSignature().AddArg(arg_type);
+    }
   }
 
-  public override int GetTotalArgsNum() { return decl.GetTotalArgsNum(); }
   public override int GetDefaultArgsNum() { return decl.GetDefaultArgsNum(); }
-
-  public void ConnectArg(string name) 
-  {
-    Symbol sym = null;
-    if(!GetMembers().TryGetValue(name, out sym))
-      throw new Exception("No such member: " + name);
-    var fsym = sym as FuncArgSymbol;
-    if(fsym == null)
-      throw new Exception("Bad symbol");
-    GetArgs().Add(fsym);
-  }
 }
 
 #if BHL_FRONT
@@ -981,12 +980,10 @@ public class FuncSymbolNative : FuncSymbol
     foreach(var arg in args)
     {
       base.Define(arg);
-      GetArgs().Add(arg);
       GetSignature().AddArg(arg.type);
     }
   }
 
-  public override int GetTotalArgsNum() { return GetMembers().Count; }
   public override int GetDefaultArgsNum() { return def_args_num; }
 
   public override void Define(Symbol sym) 
