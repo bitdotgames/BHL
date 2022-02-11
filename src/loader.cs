@@ -7,7 +7,7 @@ namespace bhl {
 
 public class UserBindings
 {
-  public virtual void Register(GlobalScope globs) {}
+  public virtual void Register(TypeSystem ts) {}
 }
 
 public class EmptyUserBindings : UserBindings {}

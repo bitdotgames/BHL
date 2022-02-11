@@ -16,10 +16,10 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  GlobalScope globs;
-  public GlobalScope Globs {
+  TypeSystem types;
+  public TypeSystem Types {
     get {
-      return globs;
+      return types;
     }
   }
 
@@ -167,12 +167,14 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcodes();
   }
 
-  public ModuleCompiler(GlobalScope globs = null, AST ast = null, ModulePath module_path = null)
+  public ModuleCompiler(TypeSystem types = null, AST ast = null, ModulePath module_path = null)
   {
-    this.globs = globs;
+    if(types == null)
+      types = new TypeSystem();
+    this.types = types;
     if(module_path == null)
       module_path = new ModulePath("", "");
-    this.symbols = new ModuleScope(module_path.id, globs);
+    this.symbols = new ModuleScope(module_path.id, types);
     this.ast = ast;
     this.module_path = module_path;
 
@@ -1223,9 +1225,9 @@ public class ModuleCompiler : AST_Visitor
     {
       return Emit(Opcodes.GetFunc, new int[] {func_symb.decl.ip_addr}, ast.line_num);
     }
-    else if(globs.Resolve(ast.name) is FuncSymbolNative fsymb)
+    else if(types.Resolve(ast.name) is FuncSymbolNative fsymb)
     {
-      int func_idx = globs.GetMembers().IndexOf(fsymb);
+      int func_idx = types.GetMembers().IndexOf(fsymb);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
       return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, ast.line_num);

@@ -670,6 +670,13 @@ public class VM
 
   Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
 
+  TypeSystem types;
+  public TypeSystem Types {
+    get {
+      return types;
+    }
+  }
+
   GlobalScope globs;
   public GlobalScope Globs {
     get {
@@ -770,12 +777,14 @@ public class VM
     }
   }
 
-  public VM(GlobalScope globs = null, IModuleImporter importer = null)
+  public VM(TypeSystem types = null, IModuleImporter importer = null)
   {
-    if(globs == null)
-      globs = TypeSystem.CreateBuiltins();
-    this.globs = globs;
+    if(types == null)
+      types = new TypeSystem();
+    this.types = types;
+    this.globs = types.globs;
     this.importer = importer;
+    //TODO: why having these?
     symbols = new Scope(globs);
 
     init_frame = new Frame(this);

@@ -449,10 +449,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindMin(globs);
+    var ts = new TypeSystem();
+    BindMin(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 0.3f);
     CommonChecks(vm);
@@ -469,10 +469,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), 1,
+      var fn = new FuncSymbolNative("func_with_def", ts.Type("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
@@ -482,13 +482,13 @@ public class BHL_TestVM : BHL_TestBase
 
             return null;
           });
-      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
-      fn.Define(new FuncArgSymbol("b", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("a", ts.Type("float")));
+      fn.Define(new FuncArgSymbol("b", ts.Type("float")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num;
     AssertEqual(res, 44);
     CommonChecks(vm);
@@ -510,10 +510,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), 1,
+      var fn = new FuncSymbolNative("func_with_def", ts.Type("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
@@ -523,13 +523,13 @@ public class BHL_TestVM : BHL_TestBase
 
             return null;
           });
-      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
-      fn.Define(new FuncArgSymbol("b", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("a", ts.Type("float")));
+      fn.Define(new FuncArgSymbol("b", ts.Type("float")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num;
     AssertEqual(res, 42+43);
     CommonChecks(vm);
@@ -546,10 +546,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), 1,
+      var fn = new FuncSymbolNative("func_with_def", ts.Type("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var a = args_info.IsDefaultArgUsed(0) ? 14 : frm.stack.PopRelease().num;
@@ -558,12 +558,12 @@ public class BHL_TestVM : BHL_TestBase
 
             return null;
           });
-      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("a", ts.Type("float")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 14);
     CommonChecks(vm);
@@ -580,10 +580,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", globs.Type("float"), 2,
+      var fn = new FuncSymbolNative("func_with_def", ts.Type("float"), 2,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(1) ? 2 : frm.stack.PopRelease().num;
@@ -593,13 +593,13 @@ public class BHL_TestVM : BHL_TestBase
 
             return null;
           });
-      fn.Define(new FuncArgSymbol("a", globs.Type("int")));
-      fn.Define(new FuncArgSymbol("b", globs.Type("int")));
+      fn.Define(new FuncArgSymbol("a", ts.Type("int")));
+      fn.Define(new FuncArgSymbol("b", ts.Type("int")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num;
     AssertEqual(res, 52);
     CommonChecks(vm);
@@ -642,18 +642,18 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("foo", globs.Type("float"),
+      var fn = new FuncSymbolNative("foo", ts.Type("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             status = BHS.FAILURE; 
             return null;
           });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     vm.Tick();
     AssertEqual(fb.status, BHS.FAILURE);
@@ -759,11 +759,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
     
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("HERE", log.ToString());
     CommonChecks(vm);
@@ -873,10 +873,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = Execute(vm, "test");
     AssertEqual(fb.result.PopRelease().num, 100);
     AssertEqual(fb.result.PopRelease().str, "bar");
@@ -927,10 +927,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = Execute(vm, "test");
     AssertEqual(fb.result.PopRelease().num, 100);
     AssertEqual(fb.result.PopRelease().str, "bar");
@@ -1186,10 +1186,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("func_mult", globs.Type("float,string"),
+      var fn = new FuncSymbolNative("func_mult", ts.Type("float,string"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
             frm.stack.Push(Val.NewStr(frm.vm, "foo"));
@@ -1197,10 +1197,10 @@ public class BHL_TestVM : BHL_TestBase
             return null;
           }
         );
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = Execute(vm, "test");
     AssertEqual(fb.result.PopRelease().num, 42);
     AssertEqual(fb.result.PopRelease().str, "foo");
@@ -1238,10 +1238,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("func_mult", globs.Type("float,string,int,float"),
+      var fn = new FuncSymbolNative("func_mult", ts.Type("float,string,int,float"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
             frm.stack.Push(Val.NewNum(frm.vm, 42.5));
@@ -1251,10 +1251,10 @@ public class BHL_TestVM : BHL_TestBase
             return null;
           }
         );
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = Execute(vm, "test");
     AssertEqual(fb.result.PopRelease().num, 104);
     AssertEqual(fb.result.PopRelease().str, "foo");
@@ -1334,11 +1334,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
     CommonChecks(vm);
   }
@@ -3037,20 +3037,20 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
+    var fn = BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var expected = 
-      new ModuleCompiler(globs)
+      new ModuleCompiler(ts)
       .UseInit()
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
@@ -3072,17 +3072,17 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    var fn = new FuncSymbolNative("answer42", globs.Type("int"),
+    var fn = new FuncSymbolNative("answer42", ts.Type("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.stack.Push(Val.NewNum(frm.vm, 42));
           return null;
         } 
     );
-    globs.Define(fn);
+    ts.Define(fn);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var num = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(42, num);
     CommonChecks(vm);
@@ -3097,13 +3097,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "already defined symbol 'trace'"
     );
@@ -3207,11 +3207,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("Hey", log.ToString());
     CommonChecks(vm);
@@ -3410,11 +3410,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
@@ -3437,11 +3437,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("OK", log.ToString());
     CommonChecks(vm);
@@ -3464,11 +3464,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("OK", log.ToString());
     CommonChecks(vm);
@@ -3489,11 +3489,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("ELSE", log.ToString());
     CommonChecks(vm);
@@ -3517,11 +3517,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("ELSE", log.ToString());
     CommonChecks(vm);
@@ -3841,11 +3841,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
 
     vm.Tick();
@@ -3870,11 +3870,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     for(int i=0;i<5;++i)
       vm.Tick();
@@ -3922,9 +3922,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
 
     //NodeDump(node);
@@ -5235,12 +5235,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("2", log.ToString());
     CommonChecks(vm);
@@ -5264,12 +5264,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("c", log.ToString());
     CommonChecks(vm);
@@ -5293,12 +5293,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
@@ -5323,12 +5323,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertTrue(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().bval);
     AssertEqual("HEY", log.ToString());
     CommonChecks(vm);
@@ -5351,12 +5351,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertFalse(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().bval);
     AssertEqual("HEYBAR", log.ToString());
     CommonChecks(vm);
@@ -5487,12 +5487,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(3*2 + 3*10, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
     AssertEqual("whathey", log.ToString());
     CommonChecks(vm);
@@ -5558,12 +5558,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertTrue(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().bval);
     AssertEqual("HEY", log.ToString());
     CommonChecks(vm);
@@ -5585,12 +5585,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertTrue(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().bval);
     AssertEqual("HEY", log.ToString());
     CommonChecks(vm);
@@ -5616,12 +5616,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test", Val.NewNum(vm, 3));
     AssertEqual("01234", log.ToString());
     AssertEqual(1/*0 frame*/+2, vm.frames_pool.Allocs);
@@ -5751,7 +5751,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
     {
@@ -5759,14 +5759,14 @@ public class BHL_TestVM : BHL_TestBase
         delegate(VM.Frame frm, ref Val v) 
         {}
       );
-      globs.Define(cl);
+      ts.Define(cl);
     }
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
     AssertError<UserError>(
       delegate() {
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "incompatible types"
     );
@@ -5857,12 +5857,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test", Val.NewNum(vm, 3));
     AssertEqual("HERE", log.ToString());
     CommonChecks(vm);
@@ -5890,12 +5890,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test", Val.NewNum(vm, 3));
     AssertEqual("HERE", log.ToString());
     CommonChecks(vm);
@@ -5912,21 +5912,21 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
     {
-      var fn = new FuncSymbolNative("foo", globs.Type("void"),
+      var fn = new FuncSymbolNative("foo", ts.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS _)
           {
             log.Append("FOO");
             return null;
           }
           );
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("FOO", log.ToString());
     CommonChecks(vm);
@@ -5950,12 +5950,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("HEREHEREHERE", log.ToString());
     CommonChecks(vm);
@@ -5987,12 +5987,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("10", log.ToString());
     CommonChecks(vm);
@@ -6033,17 +6033,17 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = new FuncSymbolNative("native", globs.Type("void"),
+    var fn = new FuncSymbolNative("native", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           log.Append("HERE");
           return null;
         } 
     );
-    globs.Define(fn);
+    ts.Define(fn);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("HERE", log.ToString());
     CommonChecks(vm);
@@ -6081,10 +6081,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
     {
-      var fn = new FuncSymbolNative("yield_and_trace", globs.Type("void"),
+      var fn = new FuncSymbolNative("yield_and_trace", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var inst = CoroutinePool.New<TraceAfterYield>(frm.vm);
@@ -6092,10 +6092,10 @@ public class BHL_TestVM : BHL_TestBase
           return inst;
         } 
       );
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("HERE", log.ToString());
     CommonChecks(vm);
@@ -6126,12 +6126,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     Execute(vm, "test2");
     AssertEqual("HEREHERE2", log.ToString());
@@ -6153,12 +6153,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     Execute(vm, "test");
     AssertEqual("HEREHERE", log.ToString());
@@ -6185,12 +6185,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
     CommonChecks(vm);
@@ -6220,19 +6220,19 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
     CleanTestDir();
     var files = new List<string>();
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     Execute(vm, "test");
     AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
@@ -6257,12 +6257,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1020", log.ToString());
     CommonChecks(vm);
@@ -6292,12 +6292,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1020", log.ToString());
     CommonChecks(vm);
@@ -6332,12 +6332,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1020", log.ToString());
     CommonChecks(vm);
@@ -6386,12 +6386,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1020HEY!12HEY!", log.ToString());
     CommonChecks(vm);
@@ -7003,10 +7003,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("func_with_ref", globs.Type("void"),
+      var fn = new FuncSymbolNative("func_with_ref", ts.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = frm.stack.Pop();
@@ -7017,13 +7017,13 @@ public class BHL_TestVM : BHL_TestBase
             return null;
           }
           );
-      fn.Define(new FuncArgSymbol("a", globs.Type("float")));
-      fn.Define(new FuncArgSymbol("b", globs.Type("float"), true/*is ref*/));
+      fn.Define(new FuncArgSymbol("a", ts.Type("float")));
+      fn.Define(new FuncArgSymbol("b", ts.Type("float"), true/*is ref*/));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
     AssertEqual(num, 6);
     CommonChecks(vm);
@@ -7450,13 +7450,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() {
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "getting field by 'ref' not supported"
     );
@@ -8298,10 +8298,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().str;
     AssertEqual(res, "3102030");
     CommonChecks(vm);
@@ -8330,10 +8330,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 10);
     CommonChecks(vm);
@@ -8358,11 +8358,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
-    BindFoo(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
+    BindFoo(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().str;
     AssertEqual(res, "2102030");
     CommonChecks(vm);
@@ -8378,8 +8378,8 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    var c = Compile(bhl, globs);
+    var ts = new TypeSystem();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -8387,7 +8387,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf("suspend"), 0 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -8410,20 +8410,20 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = BindWaitTicks(globs, log);
+    var fn = BindWaitTicks(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var expected = 
-      new ModuleCompiler(globs)
+      new ModuleCompiler(ts)
       .UseInit()
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
@@ -8446,8 +8446,8 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    var vm = MakeVM(bhl, globs);
+    var ts = new TypeSystem();
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
@@ -8467,9 +8467,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -8528,8 +8528,8 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    var c = Compile(bhl, globs);
+    var ts = new TypeSystem();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -8540,9 +8540,9 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, "int") })
       .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf("suspend"), 0 })
         .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -8577,8 +8577,8 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    var c = Compile(bhl, globs);
+    var ts = new TypeSystem();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -8589,9 +8589,9 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, "int") })
       .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("suspend"), 0})
+          .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf("suspend"), 0})
         .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf("yield"), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -8635,9 +8635,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
@@ -8668,9 +8668,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
@@ -8702,11 +8702,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(Execute(vm, "test").result.PopRelease().num, 10);
     CommonChecks(vm);
   }
@@ -8731,9 +8731,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     for(int i=0;i<99;i++)
       AssertTrue(vm.Tick());
@@ -8760,9 +8760,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -8795,11 +8795,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(Execute(vm, "test").result.PopRelease().num, 152);
     CommonChecks(vm);
   }
@@ -8838,11 +8838,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
     CommonChecks(vm);
   }
@@ -8866,8 +8866,8 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    var c = Compile(bhl, globs);
+    var ts = new TypeSystem();
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -8905,12 +8905,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("BARFOO", log.ToString());
     CommonChecks(vm);
@@ -8942,12 +8942,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("BARFOO", log.ToString());
     CommonChecks(vm);
@@ -9037,12 +9037,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -9081,12 +9081,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -9106,31 +9106,31 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("foo", globs.Type("int"),
+      var fn = new FuncSymbolNative("foo", ts.Type("int"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             frm.stack.PopRelease();
             frm.stack.Push(Val.NewNum(frm.vm, 42));
             return null;
           } );
-      fn.Define(new FuncArgSymbol("b", globs.Type("bool")));
-      globs.Define(fn);
+      fn.Define(new FuncArgSymbol("b", ts.Type("bool")));
+      ts.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("bar_fail", globs.Type("int"),
+      var fn = new FuncSymbolNative("bar_fail", ts.Type("int"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             frm.stack.PopRelease();
             status = BHS.FAILURE;
             return null;
           } );
-      fn.Define(new FuncArgSymbol("n", globs.Type("int")));
-      globs.Define(fn);
+      fn.Define(new FuncArgSymbol("n", ts.Type("int")));
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(BHS.FAILURE, fb.status);
@@ -9213,19 +9213,19 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     {
-      var fn = new FuncSymbolNative("hey", globs.Type("void"),
+      var fn = new FuncSymbolNative("hey", ts.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           { return null; }
       );
-      fn.Define(new FuncArgSymbol("s", globs.Type("string")));
-      fn.Define(new FuncArgSymbol("i", globs.Type("int")));
-      globs.Define(fn);
+      fn.Define(new FuncArgSymbol("s", ts.Type("string")));
+      fn.Define(new FuncArgSymbol("i", ts.Type("int")));
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs); 
+    var vm = MakeVM(bhl, ts); 
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(0, fb.result.Count);
@@ -9323,10 +9323,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.Count);
     CommonChecks(vm);
   }
@@ -9349,10 +9349,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.Count);
     CommonChecks(vm);
   }
@@ -9410,12 +9410,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
     {
-      var fn = new FuncSymbolNative("foo", globs.Type("Foo"),
+      var fn = new FuncSymbolNative("foo", ts.Type("Foo"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
           var fn_ptr = frm.stack.Pop();
           frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
@@ -9423,12 +9423,12 @@ public class BHL_TestVM : BHL_TestBase
           return null;
         }
       );
-      fn.Define(new FuncArgSymbol("fn", globs.Type("int[]^()")));
+      fn.Define(new FuncArgSymbol("fn", ts.Type("int[]^()")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual(log.ToString(), "HERE");
     CommonChecks(vm);
@@ -9457,13 +9457,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
-    BindFoo(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
+    BindFoo(ts);
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
@@ -9490,13 +9490,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
-    BindFoo(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
+    BindFoo(ts);
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
@@ -9540,13 +9540,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
-    BindFoo(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
+    BindFoo(ts);
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -9595,13 +9595,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
-    BindFoo(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
+    BindFoo(ts);
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -9652,13 +9652,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
-    BindFoo(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
+    BindFoo(ts);
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -9703,11 +9703,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
@@ -9752,13 +9752,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
-    BindFoo(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
+    BindFoo(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("233", log.ToString());
     CommonChecks(vm);
@@ -9796,11 +9796,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
@@ -9843,11 +9843,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
@@ -9888,11 +9888,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
@@ -9926,11 +9926,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
@@ -9991,9 +9991,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
     {
       var cl = new ClassSymbolNative("Bar", null,
@@ -10003,10 +10003,10 @@ public class BHL_TestVM : BHL_TestBase
           v.obj = null;
         }
       );
-      globs.Define(cl);
+      ts.Define(cl);
 
       {
-        var m = new FuncSymbolNative("self", globs.Type("Bar"),
+        var m = new FuncSymbolNative("self", ts.Type("Bar"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             var obj = frm.stack.PopRelease().obj;
             frm.stack.Push(Val.NewObj(frm.vm, obj));
@@ -10017,19 +10017,19 @@ public class BHL_TestVM : BHL_TestBase
       }
 
       {
-        var m = new FuncSymbolNative("ret_int", globs.Type("int"),
+        var m = new FuncSymbolNative("ret_int", ts.Type("int"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             return CoroutinePool.New<Bar_ret_int>(frm.vm);
           }
         );
-        m.Define(new FuncArgSymbol("val", globs.Type("int")));
-        m.Define(new FuncArgSymbol("ticks", globs.Type("int")));
+        m.Define(new FuncArgSymbol("val", ts.Type("int")));
+        m.Define(new FuncArgSymbol("ticks", ts.Type("int")));
         cl.Define(m);
       }
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
@@ -10049,11 +10049,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
+    var fn = BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -10063,9 +10063,9 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Block, new int[] { (int)EnumBlock.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-        .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -10097,11 +10097,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("142", log.ToString());
     CommonChecks(vm);
@@ -10133,11 +10133,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("21340", log.ToString());
     CommonChecks(vm);
@@ -10164,13 +10164,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"nested defers are not allowed"
     );
@@ -10198,11 +10198,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("~BAR~FOO", log.ToString());
     CommonChecks(vm);
@@ -10236,11 +10236,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("~FOOBAR~BAR", log.ToString());
     CommonChecks(vm);
@@ -10277,11 +10277,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("BARFOO", log.ToString());
     CommonChecks(vm);
@@ -10300,11 +10300,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"return is not allowed in defer block"
     );
@@ -10325,9 +10325,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    Compile(bhl, globs);
+    Compile(bhl, ts);
   }
 
   [IsTested()]
@@ -10348,11 +10348,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -10379,11 +10379,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("fooheybar", log.ToString());
@@ -10422,11 +10422,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("foofoo2foo1testtest2test1", log.ToString());
@@ -10451,11 +10451,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("barfoohey", log.ToString());
@@ -10487,11 +10487,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("4231", log.ToString());
@@ -10521,11 +10521,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -10557,11 +10557,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -10700,11 +10700,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
 
     AssertEqual(Execute(vm, "test1").result.PopRelease().num, 0);
 
@@ -11076,11 +11076,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
 
     AssertEqual(Execute(vm, "test1").result.PopRelease().num, 0);
 
@@ -11111,11 +11111,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -11143,11 +11143,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
 
     for(int i=0;i<5;++i)
@@ -11185,11 +11185,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("HEY;HEY;YOU;", log.ToString());
     CommonChecks(vm);
@@ -11219,11 +11219,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -11251,11 +11251,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("wowbarfoohey", log.ToString());
@@ -11283,11 +11283,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("10", log.ToString());
     CommonChecks(vm);
@@ -11315,11 +11315,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertEqual("", log.ToString());
@@ -11364,11 +11364,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -11399,11 +11399,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("wowbarfoohey", log.ToString());
@@ -11433,11 +11433,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertEqual("", log.ToString());
@@ -11483,11 +11483,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -11728,11 +11728,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("bar", log.ToString());
     CommonChecks(vm);
@@ -11781,11 +11781,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("lmb1lmb2foohey", log.ToString());
@@ -11806,8 +11806,8 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    var c = Compile(bhl, globs);
+    var ts = new TypeSystem();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -11847,12 +11847,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindFoo(globs);
+    var ts = new TypeSystem();
+    BindFoo(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "already defined symbol 'Foo'"
     );
@@ -12065,10 +12065,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
-    var c = Compile(bhl, globs);
+    var fn = BindTrace(ts, log);
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -12106,7 +12106,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -13185,12 +13185,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "extending native classes is not supported"
     );
@@ -13252,10 +13252,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
-    var c = Compile(bhl, globs);
+    var fn = BindTrace(ts, log);
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -13290,7 +13290,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -13313,10 +13313,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13332,10 +13332,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13351,10 +13351,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13369,12 +13369,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"no such attribute 'b' in class 'Color"
     );
@@ -13390,13 +13390,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "incompatible types"
     );
@@ -13414,11 +13414,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13435,11 +13435,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13457,11 +13457,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13477,13 +13477,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "incompatible types"
     );
@@ -13506,11 +13506,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13553,10 +13553,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
-    var c = Compile(bhl, globs);
+    var fn = BindTrace(ts, log);
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -13597,7 +13597,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -13628,10 +13628,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    var c = Compile(bhl, globs);
+    BindTrace(ts, log);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
     vm.Start("test");
@@ -13683,10 +13683,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(1111, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13706,10 +13706,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13729,10 +13729,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13752,10 +13752,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(40, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13775,13 +13775,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "incompatible types"
     );
@@ -13825,10 +13825,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13848,10 +13848,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13871,10 +13871,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13891,10 +13891,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13911,10 +13911,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColor(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(5, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13932,10 +13932,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColorAlpha(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColorAlpha(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(114, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13958,10 +13958,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColorAlpha(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColorAlpha(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(114, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -13983,10 +13983,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColorAlpha(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColorAlpha(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(114, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -14004,10 +14004,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColorAlpha(globs);
-    var vm = MakeVM(bhl, globs);
+    BindColorAlpha(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(112, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -14023,13 +14023,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "incompatible types"
     );
@@ -14050,10 +14050,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindMasterStruct(globs);
-    var vm = MakeVM(bhl, globs);
+    BindMasterStruct(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual("hey2", Execute(vm, "test").result.PopRelease().str);
     CommonChecks(vm);
   }
@@ -14073,10 +14073,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindMasterStruct(globs);
-    var vm = MakeVM(bhl, globs);
+    BindMasterStruct(ts);
+    var vm = MakeVM(bhl, ts);
     AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -14092,14 +14092,14 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
-    BindFoo(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
+    BindFoo(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test", Val.NewNum(vm, 42));
     AssertEqual("14232342", log.ToString());
     CommonChecks(vm);
@@ -14115,14 +14115,14 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
-    BindFoo(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
+    BindFoo(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test", Val.NewNum(vm, 42));
     AssertEqual("3", log.ToString());
     CommonChecks(vm);
@@ -14140,9 +14140,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindBar(globs);
-    var c = Compile(bhl, globs);
+    var ts = new TypeSystem();
+    BindBar(ts);
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -14182,11 +14182,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
-    BindBar(globs);
-    var c = Compile(bhl, globs);
+    var fn = BindTrace(ts, log);
+    BindBar(ts);
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -14219,7 +14219,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -14245,11 +14245,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -14266,11 +14266,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 10)).result.PopRelease().num;
     AssertEqual(res, 10);
     res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
@@ -14295,13 +14295,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "symbol is not a function"
     );
@@ -14341,12 +14341,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("NULL;NOTNULL;EQ;NOTNULL;", log.ToString());
     CommonChecks(vm);
@@ -14380,12 +14380,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindIntStruct(globs);
+    BindTrace(ts, log);
+    BindIntStruct(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("NULL;NOTNULL;EQ;", log.ToString());
     CommonChecks(vm);
@@ -14407,12 +14407,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStringClass(globs);
+    BindTrace(ts, log);
+    BindStringClass(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test", Val.NewObj(vm, null));
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
@@ -14434,12 +14434,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStringClass(globs);
+    BindTrace(ts, log);
+    BindStringClass(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test", Val.NewObj(vm, null));
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
@@ -14471,13 +14471,13 @@ public class BHL_TestVM : BHL_TestBase
   //  }
   //  ";
 
-  //  var globs = SymbolTable.CreateBuiltins();
+  //  var ts = SymbolTable.CreateBuiltins();
   //  var trace_stream = new MemoryStream();
 
-  //  BindTrace(globs, trace_stream);
-  //  BindCustomNull(globs);
+  //  BindTrace(ts, trace_stream);
+  //  BindCustomNull(ts);
 
-  //  var intp = Interpret(bhl, globs);
+  //  var intp = Interpret(bhl, ts);
   //  var node = intp.GetFuncCallNode("test");
   //  var cn = new CustomNull();
   //  node.SetArgs(DynVal.NewObj(cn));
@@ -14507,12 +14507,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
@@ -14565,12 +14565,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("NULL;NOT NULL;EQ;", log.ToString());
     CommonChecks(vm);
@@ -14590,12 +14590,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
@@ -14625,11 +14625,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("NULL;NOT NULL;", log.ToString());
     CommonChecks(vm);
@@ -14652,11 +14652,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
@@ -14679,11 +14679,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -14711,11 +14711,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1,1;1,2;2,1;2,2;", log.ToString());
     CommonChecks(vm);
@@ -14736,11 +14736,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -14761,11 +14761,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
@@ -14784,11 +14784,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("012", log.ToString());
     CommonChecks(vm);
@@ -14807,11 +14807,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("0;3;10;", log.ToString());
     CommonChecks(vm);
@@ -14830,11 +14830,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("210", log.ToString());
     CommonChecks(vm);
@@ -14854,11 +14854,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("12", log.ToString());
     CommonChecks(vm);
@@ -14879,11 +14879,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("0,0;0,1;1,0;1,1;2,0;2,1;", log.ToString());
     CommonChecks(vm);
@@ -14906,11 +14906,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("01201020", log.ToString());
     CommonChecks(vm);
@@ -14933,11 +14933,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -14961,11 +14961,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "no viable alternative at input 'i ;"
     );
@@ -14985,11 +14985,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("012", log.ToString());
     CommonChecks(vm);
@@ -15010,11 +15010,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("012", log.ToString());
     CommonChecks(vm);
@@ -15100,11 +15100,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -15124,12 +15124,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -15150,11 +15150,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -15173,11 +15173,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -15201,11 +15201,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -15228,11 +15228,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
@@ -15258,11 +15258,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("12", log.ToString());
     CommonChecks(vm);
@@ -15286,11 +15286,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("123123", log.ToString());
     CommonChecks(vm);
@@ -15312,11 +15312,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", log.ToString());
     CommonChecks(vm);
@@ -15337,11 +15337,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1,20;1,30;2,20;2,30;3,20;3,30;", log.ToString());
     CommonChecks(vm);
@@ -15491,11 +15491,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 1202);
     CommonChecks(vm);
@@ -15515,11 +15515,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 60);
     CommonChecks(vm);
@@ -15540,11 +15540,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 90);
     CommonChecks(vm);
@@ -15564,11 +15564,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -15588,11 +15588,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -15615,11 +15615,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColorAlpha(globs);
+    BindColorAlpha(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 1101);
     CommonChecks(vm);
@@ -15637,9 +15637,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     {
       var cl = new ClassSymbolNative("Foo", null,
@@ -15648,12 +15648,12 @@ public class BHL_TestVM : BHL_TestBase
           v.obj = null;
         }
       );
-      globs.Define(cl);
+      ts.Define(cl);
     }
 
     AssertError<UserError>(
        delegate() {
-         Compile(bhl, globs);
+         Compile(bhl, ts);
        },
       "incompatible types"
     );
@@ -15670,9 +15670,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     {
       var cl = new ClassSymbolNative("Foo", null,
@@ -15681,12 +15681,12 @@ public class BHL_TestVM : BHL_TestBase
           v.obj = null;
         }
       );
-      globs.Define(cl);
+      ts.Define(cl);
     }
 
     AssertError<UserError>(
        delegate() {
-         Compile(bhl, globs);
+         Compile(bhl, ts);
        },
       "incompatible types for casting"
     );
@@ -15706,9 +15706,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
+    BindColor(ts);
 
     {
       var cl = new ClassSymbolNative("ColorNested", null,
@@ -15718,9 +15718,9 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      globs.Define(cl);
+      ts.Define(cl);
 
-      cl.Define(new FieldSymbol("c", globs.Type("Color"), 
+      cl.Define(new FieldSymbol("c", ts.Type("Color"), 
         delegate(Val ctx, ref Val v)
         {
           var cn = (ColorNested)ctx.obj;
@@ -15735,7 +15735,7 @@ public class BHL_TestVM : BHL_TestBase
       ));
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -15759,10 +15759,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 2);
     CommonChecks(vm);
@@ -15784,12 +15784,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15812,12 +15812,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindColor(globs);
+    BindTrace(ts, log);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15841,11 +15841,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15876,11 +15876,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15911,11 +15911,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15940,10 +15940,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 8);
     CommonChecks(vm);
@@ -15967,10 +15967,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 2);
     CommonChecks(vm);
@@ -15994,10 +15994,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 3);
     CommonChecks(vm);
@@ -16021,10 +16021,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 2);
     CommonChecks(vm);
@@ -16061,10 +16061,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
-    BindColor(globs);
+    var ts = new TypeSystem();
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 1);
     CommonChecks(vm);
@@ -16083,11 +16083,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    var fn = BindTrace(globs, log);
-    BindBar(globs);
-    var c = Compile(bhl, globs);
+    var fn = BindTrace(ts, log);
+    BindBar(ts);
+    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -16123,7 +16123,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { globs.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -16149,11 +16149,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 60);
     CommonChecks(vm);
@@ -16175,11 +16175,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindColor(globs);
+    BindColor(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -16234,13 +16234,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"operator is not overloaded"
     );
@@ -16259,13 +16259,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"operator is not overloaded"
     );
@@ -16284,13 +16284,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"operator is not overloaded"
     );
@@ -16309,13 +16309,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"operator is not overloaded"
     );
@@ -16334,13 +16334,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"operator is not overloaded"
     );
@@ -16359,13 +16359,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"operator is not overloaded"
     );
@@ -16384,13 +16384,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"operator is not overloaded"
     );
@@ -16409,13 +16409,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"operator is not overloaded"
     );
@@ -16433,13 +16433,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"must be numeric type"
     );
@@ -16458,13 +16458,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"must be int type"
     );
@@ -16483,13 +16483,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"must be int type"
     );
@@ -16508,13 +16508,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"must be bool type"
     );
@@ -16533,13 +16533,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"must be bool type"
     );
@@ -16557,13 +16557,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    BindColor(globs);
+    BindColor(ts);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       @"must be bool type"
     );
@@ -16583,10 +16583,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    var cl = BindColor(globs);
-    var op = new FuncSymbolNative("+", globs.Type("Color"),
+    var cl = BindColor(ts);
+    var op = new FuncSymbolNative("+", ts.Type("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var r = (Color)frm.stack.PopRelease().obj;
@@ -16602,10 +16602,10 @@ public class BHL_TestVM : BHL_TestBase
         return null;
       }
     );
-    op.Define(new FuncArgSymbol("r", globs.Type("Color")));
+    op.Define(new FuncArgSymbol("r", ts.Type("Color")));
     cl.OverloadBinaryOperator(op);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
     AssertEqual(21, res.r);
     AssertEqual(32, res.g);
@@ -16625,10 +16625,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    var cl = BindColor(globs);
-    var op = new FuncSymbolNative("*", globs.Type("Color"),
+    var cl = BindColor(ts);
+    var op = new FuncSymbolNative("*", ts.Type("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var k = (float)frm.stack.PopRelease().num;
@@ -16644,10 +16644,10 @@ public class BHL_TestVM : BHL_TestBase
         return null;
       }
     );
-    op.Define(new FuncArgSymbol("k", globs.Type("float")));
+    op.Define(new FuncArgSymbol("k", ts.Type("float")));
     cl.OverloadBinaryOperator(op);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
     AssertEqual(2, res.r);
     AssertEqual(4, res.g);
@@ -16668,11 +16668,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    var cl = BindColor(globs);
+    var cl = BindColor(ts);
     {
-      var op = new FuncSymbolNative("*", globs.Type("Color"),
+      var op = new FuncSymbolNative("*", ts.Type("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var k = (float)frm.stack.PopRelease().num;
@@ -16688,12 +16688,12 @@ public class BHL_TestVM : BHL_TestBase
         return null;
       }
       );
-      op.Define(new FuncArgSymbol("k", globs.Type("float")));
+      op.Define(new FuncArgSymbol("k", ts.Type("float")));
       cl.OverloadBinaryOperator(op);
     }
     
     {
-      var op = new FuncSymbolNative("+", globs.Type("Color"),
+      var op = new FuncSymbolNative("+", ts.Type("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var r = (Color)frm.stack.PopRelease().obj;
@@ -16709,11 +16709,11 @@ public class BHL_TestVM : BHL_TestBase
         return null;
       }
       );
-      op.Define(new FuncArgSymbol("r", globs.Type("Color")));
+      op.Define(new FuncArgSymbol("r", ts.Type("Color")));
       cl.OverloadBinaryOperator(op);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
     AssertEqual(21, res.r);
     AssertEqual(42, res.g);
@@ -16739,12 +16739,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
     
-    var cl = BindColor(globs);
-    var op = new FuncSymbolNative("==", globs.Type("bool"),
+    var cl = BindColor(ts);
+    var op = new FuncSymbolNative("==", ts.Type("bool"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var arg = (Color)frm.stack.PopRelease().obj;
@@ -16756,10 +16756,10 @@ public class BHL_TestVM : BHL_TestBase
         return null;
       }
     );
-    op.Define(new FuncArgSymbol("arg", globs.Type("Color")));
+    op.Define(new FuncArgSymbol("arg", ts.Type("Color")));
     cl.OverloadBinaryOperator(op);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual(log.ToString(), "YES");
     CommonChecks(vm);
@@ -16777,26 +16777,26 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     
-    var cl = BindColor(globs);
-    var op = new FuncSymbolNative("*", globs.Type("Color"), null);
-    op.Define(new FuncArgSymbol("k", globs.Type("float")));
+    var cl = BindColor(ts);
+    var op = new FuncSymbolNative("*", ts.Type("Color"), null);
+    op.Define(new FuncArgSymbol("k", ts.Type("float")));
     cl.OverloadBinaryOperator(op);
 
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "incompatible types"
     );
   }
 
-  void BindEnum(GlobalScope globs)
+  void BindEnum(TypeSystem ts)
   {
     var en = new EnumSymbol("EnumState");
-    globs.Define(en);
-    globs.Define(new GenericArrayTypeSymbol(globs, new TypeRef(en)));
+    ts.Define(en);
+    ts.Define(new GenericArrayTypeSymbol(ts, new TypeRef(en)));
 
     en.Define(new EnumItemSymbol(en, "SPAWNED",  10));
     en.Define(new EnumItemSymbol(en, "SPAWNED2", 20));
@@ -16813,11 +16813,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindEnum(globs);
+    BindEnum(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 30);
     CommonChecks(vm);
@@ -16834,11 +16834,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindEnum(globs);
+    BindEnum(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 20);
     CommonChecks(vm);
@@ -16855,11 +16855,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindEnum(globs);
+    BindEnum(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 10);
     CommonChecks(vm);
@@ -16876,11 +16876,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindEnum(globs);
+    BindEnum(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().str;
     AssertEqual(res, "20");
     CommonChecks(vm);
@@ -16897,11 +16897,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindEnum(globs);
+    BindEnum(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
     AssertEqual(res, 1);
     CommonChecks(vm);
@@ -16918,11 +16918,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindEnum(globs);
+    BindEnum(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
     AssertEqual(res, 1);
     CommonChecks(vm);
@@ -16942,11 +16942,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindEnum(globs);
+    BindEnum(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.Pop();
     var lst = res.obj as IList<Val>;
     AssertEqual(lst.Count, 2);
@@ -16967,23 +16967,23 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
-    BindEnum(globs);
+    BindEnum(ts);
 
     {
-      var fn = new FuncSymbolNative("StateIs", globs.Type("bool"),
+      var fn = new FuncSymbolNative("StateIs", ts.Type("bool"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           var n = frm.stack.PopRelease().num;
           frm.stack.Push(Val.NewBool(frm.vm, n == 20));
           return null;
         });
-      fn.Define(new FuncArgSymbol("state", globs.Type("EnumState")));
+      fn.Define(new FuncArgSymbol("state", ts.Type("EnumState")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var res = Execute(vm, "test").result.PopRelease().bval;
     AssertTrue(res);
   }
@@ -17196,10 +17196,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     AssertError<UserError>(
       delegate() { 
-        Compile(bhl, globs);
+        Compile(bhl, ts);
       },
       "symbol is not a function"
     );
@@ -17300,11 +17300,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
 
@@ -17344,11 +17344,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
 
@@ -17389,11 +17389,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
 
@@ -17435,11 +17435,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
 
@@ -17484,11 +17484,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var c = Compile(bhl, globs);
+    var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
 
@@ -17540,13 +17540,13 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl1");
     var fb = vm.Start("test");
@@ -17733,7 +17733,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
     );
 
-    var vm = new VM(globs: null, importer: importer);
+    var vm = new VM(null, importer);
     vm.LoadModule("bhl1");
     AssertEqual(Execute(vm, "bhl1").result.PopRelease().num, 23);
     CommonChecks(vm);
@@ -17767,13 +17767,13 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl2");
     Execute(vm, "test");
@@ -17822,7 +17822,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var importer = new ModuleImporter(CompileFiles(files));
 
-    var vm = new VM(globs: null, importer: importer);
+    var vm = new VM(null, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(42, Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num);
@@ -17890,7 +17890,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var importer = new ModuleImporter(CompileFiles(files));
 
-    var vm = new VM(globs: null, importer: importer);
+    var vm = new VM(null, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
@@ -17954,7 +17954,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var importer = new ModuleImporter(CompileFiles(files));
 
-    var vm = new VM(globs: null, importer: importer);
+    var vm = new VM(null, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -17987,7 +17987,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var importer = new ModuleImporter(CompileFiles(files));
 
-    var vm = new VM(globs: null, importer: importer);
+    var vm = new VM(null, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
@@ -18029,7 +18029,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var importer = new ModuleImporter(CompileFiles(files));
 
-    var vm = new VM(globs: null, importer: importer);
+    var vm = new VM(null, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -18104,7 +18104,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var importer = new ModuleImporter(CompileFiles(files));
 
-    var vm = new VM(globs: null, importer: importer);
+    var vm = new VM(null, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(4, Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num);
@@ -18150,7 +18150,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var importer = new ModuleImporter(CompileFiles(files));
 
-    var vm = new VM(globs: null, importer: importer);
+    var vm = new VM(null, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(23, Execute(vm, "test", Val.NewNum(vm, 23)).result.PopRelease().num);
@@ -18213,12 +18213,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStartScriptInMgr(globs);
+    BindTrace(ts, log);
+    BindStartScriptInMgr(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
 
     {
@@ -18269,12 +18269,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStartScriptInMgr(globs);
+    BindTrace(ts, log);
+    BindStartScriptInMgr(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
 
     {
@@ -18322,12 +18322,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStartScriptInMgr(globs);
+    BindTrace(ts, log);
+    BindStartScriptInMgr(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
 
     AssertFalse(vm.Tick());
@@ -18366,12 +18366,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStartScriptInMgr(globs);
+    BindTrace(ts, log);
+    BindStartScriptInMgr(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
 
     AssertFalse(vm.Tick());
@@ -18405,23 +18405,23 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStartScriptInMgr(globs);
+    BindTrace(ts, log);
+    BindStartScriptInMgr(ts);
 
     {
-      var fn = new FuncSymbolNative("say_here", globs.Type("void"),
+      var fn = new FuncSymbolNative("say_here", ts.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             log.Append("HERE;");
             return null;
           }
           );
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
 
     AssertFalse(vm.Tick());
@@ -18461,12 +18461,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStartScriptInMgr(globs);
+    BindTrace(ts, log);
+    BindStartScriptInMgr(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
 
     AssertFalse(vm.Tick());
@@ -18505,12 +18505,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStartScriptInMgr(globs);
+    BindTrace(ts, log);
+    BindStartScriptInMgr(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
 
     AssertFalse(vm.Tick());
@@ -18553,12 +18553,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
-    BindTrace(globs, log);
-    BindStartScriptInMgr(globs);
+    BindTrace(ts, log);
+    BindStartScriptInMgr(ts);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     vm.Start("test");
 
     AssertFalse(vm.Tick());
@@ -18612,15 +18612,15 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
     CleanTestDir();
@@ -18629,9 +18629,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
@@ -18690,15 +18690,15 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
     CleanTestDir();
@@ -18707,9 +18707,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
@@ -18752,16 +18752,16 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     CleanTestDir();
     var files = new List<string>();
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test");
     
@@ -18822,17 +18822,17 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
     {
-      var fn = new FuncSymbolNative("throw", globs.Type("void"),
+      var fn = new FuncSymbolNative("throw", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           //emulating null reference
           frm = null;
           frm.fb = null;
           return null;
         });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
     CleanTestDir();
@@ -18841,9 +18841,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     try
@@ -18912,15 +18912,15 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
     CleanTestDir();
@@ -18929,9 +18929,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
@@ -18991,15 +18991,15 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
     CleanTestDir();
@@ -19008,9 +19008,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     vm.Start("test", Val.NewNum(vm, 3));
     AssertTrue(vm.Tick());
@@ -19069,15 +19069,15 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
     CleanTestDir();
@@ -19086,9 +19086,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
@@ -19153,15 +19153,15 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
     CleanTestDir();
@@ -19170,9 +19170,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     vm.Start("test");
     AssertFalse(vm.Tick());
@@ -19241,15 +19241,15 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", globs.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
     CleanTestDir();
@@ -19258,9 +19258,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, globs));
+    var importer = new ModuleImporter(CompileFiles(files, ts));
 
-    var vm = new VM(globs: globs, importer: importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     vm.Start("test");
     AssertFalse(vm.Tick());
@@ -19565,12 +19565,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
     var log = new StringBuilder();
 
-    BindTrace(globs, log);
+    BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
 
     AssertTrue(vm.Tick());
@@ -19831,12 +19831,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -19852,12 +19852,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test").result.PopRelease();
     AssertEqual("INC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -19875,12 +19875,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -19897,12 +19897,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -19920,12 +19920,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;INC2;INC3;DEC0;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -19942,12 +19942,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;DEC0;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -19972,13 +19972,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
-    BindTrace(globs, logs);
+    BindRefC(ts, logs);
+    BindTrace(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;INC2;DEC1;REFS2;INC2;INC3;INC4;DEC3;REFS4;DEC2;INC3;DEC2;REFS3;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -19995,12 +19995,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -20019,12 +20019,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;INC2;DEC1;DEC0;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -20047,12 +20047,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -20074,13 +20074,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
-    BindTrace(globs, logs);
+    BindRefC(ts, logs);
+    BindTrace(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;HERE;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -20109,12 +20109,12 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var globs = TypeSystem.CreateBuiltins();
+    var ts = new TypeSystem();
 
     var logs = new StringBuilder();
-    BindRefC(globs, logs);
+    BindRefC(ts, logs);
 
-    var vm = MakeVM(bhl, globs);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
@@ -20159,23 +20159,25 @@ public class BHL_TestVM : BHL_TestBase
 
   ///////////////////////////////////////
 
-  static ModuleCompiler MakeCompiler(GlobalScope globs = null)
+  static ModuleCompiler MakeCompiler(TypeSystem ts = null)
   {
-    globs = globs == null ? TypeSystem.CreateBuiltins() : globs;
-    //NOTE: we don't want to affect the original globs
-    var globs_copy = globs.Clone();
-    return new ModuleCompiler(globs_copy);
+    if(ts == null)
+      ts = new TypeSystem();
+    //NOTE: we don't want to affect the original ts
+    var ts_copy = ts.Clone();
+    return new ModuleCompiler(ts_copy);
   }
 
-  Stream CompileFiles(List<string> files, GlobalScope globs = null)
+  Stream CompileFiles(List<string> files, TypeSystem ts = null)
   {
-    globs = globs == null ? TypeSystem.CreateBuiltins() : globs;
-    //NOTE: we don't want to affect the original globs
-    var globs_copy = globs.Clone();
+    if(ts == null)
+      ts = new TypeSystem();
+    //NOTE: we don't want to affect the original ts
+    var ts_copy = ts.Clone();
 
     var conf = new BuildConf();
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
-    conf.globs = globs_copy;
+    conf.ts = ts_copy;
     conf.files = files;
     conf.res_file = TestDirPath() + "/result.bin";
     conf.inc_dir = TestDirPath();
@@ -20192,30 +20194,32 @@ public class BHL_TestVM : BHL_TestBase
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
 
-  ModuleCompiler Compile(string bhl, GlobalScope globs = null, bool show_ast = false, bool show_bytes = false)
+  ModuleCompiler Compile(string bhl, TypeSystem ts = null, bool show_ast = false, bool show_bytes = false)
   {
-    globs = globs == null ? TypeSystem.CreateBuiltins() : globs;
-    //NOTE: we don't want to affect the original globs
-    var globs_copy = globs.Clone();
+    if(ts == null)
+      ts = new TypeSystem();
+    //NOTE: we don't want to affect the original ts
+    var ts_copy = ts.Clone();
 
     var mdl = new bhl.Module("", "");
     var mreg = new ModuleRegistry();
-    var ast = Src2AST(bhl, mdl, mreg, globs_copy);
+    var ast = Src2AST(bhl, mdl, mreg, ts_copy);
     if(show_ast)
       Util.ASTDump(ast);
-    var c  = new ModuleCompiler(globs_copy, ast, mdl.path);
+    var c  = new ModuleCompiler(ts_copy, ast, mdl.path);
     c.Compile();
     if(show_bytes)
       Dump(c);
     return c;
   }
 
-  AST Src2AST(string src, bhl.Module mdl, ModuleRegistry mreg, GlobalScope globs = null)
+  AST Src2AST(string src, bhl.Module mdl, ModuleRegistry mreg, TypeSystem ts = null)
   {
-    globs = globs == null ? TypeSystem.CreateBuiltins() : globs;
+    if(ts == null)
+      ts = new TypeSystem();
 
     var ms = new MemoryStream();
-    Frontend.Source2Bin(mdl, src.ToStream(), ms, globs, mreg);
+    Frontend.Source2Bin(mdl, src.ToStream(), ms, ts, mreg);
     ms.Position = 0;
 
     return Util.Bin2Meta<AST_Module>(ms);
@@ -20470,15 +20474,15 @@ public class BHL_TestVM : BHL_TestBase
 
   static VM MakeVM(ModuleCompiler c)
   {
-    var vm = new VM(c.Globs);
+    var vm = new VM(c.Types);
     var m = c.Compile();
     vm.RegisterModule(m);
     return vm;
   }
 
-  VM MakeVM(string bhl, GlobalScope globs = null, bool show_ast = false, bool show_bytes = false)
+  VM MakeVM(string bhl, TypeSystem ts = null, bool show_ast = false, bool show_bytes = false)
   {
-    return MakeVM(Compile(bhl, globs, show_ast: show_ast, show_bytes: show_bytes));
+    return MakeVM(Compile(bhl, ts, show_ast: show_ast, show_bytes: show_bytes));
   }
 
   VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
@@ -20516,85 +20520,85 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrAddIdx {
     get {
-      var globs = TypeSystem.CreateBuiltins();
-      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      var ts = new TypeSystem();
+      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("Add")).scope_idx;
     }
   }
 
   public static int ArrSetIdx {
     get {
-      var globs = TypeSystem.CreateBuiltins();
-      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      var ts = new TypeSystem();
+      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("SetAt")).scope_idx;
     }
   }
 
   public static int ArrRemoveIdx {
     get {
-      var globs = TypeSystem.CreateBuiltins();
-      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      var ts = new TypeSystem();
+      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("RemoveAt")).scope_idx;
     }
   }
 
   public static int ArrCountIdx {
     get {
-      var globs = TypeSystem.CreateBuiltins();
-      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      var ts = new TypeSystem();
+      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("Count")).scope_idx;
     }
   }
 
   public static int ArrAtIdx {
     get {
-      var globs = TypeSystem.CreateBuiltins();
-      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      var ts = new TypeSystem();
+      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("At")).scope_idx;
     }
   }
 
   public static int ArrAddInplaceIdx {
     get {
-      var globs = TypeSystem.CreateBuiltins();
-      var class_symb = (ClassSymbol)globs.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
+      var ts = new TypeSystem();
+      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("$AddInplace")).scope_idx;
     }
   }
 
-  FuncSymbolNative BindTrace(GlobalScope globs, StringBuilder log)
+  FuncSymbolNative BindTrace(TypeSystem ts, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("trace", globs.Type("void"),
+    var fn = new FuncSymbolNative("trace", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           string str = frm.stack.PopRelease().str;
           log.Append(str);
           return null;
         } 
     );
-    fn.Define(new FuncArgSymbol("str", globs.Type("string")));
-    globs.Define(fn);
+    fn.Define(new FuncArgSymbol("str", ts.Type("string")));
+    ts.Define(fn);
     return fn;
   }
 
   //simple console outputting version
-  void BindLog(GlobalScope globs)
+  void BindLog(TypeSystem ts)
   {
     {
-      var fn = new FuncSymbolNative("log", globs.Type("void"),
+      var fn = new FuncSymbolNative("log", ts.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             string str = frm.stack.PopRelease().str;
             Console.WriteLine(str); 
             return null;
           } 
       );
-      fn.Define(new FuncArgSymbol("str", globs.Type("string")));
-      globs.Define(fn);
+      fn.Define(new FuncArgSymbol("str", ts.Type("string")));
+      ts.Define(fn);
     }
   }
 
-  void BindMin(GlobalScope globs)
+  void BindMin(TypeSystem ts)
   {
-    var fn = new FuncSymbolNative("min", globs.Type("float"),
+    var fn = new FuncSymbolNative("min", ts.Type("float"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           var b = (float)frm.stack.PopRelease().num;
           var a = (float)frm.stack.PopRelease().num;
@@ -20602,9 +20606,9 @@ public class BHL_TestVM : BHL_TestBase
           return null;
         } 
     );
-    fn.Define(new FuncArgSymbol("a", globs.Type("float")));
-    fn.Define(new FuncArgSymbol("b", globs.Type("float")));
-    globs.Define(fn);
+    fn.Define(new FuncArgSymbol("a", ts.Type("float")));
+    fn.Define(new FuncArgSymbol("b", ts.Type("float")));
+    ts.Define(fn);
   }
 
   public class Color
@@ -20633,7 +20637,7 @@ public class BHL_TestVM : BHL_TestBase
     public Color c = new Color();
   }
 
-  ClassSymbolNative BindColor(GlobalScope globs)
+  ClassSymbolNative BindColor(TypeSystem ts)
   {
     var cl = new ClassSymbolNative("Color", null,
       delegate(VM.Frame frm, ref Val v) 
@@ -20642,8 +20646,8 @@ public class BHL_TestVM : BHL_TestBase
       }
     );
 
-    globs.Define(cl);
-    cl.Define(new FieldSymbol("r", globs.Type("float"),
+    ts.Define(cl);
+    cl.Define(new FieldSymbol("r", ts.Type("float"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Color)ctx.obj;
@@ -20656,7 +20660,7 @@ public class BHL_TestVM : BHL_TestBase
         ctx.obj = c;
       }
     ));
-    cl.Define(new FieldSymbol("g", globs.Type("float"),
+    cl.Define(new FieldSymbol("g", ts.Type("float"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Color)ctx.obj;
@@ -20671,7 +20675,7 @@ public class BHL_TestVM : BHL_TestBase
     ));
 
     {
-      var m = new FuncSymbolNative("Add", globs.Type("Color"),
+      var m = new FuncSymbolNative("Add", ts.Type("Color"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
           var k = (float)frm.stack.PopRelease().num;
@@ -20687,13 +20691,13 @@ public class BHL_TestVM : BHL_TestBase
           return null;
         }
       );
-      m.Define(new FuncArgSymbol("k", globs.Type("float")));
+      m.Define(new FuncArgSymbol("k", ts.Type("float")));
 
       cl.Define(m);
     }
     
     {
-      var m = new FuncSymbolNative("mult_summ", globs.Type("float"),
+      var m = new FuncSymbolNative("mult_summ", ts.Type("float"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
           var k = frm.stack.PopRelease().num;
@@ -20702,13 +20706,13 @@ public class BHL_TestVM : BHL_TestBase
           return null;
         }
       );
-      m.Define(new FuncArgSymbol("k", globs.Type("float")));
+      m.Define(new FuncArgSymbol("k", ts.Type("float")));
 
       cl.Define(m);
     }
     
     {
-      var fn = new FuncSymbolNative("mkcolor", globs.Type("Color"),
+      var fn = new FuncSymbolNative("mkcolor", ts.Type("Color"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             var r = frm.stack.PopRelease().num;
             var c = new Color();
@@ -20718,42 +20722,42 @@ public class BHL_TestVM : BHL_TestBase
             return null;
           }
       );
-      fn.Define(new FuncArgSymbol("r", globs.Type("float")));
+      fn.Define(new FuncArgSymbol("r", ts.Type("float")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
     
     {
-      var fn = new FuncSymbolNative("mkcolor_null", globs.Type("Color"),
+      var fn = new FuncSymbolNative("mkcolor_null", ts.Type("Color"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             frm.stack.Push(frm.vm.Null);
             return null;
           }
       );
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
 
-    globs.Define(new ArrayTypeSymbolT<Color>(globs, "ArrayT_Color", globs.Type("Color"), delegate() { return new List<Color>(); } ));
+    ts.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.Type("Color"), delegate() { return new List<Color>(); } ));
 
     return cl;
   }
 
-  void BindColorAlpha(GlobalScope globs)
+  void BindColorAlpha(TypeSystem ts)
   {
-    BindColor(globs);
+    BindColor(ts);
 
     {
-      var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)globs.Type("Color").Get(globs),
+      var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.Type("Color").Get(ts),
         delegate(VM.Frame frm, ref Val v) 
         { 
           v.obj = new ColorAlpha();
         }
       );
 
-      globs.Define(cl);
+      ts.Define(cl);
 
-      cl.Define(new FieldSymbol("a", globs.Type("float"),
+      cl.Define(new FieldSymbol("a", ts.Type("float"),
         delegate(Val ctx, ref Val v)
         {
           var c = (ColorAlpha)ctx.obj;
@@ -20768,7 +20772,7 @@ public class BHL_TestVM : BHL_TestBase
       ));
 
       {
-        var m = new FuncSymbolNative("mult_summ_alpha", globs.Type("float"),
+        var m = new FuncSymbolNative("mult_summ_alpha", ts.Type("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var c = (ColorAlpha)frm.stack.PopRelease().obj;
@@ -20799,7 +20803,7 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  void BindIntStruct(GlobalScope globs)
+  void BindIntStruct(TypeSystem ts)
   {
     {
       var cl = new ClassSymbolNative("IntStruct", null,
@@ -20810,9 +20814,9 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      globs.Define(cl);
+      ts.Define(cl);
 
-      cl.Define(new FieldSymbol("n", globs.Type("int"),
+      cl.Define(new FieldSymbol("n", ts.Type("int"),
         delegate(Val ctx, ref Val v)
         {
           var s = new IntStruct();
@@ -20835,7 +20839,7 @@ public class BHL_TestVM : BHL_TestBase
     public string str;
   }
 
-  void BindStringClass(GlobalScope globs)
+  void BindStringClass(TypeSystem ts)
   {
     {
       var cl = new ClassSymbolNative("StringClass", null,
@@ -20845,9 +20849,9 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      globs.Define(cl);
+      ts.Define(cl);
 
-      cl.Define(new FieldSymbol("str", globs.Type("string"),
+      cl.Define(new FieldSymbol("str", ts.Type("string"),
         delegate(Val ctx, ref Val v)
         {
           var c = (StringClass)ctx.obj;
@@ -20871,10 +20875,10 @@ public class BHL_TestVM : BHL_TestBase
     public IntStruct child_struct2;
   }
 
-  void BindMasterStruct(GlobalScope globs)
+  void BindMasterStruct(TypeSystem ts)
   {
-    BindStringClass(globs);
-    BindIntStruct(globs);
+    BindStringClass(ts);
+    BindIntStruct(ts);
 
     {
       var cl = new ClassSymbolNative("MasterStruct", null,
@@ -20887,9 +20891,9 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      globs.Define(cl);
+      ts.Define(cl);
 
-      cl.Define(new FieldSymbol("child", globs.Type("StringClass"),
+      cl.Define(new FieldSymbol("child", ts.Type("StringClass"),
         delegate(Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -20903,7 +20907,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child2", globs.Type("StringClass"),
+      cl.Define(new FieldSymbol("child2", ts.Type("StringClass"),
         delegate(Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -20917,7 +20921,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child_struct", globs.Type("IntStruct"),
+      cl.Define(new FieldSymbol("child_struct", ts.Type("IntStruct"),
         delegate(Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -20933,7 +20937,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child_struct2", globs.Type("IntStruct"),
+      cl.Define(new FieldSymbol("child_struct2", ts.Type("IntStruct"),
         delegate(Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
@@ -20966,7 +20970,7 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  void BindFoo(GlobalScope globs)
+  void BindFoo(TypeSystem ts)
   {
     {
       var cl = new ClassSymbolNative("Foo", null,
@@ -20975,9 +20979,9 @@ public class BHL_TestVM : BHL_TestBase
           v.obj = new Foo();
         }
       );
-      globs.Define(cl);
+      ts.Define(cl);
 
-      cl.Define(new FieldSymbol("hey", globs.Type("int"),
+      cl.Define(new FieldSymbol("hey", ts.Type("int"),
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
@@ -20990,7 +20994,7 @@ public class BHL_TestVM : BHL_TestBase
           ctx.obj = f;
         }
       ));
-      cl.Define(new FieldSymbol("colors", globs.Type("ArrayT_Color"),
+      cl.Define(new FieldSymbol("colors", ts.Type("ArrayT_Color"),
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
@@ -21002,7 +21006,7 @@ public class BHL_TestVM : BHL_TestBase
           f.colors = (List<Color>)v.obj;
         }
       ));
-      cl.Define(new FieldSymbol("sub_color", globs.Type("Color"),
+      cl.Define(new FieldSymbol("sub_color", ts.Type("Color"),
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
@@ -21018,14 +21022,14 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     {
-      var fn = new FuncSymbolNative("PassthruFoo", globs.Type("Foo"),
+      var fn = new FuncSymbolNative("PassthruFoo", ts.Type("Foo"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             frm.stack.Push(frm.stack.Pop());
             return null;
           } );
-      fn.Define(new FuncArgSymbol("foo", globs.Type("Foo")));
+      fn.Define(new FuncArgSymbol("foo", ts.Type("Foo")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
   }
 
@@ -21053,15 +21057,15 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  FuncSymbolNative BindWaitTicks(GlobalScope globs, StringBuilder log)
+  FuncSymbolNative BindWaitTicks(TypeSystem ts, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("WaitTicks", globs.Type("void"),
+    var fn = new FuncSymbolNative("WaitTicks", ts.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           return CoroutinePool.New<CoroutineWaitTicks>(frm.vm);
         } 
     );
-    fn.Define(new FuncArgSymbol("ticks", globs.Type("int")));
-    globs.Define(fn);
+    fn.Define(new FuncArgSymbol("ticks", ts.Type("int")));
+    ts.Define(fn);
     return fn;
   }
 
@@ -21072,7 +21076,7 @@ public class BHL_TestVM : BHL_TestBase
     public string Str;
   }
 
-  ClassSymbolNative BindBar(GlobalScope globs)
+  ClassSymbolNative BindBar(TypeSystem ts)
   {
     var cl = new ClassSymbolNative("Bar", null,
       delegate(VM.Frame frm, ref Val v) 
@@ -21081,8 +21085,8 @@ public class BHL_TestVM : BHL_TestBase
       }
     );
 
-    globs.Define(cl);
-    cl.Define(new FieldSymbol("Int", globs.Type("int"),
+    ts.Define(cl);
+    cl.Define(new FieldSymbol("Int", ts.Type("int"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
@@ -21095,7 +21099,7 @@ public class BHL_TestVM : BHL_TestBase
         ctx.SetObj(c);
       }
     ));
-    cl.Define(new FieldSymbol("Flt", globs.Type("float"),
+    cl.Define(new FieldSymbol("Flt", ts.Type("float"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
@@ -21108,7 +21112,7 @@ public class BHL_TestVM : BHL_TestBase
         ctx.obj = c;
       }
     ));
-    cl.Define(new FieldSymbol("Str", globs.Type("string"),
+    cl.Define(new FieldSymbol("Str", ts.Type("string"),
       delegate(Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
@@ -21150,7 +21154,7 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  void BindRefC(GlobalScope globs, StringBuilder logs)
+  void BindRefC(TypeSystem ts, StringBuilder logs)
   {
     {
       var cl = new ClassSymbolNative("RefC", null,
@@ -21160,7 +21164,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
       {
-        var vs = new bhl.FieldSymbol("refs", globs.Type("int"),
+        var vs = new bhl.FieldSymbol("refs", ts.Type("int"),
           delegate(Val ctx, ref Val v)
           {
             v.num = ((RefC)ctx.obj).refs;
@@ -21170,14 +21174,14 @@ public class BHL_TestVM : BHL_TestBase
         );
         cl.Define(vs);
       }
-      globs.Define(cl);
+      ts.Define(cl);
     }
   }
 
-  void BindStartScriptInMgr(GlobalScope globs)
+  void BindStartScriptInMgr(TypeSystem ts)
   {
     {
-      var fn = new FuncSymbolNative("StartScriptInMgr", globs.Type("void"),
+      var fn = new FuncSymbolNative("StartScriptInMgr", ts.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             int spawns = (int)frm.stack.PopRelease().num;
             var ptr = frm.stack.Pop();
@@ -21191,10 +21195,10 @@ public class BHL_TestVM : BHL_TestBase
           }
       );
 
-      fn.Define(new FuncArgSymbol("script", globs.Type("void^()")));
-      fn.Define(new FuncArgSymbol("spawns", globs.Type("int")));
+      fn.Define(new FuncArgSymbol("script", ts.Type("void^()")));
+      fn.Define(new FuncArgSymbol("spawns", ts.Type("int")));
 
-      globs.Define(fn);
+      ts.Define(fn);
     }
   }
 

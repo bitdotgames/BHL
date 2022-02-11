@@ -23,8 +23,6 @@ public class Scope : IScope
 
   protected SymbolsDictionary members = new SymbolsDictionary();
 
-  Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
-
   public Scope(IScope fallback = null) 
   { 
     this.fallback = fallback;  
@@ -62,102 +60,6 @@ public class Scope : IScope
   public IScope GetFallbackScope() { return fallback; }
 
   public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }
-
-#if BHL_FRONT
-  public TypeRef Type(bhlParser.TypeContext parsed)
-  {
-    var str = parsed.GetText();
-    var type = Resolve(str) as IType;
-
-    if(type == null && parsed != null)
-    {    
-      if(parsed.fnargs() != null)
-        type = TypeSystem.GetFuncType(this, parsed);
-
-      //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
-      if(parsed.ARR() != null)
-      {
-        //checking if it's an array of func ptrs
-        if(type != null)
-          type = new GenericArrayTypeSymbol(this, new TypeRef(type));
-        else
-          type = new GenericArrayTypeSymbol(this, new TypeRef(parsed.NAME().GetText()));
-      }
-    }
-
-    var tr = new TypeRef(type, str);
-    tr.parsed = parsed;
-    return tr;
-  }
-
-  public TypeRef Type(bhlParser.RetTypeContext parsed)
-  {
-    var str = parsed == null ? "void" : parsed.GetText();
-    var type = Resolve(str) as IType;
-
-    if(type == null && parsed != null)
-    {    
-      if(parsed.type().Length > 1)
-      {
-        var mtype = new MultiType();
-        for(int i=0;i<parsed.type().Length;++i)
-          mtype.items.Add(this.Type(parsed.type()[i]));
-        mtype.Update();
-        type = mtype;
-      }
-      else
-        return this.Type(parsed.type()[0]);
-    }
-
-    var tr = new TypeRef(type, str);
-    tr.parsed = parsed;
-    return tr;
-  }
-#endif
-
-  public TypeRef Type(string name)
-  {
-    if(name.Length == 0)
-      throw new Exception("Bad type: '" + name + "'");
-
-    TypeRef tr;
-    if(type_cache.TryGetValue(name, out tr))
-      return tr;
-    
-    //let's check if the type was already explicitely defined
-    var t = Resolve(name) as IType;
-    if(t != null)
-    {
-      tr = new TypeRef(t);
-    }
-    else
-    {
-#if BHL_FRONT
-      if(TypeSystem.IsCompoundType(name))
-      {
-        var node = Frontend.ParseType(name);
-        if(node == null)
-          throw new Exception("Bad type: '" + name + "'");
-
-        if(node.type().Length == 1)
-          tr = this.Type(node.type()[0]);
-        else
-          tr = this.Type(node);
-      }
-      else
-#endif
-        tr = new TypeRef(name);
-    }
-
-    type_cache.Add(name, tr);
-    
-    return tr;
-  }
-
-  public TypeRef Type(IType t)
-  {
-    return new TypeRef(t);
-  }
 }
 
 public class GlobalScope : Scope 
@@ -170,14 +72,19 @@ public class GlobalScope : Scope
 public class ModuleScope : Scope
 {
   uint module_id;
-  public GlobalScope globs;
+  public TypeSystem ts;
+  public GlobalScope globs {
+    get {
+      return ts.globs;
+    }
+  }
 
   List<Scope> imports = new List<Scope>();
 
-  public ModuleScope(uint module_id, GlobalScope fallback) 
-    : base(fallback) 
+  public ModuleScope(uint module_id, TypeSystem ts) 
+    : base(ts.globs) 
   {
-    this.globs = fallback;
+    this.ts = ts;
     this.module_id = module_id;
   }
 

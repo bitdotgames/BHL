@@ -14,13 +14,13 @@ public class IsTestedAttribute : Attribute
 
 public static class BHL_TestExt 
 {
-  public static GlobalScope Clone(this GlobalScope globs)
+  public static TypeSystem Clone(this TypeSystem ts)
   {
-    var globs_copy = new GlobalScope();
-    var ms = globs.GetMembers();
+    var ts_copy = new TypeSystem();
+    var ms = ts.GetMembers();
     for(int i=0;i<ms.Count;++i)
-      globs_copy.Define(ms[i]);
-    return globs_copy;
+      ts_copy.Define(ms[i]);
+    return ts_copy;
   }
 
   public static string GetFullMessage(this Exception ex)
