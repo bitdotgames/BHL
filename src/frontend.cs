@@ -328,10 +328,10 @@ public class Frontend : bhlBaseVisitor<object>
     if(eval_type != null && eval_type != TypeSystem.Void)
     {
       //TODO: add a warning?
-      var mtype = eval_type as MultiType;
-      if(mtype != null)
+      var tuple = eval_type as TupleType;
+      if(tuple != null)
       {
-        for(int i=0;i<mtype.items.Count;++i)
+        for(int i=0;i<tuple.Count;++i)
           PeekAST().AddChild(AST_Util.New_PopValue());
       }
       else
@@ -1656,7 +1656,7 @@ public class Frontend : bhlBaseVisitor<object>
       else
         PushAST(ret_ast);
 
-      var fmret_type = fret_type as MultiType;
+      var fmret_type = fret_type as TupleType;
 
       //NOTE: there can be a situation when explen == 1 but the return type 
       //      is actually a multi return, like in the following case:
@@ -1678,7 +1678,7 @@ public class Frontend : bhlBaseVisitor<object>
         //      we simply ignore exp_node since return will take
         //      effect right before it
         if(Wrap(exp_item).eval_type != TypeSystem.Void)
-          ret_ast.num = fmret_type != null ? fmret_type.items.Count : 1;
+          ret_ast.num = fmret_type != null ? fmret_type.Count : 1;
 
         types.CheckAssign(func_symb.parsed, Wrap(exp_item));
         Wrap(ctx).eval_type = Wrap(exp_item).eval_type;
@@ -1688,10 +1688,10 @@ public class Frontend : bhlBaseVisitor<object>
         if(fmret_type == null)
           FireError(Location(ctx) + " : function doesn't support multi return");
 
-        if(fmret_type.items.Count != explen)
+        if(fmret_type.Count != explen)
           FireError(Location(ctx) + " : multi return size doesn't match destination");
 
-        var ret_type = new MultiType();
+        var ret_type = new TupleType();
 
         //NOTE: we traverse expressions in reversed order so that returned
         //      values are properly placed on a stack
@@ -1699,20 +1699,19 @@ public class Frontend : bhlBaseVisitor<object>
         {
           var exp = explist.exp()[i];
           Visit(exp);
-          ret_type.items.Add(types.Type(Wrap(exp).eval_type));
+          ret_type.Add(types.Type(Wrap(exp).eval_type));
         }
 
         //type checking is in proper order
         for(int i=0;i<explen;++i)
         {
           var exp = explist.exp()[i];
-          types.CheckAssign(fmret_type.items[i].Get(), Wrap(exp));
+          types.CheckAssign(fmret_type[i].Get(), Wrap(exp));
         }
 
-        ret_type.Update();
         Wrap(ctx).eval_type = ret_type;
 
-        ret_ast.num = fmret_type.items.Count;
+        ret_ast.num = fmret_type.Count;
       }
 
       if(fret_type != TypeSystem.Void)
@@ -2143,24 +2142,24 @@ public class Frontend : bhlBaseVisitor<object>
         if(pop_json_type)
           PopJsonType();
 
-        var mtype = assign_type as MultiType; 
+        var tuple = assign_type as TupleType; 
         if(vdecls.Length > 1)
         {
-          if(mtype == null)
+          if(tuple == null)
             FireError(Location(assign_exp) + " : multi return expected");
 
-          if(mtype.items.Count != vdecls.Length)
+          if(tuple.Count != vdecls.Length)
             FireError(Location(assign_exp) + " : multi return size doesn't match destination");
         }
-        else if(mtype != null)
+        else if(tuple != null)
           FireError(Location(assign_exp) + " : multi return size doesn't match destination");
       }
 
       if(assign_type != null)
       {
-        var mtype = assign_type as MultiType;
-        if(mtype != null)
-          types.CheckAssign(ptree, mtype.items[i].Get());
+        var tuple = assign_type as TupleType;
+        if(tuple != null)
+          types.CheckAssign(ptree, tuple[i].Get());
         else
           types.CheckAssign(ptree, Wrap(assign_exp));
       }

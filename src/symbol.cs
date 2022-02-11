@@ -644,18 +644,43 @@ public abstract class EnclosingSymbol : Symbol, IScope
   }
 }
 
-public class MultiType : IType
+public class TupleType : IType
 {
   public string name;
 
-  public List<TypeRef> items = new List<TypeRef>();
+  List<TypeRef> items = new List<TypeRef>();
 
   public string GetName() { return name; }
 
-  public void Update()
+  public int Count {
+    get {
+      return items.Count;
+    }
+  }
+
+  public TupleType(params TypeRef[] items)
+  {
+    foreach(var item in items)
+      this.items.Add(item);
+    Update();
+  }
+
+  public TypeRef this[int index]
+  {
+    get { 
+      return items[index]; 
+    }
+  }
+
+  public void Add(TypeRef item)
+  {
+    items.Add(item);
+    Update();
+  }
+
+  void Update()
   {
     string tmp = "";
-    //TODO: can this be more optimal?
     for(int i=0;i<items.Count;++i)
     {
       if(i > 0)
@@ -1354,11 +1379,10 @@ public class TypeSystem
     {    
       if(parsed.type().Length > 1)
       {
-        var mtype = new MultiType();
+        var tuple = new TupleType();
         for(int i=0;i<parsed.type().Length;++i)
-          mtype.items.Add(this.Type(parsed.type()[i]));
-        mtype.Update();
-        type = mtype;
+          tuple.Add(this.Type(parsed.type()[i]));
+        type = tuple;
       }
       else
         return this.Type(parsed.type()[0]);
