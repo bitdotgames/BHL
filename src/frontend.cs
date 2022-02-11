@@ -649,9 +649,10 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else
         {
-          //NOTE: for func bind symbols we assume default arguments  
+          //NOTE: for func native symbols we assume default arguments  
           //      are specified manually in bindings
-          if(func_symb is FuncSymbolNative || func_symb.GetDefaultArgsExprAt(i) != null)
+          if(func_symb is FuncSymbolNative || 
+            (func_symb is FuncSymbolScript fss && fss.GetDefaultArgsExprAt(i) != null))
           {
             int default_arg_idx = i - required_args_num;
             if(!args_info.UseDefaultArg(default_arg_idx, true))

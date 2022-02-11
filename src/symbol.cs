@@ -735,9 +735,6 @@ public class FuncSymbol : EnclosingSymbol, IScopeIndexed
   {
     this.parsed = parsed;
   }
-
-  public virtual IParseTree GetDefaultArgsExprAt(int idx) { return null; }
-
 #endif
 
   public FuncSymbol(string name, FuncSignature sig) 
@@ -938,7 +935,7 @@ public class FuncSymbolScript : FuncSymbol
     }
   }
 
-  public override IParseTree GetDefaultArgsExprAt(int idx) 
+  public IParseTree GetDefaultArgsExprAt(int idx) 
   { 
     if(fparams == null)
       return null; 
