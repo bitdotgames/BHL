@@ -84,6 +84,12 @@ namespace bhlsp
     public abstract RpcResult FindReferences(ReferenceParams args);
   }
   
+  public abstract class BHLSPTextDocumentSemanticTokensJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("textDocument/semanticTokens/full")]
+    public abstract RpcResult SemanticTokensFull(SemanticTokensParams args);
+  }
+  
   public abstract class BHLSPTextDocumentJsonRpcServiceTemplate : BHLSPJsonRpcService
   {
     [JsonRpcMethod("textDocument/completion")]
@@ -238,6 +244,20 @@ namespace bhlsp
         {
           capabilities.referencesProvider = true; //textDocument/references
         }
+
+        if(args.capabilities.textDocument.semanticTokens != null)
+        {
+          capabilities.semanticTokensProvider = new SemanticTokensOptions
+          {
+            full = true,
+            range = false,
+            legend = new SemanticTokensLegend
+            {
+              tokenTypes = BHLTextDocument.semanticTokenTypes,
+              tokenModifiers = BHLTextDocument.semanticTokenModifiers
+            }
+          };
+        }
       }
       
       return RpcResult.Success(new InitializeResult
@@ -318,9 +338,9 @@ namespace bhlsp
         {
           foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
           {
-            if(doc.funcDecls.ContainsKey(funcName))
+            if(doc.FuncDecls.ContainsKey(funcName))
             {
-              funcDecl = doc.funcDecls[funcName];
+              funcDecl = doc.FuncDecls[funcName];
               break;
             }
           }
@@ -545,9 +565,9 @@ namespace bhlsp
             {
               foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
               {
-                if(doc.varDeclars.ContainsKey(callExpMemberAccessName))
+                if(doc.VarDeclars.ContainsKey(callExpMemberAccessName))
                 {
-                  var varDeclareAssign = doc.varDeclars[callExpMemberAccessName];
+                  var varDeclareAssign = doc.VarDeclars[callExpMemberAccessName];
                   classTypeName = varDeclareAssign.varDeclare().type().NAME().GetText();
                   break;
                 }
@@ -563,9 +583,9 @@ namespace bhlsp
           
           foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
           {
-            if(doc.classDecls.ContainsKey(classTypeName))
+            if(doc.ClassDecls.ContainsKey(classTypeName))
             {
-              classDecl = doc.classDecls[classTypeName];
+              classDecl = doc.ClassDecls[classTypeName];
               classDeclBhlDocument = doc;
               break;
             }
@@ -624,9 +644,9 @@ namespace bhlsp
           
           foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
           {
-            if(doc.funcDecls.ContainsKey(callExpName))
+            if(doc.FuncDecls.ContainsKey(callExpName))
             {
-              funcDecl = doc.funcDecls[callExpName];
+              funcDecl = doc.FuncDecls[callExpName];
               funcDeclBhlDocument = doc;
               break;
             }
@@ -655,9 +675,9 @@ namespace bhlsp
           
             foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
             {
-              if(doc.funcDecls.ContainsKey(funcName))
+              if(doc.FuncDecls.ContainsKey(funcName))
               {
-                funcDecl = doc.funcDecls[funcName];
+                funcDecl = doc.FuncDecls[funcName];
                 funcDeclBhlDocument = doc;
                 break;
               }
@@ -759,9 +779,9 @@ namespace bhlsp
           
           foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
           {
-            if(doc.funcDecls.ContainsKey(callExpName))
+            if(doc.FuncDecls.ContainsKey(callExpName))
             {
-              funcDecl = doc.funcDecls[callExpName];
+              funcDecl = doc.FuncDecls[callExpName];
               break;
             }
           }
@@ -856,7 +876,7 @@ namespace bhlsp
             if(!CanCheck(bhlDocument, document.uri.LocalPath))
               continue;
             
-            foreach(var bhlDocumentFuncDecl in bhlDocument.funcDecls.Values)
+            foreach(var bhlDocumentFuncDecl in bhlDocument.FuncDecls.Values)
             {
               foreach(IParseTree node in BHLSPUtil.DFS(bhlDocumentFuncDecl))
               {
@@ -893,7 +913,7 @@ namespace bhlsp
 
     bool CanCheck(BHLTextDocument document, string path)
     {
-      foreach(var import in document.imports)
+      foreach(var import in document.Imports)
       {
         string importPath = BHLSPWorkspace.self.ResolveImportPath(document.uri.LocalPath, import, ".bhl");
         if(importPath == path)
@@ -901,6 +921,23 @@ namespace bhlsp
       }
 
       return false;
+    }
+  }
+
+  public class BHLSPTextDocumentSemanticTokensJsonRpcService : BHLSPTextDocumentSemanticTokensJsonRpcServiceTemplate
+  {
+    public override RpcResult SemanticTokensFull(SemanticTokensParams args)
+    {
+      BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri);
+      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+      {
+        return RpcResult.Success(new SemanticTokens
+        {
+          data = document.DataSemanticTokens.ToArray()
+        });
+      }
+      
+      return RpcResult.Success();
     }
   }
 }

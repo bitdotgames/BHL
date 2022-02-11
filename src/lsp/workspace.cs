@@ -117,61 +117,140 @@ namespace bhlsp
 
   public class BHLTextDocument : BHLSPTextDocument
   {
-    public Dictionary<string, bhlParser.FuncDeclContext> funcDecls = new Dictionary<string, bhlParser.FuncDeclContext>();
-    public Dictionary<string, bhlParser.ClassDeclContext> classDecls = new Dictionary<string, bhlParser.ClassDeclContext>();
-    public Dictionary<string, bhlParser.VarDeclareAssignContext> varDeclars = new Dictionary<string, bhlParser.VarDeclareAssignContext>();
+    private class BHLTextDocumentVisitor : bhlBaseVisitor<object>
+    {
+      public readonly Dictionary<string, bhlParser.FuncDeclContext> funcDecls = new Dictionary<string, bhlParser.FuncDeclContext>();
+      public readonly Dictionary<string, bhlParser.ClassDeclContext> classDecls = new Dictionary<string, bhlParser.ClassDeclContext>();
+      public readonly Dictionary<string, bhlParser.VarDeclareAssignContext> varDeclars = new Dictionary<string, bhlParser.VarDeclareAssignContext>();
+      public readonly List<string> imports = new List<string>();
+      public readonly List<uint> dataSemanticTokens = new List<uint>();
+      
+      private int next;
+      private BHLTextDocument document;
+
+      public void VisitDocument(BHLTextDocument document)
+      {
+        this.document = document;
+        next = 0;
+        
+        imports.Clear();
+        funcDecls.Clear();
+        classDecls.Clear();
+        varDeclars.Clear();
+        dataSemanticTokens.Clear();
+        
+        VisitProgram(document.ToParser().program());
+      }
+      
+      public override object VisitProgram(bhlParser.ProgramContext ctx)
+      {
+        for(var i=0;i<ctx.progblock().Length;++i)
+          Visit(ctx.progblock()[i]);
+        
+        return null;
+      }
+
+      public override object VisitClassDecl(bhlParser.ClassDeclContext ctx)
+      {
+        var classDeclName = ctx.NAME().GetText();
+        if(!classDecls.ContainsKey(classDeclName))
+          classDecls.Add(classDeclName, ctx);
+        
+        AddToken(ctx.NAME(), SemanticTokenTypes.@class);
+        
+        if(ctx.classEx() != null)
+          AddToken(ctx.classEx().NAME(), SemanticTokenTypes.@class);
+        
+        return null;
+      }
+      
+      public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
+      {
+        var funcDeclName = ctx.NAME()?.GetText();
+        if(!string.IsNullOrEmpty(funcDeclName) && !funcDecls.ContainsKey(funcDeclName))
+        {
+          funcDecls.Add(funcDeclName, ctx);
+          AddToken(ctx.NAME(), SemanticTokenTypes.function);
+        }
+        
+        return null;
+      }
+
+      public override object VisitVarDeclareAssign(bhlParser.VarDeclareAssignContext ctx)
+      {
+        string varDeclareAssignName = ctx.varDeclare()?.NAME()?.GetText();
+        if(!string.IsNullOrEmpty(varDeclareAssignName) && !varDeclars.ContainsKey(varDeclareAssignName))
+          varDeclars.Add(varDeclareAssignName, ctx);
+        
+        return null;
+      }
+      
+      public override object VisitImports(bhlParser.ImportsContext ctx)
+      {
+        foreach(var mimport in ctx.mimport())
+        {
+          var import = mimport.NORMALSTRING().GetText();
+          //removing quotes
+          import = import.Substring(1, import.Length-2);
+          imports.Add(import);
+        }
+        
+        return null;
+      }
+      
+      private void AddToken(ITerminalNode node, string tokenType)
+      {
+        if(string.IsNullOrEmpty(tokenType) || node == null)
+          return;
+      
+        var t = Array.IndexOf(semanticTokenTypes, tokenType);
+        if(t < 0)
+          return;
+      
+        var nextStart = document.GetLineColumn(next);
+        var lineColumnSymbol = document.GetLineColumn(node.Symbol.StartIndex);
+
+        var diffLine = lineColumnSymbol.Item1 - nextStart.Item1;
+        var diffColumn = diffLine != 0 ? lineColumnSymbol.Item2 : lineColumnSymbol.Item2 - nextStart.Item2;
+        // line
+        dataSemanticTokens.Add((uint)diffLine);
+        // startChar
+        dataSemanticTokens.Add((uint)diffColumn);
+        // length
+        dataSemanticTokens.Add((uint)(node.Symbol.StopIndex - node.Symbol.StartIndex + 1));
+        // tokenType
+        dataSemanticTokens.Add((uint)t);
+        // tokenModifiers
+        dataSemanticTokens.Add(0);
+
+        next = node.Symbol.StartIndex;
+      }
+    }
     
-    public List<string> imports = new List<string>();
+    public static string[] semanticTokenTypes = 
+    {
+      SemanticTokenTypes.@class,
+      SemanticTokenTypes.comment,
+      SemanticTokenTypes.function
+    };
+    
+    public static string[] semanticTokenModifiers = 
+    {
+      SemanticTokenModifiers.definition
+    };
+
+    private readonly BHLTextDocumentVisitor visitor = new BHLTextDocumentVisitor();
+
+    public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => visitor.classDecls;
+    public Dictionary<string, bhlParser.VarDeclareAssignContext> VarDeclars => visitor.varDeclars;
+    public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => visitor.funcDecls;
+    public List<string> Imports => visitor.imports;
+    public List<uint> DataSemanticTokens => visitor.dataSemanticTokens;
     
     public override void Sync(string text)
     {
       base.Sync(text);
-      
-      imports.Clear();
-      funcDecls.Clear();
-      classDecls.Clear();
-      varDeclars.Clear();
-      
-      foreach(var progblock in ToParser().program().progblock())
-      {
-        var imports = progblock.imports();
-        if(imports != null)
-        {
-          foreach(var mimport in imports.mimport())
-          {
-            var import = mimport.NORMALSTRING().GetText();
-            //removing quotes
-            import = import.Substring(1, import.Length-2);
-            this.imports.Add(import);
-          }
-        }
-
-        var decls = progblock.decls();
-        if(decls != null)
-        {
-          foreach(var decl in decls.decl())
-          {
-            var fndecl = decl.funcDecl();
-            if(fndecl?.NAME() != null)
-              funcDecls.Add(fndecl.NAME().GetText(), fndecl);
-            
-            var classDecl = decl.classDecl();
-            if(classDecl?.NAME() != null)
-              classDecls.Add(classDecl.NAME().GetText(), classDecl);
-            
-            var varDeclareAssign = decl.varDeclareAssign();
-            if(varDeclareAssign != null)
-            {
-              string varDeclareAssignName = varDeclareAssign.varDeclare()?.NAME()?.GetText();
-              if(!string.IsNullOrEmpty(varDeclareAssignName))
-              {
-                if(!varDeclars.ContainsKey(varDeclareAssignName))
-                  varDeclars.Add(varDeclareAssignName, varDeclareAssign);
-              }
-            }
-          }
-        }
-      }
+      visitor.VisitDocument(this);
     }
     
     public bhlParser ToParser()
@@ -297,12 +376,13 @@ namespace bhlsp
             text = System.Text.Encoding.Default.GetString(buffer);
           }
           
-          document.Sync(text);
-          
           lock(lockAdd)
           {
             if(!documents.ContainsKey(path))
+            {
+              document.Sync(text);
               documents.Add(path, document);
+            }
           }
         }
       }
@@ -358,7 +438,7 @@ namespace bhlsp
         BHLTextDocument document = toVisit.Dequeue();
         
         string ext = Path.GetExtension(document.uri.AbsolutePath);
-        foreach(var import in document.imports)
+        foreach(var import in document.Imports)
         {
           string path = ResolveImportPath(document.uri.LocalPath, import, ext);
           if(!string.IsNullOrEmpty(path))

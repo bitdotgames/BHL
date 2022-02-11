@@ -2390,4 +2390,79 @@ namespace bhlsp
 		 */
 	  public Range range { get; set; }
   }
+  
+  public class SemanticTokensParams : WorkDoneProgressParams
+  {
+	  /**
+		 * The text document.
+		 */
+	  public TextDocumentIdentifier textDocument { get; set; }
+	  
+	  /**
+		 * An optional token that a server can use to report partial results (e.g.
+		 * streaming) to the client.
+		 */
+	  public SumType<int, string> partialResultToken { get; set; }
+  }
+  
+  public class SemanticTokens
+  {
+	  /**
+		 * An optional result id. If provided and clients support delta updating
+		 * the client will include the result id in the next semantic token request.
+		 * A server can then instead of computing all semantic tokens again simply
+		 * send a delta.
+		 */
+	  public string resultId { get; set; }
+
+	  /**
+		 * The actual tokens.
+		 */
+	  public uint[] data { get; set; }
+  }
+  
+  public class SemanticTokenTypes
+  {
+	  public static string @namespace     = "namespace";
+	  
+	  /**
+	   * Represents a generic type. Acts as a fallback for types which
+	   * can't be mapped to a specific type like class or enum.
+	   */
+		public static string @type          = "type";
+		public static string @class         = "class";
+		public static string @enum          = "enum";
+		public static string @interface     = "interface";
+		public static string @struct        = "struct";
+		public static string @typeParameter = "typeParameter";
+		public static string @parameter     = "parameter";
+		public static string @variable      = "variable";
+		public static string @property      = "property";
+		public static string @enumMember    = "enumMember";
+		public static string @event         = "event";
+		public static string @function      = "function";
+		public static string @method        = "method";
+		public static string @macro         = "macro";
+		public static string @keyword       = "keyword";
+		public static string @modifier      = "modifier";
+		public static string @comment       = "comment";
+		public static string @string        = "string";
+		public static string @number        = "number";
+		public static string @regexp        = "regexp";
+	  public static string @operator      = "operator";
+  }
+  
+  public class SemanticTokenModifiers
+  {
+	  public static string @declaration = "declaration";
+	  public static string @definition = "definition";
+	  public static string @readonly = "readonly";
+	  public static string @static = "static";
+	  public static string @deprecated = "deprecated";
+	  public static string @abstract = "abstract";
+	  public static string @async = "async";
+	  public static string @modification = "modification";
+	  public static string @documentation = "documentation";
+	  public static string @defaultLibrary = "defaultLibrary";
+  }
 }
