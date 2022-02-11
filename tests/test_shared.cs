@@ -18,7 +18,8 @@ public static class BHL_TestExt
   {
     var ts_copy = new TypeSystem();
     var ms = ts.GetMembers();
-    for(int i=0;i<ms.Count;++i)
+    //let's skip already defined built-ins
+    for(int i=ts_copy.GetMembers().Count;i<ms.Count;++i)
       ts_copy.Define(ms[i]);
     return ts_copy;
   }

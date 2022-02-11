@@ -1249,7 +1249,7 @@ public class TypeSystem
     globs.Define(Any);
 
     //for all generic arrays
-    globs.Define(new GenericArrayTypeSymbol(this, Type("")));
+    globs.Define(new GenericArrayTypeSymbol(this, new TypeRef(this, "")));
 
     {
       var fn = new FuncSymbolNative("suspend", Type("void"), 
