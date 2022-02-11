@@ -16,9 +16,14 @@ public interface IType
 
 public class TypeRef
 {
-  public IType type;
+  IType _type;
+  public IType type { 
+    get {
+      return Get();
+    }
+  }
+  public string name { get ; private set;}
   public bool is_ref;
-  public string name;
   TypeSystem ts;
 #if BHL_FRONT
   //NOTE: parse location of the type
@@ -29,40 +34,25 @@ public class TypeRef
   {
     this.ts = ts;
     this.name = name;
-    this.type = null;
-    this.is_ref = false;
+    this._type = null;
   }
 
   public TypeRef(IType type)
   {
     this.name = type.GetName();
-    this.type = type;
-    this.is_ref = false;
-  }
-
-  public TypeRef(IType type, string name)
-  {
-    this.type = type;
-    this.name = name;
-    this.is_ref = false;
-  }
-
-  public bool IsEmpty()
-  {
-    return type == null && string.IsNullOrEmpty(name);
+    this._type = type;
   }
 
   public IType Get()
   {
-    if(type != null)
-      return type;
+    if(_type != null)
+      return _type;
 
     if(string.IsNullOrEmpty(name))
       return null;
 
-    type = (bhl.IType)ts.Resolve(name);
-
-    return type;
+    _type = (bhl.IType)ts.Resolve(name);
+    return _type;
   }
 }
 
@@ -1349,7 +1339,7 @@ public class TypeSystem
       }
     }
 
-    var tr = new TypeRef(type, str);
+    var tr = type != null ? new TypeRef(type) : new TypeRef(this, str);
     tr.parsed = parsed;
     return tr;
   }
@@ -1373,7 +1363,7 @@ public class TypeSystem
         return this.Type(parsed.type()[0]);
     }
 
-    var tr = new TypeRef(type, str);
+    var tr = type != null ? new TypeRef(type) : new TypeRef(this, str);
     tr.parsed = parsed;
     return tr;
   }
