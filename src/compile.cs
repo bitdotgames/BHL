@@ -174,7 +174,7 @@ public class ModuleCompiler : AST_Visitor
     this.types = types;
     if(module_path == null)
       module_path = new ModulePath("", "");
-    this.symbols = new ModuleScope(module_path.id, types);
+    this.symbols = new ModuleScope(module_path.id, types.globs);
     this.ast = ast;
     this.module_path = module_path;
 

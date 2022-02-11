@@ -1222,11 +1222,20 @@ public class TypeSystem
 
   public GlobalScope globs = new GlobalScope();
 
+  List<Scope> links = new List<Scope>();
+
   Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
 
   public TypeSystem()
   {
     InitBuiltins(globs);
+  }
+
+  public void Link(Scope other)
+  {
+    if(links.Contains(other))
+      return;
+    links.Add(other);
   }
 
   void InitBuiltins(GlobalScope globs) 
@@ -1309,11 +1318,27 @@ public class TypeSystem
 
   public Symbol Resolve(string name) 
   {
-    return globs.Resolve(name);
+    var s = globs.Resolve(name);
+    if(s != null)
+      return s;
+
+    foreach(var lnk in links)
+    {
+      s = lnk.Resolve(name);
+      if(s != null)
+        return s;
+    }
+    return null;
   }
 
   public void Define(Symbol sym)
   {
+    foreach(var lnk in links)
+    {
+      if(lnk.Resolve(sym.name) != null)
+        throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+    }
+
     globs.Define(sym);
   }
 

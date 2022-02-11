@@ -72,19 +72,13 @@ public class GlobalScope : Scope
 public class ModuleScope : Scope
 {
   uint module_id;
-  public TypeSystem ts;
-  public GlobalScope globs {
-    get {
-      return ts.globs;
-    }
-  }
+  public GlobalScope globs;
 
   List<Scope> imports = new List<Scope>();
 
-  public ModuleScope(uint module_id, TypeSystem ts) 
-    : base(ts.globs) 
+  public ModuleScope(uint module_id, GlobalScope globs) 
+    : base(globs) 
   {
-    this.ts = ts;
     this.module_id = module_id;
   }
 

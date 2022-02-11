@@ -188,8 +188,10 @@ public class Frontend : bhlBaseVisitor<object>
 
     this.tokens = tokens;
     this.decls_only = decls_only;
-    this.types = ts;
-    this.mscope = new ModuleScope(module.id, ts);
+    types = ts;
+    this.mscope = new ModuleScope(module.id, ts.globs);
+    //TODO: maybe TypeSystem should rather be a scope itself?
+    types.Link(mscope);
     this.mreg = mreg;
 
     curr_scope = this.mscope;
@@ -312,8 +314,6 @@ public class Frontend : bhlBaseVisitor<object>
     //NOTE: null means module is already imported
     if(module != null)
     {
-      //TODO: we should rather add it to 'fallback sources'
-      //      but not just append values into one storage
       mscope.Import(module.symbols);
       ast.module_ids.Add(module.id);
       ast.module_names.Add(import);
