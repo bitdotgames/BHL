@@ -9,29 +9,32 @@ public class UserError : Exception
 {
   public string file;
 
-  public UserError(string file, string str)
-    : base(str)
+  public UserError(string file, string msg)
+    : base(msg)
   {
     this.file = file;
   }
 
-  public UserError(string str)
-    : base(str)
+  public UserError(string msg)
+    : base(msg)
   {
     this.file = null;
   }
 
   //for proper rethrowing
-  public UserError(UserError e)
-    : base("", e)
+  public UserError(string file, string msg, Exception e)
+    : base(msg, e)
   {
-    this.file = e.file;
+    this.file = file;
   }
 
   public string ToJson()
   {
     string msg = "";
-    if(InnerException != null)
+    //if the inner exception is a UserError,
+    //let's take its message since it contains 
+    //an actuall error and was rethrown
+    if(InnerException is UserError)
       msg = InnerException.Message;
     else
       msg = Message;

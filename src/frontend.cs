@@ -117,7 +117,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
     catch(ParseError e)
     {
-      throw new UserError(module.file_path, e.Message);
+      throw new UserError(module.file_path, e.Message, e);
     }
   }
 
@@ -134,7 +134,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
     catch(ParseError e)
     {
-      throw new UserError(module.file_path, e.Message);
+      throw new UserError(module.file_path, e.Message, e);
     }
   }
 
@@ -146,7 +146,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
     catch(ParseError e)
     {
-      throw new UserError(file_path, e.Message);
+      throw new UserError(file_path, e.Message, e);
     }
   }
 
@@ -282,7 +282,7 @@ public class Frontend : bhlBaseVisitor<object>
       //NOTE: if file is not set we need to update it and re-throw the exception
       if(e.file == null)
         e.file = curr_module.file_path;
-      throw new UserError(e);
+      throw new UserError(e.file, null/*let's not duplicate the message*/, e);
     }
 
     return null;
