@@ -406,7 +406,7 @@ public class Build
       catch(Exception e)
       {
         Console.WriteLine(e.Message + " " + e.StackTrace);
-        w.error = new UserError(w.files[i], e.Message);
+        w.error = new UserError(w.files[i], e.Message, e);
       }
 
       sw.Stop();
@@ -699,7 +699,7 @@ public class Build
       catch(Exception e)
       {
         Console.WriteLine(e.Message + " " + e.StackTrace);
-        w.error = new UserError(w.files[i], e.Message);
+        w.error = new UserError(w.files[i], e.Message, e);
       }
 
       sw.Stop();
