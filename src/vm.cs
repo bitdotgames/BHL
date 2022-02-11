@@ -945,6 +945,7 @@ public class VM
           //TODO: define symbol as well?
           var fd = new AST_FuncDecl();
           fd.name = constants[name_idx].str;
+          fd.type = "void"; //TODO: temp hack
           fd.ip_addr = ip_addr;
           if(curr_class != null)
           {
