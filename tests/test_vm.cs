@@ -13605,7 +13605,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(c);
     vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual("10;14.2;Hey", log.ToString());
+    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -13636,7 +13636,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(c);
     vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual("2;15.1;Foo-10;14.2;Hey", log.ToString());
+    AssertEqual("2;15.1;Foo-10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -14227,7 +14227,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(c);
     vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual("10;14.5;Hey", log.ToString());
+    AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -16131,7 +16131,7 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(c);
     vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual("10;14.5;Hey", log.ToString());
+    AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -17777,7 +17777,7 @@ public class BHL_TestVM : BHL_TestBase
 
     vm.LoadModule("bhl2");
     Execute(vm, "test");
-    AssertEqual("10;14.2;Hey", log.ToString());
+    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
     CommonChecks(vm);
   }
 
