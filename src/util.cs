@@ -21,9 +21,21 @@ public class UserError : Exception
     this.file = null;
   }
 
+  //for proper rethrowing
+  public UserError(UserError e)
+    : base("", e)
+  {
+    this.file = e.file;
+  }
+
   public string ToJson()
   {
-    var msg = Message.Replace("\\", " ");
+    string msg = "";
+    if(InnerException != null)
+      msg = InnerException.Message;
+    else
+      msg = Message;
+    msg = msg.Replace("\\", " ");
     msg = msg.Replace("\n", " ");
     msg = msg.Replace("\r", " ");
     msg = msg.Replace("\"", "\\\""); 

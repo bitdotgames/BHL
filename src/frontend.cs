@@ -277,13 +277,12 @@ public class Frontend : bhlBaseVisitor<object>
       
       Visit(ctx.decls()); 
     }
-    //TODO: preserve original error stacktrace!
     catch(UserError e)
     {
       //NOTE: if file is not set we need to update it and re-throw the exception
       if(e.file == null)
         e.file = curr_module.file_path;
-      throw e;
+      throw new UserError(e);
     }
 
     return null;
@@ -1173,8 +1172,8 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
 
     Wrap(ctx).eval_type = type == EnumUnaryOp.NEG ? 
-      TypeSystem.TypeForUnaryMinus(Wrap(exp)) : 
-      TypeSystem.TypeForLogicalNot(Wrap(exp));
+      TypeSystem.CheckUnaryMinus(Wrap(exp)) : 
+      TypeSystem.CheckLogicalNot(Wrap(exp));
 
     PeekAST().AddChild(ast);
 
@@ -1340,7 +1339,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
 
-      Wrap(ctx).eval_type = TypeSystem.TypeForBinOpOverload(mscope, wlhs, wrhs, op_func);
+      Wrap(ctx).eval_type = TypeSystem.CheckBinOpOverload(mscope, wlhs, wrhs, op_func);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
@@ -1353,16 +1352,16 @@ public class Frontend : bhlBaseVisitor<object>
       op_type == EnumBinaryOp.EQ || 
       op_type == EnumBinaryOp.NQ
     )
-      Wrap(ctx).eval_type = TypeSystem.TypeForEqOp(wlhs, wrhs);
+      Wrap(ctx).eval_type = TypeSystem.CheckEqBinOp(wlhs, wrhs);
     else if(
       op_type == EnumBinaryOp.GT || 
       op_type == EnumBinaryOp.GTE ||
       op_type == EnumBinaryOp.LT || 
       op_type == EnumBinaryOp.LTE
     )
-      Wrap(ctx).eval_type = TypeSystem.TypeForRtlOp(wlhs, wrhs);
+      Wrap(ctx).eval_type = TypeSystem.CheckRtlBinOp(wlhs, wrhs);
     else
-      Wrap(ctx).eval_type = TypeSystem.TypeForBinOp(wlhs, wrhs);
+      Wrap(ctx).eval_type = TypeSystem.CheckBinOp(wlhs, wrhs);
 
     PeekAST().AddChild(ast);
   }
@@ -1378,7 +1377,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp_1);
     PopAST();
 
-    Wrap(ctx).eval_type = TypeSystem.TypeForBitOp(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.CheckBitOp(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1396,7 +1395,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp_1);
     PopAST();
 
-    Wrap(ctx).eval_type = TypeSystem.TypeForBitOp(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.CheckBitOp(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1422,7 +1421,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
     ast.AddChild(tmp1);
 
-    Wrap(ctx).eval_type = TypeSystem.TypeForLogicalOp(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.CheckLogicalOp(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -1448,7 +1447,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
     ast.AddChild(tmp1);
 
-    Wrap(ctx).eval_type = TypeSystem.TypeForLogicalOp(Wrap(exp_0), Wrap(exp_1));
+    Wrap(ctx).eval_type = TypeSystem.CheckLogicalOp(Wrap(exp_0), Wrap(exp_1));
 
     PeekAST().AddChild(ast);
 

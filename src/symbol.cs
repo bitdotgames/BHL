@@ -1165,6 +1165,7 @@ static public class TypeSystem
   static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any");
   static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null");
 
+#if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
   {
     { new Tuple<IType, IType>(String, String), String },
@@ -1225,6 +1226,7 @@ static public class TypeSystem
     { new Tuple<IType, IType>(Any,    Float),     Float  },
     { new Tuple<IType, IType>(Any,    Any),       Any    },
   };
+#endif
 
   static public GlobalScope CreateBuiltins()
   {
@@ -1392,11 +1394,8 @@ static public class TypeSystem
     return new FuncType(ret_type, arg_types);
   }
 
-  static public IType GetResultType(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree a, WrappedParseTree b) 
+  static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree a, WrappedParseTree b) 
   {
-    if(a.eval_type == b.eval_type)
-      return a.eval_type;
-
     IType result;
     if(!table.TryGetValue(new Tuple<IType, IType>(a.eval_type, b.eval_type), out result))
     {
@@ -1465,7 +1464,6 @@ static public class TypeSystem
 
     IType cast_type = null;
     cast_from_to.TryGetValue(new Tuple<IType, IType>(rtype, ltype), out cast_type);
-
     if(cast_type == ltype)
       return;
 
@@ -1477,7 +1475,7 @@ static public class TypeSystem
     );
   }
 
-  static public IType TypeForBinOp(WrappedParseTree a, WrappedParseTree b) 
+  static public IType CheckBinOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(!IsBinOpCompatible(a.eval_type))
       throw new UserError(
@@ -1489,17 +1487,17 @@ static public class TypeSystem
         b.Location()+" operator is not overloaded"
       );
 
-    return GetResultType(bin_op_res_type, a, b);
+    return MatchTypes(bin_op_res_type, a, b);
   }
 
-  static public IType TypeForBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
+  static public IType CheckBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
   {
     var op_func_arg = op_func.GetArgs()[0];
     CheckAssign(op_func_arg.type.Get(scope), b);
     return op_func.GetReturnType();
   }
 
-  static public IType TypeForRtlOp(WrappedParseTree a, WrappedParseTree b) 
+  static public IType CheckRtlBinOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(!IsRtlOpCompatible(a.eval_type))
       throw new UserError(
@@ -1511,15 +1509,16 @@ static public class TypeSystem
         b.Location()+" : operator is not overloaded"
       );
 
-    GetResultType(rtl_op_res_type, a, b);
-    //TODO: due to some weirdness of GetResultType
-    //      (which might return non table type in case arguments are the same) 
-    //      we need to enforce bool type
+    MatchTypes(rtl_op_res_type, a, b);
+
     return Bool;
   }
 
-  static public IType TypeForEqOp(WrappedParseTree a, WrappedParseTree b) 
+  static public IType CheckEqBinOp(WrappedParseTree a, WrappedParseTree b) 
   {
+    if(a.eval_type == b.eval_type)
+      return Bool;
+
     if(a.eval_type is ClassSymbol && b.eval_type is ClassSymbol)
       return Bool;
 
@@ -1528,14 +1527,12 @@ static public class TypeSystem
         ((b.eval_type is ClassSymbol || b.eval_type is FuncType) && a.eval_type == Null))
       return Bool;
 
-    GetResultType(eq_op_res_type, a, b);
-    //TODO: due to some weirdness of GetResultType
-    //      (which might return non table type in case arguments are the same) 
-    //      we need to enforce bool type
+    MatchTypes(eq_op_res_type, a, b);
+
     return Bool;
   }
 
-  static public IType TypeForUnaryMinus(WrappedParseTree a) 
+  static public IType CheckUnaryMinus(WrappedParseTree a) 
   {
     if(!(a.eval_type == Int || a.eval_type == Float)) 
       throw new UserError(a.Location()+" : must be numeric type");
@@ -1543,7 +1540,7 @@ static public class TypeSystem
     return a.eval_type;
   }
 
-  static public IType TypeForBitOp(WrappedParseTree a, WrappedParseTree b) 
+  static public IType CheckBitOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type != Int) 
       throw new UserError(a.Location()+" : must be int type");
@@ -1554,7 +1551,7 @@ static public class TypeSystem
     return Int;
   }
 
-  static public IType TypeForLogicalOp(WrappedParseTree a, WrappedParseTree b) 
+  static public IType CheckLogicalOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type != Bool) 
       throw new UserError(a.Location()+" : must be bool type");
@@ -1565,7 +1562,7 @@ static public class TypeSystem
     return Bool;
   }
 
-  static public IType TypeForLogicalNot(WrappedParseTree a) 
+  static public IType CheckLogicalNot(WrappedParseTree a) 
   {
     if(a.eval_type != Bool) 
       throw new UserError(a.Location()+" : must be bool type");
