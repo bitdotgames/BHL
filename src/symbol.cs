@@ -14,6 +14,34 @@ public interface IType
   string GetName();
 }
 
+public struct TypeName
+{
+  public string name;
+  public TypeRef tr;
+
+  public static implicit operator TypeName(string name)
+  {
+    return new TypeName(name);
+  }
+
+  public static implicit operator TypeName(TypeRef tr)
+  {
+    return new TypeName(tr);
+  }
+
+  public TypeName(string name)
+  {
+    this.name = name;
+    this.tr = null;
+  }
+
+  public TypeName(TypeRef tr)
+  {
+    this.name = null;
+    this.tr = tr;
+  }
+}
+
 public class TypeRef
 {
   IType type;
@@ -22,19 +50,33 @@ public class TypeRef
   TypeSystem ts;
 #if BHL_FRONT
   //NOTE: parse location of the type
-  public IParseTree parsed;
+  public IParseTree parsed { get; }
 #endif
 
-  public TypeRef(TypeSystem ts, string name)
+  public TypeRef(TypeSystem ts, string name
+#if BHL_FRONT
+, IParseTree parsed = null
+#endif
+  )
   {
     this.ts = ts;
     this.name = name;
+#if BHL_FRONT
+    this.parsed = parsed;
+#endif
   }
 
-  public TypeRef(IType type)
+  public TypeRef(IType type
+#if BHL_FRONT
+, IParseTree parsed = null
+#endif
+  )
   {
     this.name = type.GetName();
     this.type = type;
+#if BHL_FRONT
+    this.parsed = parsed;
+#endif
   }
 
   public IType Get()
@@ -556,8 +598,8 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolScript : FieldSymbol
 {
-  public FieldSymbolScript(TypeSystem ts, string name, string type) 
-    : base(name, ts.Type(type), null, null, null)
+  public FieldSymbolScript(string name, TypeRef type) 
+    : base(name, type, null, null, null)
   {
     this.getter = Getter;
     this.setter = Setter;
@@ -701,6 +743,14 @@ public class FuncSignature : IType
 
   public string GetName() { return name; }
 
+  public FuncSignature(TypeRef ret_type, params TypeRef[] arg_types)
+  {
+    this.ret_type = ret_type;
+    foreach(var arg_type in arg_types)
+      this.arg_types.Add(arg_type);
+    Update();
+  }
+
   public FuncSignature(TypeRef ret_type, List<TypeRef> arg_types)
   {
     this.ret_type = ret_type;
@@ -822,7 +872,7 @@ public class FuncSymbolScript : FuncSymbol
     TypeRef ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
-    : this(ts, decl, ret_type)
+    : this(ts, decl, new FuncSignature(ret_type))
   {
     this.parsed = parsed;
     this.fparams = fparams;
@@ -853,8 +903,8 @@ public class FuncSymbolScript : FuncSymbol
   }
 #endif
 
-  public FuncSymbolScript(TypeSystem ts, AST_FuncDecl decl, TypeRef ret_type = null)
-    : base(decl.name, new FuncSignature(ret_type == null ? ts.Type(decl.type) : ret_type))
+  public FuncSymbolScript(TypeSystem ts, AST_FuncDecl decl, FuncSignature sig)
+    : base(decl.name, sig)
   {
     this.decl = decl;
 
@@ -862,7 +912,9 @@ public class FuncSymbolScript : FuncSymbol
     {
       var tmp = (AST_Interim)decl.children[0];
       var var_decl = (AST_VarDecl)tmp.children[i];
-      var arg_type = ts.Type(var_decl.type);
+      //TODO: add proper serialization of types 
+      //var arg_type = ts.Type(var_decl.type);
+      var arg_type = ts.Type("void");
       arg_type.is_ref = var_decl.is_ref;
       GetSignature().AddArg(arg_type);
     }
@@ -1236,8 +1288,6 @@ public class TypeSystem
 
   List<Scope> links = new List<Scope>();
 
-  Dictionary<string, TypeRef> type_cache = new Dictionary<string, TypeRef>();
-
   public TypeSystem()
   {
     InitBuiltins(globs);
@@ -1304,7 +1354,7 @@ public class TypeSystem
           frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
-        new FuncArgSymbol("p", Type("void^()"))
+        new FuncArgSymbol("p", TypeFunc("void"))
       );
       globs.Define(fn);
     }
@@ -1349,88 +1399,78 @@ public class TypeSystem
     globs.Define(sym);
   }
 
+  public TypeRef Type(TypeName tn)
+  {
+    if(tn.tr != null)
+      return tn.tr;
+    else
+      return Type(tn.name);
+  }
+
+  public TypeRef TypeArr(TypeName tn)
+  {           
+    return Type(new GenericArrayTypeSymbol(this, Type(tn)));
+  }
+
+  public TypeRef TypeFunc(TypeName ret_type, params TypeName[] arg_types)
+  {           
+    var sig = new FuncSignature(Type(ret_type));
+    foreach(var arg_type in arg_types)
+      sig.AddArg(Type(arg_type));
+    return Type(sig);
+  }
+
+  public TypeRef TypeTuple(params TypeName[] types)
+  {
+    var tuple = new TupleType();
+    foreach(var type in types)
+      tuple.Add(Type(type));
+    return Type(tuple);
+  }
+
 #if BHL_FRONT
   public TypeRef Type(bhlParser.TypeContext parsed)
   {
-    var str = parsed.GetText();
-    var type = Resolve(str) as IType;
+    TypeRef tr;
+    if(parsed.fnargs() != null)
+      tr = Type(GetFuncSignature(parsed));
+    else
+      tr = Type(parsed.NAME().GetText());
 
-    if(type == null && parsed != null)
-    {    
-      if(parsed.fnargs() != null)
-        type = GetFuncSignature(parsed);
+    //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
+    if(parsed.ARR() != null)
+      tr = TypeArr(tr);
 
-      //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
-      if(parsed.ARR() != null)
-        type = new GenericArrayTypeSymbol(this, type != null ? new TypeRef(type) : Type(parsed.NAME().GetText()));
-    }
-
-    var tr = type != null ? new TypeRef(type) : new TypeRef(this, str);
-    tr.parsed = parsed;
-    return tr;
+   return tr;
   }
 
   public TypeRef Type(bhlParser.RetTypeContext parsed)
   {
-    var str = parsed == null ? "void" : parsed.GetText();
-    var type = Resolve(str) as IType;
+    TypeRef tr = null;
 
-    if(type == null && parsed != null)
-    {    
-      if(parsed.type().Length > 1)
-      {
-        var tuple = new TupleType();
-        for(int i=0;i<parsed.type().Length;++i)
-          tuple.Add(this.Type(parsed.type()[i]));
-        type = tuple;
-      }
-      else
-        return this.Type(parsed.type()[0]);
+    //convenience special case
+    if(parsed == null)
+      tr = Type("void");
+    else if(parsed.type().Length > 1)
+    {
+      var tuple = new TupleType();
+      for(int i=0;i<parsed.type().Length;++i)
+        tuple.Add(this.Type(parsed.type()[i]));
+      tr = Type(tuple);
     }
+    else
+      tr = Type(parsed.type()[0]);
 
-    var tr = type != null ? new TypeRef(type) : new TypeRef(this, str);
-    tr.parsed = parsed;
     return tr;
   }
 #endif
 
   public TypeRef Type(string name)
   {
-    if(name.Length == 0)
-      throw new Exception("Bad type: '" + name + "'");
-
-    TypeRef tr;
-    if(type_cache.TryGetValue(name, out tr))
-      return tr;
+    if(name.Length == 0 || IsCompoundType(name))
+      throw new Exception("Bad type name: '" + name + "'");
     
-    //let's check if the type was already explicitely defined
-    var t = Resolve(name) as IType;
-    if(t != null)
-    {
-      tr = new TypeRef(t);
-    }
-    else
-    {
-#if BHL_FRONT
-      if(IsCompoundType(name))
-      {
-        var node = Frontend.ParseType(name);
-        if(node == null)
-          throw new Exception("Bad type: '" + name + "'");
-
-        if(node.type().Length == 1)
-          tr = this.Type(node.type()[0]);
-        else
-          tr = this.Type(node);
-      }
-      else
-#endif
-        tr = new TypeRef(this, name);
-    }
-
-    type_cache.Add(name, tr);
-    
-    return tr;
+    return new TypeRef(this, name);
   }
 
   public TypeRef Type(IType t)
@@ -1500,13 +1540,11 @@ public class TypeSystem
 #if BHL_FRONT
   public FuncSignature GetFuncSignature(bhlParser.TypeContext ctx)
   {
-    var fnargs = ctx.fnargs();
+    var ret_type = Type(ctx.NAME().GetText());
 
-    string ret_type_str = ctx.NAME().GetText();
+    var fnargs = ctx.fnargs();
     if(fnargs.ARR() != null)
-      ret_type_str += "[]";
-    
-    var ret_type = Type(ret_type_str);
+      ret_type = TypeArr(ret_type);
 
     var arg_types = new List<TypeRef>();
     var fnames = fnargs.names();

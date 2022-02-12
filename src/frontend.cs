@@ -2595,7 +2595,7 @@ public class Frontend : bhlBaseVisitor<object>
       iter_ast_decl = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
       iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
     }
-    var arr_type = (ClassSymbol)types.Type(iter_str_type+"[]").Get();
+    var arr_type = (ClassSymbol)types.TypeArr(iter_str_type).Get();
 
     PushJsonType(arr_type);
     var exp = ctx.foreachExp().exp();
