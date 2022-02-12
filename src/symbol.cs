@@ -14,34 +14,6 @@ public interface IType
   string GetName();
 }
 
-public struct TypeName
-{
-  public string name;
-  public TypeRef tr;
-
-  public static implicit operator TypeName(string name)
-  {
-    return new TypeName(name);
-  }
-
-  public static implicit operator TypeName(TypeRef tr)
-  {
-    return new TypeName(tr);
-  }
-
-  public TypeName(string name)
-  {
-    this.name = name;
-    this.tr = null;
-  }
-
-  public TypeName(TypeRef tr)
-  {
-    this.name = null;
-    this.tr = tr;
-  }
-}
-
 public class TypeRef
 {
   IType type;
@@ -1399,7 +1371,36 @@ public class TypeSystem
     globs.Define(sym);
   }
 
-  public TypeRef Type(TypeName tn)
+
+  public struct Arg
+  {
+    public string name;
+    public TypeRef tr;
+
+    public static implicit operator Arg(string name)
+    {
+      return new Arg(name);
+    }
+
+    public static implicit operator Arg(TypeRef tr)
+    {
+      return new Arg(tr);
+    }
+
+    public Arg(string name)
+    {
+      this.name = name;
+      this.tr = null;
+    }
+
+    public Arg(TypeRef tr)
+    {
+      this.name = null;
+      this.tr = tr;
+    }
+  }
+
+  public TypeRef Type(Arg tn)
   {
     if(tn.tr != null)
       return tn.tr;
@@ -1407,12 +1408,12 @@ public class TypeSystem
       return Type(tn.name);
   }
 
-  public TypeRef TypeArr(TypeName tn)
+  public TypeRef TypeArr(Arg tn)
   {           
     return Type(new GenericArrayTypeSymbol(this, Type(tn)));
   }
 
-  public TypeRef TypeFunc(TypeName ret_type, params TypeName[] arg_types)
+  public TypeRef TypeFunc(Arg ret_type, params Arg[] arg_types)
   {           
     var sig = new FuncSignature(Type(ret_type));
     foreach(var arg_type in arg_types)
@@ -1420,7 +1421,7 @@ public class TypeSystem
     return Type(sig);
   }
 
-  public TypeRef TypeTuple(params TypeName[] types)
+  public TypeRef TypeTuple(params Arg[] types)
   {
     var tuple = new TupleType();
     foreach(var type in types)
