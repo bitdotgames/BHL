@@ -378,7 +378,7 @@ public class Frontend : bhlBaseVisitor<object>
       var name_symb = curr_scope.Resolve(root_str_name);
       if(name_symb == null)
         FireError(Location(root_name) + " : symbol not resolved");
-      if(name_symb.type == null)
+      if(name_symb.type.Get() == null)
         FireError(Location(root_name) + " : bad chain call");
       curr_type = name_symb.type.Get();
     }

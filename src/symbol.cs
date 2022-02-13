@@ -16,11 +16,11 @@ public interface IType
 
 // For lazy evaluation of types and forward declarations
 // TypeProxy is used instead of IType
-public class TypeProxy
+public struct TypeProxy
 {
+  TypeSystem ts;
   IType type;
   public string name { get ; private set;}
-  TypeSystem ts;
 #if BHL_FRONT
   //NOTE: parse location of the type
   public IParseTree parsed { get; }
@@ -33,6 +33,7 @@ public class TypeProxy
   )
   {
     this.ts = ts;
+    type = null;
     this.name = name;
 #if BHL_FRONT
     this.parsed = parsed;
@@ -45,11 +46,18 @@ public class TypeProxy
 #endif
   )
   {
+    ts = null;
     this.name = type.GetName();
     this.type = type;
 #if BHL_FRONT
     this.parsed = parsed;
 #endif
+  }
+
+  public bool IsEmpty()
+  {
+    return string.IsNullOrEmpty(name) && 
+           type == null;
   }
 
   public IType Get()
@@ -119,7 +127,7 @@ public class Symbol
 public class BuiltInTypeSymbol : Symbol, IType 
 {
   public BuiltInTypeSymbol(string name) 
-    : base(name, null/*set below*/) 
+    : base(name, default(TypeProxy)/*set below*/) 
   {
     this.type = new TypeProxy(this);
   }
@@ -631,7 +639,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 #endif
 
   public EnclosingSymbol(string name) 
-    : base(name, type: null)
+    : base(name, type: default(TypeProxy))
   {}
 
   public virtual IScope GetFallbackScope() { return this.scope; }
@@ -1391,7 +1399,7 @@ public class TypeSystem
     public Arg(string name)
     {
       this.name = name;
-      this.tp = null;
+      this.tp = default(TypeProxy);
     }
 
     public Arg(TypeProxy tp)
@@ -1403,7 +1411,7 @@ public class TypeSystem
 
   public TypeProxy Type(Arg tn)
   {
-    if(tn.tp != null)
+    if(!tn.tp.IsEmpty())
       return tn.tp;
     else
       return Type(tn.name);
@@ -1448,7 +1456,7 @@ public class TypeSystem
 
   public TypeProxy Type(bhlParser.RetTypeContext parsed)
   {
-    TypeProxy tp = null;
+    TypeProxy tp = default(TypeProxy);
 
     //convenience special case
     if(parsed == null)
