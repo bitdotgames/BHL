@@ -11,8 +11,7 @@ public class BuildConf
 {
   public string args = ""; 
   public List<string> files = new List<string>();
-  public GlobalScope globs;
-  public CompileFormat compile_fmt = CompileFormat.AST;
+  public TypeSystem ts;
   public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
@@ -29,6 +28,7 @@ public class BuildConf
  
 public class Build
 {
+  const byte COMPILE_FMT = 2;
   const uint FILE_VERSION = 1;
   const int ERROR_EXIT_CODE = 2;
 
@@ -64,15 +64,15 @@ public class Build
       )
       return 0;
 
-    var globs = conf.globs;
-    if(globs == null)
-      globs = SymbolTable.CreateBuiltins();
-    conf.userbindings.Register(globs);
+    var ts = conf.ts;
+    if(ts == null)
+      ts = new TypeSystem();
+    conf.userbindings.Register(ts);
 
     Util.SetupASTFactory();
 
     var parse_workers = StartParseWorkers(conf);
-    var compiler_workers = StartAndWaitCompileWorkers(conf, globs, parse_workers);
+    var compiler_workers = StartAndWaitCompileWorkers(conf, ts, parse_workers);
 
     var tmp_res_file = conf.cache_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
 
@@ -123,7 +123,7 @@ public class Build
     return parse_workers;
   }
 
-  static List<CompilerWorker> StartAndWaitCompileWorkers(BuildConf conf, GlobalScope globs, List<ParseWorker> parse_workers)
+  static List<CompilerWorker> StartAndWaitCompileWorkers(BuildConf conf, TypeSystem ts, List<ParseWorker> parse_workers)
   {
     var compiler_workers = new List<CompilerWorker>();
 
@@ -141,11 +141,10 @@ public class Build
       var cw = new CompilerWorker();
       cw.id = pw.id;
       cw.parsed_cache = parsed_cache;
-      cw.compile_fmt = conf.compile_fmt;
       cw.inc_dir = conf.inc_dir;
       cw.cache_dir = pw.cache_dir;
       cw.use_cache = pw.use_cache;
-      cw.globs = globs;
+      cw.ts = ts;
       cw.files = pw.files;
       cw.start = pw.start;
       cw.count = pw.count;
@@ -180,7 +179,7 @@ public class Build
     {
       var mwriter = new MsgPack.MsgPackWriter(dfs);
 
-      mwriter.Write((byte)conf.compile_fmt);
+      mwriter.Write(ModuleImporter.COMPILE_FMT);
       mwriter.Write(FILE_VERSION);
 
       int total_modules = 0;
@@ -216,10 +215,7 @@ public class Build
             var compiled_file = w.file2compiled[file];
 
             mwriter.Write((byte)conf.module_fmt);
-            if(conf.compile_fmt == CompileFormat.VM)
-              mwriter.Write(module.name);
-            else
-              mwriter.Write(module.id);
+            mwriter.Write(module.name);
 
             if(conf.module_fmt == ModuleBinaryFormat.FMT_BIN)
               mwriter.Write(File.ReadAllBytes(compiled_file));
@@ -410,7 +406,7 @@ public class Build
       catch(Exception e)
       {
         Console.WriteLine(e.Message + " " + e.StackTrace);
-        w.error = new UserError(w.files[i], e.Message);
+        w.error = new UserError(w.files[i], e.Message, e);
       }
 
       sw.Stop();
@@ -519,12 +515,11 @@ public class Build
     public int id;
     public Dictionary<string, Parsed> parsed_cache;
     public Thread th;
-    public CompileFormat compile_fmt;
     public string inc_dir;
     public bool use_cache;
     public string cache_dir;
     public List<string> files;
-    public GlobalScope globs;
+    public TypeSystem ts;
     public int start;
     public int count;
     public Symbols symbols = new Symbols();
@@ -593,20 +588,20 @@ public class Build
     {
       Parsed parsed;
       Module mod;
-      GlobalScope globs;
+      TypeSystem ts;
       ModuleRegistry mreg;
 
-      public FromParsedResolver(Parsed parsed, Module mod, GlobalScope globs, ModuleRegistry mreg)
+      public FromParsedResolver(Parsed parsed, Module mod, TypeSystem ts, ModuleRegistry mreg)
       {
         this.parsed = parsed;
         this.mod = mod;
-        this.globs = globs;
+        this.ts = ts;
         this.mreg = mreg;
       }
 
       public AST_Module Get()
       {
-        return Frontend.Parsed2AST(mod, parsed, globs, mreg);
+        return Frontend.Parsed2AST(mod, parsed, ts, mreg);
       }
     }
 
@@ -614,14 +609,14 @@ public class Build
     {
       string file;
       Module mod;
-      GlobalScope globs;
+      TypeSystem ts;
       ModuleRegistry mreg;
 
-      public FromSourceResolver(string file, Module mod, GlobalScope globs, ModuleRegistry mreg)
+      public FromSourceResolver(string file, Module mod, TypeSystem ts, ModuleRegistry mreg)
       {
         this.file = file;
         this.mod = mod;
-        this.globs = globs;
+        this.ts = ts;
         this.mreg = mreg;
       }
 
@@ -630,7 +625,7 @@ public class Build
         AST_Module ast = null;
         using(var sfs = File.OpenRead(file))
         {
-          ast = Frontend.Source2AST(mod, sfs, globs, mreg);
+          ast = Frontend.Source2AST(mod, sfs, ts, mreg);
         }
         return ast;
       }
@@ -671,7 +666,7 @@ public class Build
             ++cache_hit;
             lazy_ast = new LazyAST(
                 new CacheHitResolver(cache_file, 
-                  fallback: new FromSourceResolver(file, file_module, w.globs, mreg)
+                  fallback: new FromSourceResolver(file, file_module, w.ts, mreg)
                   )
                 );
           }
@@ -679,8 +674,8 @@ public class Build
           {
             ++cache_miss;
             lazy_ast = new LazyAST(new CacheWriteResolver(cache_file, 
-                  parsed != null ? (IASTResolver)new FromParsedResolver(parsed, file_module, w.globs, mreg) : 
-                  (IASTResolver)new FromSourceResolver(file, file_module, w.globs, mreg)));
+                  parsed != null ? (IASTResolver)new FromParsedResolver(parsed, file_module, w.ts, mreg) : 
+                  (IASTResolver)new FromSourceResolver(file, file_module, w.ts, mreg)));
           }
 
           w.symbols = GetSymbols(file, w.cache_dir, lazy_ast);
@@ -689,13 +684,10 @@ public class Build
 
           string compiled_file = w.postproc.Patch(lazy_ast, file, cache_file);
 
-          if(w.compile_fmt == CompileFormat.VM)
-          {
-            var ast = lazy_ast.Get();
-            var c  = new ModuleCompiler(w.globs, ast, file_module.path);
-            var cm = c.Compile();
-            Util.Compiled2File(cm, compiled_file);
-          }
+          var ast = lazy_ast.Get();
+          var c  = new ModuleCompiler(w.ts, ast, file_module.path);
+          var cm = c.Compile();
+          Util.Compiled2File(cm, compiled_file);
 
           w.file2compiled.Add(file, compiled_file);
         }
@@ -707,7 +699,7 @@ public class Build
       catch(Exception e)
       {
         Console.WriteLine(e.Message + " " + e.StackTrace);
-        w.error = new UserError(w.files[i], e.Message);
+        w.error = new UserError(w.files[i], e.Message, e);
       }
 
       sw.Stop();

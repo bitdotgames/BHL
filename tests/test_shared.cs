@@ -14,13 +14,14 @@ public class IsTestedAttribute : Attribute
 
 public static class BHL_TestExt 
 {
-  public static GlobalScope Clone(this GlobalScope globs)
+  public static TypeSystem Clone(this TypeSystem ts)
   {
-    var globs_copy = new GlobalScope();
-    var ms = globs.GetMembers();
-    for(int i=0;i<ms.Count;++i)
-      globs_copy.Define(ms[i]);
-    return globs_copy;
+    var ts_copy = new TypeSystem();
+    var ms = ts.globs.GetMembers();
+    //let's skip already defined built-ins
+    for(int i=ts_copy.globs.GetMembers().Count;i<ms.Count;++i)
+      ts_copy.Define(ms[i]);
+    return ts_copy;
   }
 
   public static string GetFullMessage(this Exception ex)
@@ -201,7 +202,7 @@ public class BHL_TestBase
     }
 
     AssertTrue(err != null, "Error didn't occur"); 
-    var idx = err.Message.IndexOf(msg);
-    AssertTrue(idx != -1, "Error message is: " + err.Message);
+    var idx = err.ToString().IndexOf(msg);
+    AssertTrue(idx != -1, "Error message is: " + err);
   }
 }

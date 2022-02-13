@@ -9,21 +9,36 @@ public class UserError : Exception
 {
   public string file;
 
-  public UserError(string file, string str)
-    : base(str)
+  public UserError(string file, string msg)
+    : base(msg)
   {
     this.file = file;
   }
 
-  public UserError(string str)
-    : base(str)
+  public UserError(string msg)
+    : base(msg)
   {
     this.file = null;
   }
 
+  //for proper rethrowing
+  public UserError(string file, string msg, Exception e)
+    : base(msg, e)
+  {
+    this.file = file;
+  }
+
   public string ToJson()
   {
-    var msg = Message.Replace("\\", " ");
+    string msg = "";
+    //if the inner exception is a UserError,
+    //let's take its message since it contains 
+    //an actuall error and was rethrown
+    if(InnerException is UserError)
+      msg = InnerException.Message;
+    else
+      msg = Message;
+    msg = msg.Replace("\\", " ");
     msg = msg.Replace("\n", " ");
     msg = msg.Replace("\r", " ");
     msg = msg.Replace("\"", "\\\""); 
@@ -614,7 +629,7 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", uint module_id = 0, ClassSymbol scope_symb = null, int symb_idx = 0)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", uint module_id = 0, ClassSymbol scope_symb = null, int symb_idx = -1)
   {
     return New_Call(type, line_num, name, scope_symb != null ? scope_symb.Type() : "", symb_idx, module_id);
   }
@@ -624,14 +639,14 @@ static public class AST_Util
     return New_Call(type, line_num, symb.name, scope_symb != null ? scope_symb.Type() : "", symb.scope_idx, symb.module_id);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name, string scope_type, int symb_idx = 0, uint module_id = 0)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name, string scope_type, int symb_idx = -1, uint module_id = 0)
   {
     var n = new AST_Call();
     n.type = type;
     n.name = name;
     n.scope_type = scope_type;
-    n.line_num = (uint)line_num;
-    n.symb_idx = (uint)symb_idx;
+    n.line_num = line_num;
+    n.symb_idx = symb_idx;
     n.module_id = module_id;
 
     return n;
@@ -733,17 +748,19 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_JsonObj New_JsonObj(string root_type_name)
+  static public AST_JsonObj New_JsonObj(string root_type_name, int line_num)
   {
     var n = new AST_JsonObj();
     n.type = root_type_name;
+    n.line_num = line_num;
     return n;
   }
 
-  static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type)
+  static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type, int line_num)
   {
     var n = new AST_JsonArr();
     n.type = arr_type.Type();
+    n.line_num = line_num;
     return n;
   }
 
