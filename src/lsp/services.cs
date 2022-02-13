@@ -481,7 +481,10 @@ namespace bhlsp
         int character = (int)args.position.character;
         
         int idx = document.GetIndex(line, character);
-
+        
+        bhlParser.FuncDeclContext funcDecl = null;
+        BHLTextDocument funcDeclBhlDocument = null;
+        
         bhlParser.CallExpContext callExp = null;
         bhlParser.MemberAccessContext memberAccess = null;
         bhlParser.TypeContext type = null;
@@ -493,6 +496,7 @@ namespace bhlsp
           {
             if(prc.Start.StartIndex <= idx && idx <= prc.Stop.StopIndex)
             {
+              funcDecl     = prc as bhlParser.FuncDeclContext;
               callExp      = prc as bhlParser.CallExpContext;
               memberAccess = prc as bhlParser.MemberAccessContext;
               type         = prc as bhlParser.TypeContext;
@@ -501,184 +505,188 @@ namespace bhlsp
             }
           }
         }
-        
-        string classTypeName = string.Empty;
-        string memberClassName = string.Empty;
-        
-        if(type?.NAME() != null)
-        {
-          classTypeName = type.NAME().GetText();
-        }
-        else if(memberAccess != null)
-        {
-          bhlParser.CallExpContext callExpMemberAccess = null;
-          bhlParser.FuncDeclContext memberAccessParentFuncDecl = null;
 
-          memberClassName = memberAccess.NAME().GetText();
+        if(funcDecl == null)
+        {
+          string classTypeName = string.Empty;
+          string memberClassName = string.Empty;
           
-          for(RuleContext parent = memberAccess.Parent; parent != null; parent = parent.Parent)
+          if(type?.NAME() != null)
           {
-            if(callExpMemberAccess == null && parent is bhlParser.CallExpContext)
-              callExpMemberAccess = parent as bhlParser.CallExpContext;
-
-            if(parent is bhlParser.FuncDeclContext)
-            {
-              memberAccessParentFuncDecl = parent as bhlParser.FuncDeclContext;
-              break;
-            }
+            classTypeName = type.NAME().GetText();
           }
-          
-          if(callExpMemberAccess != null)
+          else if(memberAccess != null)
           {
-            string callExpMemberAccessName = callExpMemberAccess.NAME().GetText();
-            
-            if(memberAccessParentFuncDecl?.NAME() != null)
-            {
-              foreach(IParseTree node in BHLSPUtil.DFS(memberAccessParentFuncDecl))
-              {
-                if(node is bhlParser.FuncParamDeclareContext funcParamDeclare)
-                {
-                  bhlParser.TypeContext funcParamDeclareType = funcParamDeclare.type();
-                  if(funcParamDeclareType.fnargs() != null || funcParamDeclareType.ARR() != null)
-                    continue;
-                  
-                  if(funcParamDeclare.NAME()?.GetText() == callExpMemberAccessName)
-                  {
-                    classTypeName = funcParamDeclareType.GetText();
-                    break;
-                  }
-                }
+            bhlParser.CallExpContext callExpMemberAccess = null;
+            bhlParser.FuncDeclContext memberAccessParentFuncDecl = null;
 
-                if(node is bhlParser.VarDeclareContext varDeclare && varDeclare?.NAME().GetText() == callExpMemberAccessName)
-                {
-                  classTypeName = varDeclare.type().NAME().GetText();
-                  break;
-                }
+            memberClassName = memberAccess.NAME().GetText();
+            
+            for(RuleContext parent = memberAccess.Parent; parent != null; parent = parent.Parent)
+            {
+              if(callExpMemberAccess == null && parent is bhlParser.CallExpContext)
+                callExpMemberAccess = parent as bhlParser.CallExpContext;
+
+              if(parent is bhlParser.FuncDeclContext)
+              {
+                memberAccessParentFuncDecl = parent as bhlParser.FuncDeclContext;
+                break;
               }
             }
             
-            if(string.IsNullOrEmpty(classTypeName) && !string.IsNullOrEmpty(callExpMemberAccessName))
+            if(callExpMemberAccess != null)
             {
-              foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
-              {
-                if(doc.VarDeclars.ContainsKey(callExpMemberAccessName))
-                {
-                  var varDeclareAssign = doc.VarDeclars[callExpMemberAccessName];
-                  classTypeName = varDeclareAssign.varDeclare().type().NAME().GetText();
-                  break;
-                }
-              }
-            }
-          }
-        }
-        
-        if(!string.IsNullOrEmpty(classTypeName))
-        {
-          bhlParser.ClassDeclContext classDecl = null;
-          BHLTextDocument classDeclBhlDocument = null;
-          
-          foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
-          {
-            if(doc.ClassDecls.ContainsKey(classTypeName))
-            {
-              classDecl = doc.ClassDecls[classTypeName];
-              classDeclBhlDocument = doc;
-              break;
-            }
-          }
-          
-          if(classDecl != null)
-          {
-            bhlParser.ClassMemberContext classMember = null;
-
-            if(!string.IsNullOrEmpty(memberClassName))
-            {
-              foreach(var classMemberContext in classDecl.classBlock().classMembers().classMember())
-              {
-                if(classMemberContext.funcDecl()?.NAME()?.GetText() != null)
-                {
-                  if(classMemberContext.funcDecl().NAME().GetText() == memberClassName)
-                  {
-                    classMember = classMemberContext;
-                    break;
-                  }
-                }
+              string callExpMemberAccessName = callExpMemberAccess.NAME().GetText();
               
-                if(classMemberContext.varDeclare()?.NAME()?.GetText() != null)
+              if(memberAccessParentFuncDecl?.NAME() != null)
+              {
+                foreach(IParseTree node in BHLSPUtil.DFS(memberAccessParentFuncDecl))
                 {
-                  if(classMemberContext.varDeclare().NAME().GetText() == memberClassName)
+                  if(node is bhlParser.FuncParamDeclareContext funcParamDeclare)
                   {
-                    classMember = classMemberContext;
+                    bhlParser.TypeContext funcParamDeclareType = funcParamDeclare.type();
+                    if(funcParamDeclareType.fnargs() != null || funcParamDeclareType.ARR() != null)
+                      continue;
+                    
+                    if(funcParamDeclare.NAME()?.GetText() == callExpMemberAccessName)
+                    {
+                      classTypeName = funcParamDeclareType.GetText();
+                      break;
+                    }
+                  }
+
+                  if(node is bhlParser.VarDeclareContext varDeclare && varDeclare?.NAME().GetText() == callExpMemberAccessName)
+                  {
+                    classTypeName = varDeclare.type().NAME().GetText();
+                    break;
+                  }
+                }
+              }
+              
+              if(string.IsNullOrEmpty(classTypeName) && !string.IsNullOrEmpty(callExpMemberAccessName))
+              {
+                foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
+                {
+                  if(doc.VarDeclars.ContainsKey(callExpMemberAccessName))
+                  {
+                    var varDeclareAssign = doc.VarDeclars[callExpMemberAccessName];
+                    classTypeName = varDeclareAssign.varDeclare().type().NAME().GetText();
                     break;
                   }
                 }
               }
             }
-
-            int classDeclIdx = classMember?.Start.StartIndex ?? classDecl.Start.StartIndex;
-            var start = classDeclBhlDocument.GetLineColumn(classDeclIdx);
-            var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
-        
-            return RpcResult.Success(new Location
-            {
-              uri = classDeclBhlDocument.uri,
-              range = new Range
-              {
-                start = startPos,
-                end = startPos
-              }
-            });
           }
-        }
-        
-        bhlParser.FuncDeclContext funcDecl = null;
-        BHLTextDocument funcDeclBhlDocument = null;
-        
-        if(callExp != null)
-        {
-          string callExpName = callExp.NAME().GetText();
           
-          foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
+          if(!string.IsNullOrEmpty(classTypeName))
           {
-            if(doc.FuncDecls.ContainsKey(callExpName))
-            {
-              funcDecl = doc.FuncDecls[callExpName];
-              funcDeclBhlDocument = doc;
-              break;
-            }
-          }
-        }
-        
-        if(statement != null && funcDecl == null)
-        {
-          string funcName = string.Empty;
-          
-          string pattern = @"([a-zA-Z_][a-zA-Z_0-9]*)(\({1}.*?)";
-          MatchCollection matches = Regex.Matches(statement.GetText(), pattern, RegexOptions.Multiline);
-          for(int i = 0; i < matches.Count; i++)
-          {
-            var m = matches[i];
-            if(m.Groups.Count > 1)
-            {
-              Group g = m.Groups[1];
-              funcName = g.Value;
-              break;
-            }
-          }
-
-          if(!string.IsNullOrEmpty(funcName))
-          {
-          
+            bhlParser.ClassDeclContext classDecl = null;
+            BHLTextDocument classDeclBhlDocument = null;
+            
             foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
             {
-              if(doc.FuncDecls.ContainsKey(funcName))
+              if(doc.ClassDecls.ContainsKey(classTypeName))
               {
-                funcDecl = doc.FuncDecls[funcName];
+                classDecl = doc.ClassDecls[classTypeName];
+                classDeclBhlDocument = doc;
+                break;
+              }
+            }
+            
+            if(classDecl != null)
+            {
+              bhlParser.ClassMemberContext classMember = null;
+
+              if(!string.IsNullOrEmpty(memberClassName))
+              {
+                foreach(var classMemberContext in classDecl.classBlock().classMembers().classMember())
+                {
+                  if(classMemberContext.funcDecl()?.NAME()?.GetText() != null)
+                  {
+                    if(classMemberContext.funcDecl().NAME().GetText() == memberClassName)
+                    {
+                      classMember = classMemberContext;
+                      break;
+                    }
+                  }
+                
+                  if(classMemberContext.varDeclare()?.NAME()?.GetText() != null)
+                  {
+                    if(classMemberContext.varDeclare().NAME().GetText() == memberClassName)
+                    {
+                      classMember = classMemberContext;
+                      break;
+                    }
+                  }
+                }
+              }
+
+              int classDeclIdx = classMember?.Start.StartIndex ?? classDecl.Start.StartIndex;
+              var start = classDeclBhlDocument.GetLineColumn(classDeclIdx);
+              var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
+          
+              return RpcResult.Success(new Location
+              {
+                uri = classDeclBhlDocument.uri,
+                range = new Range
+                {
+                  start = startPos,
+                  end = startPos
+                }
+              });
+            }
+          }
+          
+          if(callExp != null)
+          {
+            string callExpName = callExp.NAME().GetText();
+            
+            foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
+            {
+              if(doc.FuncDecls.ContainsKey(callExpName))
+              {
+                funcDecl = doc.FuncDecls[callExpName];
                 funcDeclBhlDocument = doc;
                 break;
               }
             }
           }
+          
+          if(statement != null && funcDecl == null)
+          {
+            string funcName = string.Empty;
+            
+            string pattern = @"([a-zA-Z_][a-zA-Z_0-9]*)(\({1}.*?)";
+            MatchCollection matches = Regex.Matches(statement.GetText(), pattern, RegexOptions.Multiline);
+            for(int i = 0; i < matches.Count; i++)
+            {
+              var m = matches[i];
+              if(m.Groups.Count > 1)
+              {
+                Group g = m.Groups[1];
+                funcName = g.Value;
+                break;
+              }
+            }
+
+            if(!string.IsNullOrEmpty(funcName))
+            {
+            
+              foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
+              {
+                if(doc.FuncDecls.ContainsKey(funcName))
+                {
+                  funcDecl = doc.FuncDecls[funcName];
+                  funcDeclBhlDocument = doc;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        else
+        {
+          funcDeclBhlDocument = document;
         }
         
         if(funcDecl != null)
