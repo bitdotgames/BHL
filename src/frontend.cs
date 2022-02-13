@@ -736,11 +736,11 @@ public class Frontend : bhlBaseVisitor<object>
       PopJsonType();
 
       var wca = Wrap(ca);
-      types.CheckAssign(arg_type, wca);
+      types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, wca);
 
-      if(arg_type_ref.is_ref && ca.isRef() == null)
+      if(arg_type_ref.Get() is RefType && ca.isRef() == null)
         FireError(Location(ca) +  " : 'ref' is missing");
-      else if(!arg_type_ref.is_ref && ca.isRef() != null)
+      else if(!(arg_type_ref.Get() is RefType) && ca.isRef() != null)
         FireError(Location(ca) +  " : argument is not a 'ref'");
 
       prev_ca = ca;

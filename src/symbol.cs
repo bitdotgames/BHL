@@ -14,11 +14,12 @@ public interface IType
   string GetName();
 }
 
+// For lazy evaluation of types and forward declarations
+// TypeProxy is used instead of IType
 public class TypeProxy
 {
   IType type;
   public string name { get ; private set;}
-  public bool is_ref;
   TypeSystem ts;
 #if BHL_FRONT
   //NOTE: parse location of the type
@@ -124,6 +125,18 @@ public class BuiltInTypeSymbol : Symbol, IType
   }
 
   public string GetName() { return name; }
+}
+
+public class RefType : IType
+{
+  public TypeProxy subj { get; private set; }
+
+  public string GetName() { return "ref " + subj.name; }
+
+  public RefType(TypeProxy subj)
+  {
+    this.subj = subj;
+  }
 }
 
 public class ClassSymbol : EnclosingSymbol, IScope, IType 
@@ -749,8 +762,6 @@ public class FuncSignature : IType
     {
       if(i > 0)
         tmp += ",";
-      if(arg_types[i].is_ref)
-        tmp += "ref ";
       tmp += arg_types[i].name;
     }
     tmp += ")";
@@ -858,7 +869,8 @@ public class FuncSymbolScript : FuncSymbol
       {
         var vd = fparams.funcParamDeclare()[i];
         var tp = ts.Type(vd.type());
-        tp.is_ref = vd.isRef() != null;
+        if(vd.isRef() != null)
+          tp = ts.Type(new RefType(tp));
         GetSignature().AddArg(tp);
       }
     }
@@ -887,7 +899,8 @@ public class FuncSymbolScript : FuncSymbol
       //TODO: add proper serialization of types 
       //var arg_type = ts.Type(var_decl.type);
       var arg_type = ts.Type("void");
-      arg_type.is_ref = var_decl.is_ref;
+      if(var_decl.is_ref)
+        arg_type = ts.Type(new RefType(arg_type));
       GetSignature().AddArg(arg_type);
     }
   }
@@ -1543,7 +1556,8 @@ public class TypeSystem
       {
         var name = fnames.refName()[i];
         var arg_type = Type(name.NAME().GetText());
-        arg_type.is_ref = name.isRef() != null; 
+        if(name.isRef() != null)
+          arg_type = Type(new RefType(arg_type));
         arg_types.Add(arg_type);
       }
     }
