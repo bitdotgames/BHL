@@ -757,8 +757,6 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   }
 
 #if BHL_FRONT
-  public bool return_statement_found = false;
-
   public FuncSymbol(WrappedParseTree parsed, string name, FuncSignature sig) 
     : this(name, sig)
   {

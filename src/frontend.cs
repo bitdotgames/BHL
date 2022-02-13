@@ -94,6 +94,10 @@ public class Frontend : bhlBaseVisitor<object>
   IScope curr_scope;
   int scope_level;
 
+  HashSet<FuncSymbol> return_found = new HashSet<FuncSymbol>();
+
+  Stack<AST> ast_stack = new Stack<AST>();
+
   public static CommonTokenStream Source2Tokens(Stream s)
   {
     var ais = new AntlrInputStream(s);
@@ -173,12 +177,6 @@ public class Frontend : bhlBaseVisitor<object>
     Util.Meta2Bin(ast, dst);
   }
 
-  public void FireError(string msg) 
-  {
-    //Console.Error.WriteLine(err);
-    throw new UserError(curr_module.file_path, msg);
-  }
-
   public Frontend(Module module, ITokenStream tokens, TypeSystem ts, ModuleRegistry mreg, bool decls_only = false)
   {
     if(ts == null)
@@ -197,7 +195,11 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope = this.mscope;
   }
 
-  Stack<AST> ast_stack = new Stack<AST>();
+  public void FireError(string msg) 
+  {
+    //Console.Error.WriteLine(err);
+    throw new UserError(curr_module.file_path, msg);
+  }
 
   void PushAST(AST ast)
   {
@@ -973,7 +975,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(funcLambda.funcBlock());
     PopAST();
 
-    if(tp.Get() != TypeSystem.Void && !symb.return_statement_found)
+    if(tp.Get() != TypeSystem.Void && !return_found.Contains(symb))
       FireError(Location(funcLambda.funcBlock()) + " : matching 'return' statement not found");
 
     PopFuncDecl();
@@ -1719,7 +1721,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(func_symb == null)
       FireError(Location(ctx) + " : return statement is not in function");
     
-    func_symb.return_statement_found = true;
+    return_found.Add(func_symb);
 
     var ret_ast = AST_Util.New_Return();
     
@@ -1971,7 +1973,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(context.funcBlock());
       PopAST();
 
-      if(tp.Get() != TypeSystem.Void && !func_symb.return_statement_found)
+      if(tp.Get() != TypeSystem.Void && !return_found.Contains(func_symb))
         FireError(Location(context.NAME()) + " : matching 'return' statement not found");
     }
     
@@ -2355,8 +2357,8 @@ public class Frontend : bhlBaseVisitor<object>
     types.CheckAssign(TypeSystem.Bool, Wrap(main.exp()));
 
     var func_symb = PeekFuncDecl();
-    bool seen_return = func_symb.return_statement_found;
-    func_symb.return_statement_found = false;
+    bool seen_return = return_found.Contains(func_symb);
+    return_found.Remove(func_symb);
 
     ast.AddChild(main_cond);
     PushAST(ast);
@@ -2393,8 +2395,8 @@ public class Frontend : bhlBaseVisitor<object>
     //        }
     //      }
     //
-    if(!seen_return && func_symb.return_statement_found && (ctx.elseIf() == null || ctx.@else() == null))
-      func_symb.return_statement_found = false;
+    if(!seen_return && return_found.Contains(func_symb) && (ctx.elseIf() == null || ctx.@else() == null))
+      return_found.Remove(func_symb);
 
     var else_if = ctx.elseIf();
     for(int i=0;i<else_if.Length;++i)
@@ -2407,30 +2409,30 @@ public class Frontend : bhlBaseVisitor<object>
 
       types.CheckAssign(TypeSystem.Bool, Wrap(item.exp()));
 
-      seen_return = func_symb.return_statement_found;
-      func_symb.return_statement_found = false;
+      seen_return = return_found.Contains(func_symb);
+      return_found.Remove(func_symb);
 
       ast.AddChild(item_cond);
       PushAST(ast);
       CommonVisitBlock(EnumBlock.SEQ, item.block().statement(), new_local_scope: false);
       PopAST();
 
-      if(!seen_return && func_symb.return_statement_found)
-        func_symb.return_statement_found = false;
+      if(!seen_return && return_found.Contains(func_symb))
+        return_found.Remove(func_symb);
     }
 
     var @else = ctx.@else();
     if(@else != null)
     {
-      seen_return = func_symb.return_statement_found;
-      func_symb.return_statement_found = false;
+      seen_return = return_found.Contains(func_symb);
+      return_found.Remove(func_symb);
 
       PushAST(ast);
       CommonVisitBlock(EnumBlock.SEQ, @else.block().statement(), new_local_scope: false);
       PopAST();
 
-      if(!seen_return && func_symb.return_statement_found)
-        func_symb.return_statement_found = false;
+      if(!seen_return && return_found.Contains(func_symb))
+        return_found.Remove(func_symb);
     }
 
     PeekAST().AddChild(ast);
@@ -2791,7 +2793,7 @@ public class Frontend : bhlBaseVisitor<object>
       curr_scope = curr_scope.GetFallbackScope();
 
     if(is_paral)
-      PeekFuncDecl().return_statement_found = false;
+      return_found.Remove(PeekFuncDecl());
 
     if(auto_add)
       PeekAST().AddChild(ast);
