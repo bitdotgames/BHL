@@ -931,7 +931,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
   {
-    var tp = ParseType(funcLambda.retType(), ensure: true);
+    var tp = ParseType(funcLambda.retType());
 
     var func_name = curr_module.id + "_lmb_" + NextLambdaId(); 
     var ast = AST_Util.New_LambdaDecl(func_name, curr_module.id, tp.name);
@@ -1026,7 +1026,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(new_exp != null)
     {
-      var tp = ParseType(new_exp.type(), ensure: true);
+      var tp = ParseType(new_exp.type());
       PushJsonType(tp.Get());
     }
 
@@ -1150,7 +1150,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
   {
-    var tp = ParseType(ctx.typeid().type(), ensure: true);
+    var tp = ParseType(ctx.typeid().type());
 
     Wrap(ctx).eval_type = TypeSystem.Int;
 
@@ -1195,7 +1195,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tp = ParseType(ctx.newExp().type(), ensure: true);
+    var tp = ParseType(ctx.newExp().type());
 
     var ast = AST_Util.New_New((ClassSymbol)tp.Get());
     Wrap(ctx).eval_type = tp.Get();
@@ -1215,7 +1215,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
-    var tp = ParseType(ctx.type(), ensure: true);
+    var tp = ParseType(ctx.type());
 
     var ast = AST_Util.New_TypeCast(tp.name);
     var exp = ctx.exp();
@@ -1927,7 +1927,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
   {
-    var tp = ParseType(context.retType(), ensure: true);
+    var tp = ParseType(context.retType());
 
     var fstr_name = context.NAME().GetText();
 
@@ -2040,7 +2040,7 @@ public class Frontend : bhlBaseVisitor<object>
       AST_Interim exp_ast = null;
       if(assign_exp != null)
       {
-        var tp = ParseType(vd.type(), ensure: true);
+        var tp = ParseType(vd.type());
 
         exp_ast = new AST_Interim();
         PushAST(exp_ast);
@@ -2283,7 +2283,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = name.GetText();
 
-    var tp = ParseType(type_ctx, ensure: true);
+    var tp = ParseType(type_ctx);
 
     var var_node = Wrap(name); 
     var_node.eval_type = tp.Get();
