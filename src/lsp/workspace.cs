@@ -640,16 +640,12 @@ namespace bhlsp
       
       public override object VisitSymbCall(bhlParser.SymbCallContext ctx)
       {
-        //BHLSPLogger.WriteLine($"VisitSymbCall::-->\n{ctx.GetText()}\n");
-        
         Visit(ctx.callExp());
         return null;
       }
       
       public override object VisitExpCall(bhlParser.ExpCallContext ctx)
       {
-        //BHLSPLogger.WriteLine($"VisitExpCall::-->\n{ctx.GetText()}\n");
-        
         Visit(ctx.callExp());
         return null;
       }
@@ -746,15 +742,6 @@ namespace bhlsp
         
         return null;
       }
-      
-      /*private void CommonExp(bhlParser.ExpContext ctx)
-      {
-        if(ctx is bhlParser.ExpJsonArrContext)
-        {
-          //[C("@unit/event/ratmen_warrior"),C("@unit/event/ratmen_alchemist")]
-          //["orc_grunt","orc_warrior","orc_champion"]
-        }
-      }*/
       
       public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
       {
@@ -978,14 +965,14 @@ namespace bhlsp
       
       bool IsTypeKeyword(string typeName)
       {
-        return SymbolTable.symb_int.name    == typeName ||
-               SymbolTable.symb_float.name  == typeName ||
-               SymbolTable.symb_string.name == typeName ||
-               SymbolTable.symb_bool.name   == typeName ||
-               SymbolTable.symb_enum.name   == typeName ||
-               SymbolTable.symb_any.name    == typeName ||
-               SymbolTable.symb_any.name    == typeName ||
-               SymbolTable.symb_void.name   == typeName;
+        return TypeSystem.Int.name    == typeName ||
+               TypeSystem.Float.name  == typeName ||
+               TypeSystem.String.name == typeName ||
+               TypeSystem.Bool.name   == typeName ||
+               TypeSystem.Enum.name   == typeName ||
+               TypeSystem.Any.name    == typeName ||
+               TypeSystem.Null.name   == typeName ||
+               TypeSystem.Void.name   == typeName;
       }
 
       private void AddSemanticTokenTypeName(ITerminalNode node)
@@ -993,9 +980,7 @@ namespace bhlsp
         if(IsTypeKeyword(node.GetText()))
           AddSemanticToken(node, SemanticTokenTypes.keyword);
         else
-        {
           AddSemanticToken(node, SemanticTokenTypes.type);
-        }
       }
       
       private void AddSemanticToken(ITerminalNode node, string tokenType, params string[] tokenModifiers)
@@ -1092,10 +1077,8 @@ namespace bhlsp
       funcDecls.Clear();
       classDecls.Clear();
       varDeclars.Clear();
-
-      var parser = ToParser();
       
-      foreach(var progblock in parser.program().progblock())
+      foreach(var progblock in ToParser().program().progblock())
       {
         var imprts = progblock.imports();
         var decls = progblock.decls();
@@ -1173,7 +1156,7 @@ namespace bhlsp
       public bool cleanup;
     }
     
-    private List<RootPath> root = new List<RootPath>();
+    private List<RootPath> roots = new List<RootPath>();
     private Dictionary<string, BHLSPTextDocument> documents = new Dictionary<string, BHLSPTextDocument>();
 
     public TextDocumentSyncKind syncKind { get; set; } = TextDocumentSyncKind.Full;
@@ -1186,10 +1169,10 @@ namespace bhlsp
     public void Shutdown()
     {
       documents.Clear();
-      for(int i = root.Count - 1; i >= 0; i--)
+      for(int i = roots.Count - 1; i >= 0; i--)
       {
-        if(root[i].cleanup)
-          root.RemoveAt(i);
+        if(roots[i].cleanup)
+          roots.RemoveAt(i);
       }
     }
 
@@ -1198,7 +1181,7 @@ namespace bhlsp
       if(check && !Directory.Exists(pathFolder))
         return;
       
-      root.Add(new RootPath {path = pathFolder, cleanup = cleanup});
+      roots.Add(new RootPath {path = pathFolder, cleanup = cleanup});
     }
     
     public void TryAddDocument(string path, string text = null)
@@ -1288,7 +1271,7 @@ namespace bhlsp
     {
       var filePath = string.Empty;
 
-      foreach(var root in this.root)
+      foreach(var root in roots)
       {
         string path = string.Empty;
         if(!Path.IsPathRooted(import))
