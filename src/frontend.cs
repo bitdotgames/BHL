@@ -167,22 +167,6 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
-  public static bhlParser.RetTypeContext ParseType(string type)
-  {
-    try
-    {
-      var tokens = Source2Tokens(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(type)));
-      var p = new bhlParser(tokens);
-      p.AddErrorListener(new ErrorParserListener());
-      p.ErrorHandler = new ErrorStrategy();
-      return p.retType();
-    }
-    catch(Exception)
-    {
-      return null;
-    }
-  }
-
   static public void Source2Bin(Module module, Stream src, Stream dst, TypeSystem ts, ModuleRegistry mr)
   {
     var ast = Source2AST(module, src, ts, mr);
@@ -904,9 +888,9 @@ public class Frontend : bhlBaseVisitor<object>
     return sig;
   }
 
-  TypeProxy ParseType(bhlParser.RetTypeContext parsed)
+  TypeProxy ParseType(bhlParser.RetTypeContext parsed, bool ensure = false)
   {
-    TypeProxy tp = default(TypeProxy);
+    TypeProxy tp;
 
     //convenience special case
     if(parsed == null)
@@ -915,16 +899,19 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var tuple = new TupleType();
       for(int i=0;i<parsed.type().Length;++i)
-        tuple.Add(ParseType(parsed.type()[i]));
+        tuple.Add(ParseType(parsed.type()[i], ensure));
       tp = types.Type(tuple);
     }
     else
-      tp = ParseType(parsed.type()[0]);
+      tp = ParseType(parsed.type()[0], ensure);
+
+    if(ensure && tp.Get() == null)
+      FireError(Location(parsed) + " : type '" + tp.name + "' not found");
 
     return tp;
   }
 
-  TypeProxy ParseType(bhlParser.TypeContext parsed)
+  TypeProxy ParseType(bhlParser.TypeContext parsed, bool ensure = false)
   {
     TypeProxy tp;
     if(parsed.fnargs() != null)
@@ -936,14 +923,15 @@ public class Frontend : bhlBaseVisitor<object>
     if(parsed.ARR() != null)
       tp = types.TypeArr(tp);
 
+    if(ensure && tp.Get() == null)
+      FireError(Location(parsed) + " : type '" + tp.name + "' not found");
+
    return tp;
   }
 
   void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
   {
-    var tp = ParseType(funcLambda.retType());
-    if(tp.Get() == null)
-      FireError(Location(funcLambda.retType()) + " : type '" + tp.name + "' not found");
+    var tp = ParseType(funcLambda.retType(), ensure: true);
 
     var func_name = curr_module.id + "_lmb_" + NextLambdaId(); 
     var ast = AST_Util.New_LambdaDecl(func_name, curr_module.id, tp.name);
@@ -1038,9 +1026,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(new_exp != null)
     {
-      var tp = ParseType(new_exp.type());
-      if(tp.Get() == null)
-        FireError(Location(new_exp.type()) + " : type '" + tp.name + "' not found");
+      var tp = ParseType(new_exp.type(), ensure: true);
       PushJsonType(tp.Get());
     }
 
@@ -1164,9 +1150,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
   {
-    var tp = ParseType(ctx.typeid().type());
-    if(tp.Get() == null)
-      FireError(Location(ctx.typeid().type()) +  " : type '" + tp.name + "' not found");
+    var tp = ParseType(ctx.typeid().type(), ensure: true);
 
     Wrap(ctx).eval_type = TypeSystem.Int;
 
@@ -1211,9 +1195,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tp = ParseType(ctx.newExp().type());
-    if(tp.Get() == null)
-      FireError(Location(ctx.newExp().type()) + " : type '" + tp.name + "' not found");
+    var tp = ParseType(ctx.newExp().type(), ensure: true);
 
     var ast = AST_Util.New_New((ClassSymbol)tp.Get());
     Wrap(ctx).eval_type = tp.Get();
@@ -1233,9 +1215,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
-    var tp = ParseType(ctx.type());
-    if(tp.Get() == null)
-      FireError(Location(ctx.type()) + " : type '" + tp.name + "' not found");
+    var tp = ParseType(ctx.type(), ensure: true);
 
     var ast = AST_Util.New_TypeCast(tp.name);
     var exp = ctx.exp();
@@ -1947,9 +1927,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
   {
-    var tp = ParseType(context.retType());
-    if(tp.Get() == null)
-      FireError(Location(context.retType()) + " : type '" + tp.name + "' not found");
+    var tp = ParseType(context.retType(), ensure: true);
 
     var fstr_name = context.NAME().GetText();
 
@@ -2062,9 +2040,7 @@ public class Frontend : bhlBaseVisitor<object>
       AST_Interim exp_ast = null;
       if(assign_exp != null)
       {
-        var tp = ParseType(vd.type());
-        if(tp.Get() == null)
-          FireError(Location(vd.type()) +  " : type '" + tp.name + "' not found");
+        var tp = ParseType(vd.type(), ensure: true);
 
         exp_ast = new AST_Interim();
         PushAST(exp_ast);
@@ -2307,9 +2283,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = name.GetText();
 
-    var tp = ParseType(type_ctx);
-    if(tp.Get() == null)
-      FireError(Location(type_ctx) +  " : type '" + tp.name + "' not found");
+    var tp = ParseType(type_ctx, ensure: true);
 
     var var_node = Wrap(name); 
     var_node.eval_type = tp.Get();
