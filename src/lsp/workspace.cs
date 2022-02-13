@@ -1115,11 +1115,11 @@ namespace bhlsp
           foreach(var decl in decls.decl())
           {
             var fndecl = decl.funcDecl();
-            if(fndecl?.NAME() != null)
+            if(fndecl?.NAME() != null && !funcDecls.ContainsKey(fndecl.NAME().GetText()))
               funcDecls.Add(fndecl.NAME().GetText(), fndecl);
             
             var classDecl = decl.classDecl();
-            if(classDecl?.NAME() != null)
+            if(classDecl?.NAME() != null && !classDecls.ContainsKey(classDecl.NAME().GetText()))
               classDecls.Add(classDecl.NAME().GetText(), classDecl);
             
             var varDeclareAssign = decl.varDeclareAssign();
