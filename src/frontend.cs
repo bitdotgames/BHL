@@ -888,7 +888,7 @@ public class Frontend : bhlBaseVisitor<object>
     return sig;
   }
 
-  TypeProxy ParseType(bhlParser.RetTypeContext parsed, bool ensure = false)
+  TypeProxy ParseType(bhlParser.RetTypeContext parsed)
   {
     TypeProxy tp;
 
@@ -899,19 +899,19 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var tuple = new TupleType();
       for(int i=0;i<parsed.type().Length;++i)
-        tuple.Add(ParseType(parsed.type()[i], ensure));
+        tuple.Add(ParseType(parsed.type()[i]));
       tp = types.Type(tuple);
     }
     else
-      tp = ParseType(parsed.type()[0], ensure);
+      tp = ParseType(parsed.type()[0]);
 
-    if(ensure && tp.Get() == null)
+    if(tp.Get() == null)
       FireError(Location(parsed) + " : type '" + tp.name + "' not found");
 
     return tp;
   }
 
-  TypeProxy ParseType(bhlParser.TypeContext parsed, bool ensure = false)
+  TypeProxy ParseType(bhlParser.TypeContext parsed)
   {
     TypeProxy tp;
     if(parsed.fnargs() != null)
@@ -923,7 +923,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(parsed.ARR() != null)
       tp = types.TypeArr(tp);
 
-    if(ensure && tp.Get() == null)
+    if(tp.Get() == null)
       FireError(Location(parsed) + " : type '" + tp.name + "' not found");
 
    return tp;
