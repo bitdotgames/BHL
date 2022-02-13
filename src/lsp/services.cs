@@ -423,10 +423,8 @@ namespace bhlsp
       {
         if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Full)
         {
-          for(int i = 0; i < args.contentChanges.Length; i++)
-          {
-            document.Sync(args.contentChanges[i].text);
-          }
+          foreach (var contentChanges in args.contentChanges)
+            document.Sync(contentChanges.text);
         }
         else if(BHLSPWorkspace.self.syncKind == TextDocumentSyncKind.Incremental)
         {

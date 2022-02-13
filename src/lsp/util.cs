@@ -50,7 +50,7 @@ namespace bhlsp
     {
       if(root != null)
       {
-        foreach(BHLTextDocument doc in BHLSPWorkspace.self.forEachBhlImports(root))
+        foreach(BHLTextDocument doc in BHLSPWorkspace.self.ForEachBhlImports(root))
         {
           yield return doc;
         }
