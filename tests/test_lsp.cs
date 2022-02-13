@@ -294,6 +294,8 @@ public class TestLSP : BHL_TestBase
     ";
     
     string bhl2 = @"
+    import ""bhl1""
+
     func float test3(float k, int j) 
     {
       return 0
@@ -319,6 +321,8 @@ public class TestLSP : BHL_TestBase
     NewTestDocument("bhl1.bhl", bhl1, files);
     NewTestDocument("bhl2.bhl", bhl2, files);
     
+    BHLSPWorkspace.self.AddRoot(GetDirPath(), true);
+    
     Uri uri1 = GetUri(files[0]);
     Uri uri2 = GetUri(files[1]);
 
@@ -334,7 +338,7 @@ public class TestLSP : BHL_TestBase
     
     json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
     json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
-    json += "\"}, \"position\": {\"line\": 8, \"character\": 8}}}";
+    json += "\"}, \"position\": {\"line\": 10, \"character\": 8}}}";
     
     AssertEqual(
       rpc.HandleMessage(json),
@@ -344,7 +348,7 @@ public class TestLSP : BHL_TestBase
     
     json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
     json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
-    json += "\"}, \"position\": {\"line\": 9, \"character\": 11}}}";
+    json += "\"}, \"position\": {\"line\": 11, \"character\": 11}}}";
     
     AssertEqual(
       rpc.HandleMessage(json),
@@ -360,77 +364,6 @@ public class TestLSP : BHL_TestBase
       rpc.HandleMessage(json),
       "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
       "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
-    );
-  }
-
-  [IsTested()]
-  public void TestFindRefs()
-  {
-    string bhl1 = @"
-    import ""bhl2""
-      
-    class Foo {
-      int BAR
-    }
-
-    Foo foo = {
-      BAR : 0
-    }
-
-    func float test1(float k) 
-    {
-      return 0
-    }
-
-    func test2() 
-    {
-      test3(0, 0)
-      test1()
-    }
-    ";
-    
-    string bhl2 = @"
-    import ""bhl1""
-
-    func float test3(float k, int j) 
-    {
-      return 0
-    }
-
-    func test4() 
-    {
-      test2()
-      foo.BAR = 1
-    }
-    ";
-    
-    var rpc = new BHLSPJsonRpc();
-    rpc.AttachRpcService(new BHLSPTextDocumentFindReferencesJsonRpcService());
-
-    BHLSPWorkspace.self.Shutdown();
-    
-    string dir = GetDirPath();
-    if(Directory.Exists(dir))
-      Directory.Delete(dir, true/*recursive*/);
-    
-    var files = new List<string>();
-    NewTestDocument("bhl1.bhl", bhl1, files);
-    NewTestDocument("bhl2.bhl", bhl2, files);
-    
-    Uri uri1 = GetUri(files[0]);
-    Uri uri2 = GetUri(files[1]);
-
-    BHLSPWorkspace.self.AddRoot(GetDirPath(), true);
-    BHLSPWorkspace.self.TryAddDocument(uri1);
-    
-    var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/references\", \"params\":";
-    json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
-    json += "\"}, \"position\": {\"line\": 3, \"character\": 17}}}";
-    
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"result\":[{\"uri\":\"" + uri1.ToString() +
-      "\",\"range\":{\"start\":{\"line\":18,\"character\":6},\"end\":{\"line\":18,\"character\":16}}}],\"jsonrpc\":\"2.0\"}"
     );
   }
   

@@ -46,23 +46,6 @@ namespace bhlsp
       }
     }
     
-    public static IEnumerable<BHLTextDocument> ForEachBhlDocuments(BHLTextDocument root = null)
-    {
-      if(root != null)
-      {
-        foreach(BHLTextDocument doc in BHLSPWorkspace.self.ForEachBhlImports(root))
-        {
-          yield return doc;
-        }
-      }
-      
-      foreach(var doc in BHLSPWorkspace.self.ForEachDocuments())
-      {
-        if(doc is BHLTextDocument bhlDocument)
-          yield return bhlDocument;
-      }
-    }
-    
     public static List<ParameterInformation> GetInfoParams(bhlParser.FuncDeclContext funcDecl)
     {
       List<ParameterInformation> funcParameters = new List<ParameterInformation>();

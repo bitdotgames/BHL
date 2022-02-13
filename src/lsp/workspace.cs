@@ -1201,48 +1201,10 @@ namespace bhlsp
       root.Add(new RootPath {path = pathFolder, cleanup = cleanup});
     }
     
-    public async void TryAddDocuments()
-    {
-      foreach(var rootPath in root)
-      {
-        string[] files = new string[0];
-        
-#if BHLSP_DEBUG
-        var sw = new System.Diagnostics.Stopwatch();
-        sw.Start();
-#endif
-        
-        await Task.Run(() =>
-        {
-          files = Directory.GetFiles(rootPath.path, "*.bhl", SearchOption.AllDirectories);
-        });
-        
-#if BHLSP_DEBUG
-        sw.Stop();
-        BHLSPLogger.WriteLine($"SearchFiles ({files.Length}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-        
-        sw = new System.Diagnostics.Stopwatch();
-        sw.Start();
-#endif
-        
-        var tasks = new List<Task>();
-        foreach(var path in files)
-          tasks.Add(Task.Run(() => TryAddDocument(path)));
-        await Task.WhenAll(tasks);
-        
-#if BHLSP_DEBUG
-        sw.Stop();
-        BHLSPLogger.WriteLine($"AddDocuments ({files.Length}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-#endif
-      }
-    }
-    
     public void TryAddDocument(string path, string text = null)
     {
       TryAddDocument(new Uri($"file://{path}"), text);
     }
-    
-    object lockAdd = new object();
     
     public void TryAddDocument(Uri uri, string text = null)
     {
@@ -1263,14 +1225,7 @@ namespace bhlsp
           }
           
           document.Sync(text);
-          
-          lock(lockAdd)
-          {
-            if(!documents.ContainsKey(path))
-            {
-              documents.Add(path, document);
-            }
-          }
+          documents.Add(path, document);
         }
       }
     }
@@ -1302,17 +1257,6 @@ namespace bhlsp
         return documents[path];
 
       return null;
-    }
-
-    public IEnumerable<BHLSPTextDocument> ForEachDocuments()
-    {
-      lock(lockAdd)
-      {
-        foreach(var document in documents.Values)
-        {
-          yield return document;
-        }
-      }
     }
     
     public IEnumerable<BHLTextDocument> ForEachBhlImports(BHLTextDocument root)

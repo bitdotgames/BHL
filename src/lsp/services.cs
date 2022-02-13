@@ -182,8 +182,6 @@ namespace bhlsp
         BHLSPWorkspace.self.AddRoot(args.rootPath, true, false);
       }
       
-      BHLSPWorkspace.self.TryAddDocuments();
-      
       ServerCapabilities capabilities = new ServerCapabilities();
 
       if(args.capabilities.textDocument != null)
@@ -242,7 +240,7 @@ namespace bhlsp
         
         if(args.capabilities.textDocument.references != null)
         {
-          capabilities.referencesProvider = true; //textDocument/references
+          capabilities.referencesProvider = false; //textDocument/references
         }
 
         if(args.capabilities.textDocument.semanticTokens != null)
@@ -336,7 +334,7 @@ namespace bhlsp
         bhlParser.FuncDeclContext funcDecl = null;
         if(!string.IsNullOrEmpty(funcName))
         {
-          foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
+          foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
           {
             if(doc.FuncDecls.ContainsKey(funcName))
             {
@@ -561,7 +559,7 @@ namespace bhlsp
             
             if(string.IsNullOrEmpty(classTypeName) && !string.IsNullOrEmpty(callExpMemberAccessName))
             {
-              foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
+              foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
               {
                 if(doc.VarDeclars.ContainsKey(callExpMemberAccessName))
                 {
@@ -579,7 +577,7 @@ namespace bhlsp
           bhlParser.ClassDeclContext classDecl = null;
           BHLTextDocument classDeclBhlDocument = null;
           
-          foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
+          foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
           {
             if(doc.ClassDecls.ContainsKey(classTypeName))
             {
@@ -640,7 +638,7 @@ namespace bhlsp
         {
           string callExpName = callExp.NAME().GetText();
           
-          foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
+          foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
           {
             if(doc.FuncDecls.ContainsKey(callExpName))
             {
@@ -671,7 +669,7 @@ namespace bhlsp
           if(!string.IsNullOrEmpty(funcName))
           {
           
-            foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
+            foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
             {
               if(doc.FuncDecls.ContainsKey(funcName))
               {
@@ -775,7 +773,7 @@ namespace bhlsp
         {
           string callExpName = callExp.NAME().GetText();
           
-          foreach(var doc in BHLSPUtil.ForEachBhlDocuments(document))
+          foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
           {
             if(doc.FuncDecls.ContainsKey(callExpName))
             {
@@ -837,91 +835,7 @@ namespace bhlsp
       return RpcResult.Success();
     }
   }
-
-  public class BHLSPTextDocumentFindReferencesJsonRpcService : BHLSPTextDocumentFindReferencesJsonRpcServiceTemplate
-  {
-    public override RpcResult FindReferences(ReferenceParams args)
-    {
-      BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri);
-      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
-      {
-        int line = (int)args.position.line;
-        int character = (int)args.position.character;
-        
-        int idx = document.GetIndex(line, character);
-
-        bhlParser.FuncDeclContext funcDecl = null;
-        
-        foreach(IParseTree node in BHLSPUtil.DFS(document.ToParser().program()))
-        {
-          if(node is ParserRuleContext prc)
-          {
-            if(prc.Start.StartIndex <= idx && idx <= prc.Stop.StopIndex)
-            {
-              funcDecl = prc as bhlParser.FuncDeclContext;
-              break;
-            }
-          }
-        }
-
-        if(funcDecl?.NAME() != null)
-        {
-          string funcDeclName = funcDecl.NAME().GetText();
-          List<Location> result = new List<Location>();
-          
-          foreach(BHLTextDocument bhlDocument in BHLSPUtil.ForEachBhlDocuments()) //TODO: too long
-          {
-            if(!CanCheck(bhlDocument, document.uri.LocalPath))
-              continue;
-            
-            foreach(var bhlDocumentFuncDecl in bhlDocument.FuncDecls.Values)
-            {
-              foreach(IParseTree node in BHLSPUtil.DFS(bhlDocumentFuncDecl))
-              {
-                if(node is bhlParser.CallExpContext callExp)
-                {
-                  if(funcDeclName == callExp.NAME().GetText())
-                  {
-                    var start = bhlDocument.GetLineColumn(callExp.Start.StartIndex);
-                    var end = bhlDocument.GetLineColumn(callExp.Stop.StopIndex);
-                    var startPos = new Position {line = (uint)start.Item1, character = (uint)start.Item2};
-                    var endPos = new Position {line = (uint)end.Item1, character = (uint)end.Item2};
-                    
-                    result.Add(new Location
-                    {
-                      uri = bhlDocument.uri,
-                      range = new Range
-                      {
-                        start = startPos,
-                        end = endPos
-                      }
-                    });
-                  }
-                }
-              }
-            }
-          }
-          
-          if(result.Count > 0)
-            return RpcResult.Success(result.ToArray());
-        }
-      }
-      return RpcResult.Success();
-    }
-
-    bool CanCheck(BHLTextDocument document, string path)
-    {
-      foreach(var import in document.Imports)
-      {
-        string importPath = BHLSPWorkspace.self.ResolveImportPath(document.uri.LocalPath, import, ".bhl");
-        if(importPath == path)
-          return true;
-      }
-
-      return false;
-    }
-  }
-
+  
   public class BHLSPTextDocumentSemanticTokensJsonRpcService : BHLSPTextDocumentSemanticTokensJsonRpcServiceTemplate
   {
     public override RpcResult SemanticTokensFull(SemanticTokensParams args)
