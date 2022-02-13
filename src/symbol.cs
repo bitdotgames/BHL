@@ -1330,35 +1330,35 @@ public class TypeSystem
     return null;
   }
 
-  public struct Arg
+  public struct TypeArg
   {
     public string name;
     public TypeProxy tp;
 
-    public static implicit operator Arg(string name)
+    public static implicit operator TypeArg(string name)
     {
-      return new Arg(name);
+      return new TypeArg(name);
     }
 
-    public static implicit operator Arg(TypeProxy tp)
+    public static implicit operator TypeArg(TypeProxy tp)
     {
-      return new Arg(tp);
+      return new TypeArg(tp);
     }
 
-    public Arg(string name)
+    public TypeArg(string name)
     {
       this.name = name;
       this.tp = default(TypeProxy);
     }
 
-    public Arg(TypeProxy tp)
+    public TypeArg(TypeProxy tp)
     {
       this.name = null;
       this.tp = tp;
     }
   }
 
-  public TypeProxy Type(Arg tn)
+  public TypeProxy Type(TypeArg tn)
   {
     if(!tn.tp.IsEmpty())
       return tn.tp;
@@ -1366,12 +1366,12 @@ public class TypeSystem
       return Type(tn.name);
   }
 
-  public TypeProxy TypeArr(Arg tn)
+  public TypeProxy TypeArr(TypeArg tn)
   {           
     return Type(new GenericArrayTypeSymbol(this, Type(tn)));
   }
 
-  public TypeProxy TypeFunc(Arg ret_type, params Arg[] arg_types)
+  public TypeProxy TypeFunc(TypeArg ret_type, params TypeArg[] arg_types)
   {           
     var sig = new FuncSignature(Type(ret_type));
     foreach(var arg_type in arg_types)
@@ -1379,7 +1379,7 @@ public class TypeSystem
     return Type(sig);
   }
 
-  public TypeProxy TypeTuple(params Arg[] types)
+  public TypeProxy TypeTuple(params TypeArg[] types)
   {
     var tuple = new TupleType();
     foreach(var type in types)
