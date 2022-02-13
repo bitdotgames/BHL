@@ -21,37 +21,19 @@ public struct TypeProxy
   TypeSystem ts;
   IType type;
   public string name { get ; private set;}
-#if BHL_FRONT
-  //NOTE: parse location of the type
-  public IParseTree parsed { get; }
-#endif
 
-  public TypeProxy(TypeSystem ts, string name
-#if BHL_FRONT
-, IParseTree parsed = null
-#endif
-  )
+  public TypeProxy(TypeSystem ts, string name)
   {
     this.ts = ts;
     type = null;
     this.name = name;
-#if BHL_FRONT
-    this.parsed = parsed;
-#endif
   }
 
-  public TypeProxy(IType type
-#if BHL_FRONT
-, IParseTree parsed = null
-#endif
-  )
+  public TypeProxy(IType type)
   {
     ts = null;
     this.name = type.GetName();
     this.type = type;
-#if BHL_FRONT
-    this.parsed = parsed;
-#endif
   }
 
   public bool IsEmpty()
@@ -72,24 +54,6 @@ public struct TypeProxy
     return type;
   }
 }
-
-#if BHL_FRONT
-public class WrappedParseTree
-{
-  public IParseTree tree;
-  public ITokenStream tokens;
-  public IType eval_type;
-
-  public string Location()
-  {
-    var interval = tree.SourceInterval;
-    var begin = tokens.Get(interval.a);
-
-    string line = string.Format("@({0},{1})", begin.Line, begin.Column);
-    return line;
-  }
-}
-#endif
 
 public class Symbol 
 {
@@ -860,28 +824,13 @@ public class FuncSymbolScript : FuncSymbol
     TypeSystem ts,
     AST_FuncDecl decl, 
     WrappedParseTree parsed, 
-    TypeProxy ret_type, 
-    bhlParser.FuncParamsContext fparams
+    bhlParser.FuncParamsContext fparams,
+    FuncSignature sig
   ) 
-    : this(ts, decl, new FuncSignature(ret_type))
+    : this(ts, decl, sig)
   {
     this.parsed = parsed;
     this.fparams = fparams;
-
-    //NOTE: code below duplicates alternative ctor logic,
-    //      it's ivoked by the frontend when decl it not 
-    //      filled yet but we do have parsed tree
-    if(parsed != null && fparams != null)
-    {
-      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
-      {
-        var vd = fparams.funcParamDeclare()[i];
-        var tp = ts.Type(vd.type());
-        if(vd.isRef() != null)
-          tp = ts.Type(new RefType(tp));
-        GetSignature().AddArg(tp);
-      }
-    }
   }
 
   public IParseTree GetDefaultArgsExprAt(int idx) 
@@ -932,11 +881,11 @@ public class LambdaSymbol : FuncSymbolScript
     TypeSystem ts,
     WrappedParseTree parsed, 
     AST_LambdaDecl decl, 
-    TypeProxy ret_type,
     bhlParser.FuncParamsContext fparams,
-    List<FuncSymbol> fdecl_stack
+    List<FuncSymbol> fdecl_stack,
+    FuncSignature sig
   ) 
-    : base(ts, decl, parsed, ret_type, fparams)
+    : base(ts, decl, parsed, fparams, sig)
   {
     this.fdecl_stack = fdecl_stack;
   }
@@ -1438,43 +1387,6 @@ public class TypeSystem
     return Type(tuple);
   }
 
-#if BHL_FRONT
-  public TypeProxy Type(bhlParser.TypeContext parsed)
-  {
-    TypeProxy tp;
-    if(parsed.fnargs() != null)
-      tp = Type(GetFuncSignature(parsed));
-    else
-      tp = Type(parsed.NAME().GetText());
-
-    //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
-    if(parsed.ARR() != null)
-      tp = TypeArr(tp);
-
-   return tp;
-  }
-
-  public TypeProxy Type(bhlParser.RetTypeContext parsed)
-  {
-    TypeProxy tp = default(TypeProxy);
-
-    //convenience special case
-    if(parsed == null)
-      tp = Type("void");
-    else if(parsed.type().Length > 1)
-    {
-      var tuple = new TupleType();
-      for(int i=0;i<parsed.type().Length;++i)
-        tuple.Add(this.Type(parsed.type()[i]));
-      tp = Type(tuple);
-    }
-    else
-      tp = Type(parsed.type()[0]);
-
-    return tp;
-  }
-#endif
-
   public TypeProxy Type(string name)
   {
     if(name.Length == 0 || IsCompoundType(name))
@@ -1548,31 +1460,6 @@ public class TypeSystem
   }
 
 #if BHL_FRONT
-  public FuncSignature GetFuncSignature(bhlParser.TypeContext ctx)
-  {
-    var ret_type = Type(ctx.NAME().GetText());
-
-    var fnargs = ctx.fnargs();
-    if(fnargs.ARR() != null)
-      ret_type = TypeArr(ret_type);
-
-    var arg_types = new List<TypeProxy>();
-    var fnames = fnargs.names();
-    if(fnames != null)
-    {
-      for(int i=0;i<fnames.refName().Length;++i)
-      {
-        var name = fnames.refName()[i];
-        var arg_type = Type(name.NAME().GetText());
-        if(name.isRef() != null)
-          arg_type = Type(new RefType(arg_type));
-        arg_types.Add(arg_type);
-      }
-    }
-
-    return new FuncSignature(ret_type, arg_types);
-  }
-
   static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree a, WrappedParseTree b) 
   {
     IType result;

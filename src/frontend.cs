@@ -51,6 +51,22 @@ public class Parsed
   public ITokenStream tokens;
 }
 
+public class WrappedParseTree
+{
+  public IParseTree tree;
+  public ITokenStream tokens;
+  public IType eval_type;
+
+  public string Location()
+  {
+    var interval = tree.SourceInterval;
+    var begin = tokens.Get(interval.a);
+
+    string line = string.Format("@({0},{1})", begin.Line, begin.Column);
+    return line;
+  }
+}
+
 public class Frontend : bhlBaseVisitor<object>
 {
   static int lambda_id = 0;
@@ -846,21 +862,98 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  FuncSignature ParseFuncSignature(bhlParser.TypeContext ctx)
+  {
+    var ret_type = types.Type(ctx.NAME().GetText());
+
+    var fnargs = ctx.fnargs();
+    if(fnargs.ARR() != null)
+      ret_type = types.TypeArr(ret_type);
+
+    var arg_types = new List<TypeProxy>();
+    var fnames = fnargs.names();
+    if(fnames != null)
+    {
+      for(int i=0;i<fnames.refName().Length;++i)
+      {
+        var name = fnames.refName()[i];
+        var arg_type = types.Type(name.NAME().GetText());
+        if(name.isRef() != null)
+          arg_type = types.Type(new RefType(arg_type));
+        arg_types.Add(arg_type);
+      }
+    }
+
+    return new FuncSignature(ret_type, arg_types);
+  }
+
+  FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams)
+  {
+    var sig = new FuncSignature(ret_type);
+    if(fparams != null)
+    {
+      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
+      {
+        var vd = fparams.funcParamDeclare()[i];
+        var tp = ParseType(vd.type());
+        if(vd.isRef() != null)
+          tp = types.Type(new RefType(tp));
+        sig.AddArg(tp);
+      }
+    }
+    return sig;
+  }
+
+  TypeProxy ParseType(bhlParser.RetTypeContext parsed)
+  {
+    TypeProxy tp = default(TypeProxy);
+
+    //convenience special case
+    if(parsed == null)
+      tp = types.Type(TypeSystem.Void);
+    else if(parsed.type().Length > 1)
+    {
+      var tuple = new TupleType();
+      for(int i=0;i<parsed.type().Length;++i)
+        tuple.Add(ParseType(parsed.type()[i]));
+      tp = types.Type(tuple);
+    }
+    else
+      tp = ParseType(parsed.type()[0]);
+
+    return tp;
+  }
+
+  TypeProxy ParseType(bhlParser.TypeContext parsed)
+  {
+    TypeProxy tp;
+    if(parsed.fnargs() != null)
+      tp = types.Type(ParseFuncSignature(parsed));
+    else
+      tp = types.Type(parsed.NAME().GetText());
+
+    //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
+    if(parsed.ARR() != null)
+      tp = types.TypeArr(tp);
+
+   return tp;
+  }
+
   void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
   {
-    var tr = types.Type(funcLambda.retType());
-    if(tr.Get() == null)
-      FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
+    var tp = ParseType(funcLambda.retType());
+    if(tp.Get() == null)
+      FireError(Location(funcLambda.retType()) + " : type '" + tp.name + "' not found");
 
     var func_name = curr_module.id + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name, curr_module.id, tr.name);
+    var ast = AST_Util.New_LambdaDecl(func_name, curr_module.id, tp.name);
     var symb = new LambdaSymbol(
       types,
       Wrap(ctx), 
       ast,
-      tr, 
       funcLambda.funcParams(),
-      this.func_decl_stack
+      this.func_decl_stack,
+      ParseFuncSignature(tp, funcLambda.funcParams())
     );
 
     PushFuncDecl(symb);
@@ -885,7 +978,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(funcLambda.funcBlock());
     PopAST();
 
-    if(tr.Get() != TypeSystem.Void && !symb.return_statement_found)
+    if(tp.Get() != TypeSystem.Void && !symb.return_statement_found)
       FireError(Location(funcLambda.funcBlock()) + " : matching 'return' statement not found");
 
     PopFuncDecl();
@@ -945,7 +1038,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(new_exp != null)
     {
-      var tp = types.Type(new_exp.type());
+      var tp = ParseType(new_exp.type());
       if(tp.Get() == null)
         FireError(Location(new_exp.type()) + " : type '" + tp.name + "' not found");
       PushJsonType(tp.Get());
@@ -1071,9 +1164,9 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
   {
-    var tp = types.Type(ctx.typeid().type());
+    var tp = ParseType(ctx.typeid().type());
     if(tp.Get() == null)
-      FireError(Location(tp.parsed) +  " : type '" + tp.name + "' not found");
+      FireError(Location(ctx.typeid().type()) +  " : type '" + tp.name + "' not found");
 
     Wrap(ctx).eval_type = TypeSystem.Int;
 
@@ -1118,9 +1211,9 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tp = types.Type(ctx.newExp().type());
+    var tp = ParseType(ctx.newExp().type());
     if(tp.Get() == null)
-      FireError(Location(tp.parsed) + " : type '" + tp.name + "' not found");
+      FireError(Location(ctx.newExp().type()) + " : type '" + tp.name + "' not found");
 
     var ast = AST_Util.New_New((ClassSymbol)tp.Get());
     Wrap(ctx).eval_type = tp.Get();
@@ -1140,9 +1233,9 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
-    var tp = types.Type(ctx.type());
+    var tp = ParseType(ctx.type());
     if(tp.Get() == null)
-      FireError(Location(tp.parsed) + " : type '" + tp.name + "' not found");
+      FireError(Location(ctx.type()) + " : type '" + tp.name + "' not found");
 
     var ast = AST_Util.New_TypeCast(tp.name);
     var exp = ctx.exp();
@@ -1854,20 +1947,19 @@ public class Frontend : bhlBaseVisitor<object>
 
   AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
   {
-    var tr = types.Type(context.retType());
-
-    if(tr.Get() == null)
-      FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
+    var tp = ParseType(context.retType());
+    if(tp.Get() == null)
+      FireError(Location(context.retType()) + " : type '" + tp.name + "' not found");
 
     var fstr_name = context.NAME().GetText();
 
     var func_node = Wrap(context);
-    func_node.eval_type = tr.Get();
+    func_node.eval_type = tp.Get();
 
-    var ast = AST_Util.New_FuncDecl(fstr_name, curr_module.id, tr.name);
+    var ast = AST_Util.New_FuncDecl(fstr_name, curr_module.id, tp.name);
 
     var func_symb = new FuncSymbolScript(
-      types, ast, func_node, tr, context.funcParams()
+      types, ast, func_node, context.funcParams(), ParseFuncSignature(tp, context.funcParams())
     );
     scope.Define(func_symb);
 
@@ -1896,7 +1988,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(context.funcBlock());
       PopAST();
 
-      if(tr.Get() != TypeSystem.Void && !func_symb.return_statement_found)
+      if(tp.Get() != TypeSystem.Void && !func_symb.return_statement_found)
         FireError(Location(context.NAME()) + " : matching 'return' statement not found");
     }
     
@@ -1970,9 +2062,9 @@ public class Frontend : bhlBaseVisitor<object>
       AST_Interim exp_ast = null;
       if(assign_exp != null)
       {
-        var tp = types.Type(vd.type());
+        var tp = ParseType(vd.type());
         if(tp.Get() == null)
-          FireError(Location(tp.parsed) +  " : type '" + tp.name + "' not found");
+          FireError(Location(vd.type()) +  " : type '" + tp.name + "' not found");
 
         exp_ast = new AST_Interim();
         PushAST(exp_ast);
@@ -2011,7 +2103,7 @@ public class Frontend : bhlBaseVisitor<object>
       bool pop_json_type = false;
       if(found_default_arg)
       {
-        var tp = types.Type(fp.type());
+        var tp = ParseType(fp.type());
         PushJsonType(tp.Get());
         pop_json_type = true;
       }
@@ -2215,9 +2307,9 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = name.GetText();
 
-    var tp = types.Type(type_ctx);
+    var tp = ParseType(type_ctx);
     if(tp.Get() == null)
-      FireError(Location(tp.parsed) +  " : type '" + tp.name + "' not found");
+      FireError(Location(type_ctx) +  " : type '" + tp.name + "' not found");
 
     var var_node = Wrap(name); 
     var_node.eval_type = tp.Get();
