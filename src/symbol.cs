@@ -14,7 +14,7 @@ public interface IType
   string GetName();
 }
 
-public class TypeRef
+public class TypeProxy
 {
   IType type;
   public string name { get ; private set;}
@@ -25,7 +25,7 @@ public class TypeRef
   public IParseTree parsed { get; }
 #endif
 
-  public TypeRef(TypeSystem ts, string name
+  public TypeProxy(TypeSystem ts, string name
 #if BHL_FRONT
 , IParseTree parsed = null
 #endif
@@ -38,7 +38,7 @@ public class TypeRef
 #endif
   }
 
-  public TypeRef(IType type
+  public TypeProxy(IType type
 #if BHL_FRONT
 , IParseTree parsed = null
 #endif
@@ -85,7 +85,7 @@ public class WrappedParseTree
 public class Symbol 
 {
   public string name;
-  public TypeRef type;
+  public TypeProxy type;
   // All symbols know what scope contains them
   public IScope scope;
 #if BHL_FRONT
@@ -93,7 +93,7 @@ public class Symbol
   public WrappedParseTree parsed;
 #endif
 
-  public Symbol(string name, TypeRef type) 
+  public Symbol(string name, TypeProxy type) 
   { 
     this.name = name; 
     this.type = type;
@@ -120,7 +120,7 @@ public class BuiltInTypeSymbol : Symbol, IType
   public BuiltInTypeSymbol(string name) 
     : base(name, null/*set below*/) 
   {
-    this.type = new TypeRef(this);
+    this.type = new TypeProxy(this);
   }
 
   public string GetName() { return name; }
@@ -154,7 +154,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   )
     : base(name)
   {
-    this.type = new TypeRef(this);
+    this.type = new TypeProxy(this);
     this.super_class = super_class;
     this.creator = creator;
 
@@ -231,9 +231,9 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
 
 abstract public class ArrayTypeSymbol : ClassSymbol
 {
-  public TypeRef item_type;
+  public TypeProxy item_type;
 
-  public ArrayTypeSymbol(TypeSystem ts, string name, TypeRef item_type)     
+  public ArrayTypeSymbol(TypeSystem ts, string name, TypeProxy item_type)     
     : base(name, super_class: null)
   {
     this.item_type = item_type;
@@ -288,7 +288,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(TypeSystem ts, TypeRef item_type) 
+  public ArrayTypeSymbol(TypeSystem ts, TypeProxy item_type) 
     : this(ts, item_type.name + "[]", item_type)
   {}
 
@@ -315,7 +315,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return CLASS_TYPE;
   }
 
-  public GenericArrayTypeSymbol(TypeSystem ts, TypeRef item_type) 
+  public GenericArrayTypeSymbol(TypeSystem ts, TypeProxy item_type) 
     : base(ts, item_type)
   {}
 
@@ -408,13 +408,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(TypeSystem ts, string name, TypeRef item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(TypeSystem ts, string name, TypeProxy item_type, CreatorCb creator) 
     : base(ts, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(TypeSystem ts, TypeRef item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(TypeSystem ts, TypeProxy item_type, CreatorCb creator) 
     : base(ts, item_type.name + "[]", item_type)
   {}
 
@@ -522,14 +522,14 @@ public class VariableSymbol : Symbol, IScopeIndexed
   //we mark this symbol as 'out of scope'
   public bool is_out_of_scope;
 
-  public VariableSymbol(WrappedParseTree parsed, string name, TypeRef type) 
+  public VariableSymbol(WrappedParseTree parsed, string name, TypeProxy type) 
     : this(name, type) 
   {
     this.parsed = parsed;
   }
 #endif
 
-  public VariableSymbol(string name, TypeRef type) 
+  public VariableSymbol(string name, TypeProxy type) 
     : base(name, type) 
   {}
 }
@@ -539,14 +539,14 @@ public class FuncArgSymbol : VariableSymbol
   public bool is_ref;
 
 #if BHL_FRONT
-  public FuncArgSymbol(WrappedParseTree parsed, string name, TypeRef type, bool is_ref = false)
+  public FuncArgSymbol(WrappedParseTree parsed, string name, TypeProxy type, bool is_ref = false)
     : this(name, type, is_ref)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public FuncArgSymbol(string name, TypeRef type, bool is_ref = false)
+  public FuncArgSymbol(string name, TypeProxy type, bool is_ref = false)
     : base(name, type)
   {
     this.is_ref = is_ref;
@@ -559,7 +559,7 @@ public class FieldSymbol : VariableSymbol
   public VM.FieldSetter setter;
   public VM.FieldRef getref;
 
-  public FieldSymbol(string name, TypeRef type, VM.FieldGetter getter = null, VM.FieldSetter setter = null, VM.FieldRef getref = null) 
+  public FieldSymbol(string name, TypeProxy type, VM.FieldGetter getter = null, VM.FieldSetter setter = null, VM.FieldRef getref = null) 
     : base(name, type)
   {
     this.getter = getter;
@@ -570,7 +570,7 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolScript : FieldSymbol
 {
-  public FieldSymbolScript(string name, TypeRef type) 
+  public FieldSymbolScript(string name, TypeProxy type) 
     : base(name, type, null, null, null)
   {
     this.getter = Getter;
@@ -662,7 +662,7 @@ public class TupleType : IType
 {
   public string name;
 
-  List<TypeRef> items = new List<TypeRef>();
+  List<TypeProxy> items = new List<TypeProxy>();
 
   public string GetName() { return name; }
 
@@ -672,21 +672,21 @@ public class TupleType : IType
     }
   }
 
-  public TupleType(params TypeRef[] items)
+  public TupleType(params TypeProxy[] items)
   {
     foreach(var item in items)
       this.items.Add(item);
     Update();
   }
 
-  public TypeRef this[int index]
+  public TypeProxy this[int index]
   {
     get { 
       return items[index]; 
     }
   }
 
-  public void Add(TypeRef item)
+  public void Add(TypeProxy item)
   {
     items.Add(item);
     Update();
@@ -710,12 +710,12 @@ public class FuncSignature : IType
 {
   public string name;
 
-  public TypeRef ret_type;
-  public List<TypeRef> arg_types = new List<TypeRef>();
+  public TypeProxy ret_type;
+  public List<TypeProxy> arg_types = new List<TypeProxy>();
 
   public string GetName() { return name; }
 
-  public FuncSignature(TypeRef ret_type, params TypeRef[] arg_types)
+  public FuncSignature(TypeProxy ret_type, params TypeProxy[] arg_types)
   {
     this.ret_type = ret_type;
     foreach(var arg_type in arg_types)
@@ -723,20 +723,20 @@ public class FuncSignature : IType
     Update();
   }
 
-  public FuncSignature(TypeRef ret_type, List<TypeRef> arg_types)
+  public FuncSignature(TypeProxy ret_type, List<TypeProxy> arg_types)
   {
     this.ret_type = ret_type;
     this.arg_types = arg_types;
     Update();
   }
 
-  public FuncSignature(TypeRef ret_type)
+  public FuncSignature(TypeProxy ret_type)
   {
     this.ret_type = ret_type;
     Update();
   }
 
-  public void AddArg(TypeRef arg_type)
+  public void AddArg(TypeProxy arg_type)
   {
     arg_types.Add(arg_type);
     Update();
@@ -786,7 +786,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public FuncSymbol(string name, FuncSignature sig) 
     : base(name)
   {
-    this.type = new TypeRef(sig);
+    this.type = new TypeProxy(sig);
   }
 
   public override SymbolsDictionary GetMembers() { return members; }
@@ -841,7 +841,7 @@ public class FuncSymbolScript : FuncSymbol
     TypeSystem ts,
     AST_FuncDecl decl, 
     WrappedParseTree parsed, 
-    TypeRef ret_type, 
+    TypeProxy ret_type, 
     bhlParser.FuncParamsContext fparams
   ) 
     : this(ts, decl, new FuncSignature(ret_type))
@@ -857,9 +857,9 @@ public class FuncSymbolScript : FuncSymbol
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
-        var type = ts.Type(vd.type());
-        type.is_ref = vd.isRef() != null;
-        GetSignature().AddArg(type);
+        var tp = ts.Type(vd.type());
+        tp.is_ref = vd.isRef() != null;
+        GetSignature().AddArg(tp);
       }
     }
   }
@@ -911,7 +911,7 @@ public class LambdaSymbol : FuncSymbolScript
     TypeSystem ts,
     WrappedParseTree parsed, 
     AST_LambdaDecl decl, 
-    TypeRef ret_type,
+    TypeProxy ret_type,
     bhlParser.FuncParamsContext fparams,
     List<FuncSymbol> fdecl_stack
   ) 
@@ -1007,7 +1007,7 @@ public class FuncSymbolNative : FuncSymbol
 
   public FuncSymbolNative(
     string name, 
-    TypeRef ret_type, 
+    TypeProxy ret_type, 
     Cb cb,
     params FuncArgSymbol[] args
   ) 
@@ -1016,7 +1016,7 @@ public class FuncSymbolNative : FuncSymbol
 
   public FuncSymbolNative(
     string name, 
-    TypeRef ret_type, 
+    TypeProxy ret_type, 
     int def_args_num,
     Cb cb,
     params FuncArgSymbol[] args
@@ -1117,7 +1117,7 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumSymbol(string name)
       : base(name)
   {
-    this.type = new TypeRef(this);
+    this.type = new TypeProxy(this);
   }
 
   public string GetName() { return name; }
@@ -1174,7 +1174,7 @@ public class EnumItemSymbol : Symbol, IType
 #endif
 
   public EnumItemSymbol(EnumSymbol owner, string name, int val = 0) 
-    : base(name, new TypeRef(owner)) 
+    : base(name, new TypeProxy(owner)) 
   {
     this.owner = owner;
     this.val = val;
@@ -1282,7 +1282,7 @@ public class TypeSystem
     globs.Define(Any);
 
     //for all generic arrays
-    globs.Define(new GenericArrayTypeSymbol(this, new TypeRef(this, "")));
+    globs.Define(new GenericArrayTypeSymbol(this, new TypeProxy(this, "")));
 
     {
       var fn = new FuncSymbolNative("suspend", Type("void"), 
@@ -1360,60 +1360,48 @@ public class TypeSystem
     return null;
   }
 
-  public void Define(Symbol sym)
-  {
-    foreach(var lnk in links)
-    {
-      if(lnk.Resolve(sym.name) != null)
-        throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
-    }
-
-    globs.Define(sym);
-  }
-
-
   public struct Arg
   {
     public string name;
-    public TypeRef tr;
+    public TypeProxy tp;
 
     public static implicit operator Arg(string name)
     {
       return new Arg(name);
     }
 
-    public static implicit operator Arg(TypeRef tr)
+    public static implicit operator Arg(TypeProxy tp)
     {
-      return new Arg(tr);
+      return new Arg(tp);
     }
 
     public Arg(string name)
     {
       this.name = name;
-      this.tr = null;
+      this.tp = null;
     }
 
-    public Arg(TypeRef tr)
+    public Arg(TypeProxy tp)
     {
       this.name = null;
-      this.tr = tr;
+      this.tp = tp;
     }
   }
 
-  public TypeRef Type(Arg tn)
+  public TypeProxy Type(Arg tn)
   {
-    if(tn.tr != null)
-      return tn.tr;
+    if(tn.tp != null)
+      return tn.tp;
     else
       return Type(tn.name);
   }
 
-  public TypeRef TypeArr(Arg tn)
+  public TypeProxy TypeArr(Arg tn)
   {           
     return Type(new GenericArrayTypeSymbol(this, Type(tn)));
   }
 
-  public TypeRef TypeFunc(Arg ret_type, params Arg[] arg_types)
+  public TypeProxy TypeFunc(Arg ret_type, params Arg[] arg_types)
   {           
     var sig = new FuncSignature(Type(ret_type));
     foreach(var arg_type in arg_types)
@@ -1421,7 +1409,7 @@ public class TypeSystem
     return Type(sig);
   }
 
-  public TypeRef TypeTuple(params Arg[] types)
+  public TypeProxy TypeTuple(params Arg[] types)
   {
     var tuple = new TupleType();
     foreach(var type in types)
@@ -1430,53 +1418,53 @@ public class TypeSystem
   }
 
 #if BHL_FRONT
-  public TypeRef Type(bhlParser.TypeContext parsed)
+  public TypeProxy Type(bhlParser.TypeContext parsed)
   {
-    TypeRef tr;
+    TypeProxy tp;
     if(parsed.fnargs() != null)
-      tr = Type(GetFuncSignature(parsed));
+      tp = Type(GetFuncSignature(parsed));
     else
-      tr = Type(parsed.NAME().GetText());
+      tp = Type(parsed.NAME().GetText());
 
     //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
     if(parsed.ARR() != null)
-      tr = TypeArr(tr);
+      tp = TypeArr(tp);
 
-   return tr;
+   return tp;
   }
 
-  public TypeRef Type(bhlParser.RetTypeContext parsed)
+  public TypeProxy Type(bhlParser.RetTypeContext parsed)
   {
-    TypeRef tr = null;
+    TypeProxy tp = null;
 
     //convenience special case
     if(parsed == null)
-      tr = Type("void");
+      tp = Type("void");
     else if(parsed.type().Length > 1)
     {
       var tuple = new TupleType();
       for(int i=0;i<parsed.type().Length;++i)
         tuple.Add(this.Type(parsed.type()[i]));
-      tr = Type(tuple);
+      tp = Type(tuple);
     }
     else
-      tr = Type(parsed.type()[0]);
+      tp = Type(parsed.type()[0]);
 
-    return tr;
+    return tp;
   }
 #endif
 
-  public TypeRef Type(string name)
+  public TypeProxy Type(string name)
   {
     if(name.Length == 0 || IsCompoundType(name))
       throw new Exception("Bad type name: '" + name + "'");
     
-    return new TypeRef(this, name);
+    return new TypeProxy(this, name);
   }
 
-  public TypeRef Type(IType t)
+  public TypeProxy Type(IType t)
   {
-    return new TypeRef(t);
+    return new TypeProxy(t);
   }
 
   static public bool IsCompoundType(string name)
@@ -1547,7 +1535,7 @@ public class TypeSystem
     if(fnargs.ARR() != null)
       ret_type = TypeArr(ret_type);
 
-    var arg_types = new List<TypeRef>();
+    var arg_types = new List<TypeProxy>();
     var fnames = fnargs.names();
     if(fnames != null)
     {

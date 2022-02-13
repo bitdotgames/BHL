@@ -945,10 +945,10 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(new_exp != null)
     {
-      var tr = types.Type(new_exp.type());
-      if(tr.Get() == null)
-        FireError(Location(new_exp.type()) + " : type '" + tr.name + "' not found");
-      PushJsonType(tr.Get());
+      var tp = types.Type(new_exp.type());
+      if(tp.Get() == null)
+        FireError(Location(new_exp.type()) + " : type '" + tp.name + "' not found");
+      PushJsonType(tp.Get());
     }
 
     var curr_type = PeekJsonType();
@@ -1071,14 +1071,14 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
   {
-    var tr = types.Type(ctx.typeid().type());
-    if(tr.Get() == null)
-      FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
+    var tp = types.Type(ctx.typeid().type());
+    if(tp.Get() == null)
+      FireError(Location(tp.parsed) +  " : type '" + tp.name + "' not found");
 
     Wrap(ctx).eval_type = TypeSystem.Int;
 
     var ast = AST_Util.New_Literal(EnumLiteral.NUM);
-    ast.nval = Hash.CRC28(tr.name);
+    ast.nval = Hash.CRC28(tp.name);
     PeekAST().AddChild(ast);
 
     return null;
@@ -1118,12 +1118,12 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tr = types.Type(ctx.newExp().type());
-    if(tr.Get() == null)
-      FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
+    var tp = types.Type(ctx.newExp().type());
+    if(tp.Get() == null)
+      FireError(Location(tp.parsed) + " : type '" + tp.name + "' not found");
 
-    var ast = AST_Util.New_New((ClassSymbol)tr.Get());
-    Wrap(ctx).eval_type = tr.Get();
+    var ast = AST_Util.New_New((ClassSymbol)tp.Get());
+    Wrap(ctx).eval_type = tp.Get();
     PeekAST().AddChild(ast);
 
     return null;
@@ -1140,17 +1140,17 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
   {
-    var tr = types.Type(ctx.type());
-    if(tr.Get() == null)
-      FireError(Location(tr.parsed) + " : type '" + tr.name + "' not found");
+    var tp = types.Type(ctx.type());
+    if(tp.Get() == null)
+      FireError(Location(tp.parsed) + " : type '" + tp.name + "' not found");
 
-    var ast = AST_Util.New_TypeCast(tr.name);
+    var ast = AST_Util.New_TypeCast(tp.name);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = tr.Get();
+    Wrap(ctx).eval_type = tp.Get();
 
     types.CheckCast(Wrap(ctx), Wrap(exp)); 
 
@@ -1970,13 +1970,13 @@ public class Frontend : bhlBaseVisitor<object>
       AST_Interim exp_ast = null;
       if(assign_exp != null)
       {
-        var tr = types.Type(vd.type());
-        if(tr.Get() == null)
-          FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
+        var tp = types.Type(vd.type());
+        if(tp.Get() == null)
+          FireError(Location(tp.parsed) +  " : type '" + tp.name + "' not found");
 
         exp_ast = new AST_Interim();
         PushAST(exp_ast);
-        PushJsonType(tr.Get());
+        PushJsonType(tp.Get());
         Visit(assign_exp);
         PopJsonType();
         PopAST();
@@ -2011,8 +2011,8 @@ public class Frontend : bhlBaseVisitor<object>
       bool pop_json_type = false;
       if(found_default_arg)
       {
-        var tr = types.Type(fp.type());
-        PushJsonType(tr.Get());
+        var tp = types.Type(fp.type());
+        PushJsonType(tp.Get());
         pop_json_type = true;
       }
 
@@ -2215,19 +2215,19 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var str_name = name.GetText();
 
-    var tr = types.Type(type_ctx);
-    if(tr.Get() == null)
-      FireError(Location(tr.parsed) +  " : type '" + tr.name + "' not found");
+    var tp = types.Type(type_ctx);
+    if(tp.Get() == null)
+      FireError(Location(tp.parsed) +  " : type '" + tp.name + "' not found");
 
     var var_node = Wrap(name); 
-    var_node.eval_type = tr.Get();
+    var_node.eval_type = tp.Get();
 
     if(is_ref && !func_arg)
       FireError(Location(name) +  " : 'ref' is only allowed in function declaration");
 
     VariableSymbol symb = func_arg ? 
-      (VariableSymbol) new FuncArgSymbol(var_node, str_name, tr, is_ref) :
-      (VariableSymbol) new VariableSymbol(var_node, str_name, tr);
+      (VariableSymbol) new FuncArgSymbol(var_node, str_name, tp, is_ref) :
+      (VariableSymbol) new VariableSymbol(var_node, str_name, tp);
 
     symb.scope_level = scope_level;
     curr_scope.Define(symb);
