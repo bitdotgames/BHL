@@ -236,12 +236,12 @@ public class Frontend : bhlBaseVisitor<object>
     return ast_stack.Peek();
   }
 
-  public string Location(IParseTree t)
+  string Location(IParseTree t)
   {
     return Wrap(t).Location();
   }
 
-  public WrappedParseTree Wrap(IParseTree t)
+  WrappedParseTree Wrap(IParseTree t)
   {
     var n = trees.Get(t);
     if(n == null)
@@ -252,6 +252,13 @@ public class Frontend : bhlBaseVisitor<object>
       trees.Put(t, n);
     }
     return n;
+  }
+
+  WrappedParseTree Wrap(IParseTree t, TypeProxy tp)
+  {
+    var w = Wrap(t);
+    w.eval_type = tp.Get();
+    return w;
   }
 
   public AST_Module ParseModule(bhlParser.ProgramContext p)
@@ -1196,9 +1203,9 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
     var tp = ParseType(ctx.newExp().type());
+    Wrap(ctx, tp);
 
     var ast = AST_Util.New_New((ClassSymbol)tp.Get());
-    Wrap(ctx).eval_type = tp.Get();
     PeekAST().AddChild(ast);
 
     return null;
@@ -1223,7 +1230,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = tp.Get();
+    Wrap(ctx, tp);
 
     types.CheckCast(Wrap(ctx), Wrap(exp)); 
 
@@ -1928,11 +1935,9 @@ public class Frontend : bhlBaseVisitor<object>
   AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
   {
     var tp = ParseType(context.retType());
+    var func_node = Wrap(context, tp);
 
     var fstr_name = context.NAME().GetText();
-
-    var func_node = Wrap(context);
-    func_node.eval_type = tp.Get();
 
     var ast = AST_Util.New_FuncDecl(fstr_name, curr_module.id, tp.name);
 
@@ -2284,9 +2289,7 @@ public class Frontend : bhlBaseVisitor<object>
     var str_name = name.GetText();
 
     var tp = ParseType(type_ctx);
-
-    var var_node = Wrap(name); 
-    var_node.eval_type = tp.Get();
+    var var_node = Wrap(name, tp); 
 
     if(is_ref && !func_arg)
       FireError(Location(name) +  " : 'ref' is only allowed in function declaration");
