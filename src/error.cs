@@ -187,9 +187,8 @@ public class SymbolError : Exception
       return string.Format("@({0},{1}) : {2}", begin.Line, begin.Column, msg);
     }
     else
-#else
-    return string.Format("@(?,?) : {0}", msg);
 #endif
+    return string.Format("@(?,?) : {0}", msg);
   }
 }
 
