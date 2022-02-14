@@ -694,7 +694,6 @@ public class Build
       catch(Exception e)
       {
         Console.WriteLine(e.Message + " " + e.StackTrace);
-
         if(e is ISourceError)
           w.error = e;
         else
