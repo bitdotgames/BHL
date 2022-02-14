@@ -684,12 +684,8 @@ public class VM
     }
   }
 
+  //TODO: get rid of this scope once we have proper serialization of types and symbols
   Scope symbols;
-  public Scope Symbols {
-    get {
-      return symbols;
-    }
-  }
 
   public struct ModuleAddr
   {

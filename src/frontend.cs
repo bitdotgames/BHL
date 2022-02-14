@@ -177,18 +177,14 @@ public class Frontend : bhlBaseVisitor<object>
     Util.Meta2Bin(ast, dst);
   }
 
-  public Frontend(Module module, ITokenStream tokens, TypeSystem ts, ModuleRegistry mreg, bool decls_only = false)
+  public Frontend(Module module, ITokenStream tokens, TypeSystem types, ModuleRegistry mreg, bool decls_only = false)
   {
-    if(ts == null)
-      throw new Exception("Type system is not setup");
-
     this.curr_module = module;
 
     this.tokens = tokens;
     this.decls_only = decls_only;
-    types = ts;
-    this.mscope = new ModuleScope(module.id, ts.globs);
-    //TODO: maybe TypeSystem should rather be a scope itself?
+    this.types = types;
+    this.mscope = new ModuleScope(module.id, types.globs);
     types.AddSource(mscope);
     this.mreg = mreg;
 
