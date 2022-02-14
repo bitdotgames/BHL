@@ -1317,9 +1317,9 @@ public class TypeSystem
 
   public Symbol Resolve(string name) 
   {
-    foreach(var lnk in sources)
+    foreach(var src in sources)
     {
-      var s = lnk.Resolve(name);
+      var s = src.Resolve(name);
       if(s != null)
         return s;
     }
