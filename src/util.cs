@@ -5,47 +5,6 @@ using System.IO;
 
 namespace bhl {
 
-public class UserError : Exception
-{
-  public string file;
-
-  public UserError(string file, string msg)
-    : base(msg)
-  {
-    this.file = file;
-  }
-
-  public UserError(string msg)
-    : base(msg)
-  {
-    this.file = null;
-  }
-
-  //for proper rethrowing
-  public UserError(string file, string msg, Exception e)
-    : base(msg, e)
-  {
-    this.file = file;
-  }
-
-  public string ToJson()
-  {
-    string msg = "";
-    //if the inner exception is a UserError,
-    //let's take its message since it contains 
-    //an actuall error and was rethrown
-    if(InnerException is UserError)
-      msg = InnerException.Message;
-    else
-      msg = Message;
-    msg = msg.Replace("\\", " ");
-    msg = msg.Replace("\n", " ");
-    msg = msg.Replace("\r", " ");
-    msg = msg.Replace("\"", "\\\""); 
-    return "{\"error\": \"" + msg + "\", \"file\": \"" + (file == null ? "<?>" : file.Replace("\\", "/")) + "\"}";
-  }
-}
-
 public static class Hash
 {
   static public uint CRC32(string id)

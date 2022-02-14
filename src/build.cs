@@ -192,9 +192,9 @@ public class Build
         if(w.error != null)
         {
           if(conf.err_file == "-")
-            Console.Error.WriteLine(w.error.ToJson());
+            Console.Error.WriteLine(ErrorUtils.ToJson(w.error));
           else
-            File.WriteAllText(conf.err_file, w.error.ToJson());
+            File.WriteAllText(conf.err_file, ErrorUtils.ToJson(w.error));
 
           return false;
         }
@@ -299,7 +299,7 @@ public class Build
       string fpath;
       if(name2file.TryGetValue(name, out fpath))
       {
-        w.error = new UserError(file, "Symbol '" + name + "' is already declared in '" + fpath + "'");
+        w.error = new BuildError(file, "symbol '" + name + "' is already declared in '" + fpath + "'");
         break;
       }
       else
@@ -323,7 +323,7 @@ public class Build
     public List<string> files;
     //NOTE: null bhlParser means file is cached
     public Dictionary<string, Parsed> parsed_cache = new Dictionary<string, Parsed>();
-    public UserError error = null;
+    public Exception error = null;
 
     public void Start()
     {
@@ -384,7 +384,7 @@ public class Build
             Parsed parsed = null;
             if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
             {
-              var parser = Frontend.Source2Parser(sfs);
+              var parser = Frontend.Source2Parser(file, sfs);
               parsed = new Parsed() {
                 tokens = parser.TokenStream,
                        prog = Frontend.ParseProgram(parser, file)
@@ -399,14 +399,13 @@ public class Build
           }
         }
       }
-      catch(UserError e)
-      {
-        w.error = e;
-      }
       catch(Exception e)
       {
         Console.WriteLine(e.Message + " " + e.StackTrace);
-        w.error = new UserError(w.files[i], e.Message, e);
+        if(e is ISourceError)
+          w.error = e;
+        else
+          w.error = new BuildError(w.files[i], e);
       }
 
       sw.Stop();
@@ -524,7 +523,7 @@ public class Build
     public int count;
     public Symbols symbols = new Symbols();
     public IPostProcessor postproc;
-    public UserError error = null;
+    public Exception error = null;
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
 
@@ -692,14 +691,14 @@ public class Build
           w.file2compiled.Add(file, compiled_file);
         }
       }
-      catch(UserError e)
-      {
-        w.error = e;
-      }
       catch(Exception e)
       {
         Console.WriteLine(e.Message + " " + e.StackTrace);
-        w.error = new UserError(w.files[i], e.Message, e);
+
+        if(e is ISourceError)
+          w.error = e;
+        else
+          w.error = new BuildError(w.files[i], e);
       }
 
       sw.Stop();

@@ -47,10 +47,10 @@ public class Scope : IScope
   public virtual void Define(Symbol sym) 
   {
     if(fallback != null && fallback.Resolve(sym.name) != null)
-      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(members.Contains(sym.name))
-      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     sym.scope = this; // track the scope in each symbol
 
@@ -141,7 +141,7 @@ public class ModuleScope : Scope
     foreach(var imp in imports)
     {
       if(imp.ResolveFlat(sym.name) != null)
-        throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+        throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
     }
 
     base.Define(sym);

@@ -958,7 +958,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -997,7 +997,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1017,7 +1017,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1061,7 +1061,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1085,7 +1085,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1108,7 +1108,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1128,7 +1128,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1147,7 +1147,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1171,7 +1171,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1604,7 +1604,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1639,7 +1639,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1662,7 +1662,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -1802,7 +1802,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2712,7 +2712,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2732,7 +2732,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2752,7 +2752,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2772,7 +2772,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2793,7 +2793,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2873,7 +2873,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2899,7 +2899,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2924,7 +2924,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -2955,7 +2955,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -3105,7 +3105,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -3147,7 +3147,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -3544,7 +3544,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -3567,7 +3567,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -3589,7 +3589,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -3609,7 +3609,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -4696,7 +4696,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -4715,7 +4715,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -5644,7 +5644,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -5664,7 +5664,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -5685,7 +5685,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -5707,7 +5707,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -5729,7 +5729,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -5768,7 +5768,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindTrace(ts, log);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl, ts);
       },
@@ -5789,7 +5789,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -5810,7 +5810,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -5831,7 +5831,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -6019,7 +6019,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -6531,7 +6531,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -6555,7 +6555,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -6579,7 +6579,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -6603,7 +6603,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -6719,7 +6719,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -6743,7 +6743,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -6768,7 +6768,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -6911,7 +6911,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -7090,7 +7090,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -7108,7 +7108,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -7165,7 +7165,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl);
       },
@@ -7458,7 +7458,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl, ts);
       },
@@ -10174,7 +10174,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -10308,7 +10308,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var ts = new TypeSystem();
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -10593,14 +10593,14 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl1);
       },
       "incompatible types"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl2);
       },
@@ -10826,77 +10826,77 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl1);
       },
       "extraneous input '++' expecting '}'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl2);
       },
       "operator ++ is not supported for string type"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl3);
       },
       "extraneous input '++' expecting ')'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl4);
       },
       "extraneous input '++' expecting ';'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl5);
       },
       "symbol not resolved"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl6);
       },
       "no viable alternative at input 'foo(i++'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl7);
       },
       "extraneous input '++' expecting ']'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl8);
       },
       "no viable alternative at input 'foo(i++'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl9);
       },
       "return value is missing"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl10);
       },
       "extraneous input '++' expecting '}'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl11);
       },
@@ -10989,63 +10989,63 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl1);
       },
       "extraneous input '--' expecting '}'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl2);
       },
       "operator -- is not supported for string type"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl3);
       },
       "extraneous input '--' expecting ')'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl4);
       },
       "extraneous input '--' expecting ';'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl5);
       },
       "no viable alternative at input 'foo(i--'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl6);
       },
       "extraneous input '--' expecting ']'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl7);
       },
       "return value is missing"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl8);
       },
       "extraneous input '--' expecting '}'"
     );
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() {
         Compile(bhl9);
       },
@@ -11856,7 +11856,7 @@ public class BHL_TestVM : BHL_TestBase
     var ts = new TypeSystem();
     BindFoo(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -12000,7 +12000,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -12628,7 +12628,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -12863,7 +12863,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -13144,7 +13144,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -13173,7 +13173,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -13195,7 +13195,7 @@ public class BHL_TestVM : BHL_TestBase
     var ts = new TypeSystem();
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13212,7 +13212,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -13233,7 +13233,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -13379,7 +13379,7 @@ public class BHL_TestVM : BHL_TestBase
     var ts = new TypeSystem();
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13401,7 +13401,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13488,7 +13488,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColorAlpha(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13533,7 +13533,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -13786,7 +13786,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindColorAlpha(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13809,7 +13809,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -14034,7 +14034,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColorAlpha(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -14306,7 +14306,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -14536,7 +14536,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -14970,7 +14970,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var ts = new TypeSystem();
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -15040,7 +15040,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15060,7 +15060,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15085,7 +15085,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15366,7 +15366,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15391,7 +15391,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15412,7 +15412,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15433,7 +15433,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15452,7 +15452,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15475,7 +15475,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -15658,7 +15658,7 @@ public class BHL_TestVM : BHL_TestBase
       ts.globs.Define(cl);
     }
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
        delegate() {
          Compile(bhl, ts);
        },
@@ -15691,7 +15691,7 @@ public class BHL_TestVM : BHL_TestBase
       ts.globs.Define(cl);
     }
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
        delegate() {
          Compile(bhl, ts);
        },
@@ -16245,7 +16245,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16270,7 +16270,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16295,7 +16295,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16320,7 +16320,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16345,7 +16345,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16370,7 +16370,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16395,7 +16395,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16420,7 +16420,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16444,7 +16444,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16469,7 +16469,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16494,7 +16494,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16519,7 +16519,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16544,7 +16544,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16568,7 +16568,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16792,7 +16792,7 @@ public class BHL_TestVM : BHL_TestBase
     );
     cl.OverloadBinaryOperator(op);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -17081,7 +17081,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -17102,7 +17102,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -17127,7 +17127,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -17151,7 +17151,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -17180,7 +17180,7 @@ public class BHL_TestVM : BHL_TestBase
 
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -17206,7 +17206,7 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var ts = new TypeSystem();
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -17858,7 +17858,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
     
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         CompileFiles(files);
       },
@@ -17930,7 +17930,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         CompileFiles(files);
       },
@@ -18065,7 +18065,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         CompileFiles(files);
       },
@@ -18195,7 +18195,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         CompileFiles(files);
       },
@@ -19487,7 +19487,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<ParserError>(
       delegate() { 
         Compile(bhl);
       },
@@ -20110,7 +20110,7 @@ public class BHL_TestVM : BHL_TestBase
     var bld = new Build();
     int res = bld.Exec(conf);
     if(res != 0)
-      throw new UserError(File.ReadAllText(conf.err_file));
+      throw new Exception(File.ReadAllText(conf.err_file));
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
