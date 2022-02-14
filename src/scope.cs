@@ -82,7 +82,7 @@ public class ModuleScope : Scope
     this.module_id = module_id;
   }
 
-  public void Import(Scope other)
+  public void AddImport(Scope other)
   {
     if(other == this)
       return;

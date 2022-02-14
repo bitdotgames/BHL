@@ -1226,18 +1226,20 @@ public class TypeSystem
 
   public GlobalScope globs = new GlobalScope();
 
-  List<Scope> links = new List<Scope>();
+  List<Scope> sources = new List<Scope>();
 
   public TypeSystem()
   {
     InitBuiltins(globs);
+
+    AddSource(globs);
   }
 
-  public void Link(Scope other)
+  public void AddSource(Scope other)
   {
-    if(links.Contains(other))
+    if(sources.Contains(other))
       return;
-    links.Add(other);
+    sources.Add(other);
   }
 
   void InitBuiltins(GlobalScope globs) 
@@ -1315,13 +1317,9 @@ public class TypeSystem
 
   public Symbol Resolve(string name) 
   {
-    var s = globs.Resolve(name);
-    if(s != null)
-      return s;
-
-    foreach(var lnk in links)
+    foreach(var lnk in sources)
     {
-      s = lnk.Resolve(name);
+      var s = lnk.Resolve(name);
       if(s != null)
         return s;
     }

@@ -189,7 +189,7 @@ public class Frontend : bhlBaseVisitor<object>
     types = ts;
     this.mscope = new ModuleScope(module.id, ts.globs);
     //TODO: maybe TypeSystem should rather be a scope itself?
-    types.Link(mscope);
+    types.AddSource(mscope);
     this.mreg = mreg;
 
     curr_scope = this.mscope;
@@ -323,7 +323,7 @@ public class Frontend : bhlBaseVisitor<object>
     //NOTE: null means module is already imported
     if(module != null)
     {
-      mscope.Import(module.symbols);
+      mscope.AddImport(module.symbols);
       ast.module_ids.Add(module.id);
       ast.module_names.Add(import);
     }
@@ -697,7 +697,7 @@ public class Frontend : bhlBaseVisitor<object>
 
         var wca = Wrap(ca);
 
-        //NOTE: if symbol is from bindings we don't have a source node attached to it
+        //NOTE: if symbol is from bindings we don't have a parse tree attached to it
         if(func_arg_symb.parsed == null)
         {
           if(func_arg_symb.type.Get() == null)
