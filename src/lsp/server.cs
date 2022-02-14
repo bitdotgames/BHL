@@ -14,13 +14,13 @@ namespace bhlsp
       this.rpc = rpc;
     }
     
-    public async Task Listen()
+    public void Start()
     {
       while (true)
       {
         try
         {
-          var success = await ReadAndHandle();
+          var success = ReadAndHandle();
           if (!success)
             break;
         }
@@ -39,13 +39,23 @@ namespace bhlsp
       }
     }
     
-    async Task<bool> ReadAndHandle()
+    bool ReadAndHandle()
     {
-      string json = await connection.Read();
+      string json = connection.Read();
       if(string.IsNullOrEmpty(json))
         return false;
       
+#if BHLSP_DEBUG
+        var sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+#endif
+      
       string response = rpc.HandleMessage(json);
+      
+#if BHLSP_DEBUG
+        sw.Stop();
+        BHLSPLogger.WriteLine($"HandleMessage done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+#endif
       
       try
       {

@@ -34,24 +34,26 @@ namespace bhlsp
       catch(Exception e)
       {
         BHLSPLogger.WriteLine(e);
+        BHLSPLogger.WriteLine($"{json}");
 #else
       catch
       {
 #endif
         resp = new ResponseMessage
         {
-          error = new ResponseError
-          {
-            code = (int)ErrorCodes.ParseError,
-            message = "Parse error"
-          }
+            error = new ResponseError
+            {
+                code = (int)ErrorCodes.ParseError,
+                message = "Parse error"
+            }
         };
       }
-      
+
 #if BHLSP_DEBUG
       if(req != null)
       {
-        //BHLSPLogger.WriteLine($":: bhlsp <-- {req.method}: {json}");
+        BHLSPLogger.WriteLine($":: bhlsp <-- {req.method}({req.id.Value})");
+        //BHLSPLogger.WriteLine($":: bhlsp <-- {json}");
       }
       else
       {
@@ -59,43 +61,45 @@ namespace bhlsp
       }
 #endif
       
-      if(req != null && req.IsMessage())
+      if(resp == null && req != null)
       {
-        resp = HandleMessage(req);
-      }
-      else if(resp == null)
-      {
-        resp = new ResponseMessage
-        {
-          error = new ResponseError
+        if(req.IsMessage())
+          resp = HandleMessage(req);
+        else
+          resp = new ResponseMessage
           {
-            code = (int)ErrorCodes.InvalidRequest,
-            message = ""
-          }
-        };
+              error = new ResponseError
+              {
+                  code = (int)ErrorCodes.InvalidRequest,
+                  message = ""
+              }
+          };
       }
-
-      string response = string.Empty;
-      bool isNotification = req != null && req.id.Value == null; //A processed notification message must not send a response back. They work like events.
       
-      if(!isNotification || resp.error != null) 
+      string response = string.Empty;
+
+      if(resp != null)
       {
-        response = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None,
-          new JsonSerializerSettings
-          {
-            NullValueHandling = NullValueHandling.Ignore
-          });
+        /* *
+         * A processed notification message must not send a response back.
+         * They work like events.
+         */
+        bool isNotification = req != null && req.id.Value == null;
+        isNotification &= req != null && req.method.IndexOf("$/", StringComparison.Ordinal) == -1;
+        
+        if(!isNotification) 
+        {
+          response = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None,
+              new JsonSerializerSettings
+              {
+                  NullValueHandling = NullValueHandling.Ignore
+              });
         
 #if BHLSP_DEBUG
-        if(req != null && resp.error == null)
-        {
-          //BHLSPLogger.WriteLine($":: bhlsp --> {req.method}: {response}");
-        }
-        else
-        {
+          BHLSPLogger.WriteLine($":: bhlsp --> {req.method}({req.id.Value})");
           //BHLSPLogger.WriteLine($":: bhlsp --> {response}");
-        }
 #endif
+        }
       }
       
       return response;

@@ -1,29 +1,26 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace bhlsp
 {
   public interface IBHLSPConnection
   {
-    Task<string> Read();
+    string Read();
     void Write(string json);
   }
   
   public class BHLSPConnectionStdIO : IBHLSPConnection
   {
-    byte[] buffer = new byte[4096];
+    readonly byte[] buffer = new byte[4096];
     
-    private const byte CR = (byte)13;
-    private const byte LF = (byte)10;
+    private const byte CR = 13;
+    private const byte LF = 10;
     
     private readonly byte[] separator = { CR, LF };
     
-    private Stream input;
-    private Stream output;
-    
-    private readonly object outputLock = new object();
+    private readonly Stream input;
+    private readonly Stream output;
     
     public BHLSPConnectionStdIO(Stream output, Stream input)
     {
@@ -31,15 +28,15 @@ namespace bhlsp
       this.output = output;
     }
     
-    public async Task<string> Read()
+    public string Read()
     {
       string result = string.Empty;
-
+      
       int length = 0;
       
       try
       {
-        length = await input.ReadAsync(buffer, 0, buffer.Length);
+        length = input.Read(buffer, 0, buffer.Length);
       }
 #if BHLSP_DEBUG
       catch(Exception e)
@@ -48,20 +45,21 @@ namespace bhlsp
 #else
       catch
       {
+        // ignored
 #endif
       }
       
       int offset = 0;
+      int contentLength = 0;
       
       while(ReadToSeparator(offset, length, out int count))
         offset += count + separator.Length;
-
+      
       if(offset > 0)
       {
         var header = Encoding.ASCII.GetString(buffer, 0, offset);
         var lenPos = header.IndexOf(": ", StringComparison.Ordinal);
-        int contentLength = 0;
-        
+
         if(lenPos >= 0)
         {
           var name = header.Substring(0, lenPos);
@@ -69,22 +67,24 @@ namespace bhlsp
           if(string.Equals(name, "Content-Length", StringComparison.Ordinal))
             int.TryParse(value, out contentLength);
         }
-
-        result = Encoding.UTF8.GetString(buffer, offset, length - offset);
-        contentLength -= length - offset;
-
-        while(contentLength > 0)
-        {
-          int readLen = contentLength <= buffer.Length ? contentLength : buffer.Length;
-          length = await input.ReadAsync(buffer, 0, readLen);
+      }
+      else
+        contentLength = length;
+      
+      result = Encoding.UTF8.GetString(buffer, offset, length - offset);
+      contentLength -= length - offset;
+      
+      while(contentLength > 0)
+      {
+        int readLen = contentLength <= buffer.Length ? contentLength : buffer.Length;
+        length = input.Read(buffer, 0, readLen);
           
-          if(contentLength >= length)
-            result += Encoding.UTF8.GetString(buffer, 0, length);
-          else
-            result += Encoding.UTF8.GetString(buffer, 0, contentLength);
-          
-          contentLength -= length;
-        }
+        if(contentLength >= length)
+          result += Encoding.UTF8.GetString(buffer, 0, length);
+        else
+          result += Encoding.UTF8.GetString(buffer, 0, contentLength);
+        
+        contentLength -= length;
       }
       
       return result;
@@ -120,18 +120,15 @@ namespace bhlsp
     public void Write(string json)
     {
       var utf8 = Encoding.UTF8.GetBytes(json);
-      lock(outputLock)
+      using(var writer = new StreamWriter(output, Encoding.ASCII, 1024, true))
       {
-        using(var writer = new StreamWriter(output, Encoding.ASCII, 1024, true))
-        {
-          writer.Write($"Content-Length: {utf8.Length}\r\n");
-          writer.Write("\r\n");
-          writer.Flush();
-        }
-        
-        output.Write(utf8, 0, utf8.Length);
-        output.Flush();
+        writer.Write($"Content-Length: {utf8.Length}\r\n");
+        writer.Write("\r\n");
+        writer.Flush();
       }
+        
+      output.Write(utf8, 0, utf8.Length);
+      output.Flush();
     }
   }
 }

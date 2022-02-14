@@ -51,13 +51,12 @@ public class BHLSPC
     
     try
     {
-      server.Listen().Wait();
+      server.Start();
     }
 #if BHLSP_DEBUG
-    catch (AggregateException ex)
+    catch (Exception e)
     {
-      BHLSPLogger.WriteLine(ex.InnerExceptions[0]);
-      Environment.Exit(-1);
+      BHLSPLogger.WriteLine(e);
 #else
     catch
     {

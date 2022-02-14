@@ -130,22 +130,7 @@ namespace bhlsp
         next = 0;
         
         dataSemanticTokens.Clear();
-
-        try
-        {
-          VisitProgram(document.ToParser().program());
-        }
-#if BHLSP_DEBUG
-        catch(Exception e)
-        {
-          BHLSPLogger.WriteLine($"ParseFail::{document.uri.LocalPath}");
-          BHLSPLogger.WriteLine(e);
-#else
-        catch
-        {
-          // ignored
-#endif
-        }
+        VisitProgram(document.ToParser().program());
       }
       
       public override object VisitProgram(bhlParser.ProgramContext ctx)
