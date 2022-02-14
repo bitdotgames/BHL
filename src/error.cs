@@ -180,9 +180,13 @@ public class SymbolError : Exception
   static string MakeMessage(Symbol symb, string msg)
   {
 #if BHL_FRONT
-    var interval = symb.parsed.tree.SourceInterval;
-    var begin = symb.parsed.tokens.Get(interval.a);
-    return string.Format("@({0},{1}) : {2}", begin.Line, begin.Column, msg);
+    if(symb.parsed != null)
+    {
+      var interval = symb.parsed.tree.SourceInterval;
+      var begin = symb.parsed.tokens.Get(interval.a);
+      return string.Format("@({0},{1}) : {2}", begin.Line, begin.Column, msg);
+    }
+    else
 #else
     return string.Format("@(?,?) : {0}", msg);
 #endif
