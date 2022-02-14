@@ -18,7 +18,7 @@ public static class ErrorUtils
     if(e is ISourceError se)
     {
       return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3} }}", 
-        MakeJsonSafe(se.msg),
+        MakeJsonSafe(se.text),
         se.file.Replace("\\", "/"),
         se.line, 
         se.char_pos
@@ -26,6 +26,30 @@ public static class ErrorUtils
     }
     else
       return string.Format(@"{{""error"": ""{0}""}}", MakeJsonSafe(e.Message));
+  }
+
+  public static string MakeMessage(string file, int line, int char_pos, string msg)
+  {
+    return string.Format("{0}@({1},{2}) : {3}", file, line, char_pos, (msg.Length > 200 ? msg.Substring(0, 100) + "..." + msg.Substring(msg.Length-100) : msg));
+  }
+
+#if BHL_FRONT
+  public static string MakeMessage(Module module, IParseTree place, ITokenStream tokens, string msg)
+  {
+    var interval = place.SourceInterval;
+    var begin = tokens.Get(interval.a);
+    return MakeMessage(module.file_path, begin.Line, begin.Column, msg);
+  }
+#endif
+
+  public static string MakeMessage(Symbol symb, string msg)
+  {
+#if BHL_FRONT
+    if(symb.parsed != null)
+      return MakeMessage(symb.parsed.module, symb.parsed.tree, symb.parsed.tokens, msg);
+    else
+#endif
+    return MakeMessage("", 0, 0, msg);
   }
 
   static string MakeJsonSafe(string msg)
@@ -40,7 +64,7 @@ public static class ErrorUtils
 
 public interface ISourceError
 {
-  string msg { get; }
+  string text { get; }
   string file { get; }
   int line { get; }
   int char_pos { get; }
@@ -49,51 +73,46 @@ public interface ISourceError
 #if BHL_FRONT
 public class SyntaxError : Exception, ISourceError
 {
-  public string msg { get; }
+  public string text { get; }
   public int line { get; }
   public int char_pos { get; }
   public string file { get; }
 
   public SyntaxError(string file, int line, int char_pos, string msg)
-    : base(MakeFullMessage(line, char_pos, msg))
+    : base(ErrorUtils.MakeMessage(file, line, char_pos, msg))
   {
-    this.msg = msg;
+    this.text = msg;
     this.line = line;
     this.char_pos = char_pos;
     this.file = file;
-  }
-
-  static string MakeFullMessage(int line, int char_pos, string msg)
-  {
-    return string.Format("@({0},{1}) : {2}", line, char_pos, (msg.Length > 200 ? msg.Substring(0, 100) + "..." + msg.Substring(msg.Length-100) : msg));
   }
 }
 
 public class BuildError : Exception, ISourceError
 {
-  public string msg { get; }
+  public string text { get; }
   public int line { get { return 0; } }
   public int char_pos { get { return 0; } }
   public string file { get; }
 
   public BuildError(string file, string msg)
-    : base(msg)
+    : base(ErrorUtils.MakeMessage(file, 0, 0, msg))
   {
-    this.msg = msg;
+    this.text = msg;
     this.file = file;
   }
 
-  public BuildError(string file, Exception e)
-    : base(e.Message, e)
+  public BuildError(string file, Exception inner)
+    : base(ErrorUtils.MakeMessage(file, 0, 0, inner.Message), inner)
   {
-    this.msg = e.Message;
+    this.text = inner.Message;
     this.file = file;
   }
 }
 
 public class SemanticError : Exception, ISourceError
 {
-  public string msg { get; }
+  public string text { get; }
   public int line { get { return tokens.Get(place.SourceInterval.a).Line; } }
   public int char_pos { get { return tokens.Get(place.SourceInterval.a).Column; } }
   public string file { get { return module.file_path; } }
@@ -103,9 +122,9 @@ public class SemanticError : Exception, ISourceError
   public ITokenStream tokens { get; }
 
   public SemanticError(Module module, IParseTree place, ITokenStream tokens, string msg)
-    : base(MakeFullMessage(place, tokens, msg))
+    : base(ErrorUtils.MakeMessage(module, place, tokens, msg))
   {
-    this.msg = msg;
+    this.text = msg;
     this.module = module;
     this.place = place;
     this.tokens = tokens;
@@ -114,13 +133,6 @@ public class SemanticError : Exception, ISourceError
   public SemanticError(WrappedParseTree w, string msg)
     : this(w.module, w.tree, w.tokens, msg)
   {}
-
-  static string MakeFullMessage(IParseTree place, ITokenStream tokens, string msg)
-  {
-    var interval = place.SourceInterval;
-    var begin = tokens.Get(interval.a);
-    return string.Format("@({0},{1}) : {2}", begin.Line, begin.Column, msg);
-  }
 }
 
 public class ErrorLexerListener : IAntlrErrorListener<int>
@@ -173,24 +185,10 @@ public class SymbolError : Exception
   public Symbol symbol { get; }
 
   public SymbolError(Symbol symb, string msg)
-    : base(MakeFullMessage(symb, msg))
+    : base(ErrorUtils.MakeMessage(symb, msg))
   {
     this.msg = msg;
     this.symbol = symb;
-  }
-
-  static string MakeFullMessage(Symbol symb, string msg)
-  {
-#if BHL_FRONT
-    if(symb.parsed != null)
-    {
-      var interval = symb.parsed.tree.SourceInterval;
-      var begin = symb.parsed.tokens.Get(interval.a);
-      return string.Format("@({0},{1}) : {2}", begin.Line, begin.Column, msg);
-    }
-    else
-#endif
-    return string.Format("@(?,?) : {0}", msg);
   }
 }
 

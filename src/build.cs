@@ -401,11 +401,14 @@ public class Build
       }
       catch(Exception e)
       {
-        //Console.WriteLine(e.Message + " " + e.StackTrace);
         if(e is ISourceError)
           w.error = e;
         else
+        {
+          //let's log unexpected exceptions immediately
+          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
           w.error = new BuildError(w.files[i], e);
+        }
       }
 
       sw.Stop();
@@ -693,11 +696,14 @@ public class Build
       }
       catch(Exception e)
       {
-        //Console.WriteLine(e.Message + " " + e.StackTrace);
         if(e is ISourceError)
           w.error = e;
         else
+        {
+          //let's log unexpected exceptions immediately
+          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
           w.error = new BuildError(w.files[i], e);
+        }
       }
 
       sw.Stop();

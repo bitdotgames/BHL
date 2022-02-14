@@ -1,11 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-#if BHL_FRONT
-using Antlr4.Runtime;
-using Antlr4.Runtime.Tree;
-#endif
-
 namespace bhl {
 
 public interface IType 
@@ -401,7 +396,7 @@ public class TypeSystem
   public TypeProxy Type(string name)
   {
     if(name.Length == 0 || IsCompoundType(name))
-      throw new Exception("Type name is not simple: '" + name + "'");
+      throw new Exception("Type name contains illegal characters: '" + name + "'");
     
     return new TypeProxy(this, name);
   }

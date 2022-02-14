@@ -4,9 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-using Antlr4.Runtime.Dfa;
-using Antlr4.Runtime.Atn;
-using Antlr4.Runtime.Sharpen;
 
 namespace bhl {
 
@@ -2594,7 +2591,7 @@ public class Frontend : bhlBaseVisitor<object>
       iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
       iter_type = iter_symb.type;
     }
-    var arr_type = (ClassSymbol)types.TypeArr(iter_type).Get();
+    var arr_type = (ArrayTypeSymbol)types.TypeArr(iter_type).Get();
 
     PushJsonType(arr_type);
     var exp = ctx.foreachExp().exp();
