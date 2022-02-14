@@ -653,9 +653,9 @@ public class FuncSymbolScript : FuncSymbol
   public bhlParser.FuncParamsContext fparams;
 
   public FuncSymbolScript(
+    WrappedParseTree parsed, 
     TypeSystem ts,
     AST_FuncDecl decl, 
-    WrappedParseTree parsed, 
     bhlParser.FuncParamsContext fparams,
     FuncSignature sig
   ) 
@@ -710,14 +710,14 @@ public class LambdaSymbol : FuncSymbolScript
   List<FuncSymbol> fdecl_stack;
 
   public LambdaSymbol(
-    TypeSystem ts,
     WrappedParseTree parsed, 
+    TypeSystem ts,
     AST_LambdaDecl decl, 
     bhlParser.FuncParamsContext fparams,
     List<FuncSymbol> fdecl_stack,
     FuncSignature sig
   ) 
-    : base(ts, decl, parsed, fparams, sig)
+    : base(parsed, ts, decl, fparams, sig)
   {
     this.fdecl_stack = fdecl_stack;
   }
