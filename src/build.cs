@@ -22,7 +22,6 @@ public class BuildConf
   public UserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
-  public bool debug = false;
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
  
@@ -401,7 +400,7 @@ public class Build
       }
       catch(Exception e)
       {
-        Console.WriteLine(e.Message + " " + e.StackTrace);
+        //Console.WriteLine(e.Message + " " + e.StackTrace);
         if(e is ISourceError)
           w.error = e;
         else
@@ -693,7 +692,7 @@ public class Build
       }
       catch(Exception e)
       {
-        Console.WriteLine(e.Message + " " + e.StackTrace);
+        //Console.WriteLine(e.Message + " " + e.StackTrace);
         if(e is ISourceError)
           w.error = e;
         else
@@ -756,7 +755,6 @@ public class Build
 
     static void WriteSymbolsCache(string file, string cache_dir, Symbols symbols)
     {
-      //Console.WriteLine("SYMB MISS " + file);
       var cache_symb_file = GetSymbolsCacheFile(cache_dir, file);
       Util.Meta2File(symbols, cache_symb_file);
     }

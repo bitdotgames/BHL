@@ -475,7 +475,7 @@ public class TypeSystem
   {
     IType result;
     if(!table.TryGetValue(new Tuple<IType, IType>(a.eval_type, b.eval_type), out result))
-      throw new ParserError(a, "incompatible types");
+      throw new SemanticError(a, "incompatible types");
     return result;
   }
 
@@ -484,7 +484,7 @@ public class TypeSystem
     IType promote_to_type = null;
     promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs.eval_type), out promote_to_type);
     if(!CanAssignTo(rhs.eval_type, lhs.eval_type, promote_to_type)) 
-      throw new ParserError(lhs, "incompatible types");
+      throw new SemanticError(lhs, "incompatible types");
   }
 
   public void CheckAssign(IType lhs, WrappedParseTree rhs) 
@@ -492,7 +492,7 @@ public class TypeSystem
     IType promote_to_type = null;
     promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs), out promote_to_type);
     if(!CanAssignTo(rhs.eval_type, lhs, promote_to_type)) 
-      throw new ParserError(rhs, "incompatible types");
+      throw new SemanticError(rhs, "incompatible types");
   }
 
   public void CheckAssign(WrappedParseTree lhs, IType rhs) 
@@ -500,7 +500,7 @@ public class TypeSystem
     IType promote_to_type = null;
     promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs, lhs.eval_type), out promote_to_type);
     if(!CanAssignTo(rhs, lhs.eval_type, promote_to_type)) 
-      throw new ParserError(lhs, "incompatible types");
+      throw new SemanticError(lhs, "incompatible types");
   }
 
   public void CheckCast(WrappedParseTree type, WrappedParseTree exp) 
@@ -531,16 +531,16 @@ public class TypeSystem
     if(IsInSameClassHierarchy(rtype, ltype))
       return;
     
-    throw new ParserError(type, "incompatible types for casting");
+    throw new SemanticError(type, "incompatible types for casting");
   }
 
   public IType CheckBinOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(!IsBinOpCompatible(a.eval_type))
-      throw new ParserError(a, "operator is not overloaded");
+      throw new SemanticError(a, "operator is not overloaded");
 
     if(!IsBinOpCompatible(b.eval_type))
-      throw new ParserError(b, "operator is not overloaded");
+      throw new SemanticError(b, "operator is not overloaded");
 
     return MatchTypes(bin_op_res_type, a, b);
   }
@@ -555,10 +555,10 @@ public class TypeSystem
   public IType CheckRtlBinOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(!IsRtlOpCompatible(a.eval_type))
-      new ParserError(a, "operator is not overloaded");
+      throw new SemanticError(a, "operator is not overloaded");
 
     if(!IsRtlOpCompatible(b.eval_type))
-      new ParserError(b, "operator is not overloaded");
+      throw new SemanticError(b, "operator is not overloaded");
 
     MatchTypes(rtl_op_res_type, a, b);
 
@@ -586,7 +586,7 @@ public class TypeSystem
   public IType CheckUnaryMinus(WrappedParseTree a) 
   {
     if(!(a.eval_type == Int || a.eval_type == Float)) 
-      throw new ParserError(a, "must be numeric type");
+      throw new SemanticError(a, "must be numeric type");
 
     return a.eval_type;
   }
@@ -594,10 +594,10 @@ public class TypeSystem
   public IType CheckBitOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type != Int) 
-      throw new ParserError(a, "must be int type");
+      throw new SemanticError(a, "must be int type");
 
     if(b.eval_type != Int)
-      throw new ParserError(b, "must be int type");
+      throw new SemanticError(b, "must be int type");
 
     return Int;
   }
@@ -605,10 +605,10 @@ public class TypeSystem
   public IType CheckLogicalOp(WrappedParseTree a, WrappedParseTree b) 
   {
     if(a.eval_type != Bool) 
-      throw new ParserError(a, "must be bool type");
+      throw new SemanticError(a, "must be bool type");
 
     if(b.eval_type != Bool)
-      throw new ParserError(b, "must be bool type");
+      throw new SemanticError(b, "must be bool type");
 
     return Bool;
   }
@@ -616,7 +616,7 @@ public class TypeSystem
   public IType CheckLogicalNot(WrappedParseTree a) 
   {
     if(a.eval_type != Bool) 
-      throw new ParserError(a, "must be bool type");
+      throw new SemanticError(a, "must be bool type");
 
     return a.eval_type;
   }

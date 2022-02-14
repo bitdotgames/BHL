@@ -20105,7 +20105,6 @@ public class BHL_TestVM : BHL_TestBase
     conf.cache_dir = TestDirPath() + "/cache";
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = false;
-    conf.debug = true;
 
     var bld = new Build();
     int res = bld.Exec(conf);

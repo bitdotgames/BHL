@@ -872,6 +872,14 @@ public class ClassSymbolScript : ClassSymbol
     this.creator = ClassCreator;
   }
 
+#if BHL_FRONT
+  public ClassSymbolScript(WrappedParseTree parsed, string name, AST_ClassDecl decl, ClassSymbol super_class = null)
+    : this(name, decl, super_class)
+  {
+    this.parsed = parsed;
+  }
+#endif
+
   void ClassCreator(VM.Frame frm, ref Val data)
   {
     //TODO: add handling of native super class

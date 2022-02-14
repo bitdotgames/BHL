@@ -139,7 +139,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   void FireError(IParseTree place, string msg) 
   {
-    throw new ParserError(module, place, tokens, msg);
+    throw new SemanticError(module, place, tokens, msg);
   }
 
   void PushAST(AST ast)
@@ -1828,7 +1828,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     var ast = AST_Util.New_ClassDecl(class_name, super_class == null ? "" : super_class.name);
-    var class_symb = new ClassSymbolScript(class_name, ast, super_class);
+    var class_symb = new ClassSymbolScript(Wrap(ctx), class_name, ast, super_class);
 
     module.symbols.Define(class_symb);
 

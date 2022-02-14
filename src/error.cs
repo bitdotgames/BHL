@@ -17,7 +17,7 @@ public static class ErrorUtils
   {
     if(e is ISourceError se)
     {
-      return string.Format("{\"error\": \"{0}\", \"file\": \"{1}\", \"line\": {2}, \"column\" : {3}}", 
+      return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3} }}", 
         MakeJsonSafe(se.msg),
         se.file.Replace("\\", "/"),
         se.line, 
@@ -25,7 +25,7 @@ public static class ErrorUtils
       );
     }
     else
-      return string.Format("{\"error\": \"{0}\"}", MakeJsonSafe(e.Message));
+      return string.Format(@"{{""error"": ""{0}""}}", MakeJsonSafe(e.Message));
   }
 
   static string MakeJsonSafe(string msg)
@@ -47,15 +47,15 @@ public interface ISourceError
 }
 
 #if BHL_FRONT
-public class LexerError : Exception, ISourceError
+public class SyntaxError : Exception, ISourceError
 {
   public string msg { get; }
   public int line { get; }
   public int char_pos { get; }
   public string file { get; }
 
-  public LexerError(string file, int line, int char_pos, string msg)
-    : base(MakeMessage(line, char_pos, msg))
+  public SyntaxError(string file, int line, int char_pos, string msg)
+    : base(MakeFullMessage(line, char_pos, msg))
   {
     this.msg = msg;
     this.line = line;
@@ -63,7 +63,7 @@ public class LexerError : Exception, ISourceError
     this.file = file;
   }
 
-  static string MakeMessage(int line, int char_pos, string msg)
+  static string MakeFullMessage(int line, int char_pos, string msg)
   {
     return string.Format("@({0},{1}) : {2}", line, char_pos, (msg.Length > 200 ? msg.Substring(0, 100) + "..." + msg.Substring(msg.Length-100) : msg));
   }
@@ -91,7 +91,7 @@ public class BuildError : Exception, ISourceError
   }
 }
 
-public class ParserError : Exception, ISourceError
+public class SemanticError : Exception, ISourceError
 {
   public string msg { get; }
   public int line { get { return tokens.Get(place.SourceInterval.a).Line; } }
@@ -102,8 +102,8 @@ public class ParserError : Exception, ISourceError
   public IParseTree place { get; }
   public ITokenStream tokens { get; }
 
-  public ParserError(Module module, IParseTree place, ITokenStream tokens, string msg)
-    : base(MakeMessage(place, tokens, msg))
+  public SemanticError(Module module, IParseTree place, ITokenStream tokens, string msg)
+    : base(MakeFullMessage(place, tokens, msg))
   {
     this.msg = msg;
     this.module = module;
@@ -111,11 +111,11 @@ public class ParserError : Exception, ISourceError
     this.tokens = tokens;
   }
 
-  public ParserError(WrappedParseTree w, string msg)
+  public SemanticError(WrappedParseTree w, string msg)
     : this(w.module, w.tree, w.tokens, msg)
   {}
 
-  static string MakeMessage(IParseTree place, ITokenStream tokens, string msg)
+  static string MakeFullMessage(IParseTree place, ITokenStream tokens, string msg)
   {
     var interval = place.SourceInterval;
     var begin = tokens.Get(interval.a);
@@ -134,7 +134,7 @@ public class ErrorLexerListener : IAntlrErrorListener<int>
 
   public virtual void SyntaxError(TextWriter tw, IRecognizer recognizer, int offendingSymbol, int line, int char_pos, string msg, RecognitionException e)
   {
-    throw new LexerError(file_path, line, char_pos, msg);
+    throw new SyntaxError(file_path, line, char_pos, msg);
   }
 }
 
@@ -154,7 +154,7 @@ public class ErrorParserListener : IParserErrorListener
 
   public virtual void SyntaxError(TextWriter tw, IRecognizer recognizer, IToken offendingSymbol, int line, int char_pos, string msg, RecognitionException e)
   {
-    throw new LexerError(file_path, line, char_pos, msg);
+    throw new SyntaxError(file_path, line, char_pos, msg);
   }
 
   public virtual void ReportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)
@@ -169,15 +169,17 @@ public class ErrorParserListener : IParserErrorListener
 
 public class SymbolError : Exception
 {
+  public string msg { get; }
   public Symbol symbol { get; }
 
   public SymbolError(Symbol symb, string msg)
-    : base(MakeMessage(symb, msg))
+    : base(MakeFullMessage(symb, msg))
   {
+    this.msg = msg;
     this.symbol = symb;
   }
 
-  static string MakeMessage(Symbol symb, string msg)
+  static string MakeFullMessage(Symbol symb, string msg)
   {
 #if BHL_FRONT
     if(symb.parsed != null)
