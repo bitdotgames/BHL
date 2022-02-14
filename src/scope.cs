@@ -74,7 +74,7 @@ public class ModuleScope : Scope
   uint module_id;
   public GlobalScope globs;
 
-  List<Scope> imports = new List<Scope>();
+  List<ModuleScope> imports = new List<ModuleScope>();
 
   public ModuleScope(uint module_id, GlobalScope globs) 
     : base(globs) 
@@ -82,7 +82,7 @@ public class ModuleScope : Scope
     this.module_id = module_id;
   }
 
-  public void AddImport(Scope other)
+  public void AddImport(ModuleScope other)
   {
     if(other == this)
       return;
@@ -93,17 +93,22 @@ public class ModuleScope : Scope
 
   public override Symbol Resolve(string name) 
   {
-    var s = base.Resolve(name);
+    var s = ResolveFlat(name);
     if(s != null)
       return s;
 
     foreach(var imp in imports)
     {
-      s = imp.Resolve(name);
+      s = imp.ResolveFlat(name);
       if(s != null)
         return s;
     }
     return null;
+  }
+
+  public Symbol ResolveFlat(string name) 
+  {
+    return base.Resolve(name);
   }
 
   public override void Define(Symbol sym) 
@@ -135,7 +140,7 @@ public class ModuleScope : Scope
 
     foreach(var imp in imports)
     {
-      if(imp.Resolve(sym.name) != null)
+      if(imp.ResolveFlat(sym.name) != null)
         throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
     }
 

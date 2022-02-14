@@ -656,7 +656,7 @@ public class Build
           var file = w.files[i]; 
 
           var cache_file = GetASTCacheFile(w.cache_dir, file);
-          var file_module = new Module(mreg.FilePath2ModuleName(file), file);
+          var file_module = new Module(w.ts, mreg.FilePath2ModuleName(file), file);
           LazyAST lazy_ast = null;
 
           Parsed parsed = null;

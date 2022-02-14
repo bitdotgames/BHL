@@ -110,7 +110,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     using(var sfs = File.OpenRead(file))
     {
-      var mod = new Module(mr.FilePath2ModuleName(file), file);
+      var mod = new Module(ts, mr.FilePath2ModuleName(file), file);
       return Source2AST(mod, sfs, ts, mr);
     }
   }
@@ -184,7 +184,7 @@ public class Frontend : bhlBaseVisitor<object>
     this.tokens = tokens;
     this.decls_only = decls_only;
     this.types = types;
-    this.mscope = new ModuleScope(module.id, types.globs);
+    this.mscope = module.symbols;
     types.AddSource(mscope);
     this.mreg = mreg;
 
@@ -1895,9 +1895,6 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_ClassDecl(class_name, super_class == null ? "" : super_class.name);
     var class_symb = new ClassSymbolScript(class_name, ast, super_class);
 
-    if(decls_only)
-      curr_module.symbols.Define(class_symb);
-
     mscope.Define(class_symb);
 
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
@@ -1944,13 +1941,12 @@ public class Frontend : bhlBaseVisitor<object>
     );
     scope.Define(func_symb);
 
+    //let's check if this is a method
     if(scope is ClassSymbolScript class_scope)
     {
       var this_symb = new VariableSymbol(func_node, "this", types.Type(class_scope));
       func_symb.Define(this_symb);
     }
-    else if(decls_only)
-      curr_module.symbols.Define(func_symb);
 
     curr_scope = func_symb;
     PushFuncDecl(func_symb);
@@ -1995,8 +1991,6 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_EnumDecl(enum_name);
 
     var symb = new EnumSymbolScript(enum_name);
-    if(decls_only)
-      curr_module.symbols.Define(symb);
     mscope.Define(symb);
     curr_scope = symb;
 
@@ -2033,7 +2027,6 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var tr = types.Type(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
-      curr_module.symbols.Define(symb);
       mscope.Define(symb);
     }
     else
@@ -2836,15 +2829,16 @@ public class Module
   }
   public ModulePath path;
   public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
-  public Scope symbols = new Scope();
+  public ModuleScope symbols;
 
-  public Module(ModulePath module_path)
+  public Module(TypeSystem types, ModulePath module_path)
   {
     this.path = module_path;
+    symbols = new ModuleScope(path.id, types.globs);
   }
 
-  public Module(string name, string file_path)
-    : this(new ModulePath(name, file_path))
+  public Module(TypeSystem types, string name, string file_path)
+    : this(types, new ModulePath(name, file_path))
   {}
 }
 
@@ -2905,7 +2899,7 @@ public class ModuleRegistry
     }
 
     //3. Ok, let's parse it otherwise
-    m = new Module(norm_path, full_path);
+    m = new Module(ts, norm_path, full_path);
    
     //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
     curr_module.imports.Add(full_path, m);

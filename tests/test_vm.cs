@@ -20122,7 +20122,7 @@ public class BHL_TestVM : BHL_TestBase
     //NOTE: we don't want to affect the original ts
     var ts_copy = ts.Clone();
 
-    var mdl = new bhl.Module("", "");
+    var mdl = new bhl.Module(ts_copy, "", "");
     var mreg = new ModuleRegistry();
     var ast = Src2AST(bhl, mdl, mreg, ts_copy);
     if(show_ast)
