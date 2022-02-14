@@ -77,20 +77,19 @@ public class Frontend : bhlBaseVisitor<object>
     return lambda_id;
   }
 
+  TypeSystem types;
+
   //NOTE: in 'declarations only' mode only declarations are filled,
   //      full definitions are omitted. This is useful when we only need 
   //      to know which symbols can be imported from the current module
   bool decls_only = false;
 
-  Module curr_module;
   ModuleRegistry mreg;
+  Module module;
+
   ITokenStream tokens;
   ParseTreeProperty<WrappedParseTree> trees = new ParseTreeProperty<WrappedParseTree>();
-  TypeSystem types;
-  //NOTE: current module's scope, it contains only symbols which belong to the current module
-  //      and symbols which were imported from other modules, it fallbacks to the global scope
-  //      if symbol is not found
-  ModuleScope mscope;
+
   IScope curr_scope;
   int scope_level;
 
@@ -179,22 +178,22 @@ public class Frontend : bhlBaseVisitor<object>
 
   public Frontend(Module module, ITokenStream tokens, TypeSystem types, ModuleRegistry mreg, bool decls_only = false)
   {
-    this.curr_module = module;
+    this.types = types;
+
+    this.module = module;
+    types.AddSource(module.symbols);
 
     this.tokens = tokens;
     this.decls_only = decls_only;
-    this.types = types;
-    this.mscope = module.symbols;
-    types.AddSource(mscope);
     this.mreg = mreg;
 
-    curr_scope = this.mscope;
+    curr_scope = this.module.symbols;
   }
 
   public void FireError(string msg) 
   {
     //Console.Error.WriteLine(err);
-    throw new UserError(curr_module.file_path, msg);
+    throw new UserError(module.file_path, msg);
   }
 
   void PushAST(AST ast)
@@ -261,7 +260,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public AST_Module ParseModule(bhlParser.ProgramContext p)
   {
-    var ast = AST_Util.New_Module(curr_module.id, curr_module.name);
+    var ast = AST_Util.New_Module(module.id, module.name);
     PushAST(ast);
     VisitProgram(p);
     PopAST();
@@ -290,7 +289,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       //NOTE: if file is not set we need to update it and re-throw the exception
       if(e.file == null)
-        e.file = curr_module.file_path;
+        e.file = module.file_path;
       throw new UserError(e.file, null/*let's not duplicate the message*/, e);
     }
 
@@ -311,17 +310,17 @@ public class Frontend : bhlBaseVisitor<object>
 
   public void AddImport(AST_Import ast, bhlParser.MimportContext ctx)
   {
-    var import = ctx.NORMALSTRING().GetText();
+    var name = ctx.NORMALSTRING().GetText();
     //removing quotes
-    import = import.Substring(1, import.Length-2);
+    name = name.Substring(1, name.Length-2);
     
-    var module = mreg.ImportModule(curr_module, types, import);
+    var imported = mreg.ImportModule(this.module, types, name);
     //NOTE: null means module is already imported
-    if(module != null)
+    if(imported != null)
     {
-      mscope.AddImport(module.symbols);
-      ast.module_ids.Add(module.id);
-      ast.module_names.Add(import);
+      module.symbols.AddImport(imported.symbols);
+      ast.module_ids.Add(imported.id);
+      ast.module_names.Add(name);
     }
   }
 
@@ -495,7 +494,7 @@ public class Frontend : bhlBaseVisitor<object>
         else
         {
           //NOTE: let's try fetching func symbol from the module scope
-          func_symb = mscope.Resolve(str_name) as FuncSymbol;
+          func_symb = module.symbols.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
             ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0), null, func_symb.scope_idx);
@@ -534,7 +533,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          var call_func_symb = mscope.Resolve(str_name) as FuncSymbol;
+          var call_func_symb = module.symbols.Resolve(str_name) as FuncSymbol;
           if(call_func_symb == null)
             FireError(Location(name) +  " : no such function found");
 
@@ -938,8 +937,8 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(funcLambda.retType());
 
-    var func_name = curr_module.id + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name, curr_module.id, tp.name);
+    var func_name = module.id + "_lmb_" + NextLambdaId(); 
+    var ast = AST_Util.New_LambdaDecl(func_name, module.id, tp.name);
     var symb = new LambdaSymbol(
       types,
       Wrap(ctx), 
@@ -962,7 +961,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    mscope.Define(symb);
+    module.symbols.Define(symb);
 
     //NOTE: while we are inside lambda the eval type is its return type
     Wrap(ctx).eval_type = symb.GetReturnType();
@@ -1170,7 +1169,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var exp = ctx.staticCallExp(); 
     var ctx_name = exp.NAME();
-    var enum_symb = mscope.Resolve(ctx_name.GetText()) as EnumSymbol;
+    var enum_symb = module.symbols.Resolve(ctx_name.GetText()) as EnumSymbol;
     if(enum_symb == null)
       FireError(Location(ctx) + " : type '" + ctx_name + "' not found");
 
@@ -1422,7 +1421,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
 
-      Wrap(ctx).eval_type = types.CheckBinOpOverload(mscope, wlhs, wrhs, op_func);
+      Wrap(ctx).eval_type = types.CheckBinOpOverload(module.symbols, wlhs, wrhs, op_func);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
@@ -1872,7 +1871,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var func_ast = CommonFuncDecl(ctx, mscope);
+    var func_ast = CommonFuncDecl(ctx, module.symbols);
     PeekAST().AddChild(func_ast);
     return null;
   }
@@ -1884,7 +1883,7 @@ public class Frontend : bhlBaseVisitor<object>
     ClassSymbol super_class = null;
     if(ctx.classEx() != null)
     {
-      super_class = mscope.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
+      super_class = module.symbols.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
       if(super_class == null)
         FireError(Location(ctx.classEx()) + " : parent class symbol not resolved");
 
@@ -1895,7 +1894,7 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_ClassDecl(class_name, super_class == null ? "" : super_class.name);
     var class_symb = new ClassSymbolScript(class_name, ast, super_class);
 
-    mscope.Define(class_symb);
+    module.symbols.Define(class_symb);
 
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
@@ -1934,7 +1933,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var fstr_name = context.NAME().GetText();
 
-    var ast = AST_Util.New_FuncDecl(fstr_name, curr_module.id, tp.name);
+    var ast = AST_Util.New_FuncDecl(fstr_name, module.id, tp.name);
 
     var func_symb = new FuncSymbolScript(
       types, ast, func_node, context.funcParams(), ParseFuncSignature(tp, context.funcParams())
@@ -1991,7 +1990,7 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_EnumDecl(enum_name);
 
     var symb = new EnumSymbolScript(enum_name);
-    mscope.Define(symb);
+    module.symbols.Define(symb);
     curr_scope = symb;
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
@@ -2012,7 +2011,7 @@ public class Frontend : bhlBaseVisitor<object>
       ast.AddChild(ast_item);
     }
 
-    curr_scope = mscope;
+    curr_scope = module.symbols;
 
     PeekAST().AddChild(ast);
 
@@ -2027,7 +2026,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var tr = types.Type(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
-      mscope.Define(symb);
+      module.symbols.Define(symb);
     }
     else
     {
