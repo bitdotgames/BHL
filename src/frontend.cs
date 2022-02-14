@@ -2575,7 +2575,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     var vod = ctx.foreachExp().varOrDeclare();
     var vd = vod.varDeclare();
-    string iter_str_type = "";
+    TypeProxy iter_type;
     string iter_str_name = "";
     AST iter_ast_decl = null;
     VariableSymbol iter_symb = null;
@@ -2585,16 +2585,16 @@ public class Frontend : bhlBaseVisitor<object>
       iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
       if(iter_symb == null)
         FireError(vod.NAME(), "symbol is not a valid variable");
-      iter_str_type = iter_symb.type.name;
+      iter_type = iter_symb.type;
     }
     else
     {
       iter_str_name = vd.NAME().GetText();
-      iter_str_type = vd.type().GetText();
       iter_ast_decl = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
       iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
+      iter_type = iter_symb.type;
     }
-    var arr_type = (ClassSymbol)types.TypeArr(iter_str_type).Get();
+    var arr_type = (ClassSymbol)types.TypeArr(iter_type).Get();
 
     PushJsonType(arr_type);
     var exp = ctx.foreachExp().exp();
@@ -2612,7 +2612,7 @@ public class Frontend : bhlBaseVisitor<object>
     var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
     if(arr_tmp_symb == null)
     {
-      arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, types.Type(iter_str_type));
+      arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, types.Type(iter_type));
       curr_scope.Define(arr_tmp_symb);
     }
 

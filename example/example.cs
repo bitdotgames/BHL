@@ -7,14 +7,14 @@ public class Example
 {
   public static void Main(string[] args)
   {
-    var symbols = TypeSystem.CreateBuiltins();
+    var types = new TypeSystem();
     var bnd = new MyBindings();
-    bnd.Register(symbols);
+    bnd.Register(types);
 
     var bytes = new MemoryStream(File.ReadAllBytes("tmp/bhl.bytes"));
     var mi = new ModuleImporter(bytes);
 
-    var vm = new VM(symbols, mi);
+    var vm = new VM(types, mi);
     vm.LoadModule("unit");
     vm.Start("Unit");
 

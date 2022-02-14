@@ -22,6 +22,7 @@ public class BuildConf
   public UserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
+  public bool debug = false; //TODO: not really used
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
  
@@ -38,13 +39,13 @@ public class Build
     var sw = new Stopwatch();
     sw.Start();
 
-    int res = DoExec(conf);
+    int code = DoExec(conf);
 
     sw.Stop();
 
     Console.WriteLine("BHL Build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
-    return res;
+    return code;
   }
 
   int DoExec(BuildConf conf)

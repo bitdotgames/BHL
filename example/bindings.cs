@@ -9,10 +9,10 @@ public class MyBindings : UserBindings
   public MyBindings()
   {}
 
-  public override void Register(GlobalScope globs)
+  public override void Register(TypeSystem types)
   {
     {
-      var fn = new FuncSymbolNative("Trace", globs.Type("void"),
+      var fn = new FuncSymbolNative("Trace", types.Type("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
 #if !BHL_FRONT
@@ -20,15 +20,15 @@ public class MyBindings : UserBindings
           Console.WriteLine(str);
 #endif
           return null;
-        }
-      );
-      fn.Define(new FuncArgSymbol("str", globs.Type("string")));
+        },
+        new FuncArgSymbol("str", types.Type("string"))
+        );
 
-      globs.Define(fn);
+      types.globs.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Rand", globs.Type("float"),
+      var fn = new FuncSymbolNative("Rand", types.Type("float"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
 #if !BHL_FRONT
@@ -39,17 +39,17 @@ public class MyBindings : UserBindings
           return null;
         }
       );
-      globs.Define(fn);
+      types.globs.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Wait", globs.Type("void"),
+      var fn = new FuncSymbolNative("Wait", types.Type("void"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
-          { return new WaitNode(); }
-      );
-      fn.Define(new FuncArgSymbol("t", globs.Type("float")));
+          { return new WaitNode(); },
+          new FuncArgSymbol("t", types.Type("float"))
+        );
 
-      globs.Define(fn);
+      types.globs.Define(fn);
     }
   }
 }

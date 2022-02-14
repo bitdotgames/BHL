@@ -401,7 +401,7 @@ public class TypeSystem
   public TypeProxy Type(string name)
   {
     if(name.Length == 0 || IsCompoundType(name))
-      throw new Exception("Bad type name: '" + name + "'");
+      throw new Exception("Type name is not simple: '" + name + "'");
     
     return new TypeProxy(this, name);
   }
