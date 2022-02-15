@@ -179,16 +179,45 @@ public class ErrorParserListener : IParserErrorListener
 
 #endif
 
-public class SymbolError : Exception
+public class SymbolError : Exception, ISourceError
 {
-  public string msg { get; }
   public Symbol symbol { get; }
 
-  public SymbolError(Symbol symb, string msg)
-    : base(ErrorUtils.MakeMessage(symb, msg))
+  public string text { get; }
+
+  public int line { 
+    get { 
+#if BHL_FRONT
+      if(symbol.parsed != null)
+        return symbol.parsed.tokens.Get(symbol.parsed.tree.SourceInterval.a).Line;  
+#endif
+      return 0; 
+    } 
+  }
+  public int char_pos { 
+    get { 
+#if BHL_FRONT
+      if(symbol.parsed != null)
+        return symbol.parsed.tokens.Get(symbol.parsed.tree.SourceInterval.a).Column;  
+#endif
+      return 0; 
+    } 
+  }
+  public string file { 
+    get { 
+#if BHL_FRONT
+      if(symbol.parsed != null)
+        return symbol.parsed.module.file_path;
+#endif
+      return ""; 
+    } 
+  }
+
+  public SymbolError(Symbol symbol, string text)
+    : base(ErrorUtils.MakeMessage(symbol, text))
   {
-    this.msg = msg;
-    this.symbol = symb;
+    this.text = text;
+    this.symbol = symbol;
   }
 }
 
