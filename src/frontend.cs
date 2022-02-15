@@ -51,7 +51,7 @@ public class Frontend : bhlBaseVisitor<object>
   Module module;
 
   ITokenStream tokens;
-  ParseTreeProperty<WrappedParseTree> trees = new ParseTreeProperty<WrappedParseTree>();
+  ParseTreeProperty<WrappedParseTree> tree_props = new ParseTreeProperty<WrappedParseTree>();
 
   Dictionary<FuncSymbolScript, bhlParser.FuncParamsContext> func2fparams = 
     new Dictionary<FuncSymbolScript, bhlParser.FuncParamsContext>(); 
@@ -223,7 +223,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   WrappedParseTree Wrap(IParseTree t)
   {
-    var w = trees.Get(t);
+    var w = tree_props.Get(t);
     if(w == null)
     {
       w = new WrappedParseTree();
@@ -231,15 +231,8 @@ public class Frontend : bhlBaseVisitor<object>
       w.tree = t;
       w.tokens = tokens;
 
-      trees.Put(t, w);
+      tree_props.Put(t, w);
     }
-    return w;
-  }
-
-  WrappedParseTree Wrap(IParseTree t, TypeProxy tp)
-  {
-    var w = Wrap(t);
-    w.eval_type = tp.Get();
     return w;
   }
 
@@ -1185,7 +1178,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
     var tp = ParseType(ctx.newExp().type());
-    Wrap(ctx, tp);
+    Wrap(ctx).eval_type = tp.Get();
 
     var ast = AST_Util.New_New((ClassSymbol)tp.Get());
     PeekAST().AddChild(ast);
@@ -1212,7 +1205,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp);
     PopAST();
 
-    Wrap(ctx, tp);
+    Wrap(ctx).eval_type = tp.Get();
 
     types.CheckCast(Wrap(ctx), Wrap(exp)); 
 
@@ -1875,14 +1868,13 @@ public class Frontend : bhlBaseVisitor<object>
   AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
   {
     var tp = ParseType(context.retType());
-    var func_node = Wrap(context, tp);
+    var func_tree = Wrap(context);
+    func_tree.eval_type = tp.Get();
 
-    var fstr_name = context.NAME().GetText();
-
-    var ast = AST_Util.New_FuncDecl(fstr_name, module.id, tp.name);
+    var ast = AST_Util.New_FuncDecl(context.NAME().GetText(), module.id, tp.name);
 
     var func_symb = new FuncSymbolScript(
-      func_node, 
+      func_tree, 
       types, 
       ast, 
       ParseFuncSignature(tp, context.funcParams())
@@ -1893,7 +1885,7 @@ public class Frontend : bhlBaseVisitor<object>
     //let's check if this is a method
     if(scope is ClassSymbolScript class_scope)
     {
-      var this_symb = new VariableSymbol(func_node, "this", types.Type(class_scope));
+      var this_symb = new VariableSymbol(func_tree, "this", types.Type(class_scope));
       func_symb.Define(this_symb);
     }
 
@@ -2226,17 +2218,17 @@ public class Frontend : bhlBaseVisitor<object>
 
   AST CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
   {
-    var str_name = name.GetText();
-
     var tp = ParseType(type_ctx);
-    var var_node = Wrap(name, tp); 
+
+    var var_tree = Wrap(name); 
+    var_tree.eval_type = tp.Get();
 
     if(is_ref && !func_arg)
       FireError(name, "'ref' is only allowed in function declaration");
 
     VariableSymbol symb = func_arg ? 
-      (VariableSymbol) new FuncArgSymbol(var_node, str_name, tp, is_ref) :
-      (VariableSymbol) new VariableSymbol(var_node, str_name, tp);
+      (VariableSymbol) new FuncArgSymbol(var_tree, name.GetText(), tp, is_ref) :
+      (VariableSymbol) new VariableSymbol(var_tree, name.GetText(), tp);
 
     symb.scope_level = scope_level;
     curr_scope.Define(symb);
