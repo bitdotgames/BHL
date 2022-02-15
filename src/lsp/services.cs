@@ -30,6 +30,12 @@ namespace bhlsp
     public abstract RpcResult Exit();
   }
 
+  public abstract class BHLSPDiagnosticJsonRpcServiceTemplate : BHLSPJsonRpcService
+  {
+    [JsonRpcMethod("$/cancelRequest")]
+    public abstract RpcResult CancelRequest(CancelParams args);
+  }
+  
   public abstract class BHLSPTextDocumentSynchronizationJsonRpcServiceTemplate : BHLSPJsonRpcService
   {
     [JsonRpcMethod("textDocument/didOpen")]

@@ -2496,4 +2496,13 @@ namespace bhlsp
     public static string documentation = "documentation";
     public static string defaultLibrary = "defaultLibrary";
   }
+  
+  
+  public class CancelParams
+  {
+    /**
+     * The request id to cancel.
+     */
+    public SumType<Int32, Int64, string> id { get; set; }
+  }
 }
