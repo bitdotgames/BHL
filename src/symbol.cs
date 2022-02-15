@@ -646,6 +646,17 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
 public class FuncSymbolScript : FuncSymbol
 {
+  public int local_vars_num;
+  public int default_args_num;
+  public int ip_addr;
+
+  public FuncSymbolScript(FuncSignature sig, string name, int default_args_num, int local_vars_num)
+    : base(null, name, sig)
+  {
+    this.name = name;
+    this.local_vars_num = local_vars_num;
+  }
+
   public AST_FuncDecl decl;
 
 #if BHL_FRONT

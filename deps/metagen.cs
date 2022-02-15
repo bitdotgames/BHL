@@ -80,15 +80,15 @@ public abstract class BaseMetaStruct : IMetaStruct
   {
     if(ctx.is_read)
     {
-      MetaHelper.ensure(ctx.reader.BeginArray());
+      MetaUtils.ensure(ctx.reader.BeginArray());
       syncFields(ctx);
-      MetaHelper.ensure(ctx.reader.EndArray());  
+      MetaUtils.ensure(ctx.reader.EndArray());  
     }
     else
     {
-      MetaHelper.ensure(ctx.writer.BeginArray(getFieldsCount()));
+      MetaUtils.ensure(ctx.writer.BeginArray(getFieldsCount()));
       syncFields(ctx);
-      MetaHelper.ensure(ctx.writer.EndArray());
+      MetaUtils.ensure(ctx.writer.EndArray());
     }
   }
 
@@ -134,7 +134,7 @@ public interface IDataWriter
   MetaIoError End(); 
 }
 
-public static class MetaHelper 
+public static class MetaUtils 
 {
   public delegate IMetaStruct CreateByIdCb(uint id); 
   static public CreateByIdCb CreateById;
@@ -507,15 +507,15 @@ public static class MetaHelper
   {
     if(ctx.is_read)
     {
-      MetaHelper.ensure(ctx.reader.BeginArray());
+      MetaUtils.ensure(ctx.reader.BeginArray());
       v.syncFields(ctx);
-      MetaHelper.ensure(ctx.reader.EndArray());  
+      MetaUtils.ensure(ctx.reader.EndArray());  
     }
     else
     {
-      MetaHelper.ensure(ctx.writer.BeginArray(v.getFieldsCount()));
+      MetaUtils.ensure(ctx.writer.BeginArray(v.getFieldsCount()));
       v.syncFields(ctx);
-      MetaHelper.ensure(ctx.writer.EndArray());
+      MetaUtils.ensure(ctx.writer.EndArray());
     }
   }
 
@@ -523,7 +523,7 @@ public static class MetaHelper
   {
     try 
     {
-      MetaHelper.sync(ctx, ref v);
+      MetaUtils.sync(ctx, ref v);
     }
     catch(MetaException e)
     {
@@ -746,7 +746,7 @@ public class MsgPackDataReader : IDataReader
       return (int)io.ValueUnsigned;
     else
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       err = MetaIoError.TYPE_DONT_MATCH; 
       return 0;
     }
@@ -774,7 +774,7 @@ public class MsgPackDataReader : IDataReader
       return (uint)io.ValueSigned;
     else
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       err = MetaIoError.TYPE_DONT_MATCH; 
       return 0;
     }
@@ -804,7 +804,7 @@ public class MsgPackDataReader : IDataReader
       return (bool)io.ValueBoolean;
     else
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       err = MetaIoError.TYPE_DONT_MATCH; 
       return false;
     }
@@ -836,7 +836,7 @@ public class MsgPackDataReader : IDataReader
       return (ulong)io.ValueSigned64;
     else
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       err = MetaIoError.TYPE_DONT_MATCH; 
       return 0;
     }
@@ -868,7 +868,7 @@ public class MsgPackDataReader : IDataReader
       return io.ValueSigned64;
     else
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       err = MetaIoError.TYPE_DONT_MATCH; 
       return 0;
     }
@@ -973,7 +973,7 @@ public class MsgPackDataReader : IDataReader
           v = (float) tmp;
           break;
         default:
-          MetaHelper.LogWarn("Got type: " + io.Type);
+          MetaUtils.LogWarn("Got type: " + io.Type);
           return MetaIoError.TYPE_DONT_MATCH; 
       }
     }
@@ -1016,7 +1016,7 @@ public class MsgPackDataReader : IDataReader
           v = (double) io.ValueSigned64;    
           break;
         default:
-          MetaHelper.LogWarn("Got type: " + io.Type);
+          MetaUtils.LogWarn("Got type: " + io.Type);
           return MetaIoError.TYPE_DONT_MATCH; 
       }
     }
@@ -1034,7 +1034,7 @@ public class MsgPackDataReader : IDataReader
 
     if(!io.IsRaw()) 
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       return MetaIoError.TYPE_DONT_MATCH;
     }
 
@@ -1056,7 +1056,7 @@ public class MsgPackDataReader : IDataReader
 
     if(!io.IsRaw()) 
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       return MetaIoError.TYPE_DONT_MATCH;
     }
 
@@ -1078,7 +1078,7 @@ public class MsgPackDataReader : IDataReader
 
     if(!io.IsArray())
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       return MetaIoError.TYPE_DONT_MATCH;
     }
 
@@ -1091,7 +1091,7 @@ public class MsgPackDataReader : IDataReader
   {
     if(!io.IsArray())
     {
-      MetaHelper.LogWarn("Got type: " + io.Type);
+      MetaUtils.LogWarn("Got type: " + io.Type);
       return MetaIoError.TYPE_DONT_MATCH;
     }
 

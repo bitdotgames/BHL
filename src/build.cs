@@ -278,8 +278,8 @@ public class Build
 
     public void syncFields(MetaSyncContext ctx) 
     {
-      MetaHelper.sync(ctx, names);
-      MetaHelper.sync(ctx, files);
+      MetaUtils.sync(ctx, names);
+      MetaUtils.sync(ctx, files);
     }
 
     public void Add(string name, string file)
@@ -436,7 +436,7 @@ public class Build
 
       public void syncFields(MetaSyncContext ctx) 
       {
-        MetaHelper.sync(ctx, files);
+        MetaUtils.sync(ctx, files);
       }
     }
 

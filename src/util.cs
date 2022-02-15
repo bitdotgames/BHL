@@ -176,17 +176,17 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static MetaHelper.CreateByIdCb prev_create_factory; 
+  static MetaUtils.CreateByIdCb prev_create_factory; 
 
   static public void SetupASTFactory()
   {
-    prev_create_factory = MetaHelper.CreateById;
-    MetaHelper.CreateById = AST_Factory.createById;
+    prev_create_factory = MetaUtils.CreateById;
+    MetaUtils.CreateById = AST_Factory.createById;
   }
 
   static public void RestoreASTFactory()
   {
-    MetaHelper.CreateById = prev_create_factory;
+    MetaUtils.CreateById = prev_create_factory;
   }
 
   static public T File2Meta<T>(string file) where T : IMetaStruct, new()
@@ -201,7 +201,7 @@ static public class Util
   {
     var reader = new MsgPackDataReader(s);
     var meta = new T();
-    MetaHelper.sync(MetaSyncContext.NewForRead(reader), ref meta);
+    MetaUtils.sync(MetaSyncContext.NewForRead(reader), ref meta);
     return meta;
   }
 
@@ -213,7 +213,7 @@ static public class Util
   static public void Meta2Bin<T>(T meta, Stream dst) where T : IMetaStruct
   {
     var writer = new MsgPackDataWriter(dst);
-    MetaHelper.sync(MetaSyncContext.NewForWrite(writer), ref meta);
+    MetaUtils.sync(MetaSyncContext.NewForWrite(writer), ref meta);
   }
 
   static public void Meta2File<T>(T meta, string file) where T : IMetaStruct

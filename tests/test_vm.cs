@@ -7,6 +7,15 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
+  public void TestSerializeModuleScope()
+  {
+    var types = new TypeSystem();
+
+    var ms = new ModuleScope(1, types.globs);
+    ms.Define(new FuncSymbolScript(new FuncSignature(types.Type("void")), "test", 0, 0));
+  }
+
+  [IsTested()]
   public void TestReturnNumConstant()
   {
     string bhl = @"
