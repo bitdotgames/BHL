@@ -401,7 +401,7 @@ public class Build
       }
       catch(Exception e)
       {
-        if(e is ISourceError)
+        if(e is IError)
           w.error = e;
         else
         {
@@ -696,7 +696,7 @@ public class Build
       }
       catch(Exception e)
       {
-        if(e is ISourceError)
+        if(e is IError)
           w.error = e;
         else
         {

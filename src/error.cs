@@ -15,7 +15,7 @@ public static class ErrorUtils
 {
   public static string ToJson(Exception e)
   {
-    if(e is ISourceError se)
+    if(e is IError se)
     {
       return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3} }}", 
         MakeJsonSafe(se.text),
@@ -62,7 +62,7 @@ public static class ErrorUtils
   }
 }
 
-public interface ISourceError
+public interface IError
 {
   string text { get; }
   string file { get; }
@@ -71,7 +71,7 @@ public interface ISourceError
 }
 
 #if BHL_FRONT
-public class SyntaxError : Exception, ISourceError
+public class SyntaxError : Exception, IError
 {
   public string text { get; }
   public int line { get; }
@@ -88,7 +88,7 @@ public class SyntaxError : Exception, ISourceError
   }
 }
 
-public class BuildError : Exception, ISourceError
+public class BuildError : Exception, IError
 {
   public string text { get; }
   public int line { get { return 0; } }
@@ -110,7 +110,7 @@ public class BuildError : Exception, ISourceError
   }
 }
 
-public class SemanticError : Exception, ISourceError
+public class SemanticError : Exception, IError
 {
   public string text { get; }
   public int line { get { return tokens.Get(place.SourceInterval.a).Line; } }
@@ -179,7 +179,7 @@ public class ErrorParserListener : IParserErrorListener
 
 #endif
 
-public class SymbolError : Exception, ISourceError
+public class SymbolError : Exception, IError
 {
   public Symbol symbol { get; }
 
