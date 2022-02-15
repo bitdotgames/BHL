@@ -485,7 +485,7 @@ public class Frontend : bhlBaseVisitor<object>
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
             var_symb.name,
-            class_scope != null ? class_scope.Type() : "",
+            class_scope != null ? class_scope.name : "",
             var_symb.scope_idx,
             var_symb.module_id
           );
@@ -546,7 +546,7 @@ public class Frontend : bhlBaseVisitor<object>
     type = arr_type.item_type.Get();
 
     var ast = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
-    ast.scope_type = arr_type.Type();
+    ast.scope_type = arr_type.name;
 
     PeekAST().AddChild(ast);
   }
@@ -901,7 +901,6 @@ public class Frontend : bhlBaseVisitor<object>
     else
       tp = types.Type(parsed.NAME().GetText());
 
-    //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
     if(parsed.ARR() != null)
       tp = types.TypeArr(tp);
 
@@ -2606,9 +2605,7 @@ public class Frontend : bhlBaseVisitor<object>
     types.CheckAssign(Wrap(exp), arr_type);
 
     //generic fallback if the concrete type is not found 
-    string arr_stype = GenericArrayTypeSymbol.CLASS_TYPE;
-    if(!(arr_type is GenericArrayTypeSymbol))
-      arr_stype = arr_type.GetName();
+    string arr_stype = arr_type.GetName();
 
     var arr_tmp_name = "$foreach_tmp" + loops_stack;
     var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;

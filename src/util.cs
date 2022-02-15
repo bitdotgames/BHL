@@ -590,12 +590,12 @@ static public class AST_Util
 
   static public AST_Call New_Call(EnumCall type, int line_num, string name = "", uint module_id = 0, ClassSymbol scope_symb = null, int symb_idx = -1)
   {
-    return New_Call(type, line_num, name, scope_symb != null ? scope_symb.Type() : "", symb_idx, module_id);
+    return New_Call(type, line_num, name, scope_symb != null ? scope_symb.name : "", symb_idx, module_id);
   }
 
   static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, ClassSymbol scope_symb = null)
   {
-    return New_Call(type, line_num, symb.name, scope_symb != null ? scope_symb.Type() : "", symb.scope_idx, symb.module_id);
+    return New_Call(type, line_num, symb.name, scope_symb != null ? scope_symb.name : "", symb.scope_idx, symb.module_id);
   }
 
   static public AST_Call New_Call(EnumCall type, int line_num, string name, string scope_type, int symb_idx = -1, uint module_id = 0)
@@ -642,7 +642,7 @@ static public class AST_Util
   static public AST_New New_New(ClassSymbol type)
   {
     var n = new AST_New();
-    n.type = type.Type();
+    n.type = type.name;
 
     return n;
   }
@@ -718,7 +718,7 @@ static public class AST_Util
   static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type, int line_num)
   {
     var n = new AST_JsonArr();
-    n.type = arr_type.Type();
+    n.type = arr_type.name;
     n.line_num = line_num;
     return n;
   }

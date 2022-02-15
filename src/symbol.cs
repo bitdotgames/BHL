@@ -1,10 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-#if BHL_FRONT
-using Antlr4.Runtime.Tree;
-#endif
-
 namespace bhl {
 
 public class Symbol 
@@ -88,11 +84,6 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
         base.Define(sym);
       }
     }
-  }
-
-  public virtual string Type()
-  {
-    return this.name;
   }
 
   public bool IsSubclassOf(ClassSymbol p)
@@ -218,22 +209,15 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   public abstract ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
-//NOTE: This one is used as a fallback for all arrays which
-//      were not explicitely re-defined. Fallback happens during
-//      compilation phase in TypeSystem.Type(..) method
-//     
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
   public static readonly string CLASS_TYPE = "[]";
 
-  public override string Type()
-  {
-    return CLASS_TYPE;
-  }
-
   public GenericArrayTypeSymbol(TypeSystem ts, TypeProxy item_type) 
     : base(ts, item_type)
-  {}
+  {
+    name = CLASS_TYPE;
+  }
 
   static IList<Val> AsList(Val arr)
   {
