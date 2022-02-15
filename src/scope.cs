@@ -47,10 +47,10 @@ public class Scope : IScope
   public virtual void Define(Symbol sym) 
   {
     if(fallback != null && fallback.Resolve(sym.name) != null)
-      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(members.Contains(sym.name))
-      throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     sym.scope = this; // track the scope in each symbol
 
@@ -74,7 +74,7 @@ public class ModuleScope : Scope
   uint module_id;
   public GlobalScope globs;
 
-  List<Scope> imports = new List<Scope>();
+  List<ModuleScope> imports = new List<ModuleScope>();
 
   public ModuleScope(uint module_id, GlobalScope globs) 
     : base(globs) 
@@ -82,7 +82,7 @@ public class ModuleScope : Scope
     this.module_id = module_id;
   }
 
-  public void Import(Scope other)
+  public void AddImport(ModuleScope other)
   {
     if(other == this)
       return;
@@ -93,17 +93,22 @@ public class ModuleScope : Scope
 
   public override Symbol Resolve(string name) 
   {
-    var s = base.Resolve(name);
+    var s = ResolveFlat(name);
     if(s != null)
       return s;
 
     foreach(var imp in imports)
     {
-      s = imp.Resolve(name);
+      s = imp.ResolveFlat(name);
       if(s != null)
         return s;
     }
     return null;
+  }
+
+  public Symbol ResolveFlat(string name) 
+  {
+    return base.Resolve(name);
   }
 
   public override void Define(Symbol sym) 
@@ -129,14 +134,14 @@ public class ModuleScope : Scope
     else if(sym is FuncSymbolScript fs)
     {
       //NOTE: adding module id if it's not added already
-      if(fs.decl.module_id == 0)
+      if(fs.decl != null && fs.decl.module_id == 0)
         fs.decl.module_id = module_id;
     }
 
     foreach(var imp in imports)
     {
-      if(imp.Resolve(sym.name) != null)
-        throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
+      if(imp.ResolveFlat(sym.name) != null)
+        throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
     }
 
     base.Define(sym);

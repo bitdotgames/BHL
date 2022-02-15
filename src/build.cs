@@ -22,7 +22,7 @@ public class BuildConf
   public UserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
-  public bool debug = false;
+  public bool debug = false; //TODO: not really used
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
  
@@ -39,13 +39,13 @@ public class Build
     var sw = new Stopwatch();
     sw.Start();
 
-    int res = DoExec(conf);
+    int code = DoExec(conf);
 
     sw.Stop();
 
     Console.WriteLine("BHL Build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
-    return res;
+    return code;
   }
 
   int DoExec(BuildConf conf)
@@ -192,9 +192,9 @@ public class Build
         if(w.error != null)
         {
           if(conf.err_file == "-")
-            Console.Error.WriteLine(w.error.ToJson());
+            Console.Error.WriteLine(ErrorUtils.ToJson(w.error));
           else
-            File.WriteAllText(conf.err_file, w.error.ToJson());
+            File.WriteAllText(conf.err_file, ErrorUtils.ToJson(w.error));
 
           return false;
         }
@@ -278,8 +278,8 @@ public class Build
 
     public void syncFields(MetaSyncContext ctx) 
     {
-      MetaHelper.sync(ctx, names);
-      MetaHelper.sync(ctx, files);
+      MetaUtils.sync(ctx, names);
+      MetaUtils.sync(ctx, files);
     }
 
     public void Add(string name, string file)
@@ -299,7 +299,7 @@ public class Build
       string fpath;
       if(name2file.TryGetValue(name, out fpath))
       {
-        w.error = new UserError(file, "Symbol '" + name + "' is already declared in '" + fpath + "'");
+        w.error = new BuildError(file, "symbol '" + name + "' is already declared in '" + fpath + "'");
         break;
       }
       else
@@ -323,7 +323,7 @@ public class Build
     public List<string> files;
     //NOTE: null bhlParser means file is cached
     public Dictionary<string, Parsed> parsed_cache = new Dictionary<string, Parsed>();
-    public UserError error = null;
+    public Exception error = null;
 
     public void Start()
     {
@@ -384,7 +384,7 @@ public class Build
             Parsed parsed = null;
             if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
             {
-              var parser = Frontend.Source2Parser(sfs);
+              var parser = Frontend.Source2Parser(file, sfs);
               parsed = new Parsed() {
                 tokens = parser.TokenStream,
                        prog = Frontend.ParseProgram(parser, file)
@@ -399,14 +399,16 @@ public class Build
           }
         }
       }
-      catch(UserError e)
-      {
-        w.error = e;
-      }
       catch(Exception e)
       {
-        Console.WriteLine(e.Message + " " + e.StackTrace);
-        w.error = new UserError(w.files[i], e.Message, e);
+        if(e is IError)
+          w.error = e;
+        else
+        {
+          //let's log unexpected exceptions immediately
+          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+          w.error = new BuildError(w.files[i], e);
+        }
       }
 
       sw.Stop();
@@ -434,7 +436,7 @@ public class Build
 
       public void syncFields(MetaSyncContext ctx) 
       {
-        MetaHelper.sync(ctx, files);
+        MetaUtils.sync(ctx, files);
       }
     }
 
@@ -524,7 +526,7 @@ public class Build
     public int count;
     public Symbols symbols = new Symbols();
     public IPostProcessor postproc;
-    public UserError error = null;
+    public Exception error = null;
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
 
@@ -656,7 +658,7 @@ public class Build
           var file = w.files[i]; 
 
           var cache_file = GetASTCacheFile(w.cache_dir, file);
-          var file_module = new Module(mreg.FilePath2ModuleName(file), file);
+          var file_module = new Module(w.ts, mreg.FilePath2ModuleName(file), file);
           LazyAST lazy_ast = null;
 
           Parsed parsed = null;
@@ -692,14 +694,16 @@ public class Build
           w.file2compiled.Add(file, compiled_file);
         }
       }
-      catch(UserError e)
-      {
-        w.error = e;
-      }
       catch(Exception e)
       {
-        Console.WriteLine(e.Message + " " + e.StackTrace);
-        w.error = new UserError(w.files[i], e.Message, e);
+        if(e is IError)
+          w.error = e;
+        else
+        {
+          //let's log unexpected exceptions immediately
+          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+          w.error = new BuildError(w.files[i], e);
+        }
       }
 
       sw.Stop();
@@ -758,7 +762,6 @@ public class Build
 
     static void WriteSymbolsCache(string file, string cache_dir, Symbols symbols)
     {
-      //Console.WriteLine("SYMB MISS " + file);
       var cache_symb_file = GetSymbolsCacheFile(cache_dir, file);
       Util.Meta2File(symbols, cache_symb_file);
     }

@@ -9,83 +9,10 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl {
 
-public interface IType 
-{
-  string GetName();
-}
-
-public class TypeRef
-{
-  IType type;
-  public string name { get ; private set;}
-  public bool is_ref;
-  TypeSystem ts;
-#if BHL_FRONT
-  //NOTE: parse location of the type
-  public IParseTree parsed { get; }
-#endif
-
-  public TypeRef(TypeSystem ts, string name
-#if BHL_FRONT
-, IParseTree parsed = null
-#endif
-  )
-  {
-    this.ts = ts;
-    this.name = name;
-#if BHL_FRONT
-    this.parsed = parsed;
-#endif
-  }
-
-  public TypeRef(IType type
-#if BHL_FRONT
-, IParseTree parsed = null
-#endif
-  )
-  {
-    this.name = type.GetName();
-    this.type = type;
-#if BHL_FRONT
-    this.parsed = parsed;
-#endif
-  }
-
-  public IType Get()
-  {
-    if(type != null)
-      return type;
-
-    if(string.IsNullOrEmpty(name))
-      return null;
-
-    type = (bhl.IType)ts.Resolve(name);
-    return type;
-  }
-}
-
-#if BHL_FRONT
-public class WrappedParseTree
-{
-  public IParseTree tree;
-  public ITokenStream tokens;
-  public IType eval_type;
-
-  public string Location()
-  {
-    var interval = tree.SourceInterval;
-    var begin = tokens.Get(interval.a);
-
-    string line = string.Format("@({0},{1})", begin.Line, begin.Column);
-    return line;
-  }
-}
-#endif
-
 public class Symbol 
 {
   public string name;
-  public TypeRef type;
+  public TypeProxy type;
   // All symbols know what scope contains them
   public IScope scope;
 #if BHL_FRONT
@@ -93,7 +20,7 @@ public class Symbol
   public WrappedParseTree parsed;
 #endif
 
-  public Symbol(string name, TypeRef type) 
+  public Symbol(string name, TypeProxy type) 
   { 
     this.name = name; 
     this.type = type;
@@ -101,16 +28,7 @@ public class Symbol
 
   public override string ToString() 
   {
-    return '<' + name + ':' + type + '>';
-  }
-
-  public string Location()
-  {
-#if BHL_FRONT
-    if(parsed != null)
-      return parsed.Location();
-#endif
-    return name + "(?)";
+    return '<' + name + ':' + type.name + '>';
   }
 }
 
@@ -118,9 +36,9 @@ public class Symbol
 public class BuiltInTypeSymbol : Symbol, IType 
 {
   public BuiltInTypeSymbol(string name) 
-    : base(name, null/*set below*/) 
+    : base(name, default(TypeProxy)/*set below*/) 
   {
-    this.type = new TypeRef(this);
+    this.type = new TypeProxy(this);
   }
 
   public string GetName() { return name; }
@@ -154,7 +72,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   )
     : base(name)
   {
-    this.type = new TypeRef(this);
+    this.type = new TypeProxy(this);
     this.super_class = super_class;
     this.creator = creator;
 
@@ -213,7 +131,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   public override void Define(Symbol sym) 
   {
     if(super_class != null && super_class.GetMembers().Contains(sym.name))
-      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     base.Define(sym);
   }
@@ -231,9 +149,9 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
 
 abstract public class ArrayTypeSymbol : ClassSymbol
 {
-  public TypeRef item_type;
+  public TypeProxy item_type;
 
-  public ArrayTypeSymbol(TypeSystem ts, string name, TypeRef item_type)     
+  public ArrayTypeSymbol(TypeSystem ts, string name, TypeProxy item_type)     
     : base(name, super_class: null)
   {
     this.item_type = item_type;
@@ -288,7 +206,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(TypeSystem ts, TypeRef item_type) 
+  public ArrayTypeSymbol(TypeSystem ts, TypeProxy item_type) 
     : this(ts, item_type.name + "[]", item_type)
   {}
 
@@ -315,7 +233,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return CLASS_TYPE;
   }
 
-  public GenericArrayTypeSymbol(TypeSystem ts, TypeRef item_type) 
+  public GenericArrayTypeSymbol(TypeSystem ts, TypeProxy item_type) 
     : base(ts, item_type)
   {}
 
@@ -323,7 +241,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   {
     var lst = arr.obj as IList<Val>;
     if(lst == null)
-      throw new UserError("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+      throw new Exception("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
     return lst;
   }
 
@@ -408,13 +326,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(TypeSystem ts, string name, TypeRef item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(TypeSystem ts, string name, TypeProxy item_type, CreatorCb creator) 
     : base(ts, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(TypeSystem ts, TypeRef item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(TypeSystem ts, TypeProxy item_type, CreatorCb creator) 
     : base(ts, item_type.name + "[]", item_type)
   {}
 
@@ -522,14 +440,14 @@ public class VariableSymbol : Symbol, IScopeIndexed
   //we mark this symbol as 'out of scope'
   public bool is_out_of_scope;
 
-  public VariableSymbol(WrappedParseTree parsed, string name, TypeRef type) 
+  public VariableSymbol(WrappedParseTree parsed, string name, TypeProxy type) 
     : this(name, type) 
   {
     this.parsed = parsed;
   }
 #endif
 
-  public VariableSymbol(string name, TypeRef type) 
+  public VariableSymbol(string name, TypeProxy type) 
     : base(name, type) 
   {}
 }
@@ -539,14 +457,14 @@ public class FuncArgSymbol : VariableSymbol
   public bool is_ref;
 
 #if BHL_FRONT
-  public FuncArgSymbol(WrappedParseTree parsed, string name, TypeRef type, bool is_ref = false)
+  public FuncArgSymbol(WrappedParseTree parsed, string name, TypeProxy type, bool is_ref = false)
     : this(name, type, is_ref)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public FuncArgSymbol(string name, TypeRef type, bool is_ref = false)
+  public FuncArgSymbol(string name, TypeProxy type, bool is_ref = false)
     : base(name, type)
   {
     this.is_ref = is_ref;
@@ -559,7 +477,7 @@ public class FieldSymbol : VariableSymbol
   public VM.FieldSetter setter;
   public VM.FieldRef getref;
 
-  public FieldSymbol(string name, TypeRef type, VM.FieldGetter getter = null, VM.FieldSetter setter = null, VM.FieldRef getref = null) 
+  public FieldSymbol(string name, TypeProxy type, VM.FieldGetter getter = null, VM.FieldSetter setter = null, VM.FieldRef getref = null) 
     : base(name, type)
   {
     this.getter = getter;
@@ -570,7 +488,7 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolScript : FieldSymbol
 {
-  public FieldSymbolScript(string name, TypeRef type) 
+  public FieldSymbolScript(string name, TypeProxy type) 
     : base(name, type, null, null, null)
   {
     this.getter = Getter;
@@ -618,7 +536,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 #endif
 
   public EnclosingSymbol(string name) 
-    : base(name, type: null)
+    : base(name, type: default(TypeProxy))
   {}
 
   public virtual IScope GetFallbackScope() { return this.scope; }
@@ -648,114 +566,13 @@ public abstract class EnclosingSymbol : Symbol, IScope
   {
     var members = GetMembers(); 
     if(members.Contains(sym.name))
-      throw new UserError(sym.Location() + ": already defined symbol '" + sym.name + "'"); 
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = members.Count; 
     sym.scope = this; // track the scope in each symbol
 
     members.Add(sym);
-  }
-}
-
-public class TupleType : IType
-{
-  public string name;
-
-  List<TypeRef> items = new List<TypeRef>();
-
-  public string GetName() { return name; }
-
-  public int Count {
-    get {
-      return items.Count;
-    }
-  }
-
-  public TupleType(params TypeRef[] items)
-  {
-    foreach(var item in items)
-      this.items.Add(item);
-    Update();
-  }
-
-  public TypeRef this[int index]
-  {
-    get { 
-      return items[index]; 
-    }
-  }
-
-  public void Add(TypeRef item)
-  {
-    items.Add(item);
-    Update();
-  }
-
-  void Update()
-  {
-    string tmp = "";
-    for(int i=0;i<items.Count;++i)
-    {
-      if(i > 0)
-        tmp += ",";
-      tmp += items[i].name;
-    }
-
-    name = tmp;
-  }
-}
-
-public class FuncSignature : IType
-{
-  public string name;
-
-  public TypeRef ret_type;
-  public List<TypeRef> arg_types = new List<TypeRef>();
-
-  public string GetName() { return name; }
-
-  public FuncSignature(TypeRef ret_type, params TypeRef[] arg_types)
-  {
-    this.ret_type = ret_type;
-    foreach(var arg_type in arg_types)
-      this.arg_types.Add(arg_type);
-    Update();
-  }
-
-  public FuncSignature(TypeRef ret_type, List<TypeRef> arg_types)
-  {
-    this.ret_type = ret_type;
-    this.arg_types = arg_types;
-    Update();
-  }
-
-  public FuncSignature(TypeRef ret_type)
-  {
-    this.ret_type = ret_type;
-    Update();
-  }
-
-  public void AddArg(TypeRef arg_type)
-  {
-    arg_types.Add(arg_type);
-    Update();
-  }
-
-  void Update()
-  {
-    string tmp = ret_type.name + "^("; 
-    for(int i=0;i<arg_types.Count;++i)
-    {
-      if(i > 0)
-        tmp += ",";
-      if(arg_types[i].is_ref)
-        tmp += "ref ";
-      tmp += arg_types[i].name;
-    }
-    tmp += ")";
-
-    name = tmp;
   }
 }
 
@@ -774,8 +591,6 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   }
 
 #if BHL_FRONT
-  public bool return_statement_found = false;
-
   public FuncSymbol(WrappedParseTree parsed, string name, FuncSignature sig) 
     : this(name, sig)
   {
@@ -786,7 +601,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public FuncSymbol(string name, FuncSignature sig) 
     : base(name)
   {
-    this.type = new TypeRef(sig);
+    this.type = new TypeProxy(sig);
   }
 
   public override SymbolsDictionary GetMembers() { return members; }
@@ -831,6 +646,17 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
 public class FuncSymbolScript : FuncSymbol
 {
+  public int local_vars_num;
+  public int default_args_num;
+  public int ip_addr;
+
+  public FuncSymbolScript(FuncSignature sig, string name, int default_args_num, int local_vars_num)
+    : base(null, name, sig)
+  {
+    this.name = name;
+    this.local_vars_num = local_vars_num;
+  }
+
   public AST_FuncDecl decl;
 
 #if BHL_FRONT
@@ -838,30 +664,16 @@ public class FuncSymbolScript : FuncSymbol
   public bhlParser.FuncParamsContext fparams;
 
   public FuncSymbolScript(
+    WrappedParseTree parsed, 
     TypeSystem ts,
     AST_FuncDecl decl, 
-    WrappedParseTree parsed, 
-    TypeRef ret_type, 
-    bhlParser.FuncParamsContext fparams
+    bhlParser.FuncParamsContext fparams,
+    FuncSignature sig
   ) 
-    : this(ts, decl, new FuncSignature(ret_type))
+    : this(ts, decl, sig)
   {
     this.parsed = parsed;
     this.fparams = fparams;
-
-    //NOTE: code below duplicates alternative ctor logic,
-    //      it's ivoked by the frontend when decl it not 
-    //      filled yet but we do have parsed tree
-    if(parsed != null && fparams != null)
-    {
-      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
-      {
-        var vd = fparams.funcParamDeclare()[i];
-        var type = ts.Type(vd.type());
-        type.is_ref = vd.isRef() != null;
-        GetSignature().AddArg(type);
-      }
-    }
   }
 
   public IParseTree GetDefaultArgsExprAt(int idx) 
@@ -887,7 +699,8 @@ public class FuncSymbolScript : FuncSymbol
       //TODO: add proper serialization of types 
       //var arg_type = ts.Type(var_decl.type);
       var arg_type = ts.Type("void");
-      arg_type.is_ref = var_decl.is_ref;
+      if(var_decl.is_ref)
+        arg_type = ts.Type(new RefType(arg_type));
       GetSignature().AddArg(arg_type);
     }
   }
@@ -908,14 +721,14 @@ public class LambdaSymbol : FuncSymbolScript
   List<FuncSymbol> fdecl_stack;
 
   public LambdaSymbol(
-    TypeSystem ts,
     WrappedParseTree parsed, 
+    TypeSystem ts,
     AST_LambdaDecl decl, 
-    TypeRef ret_type,
     bhlParser.FuncParamsContext fparams,
-    List<FuncSymbol> fdecl_stack
+    List<FuncSymbol> fdecl_stack,
+    FuncSignature sig
   ) 
-    : base(ts, decl, parsed, ret_type, fparams)
+    : base(parsed, ts, decl, fparams, sig)
   {
     this.fdecl_stack = fdecl_stack;
   }
@@ -1007,7 +820,7 @@ public class FuncSymbolNative : FuncSymbol
 
   public FuncSymbolNative(
     string name, 
-    TypeRef ret_type, 
+    TypeProxy ret_type, 
     Cb cb,
     params FuncArgSymbol[] args
   ) 
@@ -1016,7 +829,7 @@ public class FuncSymbolNative : FuncSymbol
 
   public FuncSymbolNative(
     string name, 
-    TypeRef ret_type, 
+    TypeProxy ret_type, 
     int def_args_num,
     Cb cb,
     params FuncArgSymbol[] args
@@ -1050,10 +863,10 @@ public class ClassSymbolNative : ClassSymbol
   public void OverloadBinaryOperator(FuncSymbol s)
   {
     if(s.GetArgs().Count != 1)
-      throw new UserError("Operator overload must have exactly one argument");
+      throw new SymbolError(s, "operator overload must have exactly one argument");
 
     if(s.GetReturnType() == TypeSystem.Void)
-      throw new UserError("Operator overload return value can't be void");
+      throw new SymbolError(s, "operator overload return value can't be void");
 
     Define(s);
   }
@@ -1069,6 +882,14 @@ public class ClassSymbolScript : ClassSymbol
     this.decl = decl;
     this.creator = ClassCreator;
   }
+
+#if BHL_FRONT
+  public ClassSymbolScript(WrappedParseTree parsed, string name, AST_ClassDecl decl, ClassSymbol super_class = null)
+    : this(name, decl, super_class)
+  {
+    this.parsed = parsed;
+  }
+#endif
 
   void ClassCreator(VM.Frame frm, ref Val data)
   {
@@ -1117,7 +938,7 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumSymbol(string name)
       : base(name)
   {
-    this.type = new TypeRef(this);
+    this.type = new TypeProxy(this);
   }
 
   public string GetName() { return name; }
@@ -1174,571 +995,12 @@ public class EnumItemSymbol : Symbol, IType
 #endif
 
   public EnumItemSymbol(EnumSymbol owner, string name, int val = 0) 
-    : base(name, new TypeRef(owner)) 
+    : base(name, new TypeProxy(owner)) 
   {
     this.owner = owner;
     this.val = val;
   }
   public string GetName() { return owner.name; }
-}
-
-public class TypeSystem
-{
-  static public BuiltInTypeSymbol Bool = new BuiltInTypeSymbol("bool");
-  static public BuiltInTypeSymbol String = new BuiltInTypeSymbol("string");
-  static public BuiltInTypeSymbol Int = new BuiltInTypeSymbol("int");
-  static public BuiltInTypeSymbol Float = new BuiltInTypeSymbol("float");
-  static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void");
-  static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum");
-  static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any");
-  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null");
-
-#if BHL_FRONT
-  static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
-  {
-    { new Tuple<IType, IType>(String, String), String },
-    { new Tuple<IType, IType>(Int, Int),       Int },
-    { new Tuple<IType, IType>(Int, Float),     Float },
-    { new Tuple<IType, IType>(Float, Float),   Float },
-    { new Tuple<IType, IType>(Float, Int),     Float },
-  };
-
-  static Dictionary<Tuple<IType, IType>, IType> rtl_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
-  {
-    { new Tuple<IType, IType>(String, String), Bool },
-    { new Tuple<IType, IType>(Int, Int),       Bool },
-    { new Tuple<IType, IType>(Int, Float),     Bool },
-    { new Tuple<IType, IType>(Float, Float),   Bool },
-    { new Tuple<IType, IType>(Float, Int),     Bool },
-  };
-
-  static Dictionary<Tuple<IType, IType>, IType> eq_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
-  {
-    { new Tuple<IType, IType>(String, String), Bool },
-    { new Tuple<IType, IType>(Int, Int),       Bool },
-    { new Tuple<IType, IType>(Int, Float),     Bool },
-    { new Tuple<IType, IType>(Float, Float),   Bool },
-    { new Tuple<IType, IType>(Float, Int),     Bool },
-    { new Tuple<IType, IType>(Any, Any),       Bool },
-    { new Tuple<IType, IType>(Null, Any),      Bool },
-    { new Tuple<IType, IType>(Any, Null),      Bool },
-  };
-
-  // Indicate whether a type supports a promotion to a wider type.
-  static Dictionary<Tuple<IType, IType>, IType> promote_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
-  {
-    { new Tuple<IType, IType>(Int, Float), Float },
-  };
-
-  static Dictionary<Tuple<IType, IType>, IType> cast_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
-  {
-    { new Tuple<IType, IType>(Bool,   String),    String },
-    { new Tuple<IType, IType>(Bool,   Int),       Int    },
-    { new Tuple<IType, IType>(Bool,   Float),     Float  },
-    { new Tuple<IType, IType>(Bool,   Any),       Any    },
-    { new Tuple<IType, IType>(String, String),    String },
-    { new Tuple<IType, IType>(String, Any),       Any    },
-    { new Tuple<IType, IType>(Int,    Bool),      Bool   },
-    { new Tuple<IType, IType>(Int,    String),    String },
-    { new Tuple<IType, IType>(Int,    Int),       Int    },
-    { new Tuple<IType, IType>(Int,    Float),     Float  },
-    { new Tuple<IType, IType>(Int,    Any),       Any    },
-    { new Tuple<IType, IType>(Float,  Bool),      Bool   },
-    { new Tuple<IType, IType>(Float,  String),    String },
-    { new Tuple<IType, IType>(Float,  Int),       Int    },
-    { new Tuple<IType, IType>(Float,  Float),     Float  },
-    { new Tuple<IType, IType>(Float,  Any),       Any    },
-    { new Tuple<IType, IType>(Any,    Bool),      Bool   },
-    { new Tuple<IType, IType>(Any,    String),    String },
-    { new Tuple<IType, IType>(Any,    Int),       Int    },
-    { new Tuple<IType, IType>(Any,    Float),     Float  },
-    { new Tuple<IType, IType>(Any,    Any),       Any    },
-  };
-#endif
-
-  public GlobalScope globs = new GlobalScope();
-
-  List<Scope> links = new List<Scope>();
-
-  public TypeSystem()
-  {
-    InitBuiltins(globs);
-  }
-
-  public void Link(Scope other)
-  {
-    if(links.Contains(other))
-      return;
-    links.Add(other);
-  }
-
-  void InitBuiltins(GlobalScope globs) 
-  {
-    globs.Define(Int);
-    globs.Define(Float);
-    globs.Define(Bool);
-    globs.Define(String);
-    globs.Define(Void);
-    globs.Define(Any);
-
-    //for all generic arrays
-    globs.Define(new GenericArrayTypeSymbol(this, new TypeRef(this, "")));
-
-    {
-      var fn = new FuncSymbolNative("suspend", Type("void"), 
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          return CoroutineSuspend.Instance;
-        } 
-      );
-      globs.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("yield", Type("void"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          return CoroutinePool.New<CoroutineYield>(frm.vm);
-        } 
-      );
-      globs.Define(fn);
-    }
-
-    //TODO: this one is controversary, it's defined for BC for now
-    {
-      var fn = new FuncSymbolNative("fail", Type("void"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          status = BHS.FAILURE;
-          return null;
-        } 
-      );
-      globs.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("start", Type("int"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          var val_ptr = frm.stack.Pop();
-          int id = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm).id;
-          val_ptr.Release();
-          frm.stack.Push(Val.NewNum(frm.vm, id));
-          return null;
-        }, 
-        new FuncArgSymbol("p", TypeFunc("void"))
-      );
-      globs.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("stop", Type("void"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          var fid = (int)frm.stack.PopRelease().num;
-          frm.vm.Stop(fid);
-          return null;
-        }, 
-        new FuncArgSymbol("fid", Type("int"))
-      );
-      globs.Define(fn);
-    }
-  }
-
-  public Symbol Resolve(string name) 
-  {
-    var s = globs.Resolve(name);
-    if(s != null)
-      return s;
-
-    foreach(var lnk in links)
-    {
-      s = lnk.Resolve(name);
-      if(s != null)
-        return s;
-    }
-    return null;
-  }
-
-  public void Define(Symbol sym)
-  {
-    foreach(var lnk in links)
-    {
-      if(lnk.Resolve(sym.name) != null)
-        throw new UserError(sym.Location() + " : already defined symbol '" + sym.name + "'"); 
-    }
-
-    globs.Define(sym);
-  }
-
-
-  public struct Arg
-  {
-    public string name;
-    public TypeRef tr;
-
-    public static implicit operator Arg(string name)
-    {
-      return new Arg(name);
-    }
-
-    public static implicit operator Arg(TypeRef tr)
-    {
-      return new Arg(tr);
-    }
-
-    public Arg(string name)
-    {
-      this.name = name;
-      this.tr = null;
-    }
-
-    public Arg(TypeRef tr)
-    {
-      this.name = null;
-      this.tr = tr;
-    }
-  }
-
-  public TypeRef Type(Arg tn)
-  {
-    if(tn.tr != null)
-      return tn.tr;
-    else
-      return Type(tn.name);
-  }
-
-  public TypeRef TypeArr(Arg tn)
-  {           
-    return Type(new GenericArrayTypeSymbol(this, Type(tn)));
-  }
-
-  public TypeRef TypeFunc(Arg ret_type, params Arg[] arg_types)
-  {           
-    var sig = new FuncSignature(Type(ret_type));
-    foreach(var arg_type in arg_types)
-      sig.AddArg(Type(arg_type));
-    return Type(sig);
-  }
-
-  public TypeRef TypeTuple(params Arg[] types)
-  {
-    var tuple = new TupleType();
-    foreach(var type in types)
-      tuple.Add(Type(type));
-    return Type(tuple);
-  }
-
-#if BHL_FRONT
-  public TypeRef Type(bhlParser.TypeContext parsed)
-  {
-    TypeRef tr;
-    if(parsed.fnargs() != null)
-      tr = Type(GetFuncSignature(parsed));
-    else
-      tr = Type(parsed.NAME().GetText());
-
-    //NOTE: if array type was not explicitely defined we fallback to GenericArrayTypeSymbol
-    if(parsed.ARR() != null)
-      tr = TypeArr(tr);
-
-   return tr;
-  }
-
-  public TypeRef Type(bhlParser.RetTypeContext parsed)
-  {
-    TypeRef tr = null;
-
-    //convenience special case
-    if(parsed == null)
-      tr = Type("void");
-    else if(parsed.type().Length > 1)
-    {
-      var tuple = new TupleType();
-      for(int i=0;i<parsed.type().Length;++i)
-        tuple.Add(this.Type(parsed.type()[i]));
-      tr = Type(tuple);
-    }
-    else
-      tr = Type(parsed.type()[0]);
-
-    return tr;
-  }
-#endif
-
-  public TypeRef Type(string name)
-  {
-    if(name.Length == 0 || IsCompoundType(name))
-      throw new Exception("Bad type name: '" + name + "'");
-    
-    return new TypeRef(this, name);
-  }
-
-  public TypeRef Type(IType t)
-  {
-    return new TypeRef(t);
-  }
-
-  static public bool IsCompoundType(string name)
-  {
-    for(int i=0;i<name.Length;++i)
-    {
-      char c = name[i];
-      if(!(Char.IsLetterOrDigit(c) || c == '_'))
-        return true;
-    }
-    return false;
-  }
-
-  static public bool CanAssignTo(IType src, IType dst, IType promotion) 
-  {
-    return src == dst || 
-           promotion == dst || 
-           dst == Any ||
-           (dst is ClassSymbol && src == Null) ||
-           (dst is FuncSignature && src == Null) || 
-           src.GetName() == dst.GetName() ||
-           IsChildClass(src, dst)
-           ;
-  }
-
-  static public bool IsChildClass(IType t, IType pt) 
-  {
-    var cl = t as ClassSymbol;
-    if(cl == null)
-      return false;
-    var pcl = pt as ClassSymbol;
-    if(pcl == null)
-      return false;
-    return cl.IsSubclassOf(pcl);
-  }
-
-  static public bool IsInSameClassHierarchy(IType a, IType b) 
-  {
-    var ca = a as ClassSymbol;
-    if(ca == null)
-      return false;
-    var cb = b as ClassSymbol;
-    if(cb == null)
-      return false;
-    return cb.IsSubclassOf(ca) || ca.IsSubclassOf(cb);
-  }
-
-  static public bool IsBinOpCompatible(IType type)
-  {
-    return type == Bool || 
-           type == String ||
-           type == Int ||
-           type == Float;
-  }
-
-  static public bool IsRtlOpCompatible(IType type)
-  {
-    return type == Int ||
-           type == Float;
-  }
-
-#if BHL_FRONT
-  public FuncSignature GetFuncSignature(bhlParser.TypeContext ctx)
-  {
-    var ret_type = Type(ctx.NAME().GetText());
-
-    var fnargs = ctx.fnargs();
-    if(fnargs.ARR() != null)
-      ret_type = TypeArr(ret_type);
-
-    var arg_types = new List<TypeRef>();
-    var fnames = fnargs.names();
-    if(fnames != null)
-    {
-      for(int i=0;i<fnames.refName().Length;++i)
-      {
-        var name = fnames.refName()[i];
-        var arg_type = Type(name.NAME().GetText());
-        arg_type.is_ref = name.isRef() != null; 
-        arg_types.Add(arg_type);
-      }
-    }
-
-    return new FuncSignature(ret_type, arg_types);
-  }
-
-  static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree a, WrappedParseTree b) 
-  {
-    IType result;
-    if(!table.TryGetValue(new Tuple<IType, IType>(a.eval_type, b.eval_type), out result))
-    {
-      throw new UserError(
-        a.Location()+" : incompatible types"
-      );
-    }
-    return result;
-  }
-
-  public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
-  {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs.eval_type), out promote_to_type);
-    if(!CanAssignTo(rhs.eval_type, lhs.eval_type, promote_to_type)) 
-    {
-      throw new UserError(
-        lhs.Location()+" : incompatible types"
-      );
-    }
-  }
-
-  public void CheckAssign(IType lhs, WrappedParseTree rhs) 
-  {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs), out promote_to_type);
-    if(!CanAssignTo(rhs.eval_type, lhs, promote_to_type)) 
-    {
-      throw new UserError(
-        rhs.Location()+" : incompatible types"
-      );
-    }
-  }
-
-  public void CheckAssign(WrappedParseTree lhs, IType rhs) 
-  {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs, lhs.eval_type), out promote_to_type);
-    if(!CanAssignTo(rhs, lhs.eval_type, promote_to_type)) 
-    {
-      throw new UserError(
-        lhs.Location()+" : incompatible types"
-      );
-    }
-  }
-
-  public void CheckCast(WrappedParseTree type, WrappedParseTree exp) 
-  {
-    var ltype = type.eval_type;
-    var rtype = exp.eval_type;
-
-    if(ltype == rtype)
-      return;
-
-    //special case: we allow to cast from 'any' to any user type
-    if(ltype == Any || rtype == Any)
-      return;
-
-    if((rtype == Float || rtype == Int) && ltype is EnumSymbol)
-      return;
-    if((ltype == Float || ltype == Int) && rtype is EnumSymbol)
-      return;
-
-    if(ltype == String && rtype is EnumSymbol)
-      return;
-
-    IType cast_type = null;
-    cast_from_to.TryGetValue(new Tuple<IType, IType>(rtype, ltype), out cast_type);
-    if(cast_type == ltype)
-      return;
-
-    if(IsInSameClassHierarchy(rtype, ltype))
-      return;
-    
-    throw new UserError(
-      type.Location()+" : incompatible types for casting"
-    );
-  }
-
-  public IType CheckBinOp(WrappedParseTree a, WrappedParseTree b) 
-  {
-    if(!IsBinOpCompatible(a.eval_type))
-      throw new UserError(
-        a.Location()+" operator is not overloaded"
-      );
-
-    if(!IsBinOpCompatible(b.eval_type))
-      throw new UserError(
-        b.Location()+" operator is not overloaded"
-      );
-
-    return MatchTypes(bin_op_res_type, a, b);
-  }
-
-  public IType CheckBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
-  {
-    var op_func_arg = op_func.GetArgs()[0];
-    CheckAssign(op_func_arg.type.Get(), b);
-    return op_func.GetReturnType();
-  }
-
-  public IType CheckRtlBinOp(WrappedParseTree a, WrappedParseTree b) 
-  {
-    if(!IsRtlOpCompatible(a.eval_type))
-      throw new UserError(
-        a.Location()+" : operator is not overloaded"
-      );
-
-    if(!IsRtlOpCompatible(b.eval_type))
-      throw new UserError(
-        b.Location()+" : operator is not overloaded"
-      );
-
-    MatchTypes(rtl_op_res_type, a, b);
-
-    return Bool;
-  }
-
-  public IType CheckEqBinOp(WrappedParseTree a, WrappedParseTree b) 
-  {
-    if(a.eval_type == b.eval_type)
-      return Bool;
-
-    if(a.eval_type is ClassSymbol && b.eval_type is ClassSymbol)
-      return Bool;
-
-    //TODO: add INullableType?
-    if(((a.eval_type is ClassSymbol || a.eval_type is FuncSignature) && b.eval_type == Null) ||
-        ((b.eval_type is ClassSymbol || b.eval_type is FuncSignature) && a.eval_type == Null))
-      return Bool;
-
-    MatchTypes(eq_op_res_type, a, b);
-
-    return Bool;
-  }
-
-  public IType CheckUnaryMinus(WrappedParseTree a) 
-  {
-    if(!(a.eval_type == Int || a.eval_type == Float)) 
-      throw new UserError(a.Location()+" : must be numeric type");
-
-    return a.eval_type;
-  }
-
-  public IType CheckBitOp(WrappedParseTree a, WrappedParseTree b) 
-  {
-    if(a.eval_type != Int) 
-      throw new UserError(a.Location()+" : must be int type");
-
-    if(b.eval_type != Int)
-      throw new UserError(b.Location()+" : must be int type");
-
-    return Int;
-  }
-
-  public IType CheckLogicalOp(WrappedParseTree a, WrappedParseTree b) 
-  {
-    if(a.eval_type != Bool) 
-      throw new UserError(a.Location()+" : must be bool type");
-
-    if(b.eval_type != Bool)
-      throw new UserError(b.Location()+" : must be bool type");
-
-    return Bool;
-  }
-
-  public IType CheckLogicalNot(WrappedParseTree a) 
-  {
-    if(a.eval_type != Bool) 
-      throw new UserError(a.Location()+" : must be bool type");
-
-    return a.eval_type;
-  }
-#endif
 }
 
 public class SymbolsDictionary

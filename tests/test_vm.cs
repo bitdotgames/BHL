@@ -7,6 +7,15 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
+  public void TestSerializeModuleScope()
+  {
+    var types = new TypeSystem();
+
+    var ms = new ModuleScope(1, types.globs);
+    ms.Define(new FuncSymbolScript(new FuncSignature(types.Type("void")), "test", 0, 0));
+  }
+
+  [IsTested()]
   public void TestReturnNumConstant()
   {
     string bhl = @"
@@ -486,7 +495,7 @@ public class BHL_TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.Type("float"))
         );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -528,7 +537,7 @@ public class BHL_TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.Type("float"))
         );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -563,7 +572,7 @@ public class BHL_TestVM : BHL_TestBase
           new FuncArgSymbol("a", ts.Type("float"))
         );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -600,7 +609,7 @@ public class BHL_TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.Type("int"))
         );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -654,7 +663,7 @@ public class BHL_TestVM : BHL_TestBase
             status = BHS.FAILURE; 
             return null;
           });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -958,7 +967,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -997,7 +1006,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1017,7 +1026,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1061,7 +1070,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1085,7 +1094,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1108,7 +1117,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1128,7 +1137,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1147,7 +1156,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1171,7 +1180,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1201,7 +1210,7 @@ public class BHL_TestVM : BHL_TestBase
             return null;
           }
         );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -1255,7 +1264,7 @@ public class BHL_TestVM : BHL_TestBase
             return null;
           }
         );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -1592,6 +1601,43 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestModDouble()
+  {
+    string bhl = @"
+    func float test()
+    {
+      return 2.7 % 2
+    }
+    ";
+
+    var c = Compile(bhl);
+
+
+    var expected =
+      new ModuleCompiler()
+      .UseInit()
+      .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2.7) })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .EmitThen(Opcodes.Mod)
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants.Count, 3);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    double expectedNum = 2.7 % 2;
+    AssertEqual(fb.result.PopRelease().num, expectedNum);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestEmptyParenExpression()
@@ -1604,7 +1650,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1639,7 +1685,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1662,7 +1708,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -1802,7 +1848,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2712,7 +2758,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2732,7 +2778,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2752,7 +2798,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2772,7 +2818,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2793,7 +2839,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2873,7 +2919,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2899,7 +2945,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2924,7 +2970,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -2955,7 +3001,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -3084,7 +3130,7 @@ public class BHL_TestVM : BHL_TestBase
           return null;
         } 
     );
-    ts.Define(fn);
+    ts.globs.Define(fn);
 
     var vm = MakeVM(bhl, ts);
     var num = Execute(vm, "test").result.PopRelease().num;
@@ -3105,7 +3151,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -3147,7 +3193,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -3544,7 +3590,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -3567,7 +3613,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -3589,7 +3635,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -3609,7 +3655,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -4696,7 +4742,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -4715,7 +4761,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5644,7 +5690,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5664,7 +5710,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5685,7 +5731,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5707,7 +5753,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5729,7 +5775,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5763,12 +5809,12 @@ public class BHL_TestVM : BHL_TestBase
         delegate(VM.Frame frm, ref Val v) 
         {}
       );
-      ts.Define(cl);
+      ts.globs.Define(cl);
     }
 
     BindTrace(ts, log);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl, ts);
       },
@@ -5789,7 +5835,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5810,7 +5856,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5831,7 +5877,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -5927,7 +5973,7 @@ public class BHL_TestVM : BHL_TestBase
             return null;
           }
           );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -6019,7 +6065,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -6045,7 +6091,7 @@ public class BHL_TestVM : BHL_TestBase
           return null;
         } 
     );
-    ts.Define(fn);
+    ts.globs.Define(fn);
 
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
@@ -6096,7 +6142,7 @@ public class BHL_TestVM : BHL_TestBase
           return inst;
         } 
       );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -6531,7 +6577,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -6555,7 +6601,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -6579,7 +6625,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -6603,7 +6649,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -6719,7 +6765,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -6743,7 +6789,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -6768,7 +6814,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -6911,7 +6957,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -7024,7 +7070,7 @@ public class BHL_TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.Type("float"), true/*is ref*/)
         );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -7090,7 +7136,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -7108,7 +7154,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -7165,7 +7211,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl);
       },
@@ -7458,7 +7504,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl, ts);
       },
@@ -9121,7 +9167,7 @@ public class BHL_TestVM : BHL_TestBase
           },
           new FuncArgSymbol("b", ts.Type("bool"))
         );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     {
@@ -9133,7 +9179,7 @@ public class BHL_TestVM : BHL_TestBase
           },
           new FuncArgSymbol("n", ts.Type("int"))
         );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -9228,7 +9274,7 @@ public class BHL_TestVM : BHL_TestBase
           new FuncArgSymbol("s", ts.Type("string")),
           new FuncArgSymbol("i", ts.Type("int"))
         );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts); 
@@ -9431,7 +9477,7 @@ public class BHL_TestVM : BHL_TestBase
         new FuncArgSymbol("fn", ts.TypeFunc(ts.TypeArr("int")))
       );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -10009,7 +10055,7 @@ public class BHL_TestVM : BHL_TestBase
           v.obj = null;
         }
       );
-      ts.Define(cl);
+      ts.globs.Define(cl);
 
       {
         var m = new FuncSymbolNative("self", ts.Type("Bar"),
@@ -10174,7 +10220,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -10308,7 +10354,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var ts = new TypeSystem();
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -10593,14 +10639,14 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl1);
       },
       "incompatible types"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl2);
       },
@@ -10826,77 +10872,77 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl1);
       },
       "extraneous input '++' expecting '}'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl2);
       },
       "operator ++ is not supported for string type"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl3);
       },
       "extraneous input '++' expecting ')'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl4);
       },
       "extraneous input '++' expecting ';'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl5);
       },
       "symbol not resolved"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl6);
       },
       "no viable alternative at input 'foo(i++'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl7);
       },
       "extraneous input '++' expecting ']'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl8);
       },
       "no viable alternative at input 'foo(i++'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl9);
       },
       "return value is missing"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl10);
       },
       "extraneous input '++' expecting '}'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl11);
       },
@@ -10989,63 +11035,63 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl1);
       },
       "extraneous input '--' expecting '}'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl2);
       },
       "operator -- is not supported for string type"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl3);
       },
       "extraneous input '--' expecting ')'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl4);
       },
       "extraneous input '--' expecting ';'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl5);
       },
       "no viable alternative at input 'foo(i--'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl6);
       },
       "extraneous input '--' expecting ']'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl7);
       },
       "return value is missing"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl8);
       },
       "extraneous input '--' expecting '}'"
     );
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() {
         Compile(bhl9);
       },
@@ -11856,7 +11902,7 @@ public class BHL_TestVM : BHL_TestBase
     var ts = new TypeSystem();
     BindFoo(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -12000,7 +12046,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -12628,7 +12674,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -12863,7 +12909,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -13144,7 +13190,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -13173,7 +13219,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -13195,7 +13241,7 @@ public class BHL_TestVM : BHL_TestBase
     var ts = new TypeSystem();
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13212,7 +13258,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -13233,7 +13279,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -13379,7 +13425,7 @@ public class BHL_TestVM : BHL_TestBase
     var ts = new TypeSystem();
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13401,7 +13447,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13488,7 +13534,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColorAlpha(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13533,7 +13579,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -13786,7 +13832,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindColorAlpha(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -13809,7 +13855,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -14034,7 +14080,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColorAlpha(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -14306,7 +14352,7 @@ public class BHL_TestVM : BHL_TestBase
 
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -14536,7 +14582,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -14970,7 +15016,7 @@ public class BHL_TestVM : BHL_TestBase
 
     var ts = new TypeSystem();
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -15040,7 +15086,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15060,7 +15106,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15085,7 +15131,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15366,7 +15412,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15391,7 +15437,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15412,7 +15458,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15433,7 +15479,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15452,7 +15498,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15475,7 +15521,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -15655,10 +15701,10 @@ public class BHL_TestVM : BHL_TestBase
           v.obj = null;
         }
       );
-      ts.Define(cl);
+      ts.globs.Define(cl);
     }
 
-    AssertError<UserError>(
+    AssertError<Exception>(
        delegate() {
          Compile(bhl, ts);
        },
@@ -15688,10 +15734,10 @@ public class BHL_TestVM : BHL_TestBase
           v.obj = null;
         }
       );
-      ts.Define(cl);
+      ts.globs.Define(cl);
     }
 
-    AssertError<UserError>(
+    AssertError<Exception>(
        delegate() {
          Compile(bhl, ts);
        },
@@ -15725,7 +15771,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      ts.Define(cl);
+      ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("c", ts.Type("Color"), 
         delegate(Val ctx, ref Val v)
@@ -16245,7 +16291,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16270,7 +16316,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16295,7 +16341,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16320,7 +16366,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16345,7 +16391,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16370,7 +16416,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16395,7 +16441,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16420,7 +16466,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16444,7 +16490,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16469,7 +16515,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16494,7 +16540,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16519,7 +16565,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16544,7 +16590,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16568,7 +16614,7 @@ public class BHL_TestVM : BHL_TestBase
     
     BindColor(ts);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16792,7 +16838,7 @@ public class BHL_TestVM : BHL_TestBase
     );
     cl.OverloadBinaryOperator(op);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -16803,8 +16849,8 @@ public class BHL_TestVM : BHL_TestBase
   void BindEnum(TypeSystem ts)
   {
     var en = new EnumSymbol("EnumState");
-    ts.Define(en);
-    ts.Define(new GenericArrayTypeSymbol(ts, new TypeRef(en)));
+    ts.globs.Define(en);
+    ts.globs.Define(new GenericArrayTypeSymbol(ts, new TypeProxy(en)));
 
     en.Define(new EnumItemSymbol(en, "SPAWNED",  10));
     en.Define(new EnumItemSymbol(en, "SPAWNED2", 20));
@@ -16989,7 +17035,7 @@ public class BHL_TestVM : BHL_TestBase
         new FuncArgSymbol("state", ts.Type("EnumState"))
         );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -17081,7 +17127,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -17102,7 +17148,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -17127,7 +17173,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -17151,7 +17197,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -17180,7 +17226,7 @@ public class BHL_TestVM : BHL_TestBase
 
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -17206,7 +17252,7 @@ public class BHL_TestVM : BHL_TestBase
     ";
 
     var ts = new TypeSystem();
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
       },
@@ -17858,7 +17904,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
     
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         CompileFiles(files);
       },
@@ -17930,7 +17976,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         CompileFiles(files);
       },
@@ -18065,7 +18111,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         CompileFiles(files);
       },
@@ -18195,7 +18241,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         CompileFiles(files);
       },
@@ -18427,7 +18473,7 @@ public class BHL_TestVM : BHL_TestBase
             return null;
           }
           );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -18629,7 +18675,7 @@ public class BHL_TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     CleanTestDir();
@@ -18707,7 +18753,7 @@ public class BHL_TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     CleanTestDir();
@@ -18841,7 +18887,7 @@ public class BHL_TestVM : BHL_TestBase
           frm.fb = null;
           return null;
         });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     CleanTestDir();
@@ -18929,7 +18975,7 @@ public class BHL_TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     CleanTestDir();
@@ -19008,7 +19054,7 @@ public class BHL_TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     CleanTestDir();
@@ -19086,7 +19132,7 @@ public class BHL_TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     CleanTestDir();
@@ -19170,7 +19216,7 @@ public class BHL_TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     CleanTestDir();
@@ -19258,7 +19304,7 @@ public class BHL_TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
     CleanTestDir();
@@ -19487,7 +19533,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    AssertError<UserError>(
+    AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
@@ -19589,94 +19635,6 @@ public class BHL_TestVM : BHL_TestBase
 
     AssertEqual("A1A1", log.ToString());
     CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestParseType()
-  {
-    {
-      var type = Frontend.ParseType("bool").type()[0];
-      AssertEqual(type.NAME().GetText(), "bool");
-      AssertTrue(type.fnargs() == null);
-      AssertTrue(type.ARR() == null);
-    }
-
-    {
-      var ret = Frontend.ParseType("bool,float");
-      AssertEqual(ret.type().Length, 2);
-      AssertEqual(ret.type()[0].NAME().GetText(), "bool");
-      AssertTrue(ret.type()[0].fnargs() == null);
-      AssertTrue(ret.type()[0].ARR() == null);
-      AssertEqual(ret.type()[1].NAME().GetText(), "float");
-      AssertTrue(ret.type()[1].fnargs() == null);
-      AssertTrue(ret.type()[1].ARR() == null);
-    }
-
-    {
-      var type = Frontend.ParseType("int[]").type()[0];
-      AssertEqual(type.NAME().GetText(), "int");
-      AssertTrue(type.fnargs() == null);
-      AssertTrue(type.ARR() != null);
-    }
-
-    {
-      var type = Frontend.ParseType("bool^(int,string)").type()[0];
-      AssertEqual(type.NAME().GetText(), "bool");
-      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
-      AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
-      AssertTrue(type.ARR() == null);
-    }
-
-    {
-      var ret = Frontend.ParseType("bool^(int,string),float[]");
-      AssertEqual(ret.type().Length, 2);
-      var type = ret.type()[0];
-      AssertEqual(type.NAME().GetText(), "bool");
-      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
-      AssertEqual(type.fnargs().names().refName()[1].NAME().GetText(), "string");
-      AssertTrue(type.ARR() == null);
-      type = ret.type()[1];
-      AssertEqual(type.NAME().GetText(), "float");
-      AssertTrue(type.fnargs() == null);
-      AssertTrue(type.ARR() != null);
-    }
-
-    {
-      var type = Frontend.ParseType("float^(int)[]").type()[0];
-      AssertEqual(type.NAME().GetText(), "float");
-      AssertEqual(type.fnargs().names().refName()[0].NAME().GetText(), "int");
-      AssertTrue(type.ARR() != null);
-    }
-
-    {
-      var ret = Frontend.ParseType("Vec3,Vec3,Vec3");
-      AssertEqual(ret.type().Length, 3);
-      var type = ret.type()[0];
-      AssertEqual(type.NAME().GetText(), "Vec3");
-      AssertTrue(type.fnargs() == null);
-      AssertTrue(type.ARR() == null);
-      type = ret.type()[1];
-      AssertEqual(type.NAME().GetText(), "Vec3");
-      AssertTrue(type.fnargs() == null);
-      AssertTrue(type.ARR() == null);
-      type = ret.type()[2];
-      AssertEqual(type.NAME().GetText(), "Vec3");
-      AssertTrue(type.fnargs() == null);
-      AssertTrue(type.ARR() == null);
-    }
-
-    {
-      //malformed
-      var type = Frontend.ParseType("float^");
-      AssertTrue(type == null);
-    }
-
-    {
-      //TODO:
-      //malformed
-      //var type = Frontend.ParseType("int]");
-      //AssertTrue(type == null);
-    }
   }
 
   [IsTested()]
@@ -20193,12 +20151,11 @@ public class BHL_TestVM : BHL_TestBase
     conf.cache_dir = TestDirPath() + "/cache";
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = false;
-    conf.debug = true;
 
     var bld = new Build();
     int res = bld.Exec(conf);
     if(res != 0)
-      throw new UserError(File.ReadAllText(conf.err_file));
+      throw new Exception(File.ReadAllText(conf.err_file));
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
@@ -20210,7 +20167,7 @@ public class BHL_TestVM : BHL_TestBase
     //NOTE: we don't want to affect the original ts
     var ts_copy = ts.Clone();
 
-    var mdl = new bhl.Module("", "");
+    var mdl = new bhl.Module(ts_copy, "", "");
     var mreg = new ModuleRegistry();
     var ast = Src2AST(bhl, mdl, mreg, ts_copy);
     if(show_ast)
@@ -20585,7 +20542,7 @@ public class BHL_TestVM : BHL_TestBase
         }, 
         new FuncArgSymbol("str", ts.Type("string"))
     );
-    ts.Define(fn);
+    ts.globs.Define(fn);
     return fn;
   }
 
@@ -20601,7 +20558,7 @@ public class BHL_TestVM : BHL_TestBase
           },
           new FuncArgSymbol("str", ts.Type("string"))
       );
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
   }
 
@@ -20617,7 +20574,7 @@ public class BHL_TestVM : BHL_TestBase
         new FuncArgSymbol("a", ts.Type("float")),
         new FuncArgSymbol("b", ts.Type("float"))
     );
-    ts.Define(fn);
+    ts.globs.Define(fn);
   }
 
   public class Color
@@ -20655,7 +20612,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     );
 
-    ts.Define(cl);
+    ts.globs.Define(cl);
     cl.Define(new FieldSymbol("r", ts.Type("float"),
       delegate(Val ctx, ref Val v)
       {
@@ -20733,7 +20690,7 @@ public class BHL_TestVM : BHL_TestBase
         new FuncArgSymbol("r", ts.Type("float"))
       );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
     
     {
@@ -20744,10 +20701,10 @@ public class BHL_TestVM : BHL_TestBase
           }
       );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
 
-    ts.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.Type("Color"), delegate() { return new List<Color>(); } ));
+    ts.globs.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.Type("Color"), delegate() { return new List<Color>(); } ));
 
     return cl;
   }
@@ -20764,7 +20721,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      ts.Define(cl);
+      ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("a", ts.Type("float"),
         delegate(Val ctx, ref Val v)
@@ -20823,7 +20780,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      ts.Define(cl);
+      ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("n", ts.Type("int"),
         delegate(Val ctx, ref Val v)
@@ -20858,7 +20815,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      ts.Define(cl);
+      ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("str", ts.Type("string"),
         delegate(Val ctx, ref Val v)
@@ -20900,7 +20857,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
 
-      ts.Define(cl);
+      ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("child", ts.Type("StringClass"),
         delegate(Val ctx, ref Val v)
@@ -20988,7 +20945,7 @@ public class BHL_TestVM : BHL_TestBase
           v.obj = new Foo();
         }
       );
-      ts.Define(cl);
+      ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("hey", ts.Type("int"),
         delegate(Val ctx, ref Val v)
@@ -21039,7 +20996,7 @@ public class BHL_TestVM : BHL_TestBase
           new FuncArgSymbol("foo", ts.Type("Foo"))
       );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
   }
 
@@ -21075,7 +21032,7 @@ public class BHL_TestVM : BHL_TestBase
         }, 
         new FuncArgSymbol("ticks", ts.Type("int"))
     );
-    ts.Define(fn);
+    ts.globs.Define(fn);
     return fn;
   }
 
@@ -21095,7 +21052,7 @@ public class BHL_TestVM : BHL_TestBase
       }
     );
 
-    ts.Define(cl);
+    ts.globs.Define(cl);
     cl.Define(new FieldSymbol("Int", ts.Type("int"),
       delegate(Val ctx, ref Val v)
       {
@@ -21184,7 +21141,7 @@ public class BHL_TestVM : BHL_TestBase
         );
         cl.Define(vs);
       }
-      ts.Define(cl);
+      ts.globs.Define(cl);
     }
   }
 
@@ -21207,7 +21164,7 @@ public class BHL_TestVM : BHL_TestBase
         new FuncArgSymbol("spawns", ts.Type("int"))
       );
 
-      ts.Define(fn);
+      ts.globs.Define(fn);
     }
   }
 

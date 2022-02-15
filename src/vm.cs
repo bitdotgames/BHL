@@ -684,12 +684,8 @@ public class VM
     }
   }
 
+  //TODO: get rid of this scope once we have proper serialization of types and symbols
   Scope symbols;
-  public Scope Symbols {
-    get {
-      return symbols;
-    }
-  }
 
   public struct ModuleAddr
   {
@@ -2049,7 +2045,7 @@ public class VM
         curr_frame.stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        curr_frame.stack.Push(Val.NewNum(this, (int)l_operand._num % (int)r_operand._num));
+        curr_frame.stack.Push(Val.NewNum(this, l_operand._num % r_operand._num));
       break;
     }
 

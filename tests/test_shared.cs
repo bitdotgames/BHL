@@ -20,7 +20,7 @@ public static class BHL_TestExt
     var ms = ts.globs.GetMembers();
     //let's skip already defined built-ins
     for(int i=ts_copy.globs.GetMembers().Count;i<ms.Count;++i)
-      ts_copy.Define(ms[i]);
+      ts_copy.globs.Define(ms[i]);
     return ts_copy;
   }
 

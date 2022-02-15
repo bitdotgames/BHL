@@ -5,47 +5,6 @@ using System.IO;
 
 namespace bhl {
 
-public class UserError : Exception
-{
-  public string file;
-
-  public UserError(string file, string msg)
-    : base(msg)
-  {
-    this.file = file;
-  }
-
-  public UserError(string msg)
-    : base(msg)
-  {
-    this.file = null;
-  }
-
-  //for proper rethrowing
-  public UserError(string file, string msg, Exception e)
-    : base(msg, e)
-  {
-    this.file = file;
-  }
-
-  public string ToJson()
-  {
-    string msg = "";
-    //if the inner exception is a UserError,
-    //let's take its message since it contains 
-    //an actuall error and was rethrown
-    if(InnerException is UserError)
-      msg = InnerException.Message;
-    else
-      msg = Message;
-    msg = msg.Replace("\\", " ");
-    msg = msg.Replace("\n", " ");
-    msg = msg.Replace("\r", " ");
-    msg = msg.Replace("\"", "\\\""); 
-    return "{\"error\": \"" + msg + "\", \"file\": \"" + (file == null ? "<?>" : file.Replace("\\", "/")) + "\"}";
-  }
-}
-
 public static class Hash
 {
   static public uint CRC32(string id)
@@ -217,17 +176,17 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static MetaHelper.CreateByIdCb prev_create_factory; 
+  static MetaUtils.CreateByIdCb prev_create_factory; 
 
   static public void SetupASTFactory()
   {
-    prev_create_factory = MetaHelper.CreateById;
-    MetaHelper.CreateById = AST_Factory.createById;
+    prev_create_factory = MetaUtils.CreateById;
+    MetaUtils.CreateById = AST_Factory.createById;
   }
 
   static public void RestoreASTFactory()
   {
-    MetaHelper.CreateById = prev_create_factory;
+    MetaUtils.CreateById = prev_create_factory;
   }
 
   static public T File2Meta<T>(string file) where T : IMetaStruct, new()
@@ -242,7 +201,7 @@ static public class Util
   {
     var reader = new MsgPackDataReader(s);
     var meta = new T();
-    MetaHelper.sync(MetaSyncContext.NewForRead(reader), ref meta);
+    MetaUtils.sync(MetaSyncContext.NewForRead(reader), ref meta);
     return meta;
   }
 
@@ -254,7 +213,7 @@ static public class Util
   static public void Meta2Bin<T>(T meta, Stream dst) where T : IMetaStruct
   {
     var writer = new MsgPackDataWriter(dst);
-    MetaHelper.sync(MetaSyncContext.NewForWrite(writer), ref meta);
+    MetaUtils.sync(MetaSyncContext.NewForWrite(writer), ref meta);
   }
 
   static public void Meta2File<T>(T meta, string file) where T : IMetaStruct

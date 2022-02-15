@@ -7,15 +7,16 @@ if [ ! -d $UNITY_MONO_PATH ] ; then
 fi
 
 #1. Running frontend over bhl sources
-rm tmp/bhl.bytes
+rm -rf tmp/bhl.bytes
+rm -rf tmp/bhl.err
 ../bhl run --user-sources=bindings.cs -C --dir=. --result=tmp/bhl.bytes --cache_dir=tmp --error=tmp/bhl.err
 
 if [ $? -ne 0 ] ;
 then
-  echo "======================="
-  echo "BHL ERROR:"
   if [ -f tmp/bhl.err ];
   then
+    echo "======================="
+    echo "BHL ERROR:"
     cat tmp/bhl.err
     echo ""
   fi

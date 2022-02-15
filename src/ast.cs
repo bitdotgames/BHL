@@ -157,7 +157,7 @@ public class AST  : AST_Base
   {
     base.syncFields(ctx);
 
-    MetaHelper.syncVirtual(ctx, children);
+    MetaUtils.syncVirtual(ctx, children);
   }
 
   public override int getFieldsCount() 
@@ -225,8 +225,8 @@ public class AST_Import  : AST_Base
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, module_ids);
-    MetaHelper.sync(ctx, module_names);
+    MetaUtils.sync(ctx, module_ids);
+    MetaUtils.sync(ctx, module_names);
   }
 
   public override int getFieldsCount() 
@@ -263,8 +263,8 @@ public class AST_Module  : AST
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, ref id);
-    MetaHelper.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref id);
+    MetaUtils.sync(ctx, ref name);
   }
 
   public override int getFieldsCount() 
@@ -306,7 +306,7 @@ public class AST_UnaryOpExp  : AST
   {
     base.syncFields(ctx);
     int __tmp_type = (int)type;
-    MetaHelper.sync(ctx, ref __tmp_type);
+    MetaUtils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumUnaryOp)__tmp_type;
   }
 
@@ -362,7 +362,7 @@ public class AST_BinaryOpExp  : AST
   {
     base.syncFields(ctx);
     int __tmp_type = (int)type;
-    MetaHelper.sync(ctx, ref __tmp_type);
+    MetaUtils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBinaryOp)__tmp_type;
   }
 
@@ -397,7 +397,7 @@ public class AST_Inc  : AST_Base
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, ref symb_idx);
+    MetaUtils.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
@@ -431,7 +431,7 @@ public class AST_Dec  : AST_Base
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, ref symb_idx);
+    MetaUtils.sync(ctx, ref symb_idx);
   }
 
   public override int getFieldsCount() 
@@ -465,7 +465,7 @@ public class AST_New  : AST
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, ref type);
+    MetaUtils.sync(ctx, ref type);
   }
 
   public override int getFieldsCount() 
@@ -513,13 +513,13 @@ public class AST_FuncDecl  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref type);
-    MetaHelper.sync(ctx, ref name);
-    MetaHelper.sync(ctx, ref module_id);
-    MetaHelper.sync(ctx, ref local_vars_num);
-    MetaHelper.sync(ctx, ref required_args_num);
-    MetaHelper.sync(ctx, ref default_args_num);
-    MetaHelper.sync(ctx, ref ip_addr);
+    MetaUtils.sync(ctx, ref type);
+    MetaUtils.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref module_id);
+    MetaUtils.sync(ctx, ref local_vars_num);
+    MetaUtils.sync(ctx, ref required_args_num);
+    MetaUtils.sync(ctx, ref default_args_num);
+    MetaUtils.sync(ctx, ref ip_addr);
   }
 
   public override int getFieldsCount() 
@@ -557,8 +557,8 @@ public class AST_ClassDecl  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref name);
-    MetaHelper.sync(ctx, ref parent);
+    MetaUtils.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref parent);
   }
 
   public override int getFieldsCount() 
@@ -596,8 +596,8 @@ public class AST_EnumItem  : AST_Base
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref name);
-    MetaHelper.sync(ctx, ref value);
+    MetaUtils.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref value);
   }
 
   public override int getFieldsCount() 
@@ -633,7 +633,7 @@ public class AST_EnumDecl  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref name);
   }
 
   public override int getFieldsCount() 
@@ -671,9 +671,9 @@ public class AST_UpVal  :  BaseMetaStruct
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref name);
-    MetaHelper.sync(ctx, ref symb_idx);
-    MetaHelper.sync(ctx, ref upsymb_idx);
+    MetaUtils.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref symb_idx);
+    MetaUtils.sync(ctx, ref upsymb_idx);
   }
 
   public override int getFieldsCount() 
@@ -709,7 +709,7 @@ public class AST_LambdaDecl  : AST_FuncDecl
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, upvals);
+    MetaUtils.sync(ctx, upvals);
   }
 
   public override int getFieldsCount() 
@@ -745,7 +745,7 @@ public class AST_TypeCast  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref type);
+    MetaUtils.sync(ctx, ref type);
   }
 
   public override int getFieldsCount() 
@@ -813,15 +813,15 @@ public class AST_Call  : AST
     base.syncFields(ctx);
 
     int __tmp_type = (int)type;
-    MetaHelper.sync(ctx, ref __tmp_type);
+    MetaUtils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumCall)__tmp_type;
 
-    MetaHelper.sync(ctx, ref name);
-    MetaHelper.sync(ctx, ref module_id);
-    MetaHelper.sync(ctx, ref cargs_bits);
-    MetaHelper.sync(ctx, ref line_num);
-    MetaHelper.sync(ctx, ref symb_idx);
-    MetaHelper.sync(ctx, ref scope_type);
+    MetaUtils.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref module_id);
+    MetaUtils.sync(ctx, ref cargs_bits);
+    MetaUtils.sync(ctx, ref line_num);
+    MetaUtils.sync(ctx, ref symb_idx);
+    MetaUtils.sync(ctx, ref scope_type);
   }
 
   public override int getFieldsCount() 
@@ -855,7 +855,7 @@ public class AST_Return  : AST
   public override void syncFields(MetaSyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaHelper.sync(ctx, ref num);
+    MetaUtils.sync(ctx, ref num);
   }
 
   public override int getFieldsCount() 
@@ -918,7 +918,7 @@ public class AST_Continue  : AST_Base
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref jump_marker);
+    MetaUtils.sync(ctx, ref jump_marker);
   }
 
   public override int getFieldsCount() 
@@ -968,12 +968,12 @@ public class AST_Literal  : AST_Base
     base.syncFields(ctx);
 
     int __tmp_type = (int)type;
-    MetaHelper.sync(ctx, ref __tmp_type);
+    MetaUtils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumLiteral)__tmp_type;
 
 
-    MetaHelper.sync(ctx, ref nval);
-    MetaHelper.sync(ctx, ref sval);
+    MetaUtils.sync(ctx, ref nval);
+    MetaUtils.sync(ctx, ref sval);
   }
 
   public override int getFieldsCount() 
@@ -1017,11 +1017,11 @@ public class AST_VarDecl  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref name);
-    MetaHelper.sync(ctx, ref symb_idx);
-    MetaHelper.sync(ctx, ref is_func_arg);
-    MetaHelper.sync(ctx, ref type);
-    MetaHelper.sync(ctx, ref is_ref);
+    MetaUtils.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref symb_idx);
+    MetaUtils.sync(ctx, ref is_func_arg);
+    MetaUtils.sync(ctx, ref type);
+    MetaUtils.sync(ctx, ref is_ref);
   }
 
   public override int getFieldsCount() 
@@ -1069,7 +1069,7 @@ public class AST_Block  : AST
     base.syncFields(ctx);
 
     int __tmp_type = (int)type;
-    MetaHelper.sync(ctx, ref __tmp_type);
+    MetaUtils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBlock)__tmp_type;
   }
 
@@ -1108,8 +1108,8 @@ public class AST_JsonObj  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref type);
-    MetaHelper.sync(ctx, ref line_num);
+    MetaUtils.sync(ctx, ref type);
+    MetaUtils.sync(ctx, ref line_num);
   }
 
   public override int getFieldsCount() 
@@ -1147,8 +1147,8 @@ public class AST_JsonArr  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref type);
-    MetaHelper.sync(ctx, ref line_num);
+    MetaUtils.sync(ctx, ref type);
+    MetaUtils.sync(ctx, ref line_num);
   }
 
   public override int getFieldsCount() 
@@ -1218,9 +1218,9 @@ public class AST_JsonPair  : AST
   {
     base.syncFields(ctx);
 
-    MetaHelper.sync(ctx, ref name);
-    MetaHelper.sync(ctx, ref symb_idx);
-    MetaHelper.sync(ctx, ref scope_type);
+    MetaUtils.sync(ctx, ref name);
+    MetaUtils.sync(ctx, ref symb_idx);
+    MetaUtils.sync(ctx, ref scope_type);
   }
 
   public override int getFieldsCount() 
