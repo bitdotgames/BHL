@@ -1592,6 +1592,43 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestModDouble()
+  {
+    string bhl = @"
+    func float test()
+    {
+      return 2.7 % 2
+    }
+    ";
+
+    var c = Compile(bhl);
+
+
+    var expected =
+      new ModuleCompiler()
+      .UseInit()
+      .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2.7) })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .EmitThen(Opcodes.Mod)
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants.Count, 3);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    double expectedNum = 2.7 % 2;
+    AssertEqual(fb.result.PopRelease().num, expectedNum);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestEmptyParenExpression()
