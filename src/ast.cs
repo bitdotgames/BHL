@@ -101,6 +101,48 @@ public abstract class AST_Visitor
   }
 }
 
+public interface IPostProcessor
+{
+  //returns path to the result file
+  string Patch(LazyAST lazy_ast, string src_file, string result_file);
+  void Tally();
+}
+
+public class EmptyPostProcessor : IPostProcessor 
+{
+  public string Patch(LazyAST lazy_ast, string src_file, string result_file) { return result_file; }
+  public void Tally() {}
+}
+
+public interface IASTResolver
+{
+  AST_Module Get();
+}
+
+public class LazyAST
+{
+  IASTResolver resolver;
+  AST_Module resolved;
+
+  public LazyAST(IASTResolver resolver)
+  {
+    this.resolver = resolver;
+  }
+
+  public LazyAST(AST_Module resolved)
+  {
+    this.resolved = resolved;
+  }
+
+  public AST_Module Get()
+  {
+    if(resolved == null)
+      resolved = resolver.Get();
+    return resolved;
+  }
+}
+
+
 public class AST_Base : BaseMetaStruct 
 {
   static public  uint STATIC_CLASS_ID = 246837896;

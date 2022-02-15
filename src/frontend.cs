@@ -61,6 +61,43 @@ public class Frontend : bhlBaseVisitor<object>
 
   HashSet<FuncSymbol> return_found = new HashSet<FuncSymbol>();
 
+  Dictionary<FuncSymbol, int> defers2func = new Dictionary<FuncSymbol, int>();
+  int defer_stack {
+    get {
+      var fsymb = PeekFuncDecl();
+      int v;
+      defers2func.TryGetValue(fsymb, out v);
+      return v;
+    }
+
+    set {
+      var fsymb = PeekFuncDecl();
+      defers2func[fsymb] = value;
+    }
+  }
+
+  Dictionary<FuncSymbol, int> loops2func = new Dictionary<FuncSymbol, int>();
+  int loops_stack {
+    get {
+      var fsymb = PeekFuncDecl();
+      int v;
+      loops2func.TryGetValue(fsymb, out v);
+      return v;
+    }
+
+    set {
+      var fsymb = PeekFuncDecl();
+      loops2func[fsymb] = value;
+    }
+  }
+
+  //NOTE: a list is used instead of stack, so that it's easier to traverse by index
+  List<FuncSymbol> func_decl_stack = new List<FuncSymbol>();
+
+  Stack<IType> json_type_stack = new Stack<IType>();
+
+  Stack<bool> call_by_ref_stack = new Stack<bool>();
+
   Stack<AST> ast_stack = new Stack<AST>();
 
   public static CommonTokenStream Source2Tokens(string file, Stream s)
@@ -1563,9 +1600,6 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  //NOTE: a list is used instead of stack, so that it's easier to traverse by index
-  public List<FuncSymbol> func_decl_stack = new List<FuncSymbol>();
-
   void PushFuncDecl(FuncSymbol symb)
   {
     func_decl_stack.Add(symb);
@@ -1583,9 +1617,6 @@ public class Frontend : bhlBaseVisitor<object>
 
     return func_decl_stack[func_decl_stack.Count-1];
   }
-
-  Stack<IType> json_type_stack = new Stack<IType>();
-
   void PushJsonType(IType type)
   {
     json_type_stack.Push(type);
@@ -1604,8 +1635,6 @@ public class Frontend : bhlBaseVisitor<object>
     return json_type_stack.Peek();
   }
 
-  Stack<bool> call_by_ref_stack = new Stack<bool>();
-
   void PushCallByRef(bool flag)
   {
     call_by_ref_stack.Push(flag);
@@ -1622,36 +1651,6 @@ public class Frontend : bhlBaseVisitor<object>
       return false;
 
     return call_by_ref_stack.Peek();
-  }
-
-  Dictionary<FuncSymbol, int> loops2func = new Dictionary<FuncSymbol, int>();
-  int loops_stack {
-    get {
-      var fsymb = PeekFuncDecl();
-      int v;
-      loops2func.TryGetValue(fsymb, out v);
-      return v;
-    }
-
-    set {
-      var fsymb = PeekFuncDecl();
-      loops2func[fsymb] = value;
-    }
-  }
-
-  Dictionary<FuncSymbol, int> defers2func = new Dictionary<FuncSymbol, int>();
-  int defer_stack {
-    get {
-      var fsymb = PeekFuncDecl();
-      int v;
-      defers2func.TryGetValue(fsymb, out v);
-      return v;
-    }
-
-    set {
-      var fsymb = PeekFuncDecl();
-      defers2func[fsymb] = value;
-    }
   }
 
   public override object VisitReturn(bhlParser.ReturnContext ctx)
@@ -2910,47 +2909,6 @@ public class ModuleRegistry
     if(norm_path.Length == 0)
       throw new Exception("File path '" + full_path + "' was not normalized");
     return norm_path;
-  }
-}
-
-public interface IPostProcessor
-{
-  //returns path to the result file
-  string Patch(LazyAST lazy_ast, string src_file, string result_file);
-  void Tally();
-}
-
-public class EmptyPostProcessor : IPostProcessor 
-{
-  public string Patch(LazyAST lazy_ast, string src_file, string result_file) { return result_file; }
-  public void Tally() {}
-}
-
-public interface IASTResolver
-{
-  AST_Module Get();
-}
-
-public class LazyAST
-{
-  IASTResolver resolver;
-  AST_Module resolved;
-
-  public LazyAST(IASTResolver resolver)
-  {
-    this.resolver = resolver;
-  }
-
-  public LazyAST(AST_Module resolved)
-  {
-    this.resolved = resolved;
-  }
-
-  public AST_Module Get()
-  {
-    if(resolved == null)
-      resolved = resolver.Get();
-    return resolved;
   }
 }
 
