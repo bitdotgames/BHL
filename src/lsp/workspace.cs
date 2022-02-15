@@ -1163,7 +1163,7 @@ namespace bhlsp
           if(string.IsNullOrEmpty(text))
           {
             byte[] buffer = File.ReadAllBytes(path);
-            text = System.Text.Encoding.Default.GetString(buffer);
+            text = System.Text.Encoding.UTF8.GetString(buffer);
           }
           
           document.Sync(text);
