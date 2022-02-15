@@ -253,13 +253,13 @@ namespace bhlsp
         {
           capabilities.semanticTokensProvider = new SemanticTokensOptions
           {
-            full = true,
-            range = false,
-            legend = new SemanticTokensLegend
-            {
-              tokenTypes = BHLTextDocument.semanticTokenTypes,
-              tokenModifiers = BHLTextDocument.semanticTokenModifiers
-            }
+              full = true,
+              range = false,
+              legend = new SemanticTokensLegend
+              {
+                  tokenTypes = BHLTextDocument.semanticTokenTypes,
+                  tokenModifiers = BHLTextDocument.semanticTokenModifiers
+              }
           };
         }
       }

@@ -905,8 +905,10 @@ namespace bhlsp
           var callArgIsRef = callArg.isRef();
           if(callArgIsRef != null)
             AddSemanticToken(callArgIsRef.Start.StartIndex, callArgIsRef.Stop.StopIndex, SemanticTokenTypes.keyword);
-                
-          Visit(callArg.exp());
+
+          var callArgExp = callArg.exp();
+          if(callArgExp != null)
+            Visit(callArg.exp());
         }
         return null;
       }
