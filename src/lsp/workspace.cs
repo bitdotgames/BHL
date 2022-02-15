@@ -119,6 +119,9 @@ namespace bhlsp
   {
     private class BHLTextDocumentVisitor : bhlBaseVisitor<object>
     {
+      public readonly List<string> imports = new List<string>();
+      public readonly Dictionary<string, bhlParser.FuncDeclContext> funcDecls = new Dictionary<string, bhlParser.FuncDeclContext>();
+      public readonly Dictionary<string, bhlParser.ClassDeclContext> classDecls = new Dictionary<string, bhlParser.ClassDeclContext>();
       public readonly List<uint> dataSemanticTokens = new List<uint>();
       
       private int next;
@@ -129,7 +132,11 @@ namespace bhlsp
         this.document = document;
         next = 0;
         
+        imports.Clear();
+        funcDecls.Clear();
+        classDecls.Clear();
         dataSemanticTokens.Clear();
+        
         VisitProgram(document.ToParser().program());
       }
       
@@ -144,6 +151,13 @@ namespace bhlsp
       public override object VisitClassDecl(bhlParser.ClassDeclContext ctx)
       {
         var classDeclName = ctx.NAME();
+
+        if(classDeclName != null)
+        {
+          var classDeclNameText = classDeclName.GetText();
+          if(!classDecls.ContainsKey(classDeclNameText))
+            classDecls.Add(classDeclNameText, ctx);
+        }
         
         AddSemanticToken(ctx.Start.StartIndex, classDeclName.Symbol.StartIndex - 1, SemanticTokenTypes.keyword);
         
@@ -172,6 +186,13 @@ namespace bhlsp
         var funcParams = ctx.funcParams();
         var funcBlock = ctx.funcBlock();
 
+        if(funcDeclName != null)
+        {
+          var funcDeclNameText = funcDeclName.GetText();
+          if(!funcDecls.ContainsKey(funcDeclNameText))
+            funcDecls.Add(funcDeclNameText, ctx);
+        }
+        
         var keywordStopIdx = retType?.Start.StartIndex ?? (funcDeclName?.Symbol.StartIndex ?? 0);
 
         AddSemanticToken(ctx.Start.StartIndex, Math.Max(ctx.Start.StartIndex, keywordStopIdx - 1),
@@ -910,6 +931,10 @@ namespace bhlsp
         {
           var normalstring = mimport.NORMALSTRING();
           
+          var import = normalstring.GetText();
+          import = import.Substring(1, import.Length-2); // removing quotes
+          imports.Add(import);
+          
           AddSemanticToken(mimport.Start.StartIndex, normalstring.Symbol.StartIndex - 1, SemanticTokenTypes.keyword);
           AddSemanticToken(normalstring, SemanticTokenTypes.@string);
         }
@@ -1042,68 +1067,15 @@ namespace bhlsp
     };
 
     private readonly BHLTextDocumentVisitor visitor = new BHLTextDocumentVisitor();
-
-    Dictionary<string, bhlParser.FuncDeclContext> funcDecls = new Dictionary<string, bhlParser.FuncDeclContext>();
-    Dictionary<string, bhlParser.ClassDeclContext> classDecls = new Dictionary<string, bhlParser.ClassDeclContext>();
-    Dictionary<string, bhlParser.VarDeclareAssignContext> varDeclars = new Dictionary<string, bhlParser.VarDeclareAssignContext>();
-    List<string> imports = new List<string>();
     
-    public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => classDecls;
-    public Dictionary<string, bhlParser.VarDeclareAssignContext> VarDeclars => varDeclars;
-    public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => funcDecls;
-    public List<string> Imports => imports;
+    public List<string> Imports => visitor.imports;
+    public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => visitor.classDecls;
+    public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => visitor.funcDecls;
     public List<uint> DataSemanticTokens => visitor.dataSemanticTokens;
     
     public override void Sync(string text)
     {
       base.Sync(text);
-      
-      imports.Clear();
-      funcDecls.Clear();
-      classDecls.Clear();
-      varDeclars.Clear();
-      
-      foreach(var progblock in ToParser().program().progblock())
-      {
-        var imprts = progblock.imports();
-        var decls = progblock.decls();
-        
-        if(imprts != null)
-        {
-          foreach(var mimport in imprts.mimport())
-          {
-            var import = mimport.NORMALSTRING().GetText();
-            import = import.Substring(1, import.Length-2); // removing quotes
-            imports.Add(import);
-          }
-        }
-        
-        if(decls != null)
-        {
-          foreach(var decl in decls.decl())
-          {
-            var fndecl = decl.funcDecl();
-            if(fndecl?.NAME() != null && !funcDecls.ContainsKey(fndecl.NAME().GetText()))
-              funcDecls.Add(fndecl.NAME().GetText(), fndecl);
-            
-            var classDecl = decl.classDecl();
-            if(classDecl?.NAME() != null && !classDecls.ContainsKey(classDecl.NAME().GetText()))
-              classDecls.Add(classDecl.NAME().GetText(), classDecl);
-            
-            var varDeclareAssign = decl.varDeclareAssign();
-            if(varDeclareAssign != null)
-            {
-              string varDeclareAssignName = varDeclareAssign.varDeclare()?.NAME()?.GetText();
-              if(!string.IsNullOrEmpty(varDeclareAssignName))
-              {
-                if(!varDeclars.ContainsKey(varDeclareAssignName))
-                  varDeclars.Add(varDeclareAssignName, varDeclareAssign);
-              }
-            }
-          }
-        }
-      }
-      
       visitor.VisitDocument(this);
     }
     

@@ -85,8 +85,6 @@ namespace bhlsp
          * They work like events.
          */
         bool isNotification = req != null && req.id.Value == null;
-        isNotification &= req != null && req.method.IndexOf("$/", StringComparison.Ordinal) == -1;
-        
         if(!isNotification) 
         {
           response = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None,
@@ -96,8 +94,15 @@ namespace bhlsp
               });
         
 #if BHLSP_DEBUG
-          BHLSPLogger.WriteLine($":: bhlsp --> {req.method}({req.id.Value})");
-          //BHLSPLogger.WriteLine($":: bhlsp --> {response}");
+          if(req != null)
+          {
+            BHLSPLogger.WriteLine($":: bhlsp --> {req.method}({req.id.Value})");
+            //BHLSPLogger.WriteLine($":: bhlsp --> {response}");
+          }
+          else
+          {
+            //BHLSPLogger.WriteLine($":: bhlsp --> {response}");
+          }
 #endif
         }
       }

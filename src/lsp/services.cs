@@ -568,19 +568,6 @@ namespace bhlsp
                   }
                 }
               }
-              
-              if(string.IsNullOrEmpty(classTypeName) && !string.IsNullOrEmpty(callExpMemberAccessName))
-              {
-                foreach(var doc in BHLSPWorkspace.self.ForEachBhlImports(document))
-                {
-                  if(doc.VarDeclars.ContainsKey(callExpMemberAccessName))
-                  {
-                    var varDeclareAssign = doc.VarDeclars[callExpMemberAccessName];
-                    classTypeName = varDeclareAssign.varDeclare().type().NAME().GetText();
-                    break;
-                  }
-                }
-              }
             }
           }
           

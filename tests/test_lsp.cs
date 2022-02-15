@@ -21,23 +21,16 @@ public class TestLSP : BHL_TestBase
       "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
     );
     
-    //InvalidRequest
-    json = "";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":null,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
-    );
-    
     json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
     AssertEqual(
       rpc.HandleMessage(json),
       "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
     );
     
-    json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\"}";
+    json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
     AssertEqual(
       rpc.HandleMessage(json),
-      "{\"id\":null,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
+      "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
     );
     
     //MethodNotFound
@@ -49,10 +42,10 @@ public class TestLSP : BHL_TestBase
     
     //InvalidParams
     rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
-    json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\"}";
+    json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
     AssertEqual(
       rpc.HandleMessage(json),
-      "{\"id\":null,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
+      "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
     );
     
     json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\", \"id\": 1}";
@@ -345,17 +338,7 @@ public class TestLSP : BHL_TestBase
       "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
       "\",\"range\":{\"start\":{\"line\":14,\"character\":4},\"end\":{\"line\":14,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
     );
-    
-    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
-    json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
-    json += "\"}, \"position\": {\"line\": 11, \"character\": 11}}}";
-    
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-      "\",\"range\":{\"start\":{\"line\":2,\"character\":6},\"end\":{\"line\":2,\"character\":6}}},\"jsonrpc\":\"2.0\"}"
-    );
-    
+
     json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
     json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
     json += "\"}, \"position\": {\"line\": 5, \"character\": 5}}}";
