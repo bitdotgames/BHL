@@ -168,8 +168,12 @@ namespace bhlsp
   
   public class BHLSPGeneralJsonRpcService : BHLSPGeneralJsonRpcServiceTemplate
   {
+    private int? processId;
+    
     public override RpcResult Initialize(InitializeParams args)
     {
+      processId = args.processId;
+      
       if(args.workspaceFolders != null)
       {
         for(int i = 0; i < args.workspaceFolders.Length; i++)
@@ -280,13 +284,17 @@ namespace bhlsp
     {
       BHLSPWorkspace.self.Shutdown();
       
-      Environment.Exit(0);
+      if(processId != null)
+        Environment.Exit(0);
+      
       return RpcResult.Success();
     }
 
     public override RpcResult Exit()
     {
-      Environment.Exit(0);
+      if(processId != null)
+        Environment.Exit(0);
+      
       return RpcResult.Success();
     }
   }

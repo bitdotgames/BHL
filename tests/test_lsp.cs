@@ -349,6 +349,54 @@ public class TestLSP : BHL_TestBase
       "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
     );
   }
+
+  [IsTested()]
+  public void TestSemanticTokens()
+  {
+    string bhl1 = @"
+    class Foo {
+      int BAR
+    }
+
+    Foo foo = {
+      BAR : 0
+    }
+
+    func float test1(float k) 
+    {
+      return 0
+    }
+
+    func test2() 
+    {
+      test1()
+    }
+    ";
+    
+    var rpc = new BHLSPJsonRpc();
+    rpc.AttachRpcService(new BHLSPTextDocumentSemanticTokensJsonRpcService());
+
+    BHLSPWorkspace.self.Shutdown();
+    
+    string dir = GetDirPath();
+    if(Directory.Exists(dir))
+      Directory.Delete(dir, true/*recursive*/);
+    
+    var files = new List<string>();
+    NewTestDocument("bhl1.bhl", bhl1, files);
+    
+    Uri uri1 = GetUri(files[0]);
+    
+    var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/semanticTokens/full\", \"params\":";
+    json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
+    
+    AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"result\":{\"data\":" +
+        "[1,4,6,6,0,0,6,3,0,0,1,6,3,6,0,0,4,3,2,10,3,4,3,5,0,0,4,3,2,0,1,6,3,2,0,0,6,1,3,0,3,4,5,6,0,0,5,5,6," +
+        "0,0,6,5,1,10,0,6,5,6,0,2,6,7,6,0,0,7,1,3,0,3,4,5,6,0,0,5,5,1,10,2,6,5,1,0]},\"jsonrpc\":\"2.0\"}"
+    );
+  }
   
   static Uri GetUri(string path)
   {
