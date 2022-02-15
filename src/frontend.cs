@@ -53,6 +53,9 @@ public class Frontend : bhlBaseVisitor<object>
   ITokenStream tokens;
   ParseTreeProperty<WrappedParseTree> trees = new ParseTreeProperty<WrappedParseTree>();
 
+  Dictionary<FuncSymbolScript, bhlParser.FuncParamsContext> func2fparams = 
+    new Dictionary<FuncSymbolScript, bhlParser.FuncParamsContext>(); 
+
   IScope curr_scope;
   int scope_level;
 
@@ -590,7 +593,7 @@ public class Frontend : bhlBaseVisitor<object>
           //NOTE: for func native symbols we assume default arguments  
           //      are specified manually in bindings
           if(func_symb is FuncSymbolNative || 
-            (func_symb is FuncSymbolScript fss && fss.GetDefaultArgsExprAt(i) != null))
+            (func_symb is FuncSymbolScript fss && GetDefaultArgsExprAt(fss, i) != null))
           {
             int default_arg_idx = i - required_args_num;
             if(!args_info.UseDefaultArg(default_arg_idx, true))
@@ -765,6 +768,17 @@ public class Frontend : bhlBaseVisitor<object>
     PushAST(var_tmp_read);
   }
 
+  IParseTree GetDefaultArgsExprAt(FuncSymbolScript fss, int idx)
+  {
+    var fparams = func2fparams[fss];
+    if(fparams == null)
+      return null; 
+
+    var vdecl = fparams.funcParamDeclare()[idx];
+    var vinit = vdecl.assignExp(); 
+    return vinit;
+  }
+
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
   {
     for(int i=0;i<cargs.callArg().Length;++i)
@@ -877,10 +891,10 @@ public class Frontend : bhlBaseVisitor<object>
       Wrap(ctx), 
       types,
       ast,
-      funcLambda.funcParams(),
       this.func_decl_stack,
       ParseFuncSignature(tp, funcLambda.funcParams())
     );
+    func2fparams[symb] = funcLambda.funcParams();
 
     PushFuncDecl(symb);
 
@@ -1872,9 +1886,9 @@ public class Frontend : bhlBaseVisitor<object>
       func_node, 
       types, 
       ast, 
-      context.funcParams(), 
       ParseFuncSignature(tp, context.funcParams())
     );
+    func2fparams[func_symb] = context.funcParams();
     scope.Define(func_symb);
 
     //let's check if this is a method

@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 #if BHL_FRONT
-using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 #endif
 
@@ -660,30 +658,15 @@ public class FuncSymbolScript : FuncSymbol
   public AST_FuncDecl decl;
 
 #if BHL_FRONT
-  //storing fparams so it can be accessed later for misc things, e.g. default args
-  public bhlParser.FuncParamsContext fparams;
-
   public FuncSymbolScript(
     WrappedParseTree parsed, 
     TypeSystem ts,
     AST_FuncDecl decl, 
-    bhlParser.FuncParamsContext fparams,
     FuncSignature sig
   ) 
     : this(ts, decl, sig)
   {
     this.parsed = parsed;
-    this.fparams = fparams;
-  }
-
-  public IParseTree GetDefaultArgsExprAt(int idx) 
-  { 
-    if(fparams == null)
-      return null; 
-
-    var vdecl = fparams.funcParamDeclare()[idx];
-    var vinit = vdecl.assignExp(); 
-    return vinit;
   }
 #endif
 
@@ -724,11 +707,10 @@ public class LambdaSymbol : FuncSymbolScript
     WrappedParseTree parsed, 
     TypeSystem ts,
     AST_LambdaDecl decl, 
-    bhlParser.FuncParamsContext fparams,
     List<FuncSymbol> fdecl_stack,
     FuncSignature sig
   ) 
-    : base(parsed, ts, decl, fparams, sig)
+    : base(parsed, ts, decl, sig)
   {
     this.fdecl_stack = fdecl_stack;
   }
