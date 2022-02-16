@@ -48,16 +48,64 @@ public abstract class Symbol : IMarshallableGeneric
   }
 }
 
-// A symbol to represent built in types such int, float primitive types
-public class BuiltInTypeSymbol : Symbol, IType 
+public abstract class BuiltInSymbol : Symbol, IType 
 {
-  public BuiltInTypeSymbol(string name) 
+  public BuiltInSymbol(string name) 
     : base(name, default(TypeProxy)/*set below*/) 
   {
     this.type = new TypeProxy(this);
   }
 
   public string GetName() { return name; }
+}
+
+public class IntSymbol : BuiltInSymbol
+{
+  public IntSymbol()
+    : base("int")
+  {}
+}
+
+public class BoolSymbol : BuiltInSymbol
+{
+  public BoolSymbol()
+    : base("bool")
+  {}
+}
+
+public class StringSymbol : BuiltInSymbol
+{
+  public StringSymbol()
+    : base("string")
+  {}
+}
+
+public class FloatSymbol : BuiltInSymbol
+{
+  public FloatSymbol()
+    : base("float")
+  {}
+}
+
+public class VoidSymbol : BuiltInSymbol
+{
+  public VoidSymbol()
+    : base("void")
+  {}
+}
+
+public class AnySymbol : BuiltInSymbol
+{
+  public AnySymbol()
+    : base("any")
+  {}
+}
+
+public class NullSymbol : BuiltInSymbol
+{
+  public NullSymbol()
+    : base("null")
+  {}
 }
 
 public class ClassSymbol : EnclosingSymbol, IScope, IType 

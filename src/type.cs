@@ -162,13 +162,13 @@ public class FuncSignature : IType
 
 public class TypeSystem
 {
-  static public BuiltInTypeSymbol Bool = new BuiltInTypeSymbol("bool");
-  static public BuiltInTypeSymbol String = new BuiltInTypeSymbol("string");
-  static public BuiltInTypeSymbol Int = new BuiltInTypeSymbol("int");
-  static public BuiltInTypeSymbol Float = new BuiltInTypeSymbol("float");
-  static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void");
-  static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any");
-  static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null");
+  static public BoolSymbol Bool = new BoolSymbol();
+  static public StringSymbol String = new StringSymbol();
+  static public IntSymbol Int = new IntSymbol();
+  static public FloatSymbol Float = new FloatSymbol();
+  static public VoidSymbol Void = new VoidSymbol();
+  static public AnySymbol Any = new AnySymbol();
+  static public NullSymbol Null = new NullSymbol();
 
 #if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
