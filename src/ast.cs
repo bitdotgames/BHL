@@ -851,9 +851,9 @@ public class AST_PopValue : IMarshallableGeneric
   }
 }
 
-public static class AST_Factory
+public class AST_Factory : IFactory
 {
-  static public IMarshallableGeneric Create(uint id) 
+  public IMarshallableGeneric CreateById(uint id) 
   {
     switch(id)
     {

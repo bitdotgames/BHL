@@ -24,7 +24,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       s.Position = 0;
       var ms = new ModuleScope(types);
-      Util.Data2Struct(s, factory.Create, ms);
+      Util.Data2Struct(s, factory, ms);
 
       AssertEqual(ms.module_id, 1);
 
@@ -20258,7 +20258,7 @@ public class BHL_TestVM : BHL_TestBase
     Frontend.Source2Bin(mdl, src.ToStream(), ms, ts, mreg);
     ms.Position = 0;
 
-    return Util.Data2Struct<AST_Module>(ms, AST_Factory.Create);
+    return Util.Data2Struct<AST_Module>(ms, new AST_Factory());
   }
 
   void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)

@@ -29,34 +29,36 @@ public class Error : Exception
   }
 }
 
+public interface IFactory
+{
+  IMarshallableGeneric CreateById(uint id);
+}
+
 public struct SyncContext
 {
-  public delegate IMarshallableGeneric Factory(uint id); 
-
-  public Factory CreateById;
-
   public bool is_read;
   public IReader reader;
   public IWriter writer;
-  public uint opts;
+  public IFactory factory;
 
-  public static SyncContext NewForRead(IReader reader, Factory factory)
+  public static SyncContext NewForRead(IReader reader, IFactory factory = null)
   {
     var ctx = new SyncContext() {
       is_read = true,
       reader = reader,
       writer = null,
-      CreateById = factory
+      factory = factory
     };
     return ctx;
   }
 
-  public static SyncContext NewForWrite(IWriter writer)
+  public static SyncContext NewForWrite(IWriter writer, IFactory factory = null)
   {
     var ctx = new SyncContext() {
       is_read = false,
       reader = null,
-      writer = writer
+      writer = writer,
+      factory = factory
     };
     return ctx;
   }
@@ -413,7 +415,7 @@ public static class Marshall
       uint clid = 0;
       ctx.reader.ReadU32(ref clid);
       
-      v = ctx.CreateById(clid);
+      v = ctx.factory.CreateById(clid);
       if(v == null) 
         throw new Error(ErrorCode.BAD_CLASS_ID, "Could not create object with class id: " + clid);
 

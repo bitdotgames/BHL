@@ -461,7 +461,7 @@ public class Build
 
       try
       {
-        return Util.File2Struct<FileImports>(cache_imports_file, AST_Factory.Create);
+        return Util.File2Struct<FileImports>(cache_imports_file, new AST_Factory());
       }
       catch
       {
@@ -558,7 +558,7 @@ public class Build
         try
         {
           //Console.WriteLine("HIT " + cache_file);
-          return Util.File2Struct<AST_Module>(cache_file, AST_Factory.Create);
+          return Util.File2Struct<AST_Module>(cache_file, new AST_Factory());
         }
         catch
         {
@@ -752,7 +752,7 @@ public class Build
 
       try
       {
-        return Util.File2Struct<Symbols>(cache_symb_file, AST_Factory.Create);
+        return Util.File2Struct<Symbols>(cache_symb_file, new AST_Factory());
       }
       catch
       {

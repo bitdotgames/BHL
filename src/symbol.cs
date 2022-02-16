@@ -7,8 +7,6 @@ using marshall;
 
 public abstract class Symbol : IMarshallableGeneric 
 {
-  public TypeSystem types;
-
   public string name;
   public TypeProxy type;
   // All symbols know what scope contains them
@@ -18,11 +16,10 @@ public abstract class Symbol : IMarshallableGeneric
   public WrappedParseTree parsed;
 #endif
 
-  public Symbol(string name, TypeProxy type, TypeSystem types = null) 
+  public Symbol(string name, TypeProxy type) 
   { 
     this.name = name; 
     this.type = type;
-    this.types = types;
   }
 
   public override string ToString() 
@@ -47,7 +44,7 @@ public abstract class Symbol : IMarshallableGeneric
     string type_name = type.name;
     Marshall.Sync(ctx, ref type_name);
     if(ctx.is_read)
-      type = types.Type(type_name);
+      type = ((SymbolFactory)ctx.factory).types.Type(type_name);
   }
 }
 
@@ -460,8 +457,8 @@ public class VariableSymbol : Symbol, IScopeIndexed
   {}
 
   //marshall version
-  public VariableSymbol(TypeSystem types)
-    : base("", new TypeProxy(TypeSystem.Void), types)
+  public VariableSymbol()
+    : base("", new TypeProxy(TypeSystem.Void))
   {}
 
   public override uint getClassId()
@@ -1126,21 +1123,21 @@ public class SymbolsDictionary : IMarshallable
   }
 }
 
-public class SymbolFactory
+public class SymbolFactory : IFactory
 {
-  TypeSystem types;
+  public TypeSystem types;
 
   public SymbolFactory(TypeSystem types)
   {
     this.types = types;
   }
 
-  public IMarshallableGeneric Create(uint id) 
+  public IMarshallableGeneric CreateById(uint id) 
   {
     switch(id)
     {
       case VariableSymbol.CLASS_ID:
-        return new VariableSymbol(types); 
+        return new VariableSymbol(); 
       default:
         return null;
     }

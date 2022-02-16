@@ -178,37 +178,37 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static public T File2Struct<T>(string file, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
+  static public T File2Struct<T>(string file, IFactory f) where T : IMarshallable, new()
   {
     using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
     {
-      return Data2Struct<T>(rfs, cb);
+      return Data2Struct<T>(rfs, f);
     }
   }
 
-  static public void Data2Struct<T>(Stream s, marshall.SyncContext.Factory cb, T obj) where T : IMarshallable
+  static public void Data2Struct<T>(Stream s, IFactory f, T obj) where T : IMarshallable
   {
     var reader = new MsgPackDataReader(s);
-    marshall.Marshall.Sync(marshall.SyncContext.NewForRead(reader, cb), ref obj);
+    Marshall.Sync(SyncContext.NewForRead(reader, f), ref obj);
   }
 
-  static public T Data2Struct<T>(Stream s, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
+  static public T Data2Struct<T>(Stream s, IFactory f) where T : IMarshallable, new()
   {
     var reader = new MsgPackDataReader(s);
     var obj = new T();
-    marshall.Marshall.Sync(marshall.SyncContext.NewForRead(reader, cb), ref obj);
+    Marshall.Sync(SyncContext.NewForRead(reader, f), ref obj);
     return obj;
   }
 
-  static public T Data2Struct<T>(byte[] bytes, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
+  static public T Data2Struct<T>(byte[] bytes, IFactory f) where T : IMarshallable, new()
   {
-    return Data2Struct<T>(new MemoryStream(bytes), cb);
+    return Data2Struct<T>(new MemoryStream(bytes), f);
   }
 
   static public void Struct2Data<T>(T meta, Stream dst) where T : IMarshallable
   {
     var writer = new MsgPackDataWriter(dst);
-    marshall.Marshall.Sync(marshall.SyncContext.NewForWrite(writer), ref meta);
+    Marshall.Sync(SyncContext.NewForWrite(writer), ref meta);
   }
 
   static public void Struct2File<T>(T meta, string file) where T : IMarshallable
