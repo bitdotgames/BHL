@@ -33,7 +33,7 @@ public static class Hash
 
 public static class Extensions
 {
-  public static void Append(this AST dst, AST src)
+  public static void Append(this AST_Nested dst, AST_Nested src)
   {
     for(int i=0;i<src.children.Count;++i)
     {
@@ -314,7 +314,7 @@ static public class Util
     }
   }
 
-  public static void ASTDump(AST ast)
+  public static void ASTDump(AST_Nested ast)
   {
     new AST_Dumper().Visit(ast);
     Console.WriteLine("\n=============");
@@ -403,37 +403,37 @@ public struct FuncArgsInfo
 
 static public class AST_Util
 {
-  static public List<AST_Base> GetChildren(this AST_Base self)
+  static public List<IMetaStruct> GetChildren(this IMetaStruct self)
   {
-    var ast = self as AST;
+    var ast = self as AST_Nested;
     return ast == null ? null : ast.children;
   }
 
-  static public void AddChild(this AST_Base self, AST_Base c)
+  static public void AddChild(this IMetaStruct self, IMetaStruct c)
   {
     if(c == null)
       return;
-    var ast = self as AST;
+    var ast = self as AST_Nested;
     ast.children.Add(c);
   }
 
-  static public void AddChild(this AST self, AST_Base c)
+  static public void AddChild(this AST_Nested self, IMetaStruct c)
   {
     if(c == null)
       return;
     self.children.Add(c);
   }
 
-  static public void AddChildren(this AST self, AST_Base b)
+  static public void AddChildren(this AST_Nested self, IMetaStruct b)
   {
-    if(b is AST c)
+    if(b is AST_Nested c)
     {
       for(int i=0;i<c.children.Count;++i)
         self.AddChild(c.children[i]);
     }
   }
 
-  static public AST NewInterimChild(this AST self)
+  static public AST_Nested NewInterimChild(this AST_Nested self)
   {
     var c = new AST_Interim();
     self.AddChild(c);
@@ -478,14 +478,14 @@ static public class AST_Util
     n.NewInterimChild();
   }
 
-  static public AST fparams(this AST_FuncDecl n)
+  static public AST_Nested fparams(this AST_FuncDecl n)
   {
-    return n.GetChildren()[0] as AST;
+    return n.GetChildren()[0] as AST_Nested;
   }
 
-  static public AST block(this AST_FuncDecl n)
+  static public AST_Nested block(this AST_FuncDecl n)
   {
-    return n.GetChildren()[1] as AST;
+    return n.GetChildren()[1] as AST_Nested;
   }
 
   static public int GetDefaultArgsNum(this AST_FuncDecl n)

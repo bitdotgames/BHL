@@ -6,7 +6,7 @@ namespace bhl {
 
 public class ModuleCompiler : AST_Visitor
 {
-  AST ast;
+  AST_Nested ast;
   CompiledModule compiled;
 
   ModulePath module_path;
@@ -167,7 +167,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcodes();
   }
 
-  public ModuleCompiler(TypeSystem types = null, AST ast = null, ModulePath module_path = null)
+  public ModuleCompiler(TypeSystem types = null, AST_Nested ast = null, ModulePath module_path = null)
   {
     if(types == null)
       types = new TypeSystem();

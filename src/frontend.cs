@@ -98,7 +98,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
-  Stack<AST> ast_stack = new Stack<AST>();
+  Stack<AST_Nested> ast_stack = new Stack<AST_Nested>();
 
   public static CommonTokenStream Source2Tokens(string file, Stream s)
   {
@@ -179,7 +179,7 @@ public class Frontend : bhlBaseVisitor<object>
     throw new SemanticError(module, place, tokens, msg);
   }
 
-  void PushAST(AST ast)
+  void PushAST(AST_Nested ast)
   {
     ast_stack.Push(ast);
   }
@@ -211,7 +211,7 @@ public class Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(tmp);
   }
 
-  AST PeekAST()
+  AST_Nested PeekAST()
   {
     return ast_stack.Peek();
   }
@@ -727,7 +727,7 @@ public class Frontend : bhlBaseVisitor<object>
     call.cargs_bits = args_info.bits;
   }
 
-  static bool HasFuncCalls(AST ast)
+  static bool HasFuncCalls(AST_Nested ast)
   {
     if(ast is AST_Call call && 
         (call.type == EnumCall.FUNC || 
@@ -740,7 +740,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     for(int i=0;i<ast.children.Count;++i)
     {
-      if(ast.children[i] is AST sub)
+      if(ast.children[i] is AST_Nested sub)
       {
         if(HasFuncCalls(sub))
           return true;
@@ -1272,7 +1272,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
     var op_type = GetBinaryOpType(op);
-    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
+    AST_Nested bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
 
     PushAST(bin_op_ast);
     bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
@@ -1382,7 +1382,7 @@ public class Frontend : bhlBaseVisitor<object>
   void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
-    AST ast = AST_Util.New_BinaryOpExp(op_type);
+    AST_Nested ast = AST_Util.New_BinaryOpExp(op_type);
     PushAST(ast);
     Visit(lhs);
     Visit(rhs);
@@ -2215,7 +2215,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
+  AST_Nested CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
   {
     var tp = ParseType(type_ctx);
 
@@ -2578,7 +2578,7 @@ public class Frontend : bhlBaseVisitor<object>
     var vd = vod.varDeclare();
     TypeProxy iter_type;
     string iter_str_name = "";
-    AST iter_ast_decl = null;
+    AST_Nested iter_ast_decl = null;
     VariableSymbol iter_symb = null;
     if(vod.NAME() != null)
     {
@@ -2664,7 +2664,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
+  AST_Nested CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
   {
     ++scope_level;
 

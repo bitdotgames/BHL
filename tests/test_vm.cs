@@ -20179,7 +20179,7 @@ public class BHL_TestVM : BHL_TestBase
     return c;
   }
 
-  AST Src2AST(string src, bhl.Module mdl, ModuleRegistry mreg, TypeSystem ts = null)
+  AST_Nested Src2AST(string src, bhl.Module mdl, ModuleRegistry mreg, TypeSystem ts = null)
   {
     if(ts == null)
       ts = new TypeSystem();

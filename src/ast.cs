@@ -31,7 +31,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_JsonArrAddItem node);
   public abstract void DoVisit(AST_JsonPair node);
 
-  public void Visit(AST_Base node)
+  public void Visit(IMetaStruct node)
   {
     if(node == null)
       throw new Exception("NULL node");
@@ -91,7 +91,7 @@ public abstract class AST_Visitor
       throw new Exception("Not known type: " + node.GetType().Name);
   }
 
-  public void VisitChildren(AST node)
+  public void VisitChildren(AST_Nested node)
   {
     if(node == null)
       return;
@@ -142,67 +142,37 @@ public class LazyAST
   }
 }
 
-public class AST_Base : IMetaStruct
+public class AST_Nested : IMetaStruct
 {
+  public List<IMetaStruct> children = new List<IMetaStruct>();
+
   public virtual uint CLASS_ID() 
   {
-    return 246837896; 
+    return 59352479; 
   }
 
-  public AST_Base()
+  public AST_Nested()
   {
     reset();
   }
 
   public virtual void reset() 
   {
+    if(children == null) children = new List<IMetaStruct>(); children.Clear();
   }
 
   public virtual void syncFields(MetaSyncContext ctx) 
   {
-  }
-
-  public virtual int getFieldsCount() 
-  {
-    return 0; 
-  }
-}
-
-public class AST : AST_Base 
-{
-  public List<AST_Base> children = new List<AST_Base>();
-
-  public override uint CLASS_ID() 
-  {
-    return 59352479; 
-  }
-
-  public AST()
-  {
-    reset();
-  }
-
-  public override void reset() 
-  {
-    base.reset();
-
-    if(children == null) children = new List<AST_Base>(); children.Clear();
-  }
-
-  public override void syncFields(MetaSyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
     MetaUtils.syncVirtual(ctx, children);
   }
 
-  public override int getFieldsCount() 
+  public virtual int getFieldsCount() 
   {
     return 1; 
   }
 }
 
-public class AST_Interim  : AST 
+public class AST_Interim : AST_Nested 
 {
   public override uint CLASS_ID() 
   {
@@ -230,12 +200,12 @@ public class AST_Interim  : AST
   }
 }
 
-public class AST_Import  : AST_Base 
+public class AST_Import  : IMetaStruct
 {
   public List<uint> module_ids = new List<uint>();
   public List<string> module_names = new List<string>();
 
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 117209009; 
   }
@@ -245,29 +215,25 @@ public class AST_Import  : AST_Base
     reset();
   }
 
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
-
     if(module_ids == null) module_ids = new List<uint>(); module_ids.Clear();
     if(module_names == null) module_names = new List<string>(); module_names.Clear();
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
-
     MetaUtils.sync(ctx, module_ids);
     MetaUtils.sync(ctx, module_names);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 2; 
   }
 }
 
-public class AST_Module  : AST 
+public class AST_Module : AST_Nested 
 {
   public uint id;
   public string name = "";
@@ -309,7 +275,7 @@ public enum EnumUnaryOp
   NOT = 2,
 }
 
-public class AST_UnaryOpExp  : AST 
+public class AST_UnaryOpExp : AST_Nested 
 {
   public EnumUnaryOp type = new EnumUnaryOp();
 
@@ -363,7 +329,7 @@ public enum EnumBinaryOp
   BIT_AND = 15,
 }
 
-public class AST_BinaryOpExp  : AST 
+public class AST_BinaryOpExp  : AST_Nested 
 {
   public EnumBinaryOp type = new EnumBinaryOp();
 
@@ -398,11 +364,11 @@ public class AST_BinaryOpExp  : AST
   }
 }
 
-public class AST_Inc  : AST_Base 
+public class AST_Inc : IMetaStruct
 {
   public uint symb_idx;
 
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 192507281; 
   }
@@ -412,29 +378,27 @@ public class AST_Inc  : AST_Base
     reset();
   }
 
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
     symb_idx = 0;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
     MetaUtils.sync(ctx, ref symb_idx);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 1; 
   }
 }
 
-public class AST_Dec  : AST_Base 
+public class AST_Dec : IMetaStruct
 {
   public uint symb_idx;
 
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 5580553; 
   }
@@ -444,25 +408,23 @@ public class AST_Dec  : AST_Base
     reset();
   }
 
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
     symb_idx = 0;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
     MetaUtils.sync(ctx, ref symb_idx);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 1; 
   }
 }
 
-public class AST_New  : AST 
+public class AST_New : AST_Nested 
 {
   public string type = "";
 
@@ -494,7 +456,7 @@ public class AST_New  : AST
   }
 }
 
-public class AST_FuncDecl  : AST 
+public class AST_FuncDecl : AST_Nested 
 {
   public string type = "";
   public string name = "";
@@ -546,7 +508,7 @@ public class AST_FuncDecl  : AST
   }
 }
 
-public class AST_ClassDecl  : AST 
+public class AST_ClassDecl : AST_Nested 
 {
   public string name = "";
   public string parent = "";
@@ -583,12 +545,12 @@ public class AST_ClassDecl  : AST
   }
 }
 
-public class AST_EnumItem  : AST_Base 
+public class AST_EnumItem : IMetaStruct
 {
   public string name;
   public int value;
 
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 42971075; 
   }
@@ -598,28 +560,25 @@ public class AST_EnumItem  : AST_Base
     reset();
   }
 
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
     name = "";
     value = 0;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
-
     MetaUtils.sync(ctx, ref name);
     MetaUtils.sync(ctx, ref value);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 2; 
   }
 }
 
-public class AST_EnumDecl  : AST 
+public class AST_EnumDecl : AST_Nested 
 {
   public string name = "";
 
@@ -723,7 +682,7 @@ public class AST_LambdaDecl : AST_FuncDecl
   }
 }
 
-public class AST_TypeCast : AST 
+public class AST_TypeCast : AST_Nested 
 {
   public string type = "";
 
@@ -776,7 +735,7 @@ public enum EnumCall
   GVARW           = 51,
 }
 
-public class AST_Call  : AST 
+public class AST_Call  : AST_Nested 
 {
   public EnumCall type = new EnumCall();
   public string name = "";
@@ -831,7 +790,7 @@ public class AST_Call  : AST
   }
 }
 
-public class AST_Return  : AST 
+public class AST_Return  : AST_Nested 
 {
   public int num;
 
@@ -849,6 +808,7 @@ public class AST_Return  : AST
   {
     base.reset();
 
+    num = 0;
   }
 
   public override void syncFields(MetaSyncContext ctx) 
@@ -863,9 +823,9 @@ public class AST_Return  : AST
   }
 }
 
-public class AST_Break  : AST_Base 
+public class AST_Break : IMetaStruct
 {
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 93587594; 
   }
@@ -875,27 +835,25 @@ public class AST_Break  : AST_Base
     reset();
   }
 
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 0; 
   }
 }
 
-public class AST_Continue  : AST_Base 
+public class AST_Continue : IMetaStruct
 {
   public bool jump_marker;
 
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 83587594; 
   }
@@ -905,19 +863,17 @@ public class AST_Continue  : AST_Base
     reset();
   }
 
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
+    jump_marker = false;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
-
     MetaUtils.sync(ctx, ref jump_marker);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 1; 
   }
@@ -931,13 +887,13 @@ public enum EnumLiteral
   NIL = 4,
 }
 
-public class AST_Literal  : AST_Base 
+public class AST_Literal : IMetaStruct
 {
   public EnumLiteral type = new EnumLiteral();
   public double nval;
   public string sval = "";
 
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 246902930; 
   }
@@ -947,36 +903,30 @@ public class AST_Literal  : AST_Base
     reset();
   }
 
-
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
-
     type = new EnumLiteral(); 
     nval = 0;
     sval = "";
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
-
     int __tmp_type = (int)type;
     MetaUtils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumLiteral)__tmp_type;
-
 
     MetaUtils.sync(ctx, ref nval);
     MetaUtils.sync(ctx, ref sval);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 3; 
   }
 }
 
-public class AST_VarDecl  : AST 
+public class AST_VarDecl : AST_Nested 
 {
   public string name = "";
   public string type = "";
@@ -1034,7 +984,7 @@ public enum EnumBlock
   FOR = 9,
 }
 
-public class AST_Block  : AST 
+public class AST_Block : AST_Nested 
 {
   public EnumBlock type = new EnumBlock();
 
@@ -1069,7 +1019,7 @@ public class AST_Block  : AST
   }
 }
 
-public class AST_JsonObj  : AST 
+public class AST_JsonObj : AST_Nested 
 {
   public string type = "";
   public int line_num;
@@ -1106,7 +1056,7 @@ public class AST_JsonObj  : AST
   }
 }
 
-public class AST_JsonArr  : AST 
+public class AST_JsonArr : AST_Nested 
 {
   public string type;
   public int line_num;
@@ -1143,9 +1093,9 @@ public class AST_JsonArr  : AST
   }
 }
 
-public class AST_JsonArrAddItem  : AST_Base 
+public class AST_JsonArrAddItem : IMetaStruct
 {
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 58382586; 
   }
@@ -1155,23 +1105,21 @@ public class AST_JsonArrAddItem  : AST_Base
     reset();
   }
 
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 0; 
   }
 }
 
-public class AST_JsonPair  : AST 
+public class AST_JsonPair : AST_Nested 
 {
   public string name = "";
   public uint symb_idx;
@@ -1211,9 +1159,9 @@ public class AST_JsonPair  : AST
   }
 }
 
-public class AST_PopValue  : AST_Base 
+public class AST_PopValue : IMetaStruct
 {
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 87387238; 
   }
@@ -1223,18 +1171,15 @@ public class AST_PopValue  : AST_Base
     reset();
   }
 
-
-  public override void reset() 
+  public void reset() 
   {
-    base.reset();
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 0; 
   }
@@ -1246,8 +1191,7 @@ public static class AST_Factory
   {
     switch(crc)
     {
-      case 246837896: { return new AST_Base(); };
-      case 59352479: { return new AST(); };
+      case 59352479: { return new AST_Nested(); };
       case 240440595: { return new AST_Interim(); };
       case 117209009: { return new AST_Import(); };
       case 127311748: { return new AST_Module(); };

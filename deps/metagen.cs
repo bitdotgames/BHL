@@ -463,12 +463,12 @@ public static class MetaUtils
     }
   }
 
-  static public void syncVirtual<T>(MetaSyncContext ctx, List<T> v) where T : IMetaStruct, new()
+  static public void syncVirtual<T>(MetaSyncContext ctx, List<T> v) where T : IMetaStruct
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
-      var tmp = (IMetaStruct)(ctx.is_read ? new T() : v[i]);
+      var tmp = (IMetaStruct)(ctx.is_read ? (IMetaStruct)null : v[i]);
       syncVirtual(ctx, ref tmp);
       if(ctx.is_read)
         v.Add((T)tmp);
