@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+using marshall;
+
 public interface IType 
 {
   string GetName();
@@ -10,7 +12,7 @@ public interface IType
 
 // For lazy evaluation of types and forward declarations
 // TypeProxy is used instead of IType
-public struct TypeProxy
+public struct TypeProxy : IMarshallable
 {
   TypeSystem ts;
   IType type;
@@ -46,6 +48,21 @@ public struct TypeProxy
 
     type = (bhl.IType)ts.Resolve(name);
     return type;
+  }
+
+  public int GetFieldsNum()
+  {
+    return 1;
+  }
+
+  public void Sync(SyncContext ctx)
+  {
+    var mtype = Get() as IMarshallableGeneric;
+    if(mtype == null)
+      throw new Exception("Type is not marshallable");
+    Marshall.SyncGeneric(ctx, ref mtype);
+    if(ctx.is_read)
+      type = (IType)mtype;
   }
 }
 

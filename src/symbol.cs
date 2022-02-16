@@ -40,11 +40,7 @@ public abstract class Symbol : IMarshallableGeneric
   public virtual void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
-
-    string type_name = type.name;
-    Marshall.Sync(ctx, ref type_name);
-    if(ctx.is_read)
-      type = ((SymbolFactory)ctx.factory).types.Type(type_name);
+    Marshall.Sync(ctx, ref type);
   }
 }
 
@@ -57,55 +53,115 @@ public abstract class BuiltInSymbol : Symbol, IType
   }
 
   public string GetName() { return name; }
+
+  //contains no data
+  public override int GetFieldsNum()
+  {
+    return 0;
+  }
+
+  //contains no data
+  public override void Sync(SyncContext ctx)
+  {
+  }
 }
 
 public class IntSymbol : BuiltInSymbol
 {
+  public const int CLASS_ID = 1;
+
   public IntSymbol()
     : base("int")
   {}
+
+  public override uint getClassId()
+  {
+    return CLASS_ID;
+  }
 }
 
 public class BoolSymbol : BuiltInSymbol
 {
+  public const int CLASS_ID = 2;
+
   public BoolSymbol()
     : base("bool")
   {}
+
+  public override uint getClassId()
+  {
+    return CLASS_ID;
+  }
 }
 
 public class StringSymbol : BuiltInSymbol
 {
+  public const int CLASS_ID = 3;
+
   public StringSymbol()
     : base("string")
   {}
+
+  public override uint getClassId()
+  {
+    return CLASS_ID;
+  }
 }
 
 public class FloatSymbol : BuiltInSymbol
 {
+  public const int CLASS_ID = 4;
+
   public FloatSymbol()
     : base("float")
   {}
+
+  public override uint getClassId()
+  {
+    return CLASS_ID;
+  }
 }
 
 public class VoidSymbol : BuiltInSymbol
 {
+  public const int CLASS_ID = 5;
+
   public VoidSymbol()
     : base("void")
   {}
+
+  public override uint getClassId()
+  {
+    return CLASS_ID;
+  }
 }
 
 public class AnySymbol : BuiltInSymbol
 {
+  public const int CLASS_ID = 6;
+
   public AnySymbol()
     : base("any")
   {}
+
+  public override uint getClassId()
+  {
+    return CLASS_ID;
+  }
 }
 
 public class NullSymbol : BuiltInSymbol
 {
+  public const int CLASS_ID = 7;
+
   public NullSymbol()
     : base("null")
   {}
+
+  public override uint getClassId()
+  {
+    return CLASS_ID;
+  }
 }
 
 public class ClassSymbol : EnclosingSymbol, IScope, IType 
@@ -1184,6 +1240,10 @@ public class SymbolFactory : IFactory
   {
     switch(id)
     {
+      case IntSymbol.CLASS_ID:
+        return TypeSystem.Int;
+      case StringSymbol.CLASS_ID:
+        return TypeSystem.String;
       case VariableSymbol.CLASS_ID:
         return new VariableSymbol(); 
       default:
