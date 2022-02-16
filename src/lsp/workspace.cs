@@ -164,7 +164,11 @@ namespace bhlsp
         AddSemanticToken(classDeclName, SemanticTokenTypes.@class);
         AddSemanticToken(ctx.classEx()?.NAME(), SemanticTokenTypes.@class);
 
+#if BHL_1_0 || BHL_2_0
         foreach(var classMember in ctx.classBlock().classMembers().classMember())
+#else
+        foreach(var classMember in ctx.classBlock().classMember())
+#endif
         {
           var classMemberVarDeclare = classMember.varDeclare();
           if(classMemberVarDeclare != null)
@@ -175,7 +179,7 @@ namespace bhlsp
               SemanticTokenModifiers.definition, SemanticTokenModifiers.@static);
           }
         }
-        
+
         return null;
       }
       
@@ -323,28 +327,6 @@ namespace bhlsp
         return null;
       }
       
-      public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
-      {
-        var ternaryIf = ctx.ternaryIfExp();
-        if(ternaryIf != null)
-        {
-          var ternaryIfExp = ctx.exp();
-          var ternaryIfExpLeft = ternaryIf.exp(0);
-          var ternaryIfExpRight = ternaryIf.exp(1);
-
-          if(ternaryIfExp != null)
-            Visit(ternaryIfExp);
-          
-          if(ternaryIfExpLeft != null)
-            Visit(ternaryIfExpLeft);
-          
-          if(ternaryIfExpRight != null)
-            Visit(ternaryIfExpRight);
-        }
-        
-        return null;
-      }
-      
       public override object VisitForeach(bhlParser.ForeachContext ctx)
       {
         var foreachExp = ctx.foreachExp();
@@ -371,12 +353,6 @@ namespace bhlsp
         if(foreachBlock != null)
           Visit(foreachBlock);
         
-        return null;
-      }
-      
-      public override object VisitContinue(bhlParser.ContinueContext ctx)
-      {
-        AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, SemanticTokenTypes.keyword);
         return null;
       }
       
@@ -508,9 +484,11 @@ namespace bhlsp
               }
               else
               {
+#if BHL_1_0 || BHL_2_0
                 var callPostOperators = forStmt.callPostOperators();
                 if(callPostOperators != null)
                   CommonCallPostOperators(callPostOperators);
+#endif
               }
             }
           }
@@ -547,9 +525,11 @@ namespace bhlsp
               }
               else
               {
+#if BHL_1_0 || BHL_2_0
                 var callPostOperators = forPostIterStmt.callPostOperators();
                 if(callPostOperators != null)
                   CommonCallPostOperators(callPostOperators);
+#endif
               }
             }
           }
@@ -577,28 +557,6 @@ namespace bhlsp
           Visit(operatorAddSubExpRight);
         
         return null;
-      }
-      
-      public override object VisitPostOperatorCall(bhlParser.PostOperatorCallContext ctx)
-      {
-        CommonCallPostOperators(ctx.callPostOperators());
-        return null;
-      }
-
-      void CommonCallPostOperators(bhlParser.CallPostOperatorsContext ctx)
-      {
-        var callPostOperatorName = ctx.NAME();
-        if(callPostOperatorName != null)
-          AddSemanticToken(callPostOperatorName, SemanticTokenTypes.variable);
-        
-        var decrementOperator = ctx.decrementOperator();
-        var incrementOperator = ctx.incrementOperator();
-        
-        if(decrementOperator != null)
-          AddSemanticToken(decrementOperator.Start.StartIndex, decrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
-        
-        if(incrementOperator != null)
-          AddSemanticToken(incrementOperator.Start.StartIndex, incrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
       }
       
       public override object VisitWhile(bhlParser.WhileContext ctx)
@@ -974,9 +932,64 @@ namespace bhlsp
         }
         return null;
       }
+
+#if BHL_1_0 || BHL_2_0
+      public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
+      {
+        var ternaryIf = ctx.ternaryIfExp();
+        if(ternaryIf != null)
+        {
+          var ternaryIfExp = ctx.exp();
+          var ternaryIfExpLeft = ternaryIf.exp(0);
+          var ternaryIfExpRight = ternaryIf.exp(1);
+
+          if(ternaryIfExp != null)
+            Visit(ternaryIfExp);
+          
+          if(ternaryIfExpLeft != null)
+            Visit(ternaryIfExpLeft);
+          
+          if(ternaryIfExpRight != null)
+            Visit(ternaryIfExpRight);
+        }
+        
+        return null;
+      }
+      
+      public override object VisitPostOperatorCall(bhlParser.PostOperatorCallContext ctx)
+      {
+        CommonCallPostOperators(ctx.callPostOperators());
+        return null;
+      }
+
+      void CommonCallPostOperators(bhlParser.CallPostOperatorsContext ctx)
+      {
+        var callPostOperatorName = ctx.NAME();
+        if(callPostOperatorName != null)
+          AddSemanticToken(callPostOperatorName, SemanticTokenTypes.variable);
+        
+        var decrementOperator = ctx.decrementOperator();
+        var incrementOperator = ctx.incrementOperator();
+        
+        if(decrementOperator != null)
+          AddSemanticToken(decrementOperator.Start.StartIndex, decrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
+        
+        if(incrementOperator != null)
+          AddSemanticToken(incrementOperator.Start.StartIndex, incrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
+      }
+#endif
+      
+#if BHL_2_0
+      public override object VisitContinue(bhlParser.ContinueContext ctx)
+      {
+        AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, SemanticTokenTypes.keyword);
+        return null;
+      }
+#endif
       
       bool IsTypeKeyword(string typeName)
       {
+#if BHL_2_0
         return TypeSystem.Int.name    == typeName ||
                TypeSystem.Float.name  == typeName ||
                TypeSystem.String.name == typeName ||
@@ -985,6 +998,16 @@ namespace bhlsp
                TypeSystem.Any.name    == typeName ||
                TypeSystem.Null.name   == typeName ||
                TypeSystem.Void.name   == typeName;
+#else
+        return "int"    == typeName ||
+               "float"  == typeName ||
+               "string" == typeName ||
+               "bool"   == typeName ||
+               "enum"   == typeName ||
+               "any"    == typeName ||
+               "null"   == typeName ||
+               "void"   == typeName;
+#endif
       }
 
       private void AddSemanticTokenTypeName(ITerminalNode node)
