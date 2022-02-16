@@ -8042,27 +8042,6 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestClearStringArray()
-  {
-    string bhl = @"
-      
-    func string test() 
-    {
-      string[] arr = new string[]
-      arr.Add(""bar"")
-      arr.Clear()
-      arr.Add(""foo"")
-      return arr[0]
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().str;
-    AssertEqual(res, "foo");
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
   public void TestTmpArrayAtIdx()
   {
     string bhl = @"
@@ -8293,6 +8272,28 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(res, 2);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestClearArray()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""bar"")
+      arr.Clear()
+      arr.Add(""foo"")
+      return arr[0]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().str;
+    AssertEqual(res, "foo");
+    CommonChecks(vm);
+  }
+
 
   [IsTested()]
   public void TestArrayPool()
@@ -12351,6 +12352,29 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassArrayClear()
+  {
+    string bhl = @"
+
+    class Foo { 
+      int[] a
+    }
+      
+    func int test() 
+    {
+      Foo f = {a : [10, 20]}
+      f.a.Clear()
+      f.a.Add(30)
+      return f.a[0]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
