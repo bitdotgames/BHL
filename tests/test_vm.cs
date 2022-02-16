@@ -33,10 +33,12 @@ public class BHL_TestVM : BHL_TestBase
       var foo = ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
       AssertEqual(foo.type.Get().GetName(), TypeSystem.Int.name);
+      AssertTrue(foo.scope == ms);
 
       var bar = ms.Resolve("bar");
       AssertEqual(bar.name, "bar");
       AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
+      AssertTrue(bar.scope == ms);
     }
   }
 

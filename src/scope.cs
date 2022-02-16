@@ -162,6 +162,11 @@ public class ModuleScope : Scope, IMarshallable
   {
     Marshall.Sync(ctx, ref module_id);
     Marshall.Sync(ctx, ref members);
+    if(ctx.is_read)
+    {
+      for(int i=0;i<members.Count;++i)
+        members[i].scope = this;
+    }
   }
 }
 
