@@ -5,7 +5,7 @@ namespace bhl {
 
 using marshall;
 
-public abstract class Symbol : IMarshallable 
+public abstract class Symbol : IMarshallableGeneric 
 {
   public string name;
   public TypeProxy type;
@@ -1012,7 +1012,7 @@ public class EnumItemSymbol : Symbol, IType
   public string GetName() { return owner.name; }
 }
 
-public class SymbolsDictionary : IMarshallable
+public class SymbolsDictionary : IMarshallableGeneric
 {
   public const uint CLASS_ID = 3515876236;
 
@@ -1130,7 +1130,7 @@ public class SymbolsDictionary : IMarshallable
 
 public static class SymbolFactory
 {
-  static public IMarshallable Create(uint id) 
+  static public IMarshallableGeneric Create(uint id) 
   {
     switch(id)
     {

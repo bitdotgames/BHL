@@ -31,7 +31,7 @@ public class Error : Exception
 
 public struct SyncContext
 {
-  public delegate IMarshallable Factory(uint id); 
+  public delegate IMarshallableGeneric Factory(uint id); 
 
   public Factory CreateById;
 
@@ -64,9 +64,13 @@ public struct SyncContext
 
 public interface IMarshallable 
 {
-  uint getClassId();
   int GetFieldsNum();
   void Sync(SyncContext ctx);
+}
+
+public interface IMarshallableGeneric : IMarshallable 
+{
+  uint getClassId();
 }
 
 public interface IReader 
@@ -400,7 +404,7 @@ public static class Marshall
     EndArray(ctx, v);
   }
 
-  static public void SyncGeneric(SyncContext ctx, ref IMarshallable v)
+  static public void SyncGeneric(SyncContext ctx, ref IMarshallableGeneric v)
   {
     if(ctx.is_read)
     {
@@ -425,12 +429,12 @@ public static class Marshall
     }
   }
 
-  static public void SyncGeneric<T>(SyncContext ctx, List<T> v) where T : IMarshallable
+  static public void SyncGeneric<T>(SyncContext ctx, List<T> v) where T : IMarshallableGeneric
   {
     int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
-      var tmp = (IMarshallable)(ctx.is_read ? (IMarshallable)null : v[i]);
+      var tmp = (IMarshallableGeneric)(ctx.is_read ? (IMarshallable)null : v[i]);
       SyncGeneric(ctx, ref tmp);
       if(ctx.is_read)
         v.Add((T)tmp);

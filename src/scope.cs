@@ -73,8 +73,6 @@ public class GlobalScope : Scope
 
 public class ModuleScope : Scope, IMarshallable
 {
-  public const uint CLASS_ID = 2699804695;
-
   public uint module_id;
 
   List<ModuleScope> imports = new List<ModuleScope>();
@@ -153,11 +151,6 @@ public class ModuleScope : Scope, IMarshallable
     }
 
     base.Define(sym);
-  }
-
-  public uint getClassId() 
-  {
-    return CLASS_ID;
   }
 
   public int GetFieldsNum()
