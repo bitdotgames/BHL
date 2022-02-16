@@ -27,4 +27,4 @@ jobs:
       run: ./bhl test
       
     - name: Run example
-      run: ./example/run.sh
+      run: cd example && ./run.sh
