@@ -981,7 +981,6 @@ namespace bhlsp
                TypeSystem.Float.name  == typeName ||
                TypeSystem.String.name == typeName ||
                TypeSystem.Bool.name   == typeName ||
-               TypeSystem.Enum.name   == typeName ||
                TypeSystem.Any.name    == typeName ||
                TypeSystem.Null.name   == typeName ||
                TypeSystem.Void.name   == typeName;

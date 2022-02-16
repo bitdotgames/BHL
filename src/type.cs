@@ -167,7 +167,6 @@ public class TypeSystem
   static public BuiltInTypeSymbol Int = new BuiltInTypeSymbol("int");
   static public BuiltInTypeSymbol Float = new BuiltInTypeSymbol("float");
   static public BuiltInTypeSymbol Void = new BuiltInTypeSymbol("void");
-  static public BuiltInTypeSymbol Enum = new BuiltInTypeSymbol("enum");
   static public BuiltInTypeSymbol Any = new BuiltInTypeSymbol("any");
   static public BuiltInTypeSymbol Null = new BuiltInTypeSymbol("null");
 
