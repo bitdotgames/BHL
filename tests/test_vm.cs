@@ -8042,6 +8042,27 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestClearStringArray()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      string[] arr = new string[]
+      arr.Add(""bar"")
+      arr.Clear()
+      arr.Add(""foo"")
+      return arr[0]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().str;
+    AssertEqual(res, "foo");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestTmpArrayAtIdx()
   {
     string bhl = @"

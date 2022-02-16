@@ -319,7 +319,6 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = AsList(arr);
     lst.Clear();
