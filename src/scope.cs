@@ -23,11 +23,10 @@ public class Scope : IScope
 {
   protected IScope fallback;
 
-  protected SymbolsDictionary members;
+  protected SymbolsDictionary members = new SymbolsDictionary();
 
-  public Scope(TypeSystem types, IScope fallback = null) 
+  public Scope(IScope fallback = null) 
   { 
-    members = new SymbolsDictionary(types);
     this.fallback = fallback;  
   }
 
@@ -79,14 +78,14 @@ public class ModuleScope : Scope, IMarshallable
   List<ModuleScope> imports = new List<ModuleScope>();
 
   public ModuleScope(uint module_id, TypeSystem types) 
-    : base(types, types.globs) 
+    : base(types.globs) 
   {
     this.module_id = module_id;
   }
 
   //marshall version
   public ModuleScope(TypeSystem types) 
-    : base(types, types.globs)
+    : base(types.globs)
   {}
 
   public void AddImport(ModuleScope other)

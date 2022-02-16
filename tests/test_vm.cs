@@ -19,10 +19,12 @@ public class BHL_TestVM : BHL_TestBase
       Util.Struct2Data(ms, s);
     }
 
+    var factory = new SymbolFactory(types);
+
     {
       s.Position = 0;
       var ms = new ModuleScope(types);
-      Util.Data2Struct(s, SymbolFactory.Create, ms);
+      Util.Data2Struct(s, factory.Create, ms);
 
       AssertEqual(ms.module_id, 1);
 
@@ -30,9 +32,11 @@ public class BHL_TestVM : BHL_TestBase
 
       var foo = ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
+      AssertEqual(foo.type.Get().GetName(), TypeSystem.Int.name);
 
       var bar = ms.Resolve("bar");
       AssertEqual(bar.name, "bar");
+      AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
     }
   }
 

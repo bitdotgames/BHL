@@ -2669,7 +2669,7 @@ public class Frontend : bhlBaseVisitor<object>
     ++scope_level;
 
     if(new_local_scope)
-      curr_scope = new Scope(types, curr_scope); 
+      curr_scope = new Scope(curr_scope); 
 
     bool is_paral = 
       type == EnumBlock.PARAL || 

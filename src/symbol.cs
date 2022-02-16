@@ -7,6 +7,8 @@ using marshall;
 
 public abstract class Symbol : IMarshallableGeneric 
 {
+  public TypeSystem types;
+
   public string name;
   public TypeProxy type;
   // All symbols know what scope contains them
@@ -16,10 +18,11 @@ public abstract class Symbol : IMarshallableGeneric
   public WrappedParseTree parsed;
 #endif
 
-  public Symbol(string name, TypeProxy type) 
+  public Symbol(string name, TypeProxy type, TypeSystem types = null) 
   { 
     this.name = name; 
     this.type = type;
+    this.types = types;
   }
 
   public override string ToString() 
@@ -40,8 +43,11 @@ public abstract class Symbol : IMarshallableGeneric
   public virtual void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
-    string type = "TODO";
-    Marshall.Sync(ctx, ref type);
+
+    string type_name = type.name;
+    Marshall.Sync(ctx, ref type_name);
+    if(ctx.is_read)
+      type = types.Type(type_name);
   }
 }
 
@@ -85,7 +91,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   )
     : base(name)
   {
-    members = new SymbolsDictionary(null/*for now*/);
+    members = new SymbolsDictionary();
     
     this.type = new TypeProxy(this);
     this.super_class = super_class;
@@ -457,8 +463,8 @@ public class VariableSymbol : Symbol, IScopeIndexed
   {}
 
   //marshall version
-  public VariableSymbol()
-    : base("", new TypeProxy(TypeSystem.Void))
+  public VariableSymbol(TypeSystem types)
+    : base("", new TypeProxy(TypeSystem.Void), types)
   {}
 
   public override uint getClassId()
@@ -628,7 +634,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public FuncSymbol(string name, FuncSignature sig) 
     : base(name)
   {
-    members = new SymbolsDictionary(null/*for now*/);
+    members = new SymbolsDictionary();
     this.type = new TypeProxy(sig);
   }
 
@@ -661,7 +667,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
   public SymbolsDictionary GetArgs()
   {
-    var args = new SymbolsDictionary(null/*for now*/);
+    var args = new SymbolsDictionary();
     for(int i=0;i<GetSignature().arg_types.Count;++i)
       args.Add(members[i]);
     return args;
@@ -950,7 +956,7 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumSymbol(string name)
       : base(name)
   {
-    members = new SymbolsDictionary(null/*for now*/);
+    members = new SymbolsDictionary();
     this.type = new TypeProxy(this);
   }
 
@@ -1018,7 +1024,6 @@ public class EnumItemSymbol : Symbol, IType
 
 public class SymbolsDictionary : IMarshallable
 {
-  TypeSystem types;
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
   List<Symbol> list = new List<Symbol>();
 
@@ -1034,11 +1039,6 @@ public class SymbolsDictionary : IMarshallable
     get {
       return list[index];
     }
-  }
-
-  public SymbolsDictionary(TypeSystem types)
-  {
-    this.types = types;
   }
 
   public bool Contains(string key)
@@ -1126,22 +1126,26 @@ public class SymbolsDictionary : IMarshallable
     if(ctx.is_read)
     {
       foreach(var s in list)
-      {
-        s.type = types.Type("TODO"); 
         str2symb.Add(s.name, s);
-      }
     }
   }
 }
 
-public static class SymbolFactory
+public class SymbolFactory
 {
-  static public IMarshallableGeneric Create(uint id) 
+  TypeSystem types;
+
+  public SymbolFactory(TypeSystem types)
+  {
+    this.types = types;
+  }
+
+  public IMarshallableGeneric Create(uint id) 
   {
     switch(id)
     {
       case VariableSymbol.CLASS_ID:
-        return new VariableSymbol(); 
+        return new VariableSymbol(types); 
       default:
         return null;
     }
