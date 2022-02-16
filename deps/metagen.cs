@@ -68,33 +68,6 @@ public interface IMetaStruct
   void reset();
 }
 
-public abstract class BaseMetaStruct : IMetaStruct
-{
-  public virtual uint CLASS_ID() { return 0; }
-
-  public virtual int getFieldsCount() { return 0; }
-
-  public virtual void reset() {}
-
-  public virtual void sync(MetaSyncContext ctx)
-  {
-    if(ctx.is_read)
-    {
-      MetaUtils.ensure(ctx.reader.BeginArray());
-      syncFields(ctx);
-      MetaUtils.ensure(ctx.reader.EndArray());  
-    }
-    else
-    {
-      MetaUtils.ensure(ctx.writer.BeginArray(getFieldsCount()));
-      syncFields(ctx);
-      MetaUtils.ensure(ctx.writer.EndArray());
-    }
-  }
-
-  public virtual void syncFields(MetaSyncContext ctx) {}
-}
-
 public interface IDataReader 
 {
   MetaIoError ReadI8(ref sbyte v);

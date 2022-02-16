@@ -142,12 +142,9 @@ public class LazyAST
   }
 }
 
-
-public class AST_Base : BaseMetaStruct 
+public class AST_Base : IMetaStruct
 {
-  static public  uint STATIC_CLASS_ID = 246837896;
-
-  public override uint CLASS_ID() 
+  public virtual uint CLASS_ID() 
   {
     return 246837896; 
   }
@@ -157,26 +154,23 @@ public class AST_Base : BaseMetaStruct
     reset();
   }
 
-  public override void reset() 
+  public virtual void reset() 
   {
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public virtual void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
   }
 
-  public override int getFieldsCount() 
+  public virtual int getFieldsCount() 
   {
     return 0; 
   }
 }
 
-public class AST  : AST_Base 
+public class AST : AST_Base 
 {
   public List<AST_Base> children = new List<AST_Base>();
-
-  static public  new  uint STATIC_CLASS_ID = 59352479;
 
   public override uint CLASS_ID() 
   {
@@ -210,8 +204,6 @@ public class AST  : AST_Base
 
 public class AST_Interim  : AST 
 {
-  static public  new  uint STATIC_CLASS_ID = 240440595;
-
   public override uint CLASS_ID() 
   {
     return 240440595; 
@@ -242,8 +234,6 @@ public class AST_Import  : AST_Base
 {
   public List<uint> module_ids = new List<uint>();
   public List<string> module_names = new List<string>();
-
-  static public  new  uint STATIC_CLASS_ID = 117209009;
 
   public override uint CLASS_ID() 
   {
@@ -281,8 +271,6 @@ public class AST_Module  : AST
 {
   public uint id;
   public string name = "";
-
-  static public  new  uint STATIC_CLASS_ID = 127311748;
 
   public override uint CLASS_ID() 
   {
@@ -324,8 +312,6 @@ public enum EnumUnaryOp
 public class AST_UnaryOpExp  : AST 
 {
   public EnumUnaryOp type = new EnumUnaryOp();
-
-  static public  new  uint STATIC_CLASS_ID = 224392343;
 
   public override uint CLASS_ID() 
   {
@@ -381,8 +367,6 @@ public class AST_BinaryOpExp  : AST
 {
   public EnumBinaryOp type = new EnumBinaryOp();
 
-  static public  new  uint STATIC_CLASS_ID = 78094287;
-
   public override uint CLASS_ID() 
   {
     return 78094287; 
@@ -418,8 +402,6 @@ public class AST_Inc  : AST_Base
 {
   public uint symb_idx;
 
-  static public  new  uint STATIC_CLASS_ID = 192507281;
-
   public override uint CLASS_ID() 
   {
     return 192507281; 
@@ -452,8 +434,6 @@ public class AST_Dec  : AST_Base
 {
   public uint symb_idx;
 
-  static public  new  uint STATIC_CLASS_ID = 5580553;
-
   public override uint CLASS_ID() 
   {
     return 5580553; 
@@ -485,8 +465,6 @@ public class AST_Dec  : AST_Base
 public class AST_New  : AST 
 {
   public string type = "";
-
-  static public  new  uint STATIC_CLASS_ID = 119043746;
 
   public override uint CLASS_ID() 
   {
@@ -525,8 +503,6 @@ public class AST_FuncDecl  : AST
   public byte required_args_num;
   public byte default_args_num;
   public int ip_addr;
-
-  static public  new  uint STATIC_CLASS_ID = 19638951;
 
   public override uint CLASS_ID() 
   {
@@ -575,8 +551,6 @@ public class AST_ClassDecl  : AST
   public string name = "";
   public string parent = "";
 
-  static public  new  uint STATIC_CLASS_ID = 168955538;
-
   public override uint CLASS_ID() 
   {
     return 168955538; 
@@ -614,13 +588,10 @@ public class AST_EnumItem  : AST_Base
   public string name;
   public int value;
 
-  static public  new  uint STATIC_CLASS_ID = 42971075;
-
   public override uint CLASS_ID() 
   {
     return 42971075; 
   }
-
 
   public AST_EnumItem()
   {
@@ -652,8 +623,6 @@ public class AST_EnumDecl  : AST
 {
   public string name = "";
 
-  static public  new  uint STATIC_CLASS_ID = 207366473;
-
   public override uint CLASS_ID() 
   {
     return 207366473; 
@@ -684,15 +653,13 @@ public class AST_EnumDecl  : AST
   }
 }
 
-public class AST_UpVal  :  BaseMetaStruct 
+public class AST_UpVal : IMetaStruct
 {
   public string name = "";
   public uint symb_idx;
   public uint upsymb_idx;
 
-  static public  uint STATIC_CLASS_ID = 121447213;
-
-  public override uint CLASS_ID() 
+  public uint CLASS_ID() 
   {
     return 121447213; 
   }
@@ -702,33 +669,29 @@ public class AST_UpVal  :  BaseMetaStruct
     reset();
   }
 
-  public override void reset() 
+  public void reset() 
   {
     name = "";
     symb_idx = 0;
     upsymb_idx = 0;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public void syncFields(MetaSyncContext ctx) 
   {
-    base.syncFields(ctx);
-
     MetaUtils.sync(ctx, ref name);
     MetaUtils.sync(ctx, ref symb_idx);
     MetaUtils.sync(ctx, ref upsymb_idx);
   }
 
-  public override int getFieldsCount() 
+  public int getFieldsCount() 
   {
     return 3; 
   }
 }
 
-public class AST_LambdaDecl  : AST_FuncDecl 
+public class AST_LambdaDecl : AST_FuncDecl 
 {
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
-
-  static public  new  uint STATIC_CLASS_ID = 44443142;
 
   public override uint CLASS_ID() 
   {
@@ -760,11 +723,9 @@ public class AST_LambdaDecl  : AST_FuncDecl
   }
 }
 
-public class AST_TypeCast  : AST 
+public class AST_TypeCast : AST 
 {
   public string type = "";
-
-  static public  new  uint STATIC_CLASS_ID = 234453676;
 
   public override uint CLASS_ID() 
   {
@@ -825,8 +786,6 @@ public class AST_Call  : AST
   public int symb_idx;
   public string scope_type = "";
 
-  static public  new  uint STATIC_CLASS_ID = 42771415;
-
   public override uint CLASS_ID() 
   {
     return 42771415; 
@@ -874,8 +833,6 @@ public class AST_Call  : AST
 
 public class AST_Return  : AST 
 {
-  static public  new  uint STATIC_CLASS_ID = 204244643;
-
   public int num;
 
   public override uint CLASS_ID() 
@@ -908,8 +865,6 @@ public class AST_Return  : AST
 
 public class AST_Break  : AST_Base 
 {
-  static public  new  uint STATIC_CLASS_ID = 93587594;
-
   public override uint CLASS_ID() 
   {
     return 93587594; 
@@ -938,7 +893,6 @@ public class AST_Break  : AST_Base
 
 public class AST_Continue  : AST_Base 
 {
-  static public  new  uint STATIC_CLASS_ID = 83587594;
   public bool jump_marker;
 
   public override uint CLASS_ID() 
@@ -982,8 +936,6 @@ public class AST_Literal  : AST_Base
   public EnumLiteral type = new EnumLiteral();
   public double nval;
   public string sval = "";
-
-  static public  new  uint STATIC_CLASS_ID = 246902930;
 
   public override uint CLASS_ID() 
   {
@@ -1031,8 +983,6 @@ public class AST_VarDecl  : AST
   public uint symb_idx;
   public bool is_func_arg;
   public bool is_ref;
-
-  static public  new  uint STATIC_CLASS_ID = 232512499;
 
   public override uint CLASS_ID() 
   {
@@ -1088,8 +1038,6 @@ public class AST_Block  : AST
 {
   public EnumBlock type = new EnumBlock();
 
-  static public  new  uint STATIC_CLASS_ID = 183750514;
-
   public override uint CLASS_ID() 
   {
     return 183750514; 
@@ -1125,8 +1073,6 @@ public class AST_JsonObj  : AST
 {
   public string type = "";
   public int line_num;
-
-  static public  new  uint STATIC_CLASS_ID = 31901170;
 
   public override uint CLASS_ID() 
   {
@@ -1165,8 +1111,6 @@ public class AST_JsonArr  : AST
   public string type;
   public int line_num;
 
-  static public  new  uint STATIC_CLASS_ID = 47604479;
-
   public override uint CLASS_ID() 
   {
     return 47604479; 
@@ -1201,8 +1145,6 @@ public class AST_JsonArr  : AST
 
 public class AST_JsonArrAddItem  : AST_Base 
 {
-  static public  new  uint STATIC_CLASS_ID = 58382586;
-
   public override uint CLASS_ID() 
   {
     return 58382586; 
@@ -1234,8 +1176,6 @@ public class AST_JsonPair  : AST
   public string name = "";
   public uint symb_idx;
   public string scope_type = "";
-
-  static public  new  uint STATIC_CLASS_ID = 235544635;
 
   public override uint CLASS_ID() 
   {
@@ -1273,8 +1213,6 @@ public class AST_JsonPair  : AST
 
 public class AST_PopValue  : AST_Base 
 {
-  static public  new  uint STATIC_CLASS_ID = 87387238;
-
   public override uint CLASS_ID() 
   {
     return 87387238; 
