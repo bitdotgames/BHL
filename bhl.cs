@@ -138,7 +138,7 @@ public static class Tasks
   {
     MCSBuild(tm, 
      new string[] {
-       $"{BHL_ROOT}/src/lsp/*.cs",
+        $"{BHL_ROOT}/src/lsp/*.cs",
         $"{BHL_ROOT}/tests/*.cs",
         $"{BHL_ROOT}/mono_opts.dll",
         $"{BHL_ROOT}/bhl_front.dll",
@@ -707,11 +707,10 @@ public static class Hash
     {
       var result = BitConverter.GetBytes(uint32);
 
-      if (BitConverter.IsLittleEndian)
+      if(BitConverter.IsLittleEndian)
         Array.Reverse(result);
 
       return result;
     }
   }
 }
-
