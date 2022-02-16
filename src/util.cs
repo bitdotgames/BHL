@@ -190,7 +190,7 @@ static public class Util
   {
     var reader = new MsgPackDataReader(s);
     var meta = new T();
-    marshall.Syncer.Sync(marshall.SyncContext.NewForRead(reader, cb), ref meta);
+    marshall.Marshall.Sync(marshall.SyncContext.NewForRead(reader, cb), ref meta);
     return meta;
   }
 
@@ -202,7 +202,7 @@ static public class Util
   static public void Meta2Bin<T>(T meta, Stream dst) where T : IMarshallable
   {
     var writer = new MsgPackDataWriter(dst);
-    marshall.Syncer.Sync(marshall.SyncContext.NewForWrite(writer), ref meta);
+    marshall.Marshall.Sync(marshall.SyncContext.NewForWrite(writer), ref meta);
   }
 
   static public void Meta2File<T>(T meta, string file) where T : IMarshallable

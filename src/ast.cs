@@ -155,7 +155,7 @@ public class AST_Nested : IMarshallable
 
   public virtual void Sync(SyncContext ctx) 
   {
-    Syncer.SyncGeneric(ctx, children);
+    Marshall.SyncGeneric(ctx, children);
   }
 
   public virtual int GetFieldsNum() 
@@ -194,8 +194,8 @@ public class AST_Import  : IMarshallable
 
   public void Sync(SyncContext ctx) 
   {
-    Syncer.Sync(ctx, module_ids);
-    Syncer.Sync(ctx, module_names);
+    Marshall.Sync(ctx, module_ids);
+    Marshall.Sync(ctx, module_names);
   }
 
   public int GetFieldsNum() 
@@ -217,8 +217,8 @@ public class AST_Module : AST_Nested
   public override void Sync(SyncContext ctx) 
   {
     base.Sync(ctx);
-    Syncer.Sync(ctx, ref id);
-    Syncer.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref id);
+    Marshall.Sync(ctx, ref name);
   }
 
   public override int GetFieldsNum() 
@@ -246,7 +246,7 @@ public class AST_UnaryOpExp : AST_Nested
   {
     base.Sync(ctx);
     int __tmp_type = (int)type;
-    Syncer.Sync(ctx, ref __tmp_type);
+    Marshall.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumUnaryOp)__tmp_type;
   }
 
@@ -288,7 +288,7 @@ public class AST_BinaryOpExp  : AST_Nested
   {
     base.Sync(ctx);
     int __tmp_type = (int)type;
-    Syncer.Sync(ctx, ref __tmp_type);
+    Marshall.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBinaryOp)__tmp_type;
   }
 
@@ -309,7 +309,7 @@ public class AST_Inc : IMarshallable
 
   public void Sync(SyncContext ctx) 
   {
-    Syncer.Sync(ctx, ref symb_idx);
+    Marshall.Sync(ctx, ref symb_idx);
   }
 
   public int GetFieldsNum() 
@@ -329,7 +329,7 @@ public class AST_Dec : IMarshallable
 
   public void Sync(SyncContext ctx) 
   {
-    Syncer.Sync(ctx, ref symb_idx);
+    Marshall.Sync(ctx, ref symb_idx);
   }
 
   public int GetFieldsNum() 
@@ -350,7 +350,7 @@ public class AST_New : AST_Nested
   public override void Sync(SyncContext ctx) 
   {
     base.Sync(ctx);
-    Syncer.Sync(ctx, ref type);
+    Marshall.Sync(ctx, ref type);
   }
 
   public override int GetFieldsNum() 
@@ -378,13 +378,13 @@ public class AST_FuncDecl : AST_Nested
   {
     base.Sync(ctx);
 
-    Syncer.Sync(ctx, ref type);
-    Syncer.Sync(ctx, ref name);
-    Syncer.Sync(ctx, ref module_id);
-    Syncer.Sync(ctx, ref local_vars_num);
-    Syncer.Sync(ctx, ref required_args_num);
-    Syncer.Sync(ctx, ref default_args_num);
-    Syncer.Sync(ctx, ref ip_addr);
+    Marshall.Sync(ctx, ref type);
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref module_id);
+    Marshall.Sync(ctx, ref local_vars_num);
+    Marshall.Sync(ctx, ref required_args_num);
+    Marshall.Sync(ctx, ref default_args_num);
+    Marshall.Sync(ctx, ref ip_addr);
   }
 
   public override int GetFieldsNum() 
@@ -407,8 +407,8 @@ public class AST_ClassDecl : AST_Nested
   {
     base.Sync(ctx);
 
-    Syncer.Sync(ctx, ref name);
-    Syncer.Sync(ctx, ref parent);
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref parent);
   }
 
   public override int GetFieldsNum() 
@@ -429,8 +429,8 @@ public class AST_EnumItem : IMarshallable
 
   public void Sync(SyncContext ctx) 
   {
-    Syncer.Sync(ctx, ref name);
-    Syncer.Sync(ctx, ref value);
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref value);
   }
 
   public int GetFieldsNum() 
@@ -452,7 +452,7 @@ public class AST_EnumDecl : AST_Nested
   {
     base.Sync(ctx);
 
-    Syncer.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref name);
   }
 
   public override int GetFieldsNum() 
@@ -474,9 +474,9 @@ public class AST_UpVal : IMarshallable
 
   public void Sync(SyncContext ctx) 
   {
-    Syncer.Sync(ctx, ref name);
-    Syncer.Sync(ctx, ref symb_idx);
-    Syncer.Sync(ctx, ref upsymb_idx);
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref symb_idx);
+    Marshall.Sync(ctx, ref upsymb_idx);
   }
 
   public int GetFieldsNum() 
@@ -497,7 +497,7 @@ public class AST_LambdaDecl : AST_FuncDecl
   public override void Sync(SyncContext ctx) 
   {
     base.Sync(ctx);
-    Syncer.Sync(ctx, upvals);
+    Marshall.Sync(ctx, upvals);
   }
 
   public override int GetFieldsNum() 
@@ -519,7 +519,7 @@ public class AST_TypeCast : AST_Nested
   {
     base.Sync(ctx);
 
-    Syncer.Sync(ctx, ref type);
+    Marshall.Sync(ctx, ref type);
   }
 
   public override int GetFieldsNum() 
@@ -567,15 +567,15 @@ public class AST_Call  : AST_Nested
     base.Sync(ctx);
 
     int __tmp_type = (int)type;
-    Syncer.Sync(ctx, ref __tmp_type);
+    Marshall.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumCall)__tmp_type;
 
-    Syncer.Sync(ctx, ref name);
-    Syncer.Sync(ctx, ref module_id);
-    Syncer.Sync(ctx, ref cargs_bits);
-    Syncer.Sync(ctx, ref line_num);
-    Syncer.Sync(ctx, ref symb_idx);
-    Syncer.Sync(ctx, ref scope_type);
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref module_id);
+    Marshall.Sync(ctx, ref cargs_bits);
+    Marshall.Sync(ctx, ref line_num);
+    Marshall.Sync(ctx, ref symb_idx);
+    Marshall.Sync(ctx, ref scope_type);
   }
 
   public override int GetFieldsNum() 
@@ -596,7 +596,7 @@ public class AST_Return  : AST_Nested
   public override void Sync(SyncContext ctx) 
   {
     base.Sync(ctx);
-    Syncer.Sync(ctx, ref num);
+    Marshall.Sync(ctx, ref num);
   }
 
   public override int GetFieldsNum() 
@@ -633,7 +633,7 @@ public class AST_Continue : IMarshallable
 
   public void Sync(SyncContext ctx) 
   {
-    Syncer.Sync(ctx, ref jump_marker);
+    Marshall.Sync(ctx, ref jump_marker);
   }
 
   public int GetFieldsNum() 
@@ -664,11 +664,11 @@ public class AST_Literal : IMarshallable
   public void Sync(SyncContext ctx) 
   {
     int __tmp_type = (int)type;
-    Syncer.Sync(ctx, ref __tmp_type);
+    Marshall.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumLiteral)__tmp_type;
 
-    Syncer.Sync(ctx, ref nval);
-    Syncer.Sync(ctx, ref sval);
+    Marshall.Sync(ctx, ref nval);
+    Marshall.Sync(ctx, ref sval);
   }
 
   public int GetFieldsNum() 
@@ -694,11 +694,11 @@ public class AST_VarDecl : AST_Nested
   {
     base.Sync(ctx);
 
-    Syncer.Sync(ctx, ref name);
-    Syncer.Sync(ctx, ref symb_idx);
-    Syncer.Sync(ctx, ref is_func_arg);
-    Syncer.Sync(ctx, ref type);
-    Syncer.Sync(ctx, ref is_ref);
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref symb_idx);
+    Marshall.Sync(ctx, ref is_func_arg);
+    Marshall.Sync(ctx, ref type);
+    Marshall.Sync(ctx, ref is_ref);
   }
 
   public override int GetFieldsNum() 
@@ -733,7 +733,7 @@ public class AST_Block : AST_Nested
     base.Sync(ctx);
 
     int __tmp_type = (int)type;
-    Syncer.Sync(ctx, ref __tmp_type);
+    Marshall.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBlock)__tmp_type;
   }
 
@@ -757,8 +757,8 @@ public class AST_JsonObj : AST_Nested
   {
     base.Sync(ctx);
 
-    Syncer.Sync(ctx, ref type);
-    Syncer.Sync(ctx, ref line_num);
+    Marshall.Sync(ctx, ref type);
+    Marshall.Sync(ctx, ref line_num);
   }
 
   public override int GetFieldsNum() 
@@ -781,8 +781,8 @@ public class AST_JsonArr : AST_Nested
   {
     base.Sync(ctx);
 
-    Syncer.Sync(ctx, ref type);
-    Syncer.Sync(ctx, ref line_num);
+    Marshall.Sync(ctx, ref type);
+    Marshall.Sync(ctx, ref line_num);
   }
 
   public override int GetFieldsNum() 
@@ -823,9 +823,9 @@ public class AST_JsonPair : AST_Nested
   {
     base.Sync(ctx);
 
-    Syncer.Sync(ctx, ref name);
-    Syncer.Sync(ctx, ref symb_idx);
-    Syncer.Sync(ctx, ref scope_type);
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref symb_idx);
+    Marshall.Sync(ctx, ref scope_type);
   }
 
   public override int GetFieldsNum() 

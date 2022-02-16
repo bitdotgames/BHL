@@ -278,8 +278,8 @@ public class Build
 
     public void Sync(SyncContext ctx) 
     {
-      Syncer.Sync(ctx, names);
-      Syncer.Sync(ctx, files);
+      Marshall.Sync(ctx, names);
+      Marshall.Sync(ctx, files);
     }
 
     public void Add(string name, string file)
@@ -436,7 +436,7 @@ public class Build
 
       public void Sync(SyncContext ctx) 
       {
-        Syncer.Sync(ctx, files);
+        Marshall.Sync(ctx, files);
       }
     }
 

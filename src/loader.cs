@@ -64,23 +64,23 @@ public class ModuleImporter : IModuleImporter
     reader = new marshall.MsgPackDataReader(source);
 
     byte file_format = 0;
-    Util.Verify(reader.ReadU8(ref file_format) == 0);
+    reader.ReadU8(ref file_format);
     Util.Verify(file_format == COMPILE_FMT);
 
     uint file_version = 0;
-    Util.Verify(reader.ReadU32(ref file_version) == 0);
+    reader.ReadU32(ref file_version);
     Util.Verify(file_version == 1);
 
     int num_entries = 0;
-    Util.Verify(reader.ReadI32(ref num_entries) == 0);
+    reader.ReadI32(ref num_entries);
     //Util.Debug("Total modules: " + total_modules);
     while(num_entries-- > 0)
     {
       int format = 0;
-      Util.Verify(reader.ReadI32(ref format) == 0);
+      reader.ReadI32(ref format);
 
       string name = "";
-      Util.Verify(reader.ReadString(ref name) == 0);
+      reader.ReadString(ref name);
 
       var ent = new Entry();
       ent.format = (ModuleBinaryFormat)format;
@@ -92,7 +92,7 @@ public class ModuleImporter : IModuleImporter
       //skipping binary blob
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
-      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == 0);
+      reader.ReadRaw(ref tmp_buf, ref tmp_buf_len);
       TempBuffer.Update(tmp_buf);
     }
   }
@@ -118,8 +118,8 @@ public class ModuleImporter : IModuleImporter
     {
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
-      reader.setPos(ent.stream_pos);
-      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == 0);
+      reader.SetPos(ent.stream_pos);
+      reader.ReadRaw(ref tmp_buf, ref tmp_buf_len);
       TempBuffer.Update(tmp_buf);
       res = tmp_buf;
       res_len = tmp_buf_len;
@@ -128,8 +128,8 @@ public class ModuleImporter : IModuleImporter
     {
       var lz_buf = TempBuffer.Get();
       int lz_buf_len = 0;
-      reader.setPos(ent.stream_pos);
-      Util.Verify(reader.ReadRaw(ref lz_buf, ref lz_buf_len) == 0);
+      reader.SetPos(ent.stream_pos);
+      reader.ReadRaw(ref lz_buf, ref lz_buf_len);
       TempBuffer.Update(lz_buf);
 
       var dst_buf = TempBuffer.Get();
@@ -152,8 +152,8 @@ public class ModuleImporter : IModuleImporter
     {
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
-      reader.setPos(ent.stream_pos);
-      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == 0);
+      reader.SetPos(ent.stream_pos);
+      reader.ReadRaw(ref tmp_buf, ref tmp_buf_len);
       TempBuffer.Update(tmp_buf);
       string file_path = System.Text.Encoding.UTF8.GetString(tmp_buf, 0, tmp_buf_len);
       var file_bytes = File.ReadAllBytes(file_path);

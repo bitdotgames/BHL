@@ -19,11 +19,12 @@ public enum ErrorCode
 
 public class Error : Exception
 {
-  public ErrorCode err;
+  public ErrorCode code { get; }
 
-  public Error(ErrorCode err)
+  public Error(ErrorCode code, string msg = "")
+    : base($"Error ({code}) {msg}")
   {
-    this.err = err;
+    this.code = code;
   }
 }
 
@@ -69,163 +70,144 @@ public interface IMarshallable
 
 public interface IReader 
 {
-  ErrorCode ReadI8(ref sbyte v);
-  ErrorCode ReadU8(ref byte v);
-  ErrorCode ReadI16(ref short v);
-  ErrorCode ReadU16(ref ushort v);
-  ErrorCode ReadI32(ref int v);
-  ErrorCode ReadU32(ref uint v);
-  ErrorCode ReadU64(ref ulong v);
-  ErrorCode ReadI64(ref long v);
-  ErrorCode ReadFloat(ref float v);
-  ErrorCode ReadBool(ref bool v);
-  ErrorCode ReadDouble(ref double v);
-  ErrorCode ReadString(ref string v);
-  ErrorCode ReadRaw(ref byte[] v, ref int vlen);
-  ErrorCode BeginArray(); 
-  ErrorCode GetArraySize(ref int v);
-  ErrorCode EndArray(); 
+  void ReadI8(ref sbyte v);
+  void ReadU8(ref byte v);
+  void ReadI16(ref short v);
+  void ReadU16(ref ushort v);
+  void ReadI32(ref int v);
+  void ReadU32(ref uint v);
+  void ReadU64(ref ulong v);
+  void ReadI64(ref long v);
+  void ReadFloat(ref float v);
+  void ReadBool(ref bool v);
+  void ReadDouble(ref double v);
+  void ReadString(ref string v);
+  void ReadRaw(ref byte[] v, ref int vlen);
+  int BeginArray(); 
+  void EndArray(); 
 }
 
 public interface IWriter 
 {
-  ErrorCode WriteI8(sbyte v);
-  ErrorCode WriteU8(byte v);
-  ErrorCode WriteI16(short v);
-  ErrorCode WriteU16(ushort v);
-  ErrorCode WriteI32(int v);
-  ErrorCode WriteU32(uint v);
-  ErrorCode WriteI64(long v);
-  ErrorCode WriteU64(ulong v);
-  ErrorCode WriteFloat(float v);
-  ErrorCode WriteBool(bool v);
-  ErrorCode WriteDouble(double v);
-  ErrorCode WriteString(string v);
-  ErrorCode BeginArray(int len); 
-  ErrorCode EndArray(); 
-  ErrorCode End(); 
+  void WriteI8(sbyte v);
+  void WriteU8(byte v);
+  void WriteI16(short v);
+  void WriteU16(ushort v);
+  void WriteI32(int v);
+  void WriteU32(uint v);
+  void WriteI64(long v);
+  void WriteU64(ulong v);
+  void WriteFloat(float v);
+  void WriteBool(bool v);
+  void WriteDouble(double v);
+  void WriteString(string v);
+  void BeginArray(int len); 
+  void EndArray(); 
 }
 
-public static class Syncer 
+public static class Marshall 
 {
-  public delegate void LogCb(string text);
-  static public LogCb LogError = DefaultLog;
-  static public LogCb LogWarn = DefaultLog;
-  static public LogCb LogDebug = DefaultLog;
-
-  static void DefaultLog(string s)
-  {}
-
-  static void Ensure(ErrorCode err)
-  {
-    if(err != ErrorCode.SUCCESS)
-      throw new Error(err);
-  }
-
   static public void Sync(SyncContext ctx, ref string v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadString(ref v));
+      ctx.reader.ReadString(ref v);
     else
-      Ensure(ctx.writer.WriteString(v));
+      ctx.writer.WriteString(v);
   }
 
   static public void Sync(SyncContext ctx, ref long v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadI64(ref v));
+      ctx.reader.ReadI64(ref v);
     else
-      Ensure(ctx.writer.WriteI64(v));
+      ctx.writer.WriteI64(v);
   }
 
   static public void Sync(SyncContext ctx, ref int v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadI32(ref v));
+      ctx.reader.ReadI32(ref v);
     else
-      Ensure(ctx.writer.WriteI32(v));
+      ctx.writer.WriteI32(v);
   }
 
   static public void Sync(SyncContext ctx, ref short v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadI16(ref v));
+      ctx.reader.ReadI16(ref v);
     else
-      Ensure(ctx.writer.WriteI16(v));
+      ctx.writer.WriteI16(v);
   }
 
   static public void Sync(SyncContext ctx, ref sbyte v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadI8(ref v));
+      ctx.reader.ReadI8(ref v);
     else
-      Ensure(ctx.writer.WriteI8(v));
+      ctx.writer.WriteI8(v);
   }
 
   static public void Sync(SyncContext ctx, ref ulong v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadU64(ref v));
+      ctx.reader.ReadU64(ref v);
     else
-      Ensure(ctx.writer.WriteU64(v));
+      ctx.writer.WriteU64(v);
   }
 
   static public void Sync(SyncContext ctx, ref ushort v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadU16(ref v));
+      ctx.reader.ReadU16(ref v);
     else
-      Ensure(ctx.writer.WriteU16(v));
+      ctx.writer.WriteU16(v);
   }
 
   static public void Sync(SyncContext ctx, ref uint v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadU32(ref v));
+      ctx.reader.ReadU32(ref v);
     else
-      Ensure(ctx.writer.WriteU32(v));
+      ctx.writer.WriteU32(v);
   }
 
   static public void Sync(SyncContext ctx, ref byte v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadU8(ref v));
+      ctx.reader.ReadU8(ref v);
     else
-      Ensure(ctx.writer.WriteU8(v));
+      ctx.writer.WriteU8(v);
   }
 
   static public void Sync(SyncContext ctx, ref bool v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadBool(ref v));
+      ctx.reader.ReadBool(ref v);
     else
-      Ensure(ctx.writer.WriteBool(v));
+      ctx.writer.WriteBool(v);
   }
 
   static public void Sync(SyncContext ctx, ref float v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadFloat(ref v));
+      ctx.reader.ReadFloat(ref v);
     else
-      Ensure(ctx.writer.WriteFloat(v));
+      ctx.writer.WriteFloat(v);
   }
 
   static public void Sync(SyncContext ctx, ref double v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.ReadDouble(ref v));
+      ctx.reader.ReadDouble(ref v);
     else
-      Ensure(ctx.writer.WriteDouble(v));
+      ctx.writer.WriteDouble(v);
   }
 
   static int BeginArray<T>(SyncContext ctx, List<T> v)
   {
     if(ctx.is_read)
     {
-      Ensure(ctx.reader.BeginArray());
-
-      int size = 0;
-      Ensure(ctx.reader.GetArraySize(ref size));
+      int size = ctx.reader.BeginArray();
 
       if(v.Capacity < size) 
         v.Capacity = size;
@@ -235,7 +217,7 @@ public static class Syncer
     else
     {
       int size = v == null ? 0 : v.Count;
-      Ensure(ctx.writer.BeginArray(size));
+      ctx.writer.BeginArray(size);
       return size;
     }
   }
@@ -243,9 +225,9 @@ public static class Syncer
   static void EndArray(SyncContext ctx, IList v)
   {
     if(ctx.is_read)
-      Ensure(ctx.reader.EndArray());
+      ctx.reader.EndArray();
     else
-      Ensure(ctx.writer.EndArray());
+      ctx.writer.EndArray();
   }
 
   static public void Sync(SyncContext ctx, List<string> v)
@@ -421,27 +403,24 @@ public static class Syncer
   {
     if(ctx.is_read)
     {
-      Ensure(ctx.reader.BeginArray());
+      ctx.reader.BeginArray();
 
       uint clid = 0;
-      Ensure(ctx.reader.ReadU32(ref clid));
+      ctx.reader.ReadU32(ref clid);
       
       v = ctx.CreateById(clid);
       if(v == null) 
-      {
-        LogError("Could not create struct: " + clid);
-        Ensure(ErrorCode.TYPE_MISMATCH);
-      }
+        throw new Error(ErrorCode.TYPE_MISMATCH, "Could not create struct: " + clid);
 
       v.Sync(ctx);
-      Ensure(ctx.reader.EndArray());
+      ctx.reader.EndArray();
     }
     else
     {
-      Ensure(ctx.writer.BeginArray(v.GetFieldsNum() + 1/*class id*/));
-      Ensure(ctx.writer.WriteU32(v.CLASS_ID()));
+      ctx.writer.BeginArray(v.GetFieldsNum() + 1/*class id*/);
+      ctx.writer.WriteU32(v.CLASS_ID());
       v.Sync(ctx);
-      Ensure(ctx.writer.EndArray());
+      ctx.writer.EndArray();
     }
   }
 
@@ -462,15 +441,15 @@ public static class Syncer
   {
     if(ctx.is_read)
     {
-      Syncer.Ensure(ctx.reader.BeginArray());
+      ctx.reader.BeginArray();
       v.Sync(ctx);
-      Syncer.Ensure(ctx.reader.EndArray());  
+      ctx.reader.EndArray();  
     }
     else
     {
-      Syncer.Ensure(ctx.writer.BeginArray(v.GetFieldsNum()));
+      ctx.writer.BeginArray(v.GetFieldsNum());
       v.Sync(ctx);
-      Syncer.Ensure(ctx.writer.EndArray());
+      ctx.writer.EndArray();
     }
   }
 }
@@ -483,10 +462,10 @@ public class MsgPackDataWriter : IWriter
 
   public MsgPackDataWriter(Stream _stream) 
   {
-    reset(_stream);
+    Reset(_stream);
   }
 
-  public void reset(Stream _stream)
+  public void Reset(Stream _stream)
   {
     stream = _stream;
     io = new MsgPackWriter(stream);
@@ -494,132 +473,115 @@ public class MsgPackDataWriter : IWriter
     space.Push(1);
   }
 
-  ErrorCode decSpace() 
+  void DecSpace() 
   {
     if(space.Count == 0)
-      return ErrorCode.NO_RESERVED_SPACE;
+      throw new Error(ErrorCode.NO_RESERVED_SPACE);
     
     int left = space.Pop();
     left--;
     if(left < 0)
-      return ErrorCode.NO_RESERVED_SPACE;
+      throw new Error(ErrorCode.NO_RESERVED_SPACE);
     
     space.Push(left);
-    return ErrorCode.SUCCESS;    
   }
 
-  public ErrorCode BeginArray(int size) 
+  public void BeginArray(int size) 
   {
-    ErrorCode err = decSpace();
-    if(err != ErrorCode.SUCCESS)
-      return err;
-    
+    DecSpace();
     space.Push(size);
     io.WriteArrayHeader(size);
-    return ErrorCode.SUCCESS;
   }
 
-  public ErrorCode EndArray() 
+  public void EndArray() 
   {
     if(space.Count <= 1)
-      return ErrorCode.NO_RESERVED_SPACE;
+      throw new Error(ErrorCode.NO_RESERVED_SPACE);
     
     int left = space.Pop();
     if(left != 0)
-      return ErrorCode.DANGLING_DATA;
-    
-    return ErrorCode.SUCCESS;
+      throw new Error(ErrorCode.DANGLING_DATA, "Left items: " + left);
   }
   
-  public ErrorCode End() 
-  {
-    if(space.Count != 1)
-      return ErrorCode.NO_RESERVED_SPACE;
-    
-    return ErrorCode.SUCCESS;
-  }
-
-  public ErrorCode WriteI8(sbyte v) 
+  public void WriteI8(sbyte v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
  
-  public ErrorCode WriteU8(byte v) 
+  public void WriteU8(byte v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
   
-  public ErrorCode WriteI16(short v) 
+  public void WriteI16(short v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteU16(ushort v) 
+  public void WriteU16(ushort v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteI32(int v) 
+  public void WriteI32(int v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteU32(uint v) 
+  public void WriteU32(uint v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteU64(ulong v) 
+  public void WriteU64(ulong v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteI64(long v) 
+  public void WriteI64(long v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteBool(bool v) 
+  public void WriteBool(bool v) 
   {
     io.Write(v ? 1 : 0);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteFloat(float v) 
+  public void WriteFloat(float v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteDouble(double v) 
+  public void WriteDouble(double v) 
   {
     io.Write(v);
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteString(string v) 
+  public void WriteString(string v) 
   {
     if(v == null) 
       io.Write("");
     else
       io.Write(v);
-    
-    return decSpace();
+    DecSpace();
   }
 
-  public ErrorCode WriteNil()
+  public void WriteNil()
   {
     io.WriteNil();
-    
-    return decSpace();
+    DecSpace();
   }
 }
 
@@ -644,93 +606,48 @@ public class MsgPackDataReader : IReader
   
   public MsgPackDataReader(Stream _stream) 
   { 
-    reset(_stream);
+    Reset(_stream);
   }
 
-  public void reset(Stream _stream)
+  public void Reset(Stream _stream)
   {
     stream = _stream;
     stack.Clear();
     io = new MsgPackReader(stream);
   }
 
-  public void setPos(long pos)
+  public void SetPos(long pos)
   {
     stream.Position = pos;
     stack.Clear();
   }
 
-  int nextInt(ref ErrorCode err) 
+  void Next()
   {
     if(!ArrayPositionValid())
-    {
-      err = ErrorCode.INVALID_POS;
-      return 0;
-    }
+      throw new Error(ErrorCode.INVALID_POS);
 
     if(!io.Read()) 
-    {
-      err = ErrorCode.IO_READ;
-      return 0;
-    }
+      throw new Error(ErrorCode.IO_READ);
     
     MoveNext();
-    
+  }
+
+  int NextInt() 
+  {
+    Next();
+
     if(io.IsSigned())
       return io.ValueSigned;
     else if(io.IsUnsigned())
       return (int)io.ValueUnsigned;
     else
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_MISMATCH; 
-      return 0;
-    }
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
   }
    
-  uint nextUint(ref ErrorCode err) 
+  bool NextBool() 
   {
-    if(!ArrayPositionValid())
-    {
-      err = ErrorCode.INVALID_POS;
-      return 0;
-    }
-
-    if(!io.Read()) 
-    {
-      err = ErrorCode.IO_READ;
-      return 0;
-    }
-    
-    MoveNext();
-    
-    if(io.IsUnsigned())
-      return io.ValueUnsigned;
-    else if(io.IsSigned())
-      return (uint)io.ValueSigned;
-    else
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_MISMATCH; 
-      return 0;
-    }
-  }
-
-  bool nextBool(ref ErrorCode err) 
-  {
-    if(!ArrayPositionValid())
-    {
-      err = ErrorCode.INVALID_POS;
-      return false;
-    }
-
-    if(!io.Read()) 
-    {
-      err = ErrorCode.IO_READ;
-      return false;
-    }
-    
-    MoveNext();
+    Next();
     
     if(io.IsUnsigned())
       return io.ValueUnsigned != 0;
@@ -739,60 +656,12 @@ public class MsgPackDataReader : IReader
     else if(io.IsBoolean())
       return (bool)io.ValueBoolean;
     else
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_MISMATCH; 
-      return false;
-    }
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
   }
 
-  ulong nextUint64(ref ErrorCode err) 
+  long NextLong() 
   {
-    if(!ArrayPositionValid())
-    {
-      err = ErrorCode.INVALID_POS;
-      return 0;
-    }
-
-    if(!io.Read()) 
-    {
-      err = ErrorCode.IO_READ;
-      return 0;
-    }
-    
-    MoveNext();
-
-    if(io.IsUnsigned())
-      return io.ValueUnsigned;
-    else if(io.IsSigned())
-      return (ulong)io.ValueSigned;
-    else if(io.IsUnsigned64())
-      return io.ValueUnsigned64;
-    else if(io.IsSigned64())
-      return (ulong)io.ValueSigned64;
-    else
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_MISMATCH; 
-      return 0;
-    }
-  }
-
-  long nextInt64(ref ErrorCode err) 
-  {
-    if(!ArrayPositionValid())
-    {
-      err = ErrorCode.INVALID_POS;
-      return 0;
-    }
-
-    if(!io.Read()) 
-    {
-      err = ErrorCode.IO_READ;
-      return 0;
-    }
-    
-    MoveNext();
+    Next();
 
     if(io.IsUnsigned())
       return (long)io.ValueUnsigned;
@@ -803,85 +672,57 @@ public class MsgPackDataReader : IReader
     else if(io.IsSigned64())
       return io.ValueSigned64;
     else
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_MISMATCH; 
-      return 0;
-    }
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
   }
   
-  public ErrorCode ReadI8(ref sbyte v) 
+  public void ReadI8(ref sbyte v) 
   {
-    ErrorCode err = 0;
-    v = (sbyte) nextInt(ref err);
-    return err;
+    v = (sbyte)NextInt();
   }
   
-  public ErrorCode ReadI16(ref short v) 
+  public void ReadI16(ref short v) 
   {
-    ErrorCode err = 0;
-    v = (short) nextInt(ref err);
-    return err;
+    v = (short)NextInt();
   }
   
-  public ErrorCode ReadI32(ref int v) 
+  public void ReadI32(ref int v) 
   {
-    ErrorCode err = 0;
-    v = nextInt(ref err);
-    return err;
+    v = NextInt();
   }
   
-  public ErrorCode ReadU8(ref byte v) 
+  public void ReadU8(ref byte v) 
   {
-    ErrorCode err = 0;
-    v = (byte) nextUint(ref err);
-    return err;
+    v = (byte)NextInt();
   }
   
-  public ErrorCode ReadU16(ref ushort v) 
+  public void ReadU16(ref ushort v) 
   {
-    ErrorCode err = 0;
-    v = (ushort) nextUint(ref err);
-    return err;
+    v = (ushort)NextInt();
   }
   
-  public ErrorCode ReadU32(ref uint v) 
+  public void ReadU32(ref uint v) 
   {
-    ErrorCode err = 0;
-    v = nextUint(ref err);
-    return err;
+    v = (uint)NextInt();
   }
 
-  public ErrorCode ReadU64(ref ulong v) 
+  public void ReadU64(ref ulong v) 
   {
-    ErrorCode err = 0;
-    v = nextUint64(ref err);
-    return err;
+    v = (ulong)NextLong();
   }
 
-  public ErrorCode ReadI64(ref long v) 
+  public void ReadI64(ref long v) 
   {
-    ErrorCode err = 0;
-    v = nextInt64(ref err);
-    return err;
+    v = NextLong();
   }
 
-  public ErrorCode ReadBool(ref bool v) 
+  public void ReadBool(ref bool v) 
   {
-    ErrorCode err = 0;
-    v = nextBool(ref err);
-    return err;
+    v = NextBool();
   }
 
-  public ErrorCode ReadFloat(ref float v) 
+  public void ReadFloat(ref float v) 
   {
-    if(!ArrayPositionValid())
-      return ErrorCode.INVALID_POS;
-
-    if(!io.Read()) 
-    {
-      return ErrorCode.IO_READ;
-    }
+    Next();
 
     if(io.IsUnsigned()) 
     {
@@ -903,29 +744,19 @@ public class MsgPackDataReader : IReader
           //TODO:
           //if(tmp > float.MaxValue || tmp < float.MinValue)
           //{
-          //  MetaHelper.LogWarn("Double -> Float bad conversion: " + tmp);
-          //  return MetaIoError.TYPE_DONT_MATCH; 
+          //  return ErrorCode.TYPE_DONT_MATCH; 
           //}
           v = (float) tmp;
           break;
         default:
-          Syncer.LogWarn("Got type: " + io.Type);
-          return ErrorCode.TYPE_MISMATCH; 
+          throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
       }
     }
-    MoveNext();
-    return ErrorCode.SUCCESS;
   }
 
-  public ErrorCode ReadDouble(ref double v) 
+  public void ReadDouble(ref double v) 
   {
-    if(!ArrayPositionValid())
-      return ErrorCode.INVALID_POS;
-
-    if(!io.Read()) 
-    {
-      return ErrorCode.IO_READ;
-    }
+    Next();
 
     if(io.IsUnsigned()) 
     {
@@ -940,99 +771,71 @@ public class MsgPackDataReader : IReader
       switch(io.Type)
       {
         case TypePrefixes.Float:
-          v = (double) io.ValueFloat;
+          v = (double)io.ValueFloat;
           break;
         case TypePrefixes.Double:
           v = io.ValueDouble;
           break;
         case TypePrefixes.UInt64:
-          v = (double) io.ValueUnsigned64;
+          v = (double)io.ValueUnsigned64;
           break;
         case TypePrefixes.Int64:
-          v = (double) io.ValueSigned64;    
+          v = (double)io.ValueSigned64;    
           break;
         default:
-          Syncer.LogWarn("Got type: " + io.Type);
-          return ErrorCode.TYPE_MISMATCH; 
+          throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
       }
     }
-    MoveNext();
-    return ErrorCode.SUCCESS;
   }
 
-  public ErrorCode ReadRaw(ref byte[] v, ref int vlen) 
+  public void ReadRaw(ref byte[] v, ref int vlen) 
   {
-    if(!ArrayPositionValid())
-      return ErrorCode.INVALID_POS;
-
-    if(!io.Read()) 
-      return ErrorCode.IO_READ;
+    Next();
 
     if(!io.IsRaw()) 
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      return ErrorCode.TYPE_MISMATCH;
-    }
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
 
     vlen = (int)io.Length;
     if(v.Length < vlen)
       Array.Resize(ref v, vlen);
     io.ReadValueRaw(v, 0, vlen);
-    MoveNext();
-    return ErrorCode.SUCCESS;
   }
 
-  public ErrorCode ReadString(ref string v) 
+  public void ReadString(ref string v) 
   {
-    if(!ArrayPositionValid())
-      return ErrorCode.INVALID_POS;
-
-    if(!io.Read()) 
-      return ErrorCode.IO_READ;
+    Next();
 
     if(!io.IsRaw()) 
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      return ErrorCode.TYPE_MISMATCH;
-    }
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
 
     //TODO: use shared buffer for strings loading
     byte[] strval = new byte[io.Length];
     io.ReadValueRaw(strval, 0, strval.Length);
     v = System.Text.Encoding.UTF8.GetString(strval);
-    MoveNext();
-    return ErrorCode.SUCCESS;
   }
 
-  public ErrorCode BeginArray() 
+  public int BeginArray() 
   {
     if(!ArrayPositionValid())
-      return ErrorCode.INVALID_POS;
+      throw new Error(ErrorCode.INVALID_POS);
 
-    if(!io.Read())
-      return ErrorCode.IO_READ;
+    if(!io.Read()) 
+      throw new Error(ErrorCode.IO_READ);
 
     if(!io.IsArray())
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      return ErrorCode.TYPE_MISMATCH;
-    }
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
 
-    ArrayPosition ap = new ArrayPosition(io.Length);
-    stack.Push(ap);
-    return ErrorCode.SUCCESS;
+    uint len = io.Length;
+    stack.Push(new ArrayPosition(len));
+    return (int)len;
   } 
 
-  public ErrorCode GetArraySize(ref int v) 
+  public void GetArraySize(ref int v) 
   {
     if(!io.IsArray())
-    {
-      Syncer.LogWarn("Got type: " + io.Type);
-      return ErrorCode.TYPE_MISMATCH;
-    }
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
 
-    v = (int) io.Length;
-    return ErrorCode.SUCCESS;
+    v = (int)io.Length;
   }
 
   void SkipField()
@@ -1062,19 +865,18 @@ public class MsgPackDataReader : IReader
     }
   }
 
-  public ErrorCode EndArray() 
+  public void EndArray() 
   {
     SkipTrailingFields();
     stack.Pop();
     MoveNext();
-    return ErrorCode.SUCCESS;
   }
 
   int ArrayEntriesLeft()
   {
     if(stack.Count == 0)
       return 0;
-    ArrayPosition ap = stack.Peek();
+    var ap = stack.Peek();
     return (int)ap.max - (int)ap.curr;
   }
 
@@ -1087,7 +889,7 @@ public class MsgPackDataReader : IReader
   {
     if(stack.Count > 0)
     {
-      ArrayPosition ap = stack.Pop();
+      var ap = stack.Pop();
       ap.curr++;
       stack.Push(ap);
     }
