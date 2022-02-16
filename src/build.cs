@@ -265,21 +265,21 @@ public class Build
       return 0;
     }
 
-    public int getFieldsCount()
+    public int GetFieldsNum()
     {
       return 2;
     }
 
-    public void reset() 
+    public void Reset() 
     {
       names.Clear();
       files.Clear();
     }
 
-    public void syncFields(SyncContext ctx) 
+    public void Sync(SyncContext ctx) 
     {
-      Utils.sync(ctx, names);
-      Utils.sync(ctx, files);
+      Syncer.Sync(ctx, names);
+      Syncer.Sync(ctx, files);
     }
 
     public void Add(string name, string file)
@@ -424,19 +424,19 @@ public class Build
         return 0;
       }
 
-      public int getFieldsCount()
+      public int GetFieldsNum()
       {
         return 1;
       }
 
-      public void reset() 
+      public void Reset() 
       {
         files.Clear();
       }
 
-      public void syncFields(SyncContext ctx) 
+      public void Sync(SyncContext ctx) 
       {
-        Utils.sync(ctx, files);
+        Syncer.Sync(ctx, files);
       }
     }
 
@@ -461,7 +461,7 @@ public class Build
 
       try
       {
-        return Util.File2Meta<FileImports>(cache_imports_file, AST_Factory.createById);
+        return Util.File2Meta<FileImports>(cache_imports_file, AST_Factory.Create);
       }
       catch
       {
@@ -558,7 +558,7 @@ public class Build
         try
         {
           //Console.WriteLine("HIT " + cache_file);
-          return Util.File2Meta<AST_Module>(cache_file, AST_Factory.createById);
+          return Util.File2Meta<AST_Module>(cache_file, AST_Factory.Create);
         }
         catch
         {
@@ -752,7 +752,7 @@ public class Build
 
       try
       {
-        return Util.File2Meta<Symbols>(cache_symb_file, AST_Factory.createById);
+        return Util.File2Meta<Symbols>(cache_symb_file, AST_Factory.Create);
       }
       catch
       {

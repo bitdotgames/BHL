@@ -20188,7 +20188,7 @@ public class BHL_TestVM : BHL_TestBase
     Frontend.Source2Bin(mdl, src.ToStream(), ms, ts, mreg);
     ms.Position = 0;
 
-    return Util.Bin2Meta<AST_Module>(ms, AST_Factory.createById);
+    return Util.Bin2Meta<AST_Module>(ms, AST_Factory.Create);
   }
 
   void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)

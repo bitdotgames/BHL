@@ -153,22 +153,12 @@ public class AST_Nested : IMarshallable
     return 59352479; 
   }
 
-  public AST_Nested()
+  public virtual void Sync(SyncContext ctx) 
   {
-    reset();
+    Syncer.SyncGeneric(ctx, children);
   }
 
-  public virtual void reset() 
-  {
-    if(children == null) children = new List<IMarshallable>(); children.Clear();
-  }
-
-  public virtual void syncFields(SyncContext ctx) 
-  {
-    Utils.syncVirtual(ctx, children);
-  }
-
-  public virtual int getFieldsCount() 
+  public virtual int GetFieldsNum() 
   {
     return 1; 
   }
@@ -181,24 +171,14 @@ public class AST_Interim : AST_Nested
     return 240440595; 
   }
 
-  public AST_Interim()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount(); 
+    return base.GetFieldsNum(); 
   }
 }
 
@@ -212,24 +192,13 @@ public class AST_Import  : IMarshallable
     return 117209009; 
   }
 
-  public AST_Import()
+  public void Sync(SyncContext ctx) 
   {
-    reset();
+    Syncer.Sync(ctx, module_ids);
+    Syncer.Sync(ctx, module_names);
   }
 
-  public void reset() 
-  {
-    if(module_ids == null) module_ids = new List<uint>(); module_ids.Clear();
-    if(module_names == null) module_names = new List<string>(); module_names.Clear();
-  }
-
-  public void syncFields(SyncContext ctx) 
-  {
-    Utils.sync(ctx, module_ids);
-    Utils.sync(ctx, module_names);
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 2; 
   }
@@ -245,29 +214,16 @@ public class AST_Module : AST_Nested
     return 127311748; 
   }
 
-  public AST_Module()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+    Syncer.Sync(ctx, ref id);
+    Syncer.Sync(ctx, ref name);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    id = 0;
-    name = "";
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-    Utils.sync(ctx, ref id);
-    Utils.sync(ctx, ref name);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 2; 
+    return base.GetFieldsNum() + 2; 
   }
 }
 
@@ -286,29 +242,17 @@ public class AST_UnaryOpExp : AST_Nested
     return 224392343; 
   }
 
-  public AST_UnaryOpExp()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
-  }
-
-  public override void reset() 
-  {
-    base.reset();
-
-    type = new EnumUnaryOp(); 
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
+    base.Sync(ctx);
     int __tmp_type = (int)type;
-    Utils.sync(ctx, ref __tmp_type);
+    Syncer.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumUnaryOp)__tmp_type;
   }
 
-  public override int getFieldsCount() 
+  public override int GetFieldsNum() 
   {
-    return base.getFieldsCount() + 1; 
+    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -340,29 +284,17 @@ public class AST_BinaryOpExp  : AST_Nested
     return 78094287; 
   }
 
-  public AST_BinaryOpExp()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
-  }
-
-  public override void reset() 
-  {
-    base.reset();
-
-    type = new EnumBinaryOp(); 
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
+    base.Sync(ctx);
     int __tmp_type = (int)type;
-    Utils.sync(ctx, ref __tmp_type);
+    Syncer.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBinaryOp)__tmp_type;
   }
 
-  public override int getFieldsCount() 
+  public override int GetFieldsNum() 
   {
-    return base.getFieldsCount() + 1; 
+    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -375,22 +307,12 @@ public class AST_Inc : IMarshallable
     return 192507281; 
   }
 
-  public AST_Inc()
+  public void Sync(SyncContext ctx) 
   {
-    reset();
+    Syncer.Sync(ctx, ref symb_idx);
   }
 
-  public void reset() 
-  {
-    symb_idx = 0;
-  }
-
-  public void syncFields(SyncContext ctx) 
-  {
-    Utils.sync(ctx, ref symb_idx);
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 1; 
   }
@@ -405,22 +327,12 @@ public class AST_Dec : IMarshallable
     return 5580553; 
   }
 
-  public AST_Dec()
+  public void Sync(SyncContext ctx) 
   {
-    reset();
+    Syncer.Sync(ctx, ref symb_idx);
   }
 
-  public void reset() 
-  {
-    symb_idx = 0;
-  }
-
-  public void syncFields(SyncContext ctx) 
-  {
-    Utils.sync(ctx, ref symb_idx);
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 1; 
   }
@@ -435,26 +347,15 @@ public class AST_New : AST_Nested
     return 119043746; 
   }
 
-  public AST_New()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+    Syncer.Sync(ctx, ref type);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-    type = "";
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-    Utils.sync(ctx, ref type);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 1; 
+    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -466,47 +367,29 @@ public class AST_FuncDecl : AST_Nested
   public uint local_vars_num;
   public byte required_args_num;
   public byte default_args_num;
-  public int ip_addr;
+  public int ip_addr = -1;
 
   public override uint CLASS_ID() 
   {
     return 19638951; 
   }
 
-  public AST_FuncDecl()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+
+    Syncer.Sync(ctx, ref type);
+    Syncer.Sync(ctx, ref name);
+    Syncer.Sync(ctx, ref module_id);
+    Syncer.Sync(ctx, ref local_vars_num);
+    Syncer.Sync(ctx, ref required_args_num);
+    Syncer.Sync(ctx, ref default_args_num);
+    Syncer.Sync(ctx, ref ip_addr);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    type = "";
-    module_id = 0;
-    name = "";
-    local_vars_num = 0;
-    required_args_num = 0;
-    default_args_num = 0;
-    ip_addr = -1;
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
-    Utils.sync(ctx, ref type);
-    Utils.sync(ctx, ref name);
-    Utils.sync(ctx, ref module_id);
-    Utils.sync(ctx, ref local_vars_num);
-    Utils.sync(ctx, ref required_args_num);
-    Utils.sync(ctx, ref default_args_num);
-    Utils.sync(ctx, ref ip_addr);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 7; 
+    return base.GetFieldsNum() + 7; 
   }
 }
 
@@ -520,30 +403,17 @@ public class AST_ClassDecl : AST_Nested
     return 168955538; 
   }
 
-  public AST_ClassDecl()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+
+    Syncer.Sync(ctx, ref name);
+    Syncer.Sync(ctx, ref parent);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    name = "";
-    parent = "";
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
-    Utils.sync(ctx, ref name);
-    Utils.sync(ctx, ref parent);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 2; 
+    return base.GetFieldsNum() + 2; 
   }
 }
 
@@ -557,24 +427,13 @@ public class AST_EnumItem : IMarshallable
     return 42971075; 
   }
 
-  public AST_EnumItem()
+  public void Sync(SyncContext ctx) 
   {
-    reset();
+    Syncer.Sync(ctx, ref name);
+    Syncer.Sync(ctx, ref value);
   }
 
-  public void reset() 
-  {
-    name = "";
-    value = 0;
-  }
-
-  public void syncFields(SyncContext ctx) 
-  {
-    Utils.sync(ctx, ref name);
-    Utils.sync(ctx, ref value);
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 2; 
   }
@@ -589,28 +448,16 @@ public class AST_EnumDecl : AST_Nested
     return 207366473; 
   }
 
-  public AST_EnumDecl()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+
+    Syncer.Sync(ctx, ref name);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    name = "";
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
-    Utils.sync(ctx, ref name);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 1; 
+    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -625,26 +472,14 @@ public class AST_UpVal : IMarshallable
     return 121447213; 
   }
 
-  public AST_UpVal()
+  public void Sync(SyncContext ctx) 
   {
-    reset();
+    Syncer.Sync(ctx, ref name);
+    Syncer.Sync(ctx, ref symb_idx);
+    Syncer.Sync(ctx, ref upsymb_idx);
   }
 
-  public void reset() 
-  {
-    name = "";
-    symb_idx = 0;
-    upsymb_idx = 0;
-  }
-
-  public void syncFields(SyncContext ctx) 
-  {
-    Utils.sync(ctx, ref name);
-    Utils.sync(ctx, ref symb_idx);
-    Utils.sync(ctx, ref upsymb_idx);
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 3; 
   }
@@ -659,28 +494,15 @@ public class AST_LambdaDecl : AST_FuncDecl
     return 44443142; 
   }
 
-  public AST_LambdaDecl()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+    Syncer.Sync(ctx, upvals);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    if(upvals == null) upvals = new List<AST_UpVal>(); 
-    upvals.Clear();
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-    Utils.sync(ctx, upvals);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 1; 
+    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -693,28 +515,16 @@ public class AST_TypeCast : AST_Nested
     return 234453676; 
   }
 
-  public AST_TypeCast()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+
+    Syncer.Sync(ctx, ref type);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    type = "";
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
-    Utils.sync(ctx, ref type);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 1; 
+    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -752,43 +562,25 @@ public class AST_Call  : AST_Nested
     return 42771415; 
   }
 
-  public AST_Call()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
-  }
-
-  public override void reset() 
-  {
-    base.reset();
-
-    type = new EnumCall(); 
-    name = "";
-    module_id = 0;
-    cargs_bits = 0;
-    line_num = 0;
-    symb_idx = 0;
-    scope_type = "";
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
+    base.Sync(ctx);
 
     int __tmp_type = (int)type;
-    Utils.sync(ctx, ref __tmp_type);
+    Syncer.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumCall)__tmp_type;
 
-    Utils.sync(ctx, ref name);
-    Utils.sync(ctx, ref module_id);
-    Utils.sync(ctx, ref cargs_bits);
-    Utils.sync(ctx, ref line_num);
-    Utils.sync(ctx, ref symb_idx);
-    Utils.sync(ctx, ref scope_type);
+    Syncer.Sync(ctx, ref name);
+    Syncer.Sync(ctx, ref module_id);
+    Syncer.Sync(ctx, ref cargs_bits);
+    Syncer.Sync(ctx, ref line_num);
+    Syncer.Sync(ctx, ref symb_idx);
+    Syncer.Sync(ctx, ref scope_type);
   }
 
-  public override int getFieldsCount() 
+  public override int GetFieldsNum() 
   {
-    return base.getFieldsCount() + 7; 
+    return base.GetFieldsNum() + 7; 
   }
 }
 
@@ -801,27 +593,15 @@ public class AST_Return  : AST_Nested
     return 204244643; 
   }
 
-  public AST_Return()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+    Syncer.Sync(ctx, ref num);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    num = 0;
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-    Utils.sync(ctx, ref num);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 1; 
+    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -832,20 +612,11 @@ public class AST_Break : IMarshallable
     return 93587594; 
   }
 
-  public AST_Break()
-  {
-    reset();
-  }
-
-  public void reset() 
+  public void Sync(SyncContext ctx) 
   {
   }
 
-  public void syncFields(SyncContext ctx) 
-  {
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 0; 
   }
@@ -860,22 +631,12 @@ public class AST_Continue : IMarshallable
     return 83587594; 
   }
 
-  public AST_Continue()
+  public void Sync(SyncContext ctx) 
   {
-    reset();
+    Syncer.Sync(ctx, ref jump_marker);
   }
 
-  public void reset() 
-  {
-    jump_marker = false;
-  }
-
-  public void syncFields(SyncContext ctx) 
-  {
-    Utils.sync(ctx, ref jump_marker);
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 1; 
   }
@@ -900,29 +661,17 @@ public class AST_Literal : IMarshallable
     return 246902930; 
   }
 
-  public AST_Literal()
-  {
-    reset();
-  }
-
-  public void reset() 
-  {
-    type = new EnumLiteral(); 
-    nval = 0;
-    sval = "";
-  }
-
-  public void syncFields(SyncContext ctx) 
+  public void Sync(SyncContext ctx) 
   {
     int __tmp_type = (int)type;
-    Utils.sync(ctx, ref __tmp_type);
+    Syncer.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumLiteral)__tmp_type;
 
-    Utils.sync(ctx, ref nval);
-    Utils.sync(ctx, ref sval);
+    Syncer.Sync(ctx, ref nval);
+    Syncer.Sync(ctx, ref sval);
   }
 
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 3; 
   }
@@ -941,36 +690,20 @@ public class AST_VarDecl : AST_Nested
     return 232512499; 
   }
 
-  public AST_VarDecl()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+
+    Syncer.Sync(ctx, ref name);
+    Syncer.Sync(ctx, ref symb_idx);
+    Syncer.Sync(ctx, ref is_func_arg);
+    Syncer.Sync(ctx, ref type);
+    Syncer.Sync(ctx, ref is_ref);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    name = "";
-    type = "";
-    symb_idx = 0;
-    is_func_arg = false;
-    is_ref = false;
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
-    Utils.sync(ctx, ref name);
-    Utils.sync(ctx, ref symb_idx);
-    Utils.sync(ctx, ref is_func_arg);
-    Utils.sync(ctx, ref type);
-    Utils.sync(ctx, ref is_ref);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 5; 
+    return base.GetFieldsNum() + 5; 
   }
 }
 
@@ -995,29 +728,18 @@ public class AST_Block : AST_Nested
     return 183750514; 
   }
 
-  public AST_Block()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
-  }
-
-  public override void reset() 
-  {
-    base.reset();
-    type = new EnumBlock(); 
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
+    base.Sync(ctx);
 
     int __tmp_type = (int)type;
-    Utils.sync(ctx, ref __tmp_type);
+    Syncer.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBlock)__tmp_type;
   }
 
-  public override int getFieldsCount() 
+  public override int GetFieldsNum() 
   {
-    return base.getFieldsCount() + 1; 
+    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -1031,30 +753,17 @@ public class AST_JsonObj : AST_Nested
     return 31901170; 
   }
 
-  public AST_JsonObj()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+
+    Syncer.Sync(ctx, ref type);
+    Syncer.Sync(ctx, ref line_num);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    type = "";
-    line_num = 0;
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
-    Utils.sync(ctx, ref type);
-    Utils.sync(ctx, ref line_num);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 2; 
+    return base.GetFieldsNum() + 2; 
   }
 }
 
@@ -1068,30 +777,17 @@ public class AST_JsonArr : AST_Nested
     return 47604479; 
   }
 
-  public AST_JsonArr()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+
+    Syncer.Sync(ctx, ref type);
+    Syncer.Sync(ctx, ref line_num);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    type = "";
-    line_num = 0;
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
-    Utils.sync(ctx, ref type);
-    Utils.sync(ctx, ref line_num);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 2; 
+    return base.GetFieldsNum() + 2; 
   }
 }
 
@@ -1102,20 +798,11 @@ public class AST_JsonArrAddItem : IMarshallable
     return 58382586; 
   }
 
-  public AST_JsonArrAddItem()
-  {
-    reset();
-  }
-
-  public void reset() 
+  public void Sync(SyncContext ctx) 
   {
   }
 
-  public void syncFields(SyncContext ctx) 
-  {
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 0; 
   }
@@ -1132,32 +819,18 @@ public class AST_JsonPair : AST_Nested
     return 235544635; 
   }
 
-  public AST_JsonPair()
+  public override void Sync(SyncContext ctx) 
   {
-    reset();
+    base.Sync(ctx);
+
+    Syncer.Sync(ctx, ref name);
+    Syncer.Sync(ctx, ref symb_idx);
+    Syncer.Sync(ctx, ref scope_type);
   }
 
-  public override void reset() 
+  public override int GetFieldsNum() 
   {
-    base.reset();
-
-    name = "";
-    symb_idx = 0;
-    scope_type = "";
-  }
-
-  public override void syncFields(SyncContext ctx) 
-  {
-    base.syncFields(ctx);
-
-    Utils.sync(ctx, ref name);
-    Utils.sync(ctx, ref symb_idx);
-    Utils.sync(ctx, ref scope_type);
-  }
-
-  public override int getFieldsCount() 
-  {
-    return base.getFieldsCount() + 3; 
+    return base.GetFieldsNum() + 3; 
   }
 }
 
@@ -1168,20 +841,11 @@ public class AST_PopValue : IMarshallable
     return 87387238; 
   }
 
-  public AST_PopValue()
-  {
-    reset();
-  }
-
-  public void reset() 
+  public void Sync(SyncContext ctx) 
   {
   }
 
-  public void syncFields(SyncContext ctx) 
-  {
-  }
-
-  public int getFieldsCount() 
+  public int GetFieldsNum() 
   {
     return 0; 
   }
@@ -1189,9 +853,9 @@ public class AST_PopValue : IMarshallable
 
 public static class AST_Factory
 {
-  static public IMarshallable createById(uint crc) 
+  static public IMarshallable Create(uint id) 
   {
-    switch(crc)
+    switch(id)
     {
       case 59352479: { return new AST_Nested(); };
       case 240440595: { return new AST_Interim(); };

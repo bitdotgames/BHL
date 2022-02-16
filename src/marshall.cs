@@ -9,15 +9,12 @@ namespace marshall {
 
 public enum ErrorCode
 {
-  NONE                   = -1,
   SUCCESS                = 0,
-  NO_SPACE_LEFT_IN_ARRAY = 1,
-  HAS_LEFT_SPACE         = 2,
-  ARRAY_STACK_IS_EMPTY   = 3,
-  FAIL_READ              = 4,
-  TYPE_DONT_MATCH        = 5,
-  DATA_MISSING           = 7,
-  GENERIC                = 10,
+  NO_RESERVED_SPACE      = 1,
+  DANGLING_DATA          = 2,
+  IO_READ                = 3,
+  TYPE_MISMATCH          = 4,
+  INVALID_POS            = 5,
 }
 
 public class Error : Exception
@@ -66,9 +63,8 @@ public struct SyncContext
 public interface IMarshallable 
 {
   uint CLASS_ID();
-  int getFieldsCount();
-  void syncFields(SyncContext ctx);
-  void reset();
+  int GetFieldsNum();
+  void Sync(SyncContext ctx);
 }
 
 public interface IReader 
@@ -110,7 +106,7 @@ public interface IWriter
   ErrorCode End(); 
 }
 
-public static class Utils 
+public static class Syncer 
 {
   public delegate void LogCb(string text);
   static public LogCb LogError = DefaultLog;
@@ -120,116 +116,116 @@ public static class Utils
   static void DefaultLog(string s)
   {}
 
-  static public void ensure(ErrorCode err)
+  static void Ensure(ErrorCode err)
   {
     if(err != ErrorCode.SUCCESS)
       throw new Error(err);
   }
 
-  static public void sync(SyncContext ctx, ref string v)
+  static public void Sync(SyncContext ctx, ref string v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadString(ref v));
+      Ensure(ctx.reader.ReadString(ref v));
     else
-      ensure(ctx.writer.WriteString(v));
+      Ensure(ctx.writer.WriteString(v));
   }
 
-  static public void sync(SyncContext ctx, ref long v)
+  static public void Sync(SyncContext ctx, ref long v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadI64(ref v));
+      Ensure(ctx.reader.ReadI64(ref v));
     else
-      ensure(ctx.writer.WriteI64(v));
+      Ensure(ctx.writer.WriteI64(v));
   }
 
-  static public void sync(SyncContext ctx, ref int v)
+  static public void Sync(SyncContext ctx, ref int v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadI32(ref v));
+      Ensure(ctx.reader.ReadI32(ref v));
     else
-      ensure(ctx.writer.WriteI32(v));
+      Ensure(ctx.writer.WriteI32(v));
   }
 
-  static public void sync(SyncContext ctx, ref short v)
+  static public void Sync(SyncContext ctx, ref short v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadI16(ref v));
+      Ensure(ctx.reader.ReadI16(ref v));
     else
-      ensure(ctx.writer.WriteI16(v));
+      Ensure(ctx.writer.WriteI16(v));
   }
 
-  static public void sync(SyncContext ctx, ref sbyte v)
+  static public void Sync(SyncContext ctx, ref sbyte v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadI8(ref v));
+      Ensure(ctx.reader.ReadI8(ref v));
     else
-      ensure(ctx.writer.WriteI8(v));
+      Ensure(ctx.writer.WriteI8(v));
   }
 
-  static public void sync(SyncContext ctx, ref ulong v)
+  static public void Sync(SyncContext ctx, ref ulong v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadU64(ref v));
+      Ensure(ctx.reader.ReadU64(ref v));
     else
-      ensure(ctx.writer.WriteU64(v));
+      Ensure(ctx.writer.WriteU64(v));
   }
 
-  static public void sync(SyncContext ctx, ref ushort v)
+  static public void Sync(SyncContext ctx, ref ushort v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadU16(ref v));
+      Ensure(ctx.reader.ReadU16(ref v));
     else
-      ensure(ctx.writer.WriteU16(v));
+      Ensure(ctx.writer.WriteU16(v));
   }
 
-  static public void sync(SyncContext ctx, ref uint v)
+  static public void Sync(SyncContext ctx, ref uint v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadU32(ref v));
+      Ensure(ctx.reader.ReadU32(ref v));
     else
-      ensure(ctx.writer.WriteU32(v));
+      Ensure(ctx.writer.WriteU32(v));
   }
 
-  static public void sync(SyncContext ctx, ref byte v)
+  static public void Sync(SyncContext ctx, ref byte v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadU8(ref v));
+      Ensure(ctx.reader.ReadU8(ref v));
     else
-      ensure(ctx.writer.WriteU8(v));
+      Ensure(ctx.writer.WriteU8(v));
   }
 
-  static public void sync(SyncContext ctx, ref bool v)
+  static public void Sync(SyncContext ctx, ref bool v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadBool(ref v));
+      Ensure(ctx.reader.ReadBool(ref v));
     else
-      ensure(ctx.writer.WriteBool(v));
+      Ensure(ctx.writer.WriteBool(v));
   }
 
-  static public void sync(SyncContext ctx, ref float v)
+  static public void Sync(SyncContext ctx, ref float v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadFloat(ref v));
+      Ensure(ctx.reader.ReadFloat(ref v));
     else
-      ensure(ctx.writer.WriteFloat(v));
+      Ensure(ctx.writer.WriteFloat(v));
   }
 
-  static public void sync(SyncContext ctx, ref double v)
+  static public void Sync(SyncContext ctx, ref double v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.ReadDouble(ref v));
+      Ensure(ctx.reader.ReadDouble(ref v));
     else
-      ensure(ctx.writer.WriteDouble(v));
+      Ensure(ctx.writer.WriteDouble(v));
   }
 
-  static int syncBeginArray<T>(SyncContext ctx, List<T> v)
+  static int BeginArray<T>(SyncContext ctx, List<T> v)
   {
     if(ctx.is_read)
     {
-      ensure(ctx.reader.BeginArray());
+      Ensure(ctx.reader.BeginArray());
 
       int size = 0;
-      ensure(ctx.reader.GetArraySize(ref size));
+      Ensure(ctx.reader.GetArraySize(ref size));
 
       if(v.Capacity < size) 
         v.Capacity = size;
@@ -239,276 +235,243 @@ public static class Utils
     else
     {
       int size = v == null ? 0 : v.Count;
-      ensure(ctx.writer.BeginArray(size));
+      Ensure(ctx.writer.BeginArray(size));
       return size;
     }
   }
 
-  static void syncEndArray(SyncContext ctx, IList v)
+  static void EndArray(SyncContext ctx, IList v)
   {
     if(ctx.is_read)
-      ensure(ctx.reader.EndArray());
+      Ensure(ctx.reader.EndArray());
     else
-      ensure(ctx.writer.EndArray());
+      Ensure(ctx.writer.EndArray());
   }
 
-  //TODO: this one should be used for all builtin types
-  //static public void sync<T>(MetaSyncContext ctx, List<T> v) where T : struct
-  //{
-  //  int size = syncBeginArray(ctx, v);
-  //  for(int i = 0; i < size; ++i)
-  //  {
-  //    var tmp = ctx.is_read ? default(T) : v[i];
-  //    sync(ctx, ref tmp);
-  //    if(ctx.is_read)
-  //      v.Add(tmp);
-  //  }
-  //  syncEndArray(ctx, v);
-  //}
-
-  static public void sync(SyncContext ctx, List<string> v)
+  static public void Sync(SyncContext ctx, List<string> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? "" : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<long> v)
+  static public void Sync(SyncContext ctx, List<long> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(long) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<int> v)
+  static public void Sync(SyncContext ctx, List<int> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(int) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<short> v)
+  static public void Sync(SyncContext ctx, List<short> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(short) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<sbyte> v)
+  static public void Sync(SyncContext ctx, List<sbyte> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(sbyte) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<ulong> v)
+  static public void Sync(SyncContext ctx, List<ulong> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(ulong) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<uint> v)
+  static public void Sync(SyncContext ctx, List<uint> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(uint) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<ushort> v)
+  static public void Sync(SyncContext ctx, List<ushort> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(ushort) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<byte> v)
+  static public void Sync(SyncContext ctx, List<byte> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(byte) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<bool> v)
+  static public void Sync(SyncContext ctx, List<bool> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(bool) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<float> v)
+  static public void Sync(SyncContext ctx, List<float> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(float) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync(SyncContext ctx, List<double> v)
+  static public void Sync(SyncContext ctx, List<double> v)
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? default(double) : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
   
-  static public void sync<T>(SyncContext ctx, List<T> v) where T : IMarshallable, new()
+  static public void Sync<T>(SyncContext ctx, List<T> v) where T : IMarshallable, new()
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? new T() : v[i];
-      sync(ctx, ref tmp);
+      Sync(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void syncVirtual(SyncContext ctx, ref IMarshallable v)
+  static public void SyncGeneric(SyncContext ctx, ref IMarshallable v)
   {
     if(ctx.is_read)
     {
-      ensure(ctx.reader.BeginArray());
+      Ensure(ctx.reader.BeginArray());
 
       uint clid = 0;
-      ensure(ctx.reader.ReadU32(ref clid));
+      Ensure(ctx.reader.ReadU32(ref clid));
       
       v = ctx.CreateById(clid);
       if(v == null) 
       {
         LogError("Could not create struct: " + clid);
-        ensure(ErrorCode.TYPE_DONT_MATCH);
+        Ensure(ErrorCode.TYPE_MISMATCH);
       }
 
-      v.syncFields(ctx);
-      ensure(ctx.reader.EndArray());
+      v.Sync(ctx);
+      Ensure(ctx.reader.EndArray());
     }
     else
     {
-      ensure(ctx.writer.BeginArray(v.getFieldsCount() + 1));
-      ensure(ctx.writer.WriteU32(v.CLASS_ID()));
-      v.syncFields(ctx);
-      ensure(ctx.writer.EndArray());
+      Ensure(ctx.writer.BeginArray(v.GetFieldsNum() + 1/*class id*/));
+      Ensure(ctx.writer.WriteU32(v.CLASS_ID()));
+      v.Sync(ctx);
+      Ensure(ctx.writer.EndArray());
     }
   }
 
-  static public void syncVirtual<T>(SyncContext ctx, List<T> v) where T : IMarshallable
+  static public void SyncGeneric<T>(SyncContext ctx, List<T> v) where T : IMarshallable
   {
-    int size = syncBeginArray(ctx, v);
+    int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = (IMarshallable)(ctx.is_read ? (IMarshallable)null : v[i]);
-      syncVirtual(ctx, ref tmp);
+      SyncGeneric(ctx, ref tmp);
       if(ctx.is_read)
         v.Add((T)tmp);
     }
-    syncEndArray(ctx, v);
+    EndArray(ctx, v);
   }
 
-  static public void sync<T>(SyncContext ctx, ref T v) where T : IMarshallable
+  static public void Sync<T>(SyncContext ctx, ref T v) where T : IMarshallable
   {
     if(ctx.is_read)
     {
-      Utils.ensure(ctx.reader.BeginArray());
-      v.syncFields(ctx);
-      Utils.ensure(ctx.reader.EndArray());  
+      Syncer.Ensure(ctx.reader.BeginArray());
+      v.Sync(ctx);
+      Syncer.Ensure(ctx.reader.EndArray());  
     }
     else
     {
-      Utils.ensure(ctx.writer.BeginArray(v.getFieldsCount()));
-      v.syncFields(ctx);
-      Utils.ensure(ctx.writer.EndArray());
+      Syncer.Ensure(ctx.writer.BeginArray(v.GetFieldsNum()));
+      v.Sync(ctx);
+      Syncer.Ensure(ctx.writer.EndArray());
     }
-  }
-
-  static public ErrorCode syncSafe<T>(SyncContext ctx, ref T v) where T : IMarshallable
-  {
-    try 
-    {
-      Utils.sync(ctx, ref v);
-    }
-    catch(Error e)
-    {
-      LogError(e.Message + " " + e.StackTrace);
-      return e.err;
-    }
-    catch(Exception e)
-    {
-      LogError(e.Message + " " + e.StackTrace);
-      return ErrorCode.GENERIC;
-    }
-    return ErrorCode.SUCCESS;
   }
 }
 
@@ -534,12 +497,12 @@ public class MsgPackDataWriter : IWriter
   ErrorCode decSpace() 
   {
     if(space.Count == 0)
-      return ErrorCode.NO_SPACE_LEFT_IN_ARRAY;
+      return ErrorCode.NO_RESERVED_SPACE;
     
     int left = space.Pop();
     left--;
     if(left < 0)
-      return ErrorCode.NO_SPACE_LEFT_IN_ARRAY;
+      return ErrorCode.NO_RESERVED_SPACE;
     
     space.Push(left);
     return ErrorCode.SUCCESS;    
@@ -559,11 +522,11 @@ public class MsgPackDataWriter : IWriter
   public ErrorCode EndArray() 
   {
     if(space.Count <= 1)
-      return ErrorCode.ARRAY_STACK_IS_EMPTY;
+      return ErrorCode.NO_RESERVED_SPACE;
     
     int left = space.Pop();
     if(left != 0)
-      return ErrorCode.HAS_LEFT_SPACE;
+      return ErrorCode.DANGLING_DATA;
     
     return ErrorCode.SUCCESS;
   }
@@ -571,7 +534,7 @@ public class MsgPackDataWriter : IWriter
   public ErrorCode End() 
   {
     if(space.Count != 1)
-      return ErrorCode.ARRAY_STACK_IS_EMPTY;
+      return ErrorCode.NO_RESERVED_SPACE;
     
     return ErrorCode.SUCCESS;
   }
@@ -701,13 +664,13 @@ public class MsgPackDataReader : IReader
   {
     if(!ArrayPositionValid())
     {
-      err = ErrorCode.DATA_MISSING;
+      err = ErrorCode.INVALID_POS;
       return 0;
     }
 
     if(!io.Read()) 
     {
-      err = ErrorCode.FAIL_READ;
+      err = ErrorCode.IO_READ;
       return 0;
     }
     
@@ -719,8 +682,8 @@ public class MsgPackDataReader : IReader
       return (int)io.ValueUnsigned;
     else
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_DONT_MATCH; 
+      Syncer.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_MISMATCH; 
       return 0;
     }
   }
@@ -729,13 +692,13 @@ public class MsgPackDataReader : IReader
   {
     if(!ArrayPositionValid())
     {
-      err = ErrorCode.DATA_MISSING;
+      err = ErrorCode.INVALID_POS;
       return 0;
     }
 
     if(!io.Read()) 
     {
-      err = ErrorCode.FAIL_READ;
+      err = ErrorCode.IO_READ;
       return 0;
     }
     
@@ -747,8 +710,8 @@ public class MsgPackDataReader : IReader
       return (uint)io.ValueSigned;
     else
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_DONT_MATCH; 
+      Syncer.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_MISMATCH; 
       return 0;
     }
   }
@@ -757,13 +720,13 @@ public class MsgPackDataReader : IReader
   {
     if(!ArrayPositionValid())
     {
-      err = ErrorCode.DATA_MISSING;
+      err = ErrorCode.INVALID_POS;
       return false;
     }
 
     if(!io.Read()) 
     {
-      err = ErrorCode.FAIL_READ;
+      err = ErrorCode.IO_READ;
       return false;
     }
     
@@ -777,8 +740,8 @@ public class MsgPackDataReader : IReader
       return (bool)io.ValueBoolean;
     else
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_DONT_MATCH; 
+      Syncer.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_MISMATCH; 
       return false;
     }
   }
@@ -787,13 +750,13 @@ public class MsgPackDataReader : IReader
   {
     if(!ArrayPositionValid())
     {
-      err = ErrorCode.DATA_MISSING;
+      err = ErrorCode.INVALID_POS;
       return 0;
     }
 
     if(!io.Read()) 
     {
-      err = ErrorCode.FAIL_READ;
+      err = ErrorCode.IO_READ;
       return 0;
     }
     
@@ -809,8 +772,8 @@ public class MsgPackDataReader : IReader
       return (ulong)io.ValueSigned64;
     else
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_DONT_MATCH; 
+      Syncer.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_MISMATCH; 
       return 0;
     }
   }
@@ -819,13 +782,13 @@ public class MsgPackDataReader : IReader
   {
     if(!ArrayPositionValid())
     {
-      err = ErrorCode.DATA_MISSING;
+      err = ErrorCode.INVALID_POS;
       return 0;
     }
 
     if(!io.Read()) 
     {
-      err = ErrorCode.FAIL_READ;
+      err = ErrorCode.IO_READ;
       return 0;
     }
     
@@ -841,8 +804,8 @@ public class MsgPackDataReader : IReader
       return io.ValueSigned64;
     else
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      err = ErrorCode.TYPE_DONT_MATCH; 
+      Syncer.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_MISMATCH; 
       return 0;
     }
   }
@@ -913,11 +876,11 @@ public class MsgPackDataReader : IReader
   public ErrorCode ReadFloat(ref float v) 
   {
     if(!ArrayPositionValid())
-      return ErrorCode.DATA_MISSING;
+      return ErrorCode.INVALID_POS;
 
     if(!io.Read()) 
     {
-      return ErrorCode.FAIL_READ;
+      return ErrorCode.IO_READ;
     }
 
     if(io.IsUnsigned()) 
@@ -946,8 +909,8 @@ public class MsgPackDataReader : IReader
           v = (float) tmp;
           break;
         default:
-          Utils.LogWarn("Got type: " + io.Type);
-          return ErrorCode.TYPE_DONT_MATCH; 
+          Syncer.LogWarn("Got type: " + io.Type);
+          return ErrorCode.TYPE_MISMATCH; 
       }
     }
     MoveNext();
@@ -957,11 +920,11 @@ public class MsgPackDataReader : IReader
   public ErrorCode ReadDouble(ref double v) 
   {
     if(!ArrayPositionValid())
-      return ErrorCode.DATA_MISSING;
+      return ErrorCode.INVALID_POS;
 
     if(!io.Read()) 
     {
-      return ErrorCode.FAIL_READ;
+      return ErrorCode.IO_READ;
     }
 
     if(io.IsUnsigned()) 
@@ -989,8 +952,8 @@ public class MsgPackDataReader : IReader
           v = (double) io.ValueSigned64;    
           break;
         default:
-          Utils.LogWarn("Got type: " + io.Type);
-          return ErrorCode.TYPE_DONT_MATCH; 
+          Syncer.LogWarn("Got type: " + io.Type);
+          return ErrorCode.TYPE_MISMATCH; 
       }
     }
     MoveNext();
@@ -1000,15 +963,15 @@ public class MsgPackDataReader : IReader
   public ErrorCode ReadRaw(ref byte[] v, ref int vlen) 
   {
     if(!ArrayPositionValid())
-      return ErrorCode.DATA_MISSING;
+      return ErrorCode.INVALID_POS;
 
     if(!io.Read()) 
-      return ErrorCode.FAIL_READ;
+      return ErrorCode.IO_READ;
 
     if(!io.IsRaw()) 
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      return ErrorCode.TYPE_DONT_MATCH;
+      Syncer.LogWarn("Got type: " + io.Type);
+      return ErrorCode.TYPE_MISMATCH;
     }
 
     vlen = (int)io.Length;
@@ -1022,15 +985,15 @@ public class MsgPackDataReader : IReader
   public ErrorCode ReadString(ref string v) 
   {
     if(!ArrayPositionValid())
-      return ErrorCode.DATA_MISSING;
+      return ErrorCode.INVALID_POS;
 
     if(!io.Read()) 
-      return ErrorCode.FAIL_READ;
+      return ErrorCode.IO_READ;
 
     if(!io.IsRaw()) 
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      return ErrorCode.TYPE_DONT_MATCH;
+      Syncer.LogWarn("Got type: " + io.Type);
+      return ErrorCode.TYPE_MISMATCH;
     }
 
     //TODO: use shared buffer for strings loading
@@ -1044,15 +1007,15 @@ public class MsgPackDataReader : IReader
   public ErrorCode BeginArray() 
   {
     if(!ArrayPositionValid())
-      return ErrorCode.DATA_MISSING;
+      return ErrorCode.INVALID_POS;
 
     if(!io.Read())
-      return ErrorCode.FAIL_READ;
+      return ErrorCode.IO_READ;
 
     if(!io.IsArray())
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      return ErrorCode.TYPE_DONT_MATCH;
+      Syncer.LogWarn("Got type: " + io.Type);
+      return ErrorCode.TYPE_MISMATCH;
     }
 
     ArrayPosition ap = new ArrayPosition(io.Length);
@@ -1064,8 +1027,8 @@ public class MsgPackDataReader : IReader
   {
     if(!io.IsArray())
     {
-      Utils.LogWarn("Got type: " + io.Type);
-      return ErrorCode.TYPE_DONT_MATCH;
+      Syncer.LogWarn("Got type: " + io.Type);
+      return ErrorCode.TYPE_MISMATCH;
     }
 
     v = (int) io.Length;
