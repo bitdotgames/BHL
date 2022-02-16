@@ -5,9 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace bhl {
+namespace marshall {
 
-//NOTE: don't change existing values
-public enum MetaIoError
+public enum ErrorCode
 {
   NONE                   = -1,
   SUCCESS                = 0,
@@ -20,26 +20,26 @@ public enum MetaIoError
   GENERIC                = 10,
 }
 
-public class MetaException : Exception
+public class Error : Exception
 {
-  public MetaIoError err;
+  public ErrorCode err;
 
-  public MetaException(MetaIoError err)
+  public Error(ErrorCode err)
   {
     this.err = err;
   }
 }
 
-public struct MetaSyncContext
+public struct SyncContext
 {
   public bool is_read;
-  public IDataReader reader;
-  public IDataWriter writer;
+  public IReader reader;
+  public IWriter writer;
   public uint opts;
 
-  public static MetaSyncContext NewForRead(IDataReader reader, uint opts = 0)
+  public static SyncContext NewForRead(IReader reader, uint opts = 0)
   {
-    var ctx = new MetaSyncContext() {
+    var ctx = new SyncContext() {
       is_read = true,
       reader = reader,
       writer = null,
@@ -48,9 +48,9 @@ public struct MetaSyncContext
     return ctx;
   }
 
-  public static MetaSyncContext NewForWrite(IDataWriter writer, uint opts = 0)
+  public static SyncContext NewForWrite(IWriter writer, uint opts = 0)
   {
-    var ctx = new MetaSyncContext() {
+    var ctx = new SyncContext() {
       is_read = false,
       reader = null,
       writer = writer,
@@ -60,56 +60,56 @@ public struct MetaSyncContext
   }
 }
 
-public interface IMetaStruct 
+public interface IMarshallable 
 {
   uint CLASS_ID();
   int getFieldsCount();
-  void syncFields(MetaSyncContext ctx);
+  void syncFields(SyncContext ctx);
   void reset();
 }
 
-public interface IDataReader 
+public interface IReader 
 {
-  MetaIoError ReadI8(ref sbyte v);
-  MetaIoError ReadU8(ref byte v);
-  MetaIoError ReadI16(ref short v);
-  MetaIoError ReadU16(ref ushort v);
-  MetaIoError ReadI32(ref int v);
-  MetaIoError ReadU32(ref uint v);
-  MetaIoError ReadU64(ref ulong v);
-  MetaIoError ReadI64(ref long v);
-  MetaIoError ReadFloat(ref float v);
-  MetaIoError ReadBool(ref bool v);
-  MetaIoError ReadDouble(ref double v);
-  MetaIoError ReadString(ref string v);
-  MetaIoError ReadRaw(ref byte[] v, ref int vlen);
-  MetaIoError BeginArray(); 
-  MetaIoError GetArraySize(ref int v);
-  MetaIoError EndArray(); 
+  ErrorCode ReadI8(ref sbyte v);
+  ErrorCode ReadU8(ref byte v);
+  ErrorCode ReadI16(ref short v);
+  ErrorCode ReadU16(ref ushort v);
+  ErrorCode ReadI32(ref int v);
+  ErrorCode ReadU32(ref uint v);
+  ErrorCode ReadU64(ref ulong v);
+  ErrorCode ReadI64(ref long v);
+  ErrorCode ReadFloat(ref float v);
+  ErrorCode ReadBool(ref bool v);
+  ErrorCode ReadDouble(ref double v);
+  ErrorCode ReadString(ref string v);
+  ErrorCode ReadRaw(ref byte[] v, ref int vlen);
+  ErrorCode BeginArray(); 
+  ErrorCode GetArraySize(ref int v);
+  ErrorCode EndArray(); 
 }
 
-public interface IDataWriter 
+public interface IWriter 
 {
-  MetaIoError WriteI8(sbyte v);
-  MetaIoError WriteU8(byte v);
-  MetaIoError WriteI16(short v);
-  MetaIoError WriteU16(ushort v);
-  MetaIoError WriteI32(int v);
-  MetaIoError WriteU32(uint v);
-  MetaIoError WriteI64(long v);
-  MetaIoError WriteU64(ulong v);
-  MetaIoError WriteFloat(float v);
-  MetaIoError WriteBool(bool v);
-  MetaIoError WriteDouble(double v);
-  MetaIoError WriteString(string v);
-  MetaIoError BeginArray(int len); 
-  MetaIoError EndArray(); 
-  MetaIoError End(); 
+  ErrorCode WriteI8(sbyte v);
+  ErrorCode WriteU8(byte v);
+  ErrorCode WriteI16(short v);
+  ErrorCode WriteU16(ushort v);
+  ErrorCode WriteI32(int v);
+  ErrorCode WriteU32(uint v);
+  ErrorCode WriteI64(long v);
+  ErrorCode WriteU64(ulong v);
+  ErrorCode WriteFloat(float v);
+  ErrorCode WriteBool(bool v);
+  ErrorCode WriteDouble(double v);
+  ErrorCode WriteString(string v);
+  ErrorCode BeginArray(int len); 
+  ErrorCode EndArray(); 
+  ErrorCode End(); 
 }
 
-public static class MetaUtils 
+public static class Utils 
 {
-  public delegate IMetaStruct CreateByIdCb(uint id); 
+  public delegate IMarshallable CreateByIdCb(uint id); 
   static public CreateByIdCb CreateById;
 
   public delegate void LogCb(string text);
@@ -120,13 +120,13 @@ public static class MetaUtils
   static void DefaultLog(string s)
   {}
 
-  static public void ensure(MetaIoError err)
+  static public void ensure(ErrorCode err)
   {
-    if(err != MetaIoError.SUCCESS)
-      throw new MetaException(err);
+    if(err != ErrorCode.SUCCESS)
+      throw new Error(err);
   }
 
-  static public void sync(MetaSyncContext ctx, ref string v)
+  static public void sync(SyncContext ctx, ref string v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadString(ref v));
@@ -134,7 +134,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteString(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref long v)
+  static public void sync(SyncContext ctx, ref long v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadI64(ref v));
@@ -142,7 +142,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteI64(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref int v)
+  static public void sync(SyncContext ctx, ref int v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadI32(ref v));
@@ -150,7 +150,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteI32(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref short v)
+  static public void sync(SyncContext ctx, ref short v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadI16(ref v));
@@ -158,7 +158,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteI16(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref sbyte v)
+  static public void sync(SyncContext ctx, ref sbyte v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadI8(ref v));
@@ -166,7 +166,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteI8(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref ulong v)
+  static public void sync(SyncContext ctx, ref ulong v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadU64(ref v));
@@ -174,7 +174,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteU64(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref ushort v)
+  static public void sync(SyncContext ctx, ref ushort v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadU16(ref v));
@@ -182,7 +182,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteU16(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref uint v)
+  static public void sync(SyncContext ctx, ref uint v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadU32(ref v));
@@ -190,7 +190,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteU32(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref byte v)
+  static public void sync(SyncContext ctx, ref byte v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadU8(ref v));
@@ -198,7 +198,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteU8(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref bool v)
+  static public void sync(SyncContext ctx, ref bool v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadBool(ref v));
@@ -206,7 +206,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteBool(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref float v)
+  static public void sync(SyncContext ctx, ref float v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadFloat(ref v));
@@ -214,7 +214,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteFloat(v));
   }
 
-  static public void sync(MetaSyncContext ctx, ref double v)
+  static public void sync(SyncContext ctx, ref double v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.ReadDouble(ref v));
@@ -222,7 +222,7 @@ public static class MetaUtils
       ensure(ctx.writer.WriteDouble(v));
   }
 
-  static int syncBeginArray<T>(MetaSyncContext ctx, List<T> v)
+  static int syncBeginArray<T>(SyncContext ctx, List<T> v)
   {
     if(ctx.is_read)
     {
@@ -244,7 +244,7 @@ public static class MetaUtils
     }
   }
 
-  static void syncEndArray(MetaSyncContext ctx, IList v)
+  static void syncEndArray(SyncContext ctx, IList v)
   {
     if(ctx.is_read)
       ensure(ctx.reader.EndArray());
@@ -266,7 +266,7 @@ public static class MetaUtils
   //  syncEndArray(ctx, v);
   //}
 
-  static public void sync(MetaSyncContext ctx, List<string> v)
+  static public void sync(SyncContext ctx, List<string> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -279,7 +279,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<long> v)
+  static public void sync(SyncContext ctx, List<long> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -292,7 +292,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<int> v)
+  static public void sync(SyncContext ctx, List<int> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -305,7 +305,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<short> v)
+  static public void sync(SyncContext ctx, List<short> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -318,7 +318,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<sbyte> v)
+  static public void sync(SyncContext ctx, List<sbyte> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -331,7 +331,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<ulong> v)
+  static public void sync(SyncContext ctx, List<ulong> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -344,7 +344,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<uint> v)
+  static public void sync(SyncContext ctx, List<uint> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -357,7 +357,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<ushort> v)
+  static public void sync(SyncContext ctx, List<ushort> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -370,7 +370,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<byte> v)
+  static public void sync(SyncContext ctx, List<byte> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -383,7 +383,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<bool> v)
+  static public void sync(SyncContext ctx, List<bool> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -396,7 +396,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<float> v)
+  static public void sync(SyncContext ctx, List<float> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -409,7 +409,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync(MetaSyncContext ctx, List<double> v)
+  static public void sync(SyncContext ctx, List<double> v)
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -422,7 +422,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
   
-  static public void sync<T>(MetaSyncContext ctx, List<T> v) where T : IMetaStruct, new()
+  static public void sync<T>(SyncContext ctx, List<T> v) where T : IMarshallable, new()
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
@@ -435,7 +435,7 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void syncVirtual(MetaSyncContext ctx, ref IMetaStruct v)
+  static public void syncVirtual(SyncContext ctx, ref IMarshallable v)
   {
     if(ctx.is_read)
     {
@@ -448,7 +448,7 @@ public static class MetaUtils
       if(v == null) 
       {
         LogError("Could not create struct: " + clid);
-        ensure(MetaIoError.TYPE_DONT_MATCH);
+        ensure(ErrorCode.TYPE_DONT_MATCH);
       }
 
       v.syncFields(ctx);
@@ -463,12 +463,12 @@ public static class MetaUtils
     }
   }
 
-  static public void syncVirtual<T>(MetaSyncContext ctx, List<T> v) where T : IMetaStruct
+  static public void syncVirtual<T>(SyncContext ctx, List<T> v) where T : IMarshallable
   {
     int size = syncBeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
-      var tmp = (IMetaStruct)(ctx.is_read ? (IMetaStruct)null : v[i]);
+      var tmp = (IMarshallable)(ctx.is_read ? (IMarshallable)null : v[i]);
       syncVirtual(ctx, ref tmp);
       if(ctx.is_read)
         v.Add((T)tmp);
@@ -476,29 +476,29 @@ public static class MetaUtils
     syncEndArray(ctx, v);
   }
 
-  static public void sync<T>(MetaSyncContext ctx, ref T v) where T : IMetaStruct
+  static public void sync<T>(SyncContext ctx, ref T v) where T : IMarshallable
   {
     if(ctx.is_read)
     {
-      MetaUtils.ensure(ctx.reader.BeginArray());
+      Utils.ensure(ctx.reader.BeginArray());
       v.syncFields(ctx);
-      MetaUtils.ensure(ctx.reader.EndArray());  
+      Utils.ensure(ctx.reader.EndArray());  
     }
     else
     {
-      MetaUtils.ensure(ctx.writer.BeginArray(v.getFieldsCount()));
+      Utils.ensure(ctx.writer.BeginArray(v.getFieldsCount()));
       v.syncFields(ctx);
-      MetaUtils.ensure(ctx.writer.EndArray());
+      Utils.ensure(ctx.writer.EndArray());
     }
   }
 
-  static public MetaIoError syncSafe<T>(MetaSyncContext ctx, ref T v) where T : IMetaStruct
+  static public ErrorCode syncSafe<T>(SyncContext ctx, ref T v) where T : IMarshallable
   {
     try 
     {
-      MetaUtils.sync(ctx, ref v);
+      Utils.sync(ctx, ref v);
     }
-    catch(MetaException e)
+    catch(Error e)
     {
       LogError(e.Message + " " + e.StackTrace);
       return e.err;
@@ -506,13 +506,13 @@ public static class MetaUtils
     catch(Exception e)
     {
       LogError(e.Message + " " + e.StackTrace);
-      return MetaIoError.GENERIC;
+      return ErrorCode.GENERIC;
     }
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 }
 
-public class MsgPackDataWriter : IDataWriter 
+public class MsgPackDataWriter : IWriter 
 {
   Stream stream;
   MsgPackWriter io;
@@ -531,118 +531,118 @@ public class MsgPackDataWriter : IDataWriter
     space.Push(1);
   }
 
-  MetaIoError decSpace() 
+  ErrorCode decSpace() 
   {
     if(space.Count == 0)
-      return MetaIoError.NO_SPACE_LEFT_IN_ARRAY;
+      return ErrorCode.NO_SPACE_LEFT_IN_ARRAY;
     
     int left = space.Pop();
     left--;
     if(left < 0)
-      return MetaIoError.NO_SPACE_LEFT_IN_ARRAY;
+      return ErrorCode.NO_SPACE_LEFT_IN_ARRAY;
     
     space.Push(left);
-    return MetaIoError.SUCCESS;    
+    return ErrorCode.SUCCESS;    
   }
 
-  public MetaIoError BeginArray(int size) 
+  public ErrorCode BeginArray(int size) 
   {
-    MetaIoError err = decSpace();
-    if(err != MetaIoError.SUCCESS)
+    ErrorCode err = decSpace();
+    if(err != ErrorCode.SUCCESS)
       return err;
     
     space.Push(size);
     io.WriteArrayHeader(size);
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 
-  public MetaIoError EndArray() 
+  public ErrorCode EndArray() 
   {
     if(space.Count <= 1)
-      return MetaIoError.ARRAY_STACK_IS_EMPTY;
+      return ErrorCode.ARRAY_STACK_IS_EMPTY;
     
     int left = space.Pop();
     if(left != 0)
-      return MetaIoError.HAS_LEFT_SPACE;
+      return ErrorCode.HAS_LEFT_SPACE;
     
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
   
-  public MetaIoError End() 
+  public ErrorCode End() 
   {
     if(space.Count != 1)
-      return MetaIoError.ARRAY_STACK_IS_EMPTY;
+      return ErrorCode.ARRAY_STACK_IS_EMPTY;
     
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 
-  public MetaIoError WriteI8(sbyte v) 
+  public ErrorCode WriteI8(sbyte v) 
   {
     io.Write(v);
     return decSpace();
   }
  
-  public MetaIoError WriteU8(byte v) 
+  public ErrorCode WriteU8(byte v) 
   {
     io.Write(v);
     return decSpace();
   }
   
-  public MetaIoError WriteI16(short v) 
+  public ErrorCode WriteI16(short v) 
   {
     io.Write(v);
     return decSpace();
   }
 
-  public MetaIoError WriteU16(ushort v) 
+  public ErrorCode WriteU16(ushort v) 
   {
     io.Write(v);
     return decSpace();
   }
 
-  public MetaIoError WriteI32(int v) 
+  public ErrorCode WriteI32(int v) 
   {
     io.Write(v);
     return decSpace();
   }
 
-  public MetaIoError WriteU32(uint v) 
+  public ErrorCode WriteU32(uint v) 
   {
     io.Write(v);
     return decSpace();
   }
 
-  public MetaIoError WriteU64(ulong v) 
+  public ErrorCode WriteU64(ulong v) 
   {
     io.Write(v);
     return decSpace();
   }
 
-  public MetaIoError WriteI64(long v) 
+  public ErrorCode WriteI64(long v) 
   {
     io.Write(v);
     return decSpace();
   }
 
-  public MetaIoError WriteBool(bool v) 
+  public ErrorCode WriteBool(bool v) 
   {
     io.Write(v ? 1 : 0);
     return decSpace();
   }
 
-  public MetaIoError WriteFloat(float v) 
+  public ErrorCode WriteFloat(float v) 
   {
     io.Write(v);
     return decSpace();
   }
 
-  public MetaIoError WriteDouble(double v) 
+  public ErrorCode WriteDouble(double v) 
   {
     io.Write(v);
     return decSpace();
   }
 
-  public MetaIoError WriteString(string v) 
+  public ErrorCode WriteString(string v) 
   {
     if(v == null) 
       io.Write("");
@@ -652,7 +652,7 @@ public class MsgPackDataWriter : IDataWriter
     return decSpace();
   }
 
-  public MetaIoError WriteNil()
+  public ErrorCode WriteNil()
   {
     io.WriteNil();
     
@@ -660,7 +660,7 @@ public class MsgPackDataWriter : IDataWriter
   }
 }
 
-public class MsgPackDataReader : IDataReader 
+public class MsgPackDataReader : IReader 
 {
   Stream stream;
   MsgPackReader io;
@@ -697,17 +697,17 @@ public class MsgPackDataReader : IDataReader
     stack.Clear();
   }
 
-  int nextInt(ref MetaIoError err) 
+  int nextInt(ref ErrorCode err) 
   {
     if(!ArrayPositionValid())
     {
-      err = MetaIoError.DATA_MISSING;
+      err = ErrorCode.DATA_MISSING;
       return 0;
     }
 
     if(!io.Read()) 
     {
-      err = MetaIoError.FAIL_READ;
+      err = ErrorCode.FAIL_READ;
       return 0;
     }
     
@@ -719,23 +719,23 @@ public class MsgPackDataReader : IDataReader
       return (int)io.ValueUnsigned;
     else
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      err = MetaIoError.TYPE_DONT_MATCH; 
+      Utils.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_DONT_MATCH; 
       return 0;
     }
   }
    
-  uint nextUint(ref MetaIoError err) 
+  uint nextUint(ref ErrorCode err) 
   {
     if(!ArrayPositionValid())
     {
-      err = MetaIoError.DATA_MISSING;
+      err = ErrorCode.DATA_MISSING;
       return 0;
     }
 
     if(!io.Read()) 
     {
-      err = MetaIoError.FAIL_READ;
+      err = ErrorCode.FAIL_READ;
       return 0;
     }
     
@@ -747,23 +747,23 @@ public class MsgPackDataReader : IDataReader
       return (uint)io.ValueSigned;
     else
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      err = MetaIoError.TYPE_DONT_MATCH; 
+      Utils.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_DONT_MATCH; 
       return 0;
     }
   }
 
-  bool nextBool(ref MetaIoError err) 
+  bool nextBool(ref ErrorCode err) 
   {
     if(!ArrayPositionValid())
     {
-      err = MetaIoError.DATA_MISSING;
+      err = ErrorCode.DATA_MISSING;
       return false;
     }
 
     if(!io.Read()) 
     {
-      err = MetaIoError.FAIL_READ;
+      err = ErrorCode.FAIL_READ;
       return false;
     }
     
@@ -777,23 +777,23 @@ public class MsgPackDataReader : IDataReader
       return (bool)io.ValueBoolean;
     else
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      err = MetaIoError.TYPE_DONT_MATCH; 
+      Utils.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_DONT_MATCH; 
       return false;
     }
   }
 
-  ulong nextUint64(ref MetaIoError err) 
+  ulong nextUint64(ref ErrorCode err) 
   {
     if(!ArrayPositionValid())
     {
-      err = MetaIoError.DATA_MISSING;
+      err = ErrorCode.DATA_MISSING;
       return 0;
     }
 
     if(!io.Read()) 
     {
-      err = MetaIoError.FAIL_READ;
+      err = ErrorCode.FAIL_READ;
       return 0;
     }
     
@@ -809,23 +809,23 @@ public class MsgPackDataReader : IDataReader
       return (ulong)io.ValueSigned64;
     else
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      err = MetaIoError.TYPE_DONT_MATCH; 
+      Utils.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_DONT_MATCH; 
       return 0;
     }
   }
 
-  long nextInt64(ref MetaIoError err) 
+  long nextInt64(ref ErrorCode err) 
   {
     if(!ArrayPositionValid())
     {
-      err = MetaIoError.DATA_MISSING;
+      err = ErrorCode.DATA_MISSING;
       return 0;
     }
 
     if(!io.Read()) 
     {
-      err = MetaIoError.FAIL_READ;
+      err = ErrorCode.FAIL_READ;
       return 0;
     }
     
@@ -841,83 +841,83 @@ public class MsgPackDataReader : IDataReader
       return io.ValueSigned64;
     else
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      err = MetaIoError.TYPE_DONT_MATCH; 
+      Utils.LogWarn("Got type: " + io.Type);
+      err = ErrorCode.TYPE_DONT_MATCH; 
       return 0;
     }
   }
   
-  public MetaIoError ReadI8(ref sbyte v) 
+  public ErrorCode ReadI8(ref sbyte v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = (sbyte) nextInt(ref err);
     return err;
   }
   
-  public MetaIoError ReadI16(ref short v) 
+  public ErrorCode ReadI16(ref short v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = (short) nextInt(ref err);
     return err;
   }
   
-  public MetaIoError ReadI32(ref int v) 
+  public ErrorCode ReadI32(ref int v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = nextInt(ref err);
     return err;
   }
   
-  public MetaIoError ReadU8(ref byte v) 
+  public ErrorCode ReadU8(ref byte v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = (byte) nextUint(ref err);
     return err;
   }
   
-  public MetaIoError ReadU16(ref ushort v) 
+  public ErrorCode ReadU16(ref ushort v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = (ushort) nextUint(ref err);
     return err;
   }
   
-  public MetaIoError ReadU32(ref uint v) 
+  public ErrorCode ReadU32(ref uint v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = nextUint(ref err);
     return err;
   }
 
-  public MetaIoError ReadU64(ref ulong v) 
+  public ErrorCode ReadU64(ref ulong v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = nextUint64(ref err);
     return err;
   }
 
-  public MetaIoError ReadI64(ref long v) 
+  public ErrorCode ReadI64(ref long v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = nextInt64(ref err);
     return err;
   }
 
-  public MetaIoError ReadBool(ref bool v) 
+  public ErrorCode ReadBool(ref bool v) 
   {
-    MetaIoError err = 0;
+    ErrorCode err = 0;
     v = nextBool(ref err);
     return err;
   }
 
-  public MetaIoError ReadFloat(ref float v) 
+  public ErrorCode ReadFloat(ref float v) 
   {
     if(!ArrayPositionValid())
-      return MetaIoError.DATA_MISSING;
+      return ErrorCode.DATA_MISSING;
 
     if(!io.Read()) 
     {
-      return MetaIoError.FAIL_READ;
+      return ErrorCode.FAIL_READ;
     }
 
     if(io.IsUnsigned()) 
@@ -946,22 +946,22 @@ public class MsgPackDataReader : IDataReader
           v = (float) tmp;
           break;
         default:
-          MetaUtils.LogWarn("Got type: " + io.Type);
-          return MetaIoError.TYPE_DONT_MATCH; 
+          Utils.LogWarn("Got type: " + io.Type);
+          return ErrorCode.TYPE_DONT_MATCH; 
       }
     }
     MoveNext();
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 
-  public MetaIoError ReadDouble(ref double v) 
+  public ErrorCode ReadDouble(ref double v) 
   {
     if(!ArrayPositionValid())
-      return MetaIoError.DATA_MISSING;
+      return ErrorCode.DATA_MISSING;
 
     if(!io.Read()) 
     {
-      return MetaIoError.FAIL_READ;
+      return ErrorCode.FAIL_READ;
     }
 
     if(io.IsUnsigned()) 
@@ -989,26 +989,26 @@ public class MsgPackDataReader : IDataReader
           v = (double) io.ValueSigned64;    
           break;
         default:
-          MetaUtils.LogWarn("Got type: " + io.Type);
-          return MetaIoError.TYPE_DONT_MATCH; 
+          Utils.LogWarn("Got type: " + io.Type);
+          return ErrorCode.TYPE_DONT_MATCH; 
       }
     }
     MoveNext();
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 
-  public MetaIoError ReadRaw(ref byte[] v, ref int vlen) 
+  public ErrorCode ReadRaw(ref byte[] v, ref int vlen) 
   {
     if(!ArrayPositionValid())
-      return MetaIoError.DATA_MISSING;
+      return ErrorCode.DATA_MISSING;
 
     if(!io.Read()) 
-      return MetaIoError.FAIL_READ;
+      return ErrorCode.FAIL_READ;
 
     if(!io.IsRaw()) 
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      return MetaIoError.TYPE_DONT_MATCH;
+      Utils.LogWarn("Got type: " + io.Type);
+      return ErrorCode.TYPE_DONT_MATCH;
     }
 
     vlen = (int)io.Length;
@@ -1016,21 +1016,21 @@ public class MsgPackDataReader : IDataReader
       Array.Resize(ref v, vlen);
     io.ReadValueRaw(v, 0, vlen);
     MoveNext();
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 
-  public MetaIoError ReadString(ref string v) 
+  public ErrorCode ReadString(ref string v) 
   {
     if(!ArrayPositionValid())
-      return MetaIoError.DATA_MISSING;
+      return ErrorCode.DATA_MISSING;
 
     if(!io.Read()) 
-      return MetaIoError.FAIL_READ;
+      return ErrorCode.FAIL_READ;
 
     if(!io.IsRaw()) 
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      return MetaIoError.TYPE_DONT_MATCH;
+      Utils.LogWarn("Got type: " + io.Type);
+      return ErrorCode.TYPE_DONT_MATCH;
     }
 
     //TODO: use shared buffer for strings loading
@@ -1038,38 +1038,38 @@ public class MsgPackDataReader : IDataReader
     io.ReadValueRaw(strval, 0, strval.Length);
     v = System.Text.Encoding.UTF8.GetString(strval);
     MoveNext();
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 
-  public MetaIoError BeginArray() 
+  public ErrorCode BeginArray() 
   {
     if(!ArrayPositionValid())
-      return MetaIoError.DATA_MISSING;
+      return ErrorCode.DATA_MISSING;
 
     if(!io.Read())
-      return MetaIoError.FAIL_READ;
+      return ErrorCode.FAIL_READ;
 
     if(!io.IsArray())
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      return MetaIoError.TYPE_DONT_MATCH;
+      Utils.LogWarn("Got type: " + io.Type);
+      return ErrorCode.TYPE_DONT_MATCH;
     }
 
     ArrayPosition ap = new ArrayPosition(io.Length);
     stack.Push(ap);
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   } 
 
-  public MetaIoError GetArraySize(ref int v) 
+  public ErrorCode GetArraySize(ref int v) 
   {
     if(!io.IsArray())
     {
-      MetaUtils.LogWarn("Got type: " + io.Type);
-      return MetaIoError.TYPE_DONT_MATCH;
+      Utils.LogWarn("Got type: " + io.Type);
+      return ErrorCode.TYPE_DONT_MATCH;
     }
 
     v = (int) io.Length;
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 
   void SkipField()
@@ -1099,12 +1099,12 @@ public class MsgPackDataReader : IDataReader
     }
   }
 
-  public MetaIoError EndArray() 
+  public ErrorCode EndArray() 
   {
     SkipTrailingFields();
     stack.Pop();
     MoveNext();
-    return MetaIoError.SUCCESS;
+    return ErrorCode.SUCCESS;
   }
 
   int ArrayEntriesLeft()
@@ -1131,4 +1131,5 @@ public class MsgPackDataReader : IDataReader
   }
 }
 
+} // namespace marshall
 } // namespace bhl

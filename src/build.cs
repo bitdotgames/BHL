@@ -7,6 +7,8 @@ using System.Diagnostics;
 
 namespace bhl {
 
+using marshall;
+
 public class BuildConf
 {
   public string args = ""; 
@@ -252,7 +254,7 @@ public class Build
     return lz4_bytes;
   }
 
-  public class Symbols : IMetaStruct
+  public class Symbols : IMarshallable
   {
     //all collections have the same amount ot items
     public List<string> names = new List<string>();
@@ -276,10 +278,10 @@ public class Build
       files.Clear();
     }
 
-    public void syncFields(MetaSyncContext ctx) 
+    public void syncFields(SyncContext ctx) 
     {
-      MetaUtils.sync(ctx, names);
-      MetaUtils.sync(ctx, files);
+      Utils.sync(ctx, names);
+      Utils.sync(ctx, files);
     }
 
     public void Add(string name, string file)
@@ -415,7 +417,7 @@ public class Build
       Console.WriteLine("BHL Parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
 
-    public class FileImports : IMetaStruct
+    public class FileImports : IMarshallable
     {
       public List<string> files = new List<string>();
 
@@ -434,9 +436,9 @@ public class Build
         files.Clear();
       }
 
-      public void syncFields(MetaSyncContext ctx) 
+      public void syncFields(SyncContext ctx) 
       {
-        MetaUtils.sync(ctx, files);
+        Utils.sync(ctx, files);
       }
     }
 

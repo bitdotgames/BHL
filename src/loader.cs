@@ -35,7 +35,7 @@ public class ModuleImporter : IModuleImporter
   public const byte COMPILE_FMT = 2;
 
   Stream source;
-  MsgPackDataReader reader;
+  marshall.MsgPackDataReader reader;
   Lz4DecoderStream decoder = new Lz4DecoderStream();
   MemoryStream mod_stream = new MemoryStream();
   MemoryStream lz_stream = new MemoryStream();
@@ -61,26 +61,26 @@ public class ModuleImporter : IModuleImporter
     source = source_;
     source.Position = 0;
 
-    reader = new MsgPackDataReader(source);
+    reader = new marshall.MsgPackDataReader(source);
 
     byte file_format = 0;
-    Util.Verify(reader.ReadU8(ref file_format) == MetaIoError.SUCCESS);
+    Util.Verify(reader.ReadU8(ref file_format) == 0);
     Util.Verify(file_format == COMPILE_FMT);
 
     uint file_version = 0;
-    Util.Verify(reader.ReadU32(ref file_version) == MetaIoError.SUCCESS);
+    Util.Verify(reader.ReadU32(ref file_version) == 0);
     Util.Verify(file_version == 1);
 
     int num_entries = 0;
-    Util.Verify(reader.ReadI32(ref num_entries) == MetaIoError.SUCCESS);
+    Util.Verify(reader.ReadI32(ref num_entries) == 0);
     //Util.Debug("Total modules: " + total_modules);
     while(num_entries-- > 0)
     {
       int format = 0;
-      Util.Verify(reader.ReadI32(ref format) == MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadI32(ref format) == 0);
 
       string name = "";
-      Util.Verify(reader.ReadString(ref name) == MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadString(ref name) == 0);
 
       var ent = new Entry();
       ent.format = (ModuleBinaryFormat)format;
@@ -92,7 +92,7 @@ public class ModuleImporter : IModuleImporter
       //skipping binary blob
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
-      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == 0);
       TempBuffer.Update(tmp_buf);
     }
   }
@@ -119,7 +119,7 @@ public class ModuleImporter : IModuleImporter
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
       reader.setPos(ent.stream_pos);
-      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == 0);
       TempBuffer.Update(tmp_buf);
       res = tmp_buf;
       res_len = tmp_buf_len;
@@ -129,7 +129,7 @@ public class ModuleImporter : IModuleImporter
       var lz_buf = TempBuffer.Get();
       int lz_buf_len = 0;
       reader.setPos(ent.stream_pos);
-      Util.Verify(reader.ReadRaw(ref lz_buf, ref lz_buf_len) == MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadRaw(ref lz_buf, ref lz_buf_len) == 0);
       TempBuffer.Update(lz_buf);
 
       var dst_buf = TempBuffer.Get();
@@ -153,7 +153,7 @@ public class ModuleImporter : IModuleImporter
       var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
       reader.setPos(ent.stream_pos);
-      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == MetaIoError.SUCCESS);
+      Util.Verify(reader.ReadRaw(ref tmp_buf, ref tmp_buf_len) == 0);
       TempBuffer.Update(tmp_buf);
       string file_path = System.Text.Encoding.UTF8.GetString(tmp_buf, 0, tmp_buf_len);
       var file_bytes = File.ReadAllBytes(file_path);

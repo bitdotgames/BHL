@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+using marshall;
+
 public abstract class AST_Visitor
 {
   public abstract void DoVisit(AST_Interim node);
@@ -31,7 +33,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_JsonArrAddItem node);
   public abstract void DoVisit(AST_JsonPair node);
 
-  public void Visit(IMetaStruct node)
+  public void Visit(IMarshallable node)
   {
     if(node == null)
       throw new Exception("NULL node");
@@ -142,9 +144,9 @@ public class LazyAST
   }
 }
 
-public class AST_Nested : IMetaStruct
+public class AST_Nested : IMarshallable
 {
-  public List<IMetaStruct> children = new List<IMetaStruct>();
+  public List<IMarshallable> children = new List<IMarshallable>();
 
   public virtual uint CLASS_ID() 
   {
@@ -158,12 +160,12 @@ public class AST_Nested : IMetaStruct
 
   public virtual void reset() 
   {
-    if(children == null) children = new List<IMetaStruct>(); children.Clear();
+    if(children == null) children = new List<IMarshallable>(); children.Clear();
   }
 
-  public virtual void syncFields(MetaSyncContext ctx) 
+  public virtual void syncFields(SyncContext ctx) 
   {
-    MetaUtils.syncVirtual(ctx, children);
+    Utils.syncVirtual(ctx, children);
   }
 
   public virtual int getFieldsCount() 
@@ -189,7 +191,7 @@ public class AST_Interim : AST_Nested
     base.reset();
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
   }
@@ -200,7 +202,7 @@ public class AST_Interim : AST_Nested
   }
 }
 
-public class AST_Import  : IMetaStruct
+public class AST_Import  : IMarshallable
 {
   public List<uint> module_ids = new List<uint>();
   public List<string> module_names = new List<string>();
@@ -221,10 +223,10 @@ public class AST_Import  : IMetaStruct
     if(module_names == null) module_names = new List<string>(); module_names.Clear();
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
-    MetaUtils.sync(ctx, module_ids);
-    MetaUtils.sync(ctx, module_names);
+    Utils.sync(ctx, module_ids);
+    Utils.sync(ctx, module_names);
   }
 
   public int getFieldsCount() 
@@ -256,11 +258,11 @@ public class AST_Module : AST_Nested
     name = "";
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaUtils.sync(ctx, ref id);
-    MetaUtils.sync(ctx, ref name);
+    Utils.sync(ctx, ref id);
+    Utils.sync(ctx, ref name);
   }
 
   public override int getFieldsCount() 
@@ -296,11 +298,11 @@ public class AST_UnaryOpExp : AST_Nested
     type = new EnumUnaryOp(); 
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
     int __tmp_type = (int)type;
-    MetaUtils.sync(ctx, ref __tmp_type);
+    Utils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumUnaryOp)__tmp_type;
   }
 
@@ -350,11 +352,11 @@ public class AST_BinaryOpExp  : AST_Nested
     type = new EnumBinaryOp(); 
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
     int __tmp_type = (int)type;
-    MetaUtils.sync(ctx, ref __tmp_type);
+    Utils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBinaryOp)__tmp_type;
   }
 
@@ -364,7 +366,7 @@ public class AST_BinaryOpExp  : AST_Nested
   }
 }
 
-public class AST_Inc : IMetaStruct
+public class AST_Inc : IMarshallable
 {
   public uint symb_idx;
 
@@ -383,9 +385,9 @@ public class AST_Inc : IMetaStruct
     symb_idx = 0;
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
-    MetaUtils.sync(ctx, ref symb_idx);
+    Utils.sync(ctx, ref symb_idx);
   }
 
   public int getFieldsCount() 
@@ -394,7 +396,7 @@ public class AST_Inc : IMetaStruct
   }
 }
 
-public class AST_Dec : IMetaStruct
+public class AST_Dec : IMarshallable
 {
   public uint symb_idx;
 
@@ -413,9 +415,9 @@ public class AST_Dec : IMetaStruct
     symb_idx = 0;
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
-    MetaUtils.sync(ctx, ref symb_idx);
+    Utils.sync(ctx, ref symb_idx);
   }
 
   public int getFieldsCount() 
@@ -444,10 +446,10 @@ public class AST_New : AST_Nested
     type = "";
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaUtils.sync(ctx, ref type);
+    Utils.sync(ctx, ref type);
   }
 
   public override int getFieldsCount() 
@@ -489,17 +491,17 @@ public class AST_FuncDecl : AST_Nested
     ip_addr = -1;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaUtils.sync(ctx, ref type);
-    MetaUtils.sync(ctx, ref name);
-    MetaUtils.sync(ctx, ref module_id);
-    MetaUtils.sync(ctx, ref local_vars_num);
-    MetaUtils.sync(ctx, ref required_args_num);
-    MetaUtils.sync(ctx, ref default_args_num);
-    MetaUtils.sync(ctx, ref ip_addr);
+    Utils.sync(ctx, ref type);
+    Utils.sync(ctx, ref name);
+    Utils.sync(ctx, ref module_id);
+    Utils.sync(ctx, ref local_vars_num);
+    Utils.sync(ctx, ref required_args_num);
+    Utils.sync(ctx, ref default_args_num);
+    Utils.sync(ctx, ref ip_addr);
   }
 
   public override int getFieldsCount() 
@@ -531,12 +533,12 @@ public class AST_ClassDecl : AST_Nested
     parent = "";
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaUtils.sync(ctx, ref name);
-    MetaUtils.sync(ctx, ref parent);
+    Utils.sync(ctx, ref name);
+    Utils.sync(ctx, ref parent);
   }
 
   public override int getFieldsCount() 
@@ -545,7 +547,7 @@ public class AST_ClassDecl : AST_Nested
   }
 }
 
-public class AST_EnumItem : IMetaStruct
+public class AST_EnumItem : IMarshallable
 {
   public string name;
   public int value;
@@ -566,10 +568,10 @@ public class AST_EnumItem : IMetaStruct
     value = 0;
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
-    MetaUtils.sync(ctx, ref name);
-    MetaUtils.sync(ctx, ref value);
+    Utils.sync(ctx, ref name);
+    Utils.sync(ctx, ref value);
   }
 
   public int getFieldsCount() 
@@ -599,11 +601,11 @@ public class AST_EnumDecl : AST_Nested
     name = "";
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaUtils.sync(ctx, ref name);
+    Utils.sync(ctx, ref name);
   }
 
   public override int getFieldsCount() 
@@ -612,7 +614,7 @@ public class AST_EnumDecl : AST_Nested
   }
 }
 
-public class AST_UpVal : IMetaStruct
+public class AST_UpVal : IMarshallable
 {
   public string name = "";
   public uint symb_idx;
@@ -635,11 +637,11 @@ public class AST_UpVal : IMetaStruct
     upsymb_idx = 0;
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
-    MetaUtils.sync(ctx, ref name);
-    MetaUtils.sync(ctx, ref symb_idx);
-    MetaUtils.sync(ctx, ref upsymb_idx);
+    Utils.sync(ctx, ref name);
+    Utils.sync(ctx, ref symb_idx);
+    Utils.sync(ctx, ref upsymb_idx);
   }
 
   public int getFieldsCount() 
@@ -670,10 +672,10 @@ public class AST_LambdaDecl : AST_FuncDecl
     upvals.Clear();
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaUtils.sync(ctx, upvals);
+    Utils.sync(ctx, upvals);
   }
 
   public override int getFieldsCount() 
@@ -703,11 +705,11 @@ public class AST_TypeCast : AST_Nested
     type = "";
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaUtils.sync(ctx, ref type);
+    Utils.sync(ctx, ref type);
   }
 
   public override int getFieldsCount() 
@@ -768,20 +770,20 @@ public class AST_Call  : AST_Nested
     scope_type = "";
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
     int __tmp_type = (int)type;
-    MetaUtils.sync(ctx, ref __tmp_type);
+    Utils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumCall)__tmp_type;
 
-    MetaUtils.sync(ctx, ref name);
-    MetaUtils.sync(ctx, ref module_id);
-    MetaUtils.sync(ctx, ref cargs_bits);
-    MetaUtils.sync(ctx, ref line_num);
-    MetaUtils.sync(ctx, ref symb_idx);
-    MetaUtils.sync(ctx, ref scope_type);
+    Utils.sync(ctx, ref name);
+    Utils.sync(ctx, ref module_id);
+    Utils.sync(ctx, ref cargs_bits);
+    Utils.sync(ctx, ref line_num);
+    Utils.sync(ctx, ref symb_idx);
+    Utils.sync(ctx, ref scope_type);
   }
 
   public override int getFieldsCount() 
@@ -811,10 +813,10 @@ public class AST_Return  : AST_Nested
     num = 0;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
-    MetaUtils.sync(ctx, ref num);
+    Utils.sync(ctx, ref num);
   }
 
   public override int getFieldsCount() 
@@ -823,7 +825,7 @@ public class AST_Return  : AST_Nested
   }
 }
 
-public class AST_Break : IMetaStruct
+public class AST_Break : IMarshallable
 {
   public uint CLASS_ID() 
   {
@@ -839,7 +841,7 @@ public class AST_Break : IMetaStruct
   {
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
   }
 
@@ -849,7 +851,7 @@ public class AST_Break : IMetaStruct
   }
 }
 
-public class AST_Continue : IMetaStruct
+public class AST_Continue : IMarshallable
 {
   public bool jump_marker;
 
@@ -868,9 +870,9 @@ public class AST_Continue : IMetaStruct
     jump_marker = false;
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
-    MetaUtils.sync(ctx, ref jump_marker);
+    Utils.sync(ctx, ref jump_marker);
   }
 
   public int getFieldsCount() 
@@ -887,7 +889,7 @@ public enum EnumLiteral
   NIL = 4,
 }
 
-public class AST_Literal : IMetaStruct
+public class AST_Literal : IMarshallable
 {
   public EnumLiteral type = new EnumLiteral();
   public double nval;
@@ -910,14 +912,14 @@ public class AST_Literal : IMetaStruct
     sval = "";
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
     int __tmp_type = (int)type;
-    MetaUtils.sync(ctx, ref __tmp_type);
+    Utils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumLiteral)__tmp_type;
 
-    MetaUtils.sync(ctx, ref nval);
-    MetaUtils.sync(ctx, ref sval);
+    Utils.sync(ctx, ref nval);
+    Utils.sync(ctx, ref sval);
   }
 
   public int getFieldsCount() 
@@ -955,15 +957,15 @@ public class AST_VarDecl : AST_Nested
     is_ref = false;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaUtils.sync(ctx, ref name);
-    MetaUtils.sync(ctx, ref symb_idx);
-    MetaUtils.sync(ctx, ref is_func_arg);
-    MetaUtils.sync(ctx, ref type);
-    MetaUtils.sync(ctx, ref is_ref);
+    Utils.sync(ctx, ref name);
+    Utils.sync(ctx, ref symb_idx);
+    Utils.sync(ctx, ref is_func_arg);
+    Utils.sync(ctx, ref type);
+    Utils.sync(ctx, ref is_ref);
   }
 
   public override int getFieldsCount() 
@@ -1004,12 +1006,12 @@ public class AST_Block : AST_Nested
     type = new EnumBlock(); 
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
     int __tmp_type = (int)type;
-    MetaUtils.sync(ctx, ref __tmp_type);
+    Utils.sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBlock)__tmp_type;
   }
 
@@ -1042,12 +1044,12 @@ public class AST_JsonObj : AST_Nested
     line_num = 0;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaUtils.sync(ctx, ref type);
-    MetaUtils.sync(ctx, ref line_num);
+    Utils.sync(ctx, ref type);
+    Utils.sync(ctx, ref line_num);
   }
 
   public override int getFieldsCount() 
@@ -1079,12 +1081,12 @@ public class AST_JsonArr : AST_Nested
     line_num = 0;
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaUtils.sync(ctx, ref type);
-    MetaUtils.sync(ctx, ref line_num);
+    Utils.sync(ctx, ref type);
+    Utils.sync(ctx, ref line_num);
   }
 
   public override int getFieldsCount() 
@@ -1093,7 +1095,7 @@ public class AST_JsonArr : AST_Nested
   }
 }
 
-public class AST_JsonArrAddItem : IMetaStruct
+public class AST_JsonArrAddItem : IMarshallable
 {
   public uint CLASS_ID() 
   {
@@ -1109,7 +1111,7 @@ public class AST_JsonArrAddItem : IMetaStruct
   {
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
   }
 
@@ -1144,13 +1146,13 @@ public class AST_JsonPair : AST_Nested
     scope_type = "";
   }
 
-  public override void syncFields(MetaSyncContext ctx) 
+  public override void syncFields(SyncContext ctx) 
   {
     base.syncFields(ctx);
 
-    MetaUtils.sync(ctx, ref name);
-    MetaUtils.sync(ctx, ref symb_idx);
-    MetaUtils.sync(ctx, ref scope_type);
+    Utils.sync(ctx, ref name);
+    Utils.sync(ctx, ref symb_idx);
+    Utils.sync(ctx, ref scope_type);
   }
 
   public override int getFieldsCount() 
@@ -1159,7 +1161,7 @@ public class AST_JsonPair : AST_Nested
   }
 }
 
-public class AST_PopValue : IMetaStruct
+public class AST_PopValue : IMarshallable
 {
   public uint CLASS_ID() 
   {
@@ -1175,7 +1177,7 @@ public class AST_PopValue : IMetaStruct
   {
   }
 
-  public void syncFields(MetaSyncContext ctx) 
+  public void syncFields(SyncContext ctx) 
   {
   }
 
@@ -1187,7 +1189,7 @@ public class AST_PopValue : IMetaStruct
 
 public static class AST_Factory
 {
-  static public IMetaStruct createById(uint crc) 
+  static public IMarshallable createById(uint crc) 
   {
     switch(crc)
     {

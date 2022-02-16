@@ -5,6 +5,8 @@ using System.IO;
 
 namespace bhl {
 
+using marshall;
+
 public static class Hash
 {
   static public uint CRC32(string id)
@@ -176,20 +178,20 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static MetaUtils.CreateByIdCb prev_create_factory; 
+  static marshall.Utils.CreateByIdCb prev_create_factory; 
 
   static public void SetupASTFactory()
   {
-    prev_create_factory = MetaUtils.CreateById;
-    MetaUtils.CreateById = AST_Factory.createById;
+    prev_create_factory = marshall.Utils.CreateById;
+    marshall.Utils.CreateById = AST_Factory.createById;
   }
 
   static public void RestoreASTFactory()
   {
-    MetaUtils.CreateById = prev_create_factory;
+    marshall.Utils.CreateById = prev_create_factory;
   }
 
-  static public T File2Meta<T>(string file) where T : IMetaStruct, new()
+  static public T File2Meta<T>(string file) where T : IMarshallable, new()
   {
     using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
     {
@@ -197,26 +199,26 @@ static public class Util
     }
   }
 
-  static public T Bin2Meta<T>(Stream s) where T : IMetaStruct, new()
+  static public T Bin2Meta<T>(Stream s) where T : IMarshallable, new()
   {
     var reader = new MsgPackDataReader(s);
     var meta = new T();
-    MetaUtils.sync(MetaSyncContext.NewForRead(reader), ref meta);
+    marshall.Utils.sync(marshall.SyncContext.NewForRead(reader), ref meta);
     return meta;
   }
 
-  static public T Bin2Meta<T>(byte[] bytes) where T : IMetaStruct, new()
+  static public T Bin2Meta<T>(byte[] bytes) where T : IMarshallable, new()
   {
     return Bin2Meta<T>(new MemoryStream(bytes));
   }
 
-  static public void Meta2Bin<T>(T meta, Stream dst) where T : IMetaStruct
+  static public void Meta2Bin<T>(T meta, Stream dst) where T : IMarshallable
   {
     var writer = new MsgPackDataWriter(dst);
-    MetaUtils.sync(MetaSyncContext.NewForWrite(writer), ref meta);
+    marshall.Utils.sync(marshall.SyncContext.NewForWrite(writer), ref meta);
   }
 
-  static public void Meta2File<T>(T meta, string file) where T : IMetaStruct
+  static public void Meta2File<T>(T meta, string file) where T : IMarshallable
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {
@@ -403,13 +405,13 @@ public struct FuncArgsInfo
 
 static public class AST_Util
 {
-  static public List<IMetaStruct> GetChildren(this IMetaStruct self)
+  static public List<IMarshallable> GetChildren(this IMarshallable self)
   {
     var ast = self as AST_Nested;
     return ast == null ? null : ast.children;
   }
 
-  static public void AddChild(this IMetaStruct self, IMetaStruct c)
+  static public void AddChild(this IMarshallable self, IMarshallable c)
   {
     if(c == null)
       return;
@@ -417,14 +419,14 @@ static public class AST_Util
     ast.children.Add(c);
   }
 
-  static public void AddChild(this AST_Nested self, IMetaStruct c)
+  static public void AddChild(this AST_Nested self, IMarshallable c)
   {
     if(c == null)
       return;
     self.children.Add(c);
   }
 
-  static public void AddChildren(this AST_Nested self, IMetaStruct b)
+  static public void AddChildren(this AST_Nested self, IMarshallable b)
   {
     if(b is AST_Nested c)
     {
