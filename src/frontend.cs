@@ -155,7 +155,7 @@ public class Frontend : bhlBaseVisitor<object>
   static public void Source2Bin(Module module, Stream src, Stream dst, TypeSystem ts, ModuleRegistry mr)
   {
     var ast = Source2AST(module, src, ts, mr);
-    Util.Meta2Bin(ast, dst);
+    Util.Struct2Data(ast, dst);
   }
 
   public Frontend(Module module, ITokenStream tokens, TypeSystem types, ModuleRegistry mreg, bool decls_only = false)

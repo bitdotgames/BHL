@@ -11,8 +11,22 @@ public class BHL_TestVM : BHL_TestBase
   {
     var types = new TypeSystem();
 
-    var ms = new ModuleScope(1, types.globs);
-    ms.Define(new FuncSymbolScript(new FuncSignature(types.Type("void")), "test", 0, 0));
+    var s = new MemoryStream();
+    {
+      var ms = new ModuleScope(1, types.globs);
+      ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
+      Util.Struct2Data(ms, s);
+    }
+
+    {
+      s.Position = 0;
+      var ms = new ModuleScope(types.globs);
+      Util.Data2Struct(s, SymbolFactory.Create, ms);
+
+      AssertEqual(ms.module_id, 1);
+      var vs = ms.Resolve("foo");
+      AssertEqual(vs.name, "foo");
+    }
   }
 
   [IsTested()]
@@ -20188,7 +20202,7 @@ public class BHL_TestVM : BHL_TestBase
     Frontend.Source2Bin(mdl, src.ToStream(), ms, ts, mreg);
     ms.Position = 0;
 
-    return Util.Bin2Meta<AST_Module>(ms, AST_Factory.Create);
+    return Util.Data2Struct<AST_Module>(ms, AST_Factory.Create);
   }
 
   void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)

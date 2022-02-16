@@ -178,42 +178,48 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static public T File2Meta<T>(string file, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
+  static public T File2Struct<T>(string file, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
   {
     using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
     {
-      return Bin2Meta<T>(rfs, cb);
+      return Data2Struct<T>(rfs, cb);
     }
   }
 
-  static public T Bin2Meta<T>(Stream s, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
+  static public void Data2Struct<T>(Stream s, marshall.SyncContext.Factory cb, T obj) where T : IMarshallable
   {
     var reader = new MsgPackDataReader(s);
-    var meta = new T();
-    marshall.Marshall.Sync(marshall.SyncContext.NewForRead(reader, cb), ref meta);
-    return meta;
+    marshall.Marshall.Sync(marshall.SyncContext.NewForRead(reader, cb), ref obj);
   }
 
-  static public T Bin2Meta<T>(byte[] bytes, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
+  static public T Data2Struct<T>(Stream s, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
   {
-    return Bin2Meta<T>(new MemoryStream(bytes), cb);
+    var reader = new MsgPackDataReader(s);
+    var obj = new T();
+    marshall.Marshall.Sync(marshall.SyncContext.NewForRead(reader, cb), ref obj);
+    return obj;
   }
 
-  static public void Meta2Bin<T>(T meta, Stream dst) where T : IMarshallable
+  static public T Data2Struct<T>(byte[] bytes, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
+  {
+    return Data2Struct<T>(new MemoryStream(bytes), cb);
+  }
+
+  static public void Struct2Data<T>(T meta, Stream dst) where T : IMarshallable
   {
     var writer = new MsgPackDataWriter(dst);
     marshall.Marshall.Sync(marshall.SyncContext.NewForWrite(writer), ref meta);
   }
 
-  static public void Meta2File<T>(T meta, string file) where T : IMarshallable
+  static public void Struct2File<T>(T meta, string file) where T : IMarshallable
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {
-      Meta2Bin(meta, wfs);
+      Struct2Data(meta, wfs);
     }
   }
 
-  static public void Compiled2Bin(CompiledModule m, Stream dst)
+  static public void Compiled2Data(CompiledModule m, Stream dst)
   {
     using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
     {
@@ -254,11 +260,11 @@ static public class Util
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {
-      Compiled2Bin(m, wfs);
+      Compiled2Data(m, wfs);
     }
   }
 
-  static public CompiledModule Bin2Compiled(Stream src)
+  static public CompiledModule Data2Compiled(Stream src)
   {
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
     {

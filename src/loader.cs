@@ -109,7 +109,7 @@ public class ModuleImporter : IModuleImporter
 
     mod_stream.SetData(res, 0, res_len);
 
-    return Util.Bin2Compiled(mod_stream);
+    return Util.Data2Compiled(mod_stream);
   }
 
   void DecodeBin(Entry ent, ref byte[] res, ref int res_len)

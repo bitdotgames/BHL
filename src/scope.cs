@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+using marshall;
+
 public interface IScope
 {
   // Where to look next for symbols in case if not found (e.g super class) 
@@ -69,10 +71,11 @@ public class GlobalScope : Scope
   {}
 }
 
-public class ModuleScope : Scope
+public class ModuleScope : Scope, IMarshallable
 {
-  uint module_id;
-  public GlobalScope globs;
+  public const uint CLASS_ID = 2699804695;
+
+  public uint module_id;
 
   List<ModuleScope> imports = new List<ModuleScope>();
 
@@ -81,6 +84,11 @@ public class ModuleScope : Scope
   {
     this.module_id = module_id;
   }
+
+  //marshall version
+  public ModuleScope(GlobalScope globs) 
+    : base(globs)
+  {}
 
   public void AddImport(ModuleScope other)
   {
@@ -145,6 +153,22 @@ public class ModuleScope : Scope
     }
 
     base.Define(sym);
+  }
+
+  public uint getClassId() 
+  {
+    return CLASS_ID;
+  }
+
+  public int GetFieldsNum()
+  {
+    return 2;
+  }
+
+  public void Sync(SyncContext ctx) 
+  {
+    Marshall.Sync(ctx, ref module_id);
+    Marshall.Sync(ctx, ref members);
   }
 }
 

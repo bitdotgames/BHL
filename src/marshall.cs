@@ -15,6 +15,7 @@ public enum ErrorCode
   IO_READ                = 3,
   TYPE_MISMATCH          = 4,
   INVALID_POS            = 5,
+  BAD_CLASS_ID           = 6,
 }
 
 public class Error : Exception
@@ -22,7 +23,7 @@ public class Error : Exception
   public ErrorCode code { get; }
 
   public Error(ErrorCode code, string msg = "")
-    : base($"Error ({code}) {msg}")
+    : base($"({code}) {msg}")
   {
     this.code = code;
   }
@@ -63,7 +64,7 @@ public struct SyncContext
 
 public interface IMarshallable 
 {
-  uint CLASS_ID();
+  uint getClassId();
   int GetFieldsNum();
   void Sync(SyncContext ctx);
 }
@@ -83,8 +84,8 @@ public interface IReader
   void ReadDouble(ref double v);
   void ReadString(ref string v);
   void ReadRaw(ref byte[] v, ref int vlen);
-  int BeginStruct(); 
-  void EndStruct(); 
+  int BeginContainer(); 
+  void EndContainer(); 
 }
 
 public interface IWriter 
@@ -101,8 +102,8 @@ public interface IWriter
   void WriteBool(bool v);
   void WriteDouble(double v);
   void WriteString(string v);
-  void BeginStruct(int len); 
-  void EndStruct(); 
+  void BeginContainer(int len); 
+  void EndContainer(); 
 }
 
 public static class Marshall 
@@ -207,7 +208,7 @@ public static class Marshall
   {
     if(ctx.is_read)
     {
-      int size = ctx.reader.BeginStruct();
+      int size = ctx.reader.BeginContainer();
 
       if(v.Capacity < size) 
         v.Capacity = size;
@@ -217,7 +218,7 @@ public static class Marshall
     else
     {
       int size = v == null ? 0 : v.Count;
-      ctx.writer.BeginStruct(size);
+      ctx.writer.BeginContainer(size);
       return size;
     }
   }
@@ -225,9 +226,9 @@ public static class Marshall
   static void EndArray(SyncContext ctx, IList v)
   {
     if(ctx.is_read)
-      ctx.reader.EndStruct();
+      ctx.reader.EndContainer();
     else
-      ctx.writer.EndStruct();
+      ctx.writer.EndContainer();
   }
 
   static public void Sync(SyncContext ctx, List<string> v)
@@ -403,24 +404,24 @@ public static class Marshall
   {
     if(ctx.is_read)
     {
-      ctx.reader.BeginStruct();
+      ctx.reader.BeginContainer();
 
       uint clid = 0;
       ctx.reader.ReadU32(ref clid);
       
       v = ctx.CreateById(clid);
       if(v == null) 
-        throw new Error(ErrorCode.TYPE_MISMATCH, "Could not create struct: " + clid);
+        throw new Error(ErrorCode.BAD_CLASS_ID, "Could not create object with class id: " + clid);
 
       v.Sync(ctx);
-      ctx.reader.EndStruct();
+      ctx.reader.EndContainer();
     }
     else
     {
-      ctx.writer.BeginStruct(v.GetFieldsNum() + 1/*class id*/);
-      ctx.writer.WriteU32(v.CLASS_ID());
+      ctx.writer.BeginContainer(v.GetFieldsNum() + 1/*class id*/);
+      ctx.writer.WriteU32(v.getClassId());
       v.Sync(ctx);
-      ctx.writer.EndStruct();
+      ctx.writer.EndContainer();
     }
   }
 
@@ -441,15 +442,15 @@ public static class Marshall
   {
     if(ctx.is_read)
     {
-      ctx.reader.BeginStruct();
+      ctx.reader.BeginContainer();
       v.Sync(ctx);
-      ctx.reader.EndStruct();  
+      ctx.reader.EndContainer();  
     }
     else
     {
-      ctx.writer.BeginStruct(v.GetFieldsNum());
+      ctx.writer.BeginContainer(v.GetFieldsNum());
       v.Sync(ctx);
-      ctx.writer.EndStruct();
+      ctx.writer.EndContainer();
     }
   }
 }
@@ -484,14 +485,14 @@ public class MsgPackDataWriter : IWriter
     space.Push(left);
   }
 
-  public void BeginStruct(int size) 
+  public void BeginContainer(int size) 
   {
     DecSpace();
     space.Push(size);
     io.WriteArrayHeader(size);
   }
 
-  public void EndStruct() 
+  public void EndContainer() 
   {
     if(space.Count <= 1)
       throw new Error(ErrorCode.NO_RESERVED_SPACE);
@@ -812,7 +813,7 @@ public class MsgPackDataReader : IReader
     v = System.Text.Encoding.UTF8.GetString(strval);
   }
 
-  public int BeginStruct() 
+  public int BeginContainer() 
   {
     if(!SpacePositionValid())
       throw new Error(ErrorCode.INVALID_POS);
@@ -863,7 +864,7 @@ public class MsgPackDataReader : IReader
     }
   }
 
-  public void EndStruct() 
+  public void EndContainer() 
   {
     SkipTrailingFields();
     structs_pos.Pop();

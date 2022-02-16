@@ -3,7 +3,9 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public class Symbol 
+using marshall;
+
+public abstract class Symbol : IMarshallable 
 {
   public string name;
   public TypeProxy type;
@@ -23,6 +25,23 @@ public class Symbol
   public override string ToString() 
   {
     return '<' + name + ':' + type.name + '>';
+  }
+
+  public virtual uint getClassId()
+  {
+    throw new NotImplementedException();
+  }
+
+  public virtual int GetFieldsNum()
+  {
+    return 2;
+  }
+
+  public virtual void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref name);
+    string type = "TODO";
+    Marshall.Sync(ctx, ref type);
   }
 }
 
@@ -402,6 +421,8 @@ public interface IScopeIndexed
 
 public class VariableSymbol : Symbol, IScopeIndexed
 {
+  public const uint CLASS_ID = 1982058327;
+
   //if variable is global in a module it stores its id
   public uint module_id;
 
@@ -432,6 +453,28 @@ public class VariableSymbol : Symbol, IScopeIndexed
   public VariableSymbol(string name, TypeProxy type) 
     : base(name, type) 
   {}
+
+  //marshall version
+  public VariableSymbol()
+    : base("", new TypeProxy(TypeSystem.Void))
+  {}
+
+  public override uint getClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override int GetFieldsNum()
+  {
+    return base.GetFieldsNum() + 1;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    base.Sync(ctx);
+
+    Marshall.Sync(ctx, ref module_id);
+  }
 }
 
 public class FuncArgSymbol : VariableSymbol
@@ -969,8 +1012,10 @@ public class EnumItemSymbol : Symbol, IType
   public string GetName() { return owner.name; }
 }
 
-public class SymbolsDictionary
+public class SymbolsDictionary : IMarshallable
 {
+  public const uint CLASS_ID = 3515876236;
+
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
   List<Symbol> list = new List<Symbol>();
 
@@ -1060,6 +1105,42 @@ public class SymbolsDictionary
         return i;
     }
     return -1;
+  }
+
+  public uint getClassId() 
+  {
+    return CLASS_ID;
+  }
+
+  public int GetFieldsNum()
+  {
+    return 1;
+  }
+
+  public void Sync(SyncContext ctx) 
+  {
+    Marshall.SyncGeneric(ctx, list);
+    if(ctx.is_read)
+    {
+      foreach(var s in list)
+        str2symb.Add(s.name, s);
+    }
+  }
+}
+
+public static class SymbolFactory
+{
+  static public IMarshallable Create(uint id) 
+  {
+    switch(id)
+    {
+      case SymbolsDictionary.CLASS_ID:
+        return new SymbolsDictionary(); 
+      case VariableSymbol.CLASS_ID:
+        return new VariableSymbol(); 
+      default:
+        return null;
+    }
   }
 }
 

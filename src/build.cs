@@ -260,7 +260,7 @@ public class Build
 
     public int Count => names.Count;
 
-    public uint CLASS_ID() 
+    public uint getClassId() 
     {
       return 0;
     }
@@ -419,7 +419,7 @@ public class Build
     {
       public List<string> files = new List<string>();
 
-      public uint CLASS_ID() 
+      public uint getClassId() 
       {
         return 0;
       }
@@ -461,7 +461,7 @@ public class Build
 
       try
       {
-        return Util.File2Meta<FileImports>(cache_imports_file, AST_Factory.Create);
+        return Util.File2Struct<FileImports>(cache_imports_file, AST_Factory.Create);
       }
       catch
       {
@@ -473,7 +473,7 @@ public class Build
     {
       //Console.WriteLine("IMPORTS MISS " + file);
       var cache_imports_file = GetImportsCacheFile(cache_dir, file);
-      Util.Meta2File(imports, cache_imports_file);
+      Util.Struct2File(imports, cache_imports_file);
     }
 
     static List<string> ParseImports(List<string> inc_paths, string file, FileStream fs)
@@ -558,12 +558,12 @@ public class Build
         try
         {
           //Console.WriteLine("HIT " + cache_file);
-          return Util.File2Meta<AST_Module>(cache_file, AST_Factory.Create);
+          return Util.File2Struct<AST_Module>(cache_file, AST_Factory.Create);
         }
         catch
         {
           var ast = fallback.Get();
-          Util.Meta2File(ast, cache_file);
+          Util.Struct2File(ast, cache_file);
           return ast;
         }
       }
@@ -576,7 +576,7 @@ public class Build
       public CacheWriteResolver(string cache_file, IASTResolver resolver)
       {
         ast = resolver.Get();
-        Util.Meta2File(ast, cache_file);
+        Util.Struct2File(ast, cache_file);
         //Console.WriteLine("MISS " + cache_file);
       }
 
@@ -752,7 +752,7 @@ public class Build
 
       try
       {
-        return Util.File2Meta<Symbols>(cache_symb_file, AST_Factory.Create);
+        return Util.File2Struct<Symbols>(cache_symb_file, AST_Factory.Create);
       }
       catch
       {
@@ -763,7 +763,7 @@ public class Build
     static void WriteSymbolsCache(string file, string cache_dir, Symbols symbols)
     {
       var cache_symb_file = GetSymbolsCacheFile(cache_dir, file);
-      Util.Meta2File(symbols, cache_symb_file);
+      Util.Struct2File(symbols, cache_symb_file);
     }
   }
 
