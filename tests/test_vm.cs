@@ -15,6 +15,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       var ms = new ModuleScope(1, types);
       ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
+      ms.Define(new VariableSymbol("bar", types.Type(TypeSystem.String)));
       Util.Struct2Data(ms, s);
     }
 
@@ -24,8 +25,14 @@ public class BHL_TestVM : BHL_TestBase
       Util.Data2Struct(s, SymbolFactory.Create, ms);
 
       AssertEqual(ms.module_id, 1);
-      var vs = ms.Resolve("foo");
-      AssertEqual(vs.name, "foo");
+
+      AssertEqual(2, ms.GetMembers().Count);
+
+      var foo = ms.Resolve("foo");
+      AssertEqual(foo.name, "foo");
+
+      var bar = ms.Resolve("bar");
+      AssertEqual(bar.name, "bar");
     }
   }
 
