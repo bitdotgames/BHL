@@ -83,8 +83,8 @@ public interface IReader
   void ReadDouble(ref double v);
   void ReadString(ref string v);
   void ReadRaw(ref byte[] v, ref int vlen);
-  int BeginArray(); 
-  void EndArray(); 
+  int BeginStruct(); 
+  void EndStruct(); 
 }
 
 public interface IWriter 
@@ -101,8 +101,8 @@ public interface IWriter
   void WriteBool(bool v);
   void WriteDouble(double v);
   void WriteString(string v);
-  void BeginArray(int len); 
-  void EndArray(); 
+  void BeginStruct(int len); 
+  void EndStruct(); 
 }
 
 public static class Marshall 
@@ -207,7 +207,7 @@ public static class Marshall
   {
     if(ctx.is_read)
     {
-      int size = ctx.reader.BeginArray();
+      int size = ctx.reader.BeginStruct();
 
       if(v.Capacity < size) 
         v.Capacity = size;
@@ -217,7 +217,7 @@ public static class Marshall
     else
     {
       int size = v == null ? 0 : v.Count;
-      ctx.writer.BeginArray(size);
+      ctx.writer.BeginStruct(size);
       return size;
     }
   }
@@ -225,9 +225,9 @@ public static class Marshall
   static void EndArray(SyncContext ctx, IList v)
   {
     if(ctx.is_read)
-      ctx.reader.EndArray();
+      ctx.reader.EndStruct();
     else
-      ctx.writer.EndArray();
+      ctx.writer.EndStruct();
   }
 
   static public void Sync(SyncContext ctx, List<string> v)
@@ -403,7 +403,7 @@ public static class Marshall
   {
     if(ctx.is_read)
     {
-      ctx.reader.BeginArray();
+      ctx.reader.BeginStruct();
 
       uint clid = 0;
       ctx.reader.ReadU32(ref clid);
@@ -413,14 +413,14 @@ public static class Marshall
         throw new Error(ErrorCode.TYPE_MISMATCH, "Could not create struct: " + clid);
 
       v.Sync(ctx);
-      ctx.reader.EndArray();
+      ctx.reader.EndStruct();
     }
     else
     {
-      ctx.writer.BeginArray(v.GetFieldsNum() + 1/*class id*/);
+      ctx.writer.BeginStruct(v.GetFieldsNum() + 1/*class id*/);
       ctx.writer.WriteU32(v.CLASS_ID());
       v.Sync(ctx);
-      ctx.writer.EndArray();
+      ctx.writer.EndStruct();
     }
   }
 
@@ -441,33 +441,31 @@ public static class Marshall
   {
     if(ctx.is_read)
     {
-      ctx.reader.BeginArray();
+      ctx.reader.BeginStruct();
       v.Sync(ctx);
-      ctx.reader.EndArray();  
+      ctx.reader.EndStruct();  
     }
     else
     {
-      ctx.writer.BeginArray(v.GetFieldsNum());
+      ctx.writer.BeginStruct(v.GetFieldsNum());
       v.Sync(ctx);
-      ctx.writer.EndArray();
+      ctx.writer.EndStruct();
     }
   }
 }
 
 public class MsgPackDataWriter : IWriter 
 {
-  Stream stream;
   MsgPackWriter io;
   Stack<int> space = new Stack<int>();
 
-  public MsgPackDataWriter(Stream _stream) 
+  public MsgPackDataWriter(Stream stream) 
   {
-    Reset(_stream);
+    Reset(stream);
   }
 
-  public void Reset(Stream _stream)
+  public void Reset(Stream stream)
   {
-    stream = _stream;
     io = new MsgPackWriter(stream);
     space.Clear();
     space.Push(1);
@@ -486,14 +484,14 @@ public class MsgPackDataWriter : IWriter
     space.Push(left);
   }
 
-  public void BeginArray(int size) 
+  public void BeginStruct(int size) 
   {
     DecSpace();
     space.Push(size);
     io.WriteArrayHeader(size);
   }
 
-  public void EndArray() 
+  public void EndStruct() 
   {
     if(space.Count <= 1)
       throw new Error(ErrorCode.NO_RESERVED_SPACE);
@@ -590,19 +588,19 @@ public class MsgPackDataReader : IReader
   Stream stream;
   MsgPackReader io;
 
-  struct ArrayPosition
+  struct StructPos
   {
     public uint max;
     public uint curr;
 
-    public ArrayPosition(uint length)
+    public StructPos(uint length)
     {
       curr = 0;
       max = length - 1;
     }
   }
 
-  Stack<ArrayPosition> stack = new Stack<ArrayPosition>();
+  Stack<StructPos> structs_pos = new Stack<StructPos>();
   
   public MsgPackDataReader(Stream _stream) 
   { 
@@ -612,25 +610,25 @@ public class MsgPackDataReader : IReader
   public void Reset(Stream _stream)
   {
     stream = _stream;
-    stack.Clear();
+    structs_pos.Clear();
     io = new MsgPackReader(stream);
   }
 
   public void SetPos(long pos)
   {
     stream.Position = pos;
-    stack.Clear();
+    structs_pos.Clear();
   }
 
   void Next()
   {
-    if(!ArrayPositionValid())
+    if(!SpacePositionValid())
       throw new Error(ErrorCode.INVALID_POS);
 
     if(!io.Read()) 
       throw new Error(ErrorCode.IO_READ);
     
-    MoveNext();
+    MoveSpaceCursor();
   }
 
   int NextInt() 
@@ -814,9 +812,9 @@ public class MsgPackDataReader : IReader
     v = System.Text.Encoding.UTF8.GetString(strval);
   }
 
-  public int BeginArray() 
+  public int BeginStruct() 
   {
-    if(!ArrayPositionValid())
+    if(!SpacePositionValid())
       throw new Error(ErrorCode.INVALID_POS);
 
     if(!io.Read()) 
@@ -826,7 +824,7 @@ public class MsgPackDataReader : IReader
       throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
 
     uint len = io.Length;
-    stack.Push(new ArrayPosition(len));
+    structs_pos.Push(new StructPos(len));
     return (int)len;
   } 
 
@@ -858,40 +856,40 @@ public class MsgPackDataReader : IReader
 
   void SkipTrailingFields() 
   {
-    while(ArrayEntriesLeft() > -1)
+    while(SpaceLeft() > -1)
     {
       SkipField();
-      MoveNext();
+      MoveSpaceCursor();
     }
   }
 
-  public void EndArray() 
+  public void EndStruct() 
   {
     SkipTrailingFields();
-    stack.Pop();
-    MoveNext();
+    structs_pos.Pop();
+    MoveSpaceCursor();
   }
 
-  int ArrayEntriesLeft()
+  int SpaceLeft()
   {
-    if(stack.Count == 0)
+    if(structs_pos.Count == 0)
       return 0;
-    var ap = stack.Peek();
+    var ap = structs_pos.Peek();
     return (int)ap.max - (int)ap.curr;
   }
 
-  bool ArrayPositionValid()
+  bool SpacePositionValid()
   {
-    return ArrayEntriesLeft() >= 0;
+    return SpaceLeft() >= 0;
   }
 
-  void MoveNext()
+  void MoveSpaceCursor()
   {
-    if(stack.Count > 0)
+    if(structs_pos.Count > 0)
     {
-      var ap = stack.Pop();
+      var ap = structs_pos.Pop();
       ap.curr++;
-      stack.Push(ap);
+      structs_pos.Push(ap);
     }
   }
 }
