@@ -15,6 +15,14 @@
     <Compile Include="deps/metagen.cs" />
     <Compile Include="deps/msgpack/*.cs" />
     <Compile Include="deps/msgpack/Compiler/*.cs" />
+    <Compile Include="src\lsp\connection.cs" />
+    <Compile Include="src\lsp\logger.cs" />
+    <Compile Include="src\lsp\protocol.cs" />
+    <Compile Include="src\lsp\rpc.cs" />
+    <Compile Include="src\lsp\server.cs" />
+    <Compile Include="src\lsp\services.cs" />
+    <Compile Include="src\lsp\util.cs" />
+    <Compile Include="src\lsp\workspace.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!--
