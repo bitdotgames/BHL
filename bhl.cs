@@ -17,7 +17,6 @@ public static class Tasks
     MCSBuild(tm, new string[] {
       $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
       $"{BHL_ROOT}/deps/msgpack/*.cs",
-      $"{BHL_ROOT}/deps/metagen.cs",
       $"{BHL_ROOT}/src/g/*.cs",
       $"{BHL_ROOT}/src/*.cs",
       $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
@@ -52,7 +51,6 @@ public static class Tasks
     MCSBuild(tm, new string[] {
       $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
       $"{BHL_ROOT}/deps/msgpack/*.cs",
-      $"{BHL_ROOT}/deps/metagen.cs",
       $"{BHL_ROOT}/src/ast.cs", 
       $"{BHL_ROOT}/src/type.cs", 
       $"{BHL_ROOT}/src/vm.cs", 
@@ -63,6 +61,7 @@ public static class Tasks
       $"{BHL_ROOT}/src/storage.cs", 
       $"{BHL_ROOT}/src/nodes.cs", 
       $"{BHL_ROOT}/src/util.cs",
+      $"{BHL_ROOT}/src/marshall.cs",
       $"{BHL_ROOT}/src/lz4.cs",
      }, 
       dll_file,
