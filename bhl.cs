@@ -147,13 +147,13 @@ public static class Tasks
         $"{BHL_ROOT}/Newtonsoft.Json.dll",
       },
       $"{BHL_ROOT}/test.exe",
-      "-define:BHL_FRONT -define:BHL_2_0 -debug"
+      "-define:BHL_FRONT -debug"
     );
 
     MonoRun(tm, $"{BHL_ROOT}/test.exe", args, "--debug ");
   }
   
-  [Task()]
+  [Task(deps: "build_front_dll")]
   public static void build_lsp(Taskman tm, string[] args)
   {
     var extra_args = "";
@@ -174,7 +174,7 @@ public static class Tasks
         $"{BHL_ROOT}/Newtonsoft.Json.dll",
       },
       $"{BHL_ROOT}/bhlspc.exe",
-      $"{extra_args} -define:BHLSP_DEBUG -define:BHL_2_0 -debug"
+      $"{extra_args} -define:BHLSP_DEBUG -debug"
     );
   }
   

@@ -163,12 +163,8 @@ namespace bhlsp
         
         AddSemanticToken(classDeclName, SemanticTokenTypes.@class);
         AddSemanticToken(ctx.classEx()?.NAME(), SemanticTokenTypes.@class);
-
-#if BHL_1_0 || BHL_2_0
+        
         foreach(var classMember in ctx.classBlock().classMembers().classMember())
-#else
-        foreach(var classMember in ctx.classBlock().classMember())
-#endif
         {
           var classMemberVarDeclare = classMember.varDeclare();
           if(classMemberVarDeclare != null)
@@ -484,11 +480,9 @@ namespace bhlsp
               }
               else
               {
-#if BHL_1_0 || BHL_2_0
                 var callPostOperators = forStmt.callPostOperators();
                 if(callPostOperators != null)
                   CommonCallPostOperators(callPostOperators);
-#endif
               }
             }
           }
@@ -525,11 +519,9 @@ namespace bhlsp
               }
               else
               {
-#if BHL_1_0 || BHL_2_0
                 var callPostOperators = forPostIterStmt.callPostOperators();
                 if(callPostOperators != null)
                   CommonCallPostOperators(callPostOperators);
-#endif
               }
             }
           }
@@ -932,8 +924,7 @@ namespace bhlsp
         }
         return null;
       }
-
-#if BHL_1_0 || BHL_2_0
+      
       public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
       {
         var ternaryIf = ctx.ternaryIfExp();
@@ -977,19 +968,15 @@ namespace bhlsp
         if(incrementOperator != null)
           AddSemanticToken(incrementOperator.Start.StartIndex, incrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
       }
-#endif
-      
-#if BHL_2_0
+
       public override object VisitContinue(bhlParser.ContinueContext ctx)
       {
         AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, SemanticTokenTypes.keyword);
         return null;
       }
-#endif
       
       bool IsTypeKeyword(string typeName)
       {
-#if BHL_2_0
         return TypeSystem.Int.name    == typeName ||
                TypeSystem.Float.name  == typeName ||
                TypeSystem.String.name == typeName ||
@@ -998,16 +985,6 @@ namespace bhlsp
                TypeSystem.Any.name    == typeName ||
                TypeSystem.Null.name   == typeName ||
                TypeSystem.Void.name   == typeName;
-#else
-        return "int"    == typeName ||
-               "float"  == typeName ||
-               "string" == typeName ||
-               "bool"   == typeName ||
-               "enum"   == typeName ||
-               "any"    == typeName ||
-               "null"   == typeName ||
-               "void"   == typeName;
-#endif
       }
 
       private void AddSemanticTokenTypeName(ITerminalNode node)

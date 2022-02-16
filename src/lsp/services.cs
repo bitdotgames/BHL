@@ -595,7 +595,6 @@ namespace bhlsp
 
               if(!string.IsNullOrEmpty(memberClassName))
               {
-#if BHL_1_0 || BHL_2_0
                 foreach(var classMemberContext in classDecl.classBlock().classMembers().classMember())
                 {
                   if(classMemberContext.funcDecl()?.NAME()?.GetText() != null)
@@ -606,10 +605,7 @@ namespace bhlsp
                       break;
                     }
                   }
-#else
-                foreach(var classMemberContext in classDecl.classBlock().classMember())
-                {
-#endif
+                  
                   if(classMemberContext.varDeclare()?.NAME()?.GetText() != null)
                   {
                     if(classMemberContext.varDeclare().NAME().GetText() == memberClassName)
