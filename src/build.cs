@@ -71,8 +71,6 @@ public class Build
       ts = new TypeSystem();
     conf.userbindings.Register(ts);
 
-    Util.SetupASTFactory();
-
     var parse_workers = StartParseWorkers(conf);
     var compiler_workers = StartAndWaitCompileWorkers(conf, ts, parse_workers);
 
@@ -463,7 +461,7 @@ public class Build
 
       try
       {
-        return Util.File2Meta<FileImports>(cache_imports_file);
+        return Util.File2Meta<FileImports>(cache_imports_file, AST_Factory.createById);
       }
       catch
       {
@@ -560,7 +558,7 @@ public class Build
         try
         {
           //Console.WriteLine("HIT " + cache_file);
-          return Util.File2Meta<AST_Module>(cache_file);
+          return Util.File2Meta<AST_Module>(cache_file, AST_Factory.createById);
         }
         catch
         {
@@ -754,7 +752,7 @@ public class Build
 
       try
       {
-        return Util.File2Meta<Symbols>(cache_symb_file);
+        return Util.File2Meta<Symbols>(cache_symb_file, AST_Factory.createById);
       }
       catch
       {

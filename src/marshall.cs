@@ -32,29 +32,32 @@ public class Error : Exception
 
 public struct SyncContext
 {
+  public delegate IMarshallable Factory(uint id); 
+
+  public Factory CreateById;
+
   public bool is_read;
   public IReader reader;
   public IWriter writer;
   public uint opts;
 
-  public static SyncContext NewForRead(IReader reader, uint opts = 0)
+  public static SyncContext NewForRead(IReader reader, Factory factory)
   {
     var ctx = new SyncContext() {
       is_read = true,
       reader = reader,
       writer = null,
-      opts = opts
+      CreateById = factory
     };
     return ctx;
   }
 
-  public static SyncContext NewForWrite(IWriter writer, uint opts = 0)
+  public static SyncContext NewForWrite(IWriter writer)
   {
     var ctx = new SyncContext() {
       is_read = false,
       reader = null,
-      writer = writer,
-      opts = opts
+      writer = writer
     };
     return ctx;
   }
@@ -109,9 +112,6 @@ public interface IWriter
 
 public static class Utils 
 {
-  public delegate IMarshallable CreateByIdCb(uint id); 
-  static public CreateByIdCb CreateById;
-
   public delegate void LogCb(string text);
   static public LogCb LogError = DefaultLog;
   static public LogCb LogWarn = DefaultLog;
@@ -444,7 +444,7 @@ public static class Utils
       uint clid = 0;
       ensure(ctx.reader.ReadU32(ref clid));
       
-      v = CreateById(clid);
+      v = ctx.CreateById(clid);
       if(v == null) 
       {
         LogError("Could not create struct: " + clid);

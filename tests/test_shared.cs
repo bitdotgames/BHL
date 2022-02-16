@@ -71,7 +71,6 @@ public class BHL_TestRunner
     {
       if(IsMemberTested(method))
       {
-        Util.SetupASTFactory();
         if(IsAllowedToRun(names, test, method))
         {
           if(verbose)

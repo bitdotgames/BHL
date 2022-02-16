@@ -178,38 +178,25 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static marshall.Utils.CreateByIdCb prev_create_factory; 
-
-  static public void SetupASTFactory()
-  {
-    prev_create_factory = marshall.Utils.CreateById;
-    marshall.Utils.CreateById = AST_Factory.createById;
-  }
-
-  static public void RestoreASTFactory()
-  {
-    marshall.Utils.CreateById = prev_create_factory;
-  }
-
-  static public T File2Meta<T>(string file) where T : IMarshallable, new()
+  static public T File2Meta<T>(string file, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
   {
     using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
     {
-      return Bin2Meta<T>(rfs);
+      return Bin2Meta<T>(rfs, cb);
     }
   }
 
-  static public T Bin2Meta<T>(Stream s) where T : IMarshallable, new()
+  static public T Bin2Meta<T>(Stream s, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
   {
     var reader = new MsgPackDataReader(s);
     var meta = new T();
-    marshall.Utils.sync(marshall.SyncContext.NewForRead(reader), ref meta);
+    marshall.Utils.sync(marshall.SyncContext.NewForRead(reader, cb), ref meta);
     return meta;
   }
 
-  static public T Bin2Meta<T>(byte[] bytes) where T : IMarshallable, new()
+  static public T Bin2Meta<T>(byte[] bytes, marshall.SyncContext.Factory cb) where T : IMarshallable, new()
   {
-    return Bin2Meta<T>(new MemoryStream(bytes));
+    return Bin2Meta<T>(new MemoryStream(bytes), cb);
   }
 
   static public void Meta2Bin<T>(T meta, Stream dst) where T : IMarshallable
