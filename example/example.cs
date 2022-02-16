@@ -7,6 +7,8 @@ public class Example
 {
   public static void Main(string[] args)
   {
+    Console.WriteLine("Example started");
+
     var types = new TypeSystem();
     var bnd = new MyBindings();
     bnd.Register(types);
@@ -20,10 +22,16 @@ public class Example
 
     //NOTE: emulating update game loop
     Time.dt = 0.016f;
+    float time_accum = 0;
     while(true)
     {
       vm.Tick();
-      Thread.Sleep(16);
+      Thread.Sleep((int)(Time.dt * 1000));
+      time_accum += Time.dt;
+      if(time_accum > 10)
+        break;
     }
+
+    Console.WriteLine("Example finished");
   }
 }

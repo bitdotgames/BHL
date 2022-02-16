@@ -633,7 +633,7 @@ public class FuncSymbolScript : FuncSymbol
   public int ip_addr;
 
   public FuncSymbolScript(FuncSignature sig, string name, int default_args_num, int local_vars_num)
-    : base(null, name, sig)
+    : base(name, sig)
   {
     this.name = name;
     this.local_vars_num = local_vars_num;
