@@ -67,7 +67,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
 {
   internal ClassSymbol super_class;
 
-  public SymbolsDictionary members;
+  public SymbolsDictionary members = new SymbolsDictionary();
 
   public VM.ClassCreator creator;
 
@@ -91,8 +91,6 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   )
     : base(name)
   {
-    members = new SymbolsDictionary();
-    
     this.type = new TypeProxy(this);
     this.super_class = super_class;
     this.creator = creator;
@@ -611,7 +609,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
 public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
-  SymbolsDictionary members;
+  SymbolsDictionary members = new SymbolsDictionary();
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -634,7 +632,6 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public FuncSymbol(string name, FuncSignature sig) 
     : base(name)
   {
-    members = new SymbolsDictionary();
     this.type = new TypeProxy(sig);
   }
 
@@ -943,7 +940,7 @@ public class ClassSymbolScript : ClassSymbol
 
 public class EnumSymbol : EnclosingSymbol, IType
 {
-  public SymbolsDictionary members;
+  public SymbolsDictionary members = new SymbolsDictionary();
 
 #if BHL_FRONT
   public EnumSymbol(WrappedParseTree parsed, string name)
@@ -956,7 +953,6 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumSymbol(string name)
       : base(name)
   {
-    members = new SymbolsDictionary();
     this.type = new TypeProxy(this);
   }
 
