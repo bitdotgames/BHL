@@ -781,7 +781,7 @@ public class VM
     this.globs = types.globs;
     this.importer = importer;
     //TODO: why having these?
-    symbols = new Scope(globs);
+    symbols = new Scope(types, globs);
 
     init_frame = new Frame(this);
 

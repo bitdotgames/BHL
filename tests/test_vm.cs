@@ -13,14 +13,14 @@ public class BHL_TestVM : BHL_TestBase
 
     var s = new MemoryStream();
     {
-      var ms = new ModuleScope(1, types.globs);
+      var ms = new ModuleScope(1, types);
       ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
       Util.Struct2Data(ms, s);
     }
 
     {
       s.Position = 0;
-      var ms = new ModuleScope(types.globs);
+      var ms = new ModuleScope(types);
       Util.Data2Struct(s, SymbolFactory.Create, ms);
 
       AssertEqual(ms.module_id, 1);

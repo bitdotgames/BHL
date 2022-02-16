@@ -61,7 +61,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
 {
   internal ClassSymbol super_class;
 
-  public SymbolsDictionary members = new SymbolsDictionary();
+  public SymbolsDictionary members;
 
   public VM.ClassCreator creator;
 
@@ -85,6 +85,8 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   )
     : base(name)
   {
+    members = new SymbolsDictionary(null/*for now*/);
+    
     this.type = new TypeProxy(this);
     this.super_class = super_class;
     this.creator = creator;
@@ -603,7 +605,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
 public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
-  SymbolsDictionary members = new SymbolsDictionary();
+  SymbolsDictionary members;
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -626,6 +628,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public FuncSymbol(string name, FuncSignature sig) 
     : base(name)
   {
+    members = new SymbolsDictionary(null/*for now*/);
     this.type = new TypeProxy(sig);
   }
 
@@ -658,7 +661,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
   public SymbolsDictionary GetArgs()
   {
-    var args = new SymbolsDictionary();
+    var args = new SymbolsDictionary(null/*for now*/);
     for(int i=0;i<GetSignature().arg_types.Count;++i)
       args.Add(members[i]);
     return args;
@@ -934,7 +937,7 @@ public class ClassSymbolScript : ClassSymbol
 
 public class EnumSymbol : EnclosingSymbol, IType
 {
-  public SymbolsDictionary members = new SymbolsDictionary();
+  public SymbolsDictionary members;
 
 #if BHL_FRONT
   public EnumSymbol(WrappedParseTree parsed, string name)
@@ -947,6 +950,7 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumSymbol(string name)
       : base(name)
   {
+    members = new SymbolsDictionary(null/*for now*/);
     this.type = new TypeProxy(this);
   }
 
@@ -1012,10 +1016,9 @@ public class EnumItemSymbol : Symbol, IType
   public string GetName() { return owner.name; }
 }
 
-public class SymbolsDictionary : IMarshallableGeneric
+public class SymbolsDictionary : IMarshallable
 {
-  public const uint CLASS_ID = 3515876236;
-
+  TypeSystem types;
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
   List<Symbol> list = new List<Symbol>();
 
@@ -1031,6 +1034,11 @@ public class SymbolsDictionary : IMarshallableGeneric
     get {
       return list[index];
     }
+  }
+
+  public SymbolsDictionary(TypeSystem types)
+  {
+    this.types = types;
   }
 
   public bool Contains(string key)
@@ -1107,11 +1115,6 @@ public class SymbolsDictionary : IMarshallableGeneric
     return -1;
   }
 
-  public uint getClassId() 
-  {
-    return CLASS_ID;
-  }
-
   public int GetFieldsNum()
   {
     return 1;
@@ -1123,7 +1126,10 @@ public class SymbolsDictionary : IMarshallableGeneric
     if(ctx.is_read)
     {
       foreach(var s in list)
+      {
+        s.type = types.Type("TODO"); 
         str2symb.Add(s.name, s);
+      }
     }
   }
 }
@@ -1134,8 +1140,6 @@ public static class SymbolFactory
   {
     switch(id)
     {
-      case SymbolsDictionary.CLASS_ID:
-        return new SymbolsDictionary(); 
       case VariableSymbol.CLASS_ID:
         return new VariableSymbol(); 
       default:

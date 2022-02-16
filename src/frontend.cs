@@ -2669,7 +2669,7 @@ public class Frontend : bhlBaseVisitor<object>
     ++scope_level;
 
     if(new_local_scope)
-      curr_scope = new Scope(curr_scope); 
+      curr_scope = new Scope(types, curr_scope); 
 
     bool is_paral = 
       type == EnumBlock.PARAL || 
@@ -2772,7 +2772,7 @@ public class Module
   public Module(TypeSystem types, ModulePath module_path)
   {
     this.path = module_path;
-    symbols = new ModuleScope(path.id, types.globs);
+    symbols = new ModuleScope(path.id, types);
   }
 
   public Module(TypeSystem types, string name, string file_path)
