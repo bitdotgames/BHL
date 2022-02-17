@@ -834,7 +834,13 @@ public class FuncSymbolScript : FuncSymbol
   public int default_args_num;
   public int ip_addr;
 
-  public FuncSymbolScript(FuncSignature sig, string name, int default_args_num, int local_vars_num, int ip_addr)
+  public FuncSymbolScript(
+      FuncSignature sig, 
+      string name, 
+      int default_args_num, 
+      int local_vars_num, 
+      int ip_addr
+  )
     : base(name, sig)
   {
     this.name = name;
@@ -895,6 +901,12 @@ public class FuncSymbolScript : FuncSymbol
 
   public override void Sync(SyncContext ctx)
   {
+    //NOTE: we don't Sync actual arguments for now,
+    //      we probably should be doint this however
+    //      we need to separate arguments from local
+    //      variables (check if they are stored in the 
+    //      same members dictionary)
+
     Marshall.Sync(ctx, ref signature);
     if(ctx.is_read)
       type = new TypeProxy(signature);
@@ -1259,7 +1271,9 @@ public class EnumSymbolScript : EnumSymbol
         return 1;
     }
 
-    var item = new EnumItemSymbol(this, name, val);
+    var item = new EnumItemSymbol(name, val);
+    //TODO: should be set by SymbolsDictionary
+    item.scope = this;
     members.Add(item);
     return 0;
   }
@@ -1283,7 +1297,7 @@ public class EnumSymbolScript : EnumSymbol
       for(int i=0;i<members.Count;++i)
       {
         var item = (EnumItemSymbol)members[i];
-        item.owner = this;
+        item.scope = this;
         item.type = new TypeProxy(this); 
       }
     }
@@ -1294,27 +1308,30 @@ public class EnumItemSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 15;
 
-  public EnumSymbol owner;
+  public EnumSymbol owner {
+    get {
+      return scope as EnumSymbol;
+    }
+  }
   public int val;
 
 #if BHL_FRONT
-  public EnumItemSymbol(WrappedParseTree parsed, EnumSymbol owner, string name, int val = 0) 
-    : this(owner, name, val) 
+  public EnumItemSymbol(WrappedParseTree parsed, string name, int val = 0) 
+    : this(name, val) 
   {
     this.parsed = parsed;
   }
 #endif
 
-  public EnumItemSymbol(EnumSymbol owner, string name, int val = 0) 
-    : base(name, new TypeProxy(owner)) 
+  public EnumItemSymbol(string name, int val = 0) 
+    : base(name, new TypeProxy()) 
   {
-    this.owner = owner;
     this.val = val;
   }
 
   //marshall factory version
   public EnumItemSymbol() 
-    : this(null, null)
+    : base(null, new TypeProxy())
   {}
 
   //type name
@@ -1327,11 +1344,12 @@ public class EnumItemSymbol : Symbol, IType
 
   public override int GetFieldsNum()
   {
-    return 1;
+    return 2;
   }
 
   public override void Sync(SyncContext ctx)
   {
+    Marshall.Sync(ctx, ref name);
     Marshall.Sync(ctx, ref val);
   }
 }

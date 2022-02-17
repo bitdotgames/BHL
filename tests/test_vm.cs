@@ -16888,8 +16888,8 @@ public class BHL_TestVM : BHL_TestBase
     var en = new EnumSymbol("EnumState");
     ts.globs.Define(en);
 
-    en.Define(new EnumItemSymbol(en, "SPAWNED",  10));
-    en.Define(new EnumItemSymbol(en, "SPAWNED2", 20));
+    en.Define(new EnumItemSymbol("SPAWNED",  10));
+    en.Define(new EnumItemSymbol("SPAWNED2", 20));
   }
 
   [IsTested()]
@@ -20153,6 +20153,11 @@ public class BHL_TestVM : BHL_TestBase
       Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("bool","bool"), types.Type("int")), "What", 1, 5, 1));
       ms.Define(Bar);
 
+      var Enum = new EnumSymbolScript("Enum");
+      Enum.TryAddItem("Type1", 1);
+      Enum.TryAddItem("Type2", 2);
+      ms.Define(Enum);
+
       Util.Struct2Data(ms, s);
     }
 
@@ -20168,7 +20173,7 @@ public class BHL_TestVM : BHL_TestBase
 
       AssertEqual(ms.module_id, 1);
 
-      AssertEqual(7, ms.GetMembers().Count);
+      AssertEqual(8, ms.GetMembers().Count);
 
       var foo = (VariableSymbol)ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
@@ -20232,6 +20237,13 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(5, Bar_What.local_vars_num);
       AssertEqual(1, Bar_What.ip_addr);
 
+      var Enum = (EnumSymbolScript)ms.Resolve("Enum");
+      AssertEqual(Enum.name, "Enum");
+      AssertEqual(Enum.GetMembers().Count, 2);
+      AssertEqual(Enum.Resolve("Type1").type.Get(), Enum);
+      AssertEqual(((EnumItemSymbol)Enum.Resolve("Type1")).val, 1);
+      AssertEqual(Enum.Resolve("Type2").type.Get(), Enum);
+      AssertEqual(((EnumItemSymbol)Enum.Resolve("Type2")).val, 2);
     }
   }
 
