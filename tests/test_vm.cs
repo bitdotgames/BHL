@@ -20149,6 +20149,7 @@ public class BHL_TestVM : BHL_TestBase
       Foo.Define(new FuncSymbolScript(new FuncSignature(types.Type("void")), "Hey", 0, 4, 3));
       ms.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", null, Foo);
+      Bar.Define(new FieldSymbolScript("Float", types.Type("float")));
       ms.Define(Bar);
 
       Util.Struct2Data(ms, s);
@@ -20218,6 +20219,10 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(Bar.super_class.name, Foo.name);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
+      AssertEqual(Bar.GetMembers().Count, 2/*from parent*/+1);
+      var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
+      AssertEqual(Bar_Float.name, "Float");
+      AssertEqual(Bar_Float.type.Get(), TypeSystem.Float);
 
     }
   }
