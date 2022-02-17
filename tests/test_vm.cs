@@ -20158,7 +20158,7 @@ public class BHL_TestVM : BHL_TestBase
       Enum.TryAddItem("Type2", 2);
       ms.Define(Enum);
 
-      Util.Struct2Data(ms, s);
+      Util.Obj2Data(ms, s);
     }
 
     {
@@ -20169,7 +20169,7 @@ public class BHL_TestVM : BHL_TestBase
       types.AddSource(ms);
 
       s.Position = 0;
-      Util.Data2Struct(s, factory, ms);
+      Util.Data2Obj(s, factory, ms);
 
       AssertEqual(ms.module_id, 1);
 
@@ -20350,7 +20350,7 @@ public class BHL_TestVM : BHL_TestBase
     Frontend.Source2Bin(mdl, src.ToStream(), ms, ts, mreg);
     ms.Position = 0;
 
-    return Util.Data2Struct<AST_Module>(ms, new AST_Factory());
+    return Util.Data2Obj<AST_Module>(ms, new AST_Factory());
   }
 
   void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)

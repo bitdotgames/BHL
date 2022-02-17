@@ -461,7 +461,7 @@ public class Build
 
       try
       {
-        return Util.File2Struct<FileImports>(cache_imports_file, new AST_Factory());
+        return Util.File2Obj<FileImports>(cache_imports_file, new AST_Factory());
       }
       catch
       {
@@ -473,7 +473,7 @@ public class Build
     {
       //Console.WriteLine("IMPORTS MISS " + file);
       var cache_imports_file = GetImportsCacheFile(cache_dir, file);
-      Util.Struct2File(imports, cache_imports_file);
+      Util.Obj2File(imports, cache_imports_file);
     }
 
     static List<string> ParseImports(List<string> inc_paths, string file, FileStream fs)
@@ -558,12 +558,12 @@ public class Build
         try
         {
           //Console.WriteLine("HIT " + cache_file);
-          return Util.File2Struct<AST_Module>(cache_file, new AST_Factory());
+          return Util.File2Obj<AST_Module>(cache_file, new AST_Factory());
         }
         catch
         {
           var ast = fallback.Get();
-          Util.Struct2File(ast, cache_file);
+          Util.Obj2File(ast, cache_file);
           return ast;
         }
       }
@@ -576,7 +576,7 @@ public class Build
       public CacheWriteResolver(string cache_file, IASTResolver resolver)
       {
         ast = resolver.Get();
-        Util.Struct2File(ast, cache_file);
+        Util.Obj2File(ast, cache_file);
         //Console.WriteLine("MISS " + cache_file);
       }
 
@@ -752,7 +752,7 @@ public class Build
 
       try
       {
-        return Util.File2Struct<Symbols>(cache_symb_file, new AST_Factory());
+        return Util.File2Obj<Symbols>(cache_symb_file, new AST_Factory());
       }
       catch
       {
@@ -763,7 +763,7 @@ public class Build
     static void WriteSymbolsCache(string file, string cache_dir, Symbols symbols)
     {
       var cache_symb_file = GetSymbolsCacheFile(cache_dir, file);
-      Util.Struct2File(symbols, cache_symb_file);
+      Util.Obj2File(symbols, cache_symb_file);
     }
   }
 

@@ -7,6 +7,209 @@ namespace bhl {
 
 using marshall;
 
+static public class Util
+{
+  public delegate void LogCb(string text);
+  static public LogCb Debug = DefaultDebug;
+  static public LogCb Error = DefaultError;
+
+  static public void DefaultDebug(string str)
+  {
+    Console.WriteLine("[DBG] " + str);
+  }
+
+  static public void DefaultError(string str)
+  {
+    Console.WriteLine("[ERR] " + str);
+  }
+  ////////////////////////////////////////////////////////
+
+  public static void Verify(bool condition)
+  {
+    if(!condition) throw new Exception();
+  }
+
+  public static void Verify(bool condition, string fmt, params object[] vals)
+  {
+    if(!condition) throw new Exception(string.Format(fmt, vals));
+  }
+
+  public static void Verify(bool condition, string msg)
+  {
+    if(!condition) throw new Exception(msg);
+  }
+
+  ////////////////////////////////////////////////////////
+
+  static public string NormalizeFilePath(string file_path)
+  {
+    return Path.GetFullPath(file_path).Replace("\\", "/");
+  }
+
+  static public string ResolveImportPath(List<string> inc_paths, string self_path, string path)
+  {
+    //relative import
+    if(!Path.IsPathRooted(path))
+    {
+      var dir = Path.GetDirectoryName(self_path);
+      return Path.GetFullPath(Path.Combine(dir, path) + ".bhl");
+    }
+    //absolute import
+    else
+      return TryIncludePaths(inc_paths, path);
+  }
+
+  static string TryIncludePaths(List<string> inc_paths, string path)
+  {
+    for(int i=0;i<inc_paths.Count;++i)
+    {
+      var file_path = Path.GetFullPath(inc_paths[i] + "/" + path  + ".bhl");
+      if(File.Exists(file_path))
+        return file_path;
+    }
+    throw new Exception("Could not find file for path '" + path + "'");
+  }
+
+  ////////////////////////////////////////////////////////
+
+  static public T File2Obj<T>(string file, IFactory f) where T : IMarshallable, new()
+  {
+    using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
+    {
+      return Data2Obj<T>(rfs, f);
+    }
+  }
+
+  static public void Data2Obj<T>(Stream s, IFactory f, T obj) where T : IMarshallable
+  {
+    var reader = new MsgPackDataReader(s);
+    Marshall.Sync(SyncContext.NewForRead(reader, f), ref obj);
+  }
+
+  static public T Data2Obj<T>(Stream s, IFactory f) where T : IMarshallable, new()
+  {
+    var reader = new MsgPackDataReader(s);
+    var obj = new T();
+    Marshall.Sync(SyncContext.NewForRead(reader, f), ref obj);
+    return obj;
+  }
+
+  static public T Data2Obj<T>(byte[] bytes, IFactory f) where T : IMarshallable, new()
+  {
+    return Data2Obj<T>(new MemoryStream(bytes), f);
+  }
+
+  static public void Obj2Data<T>(T obj, Stream dst) where T : IMarshallable
+  {
+    var writer = new MsgPackDataWriter(dst);
+    Marshall.Sync(SyncContext.NewForWrite(writer), ref obj);
+  }
+
+  static public void Obj2File<T>(T obj, string file) where T : IMarshallable
+  {
+    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
+    {
+      Obj2Data(obj, wfs);
+    }
+  }
+
+  static public void Compiled2Data(CompiledModule m, Stream dst)
+  {
+    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
+    {
+      //TODO: add better support for version
+      w.Write((uint)1);
+
+      w.Write(m.name);
+
+      w.Write(m.initcode == null ? (int)0 : m.initcode.Length);
+      if(m.initcode != null)
+        w.Write(m.initcode, 0, m.initcode.Length);
+
+      w.Write(m.bytecode == null ? (int)0 : m.bytecode.Length);
+      if(m.bytecode != null)
+        w.Write(m.bytecode, 0, m.bytecode.Length);
+
+      w.Write(m.constants.Count);
+      foreach(var cn in m.constants)
+      {
+        w.Write((byte)cn.type);
+        if(cn.type == EnumLiteral.STR)
+          w.Write(cn.str);
+        else
+          w.Write(cn.num);
+      }
+
+      //TODO: add this info only for development builds
+      w.Write(m.ip2src_line.Count);
+      foreach(var kv in m.ip2src_line)
+      {
+        w.Write(kv.Key);
+        w.Write(kv.Value);
+      }
+    }
+  }
+
+  static public void Compiled2File(CompiledModule m, string file)
+  {
+    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
+    {
+      Compiled2Data(m, wfs);
+    }
+  }
+
+  static public CompiledModule Data2Compiled(Stream src)
+  {
+    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
+    {
+      //TODO: add better support for version
+      uint version = r.ReadUInt32();
+      if(version != 1)
+        throw new Exception("Unsupported version: " + version);
+
+      string name = r.ReadString();
+
+      byte[] initcode = null;
+      int initcode_len = r.ReadInt32();
+      if(initcode_len > 0)
+        initcode = r.ReadBytes(initcode_len);
+
+      byte[] bytecode = null;
+      int bytecode_len = r.ReadInt32();
+      if(bytecode_len > 0)
+        bytecode = r.ReadBytes(bytecode_len);
+
+      var constants = new List<Const>();
+      int constants_len = r.ReadInt32();
+      for(int i=0;i<constants_len;++i)
+      {
+        var cn_type = (EnumLiteral)r.Read();
+        double cn_num = 0;
+        string cn_str = "";
+        if(cn_type == EnumLiteral.STR)
+          cn_str = r.ReadString();
+        else
+          cn_num = r.ReadDouble();
+        var cn = new Const(cn_type, cn_num, cn_str);
+        constants.Add(cn);
+      }
+
+      var ip2src_line = new Dictionary<int, int>();
+      int ip2src_line_len = r.ReadInt32();
+      for(int i=0;i<ip2src_line_len;++i)
+        ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
+
+      return new CompiledModule(name, bytecode, constants, initcode, ip2src_line);
+    }
+  }
+
+  public static void ASTDump(AST_Nested ast)
+  {
+    new AST_Dumper().Visit(ast);
+    Console.WriteLine("\n=============");
+  }
+}
+
 public static class Hash
 {
   static public uint CRC32(string id)
@@ -110,209 +313,6 @@ public static class Extensions
       curr.RefMod(RefOp.USR_INC);
       s[idx] = curr;
     }
-  }
-}
-
-static public class Util
-{
-  public delegate void LogCb(string text);
-  static public LogCb Debug = DefaultDebug;
-  static public LogCb Error = DefaultError;
-
-  static public void DefaultDebug(string str)
-  {
-    Console.WriteLine("[DBG] " + str);
-  }
-
-  static public void DefaultError(string str)
-  {
-    Console.WriteLine("[ERR] " + str);
-  }
-  ////////////////////////////////////////////////////////
-
-  public static void Verify(bool condition)
-  {
-    if(!condition) throw new Exception();
-  }
-
-  public static void Verify(bool condition, string fmt, params object[] vals)
-  {
-    if(!condition) throw new Exception(string.Format(fmt, vals));
-  }
-
-  public static void Verify(bool condition, string msg)
-  {
-    if(!condition) throw new Exception(msg);
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public string NormalizeFilePath(string file_path)
-  {
-    return Path.GetFullPath(file_path).Replace("\\", "/");
-  }
-
-  static public string ResolveImportPath(List<string> inc_paths, string self_path, string path)
-  {
-    //relative import
-    if(!Path.IsPathRooted(path))
-    {
-      var dir = Path.GetDirectoryName(self_path);
-      return Path.GetFullPath(Path.Combine(dir, path) + ".bhl");
-    }
-    //absolute import
-    else
-      return TryIncludePaths(inc_paths, path);
-  }
-
-  static string TryIncludePaths(List<string> inc_paths, string path)
-  {
-    for(int i=0;i<inc_paths.Count;++i)
-    {
-      var file_path = Path.GetFullPath(inc_paths[i] + "/" + path  + ".bhl");
-      if(File.Exists(file_path))
-        return file_path;
-    }
-    throw new Exception("Could not find file for path '" + path + "'");
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public T File2Struct<T>(string file, IFactory f) where T : IMarshallable, new()
-  {
-    using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
-    {
-      return Data2Struct<T>(rfs, f);
-    }
-  }
-
-  static public void Data2Struct<T>(Stream s, IFactory f, T obj) where T : IMarshallable
-  {
-    var reader = new MsgPackDataReader(s);
-    Marshall.Sync(SyncContext.NewForRead(reader, f), ref obj);
-  }
-
-  static public T Data2Struct<T>(Stream s, IFactory f) where T : IMarshallable, new()
-  {
-    var reader = new MsgPackDataReader(s);
-    var obj = new T();
-    Marshall.Sync(SyncContext.NewForRead(reader, f), ref obj);
-    return obj;
-  }
-
-  static public T Data2Struct<T>(byte[] bytes, IFactory f) where T : IMarshallable, new()
-  {
-    return Data2Struct<T>(new MemoryStream(bytes), f);
-  }
-
-  static public void Struct2Data<T>(T meta, Stream dst) where T : IMarshallable
-  {
-    var writer = new MsgPackDataWriter(dst);
-    Marshall.Sync(SyncContext.NewForWrite(writer), ref meta);
-  }
-
-  static public void Struct2File<T>(T meta, string file) where T : IMarshallable
-  {
-    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
-    {
-      Struct2Data(meta, wfs);
-    }
-  }
-
-  static public void Compiled2Data(CompiledModule m, Stream dst)
-  {
-    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
-    {
-      //TODO: add better support for version
-      w.Write((uint)1);
-
-      w.Write(m.name);
-
-      w.Write(m.initcode == null ? (int)0 : m.initcode.Length);
-      if(m.initcode != null)
-        w.Write(m.initcode, 0, m.initcode.Length);
-
-      w.Write(m.bytecode == null ? (int)0 : m.bytecode.Length);
-      if(m.bytecode != null)
-        w.Write(m.bytecode, 0, m.bytecode.Length);
-
-      w.Write(m.constants.Count);
-      foreach(var cn in m.constants)
-      {
-        w.Write((byte)cn.type);
-        if(cn.type == EnumLiteral.STR)
-          w.Write(cn.str);
-        else
-          w.Write(cn.num);
-      }
-
-      //TODO: add this info only for development builds
-      w.Write(m.ip2src_line.Count);
-      foreach(var kv in m.ip2src_line)
-      {
-        w.Write(kv.Key);
-        w.Write(kv.Value);
-      }
-    }
-  }
-
-  static public void Compiled2File(CompiledModule m, string file)
-  {
-    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
-    {
-      Compiled2Data(m, wfs);
-    }
-  }
-
-  static public CompiledModule Data2Compiled(Stream src)
-  {
-    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
-    {
-      //TODO: add better support for version
-      uint version = r.ReadUInt32();
-      if(version != 1)
-        throw new Exception("Unsupported version: " + version);
-
-      string name = r.ReadString();
-
-      byte[] initcode = null;
-      int initcode_len = r.ReadInt32();
-      if(initcode_len > 0)
-        initcode = r.ReadBytes(initcode_len);
-
-      byte[] bytecode = null;
-      int bytecode_len = r.ReadInt32();
-      if(bytecode_len > 0)
-        bytecode = r.ReadBytes(bytecode_len);
-
-      var constants = new List<Const>();
-      int constants_len = r.ReadInt32();
-      for(int i=0;i<constants_len;++i)
-      {
-        var cn_type = (EnumLiteral)r.Read();
-        double cn_num = 0;
-        string cn_str = "";
-        if(cn_type == EnumLiteral.STR)
-          cn_str = r.ReadString();
-        else
-          cn_num = r.ReadDouble();
-        var cn = new Const(cn_type, cn_num, cn_str);
-        constants.Add(cn);
-      }
-
-      var ip2src_line = new Dictionary<int, int>();
-      int ip2src_line_len = r.ReadInt32();
-      for(int i=0;i<ip2src_line_len;++i)
-        ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
-
-      return new CompiledModule(name, bytecode, constants, initcode, ip2src_line);
-    }
-  }
-
-  public static void ASTDump(AST_Nested ast)
-  {
-    new AST_Dumper().Visit(ast);
-    Console.WriteLine("\n=============");
   }
 }
 
@@ -853,103 +853,6 @@ public static class TempBuffer
     //  Util.Debug(curr.Length + " VS " + buf.Length);
     tmp_bufs[idx] = buf;
     stats_max_buf = stats_max_buf < buf.Length ? buf.Length : stats_max_buf;
-  }
-}
-
-// A dictionary that remembers the order that keys were first inserted. If a new entry overwrites an existing entry, 
-// the original insertion position is left unchanged. 
-// Deleting an entry and reinserting it will move it to the end.
-public class OrderedDictionary<TKey, TValue>
-{
-  // An unordered dictionary of key pairs.
-  Dictionary<TKey, TValue> dict;
-
-  // The keys of the dictionary in the exposed order.
-  List<TKey> keys = new List<TKey>();
-
-  public OrderedDictionary()
-  {
-    dict = new Dictionary<TKey, TValue>();
-  }
-
-  public OrderedDictionary(IEqualityComparer<TKey> cmp)
-  {
-    dict = new Dictionary<TKey, TValue>(cmp);
-  }
-
-  public int Count
-  {
-    get {
-      return keys.Count;
-    }
-  }
-
-  public ICollection<TKey> Keys
-  {
-    get {
-      return keys.AsReadOnly();
-    }
-  }
-
-  // The value at the given index.
-  public TValue this[int index]
-  {
-    get {
-      var key = keys[index];
-      return dict[key];
-    }
-    set {
-      var key = keys[index];
-      dict[key] = value;
-    }
-  }
-
-  public int IndexOf(TKey key)
-  {
-    return keys.IndexOf(key);
-  }
-
-  public void RemoveAt(int index)
-  {
-    var key = keys[index];
-    dict.Remove(key);
-    keys.RemoveAt(index);
-  }
-
-  public bool ContainsKey(TKey key)
-  {
-    return dict.ContainsKey(key);
-  }
-
-  public bool TryGetValue(TKey key, out TValue value)
-  {
-    return dict.TryGetValue(key, out value);
-  }
-
-  public void Insert(int index, TKey key, TValue value)
-  {
-    // Dictionary operation first, so exception thrown if key already exists.
-    dict.Add(key, value);
-    keys.Insert(index, key);
-  }
-
-  public void Add(TKey key, TValue value)
-  {
-    // Dictionary operation first, so exception thrown if key already exists.
-    dict.Add(key, value);
-    keys.Add(key);
-  }
-
-  public void Remove(TKey key)
-  {
-    dict.Remove(key);
-    keys.Remove(key);
-  }
-
-  public void Clear()
-  {
-    dict.Clear();
-    keys.Clear();
   }
 }
 
