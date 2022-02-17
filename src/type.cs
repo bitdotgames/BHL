@@ -57,7 +57,9 @@ public struct TypeProxy : IMarshallable
 
   public int GetFieldsNum()
   {
-    return 1;
+    return 1 /*name*/ + 
+           1 /*bool flag if existing symbol*/ +
+           1 /*dummy or marshallable type*/;
   }
 
   public void Sync(SyncContext ctx)
@@ -67,10 +69,48 @@ public struct TypeProxy : IMarshallable
 
     Marshall.Sync(ctx, ref _name);
 
-    if(ctx.is_read)
+    if(!ctx.is_read)
     {
-      type = null;
-      types = ((SymbolFactory)ctx.factory).types; 
+      var tmp = Get();
+
+      //NOTE: we want to determine if it's an existing symbol and if so
+      //      we don't want to serialize it
+      bool existing_symbol = (tmp is Symbol symb && symb.scope is ModuleScope); 
+      Marshall.Sync(ctx, ref existing_symbol);
+
+      if(!existing_symbol)
+      {
+        var mtmp = tmp as IMarshallableGeneric;
+        if(mtmp == null)
+          throw new Exception("Type is not marshallable: " + (tmp != null ? tmp.GetType().Name + " " : "<null> ") + name);
+        Marshall.SyncGeneric(ctx, ref mtmp);
+      }
+      else
+      {
+        bool dummy = false;
+        Marshall.Sync(ctx, ref dummy);
+      }
+    }
+    else
+    {   
+      types = ((SymbolFactory)ctx.factory).types;
+      
+      bool existing_symbol = false;
+      Marshall.Sync(ctx, ref existing_symbol);
+
+      if(existing_symbol)
+      {
+        type = (IType)types.Resolve(_name); 
+
+        bool dummy = false;
+        Marshall.Sync(ctx, ref dummy);
+      }
+      else
+      {
+        IMarshallableGeneric mtmp = null;
+        Marshall.SyncGeneric(ctx, ref mtmp);
+        type = (IType)mtmp;
+      }
     }
   }
 }
@@ -333,7 +373,7 @@ public class TypeSystem
     globs.Define(Void);
     globs.Define(Any);
 
-    //for all generic arrays
+    //TODO: probably we should get rid of this this general fallback
     globs.Define(new GenericArrayTypeSymbol(this, new TypeProxy(this, "")));
 
     {

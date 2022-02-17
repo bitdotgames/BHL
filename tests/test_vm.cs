@@ -20138,9 +20138,11 @@ public class BHL_TestVM : BHL_TestBase
 
       ms.Define(new VariableSymbol("bar", types.Type(TypeSystem.String)));
 
+      ms.Define(new VariableSymbol("wow", types.TypeArr("bool")));
+
       ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.Type("int"), types.Type("string")), "Test", 1, 4, 155));
 
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("string"), types.Type("Bar")), "Make", 10, 3, 15));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr("string"), types.Type("Bar")), "Make", 10, 3, 15));
 
       var Foo = new ClassSymbolScript("Foo", null);
       ms.Define(Foo);
@@ -20162,7 +20164,7 @@ public class BHL_TestVM : BHL_TestBase
 
       AssertEqual(ms.module_id, 1);
 
-      AssertEqual(6, ms.GetMembers().Count);
+      AssertEqual(7, ms.GetMembers().Count);
 
       var foo = (VariableSymbol)ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
@@ -20174,6 +20176,12 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
       AssertTrue(bar.scope == ms);
 
+      var wow = (VariableSymbol)ms.Resolve("wow");
+      AssertEqual(wow.name, "wow");
+      AssertEqual(wow.type.Get().GetName(), types.TypeArr("string").Get().GetName());
+      AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get().GetName(), types.Type("bool").Get().GetName());
+      AssertTrue(wow.scope == ms);
+
       var Test = (FuncSymbolScript)ms.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), "int", "string").name, Test.GetSignature().name);
@@ -20183,7 +20191,9 @@ public class BHL_TestVM : BHL_TestBase
 
       var Make = (FuncSymbolScript)ms.Resolve("Make");
       AssertEqual(Make.name, "Make");
-      AssertEqual(types.TypeFunc(types.TypeTuple("string"), "Bar").name, Make.GetSignature().name);
+      AssertEqual(1, Make.GetSignature().arg_types.Count);
+      AssertEqual(types.TypeArr("string").Get().GetName(), Make.GetReturnType().GetName());
+      AssertEqual(types.Type("Bar").Get().GetName(), Make.GetSignature().arg_types[0].Get().GetName());
       AssertEqual(10, Make.default_args_num);
       AssertEqual(3, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);

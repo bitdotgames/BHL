@@ -1453,6 +1453,8 @@ public class SymbolFactory : IFactory
         return TypeSystem.Float;
       case StringSymbol.CLASS_ID:
         return TypeSystem.String;
+      case BoolSymbol.CLASS_ID:
+        return TypeSystem.Bool;
       case AnySymbol.CLASS_ID:
         return TypeSystem.Any;
       case VoidSymbol.CLASS_ID:
