@@ -27,10 +27,7 @@ public abstract class Symbol : IMarshallableGeneric
     return '<' + name + ':' + type.name + '>';
   }
 
-  public virtual uint getClassId()
-  {
-    throw new NotImplementedException();
-  }
+  public abstract uint ClassId();
 
   public virtual int GetFieldsNum()
   {
@@ -68,13 +65,13 @@ public abstract class BuiltInSymbol : Symbol, IType
 
 public class IntSymbol : BuiltInSymbol
 {
-  public const int CLASS_ID = 1;
+  public const uint CLASS_ID = 1;
 
   public IntSymbol()
     : base("int")
   {}
 
-  public override uint getClassId()
+  public override uint ClassId()
   {
     return CLASS_ID;
   }
@@ -82,13 +79,13 @@ public class IntSymbol : BuiltInSymbol
 
 public class BoolSymbol : BuiltInSymbol
 {
-  public const int CLASS_ID = 2;
+  public const uint CLASS_ID = 2;
 
   public BoolSymbol()
     : base("bool")
   {}
 
-  public override uint getClassId()
+  public override uint ClassId()
   {
     return CLASS_ID;
   }
@@ -96,13 +93,13 @@ public class BoolSymbol : BuiltInSymbol
 
 public class StringSymbol : BuiltInSymbol
 {
-  public const int CLASS_ID = 3;
+  public const uint CLASS_ID = 3;
 
   public StringSymbol()
     : base("string")
   {}
 
-  public override uint getClassId()
+  public override uint ClassId()
   {
     return CLASS_ID;
   }
@@ -110,13 +107,13 @@ public class StringSymbol : BuiltInSymbol
 
 public class FloatSymbol : BuiltInSymbol
 {
-  public const int CLASS_ID = 4;
+  public const uint CLASS_ID = 4;
 
   public FloatSymbol()
     : base("float")
   {}
 
-  public override uint getClassId()
+  public override uint ClassId()
   {
     return CLASS_ID;
   }
@@ -124,13 +121,13 @@ public class FloatSymbol : BuiltInSymbol
 
 public class VoidSymbol : BuiltInSymbol
 {
-  public const int CLASS_ID = 5;
+  public const uint CLASS_ID = 5;
 
   public VoidSymbol()
     : base("void")
   {}
 
-  public override uint getClassId()
+  public override uint ClassId()
   {
     return CLASS_ID;
   }
@@ -138,13 +135,13 @@ public class VoidSymbol : BuiltInSymbol
 
 public class AnySymbol : BuiltInSymbol
 {
-  public const int CLASS_ID = 6;
+  public const uint CLASS_ID = 6;
 
   public AnySymbol()
     : base("any")
   {}
 
-  public override uint getClassId()
+  public override uint ClassId()
   {
     return CLASS_ID;
   }
@@ -152,19 +149,19 @@ public class AnySymbol : BuiltInSymbol
 
 public class NullSymbol : BuiltInSymbol
 {
-  public const int CLASS_ID = 7;
+  public const uint CLASS_ID = 7;
 
   public NullSymbol()
     : base("null")
   {}
 
-  public override uint getClassId()
+  public override uint ClassId()
   {
     return CLASS_ID;
   }
 }
 
-public class ClassSymbol : EnclosingSymbol, IScope, IType 
+public abstract class ClassSymbol : EnclosingSymbol, IScope, IType 
 {
   internal ClassSymbol super_class;
 
@@ -262,7 +259,7 @@ public class ClassSymbol : EnclosingSymbol, IScope, IType
   }
 }
 
-abstract public class ArrayTypeSymbol : ClassSymbol
+public abstract class ArrayTypeSymbol : ClassSymbol
 {
   public TypeProxy item_type;
 
@@ -337,13 +334,20 @@ abstract public class ArrayTypeSymbol : ClassSymbol
 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
+  public const uint CLASS_ID = 10; 
+
   public static readonly string CLASS_TYPE = "[]";
 
-  public GenericArrayTypeSymbol(TypeSystem ts, TypeProxy item_type) 
-    : base(ts, item_type)
+  public GenericArrayTypeSymbol(TypeSystem types, TypeProxy item_type) 
+    : base(types, item_type)
   {
     name = CLASS_TYPE;
   }
+
+  //marshall factory version
+  public GenericArrayTypeSymbol(TypeSystem types)
+    : this(types, new TypeProxy())
+  {}
 
   static IList<Val> AsList(Val arr)
   {
@@ -425,6 +429,21 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     lst.Clear();
     arr.Release();
     return null;
+  }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override int GetFieldsNum()
+  {
+    return 1;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref item_type);
   }
 }
 
@@ -517,6 +536,21 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     arr.Release();
     return null;
   }
+
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override int GetFieldsNum()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    throw new NotImplementedException();
+  }
 }
 
 public interface IScopeIndexed
@@ -560,12 +594,12 @@ public class VariableSymbol : Symbol, IScopeIndexed
     : base(name, type) 
   {}
 
-  //marshall version
+  //marshall factory version
   public VariableSymbol()
     : base("", new TypeProxy(TypeSystem.Void))
   {}
 
-  public override uint getClassId()
+  public override uint ClassId()
   {
     return CLASS_ID;
   }
@@ -777,6 +811,8 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
 public class FuncSymbolScript : FuncSymbol
 {
+  public const uint CLASS_ID = 13; 
+
   public int local_vars_num;
   public int default_args_num;
   public int ip_addr;
@@ -821,7 +857,31 @@ public class FuncSymbolScript : FuncSymbol
     }
   }
 
+  //symbol factory version
+  public FuncSymbolScript()
+    : base(null, new FuncSignature())
+  {}
+
   public override int GetDefaultArgsNum() { return decl.GetDefaultArgsNum(); }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override int GetFieldsNum()
+  {
+    return 5;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref type);
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref local_vars_num);
+    Marshall.Sync(ctx, ref default_args_num);
+    Marshall.Sync(ctx, ref ip_addr);
+  }
 }
 
 #if BHL_FRONT
@@ -967,6 +1027,21 @@ public class FuncSymbolNative : FuncSymbol
   {
     throw new Exception("Defining symbols here is not allowed");
   }
+
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override int GetFieldsNum()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    throw new NotImplementedException();
+  }
 }
 
 public class ClassSymbolNative : ClassSymbol
@@ -985,10 +1060,27 @@ public class ClassSymbolNative : ClassSymbol
 
     Define(s);
   }
+
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override int GetFieldsNum()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    throw new NotImplementedException();
+  }
 }
 
 public class ClassSymbolScript : ClassSymbol
 {
+  public const uint CLASS_ID = 11;
+
   public AST_ClassDecl decl;
 
   public ClassSymbolScript(string name, AST_ClassDecl decl, ClassSymbol super_class = null)
@@ -1005,6 +1097,11 @@ public class ClassSymbolScript : ClassSymbol
     this.parsed = parsed;
   }
 #endif
+
+  //marshall factory version
+  public ClassSymbolScript() 
+    : this(null, null, null)
+  {}
 
   void ClassCreator(VM.Frame frm, ref Val data)
   {
@@ -1035,6 +1132,31 @@ public class ClassSymbolScript : ClassSymbol
       else
         vl.Add(frm.vm.Null);
     }
+  }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override int GetFieldsNum()
+  {
+    return 3;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref name);
+
+    string super_name = super_class == null ? "" : super_class.GetName();
+    Marshall.Sync(ctx, ref super_name);
+    if(ctx.is_read && super_name != "")
+    {
+      super_class = (ClassSymbol)((SymbolFactory)ctx.factory).types.Resolve(super_name);
+      if(super_class == null)
+        throw new Exception("Parent class '" + super_name + "' not found");
+    }
+    Marshall.Sync(ctx, ref members);
   }
 }
 
@@ -1070,12 +1192,34 @@ public class EnumSymbol : EnclosingSymbol, IType
     return "enum "+name+":{"+
             string.Join(",", members.GetStringKeys().ToArray())+"}";
   }
+
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override int GetFieldsNum()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    throw new NotImplementedException();
+  }
 }
 
 public class EnumSymbolScript : EnumSymbol
 {
+  public const uint CLASS_ID = 12;
+
   public EnumSymbolScript(string name)
     : base(name)
+  {}
+
+  //marshall factory version
+  public EnumSymbolScript()
+    : base(null)
   {}
 
   //0 - OK, 1 - duplicate key, 2 - duplicate value
@@ -1094,10 +1238,37 @@ public class EnumSymbolScript : EnumSymbol
     members.Add(item);
     return 0;
   }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override int GetFieldsNum()
+  {
+    return 2;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref members);
+    if(ctx.is_read)
+    {
+      for(int i=0;i<members.Count;++i)
+      {
+        var item = (EnumItemSymbol)members[i];
+        item.owner = this;
+        item.type = new TypeProxy(this); 
+      }
+    }
+  }
 }
 
 public class EnumItemSymbol : Symbol, IType 
 {
+  public const uint CLASS_ID = 15;
+
   public EnumSymbol owner;
   public int val;
 
@@ -1115,7 +1286,29 @@ public class EnumItemSymbol : Symbol, IType
     this.owner = owner;
     this.val = val;
   }
+
+  //marshall factory version
+  public EnumItemSymbol() 
+    : this(null, null)
+  {}
+
+  //type name
   public string GetName() { return owner.name; }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override int GetFieldsNum()
+  {
+    return 1;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref val);
+  }
 }
 
 public class SymbolsDictionary : IMarshallable
@@ -1242,10 +1435,30 @@ public class SymbolFactory : IFactory
     {
       case IntSymbol.CLASS_ID:
         return TypeSystem.Int;
+      case FloatSymbol.CLASS_ID:
+        return TypeSystem.Float;
       case StringSymbol.CLASS_ID:
         return TypeSystem.String;
+      case AnySymbol.CLASS_ID:
+        return TypeSystem.Any;
+      case VoidSymbol.CLASS_ID:
+        return TypeSystem.Void;
       case VariableSymbol.CLASS_ID:
         return new VariableSymbol(); 
+      case GenericArrayTypeSymbol.CLASS_ID:
+        return new GenericArrayTypeSymbol(types); 
+      case ClassSymbolScript.CLASS_ID:
+        return new ClassSymbolScript();
+      case EnumSymbolScript.CLASS_ID:
+        return new EnumSymbolScript();
+      case EnumItemSymbol.CLASS_ID:
+        return new EnumItemSymbol();
+      case FuncSymbolScript.CLASS_ID:
+        return new FuncSymbolScript();
+      case FuncSignature.CLASS_ID:
+        return new FuncSignature();
+      case TupleType.CLASS_ID:
+        return new TupleType();
       default:
         return null;
     }

@@ -148,7 +148,7 @@ public class AST_Nested : IMarshallableGeneric
 {
   public List<IMarshallableGeneric> children = new List<IMarshallableGeneric>();
 
-  public virtual uint getClassId() 
+  public virtual uint ClassId() 
   {
     return 59352479; 
   }
@@ -166,7 +166,7 @@ public class AST_Nested : IMarshallableGeneric
 
 public class AST_Interim : AST_Nested 
 {
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 240440595; 
   }
@@ -187,7 +187,7 @@ public class AST_Import  : IMarshallableGeneric
   public List<uint> module_ids = new List<uint>();
   public List<string> module_names = new List<string>();
 
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 117209009; 
   }
@@ -209,7 +209,7 @@ public class AST_Module : AST_Nested
   public uint id;
   public string name = "";
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 127311748; 
   }
@@ -237,7 +237,7 @@ public class AST_UnaryOpExp : AST_Nested
 {
   public EnumUnaryOp type = new EnumUnaryOp();
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 224392343; 
   }
@@ -279,7 +279,7 @@ public class AST_BinaryOpExp  : AST_Nested
 {
   public EnumBinaryOp type = new EnumBinaryOp();
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 78094287; 
   }
@@ -302,7 +302,7 @@ public class AST_Inc : IMarshallableGeneric
 {
   public uint symb_idx;
 
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 192507281; 
   }
@@ -322,7 +322,7 @@ public class AST_Dec : IMarshallableGeneric
 {
   public uint symb_idx;
 
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 5580553; 
   }
@@ -342,7 +342,7 @@ public class AST_New : AST_Nested
 {
   public string type = "";
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 119043746; 
   }
@@ -369,7 +369,7 @@ public class AST_FuncDecl : AST_Nested
   public byte default_args_num;
   public int ip_addr = -1;
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 19638951; 
   }
@@ -398,7 +398,7 @@ public class AST_ClassDecl : AST_Nested
   public string name = "";
   public string parent = "";
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 168955538; 
   }
@@ -422,7 +422,7 @@ public class AST_EnumItem : IMarshallableGeneric
   public string name;
   public int value;
 
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 42971075; 
   }
@@ -443,7 +443,7 @@ public class AST_EnumDecl : AST_Nested
 {
   public string name = "";
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 207366473; 
   }
@@ -467,7 +467,7 @@ public class AST_UpVal : IMarshallableGeneric
   public uint symb_idx;
   public uint upsymb_idx;
 
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 121447213; 
   }
@@ -489,7 +489,7 @@ public class AST_LambdaDecl : AST_FuncDecl
 {
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 44443142; 
   }
@@ -510,7 +510,7 @@ public class AST_TypeCast : AST_Nested
 {
   public string type = "";
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 234453676; 
   }
@@ -557,7 +557,7 @@ public class AST_Call  : AST_Nested
   public int symb_idx;
   public string scope_type = "";
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 42771415; 
   }
@@ -588,7 +588,7 @@ public class AST_Return  : AST_Nested
 {
   public int num;
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 204244643; 
   }
@@ -607,7 +607,7 @@ public class AST_Return  : AST_Nested
 
 public class AST_Break : IMarshallableGeneric
 {
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 93587594; 
   }
@@ -626,7 +626,7 @@ public class AST_Continue : IMarshallableGeneric
 {
   public bool jump_marker;
 
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 83587594; 
   }
@@ -656,7 +656,7 @@ public class AST_Literal : IMarshallableGeneric
   public double nval;
   public string sval = "";
 
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 246902930; 
   }
@@ -685,7 +685,7 @@ public class AST_VarDecl : AST_Nested
   public bool is_func_arg;
   public bool is_ref;
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 232512499; 
   }
@@ -723,7 +723,7 @@ public class AST_Block : AST_Nested
 {
   public EnumBlock type = new EnumBlock();
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 183750514; 
   }
@@ -748,7 +748,7 @@ public class AST_JsonObj : AST_Nested
   public string type = "";
   public int line_num;
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 31901170; 
   }
@@ -772,7 +772,7 @@ public class AST_JsonArr : AST_Nested
   public string type;
   public int line_num;
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 47604479; 
   }
@@ -793,7 +793,7 @@ public class AST_JsonArr : AST_Nested
 
 public class AST_JsonArrAddItem : IMarshallableGeneric
 {
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 58382586; 
   }
@@ -814,7 +814,7 @@ public class AST_JsonPair : AST_Nested
   public uint symb_idx;
   public string scope_type = "";
 
-  public override uint getClassId() 
+  public override uint ClassId() 
   {
     return 235544635; 
   }
@@ -836,7 +836,7 @@ public class AST_JsonPair : AST_Nested
 
 public class AST_PopValue : IMarshallableGeneric
 {
-  public uint getClassId() 
+  public uint ClassId() 
   {
     return 87387238; 
   }

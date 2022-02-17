@@ -57,9 +57,10 @@ public struct TypeProxy : IMarshallable
 
   public void Sync(SyncContext ctx)
   {
-    var mtype = Get() as IMarshallableGeneric;
+    var tmp = Get();
+    var mtype = tmp as IMarshallableGeneric;
     if(mtype == null)
-      throw new Exception("Type is not marshallable");
+      throw new Exception("Type is not marshallable: " + (tmp != null ? tmp.GetType().Name + " " : "<null> ") + name);
     Marshall.SyncGeneric(ctx, ref mtype);
     if(ctx.is_read)
       type = (IType)mtype;
@@ -78,9 +79,11 @@ public class RefType : IType
   }
 }
 
-public class TupleType : IType
+public class TupleType : IType, IMarshallableGeneric
 {
-  public string name;
+  public const uint CLASS_ID = 16;
+
+  string name;
 
   List<TypeProxy> items = new List<TypeProxy>();
 
@@ -98,6 +101,10 @@ public class TupleType : IType
       this.items.Add(item);
     Update();
   }
+
+  //symbol factory version
+  public TupleType()
+  {}
 
   public TypeProxy this[int index]
   {
@@ -124,10 +131,29 @@ public class TupleType : IType
 
     name = tmp;
   }
+
+  public uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public int GetFieldsNum()
+  {
+    return 1;
+  }
+
+  public void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, items);
+    if(ctx.is_read)
+      Update();
+  }
 }
 
-public class FuncSignature : IType
+public class FuncSignature : IType, IMarshallableGeneric
 {
+  public const uint CLASS_ID = 14; 
+
   public string name;
 
   public TypeProxy ret_type;
@@ -156,6 +182,10 @@ public class FuncSignature : IType
     Update();
   }
 
+  //symbol factory version
+  public FuncSignature()
+  {}
+
   public void AddArg(TypeProxy arg_type)
   {
     arg_types.Add(arg_type);
@@ -174,6 +204,24 @@ public class FuncSignature : IType
     tmp += ")";
 
     name = tmp;
+  }
+
+  public uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public int GetFieldsNum()
+  {
+    return 2;
+  }
+
+  public void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref ret_type);
+    Marshall.Sync(ctx, arg_types);
+    if(ctx.is_read)
+      Update();
   }
 }
 

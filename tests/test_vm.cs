@@ -7,42 +7,6 @@ using bhl;
 public class BHL_TestVM : BHL_TestBase
 {
   [IsTested()]
-  public void TestSerializeModuleScope()
-  {
-    var types = new TypeSystem();
-
-    var s = new MemoryStream();
-    {
-      var ms = new ModuleScope(1, types);
-      ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
-      ms.Define(new VariableSymbol("bar", types.Type(TypeSystem.String)));
-      Util.Struct2Data(ms, s);
-    }
-
-    var factory = new SymbolFactory(types);
-
-    {
-      s.Position = 0;
-      var ms = new ModuleScope(types);
-      Util.Data2Struct(s, factory, ms);
-
-      AssertEqual(ms.module_id, 1);
-
-      AssertEqual(2, ms.GetMembers().Count);
-
-      var foo = ms.Resolve("foo");
-      AssertEqual(foo.name, "foo");
-      AssertEqual(foo.type.Get().GetName(), TypeSystem.Int.name);
-      AssertTrue(foo.scope == ms);
-
-      var bar = ms.Resolve("bar");
-      AssertEqual(bar.name, "bar");
-      AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
-      AssertTrue(bar.scope == ms);
-    }
-  }
-
-  [IsTested()]
   public void TestReturnNumConstant()
   {
     string bhl = @"
@@ -20160,6 +20124,44 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSerializeModuleScope()
+  {
+    var types = new TypeSystem();
+
+    var s = new MemoryStream();
+    {
+      var ms = new ModuleScope(1, types);
+      ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
+      ms.Define(new VariableSymbol("bar", types.Type(TypeSystem.String)));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.Type("int"), types.Type("string")), "Test", 1, 4));
+
+      Util.Struct2Data(ms, s);
+    }
+
+    var factory = new SymbolFactory(types);
+
+    {
+      s.Position = 0;
+      var ms = new ModuleScope(types);
+      Util.Data2Struct(s, factory, ms);
+
+      AssertEqual(ms.module_id, 1);
+
+      AssertEqual(2, ms.GetMembers().Count);
+
+      var foo = ms.Resolve("foo");
+      AssertEqual(foo.name, "foo");
+      AssertEqual(foo.type.Get().GetName(), TypeSystem.Int.name);
+      AssertTrue(foo.scope == ms);
+
+      var bar = ms.Resolve("bar");
+      AssertEqual(bar.name, "bar");
+      AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
+      AssertTrue(bar.scope == ms);
+    }
+  }
+
+  [IsTested()]
   public void TestFibonacci()
   {
     string bhl = @"
@@ -20187,13 +20189,15 @@ public class BHL_TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var vm = MakeVM(c);
+
     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     stopwatch.Stop();
     AssertEqual(fb.result.PopRelease().num, 610);
-    CommonChecks(vm);
     Console.WriteLine("bhl vm fib ticks: {0}", stopwatch.ElapsedTicks);
+
+    CommonChecks(vm);
   }
 
   ///////////////////////////////////////

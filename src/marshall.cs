@@ -72,7 +72,7 @@ public interface IMarshallable
 
 public interface IMarshallableGeneric : IMarshallable 
 {
-  uint getClassId();
+  uint ClassId();
 }
 
 public interface IReader 
@@ -425,7 +425,7 @@ public static class Marshall
     else
     {
       ctx.writer.BeginContainer(v.GetFieldsNum() + 1/*class id*/);
-      ctx.writer.WriteU32(v.getClassId());
+      ctx.writer.WriteU32(v.ClassId());
       v.Sync(ctx);
       ctx.writer.EndContainer();
     }
