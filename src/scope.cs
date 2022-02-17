@@ -121,10 +121,6 @@ public class ModuleScope : Scope, IMarshallable
   {
     if(sym is VariableSymbol vs)
     {
-      //NOTE: adding module id if it's not added already
-      if(vs.module_id == 0)
-        vs.module_id = module_id;
-
       //NOTE: calculating scope idx only for global variables for now
       //      (we are not interested in calculating scope indices for global
       //      funcs for now so that these indices won't clash)

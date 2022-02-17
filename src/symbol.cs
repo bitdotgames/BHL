@@ -573,8 +573,13 @@ public class VariableSymbol : Symbol, IScopeIndexed
 {
   public const uint CLASS_ID = 8;
 
-  //if variable is global in a module it stores its id
-  public uint module_id;
+  public uint module_id { 
+    get {
+      if(scope is ModuleScope ms)
+        return ms.module_id;
+      return 0;
+    }
+  }
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -612,18 +617,6 @@ public class VariableSymbol : Symbol, IScopeIndexed
   public override uint ClassId()
   {
     return CLASS_ID;
-  }
-
-  public override int GetFieldsNum()
-  {
-    return base.GetFieldsNum() + 1;
-  }
-
-  public override void Sync(SyncContext ctx)
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref module_id);
   }
 }
 
@@ -705,17 +698,6 @@ public class FieldSymbolScript : FieldSymbol
   public override uint ClassId()
   {
     return CLASS_ID;
-  }
-
-  public override int GetFieldsNum()
-  {
-    return 2;
-  }
-
-  public override void Sync(SyncContext ctx)
-  {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref type);
   }
 }
 
