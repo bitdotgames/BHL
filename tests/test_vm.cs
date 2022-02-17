@@ -20145,6 +20145,7 @@ public class BHL_TestVM : BHL_TestBase
       ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr("string"), types.Type("Bar")), "Make", 10, 3, 15));
 
       var Foo = new ClassSymbolScript("Foo", null);
+      Foo.Define(new FieldSymbolScript("Int", types.Type("int")));
       ms.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", null, Foo);
       ms.Define(Bar);
@@ -20201,6 +20202,9 @@ public class BHL_TestVM : BHL_TestBase
       var Foo = (ClassSymbolScript)ms.Resolve("Foo");
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
+      AssertEqual(Foo.GetMembers().Count, 1);
+      AssertTrue(Foo.Resolve("Int") is FieldSymbolScript);
+      AssertEqual(Foo.Resolve("Int").name, "Int");
 
       var Bar = (ClassSymbolScript)ms.Resolve("Bar");
       AssertTrue(Bar.super_class.name == Foo.name);

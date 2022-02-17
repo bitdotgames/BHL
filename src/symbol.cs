@@ -10,6 +10,8 @@ public abstract class Symbol : IMarshallableGeneric
   public string name;
   public TypeProxy type;
   // All symbols know what scope contains them
+  // TODO: during un-marshalling this one is not restored, we probably
+  //       should restore it in SymbolsDictionary's Sync
   public IScope scope;
 #if BHL_FRONT
   // Location in parse tree, can be null if it's a native symbol
@@ -195,8 +197,11 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
     SetSuperClass(super_class);
   }
 
-  protected void SetSuperClass(ClassSymbol super_class)
+  void SetSuperClass(ClassSymbol super_class)
   {
+    if(this.super_class == super_class)
+      return;
+
     this.super_class = super_class;
     //NOTE: we define parent members in the current class
     //      scope as well. We do this since we want to  
@@ -566,7 +571,7 @@ public interface IScopeIndexed
 
 public class VariableSymbol : Symbol, IScopeIndexed
 {
-  public const uint CLASS_ID = 1982058327;
+  public const uint CLASS_ID = 8;
 
   //if variable is global in a module it stores its id
   public uint module_id;
@@ -601,7 +606,7 @@ public class VariableSymbol : Symbol, IScopeIndexed
 
   //marshall factory version
   public VariableSymbol()
-    : base("", new TypeProxy(TypeSystem.Void))
+    : base("", new TypeProxy())
   {}
 
   public override uint ClassId()
@@ -658,6 +663,8 @@ public class FieldSymbol : VariableSymbol
 
 public class FieldSymbolScript : FieldSymbol
 {
+  new public const uint CLASS_ID = 9;
+
   public FieldSymbolScript(string name, TypeProxy type) 
     : base(name, type, null, null, null)
   {
@@ -665,6 +672,11 @@ public class FieldSymbolScript : FieldSymbol
     this.setter = Setter;
     this.getref = Getref;
   }
+
+  //marshall factory version
+  public FieldSymbolScript()
+    : this("", new TypeProxy())
+  {}
 
   void Getter(Val ctx, ref Val v)
   {
@@ -688,6 +700,22 @@ public class FieldSymbolScript : FieldSymbol
   {
     var m = (IList<Val>)ctx.obj;
     v = m[scope_idx];
+  }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override int GetFieldsNum()
+  {
+    return 2;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref type);
   }
 }
 
@@ -1166,8 +1194,11 @@ public class ClassSymbolScript : ClassSymbol
       var tmp_class = (ClassSymbol)((SymbolFactory)ctx.factory).types.Resolve(super_name);
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
-      SetSuperClass(tmp_class);
+      super_class = tmp_class;
     }
+
+    //NOTE: this includes super class members as well, maybe we
+    //      should make a copy which doesn't include parent members?
     Marshall.Sync(ctx, ref members);
   }
 }
@@ -1461,6 +1492,8 @@ public class SymbolFactory : IFactory
         return TypeSystem.Void;
       case VariableSymbol.CLASS_ID:
         return new VariableSymbol(); 
+      case FieldSymbolScript.CLASS_ID:
+        return new FieldSymbolScript(); 
       case GenericArrayTypeSymbol.CLASS_ID:
         return new GenericArrayTypeSymbol(types); 
       case ClassSymbolScript.CLASS_ID:
