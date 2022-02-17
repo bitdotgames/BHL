@@ -817,11 +817,13 @@ public class FuncSymbolScript : FuncSymbol
   public int default_args_num;
   public int ip_addr;
 
-  public FuncSymbolScript(FuncSignature sig, string name, int default_args_num, int local_vars_num)
+  public FuncSymbolScript(FuncSignature sig, string name, int default_args_num, int local_vars_num, int ip_addr)
     : base(name, sig)
   {
     this.name = name;
+    this.default_args_num = default_args_num;
     this.local_vars_num = local_vars_num;
+    this.ip_addr = ip_addr;
   }
 
   public AST_FuncDecl decl;

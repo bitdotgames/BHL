@@ -20133,7 +20133,7 @@ public class BHL_TestVM : BHL_TestBase
       var ms = new ModuleScope(1, types);
       ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
       ms.Define(new VariableSymbol("bar", types.Type(TypeSystem.String)));
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.Type("int"), types.Type("string")), "Test", 1, 4));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.Type("int"), types.Type("string")), "Test", 1, 4, 155));
 
       Util.Struct2Data(ms, s);
     }
@@ -20147,17 +20147,24 @@ public class BHL_TestVM : BHL_TestBase
 
       AssertEqual(ms.module_id, 1);
 
-      AssertEqual(2, ms.GetMembers().Count);
+      AssertEqual(3, ms.GetMembers().Count);
 
-      var foo = ms.Resolve("foo");
+      var foo = (VariableSymbol)ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
       AssertEqual(foo.type.Get().GetName(), TypeSystem.Int.name);
       AssertTrue(foo.scope == ms);
 
-      var bar = ms.Resolve("bar");
+      var bar = (VariableSymbol)ms.Resolve("bar");
       AssertEqual(bar.name, "bar");
       AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
       AssertTrue(bar.scope == ms);
+
+      var test = (FuncSymbolScript)ms.Resolve("Test");
+      AssertEqual(test.name, "Test");
+      AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), "int", "string").name, test.GetSignature().name);
+      AssertEqual(1, test.default_args_num);
+      AssertEqual(4, test.local_vars_num);
+      AssertEqual(155, test.ip_addr);
     }
   }
 
