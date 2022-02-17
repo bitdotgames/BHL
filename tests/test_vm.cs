@@ -20150,6 +20150,7 @@ public class BHL_TestVM : BHL_TestBase
       ms.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", null, Foo);
       Bar.Define(new FieldSymbolScript("Float", types.Type("float")));
+      Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("bool","bool"), types.Type("int")), "What", 1, 5, 1));
       ms.Define(Bar);
 
       Util.Struct2Data(ms, s);
@@ -20171,18 +20172,18 @@ public class BHL_TestVM : BHL_TestBase
 
       var foo = (VariableSymbol)ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
-      AssertEqual(foo.type.Get().GetName(), TypeSystem.Int.name);
+      AssertEqual(foo.type.Get(), TypeSystem.Int);
       AssertEqual(foo.scope, ms);
 
       var bar = (VariableSymbol)ms.Resolve("bar");
       AssertEqual(bar.name, "bar");
-      AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
+      AssertEqual(bar.type.Get(), TypeSystem.String);
       AssertEqual(bar.scope, ms);
 
       var wow = (VariableSymbol)ms.Resolve("wow");
       AssertEqual(wow.name, "wow");
       AssertEqual(wow.type.Get().GetName(), types.TypeArr("string").Get().GetName());
-      AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get().GetName(), types.Type("bool").Get().GetName());
+      AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), TypeSystem.Bool);
       AssertEqual(wow.scope, ms);
 
       var Test = (FuncSymbolScript)ms.Resolve("Test");
@@ -20196,7 +20197,7 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(Make.name, "Make");
       AssertEqual(1, Make.GetSignature().arg_types.Count);
       AssertEqual(types.TypeArr("string").Get().GetName(), Make.GetReturnType().GetName());
-      AssertEqual(types.Type("Bar").Get().GetName(), Make.GetSignature().arg_types[0].Get().GetName());
+      AssertEqual(types.Type("Bar").Get(), Make.GetSignature().arg_types[0].Get());
       AssertEqual(10, Make.default_args_num);
       AssertEqual(3, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);
@@ -20219,10 +20220,17 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(Bar.super_class.name, Foo.name);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
-      AssertEqual(Bar.GetMembers().Count, 2/*from parent*/+1);
+      AssertEqual(Bar.GetMembers().Count, 2/*from parent*/+2);
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
       AssertEqual(Bar_Float.name, "Float");
       AssertEqual(Bar_Float.type.Get(), TypeSystem.Float);
+      var Bar_What = Bar.Resolve("What") as FuncSymbolScript;
+      AssertEqual(Bar_What.name, "What");
+      AssertEqual(Bar_What.GetReturnType().GetName(), types.TypeTuple("bool", "bool").Get().GetName());
+      AssertEqual(Bar_What.GetSignature().arg_types[0].Get(), TypeSystem.Int);
+      AssertEqual(1, Bar_What.default_args_num);
+      AssertEqual(5, Bar_What.local_vars_num);
+      AssertEqual(1, Bar_What.ip_addr);
 
     }
   }
