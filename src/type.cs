@@ -14,27 +14,32 @@ public interface IType
 // TypeProxy is used instead of IType
 public struct TypeProxy : IMarshallable
 {
-  TypeSystem ts;
+  TypeSystem types;
   IType type;
-  public string name { get ; private set;}
+  string _name;
+  public string name 
+  { 
+    get { return _name; } 
+    private set { _name = value; }
+  }
 
   public TypeProxy(TypeSystem ts, string name)
   {
-    this.ts = ts;
+    this.types = ts;
     type = null;
-    this.name = name;
+    _name = name;
   }
 
   public TypeProxy(IType type)
   {
-    ts = null;
-    this.name = type.GetName();
+    types = null;
+    _name = type.GetName();
     this.type = type;
   }
 
   public bool IsEmpty()
   {
-    return string.IsNullOrEmpty(name) && 
+    return string.IsNullOrEmpty(_name) && 
            type == null;
   }
 
@@ -43,10 +48,10 @@ public struct TypeProxy : IMarshallable
     if(type != null)
       return type;
 
-    if(string.IsNullOrEmpty(name))
+    if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)ts.Resolve(name);
+    type = (bhl.IType)types.Resolve(_name);
     return type;
   }
 
@@ -57,22 +62,15 @@ public struct TypeProxy : IMarshallable
 
   public void Sync(SyncContext ctx)
   {
-    IMarshallableGeneric mtype = null;
+    if(!ctx.is_read && string.IsNullOrEmpty(_name))
+      throw new Exception("TypeProxy name is empty");
 
-    if(!ctx.is_read)
-    {
-      var tmp = Get();
-      mtype = tmp as IMarshallableGeneric;
-      if(mtype == null)
-        throw new Exception("Type is not marshallable: " + (tmp != null ? tmp.GetType().Name + " " : "<null> ") + name);
-    }
-
-    Marshall.SyncGeneric(ctx, ref mtype);
+    Marshall.Sync(ctx, ref _name);
 
     if(ctx.is_read)
     {
-      type = (IType)mtype;
-      name = type.GetName();
+      type = null;
+      types = ((SymbolFactory)ctx.factory).types; 
     }
   }
 }

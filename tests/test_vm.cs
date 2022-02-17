@@ -20126,28 +20126,43 @@ public class BHL_TestVM : BHL_TestBase
   [IsTested()]
   public void TestSerializeModuleScope()
   {
-    var types = new TypeSystem();
 
     var s = new MemoryStream();
     {
+      var types = new TypeSystem();
+
       var ms = new ModuleScope(1, types);
+      types.AddSource(ms);
+
       ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
+
       ms.Define(new VariableSymbol("bar", types.Type(TypeSystem.String)));
+
       ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.Type("int"), types.Type("string")), "Test", 1, 4, 155));
+
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("string"), types.Type("Bar")), "Make", 10, 3, 15));
+
+      var Foo = new ClassSymbolScript("Foo", null);
+      ms.Define(Foo);
+      var Bar = new ClassSymbolScript("Bar", null, Foo);
+      ms.Define(Bar);
 
       Util.Struct2Data(ms, s);
     }
 
-    var factory = new SymbolFactory(types);
-
     {
-      s.Position = 0;
+      var types = new TypeSystem();
+      var factory = new SymbolFactory(types);
+
       var ms = new ModuleScope(types);
+      types.AddSource(ms);
+
+      s.Position = 0;
       Util.Data2Struct(s, factory, ms);
 
       AssertEqual(ms.module_id, 1);
 
-      AssertEqual(3, ms.GetMembers().Count);
+      AssertEqual(6, ms.GetMembers().Count);
 
       var foo = (VariableSymbol)ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
@@ -20159,12 +20174,29 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
       AssertTrue(bar.scope == ms);
 
-      var test = (FuncSymbolScript)ms.Resolve("Test");
-      AssertEqual(test.name, "Test");
-      AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), "int", "string").name, test.GetSignature().name);
-      AssertEqual(1, test.default_args_num);
-      AssertEqual(4, test.local_vars_num);
-      AssertEqual(155, test.ip_addr);
+      var Test = (FuncSymbolScript)ms.Resolve("Test");
+      AssertEqual(Test.name, "Test");
+      AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), "int", "string").name, Test.GetSignature().name);
+      AssertEqual(1, Test.default_args_num);
+      AssertEqual(4, Test.local_vars_num);
+      AssertEqual(155, Test.ip_addr);
+
+      var Make = (FuncSymbolScript)ms.Resolve("Make");
+      AssertEqual(Make.name, "Make");
+      AssertEqual(types.TypeFunc(types.TypeTuple("string"), "Bar").name, Make.GetSignature().name);
+      AssertEqual(10, Make.default_args_num);
+      AssertEqual(3, Make.local_vars_num);
+      AssertEqual(15, Make.ip_addr);
+
+      var Foo = (ClassSymbolScript)ms.Resolve("Foo");
+      AssertTrue(Foo.super_class == null);
+      AssertEqual(Foo.name, "Foo");
+
+      var Bar = (ClassSymbolScript)ms.Resolve("Bar");
+      AssertTrue(Bar.super_class.name == Foo.name);
+      AssertTrue(Bar.super_class == Foo);
+      AssertEqual(Bar.name, "Bar");
+
     }
   }
 

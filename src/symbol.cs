@@ -163,7 +163,7 @@ public class NullSymbol : BuiltInSymbol
 
 public abstract class ClassSymbol : EnclosingSymbol, IScope, IType 
 {
-  internal ClassSymbol super_class;
+  public ClassSymbol super_class { get; protected set;}
 
   public SymbolsDictionary members = new SymbolsDictionary();
 
@@ -190,9 +190,14 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
     : base(name)
   {
     this.type = new TypeProxy(this);
-    this.super_class = super_class;
     this.creator = creator;
 
+    SetSuperClass(super_class);
+  }
+
+  protected void SetSuperClass(ClassSymbol super_class)
+  {
+    this.super_class = super_class;
     //NOTE: we define parent members in the current class
     //      scope as well. We do this since we want to  
     //      address its members simply by int index
@@ -743,6 +748,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
 public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
+  protected FuncSignature signature;
   SymbolsDictionary members = new SymbolsDictionary();
 
   int _scope_idx = -1;
@@ -763,10 +769,11 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   }
 #endif
 
-  public FuncSymbol(string name, FuncSignature sig) 
+  public FuncSymbol(string name, FuncSignature signature) 
     : base(name)
   {
-    this.type = new TypeProxy(sig);
+    this.signature = signature;
+    this.type = new TypeProxy(signature);
   }
 
   public override SymbolsDictionary GetMembers() { return members; }
@@ -878,7 +885,9 @@ public class FuncSymbolScript : FuncSymbol
 
   public override void Sync(SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref type);
+    Marshall.Sync(ctx, ref signature);
+    if(ctx.is_read)
+      type = new TypeProxy(signature);
     Marshall.Sync(ctx, ref name);
     Marshall.Sync(ctx, ref local_vars_num);
     Marshall.Sync(ctx, ref default_args_num);
@@ -1154,9 +1163,10 @@ public class ClassSymbolScript : ClassSymbol
     Marshall.Sync(ctx, ref super_name);
     if(ctx.is_read && super_name != "")
     {
-      super_class = (ClassSymbol)((SymbolFactory)ctx.factory).types.Resolve(super_name);
-      if(super_class == null)
+      var tmp_class = (ClassSymbol)((SymbolFactory)ctx.factory).types.Resolve(super_name);
+      if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
+      SetSuperClass(tmp_class);
     }
     Marshall.Sync(ctx, ref members);
   }
@@ -1413,12 +1423,14 @@ public class SymbolsDictionary : IMarshallable
 
   public void Sync(SyncContext ctx) 
   {
-    Marshall.SyncGeneric(ctx, list);
-    if(ctx.is_read)
-    {
-      foreach(var s in list)
-        str2symb.Add(s.name, s);
-    }
+    Marshall.SyncGeneric(ctx, list, delegate(IMarshallableGeneric tmp) {
+        if(ctx.is_read)
+        {
+          //NOTE: we need to add new symbol to str2sym collection ASAP
+          var s = (Symbol)tmp;
+          str2symb.Add(s.name, s);
+        }
+    });
   }
 }
 
