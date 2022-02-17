@@ -20146,6 +20146,7 @@ public class BHL_TestVM : BHL_TestBase
 
       var Foo = new ClassSymbolScript("Foo", null);
       Foo.Define(new FieldSymbolScript("Int", types.Type("int")));
+      Foo.Define(new FuncSymbolScript(new FuncSignature(types.Type("void")), "Hey", 0, 4, 3));
       ms.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", null, Foo);
       ms.Define(Bar);
@@ -20170,18 +20171,18 @@ public class BHL_TestVM : BHL_TestBase
       var foo = (VariableSymbol)ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
       AssertEqual(foo.type.Get().GetName(), TypeSystem.Int.name);
-      AssertTrue(foo.scope == ms);
+      AssertEqual(foo.scope, ms);
 
       var bar = (VariableSymbol)ms.Resolve("bar");
       AssertEqual(bar.name, "bar");
       AssertEqual(bar.type.Get().GetName(), TypeSystem.String.name);
-      AssertTrue(bar.scope == ms);
+      AssertEqual(bar.scope, ms);
 
       var wow = (VariableSymbol)ms.Resolve("wow");
       AssertEqual(wow.name, "wow");
       AssertEqual(wow.type.Get().GetName(), types.TypeArr("string").Get().GetName());
       AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get().GetName(), types.Type("bool").Get().GetName());
-      AssertTrue(wow.scope == ms);
+      AssertEqual(wow.scope, ms);
 
       var Test = (FuncSymbolScript)ms.Resolve("Test");
       AssertEqual(Test.name, "Test");
@@ -20202,13 +20203,20 @@ public class BHL_TestVM : BHL_TestBase
       var Foo = (ClassSymbolScript)ms.Resolve("Foo");
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
-      AssertEqual(Foo.GetMembers().Count, 1);
-      AssertTrue(Foo.Resolve("Int") is FieldSymbolScript);
-      AssertEqual(Foo.Resolve("Int").name, "Int");
+      AssertEqual(Foo.GetMembers().Count, 2);
+      var Foo_Int = Foo.Resolve("Int") as FieldSymbolScript;
+      AssertEqual(Foo_Int.name, "Int");
+      AssertEqual(Foo_Int.type.Get(), TypeSystem.Int);
+      var Foo_Hey = Foo.Resolve("Hey") as FuncSymbolScript;
+      AssertEqual(Foo_Hey.name, "Hey");
+      AssertEqual(Foo_Hey.GetReturnType(), TypeSystem.Void);
+      AssertEqual(0, Foo_Hey.default_args_num);
+      AssertEqual(4, Foo_Hey.local_vars_num);
+      AssertEqual(3, Foo_Hey.ip_addr);
 
       var Bar = (ClassSymbolScript)ms.Resolve("Bar");
-      AssertTrue(Bar.super_class.name == Foo.name);
-      AssertTrue(Bar.super_class == Foo);
+      AssertEqual(Bar.super_class.name, Foo.name);
+      AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
 
     }

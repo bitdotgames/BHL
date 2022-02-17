@@ -160,6 +160,7 @@ public class ModuleScope : Scope, IMarshallable
     Marshall.Sync(ctx, ref members);
     if(ctx.is_read)
     {
+      //TODO: move this to SymbolsDictionary
       for(int i=0;i<members.Count;++i)
         members[i].scope = this;
     }
