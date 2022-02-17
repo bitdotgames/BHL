@@ -63,7 +63,10 @@ public struct TypeProxy : IMarshallable
       throw new Exception("Type is not marshallable: " + (tmp != null ? tmp.GetType().Name + " " : "<null> ") + name);
     Marshall.SyncGeneric(ctx, ref mtype);
     if(ctx.is_read)
+    {
       type = (IType)mtype;
+      name = type.GetName();
+    }
   }
 }
 
