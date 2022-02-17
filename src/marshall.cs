@@ -415,19 +415,36 @@ public static class Marshall
       uint clid = 0;
       ctx.reader.ReadU32(ref clid);
       
-      v = ctx.factory.CreateById(clid);
-      if(v == null) 
-        throw new Error(ErrorCode.BAD_CLASS_ID, "Could not create object with class id: " + clid);
+      //check for null
+      if(clid != 0xFFFFFFFF)
+      {
+        v = ctx.factory.CreateById(clid);
+        if(v == null) 
+          throw new Error(ErrorCode.BAD_CLASS_ID, "Could not create object with class id: " + clid);
 
-      v.Sync(ctx);
+        v.Sync(ctx);
+      }
+      else
+      {
+        v = null;
+      }
       ctx.reader.EndContainer();
     }
     else
     {
-      ctx.writer.BeginContainer(v.GetFieldsNum() + 1/*class id*/);
-      ctx.writer.WriteU32(v.ClassId());
-      v.Sync(ctx);
-      ctx.writer.EndContainer();
+      if(v == null)
+      {
+        ctx.writer.BeginContainer(1/*class id*/);
+        ctx.writer.WriteU32(0xFFFFFFFF);
+        ctx.writer.EndContainer();
+      }
+      else
+      {
+        ctx.writer.BeginContainer(v.GetFieldsNum() + 1/*class id*/);
+        ctx.writer.WriteU32(v.ClassId());
+        v.Sync(ctx);
+        ctx.writer.EndContainer();
+      }
     }
   }
 

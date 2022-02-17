@@ -58,59 +58,38 @@ public struct TypeProxy : IMarshallable
   public int GetFieldsNum()
   {
     return 1 /*name*/ + 
-           1 /*bool flag if existing symbol*/ +
-           1 /*dummy or marshallable type*/;
+           1 /*marshallable type or null*/;
   }
 
   public void Sync(SyncContext ctx)
   {
-    if(!ctx.is_read && string.IsNullOrEmpty(_name))
+    if(ctx.is_read)
+      types = ((SymbolFactory)ctx.factory).types;
+    else if(string.IsNullOrEmpty(_name))
       throw new Exception("TypeProxy name is empty");
 
     Marshall.Sync(ctx, ref _name);
 
-    if(!ctx.is_read)
+    IMarshallableGeneric mg = null;
+    if(ctx.is_read)
     {
-      var tmp = Get();
-
-      //NOTE: we want to determine if it's an existing symbol and if so
-      //      we don't want to serialize it
-      bool existing_symbol = (tmp is Symbol symb && symb.scope is ModuleScope); 
-      Marshall.Sync(ctx, ref existing_symbol);
-
-      if(!existing_symbol)
-      {
-        var mtmp = tmp as IMarshallableGeneric;
-        if(mtmp == null)
-          throw new Exception("Type is not marshallable: " + (tmp != null ? tmp.GetType().Name + " " : "<null> ") + name);
-        Marshall.SyncGeneric(ctx, ref mtmp);
-      }
-      else
-      {
-        bool dummy = false;
-        Marshall.Sync(ctx, ref dummy);
-      }
+      Marshall.SyncGeneric(ctx, ref mg);
+      type = (IType)mg;
     }
     else
     {   
-      types = ((SymbolFactory)ctx.factory).types;
-      
-      bool existing_symbol = false;
-      Marshall.Sync(ctx, ref existing_symbol);
+      var resolved = Get();
+      bool defined_in_module = resolved is Symbol symb && symb.scope is ModuleScope;
 
-      if(existing_symbol)
+      //NOTE: we want to determine if it's an existing symbol and if so
+      //      we don't want to serialize it by passing null instead of it
+      if(!defined_in_module)
       {
-        type = (IType)types.Resolve(_name); 
-
-        bool dummy = false;
-        Marshall.Sync(ctx, ref dummy);
+        mg = resolved as IMarshallableGeneric;
+        if(mg == null)
+          throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _name);
       }
-      else
-      {
-        IMarshallableGeneric mtmp = null;
-        Marshall.SyncGeneric(ctx, ref mtmp);
-        type = (IType)mtmp;
-      }
+      Marshall.SyncGeneric(ctx, ref mg);
     }
   }
 }
@@ -373,7 +352,9 @@ public class TypeSystem
     globs.Define(Void);
     globs.Define(Any);
 
-    //TODO: probably we should get rid of this this general fallback
+    //TODO: probably we should get rid of this general fallback, 
+    //      once we have proper serialization of types this one 
+    //      won't be needed
     globs.Define(new GenericArrayTypeSymbol(this, new TypeProxy(this, "")));
 
     {
