@@ -856,40 +856,21 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
   public FuncSymbolScript(
     WrappedParseTree parsed, 
-    TypeSystem ts,
-    AST_FuncDecl decl, 
-    FuncSignature sig
+    FuncSignature sig,
+    string name
   ) 
-    : this(ts, decl, sig)
+    : this(sig, name, 0, 0)
   {
     this.parsed = parsed;
   }
 #endif
-
-  public FuncSymbolScript(TypeSystem ts, AST_FuncDecl decl, FuncSignature sig)
-    : base(decl.name, sig)
-  {
-    this.decl = decl;
-
-    for(int i=0;i<decl.GetTotalArgsNum();++i)
-    {
-      var tmp = (AST_Interim)decl.children[0];
-      var var_decl = (AST_VarDecl)tmp.children[i];
-      //TODO: add proper serialization of types 
-      //var arg_type = ts.Type(var_decl.type);
-      var arg_type = ts.Type("void");
-      if(var_decl.is_ref)
-        arg_type = ts.Type(new RefType(arg_type));
-      GetSignature().AddArg(arg_type);
-    }
-  }
 
   //symbol factory version
   public FuncSymbolScript()
     : base(null, new FuncSignature())
   {}
 
-  public override int GetDefaultArgsNum() { return decl.GetDefaultArgsNum(); }
+  public override int GetDefaultArgsNum() { return default_args_num; }
 
   public override uint ClassId()
   {
@@ -921,24 +902,19 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
 public class LambdaSymbol : FuncSymbolScript
 {
-  public AST_LambdaDecl ldecl 
-  {
-    get {
-      return (AST_LambdaDecl)decl;
-    }
-  }
+  public AST_LambdaDecl ldecl; 
 
   List<FuncSymbol> fdecl_stack;
 
   public LambdaSymbol(
     WrappedParseTree parsed, 
-    TypeSystem ts,
-    AST_LambdaDecl decl, 
+    FuncSignature sig,
     List<FuncSymbol> fdecl_stack,
-    FuncSignature sig
+    AST_LambdaDecl ldecl
   ) 
-    : base(parsed, ts, decl, sig)
+    : base(parsed, sig, ldecl.name)
   {
+    this.ldecl = ldecl;
     this.fdecl_stack = fdecl_stack;
   }
 

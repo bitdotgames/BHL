@@ -909,10 +909,9 @@ public class Frontend : bhlBaseVisitor<object>
     var ast = AST_Util.New_LambdaDecl(func_name, module.id, tp.name);
     var symb = new LambdaSymbol(
       Wrap(ctx), 
-      types,
-      ast,
+      ParseFuncSignature(tp, funcLambda.funcParams()),
       this.func_decl_stack,
-      ParseFuncSignature(tp, funcLambda.funcParams())
+      ast
     );
     func2fparams[symb] = funcLambda.funcParams();
 
@@ -1865,9 +1864,8 @@ public class Frontend : bhlBaseVisitor<object>
 
     var func_symb = new FuncSymbolScript(
       func_tree, 
-      types, 
-      ast, 
-      ParseFuncSignature(tp, context.funcParams())
+      ParseFuncSignature(tp, context.funcParams()),
+      ast.name
     );
     func2fparams[func_symb] = context.funcParams();
     scope.Define(func_symb);
