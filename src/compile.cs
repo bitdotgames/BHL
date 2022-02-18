@@ -790,10 +790,7 @@ public class ModuleCompiler : AST_Visitor
 
     func_decls.Push(fsymb);
 
-    int ip = GetCodeSize();
-    //let's patch the func address
-    //inst.SetOperand(1, ip);
-    fsymb.ip_addr = ip;
+    fsymb.ip_addr = GetCodeSize();
 
     Emit(Opcodes.InitFrame, new int[] { fsymb.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);

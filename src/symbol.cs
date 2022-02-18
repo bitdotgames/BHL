@@ -830,7 +830,11 @@ public class FuncSymbolScript : FuncSymbol
 {
   public const uint CLASS_ID = 13; 
 
-  public int local_vars_num;
+  public int local_vars_num {
+    get {
+      return GetMembers().Count;
+    }
+  }
   public int default_args_num;
   public int ip_addr;
 
@@ -838,14 +842,12 @@ public class FuncSymbolScript : FuncSymbol
       FuncSignature sig, 
       string name, 
       int default_args_num, 
-      int local_vars_num, 
       int ip_addr
   )
     : base(name, sig)
   {
     this.name = name;
     this.default_args_num = default_args_num;
-    this.local_vars_num = local_vars_num;
     this.ip_addr = ip_addr;
   }
 
@@ -896,7 +898,7 @@ public class FuncSymbolScript : FuncSymbol
 
   public override int GetFieldsNum()
   {
-    return 5;
+    return 4;
   }
 
   public override void Sync(SyncContext ctx)
@@ -911,7 +913,6 @@ public class FuncSymbolScript : FuncSymbol
     if(ctx.is_read)
       type = new TypeProxy(signature);
     Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref local_vars_num);
     Marshall.Sync(ctx, ref default_args_num);
     Marshall.Sync(ctx, ref ip_addr);
   }

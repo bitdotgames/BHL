@@ -19978,17 +19978,17 @@ public class BHL_TestVM : BHL_TestBase
 
       ms.Define(new VariableSymbol("wow", types.TypeArr("bool")));
 
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.Type("int"), types.Type("string")), "Test", 1, 4, 155));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.Type("int"), types.Type("string")), "Test", 1, 155));
 
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr("string"), types.Type("Bar")), "Make", 10, 3, 15));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr("string"), types.Type("Bar")), "Make", 3, 15));
 
       var Foo = new ClassSymbolScript("Foo", null);
       Foo.Define(new FieldSymbolScript("Int", types.Type("int")));
-      Foo.Define(new FuncSymbolScript(new FuncSignature(types.Type("void")), "Hey", 0, 4, 3));
+      Foo.Define(new FuncSymbolScript(new FuncSignature(types.Type("void")), "Hey", 0, 3));
       ms.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", null, Foo);
       Bar.Define(new FieldSymbolScript("Float", types.Type("float")));
-      Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("bool","bool"), types.Type("int")), "What", 1, 5, 1));
+      Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("bool","bool"), types.Type("int")), "What", 1, 1));
       ms.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");
