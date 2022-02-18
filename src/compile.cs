@@ -175,6 +175,9 @@ public class ModuleCompiler : AST_Visitor
   //NOTE: for testing purposes only
   public ModuleCompiler()
   {
+    types = new TypeSystem();
+    module = new Module(types.globs, new ModulePath("", ""));
+
     UseInit();
   }
 
@@ -211,8 +214,8 @@ public class ModuleCompiler : AST_Visitor
         module.name, 
         module.symbols,
         constants, 
-        code_bytes,
         init_bytes,
+        code_bytes,
         ip2src_line
       );    
     }
@@ -813,23 +816,22 @@ public class ModuleCompiler : AST_Visitor
 
     //var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
 
-    //UseCode();
+    UseCode();
 
-    //func_decls.Push(fsymb);
+    var fsymb = (FuncSymbolScript)module.symbols.Resolve(ast.name);
 
-    //int ip = GetCodeSize();
-    ////let's patch the func address
+    func_decls.Push(fsymb);
+
+    int ip = GetCodeSize();
+    //let's patch the func address
     //inst.SetOperand(1, ip);
+    fsymb.ip_addr = ip;
 
-    //fsymb.decl.ip_addr = ip;
+    Emit(Opcodes.InitFrame, new int[] { fsymb.local_vars_num + 1/*cargs bits*/});
+    VisitChildren(ast);
+    Emit(Opcodes.Return);
 
-    //Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
-    //VisitChildren(ast);
-    //Emit(Opcodes.Return);
-
-    //func_decls.Pop();
-
-    //UseInit();
+    func_decls.Pop();
   }
 
   public override void DoVisit(AST_LambdaDecl ast)

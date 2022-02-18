@@ -799,13 +799,20 @@ public class VM
     RegisterModule(imported_module);
   }
 
-  public void RegisterModule(CompiledModule m)
+  public void RegisterModule(CompiledModule cm)
   {
-    if(modules.ContainsKey(m.name))
+    if(modules.ContainsKey(cm.name))
       return;
-    modules.Add(m.name, m);
+    modules.Add(cm.name, cm);
 
-    ExecInit(m);
+    for(int i=0;i<cm.symbols.GetMembers().Count;++i)
+    {
+      //TODO: do we really need func2addr dictionary?
+      if(cm.symbols.GetMembers()[i] is FuncSymbolScript fs)
+        func2addr.Add(fs.name, new ModuleAddr() { module = cm, ip = fs.ip_addr });
+    }
+
+    ExecInit(cm);
   }
 
   public void UnloadModule(string module_name)
@@ -2133,7 +2140,16 @@ public class CompiledModule
       for(int i=0;i<ip2src_line_len;++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
 
-      return new CompiledModule(id, name, symbols, constants, initcode, bytecode, ip2src_line);
+      return new 
+        CompiledModule(
+          id, 
+          name, 
+          symbols, 
+          constants, 
+          initcode, 
+          bytecode, 
+          ip2src_line
+       );
     }
   }
 

@@ -20,8 +20,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var expected = 
       new ModuleCompiler()
-      .UseInit()
-      .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
@@ -30,7 +28,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 2);
+    AssertEqual(c.Constants.Count, 1);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -20328,7 +20326,7 @@ public class BHL_TestVM : BHL_TestBase
     //NOTE: we don't want to affect the original ts
     var ts_copy = ts.Clone();
 
-    var mdl = new bhl.Module(ts_copy.globs, "", "");
+    var mdl = new Module(ts_copy.globs, "", "");
     var mreg = new ModuleRegistry();
 
     var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts, mreg);
