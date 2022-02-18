@@ -19962,7 +19962,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSerializeModuleScope()
+  public void TestSerializeModuleSymbols()
   {
 
     var s = new MemoryStream();
@@ -20033,7 +20033,7 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(Test.name, "Test");
       AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), "int", "string").name, Test.GetSignature().name);
       AssertEqual(1, Test.default_args_num);
-      AssertEqual(4, Test.local_vars_num);
+      AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
 
       var Make = (FuncSymbolScript)ms.Resolve("Make");
@@ -20041,8 +20041,8 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(1, Make.GetSignature().arg_types.Count);
       AssertEqual(types.TypeArr("string").Get().GetName(), Make.GetReturnType().GetName());
       AssertEqual(types.Type("Bar").Get(), Make.GetSignature().arg_types[0].Get());
-      AssertEqual(10, Make.default_args_num);
-      AssertEqual(3, Make.local_vars_num);
+      AssertEqual(3, Make.default_args_num);
+      AssertEqual(0, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);
 
       var Foo = (ClassSymbolScript)ms.Resolve("Foo");
@@ -20056,7 +20056,7 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(Foo_Hey.name, "Hey");
       AssertEqual(Foo_Hey.GetReturnType(), TypeSystem.Void);
       AssertEqual(0, Foo_Hey.default_args_num);
-      AssertEqual(4, Foo_Hey.local_vars_num);
+      AssertEqual(0, Foo_Hey.local_vars_num);
       AssertEqual(3, Foo_Hey.ip_addr);
 
       var Bar = (ClassSymbolScript)ms.Resolve("Bar");
@@ -20072,7 +20072,7 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(Bar_What.GetReturnType().GetName(), types.TypeTuple("bool", "bool").Get().GetName());
       AssertEqual(Bar_What.GetSignature().arg_types[0].Get(), TypeSystem.Int);
       AssertEqual(1, Bar_What.default_args_num);
-      AssertEqual(5, Bar_What.local_vars_num);
+      AssertEqual(0, Bar_What.local_vars_num);
       AssertEqual(1, Bar_What.ip_addr);
 
       var Enum = (EnumSymbolScript)ms.Resolve("Enum");
