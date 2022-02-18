@@ -1870,7 +1870,8 @@ public class Frontend : bhlBaseVisitor<object>
     func2fparams[func_symb] = context.funcParams();
     scope.Define(func_symb);
 
-    //let's check if this is a method
+    //NOTE: let's check if this is a method and if so
+    //      let's define a special case 'this' local variable
     if(scope is ClassSymbolScript class_scope)
     {
       var this_symb = new VariableSymbol(func_tree, "this", types.Type(class_scope));

@@ -34,6 +34,8 @@ public class ModuleCompiler : AST_Visitor
   List<Instruction> code = new List<Instruction>();
   List<Instruction> head = null;
 
+  IScope curr_scope;
+
   Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
   Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
 
@@ -168,6 +170,7 @@ public class ModuleCompiler : AST_Visitor
     this.types = types;
     module = fres.module;
     ast = fres.ast;
+    curr_scope = module.scope;
 
     UseInit();
   }
@@ -177,6 +180,7 @@ public class ModuleCompiler : AST_Visitor
   {
     types = new TypeSystem();
     module = new Module(types.globs, new ModulePath("", ""));
+    curr_scope = module.scope;
 
     UseInit();
   }
@@ -786,7 +790,7 @@ public class ModuleCompiler : AST_Visitor
   {
     UseCode();
 
-    var fsymb = (FuncSymbolScript)module.scope.Resolve(ast.name);
+    var fsymb = (FuncSymbolScript)curr_scope.Resolve(ast.name);
 
     func_decls.Push(fsymb);
 
@@ -814,37 +818,21 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_ClassDecl ast)
   {
-    //UseInit();
+    var scope_bak = curr_scope;
+    curr_scope = (IScope)module.scope.Resolve(ast.name);
 
-    //ClassSymbol parent = null;
-    //if(!string.IsNullOrEmpty(ast.parent))
-    //  parent = (ClassSymbol)symbols.Resolve(ast.parent);
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var child = ast.children[i];
+      if(child is AST_FuncDecl fd)
+        Visit(fd);
+    }
 
-    //curr_class_symb = new ClassSymbolScript(ast.name, ast, parent);
-    //symbols.Define(curr_class_symb);
-
-    //Emit(Opcodes.ClassBegin, new int[] { AddConstant(ast.name), (int)(parent == null ? -1 : AddConstant(parent.name)) });
-    //for(int i=0;i<ast.children.Count;++i)
-    //{
-    //  var child = ast.children[i];
-
-    //  if(child is AST_VarDecl vd)
-    //  {
-    //    curr_class_symb.Define(new FieldSymbolScript(vd.name, /*tmp hackk*/TypeSystem.IsCompoundType(vd.type) ? types.Type("void") : types.Type(vd.type)));
-    //    Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name), (int)vd.symb_idx });
-    //  }
-    //  else if(child is AST_FuncDecl fd)
-    //  {
-    //    Visit(fd);
-    //  }
-    //}
-    //Emit(Opcodes.ClassEnd);
-    //curr_class_symb = null;
+    curr_scope = scope_bak;
   }
 
   public override void DoVisit(AST_EnumDecl ast)
   {
-    //symbols.Define(new EnumSymbolScript(ast.name));
   }
 
   public override void DoVisit(AST_Block ast)
