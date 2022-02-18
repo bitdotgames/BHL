@@ -576,7 +576,7 @@ public class Build
           //}
 
           w.file2module.Add(file, file_module);
-          w.file2symbols.Add(file, front_res.module.symbols);
+          w.file2symbols.Add(file, front_res.module.scope);
 
           string compiled_file = w.postproc.Patch(front_res, file, cache_file);
 

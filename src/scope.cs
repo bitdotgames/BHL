@@ -99,20 +99,20 @@ public class ModuleScope : Scope, IMarshallable
 
   public override Symbol Resolve(string name) 
   {
-    var s = ResolveFlat(name);
+    var s = ResolveLocal(name);
     if(s != null)
       return s;
 
     foreach(var imp in imports)
     {
-      s = imp.ResolveFlat(name);
+      s = imp.ResolveLocal(name);
       if(s != null)
         return s;
     }
     return null;
   }
 
-  Symbol ResolveFlat(string name) 
+  public Symbol ResolveLocal(string name) 
   {
     return base.Resolve(name);
   }
@@ -121,7 +121,7 @@ public class ModuleScope : Scope, IMarshallable
   {
     foreach(var imp in imports)
     {
-      if(imp.ResolveFlat(sym.name) != null)
+      if(imp.ResolveLocal(sym.name) != null)
         throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
     }
 

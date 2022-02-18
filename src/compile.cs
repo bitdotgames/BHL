@@ -212,7 +212,7 @@ public class ModuleCompiler : AST_Visitor
       compiled = new CompiledModule(
         module.id,
         module.name, 
-        module.symbols,
+        module.scope,
         constants, 
         init_bytes,
         code_bytes,
@@ -786,7 +786,7 @@ public class ModuleCompiler : AST_Visitor
   {
     UseCode();
 
-    var fsymb = (FuncSymbolScript)module.symbols.Resolve(ast.name);
+    var fsymb = (FuncSymbolScript)module.scope.Resolve(ast.name);
 
     func_decls.Push(fsymb);
 
@@ -1115,7 +1115,7 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.MFUNC:
       {
-        var class_symb = module.symbols.Resolve(ast.scope_type) as ClassSymbol;
+        var class_symb = module.scope.Resolve(ast.scope_type) as ClassSymbol;
         if(class_symb == null)
           throw new Exception("Class type not found: " + ast.scope_type);
 
@@ -1143,13 +1143,13 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.ARR_IDX:
       {
-        var arr_symb = module.symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        var arr_symb = module.scope.Resolve(ast.scope_type) as ArrayTypeSymbol;
         Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, AddConstant(arr_symb.name), 1 }, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        var arr_symb = module.symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        var arr_symb = module.scope.Resolve(ast.scope_type) as ArrayTypeSymbol;
         Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, AddConstant(arr_symb.name), 3 }, ast.line_num);
       }
       break;
@@ -1186,12 +1186,12 @@ public class ModuleCompiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    var func_symb = module.symbols.Resolve(ast.name) as FuncSymbolScript;
+    var func_symb = module.scope.ResolveLocal(ast.name) as FuncSymbolScript;
     if(func_symb != null)
     {
       return Emit(Opcodes.GetFunc, new int[] {func_symb.ip_addr}, ast.line_num);
     }
-    else if(types.Resolve(ast.name) is FuncSymbolNative fsymb)
+    else if(types.globs.Resolve(ast.name) is FuncSymbolNative fsymb)
     {
       int func_idx = types.globs.GetMembers().IndexOf(fsymb);
       if(func_idx == -1)
@@ -1388,7 +1388,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonArr ast)
   {
-    var arr_symb = module.symbols.Resolve(ast.type) as ArrayTypeSymbol;
+    var arr_symb = module.scope.Resolve(ast.type) as ArrayTypeSymbol;
     if(arr_symb == null)
       throw new Exception("Could not find class binding: " + ast.type);
 

@@ -1347,7 +1347,7 @@ public class VM
         ip = curr_frame.return_ip;
         curr_frame.Clear();
         curr_frame.Release();
-        //Console.WriteLine("RET IP " + ip + " FRAMES " + frames.Count);
+        //Console.WriteLine("RET IP " + ip + " FRAMES " + ctx_frames.Count);
         ctx_frames.Pop();
         //let's restore the defer scope
         defer_scope = curr_frame.origin;
