@@ -801,9 +801,10 @@ public class VM
       return;
     modules.Add(cm.name, cm);
 
+    //let's register all module functions
+    //TODO: do we really need to do this?
     for(int i=0;i<cm.symbols.GetMembers().Count;++i)
     {
-      //TODO: do we really need func2addr dictionary?
       if(cm.symbols.GetMembers()[i] is FuncSymbolScript fs)
         func2addr.Add(fs.name, new ModuleAddr() { module = cm, ip = fs.ip_addr });
     }
@@ -851,6 +852,9 @@ public class VM
   void ExecInit(CompiledModule module)
   {
     var bytecode = module.initcode;
+    if(bytecode == null || bytecode.Length == 0)
+      return;
+
     var constants = module.constants;
     var stack = init_frame.stack;
 
