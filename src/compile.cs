@@ -1189,7 +1189,7 @@ public class ModuleCompiler : AST_Visitor
     var func_symb = module.symbols.Resolve(ast.name) as FuncSymbolScript;
     if(func_symb != null)
     {
-      return Emit(Opcodes.GetFunc, new int[] {func_symb.decl.ip_addr}, ast.line_num);
+      return Emit(Opcodes.GetFunc, new int[] {func_symb.ip_addr}, ast.line_num);
     }
     else if(types.Resolve(ast.name) is FuncSymbolNative fsymb)
     {

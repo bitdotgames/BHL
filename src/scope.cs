@@ -139,12 +139,6 @@ public class ModuleScope : Scope, IMarshallable
         vs.scope_idx = c;
       }
     } 
-    else if(sym is FuncSymbolScript fs)
-    {
-      //NOTE: adding module id if it's not added already
-      if(fs.decl != null && fs.decl.module_id == 0)
-        fs.decl.module_id = module_id;
-    }
 
     base.Define(sym);
   }

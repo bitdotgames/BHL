@@ -322,11 +322,9 @@ public class AST_FuncDecl : AST
 {
   public string type = "";
   public string name = "";
-  public uint module_id;
   public uint local_vars_num;
   public byte required_args_num;
   public byte default_args_num;
-  public int ip_addr = -1;
 
   public override uint ClassId() 
   {
@@ -339,16 +337,14 @@ public class AST_FuncDecl : AST
 
     Marshall.Sync(ctx, ref type);
     Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref module_id);
     Marshall.Sync(ctx, ref local_vars_num);
     Marshall.Sync(ctx, ref required_args_num);
     Marshall.Sync(ctx, ref default_args_num);
-    Marshall.Sync(ctx, ref ip_addr);
   }
 
   public override int GetFieldsNum() 
   {
-    return base.GetFieldsNum() + 7; 
+    return base.GetFieldsNum() + 5; 
   }
 }
 
@@ -909,17 +905,16 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_FuncDecl New_FuncDecl(string name, uint module_id, string type)
+  static public AST_FuncDecl New_FuncDecl(string name, string type)
   {
     var n = new AST_FuncDecl();
-    Init_FuncDecl(n, name, module_id, type);
+    Init_FuncDecl(n, name, type);
     return n;
   }
 
-  static void Init_FuncDecl(AST_FuncDecl n, string name, uint module_id, string type)
+  static void Init_FuncDecl(AST_FuncDecl n, string name, string type)
   {
     n.type = type;
-    n.module_id = module_id;
     n.name = name;
     //fparams
     n.NewInterimChild();
@@ -964,10 +959,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_LambdaDecl New_LambdaDecl(string name, uint module_id, string type)
+  static public AST_LambdaDecl New_LambdaDecl(string name, string type)
   {
     var n = new AST_LambdaDecl();
-    Init_FuncDecl(n, name, module_id, type);
+    Init_FuncDecl(n, name, type);
 
     return n;
   }

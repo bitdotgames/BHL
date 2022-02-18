@@ -1975,10 +1975,10 @@ public class BHL_TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.Constant, new int[] { 1 })
+      .EmitThen(Opcodes.Constant, new int[] { 0 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { 1 })
+      .EmitThen(Opcodes.Constant, new int[] { 0 })
       .EmitThen(Opcodes.Equal)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -2598,7 +2598,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 2);
+    AssertEqual(c.Constants.Count, 1);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -2831,7 +2831,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 4);
+    AssertEqual(c.Constants.Count, 3);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -2974,7 +2974,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 3);
+    AssertEqual(c.Constants.Count, 1);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -3234,7 +3234,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 5);
+    AssertEqual(c.Constants.Count, 4);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -3287,7 +3287,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 6);
+    AssertEqual(c.Constants.Count, 5);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -3363,7 +3363,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 8);
+    AssertEqual(c.Constants.Count, 7);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -3679,7 +3679,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 3);
+    AssertEqual(c.Constants.Count, 2);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -3957,7 +3957,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 5);
+    AssertEqual(c.Constants.Count, 4);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -4117,7 +4117,7 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 4);
+    AssertEqual(c.Constants.Count, 3);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -4175,8 +4175,6 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
-
-    AssertEqual(c.Constants.Count, 4);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -4443,8 +4441,6 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 6);
-
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
@@ -4503,8 +4499,6 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
-
-    AssertEqual(c.Constants.Count, 6);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -4601,8 +4595,6 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
-
-    AssertEqual(c.Constants.Count, 4);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -4911,8 +4903,6 @@ public class BHL_TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.Constants.Count, 3);
-
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
@@ -4972,8 +4962,6 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
-
-    AssertEqual(c.Constants.Count, 5);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -5037,8 +5025,6 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
-
-    AssertEqual(c.Constants.Count, 4);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -6410,8 +6396,6 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
-
-    AssertEqual(c.Constants.Count, 5);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -7840,8 +7824,6 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
-
-    AssertEqual(c.Constants.Count, 2);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");

@@ -835,6 +835,12 @@ public class FuncSymbolScript : FuncSymbol
       return GetMembers().Count;
     }
   }
+  public uint module_id {
+    get {
+      return ((ModuleScope)scope).module_id;
+    }
+  }
+
   public int default_args_num;
   public int ip_addr;
 
@@ -850,8 +856,6 @@ public class FuncSymbolScript : FuncSymbol
     this.default_args_num = default_args_num;
     this.ip_addr = ip_addr;
   }
-
-  public AST_FuncDecl decl;
 
 #if BHL_FRONT
   public FuncSymbolScript(

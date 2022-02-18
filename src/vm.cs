@@ -1477,7 +1477,7 @@ public class VM
         var class_symb = (ClassSymbol)symbols.Resolve(class_type);
 
         var field_symb = (FuncSymbolScript)class_symb.members[func_idx];
-        int func_ip = field_symb.decl.ip_addr;
+        int func_ip = field_symb.ip_addr;
 
         var self = curr_frame.stack.Pop();
 

@@ -445,7 +445,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0), class_scope, func_symb.scope_idx);
+          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_id : 0), class_scope, func_symb.scope_idx);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -455,7 +455,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = module.symbols.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0), null, func_symb.scope_idx);
+            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_id : 0), null, func_symb.scope_idx);
             AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
             type = func_symb.GetReturnType();
           }
@@ -495,7 +495,7 @@ public class Frontend : bhlBaseVisitor<object>
           if(call_func_symb == null)
             FireError(name, "no such function found");
 
-          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb is FuncSymbolScript fss ? fss.decl.module_id : 0));
+          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb is FuncSymbolScript fss ? fss.module_id : 0));
           type = func_symb.type.Get();
         }
         else
@@ -906,7 +906,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(funcLambda.retType());
 
     var func_name = module.id + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name, module.id, tp.name);
+    var ast = AST_Util.New_LambdaDecl(func_name, tp.name);
     var symb = new LambdaSymbol(
       Wrap(ctx), 
       ParseFuncSignature(tp, funcLambda.funcParams()),
@@ -1860,7 +1860,7 @@ public class Frontend : bhlBaseVisitor<object>
     var func_tree = Wrap(context);
     func_tree.eval_type = tp.Get();
 
-    var ast = AST_Util.New_FuncDecl(context.NAME().GetText(), module.id, tp.name);
+    var ast = AST_Util.New_FuncDecl(context.NAME().GetText(), tp.name);
 
     var func_symb = new FuncSymbolScript(
       func_tree, 
