@@ -11737,7 +11737,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { 2 })
+      .EmitThen(Opcodes.Constant, new int[] { 1 })
       .EmitThen(Opcodes.NotEqual)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)

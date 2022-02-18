@@ -421,9 +421,6 @@ public class Frontend : bhlBaseVisitor<object>
       //func or method call
       if(cargs != null)
       {
-        if(name_symb is FieldSymbol)
-          FireError(name, "symbol is not a function");
-
         //func ptr
         if(var_symb != null && var_symb.type.Get() is FuncSignature)
         {
@@ -2217,7 +2214,10 @@ public class Frontend : bhlBaseVisitor<object>
 
     VariableSymbol symb = func_arg ? 
       (VariableSymbol) new FuncArgSymbol(var_tree, name.GetText(), tp, is_ref) :
-      (VariableSymbol) new VariableSymbol(var_tree, name.GetText(), tp);
+      (VariableSymbol) (curr_scope is ClassSymbolScript ? 
+          new FieldSymbolScript(name.GetText(), tp) :
+          new VariableSymbol(var_tree, name.GetText(), tp)
+      );
 
     symb.scope_level = scope_level;
     curr_scope.Define(symb);

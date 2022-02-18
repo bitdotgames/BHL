@@ -837,7 +837,9 @@ public class FuncSymbolScript : FuncSymbol
   }
   public uint module_id {
     get {
-      return ((ModuleScope)scope).module_id;
+      if(scope is ModuleScope ms)
+        return ms.module_id;
+      return 0;
     }
   }
 
