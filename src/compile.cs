@@ -1186,26 +1186,27 @@ public class ModuleCompiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    var func_symb = module.scope.ResolveLocal(ast.name) as FuncSymbolScript;
-    if(func_symb != null)
+    var func_symb = module.scope.Resolve(ast.name) as FuncSymbol;
+    if(func_symb == null)
+      throw new Exception("Func '" + ast.name + "' code not found");
+
+    if(func_symb is FuncSymbolNative fnative)
     {
-      return Emit(Opcodes.GetFunc, new int[] {func_symb.ip_addr}, ast.line_num);
-    }
-    else if(types.globs.Resolve(ast.name) is FuncSymbolNative fsymb)
-    {
-      int func_idx = types.globs.GetMembers().IndexOf(fsymb);
+      int func_idx = types.globs.GetMembers().IndexOf(fnative);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
       return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, ast.line_num);
     }
-    else if(ast.module_id != module.path.id)
+    else if(func_symb.scope == module.scope)
+    {
+      return Emit(Opcodes.GetFunc, new int[] {((FuncSymbolScript)func_symb).ip_addr}, ast.line_num);
+    }
+    else
     {
       int func_idx = AddConstant(ast.name);
 
       return Emit(Opcodes.GetFuncImported, new int[] {func_idx}, ast.line_num);
     }
-    else
-      throw new Exception("Func '" + ast.name + "' code not found");
   }
 
   public override void DoVisit(AST_Return ast)
