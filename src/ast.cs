@@ -322,9 +322,6 @@ public class AST_FuncDecl : AST
 {
   public string type = "";
   public string name = "";
-  public uint local_vars_num;
-  public byte required_args_num;
-  public byte default_args_num;
 
   public override uint ClassId() 
   {
@@ -337,14 +334,11 @@ public class AST_FuncDecl : AST
 
     Marshall.Sync(ctx, ref type);
     Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref local_vars_num);
-    Marshall.Sync(ctx, ref required_args_num);
-    Marshall.Sync(ctx, ref default_args_num);
   }
 
   public override int GetFieldsNum() 
   {
-    return base.GetFieldsNum() + 5; 
+    return base.GetFieldsNum() + 2; 
   }
 }
 
@@ -442,6 +436,7 @@ public class AST_UpVal : IMarshallableGeneric
 
 public class AST_LambdaDecl : AST_FuncDecl 
 {
+  public int local_vars_num;
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
 
   public override uint ClassId() 
@@ -452,12 +447,13 @@ public class AST_LambdaDecl : AST_FuncDecl
   public override void Sync(SyncContext ctx) 
   {
     base.Sync(ctx);
+    Marshall.Sync(ctx, ref local_vars_num);
     Marshall.Sync(ctx, upvals);
   }
 
   public override int GetFieldsNum() 
   {
-    return base.GetFieldsNum() + 1; 
+    return base.GetFieldsNum() + 2; 
   }
 }
 

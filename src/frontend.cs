@@ -907,18 +907,18 @@ public class Frontend : bhlBaseVisitor<object>
 
     var func_name = module.id + "_lmb_" + NextLambdaId(); 
     var ast = AST_Util.New_LambdaDecl(func_name, tp.name);
-    var symb = new LambdaSymbol(
+    var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
       ParseFuncSignature(tp, funcLambda.funcParams()),
       this.func_decl_stack,
       ast
     );
-    func2fparams[symb] = funcLambda.funcParams();
+    func2fparams[lmb_symb] = funcLambda.funcParams();
 
-    PushFuncDecl(symb);
+    PushFuncDecl(lmb_symb);
 
     var scope_backup = curr_scope;
-    curr_scope = symb;
+    curr_scope = lmb_symb;
 
     var fparams = funcLambda.funcParams();
     if(fparams != null)
@@ -928,27 +928,30 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    module.scope.Define(symb);
+    module.scope.Define(lmb_symb);
 
     //NOTE: while we are inside lambda the eval type is its return type
-    Wrap(ctx).eval_type = symb.GetReturnType();
+    Wrap(ctx).eval_type = lmb_symb.GetReturnType();
 
     PushAST(ast.block());
     Visit(funcLambda.funcBlock());
     PopAST();
 
-    if(tp.Get() != TypeSystem.Void && !return_found.Contains(symb))
+    if(tp.Get() != TypeSystem.Void && !return_found.Contains(lmb_symb))
       FireError(funcLambda.funcBlock(), "matching 'return' statement not found");
 
     PopFuncDecl();
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
-    var curr_type = symb.type.Get(); 
+    var curr_type = lmb_symb.type.Get(); 
     Wrap(ctx).eval_type = curr_type;
 
     curr_scope = scope_backup;
 
-    ast.local_vars_num = (uint)symb.GetMembers().Count;
+    //NOTE: since lambda func symbol is currently compile-time only,
+    //      we need to reflect local variables number in AST
+    //      (for regular funcs this number is taken from a symbol)
+    ast.local_vars_num = lmb_symb.local_vars_num;
 
     var chain = funcLambda.chainExp(); 
     if(chain != null)
@@ -1902,9 +1905,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     curr_scope = scope;
 
-    ast.local_vars_num = (uint)func_symb.GetMembers().Count;
-    ast.required_args_num = (byte)func_symb.GetRequiredArgsNum();
-    ast.default_args_num = (byte)func_symb.GetDefaultArgsNum();
+    func_symb.default_args_num = ast.GetDefaultArgsNum();
 
     return ast;
   }

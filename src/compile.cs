@@ -803,7 +803,7 @@ public class ModuleCompiler : AST_Visitor
   {
     var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
-    Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
+    Emit(Opcodes.InitFrame, new int[] { ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
     AddJumpFromTo(lmbd_op, Peek());
