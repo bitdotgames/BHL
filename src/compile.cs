@@ -618,29 +618,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.Func,
-        4/*name idx*/, 3/*ip addr*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.ClassBegin,
-        4/*type idx*/, 4/*parent type idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.ClassMember,
-        4/*type idx*/, 4/*name idx*/, 2/*symb idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.ClassEnd
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.Import,
         4/*name idx*/
       )
@@ -807,15 +784,6 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
-    //UseInit();
-    //var fsymb = new FuncSymbolScript(types, ast, new FuncSignature(types.Type("void"))/*for now*/);
-    //if(curr_class_symb != null)
-    //  curr_class_symb.Define(fsymb);
-    //else
-    //  symbols.Define(fsymb);
-
-    //var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
-
     UseCode();
 
     var fsymb = (FuncSymbolScript)module.symbols.Resolve(ast.name);

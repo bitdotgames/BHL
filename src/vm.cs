@@ -66,11 +66,7 @@ public enum Opcodes
   InitFrame        = 59,
   Inc              = 60,
   Dec              = 61,
-  Func             = 62,
-  ClassBegin       = 63,
-  ClassMember      = 64,
-  ClassEnd         = 65,
-  Import           = 66,
+  Import           = 62,
 }
 
 public class Const
@@ -859,7 +855,6 @@ public class VM
     var stack = init_frame.stack;
 
     int ip = 0;
-    ClassSymbolScript curr_class = null;
 
     while(ip < bytecode.Length)
     {
@@ -938,64 +933,6 @@ public class VM
           BHS status;
           ICoroutine coroutine = null;
           CallNative(init_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine);
-        }
-        break;
-        case Opcodes.Func:
-        {
-          int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          int ip_addr = (int)Bytecode.Decode24(bytecode, ref ip);
-
-          var fd = AST_Util.New_FuncDecl(constants[name_idx].str, 0, "void"/*for now*/); 
-          fd.ip_addr = ip_addr;
-          if(curr_class != null)
-          {
-            curr_class.decl.children.Add(fd);
-            curr_class.Define(new FuncSymbolScript(types, fd, new FuncSignature(types.Type("void"))/*for now*/));
-          }
-          else
-            func2addr.Add(fd.name, new ModuleAddr() { module = module, ip = ip_addr });
-        }
-        break;
-        case Opcodes.ClassBegin:
-        {
-          int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          int parent_type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-
-          var class_decl = new AST_ClassDecl();
-          class_decl.name = constants[type_idx].str;
-          if(parent_type_idx != -1)
-            class_decl.parent = constants[parent_type_idx].str;
-
-          ClassSymbol super_class = null;
-          if(!string.IsNullOrEmpty(class_decl.parent))
-            super_class = (ClassSymbol)symbols.Resolve(class_decl.parent);
-
-          curr_class = new ClassSymbolScript(class_decl.name, class_decl, super_class);
-        }
-        break;
-        case Opcodes.ClassMember:
-        {
-          int type_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          int name_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          int symb_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-
-          var vd = new AST_VarDecl();
-          vd.type = constants[type_idx].str;
-          vd.name = constants[name_idx].str;
-          vd.symb_idx = (uint)symb_idx;
-
-          curr_class.decl.children.Add(vd);
-
-          curr_class.Define(new FieldSymbolScript(vd.name, /*tmp hackk*/TypeSystem.IsCompoundType(vd.type) ? types.Type("void") : types.Type(vd.type)));
-          //TODO: this check must be in dev.version only
-          if(curr_class.members[(int)vd.symb_idx].name != vd.name)
-            throw new Exception("Symbol index is not valid");
-        }
-        break;
-        case Opcodes.ClassEnd:
-        {
-          symbols.Define(curr_class);
-          curr_class = null;
         }
         break;
         default:
