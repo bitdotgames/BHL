@@ -7,26 +7,35 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl {
 
-public class Parsed
-{
-  public bhlParser.ProgramContext prog;
-  public ITokenStream tokens;
-}
-
 public class WrappedParseTree
 {
   public IParseTree tree;
   public Module module;
   public ITokenStream tokens;
   public IType eval_type;
+}
 
-  public string Location()
+public class ANTLR_Result
+{
+  public ITokenStream tokens { get; private set; }
+  public bhlParser.ProgramContext prog { get; private set; }
+
+  public ANTLR_Result(ITokenStream tokens, bhlParser.ProgramContext prog)
   {
-    var interval = tree.SourceInterval;
-    var begin = tokens.Get(interval.a);
+    this.tokens = tokens;
+    this.prog = prog;
+  }
+}
 
-    string line = string.Format("@({0},{1})", begin.Line, begin.Column);
-    return line;
+public class FrontendResult
+{
+  public Module module { get; private set; }
+  public AST_Module ast { get; private set; }
+
+  public FrontendResult(Module module, AST_Module ast)
+  {
+    this.module = module;
+    this.ast = ast;
   }
 }
 
@@ -98,9 +107,9 @@ public class Frontend : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
-  Stack<AST_Nested> ast_stack = new Stack<AST_Nested>();
+  Stack<AST> ast_stack = new Stack<AST>();
 
-  public static CommonTokenStream Source2Tokens(string file, Stream s)
+  public static CommonTokenStream Stream2Tokens(string file, Stream s)
   {
     var ais = new AntlrInputStream(s);
     var lex = new bhlLexer(ais);
@@ -108,54 +117,41 @@ public class Frontend : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static AST_Module File2AST(string file, TypeSystem ts, ModuleRegistry mr)
+  public static FrontendResult ProcessFile(string file, TypeSystem ts, ModuleRegistry mr)
   {
     using(var sfs = File.OpenRead(file))
     {
-      var mod = new Module(ts, mr.FilePath2ModuleName(file), file);
-      return Source2AST(mod, sfs, ts, mr);
+      var mod = new Module(ts.globs, mr.FilePath2ModuleName(file), file);
+      return ProcessStream(mod, sfs, ts, mr);
     }
   }
 
-  public static bhlParser Source2Parser(string file, Stream src)
+  public static bhlParser Stream2Parser(string file, Stream src)
   {
-    var tokens = Source2Tokens(file, src);
+    var tokens = Stream2Tokens(file, src);
     var p = new bhlParser(tokens);
     p.AddErrorListener(new ErrorParserListener(file));
     p.ErrorHandler = new ErrorStrategy();
     return p;
   }
   
-  public static AST_Module Source2AST(Module module, Stream src, TypeSystem ts, ModuleRegistry mr, bool decls_only = false)
+  public static FrontendResult ProcessStream(Module module, Stream src, TypeSystem ts, ModuleRegistry mr, bool decls_only = false)
   {
-    var p = Source2Parser(module.file_path, src);
+    var p = Stream2Parser(module.file_path, src);
 
-    var parsed = new Parsed();
-    parsed.tokens = p.TokenStream;
-    parsed.prog = p.program();
+    var parsed = new ANTLR_Result(p.TokenStream, p.program());
 
-    return Parsed2AST(module, parsed, ts, mr, decls_only);
+    return ProcessParsed(module, parsed, ts, mr, decls_only);
   }
 
-  public static AST_Module Parsed2AST(Module module, Parsed p, TypeSystem ts, ModuleRegistry mr, bool decls_only = false)
+  public static FrontendResult ProcessParsed(Module module, ANTLR_Result p, TypeSystem ts, ModuleRegistry mr, bool decls_only = false)
   {
     //var sw1 = System.Diagnostics.Stopwatch.StartNew();
     var f = new Frontend(module, p.tokens, ts, mr, decls_only);
     var ast = f.ParseModule(p.prog);
     //sw1.Stop();
     //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
-    return ast;
-  }
-
-  public static bhlParser.ProgramContext ParseProgram(bhlParser parser, string file_path)
-  {
-    return parser.program();
-  }
-
-  static public void Source2Bin(Module module, Stream src, Stream dst, TypeSystem ts, ModuleRegistry mr)
-  {
-    var ast = Source2AST(module, src, ts, mr);
-    Util.Obj2Data(ast, dst);
+    return new FrontendResult(module, ast);
   }
 
   public Frontend(Module module, ITokenStream tokens, TypeSystem types, ModuleRegistry mreg, bool decls_only = false)
@@ -179,7 +175,7 @@ public class Frontend : bhlBaseVisitor<object>
     throw new SemanticError(module, place, tokens, msg);
   }
 
-  void PushAST(AST_Nested ast)
+  void PushAST(AST ast)
   {
     ast_stack.Push(ast);
   }
@@ -211,14 +207,9 @@ public class Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(tmp);
   }
 
-  AST_Nested PeekAST()
+  AST PeekAST()
   {
     return ast_stack.Peek();
-  }
-
-  string Location(IParseTree t)
-  {
-    return Wrap(t).Location();
   }
 
   WrappedParseTree Wrap(IParseTree t)
@@ -727,7 +718,7 @@ public class Frontend : bhlBaseVisitor<object>
     call.cargs_bits = args_info.bits;
   }
 
-  static bool HasFuncCalls(AST_Nested ast)
+  static bool HasFuncCalls(AST ast)
   {
     if(ast is AST_Call call && 
         (call.type == EnumCall.FUNC || 
@@ -740,7 +731,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     for(int i=0;i<ast.children.Count;++i)
     {
-      if(ast.children[i] is AST_Nested sub)
+      if(ast.children[i] is AST sub)
       {
         if(HasFuncCalls(sub))
           return true;
@@ -1272,7 +1263,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
     var op_type = GetBinaryOpType(op);
-    AST_Nested bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
+    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
 
     PushAST(bin_op_ast);
     bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
@@ -1382,7 +1373,7 @@ public class Frontend : bhlBaseVisitor<object>
   void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
-    AST_Nested ast = AST_Util.New_BinaryOpExp(op_type);
+    AST ast = AST_Util.New_BinaryOpExp(op_type);
     PushAST(ast);
     Visit(lhs);
     Visit(rhs);
@@ -2215,7 +2206,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_Nested CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
+  AST CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
   {
     var tp = ParseType(type_ctx);
 
@@ -2578,7 +2569,7 @@ public class Frontend : bhlBaseVisitor<object>
     var vd = vod.varDeclare();
     TypeProxy iter_type;
     string iter_str_name = "";
-    AST_Nested iter_ast_decl = null;
+    AST iter_ast_decl = null;
     VariableSymbol iter_symb = null;
     if(vod.NAME() != null)
     {
@@ -2664,7 +2655,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_Nested CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
+  AST CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
   {
     ++scope_level;
 
@@ -2769,14 +2760,14 @@ public class Module
   public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
   public ModuleScope symbols;
 
-  public Module(TypeSystem types, ModulePath module_path)
+  public Module(GlobalScope globs, ModulePath module_path)
   {
     this.path = module_path;
-    symbols = new ModuleScope(path.id, types);
+    symbols = new ModuleScope(path.id, globs);
   }
 
-  public Module(TypeSystem types, string name, string file_path)
-    : this(types, new ModulePath(name, file_path))
+  public Module(GlobalScope globs, string name, string file_path)
+    : this(globs, new ModulePath(name, file_path))
   {}
 }
 
@@ -2784,9 +2775,9 @@ public class ModuleRegistry
 {
   List<string> include_path = new List<string>();
   Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
-  Dictionary<string, Parsed> parsed_cache = null;
+  Dictionary<string, ANTLR_Result> parsed_cache = null;
 
-  public void SetParsedCache(Dictionary<string, Parsed> cache)
+  public void SetParsedCache(Dictionary<string, ANTLR_Result> cache)
   {
     parsed_cache = cache;
   }
@@ -2837,25 +2828,25 @@ public class ModuleRegistry
     }
 
     //3. Ok, let's parse it otherwise
-    m = new Module(ts, norm_path, full_path);
+    m = new Module(ts.globs, norm_path, full_path);
    
     //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
     curr_module.imports.Add(full_path, m);
     Register(m);
 
-    Parsed parsed;
+    ANTLR_Result parsed;
     //4. Let's try the parsed cache if it's present
     if(parsed_cache != null && parsed_cache.TryGetValue(full_path, out parsed) && parsed != null)
     {
       //Console.WriteLine("HIT " + full_path);
-      Frontend.Parsed2AST(m, parsed, ts, this, decls_only: true);
+      Frontend.ProcessParsed(m, parsed, ts, this, decls_only: true);
     }
     else
     {
       var stream = File.OpenRead(full_path);
 
       //Console.WriteLine("MISS " + full_path);
-      Frontend.Source2AST(m, stream, ts, this, decls_only: true);
+      Frontend.ProcessStream(m, stream, ts, this, decls_only: true);
 
       stream.Close();
     }

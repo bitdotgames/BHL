@@ -1,5 +1,5 @@
 using System;
-using System.Collections;
+using System.IO;
 using System.Collections.Generic;
 
 namespace bhl {
@@ -2058,7 +2058,9 @@ public class CompiledModule
 {
   public const int MAX_GLOBALS = 128;
 
+  public uint id;
   public string name;
+  public ModuleScope symbols;
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
@@ -2066,18 +2068,124 @@ public class CompiledModule
   public Dictionary<int, int> ip2src_line;
 
   public CompiledModule(
+    uint id,
     string name,
-    byte[] bytecode, 
+    ModuleScope symbols,
     List<Const> constants, 
     byte[] initcode,
+    byte[] bytecode, 
     Dictionary<int, int> ip2src_line = null
   )
   {
+    this.id = id;
     this.name = name;
+    this.symbols = symbols;
+    this.constants = constants;
     this.initcode = initcode;
     this.bytecode = bytecode;
-    this.constants = constants;
     this.ip2src_line = ip2src_line;
+  }
+
+  static public CompiledModule FromStream(TypeSystem types, Stream src)
+  {
+    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
+    {
+      //TODO: add better support for version
+      uint version = r.ReadUInt32();
+      if(version != 1)
+        throw new Exception("Unsupported version: " + version);
+
+      uint id = r.ReadUInt32(); 
+      string name = r.ReadString();
+
+      int symb_len = r.ReadInt32();
+      var symb_bytes = r.ReadBytes(symb_len);
+      var symbols = new ModuleScope(id, types.globs);
+      Util.Stream2Obj(new MemoryStream(symb_bytes), symbols, new SymbolFactory(types));
+
+      byte[] initcode = null;
+      int initcode_len = r.ReadInt32();
+      if(initcode_len > 0)
+        initcode = r.ReadBytes(initcode_len);
+
+      byte[] bytecode = null;
+      int bytecode_len = r.ReadInt32();
+      if(bytecode_len > 0)
+        bytecode = r.ReadBytes(bytecode_len);
+
+      var constants = new List<Const>();
+      int constants_len = r.ReadInt32();
+      for(int i=0;i<constants_len;++i)
+      {
+        var cn_type = (EnumLiteral)r.Read();
+        double cn_num = 0;
+        string cn_str = "";
+        if(cn_type == EnumLiteral.STR)
+          cn_str = r.ReadString();
+        else
+          cn_num = r.ReadDouble();
+        var cn = new Const(cn_type, cn_num, cn_str);
+        constants.Add(cn);
+      }
+
+      var ip2src_line = new Dictionary<int, int>();
+      int ip2src_line_len = r.ReadInt32();
+      for(int i=0;i<ip2src_line_len;++i)
+        ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
+
+      return new CompiledModule(id, name, symbols, constants, initcode, bytecode, ip2src_line);
+    }
+  }
+
+  static public void ToStream(CompiledModule cm, Stream dst)
+  {
+    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
+    {
+      //TODO: add better support for version
+      //TODO: introduce header info with offsets to data
+      w.Write((uint)1);
+
+      w.Write(cm.id);
+      w.Write(cm.name);
+
+      var symb_bytes = Util.Obj2Bytes(cm.symbols);
+      w.Write(symb_bytes.Length);
+      w.Write(symb_bytes, 0, symb_bytes.Length);
+
+      w.Write(cm.initcode == null ? (int)0 : cm.initcode.Length);
+      if(cm.initcode != null)
+        w.Write(cm.initcode, 0, cm.initcode.Length);
+
+      w.Write(cm.bytecode == null ? (int)0 : cm.bytecode.Length);
+      if(cm.bytecode != null)
+        w.Write(cm.bytecode, 0, cm.bytecode.Length);
+
+      w.Write(cm.constants.Count);
+      foreach(var cn in cm.constants)
+      {
+        w.Write((byte)cn.type);
+        if(cn.type == EnumLiteral.STR)
+          w.Write(cn.str);
+        else
+          w.Write(cn.num);
+      }
+
+      //TODO: add this info only for development builds
+      w.Write(cm.ip2src_line.Count);
+      foreach(var kv in cm.ip2src_line)
+      {
+        w.Write(kv.Key);
+        w.Write(kv.Value);
+      }
+    }
+  }
+
+  static public void ToFile(CompiledModule cm, string file)
+  {
+    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
+    {
+      ToStream(cm, wfs);
+    }
   }
 }
 

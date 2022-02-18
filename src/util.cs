@@ -72,138 +72,51 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  static public T File2Obj<T>(string file, IFactory f) where T : IMarshallable, new()
+  static public T File2Obj<T>(string file, IFactory f = null) where T : IMarshallable, new()
   {
     using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
     {
-      return Data2Obj<T>(rfs, f);
+      return Stream2Obj<T>(rfs, f);
     }
   }
 
-  static public void Data2Obj<T>(Stream s, IFactory f, T obj) where T : IMarshallable
+  static public void Stream2Obj<T>(Stream s, T obj, IFactory f = null) where T : IMarshallable
   {
     var reader = new MsgPackDataReader(s);
-    Marshall.Sync(SyncContext.NewForRead(reader, f), ref obj);
+    Marshall.Sync(SyncContext.NewReader(reader, f), ref obj);
   }
 
-  static public T Data2Obj<T>(Stream s, IFactory f) where T : IMarshallable, new()
+  static public T Stream2Obj<T>(Stream s, IFactory f = null) where T : IMarshallable, new()
   {
     var reader = new MsgPackDataReader(s);
     var obj = new T();
-    Marshall.Sync(SyncContext.NewForRead(reader, f), ref obj);
+    Marshall.Sync(SyncContext.NewReader(reader, f), ref obj);
     return obj;
   }
 
-  static public T Data2Obj<T>(byte[] bytes, IFactory f) where T : IMarshallable, new()
-  {
-    return Data2Obj<T>(new MemoryStream(bytes), f);
-  }
-
-  static public void Obj2Data<T>(T obj, Stream dst) where T : IMarshallable
+  static public void Obj2Stream<T>(T obj, Stream dst) where T : IMarshallable
   {
     var writer = new MsgPackDataWriter(dst);
-    Marshall.Sync(SyncContext.NewForWrite(writer), ref obj);
+    Marshall.Sync(SyncContext.NewWriter(writer), ref obj);
+  }
+
+  static public byte[] Obj2Bytes<T>(T obj) where T : IMarshallable
+  {
+    var dst = new MemoryStream();
+    var writer = new MsgPackDataWriter(dst);
+    Marshall.Sync(SyncContext.NewWriter(writer), ref obj);
+    return dst.GetBuffer();
   }
 
   static public void Obj2File<T>(T obj, string file) where T : IMarshallable
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {
-      Obj2Data(obj, wfs);
+      Obj2Stream(obj, wfs);
     }
   }
 
-  static public void Compiled2Data(CompiledModule m, Stream dst)
-  {
-    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
-    {
-      //TODO: add better support for version
-      w.Write((uint)1);
-
-      w.Write(m.name);
-
-      w.Write(m.initcode == null ? (int)0 : m.initcode.Length);
-      if(m.initcode != null)
-        w.Write(m.initcode, 0, m.initcode.Length);
-
-      w.Write(m.bytecode == null ? (int)0 : m.bytecode.Length);
-      if(m.bytecode != null)
-        w.Write(m.bytecode, 0, m.bytecode.Length);
-
-      w.Write(m.constants.Count);
-      foreach(var cn in m.constants)
-      {
-        w.Write((byte)cn.type);
-        if(cn.type == EnumLiteral.STR)
-          w.Write(cn.str);
-        else
-          w.Write(cn.num);
-      }
-
-      //TODO: add this info only for development builds
-      w.Write(m.ip2src_line.Count);
-      foreach(var kv in m.ip2src_line)
-      {
-        w.Write(kv.Key);
-        w.Write(kv.Value);
-      }
-    }
-  }
-
-  static public void Compiled2File(CompiledModule m, string file)
-  {
-    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
-    {
-      Compiled2Data(m, wfs);
-    }
-  }
-
-  static public CompiledModule Data2Compiled(Stream src)
-  {
-    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
-    {
-      //TODO: add better support for version
-      uint version = r.ReadUInt32();
-      if(version != 1)
-        throw new Exception("Unsupported version: " + version);
-
-      string name = r.ReadString();
-
-      byte[] initcode = null;
-      int initcode_len = r.ReadInt32();
-      if(initcode_len > 0)
-        initcode = r.ReadBytes(initcode_len);
-
-      byte[] bytecode = null;
-      int bytecode_len = r.ReadInt32();
-      if(bytecode_len > 0)
-        bytecode = r.ReadBytes(bytecode_len);
-
-      var constants = new List<Const>();
-      int constants_len = r.ReadInt32();
-      for(int i=0;i<constants_len;++i)
-      {
-        var cn_type = (EnumLiteral)r.Read();
-        double cn_num = 0;
-        string cn_str = "";
-        if(cn_type == EnumLiteral.STR)
-          cn_str = r.ReadString();
-        else
-          cn_num = r.ReadDouble();
-        var cn = new Const(cn_type, cn_num, cn_str);
-        constants.Add(cn);
-      }
-
-      var ip2src_line = new Dictionary<int, int>();
-      int ip2src_line_len = r.ReadInt32();
-      for(int i=0;i<ip2src_line_len;++i)
-        ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
-
-      return new CompiledModule(name, bytecode, constants, initcode, ip2src_line);
-    }
-  }
-
-  public static void ASTDump(AST_Nested ast)
+  public static void ASTDump(AST ast)
   {
     new AST_Dumper().Visit(ast);
     Console.WriteLine("\n=============");
@@ -238,7 +151,7 @@ public static class Hash
 
 public static class Extensions
 {
-  public static void Append(this AST_Nested dst, AST_Nested src)
+  public static void Append(this AST dst, AST src)
   {
     for(int i=0;i<src.children.Count;++i)
     {

@@ -3085,7 +3085,7 @@ public class BHL_TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new ModuleCompiler(ts)
+      new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()
@@ -6271,7 +6271,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -8480,7 +8480,7 @@ public class BHL_TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new ModuleCompiler(ts)
+      new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
       .UseCode()
@@ -17635,7 +17635,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
 
@@ -17785,7 +17785,8 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files));
+    var ts = new TypeSystem();
+    var importer = new ModuleImporter(ts, CompileFiles(files));
 
     AssertEqual(importer.Import("bhl1"), 
       new ModuleCompiler()
@@ -17824,7 +17825,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
     );
 
-    var vm = new VM(null, importer);
+    var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
     AssertEqual(Execute(vm, "bhl1").result.PopRelease().num, 23);
     CommonChecks(vm);
@@ -17862,7 +17863,7 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
 
@@ -17911,9 +17912,10 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files));
+    var ts = new TypeSystem();
+    var importer = new ModuleImporter(ts, CompileFiles(files));
 
-    var vm = new VM(null, importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(42, Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num);
@@ -17979,9 +17981,10 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files));
+    var ts = new TypeSystem();
+    var importer = new ModuleImporter(ts, CompileFiles(files));
 
-    var vm = new VM(null, importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
@@ -18043,9 +18046,10 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files));
+    var ts = new TypeSystem();
+    var importer = new ModuleImporter(ts, CompileFiles(files));
 
-    var vm = new VM(null, importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -18076,9 +18080,10 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files));
+    var ts = new TypeSystem();
+    var importer = new ModuleImporter(ts, CompileFiles(files));
 
-    var vm = new VM(null, importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
@@ -18118,9 +18123,10 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files));
+    var ts = new TypeSystem();
+    var importer = new ModuleImporter(ts, CompileFiles(files));
 
-    var vm = new VM(null, importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -18193,9 +18199,10 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files));
+    var ts = new TypeSystem();
+    var importer = new ModuleImporter(ts, CompileFiles(files));
 
-    var vm = new VM(null, importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(4, Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num);
@@ -18239,9 +18246,10 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files));
+    var ts = new TypeSystem();
+    var importer = new ModuleImporter(ts, CompileFiles(files));
 
-    var vm = new VM(null, importer);
+    var vm = new VM(ts, importer);
 
     vm.LoadModule("bhl1");
     AssertEqual(23, Execute(vm, "test", Val.NewNum(vm, 23)).result.PopRelease().num);
@@ -18720,7 +18728,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -18798,7 +18806,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -18850,7 +18858,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -18932,7 +18940,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -19020,7 +19028,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -19099,7 +19107,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -19177,7 +19185,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -19261,7 +19269,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -19349,7 +19357,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(CompileFiles(files, ts));
+    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
 
     var vm = new VM(ts, importer);
     vm.LoadModule("bhl1");
@@ -20131,7 +20139,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       var types = new TypeSystem();
 
-      var ms = new ModuleScope(1, types);
+      var ms = new ModuleScope(1, types.globs);
       types.AddSource(ms);
 
       ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
@@ -20158,18 +20166,18 @@ public class BHL_TestVM : BHL_TestBase
       Enum.TryAddItem("Type2", 2);
       ms.Define(Enum);
 
-      Util.Obj2Data(ms, s);
+      Util.Obj2Stream(ms, s);
     }
 
     {
       var types = new TypeSystem();
       var factory = new SymbolFactory(types);
 
-      var ms = new ModuleScope(types);
+      var ms = new ModuleScope(types.globs);
       types.AddSource(ms);
 
       s.Position = 0;
-      Util.Data2Obj(s, factory, ms);
+      Util.Stream2Obj(s, ms, factory);
 
       AssertEqual(ms.module_id, 1);
 
@@ -20288,15 +20296,6 @@ public class BHL_TestVM : BHL_TestBase
 
   ///////////////////////////////////////
 
-  static ModuleCompiler MakeCompiler(TypeSystem ts = null)
-  {
-    if(ts == null)
-      ts = new TypeSystem();
-    //NOTE: we don't want to affect the original ts
-    var ts_copy = ts.Clone();
-    return new ModuleCompiler(ts_copy);
-  }
-
   Stream CompileFiles(List<string> files, TypeSystem ts = null)
   {
     if(ts == null)
@@ -20329,28 +20328,18 @@ public class BHL_TestVM : BHL_TestBase
     //NOTE: we don't want to affect the original ts
     var ts_copy = ts.Clone();
 
-    var mdl = new bhl.Module(ts_copy, "", "");
+    var mdl = new bhl.Module(ts_copy.globs, "", "");
     var mreg = new ModuleRegistry();
-    var ast = Src2AST(bhl, mdl, mreg, ts_copy);
+
+    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts, mreg);
+
     if(show_ast)
-      Util.ASTDump(ast);
-    var c  = new ModuleCompiler(ts_copy, ast, mdl.path);
+      Util.ASTDump(front_res.ast);
+    var c  = new ModuleCompiler(ts_copy, front_res);
     c.Compile();
     if(show_bytes)
       Dump(c);
     return c;
-  }
-
-  AST_Nested Src2AST(string src, bhl.Module mdl, ModuleRegistry mreg, TypeSystem ts = null)
-  {
-    if(ts == null)
-      ts = new TypeSystem();
-
-    var ms = new MemoryStream();
-    Frontend.Source2Bin(mdl, src.ToStream(), ms, ts, mreg);
-    ms.Position = 0;
-
-    return Util.Data2Obj<AST_Module>(ms, new AST_Factory());
   }
 
   void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)

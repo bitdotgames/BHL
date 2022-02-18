@@ -77,15 +77,15 @@ public class ModuleScope : Scope, IMarshallable
 
   List<ModuleScope> imports = new List<ModuleScope>();
 
-  public ModuleScope(uint module_id, TypeSystem types) 
-    : base(types.globs) 
+  public ModuleScope(uint module_id, GlobalScope globs) 
+    : base(globs) 
   {
     this.module_id = module_id;
   }
 
   //marshall version
-  public ModuleScope(TypeSystem types) 
-    : base(types.globs)
+  public ModuleScope(GlobalScope globs) 
+    : base(globs)
   {}
 
   public void AddImport(ModuleScope other)
@@ -112,13 +112,19 @@ public class ModuleScope : Scope, IMarshallable
     return null;
   }
 
-  public Symbol ResolveFlat(string name) 
+  Symbol ResolveFlat(string name) 
   {
     return base.Resolve(name);
   }
 
   public override void Define(Symbol sym) 
   {
+    foreach(var imp in imports)
+    {
+      if(imp.ResolveFlat(sym.name) != null)
+        throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+    }
+
     if(sym is VariableSymbol vs)
     {
       //NOTE: calculating scope idx only for global variables for now
@@ -138,12 +144,6 @@ public class ModuleScope : Scope, IMarshallable
       //NOTE: adding module id if it's not added already
       if(fs.decl != null && fs.decl.module_id == 0)
         fs.decl.module_id = module_id;
-    }
-
-    foreach(var imp in imports)
-    {
-      if(imp.ResolveFlat(sym.name) != null)
-        throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
     }
 
     base.Define(sym);

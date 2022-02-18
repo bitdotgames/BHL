@@ -20,7 +20,7 @@ public class BuildConf
   public string cache_dir = "";
   public bool use_cache = true;
   public string err_file = "";
-  public IPostProcessor postproc = new EmptyPostProcessor();
+  public IBuildPostProcessor postproc = new EmptyPostProcessor();
   public UserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
@@ -128,7 +128,7 @@ public class Build
     var compiler_workers = new List<CompilerWorker>();
 
     //1. parsing first and creating the shared parsed cache 
-    var parsed_cache = new Dictionary<string, Parsed>(); 
+    var parsed_cache = new Dictionary<string, ANTLR_Result>(); 
 
     bool had_errors = false;
     foreach(var pw in parse_workers)
@@ -260,20 +260,9 @@ public class Build
 
     public int Count => names.Count;
 
-    public uint getClassId() 
-    {
-      return 0;
-    }
-
     public int GetFieldsNum()
     {
       return 2;
-    }
-
-    public void Reset() 
-    {
-      names.Clear();
-      files.Clear();
     }
 
     public void Sync(SyncContext ctx) 
@@ -291,20 +280,24 @@ public class Build
 
   void CheckUniqueSymbols(CompilerWorker w)
   {
-    for(int i=0;i<w.symbols.Count; ++i)
+    foreach(var kv in w.file2symbols)
     {
-      var name = w.symbols.names[i];
-      var file = w.symbols.files[i];
+      var symbols = kv.Value;
+      var file = kv.Key;
 
-      string fpath;
-      if(name2file.TryGetValue(name, out fpath))
+      for(int i=0;i<symbols.GetMembers().Count;++i)
       {
-        w.error = new BuildError(file, "symbol '" + name + "' is already declared in '" + fpath + "'");
-        break;
-      }
-      else
-      {
-        name2file.Add(name, file);
+        var s = symbols.GetMembers()[i];
+        string fpath;
+        if(name2file.TryGetValue(s.name, out fpath))
+        {
+          w.error = new BuildError(file, "symbol '" + s.name + "' is already declared in '" + fpath + "'");
+          break;
+        }
+        else
+        {
+          name2file.Add(s.name, file);
+        }
       }
     }
   }
@@ -321,8 +314,8 @@ public class Build
     public int count;
     public List<string> inc_path = new List<string>();
     public List<string> files;
-    //NOTE: null bhlParser means file is cached
-    public Dictionary<string, Parsed> parsed_cache = new Dictionary<string, Parsed>();
+    //NOTE: null value means file is cached
+    public Dictionary<string, ANTLR_Result> parsed_cache = new Dictionary<string, ANTLR_Result>();
     public Exception error = null;
 
     public void Start()
@@ -378,17 +371,14 @@ public class Build
             if(self_bin_file.Length > 0)
               deps.Add(self_bin_file);
 
-            var cache_file = GetASTCacheFile(w.cache_dir, file);
+            var cache_file = GetBuildCacheFile(w.cache_dir, file);
 
             //NOTE: null means - "try from file cache"
-            Parsed parsed = null;
+            ANTLR_Result parsed = null;
             if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
             {
-              var parser = Frontend.Source2Parser(file, sfs);
-              parsed = new Parsed() {
-                tokens = parser.TokenStream,
-                       prog = Frontend.ParseProgram(parser, file)
-              };
+              var parser = Frontend.Stream2Parser(file, sfs);
+              parsed = new ANTLR_Result(parser.TokenStream, parser.program());
               ++cache_miss;
               //Console.WriteLine("PARSE " + file + " " + cache_file);
             }
@@ -418,11 +408,6 @@ public class Build
     public class FileImports : IMarshallable
     {
       public List<string> files = new List<string>();
-
-      public uint getClassId() 
-      {
-        return 0;
-      }
 
       public int GetFieldsNum()
       {
@@ -515,7 +500,7 @@ public class Build
   public class CompilerWorker
   {
     public int id;
-    public Dictionary<string, Parsed> parsed_cache;
+    public Dictionary<string, ANTLR_Result> parsed_cache;
     public Thread th;
     public string inc_dir;
     public bool use_cache;
@@ -524,11 +509,11 @@ public class Build
     public TypeSystem ts;
     public int start;
     public int count;
-    public Symbols symbols = new Symbols();
-    public IPostProcessor postproc;
+    public IBuildPostProcessor postproc;
     public Exception error = null;
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
+    public Dictionary<string, ModuleScope> file2symbols = new Dictionary<string, ModuleScope>();
 
     public void Start()
     {
@@ -540,97 +525,6 @@ public class Build
     public void Join()
     {
       th.Join();
-    }
-
-    public class CacheHitResolver : IASTResolver 
-    {
-      string cache_file;
-      IASTResolver fallback;
-
-      public CacheHitResolver(string cache_file, IASTResolver fallback)
-      {
-        this.cache_file = cache_file;
-        this.fallback = fallback;
-      }
-
-      public AST_Module Get()
-      {
-        try
-        {
-          //Console.WriteLine("HIT " + cache_file);
-          return Util.File2Obj<AST_Module>(cache_file, new AST_Factory());
-        }
-        catch
-        {
-          var ast = fallback.Get();
-          Util.Obj2File(ast, cache_file);
-          return ast;
-        }
-      }
-    }
-
-    public class CacheWriteResolver : IASTResolver 
-    {
-      AST_Module ast;
-
-      public CacheWriteResolver(string cache_file, IASTResolver resolver)
-      {
-        ast = resolver.Get();
-        Util.Obj2File(ast, cache_file);
-        //Console.WriteLine("MISS " + cache_file);
-      }
-
-      public AST_Module Get()
-      {
-        return ast;
-      }
-    }
-
-    public class FromParsedResolver : IASTResolver
-    {
-      Parsed parsed;
-      Module mod;
-      TypeSystem ts;
-      ModuleRegistry mreg;
-
-      public FromParsedResolver(Parsed parsed, Module mod, TypeSystem ts, ModuleRegistry mreg)
-      {
-        this.parsed = parsed;
-        this.mod = mod;
-        this.ts = ts;
-        this.mreg = mreg;
-      }
-
-      public AST_Module Get()
-      {
-        return Frontend.Parsed2AST(mod, parsed, ts, mreg);
-      }
-    }
-
-    public class FromSourceResolver : IASTResolver
-    {
-      string file;
-      Module mod;
-      TypeSystem ts;
-      ModuleRegistry mreg;
-
-      public FromSourceResolver(string file, Module mod, TypeSystem ts, ModuleRegistry mreg)
-      {
-        this.file = file;
-        this.mod = mod;
-        this.ts = ts;
-        this.mreg = mreg;
-      }
-
-      public AST_Module Get()
-      {
-        AST_Module ast = null;
-        using(var sfs = File.OpenRead(file))
-        {
-          ast = Frontend.Source2AST(mod, sfs, ts, mreg);
-        }
-        return ast;
-      }
     }
 
     public static void DoWork(object data)
@@ -657,39 +551,38 @@ public class Build
         {
           var file = w.files[i]; 
 
-          var cache_file = GetASTCacheFile(w.cache_dir, file);
-          var file_module = new Module(w.ts, mreg.FilePath2ModuleName(file), file);
-          LazyAST lazy_ast = null;
+          var cache_file = GetBuildCacheFile(w.cache_dir, file);
+          var file_module = new Module(w.ts.globs, mreg.FilePath2ModuleName(file), file);
 
-          Parsed parsed = null;
-          //NOTE: checking if data must be taken from the file cache
-          if(w.parsed_cache.TryGetValue(file, out parsed) && parsed == null)
-          {
-            ++cache_hit;
-            lazy_ast = new LazyAST(
-                new CacheHitResolver(cache_file, 
-                  fallback: new FromSourceResolver(file, file_module, w.ts, mreg)
-                  )
-                );
-          }
-          else
-          {
+          FrontendResult front_res = null;
+
+          ANTLR_Result parsed;
+          w.parsed_cache.TryGetValue(file, out parsed);
+          ////NOTE: checking if data must be taken from the file cache (parsed is null)
+          //if(w.parsed_cache.TryGetValue(file, out parsed) && parsed == null)
+          //{
+          //  ++cache_hit;
+          //  //TODO:
+          //  throw new NotImplementedException();
+          //}
+          //else
+          //{
             ++cache_miss;
-            lazy_ast = new LazyAST(new CacheWriteResolver(cache_file, 
-                  parsed != null ? (IASTResolver)new FromParsedResolver(parsed, file_module, w.ts, mreg) : 
-                  (IASTResolver)new FromSourceResolver(file, file_module, w.ts, mreg)));
-          }
 
-          w.symbols = GetSymbols(file, w.cache_dir, lazy_ast);
+            if(parsed == null)
+              front_res = Frontend.ProcessFile(file, w.ts, mreg);
+            else
+              front_res = Frontend.ProcessParsed(file_module, parsed, w.ts, mreg);
+          //}
 
           w.file2module.Add(file, file_module);
+          w.file2symbols.Add(file, front_res.module.symbols);
 
-          string compiled_file = w.postproc.Patch(lazy_ast, file, cache_file);
+          string compiled_file = w.postproc.Patch(front_res, file, cache_file);
 
-          var ast = lazy_ast.Get();
-          var c  = new ModuleCompiler(w.ts, ast, file_module.path);
+          var c  = new ModuleCompiler(w.ts, front_res);
           var cm = c.Compile();
-          Util.Compiled2File(cm, compiled_file);
+          CompiledModule.ToFile(cm, compiled_file);
 
           w.file2compiled.Add(file, compiled_file);
         }
@@ -709,77 +602,16 @@ public class Build
       sw.Stop();
       Console.WriteLine("BHL Compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
-
-    static Symbols GetSymbols(string file, string cache_dir, LazyAST lazy_ast)
-    {
-      var symbols = TryReadSymbolsCache(file, cache_dir);
-      if(symbols == null)
-      {
-        symbols = new Symbols();
-        var ast = lazy_ast.Get();
-        foreach(var c in ast.children)
-        {
-          var fn = c as AST_FuncDecl;
-          if(fn != null)
-          {
-            symbols.Add(fn.name, file);
-            continue;
-          }
-          var cd = c as AST_ClassDecl;
-          if(cd != null)
-          {
-            symbols.Add(cd.name, file);
-            continue;
-          }
-          var vd = c as AST_VarDecl;
-          if(vd != null)
-          {
-            symbols.Add(vd.name, file);
-            continue;
-          }
-        }
-        WriteSymbolsCache(file, cache_dir, symbols);
-      }
-
-      return symbols;
-    }
-
-    static Symbols TryReadSymbolsCache(string file, string cache_dir)
-    {
-      var cache_symb_file = GetSymbolsCacheFile(cache_dir, file);
-      if(BuildUtil.NeedToRegen(cache_symb_file, file))
-        return null;
-
-      try
-      {
-        return Util.File2Obj<Symbols>(cache_symb_file, new AST_Factory());
-      }
-      catch
-      {
-        return null;
-      }
-    }
-
-    static void WriteSymbolsCache(string file, string cache_dir, Symbols symbols)
-    {
-      var cache_symb_file = GetSymbolsCacheFile(cache_dir, file);
-      Util.Obj2File(symbols, cache_symb_file);
-    }
   }
 
-  public static string GetASTCacheFile(string cache_dir, string file)
+  public static string GetBuildCacheFile(string cache_dir, string file)
   {
-    return cache_dir + "/" + Hash.CRC32(file) + ".ast.cache";
+    return cache_dir + "/" + Path.GetFileName(file) + "_" + Hash.CRC32(file) + ".bld.cache";
   }
 
   public static string GetImportsCacheFile(string cache_dir, string file)
   {
     return cache_dir + "/" + Hash.CRC32(file) + ".imports.cache";
-  }
-
-  public static string GetSymbolsCacheFile(string cache_dir, string file)
-  {
-    return cache_dir + "/" + Hash.CRC32(file) + ".symb.cache";
   }
 
   public static bool TestFile(string file)
@@ -808,6 +640,19 @@ public class Build
         }
         );
   }
+}
+
+public interface IBuildPostProcessor
+{
+  //NOTE: returns path to the result file
+  string Patch(FrontendResult build_res, string src_file, string result_file);
+  void Tally();
+}
+
+public class EmptyPostProcessor : IBuildPostProcessor 
+{
+  public string Patch(FrontendResult build_res, string src_file, string result_file) { return result_file; }
+  public void Tally() {}
 }
 
 public static class BuildUtil

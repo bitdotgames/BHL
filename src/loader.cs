@@ -34,6 +34,7 @@ public class ModuleImporter : IModuleImporter
 {
   public const byte COMPILE_FMT = 2;
 
+  TypeSystem types;
   Stream source;
   marshall.MsgPackDataReader reader;
   Lz4DecoderStream decoder = new Lz4DecoderStream();
@@ -49,8 +50,9 @@ public class ModuleImporter : IModuleImporter
 
   Dictionary<string, Entry> name2entry = new Dictionary<string, Entry>();
 
-  public ModuleImporter(Stream source)
+  public ModuleImporter(TypeSystem types, Stream source)
   {
+    this.types = types;
     Load(source);
   }
 
@@ -109,7 +111,7 @@ public class ModuleImporter : IModuleImporter
 
     mod_stream.SetData(res, 0, res_len);
 
-    return Util.Data2Compiled(mod_stream);
+    return CompiledModule.FromStream(types, mod_stream);
   }
 
   void DecodeBin(Entry ent, ref byte[] res, ref int res_len)

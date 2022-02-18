@@ -6,13 +6,13 @@ namespace bhl {
 
 public class ModuleCompiler : AST_Visitor
 {
-  AST_Nested ast;
+  AST ast;
   CompiledModule compiled;
 
-  ModulePath module_path;
-  public ModulePath Module {
+  Module module;
+  public Module Module {
     get {
-      return module_path;
+      return module;
     }
   }
 
@@ -22,8 +22,6 @@ public class ModuleCompiler : AST_Visitor
       return types;
     }
   }
-
-  ModuleScope symbols;
 
   List<Const> constants = new List<Const>();
   public List<Const> Constants {
@@ -35,8 +33,6 @@ public class ModuleCompiler : AST_Visitor
   List<Instruction> init = new List<Instruction>();
   List<Instruction> code = new List<Instruction>();
   List<Instruction> head = null;
-
-  ClassSymbol curr_class_symb = null;
 
   Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
   Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
@@ -167,17 +163,18 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcodes();
   }
 
-  public ModuleCompiler(TypeSystem types = null, AST_Nested ast = null, ModulePath module_path = null)
+  public ModuleCompiler(TypeSystem types, FrontendResult fres)
   {
-    if(types == null)
-      types = new TypeSystem();
     this.types = types;
-    if(module_path == null)
-      module_path = new ModulePath("", "");
-    this.symbols = new ModuleScope(module_path.id, types);
-    this.ast = ast;
-    this.module_path = module_path;
+    module = fres.module;
+    ast = fres.ast;
 
+    UseInit();
+  }
+
+  //NOTE: for testing purposes only
+  public ModuleCompiler()
+  {
     UseInit();
   }
 
@@ -210,9 +207,11 @@ public class ModuleCompiler : AST_Visitor
       Bake(out init_bytes, out code_bytes, out ip2src_line);
 
       compiled = new CompiledModule(
-        Module.name, 
+        module.id,
+        module.name, 
+        module.symbols,
+        constants, 
         code_bytes,
-        Constants, 
         init_bytes,
         ip2src_line
       );    
@@ -805,32 +804,32 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_FuncDecl ast)
   {
-    UseInit();
-    var fsymb = new FuncSymbolScript(types, ast, new FuncSignature(types.Type("void"))/*for now*/);
-    if(curr_class_symb != null)
-      curr_class_symb.Define(fsymb);
-    else
-      symbols.Define(fsymb);
+    //UseInit();
+    //var fsymb = new FuncSymbolScript(types, ast, new FuncSignature(types.Type("void"))/*for now*/);
+    //if(curr_class_symb != null)
+    //  curr_class_symb.Define(fsymb);
+    //else
+    //  symbols.Define(fsymb);
 
-    var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
+    //var inst = Emit(Opcodes.Func, new int[] { AddConstant(ast.name), 0/*ip addr*/ });
 
-    UseCode();
+    //UseCode();
 
-    func_decls.Push(fsymb);
+    //func_decls.Push(fsymb);
 
-    int ip = GetCodeSize();
-    //let's patch the func address
-    inst.SetOperand(1, ip);
+    //int ip = GetCodeSize();
+    ////let's patch the func address
+    //inst.SetOperand(1, ip);
 
-    fsymb.decl.ip_addr = ip;
+    //fsymb.decl.ip_addr = ip;
 
-    Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
-    VisitChildren(ast);
-    Emit(Opcodes.Return);
+    //Emit(Opcodes.InitFrame, new int[] { (int)ast.local_vars_num + 1/*cargs bits*/});
+    //VisitChildren(ast);
+    //Emit(Opcodes.Return);
 
-    func_decls.Pop();
+    //func_decls.Pop();
 
-    UseInit();
+    //UseInit();
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
@@ -848,37 +847,37 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_ClassDecl ast)
   {
-    UseInit();
+    //UseInit();
 
-    ClassSymbol parent = null;
-    if(!string.IsNullOrEmpty(ast.parent))
-      parent = (ClassSymbol)symbols.Resolve(ast.parent);
+    //ClassSymbol parent = null;
+    //if(!string.IsNullOrEmpty(ast.parent))
+    //  parent = (ClassSymbol)symbols.Resolve(ast.parent);
 
-    curr_class_symb = new ClassSymbolScript(ast.name, ast, parent);
-    symbols.Define(curr_class_symb);
+    //curr_class_symb = new ClassSymbolScript(ast.name, ast, parent);
+    //symbols.Define(curr_class_symb);
 
-    Emit(Opcodes.ClassBegin, new int[] { AddConstant(ast.name), (int)(parent == null ? -1 : AddConstant(parent.name)) });
-    for(int i=0;i<ast.children.Count;++i)
-    {
-      var child = ast.children[i];
+    //Emit(Opcodes.ClassBegin, new int[] { AddConstant(ast.name), (int)(parent == null ? -1 : AddConstant(parent.name)) });
+    //for(int i=0;i<ast.children.Count;++i)
+    //{
+    //  var child = ast.children[i];
 
-      if(child is AST_VarDecl vd)
-      {
-        curr_class_symb.Define(new FieldSymbolScript(vd.name, /*tmp hackk*/TypeSystem.IsCompoundType(vd.type) ? types.Type("void") : types.Type(vd.type)));
-        Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name), (int)vd.symb_idx });
-      }
-      else if(child is AST_FuncDecl fd)
-      {
-        Visit(fd);
-      }
-    }
-    Emit(Opcodes.ClassEnd);
-    curr_class_symb = null;
+    //  if(child is AST_VarDecl vd)
+    //  {
+    //    curr_class_symb.Define(new FieldSymbolScript(vd.name, /*tmp hackk*/TypeSystem.IsCompoundType(vd.type) ? types.Type("void") : types.Type(vd.type)));
+    //    Emit(Opcodes.ClassMember, new int[] { AddConstant(vd.type), AddConstant(vd.name), (int)vd.symb_idx });
+    //  }
+    //  else if(child is AST_FuncDecl fd)
+    //  {
+    //    Visit(fd);
+    //  }
+    //}
+    //Emit(Opcodes.ClassEnd);
+    //curr_class_symb = null;
   }
 
   public override void DoVisit(AST_EnumDecl ast)
   {
-    symbols.Define(new EnumSymbolScript(ast.name));
+    //symbols.Define(new EnumSymbolScript(ast.name));
   }
 
   public override void DoVisit(AST_Block ast)
@@ -1077,7 +1076,7 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        if(ast.module_id != module_path.id)
+        if(ast.module_id != module.path.id)
         {
           var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
@@ -1091,7 +1090,7 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVARW:
       {
-        if(ast.module_id != module_path.id)
+        if(ast.module_id != module.path.id)
         {
           var import_name = imports[ast.module_id];
           int module_idx = AddConstant(import_name);
@@ -1149,7 +1148,7 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.MFUNC:
       {
-        var class_symb = symbols.Resolve(ast.scope_type) as ClassSymbol;
+        var class_symb = module.symbols.Resolve(ast.scope_type) as ClassSymbol;
         if(class_symb == null)
           throw new Exception("Class type not found: " + ast.scope_type);
 
@@ -1177,13 +1176,13 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.ARR_IDX:
       {
-        var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        var arr_symb = module.symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
         Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, AddConstant(arr_symb.name), 1 }, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        var arr_symb = symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        var arr_symb = module.symbols.Resolve(ast.scope_type) as ArrayTypeSymbol;
         Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, AddConstant(arr_symb.name), 3 }, ast.line_num);
       }
       break;
@@ -1220,7 +1219,7 @@ public class ModuleCompiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    var func_symb = symbols.Resolve(ast.name) as FuncSymbolScript;
+    var func_symb = module.symbols.Resolve(ast.name) as FuncSymbolScript;
     if(func_symb != null)
     {
       return Emit(Opcodes.GetFunc, new int[] {func_symb.decl.ip_addr}, ast.line_num);
@@ -1232,7 +1231,7 @@ public class ModuleCompiler : AST_Visitor
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
       return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, ast.line_num);
     }
-    else if(ast.module_id != module_path.id)
+    else if(ast.module_id != module.path.id)
     {
       int func_idx = AddConstant(ast.name);
 
@@ -1422,7 +1421,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonArr ast)
   {
-    var arr_symb = symbols.Resolve(ast.type) as ArrayTypeSymbol;
+    var arr_symb = module.symbols.Resolve(ast.type) as ArrayTypeSymbol;
     if(arr_symb == null)
       throw new Exception("Could not find class binding: " + ast.type);
 

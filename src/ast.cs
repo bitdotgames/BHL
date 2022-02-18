@@ -93,7 +93,7 @@ public abstract class AST_Visitor
       throw new Exception("Not known type: " + node.GetType().Name);
   }
 
-  public void VisitChildren(AST_Nested node)
+  public void VisitChildren(AST node)
   {
     if(node == null)
       return;
@@ -103,48 +103,7 @@ public abstract class AST_Visitor
   }
 }
 
-public interface IPostProcessor
-{
-  //returns path to the result file
-  string Patch(LazyAST lazy_ast, string src_file, string result_file);
-  void Tally();
-}
-
-public class EmptyPostProcessor : IPostProcessor 
-{
-  public string Patch(LazyAST lazy_ast, string src_file, string result_file) { return result_file; }
-  public void Tally() {}
-}
-
-public interface IASTResolver
-{
-  AST_Module Get();
-}
-
-public class LazyAST
-{
-  IASTResolver resolver;
-  AST_Module resolved;
-
-  public LazyAST(IASTResolver resolver)
-  {
-    this.resolver = resolver;
-  }
-
-  public LazyAST(AST_Module resolved)
-  {
-    this.resolved = resolved;
-  }
-
-  public AST_Module Get()
-  {
-    if(resolved == null)
-      resolved = resolver.Get();
-    return resolved;
-  }
-}
-
-public class AST_Nested : IMarshallableGeneric
+public class AST : IMarshallableGeneric
 {
   public List<IMarshallableGeneric> children = new List<IMarshallableGeneric>();
 
@@ -164,7 +123,7 @@ public class AST_Nested : IMarshallableGeneric
   }
 }
 
-public class AST_Interim : AST_Nested 
+public class AST_Interim : AST 
 {
   public override uint ClassId() 
   {
@@ -204,7 +163,7 @@ public class AST_Import  : IMarshallableGeneric
   }
 }
 
-public class AST_Module : AST_Nested 
+public class AST_Module : AST 
 {
   public uint id;
   public string name = "";
@@ -233,7 +192,7 @@ public enum EnumUnaryOp
   NOT = 2,
 }
 
-public class AST_UnaryOpExp : AST_Nested 
+public class AST_UnaryOpExp : AST 
 {
   public EnumUnaryOp type = new EnumUnaryOp();
 
@@ -275,7 +234,7 @@ public enum EnumBinaryOp
   BIT_AND = 15,
 }
 
-public class AST_BinaryOpExp  : AST_Nested 
+public class AST_BinaryOpExp  : AST 
 {
   public EnumBinaryOp type = new EnumBinaryOp();
 
@@ -338,7 +297,7 @@ public class AST_Dec : IMarshallableGeneric
   }
 }
 
-public class AST_New : AST_Nested 
+public class AST_New : AST 
 {
   public string type = "";
 
@@ -359,7 +318,7 @@ public class AST_New : AST_Nested
   }
 }
 
-public class AST_FuncDecl : AST_Nested 
+public class AST_FuncDecl : AST 
 {
   public string type = "";
   public string name = "";
@@ -393,7 +352,7 @@ public class AST_FuncDecl : AST_Nested
   }
 }
 
-public class AST_ClassDecl : AST_Nested 
+public class AST_ClassDecl : AST 
 {
   public string name = "";
   public string parent = "";
@@ -439,7 +398,7 @@ public class AST_EnumItem : IMarshallableGeneric
   }
 }
 
-public class AST_EnumDecl : AST_Nested 
+public class AST_EnumDecl : AST 
 {
   public string name = "";
 
@@ -506,7 +465,7 @@ public class AST_LambdaDecl : AST_FuncDecl
   }
 }
 
-public class AST_TypeCast : AST_Nested 
+public class AST_TypeCast : AST 
 {
   public string type = "";
 
@@ -547,7 +506,7 @@ public enum EnumCall
   GVARW           = 51,
 }
 
-public class AST_Call  : AST_Nested 
+public class AST_Call  : AST 
 {
   public EnumCall type = new EnumCall();
   public string name = "";
@@ -584,7 +543,7 @@ public class AST_Call  : AST_Nested
   }
 }
 
-public class AST_Return  : AST_Nested 
+public class AST_Return  : AST 
 {
   public int num;
 
@@ -677,7 +636,7 @@ public class AST_Literal : IMarshallableGeneric
   }
 }
 
-public class AST_VarDecl : AST_Nested 
+public class AST_VarDecl : AST 
 {
   public string name = "";
   public string type = "";
@@ -719,7 +678,7 @@ public enum EnumBlock
   FOR = 9,
 }
 
-public class AST_Block : AST_Nested 
+public class AST_Block : AST 
 {
   public EnumBlock type = new EnumBlock();
 
@@ -743,7 +702,7 @@ public class AST_Block : AST_Nested
   }
 }
 
-public class AST_JsonObj : AST_Nested 
+public class AST_JsonObj : AST 
 {
   public string type = "";
   public int line_num;
@@ -767,7 +726,7 @@ public class AST_JsonObj : AST_Nested
   }
 }
 
-public class AST_JsonArr : AST_Nested 
+public class AST_JsonArr : AST 
 {
   public string type;
   public int line_num;
@@ -808,7 +767,7 @@ public class AST_JsonArrAddItem : IMarshallableGeneric
   }
 }
 
-public class AST_JsonPair : AST_Nested 
+public class AST_JsonPair : AST 
 {
   public string name = "";
   public uint symb_idx;
@@ -857,7 +816,7 @@ public class AST_Factory : IFactory
   {
     switch(id)
     {
-      case 59352479: { return new AST_Nested(); };
+      case 59352479: { return new AST(); };
       case 240440595: { return new AST_Interim(); };
       case 117209009: { return new AST_Import(); };
       case 127311748: { return new AST_Module(); };
@@ -895,7 +854,7 @@ static public class AST_Util
 {
   static public List<IMarshallableGeneric> GetChildren(this IMarshallableGeneric self)
   {
-    var ast = self as AST_Nested;
+    var ast = self as AST;
     return ast == null ? null : ast.children;
   }
 
@@ -903,27 +862,27 @@ static public class AST_Util
   {
     if(c == null)
       return;
-    var ast = self as AST_Nested;
+    var ast = self as AST;
     ast.children.Add(c);
   }
 
-  static public void AddChild(this AST_Nested self, IMarshallableGeneric c)
+  static public void AddChild(this AST self, IMarshallableGeneric c)
   {
     if(c == null)
       return;
     self.children.Add(c);
   }
 
-  static public void AddChildren(this AST_Nested self, IMarshallable b)
+  static public void AddChildren(this AST self, IMarshallable b)
   {
-    if(b is AST_Nested c)
+    if(b is AST c)
     {
       for(int i=0;i<c.children.Count;++i)
         self.AddChild(c.children[i]);
     }
   }
 
-  static public AST_Nested NewInterimChild(this AST_Nested self)
+  static public AST NewInterimChild(this AST self)
   {
     var c = new AST_Interim();
     self.AddChild(c);
@@ -968,14 +927,14 @@ static public class AST_Util
     n.NewInterimChild();
   }
 
-  static public AST_Nested fparams(this AST_FuncDecl n)
+  static public AST fparams(this AST_FuncDecl n)
   {
-    return n.GetChildren()[0] as AST_Nested;
+    return n.GetChildren()[0] as AST;
   }
 
-  static public AST_Nested block(this AST_FuncDecl n)
+  static public AST block(this AST_FuncDecl n)
   {
-    return n.GetChildren()[1] as AST_Nested;
+    return n.GetChildren()[1] as AST;
   }
 
   static public int GetDefaultArgsNum(this AST_FuncDecl n)

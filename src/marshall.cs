@@ -41,7 +41,7 @@ public struct SyncContext
   public IWriter writer;
   public IFactory factory;
 
-  public static SyncContext NewForRead(IReader reader, IFactory factory = null)
+  public static SyncContext NewReader(IReader reader, IFactory factory = null)
   {
     var ctx = new SyncContext() {
       is_read = true,
@@ -52,7 +52,7 @@ public struct SyncContext
     return ctx;
   }
 
-  public static SyncContext NewForWrite(IWriter writer, IFactory factory = null)
+  public static SyncContext NewWriter(IWriter writer, IFactory factory = null)
   {
     var ctx = new SyncContext() {
       is_read = false,
