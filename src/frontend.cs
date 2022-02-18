@@ -421,6 +421,9 @@ public class Frontend : bhlBaseVisitor<object>
       //func or method call
       if(cargs != null)
       {
+        if(var_symb is FieldSymbol && !(var_symb.type.Get() is FuncSignature))
+          FireError(name, "symbol is not a function");
+
         //func ptr
         if(var_symb != null && var_symb.type.Get() is FuncSignature)
         {

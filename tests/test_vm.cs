@@ -17613,7 +17613,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Import, new int[] { 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { 2 })
+      .EmitThen(Opcodes.Constant, new int[] { 1 })
       .EmitThen(Opcodes.CallImported, new int[] { 0, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
