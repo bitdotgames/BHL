@@ -561,7 +561,11 @@ public class MsgPackDataWriter : IWriter
   {
     DecSpace();
     space.Push(size);
-    io.WriteArrayHeader(size);
+    //special 'unspecified' case
+    if(size == -1)
+      io.Write(-1);
+    else
+      io.WriteArrayHeader(size);
   }
 
   public void EndContainer() 
@@ -898,7 +902,8 @@ public class MsgPackDataReader : IReader
 
     if(!io.IsArray())
     {
-      if(io.Type == TypePrefixes.NegativeFixNum)
+      //special 'unspecified' case
+      if(io.IsSigned() && io.ValueSigned == -1)
       {
         structs_pos.Push(new StructPos(-1));
         return -1;
