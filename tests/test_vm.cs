@@ -19961,7 +19961,7 @@ public class BHL_TestVM : BHL_TestBase
 
       ms.Define(new VariableSymbol("wow", types.TypeArr("bool")));
 
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.Type("int"), types.Type("string")), "Test", 1, 155));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.TypeRef(types.Type("int")), types.Type("string")), "Test", 1, 155));
 
       ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr("string"), types.Type("Bar")), "Make", 3, 15));
 
@@ -20018,7 +20018,7 @@ public class BHL_TestVM : BHL_TestBase
       var Test = (FuncSymbolScript)ms.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(Test.scope, ms);
-      AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), "int", "string").name, Test.GetSignature().name);
+      AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), types.TypeRef("int"), "string").name, Test.GetSignature().name);
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);

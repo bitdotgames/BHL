@@ -99,12 +99,12 @@ public class BHLC
         Usage("User bindings are invalid");
     }
 
-    IPostProcessor postproc = new EmptyPostProcessor();
+    IBuildPostProcessor postproc = new EmptyPostProcessor();
     if(postproc_dll_path != "")
     {
       var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll_path);
       var postproc_class = postproc_assembly.GetTypes()[0];
-      postproc = System.Activator.CreateInstance(postproc_class) as IPostProcessor;
+      postproc = System.Activator.CreateInstance(postproc_class) as IBuildPostProcessor;
       if(postproc == null)
         Usage("User postprocessor is invalid");
     }

@@ -14,10 +14,10 @@ public class Example
     bnd.Register(types);
 
     var bytes = new MemoryStream(File.ReadAllBytes("tmp/bhl.bytes"));
-    var mi = new ModuleImporter(bytes);
+    var mi = new ModuleImporter(types, bytes);
 
     var vm = new VM(types, mi);
-    vm.LoadModule("unit");
+    vm.LoadModule("example");
     vm.Start("Unit");
 
     //NOTE: emulating update game loop

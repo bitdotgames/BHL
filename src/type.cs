@@ -88,15 +88,31 @@ public struct TypeProxy : IMarshallable
   }
 }
 
-public class RefType : IType
+public class RefType : IType, IMarshallableGeneric
 {
-  public TypeProxy subj { get; private set; }
+  public const uint CLASS_ID = 17;
+
+  public TypeProxy subj; 
 
   public string GetName() { return "ref " + subj.name; }
 
   public RefType(TypeProxy subj)
   {
     this.subj = subj;
+  }
+
+  //marshall factory version
+  public RefType()
+  {}
+
+  public uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref subj);
   }
 }
 
@@ -452,6 +468,11 @@ public class TypeSystem
       return tn.tp;
     else
       return Type(tn.name);
+  }
+
+  public TypeProxy TypeRef(TypeArg tn)
+  {           
+    return Type(new RefType(Type(tn)));
   }
 
   public TypeProxy TypeArr(TypeArg tn)

@@ -1453,6 +1453,8 @@ public class SymbolFactory : IFactory
         return new FuncSymbolScript();
       case FuncSignature.CLASS_ID:
         return new FuncSignature();
+      case RefType.CLASS_ID:
+        return new RefType();
       case TupleType.CLASS_ID:
         return new TupleType();
       default:

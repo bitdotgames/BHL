@@ -411,6 +411,7 @@ public static class Marshall
     EndArray(ctx, v);
   }
 
+  //TODO: make it private and deduce by IMarshallableGeneric interface
   static public void SyncGeneric(SyncContext ctx, ref IMarshallableGeneric v)
   {
     if(ctx.is_read)
@@ -449,6 +450,7 @@ public static class Marshall
     }
   }
 
+  //TODO: make it private and deduce by IMarshallableGeneric interface
   static public void SyncGeneric<T>(SyncContext ctx, List<T> v, System.Action<IMarshallableGeneric> item_cb = null) where T : IMarshallableGeneric
   {
     int size = BeginArray(ctx, v);
