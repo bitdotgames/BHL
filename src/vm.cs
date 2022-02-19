@@ -808,7 +808,9 @@ public class VM
     for(int i=0;i<cm.scope.GetMembers().Count;++i)
     {
       if(cm.scope.GetMembers()[i] is FuncSymbolScript fs)
+      {
         func2addr.Add(fs.name, new ModuleAddr() { module = cm, ip = fs.ip_addr });
+      }
     }
 
     types.AddSource(cm.scope);
