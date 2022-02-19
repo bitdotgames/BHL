@@ -19999,17 +19999,20 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(foo.name, "foo");
       AssertEqual(foo.type.Get(), TypeSystem.Int);
       AssertEqual(foo.scope, ms);
+      AssertEqual(foo.scope_idx, 0);
 
       var bar = (VariableSymbol)ms.Resolve("bar");
       AssertEqual(bar.name, "bar");
       AssertEqual(bar.type.Get(), TypeSystem.String);
       AssertEqual(bar.scope, ms);
+      AssertEqual(bar.scope_idx, 1);
 
       var wow = (VariableSymbol)ms.Resolve("wow");
       AssertEqual(wow.name, "wow");
       AssertEqual(wow.type.Get().GetName(), types.TypeArr("string").Get().GetName());
       AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), TypeSystem.Bool);
       AssertEqual(wow.scope, ms);
+      AssertEqual(wow.scope_idx, 2);
 
       var Test = (FuncSymbolScript)ms.Resolve("Test");
       AssertEqual(Test.name, "Test");
@@ -20017,6 +20020,8 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
+      //global funcs don't have scope idx set
+      AssertEqual(-1, Test.scope_idx);
 
       var Make = (FuncSymbolScript)ms.Resolve("Make");
       AssertEqual(Make.name, "Make");
@@ -20026,6 +20031,8 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(3, Make.default_args_num);
       AssertEqual(0, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);
+      //global funcs don't have scope idx set
+      AssertEqual(-1, Make.scope_idx);
 
       var Foo = (ClassSymbolScript)ms.Resolve("Foo");
       AssertTrue(Foo.super_class == null);
@@ -20034,12 +20041,14 @@ public class BHL_TestVM : BHL_TestBase
       var Foo_Int = Foo.Resolve("Int") as FieldSymbolScript;
       AssertEqual(Foo_Int.name, "Int");
       AssertEqual(Foo_Int.type.Get(), TypeSystem.Int);
+      AssertEqual(Foo_Int.scope_idx, 0);
       var Foo_Hey = Foo.Resolve("Hey") as FuncSymbolScript;
       AssertEqual(Foo_Hey.name, "Hey");
       AssertEqual(Foo_Hey.GetReturnType(), TypeSystem.Void);
       AssertEqual(0, Foo_Hey.default_args_num);
       AssertEqual(0, Foo_Hey.local_vars_num);
       AssertEqual(3, Foo_Hey.ip_addr);
+      AssertEqual(1, Foo_Hey.scope_idx);
 
       var Bar = (ClassSymbolScript)ms.Resolve("Bar");
       AssertEqual(Bar.super_class.name, Foo.name);
@@ -20049,6 +20058,7 @@ public class BHL_TestVM : BHL_TestBase
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
       AssertEqual(Bar_Float.name, "Float");
       AssertEqual(Bar_Float.type.Get(), TypeSystem.Float);
+      AssertEqual(Bar_Float.scope_idx, 2);
       var Bar_What = Bar.Resolve("What") as FuncSymbolScript;
       AssertEqual(Bar_What.name, "What");
       AssertEqual(Bar_What.GetReturnType().GetName(), types.TypeTuple("bool", "bool").Get().GetName());

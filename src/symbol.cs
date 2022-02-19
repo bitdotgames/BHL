@@ -835,6 +835,20 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public int GetTotalArgsNum() { return GetSignature().arg_types.Count; }
   public abstract int GetDefaultArgsNum();
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
+
+  public override int GetFieldsNum()
+  {
+    return 3;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref signature);
+    if(ctx.is_read)
+      type = new TypeProxy(signature);
+    Marshall.Sync(ctx, ref _scope_idx);
+  }
 }
 
 public class FuncSymbolScript : FuncSymbol
@@ -896,21 +910,19 @@ public class FuncSymbolScript : FuncSymbol
 
   public override int GetFieldsNum()
   {
-    return 4;
+    return base.GetFieldsNum() + 2;
   }
 
   public override void Sync(SyncContext ctx)
   {
+    base.Sync(ctx);
+
     //NOTE: we don't Sync actual arguments for now,
     //      we probably should be doint this however
     //      we need to separate arguments from local
     //      variables (check if they are stored in the 
     //      same members dictionary)
 
-    Marshall.Sync(ctx, ref signature);
-    if(ctx.is_read)
-      type = new TypeProxy(signature);
-    Marshall.Sync(ctx, ref name);
     Marshall.Sync(ctx, ref default_args_num);
     Marshall.Sync(ctx, ref ip_addr);
   }
