@@ -59,8 +59,6 @@ public class ModuleCompiler : AST_Visitor
   }
   List<Jump> jumps = new List<Jump>();
 
-  Dictionary<uint, string> imports = new Dictionary<uint, string>();
-  
   static Dictionary<byte, Definition> opcode_decls = new Dictionary<byte, Definition>();
 
   public class Definition
@@ -214,7 +212,6 @@ public class ModuleCompiler : AST_Visitor
       Bake(out init_bytes, out code_bytes, out ip2src_line);
 
       compiled = new CompiledModule(
-        module.id,
         module.name, 
         module.scope,
         constants, 
@@ -779,7 +776,6 @@ public class ModuleCompiler : AST_Visitor
   {
     for(int i=0;i<ast.module_names.Count;++i)
     {
-      imports.Add(ast.module_ids[i], ast.module_names[i]);
       int module_idx = AddConstant(ast.module_names[i]);
 
       Emit(Opcodes.Import, new int[] { module_idx });
@@ -1033,10 +1029,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        if(ast.module_id != module.path.id)
+        if(ast.module_name != module.name)
         {
-          var import_name = imports[ast.module_id];
-          int module_idx = AddConstant(import_name);
+          int module_idx = AddConstant(ast.module_name);
           Emit(Opcodes.GetGVarImported, new int[] {module_idx, ast.symb_idx}, ast.line_num);
         }
         else 
@@ -1047,10 +1042,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVARW:
       {
-        if(ast.module_id != module.path.id)
+        if(ast.module_name != module.name)
         {
-          var import_name = imports[ast.module_id];
-          int module_idx = AddConstant(import_name);
+          int module_idx = AddConstant(ast.module_name);
           Emit(Opcodes.SetGVarImported, new int[] {module_idx, ast.symb_idx}, ast.line_num);
         }
         else 

@@ -260,11 +260,6 @@ public class Build
 
     public int Count => names.Count;
 
-    public int GetFieldsNum()
-    {
-      return 2;
-    }
-
     public void Sync(SyncContext ctx) 
     {
       Marshall.Sync(ctx, names);
@@ -408,11 +403,6 @@ public class Build
     public class FileImports : IMarshallable
     {
       public List<string> files = new List<string>();
-
-      public int GetFieldsNum()
-      {
-        return 1;
-      }
 
       public void Reset() 
       {

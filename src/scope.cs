@@ -73,14 +73,14 @@ public class GlobalScope : Scope
 
 public class ModuleScope : Scope, IMarshallable
 {
-  public uint module_id;
+  public string module_name;
 
   List<ModuleScope> imports = new List<ModuleScope>();
 
-  public ModuleScope(uint module_id, GlobalScope globs) 
+  public ModuleScope(string module_name, GlobalScope globs) 
     : base(globs) 
   {
-    this.module_id = module_id;
+    this.module_name = module_name;
   }
 
   //marshall version
@@ -143,14 +143,9 @@ public class ModuleScope : Scope, IMarshallable
     base.Define(sym);
   }
 
-  public int GetFieldsNum()
-  {
-    return 2;
-  }
-
   public void Sync(SyncContext ctx) 
   {
-    Marshall.Sync(ctx, ref module_id);
+    Marshall.Sync(ctx, ref module_name);
     Marshall.Sync(ctx, ref members);
     if(ctx.is_read)
     {

@@ -229,7 +229,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public AST_Module ParseModule(bhlParser.ProgramContext p)
   {
-    var ast = AST_Util.New_Module(module.id, module.name);
+    var ast = AST_Util.New_Module(module.name);
     PushAST(ast);
     VisitProgram(p);
     PopAST();
@@ -278,7 +278,6 @@ public class Frontend : bhlBaseVisitor<object>
     if(imported != null)
     {
       module.scope.AddImport(imported.scope);
-      ast.module_ids.Add(imported.id);
       ast.module_names.Add(name);
     }
   }
@@ -445,7 +444,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_id : 0), class_scope, func_symb.scope_idx);
+          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), class_scope, func_symb.scope_idx);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -455,7 +454,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = module.scope.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_id : 0), null, func_symb.scope_idx);
+            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), null, func_symb.scope_idx);
             AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
             type = func_symb.GetReturnType();
           }
@@ -478,7 +477,7 @@ public class Frontend : bhlBaseVisitor<object>
             var_symb.name,
             class_scope != null ? class_scope.name : "",
             var_symb.scope_idx,
-            var_symb.module_id
+            is_global ? var_symb.module_name : ""
           );
           //handling passing by ref for class fields
           if(class_scope != null && PeekCallByRef())
@@ -495,7 +494,7 @@ public class Frontend : bhlBaseVisitor<object>
           if(call_func_symb == null)
             FireError(name, "no such function found");
 
-          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb is FuncSymbolScript fss ? fss.module_id : 0));
+          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb is FuncSymbolScript fss ? fss.module_name : ""), null);
           type = func_symb.type.Get();
         }
         else
@@ -905,7 +904,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(funcLambda.retType());
 
-    var func_name = module.id + "_lmb_" + NextLambdaId(); 
+    var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
     var ast = AST_Util.New_LambdaDecl(func_name, tp.name);
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
@@ -1396,7 +1395,7 @@ public class Frontend : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, 0, class_symb, op_func.scope_idx));
+      over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, "", class_symb, op_func.scope_idx));
       ast = over_ast;
     }
     else if(
@@ -2725,14 +2724,6 @@ public class Frontend : bhlBaseVisitor<object>
 public class ModulePath
 {
   public string name;
-  uint _id;
-  public uint id {
-    get {
-      if(_id == 0)
-        _id = Hash.CRC32(name);
-      return _id;
-    }
-  }
   public string file_path;
 
   public ModulePath(string name, string file_path)
@@ -2744,11 +2735,6 @@ public class ModulePath
 
 public class Module
 {
-  public uint id {
-    get {
-      return path.id;
-    }
-  }
   public string name {
     get {
       return path.name;
@@ -2766,7 +2752,7 @@ public class Module
   public Module(GlobalScope globs, ModulePath module_path)
   {
     this.path = module_path;
-    scope = new ModuleScope(path.id, globs);
+    scope = new ModuleScope(path.name, globs);
   }
 
   public Module(GlobalScope globs, string name, string file_path)

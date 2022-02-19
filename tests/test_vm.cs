@@ -19952,7 +19952,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       var types = new TypeSystem();
 
-      var ms = new ModuleScope(1, types.globs);
+      var ms = new ModuleScope("module", types.globs);
       types.AddSource(ms);
 
       ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
@@ -19992,7 +19992,7 @@ public class BHL_TestVM : BHL_TestBase
       s.Position = 0;
       Marshall.Stream2Obj(s, ms, factory);
 
-      AssertEqual(ms.module_id, 1);
+      AssertEqual(ms.module_name, "module");
 
       AssertEqual(8, ms.GetMembers().Count);
 

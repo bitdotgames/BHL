@@ -552,11 +552,11 @@ public class VariableSymbol : Symbol, IScopeIndexed
 {
   public const uint CLASS_ID = 8;
 
-  public uint module_id { 
+  public string module_name { 
     get {
       if(scope is ModuleScope ms)
-        return ms.module_id;
-      return 0;
+        return ms.module_name;
+      return "";
     }
   }
 
@@ -829,11 +829,12 @@ public class FuncSymbolScript : FuncSymbol
       return GetMembers().Count;
     }
   }
-  public uint module_id {
+
+  public string module_name {
     get {
       if(scope is ModuleScope ms)
-        return ms.module_id;
-      return 0;
+        return ms.module_name;
+      return "";
     }
   }
 

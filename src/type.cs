@@ -55,12 +55,6 @@ public struct TypeProxy : IMarshallable
     return type;
   }
 
-  public int GetFieldsNum()
-  {
-    return 1 /*name*/ + 
-           1 /*marshallable type or null*/;
-  }
-
   public void Sync(SyncContext ctx)
   {
     if(ctx.is_read)
@@ -164,11 +158,6 @@ public class TupleType : IType, IMarshallableGeneric
     return CLASS_ID;
   }
 
-  public int GetFieldsNum()
-  {
-    return 1;
-  }
-
   public void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, items);
@@ -236,11 +225,6 @@ public class FuncSignature : IType, IMarshallableGeneric
   public uint ClassId()
   {
     return CLASS_ID;
-  }
-
-  public int GetFieldsNum()
-  {
-    return 2;
   }
 
   public void Sync(SyncContext ctx)

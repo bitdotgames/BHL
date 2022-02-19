@@ -291,7 +291,9 @@ public class VM
         if(frm.module != null)
         {
           item.file = frm.module.name + ".bhl";
-          item.func = TraceItem.MapIp2Func(frm.module.name, calls[i].start_ip, frm.vm.func2addr);
+          var fsymb = TryMapIp2Func(frm.module, calls[i].start_ip);
+
+          item.func = fsymb == null ? "?" : fsymb.name;
           frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
         }
         else
@@ -618,16 +620,6 @@ public class VM
     public string func;
     public int line;
     public int ip; 
-
-    static public string MapIp2Func(string module_name, int ip, Dictionary<string, ModuleAddr> func2addr)
-    {
-      foreach(var kv in func2addr)
-      {
-        if(kv.Value.module.name == module_name && kv.Value.ip == ip)
-          return kv.Key;
-      }
-      return "?";
-    }
   }
 
   public class Error : Exception
@@ -687,8 +679,6 @@ public class VM
     public CompiledModule module;
     public int ip;
   }
-
-  Dictionary<string, ModuleAddr> func2addr = new Dictionary<string, ModuleAddr>();
 
   int fibers_ids = 0;
   List<Fiber> fibers = new List<Fiber>();
@@ -806,15 +796,6 @@ public class VM
       return;
     modules.Add(cm.name, cm);
 
-    //let's register all module functions
-    for(int i=0;i<cm.scope.GetMembers().Count;++i)
-    {
-      if(cm.scope.GetMembers()[i] is FuncSymbolScript fs)
-      {
-        func2addr.Add(fs.name, new ModuleAddr() { module = cm, ip = fs.ip_addr });
-      }
-    }
-
     types.AddSource(cm.scope);
 
     ExecInit(cm);
@@ -825,17 +806,6 @@ public class VM
     CompiledModule m;
     if(!modules.TryGetValue(module_name, out m))
       return;
-
-    //NOTE: we can't modify dictionary during traversal,
-    //      for this reason we have to collect removed keys 
-    //      into a seperate list and remove them below
-    var keys_to_remove = new List<string>();
-    foreach(var kv in func2addr)
-      if(kv.Value.module.name == module_name)
-        keys_to_remove.Add(kv.Key);
-
-    foreach(var name in keys_to_remove)
-      func2addr.Remove(name);
 
     for(int i=0;i<m.gvars.Count;++i)
     {
@@ -969,7 +939,7 @@ public class VM
   public Fiber Start(string func, uint cargs_bits, params Val[] args)
   {
     ModuleAddr addr;
-    if(!func2addr.TryGetValue(func, out addr))
+    if(!TryFindFuncAddr(func, out addr))
       return null;
 
     var fb = Fiber.New(this);
@@ -989,6 +959,46 @@ public class VM
     Attach(fb, frame);
 
     return fb;
+  }
+
+  bool TryFindFuncAddr(string name, out ModuleAddr addr)
+  {
+    addr = default(ModuleAddr);
+
+    var fs = types.Resolve(name) as FuncSymbolScript;
+    if(fs == null)
+      return false;
+
+    var cm = modules[((ModuleScope)fs.scope).module_name];
+
+    addr = new ModuleAddr() {
+      module = cm,
+      ip = fs.ip_addr
+    };
+
+    return true;
+  }
+
+  //TODO: add caching?
+  ModuleAddr GetFuncAddr(string name)
+  {
+    var fs = (FuncSymbolScript)types.Resolve(name);
+    var cm = modules[((ModuleScope)fs.scope).module_name];
+    return new ModuleAddr() {
+      module = cm,
+      ip = fs.ip_addr
+    };
+  }
+
+  static FuncSymbol TryMapIp2Func(CompiledModule cm, int ip)
+  {
+    for(int i=0;i<cm.scope.GetMembers().Count; ++i)
+    {
+      var fsymb = cm.scope.GetMembers()[i] as FuncSymbolScript;
+      if(fsymb != null && fsymb.ip_addr == ip)
+        return fsymb;
+    }
+    return null;
   }
 
   //NOTE: adding special bytecode which makes the fake Frame to exit
@@ -1405,7 +1415,7 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
         string func_name = curr_frame.constants[func_idx].str;
-        var maddr = func2addr[func_name];
+        var maddr = GetFuncAddr(func_name);
 
         var ptr = FuncPtr.New(this);
         ptr.Init(maddr.module, maddr.ip);
@@ -1460,7 +1470,8 @@ public class VM
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
         string func_name = curr_frame.constants[func_idx].str;
-        var maddr = func2addr[func_name];
+        
+        var maddr = GetFuncAddr(func_name);
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, maddr.module, maddr.ip);
@@ -2026,7 +2037,6 @@ public class CompiledModule
   public Dictionary<int, int> ip2src_line;
 
   public CompiledModule(
-    uint id,
     string name,
     ModuleScope symbols,
     List<Const> constants, 
@@ -2035,7 +2045,6 @@ public class CompiledModule
     Dictionary<int, int> ip2src_line = null
   )
   {
-    this.id = id;
     this.name = name;
     this.scope = symbols;
     this.constants = constants;
@@ -2053,12 +2062,11 @@ public class CompiledModule
       if(version != 1)
         throw new Exception("Unsupported version: " + version);
 
-      uint id = r.ReadUInt32(); 
       string name = r.ReadString();
 
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
-      var symbols = new ModuleScope(id, types.globs);
+      var symbols = new ModuleScope(name, types.globs);
       Marshall.Stream2Obj(new MemoryStream(symb_bytes), symbols, new SymbolFactory(types));
 
       byte[] initcode = null;
@@ -2093,7 +2101,6 @@ public class CompiledModule
 
       return new 
         CompiledModule(
-          id, 
           name, 
           symbols, 
           constants, 
@@ -2112,7 +2119,6 @@ public class CompiledModule
       //TODO: introduce header info with offsets to data
       w.Write((uint)1);
 
-      w.Write(cm.id);
       w.Write(cm.name);
 
       var symb_bytes = Marshall.Obj2Bytes(cm.scope);

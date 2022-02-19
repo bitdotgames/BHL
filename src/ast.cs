@@ -133,7 +133,6 @@ public class AST_Interim : AST
 
 public class AST_Import  : IMarshallableGeneric
 {
-  public List<uint> module_ids = new List<uint>();
   public List<string> module_names = new List<string>();
 
   public uint ClassId() 
@@ -143,7 +142,6 @@ public class AST_Import  : IMarshallableGeneric
 
   public void Sync(SyncContext ctx) 
   {
-    Marshall.Sync(ctx, module_ids);
     Marshall.Sync(ctx, module_names);
   }
 }
@@ -421,7 +419,7 @@ public class AST_Call  : AST
 {
   public EnumCall type = new EnumCall();
   public string name = "";
-  public uint module_id;
+  public string module_name = "";
   public uint cargs_bits;
   public int line_num;
   public int symb_idx;
@@ -441,7 +439,7 @@ public class AST_Call  : AST
     if(ctx.is_read) type = (EnumCall)__tmp_type;
 
     Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref module_id);
+    Marshall.Sync(ctx, ref module_name);
     Marshall.Sync(ctx, ref cargs_bits);
     Marshall.Sync(ctx, ref line_num);
     Marshall.Sync(ctx, ref symb_idx);
@@ -742,10 +740,9 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Module New_Module(uint id, string name)
+  static public AST_Module New_Module(string name)
   {
     var n = new AST_Module();
-    n.id = id;
     n.name = name;
     return n;
   }
@@ -887,17 +884,17 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", uint module_id = 0, ClassSymbol scope_symb = null, int symb_idx = -1)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", string module_name = "", ClassSymbol scope_symb = null, int symb_idx = -1)
   {
-    return New_Call(type, line_num, name, scope_symb != null ? scope_symb.name : "", symb_idx, module_id);
+    return New_Call(type, line_num, name, scope_symb != null ? scope_symb.name : "", symb_idx, module_name);
   }
 
   static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, ClassSymbol scope_symb = null)
   {
-    return New_Call(type, line_num, symb.name, scope_symb != null ? scope_symb.name : "", symb.scope_idx, symb.module_id);
+    return New_Call(type, line_num, symb.name, scope_symb != null ? scope_symb.name : "", symb.scope_idx, symb.module_name);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name, string scope_type, int symb_idx = -1, uint module_id = 0)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name, string scope_type, int symb_idx = -1, string module_name = "")
   {
     var n = new AST_Call();
     n.type = type;
@@ -905,7 +902,7 @@ static public class AST_Util
     n.scope_type = scope_type;
     n.line_num = line_num;
     n.symb_idx = symb_idx;
-    n.module_id = module_id;
+    n.module_name = module_name;
 
     return n;
   }
