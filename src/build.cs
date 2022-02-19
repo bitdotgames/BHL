@@ -446,7 +446,7 @@ public class Build
 
       try
       {
-        return Util.File2Obj<FileImports>(cache_imports_file, new AST_Factory());
+        return Marshall.File2Obj<FileImports>(cache_imports_file, new AST_Factory());
       }
       catch
       {
@@ -458,7 +458,7 @@ public class Build
     {
       //Console.WriteLine("IMPORTS MISS " + file);
       var cache_imports_file = GetImportsCacheFile(cache_dir, file);
-      Util.Obj2File(imports, cache_imports_file);
+      Marshall.Obj2File(imports, cache_imports_file);
     }
 
     static List<string> ParseImports(List<string> inc_paths, string file, FileStream fs)

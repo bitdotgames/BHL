@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+using marshall;
+
 public enum Opcodes
 {
   Constant         = 1,
@@ -2057,7 +2059,7 @@ public class CompiledModule
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
       var symbols = new ModuleScope(id, types.globs);
-      Util.Stream2Obj(new MemoryStream(symb_bytes), symbols, new SymbolFactory(types));
+      Marshall.Stream2Obj(new MemoryStream(symb_bytes), symbols, new SymbolFactory(types));
 
       byte[] initcode = null;
       int initcode_len = r.ReadInt32();
@@ -2113,7 +2115,7 @@ public class CompiledModule
       w.Write(cm.id);
       w.Write(cm.name);
 
-      var symb_bytes = Util.Obj2Bytes(cm.scope);
+      var symb_bytes = Marshall.Obj2Bytes(cm.scope);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 

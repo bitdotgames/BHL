@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using bhl.marshall;
 
 public class BHL_TestVM : BHL_TestBase
 {
@@ -19978,7 +19979,7 @@ public class BHL_TestVM : BHL_TestBase
       Enum.TryAddItem("Type2", 2);
       ms.Define(Enum);
 
-      Util.Obj2Stream(ms, s);
+      Marshall.Obj2Stream(ms, s);
     }
 
     {
@@ -19989,7 +19990,7 @@ public class BHL_TestVM : BHL_TestBase
       types.AddSource(ms);
 
       s.Position = 0;
-      Util.Stream2Obj(s, ms, factory);
+      Marshall.Stream2Obj(s, ms, factory);
 
       AssertEqual(ms.module_id, 1);
 

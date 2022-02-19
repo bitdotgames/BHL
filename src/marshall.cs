@@ -477,6 +477,50 @@ public static class Marshall
       ctx.writer.EndContainer();
     }
   }
+
+  static public T File2Obj<T>(string file, IFactory f = null) where T : IMarshallable, new()
+  {
+    using(FileStream rfs = File.Open(file, FileMode.Open, FileAccess.Read))
+    {
+      return Stream2Obj<T>(rfs, f);
+    }
+  }
+
+  static public void Stream2Obj<T>(Stream s, T obj, IFactory f = null) where T : IMarshallable
+  {
+    var reader = new MsgPackDataReader(s);
+    Sync(SyncContext.NewReader(reader, f), ref obj);
+  }
+
+  static public T Stream2Obj<T>(Stream s, IFactory f = null) where T : IMarshallable, new()
+  {
+    var reader = new MsgPackDataReader(s);
+    var obj = new T();
+    Sync(SyncContext.NewReader(reader, f), ref obj);
+    return obj;
+  }
+
+  static public void Obj2Stream<T>(T obj, Stream dst) where T : IMarshallable
+  {
+    var writer = new MsgPackDataWriter(dst);
+    Sync(SyncContext.NewWriter(writer), ref obj);
+  }
+
+  static public byte[] Obj2Bytes<T>(T obj) where T : IMarshallable
+  {
+    var dst = new MemoryStream();
+    var writer = new MsgPackDataWriter(dst);
+    Sync(SyncContext.NewWriter(writer), ref obj);
+    return dst.GetBuffer();
+  }
+
+  static public void Obj2File<T>(T obj, string file) where T : IMarshallable
+  {
+    using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
+    {
+      Obj2Stream(obj, wfs);
+    }
+  }
 }
 
 public class MsgPackDataWriter : IWriter 
