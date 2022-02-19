@@ -31,11 +31,6 @@ public abstract class Symbol : IMarshallableGeneric
 
   public abstract uint ClassId();
 
-  public virtual int GetFieldsNum()
-  {
-    return 2;
-  }
-
   public virtual void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
@@ -52,12 +47,6 @@ public abstract class BuiltInSymbol : Symbol, IType
   }
 
   public string GetName() { return name; }
-
-  //contains no data
-  public override int GetFieldsNum()
-  {
-    return 0;
-  }
 
   //contains no data
   public override void Sync(SyncContext ctx)
@@ -446,11 +435,6 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return CLASS_ID;
   }
 
-  public override int GetFieldsNum()
-  {
-    return 1;
-  }
-
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref item_type);
@@ -552,11 +536,6 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     throw new NotImplementedException();
   }
 
-  public override int GetFieldsNum()
-  {
-    throw new NotImplementedException();
-  }
-
   public override void Sync(SyncContext ctx)
   {
     throw new NotImplementedException();
@@ -617,11 +596,6 @@ public class VariableSymbol : Symbol, IScopeIndexed
   public override uint ClassId()
   {
     return CLASS_ID;
-  }
-
-  public override int GetFieldsNum()
-  {
-    return base.GetFieldsNum() + 1;
   }
 
   public override void Sync(SyncContext ctx)
@@ -836,11 +810,6 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public abstract int GetDefaultArgsNum();
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
 
-  public override int GetFieldsNum()
-  {
-    return 3;
-  }
-
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
@@ -906,11 +875,6 @@ public class FuncSymbolScript : FuncSymbol
   public override uint ClassId()
   {
     return CLASS_ID;
-  }
-
-  public override int GetFieldsNum()
-  {
-    return base.GetFieldsNum() + 2;
   }
 
   public override void Sync(SyncContext ctx)
@@ -1072,11 +1036,6 @@ public class FuncSymbolNative : FuncSymbol
     throw new NotImplementedException();
   }
 
-  public override int GetFieldsNum()
-  {
-    throw new NotImplementedException();
-  }
-
   public override void Sync(SyncContext ctx)
   {
     throw new NotImplementedException();
@@ -1101,11 +1060,6 @@ public class ClassSymbolNative : ClassSymbol
   }
 
   public override uint ClassId()
-  {
-    throw new NotImplementedException();
-  }
-
-  public override int GetFieldsNum()
   {
     throw new NotImplementedException();
   }
@@ -1178,11 +1132,6 @@ public class ClassSymbolScript : ClassSymbol
     return CLASS_ID;
   }
 
-  public override int GetFieldsNum()
-  {
-    return 3;
-  }
-
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
@@ -1241,11 +1190,6 @@ public class EnumSymbol : EnclosingSymbol, IType
     throw new NotImplementedException();
   }
 
-  public override int GetFieldsNum()
-  {
-    throw new NotImplementedException();
-  }
-
   public override void Sync(SyncContext ctx)
   {
     throw new NotImplementedException();
@@ -1287,11 +1231,6 @@ public class EnumSymbolScript : EnumSymbol
   public override uint ClassId()
   {
     return CLASS_ID;
-  }
-
-  public override int GetFieldsNum()
-  {
-    return 2;
   }
 
   public override void Sync(SyncContext ctx)
@@ -1346,11 +1285,6 @@ public class EnumItemSymbol : Symbol, IType
   public override uint ClassId()
   {
     return CLASS_ID;
-  }
-
-  public override int GetFieldsNum()
-  {
-    return 2;
   }
 
   public override void Sync(SyncContext ctx)
@@ -1451,11 +1385,6 @@ public class SymbolsDictionary : IMarshallable
         return i;
     }
     return -1;
-  }
-
-  public int GetFieldsNum()
-  {
-    return 1;
   }
 
   public void Sync(SyncContext ctx) 

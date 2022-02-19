@@ -116,11 +116,6 @@ public class AST : IMarshallableGeneric
   {
     Marshall.SyncGeneric(ctx, children);
   }
-
-  public virtual int GetFieldsNum() 
-  {
-    return 1; 
-  }
 }
 
 public class AST_Interim : AST 
@@ -133,11 +128,6 @@ public class AST_Interim : AST
   public override void Sync(SyncContext ctx) 
   {
     base.Sync(ctx);
-  }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum(); 
   }
 }
 
@@ -156,11 +146,6 @@ public class AST_Import  : IMarshallableGeneric
     Marshall.Sync(ctx, module_ids);
     Marshall.Sync(ctx, module_names);
   }
-
-  public int GetFieldsNum() 
-  {
-    return 2; 
-  }
 }
 
 public class AST_Module : AST 
@@ -178,11 +163,6 @@ public class AST_Module : AST
     base.Sync(ctx);
     Marshall.Sync(ctx, ref id);
     Marshall.Sync(ctx, ref name);
-  }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 2; 
   }
 }
 
@@ -207,11 +187,6 @@ public class AST_UnaryOpExp : AST
     int __tmp_type = (int)type;
     Marshall.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumUnaryOp)__tmp_type;
-  }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -250,11 +225,6 @@ public class AST_BinaryOpExp  : AST
     Marshall.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBinaryOp)__tmp_type;
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 1; 
-  }
 }
 
 public class AST_Inc : IMarshallableGeneric
@@ -269,11 +239,6 @@ public class AST_Inc : IMarshallableGeneric
   public void Sync(SyncContext ctx) 
   {
     Marshall.Sync(ctx, ref symb_idx);
-  }
-
-  public int GetFieldsNum() 
-  {
-    return 1; 
   }
 }
 
@@ -290,11 +255,6 @@ public class AST_Dec : IMarshallableGeneric
   {
     Marshall.Sync(ctx, ref symb_idx);
   }
-
-  public int GetFieldsNum() 
-  {
-    return 1; 
-  }
 }
 
 public class AST_New : AST 
@@ -310,11 +270,6 @@ public class AST_New : AST
   {
     base.Sync(ctx);
     Marshall.Sync(ctx, ref type);
-  }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -335,11 +290,6 @@ public class AST_FuncDecl : AST
     Marshall.Sync(ctx, ref type);
     Marshall.Sync(ctx, ref name);
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 2; 
-  }
 }
 
 public class AST_ClassDecl : AST 
@@ -359,11 +309,6 @@ public class AST_ClassDecl : AST
     Marshall.Sync(ctx, ref name);
     Marshall.Sync(ctx, ref parent);
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 2; 
-  }
 }
 
 public class AST_EnumItem : IMarshallableGeneric
@@ -381,11 +326,6 @@ public class AST_EnumItem : IMarshallableGeneric
     Marshall.Sync(ctx, ref name);
     Marshall.Sync(ctx, ref value);
   }
-
-  public int GetFieldsNum() 
-  {
-    return 2; 
-  }
 }
 
 public class AST_EnumDecl : AST 
@@ -402,11 +342,6 @@ public class AST_EnumDecl : AST
     base.Sync(ctx);
 
     Marshall.Sync(ctx, ref name);
-  }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -427,11 +362,6 @@ public class AST_UpVal : IMarshallableGeneric
     Marshall.Sync(ctx, ref symb_idx);
     Marshall.Sync(ctx, ref upsymb_idx);
   }
-
-  public int GetFieldsNum() 
-  {
-    return 3; 
-  }
 }
 
 public class AST_LambdaDecl : AST_FuncDecl 
@@ -450,11 +380,6 @@ public class AST_LambdaDecl : AST_FuncDecl
     Marshall.Sync(ctx, ref local_vars_num);
     Marshall.Sync(ctx, upvals);
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 2; 
-  }
 }
 
 public class AST_TypeCast : AST 
@@ -469,13 +394,7 @@ public class AST_TypeCast : AST
   public override void Sync(SyncContext ctx) 
   {
     base.Sync(ctx);
-
     Marshall.Sync(ctx, ref type);
-  }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 1; 
   }
 }
 
@@ -528,11 +447,6 @@ public class AST_Call  : AST
     Marshall.Sync(ctx, ref symb_idx);
     Marshall.Sync(ctx, ref scope_type);
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 7; 
-  }
 }
 
 public class AST_Return  : AST 
@@ -549,11 +463,6 @@ public class AST_Return  : AST
     base.Sync(ctx);
     Marshall.Sync(ctx, ref num);
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 1; 
-  }
 }
 
 public class AST_Break : IMarshallableGeneric
@@ -565,11 +474,6 @@ public class AST_Break : IMarshallableGeneric
 
   public void Sync(SyncContext ctx) 
   {
-  }
-
-  public int GetFieldsNum() 
-  {
-    return 0; 
   }
 }
 
@@ -585,11 +489,6 @@ public class AST_Continue : IMarshallableGeneric
   public void Sync(SyncContext ctx) 
   {
     Marshall.Sync(ctx, ref jump_marker);
-  }
-
-  public int GetFieldsNum() 
-  {
-    return 1; 
   }
 }
 
@@ -621,11 +520,6 @@ public class AST_Literal : IMarshallableGeneric
     Marshall.Sync(ctx, ref nval);
     Marshall.Sync(ctx, ref sval);
   }
-
-  public int GetFieldsNum() 
-  {
-    return 3; 
-  }
 }
 
 public class AST_VarDecl : AST 
@@ -650,11 +544,6 @@ public class AST_VarDecl : AST
     Marshall.Sync(ctx, ref is_func_arg);
     Marshall.Sync(ctx, ref type);
     Marshall.Sync(ctx, ref is_ref);
-  }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 5; 
   }
 }
 
@@ -687,11 +576,6 @@ public class AST_Block : AST
     Marshall.Sync(ctx, ref __tmp_type);
     if(ctx.is_read) type = (EnumBlock)__tmp_type;
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 1; 
-  }
 }
 
 public class AST_JsonObj : AST 
@@ -710,11 +594,6 @@ public class AST_JsonObj : AST
 
     Marshall.Sync(ctx, ref type);
     Marshall.Sync(ctx, ref line_num);
-  }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 2; 
   }
 }
 
@@ -735,11 +614,6 @@ public class AST_JsonArr : AST
     Marshall.Sync(ctx, ref type);
     Marshall.Sync(ctx, ref line_num);
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 2; 
-  }
 }
 
 public class AST_JsonArrAddItem : IMarshallableGeneric
@@ -751,11 +625,6 @@ public class AST_JsonArrAddItem : IMarshallableGeneric
 
   public void Sync(SyncContext ctx) 
   {
-  }
-
-  public int GetFieldsNum() 
-  {
-    return 0; 
   }
 }
 
@@ -778,11 +647,6 @@ public class AST_JsonPair : AST
     Marshall.Sync(ctx, ref symb_idx);
     Marshall.Sync(ctx, ref scope_type);
   }
-
-  public override int GetFieldsNum() 
-  {
-    return base.GetFieldsNum() + 3; 
-  }
 }
 
 public class AST_PopValue : IMarshallableGeneric
@@ -794,11 +658,6 @@ public class AST_PopValue : IMarshallableGeneric
 
   public void Sync(SyncContext ctx) 
   {
-  }
-
-  public int GetFieldsNum() 
-  {
-    return 0; 
   }
 }
 

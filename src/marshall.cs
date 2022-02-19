@@ -66,8 +66,12 @@ public struct SyncContext
 
 public interface IMarshallable 
 {
-  int GetFieldsNum();
   void Sync(SyncContext ctx);
+}
+
+public interface IFixedStruct
+{
+  int GetFieldsNum();
 }
 
 public interface IMarshallableGeneric : IMarshallable 
@@ -108,6 +112,7 @@ public interface IWriter
   void WriteBool(bool v);
   void WriteDouble(double v);
   void WriteString(string v);
+  //NOTE: -1 means 'unspecified'
   void BeginContainer(int len); 
   void EndContainer(); 
 }
@@ -432,19 +437,15 @@ public static class Marshall
     }
     else
     {
-      if(v == null)
-      {
-        ctx.writer.BeginContainer(1/*class id*/);
-        ctx.writer.WriteU32(0xFFFFFFFF);
-        ctx.writer.EndContainer();
-      }
-      else
-      {
-        ctx.writer.BeginContainer(v.GetFieldsNum() + 1/*class id*/);
-        ctx.writer.WriteU32(v.ClassId());
+      int fields_num = v == null ? 0 : (v is IFixedStruct fs ? fs.GetFieldsNum() : -1);
+       //class id
+      if(fields_num != -1)
+        ++fields_num;
+      ctx.writer.BeginContainer(fields_num);
+      ctx.writer.WriteU32(v == null ? 0xFFFFFFFF : v.ClassId());
+      if(v != null)
         v.Sync(ctx);
-        ctx.writer.EndContainer();
-      }
+      ctx.writer.EndContainer();
     }
   }
 
@@ -472,7 +473,7 @@ public static class Marshall
     }
     else
     {
-      ctx.writer.BeginContainer(v.GetFieldsNum());
+      ctx.writer.BeginContainer(v is IFixedStruct fs ? fs.GetFieldsNum() : -1);
       v.Sync(ctx);
       ctx.writer.EndContainer();
     }
@@ -546,10 +547,13 @@ public class MsgPackDataWriter : IWriter
       throw new Error(ErrorCode.NO_RESERVED_SPACE);
     
     int left = space.Pop();
-    left--;
-    if(left < 0)
-      throw new Error(ErrorCode.NO_RESERVED_SPACE);
-    
+    //special 'unspecified' case
+    if(left != -1)
+    {
+      left--;
+      if(left < 0)
+        throw new Error(ErrorCode.NO_RESERVED_SPACE);
+    }
     space.Push(left);
   }
 
@@ -566,8 +570,11 @@ public class MsgPackDataWriter : IWriter
       throw new Error(ErrorCode.NO_RESERVED_SPACE);
     
     int left = space.Pop();
+    //special 'unspecifed' case 
+    if(left == -1)
+      return;
     if(left != 0)
-      throw new Error(ErrorCode.DANGLING_DATA, "Left items: " + left);
+      throw new Error(ErrorCode.DANGLING_DATA, "Not written items amount: " + left);
   }
   
   public void WriteI8(sbyte v) 
@@ -659,13 +666,13 @@ public class MsgPackDataReader : IReader
 
   struct StructPos
   {
-    public uint max;
-    public uint curr;
+    public int max;
+    public int curr;
 
-    public StructPos(uint length)
+    public StructPos(int max)
     {
+      this.max = max;
       curr = 0;
-      max = length - 1;
     }
   }
 
@@ -691,7 +698,7 @@ public class MsgPackDataReader : IReader
 
   void Next()
   {
-    if(!SpacePositionValid())
+    if(!SpaceIsValid())
       throw new Error(ErrorCode.INVALID_POS);
 
     if(!io.Read()) 
@@ -883,18 +890,26 @@ public class MsgPackDataReader : IReader
 
   public int BeginContainer() 
   {
-    if(!SpacePositionValid())
+    if(!SpaceIsValid())
       throw new Error(ErrorCode.INVALID_POS);
 
     if(!io.Read()) 
       throw new Error(ErrorCode.IO_READ);
 
     if(!io.IsArray())
-      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+    {
+      if(io.Type == TypePrefixes.NegativeFixNum)
+      {
+        structs_pos.Push(new StructPos(-1));
+        return -1;
+      }
+      else
+        throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+    }
 
-    uint len = io.Length;
+    int len = (int)io.Length;
     structs_pos.Push(new StructPos(len));
-    return (int)len;
+    return len;
   } 
 
   public void GetArraySize(ref int v) 
@@ -944,12 +959,16 @@ public class MsgPackDataReader : IReader
     if(structs_pos.Count == 0)
       return 0;
     var ap = structs_pos.Peek();
-    return (int)ap.max - (int)ap.curr;
+    //special 'unspecified' case
+    if(ap.max == -1)
+      return -1;
+    return ap.max - ap.curr - 1;
   }
 
-  bool SpacePositionValid()
+  bool SpaceIsValid()
   {
-    return SpaceLeft() >= 0;
+    int left = SpaceLeft(); 
+    return left == -1 || left  >= 0;
   }
 
   void MoveSpaceCursor()
