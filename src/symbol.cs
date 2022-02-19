@@ -10,8 +10,6 @@ public abstract class Symbol : IMarshallableGeneric
   public string name;
   public TypeProxy type;
   // All symbols know what scope contains them
-  // TODO: during un-marshalling this one is not restored, we probably
-  //       should restore it in SymbolsDictionary's Sync
   public IScope scope;
 #if BHL_FRONT
   // Location in parse tree, can be null if it's a native symbol
@@ -156,7 +154,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
 {
   public ClassSymbol super_class { get; protected set;}
 
-  public SymbolsDictionary members = new SymbolsDictionary();
+  public SymbolsDictionary members;
 
   public VM.ClassCreator creator;
 
@@ -180,6 +178,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
   )
     : base(name)
   {
+    this.members = new SymbolsDictionary(this);
     this.type = new TypeProxy(this);
     this.creator = creator;
 
@@ -735,7 +734,6 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = members.Count; 
-    sym.scope = this; // track the scope in each symbol
 
     members.Add(sym);
   }
@@ -744,7 +742,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
   protected FuncSignature signature;
-  SymbolsDictionary members = new SymbolsDictionary();
+  SymbolsDictionary members;
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -767,6 +765,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public FuncSymbol(string name, FuncSignature signature) 
     : base(name)
   {
+    this.members = new SymbolsDictionary(this);
     this.signature = signature;
     this.type = new TypeProxy(signature);
   }
@@ -800,7 +799,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
   public SymbolsDictionary GetArgs()
   {
-    var args = new SymbolsDictionary();
+    var args = new SymbolsDictionary(this);
     for(int i=0;i<GetSignature().arg_types.Count;++i)
       args.Add(members[i]);
     return args;
@@ -1155,7 +1154,7 @@ public class ClassSymbolScript : ClassSymbol
 
 public class EnumSymbol : EnclosingSymbol, IType
 {
-  public SymbolsDictionary members = new SymbolsDictionary();
+  public SymbolsDictionary members;
 
 #if BHL_FRONT
   public EnumSymbol(WrappedParseTree parsed, string name)
@@ -1166,8 +1165,9 @@ public class EnumSymbol : EnclosingSymbol, IType
 #endif
 
   public EnumSymbol(string name)
-      : base(name)
+     : base(name)
   {
+    this.members = new SymbolsDictionary(this);
     this.type = new TypeProxy(this);
   }
 
@@ -1297,6 +1297,7 @@ public class EnumItemSymbol : Symbol, IType
 
 public class SymbolsDictionary : IMarshallable
 {
+  IScope scope;
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
   List<Symbol> list = new List<Symbol>();
 
@@ -1312,6 +1313,11 @@ public class SymbolsDictionary : IMarshallable
     get {
       return list[index];
     }
+  }
+
+  public SymbolsDictionary(IScope scope)
+  {
+    this.scope = scope;
   }
 
   public bool Contains(string key)
@@ -1333,6 +1339,7 @@ public class SymbolsDictionary : IMarshallable
 
   public void Add(Symbol s)
   {
+    s.scope = scope;
     str2symb.Add(s.name, s);
     list.Add(s);
   }
@@ -1340,6 +1347,7 @@ public class SymbolsDictionary : IMarshallable
   public void RemoveAt(int index)
   {
     var s = list[index];
+    s.scope = null;
     str2symb.Remove(s.name);
     list.RemoveAt(index);
   }
@@ -1366,6 +1374,8 @@ public class SymbolsDictionary : IMarshallable
 
   public void Clear()
   {
+    foreach(var s in list)
+      s.scope = null;
     str2symb.Clear();
     list.Clear();
   }
@@ -1395,6 +1405,7 @@ public class SymbolsDictionary : IMarshallable
         {
           //NOTE: we need to add new symbol to str2sym collection ASAP
           var s = (Symbol)tmp;
+          s.scope = this.scope;
           str2symb.Add(s.name, s);
         }
     });

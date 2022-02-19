@@ -20017,6 +20017,7 @@ public class BHL_TestVM : BHL_TestBase
 
       var Test = (FuncSymbolScript)ms.Resolve("Test");
       AssertEqual(Test.name, "Test");
+      AssertEqual(Test.scope, ms);
       AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), "int", "string").name, Test.GetSignature().name);
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
@@ -20026,6 +20027,7 @@ public class BHL_TestVM : BHL_TestBase
 
       var Make = (FuncSymbolScript)ms.Resolve("Make");
       AssertEqual(Make.name, "Make");
+      AssertEqual(Make.scope, ms);
       AssertEqual(1, Make.GetSignature().arg_types.Count);
       AssertEqual(types.TypeArr("string").Get().GetName(), Make.GetReturnType().GetName());
       AssertEqual(types.Type("Bar").Get(), Make.GetSignature().arg_types[0].Get());
@@ -20036,14 +20038,17 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(-1, Make.scope_idx);
 
       var Foo = (ClassSymbolScript)ms.Resolve("Foo");
+      AssertEqual(Foo.scope, ms);
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
       AssertEqual(Foo.GetMembers().Count, 2);
       var Foo_Int = Foo.Resolve("Int") as FieldSymbolScript;
+      AssertEqual(Foo_Int.scope, Foo);
       AssertEqual(Foo_Int.name, "Int");
       AssertEqual(Foo_Int.type.Get(), TypeSystem.Int);
       AssertEqual(Foo_Int.scope_idx, 0);
       var Foo_Hey = Foo.Resolve("Hey") as FuncSymbolScript;
+      AssertEqual(Foo_Hey.scope, Foo);
       AssertEqual(Foo_Hey.name, "Hey");
       AssertEqual(Foo_Hey.GetReturnType(), TypeSystem.Void);
       AssertEqual(0, Foo_Hey.default_args_num);
@@ -20052,11 +20057,12 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(1, Foo_Hey.scope_idx);
 
       var Bar = (ClassSymbolScript)ms.Resolve("Bar");
-      AssertEqual(Bar.super_class.name, Foo.name);
+      AssertEqual(Bar.scope, ms);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
       AssertEqual(Bar.GetMembers().Count, 2/*from parent*/+2);
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
+      AssertEqual(Bar_Float.scope, Bar);
       AssertEqual(Bar_Float.name, "Float");
       AssertEqual(Bar_Float.type.Get(), TypeSystem.Float);
       AssertEqual(Bar_Float.scope_idx, 2);
@@ -20069,11 +20075,14 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(1, Bar_What.ip_addr);
 
       var Enum = (EnumSymbolScript)ms.Resolve("Enum");
+      AssertEqual(Enum.scope, ms);
       AssertEqual(Enum.name, "Enum");
       AssertEqual(Enum.GetMembers().Count, 2);
       AssertEqual(Enum.Resolve("Type1").type.Get(), Enum);
+      AssertEqual(Enum.Resolve("Type1").scope, Enum);
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type1")).val, 1);
       AssertEqual(Enum.Resolve("Type2").type.Get(), Enum);
+      AssertEqual(Enum.Resolve("Type2").scope, Enum);
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type2")).val, 2);
     }
   }

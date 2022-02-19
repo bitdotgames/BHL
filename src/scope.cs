@@ -23,10 +23,11 @@ public class Scope : IScope
 {
   protected IScope fallback;
 
-  protected SymbolsDictionary members = new SymbolsDictionary();
+  protected SymbolsDictionary members;
 
   public Scope(IScope fallback = null) 
   { 
+    members = new SymbolsDictionary(this);
     this.fallback = fallback;  
   }
 
@@ -53,8 +54,6 @@ public class Scope : IScope
 
     if(members.Contains(sym.name))
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
-    sym.scope = this; // track the scope in each symbol
 
     members.Add(sym);
   }
@@ -147,12 +146,6 @@ public class ModuleScope : Scope, IMarshallable
   {
     Marshall.Sync(ctx, ref module_name);
     Marshall.Sync(ctx, ref members);
-    if(ctx.is_read)
-    {
-      //TODO: move this to SymbolsDictionary
-      for(int i=0;i<members.Count;++i)
-        members[i].scope = this;
-    }
   }
 }
 
