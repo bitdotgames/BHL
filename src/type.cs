@@ -336,11 +336,16 @@ public class TypeSystem
     AddSource(globs);
   }
 
-  public void AddSource(Scope other)
+  public void AddSource(Scope src)
   {
-    if(sources.Contains(other))
+    if(sources.Contains(src))
       return;
-    sources.Add(other);
+    sources.Add(src);
+  }
+
+  public void RemoveSource(Scope src)
+  {
+    sources.Remove(src);
   }
 
   void InitBuiltins(GlobalScope globs) 

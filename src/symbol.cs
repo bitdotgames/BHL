@@ -618,6 +618,17 @@ public class VariableSymbol : Symbol, IScopeIndexed
   {
     return CLASS_ID;
   }
+
+  public override int GetFieldsNum()
+  {
+    return base.GetFieldsNum() + 1;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    base.Sync(ctx);
+    Marshall.Sync(ctx, ref _scope_idx);
+  }
 }
 
 public class FuncArgSymbol : VariableSymbol

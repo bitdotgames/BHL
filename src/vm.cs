@@ -790,6 +790,14 @@ public class VM
     RegisterModule(imported_module);
   }
 
+  void LoadModule(CompiledModule module, string module_name)
+  {
+    var imported_module = importer.Import(module_name);
+    RegisterModule(imported_module);
+
+    module.scope.AddImport(imported_module.scope);
+  }
+
   public void RegisterModule(CompiledModule cm)
   {
     if(modules.ContainsKey(cm.name))
@@ -797,12 +805,13 @@ public class VM
     modules.Add(cm.name, cm);
 
     //let's register all module functions
-    //TODO: do we really need to do this?
     for(int i=0;i<cm.scope.GetMembers().Count;++i)
     {
       if(cm.scope.GetMembers()[i] is FuncSymbolScript fs)
         func2addr.Add(fs.name, new ModuleAddr() { module = cm, ip = fs.ip_addr });
     }
+
+    types.AddSource(cm.scope);
 
     ExecInit(cm);
   }
@@ -831,6 +840,8 @@ public class VM
         val.RefMod(RefOp.DEC | RefOp.USR_DEC);
     }
     m.gvars.Clear();
+
+    types.RemoveSource(m.scope);
 
     modules.Remove(module_name);
   }
@@ -865,7 +876,7 @@ public class VM
           int module_idx = (int)Bytecode.Decode32(bytecode, ref ip);
           string module_name = constants[module_idx].str;
 
-          LoadModule(module_name);
+          LoadModule(module, module_name);
         }
         break;
         case Opcodes.DeclVar:
@@ -907,7 +918,7 @@ public class VM
           int class_type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
           string class_type = constants[class_type_idx].str;
           int fld_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-          var class_symb = module.scope.Resolve(class_type) as ClassSymbol;
+          var class_symb = types.Resolve(class_type) as ClassSymbol;
           //TODO: this check must be in dev.version only
           if(class_symb == null)
             throw new Exception("Class type not found: " + class_type);
@@ -927,7 +938,7 @@ public class VM
           uint args_bits = Bytecode.Decode32(bytecode, ref ip); 
 
           string class_type = constants[class_type_idx].str; 
-          var class_symb = (ClassSymbol)module.scope.Resolve(class_type);
+          var class_symb = (ClassSymbol)types.Resolve(class_type);
 
           BHS status;
           ICoroutine coroutine = null;
@@ -1232,7 +1243,7 @@ public class VM
         int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = (ClassSymbol)curr_frame.module.scope.Resolve(class_type);
+        var class_symb = (ClassSymbol)types.Resolve(class_type);
         var obj = curr_frame.stack.Pop();
         var res = Val.New(this);
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
@@ -1250,7 +1261,7 @@ public class VM
         int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = curr_frame.module.scope.Resolve(class_type) as ClassSymbol;
+        var class_symb = types.Resolve(class_type) as ClassSymbol;
         //TODO: this check must be in dev.version only
         if(class_symb == null)
           throw new Exception("Class type not found: " + class_type);
@@ -1268,7 +1279,7 @@ public class VM
         int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = curr_frame.module.scope.Resolve(class_type) as ClassSymbol;
+        var class_symb = types.Resolve(class_type) as ClassSymbol;
         //TODO: this check must be in dev.version only
         if(class_symb == null)
           throw new Exception("Class type not found: " + class_type);
@@ -1286,7 +1297,7 @@ public class VM
         int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = curr_frame.module.scope.Resolve(class_type) as ClassSymbol;
+        var class_symb = types.Resolve(class_type) as ClassSymbol;
         //TODO: this check must be in dev.version only
         if(class_symb == null)
           throw new Exception("Class type not found: " + class_type);
@@ -1459,7 +1470,7 @@ public class VM
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
         string class_type = curr_frame.constants[class_type_idx].str; 
-        var class_symb = (ClassSymbol)curr_frame.module.scope.Resolve(class_type);
+        var class_symb = (ClassSymbol)types.Resolve(class_type);
 
         BHS status;
         if(CallNative(curr_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine))
@@ -1473,7 +1484,7 @@ public class VM
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
         string class_type = curr_frame.constants[class_type_idx].str; 
-        var class_symb = (ClassSymbol)curr_frame.module.scope.Resolve(class_type);
+        var class_symb = (ClassSymbol)types.Resolve(class_type);
 
         var field_symb = (FuncSymbolScript)class_symb.members[func_idx];
         int func_ip = field_symb.ip_addr;
@@ -1783,7 +1794,7 @@ public class VM
 
   void HandleNew(Frame curr_frame, string class_type)
   {
-    var cls = curr_frame.module.scope.Resolve(class_type) as ClassSymbol;
+    var cls = types.Resolve(class_type) as ClassSymbol;
     //TODO: this check must be in dev.version only
     if(cls == null)
       throw new Exception("Could not find class symbol: " + class_type);
