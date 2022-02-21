@@ -68,12 +68,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDecl([NotNull] bhlParser.DeclContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.fnargs"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFnargs([NotNull] bhlParser.FnargsContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.type"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -590,6 +584,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncDecl([NotNull] bhlParser.FuncDeclContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.funcType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFuncType([NotNull] bhlParser.FuncTypeContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcBlock"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -602,11 +602,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncLambda([NotNull] bhlParser.FuncLambdaContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.refName"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.refType"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitRefName([NotNull] bhlParser.RefNameContext context);
+	Result VisitRefType([NotNull] bhlParser.RefTypeContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.retType"/>.
 	/// </summary>
@@ -614,11 +614,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitRetType([NotNull] bhlParser.RetTypeContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.names"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.types"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitNames([NotNull] bhlParser.NamesContext context);
+	Result VisitTypes([NotNull] bhlParser.TypesContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcParams"/>.
 	/// </summary>

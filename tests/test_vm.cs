@@ -1271,7 +1271,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test() 
     {
-      int^() ptr = func int() {
+      func int() ptr = func int() {
         return 1
       }
       ptr()
@@ -1291,7 +1291,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test() 
     {
-      int[]^() ptr = func int[]() {
+      func int[]() ptr = func int[]() {
         return [1,2]
       }
       ptr()
@@ -3143,7 +3143,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test() 
     {
-      int^() ptr = foo
+      func int() ptr = foo
       return ptr()
     }
     ";
@@ -3165,7 +3165,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test() 
     {
-      int^(int, int) ptr = foo
+      func int(int, int) ptr = foo
       return ptr(42, 1)
     }
     ";
@@ -3183,7 +3183,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      void^(string) ptr = trace
+      func(string) ptr = trace
       ptr(""Hey"")
     }
     ";
@@ -4751,7 +4751,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test()
     {
-      int^() a = func int() {
+      func int() a = func int() {
         return 123
       }
       return a()
@@ -4774,7 +4774,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test()
     {
-      int^() a = func int() {
+      func int() a = func int() {
         return 123
       }
       return a() + a()
@@ -4794,7 +4794,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      int^(int,int) a = func int(int c, int b) {
+      func int(int,int) a = func int(int c, int b) {
         return c - b
       }
       return a(42, 1)
@@ -4817,7 +4817,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test()
     {
-      int^() a = func int() {
+      func int() a = func int() {
         return 123
       }
       if(false) {
@@ -4844,7 +4844,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test()
     {
-      int^() a = func int() {
+      func int() a = func int() {
         return 123
       }
       if(true) {
@@ -5039,7 +5039,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn) 
+    func foo(func void() fn) 
     {
       fn()
     }
@@ -5073,7 +5073,7 @@ public class BHL_TestVM : BHL_TestBase
     {
       float a = 2
       func() {
-          void^() fn = func() {
+          func() fn = func() {
             a = a + 1    
           }
       }()
@@ -5092,7 +5092,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn) 
+    func foo(func() fn) 
     {
       fn()
     }
@@ -5102,7 +5102,7 @@ public class BHL_TestVM : BHL_TestBase
       float a = 2
       float b = 10
       foo(func() { 
-          void^() p = func() {
+          func() p = func() {
             a = a + 1    
             b = b * 2    
           }
@@ -5130,7 +5130,7 @@ public class BHL_TestVM : BHL_TestBase
 
       float res
 
-      void^() fn = func void^() (float a, int b) { 
+      func() fn = func func() (float a, int b) { 
         return func() { 
           res = a + b 
         }
@@ -5157,7 +5157,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      int[]^() ptr = func int[]() {
+      func int[]() ptr = func int[]() {
         return [1,2]
       }
       trace((string)ptr()[1])
@@ -5211,7 +5211,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      void^(string) ptr = func(string arg) {
+      func(string) ptr = func(string arg) {
         trace(arg)
         yield()
       }
@@ -5247,7 +5247,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func bool test(int a) 
     {
-      bool^(int,string) ptr = foo
+      func bool(int,string) ptr = foo
       return ptr(a, ""HEY"")
     }
     ";
@@ -5275,7 +5275,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func bool test(int a) 
     {
-      bool^(int,string) ptr = foo
+      func bool(int,string) ptr = foo
       return ptr(a, ""HEY"") && ptr(a-1, ""BAR"")
     }
     ";
@@ -5297,7 +5297,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int foo(int a)
     {
-      int^(int) p = 
+      func int(int) p = 
         func int (int a) {
           return a * 2
         }
@@ -5322,7 +5322,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int foo(int a)
     {
-      int^(int) p = 
+      func int(int) p = 
         func int (int a) {
           return a
         }
@@ -5348,7 +5348,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int foo(int a)
     {
-      int^(int) p = 
+      func int(int) p = 
         func int (int a) {
           return a
         }
@@ -5378,7 +5378,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestComplexFuncPtrSeveralTimes5()
   {
     string bhl = @"
-    func int foo(int^(int) p, int a)
+    func int foo(func int(int) p, int a)
     {
       return p(a)
     }
@@ -5402,7 +5402,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test(int a) 
     {
-      int^(int,string)[] ptrs = new int^(int,string)[]
+      func int(int,string)[] ptrs = new func int(int,string)[]
       ptrs.Add(func int(int a, string b) { 
           trace(b) 
           return a*2 
@@ -5431,14 +5431,14 @@ public class BHL_TestVM : BHL_TestBase
   public void TestReturnComplexFuncPtr()
   {
     string bhl = @"
-    func bool^(int) foo()
+    func func bool(int) foo()
     {
       return func bool(int a) { return a > 2 } 
     }
 
     func bool test(int a) 
     {
-      bool^(int) ptr = foo()
+      func bool(int) ptr = foo()
       return ptr(a)
     }
     ";
@@ -5452,7 +5452,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestReturnAndCallComplexFuncPtr()
   {
     string bhl = @"
-    func bool^(int) foo()
+    func func bool(int) foo()
     {
       return func bool(int a) { return a > 2 } 
     }
@@ -5480,7 +5480,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func bool test(int a) 
     {
-      void^(int,string, ref  bool) ptr = foo
+      func(int,string, ref bool) ptr = foo
       bool res = false
       ptr(a, ""HEY"", ref res)
       return res
@@ -5504,7 +5504,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func bool test(int a) 
     {
-      bool^(int,string) ptr = 
+      func bool(int,string) ptr = 
         func bool (int a, string k)
         {
           trace(k)
@@ -5531,7 +5531,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func test() 
     {
-      void^(int) ptr = 
+      func void(int) ptr = 
         func void (int a)
         {
           trace((string)a)
@@ -5565,7 +5565,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      bool^(int) ptr = foo
+      func bool(int) ptr = foo
     }
     ";
 
@@ -5585,7 +5585,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      void^(float) ptr = foo
+      func(float) ptr = foo
     }
     ";
 
@@ -5605,7 +5605,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      void^(int) ptr = foo
+      func(int) ptr = foo
       ptr(""hey"")
     }
     ";
@@ -5627,7 +5627,7 @@ public class BHL_TestVM : BHL_TestBase
     func void test() 
     {
       float b = 1
-      void^(int, ref float) ptr = foo
+      func(int, ref float) ptr = foo
       ptr(10, b)
     }
     ";
@@ -5649,7 +5649,7 @@ public class BHL_TestVM : BHL_TestBase
     func void test() 
     {
       float b = 1
-      void^(int, float) ptr = foo
+      func(int, float) ptr = foo
       ptr(10, ref b)
     }
     ";
@@ -5673,7 +5673,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func bool test(int a) 
     {
-      void^(int,string,ref bool) ptr = foo
+      func(int,string,ref bool) ptr = foo
       bool res = false
       ptr(a, ""HEY"", ref res)
       return res
@@ -5709,7 +5709,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      void^(int) ptr = foo
+      func(int) ptr = foo
       ptr()
     }
     ";
@@ -5730,7 +5730,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      void^(int, float) ptr = foo
+      func(int, float) ptr = foo
       ptr(10)
     }
     ";
@@ -5751,7 +5751,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      void^(int) ptr = foo
+      func(int) ptr = foo
       ptr(10, 30)
     }
     ";
@@ -5769,14 +5769,14 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn)
+    func foo(func() fn)
     {
       fn()
     }
 
     func void test() 
     {
-      void^() fun = 
+      func() fun = 
         func()
         { 
           trace(""HERE"")
@@ -5802,7 +5802,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn)
+    func foo(func() fn)
     {
       fn()
     }
@@ -5836,7 +5836,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func void test() 
     {
-      void^() ptr = foo
+      func() ptr = foo
       ptr()
     }
     ";
@@ -5867,7 +5867,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func void test() 
     {
-      void^() fun = 
+      func() fun = 
         func()
         { 
           trace(""HERE"")
@@ -5902,7 +5902,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void foo(float time)
     {
-      void^() fn = func()
+      func() fn = func()
       {
         float b = time
         trace((string)b)
@@ -6105,8 +6105,8 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     func void test() {
-      void^() fn = foo
-      void^() fn2 = fn
+      func() fn = foo
+      func() fn2 = fn
       paral_all {
         start(fn2)
         start(fn2)
@@ -6140,8 +6140,8 @@ public class BHL_TestVM : BHL_TestBase
     import ""bhl2""
 
     func void test() {
-      void^() fn = foo
-      void^() fn2 = fn
+      func() fn = foo
+      func() fn2 = fn
       paral_all {
         start(fn2)
         start(fn2)
@@ -6210,7 +6210,7 @@ public class BHL_TestVM : BHL_TestBase
         { 
           float k = a 
 
-          void^() fn = func() 
+          func() fn = func() 
           {
             trace((string)k + (string)b)
           }
@@ -6245,9 +6245,9 @@ public class BHL_TestVM : BHL_TestBase
         { 
           float k = a 
 
-          void^() fn = func() 
+          func() fn = func() 
           {
-            void^() fn = func() 
+            func() fn = func() 
             {
               trace((string)k + (string)b)
             }
@@ -6277,7 +6277,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func call(void^() fn, void^() fn2)
+    func call(func() fn, func() fn2)
     {
       start(fn2)
     }
@@ -6333,9 +6333,9 @@ public class BHL_TestVM : BHL_TestBase
     func float test() 
     {
       //TODO: need more flexible types support for this:
-      //func(float)func(float)
+      //func(float) func(float)
       
-      return func float^(float) (float a) {
+      return func func float(float) (float a) {
         return func float (float b) { return a + b }
       }(2)(3)
     }
@@ -7283,14 +7283,14 @@ public class BHL_TestVM : BHL_TestBase
       return 2
     }
 
-    func change(ref int^() p)
+    func change(ref func int() p)
     {
       p = _2
     }
 
     func int test() 
     {
-      int^() ptr = _1
+      func int() ptr = _1
       change(ref ptr)
       return ptr()
     }
@@ -7302,7 +7302,6 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [IsTested()]
   public void TestPassByRefClassFieldFuncPtr()
   {
@@ -7310,7 +7309,7 @@ public class BHL_TestVM : BHL_TestBase
 
     class Bar
     {
-      int^() p
+      func int() p
     }
 
     func int _5()
@@ -7323,7 +7322,7 @@ public class BHL_TestVM : BHL_TestBase
       return 10
     }
 
-    func foo(ref int^() p) 
+    func foo(ref func int() p) 
     {
       p = _10
     }
@@ -7379,7 +7378,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn) 
+    func foo(func() fn) 
     {
       fn()
     }
@@ -7403,7 +7402,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn) 
+    func foo(func() fn) 
     {
       fn()
     }
@@ -7532,7 +7531,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn) 
+    func foo(func() fn) 
     {
       fn()
     }
@@ -7559,7 +7558,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn) 
+    func foo(func() fn) 
     {
       fn()
     }
@@ -7591,14 +7590,14 @@ public class BHL_TestVM : BHL_TestBase
       return 42
     } 
 
-    func foo(ref float^() a) 
+    func foo(ref func float() a) 
     {
       a = bar
     }
       
     func float test() 
     {
-      float^() a
+      func float() a
       foo(ref a)
       return a()
     }
@@ -7620,14 +7619,14 @@ public class BHL_TestVM : BHL_TestBase
       return 42
     } 
 
-    func foo(ref float^() a) 
+    func foo(ref func float() a) 
     {
       a = bar
     }
       
     func float test() 
     {
-      float^() a = func float() { return 45 } 
+      func float() a = func float() { return 45 } 
       foo(ref a)
       return a()
     }
@@ -7644,14 +7643,14 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn) 
+    func foo(func() fn) 
     {
       fn()
     }
       
     func float test() 
     {
-      float^() a
+      func float() a
       foo(func() { 
           a = func float () { return 42 }
         } 
@@ -7671,14 +7670,14 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(void^() fn) 
+    func foo(func() fn) 
     {
       fn()
     }
       
     func float test() 
     {
-      float^() a = func float() { return 45 } 
+      func float() a = func float() { return 45 } 
       foo(func() { 
           a = func float () { return 42 }
         } 
@@ -9226,7 +9225,7 @@ public class BHL_TestVM : BHL_TestBase
 
     class Foo
     {
-      void^(int,int) ptr
+      func(int,int) ptr
     }
 
     func int foo()
@@ -9370,7 +9369,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func bar()
     {
-      int^(int) p = foo
+      func int(int) p = foo
       Foo f = PassthruFoo({hey:1, colors:[{r:p(42)}]})
       trace((string)f.hey)
     }
@@ -9500,7 +9499,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func bar()
     {
-      int^(int) p = foo
+      func int(int) p = foo
       Foo f
       paral_all {
         {
@@ -9709,7 +9708,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      int^(int,int) p = ret_int
+      func int(int,int) p = ret_int
       paral {
         {
           foo(1, p(2, 1))
@@ -9740,7 +9739,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     class Bar { 
-      int^(int,int) ptr
+      func int(int,int) ptr
     }
 
     func int ret_int(int val, int ticks)
@@ -10546,9 +10545,9 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test2() 
     {
-      int^() af = func int() { return 500100 } //500100
+      func int() af = func int() { return 500100 } //500100
 
-      int^() bf = func int() { 
+      func int() bf = func int() { 
         int a = 2
         int b = 1
 
@@ -10557,7 +10556,7 @@ public class BHL_TestVM : BHL_TestBase
         return c //100500
       }
 
-      int^() cf = func int() { 
+      func int() cf = func int() { 
         return true ? 100500 : 500100 //100500
       }
 
@@ -10568,7 +10567,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func string test3(int v)
     {
-      string^() af = func string() {
+      func string() af = func string() {
         return v == 1 ? ""first value""  :
                v == 2 ? ""second value"" :
                v == 3 ? ""result value"" : ""default value""
@@ -10708,7 +10707,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl8 = @"
     func int test()
     {
-      bool^(int) foo = func bool(int b) { return b > 1 }
+      func bool(int) foo = func bool(int b) { return b > 1 }
 
       int i = 0
       foo(i++)
@@ -12201,7 +12200,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     class Foo { 
-      int^(int) ptr
+      func int(int) ptr
     }
       
     func int test() 
@@ -12223,7 +12222,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
 
     class Foo { 
-      void^(int) ptr
+      func void(int) ptr
     }
       
     func bool test() 
@@ -12254,7 +12253,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     class Foo { 
-      int^(int)[] ptrs
+      func int(int)[] ptrs
     }
       
     func int test() 
@@ -12287,7 +12286,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     class Foo { 
-      int^(int,int)[] ptrs
+      func int(int,int)[] ptrs
     }
 
     func int bar()
@@ -14520,8 +14519,8 @@ public class BHL_TestVM : BHL_TestBase
       
     func void test() 
     {
-      void^() fn = null
-      void^() fn2 = func () { }
+      func() fn = null
+      func() fn2 = func () { }
       if(fn == null) {
         trace(""NULL;"")
       }
@@ -18269,7 +18268,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      void^() fn = func() {
+      func() fn = func() {
         trace(""HERE;"")
         suspend()
       }
@@ -18362,7 +18361,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func void test() 
     {
-      void^() fn = func() {
+      func() fn = func() {
         trace(""HERE;"")
         suspend()
       }
@@ -19787,7 +19786,7 @@ public class BHL_TestVM : BHL_TestBase
 
       trace(""REFS"" + (string)r1.refs + "";"")
 
-      void^() fn = func() {
+      func() fn = func() {
         trace(""REFS"" + (string)r1.refs + "";"")
       }
       

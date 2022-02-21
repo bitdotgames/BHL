@@ -554,7 +554,7 @@ namespace bhlsp
                   if(node is bhlParser.FuncParamDeclareContext funcParamDeclare)
                   {
                     bhlParser.TypeContext funcParamDeclareType = funcParamDeclare.type();
-                    if(funcParamDeclareType.fnargs() != null || funcParamDeclareType.ARR() != null)
+                    if(funcParamDeclareType.funcType() != null || funcParamDeclareType.ARR() != null)
                       continue;
                     
                     if(funcParamDeclare.NAME()?.GetText() == callExpMemberAccessName)

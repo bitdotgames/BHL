@@ -909,19 +909,19 @@ namespace bhlsp
       {
         AddSemanticTokenTypeName(ctx.NAME());
 
-        var fnArgs = ctx.fnargs();
-        if(fnArgs != null && fnArgs.names() is bhlParser.NamesContext names)
-        {
-          foreach(var refName in names.refName())
-          {
-            var refNameIsRef = refName.isRef();
-            var refNameName = refName.NAME();
-            if(refNameIsRef != null)
-              AddSemanticToken(refNameIsRef.Start.StartIndex, refNameName.Symbol.StartIndex-1, SemanticTokenTypes.keyword);
-            
-            AddSemanticTokenTypeName(refNameName);
-          }
-        }
+        //var fnType = ctx.funcType();
+        //if(fnType != null && fnType.types() is bhlParser.TypeContext types)
+        //{
+        //  foreach(var refType in types.refType())
+        //  {
+        //    var refNameIsRef = refType.isRef();
+        //    var refNameName = refType.NAME();
+        //    if(refNameIsRef != null)
+        //      AddSemanticToken(refNameIsRef.Start.StartIndex, refNameName.Symbol.StartIndex-1, SemanticTokenTypes.keyword);
+        //    
+        //    AddSemanticTokenTypeName(refNameName);
+        //  }
+        //}
         return null;
       }
       

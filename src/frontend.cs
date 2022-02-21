@@ -818,24 +818,21 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  FuncSignature ParseFuncSignature(bhlParser.TypeContext ctx)
+  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
   {
-    var ret_type = types.Type(ctx.NAME().GetText());
+    var ret_type = ctx.retType() != null ? ParseType(ctx.retType()) : this.types.Type("void");
 
-    var fnargs = ctx.fnargs();
-    if(fnargs.ARR() != null)
-      ret_type = types.TypeArr(ret_type);
 
     var arg_types = new List<TypeProxy>();
-    var fnames = fnargs.names();
-    if(fnames != null)
+    var types = ctx.types();
+    if(types != null)
     {
-      for(int i=0;i<fnames.refName().Length;++i)
+      for(int i=0;i<types.refType().Length;++i)
       {
-        var name = fnames.refName()[i];
-        var arg_type = types.Type(name.NAME().GetText());
-        if(name.isRef() != null)
-          arg_type = types.Type(new RefType(arg_type));
+        var refType = types.refType()[i];
+        var arg_type = ParseType(refType.type());
+        if(refType.isRef() != null)
+          arg_type = this.types.TypeRef(arg_type);
         arg_types.Add(arg_type);
       }
     }
@@ -883,19 +880,19 @@ public class Frontend : bhlBaseVisitor<object>
     return tp;
   }
 
-  TypeProxy ParseType(bhlParser.TypeContext parsed)
+  TypeProxy ParseType(bhlParser.TypeContext ctx)
   {
     TypeProxy tp;
-    if(parsed.fnargs() != null)
-      tp = types.Type(ParseFuncSignature(parsed));
+    if(ctx.funcType() != null)
+      tp = types.Type(ParseFuncSignature(ctx.funcType()));
     else
-      tp = types.Type(parsed.NAME().GetText());
+      tp = types.Type(ctx.NAME().GetText());
 
-    if(parsed.ARR() != null)
+    if(ctx.ARR() != null)
       tp = types.TypeArr(tp);
 
     if(tp.Get() == null)
-      FireError(parsed, "type '" + tp.name + "' not found");
+      FireError(ctx, "type '" + tp.name + "' not found");
 
    return tp;
   }

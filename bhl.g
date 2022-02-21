@@ -24,13 +24,8 @@ decl
   : (classDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
-//NOTE: ARR hack is here for types like int[]^(..) 
-fnargs
-  : ARR? '^' '(' names? ')'
-  ;
-
-type 
-  : NAME fnargs? ARR?
+type
+  : (NAME | funcType) ARR?
   ;
 
 //expressions
@@ -230,6 +225,10 @@ funcDecl
   : 'func' retType? NAME '(' funcParams? ')' funcBlock
   ;
 
+funcType
+  : 'func' retType? '(' types? ')'
+  ;
+
 funcBlock
   : block
   ;
@@ -238,16 +237,16 @@ funcLambda
   : 'func' retType? '(' funcParams? ')' funcBlock chainExp*
   ;
 
-refName
-  : isRef? NAME
+refType
+  : isRef? type
   ;
 
 retType
   : type (',' type)*
   ;
 
-names
-  : refName (',' refName)*
+types
+  : refType (',' refType)*
   ;
 
 funcParams

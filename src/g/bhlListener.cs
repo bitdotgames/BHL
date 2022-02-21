@@ -91,16 +91,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitDecl([NotNull] bhlParser.DeclContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.fnargs"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterFnargs([NotNull] bhlParser.FnargsContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.fnargs"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitFnargs([NotNull] bhlParser.FnargsContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.type"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -975,6 +965,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitFuncDecl([NotNull] bhlParser.FuncDeclContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.funcType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFuncType([NotNull] bhlParser.FuncTypeContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.funcType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFuncType([NotNull] bhlParser.FuncTypeContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcBlock"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -995,15 +995,15 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitFuncLambda([NotNull] bhlParser.FuncLambdaContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.refName"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.refType"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterRefName([NotNull] bhlParser.RefNameContext context);
+	void EnterRefType([NotNull] bhlParser.RefTypeContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.refName"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.refType"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitRefName([NotNull] bhlParser.RefNameContext context);
+	void ExitRefType([NotNull] bhlParser.RefTypeContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.retType"/>.
 	/// </summary>
@@ -1015,15 +1015,15 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitRetType([NotNull] bhlParser.RetTypeContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.names"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.types"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterNames([NotNull] bhlParser.NamesContext context);
+	void EnterTypes([NotNull] bhlParser.TypesContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.names"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.types"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitNames([NotNull] bhlParser.NamesContext context);
+	void ExitTypes([NotNull] bhlParser.TypesContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcParams"/>.
 	/// </summary>
