@@ -25,7 +25,7 @@ decl
   ;
 
 type
-  : (NAME | funcType) ARR?
+  : ARR? (NAME | funcType) 
   ;
 
 //expressions
@@ -113,8 +113,9 @@ decrementOperator
 
 //statements
 statement
-  : varDeclare                                                  #VarDecl
+  : funcLambda                                                  #LambdaCall
   | varsDeclareOrCallExps assignExp                             #DeclAssign
+  | varDeclare                                                  #VarDecl
   | NAME operatorPostOpAssign exp                               #VarPostOpAssign
   | callExp                                                     #SymbCall
   | callPostOperators                                           #PostOperatorCall
@@ -131,7 +132,6 @@ statement
   | 'paral_all' block                                           #ParalAll
   | 'defer' block                                               #Defer
   | block                                                       #BlockNested
-  | funcLambda                                                  #LambdaCall
   ;
 
 mainIf

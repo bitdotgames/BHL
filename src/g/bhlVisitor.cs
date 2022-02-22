@@ -319,12 +319,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>VarDecl</c>
+	/// Visit a parse tree produced by the <c>LambdaCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitVarDecl([NotNull] bhlParser.VarDeclContext context);
+	Result VisitLambdaCall([NotNull] bhlParser.LambdaCallContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>DeclAssign</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -332,6 +332,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitDeclAssign([NotNull] bhlParser.DeclAssignContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>VarDecl</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarDecl([NotNull] bhlParser.VarDeclContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>VarPostOpAssign</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -444,13 +451,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitBlockNested([NotNull] bhlParser.BlockNestedContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>LambdaCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitLambdaCall([NotNull] bhlParser.LambdaCallContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.mainIf"/>.
 	/// </summary>

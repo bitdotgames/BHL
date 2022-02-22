@@ -878,7 +878,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float,string test() 
     {
-      string[] s = [""""]
+      []string s = [""""]
       float r,s[0] = foo()
       return r,s[0]
     }
@@ -904,7 +904,7 @@ public class BHL_TestVM : BHL_TestBase
     func float,string test() 
     {
       string s
-      Color[] c = [{}]
+      []Color c = [{}]
       c[0].r,s = foo()
       return c[0].r,s
     }
@@ -1291,7 +1291,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test() 
     {
-      func int[]() ptr = func int[]() {
+      func []int() ptr = func []int() {
         return [1,2]
       }
       ptr()
@@ -1602,7 +1602,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       ().foo
     }
@@ -2689,7 +2689,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       string k
       k += ""foo""
@@ -2709,7 +2709,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       string k
       k -= ""foo""
@@ -2729,7 +2729,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       string k
       k *= ""foo""
@@ -2749,7 +2749,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       string k
       k /= ""foo""
@@ -2769,7 +2769,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       int k
       float a
@@ -3014,7 +3014,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestSimpleNativeFunc()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       trace(""foo"")
     }
@@ -3119,7 +3119,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestFuncAlreadyDeclaredArg()
   {
     string bhl = @"
-    func void foo(int k, int k)
+    func foo(int k, int k)
     {
     }
     ";
@@ -3181,7 +3181,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       func(string) ptr = trace
       ptr(""Hey"")
@@ -3897,8 +3897,6 @@ public class BHL_TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
-
-    //NodeDump(node);
     
     for(int i=0;i<5;++i)
       vm.Tick();
@@ -4005,7 +4003,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      int[] arr = new int[]
+      []int arr = new []int
       arr.Add(1)
       arr.Add(3)
       int accum = 0
@@ -4190,7 +4188,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      int[] arr = new int[]
+      []int arr = new []int
       arr.Add(1)
       arr.Add(3)
       int accum = 0
@@ -4338,7 +4336,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      int[] arr = new int[]
+      []int arr = new []int
       arr.Add(1)
       arr.Add(3)
       int accum = 0
@@ -4611,8 +4609,8 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test(int a) 
     {
-      return func int[](int a) { 
-        int[] ns = new int[]
+      return func []int(int a) { 
+        []int ns = new []int
         ns.Add(a)
         ns.Add(a*2)
         return ns
@@ -5155,9 +5153,9 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
-      func int[]() ptr = func int[]() {
+      func []int() ptr =  func []int () {
         return [1,2]
       }
       trace((string)ptr()[1])
@@ -5402,7 +5400,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test(int a) 
     {
-      func int(int,string)[] ptrs = new func int(int,string)[]
+      []func int(int,string) ptrs = new []func int(int,string)
       ptrs.Add(func int(int a, string b) { 
           trace(b) 
           return a*2 
@@ -5531,8 +5529,8 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func test() 
     {
-      func void(int) ptr = 
-        func void (int a)
+      func(int) ptr = 
+        func (int a)
         {
           trace((string)a)
         }
@@ -5581,9 +5579,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestComplexFuncPtrArgTypeCheck()
   {
     string bhl = @"
-    func void foo(int a) { }
+    func foo(int a) { }
 
-    func void test() 
+    func test() 
     {
       func(float) ptr = foo
     }
@@ -5601,9 +5599,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestComplexFuncPtrCallArgTypeCheck()
   {
     string bhl = @"
-    func void foo(int a) { }
+    func foo(int a) { }
 
-    func void test() 
+    func test() 
     {
       func(int) ptr = foo
       ptr(""hey"")
@@ -5622,9 +5620,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestComplexFuncPtrCallArgRefTypeCheck()
   {
     string bhl = @"
-    func void foo(int a, ref  float b) { }
+    func foo(int a, ref  float b) { }
 
-    func void test() 
+    func test() 
     {
       float b = 1
       func(int, ref float) ptr = foo
@@ -5644,9 +5642,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestComplexFuncPtrCallArgRefTypeCheck2()
   {
     string bhl = @"
-    func void foo(int a, ref float b) { }
+    func foo(int a, ref float b) { }
 
-    func void test() 
+    func test() 
     {
       float b = 1
       func(int, float) ptr = foo
@@ -5705,9 +5703,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestComplexFuncPtrCallArgNotEnoughArgsCheck()
   {
     string bhl = @"
-    func void foo(int a) { }
+    func foo(int a) { }
 
-    func void test() 
+    func test() 
     {
       func(int) ptr = foo
       ptr()
@@ -5726,9 +5724,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestComplexFuncPtrCallArgNotEnoughArgsCheck2()
   {
     string bhl = @"
-    func void foo(int a, float b) { }
+    func foo(int a, float b) { }
 
-    func void test() 
+    func test() 
     {
       func(int, float) ptr = foo
       ptr(10)
@@ -5747,9 +5745,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestComplexFuncPtrCallArgTooManyArgsCheck()
   {
     string bhl = @"
-    func void foo(int a) { }
+    func foo(int a) { }
 
-    func void test() 
+    func test() 
     {
       func(int) ptr = foo
       ptr(10, 30)
@@ -5774,7 +5772,7 @@ public class BHL_TestVM : BHL_TestBase
       fn()
     }
 
-    func void test() 
+    func test() 
     {
       func() fun = 
         func()
@@ -5813,7 +5811,7 @@ public class BHL_TestVM : BHL_TestBase
       trace(""HERE"")
     }
 
-    func void test() 
+    func test() 
     {
       foo(hey)
     }
@@ -5834,7 +5832,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestFuncPtrForNativeFunc()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       func() ptr = foo
       ptr()
@@ -5865,7 +5863,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestLambdaVarSeveralTimes()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       func() fun = 
         func()
@@ -5910,7 +5908,7 @@ public class BHL_TestVM : BHL_TestBase
       fn()
     }
 
-    func void test() 
+    func test() 
     {
       foo(10)
     }
@@ -5931,7 +5929,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestLambdaLocalVarsConflict()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       float a = 10
       float b = 20
@@ -5956,7 +5954,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartNativeFunc()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       start(native)
     }
@@ -6004,7 +6002,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartNativeStatefulFunc()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       start(yield_and_trace)
     }
@@ -6034,7 +6032,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartSeveralLambdas()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       start(
         func()
@@ -6044,7 +6042,7 @@ public class BHL_TestVM : BHL_TestBase
       ) 
     }
 
-    func void test2() 
+    func test2() 
     {
       start(
         func()
@@ -6071,7 +6069,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartLambdaSeveralTimes()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       start(
         func()
@@ -6098,13 +6096,13 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartSameFuncPtr()
   {
     string bhl = @"
-    func void foo() {
+    func foo() {
       trace(""FOO1"")
       yield()
       trace(""FOO2"")
     }
 
-    func void test() {
+    func test() {
       func() fn = foo
       func() fn2 = fn
       paral_all {
@@ -6129,7 +6127,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartImportedSameFuncPtr()
   {
     string bhl2 = @"
-    func void foo() {
+    func foo() {
       trace(""FOO1"")
       yield()
       trace(""FOO2"")
@@ -6139,7 +6137,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl1 = @"
     import ""bhl2""
 
-    func void test() {
+    func test() {
       func() fn = foo
       func() fn2 = fn
       paral_all {
@@ -6172,7 +6170,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartLambdaCaptureVars()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       float a = 10
       float b = 20
@@ -6201,7 +6199,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartLambdaCaptureVarsNested()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       float a = 10
       float b = 20
@@ -6236,7 +6234,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStartLambdaCaptureVarsNested2()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       float a = 10
       float b = 20
@@ -6282,7 +6280,7 @@ public class BHL_TestVM : BHL_TestBase
       start(fn2)
     }
 
-    func void foo(float a = 1, float b = 2)
+    func foo(float a = 1, float b = 2)
     {
       call(fn2 :
         func()
@@ -6294,7 +6292,7 @@ public class BHL_TestVM : BHL_TestBase
       ) 
     }
 
-    func void bar()
+    func bar()
     {
       call(
         fn2 :
@@ -6306,7 +6304,7 @@ public class BHL_TestVM : BHL_TestBase
       ) 
     }
 
-    func void test() 
+    func test() 
     {
       foo(10, 20)
       bar()
@@ -6676,13 +6674,13 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void foo(float b, float k)
+    func foo(float b, float k)
     {
       float f = 3
       float a = b + k
     }
       
-    func void test() 
+    func test() 
     {
       foo(b: 24, k: 3, f : 1)
     }
@@ -6723,7 +6721,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void foo(float a)
+    func foo(float a)
     {
       a = a + 1
     }
@@ -7001,7 +6999,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       ref float a
     }
@@ -7020,7 +7018,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void foo(ref float k = 10)
+    func foo(ref float k = 10)
     {
     }
     ";
@@ -7076,7 +7074,7 @@ public class BHL_TestVM : BHL_TestBase
     {
     }
 
-    func void test() 
+    func test() 
     {
       foo(ref 10)  
     }
@@ -7132,7 +7130,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test() 
     {
-      float[] fs = [1,10,20]
+      []float fs = [1,10,20]
 
       foo(ref fs[1])
       return fs[0] + fs[1] + fs[2]
@@ -7162,7 +7160,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test() 
     {
-      Bar[] bs = [{f:1},{f:10},{f:20}]
+      []Bar bs = [{f:1},{f:10},{f:20}]
 
       foo(ref bs[1].f)
       return bs[0].f + bs[1].f + bs[2].f
@@ -7409,7 +7407,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test() 
     {
-      float[] a = []
+      []float a = []
       foo(func() { a.Add(10) } )
       return a[0]
     }
@@ -7426,20 +7424,20 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float[] make()
+    func []float make()
     {
-      float[] fs = [42]
+      []float fs = [42]
       return fs
     }
 
-    func foo(ref float[] a) 
+    func foo(ref []float a) 
     {
       a = make()
     }
       
     func float test() 
     {
-      float[] a
+      []float a
       foo(ref a)
       return a[0]
     }
@@ -7456,14 +7454,14 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float[] a) 
+    func foo(ref []float a) 
     {
       a = [42]
     }
       
     func float test() 
     {
-      float[] a = []
+      []float a = []
       foo(ref a)
       return a[0]
     }
@@ -7480,15 +7478,15 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float[] a) 
+    func foo(ref []float a) 
     {
       a = [42]
-      float[] b = a
+      []float b = a
     }
       
     func float test() 
     {
-      float[] a = []
+      []float a = []
       foo(ref a)
       return a[0]
     }
@@ -7505,14 +7503,14 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(int[] a)
+    func foo([]int a)
     {
       a = [100]
     }
       
     func int test() 
     {
-      int[] a = [1, 2]
+      []int a = [1, 2]
 
       foo(a)
 
@@ -7538,7 +7536,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test() 
     {
-      float[] a
+      []float a
       foo(func() { 
           a = [42]
         } 
@@ -7565,7 +7563,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test() 
     {
-      float[] a = []
+      []float a = []
       foo(func() { 
           a = [42]
         } 
@@ -7804,9 +7802,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestEmptyIntArray()
   {
     string bhl = @"
-    func int[] test()
+    func []int test()
     {
-      int[] a = new int[]
+      []int a = new []int
       return a
     }
     ";
@@ -7840,7 +7838,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func string test()
     {
-      string[] a = new string[]
+      []string a = new []string
       a.Add(""test"")
       return a[0]
     }
@@ -7860,7 +7858,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func string test() 
     {
-      string[] arr = new string[]
+      []string arr = new []string
       arr.Add(""bar"")
       arr.Add(""foo"")
       return arr[1]
@@ -7877,9 +7875,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestTmpArrayAtIdx()
   {
     string bhl = @"
-    func int[] mkarray()
+    func []int mkarray()
     {
-      int[] a = new int[]
+      []int a = new []int
       a.Add(1)
       a.Add(2)
       return a
@@ -7902,16 +7900,16 @@ public class BHL_TestVM : BHL_TestBase
   public void TestArrayRemoveAt()
   {
     string bhl = @"
-    func int[] mkarray()
+    func []int mkarray()
     {
-      int[] arr = new int[]
+      []int arr = new []int
       arr.Add(1)
       arr.Add(100)
       arr.RemoveAt(0)
       return arr
     }
       
-    func int[] test() 
+    func []int test() 
     {
       return mkarray()
     }
@@ -7930,9 +7928,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestTmpArrayCount() 
   {
     string bhl = @"
-    func int[] mkarray()
+    func []int mkarray()
     {
-      int[] arr = new int[]
+      []int arr = new []int
       arr.Add(1)
       arr.Add(100)
       return arr
@@ -7956,15 +7954,15 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int[] mkarray()
+    func []int mkarray()
     {
-      int[] arr = new int[]
+      []int arr = new []int
       arr.Add(1)
       arr.Add(100)
       return arr
     }
       
-    func void test() 
+    func test() 
     {
       mkarray().RemoveAt(0)
     }
@@ -7980,15 +7978,15 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int[] mkarray()
+    func []int mkarray()
     {
-      int[] arr = new int[]
+      []int arr = new []int
       arr.Add(1)
       arr.Add(100)
       return arr
     }
       
-    func void test() 
+    func test() 
     {
       mkarray().Add(300)
     }
@@ -8004,9 +8002,9 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func string[] test() 
+    func []string test() 
     {
-      string[] arr = new string[]
+      []string arr = new []string
       arr.Add(""foo"")
       arr[0] = ""tst""
       arr.Add(""bar"")
@@ -8030,14 +8028,14 @@ public class BHL_TestVM : BHL_TestBase
   public void TestArrayPassedToFuncIsChanged()
   {
     string bhl = @"
-    func foo(int[] a)
+    func foo([]int a)
     {
       a.Add(100)
     }
       
     func int test() 
     {
-      int[] a = new int[]
+      []int a = new []int
       a.Add(1)
       a.Add(2)
 
@@ -8058,14 +8056,14 @@ public class BHL_TestVM : BHL_TestBase
   public void TestArrayPassedToFuncByRef()
   {
     string bhl = @"
-    func foo(ref int[] a)
+    func foo(ref []int a)
     {
       a.Add(100)
     }
       
     func int test() 
     {
-      int[] a = new int[]
+      []int a = new []int
       a.Add(1)
       a.Add(2)
 
@@ -8091,7 +8089,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func int test() 
     {
-      string[] arr = new string[]
+      []string arr = new []string
       arr.Add(""foo"")
       arr.Add(""bar"")
       int c = arr.Count
@@ -8112,7 +8110,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func string test() 
     {
-      string[] arr = new string[]
+      []string arr = new []string
       arr.Add(""bar"")
       arr.Clear()
       arr.Add(""foo"")
@@ -8132,21 +8130,21 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func string[] make()
+    func []string make()
     {
-      string[] arr = new string[]
+      []string arr = new []string
       return arr
     }
 
-    func add(string[] arr)
+    func add([]string arr)
     {
       arr.Add(""foo"")
       arr.Add(""bar"")
     }
       
-    func string[] test() 
+    func []string test() 
     {
-      string[] arr = make()
+      []string arr = make()
       add(arr)
       return arr
     }
@@ -8173,16 +8171,16 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func string[] make()
+    func []string make()
     {
-      string[] arr = new string[]
+      []string arr = new []string
       return arr
     }
       
     func test() 
     {
       while(true) {
-        string[] arr = new string[]
+        []string arr = new []string
         yield()
       }
     }
@@ -8331,7 +8329,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestStatefulNativeFunc()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       WaitTicks(2)
     }
@@ -9314,9 +9312,9 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int[] make_ints(int n, int k)
+    func []int make_ints(int n, int k)
     {
-      int[] res = []
+      []int res = []
       return res
     }
 
@@ -9326,9 +9324,9 @@ public class BHL_TestVM : BHL_TestBase
       return 10
     }
 
-    func void test() 
+    func test() 
     {
-      foo(func int[] () { return make_ints(2, do_fail()) } )
+      foo(func []int () { return make_ints(2, do_fail()) } )
       trace(""HERE"")
     }
     ";
@@ -9374,7 +9372,7 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    func void test() 
+    func test() 
     {
       bar()
     }
@@ -9407,7 +9405,7 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    func void test() 
+    func test() 
     {
       bar()
     }
@@ -9457,7 +9455,7 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    func void test() 
+    func test() 
     {
       bar()
     }
@@ -9512,7 +9510,7 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    func void test() 
+    func test() 
     {
       bar()
     }
@@ -9569,7 +9567,7 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    func void test() 
+    func test() 
     {
       bar()
     }
@@ -9669,7 +9667,7 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    func void test() 
+    func test() 
     {
       bar()
     }
@@ -9706,7 +9704,7 @@ public class BHL_TestVM : BHL_TestBase
       return val
     }
 
-    func void test() 
+    func test() 
     {
       func int(int,int) p = ret_int
       paral {
@@ -9752,7 +9750,7 @@ public class BHL_TestVM : BHL_TestBase
       return val
     }
 
-    func void test() 
+    func test() 
     {
       Bar b = {}
       b.ptr = ret_int
@@ -9785,7 +9783,7 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    func void test() 
+    func test() 
     {
       paral {
         {
@@ -9840,7 +9838,7 @@ public class BHL_TestVM : BHL_TestBase
       return val
     }
 
-    func void test() 
+    func test() 
     {
       paral_all {
         foo(1, ret_int(val: 2, ticks: 1))
@@ -9902,7 +9900,7 @@ public class BHL_TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    func void test() 
+    func test() 
     {
       paral {
         {
@@ -10134,7 +10132,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void bar(float k)
+    func bar(float k)
     {
       defer {
         trace(""~BAR"")
@@ -10698,7 +10696,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl7 = @"
     func test()
     {
-      int[] arr = [0, 1, 3, 4]
+      []int arr = [0, 1, 3, 4]
       int i = 0
       int j = arr[i++]
     }
@@ -10872,7 +10870,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl6 = @"
     func test()
     {
-      int[] arr = [0, 1, 3, 4]
+      []int arr = [0, 1, 3, 4]
       int i = 0
       int j = arr[i--]
     }
@@ -11758,7 +11756,7 @@ public class BHL_TestVM : BHL_TestBase
 
     class Foo { }
       
-    func void test() 
+    func test() 
     {
       Foo f = {}
     }
@@ -11819,7 +11817,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func int test() 
     {
-      return typeid(int[])
+      return typeid([]int)
     }
     ";
 
@@ -11891,7 +11889,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func bool test() 
     {
-      return typeid(int[]) == typeid(float[])
+      return typeid([]int) == typeid([]float)
     }
     ";
 
@@ -11974,7 +11972,7 @@ public class BHL_TestVM : BHL_TestBase
       string Str
     }
       
-    func void test() 
+    func test() 
     {
       Foo f = new Foo
       f.Int = 10
@@ -12130,7 +12128,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
 
     class Foo { 
-      int[] a
+      []int a
     }
       
     func int test() 
@@ -12151,7 +12149,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
 
     class Foo { 
-      int[] a
+      []int a
     }
       
     func bool test() 
@@ -12172,7 +12170,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
 
     class Foo { 
-      int[] a
+      []int a
     }
       
     func int test() 
@@ -12253,7 +12251,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     class Foo { 
-      func int(int)[] ptrs
+      []func int(int) ptrs
     }
       
     func int test() 
@@ -12286,7 +12284,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     class Foo { 
-      func int(int,int)[] ptrs
+      []func int(int,int) ptrs
     }
 
     func int bar()
@@ -12341,7 +12339,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
 
     class Bar {
-      int[] a
+      []int a
     }
 
     class Foo { 
@@ -12805,7 +12803,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func float test() 
     {
-      Foo[] fs = [{b:1, c:2}]
+      []Foo fs = [{b:1, c:2}]
       fs.Add({b:10, c:20})
 
       return fs[0].b + fs[0].c + fs[1].b + fs[1].c
@@ -12868,7 +12866,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
 
     class Foo { 
-      int[] b
+      []int b
     }
       
     func int test() 
@@ -12890,7 +12888,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
 
     class Foo { 
-      int[] b
+      []int b
     }
       
     func int test() 
@@ -13174,7 +13172,7 @@ public class BHL_TestVM : BHL_TestBase
       string Str
     }
       
-    func void test() 
+    func test() 
     {
       Foo f = {Int: 10, Flt: 14.2, Str: ""Hey""}
       trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
@@ -13285,7 +13283,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestJsonCtorNotExpectedMember()
   {
     string bhl = @"
-    func void test()
+    func test()
     {
       Color c = {b: 10}
     }
@@ -13306,7 +13304,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestJsonCtorBadType()
   {
     string bhl = @"
-    func void test()
+    func test()
     {
       Color c = {r: ""what""}
     }
@@ -13393,7 +13391,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       ColorAlpha c = new Color {g: 10, r: 100}
     }
@@ -13442,7 +13440,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       any c = new Foo {}
     }
@@ -13467,9 +13465,9 @@ public class BHL_TestVM : BHL_TestBase
       string Str
     }
       
-    func void test() 
+    func test() 
     {
-      Foo[] fs = [{Int: 10, Flt: 14.2, Str: ""Hey""}]
+      []Foo fs = [{Int: 10, Flt: 14.2, Str: ""Hey""}]
       Foo f = fs[0]
       trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
     }
@@ -13535,9 +13533,9 @@ public class BHL_TestVM : BHL_TestBase
       string Str
     }
       
-    func void test() 
+    func test() 
     {
-      Foo[] fs = [{Int: 10, Flt: 14.2, Str: ""Hey""},{Flt: 15.1, Int: 2, Str: ""Foo""}]
+      []Foo fs = [{Int: 10, Flt: 14.2, Str: ""Hey""},{Flt: 15.1, Int: 2, Str: ""Foo""}]
       trace((string)fs[1].Int + "";"" + (string)fs[1].Flt + "";"" + fs[1].Str + ""-"" + 
            (string)fs[0].Int + "";"" + (string)fs[0].Flt + "";"" + fs[0].Str)
     }
@@ -13561,7 +13559,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      int[] a = []
+      []int a = []
       return a.Count 
     }
     ";
@@ -13577,7 +13575,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      int[] a = [1,2,3]
+      []int a = [1,2,3]
       return a[0] + a[1] + a[2]
     }
     ";
@@ -13593,7 +13591,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func float test()
     {
-      Color[] cs = [{r:10, g:100}, {g:1000, r:1}]
+      []Color cs = [{r:10, g:100}, {g:1000, r:1}]
       return cs[0].r + cs[0].g + cs[1].r + cs[1].g
     }
     ";
@@ -13752,7 +13750,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestJsonArrDefaultArg()
   {
     string bhl = @"
-    func float foo(Color[] c = [{r:10}])
+    func float foo([]Color c = [{r:10}])
     {
       return c[0].r
     }
@@ -13775,7 +13773,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestJsonArrEmptyDefaultArg()
   {
     string bhl = @"
-    func int foo(Color[] c = [])
+    func int foo([]Color c = [])
     {
       return c.Count
     }
@@ -13820,7 +13818,7 @@ public class BHL_TestVM : BHL_TestBase
     string bhl = @"
     func float test()
     {
-      float[] b = [1]
+      []float b = [1]
       b = [2,3]
       return b[0] + b[1]
     }
@@ -13841,7 +13839,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test() 
     {
-      Color[] cs = [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
+      []Color cs = [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
       ColorAlpha ca = (ColorAlpha)cs[0]
       return ca.a + cs[1].g + cs[2].r
     }
@@ -13860,14 +13858,14 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func Color[] make()
+    func []Color make()
     {
       return [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
     }
       
     func float test() 
     {
-      Color[] cs = make()
+      []Color cs = make()
       ColorAlpha ca = (ColorAlpha)cs[0]
       return ca.a + cs[1].g + cs[2].r
     }
@@ -13886,7 +13884,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float foo(Color[] cs)
+    func float foo([]Color cs)
     {
       ColorAlpha ca = (ColorAlpha)cs[0]
       return ca.a + cs[1].g + cs[2].r
@@ -13913,7 +13911,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test() 
     {
-      Color[] cs = [{r:1,g:2}, new ColorAlpha {g: 10, r: 100, a:2}]
+      []Color cs = [{r:1,g:2}, new ColorAlpha {g: 10, r: 100, a:2}]
       ColorAlpha c = (ColorAlpha)cs[1]
       return c.r + c.g + c.a
     }
@@ -13932,9 +13930,9 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
-      ColorAlpha[] c = [{r:1,g:2,a:100}, new Color {g: 10, r: 100}]
+      []ColorAlpha c = [{r:1,g:2,a:100}, new Color {g: 10, r: 100}]
     }
     ";
 
@@ -14000,7 +13998,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestJsonFuncArg()
   {
     string bhl = @"
-    func void test(float b) 
+    func test(float b) 
     {
       Foo f = PassthruFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]})
       trace((string)f.hey + (string)f.colors.Count + (string)f.colors[0].r + (string)f.colors[1].g + (string)f.colors[2].g)
@@ -14024,7 +14022,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestJsonFuncArgChainCall()
   {
     string bhl = @"
-    func void test(float b) 
+    func test(float b) 
     {
       trace((string)PassthruFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]}).colors.Count)
     }
@@ -14085,7 +14083,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       Bar o = new Bar
       o.Int = 10
@@ -14199,7 +14197,7 @@ public class BHL_TestVM : BHL_TestBase
       return 0
     }
       
-    func void test() 
+    func test() 
     {
       Color c = new Color
       c.r()
@@ -14223,7 +14221,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c = null
       Color c2 = new Color
@@ -14268,7 +14266,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       IntStruct c = null
       IntStruct c2 = {n: 1}
@@ -14307,7 +14305,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test(StringClass c) 
+    func test(StringClass c) 
     {
       if(c != null) {
         trace(""NEVER;"")
@@ -14334,7 +14332,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test(StringClass c) 
+    func test(StringClass c) 
     {
       if(c != null) {
         trace(""NEVER;"")
@@ -14362,7 +14360,7 @@ public class BHL_TestVM : BHL_TestBase
   //{
   //  string bhl = @"
   //    
-  //  func void test(CustomNull c) 
+  //  func test(CustomNull c) 
   //  {
   //    if(c != null) {
   //      trace(""NOTNULL;"")
@@ -14409,7 +14407,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c = mkcolor_null()
       if(c == null) {
@@ -14453,10 +14451,10 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
-      Color[] cs = null
-      Color[] cs2 = new Color[]
+      []Color cs = null
+      []Color cs2 = new []Color
       if(cs == null) {
         trace(""NULL;"")
       }
@@ -14492,9 +14490,9 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
-      Color[] cs
+      []Color cs
       if(cs == null) {
         trace(""NULL;"")
       }
@@ -14517,7 +14515,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       func() fn = null
       func() fn2 = func () { }
@@ -14553,7 +14551,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      int[] arr = []
+      []int arr = []
       int i = 0
       while(i < arr.Count) {
         int tmp = arr[i]
@@ -14580,7 +14578,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      int[] arr = [1,2,3]
+      []int arr = [1,2,3]
       int i = 0
       while(i < arr.Count) {
         int tmp = arr[i]
@@ -14607,7 +14605,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      int[] arr = [1,2]
+      []int arr = [1,2]
       int i = 0
       while(i < arr.Count) {
         int tmp = arr[i]
@@ -15004,7 +15002,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      int[] is = [1, 2, 3]
+      []int is = [1, 2, 3]
       foreach(is as int it) {
         trace((string)it)
       }
@@ -15028,7 +15026,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      Color[] cs = [{r:1}, {r:2}, {r:3}]
+      []Color cs = [{r:1}, {r:2}, {r:3}]
       foreach(cs as Color c) {
         trace((string)c.r)
       }
@@ -15054,7 +15052,7 @@ public class BHL_TestVM : BHL_TestBase
     func test() 
     {
       int it
-      int[] is = [1, 2, 3]
+      []int is = [1, 2, 3]
       foreach(is as it) {
         trace((string)it)
       }
@@ -15099,7 +15097,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int[] foo()
+    func []int foo()
     {
       return [1,2,3]
     }
@@ -15186,7 +15184,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      int[] is = [1,2,3]
+      []int is = [1,2,3]
       foreach(is as int it) {
         trace((string)it)
       }
@@ -15214,7 +15212,7 @@ public class BHL_TestVM : BHL_TestBase
 
     func test() 
     {
-      int[] is = [1,2,3]
+      []int is = [1,2,3]
       foreach(is as int it) {
         foreach(is as int it2) {
           trace((string)it + "","" + (string)it2 + "";"")
@@ -15684,7 +15682,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c = null
       if(c == null || c.r == 0) {
@@ -15712,7 +15710,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c = null
       if(c != null && c.r == 0) {
@@ -15740,7 +15738,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       bool ready = false
       bool activated = true
@@ -15774,7 +15772,7 @@ public class BHL_TestVM : BHL_TestBase
       bool activated
     }
       
-    func void test() 
+    func test() 
     {
       Foo foo = {}
       foo.ready = false
@@ -15809,7 +15807,7 @@ public class BHL_TestVM : BHL_TestBase
       bool activated
     }
       
-    func void test() 
+    func test() 
     {
       Foo foo = {}
       foo.ready = false
@@ -15986,9 +15984,9 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
-      Bar[] bs = [{Int: 10, Flt: 14.5, Str: ""Hey""}]
+      []Bar bs = [{Int: 10, Flt: 14.5, Str: ""Hey""}]
       Bar b = bs[0]
       trace((string)b.Int + "";"" + (string)b.Flt + "";"" + b.Str)
     }
@@ -16135,7 +16133,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16160,7 +16158,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16185,7 +16183,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16210,7 +16208,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16235,7 +16233,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16260,7 +16258,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16285,7 +16283,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16310,7 +16308,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16335,7 +16333,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2 = -c1
@@ -16359,7 +16357,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16384,7 +16382,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16409,7 +16407,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16434,7 +16432,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       Color c2
@@ -16459,7 +16457,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func void test() 
+    func test() 
     {
       Color c1
       bool a = !c1
@@ -16842,9 +16840,9 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func EnumState[] test() 
+    func []EnumState test() 
     {
-      EnumState[] arr = new EnumState[]
+      []EnumState arr = new []EnumState
       arr.Add(EnumState::SPAWNED2)
       arr.Add(EnumState::SPAWNED)
       return arr
@@ -17659,7 +17657,7 @@ public class BHL_TestVM : BHL_TestBase
       
   string bhl2 = @"
     import ""bhl1""  
-    func void test() 
+    func test() 
     {
       Foo f = new Foo
       f.Int = 10
@@ -18113,7 +18111,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       while(true) {
         StartScriptInMgr(
@@ -18168,7 +18166,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       while(true) {
         StartScriptInMgr(
@@ -18225,7 +18223,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       StartScriptInMgr(
         script: func() { 
@@ -18266,7 +18264,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       func() fn = func() {
         trace(""HERE;"")
@@ -18310,7 +18308,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       StartScriptInMgr(
         script: say_here,
@@ -18359,7 +18357,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       func() fn = func() {
         trace(""HERE;"")
@@ -18405,7 +18403,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       float a = 0
       StartScriptInMgr(
@@ -18451,7 +18449,7 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void test() 
+    func test() 
     {
       float a = 1
       StartScriptInMgr(
@@ -19334,7 +19332,7 @@ public class BHL_TestVM : BHL_TestBase
       float b
     }
 
-    Foo[] foos = [{b : 100}, {b: 200}]
+    []Foo foos = [{b : 100}, {b: 200}]
       
     func float test() 
     {
@@ -19648,7 +19646,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestRefCountSimple()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       RefC r = new RefC
     }
@@ -19690,7 +19688,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestRefCountAssignSame()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       RefC r1 = new RefC
       RefC r2 = r1
@@ -19713,7 +19711,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestRefCountAssignSelf()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       RefC r1 = new RefC
       r1 = r1
@@ -19735,7 +19733,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestRefCountAssignOverwrite()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       RefC r1 = new RefC
       RefC r2 = new RefC
@@ -19758,7 +19756,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestRefCountSeveral()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       RefC r1 = new RefC
       RefC r2 = new RefC
@@ -19780,7 +19778,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestRefCountInLambda()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
       RefC r1 = new RefC
 
@@ -19811,9 +19809,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestRefCountInArray()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
-      RefC[] rs = new RefC[]
+      []RefC rs = new []RefC
       rs.Add(new RefC)
     }
     ";
@@ -19833,9 +19831,9 @@ public class BHL_TestVM : BHL_TestBase
   public void TestRefCountSeveralInArrayAccess()
   {
     string bhl = @"
-    func void test() 
+    func test() 
     {
-      RefC[] rs = new RefC[]
+      []RefC rs = new []RefC
       rs.Add(new RefC)
       rs.Add(new RefC)
       float refs = rs[1].refs
@@ -19864,7 +19862,7 @@ public class BHL_TestVM : BHL_TestBase
       return c
     }
 
-    func void test() 
+    func test() 
     {
       RefC c1 = make()
     }
@@ -19886,12 +19884,12 @@ public class BHL_TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func void foo(RefC c)
+    func foo(RefC c)
     { 
       trace(""HERE;"")
     }
 
-    func void test() 
+    func test() 
     {
       foo(new RefC)
     }
@@ -19920,12 +19918,12 @@ public class BHL_TestVM : BHL_TestBase
       return c
     }
 
-    func void foo(RefC c)
+    func foo(RefC c)
     {
       RefC c2 = c
     }
 
-    func void test() 
+    func test() 
     {
       RefC c1 = make()
       foo(c1)
@@ -19954,23 +19952,23 @@ public class BHL_TestVM : BHL_TestBase
       var ms = new ModuleScope("module", types.globs);
       types.AddSource(ms);
 
-      ms.Define(new VariableSymbol("foo", types.Type(TypeSystem.Int)));
+      ms.Define(new VariableSymbol("foo", TypeSystem.Int));
 
-      ms.Define(new VariableSymbol("bar", types.Type(TypeSystem.String)));
+      ms.Define(new VariableSymbol("bar", TypeSystem.String));
 
-      ms.Define(new VariableSymbol("wow", types.TypeArr("bool")));
+      ms.Define(new VariableSymbol("wow", types.TypeArr(TypeSystem.Bool)));
 
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("int","float"), types.TypeRef(types.Type("int")), types.Type("string")), "Test", 1, 155));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple(TypeSystem.Int,TypeSystem.Float), types.TypeRef(TypeSystem.Int), TypeSystem.String), "Test", 1, 155));
 
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr("string"), types.Type("Bar")), "Make", 3, 15));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr(TypeSystem.String), types.Type("Bar")), "Make", 3, 15));
 
       var Foo = new ClassSymbolScript("Foo", null);
-      Foo.Define(new FieldSymbolScript("Int", types.Type("int")));
-      Foo.Define(new FuncSymbolScript(new FuncSignature(types.Type("void")), "Hey", 0, 3));
+      Foo.Define(new FieldSymbolScript("Int", TypeSystem.Int));
+      Foo.Define(new FuncSymbolScript(new FuncSignature(TypeSystem.Void), "Hey", 0, 3));
       ms.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", null, Foo);
-      Bar.Define(new FieldSymbolScript("Float", types.Type("float")));
-      Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple("bool","bool"), types.Type("int")), "What", 1, 1));
+      Bar.Define(new FieldSymbolScript("Float", TypeSystem.Float));
+      Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple(TypeSystem.Bool,TypeSystem.Bool), TypeSystem.Int), "What", 1, 1));
       ms.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");

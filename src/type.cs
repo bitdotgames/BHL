@@ -37,6 +37,11 @@ public struct TypeProxy : IMarshallable
     this.type = type;
   }
 
+  public static implicit operator TypeProxy(BuiltInSymbol s)
+  {
+    return new TypeProxy((IType)s);
+  }
+
   public bool IsEmpty()
   {
     return string.IsNullOrEmpty(_name) && 
@@ -447,6 +452,11 @@ public class TypeSystem
     public static implicit operator TypeArg(TypeProxy tp)
     {
       return new TypeArg(tp);
+    }
+
+    public static implicit operator TypeArg(BuiltInSymbol s)
+    {
+      return new TypeArg(new TypeProxy(s));
     }
 
     public TypeArg(string name)

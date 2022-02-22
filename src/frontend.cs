@@ -820,8 +820,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
   {
-    var ret_type = ctx.retType() != null ? ParseType(ctx.retType()) : this.types.Type("void");
-
+    var ret_type = ParseType(ctx.retType());
 
     var arg_types = new List<TypeProxy>();
     var types = ctx.types();
@@ -863,7 +862,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //convenience special case
     if(parsed == null)
-      tp = types.Type(TypeSystem.Void);
+      tp = TypeSystem.Void;
     else if(parsed.type().Length > 1)
     {
       var tuple = new TupleType();
