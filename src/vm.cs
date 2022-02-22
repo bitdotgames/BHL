@@ -660,8 +660,8 @@ public class VM
 
   Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
 
-  TypeSystem types;
-  public TypeSystem Types {
+  Types types;
+  public Types Types {
     get {
       return types;
     }
@@ -758,10 +758,10 @@ public class VM
     }
   }
 
-  public VM(TypeSystem types = null, IModuleImporter importer = null)
+  public VM(Types types = null, IModuleImporter importer = null)
   {
     if(types == null)
-      types = new TypeSystem();
+      types = new Types();
     this.types = types;
     this.globs = types.globs;
     this.importer = importer;
@@ -1398,7 +1398,7 @@ public class VM
         int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, func_ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, TypeSystem.Any));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
       }
       break;
       case Opcodes.GetFuncNative:
@@ -1407,7 +1407,7 @@ public class VM
         var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, TypeSystem.Any));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
       }
       break;
       case Opcodes.GetFuncImported:
@@ -1419,7 +1419,7 @@ public class VM
 
         var ptr = FuncPtr.New(this);
         ptr.Init(maddr.module, maddr.ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, TypeSystem.Any));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
       }
       break;
       case Opcodes.GetFuncFromVar:
@@ -1554,7 +1554,7 @@ public class VM
         short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, ip+1);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, TypeSystem.Any));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
 
         ip += offset;
       }
@@ -1673,13 +1673,13 @@ public class VM
     var v = Val.New(this);
     //TODO: make type responsible for default initialization 
     //      of the value
-    if(type == TypeSystem.Int)
+    if(type == Types.Int)
       v.SetNum(0);
-    else if(type == TypeSystem.Float)
+    else if(type == Types.Float)
       v.SetNum((double)0);
-    else if(type == TypeSystem.String)
+    else if(type == Types.String)
       v.SetStr("");
-    else if(type == TypeSystem.Bool)
+    else if(type == Types.Bool)
       v.SetBool(false);
     else
       v.type = type;
@@ -1796,7 +1796,7 @@ public class VM
 
     if(cast_type == "int")
       new_val.SetNum((int)val.num);
-    else if(cast_type == "string" && val.type != TypeSystem.String)
+    else if(cast_type == "string" && val.type != Types.String)
       new_val.SetStr(val.num.ToString());
     else
     {
@@ -1969,7 +1969,7 @@ public class VM
     {
       case Opcodes.Add:
         //TODO: add Opcodes.Concat?
-        if((r_operand.type == TypeSystem.String) && (l_operand.type == TypeSystem.String))
+        if((r_operand.type == Types.String) && (l_operand.type == Types.String))
           curr_frame.stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
         else
           curr_frame.stack.Push(Val.NewNum(this, l_operand._num + r_operand._num));
@@ -2053,7 +2053,7 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(TypeSystem types, Stream src)
+  static public CompiledModule FromStream(Types types, Stream src)
   {
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
     {

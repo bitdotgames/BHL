@@ -14,9 +14,9 @@ public class IsTestedAttribute : Attribute
 
 public static class BHL_TestExt 
 {
-  public static TypeSystem Clone(this TypeSystem ts)
+  public static Types Clone(this Types ts)
   {
-    var ts_copy = new TypeSystem();
+    var ts_copy = new Types();
     var ms = ts.globs.GetMembers();
     //let's skip already defined built-ins
     for(int i=ts_copy.globs.GetMembers().Count;i<ms.Count;++i)

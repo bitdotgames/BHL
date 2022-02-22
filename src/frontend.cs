@@ -49,7 +49,7 @@ public class Frontend : bhlBaseVisitor<object>
     return lambda_id;
   }
 
-  TypeSystem types;
+  Types types;
 
   //NOTE: in 'declarations only' mode only declarations are filled,
   //      full definitions are omitted. This is useful when we only need 
@@ -117,7 +117,7 @@ public class Frontend : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static FrontendResult ProcessFile(string file, TypeSystem ts, ModuleRegistry mr)
+  public static FrontendResult ProcessFile(string file, Types ts, ModuleRegistry mr)
   {
     using(var sfs = File.OpenRead(file))
     {
@@ -135,7 +135,7 @@ public class Frontend : bhlBaseVisitor<object>
     return p;
   }
   
-  public static FrontendResult ProcessStream(Module module, Stream src, TypeSystem ts, ModuleRegistry mr, bool decls_only = false)
+  public static FrontendResult ProcessStream(Module module, Stream src, Types ts, ModuleRegistry mr, bool decls_only = false)
   {
     var p = Stream2Parser(module.file_path, src);
 
@@ -144,7 +144,7 @@ public class Frontend : bhlBaseVisitor<object>
     return ProcessParsed(module, parsed, ts, mr, decls_only);
   }
 
-  public static FrontendResult ProcessParsed(Module module, ANTLR_Result p, TypeSystem ts, ModuleRegistry mr, bool decls_only = false)
+  public static FrontendResult ProcessParsed(Module module, ANTLR_Result p, Types ts, ModuleRegistry mr, bool decls_only = false)
   {
     //var sw1 = System.Diagnostics.Stopwatch.StartNew();
     var f = new Frontend(module, p.tokens, ts, mr, decls_only);
@@ -154,7 +154,7 @@ public class Frontend : bhlBaseVisitor<object>
     return new FrontendResult(module, ast);
   }
 
-  public Frontend(Module module, ITokenStream tokens, TypeSystem types, ModuleRegistry mreg, bool decls_only = false)
+  public Frontend(Module module, ITokenStream tokens, Types types, ModuleRegistry mreg, bool decls_only = false)
   {
     this.module = module;
     types.AddSource(module.scope);
@@ -287,7 +287,7 @@ public class Frontend : bhlBaseVisitor<object>
     var exp = ctx.callExp(); 
     Visit(exp);
     var eval_type = Wrap(exp).eval_type;
-    if(eval_type != null && eval_type != TypeSystem.Void)
+    if(eval_type != null && eval_type != Types.Void)
     {
       var tuple = eval_type as TupleType;
       if(tuple != null)
@@ -530,7 +530,7 @@ public class Frontend : bhlBaseVisitor<object>
     var arr_exp = arracc.exp();
     Visit(arr_exp);
 
-    if(Wrap(arr_exp).eval_type != TypeSystem.Int)
+    if(Wrap(arr_exp).eval_type != Types.Int)
       FireError(arr_exp, "array index expression is not of type int");
 
     type = arr_type.item_type.Get();
@@ -862,7 +862,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //convenience special case
     if(parsed == null)
-      tp = TypeSystem.Void;
+      tp = Types.Void;
     else if(parsed.type().Length > 1)
     {
       var tuple = new TupleType();
@@ -932,7 +932,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(funcLambda.funcBlock());
     PopAST();
 
-    if(tp.Get() != TypeSystem.Void && !return_found.Contains(lmb_symb))
+    if(tp.Get() != Types.Void && !return_found.Contains(lmb_symb))
       FireError(funcLambda.funcBlock(), "matching 'return' statement not found");
 
     PopFuncDecl();
@@ -1121,7 +1121,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.typeid().type());
 
-    Wrap(ctx).eval_type = TypeSystem.Int;
+    Wrap(ctx).eval_type = Types.Int;
 
     var ast = AST_Util.New_Literal(EnumLiteral.NUM);
     ast.nval = Hash.CRC28(tp.name);
@@ -1255,7 +1255,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(vlhs == null)
       FireError(ctx.NAME(), "symbol not resolved");
 
-    if(!TypeSystem.IsRtlOpCompatible(vlhs.type.Get()))
+    if(!Types.IsRtlOpCompatible(vlhs.type.Get()))
       FireError(ctx.NAME(), "incompatible types");
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
@@ -1310,7 +1310,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     bool is_negative = ctx.decrementOperator() != null;
     
-    if(!TypeSystem.IsRtlOpCompatible(vs.type.Get())) // only numeric types
+    if(!Types.IsRtlOpCompatible(vs.type.Get())) // only numeric types
     {
       FireError(v,
         $"operator {(is_negative ? "--" : "++")} is not supported for {vs.type.name} type"
@@ -1322,7 +1322,7 @@ public class Frontend : bhlBaseVisitor<object>
     else
       ast.AddChild(AST_Util.New_Inc(vs));
     
-    Wrap(ctx).eval_type = TypeSystem.Void;
+    Wrap(ctx).eval_type = Types.Void;
     PeekAST().AddChild(ast);
   }
   
@@ -1511,17 +1511,17 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(int_num != null)
     {
-      Wrap(ctx).eval_type = TypeSystem.Int;
+      Wrap(ctx).eval_type = Types.Int;
       ast.nval = double.Parse(int_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(flt_num != null)
     {
-      Wrap(ctx).eval_type = TypeSystem.Float;
+      Wrap(ctx).eval_type = Types.Float;
       ast.nval = double.Parse(flt_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(hex_num != null)
     {
-      Wrap(ctx).eval_type = TypeSystem.Int;
+      Wrap(ctx).eval_type = Types.Int;
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
     }
 
@@ -1532,7 +1532,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
   {
-    Wrap(ctx).eval_type = TypeSystem.Bool;
+    Wrap(ctx).eval_type = Types.Bool;
 
     var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
     ast.nval = 0;
@@ -1543,7 +1543,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
   {
-    Wrap(ctx).eval_type = TypeSystem.Null;
+    Wrap(ctx).eval_type = Types.Null;
 
     var ast = AST_Util.New_Literal(EnumLiteral.NIL);
     PeekAST().AddChild(ast);
@@ -1553,7 +1553,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralTrue(bhlParser.ExpLiteralTrueContext ctx)
   {
-    Wrap(ctx).eval_type = TypeSystem.Bool;
+    Wrap(ctx).eval_type = Types.Bool;
 
     var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
     ast.nval = 1;
@@ -1564,7 +1564,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
   {
-    Wrap(ctx).eval_type = TypeSystem.String;
+    Wrap(ctx).eval_type = Types.String;
 
     var ast = AST_Util.New_Literal(EnumLiteral.STR);
     ast.sval = ctx.@string().NORMALSTRING().GetText();
@@ -1654,7 +1654,7 @@ public class Frontend : bhlBaseVisitor<object>
       var fret_type = func_symb.GetReturnType();
 
       //NOTE: immediately adding return node in case of void return type
-      if(fret_type == TypeSystem.Void)
+      if(fret_type == Types.Void)
         PeekAST().AddChild(ret_ast);
       else
         PushAST(ret_ast);
@@ -1680,7 +1680,7 @@ public class Frontend : bhlBaseVisitor<object>
         //      where exp has void type, in this case
         //      we simply ignore exp_node since return will take
         //      effect right before it
-        if(Wrap(exp_item).eval_type != TypeSystem.Void)
+        if(Wrap(exp_item).eval_type != Types.Void)
           ret_ast.num = fmret_type != null ? fmret_type.Count : 1;
 
         types.CheckAssign(func_symb.parsed, Wrap(exp_item));
@@ -1717,7 +1717,7 @@ public class Frontend : bhlBaseVisitor<object>
         ret_ast.num = fmret_type.Count;
       }
 
-      if(fret_type != TypeSystem.Void)
+      if(fret_type != Types.Void)
       {
         PopAST();
         PeekAST().AddChild(ret_ast);
@@ -1725,9 +1725,9 @@ public class Frontend : bhlBaseVisitor<object>
     }
     else
     {
-      if(func_symb.GetReturnType() != TypeSystem.Void)
+      if(func_symb.GetReturnType() != Types.Void)
         FireError(ctx, "return value is missing");
-      Wrap(ctx).eval_type = TypeSystem.Void;
+      Wrap(ctx).eval_type = Types.Void;
       PeekAST().AddChild(ret_ast);
     }
 
@@ -1893,7 +1893,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(context.funcBlock());
       PopAST();
 
-      if(tp.Get() != TypeSystem.Void && !return_found.Contains(func_symb))
+      if(tp.Get() != Types.Void && !return_found.Contains(func_symb))
         FireError(context.NAME(), "matching 'return' statement not found");
     }
     
@@ -2272,7 +2272,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(main.exp());
     PopAST();
 
-    types.CheckAssign(TypeSystem.Bool, Wrap(main.exp()));
+    types.CheckAssign(Types.Bool, Wrap(main.exp()));
 
     var func_symb = PeekFuncDecl();
     bool seen_return = return_found.Contains(func_symb);
@@ -2325,7 +2325,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(item.exp());
       PopAST();
 
-      types.CheckAssign(TypeSystem.Bool, Wrap(item.exp()));
+      types.CheckAssign(Types.Bool, Wrap(item.exp()));
 
       seen_return = return_found.Contains(func_symb);
       return_found.Remove(func_symb);
@@ -2371,7 +2371,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(exp_0);
     PopAST();
 
-    types.CheckAssign(TypeSystem.Bool, Wrap(exp_0));
+    types.CheckAssign(Types.Bool, Wrap(exp_0));
 
     ast.AddChild(condition);
 
@@ -2408,7 +2408,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    types.CheckAssign(TypeSystem.Bool, Wrap(ctx.exp()));
+    types.CheckAssign(Types.Bool, Wrap(ctx.exp()));
 
     ast.AddChild(cond);
 
@@ -2471,7 +2471,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(for_cond);
     PopAST();
 
-    types.CheckAssign(TypeSystem.Bool, Wrap(for_cond.exp()));
+    types.CheckAssign(Types.Bool, Wrap(for_cond.exp()));
 
     ast.AddChild(cond);
 
@@ -2535,7 +2535,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    types.CheckAssign(TypeSystem.Bool, Wrap(ctx.exp()));
+    types.CheckAssign(Types.Bool, Wrap(ctx.exp()));
 
     ast.AddChild(cond);
 
@@ -2789,7 +2789,7 @@ public class ModuleRegistry
     modules.Add(m.file_path, m);
   }
 
-  public Module ImportModule(Module curr_module, TypeSystem ts, string path)
+  public Module ImportModule(Module curr_module, Types ts, string path)
   {
     string full_path;
     string norm_path;

@@ -14,7 +14,7 @@ public interface IType
 // TypeProxy is used instead of IType
 public struct TypeProxy : IMarshallable
 {
-  TypeSystem types;
+  Types types;
   IType type;
   string _name;
   public string name 
@@ -23,7 +23,7 @@ public struct TypeProxy : IMarshallable
     private set { _name = value; }
   }
 
-  public TypeProxy(TypeSystem ts, string name)
+  public TypeProxy(Types ts, string name)
   {
     this.types = ts;
     type = null;
@@ -257,7 +257,7 @@ public class FuncSignature : IType, IMarshallableGeneric
   }
 }
 
-public class TypeSystem
+public class Types
 {
   static public BoolSymbol Bool = new BoolSymbol();
   static public StringSymbol String = new StringSymbol();
@@ -334,7 +334,7 @@ public class TypeSystem
 
   List<Scope> sources = new List<Scope>();
 
-  public TypeSystem()
+  public Types()
   {
     InitBuiltins(globs);
 

@@ -7,7 +7,7 @@ namespace bhl {
 
 public class UserBindings
 {
-  public virtual void Register(TypeSystem ts) {}
+  public virtual void Register(Types ts) {}
 }
 
 public class EmptyUserBindings : UserBindings {}
@@ -34,7 +34,7 @@ public class ModuleImporter : IModuleImporter
 {
   public const byte COMPILE_FMT = 2;
 
-  TypeSystem types;
+  Types types;
   Stream source;
   marshall.MsgPackDataReader reader;
   Lz4DecoderStream decoder = new Lz4DecoderStream();
@@ -50,7 +50,7 @@ public class ModuleImporter : IModuleImporter
 
   Dictionary<string, Entry> name2entry = new Dictionary<string, Entry>();
 
-  public ModuleImporter(TypeSystem types, Stream source)
+  public ModuleImporter(Types types, Stream source)
   {
     this.types = types;
     Load(source);

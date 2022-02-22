@@ -434,7 +434,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindMin(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -454,7 +454,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
       var fn = new FuncSymbolNative("func_with_def", ts.Type("float"), 1,
@@ -496,7 +496,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
       var fn = new FuncSymbolNative("func_with_def", ts.Type("float"), 1,
@@ -533,7 +533,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
       var fn = new FuncSymbolNative("func_with_def", ts.Type("float"), 1,
@@ -568,7 +568,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
       var fn = new FuncSymbolNative("func_with_def", ts.Type("float"), 2,
@@ -581,8 +581,8 @@ public class BHL_TestVM : BHL_TestBase
 
             return null;
           },
-          new FuncArgSymbol("a", ts.Type("int")),
-          new FuncArgSymbol("b", ts.Type("int"))
+          new FuncArgSymbol("a", Types.Int),
+          new FuncArgSymbol("b", Types.Int)
         );
 
       ts.globs.Define(fn);
@@ -631,7 +631,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
       var fn = new FuncSymbolNative("foo", ts.Type("float"),
@@ -744,7 +744,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     
@@ -856,7 +856,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -910,7 +910,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -1169,7 +1169,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
       var fn = new FuncSymbolNative("func_mult", ts.TypeTuple("float", "string"),
@@ -1221,7 +1221,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
       var fn = new FuncSymbolNative("func_mult", ts.TypeTuple("float","string","int","float"),
@@ -1317,7 +1317,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
 
@@ -3020,7 +3020,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     var fn = BindTrace(ts, log);
 
@@ -3053,9 +3053,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
-    var fn = new FuncSymbolNative("answer42", ts.Type("int"),
+    var fn = new FuncSymbolNative("answer42", Types.Int,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.stack.Push(Val.NewNum(frm.vm, 42));
           return null;
@@ -3078,7 +3078,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3188,7 +3188,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3385,7 +3385,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3412,7 +3412,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3439,7 +3439,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3464,7 +3464,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3492,7 +3492,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3812,7 +3812,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3841,7 +3841,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -3893,7 +3893,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
@@ -5162,7 +5162,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5180,7 +5180,6 @@ public class BHL_TestVM : BHL_TestBase
 
     func test()
     {
-      //TODO:
       []func []string() ptr = [
         func []string () { return [""a"",""b""] },
         func []string () { return [""c"",""d""] }
@@ -5189,7 +5188,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5218,7 +5217,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5248,7 +5247,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5276,7 +5275,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5412,7 +5411,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5483,7 +5482,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5510,7 +5509,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5541,7 +5540,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5676,7 +5675,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     {
@@ -5782,7 +5781,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5815,7 +5814,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5837,11 +5836,11 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     {
-      var fn = new FuncSymbolNative("foo", ts.Type("void"),
+      var fn = new FuncSymbolNative("foo", Types.Void,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS _)
           {
             log.Append("FOO");
@@ -5875,7 +5874,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5912,7 +5911,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -5958,9 +5957,9 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
-    var fn = new FuncSymbolNative("native", ts.Type("void"),
+    var fn = new FuncSymbolNative("native", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           log.Append("HERE");
           return null;
@@ -6006,10 +6005,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     {
-      var fn = new FuncSymbolNative("yield_and_trace", ts.Type("void"),
+      var fn = new FuncSymbolNative("yield_and_trace", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var inst = CoroutinePool.New<TraceAfterYield>(frm.vm);
@@ -6051,7 +6050,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -6078,7 +6077,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -6110,7 +6109,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -6145,7 +6144,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -6182,7 +6181,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -6217,7 +6216,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -6257,7 +6256,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -6311,7 +6310,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -6920,10 +6919,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_with_ref", ts.Type("void"),
+      var fn = new FuncSymbolNative("func_with_ref", Types.Void,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = frm.stack.Pop();
@@ -7357,7 +7356,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -8223,7 +8222,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -8255,7 +8254,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -8283,7 +8282,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
 
@@ -8303,7 +8302,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var c = Compile(bhl, ts);
 
     var expected = 
@@ -8333,7 +8332,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     var fn = BindWaitTicks(ts, log);
 
@@ -8367,7 +8366,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var vm = MakeVM(bhl, ts);
     vm.Start("test");
     AssertTrue(vm.Tick());
@@ -8388,7 +8387,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
@@ -8449,7 +8448,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var c = Compile(bhl, ts);
 
     var expected = 
@@ -8496,7 +8495,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var c = Compile(bhl, ts);
 
     var expected = 
@@ -8552,7 +8551,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
@@ -8585,7 +8584,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
@@ -8619,7 +8618,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
 
@@ -8648,7 +8647,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var vm = MakeVM(bhl, ts);
     vm.Start("test");
@@ -8677,7 +8676,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
@@ -8712,7 +8711,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
 
@@ -8755,7 +8754,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
 
@@ -8783,7 +8782,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var c = Compile(bhl, ts);
 
     var vm = MakeVM(c);
@@ -8822,7 +8821,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -8859,7 +8858,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -8954,7 +8953,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -8998,7 +8997,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -9023,10 +9022,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("foo", ts.Type("int"),
+      var fn = new FuncSymbolNative("foo", Types.Int,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             frm.stack.PopRelease();
             frm.stack.Push(Val.NewNum(frm.vm, 42));
@@ -9038,13 +9037,13 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     {
-      var fn = new FuncSymbolNative("bar_fail", ts.Type("int"),
+      var fn = new FuncSymbolNative("bar_fail", Types.Int,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             frm.stack.PopRelease();
             status = BHS.FAILURE;
             return null;
           },
-          new FuncArgSymbol("n", ts.Type("int"))
+          new FuncArgSymbol("n", Types.Int)
         );
       ts.globs.Define(fn);
     }
@@ -9132,14 +9131,14 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("hey", ts.Type("void"),
+      var fn = new FuncSymbolNative("hey", Types.Void,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           { return null; },
           new FuncArgSymbol("s", ts.Type("string")),
-          new FuncArgSymbol("i", ts.Type("int"))
+          new FuncArgSymbol("i", Types.Int)
         );
       ts.globs.Define(fn);
     }
@@ -9242,7 +9241,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -9268,7 +9267,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -9329,7 +9328,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -9341,7 +9340,7 @@ public class BHL_TestVM : BHL_TestBase
           fn_ptr.Release();
           return null;
         },
-        new FuncArgSymbol("fn", ts.TypeFunc(ts.TypeArr("int")))
+        new FuncArgSymbol("fn", ts.TypeFunc(ts.TypeArr(Types.Int)))
       );
 
       ts.globs.Define(fn);
@@ -9376,7 +9375,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
     var log = new StringBuilder();
@@ -9409,7 +9408,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
     var log = new StringBuilder();
@@ -9459,7 +9458,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
     var log = new StringBuilder();
@@ -9514,7 +9513,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
     var log = new StringBuilder();
@@ -9571,7 +9570,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
     var log = new StringBuilder();
@@ -9622,7 +9621,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -9671,7 +9670,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindColor(ts);
@@ -9715,7 +9714,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -9762,7 +9761,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -9807,7 +9806,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -9845,7 +9844,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -9910,7 +9909,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -9936,13 +9935,13 @@ public class BHL_TestVM : BHL_TestBase
       }
 
       {
-        var m = new FuncSymbolNative("ret_int", ts.Type("int"),
+        var m = new FuncSymbolNative("ret_int", Types.Int,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             return CoroutinePool.New<Bar_ret_int>(frm.vm);
           },
-          new FuncArgSymbol("val", ts.Type("int")),
-          new FuncArgSymbol("ticks", ts.Type("int"))
+          new FuncArgSymbol("val", Types.Int),
+          new FuncArgSymbol("ticks", Types.Int)
         );
         cl.Define(m);
       }
@@ -9968,7 +9967,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     var fn = BindTrace(ts, log);
 
@@ -10014,7 +10013,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10050,7 +10049,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10081,7 +10080,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10115,7 +10114,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10153,7 +10152,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10194,7 +10193,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10217,7 +10216,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     AssertError<Exception>(
       delegate() { 
@@ -10242,7 +10241,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     Compile(bhl, ts);
   }
@@ -10265,7 +10264,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10296,7 +10295,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10339,7 +10338,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10368,7 +10367,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10404,7 +10403,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10438,7 +10437,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10474,7 +10473,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10617,7 +10616,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -10993,7 +10992,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11028,7 +11027,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11060,7 +11059,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11102,7 +11101,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11136,7 +11135,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11168,7 +11167,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11200,7 +11199,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11232,7 +11231,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11281,7 +11280,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11316,7 +11315,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11350,7 +11349,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11400,7 +11399,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11645,7 +11644,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11698,7 +11697,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11723,7 +11722,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var c = Compile(bhl, ts);
 
     var expected = 
@@ -11760,7 +11759,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindFoo(ts);
 
     AssertError<Exception>(
@@ -11980,7 +11979,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     var fn = BindTrace(ts, log);
     var c = Compile(bhl, ts);
@@ -13110,7 +13109,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     AssertError<Exception>(
@@ -13177,7 +13176,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     var fn = BindTrace(ts, log);
     var c = Compile(bhl, ts);
@@ -13231,7 +13230,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -13250,7 +13249,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -13269,7 +13268,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -13287,7 +13286,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     AssertError<Exception>(
@@ -13308,7 +13307,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
 
@@ -13332,7 +13331,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -13353,7 +13352,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -13375,7 +13374,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -13395,7 +13394,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -13424,7 +13423,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -13471,7 +13470,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     var fn = BindTrace(ts, log);
     var c = Compile(bhl, ts);
@@ -13539,7 +13538,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     var c = Compile(bhl, ts);
@@ -13594,7 +13593,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13617,7 +13616,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13640,7 +13639,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13663,7 +13662,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13686,7 +13685,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColorAlpha(ts);
 
@@ -13736,7 +13735,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13759,7 +13758,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13782,7 +13781,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13802,7 +13801,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13822,7 +13821,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
     var vm = MakeVM(bhl, ts);
@@ -13843,7 +13842,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColorAlpha(ts);
     var vm = MakeVM(bhl, ts);
@@ -13869,7 +13868,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColorAlpha(ts);
     var vm = MakeVM(bhl, ts);
@@ -13894,7 +13893,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColorAlpha(ts);
     var vm = MakeVM(bhl, ts);
@@ -13915,7 +13914,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColorAlpha(ts);
     var vm = MakeVM(bhl, ts);
@@ -13934,7 +13933,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -13961,7 +13960,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindMasterStruct(ts);
     var vm = MakeVM(bhl, ts);
@@ -13984,7 +13983,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindMasterStruct(ts);
     var vm = MakeVM(bhl, ts);
@@ -14003,7 +14002,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var log = new StringBuilder();
     BindTrace(ts, log);
@@ -14026,7 +14025,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var log = new StringBuilder();
     BindTrace(ts, log);
@@ -14051,7 +14050,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindBar(ts);
     var c = Compile(bhl, ts);
 
@@ -14091,7 +14090,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     var fn = BindTrace(ts, log);
     BindBar(ts);
@@ -14152,7 +14151,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -14173,7 +14172,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -14202,7 +14201,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
 
@@ -14248,7 +14247,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindColor(ts);
@@ -14287,7 +14286,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindIntStruct(ts);
@@ -14314,7 +14313,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStringClass(ts);
@@ -14341,7 +14340,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStringClass(ts);
@@ -14414,7 +14413,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindColor(ts);
@@ -14472,7 +14471,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindColor(ts);
@@ -14497,7 +14496,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindColor(ts);
@@ -14532,7 +14531,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14559,7 +14558,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14586,7 +14585,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14618,7 +14617,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14643,7 +14642,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14668,7 +14667,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14691,7 +14690,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14714,7 +14713,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14737,7 +14736,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14761,7 +14760,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14786,7 +14785,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14813,7 +14812,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14840,7 +14839,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14868,7 +14867,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     AssertError<Exception>(
       delegate() { 
@@ -14892,7 +14891,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -14917,7 +14916,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15007,7 +15006,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15031,7 +15030,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindColor(ts);
@@ -15057,7 +15056,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15080,7 +15079,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15108,7 +15107,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15135,7 +15134,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15165,7 +15164,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15193,7 +15192,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15219,7 +15218,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15244,7 +15243,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15398,7 +15397,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -15422,7 +15421,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -15447,7 +15446,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -15471,7 +15470,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -15495,7 +15494,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -15522,7 +15521,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColorAlpha(ts);
 
@@ -15544,7 +15543,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -15577,7 +15576,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -15613,7 +15612,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
 
@@ -15666,7 +15665,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -15691,7 +15690,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindColor(ts);
@@ -15719,7 +15718,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindColor(ts);
@@ -15748,7 +15747,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15783,7 +15782,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15818,7 +15817,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -15847,7 +15846,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -15874,7 +15873,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -15901,7 +15900,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -15928,7 +15927,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -15968,7 +15967,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     BindColor(ts);
 
     var vm = MakeVM(bhl, ts);
@@ -15990,7 +15989,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     var fn = BindTrace(ts, log);
     BindBar(ts);
@@ -16054,7 +16053,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16080,7 +16079,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindColor(ts);
 
@@ -16139,7 +16138,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16164,7 +16163,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16189,7 +16188,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16214,7 +16213,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16239,7 +16238,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16264,7 +16263,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16289,7 +16288,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16314,7 +16313,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16338,7 +16337,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16363,7 +16362,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16388,7 +16387,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16413,7 +16412,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16438,7 +16437,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16462,7 +16461,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     BindColor(ts);
 
@@ -16488,7 +16487,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     var cl = BindColor(ts);
     var op = new FuncSymbolNative("+", ts.Type("Color"),
@@ -16530,7 +16529,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     var cl = BindColor(ts);
     var op = new FuncSymbolNative("*", ts.Type("Color"),
@@ -16573,7 +16572,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     var cl = BindColor(ts);
     {
@@ -16644,7 +16643,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     
@@ -16682,7 +16681,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     
     var cl = BindColor(ts);
     var op = new FuncSymbolNative("*", ts.Type("Color"), null,
@@ -16698,7 +16697,7 @@ public class BHL_TestVM : BHL_TestBase
     );
   }
 
-  void BindEnum(TypeSystem ts)
+  void BindEnum(Types ts)
   {
     var en = new EnumSymbol("EnumState");
     ts.globs.Define(en);
@@ -16718,7 +16717,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindEnum(ts);
 
@@ -16739,7 +16738,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindEnum(ts);
 
@@ -16760,7 +16759,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindEnum(ts);
 
@@ -16781,7 +16780,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindEnum(ts);
 
@@ -16802,7 +16801,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindEnum(ts);
 
@@ -16823,7 +16822,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindEnum(ts);
 
@@ -16847,7 +16846,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindEnum(ts);
 
@@ -16872,7 +16871,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     BindEnum(ts);
 
@@ -17102,7 +17101,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     AssertError<Exception>(
       delegate() { 
         Compile(bhl, ts);
@@ -17206,7 +17205,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -17250,7 +17249,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -17295,7 +17294,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -17341,7 +17340,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -17390,7 +17389,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -17446,7 +17445,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -17600,7 +17599,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var importer = new ModuleImporter(ts, CompileFiles(files));
 
     AssertEqual(importer.Import("bhl1"), 
@@ -17670,7 +17669,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -17723,7 +17722,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var importer = new ModuleImporter(ts, CompileFiles(files));
 
     var vm = new VM(ts, importer);
@@ -17792,7 +17791,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var importer = new ModuleImporter(ts, CompileFiles(files));
 
     var vm = new VM(ts, importer);
@@ -17857,7 +17856,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var importer = new ModuleImporter(ts, CompileFiles(files));
 
     var vm = new VM(ts, importer);
@@ -17891,7 +17890,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var importer = new ModuleImporter(ts, CompileFiles(files));
 
     var vm = new VM(ts, importer);
@@ -17934,7 +17933,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var importer = new ModuleImporter(ts, CompileFiles(files));
 
     var vm = new VM(ts, importer);
@@ -18010,7 +18009,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var importer = new ModuleImporter(ts, CompileFiles(files));
 
     var vm = new VM(ts, importer);
@@ -18057,7 +18056,7 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var importer = new ModuleImporter(ts, CompileFiles(files));
 
     var vm = new VM(ts, importer);
@@ -18123,7 +18122,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStartScriptInMgr(ts);
@@ -18179,7 +18178,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStartScriptInMgr(ts);
@@ -18232,7 +18231,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStartScriptInMgr(ts);
@@ -18276,7 +18275,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStartScriptInMgr(ts);
@@ -18315,13 +18314,13 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStartScriptInMgr(ts);
 
     {
-      var fn = new FuncSymbolNative("say_here", ts.Type("void"),
+      var fn = new FuncSymbolNative("say_here", Types.Void,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             log.Append("HERE;");
@@ -18371,7 +18370,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStartScriptInMgr(ts);
@@ -18415,7 +18414,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStartScriptInMgr(ts);
@@ -18463,7 +18462,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
     BindStartScriptInMgr(ts);
@@ -18522,10 +18521,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -18600,10 +18599,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -18662,7 +18661,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     CleanTestDir();
     var files = new List<string>();
@@ -18732,10 +18731,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
     {
-      var fn = new FuncSymbolNative("throw", ts.Type("void"),
+      var fn = new FuncSymbolNative("throw", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           //emulating null reference
           frm = null;
@@ -18822,10 +18821,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -18901,10 +18900,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -18979,10 +18978,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -19063,10 +19062,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -19151,10 +19150,10 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var trace = new List<VM.TraceItem>();
     {
-      var fn = new FuncSymbolNative("record_callstack", ts.Type("void"),
+      var fn = new FuncSymbolNative("record_callstack", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           frm.fb.GetStackTrace(trace); 
           return null;
@@ -19472,7 +19471,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
     var log = new StringBuilder();
 
     BindTrace(ts, log);
@@ -19650,7 +19649,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19671,7 +19670,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19694,7 +19693,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19716,7 +19715,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19739,7 +19738,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19761,7 +19760,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19791,7 +19790,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19814,7 +19813,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19838,7 +19837,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19866,7 +19865,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19893,7 +19892,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19928,7 +19927,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new TypeSystem();
+    var ts = new Types();
 
     var logs = new StringBuilder();
     BindRefC(ts, logs);
@@ -19945,28 +19944,28 @@ public class BHL_TestVM : BHL_TestBase
 
     var s = new MemoryStream();
     {
-      var types = new TypeSystem();
+      var types = new Types();
 
       var ms = new ModuleScope("module", types.globs);
       types.AddSource(ms);
 
-      ms.Define(new VariableSymbol("foo", TypeSystem.Int));
+      ms.Define(new VariableSymbol("foo", Types.Int));
 
-      ms.Define(new VariableSymbol("bar", TypeSystem.String));
+      ms.Define(new VariableSymbol("bar", Types.String));
 
-      ms.Define(new VariableSymbol("wow", types.TypeArr(TypeSystem.Bool)));
+      ms.Define(new VariableSymbol("wow", types.TypeArr(Types.Bool)));
 
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple(TypeSystem.Int,TypeSystem.Float), types.TypeRef(TypeSystem.Int), TypeSystem.String), "Test", 1, 155));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple(Types.Int,Types.Float), types.TypeRef(Types.Int), Types.String), "Test", 1, 155));
 
-      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr(TypeSystem.String), types.Type("Bar")), "Make", 3, 15));
+      ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr(Types.String), types.Type("Bar")), "Make", 3, 15));
 
       var Foo = new ClassSymbolScript("Foo", null);
-      Foo.Define(new FieldSymbolScript("Int", TypeSystem.Int));
-      Foo.Define(new FuncSymbolScript(new FuncSignature(TypeSystem.Void), "Hey", 0, 3));
+      Foo.Define(new FieldSymbolScript("Int", Types.Int));
+      Foo.Define(new FuncSymbolScript(new FuncSignature(Types.Void), "Hey", 0, 3));
       ms.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", null, Foo);
-      Bar.Define(new FieldSymbolScript("Float", TypeSystem.Float));
-      Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple(TypeSystem.Bool,TypeSystem.Bool), TypeSystem.Int), "What", 1, 1));
+      Bar.Define(new FieldSymbolScript("Float", Types.Float));
+      Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ms.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");
@@ -19978,7 +19977,7 @@ public class BHL_TestVM : BHL_TestBase
     }
 
     {
-      var types = new TypeSystem();
+      var types = new Types();
       var factory = new SymbolFactory(types);
 
       var ms = new ModuleScope(types.globs);
@@ -19993,27 +19992,27 @@ public class BHL_TestVM : BHL_TestBase
 
       var foo = (VariableSymbol)ms.Resolve("foo");
       AssertEqual(foo.name, "foo");
-      AssertEqual(foo.type.Get(), TypeSystem.Int);
+      AssertEqual(foo.type.Get(), Types.Int);
       AssertEqual(foo.scope, ms);
       AssertEqual(foo.scope_idx, 0);
 
       var bar = (VariableSymbol)ms.Resolve("bar");
       AssertEqual(bar.name, "bar");
-      AssertEqual(bar.type.Get(), TypeSystem.String);
+      AssertEqual(bar.type.Get(), Types.String);
       AssertEqual(bar.scope, ms);
       AssertEqual(bar.scope_idx, 1);
 
       var wow = (VariableSymbol)ms.Resolve("wow");
       AssertEqual(wow.name, "wow");
-      AssertEqual(wow.type.Get().GetName(), types.TypeArr("string").Get().GetName());
-      AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), TypeSystem.Bool);
+      AssertEqual(wow.type.Get().GetName(), types.TypeArr(Types.String).Get().GetName());
+      AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), Types.Bool);
       AssertEqual(wow.scope, ms);
       AssertEqual(wow.scope_idx, 2);
 
       var Test = (FuncSymbolScript)ms.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(Test.scope, ms);
-      AssertEqual(types.TypeFunc(types.TypeTuple("int", "float"), types.TypeRef("int"), "string").name, Test.GetSignature().name);
+      AssertEqual(types.TypeFunc(types.TypeTuple(Types.Int, Types.Float), types.TypeRef(Types.Int), Types.String).name, Test.GetSignature().name);
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
@@ -20024,7 +20023,7 @@ public class BHL_TestVM : BHL_TestBase
       AssertEqual(Make.name, "Make");
       AssertEqual(Make.scope, ms);
       AssertEqual(1, Make.GetSignature().arg_types.Count);
-      AssertEqual(types.TypeArr("string").Get().GetName(), Make.GetReturnType().GetName());
+      AssertEqual(types.TypeArr(Types.String).Get().GetName(), Make.GetReturnType().GetName());
       AssertEqual(types.Type("Bar").Get(), Make.GetSignature().arg_types[0].Get());
       AssertEqual(3, Make.default_args_num);
       AssertEqual(0, Make.local_vars_num);
@@ -20040,12 +20039,12 @@ public class BHL_TestVM : BHL_TestBase
       var Foo_Int = Foo.Resolve("Int") as FieldSymbolScript;
       AssertEqual(Foo_Int.scope, Foo);
       AssertEqual(Foo_Int.name, "Int");
-      AssertEqual(Foo_Int.type.Get(), TypeSystem.Int);
+      AssertEqual(Foo_Int.type.Get(), Types.Int);
       AssertEqual(Foo_Int.scope_idx, 0);
       var Foo_Hey = Foo.Resolve("Hey") as FuncSymbolScript;
       AssertEqual(Foo_Hey.scope, Foo);
       AssertEqual(Foo_Hey.name, "Hey");
-      AssertEqual(Foo_Hey.GetReturnType(), TypeSystem.Void);
+      AssertEqual(Foo_Hey.GetReturnType(), Types.Void);
       AssertEqual(0, Foo_Hey.default_args_num);
       AssertEqual(0, Foo_Hey.local_vars_num);
       AssertEqual(3, Foo_Hey.ip_addr);
@@ -20059,12 +20058,12 @@ public class BHL_TestVM : BHL_TestBase
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
       AssertEqual(Bar_Float.scope, Bar);
       AssertEqual(Bar_Float.name, "Float");
-      AssertEqual(Bar_Float.type.Get(), TypeSystem.Float);
+      AssertEqual(Bar_Float.type.Get(), Types.Float);
       AssertEqual(Bar_Float.scope_idx, 2);
       var Bar_What = Bar.Resolve("What") as FuncSymbolScript;
       AssertEqual(Bar_What.name, "What");
-      AssertEqual(Bar_What.GetReturnType().GetName(), types.TypeTuple("bool", "bool").Get().GetName());
-      AssertEqual(Bar_What.GetSignature().arg_types[0].Get(), TypeSystem.Int);
+      AssertEqual(Bar_What.GetReturnType().GetName(), types.TypeTuple(Types.Bool, Types.Bool).Get().GetName());
+      AssertEqual(Bar_What.GetSignature().arg_types[0].Get(), Types.Int);
       AssertEqual(1, Bar_What.default_args_num);
       AssertEqual(0, Bar_What.local_vars_num);
       AssertEqual(1, Bar_What.ip_addr);
@@ -20123,10 +20122,10 @@ public class BHL_TestVM : BHL_TestBase
 
   ///////////////////////////////////////
 
-  Stream CompileFiles(List<string> files, TypeSystem ts = null)
+  Stream CompileFiles(List<string> files, Types ts = null)
   {
     if(ts == null)
-      ts = new TypeSystem();
+      ts = new Types();
     //NOTE: we don't want to affect the original ts
     var ts_copy = ts.Clone();
 
@@ -20148,10 +20147,10 @@ public class BHL_TestVM : BHL_TestBase
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
 
-  ModuleCompiler Compile(string bhl, TypeSystem ts = null, bool show_ast = false, bool show_bytes = false)
+  ModuleCompiler Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
   {
     if(ts == null)
-      ts = new TypeSystem();
+      ts = new Types();
     //NOTE: we don't want to affect the original ts
     var ts_copy = ts.Clone();
 
@@ -20424,7 +20423,7 @@ public class BHL_TestVM : BHL_TestBase
     return vm;
   }
 
-  VM MakeVM(string bhl, TypeSystem ts = null, bool show_ast = false, bool show_bytes = false)
+  VM MakeVM(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
   {
     return MakeVM(Compile(bhl, ts, show_ast: show_ast, show_bytes: show_bytes));
   }
@@ -20464,7 +20463,7 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrAddIdx {
     get {
-      var ts = new TypeSystem();
+      var ts = new Types();
       var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("Add")).scope_idx;
     }
@@ -20472,7 +20471,7 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrSetIdx {
     get {
-      var ts = new TypeSystem();
+      var ts = new Types();
       var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("SetAt")).scope_idx;
     }
@@ -20480,7 +20479,7 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrRemoveIdx {
     get {
-      var ts = new TypeSystem();
+      var ts = new Types();
       var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("RemoveAt")).scope_idx;
     }
@@ -20488,7 +20487,7 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrCountIdx {
     get {
-      var ts = new TypeSystem();
+      var ts = new Types();
       var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("Count")).scope_idx;
     }
@@ -20496,7 +20495,7 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrAtIdx {
     get {
-      var ts = new TypeSystem();
+      var ts = new Types();
       var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("At")).scope_idx;
     }
@@ -20504,15 +20503,15 @@ public class BHL_TestVM : BHL_TestBase
 
   public static int ArrAddInplaceIdx {
     get {
-      var ts = new TypeSystem();
+      var ts = new Types();
       var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("$AddInplace")).scope_idx;
     }
   }
 
-  FuncSymbolNative BindTrace(TypeSystem ts, StringBuilder log)
+  FuncSymbolNative BindTrace(Types ts, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("trace", ts.Type("void"),
+    var fn = new FuncSymbolNative("trace", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           string str = frm.stack.PopRelease().str;
           log.Append(str);
@@ -20525,10 +20524,10 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   //simple console outputting version
-  void BindLog(TypeSystem ts)
+  void BindLog(Types ts)
   {
     {
-      var fn = new FuncSymbolNative("log", ts.Type("void"),
+      var fn = new FuncSymbolNative("log", Types.Void,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             string str = frm.stack.PopRelease().str;
             Console.WriteLine(str); 
@@ -20540,7 +20539,7 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  void BindMin(TypeSystem ts)
+  void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative("min", ts.Type("float"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
@@ -20581,7 +20580,7 @@ public class BHL_TestVM : BHL_TestBase
     public Color c = new Color();
   }
 
-  ClassSymbolNative BindColor(TypeSystem ts)
+  ClassSymbolNative BindColor(Types ts)
   {
     var cl = new ClassSymbolNative("Color", null,
       delegate(VM.Frame frm, ref Val v) 
@@ -20687,7 +20686,7 @@ public class BHL_TestVM : BHL_TestBase
     return cl;
   }
 
-  void BindColorAlpha(TypeSystem ts)
+  void BindColorAlpha(Types ts)
   {
     BindColor(ts);
 
@@ -20747,7 +20746,7 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  void BindIntStruct(TypeSystem ts)
+  void BindIntStruct(Types ts)
   {
     {
       var cl = new ClassSymbolNative("IntStruct", null,
@@ -20760,7 +20759,7 @@ public class BHL_TestVM : BHL_TestBase
 
       ts.globs.Define(cl);
 
-      cl.Define(new FieldSymbol("n", ts.Type("int"),
+      cl.Define(new FieldSymbol("n", Types.Int,
         delegate(Val ctx, ref Val v)
         {
           var s = new IntStruct();
@@ -20783,7 +20782,7 @@ public class BHL_TestVM : BHL_TestBase
     public string str;
   }
 
-  void BindStringClass(TypeSystem ts)
+  void BindStringClass(Types ts)
   {
     {
       var cl = new ClassSymbolNative("StringClass", null,
@@ -20819,7 +20818,7 @@ public class BHL_TestVM : BHL_TestBase
     public IntStruct child_struct2;
   }
 
-  void BindMasterStruct(TypeSystem ts)
+  void BindMasterStruct(Types ts)
   {
     BindStringClass(ts);
     BindIntStruct(ts);
@@ -20914,7 +20913,7 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  void BindFoo(TypeSystem ts)
+  void BindFoo(Types ts)
   {
     {
       var cl = new ClassSymbolNative("Foo", null,
@@ -20925,7 +20924,7 @@ public class BHL_TestVM : BHL_TestBase
       );
       ts.globs.Define(cl);
 
-      cl.Define(new FieldSymbol("hey", ts.Type("int"),
+      cl.Define(new FieldSymbol("hey", Types.Int,
         delegate(Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
@@ -21002,13 +21001,13 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  FuncSymbolNative BindWaitTicks(TypeSystem ts, StringBuilder log)
+  FuncSymbolNative BindWaitTicks(Types ts, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("WaitTicks", ts.Type("void"),
+    var fn = new FuncSymbolNative("WaitTicks", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           return CoroutinePool.New<CoroutineWaitTicks>(frm.vm);
         }, 
-        new FuncArgSymbol("ticks", ts.Type("int"))
+        new FuncArgSymbol("ticks", Types.Int)
     );
     ts.globs.Define(fn);
     return fn;
@@ -21021,7 +21020,7 @@ public class BHL_TestVM : BHL_TestBase
     public string Str;
   }
 
-  ClassSymbolNative BindBar(TypeSystem ts)
+  ClassSymbolNative BindBar(Types ts)
   {
     var cl = new ClassSymbolNative("Bar", null,
       delegate(VM.Frame frm, ref Val v) 
@@ -21031,7 +21030,7 @@ public class BHL_TestVM : BHL_TestBase
     );
 
     ts.globs.Define(cl);
-    cl.Define(new FieldSymbol("Int", ts.Type("int"),
+    cl.Define(new FieldSymbol("Int", Types.Int,
       delegate(Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
@@ -21099,7 +21098,7 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  void BindRefC(TypeSystem ts, StringBuilder logs)
+  void BindRefC(Types ts, StringBuilder logs)
   {
     {
       var cl = new ClassSymbolNative("RefC", null,
@@ -21109,7 +21108,7 @@ public class BHL_TestVM : BHL_TestBase
         }
       );
       {
-        var vs = new bhl.FieldSymbol("refs", ts.Type("int"),
+        var vs = new bhl.FieldSymbol("refs", Types.Int,
           delegate(Val ctx, ref Val v)
           {
             v.num = ((RefC)ctx.obj).refs;
@@ -21123,10 +21122,10 @@ public class BHL_TestVM : BHL_TestBase
     }
   }
 
-  void BindStartScriptInMgr(TypeSystem ts)
+  void BindStartScriptInMgr(Types ts)
   {
     {
-      var fn = new FuncSymbolNative("StartScriptInMgr", ts.Type("void"),
+      var fn = new FuncSymbolNative("StartScriptInMgr", Types.Void,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             int spawns = (int)frm.stack.PopRelease().num;
             var ptr = frm.stack.Pop();
@@ -21138,8 +21137,8 @@ public class BHL_TestVM : BHL_TestBase
 
             return null;
           },
-        new FuncArgSymbol("script", ts.TypeFunc("void")),
-        new FuncArgSymbol("spawns", ts.Type("int"))
+        new FuncArgSymbol("script", ts.TypeFunc(Types.Void)),
+        new FuncArgSymbol("spawns", Types.Int)
       );
 
       ts.globs.Define(fn);

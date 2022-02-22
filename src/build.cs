@@ -13,7 +13,7 @@ public class BuildConf
 {
   public string args = ""; 
   public List<string> files = new List<string>();
-  public TypeSystem ts;
+  public Types ts;
   public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
@@ -68,7 +68,7 @@ public class Build
 
     var ts = conf.ts;
     if(ts == null)
-      ts = new TypeSystem();
+      ts = new Types();
     conf.userbindings.Register(ts);
 
     var parse_workers = StartParseWorkers(conf);
@@ -123,7 +123,7 @@ public class Build
     return parse_workers;
   }
 
-  static List<CompilerWorker> StartAndWaitCompileWorkers(BuildConf conf, TypeSystem ts, List<ParseWorker> parse_workers)
+  static List<CompilerWorker> StartAndWaitCompileWorkers(BuildConf conf, Types ts, List<ParseWorker> parse_workers)
   {
     var compiler_workers = new List<CompilerWorker>();
 
@@ -496,7 +496,7 @@ public class Build
     public bool use_cache;
     public string cache_dir;
     public List<string> files;
-    public TypeSystem ts;
+    public Types ts;
     public int start;
     public int count;
     public IBuildPostProcessor postproc;

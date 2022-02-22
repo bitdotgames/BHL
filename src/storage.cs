@@ -53,7 +53,7 @@ public class Val
       return _obj;
     }
     set {
-      SetObj(value, TypeSystem.Any);
+      SetObj(value, Types.Any);
     }
   }
 
@@ -194,7 +194,7 @@ public class Val
   public void SetStr(string s)
   {
     Reset();
-    type = TypeSystem.String;
+    type = Types.String;
     _obj = s;
   }
 
@@ -208,7 +208,7 @@ public class Val
   public void SetNum(int n)
   {
     Reset();
-    type = TypeSystem.Int;
+    type = Types.Int;
     _num = n;
   }
 
@@ -222,7 +222,7 @@ public class Val
   public void SetNum(double n)
   {
     Reset();
-    type = TypeSystem.Float;
+    type = Types.Float;
     _num = n;
   }
 
@@ -236,7 +236,7 @@ public class Val
   public void SetBool(bool b)
   {
     Reset();
-    type = TypeSystem.Bool;
+    type = Types.Bool;
     _num = b ? 1 : 0;
   }
 
@@ -263,7 +263,7 @@ public class Val
 
   public void SetObj(object o)
   {
-    SetObj(o, TypeSystem.Any);
+    SetObj(o, Types.Any);
   }
 
   public bool IsValueEqual(Val o)
@@ -271,7 +271,7 @@ public class Val
     bool res =
       _num == o._num &&
       //TODO: delegate comparison to type?
-      (type == TypeSystem.String ? (string)_obj == (string)o._obj : _obj == o._obj)
+      (type == Types.String ? (string)_obj == (string)o._obj : _obj == o._obj)
       ;
 
     return res;
@@ -280,15 +280,15 @@ public class Val
   public override string ToString() 
   {
     string str = "";
-    if(type == TypeSystem.Int)
+    if(type == Types.Int)
       str = _num + ":<INT>";
-    else if(type == TypeSystem.Float)
+    else if(type == Types.Float)
       str = _num + ":<FLOAT>";
-    else if(type == TypeSystem.Bool)
+    else if(type == Types.Bool)
       str = bval + ":<BOOL>";
-    else if(type == TypeSystem.String)
+    else if(type == Types.String)
       str = this.str + ":<STRING>";
-    else if(type == TypeSystem.Any)
+    else if(type == Types.Any)
       str = _obj?.GetType().Name + ":<OBJ>";
     else if(type == null)
       str = "<NONE>";

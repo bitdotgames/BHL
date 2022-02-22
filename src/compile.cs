@@ -16,8 +16,8 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  TypeSystem types;
-  public TypeSystem Types {
+  Types types;
+  public Types Types {
     get {
       return types;
     }
@@ -163,7 +163,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcodes();
   }
 
-  public ModuleCompiler(TypeSystem types, FrontendResult fres)
+  public ModuleCompiler(Types types, FrontendResult fres)
   {
     this.types = types;
     module = fres.module;
@@ -176,7 +176,7 @@ public class ModuleCompiler : AST_Visitor
   //NOTE: for testing purposes only
   public ModuleCompiler()
   {
-    types = new TypeSystem();
+    types = new Types();
     module = new Module(types.globs, new ModulePath("", ""));
     curr_scope = module.scope;
 

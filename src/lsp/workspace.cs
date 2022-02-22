@@ -977,13 +977,13 @@ namespace bhlsp
       
       bool IsTypeKeyword(string typeName)
       {
-        return TypeSystem.Int.name    == typeName ||
-               TypeSystem.Float.name  == typeName ||
-               TypeSystem.String.name == typeName ||
-               TypeSystem.Bool.name   == typeName ||
-               TypeSystem.Any.name    == typeName ||
-               TypeSystem.Null.name   == typeName ||
-               TypeSystem.Void.name   == typeName;
+        return Types.Int.name    == typeName ||
+               Types.Float.name  == typeName ||
+               Types.String.name == typeName ||
+               Types.Bool.name   == typeName ||
+               Types.Any.name    == typeName ||
+               Types.Null.name   == typeName ||
+               Types.Void.name   == typeName;
       }
 
       private void AddSemanticTokenTypeName(ITerminalNode node)

@@ -261,7 +261,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 {
   public TypeProxy item_type;
 
-  public ArrayTypeSymbol(TypeSystem ts, string name, TypeProxy item_type)     
+  public ArrayTypeSymbol(Types ts, string name, TypeProxy item_type)     
     : base(name, super_class: null)
   {
     this.item_type = item_type;
@@ -316,7 +316,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(TypeSystem ts, TypeProxy item_type) 
+  public ArrayTypeSymbol(Types ts, TypeProxy item_type) 
     : this(ts, item_type.name + "[]", item_type)
   {}
 
@@ -336,14 +336,14 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public static readonly string CLASS_TYPE = "[]";
 
-  public GenericArrayTypeSymbol(TypeSystem types, TypeProxy item_type) 
+  public GenericArrayTypeSymbol(Types types, TypeProxy item_type) 
     : base(types, item_type)
   {
     name = CLASS_TYPE;
   }
 
   //marshall factory version
-  public GenericArrayTypeSymbol(TypeSystem types)
+  public GenericArrayTypeSymbol(Types types)
     : this(types, new TypeProxy())
   {}
 
@@ -445,13 +445,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(TypeSystem ts, string name, TypeProxy item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Types ts, string name, TypeProxy item_type, CreatorCb creator) 
     : base(ts, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(TypeSystem ts, TypeProxy item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Types ts, TypeProxy item_type, CreatorCb creator) 
     : base(ts, item_type.name + "[]", item_type)
   {}
 
@@ -492,7 +492,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = (IList<T>)arr.obj;
-    var res = Val.NewObj(frame.vm, lst[idx], TypeSystem.Any);
+    var res = Val.NewObj(frame.vm, lst[idx], Types.Any);
     frame.stack.Push(res);
     arr.Release();
     return null;
@@ -1053,7 +1053,7 @@ public class ClassSymbolNative : ClassSymbol
     if(s.GetArgs().Count != 1)
       throw new SymbolError(s, "operator overload must have exactly one argument");
 
-    if(s.GetReturnType() == TypeSystem.Void)
+    if(s.GetReturnType() == Types.Void)
       throw new SymbolError(s, "operator overload return value can't be void");
 
     Define(s);
@@ -1414,9 +1414,9 @@ public class SymbolsDictionary : IMarshallable
 
 public class SymbolFactory : IFactory
 {
-  public TypeSystem types;
+  public Types types;
 
-  public SymbolFactory(TypeSystem types)
+  public SymbolFactory(Types types)
   {
     this.types = types;
   }
@@ -1426,17 +1426,17 @@ public class SymbolFactory : IFactory
     switch(id)
     {
       case IntSymbol.CLASS_ID:
-        return TypeSystem.Int;
+        return Types.Int;
       case FloatSymbol.CLASS_ID:
-        return TypeSystem.Float;
+        return Types.Float;
       case StringSymbol.CLASS_ID:
-        return TypeSystem.String;
+        return Types.String;
       case BoolSymbol.CLASS_ID:
-        return TypeSystem.Bool;
+        return Types.Bool;
       case AnySymbol.CLASS_ID:
-        return TypeSystem.Any;
+        return Types.Any;
       case VoidSymbol.CLASS_ID:
-        return TypeSystem.Void;
+        return Types.Void;
       case VariableSymbol.CLASS_ID:
         return new VariableSymbol(); 
       case FieldSymbolScript.CLASS_ID:
