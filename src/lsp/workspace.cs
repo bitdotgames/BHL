@@ -910,16 +910,19 @@ namespace bhlsp
         AddSemanticTokenTypeName(ctx.NAME());
 
         var fnType = ctx.funcType();
-        if(fnType != null)
+        if(fnType != null && fnType.types() is bhlParser.TypesContext types)
         {
-          foreach(var refType in fnType.types().refType())
+          foreach(var refType in types.refType())
           {
             var refNameIsRef = refType.isRef();
-            var refNameName = refType.type().NAME();
-            if(refNameIsRef != null)
-              AddSemanticToken(refNameIsRef.Start.StartIndex, refNameName.Symbol.StartIndex-1, SemanticTokenTypes.keyword);
+            var refNameName = refType.type()?.NAME();
+            if(refNameName != null)
+            {
+              if(refNameIsRef != null)
+                AddSemanticToken(refNameIsRef.Start.StartIndex, refNameName.Symbol.StartIndex-1, SemanticTokenTypes.keyword);
             
-            AddSemanticTokenTypeName(refNameName);
+              AddSemanticTokenTypeName(refNameName);
+            }
           }
         }
         return null;
@@ -988,6 +991,9 @@ namespace bhlsp
 
       private void AddSemanticTokenTypeName(ITerminalNode node)
       {
+        if(node == null)
+          return;
+        
         if(IsTypeKeyword(node.GetText()))
           AddSemanticToken(node, SemanticTokenTypes.keyword);
         else
