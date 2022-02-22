@@ -9,7 +9,7 @@ public class MyBindings : UserBindings
   public MyBindings()
   {}
 
-  public override void Register(TypeSystem types)
+  public override void Register(Types types)
   {
     {
       var fn = new FuncSymbolNative("Trace", types.Type("void"),

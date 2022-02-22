@@ -9,7 +9,7 @@ public class Example
   {
     Console.WriteLine("Example started");
 
-    var types = new TypeSystem();
+    var types = new Types();
     var bnd = new MyBindings();
     bnd.Register(types);
 

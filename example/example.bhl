@@ -65,8 +65,8 @@ func RandomStateChanger(ref int state)
   }
 }
 
-func Selector(bool^()[] fns) {
-  foreach(fns as bool^() fn) {
+func Selector([]func bool() fns) {
+  foreach(fns as func bool() fn) {
     if(!fn()) {
       continue
     } else {
