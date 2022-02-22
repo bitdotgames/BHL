@@ -5173,8 +5173,7 @@ public class BHL_TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO: think about alternative Go-alike types notation?
-  //[IsTested()]
+  [IsTested()]
   public void TestFuncPtrReturningArrOfArrLambda()
   {
     string bhl = @"
@@ -5182,10 +5181,9 @@ public class BHL_TestVM : BHL_TestBase
     func test()
     {
       //TODO:
-      //[]func()[]string ptr = [
-      string[]^()[] ptr = [
-        func string[] () { return [""a"",""b""] },
-        func string[] () { return [""c"",""d""] }
+      []func []string() ptr = [
+        func []string () { return [""a"",""b""] },
+        func []string () { return [""c"",""d""] }
       ]
       trace(ptr[1]()[0])
     }
