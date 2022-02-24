@@ -4805,6 +4805,26 @@ public class BHL_TestVM : BHL_TestBase
     AssertEqual(fb.result.PopRelease().num, 41);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestLambdaCantHaveArgsWithDefaultValues()
+  {
+    string bhl = @"
+    func test()
+    {
+      func int(int c, int b = 1) {
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "default argument values not allowed for lambdas"
+    );
+  }
+  
   
   [IsTested()]
   public void TestLambdaCallAsVarInFalseCondition()

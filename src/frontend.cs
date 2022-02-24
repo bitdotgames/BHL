@@ -154,7 +154,7 @@ public class Frontend : bhlBaseVisitor<object>
     return new FrontendResult(module, ast);
   }
 
-  public Frontend(Module module, ITokenStream tokens, Types types, ModuleRegistry mreg, bool decls_only = false)
+  public Frontend(Module module, ITokenStream tokens, Types types, ModuleRegistry mr, bool decls_only = false)
   {
     this.module = module;
     types.AddSource(module.scope);
@@ -163,7 +163,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     this.types = types;
 
-    this.mreg = mreg;
+    this.mreg = mr;
 
     this.decls_only = decls_only;
 
@@ -1994,7 +1994,12 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var fp = fparams[i]; 
       if(fp.assignExp() != null)
+      {
+        if(curr_scope is LambdaSymbol)
+          FireError(fp.NAME(), "default argument values not allowed for lambdas");
+
         found_default_arg = true;
+      }
       else if(found_default_arg)
         FireError(fp.NAME(), "missing default argument expression");
 
@@ -2804,7 +2809,7 @@ public class ModuleRegistry
       return null;
     }
 
-    //2. checking global presence
+    //2. checking if already exists
     Module m = TryGet(full_path);
     if(m != null)
     {

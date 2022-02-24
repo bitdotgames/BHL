@@ -128,19 +128,19 @@ public class Build
     var compiler_workers = new List<CompilerWorker>();
 
     //1. parsing first and creating the shared parsed cache 
-    var parsed_cache = new Dictionary<string, ANTLR_Result>(); 
+    var parsed_result = new Dictionary<string, ANTLR_Result>(); 
 
     bool had_errors = false;
     foreach(var pw in parse_workers)
     {
       pw.Join();
 
-      foreach(var kv in pw.parsed_cache)
-        parsed_cache.Add(kv.Key, kv.Value);
+      foreach(var kv in pw.parsed_result)
+        parsed_result.Add(kv.Key, kv.Value);
 
       var cw = new CompilerWorker();
       cw.id = pw.id;
-      cw.parsed_cache = parsed_cache;
+      cw.parsed_result = parsed_result;
       cw.inc_dir = conf.inc_dir;
       cw.cache_dir = pw.cache_dir;
       cw.use_cache = pw.use_cache;
@@ -310,7 +310,7 @@ public class Build
     public List<string> inc_path = new List<string>();
     public List<string> files;
     //NOTE: null value means file is cached
-    public Dictionary<string, ANTLR_Result> parsed_cache = new Dictionary<string, ANTLR_Result>();
+    public Dictionary<string, ANTLR_Result> parsed_result = new Dictionary<string, ANTLR_Result>();
     public Exception error = null;
 
     public void Start()
@@ -380,7 +380,7 @@ public class Build
             else
               ++cache_hit;
 
-            w.parsed_cache[file] = parsed;
+            w.parsed_result[file] = parsed;
           }
         }
       }
@@ -490,7 +490,7 @@ public class Build
   public class CompilerWorker
   {
     public int id;
-    public Dictionary<string, ANTLR_Result> parsed_cache;
+    public Dictionary<string, ANTLR_Result> parsed_result;
     public Thread th;
     public string inc_dir;
     public bool use_cache;
@@ -527,7 +527,7 @@ public class Build
       w.file2compiled.Clear();
 
       var mreg = new ModuleRegistry();
-      mreg.SetParsedCache(w.parsed_cache);
+      mreg.SetParsedCache(w.parsed_result);
       mreg.AddToIncludePath(w.inc_dir);
 
       int i = w.start;
@@ -547,7 +547,7 @@ public class Build
           FrontendResult front_res = null;
 
           ANTLR_Result parsed;
-          w.parsed_cache.TryGetValue(file, out parsed);
+          w.parsed_result.TryGetValue(file, out parsed);
           ////NOTE: checking if data must be taken from the file cache (parsed is null)
           //if(w.parsed_cache.TryGetValue(file, out parsed) && parsed == null)
           //{
