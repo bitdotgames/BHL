@@ -198,7 +198,7 @@ public class Build
 
           return false;
         }
-        total_modules += w.file2module.Count;
+        total_modules += w.file2path.Count;
       }
       mwriter.Write(total_modules);
 
@@ -211,11 +211,11 @@ public class Build
         {
           if(file_idx >= w.start && file_idx < w.start + w.count) 
           {
-            var module = w.file2module[file];
+            var path = w.file2path[file];
             var compiled_file = w.file2compiled[file];
 
             mwriter.Write((byte)conf.module_fmt);
-            mwriter.Write(module.name);
+            mwriter.Write(path.name);
 
             if(conf.module_fmt == ModuleBinaryFormat.FMT_BIN)
               mwriter.Write(File.ReadAllBytes(compiled_file));
@@ -366,7 +366,7 @@ public class Build
             if(self_bin_file.Length > 0)
               deps.Add(self_bin_file);
 
-            var cache_file = GetBuildCacheFile(w.cache_dir, file);
+            var cache_file = GetASTCacheFile(w.cache_dir, file);
 
             //NOTE: null means - "try from file cache"
             ANTLR_Result parsed = null;
@@ -501,7 +501,7 @@ public class Build
     public int count;
     public IFrontPostProcessor postproc;
     public Exception error = null;
-    public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
+    public Dictionary<string, ModulePath> file2path = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
     public Dictionary<string, ModuleScope> file2symbols = new Dictionary<string, ModuleScope>();
 
@@ -523,7 +523,7 @@ public class Build
       sw.Start();
 
       var w = (CompilerWorker)data;
-      w.file2module.Clear();
+      w.file2path.Clear();
       w.file2compiled.Clear();
 
       var imp = new Frontend.Importer();
@@ -541,7 +541,9 @@ public class Build
         {
           var file = w.files[i]; 
 
-          var cache_file = GetBuildCacheFile(w.cache_dir, file);
+          //TODO:
+          //var ast_file = GetASTCacheFile(w.cache_dir, file);
+          var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
           var file_module = new Module(w.ts.globs, imp.FilePath2ModuleName(file), file);
 
           Frontend.Result front_res = null;
@@ -565,10 +567,10 @@ public class Build
               front_res = Frontend.ProcessParsed(file_module, parsed, w.ts, imp);
           //}
 
-          w.file2module.Add(file, file_module);
+          w.file2path.Add(file, file_module.path);
           w.file2symbols.Add(file, front_res.module.scope);
 
-          string compiled_file = w.postproc.Patch(front_res, file, cache_file);
+          front_res = w.postproc.Patch(front_res, file);
 
           var c  = new Compiler(w.ts, front_res);
           var cm = c.Compile();
@@ -594,9 +596,14 @@ public class Build
     }
   }
 
-  public static string GetBuildCacheFile(string cache_dir, string file)
+  public static string GetASTCacheFile(string cache_dir, string file)
   {
-    return cache_dir + "/" + Path.GetFileName(file) + "_" + Hash.CRC32(file) + ".bld.cache";
+    return cache_dir + "/" + Path.GetFileName(file) + "_" + Hash.CRC32(file) + ".ast.cache";
+  }
+
+  public static string GetCompiledCacheFile(string cache_dir, string file)
+  {
+    return cache_dir + "/" + Path.GetFileName(file) + "_" + Hash.CRC32(file) + ".compile.cache";
   }
 
   public static string GetImportsCacheFile(string cache_dir, string file)
@@ -634,14 +641,14 @@ public class Build
 
 public interface IFrontPostProcessor
 {
-  //NOTE: returns path to the result file
-  string Patch(Frontend.Result fres, string src_file, string result_file);
+  //NOTE: returns patched result
+  Frontend.Result Patch(Frontend.Result fres, string src_file);
   void Tally();
 }
 
 public class EmptyPostProcessor : IFrontPostProcessor 
 {
-  public string Patch(Frontend.Result fres, string src_file, string result_file) { return result_file; }
+  public Frontend.Result Patch(Frontend.Result fres, string src_file) { return fres; }
   public void Tally() {}
 }
 
