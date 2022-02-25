@@ -14,6 +14,8 @@ public enum BHS
 
 public interface IBehaviorTreeNode
 {
+  BHS last_status { get; set; } 
+
   //NOTE: methods below should never be called directly
   // This method will be invoked before the node is executed for the first time.
   void Init();
@@ -25,30 +27,38 @@ public interface IBehaviorTreeNode
   void Defer();
 }
 
-public abstract class BehaviorTreeNode : IBehaviorTreeNode
+public static class NodeExtensions
 {
-  //NOTE: semi-private, public for fast access
-  public BHS last_status = BHS.NONE; 
-  
-  //NOTE: this method is heavily used for inlining, 
-  //      don't change its contents if you are not sure
-  public BHS Run()
+  public static BHS Run(this IBehaviorTreeNode node)
   {
-    if(last_status != BHS.RUNNING)
-      Init();
-    last_status = Execute();
-    if(last_status != BHS.RUNNING)
-      Deinit();
-    return last_status;
+    if(node.last_status != BHS.RUNNING)
+      node.Init();
+    node.last_status = node.Execute();
+    if(node.last_status != BHS.RUNNING)
+      node.Deinit();
+    return node.last_status;
   }
 
-  public void Stop()
+  public static void Stop(this IBehaviorTreeNode node)
   {
-    if(last_status == BHS.RUNNING)
-      Deinit();
-    if(last_status != BHS.NONE)
-      Defer();
-    last_status = BHS.NONE;
+    if(node.last_status == BHS.RUNNING)
+      node.Deinit();
+    if(node.last_status != BHS.NONE)
+      node.Defer();
+    node.last_status = BHS.NONE;
+  }
+}
+
+public abstract class BehaviorTreeNode : IBehaviorTreeNode
+{
+  BHS _last_status = BHS.NONE; 
+  public BHS last_status { 
+    get {
+      return _last_status;
+    }
+    set {
+      _last_status = value;
+    }
   }
 
   public abstract void Init();
@@ -76,9 +86,9 @@ public abstract class BehaviorTreeTerminalNode : BehaviorTreeNode
 
 public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
 {
-  public List<BehaviorTreeNode> children = new List<BehaviorTreeNode>();
+  public List<IBehaviorTreeNode> children = new List<IBehaviorTreeNode>();
 
-  public virtual BehaviorTreeInternalNode AddChild(BehaviorTreeNode new_child)
+  public virtual BehaviorTreeInternalNode AddChild(IBehaviorTreeNode new_child)
   {
     children.Add(new_child);
     return this;
@@ -157,7 +167,7 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
 public abstract class ScopeNode : BehaviorTreeInternalNode
 {
   //NOTE: normally you never really want to override this one
-  override public void Deinit()
+  public override void Deinit()
   {
     //NOTE: Trying to deinit all of its children may be suboptimal, so
     //      it makes sense to override it for specific cases
@@ -165,7 +175,7 @@ public abstract class ScopeNode : BehaviorTreeInternalNode
   }
 
   //NOTE: normally you never really want to override this one
-  override public void Defer()
+  public override void Defer()
   {}
 }
 
@@ -179,31 +189,20 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
   public override BHS Execute()
   {
-    //BHS status = children[0].run();
-    BHS status;
-    var current = children[0];
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    if(current.last_status != BHS.RUNNING)
-      current.Init();
-    status = current.Execute();
-    current.last_status = status;
-    if(status != BHS.RUNNING)
-      current.Deinit();
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    return status;
+    return children[0].Run();
   }
 
-  override public void Deinit()
+  public override void Deinit()
   {
     DeinitChildren(0, 1);
   } 
 
-  override public void Defer()
+  public override void Defer()
   {
     DeferChildren(children.Count);
   }
 
-  public void setSlave(BehaviorTreeNode node)
+  public void SetSlave(IBehaviorTreeNode node)
   {
     if(children.Count == 0)
       this.AddChild(node);
@@ -217,52 +216,52 @@ public abstract class BehaviorTreeDecoratorNode : BehaviorTreeInternalNode
 
 public class suspend : BehaviorTreeNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
     return BHS.RUNNING;
   }
-  override public void Init(){}
-  override public void Deinit(){}
-  override public void Defer(){}
+  public override void Init(){}
+  public override void Deinit(){}
+  public override void Defer(){}
 }
 
 //////////////////////////////////////////
 
 public class yield : BehaviorTreeNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
     return last_status == BHS.NONE ? BHS.RUNNING : BHS.SUCCESS;
   }
-  override public void Init(){}
-  override public void Deinit(){}
-  override public void Defer(){}
+  public override void Init(){}
+  public override void Deinit(){}
+  public override void Defer(){}
 }
 
 //////////////////////////////////////////
                
 public class nop : BehaviorTreeNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
     return BHS.SUCCESS;
   }
-  override public void Init(){}
-  override public void Deinit(){}
-  override public void Defer(){}
+  public override void Init(){}
+  public override void Deinit(){}
+  public override void Defer(){}
 }
 
 //////////////////////////////////////////
 
 public class fail : BehaviorTreeNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
     return BHS.FAILURE;
   }
-  override public void Init(){}
-  override public void Deinit(){}
-  override public void Defer(){}
+  public override void Init(){}
+  public override void Deinit(){}
+  public override void Defer(){}
 }
 
 /////////////////////////////////////////////////////////////
@@ -271,31 +270,23 @@ public class SequentialNode : ScopeNode
 {
   protected int curr_pos = 0;
 
-  override public void Init()
+  public override void Init()
   {
     curr_pos = 0;
   }
 
-  override public void Deinit()
+  public override void Deinit()
   {
     DeinitAndDeferChildren(curr_pos, 1);
   }
 
-  override public BHS Execute()
+  public override BHS Execute()
   {
     BHS status = BHS.SUCCESS;
     while(curr_pos < children.Count)
     {
       var current = children[curr_pos];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(current.last_status != BHS.RUNNING)
-        current.Init();
-      status = current.Execute();
-      current.last_status = status;
-      if(status != BHS.RUNNING)
-        current.Deinit();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
+      status = current.Run();
       if(status == BHS.SUCCESS)
         ++curr_pos;
       else
@@ -307,29 +298,9 @@ public class SequentialNode : ScopeNode
 
 public class SequentialNode_ : SequentialNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
-    //var status = base.execute();
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    BHS status = BHS.SUCCESS;
-    while(curr_pos < children.Count)
-    {
-      var current = children[curr_pos];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(current.last_status != BHS.RUNNING)
-        current.Init();
-      status = current.Execute();
-      current.last_status = status;
-      if(status != BHS.RUNNING)
-        current.Deinit();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++curr_pos;
-      else
-        break;
-    } 
-    ////////////////////FORCING CODE INLINE////////////////////////////////
+    BHS status = base.Execute();
     if(status == BHS.FAILURE)
       status = BHS.SUCCESS;
     return status;
@@ -338,28 +309,19 @@ public class SequentialNode_ : SequentialNode
 
 public class ParallelNode : ScopeNode
 {
-  override public void Init() 
+  public override void Init() 
   {}
 
-  override public BHS Execute()
+  public override BHS Execute()
   {
     for(int i=0;i<children.Count;++i)
     {
       var current = children[i];
 
-      if(current.last_status == BHS.NONE || current.last_status == BHS.RUNNING)
+      if(current.last_status == BHS.NONE || 
+          current.last_status == BHS.RUNNING)
       {
-        //BHS status = currentTask.run();
-        BHS status;
-        ////////////////////FORCING CODE INLINE////////////////////////////////
-        if(current.last_status != BHS.RUNNING)
-          current.Init();
-        status = current.Execute();
-        current.last_status = status;
-        if(status != BHS.RUNNING)
-          current.Deinit();
-        ////////////////////FORCING CODE INLINE////////////////////////////////
-
+        BHS status = current.Run();
         if(status != BHS.RUNNING)
           return status;
       }
@@ -368,7 +330,7 @@ public class ParallelNode : ScopeNode
     return BHS.RUNNING;
   }
 
-  override public BehaviorTreeInternalNode AddChild(BehaviorTreeNode new_child)
+  public override BehaviorTreeInternalNode AddChild(IBehaviorTreeNode new_child)
   {
     //force DEFER to keep running
     var d = new_child as DeferNode;
@@ -382,28 +344,20 @@ public class ParallelNode : ScopeNode
 
 public class ParallelAllNode : ScopeNode
 {
-  override public void Init() 
+  public override void Init() 
   {}
 
-  override public BHS Execute()
+  public override BHS Execute()
   {
     bool all_success = true;
     for(int i=0;i<children.Count;++i)
     {
       var current = children[i];
 
-      if(current.last_status == BHS.NONE || current.last_status == BHS.RUNNING)
+      if(current.last_status == BHS.NONE || 
+          current.last_status == BHS.RUNNING)
       {
-        //BHS status = currentTask.run();
-        BHS status;
-        ////////////////////FORCING CODE INLINE////////////////////////////////
-        if(current.last_status != BHS.RUNNING)
-          current.Init();
-        status = current.Execute();
-        current.last_status = status;
-        if(status != BHS.RUNNING)
-          current.Deinit();
-        ////////////////////FORCING CODE INLINE////////////////////////////////
+        BHS status = current.Run();
 
         if(status == BHS.FAILURE)
           return BHS.FAILURE;
@@ -424,12 +378,12 @@ public class PriorityNode : ScopeNode
 {
   private int curr_pos = -1;
 
-  override public void Init()
+  public override void Init()
   {
     curr_pos = -1;
   }
 
-  override public BHS Execute()
+  public override BHS Execute()
   {
     BHS status;
 
@@ -437,16 +391,7 @@ public class PriorityNode : ScopeNode
     if(curr_pos != -1)
     {
       var current = children[curr_pos];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(current.last_status != BHS.RUNNING)
-        current.Init();
-      status = current.Execute();
-      current.last_status = status;
-      if(status != BHS.RUNNING)
-        current.Deinit();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-
+      status = current.Run();
       if(status == BHS.RUNNING)
         return BHS.RUNNING;
       else if(status == BHS.SUCCESS)
@@ -474,19 +419,11 @@ public class PriorityNode : ScopeNode
 
     //first run
     {
-      BehaviorTreeNode current = children[curr_pos];
-       //keep trying children until one doesn't fail
+      var current = children[curr_pos];
+      //keep trying children until one doesn't fail
       while(true)
       {
-        //status = currentTask.run();
-        ////////////////////FORCING CODE INLINE////////////////////////////////
-        if(current.last_status != BHS.RUNNING)
-          current.Init();
-        status = current.Execute();
-        current.last_status = status;
-        if(status != BHS.RUNNING)
-          current.Deinit();
-        ////////////////////FORCING CODE INLINE////////////////////////////////
+        status = current.Run();
         if(status != BHS.FAILURE)
           break;
       
@@ -503,7 +440,7 @@ public class PriorityNode : ScopeNode
     return status;
   }
 
-  override public BehaviorTreeInternalNode AddChild(BehaviorTreeNode new_child)
+  public override BehaviorTreeInternalNode AddChild(IBehaviorTreeNode new_child)
   {
     //force DEFER to proceed to the next node
     var d = new_child as DeferNode;
@@ -517,41 +454,17 @@ public class PriorityNode : ScopeNode
 
 public class ForeverNode : SequentialNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
-    //var status = base.execute();
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    BHS status = BHS.SUCCESS;
-
-    while(curr_pos < children.Count)
-    {
-      var current = children[curr_pos];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(current.last_status != BHS.RUNNING)
-        current.Init();
-      status = current.Execute();
-      current.last_status = status;
-      if(status != BHS.RUNNING)
-        current.Deinit();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++curr_pos;
-      else
-        break;
-    } 
-
-    if(status != BHS.RUNNING)
-      curr_pos = 0;
-    ////////////////////FORCING CODE INLINE////////////////////////////////
+    var status = base.Execute();
     //NOTE: we need to stop child in order to make it 
     //      reset its status and re-init on the next run,
-    //      also we force currStatus to be BHS.RUNNING since
+    //      also we force last_status to be BHS.RUNNING since
     //      logic in stop *needs* that even though we officially return
     //      running status *below* that call 
-    base.last_status = BHS.RUNNING;
+    this.last_status = BHS.RUNNING;
     if(status != BHS.RUNNING)
-      Stop();
+      this.Stop();
 
     return BHS.RUNNING;
   }
@@ -559,31 +472,9 @@ public class ForeverNode : SequentialNode
 
 public class MonitorSuccessNode : SequentialNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
-    //var status = base.execute();
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    BHS status = BHS.SUCCESS;
-    while(curr_pos < children.Count)
-    {
-      var current = children[curr_pos];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(current.last_status != BHS.RUNNING)
-        current.Init();
-      status = current.Execute();
-      current.last_status = status;
-      if(status != BHS.RUNNING)
-        current.Deinit();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++curr_pos;
-      else
-        break;
-    } 
-    if(status != BHS.RUNNING)
-      curr_pos = 0;
-    ////////////////////FORCING CODE INLINE////////////////////////////////
+    var status = base.Execute();
 
     if(status == BHS.SUCCESS)
       return BHS.SUCCESS;
@@ -591,7 +482,7 @@ public class MonitorSuccessNode : SequentialNode
     //NOTE: we need to stop children in order to make them 
     //      reset its status and re-init on the next run
     if(status == BHS.FAILURE)
-      base.Stop();
+      this.Stop();
 
     return BHS.RUNNING;
   }
@@ -599,38 +490,16 @@ public class MonitorSuccessNode : SequentialNode
 
 public class MonitorFailureNode : SequentialNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
-    //var status = base.execute();
-    ////////////////////FORCING CODE INLINE////////////////////////////////
-    BHS status = BHS.SUCCESS;
-    while(curr_pos < children.Count)
-    {
-      var current = children[curr_pos];
-      //status = currentTask.run();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(current.last_status != BHS.RUNNING)
-        current.Init();
-      status = current.Execute();
-      current.last_status = status;
-      if(status != BHS.RUNNING)
-        current.Deinit();
-      ////////////////////FORCING CODE INLINE////////////////////////////////
-      if(status == BHS.SUCCESS)
-        ++curr_pos;
-      else
-        break;
-    } 
-    if(status != BHS.RUNNING)
-      curr_pos = 0;
-    ////////////////////FORCING CODE INLINE////////////////////////////////
+    var status = base.Execute();
     if(status == BHS.FAILURE)
       return BHS.SUCCESS;
 
     //NOTE: we need to stop children in order to make them 
     //      reset its status and re-init on the next run
     if(status == BHS.SUCCESS)
-      base.Stop();
+      this.Stop();
 
     return BHS.RUNNING;
   }
@@ -640,15 +509,15 @@ public class DeferNode : BehaviorTreeInternalNode
 {
   public BHS result = BHS.SUCCESS; 
 
-  override public void Init()
+  public override void Init()
   {}
 
   //NOTE: does nothing on purpose because 
   //      action happens in its defer
-  override public void Deinit()
+  public override void Deinit()
   {}
 
-  override public void Defer()
+  public override void Defer()
   {
     for(int i=0;i<children.Count;++i)
       children[i].Run();
@@ -656,7 +525,7 @@ public class DeferNode : BehaviorTreeInternalNode
     DeferChildren(children.Count);
   }
 
-  override public BHS Execute()
+  public override BHS Execute()
   {
     return result;
   }
@@ -664,7 +533,7 @@ public class DeferNode : BehaviorTreeInternalNode
 
 public class InvertNode : BehaviorTreeDecoratorNode
 {
-  override public BHS Execute()
+  public override BHS Execute()
   {
     BHS status = base.Execute();
 

@@ -47,7 +47,7 @@ public class BHL_TestNodes : BHL_TestBase
   {
     public DecoratorTestNode(TestNode t)
     {
-      setSlave(t);
+      SetSlave(t);
     }
   }
 
