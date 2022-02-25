@@ -6174,9 +6174,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     Execute(vm, "test");
     AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
@@ -17469,9 +17469,9 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl1");
     var fb = vm.Start("test");
@@ -17620,9 +17620,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var importer = new ModuleImporter(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    AssertEqual(importer.Import("bhl1"), 
+    AssertEqual(loader.Load("bhl1"), 
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Import, new int[] { 0 })
@@ -17633,7 +17633,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
-    AssertEqual(importer.Import("bhl2"), 
+    AssertEqual(loader.Load("bhl2"), 
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Import, new int[] { 0 })
@@ -17645,7 +17645,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
-    AssertEqual(importer.Import("bhl3"), 
+    AssertEqual(loader.Load("bhl3"), 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
@@ -17655,7 +17655,7 @@ public class BHL_TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
     );
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     AssertEqual(Execute(vm, "bhl1").result.PopRelease().num, 23);
     CommonChecks(vm);
@@ -17693,9 +17693,9 @@ public class BHL_TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl2");
     Execute(vm, "test");
@@ -17743,9 +17743,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var importer = new ModuleImporter(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl1");
     AssertEqual(42, Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num);
@@ -17812,9 +17812,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
     var ts = new Types();
-    var importer = new ModuleImporter(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl1");
     AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
@@ -17877,9 +17877,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
     var ts = new Types();
-    var importer = new ModuleImporter(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl1");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -17911,9 +17911,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
     var ts = new Types();
-    var importer = new ModuleImporter(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl1");
     AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
@@ -17954,9 +17954,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var importer = new ModuleImporter(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl1");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -18030,9 +18030,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var importer = new ModuleImporter(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl1");
     AssertEqual(4, Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num);
@@ -18077,9 +18077,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var importer = new ModuleImporter(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
 
     vm.LoadModule("bhl1");
     AssertEqual(23, Execute(vm, "test", Val.NewNum(vm, 23)).result.PopRelease().num);
@@ -18558,9 +18558,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
@@ -18636,9 +18636,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
@@ -18688,9 +18688,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
     NewTestFile("bhl2.bhl", bhl2, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test");
     
@@ -18770,9 +18770,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     try
@@ -18858,9 +18858,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
@@ -18937,9 +18937,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     vm.Start("test", Val.NewNum(vm, 3));
     AssertTrue(vm.Tick());
@@ -19015,9 +19015,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     vm.Start("test", Val.NewNum(vm, 3));
     AssertFalse(vm.Tick());
@@ -19099,9 +19099,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     vm.Start("test");
     AssertFalse(vm.Tick());
@@ -19187,9 +19187,9 @@ public class BHL_TestVM : BHL_TestBase
     NewTestFile("bhl2.bhl", bhl2, ref files);
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
-    var importer = new ModuleImporter(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
 
-    var vm = new VM(ts, importer);
+    var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
     vm.Start("test");
     AssertFalse(vm.Tick());
@@ -21204,11 +21204,11 @@ public class BHL_TestVM : BHL_TestBase
     return Path.GetDirectoryName(self_bin) + "/tmp/tests";
   }
 
-  class TestImporter : IModuleImporter
+  class TestImporter : IModuleLoader
   {
     public Dictionary<string, CompiledModule> mods = new Dictionary<string, CompiledModule>();
 
-    public CompiledModule Import(string name)
+    public CompiledModule Load(string name)
     {
       return mods[name];
     }

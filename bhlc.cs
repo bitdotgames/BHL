@@ -89,12 +89,12 @@ public class BHLC
     if(File.Exists(err_file))
       File.Delete(err_file);
 
-    UserBindings userbindings = new EmptyUserBindings();
+    IUserBindings userbindings = new EmptyUserBindings();
     if(userbindings_dll_path != "")
     {
       var userbindings_assembly = System.Reflection.Assembly.LoadFrom(userbindings_dll_path);
       var userbindings_class = userbindings_assembly.GetTypes()[0];
-      userbindings = System.Activator.CreateInstance(userbindings_class) as UserBindings;
+      userbindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
       if(userbindings == null)
         Usage("User bindings are invalid");
     }

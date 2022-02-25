@@ -1,21 +1,18 @@
 using System;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace bhl {
 
-public class UserBindings
+public interface IUserBindings
 {
-  public virtual void Register(Types ts) {}
+  void Register(Types ts);
 }
 
-public class EmptyUserBindings : UserBindings {}
-
-public interface IModuleLoader
+public class EmptyUserBindings : IUserBindings 
 {
-  //NOTE: must return null if no such module
-  AST_Module LoadModule(uint id);
+  public void Register(Types ts)
+  {}
 }
 
 public enum ModuleBinaryFormat
@@ -25,12 +22,12 @@ public enum ModuleBinaryFormat
   FMT_FILE_REF = 2,
 }
 
-public interface IModuleImporter
+public interface IModuleLoader
 {
-  CompiledModule Import(string module_name);
+  CompiledModule Load(string module_name);
 }
 
-public class ModuleImporter : IModuleImporter
+public class ModuleLoader : IModuleLoader
 {
   public const byte COMPILE_FMT = 2;
 
@@ -50,7 +47,7 @@ public class ModuleImporter : IModuleImporter
 
   Dictionary<string, Entry> name2entry = new Dictionary<string, Entry>();
 
-  public ModuleImporter(Types types, Stream source)
+  public ModuleLoader(Types types, Stream source)
   {
     this.types = types;
     Load(source);
@@ -99,7 +96,7 @@ public class ModuleImporter : IModuleImporter
     }
   }
 
-  public CompiledModule Import(string module_name)
+  public CompiledModule Load(string module_name)
   {
     Entry ent;
     if(!name2entry.TryGetValue(module_name, out ent))

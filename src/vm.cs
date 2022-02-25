@@ -683,7 +683,7 @@ public class VM
   int fibers_ids = 0;
   List<Fiber> fibers = new List<Fiber>();
 
-  IModuleImporter importer;
+  IModuleLoader importer;
 
   public delegate void ClassCreator(VM.Frame frm, ref Val res);
   public delegate void FieldGetter(Val v, ref Val res);
@@ -758,7 +758,7 @@ public class VM
     }
   }
 
-  public VM(Types types = null, IModuleImporter importer = null)
+  public VM(Types types = null, IModuleLoader importer = null)
   {
     if(types == null)
       types = new Types();
@@ -778,13 +778,13 @@ public class VM
 
   public void LoadModule(string module_name)
   {
-    var imported_module = importer.Import(module_name);
+    var imported_module = importer.Load(module_name);
     RegisterModule(imported_module);
   }
 
   void LoadModule(CompiledModule module, string module_name)
   {
-    var imported_module = importer.Import(module_name);
+    var imported_module = importer.Load(module_name);
     RegisterModule(imported_module);
 
     module.scope.AddImport(imported_module.scope);

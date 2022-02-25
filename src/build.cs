@@ -21,7 +21,7 @@ public class BuildConf
   public bool use_cache = true;
   public string err_file = "";
   public IBuildPostProcessor postproc = new EmptyPostProcessor();
-  public UserBindings userbindings = new EmptyUserBindings();
+  public IUserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
   public bool debug = false; //TODO: not really used
@@ -179,7 +179,7 @@ public class Build
     {
       var mwriter = new MsgPack.MsgPackWriter(dfs);
 
-      mwriter.Write(ModuleImporter.COMPILE_FMT);
+      mwriter.Write(ModuleLoader.COMPILE_FMT);
       mwriter.Write(FILE_VERSION);
 
       int total_modules = 0;

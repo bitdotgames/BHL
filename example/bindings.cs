@@ -4,12 +4,12 @@ using System.IO;
 namespace bhl {
 
 //NOTE: this class must be first in the assembly
-public class MyBindings : UserBindings
+public class MyBindings : IUserBindings
 { 
   public MyBindings()
   {}
 
-  public override void Register(Types types)
+  public void Register(Types types)
   {
     {
       var fn = new FuncSymbolNative("Trace", types.Type("void"),
