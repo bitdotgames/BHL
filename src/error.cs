@@ -152,7 +152,7 @@ public class ErrorLexerListener : IAntlrErrorListener<int>
 
 public class ErrorStrategy : DefaultErrorStrategy
 {
-  public override void Sync(Parser recognizer) {}
+  public override void Sync(Antlr4.Runtime.Parser recognizer) {}
 }
 
 public class ErrorParserListener : IParserErrorListener
@@ -169,11 +169,11 @@ public class ErrorParserListener : IParserErrorListener
     throw new SyntaxError(file_path, line, char_pos, msg);
   }
 
-  public virtual void ReportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)
+  public virtual void ReportAmbiguity(Antlr4.Runtime.Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)
   {}
-  public virtual void ReportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, SimulatorState conflictState)
+  public virtual void ReportAttemptingFullContext(Antlr4.Runtime.Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, SimulatorState conflictState)
   {}
-  public virtual void ReportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, SimulatorState acceptState)
+  public virtual void ReportContextSensitivity(Antlr4.Runtime.Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, SimulatorState acceptState)
   {}
 }
 

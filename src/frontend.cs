@@ -27,20 +27,24 @@ public class ANTLR_Result
   }
 }
 
-public class FrontendResult
-{
-  public Module module { get; private set; }
-  public AST_Module ast { get; private set; }
-
-  public FrontendResult(Module module, AST_Module ast)
-  {
-    this.module = module;
-    this.ast = ast;
-  }
-}
-
 public class Frontend : bhlBaseVisitor<object>
 {
+  public class Result
+  {
+    public Module module { get; private set; }
+    public AST_Module ast { get; private set; }
+
+    public Result(Module module, AST_Module ast)
+    {
+      this.module = module;
+      this.ast = ast;
+    }
+  }
+
+  Result result;
+
+  ANTLR_Result parsed;
+
   static int lambda_id = 0;
 
   static int NextLambdaId()
@@ -118,7 +122,7 @@ public class Frontend : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static FrontendResult ProcessFile(string file, Types ts, Frontend.Importer imp)
+  public static Result ProcessFile(string file, Types ts, Frontend.Importer imp)
   {
     using(var sfs = File.OpenRead(file))
     {
@@ -136,23 +140,21 @@ public class Frontend : bhlBaseVisitor<object>
     return p;
   }
   
-  public static FrontendResult ProcessStream(Module module, Stream src, Types ts, Frontend.Importer imp = null, bool decls_only = false)
+  public static Result ProcessStream(Module module, Stream src, Types ts, Frontend.Importer imp = null, bool decls_only = false)
   {
     var p = Stream2Parser(module.file_path, src);
-
     var parsed = new ANTLR_Result(p.TokenStream, p.program());
-
     return ProcessParsed(module, parsed, ts, imp, decls_only);
   }
 
-  public static FrontendResult ProcessParsed(Module module, ANTLR_Result p, Types ts, Frontend.Importer imp = null, bool decls_only = false)
+  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, Frontend.Importer imp = null, bool decls_only = false)
   {
     //var sw1 = System.Diagnostics.Stopwatch.StartNew();
-    var f = new Frontend(module, p.tokens, ts, imp, decls_only);
-    var ast = f.ParseModule(p.prog);
+    var f = new Frontend(parsed, module, ts, imp, decls_only);
+    var res = f.Process();
     //sw1.Stop();
     //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
-    return new FrontendResult(module, ast);
+    return res;
   }
 
   public class Importer
@@ -228,10 +230,8 @@ public class Frontend : bhlBaseVisitor<object>
       else
       {
         var stream = File.OpenRead(full_path);
-
         //Console.WriteLine("MISS " + full_path);
         Frontend.ProcessStream(m, stream, ts, this, decls_only: true);
-
         stream.Close();
       }
 
@@ -276,8 +276,11 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
-  public Frontend(Module module, ITokenStream tokens, Types types, Importer importer, bool decls_only = false)
+  public Frontend(ANTLR_Result parsed, Module module, Types types, Importer importer, bool decls_only = false)
   {
+    this.parsed = parsed;
+    this.tokens = parsed.tokens;
+
     this.module = module;
     types.AddSource(module.scope);
     curr_scope = this.module.scope;
@@ -285,8 +288,6 @@ public class Frontend : bhlBaseVisitor<object>
     if(importer == null)
       importer = new Importer();
     this.importer = importer;
-
-    this.tokens = tokens;
 
     this.types = types;
 
@@ -350,13 +351,18 @@ public class Frontend : bhlBaseVisitor<object>
     return w;
   }
 
-  public AST_Module ParseModule(bhlParser.ProgramContext p)
+  public Result Process()
   {
-    var ast = AST_Util.New_Module(module.name);
-    PushAST(ast);
-    VisitProgram(p);
-    PopAST();
-    return ast;
+    if(result == null)
+    {
+      var ast = AST_Util.New_Module(module.name);
+      PushAST(ast);
+      VisitProgram(parsed.prog);
+      PopAST();
+
+      result = new Result(module, ast);
+    }
+    return result;
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
@@ -2873,9 +2879,9 @@ public class Module
   public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
   public ModuleScope scope;
 
-  public Module(GlobalScope globs, ModulePath module_path)
+  public Module(GlobalScope globs, ModulePath path)
   {
-    this.path = module_path;
+    this.path = path;
     scope = new ModuleScope(path.name, globs);
   }
 

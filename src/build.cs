@@ -20,7 +20,7 @@ public class BuildConf
   public string cache_dir = "";
   public bool use_cache = true;
   public string err_file = "";
-  public IBuildPostProcessor postproc = new EmptyPostProcessor();
+  public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public IUserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
@@ -499,7 +499,7 @@ public class Build
     public Types ts;
     public int start;
     public int count;
-    public IBuildPostProcessor postproc;
+    public IFrontPostProcessor postproc;
     public Exception error = null;
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
@@ -544,7 +544,7 @@ public class Build
           var cache_file = GetBuildCacheFile(w.cache_dir, file);
           var file_module = new Module(w.ts.globs, imp.FilePath2ModuleName(file), file);
 
-          FrontendResult front_res = null;
+          Frontend.Result front_res = null;
 
           ANTLR_Result parsed;
           w.parsed_result.TryGetValue(file, out parsed);
@@ -570,7 +570,7 @@ public class Build
 
           string compiled_file = w.postproc.Patch(front_res, file, cache_file);
 
-          var c  = new ModuleCompiler(w.ts, front_res);
+          var c  = new Compiler(w.ts, front_res);
           var cm = c.Compile();
           CompiledModule.ToFile(cm, compiled_file);
 
@@ -623,25 +623,25 @@ public class Build
   public static void AddFilesFromDir(string dir, List<string> files)
   {
     DirWalk(dir, 
-        delegate(string file) 
-        { 
+      delegate(string file) 
+      { 
         if(TestFile(file))
-        files.Add(file);
-        }
-        );
+          files.Add(file);
+      }
+    );
   }
 }
 
-public interface IBuildPostProcessor
+public interface IFrontPostProcessor
 {
   //NOTE: returns path to the result file
-  string Patch(FrontendResult build_res, string src_file, string result_file);
+  string Patch(Frontend.Result fres, string src_file, string result_file);
   void Tally();
 }
 
-public class EmptyPostProcessor : IBuildPostProcessor 
+public class EmptyPostProcessor : IFrontPostProcessor 
 {
-  public string Patch(FrontendResult build_res, string src_file, string result_file) { return result_file; }
+  public string Patch(Frontend.Result fres, string src_file, string result_file) { return result_file; }
   public void Tally() {}
 }
 

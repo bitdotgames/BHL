@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public class ModuleCompiler : AST_Visitor
+public class Compiler : AST_Visitor
 {
   AST ast;
   CompiledModule compiled;
@@ -158,12 +158,12 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  static ModuleCompiler()
+  static Compiler()
   {
     DeclareOpcodes();
   }
 
-  public ModuleCompiler(Types types, FrontendResult fres)
+  public Compiler(Types types, Frontend.Result fres)
   {
     this.types = types;
     module = fres.module;
@@ -174,7 +174,7 @@ public class ModuleCompiler : AST_Visitor
   }
 
   //NOTE: for testing purposes only
-  public ModuleCompiler()
+  public Compiler()
   {
     types = new Types();
     module = new Module(types.globs, new ModulePath("", ""));
@@ -184,14 +184,14 @@ public class ModuleCompiler : AST_Visitor
   }
 
   //NOTE: public for testing purposes only
-  public ModuleCompiler UseCode()
+  public Compiler UseCode()
   {
     head = code;
     return this;
   }
 
   //NOTE: public for testing purposes only
-  public ModuleCompiler UseInit()
+  public Compiler UseInit()
   {
     head = init;
     return this;
@@ -661,7 +661,7 @@ public class ModuleCompiler : AST_Visitor
   }
 
   //NOTE: for testing purposes only
-  public ModuleCompiler EmitThen(Opcodes op, params int[] operands)
+  public Compiler EmitThen(Opcodes op, params int[] operands)
   {
     Emit(op, operands);
     return this;
@@ -759,8 +759,6 @@ public class ModuleCompiler : AST_Visitor
       ip2src_line.Add(pos-1, code[i].line_num);
     }
   }
-
-#region Visits
 
   public override void DoVisit(AST_Interim ast)
   {
@@ -1409,8 +1407,6 @@ public class ModuleCompiler : AST_Visitor
     VisitChildren(ast);
     Emit(Opcodes.SetAttrInplace, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx });
   }
-
-#endregion
 }
 
 } //namespace bhl
