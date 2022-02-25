@@ -526,9 +526,9 @@ public class Build
       w.file2module.Clear();
       w.file2compiled.Clear();
 
-      var mreg = new ModuleRegistry();
-      mreg.SetParsedCache(w.parsed_result);
-      mreg.AddToIncludePath(w.inc_dir);
+      var imp = new Frontend.Importer();
+      imp.SetParsedCache(w.parsed_result);
+      imp.AddToIncludePath(w.inc_dir);
 
       int i = w.start;
 
@@ -542,7 +542,7 @@ public class Build
           var file = w.files[i]; 
 
           var cache_file = GetBuildCacheFile(w.cache_dir, file);
-          var file_module = new Module(w.ts.globs, mreg.FilePath2ModuleName(file), file);
+          var file_module = new Module(w.ts.globs, imp.FilePath2ModuleName(file), file);
 
           FrontendResult front_res = null;
 
@@ -560,9 +560,9 @@ public class Build
             ++cache_miss;
 
             if(parsed == null)
-              front_res = Frontend.ProcessFile(file, w.ts, mreg);
+              front_res = Frontend.ProcessFile(file, w.ts, imp);
             else
-              front_res = Frontend.ProcessParsed(file_module, parsed, w.ts, mreg);
+              front_res = Frontend.ProcessParsed(file_module, parsed, w.ts, imp);
           //}
 
           w.file2module.Add(file, file_module);

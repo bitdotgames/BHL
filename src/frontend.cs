@@ -56,7 +56,8 @@ public class Frontend : bhlBaseVisitor<object>
   //      to know which symbols can be imported from the current module
   bool decls_only;
 
-  ModuleRegistry mreg;
+  Importer importer;
+
   Module module;
 
   ITokenStream tokens;
@@ -117,12 +118,12 @@ public class Frontend : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static FrontendResult ProcessFile(string file, Types ts, ModuleRegistry mr)
+  public static FrontendResult ProcessFile(string file, Types ts, Frontend.Importer imp)
   {
     using(var sfs = File.OpenRead(file))
     {
-      var mod = new Module(ts.globs, mr.FilePath2ModuleName(file), file);
-      return ProcessStream(mod, sfs, ts, mr);
+      var mod = new Module(ts.globs, imp.FilePath2ModuleName(file), file);
+      return ProcessStream(mod, sfs, ts, imp);
     }
   }
 
@@ -135,39 +136,161 @@ public class Frontend : bhlBaseVisitor<object>
     return p;
   }
   
-  public static FrontendResult ProcessStream(Module module, Stream src, Types ts, ModuleRegistry mr, bool decls_only = false)
+  public static FrontendResult ProcessStream(Module module, Stream src, Types ts, Frontend.Importer imp = null, bool decls_only = false)
   {
     var p = Stream2Parser(module.file_path, src);
 
     var parsed = new ANTLR_Result(p.TokenStream, p.program());
 
-    return ProcessParsed(module, parsed, ts, mr, decls_only);
+    return ProcessParsed(module, parsed, ts, imp, decls_only);
   }
 
-  public static FrontendResult ProcessParsed(Module module, ANTLR_Result p, Types ts, ModuleRegistry mr, bool decls_only = false)
+  public static FrontendResult ProcessParsed(Module module, ANTLR_Result p, Types ts, Frontend.Importer imp = null, bool decls_only = false)
   {
     //var sw1 = System.Diagnostics.Stopwatch.StartNew();
-    var f = new Frontend(module, p.tokens, ts, mr, decls_only);
+    var f = new Frontend(module, p.tokens, ts, imp, decls_only);
     var ast = f.ParseModule(p.prog);
     //sw1.Stop();
     //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
     return new FrontendResult(module, ast);
   }
 
-  public Frontend(Module module, ITokenStream tokens, Types types, ModuleRegistry mr, bool decls_only = false)
+  public class Importer
+  {
+    List<string> include_path = new List<string>();
+    Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
+    Dictionary<string, ANTLR_Result> parsed_cache = null;
+
+    public void SetParsedCache(Dictionary<string, ANTLR_Result> cache)
+    {
+      parsed_cache = cache;
+    }
+
+    public void AddToIncludePath(string path)
+    {
+      include_path.Add(Util.NormalizeFilePath(path));
+    }
+
+    public List<string> GetIncludePath()
+    {
+      return include_path;
+    }
+
+    public Module TryGet(string path)
+    {
+      Module m = null;
+      modules.TryGetValue(path, out m);
+      return m;
+    }
+
+    public void Register(Module m)
+    {
+      modules.Add(m.file_path, m);
+    }
+
+    public Module ImportModule(Module curr_module, Types ts, string path)
+    {
+      string full_path;
+      string norm_path;
+      ResolvePath(curr_module.file_path, path, out full_path, out norm_path);
+
+      //Console.WriteLine("IMPORT: " + full_path + " FROM:" + curr_module.file_path);
+
+      //1. checking repeated imports
+      if(curr_module.imports.ContainsKey(full_path))
+      {
+        //Console.WriteLine("HIT: " + full_path);
+        return null;
+      }
+
+      //2. checking if already exists
+      Module m = TryGet(full_path);
+      if(m != null)
+      {
+        curr_module.imports.Add(full_path, m);
+        return m;
+      }
+
+      //3. Ok, let's parse it otherwise
+      m = new Module(ts.globs, norm_path, full_path);
+     
+      //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
+      curr_module.imports.Add(full_path, m);
+      Register(m);
+
+      ANTLR_Result parsed;
+      //4. Let's try the parsed cache if it's present
+      if(parsed_cache != null && parsed_cache.TryGetValue(full_path, out parsed) && parsed != null)
+      {
+        //Console.WriteLine("HIT " + full_path);
+        Frontend.ProcessParsed(m, parsed, ts, this, decls_only: true);
+      }
+      else
+      {
+        var stream = File.OpenRead(full_path);
+
+        //Console.WriteLine("MISS " + full_path);
+        Frontend.ProcessStream(m, stream, ts, this, decls_only: true);
+
+        stream.Close();
+      }
+
+      return m;
+    }
+
+    void ResolvePath(string self_path, string path, out string full_path, out string norm_path)
+    {
+      full_path = "";
+      norm_path = "";
+
+      if(path.Length == 0)
+        throw new Exception("Bad path");
+
+      full_path = Util.ResolveImportPath(include_path, self_path, path);
+      norm_path = FilePath2ModuleName(full_path);
+    }
+
+    public string FilePath2ModuleName(string full_path)
+    {
+      full_path = Util.NormalizeFilePath(full_path);
+
+      string norm_path = "";
+      for(int i=0;i<include_path.Count;++i)
+      {
+        var inc_path = include_path[i];
+        if(full_path.IndexOf(inc_path) == 0)
+        {
+          norm_path = full_path.Replace(inc_path, "");
+          norm_path = norm_path.Replace('\\', '/');
+          //stripping .bhl extension
+          norm_path = norm_path.Substring(0, norm_path.Length-4);
+          //stripping initial /
+          norm_path = norm_path.TrimStart('/', '\\');
+          break;
+        }
+      }
+
+      if(norm_path.Length == 0)
+        throw new Exception("File path '" + full_path + "' was not normalized");
+      return norm_path;
+    }
+  }
+
+  public Frontend(Module module, ITokenStream tokens, Types types, Importer importer, bool decls_only = false)
   {
     this.module = module;
     types.AddSource(module.scope);
+    curr_scope = this.module.scope;
+
+    if(importer == null)
+      importer = new Importer();
+    this.importer = importer;
 
     this.tokens = tokens;
 
     this.types = types;
 
-    this.mreg = mr;
-
     this.decls_only = decls_only;
-
-    curr_scope = this.module.scope;
   }
 
   void FireError(IParseTree place, string msg) 
@@ -273,7 +396,7 @@ public class Frontend : bhlBaseVisitor<object>
     //removing quotes
     name = name.Substring(1, name.Length-2);
     
-    var imported = mreg.ImportModule(this.module, types, name);
+    var imported = importer.ImportModule(this.module, types, name);
     //NOTE: null means module is already imported
     if(imported != null)
     {
@@ -2759,127 +2882,6 @@ public class Module
   public Module(GlobalScope globs, string name, string file_path)
     : this(globs, new ModulePath(name, file_path))
   {}
-}
-
-public class ModuleRegistry
-{
-  List<string> include_path = new List<string>();
-  Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
-  Dictionary<string, ANTLR_Result> parsed_cache = null;
-
-  public void SetParsedCache(Dictionary<string, ANTLR_Result> cache)
-  {
-    parsed_cache = cache;
-  }
-
-  public void AddToIncludePath(string path)
-  {
-    include_path.Add(Util.NormalizeFilePath(path));
-  }
-
-  public List<string> GetIncludePath()
-  {
-    return include_path;
-  }
-
-  public Module TryGet(string path)
-  {
-    Module m = null;
-    modules.TryGetValue(path, out m);
-    return m;
-  }
-
-  public void Register(Module m)
-  {
-    modules.Add(m.file_path, m);
-  }
-
-  public Module ImportModule(Module curr_module, Types ts, string path)
-  {
-    string full_path;
-    string norm_path;
-    ResolvePath(curr_module.file_path, path, out full_path, out norm_path);
-
-    //Console.WriteLine("IMPORT: " + full_path + " FROM:" + curr_module.file_path);
-
-    //1. checking repeated imports
-    if(curr_module.imports.ContainsKey(full_path))
-    {
-      //Console.WriteLine("HIT: " + full_path);
-      return null;
-    }
-
-    //2. checking if already exists
-    Module m = TryGet(full_path);
-    if(m != null)
-    {
-      curr_module.imports.Add(full_path, m);
-      return m;
-    }
-
-    //3. Ok, let's parse it otherwise
-    m = new Module(ts.globs, norm_path, full_path);
-   
-    //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
-    curr_module.imports.Add(full_path, m);
-    Register(m);
-
-    ANTLR_Result parsed;
-    //4. Let's try the parsed cache if it's present
-    if(parsed_cache != null && parsed_cache.TryGetValue(full_path, out parsed) && parsed != null)
-    {
-      //Console.WriteLine("HIT " + full_path);
-      Frontend.ProcessParsed(m, parsed, ts, this, decls_only: true);
-    }
-    else
-    {
-      var stream = File.OpenRead(full_path);
-
-      //Console.WriteLine("MISS " + full_path);
-      Frontend.ProcessStream(m, stream, ts, this, decls_only: true);
-
-      stream.Close();
-    }
-
-    return m;
-  }
-
-  void ResolvePath(string self_path, string path, out string full_path, out string norm_path)
-  {
-    full_path = "";
-    norm_path = "";
-
-    if(path.Length == 0)
-      throw new Exception("Bad path");
-
-    full_path = Util.ResolveImportPath(include_path, self_path, path);
-    norm_path = FilePath2ModuleName(full_path);
-  }
-
-  public string FilePath2ModuleName(string full_path)
-  {
-    full_path = Util.NormalizeFilePath(full_path);
-
-    string norm_path = "";
-    for(int i=0;i<include_path.Count;++i)
-    {
-      var inc_path = include_path[i];
-      if(full_path.IndexOf(inc_path) == 0)
-      {
-        norm_path = full_path.Replace(inc_path, "");
-        norm_path = norm_path.Replace('\\', '/');
-        //stripping .bhl extension
-        norm_path = norm_path.Substring(0, norm_path.Length-4);
-        //stripping initial /
-        norm_path = norm_path.TrimStart('/', '\\');
-        break;
-      }
-    }
-
-    if(norm_path.Length == 0)
-      throw new Exception("File path '" + full_path + "' was not normalized");
-    return norm_path;
-  }
 }
 
 } //namespace bhl

@@ -20175,9 +20175,8 @@ public class BHL_TestVM : BHL_TestBase
     var ts_copy = ts.Clone();
 
     var mdl = new Module(ts_copy.globs, "", "");
-    var mreg = new ModuleRegistry();
 
-    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts, mreg);
+    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts);
 
     if(show_ast)
       Util.ASTDump(front_res.ast);
