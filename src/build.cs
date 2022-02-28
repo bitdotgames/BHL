@@ -39,7 +39,6 @@ public class Build
   public struct InterimResult
   {
     public bool use_file_cache;
-    public string cache_file;
     public ANTLR_Result parsed;
   }
 
@@ -69,7 +68,7 @@ public class Build
 
     sw.Stop();
 
-    Console.WriteLine("BHL Build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     return code;
   }
@@ -88,7 +87,10 @@ public class Build
         !args_changed && 
         !BuildUtil.NeedToRegen(conf.res_file, conf.files)
       )
+    {
+      Console.WriteLine("BHL no need to re-build");
       return 0;
+    }
 
     var ts = conf.ts;
     if(ts == null)
@@ -392,10 +394,9 @@ public class Build
             if(self_bin_file.Length > 0)
               deps.Add(self_bin_file);
 
-            var cache_file = GetASTCacheFile(w.cache_dir, file);
+            var cache_file = GetCompiledCacheFile(w.cache_dir, file);
 
             var interim = new InterimResult();
-            interim.cache_file = cache_file;
 
             if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
             {
@@ -431,7 +432,7 @@ public class Build
       }
 
       sw.Stop();
-      Console.WriteLine("BHL Parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
+      Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
 
     public class FileImports : IMarshallable
@@ -574,40 +575,39 @@ public class Build
         {
           var file = w.files[i]; 
 
-          //TODO:
-          //var ast_file = GetASTCacheFile(w.cache_dir, file);
           var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
           var file_module = new Module(w.ts.globs, imp.FilePath2ModuleName(file), file);
 
-          Frontend.Result front_res = null;
-
           InterimResult interim;
-          w.cache.file2interim.TryGetValue(file, out interim);
-          ////NOTE: checking if data must be taken from the file cache (parsed is null)
-          //if(interim.use_file_cache)
-          //{
-          //  ++cache_hit;
-          //  //TODO:
-          //  throw new NotImplementedException();
-          //}
-          //else
-          //{
+          if(w.cache.file2interim.TryGetValue(file, out interim) 
+              && interim.use_file_cache)
+          {
+            ++cache_hit;
+
+            w.file2path.Add(file, file_module.path);
+            //TODO: load from the cached file?
+            //w.file2symbols.Add(file, ...);
+          }
+          else
+          {
             ++cache_miss;
 
-            if(interim.parsed == null)
-              front_res = Frontend.ProcessFile(file, w.ts, imp);
-            else
+            Frontend.Result front_res = null;
+
+            if(interim.parsed != null)
               front_res = Frontend.ProcessParsed(file_module, interim.parsed, w.ts, imp);
-          //}
+            else
+              front_res = Frontend.ProcessFile(file, w.ts, imp);
 
-          w.file2path.Add(file, file_module.path);
-          w.file2symbols.Add(file, front_res.module.scope);
+            front_res = w.postproc.Patch(front_res, file);
 
-          front_res = w.postproc.Patch(front_res, file);
+            w.file2path.Add(file, file_module.path);
+            w.file2symbols.Add(file, front_res.module.scope);
 
-          var c  = new Compiler(w.ts, front_res);
-          var cm = c.Compile();
-          CompiledModule.ToFile(cm, compiled_file);
+            var c  = new Compiler(w.ts, front_res);
+            var cm = c.Compile();
+            CompiledModule.ToFile(cm, compiled_file);
+          }
 
           w.file2compiled.Add(file, compiled_file);
         }
@@ -625,13 +625,8 @@ public class Build
       }
 
       sw.Stop();
-      Console.WriteLine("BHL Compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
+      Console.WriteLine("BHL compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
-  }
-
-  public static string GetASTCacheFile(string cache_dir, string file)
-  {
-    return cache_dir + "/" + Path.GetFileName(file) + "_" + Hash.CRC32(file) + ".ast.cache";
   }
 
   public static string GetCompiledCacheFile(string cache_dir, string file)
@@ -693,15 +688,22 @@ public static class BuildUtil
   static public bool NeedToRegen(string file, List<string> deps)
   {
     if(!FileExists(file))
+    {
+      //Console.WriteLine("Missing " + file);
       return true;
+    }
 
     var fmtime = GetLastWriteTime(file);
     foreach(var dep in deps)
     {
       if(FileExists(dep) && GetLastWriteTime(dep) > fmtime)
+      {
+        //Console.WriteLine("Stale " + dep + " " + file);
         return true;
+      }
     }
 
+    //Console.WriteLine("Hit "+ file);
     return false;
   }
 

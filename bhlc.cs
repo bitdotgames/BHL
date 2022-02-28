@@ -121,7 +121,7 @@ public class BHLC
     if(deterministic)
       files.Sort();
 
-    Console.WriteLine("Total files {0}(debug: {1})", files.Count, debug);
+    Console.WriteLine("BHL total files: {0}(debug: {1}, cache: {2})", files.Count, debug, use_cache);
     var conf = new BuildConf();
     conf.args = string.Join(";", args);
     conf.module_fmt = module_fmt;
