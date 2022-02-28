@@ -113,7 +113,7 @@ public static class Tasks
   }
 
   [Task(deps: "build_front_dll")]
-  public static void run(Taskman tm, string[] args)
+  public static void compile(Taskman tm, string[] args)
   {
     List<string> postproc_sources;
     List<string> user_sources;
@@ -221,7 +221,7 @@ public static class Tasks
         $"{BHL_ROOT}/bhl_user.dll",
         "-define:BHL_FRONT -debug -target:library"
       );
-      runtime_args.Add($"--bindings_dll={BHL_ROOT}/bhl_user.dll");
+      runtime_args.Add($"--bindings-dll={BHL_ROOT}/bhl_user.dll");
     }
 
     if(postproc_sources.Count > 0)
@@ -233,7 +233,7 @@ public static class Tasks
         $"{BHL_ROOT}/bhl_postproc.dll",
         "-define:BHL_FRONT -debug -target:library"
       );
-      runtime_args.Add($"--postproc_dll={BHL_ROOT}/bhl_postproc.dll");
+      runtime_args.Add($"--postproc-dll={BHL_ROOT}/bhl_postproc.dll");
     }
 
     MCSBuild(tm, sources, $"{BHL_ROOT}/bhlc.exe", "-define:BHL_FRONT -debug");

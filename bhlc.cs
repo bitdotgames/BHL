@@ -12,7 +12,7 @@ public class BHLC
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl run --dir=<root src dir> [--files=<file>] --result=<result file> --cache_dir=<cache dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--module_fmt=<1,2>]");
+    Console.WriteLine("bhl compile --dir=<root src dir> [--files=<file>] --result=<result file> --tmp-dir=<tmp dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--module_fmt=<1,2>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -23,7 +23,7 @@ public class BHLC
 
     string src_dir = "";
     string res_file = "";
-    string cache_dir = "";
+    string tmp_dir = "";
     bool use_cache = true;
     string err_file = "";
     string postproc_dll_path = "";
@@ -41,15 +41,15 @@ public class BHLC
         v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
       { "result=", "result file",
         v => res_file = v },
-      { "cache_dir=", "cache dir",
-        v => cache_dir = v },
+      { "tmp-dir=", "tmp dir",
+        v => tmp_dir = v },
       { "C", "don't use cache",
         v => use_cache = v == null },
       { "N", "don't check import deps",
         v => check_deps = v == null },
-      { "postproc_dll=", "posprocess dll path",
+      { "postproc-dll=", "posprocess dll path",
         v => postproc_dll_path = v },
-      { "bindings_dll=", "bindings dll path",
+      { "bindings-dll=", "bindings dll path",
         v => userbindings_dll_path = v },
       { "error=", "error file",
         v => err_file = v },
@@ -59,7 +59,7 @@ public class BHLC
           v => max_threads = int.Parse(v) },
       { "d", "debug version",
         v => debug = v != null },
-      { "module_fmt=", "binary module format",
+      { "module-fmt=", "binary module format",
         v => module_fmt = (ModuleBinaryFormat)int.Parse(v) }
      };
 
@@ -81,7 +81,7 @@ public class BHLC
     if(res_file == "")
       Usage("Result file path not set");
 
-    if(cache_dir == "")
+    if(tmp_dir == "")
       Usage("Cache dir not set");
 
     if(err_file == "")
@@ -132,7 +132,7 @@ public class BHLC
     conf.inc_dir = src_dir;
     conf.max_threads = max_threads;
     conf.res_file = res_file;
-    conf.cache_dir = cache_dir;
+    conf.tmp_dir = tmp_dir;
     conf.err_file = err_file;
     conf.userbindings = userbindings;
     conf.postproc = postproc;

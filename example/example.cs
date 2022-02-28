@@ -13,7 +13,7 @@ public class Example
     var bnd = new MyBindings();
     bnd.Register(types);
 
-    var bytes = new MemoryStream(File.ReadAllBytes("tmp/bhl.bytes"));
+    var bytes = new MemoryStream(File.ReadAllBytes(args[0]));
 
     var vm = new VM(types, new ModuleLoader(types, bytes));
     vm.LoadModule("example");

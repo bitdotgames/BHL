@@ -20155,7 +20155,7 @@ public class BHL_TestVM : BHL_TestBase
     conf.files = files;
     conf.res_file = TestDirPath() + "/result.bin";
     conf.inc_dir = TestDirPath();
-    conf.cache_dir = TestDirPath() + "/cache";
+    conf.tmp_dir = TestDirPath() + "/cache";
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = false;
 

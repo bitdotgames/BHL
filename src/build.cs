@@ -17,7 +17,7 @@ public class BuildConf
   public string self_file = "";
   public string inc_dir = "";
   public string res_file = "";
-  public string cache_dir = "";
+  public string tmp_dir = "";
   public bool use_cache = true;
   public string err_file = "";
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
@@ -79,7 +79,7 @@ public class Build
     if(res_dir.Length > 0)
       Directory.CreateDirectory(res_dir);
 
-    Directory.CreateDirectory(conf.cache_dir);
+    Directory.CreateDirectory(conf.tmp_dir);
 
     var args_changed = CheckArgsSignatureFile(conf);
 
@@ -100,7 +100,7 @@ public class Build
     var parse_workers = StartParseWorkers(conf);
     var compiler_workers = StartAndWaitCompileWorkers(conf, ts, parse_workers);
 
-    var tmp_res_file = conf.cache_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
+    var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
 
     if(!WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file))
       return ERROR_EXIT_CODE;
@@ -136,7 +136,7 @@ public class Build
       pw.inc_path.Add(conf.inc_dir);
       pw.count = count;
       pw.use_cache = conf.use_cache;
-      pw.cache_dir = conf.cache_dir;
+      pw.cache_dir = conf.tmp_dir;
       pw.check_deps = conf.check_deps;
       pw.files = conf.files;
 
@@ -266,7 +266,7 @@ public class Build
 
   static bool CheckArgsSignatureFile(BuildConf conf)
   {
-    var tmp_args_file = conf.cache_dir + "/" + Path.GetFileName(conf.res_file) + ".args";
+    var tmp_args_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".args";
     bool changed = !File.Exists(tmp_args_file) || (File.Exists(tmp_args_file) && File.ReadAllText(tmp_args_file) != conf.args);
     if(changed)
       File.WriteAllText(tmp_args_file, conf.args);
