@@ -36,6 +36,30 @@ public class Build
 
   Dictionary<string, string> name2file = new Dictionary<string, string>();
 
+  public struct InterimResult
+  {
+    public bool use_file_cache;
+    public string cache_file;
+    public ANTLR_Result parsed;
+  }
+
+  public class Cache : Frontend.IParsedCache
+  {
+    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
+
+    public bool TryFetch(string file, out ANTLR_Result parsed)
+    {
+      parsed = null;
+      InterimResult interim;
+      if(file2interim.TryGetValue(file, out interim) && !interim.use_file_cache && interim.parsed != null)
+      {
+        parsed = interim.parsed;
+        return true;
+      }
+      return false;
+    }
+  }
+
   public int Exec(BuildConf conf)
   {
     var sw = new Stopwatch();
@@ -127,23 +151,26 @@ public class Build
   {
     var compiler_workers = new List<CompilerWorker>();
 
-    //1. parsing first and creating the shared parsed cache 
-    var parsed_result = new Dictionary<string, ANTLR_Result>(); 
+    var cache = new Cache();
 
-    bool had_errors = false;
+    //1. waiting for parse workers to finish
     foreach(var pw in parse_workers)
     {
       pw.Join();
 
-      foreach(var kv in pw.parsed_result)
-        parsed_result.Add(kv.Key, kv.Value);
+      //let's create the shared interim result
+      foreach(var kv in pw.file2interim)
+        cache.file2interim.Add(kv.Key, kv.Value);
+    }
 
+    bool had_errors = false;
+    foreach(var pw in parse_workers)
+    {
       var cw = new CompilerWorker();
       cw.id = pw.id;
-      cw.parsed_result = parsed_result;
+      cw.cache = cache;
       cw.inc_dir = conf.inc_dir;
       cw.cache_dir = pw.cache_dir;
-      cw.use_cache = pw.use_cache;
       cw.ts = ts;
       cw.files = pw.files;
       cw.start = pw.start;
@@ -309,8 +336,7 @@ public class Build
     public int count;
     public List<string> inc_path = new List<string>();
     public List<string> files;
-    //NOTE: null value means file is cached
-    public Dictionary<string, ANTLR_Result> parsed_result = new Dictionary<string, ANTLR_Result>();
+    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public Exception error = null;
 
     public void Start()
@@ -368,19 +394,27 @@ public class Build
 
             var cache_file = GetASTCacheFile(w.cache_dir, file);
 
-            //NOTE: null means - "try from file cache"
-            ANTLR_Result parsed = null;
+            var interim = new InterimResult();
+            interim.cache_file = cache_file;
+
             if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
             {
               var parser = Frontend.Stream2Parser(file, sfs);
-              parsed = new ANTLR_Result(parser.TokenStream, parser.program());
+              var parsed = new ANTLR_Result(parser.TokenStream, parser.program());
+
+              interim.parsed = parsed;
+
               ++cache_miss;
               //Console.WriteLine("PARSE " + file + " " + cache_file);
             }
             else
-              ++cache_hit;
+            {
+              interim.use_file_cache = true;
 
-            w.parsed_result[file] = parsed;
+              ++cache_hit;
+            }
+
+            w.file2interim[file] = interim;
           }
         }
       }
@@ -490,10 +524,8 @@ public class Build
   public class CompilerWorker
   {
     public int id;
-    public Dictionary<string, ANTLR_Result> parsed_result;
     public Thread th;
     public string inc_dir;
-    public bool use_cache;
     public string cache_dir;
     public List<string> files;
     public Types ts;
@@ -501,6 +533,7 @@ public class Build
     public int count;
     public IFrontPostProcessor postproc;
     public Exception error = null;
+    public Cache cache;
     public Dictionary<string, ModulePath> file2path = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
     public Dictionary<string, ModuleScope> file2symbols = new Dictionary<string, ModuleScope>();
@@ -527,7 +560,7 @@ public class Build
       w.file2compiled.Clear();
 
       var imp = new Frontend.Importer();
-      imp.SetParsedCache(w.parsed_result);
+      imp.SetParsedCache(w.cache);
       imp.AddToIncludePath(w.inc_dir);
 
       int i = w.start;
@@ -548,10 +581,10 @@ public class Build
 
           Frontend.Result front_res = null;
 
-          ANTLR_Result parsed;
-          w.parsed_result.TryGetValue(file, out parsed);
+          InterimResult interim;
+          w.cache.file2interim.TryGetValue(file, out interim);
           ////NOTE: checking if data must be taken from the file cache (parsed is null)
-          //if(w.parsed_cache.TryGetValue(file, out parsed) && parsed == null)
+          //if(interim.use_file_cache)
           //{
           //  ++cache_hit;
           //  //TODO:
@@ -561,10 +594,10 @@ public class Build
           //{
             ++cache_miss;
 
-            if(parsed == null)
+            if(interim.parsed == null)
               front_res = Frontend.ProcessFile(file, w.ts, imp);
             else
-              front_res = Frontend.ProcessParsed(file_module, parsed, w.ts, imp);
+              front_res = Frontend.ProcessParsed(file_module, interim.parsed, w.ts, imp);
           //}
 
           w.file2path.Add(file, file_module.path);

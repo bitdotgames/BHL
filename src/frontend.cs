@@ -157,13 +157,18 @@ public class Frontend : bhlBaseVisitor<object>
     return res;
   }
 
+  public interface IParsedCache
+  {
+    bool TryFetch(string file, out ANTLR_Result parsed);
+  }
+
   public class Importer
   {
     List<string> include_path = new List<string>();
     Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
-    Dictionary<string, ANTLR_Result> parsed_cache = null;
+    IParsedCache parsed_cache = null;
 
-    public void SetParsedCache(Dictionary<string, ANTLR_Result> cache)
+    public void SetParsedCache(IParsedCache cache)
     {
       parsed_cache = cache;
     }
@@ -222,7 +227,7 @@ public class Frontend : bhlBaseVisitor<object>
 
       ANTLR_Result parsed;
       //4. Let's try the parsed cache if it's present
-      if(parsed_cache != null && parsed_cache.TryGetValue(full_path, out parsed) && parsed != null)
+      if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
       {
         //Console.WriteLine("HIT " + full_path);
         Frontend.ProcessParsed(m, parsed, ts, this, decls_only: true);
