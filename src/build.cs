@@ -95,6 +95,7 @@ public class Build
     var ts = conf.ts;
     if(ts == null)
       ts = new Types();
+
     conf.userbindings.Register(ts);
 
     var parse_workers = StartParseWorkers(conf);
