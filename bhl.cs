@@ -164,7 +164,7 @@ public static class Tasks
     
     MCSBuild(tm, 
       new string[] {
-        $"{BHL_ROOT}/bhlspc.cs",
+        $"{BHL_ROOT}/src/bin/bhlspc.cs",
         $"{BHL_ROOT}/src/lsp/*.cs",
         $"{BHL_ROOT}/mono_opts.dll",
         $"{BHL_ROOT}/bhl_front.dll",
@@ -206,7 +206,7 @@ public static class Tasks
   public static string BuildBHLC(Taskman tm, List<string> user_sources, List<string> postproc_sources, ref List<string> runtime_args)
   {
     var sources = new string[] {
-      $"{BHL_ROOT}/bhlc.cs",
+      $"{BHL_ROOT}/src/bin/bhlc.cs",
       $"{BHL_ROOT}/bhl_front.dll", 
       $"{BHL_ROOT}/mono_opts.dll",
       $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
