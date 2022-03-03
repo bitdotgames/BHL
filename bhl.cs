@@ -19,8 +19,8 @@ public static class Tasks
       $"{BHL_ROOT}/deps/msgpack/*.cs",
       $"{BHL_ROOT}/src/g/*.cs",
       $"{BHL_ROOT}/src/*.cs",
-      $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
-      $"{BHL_ROOT}/lz4.dll", 
+      $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
+      $"{BHL_ROOT}/deps/lz4.dll", 
      },
      $"{BHL_ROOT}/bhl_front.dll",
      "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library"
@@ -139,10 +139,10 @@ public static class Tasks
      new string[] {
         $"{BHL_ROOT}/src/lsp/*.cs",
         $"{BHL_ROOT}/tests/*.cs",
-        $"{BHL_ROOT}/mono_opts.dll",
+        $"{BHL_ROOT}/deps/mono_opts.dll",
         $"{BHL_ROOT}/bhl_front.dll",
-        $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll",
-        $"{BHL_ROOT}/Newtonsoft.Json.dll",
+        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll",
+        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
       },
       $"{BHL_ROOT}/test.exe",
       "-define:BHL_FRONT -debug"
@@ -166,10 +166,10 @@ public static class Tasks
       new string[] {
         $"{BHL_ROOT}/src/bin/bhlspc.cs",
         $"{BHL_ROOT}/src/lsp/*.cs",
-        $"{BHL_ROOT}/mono_opts.dll",
+        $"{BHL_ROOT}/deps/mono_opts.dll",
         $"{BHL_ROOT}/bhl_front.dll",
-        $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll",
-        $"{BHL_ROOT}/Newtonsoft.Json.dll",
+        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll",
+        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
       },
       $"{BHL_ROOT}/bhlspc.exe",
       $"{extra_args} -define:BHLSP_DEBUG -debug"
@@ -208,14 +208,14 @@ public static class Tasks
     var sources = new string[] {
       $"{BHL_ROOT}/src/bin/bhlc.cs",
       $"{BHL_ROOT}/bhl_front.dll", 
-      $"{BHL_ROOT}/mono_opts.dll",
-      $"{BHL_ROOT}/Antlr4.Runtime.Standard.dll", 
+      $"{BHL_ROOT}/deps/mono_opts.dll",
+      $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
     };
 
     if(user_sources.Count > 0)
     {
       user_sources.Add($"{BHL_ROOT}/bhl_front.dll");
-      user_sources.Add($"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"); 
+      user_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
       MCSBuild(tm, 
         user_sources.ToArray(),
         $"{BHL_ROOT}/bhl_user.dll",
@@ -227,7 +227,7 @@ public static class Tasks
     if(postproc_sources.Count > 0)
     {
       postproc_sources.Add($"{BHL_ROOT}/bhl_front.dll");
-      postproc_sources.Add($"{BHL_ROOT}/Antlr4.Runtime.Standard.dll"); 
+      postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
       MCSBuild(tm, 
         postproc_sources.ToArray(),
         $"{BHL_ROOT}/bhl_postproc.dll",

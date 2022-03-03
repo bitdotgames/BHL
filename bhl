@@ -6,9 +6,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 SRC=$DIR/bhl.cs
 EXE=$DIR/bhlb.exe
+export MONO_PATH="deps/:$MONO_PATH" 
 
 if [ $EXE -ot $SRC ]; then 
-  mcs $SRC -debug -r:$DIR/mono_opts.dll -out:$EXE
+  mcs $SRC -debug -r:$DIR/deps/mono_opts.dll -out:$EXE
 fi
 
 mono --debug $EXE $*
