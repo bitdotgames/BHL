@@ -15378,6 +15378,36 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSeveralForeachInParalAll()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral_all {
+        foreach([1,2,3] as int it) {
+          trace((string)it)
+          yield()
+        }
+        foreach([4,5,6] as int it2) {
+          trace((string)it2)
+          yield()
+        }
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("142536", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestForeachBreak()
   {
     string bhl = @"

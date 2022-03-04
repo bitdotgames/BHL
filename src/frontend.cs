@@ -2762,7 +2762,7 @@ public class Frontend : bhlBaseVisitor<object>
     //generic fallback if the concrete type is not found 
     string arr_stype = arr_type.GetName();
 
-    var arr_tmp_name = "$foreach_tmp" + loops_stack;
+    var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
     var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
     if(arr_tmp_symb == null)
     {
@@ -2770,7 +2770,7 @@ public class Frontend : bhlBaseVisitor<object>
       curr_scope.Define(arr_tmp_symb);
     }
 
-    var arr_cnt_name = "$foreach_cnt" + loops_stack;
+    var arr_cnt_name = "$foreach_cnt" + exp.Start.Line + "_" + exp.Start.Column;
     var arr_cnt_symb = curr_scope.Resolve(arr_cnt_name) as VariableSymbol;
     if(arr_cnt_symb == null)
     {
