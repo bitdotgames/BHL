@@ -3827,6 +3827,217 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDoWhileWithCondition()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 100
+
+      do
+      {
+        x1 = x1 - 10
+      }
+      while( x1 >= 10 )
+
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new Compiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
+      .EmitThen(Opcodes.SetVar, new int[] { 0 })
+      //__while__//
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+      .EmitThen(Opcodes.Sub)
+      .EmitThen(Opcodes.SetVar, new int[] { 0 })
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+      .EmitThen(Opcodes.GTE)
+      .EmitThen(Opcodes.JumpZ, new int[] { 3 })
+      .EmitThen(Opcodes.Jump, new int[] { -22 })
+      //__//
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    AssertEqual(c.Constants.Count, 2);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 0);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestDoWhileFeature()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      do {
+        i = i + 1
+      } while(false)
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  // [IsTested()]
+  // public void TestDoWhileComplexCondition()
+  // {
+  //   string bhl = @"
+
+  //   func int test() 
+  //   {
+  //     int i = 0
+  //     while(i < 3 && true) {
+  //       i = i + 1
+  //     }
+  //     return i
+  //   }
+  //   ";
+
+  //   var vm = MakeVM(bhl);
+  //   AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+  //   CommonChecks(vm);
+  // }
+
+  // [IsTested()]
+  // public void TestBreakInWhile()
+  // {
+  //   string bhl = @"
+  //   func int test()
+  //   {
+  //     int x1 = 100
+
+  //     while( x1 >= 10 )
+  //     {
+  //       x1 = x1 - 10
+  //       if(x1 < 80) {
+  //         break
+  //       }
+  //     }
+
+  //     return x1
+  //   }
+  //   ";
+
+  //   var c = Compile(bhl);
+
+  //   var expected = 
+  //     new ModuleCompiler()
+  //     .UseInit()
+  //     .EmitThen(Opcodes.Func, new int[] { ConstIdx(c, "test"), 0 })
+  //     .UseCode()
+  //     .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+  //     .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
+  //     .EmitThen(Opcodes.SetVar, new int[] { 0 })
+  //     //__while__//
+  //     .EmitThen(Opcodes.GetVar, new int[] { 0 })
+  //     .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+  //     .EmitThen(Opcodes.GTE)
+  //     .EmitThen(Opcodes.JumpZ, new int[] { 25 })
+  //     .EmitThen(Opcodes.GetVar, new int[] { 0 })
+  //     .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+  //     .EmitThen(Opcodes.Sub)
+  //     .EmitThen(Opcodes.SetVar, new int[] { 0 })
+  //     .EmitThen(Opcodes.GetVar, new int[] { 0 })
+  //     .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 80) })
+  //     .EmitThen(Opcodes.LT)
+  //     .EmitThen(Opcodes.JumpZ, new int[] { 3 })
+  //     .EmitThen(Opcodes.Break, new int[] { 3 })
+  //     .EmitThen(Opcodes.Jump, new int[] { -35 })
+  //     //__//
+  //     .EmitThen(Opcodes.GetVar, new int[] { 0 })
+  //     .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+  //     .EmitThen(Opcodes.Return)
+  //     ;
+  //   AssertEqual(c, expected);
+
+  //   var vm = MakeVM(c);
+  //   var fb = vm.Start("test");
+  //   AssertFalse(vm.Tick());
+  //   AssertEqual(fb.result.PopRelease().num, 70);
+  //   CommonChecks(vm);
+  // }
+
+  // [IsTested()]
+  // public void TestContinueInWhile()
+  // {
+  //   string bhl = @"
+  //   func int test()
+  //   {
+  //     int x1 = 100
+
+  //     while( x1 >= 10 )
+  //     {
+  //       x1 = x1 - 10
+  //       continue
+  //       x1 = x1 + 10
+  //     }
+
+  //     return x1
+  //   }
+  //   ";
+
+  //   var c = Compile(bhl);
+
+  //   var vm = MakeVM(c);
+  //   var fb = vm.Start("test");
+  //   AssertFalse(vm.Tick());
+  //   AssertEqual(fb.result.PopRelease().num, 0);
+  //   CommonChecks(vm);
+  // }
+
+  // [IsTested()]
+  // public void TestDoWhileFailure()
+  // {
+  //   string bhl = @"
+
+  //   func test() 
+  //   {
+  //     int i = 0
+  //     while(i < 3) {
+  //       trace((string)i)
+  //       i = i + 1
+  //       if(i == 2) {
+  //         fail()
+  //       }
+  //     }
+  //   }
+  //   ";
+
+  //   var ts = new TypeSystem();
+  //   var log = new StringBuilder();
+  //   BindTrace(ts, log);
+
+  //   var vm = MakeVM(bhl, ts);
+  //   var fb = vm.Start("test");
+
+  //   vm.Tick();
+  //   AssertEqual(fb.status, BHS.FAILURE);
+
+  //   AssertEqual("01", log.ToString());
+  //   CommonChecks(vm);
+  // }
+
+  [IsTested()]
   public void TestVarInInfiniteLoop()
   {
     string bhl = @"

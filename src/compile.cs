@@ -910,6 +910,33 @@ public class Compiler : AST_Visitor
         loop_blocks.Pop();
       }
       break;
+      case EnumBlock.DOWHILE:
+      {
+        if(ast.children.Count != 2)
+         throw new Exception("Unexpected amount of children (must be 2)");
+
+        loop_blocks.Push(ast);
+
+        var begin_op = Peek();
+
+        Visit(ast.children[0]);
+        Visit(ast.children[1]);
+        var cond_op = Emit(Opcodes.JumpZ, new int[] { 0 });
+
+        //to the beginning of the loop
+        var jump_op = Emit(Opcodes.Jump, new int[] { 0 });
+        AddJumpFromTo(jump_op, begin_op);
+
+        //patch 'jump out of the loop' position
+        AddJumpFromTo(cond_op, Peek());
+
+        PatchContinues(ast);
+
+        PatchBreaks(ast);
+
+        loop_blocks.Pop();
+      }
+      break;
       case EnumBlock.FUNC:
       {
         VisitChildren(ast);

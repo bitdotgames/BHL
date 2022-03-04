@@ -2563,6 +2563,33 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitDoWhile(bhlParser.DoWhileContext ctx)
+  {
+    var ast = AST_Util.New_Block(EnumBlock.DOWHILE);
+
+    ++loops_stack;
+
+    PushAST(ast);
+    CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
+    PopAST();
+    ast.children[ast.children.Count-1].AddChild(AST_Util.New_Continue(jump_marker: true));
+
+    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    PushAST(cond);
+    Visit(ctx.exp());
+    PopAST();
+
+    types.CheckAssign(Types.Bool, Wrap(ctx.exp()));
+
+    ast.AddChild(cond);
+
+    --loops_stack;
+
+    PeekAST().AddChild(ast);
+
+    return null;
+  }
+
   public override object VisitFor(bhlParser.ForContext ctx)
   {
     //NOTE: we're going to generate the following code

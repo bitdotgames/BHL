@@ -613,6 +613,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitWhile([NotNull] bhlParser.WhileContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>DoWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterDoWhile([NotNull] bhlParser.DoWhileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>DoWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitDoWhile([NotNull] bhlParser.DoWhileContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>For</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

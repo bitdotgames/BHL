@@ -721,6 +721,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitWhile([NotNull] bhlParser.WhileContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>DoWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterDoWhile([NotNull] bhlParser.DoWhileContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>DoWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitDoWhile([NotNull] bhlParser.DoWhileContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>For</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>

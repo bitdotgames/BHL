@@ -375,6 +375,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitWhile([NotNull] bhlParser.WhileContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>DoWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDoWhile([NotNull] bhlParser.DoWhileContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>For</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

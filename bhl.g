@@ -121,6 +121,7 @@ statement
   | callPostOperators                                           #PostOperatorCall
   | mainIf elseIf* else?                                        #If
   | 'while' '(' exp ')' block                                   #While
+  | 'do' block 'while' '(' exp ')'                              #DoWhile
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
   | 'yield' '(' ')'                                             #Yield //we need this one because of 'yield while()' special case
