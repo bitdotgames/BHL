@@ -130,7 +130,7 @@ public static class Tasks
         $"{BHL_ROOT}/tests/*.cs",
         $"{BHL_ROOT}/deps/mono_opts.dll",
         $"{BHL_ROOT}/bhl_front.dll",
-        $"{BHL_ROOT}/bhlsp.dll",
+        $"{BHL_ROOT}/bhl_lsp.dll",
         $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"
      },
       $"{BHL_ROOT}/test.exe",
@@ -150,7 +150,7 @@ public static class Tasks
         $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll",
         $"{BHL_ROOT}/deps/Newtonsoft.Json.dll"
       },
-      $"{BHL_ROOT}/bhlsp.dll",
+      $"{BHL_ROOT}/bhl_lsp.dll",
       "-target:library"
     );
   }
@@ -172,7 +172,7 @@ public static class Tasks
       new string[] {
         $"{BHL_ROOT}/src/cmd/lsp.cs",
         $"{BHL_ROOT}/src/cmd/cmd.cs",
-        $"{BHL_ROOT}/bhlsp.dll",
+        $"{BHL_ROOT}/bhl_lsp.dll",
         $"{BHL_ROOT}/deps/mono_opts.dll"
       },
       $"{extra_args} -define:BHLSP_DEBUG",
