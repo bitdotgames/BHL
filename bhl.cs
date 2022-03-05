@@ -119,17 +119,7 @@ public static class Tasks
     List<string> user_sources;
     var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
 
-    var bin = BuildBHLC(tm, user_sources, postproc_sources, ref runtime_args);
-    MonoRun(tm, bin, runtime_args.ToArray(), "--debug");
-  }
-
-  [Task(deps: "build_front_dll")]
-  public static void build(Taskman tm, string[] args)
-  {
-    List<string> postproc_sources;
-    List<string> user_sources;
-    var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
-    BuildBHLC(tm, user_sources, postproc_sources, ref runtime_args);
+    BuildAndRunCompiler(tm, user_sources, postproc_sources, ref runtime_args);
   }
 
   [Task("build_front_dll", "build_lsp_dll")]
@@ -176,17 +166,18 @@ public static class Tasks
         extra_args += " ";
     }
     
-    MCSBuild(tm,
+    BuildAndRunDllCmd(
+      tm,
+      "lsp",
       new string[] {
-        $"{BHL_ROOT}/src/bin/bhlspc.cs",
+        $"{BHL_ROOT}/src/cmd/lsp.cs",
+        $"{BHL_ROOT}/src/cmd/cmd.cs",
         $"{BHL_ROOT}/bhlsp.dll",
         $"{BHL_ROOT}/deps/mono_opts.dll"
       },
-      $"{BHL_ROOT}/bhlspc.exe",
-      $"{extra_args} -define:BHLSP_DEBUG -debug"
+      $"{extra_args} -define:BHLSP_DEBUG",
+      args
     );
-    
-    MonoRun(tm, $"{BHL_ROOT}/bhlspc.exe", args, "--debug ");
   }
   
   /////////////////////////////////////////////////
@@ -216,10 +207,11 @@ public static class Tasks
     return left;
   }
   
-  public static string BuildBHLC(Taskman tm, List<string> user_sources, List<string> postproc_sources, ref List<string> runtime_args)
+  public static void BuildAndRunCompiler(Taskman tm, List<string> user_sources, List<string> postproc_sources, ref List<string> runtime_args)
   {
     var sources = new string[] {
-      $"{BHL_ROOT}/src/bin/bhlc.cs",
+      $"{BHL_ROOT}/src/cmd/compile.cs",
+      $"{BHL_ROOT}/src/cmd/cmd.cs",
       $"{BHL_ROOT}/bhl_front.dll", 
       $"{BHL_ROOT}/deps/mono_opts.dll",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
@@ -249,9 +241,13 @@ public static class Tasks
       runtime_args.Add($"--postproc-dll={BHL_ROOT}/bhl_postproc.dll");
     }
 
-    MCSBuild(tm, sources, $"{BHL_ROOT}/bhlc.exe", "-define:BHL_FRONT -debug");
-
-    return $"{BHL_ROOT}/bhlc.exe";
+    BuildAndRunDllCmd(
+      tm,
+      "compile",
+      sources,
+      "-define:BHL_FRONT",
+      runtime_args
+    );
   }
 
   public static void MonoRun(Taskman tm, string exe, string[] args = null, string opts = "")
@@ -301,6 +297,27 @@ public static class Tasks
 
     if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
       tm.Shell(binary, args);
+  }
+
+  public static void BuildAndRunDllCmd(Taskman tm, string name, string[] sources, string extra_mcs_args, IList<string> args)
+  {
+    var dll_path = $"{BHL_ROOT}/bhl_cmd_{name}.dll";
+
+    MCSBuild(tm, 
+      sources.ToArray(),
+      dll_path,
+      extra_mcs_args + " -debug -target:library"
+    );
+
+    var cmd_assembly = System.Reflection.Assembly.LoadFrom(dll_path);
+    var cmd_class = cmd_assembly.GetTypes()[0];
+    var cmd = System.Activator.CreateInstance(cmd_class, null);
+    if(cmd == null)
+      throw new Exception("Could not create instance of: " + cmd_class.Name);
+    var cmd_method = cmd.GetType().GetMethod("Run");
+    if(cmd_method == null)
+      throw new Exception("No Run method in class: " + cmd_class.Name);
+    cmd_method.Invoke(cmd, new object[] { args.ToArray() });
   }
 }
 

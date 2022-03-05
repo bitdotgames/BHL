@@ -5,9 +5,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Antlr4.Runtime.Misc;
 using Mono.Options;
-using bhl;
 
-public class BHLC
+namespace bhl {
+
+public class CompileCmd : ICmd
 {
   public static void Usage(string msg = "")
   {
@@ -17,7 +18,7 @@ public class BHLC
     Environment.Exit(1);
   }
 
-  public static void Main(string[] args)
+  public void Run(string[] args)
   {
     var files = new List<string>();
 
@@ -148,4 +149,6 @@ public class BHLC
   {
     return System.Reflection.Assembly.GetExecutingAssembly().Location;
   }
+}
+
 }

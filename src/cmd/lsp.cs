@@ -3,9 +3,11 @@ using System.Text;
 using Mono.Options;
 using bhlsp;
 
-public class BHLSPC
+namespace bhl {
+
+public class LSP : ICmd
 {
-  public static void Main(string[] args)
+  public void Run(string[] args)
   {
 #if BHLSP_DEBUG
     BHLSPLogger.CleanUpLogFile();
@@ -64,4 +66,6 @@ public class BHLSPC
       Environment.Exit(-1);
     }
   }
+}
+
 }

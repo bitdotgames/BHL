@@ -244,7 +244,7 @@ namespace bhlsp
     {
       while(lengthRead < count)
       {
-        if (!stream.CanRead)
+        if(!stream.CanRead)
           return Slice(lengthRead, 0);
         
         FillBuffer();

@@ -6,6 +6,7 @@ namespace bhl {
 //NOTE: this class must be first in the assembly
 public class MyBindings : IUserBindings
 { 
+  //must be present due to loading class instance from dll requirements
   public MyBindings()
   {}
 
