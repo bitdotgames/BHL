@@ -155,7 +155,7 @@ public static class Tasks
     );
   }
   
-  [Task(deps: "build_lsp_dll")]
+  [Task(deps: "build_lsp_dll", verbose: false)]
   public static void lsp(Taskman tm, string[] args)
   {
     var extra_args = "";
@@ -353,6 +353,8 @@ public static class BHLBuild
 
 public class Taskman
 {
+  public bool verbose = true;
+
   public class Task
   {
     public TaskAttribute attr;
@@ -432,6 +434,8 @@ public class Taskman
     for(int i=1;i<args.Length;++i)
       task_args[i-1] = args[i];
 
+    verbose = task.attr.verbose;
+
     Invoke(task, task_args);
   }
 
@@ -491,7 +495,8 @@ public class Taskman
 
   public void Echo(string s)
   {
-    Console.WriteLine(s);
+    if(verbose)
+      Console.WriteLine(s);
   }
 
   public void Mkdir(string path)
@@ -603,10 +608,17 @@ public class Taskman
 
 public class TaskAttribute : Attribute
 {
+  public bool verbose = true;
   public string[] deps;
 
   public TaskAttribute(params string[] deps)
   {
+    this.deps = deps;
+  }
+
+  public TaskAttribute(bool verbose, params string[] deps)
+  {
+    this.verbose = verbose;
     this.deps = deps;
   }
 }
