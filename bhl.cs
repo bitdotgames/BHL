@@ -132,18 +132,17 @@ public static class Tasks
     BuildBHLC(tm, user_sources, postproc_sources, ref runtime_args);
   }
 
-  [Task(deps: "build_front_dll")]
+  [Task("build_front_dll", "build_lsp_dll")]
   public static void test(Taskman tm, string[] args)
   {
     MCSBuild(tm, 
      new string[] {
-        $"{BHL_ROOT}/src/lsp/*.cs",
         $"{BHL_ROOT}/tests/*.cs",
         $"{BHL_ROOT}/deps/mono_opts.dll",
         $"{BHL_ROOT}/bhl_front.dll",
-        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll",
-        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
-      },
+        $"{BHL_ROOT}/bhlsp.dll",
+        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"
+     },
       $"{BHL_ROOT}/test.exe",
       "-define:BHL_FRONT -debug"
     );
@@ -152,6 +151,21 @@ public static class Tasks
   }
   
   [Task(deps: "build_front_dll")]
+  public static void build_lsp_dll(Taskman tm, string[] args)
+  {
+    MCSBuild(tm, 
+      new string[] {
+        $"{BHL_ROOT}/src/lsp/*.cs",
+        $"{BHL_ROOT}/bhl_front.dll",
+        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll",
+        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll"
+      },
+      $"{BHL_ROOT}/bhlsp.dll",
+      "-target:library"
+    );
+  }
+  
+  [Task(deps: "build_lsp_dll")]
   public static void build_lsp(Taskman tm, string[] args)
   {
     var extra_args = "";
@@ -162,16 +176,20 @@ public static class Tasks
         extra_args += " ";
     }
     
-    MCSBuild(tm, 
+    tm.Mkdir($"{BHL_ROOT}/tmp/lsp");
+    tm.Copy($"{BHL_ROOT}/deps/mono_opts.dll", $"{BHL_ROOT}/tmp/lsp/mono_opts.dll");
+    tm.Copy($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", $"{BHL_ROOT}/tmp/lsp/Antlr4.Runtime.Standard.dll");
+    tm.Copy($"{BHL_ROOT}/deps/Newtonsoft.Json.dll", $"{BHL_ROOT}/tmp/lsp/Newtonsoft.Json.dll");
+    tm.Copy($"{BHL_ROOT}/bhl_front.dll", $"{BHL_ROOT}/tmp/lsp/bhl_front.dll");
+    tm.Copy($"{BHL_ROOT}/bhlsp.dll", $"{BHL_ROOT}/tmp/lsp/bhlsp.dll");
+    
+    MCSBuild(tm,
       new string[] {
         $"{BHL_ROOT}/src/bin/bhlspc.cs",
-        $"{BHL_ROOT}/src/lsp/*.cs",
-        $"{BHL_ROOT}/deps/mono_opts.dll",
-        $"{BHL_ROOT}/bhl_front.dll",
-        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll",
-        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
+        $"{BHL_ROOT}/tmp/lsp/bhlsp.dll",
+        $"{BHL_ROOT}/tmp/lsp/mono_opts.dll"
       },
-      $"{BHL_ROOT}/bhlspc.exe",
+      $"{BHL_ROOT}/tmp/lsp/bhlspc.exe",
       $"{extra_args} -define:BHLSP_DEBUG -debug"
     );
   }
