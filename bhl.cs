@@ -166,7 +166,7 @@ public static class Tasks
   }
   
   [Task(deps: "build_lsp_dll")]
-  public static void build_lsp(Taskman tm, string[] args)
+  public static void lsp(Taskman tm, string[] args)
   {
     var extra_args = "";
     for(int i = 0; i < args.Length; i++)
@@ -176,22 +176,17 @@ public static class Tasks
         extra_args += " ";
     }
     
-    tm.Mkdir($"{BHL_ROOT}/tmp/lsp");
-    tm.Copy($"{BHL_ROOT}/deps/mono_opts.dll", $"{BHL_ROOT}/tmp/lsp/mono_opts.dll");
-    tm.Copy($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", $"{BHL_ROOT}/tmp/lsp/Antlr4.Runtime.Standard.dll");
-    tm.Copy($"{BHL_ROOT}/deps/Newtonsoft.Json.dll", $"{BHL_ROOT}/tmp/lsp/Newtonsoft.Json.dll");
-    tm.Copy($"{BHL_ROOT}/bhl_front.dll", $"{BHL_ROOT}/tmp/lsp/bhl_front.dll");
-    tm.Copy($"{BHL_ROOT}/bhlsp.dll", $"{BHL_ROOT}/tmp/lsp/bhlsp.dll");
-    
     MCSBuild(tm,
       new string[] {
         $"{BHL_ROOT}/src/bin/bhlspc.cs",
-        $"{BHL_ROOT}/tmp/lsp/bhlsp.dll",
-        $"{BHL_ROOT}/tmp/lsp/mono_opts.dll"
+        $"{BHL_ROOT}/bhlsp.dll",
+        $"{BHL_ROOT}/deps/mono_opts.dll"
       },
-      $"{BHL_ROOT}/tmp/lsp/bhlspc.exe",
+      $"{BHL_ROOT}/bhlspc.exe",
       $"{extra_args} -define:BHLSP_DEBUG -debug"
     );
+    
+    MonoRun(tm, $"{BHL_ROOT}/bhlspc.exe", args, "--debug ");
   }
   
   /////////////////////////////////////////////////
