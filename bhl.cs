@@ -405,14 +405,11 @@ public class Taskman
   public void Run(string[] args)
   {
     if(args.Length == 0)
-      return;
+      throw new Exception("No task specified");
 
-    if(tasks.Count == 0)
-      return;
-    
     var task = FindTask(args[0]);
     if(task == null)
-      return;
+      throw new Exception("No such task: " + args[0]);
 
     var task_args = new string[args.Length-1];
     for(int i=1;i<args.Length;++i)
