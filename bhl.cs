@@ -107,7 +107,7 @@ public static class Tasks
     tm.Mkdir($"{BHL_ROOT}/tmp");
 
     tm.Copy($"{BHL_ROOT}/bhl.g", $"{BHL_ROOT}/tmp/bhl.g");
-    tm.Copy($"{BHL_ROOT}/bin/g4sharp", $"{BHL_ROOT}/tmp/g4sharp");
+    tm.Copy($"{BHL_ROOT}/util/g4sharp", $"{BHL_ROOT}/tmp/g4sharp");
 
     tm.Shell("sh", $"-c 'cd {BHL_ROOT}/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/' ");
   }
