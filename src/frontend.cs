@@ -67,9 +67,6 @@ public class Frontend : bhlBaseVisitor<object>
   ITokenStream tokens;
   ParseTreeProperty<WrappedParseTree> tree_props = new ParseTreeProperty<WrappedParseTree>();
 
-  Dictionary<FuncSymbolScript, bhlParser.FuncParamsContext> func2fparams = 
-    new Dictionary<FuncSymbolScript, bhlParser.FuncParamsContext>(); 
-
   IScope curr_scope;
   int scope_level;
 
@@ -747,7 +744,7 @@ public class Frontend : bhlBaseVisitor<object>
           //NOTE: for func native symbols we assume default arguments  
           //      are specified manually in bindings
           if(func_symb is FuncSymbolNative || 
-            (func_symb is FuncSymbolScript fss && GetDefaultArgsExprAt(fss, i) != null))
+            (func_symb is FuncSymbolScript fss && fss.HasDefaultArgAt(i)))
           {
             int default_arg_idx = i - required_args_num;
             if(!args_info.UseDefaultArg(default_arg_idx, true))
@@ -922,17 +919,6 @@ public class Frontend : bhlBaseVisitor<object>
     PushAST(var_tmp_read);
   }
 
-  IParseTree GetDefaultArgsExprAt(FuncSymbolScript fss, int idx)
-  {
-    var fparams = func2fparams[fss];
-    if(fparams == null)
-      return null; 
-
-    var vdecl = fparams.funcParamDeclare()[idx];
-    var vinit = vdecl.assignExp(); 
-    return vinit;
-  }
-
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
   {
     for(int i=0;i<cargs.callArg().Length;++i)
@@ -973,17 +959,21 @@ public class Frontend : bhlBaseVisitor<object>
     return new FuncSignature(ret_type, arg_types);
   }
 
-  FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams)
+  FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
   {
+    default_args_num = 0;
     var sig = new FuncSignature(ret_type);
     if(fparams != null)
     {
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
+
         var tp = ParseType(vd.type());
         if(vd.isRef() != null)
           tp = types.Type(new RefType(tp));
+        if(vd.assignExp() != null)
+          ++default_args_num;
         sig.AddArg(tp);
       }
     }
@@ -1036,13 +1026,13 @@ public class Frontend : bhlBaseVisitor<object>
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
     var ast = AST_Util.New_LambdaDecl(func_name, tp.name);
+    int default_args_num;
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
-      ParseFuncSignature(tp, funcLambda.funcParams()),
+      ParseFuncSignature(tp, funcLambda.funcParams(), out default_args_num),
       this.func_decl_stack,
       ast
     );
-    func2fparams[lmb_symb] = funcLambda.funcParams();
 
     PushFuncDecl(lmb_symb);
 
@@ -1994,12 +1984,13 @@ public class Frontend : bhlBaseVisitor<object>
 
     var ast = AST_Util.New_FuncDecl(context.NAME().GetText(), tp.name);
 
+    int default_args_num;
     var func_symb = new FuncSymbolScript(
       func_tree, 
-      ParseFuncSignature(tp, context.funcParams()),
-      ast.name
+      ParseFuncSignature(tp, context.funcParams(), out default_args_num),
+      ast.name,
+      default_args_num
     );
-    func2fparams[func_symb] = context.funcParams();
     scope.Define(func_symb);
 
     //NOTE: let's check if this is a method and if so

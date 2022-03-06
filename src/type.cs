@@ -78,11 +78,18 @@ public struct TypeProxy : IMarshallable
     else
     {   
       var resolved = Get();
-      bool defined_in_module = resolved is Symbol symb && symb.scope is ModuleScope;
+      //TODO: make this check more robust
+      bool defined_in_scope = 
+        resolved is Symbol symb && 
+        (symb.scope is ModuleScope || 
+         symb is ClassSymbolNative ||
+         symb is EnumSymbol
+         );
 
-      //NOTE: we want to determine if it's an existing symbol and if so
-      //      we don't want to serialize it by passing null instead of it
-      if(!defined_in_module)
+      //NOTE: we want to marshall only those types which are not
+      //      defined elsewhere otherwise we just want to keep
+      //      string reference at them
+      if(!defined_in_scope)
       {
         mg = resolved as IMarshallableGeneric;
         if(mg == null)

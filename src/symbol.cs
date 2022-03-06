@@ -809,6 +809,13 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public abstract int GetDefaultArgsNum();
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
 
+  public bool HasDefaultArgAt(int i)
+  {
+    if(i >= GetTotalArgsNum())
+      return false;
+    return i >= (GetDefaultArgsNum() - GetDefaultArgsNum());
+  }
+
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
@@ -857,9 +864,10 @@ public class FuncSymbolScript : FuncSymbol
   public FuncSymbolScript(
     WrappedParseTree parsed, 
     FuncSignature sig,
-    string name
+    string name,
+    int default_args_num
   ) 
-    : this(sig, name, 0, 0)
+    : this(sig, name, default_args_num, 0)
   {
     this.parsed = parsed;
   }
@@ -905,7 +913,7 @@ public class LambdaSymbol : FuncSymbolScript
     List<FuncSymbol> fdecl_stack,
     AST_LambdaDecl ldecl
   ) 
-    : base(parsed, sig, ldecl.name)
+    : base(parsed, sig, ldecl.name, 0)
   {
     this.ldecl = ldecl;
     this.fdecl_stack = fdecl_stack;
