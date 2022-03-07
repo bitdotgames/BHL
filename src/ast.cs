@@ -171,12 +171,11 @@ public class AST_Dec : IAST
 
 public class AST_New : AST 
 {
-  public string type = "";
+  public IType type;
 }
 
 public class AST_FuncDecl : AST 
 {
-  public string type = "";
   public string name = "";
 }
 
@@ -386,16 +385,15 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_FuncDecl New_FuncDecl(string name, string type)
+  static public AST_FuncDecl New_FuncDecl(string name)
   {
     var n = new AST_FuncDecl();
-    Init_FuncDecl(n, name, type);
+    Init_FuncDecl(n, name);
     return n;
   }
 
-  static void Init_FuncDecl(AST_FuncDecl n, string name, string type)
+  static void Init_FuncDecl(AST_FuncDecl n, string name)
   {
-    n.type = type;
     n.name = name;
     //fparams
     n.NewInterimChild();
@@ -440,11 +438,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_LambdaDecl New_LambdaDecl(string name, string type)
+  static public AST_LambdaDecl New_LambdaDecl(string name)
   {
     var n = new AST_LambdaDecl();
-    Init_FuncDecl(n, name, type);
-
+    Init_FuncDecl(n, name);
     return n;
   }
 
@@ -567,7 +564,7 @@ static public class AST_Util
   static public AST_New New_New(ClassSymbol type)
   {
     var n = new AST_New();
-    n.type = type.name;
+    n.type = type;
 
     return n;
   }

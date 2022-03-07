@@ -418,7 +418,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_FuncDecl node)
   {
     Console.Write("(FUNC ");
-    Console.Write(node.type + " " + node.name);
+    Console.Write(node.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -426,7 +426,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_LambdaDecl node)
   {
     Console.Write("(LMBD ");
-    Console.Write(node.type + " " + node.name);
+    Console.Write(node.name);
     if(node.upvals.Count > 0)
       Console.Write(" USE:");
     for(int i=0;i<node.upvals.Count;++i)
@@ -539,7 +539,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_New node)
   {
-    Console.Write("(NEW " + node.type);
+    Console.Write("(NEW " + node.type.GetName());
     VisitChildren(node);
     Console.Write(")");
   }

@@ -1024,7 +1024,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_New ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) });
     VisitChildren(ast);
   }
 

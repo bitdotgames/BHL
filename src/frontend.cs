@@ -1025,7 +1025,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(funcLambda.retType());
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name, tp.name);
+    var ast = AST_Util.New_LambdaDecl(func_name);
     int default_args_num;
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
@@ -1981,7 +1981,7 @@ public class Frontend : bhlBaseVisitor<object>
     var func_tree = Wrap(context);
     func_tree.eval_type = tp.Get();
 
-    var ast = AST_Util.New_FuncDecl(context.NAME().GetText(), tp.name);
+    var ast = AST_Util.New_FuncDecl(context.NAME().GetText());
 
     int default_args_num;
     var func_symb = new FuncSymbolScript(
