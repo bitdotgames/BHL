@@ -1105,60 +1105,60 @@ public class Compiler : AST_Visitor
       case EnumCall.MVAR:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
-        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MVARW:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
-        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MFUNC:
       {
-        var class_symb = module.scope.Resolve(ast.scope_type) as ClassSymbol;
+        var class_symb = ast.scope_type as ClassSymbol;
         if(class_symb == null)
-          throw new Exception("Class type not found: " + ast.scope_type);
+          throw new Exception("Class type not found: " + ast.scope_type.GetName());
 
         var mfunc = class_symb.members.TryAt(ast.symb_idx) as FuncSymbol;
         if(mfunc == null)
-          throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type + "' by index " + ast.symb_idx);
+          throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type.GetName() + "' by index " + ast.symb_idx);
 
         VisitChildren(ast);
         
         if(mfunc is FuncSymbolScript)
-          Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
         else
-          Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
-        Emit(Opcodes.RefAttr, new int[] {AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.RefAttr, new int[] {AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDX:
       {
-        var arr_symb = module.scope.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        var arr_symb = ast.scope_type as ArrayTypeSymbol;
         Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, AddConstant(arr_symb.name), 1 }, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        var arr_symb = module.scope.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        var arr_symb = ast.scope_type as ArrayTypeSymbol;
         Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, AddConstant(arr_symb.name), 3 }, ast.line_num);
       }
       break;

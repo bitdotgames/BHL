@@ -606,7 +606,7 @@ public class Frontend : bhlBaseVisitor<object>
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
             var_symb.name,
-            class_scope != null ? class_scope.name : "",
+            (IType)class_scope,
             var_symb.scope_idx,
             is_global ? var_symb.module_name : ""
           );
@@ -667,7 +667,7 @@ public class Frontend : bhlBaseVisitor<object>
     type = arr_type.item_type.Get();
 
     var ast = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
-    ast.scope_type = arr_type.name;
+    ast.scope_type = arr_type;
 
     PeekAST().AddChild(ast);
   }
@@ -2750,9 +2750,6 @@ public class Frontend : bhlBaseVisitor<object>
     PopJsonType();
     types.CheckAssign(Wrap(exp), arr_type);
 
-    //generic fallback if the concrete type is not found 
-    string arr_stype = arr_type.GetName();
-
     var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
     var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
     if(arr_tmp_symb == null)
@@ -2786,7 +2783,7 @@ public class Frontend : bhlBaseVisitor<object>
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_stype, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_type, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
@@ -2794,7 +2791,7 @@ public class Frontend : bhlBaseVisitor<object>
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_stype, ((FuncSymbol)arr_type.Resolve("At")).scope_idx));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_type, ((FuncSymbol)arr_type.Resolve("At")).scope_idx));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
 
