@@ -1019,7 +1019,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type) });
+    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type.GetName()) });
   }
 
   public override void DoVisit(AST_New ast)

@@ -211,7 +211,7 @@ public class AST_LambdaDecl : AST_FuncDecl
 
 public class AST_TypeCast : AST 
 {
-  public string type = "";
+  public IType type;
 }
 
 public enum EnumCall 
@@ -488,7 +488,7 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_TypeCast New_TypeCast(string type)
+  static public AST_TypeCast New_TypeCast(IType type)
   {
     var n = new AST_TypeCast();
     n.type = type;

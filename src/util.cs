@@ -462,7 +462,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_TypeCast node)
   {
     Console.Write("(CAST ");
-    Console.Write(node.type + " ");
+    Console.Write(node.type.GetName() + " ");
     VisitChildren(node);
     Console.Write(")");
   }

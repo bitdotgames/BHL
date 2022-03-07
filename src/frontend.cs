@@ -1309,7 +1309,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = AST_Util.New_TypeCast(tp.name);
+    var ast = AST_Util.New_TypeCast(tp.Get());
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
