@@ -182,7 +182,6 @@ public class AST_FuncDecl : AST
 public class AST_ClassDecl : AST 
 {
   public string name = "";
-  public string parent = "";
 }
 
 public class AST_EnumItem : IAST
@@ -276,7 +275,7 @@ public class AST_Literal : IAST
 public class AST_VarDecl : AST 
 {
   public string name = "";
-  public string type = "";
+  public IType type;
   public uint symb_idx;
   public bool is_func_arg;
   public bool is_ref;
@@ -447,11 +446,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_ClassDecl New_ClassDecl(string name, string parent)
+  static public AST_ClassDecl New_ClassDecl(string name)
   {
     var n = new AST_ClassDecl();
     n.name = name;
-    n.parent = parent;
 
     return n;
   }
@@ -583,10 +581,10 @@ static public class AST_Util
 
   static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref)
   {
-    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.name, symb.scope_idx);
+    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx);
   }
 
-  static public AST_VarDecl New_VarDecl(string name, bool is_ref, bool is_func_arg, string type, int symb_idx)
+  static public AST_VarDecl New_VarDecl(string name, bool is_ref, bool is_func_arg, IType type, int symb_idx)
   {
     var n = new AST_VarDecl();
     n.name = name;

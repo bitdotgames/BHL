@@ -1374,7 +1374,7 @@ public class Compiler : AST_Visitor
 
     if(!ast.is_func_arg)
     {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type) });
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type.GetName()) });
     }
     //check if it's not a module scope var (global)
     else if(func_decls.Count > 0)
@@ -1386,7 +1386,7 @@ public class Compiler : AST_Visitor
     }
     else
     {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type)});
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type.GetName())});
     }
   }
 
