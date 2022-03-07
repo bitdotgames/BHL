@@ -553,7 +553,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_JsonObj node)
   {
-    Console.Write("(JOBJ " + node.type);
+    Console.Write("(JOBJ " + node.type.GetName());
     VisitChildren(node);
     Console.Write(")");
   }

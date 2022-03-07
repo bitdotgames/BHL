@@ -303,13 +303,13 @@ public class AST_Block : AST
 
 public class AST_JsonObj : AST 
 {
-  public string type = "";
+  public IType type;
   public int line_num;
 }
 
 public class AST_JsonArr : AST 
 {
-  public string type;
+  public IType type;
   public int line_num;
 }
 
@@ -632,10 +632,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_JsonObj New_JsonObj(string root_type_name, int line_num)
+  static public AST_JsonObj New_JsonObj(IType root_type, int line_num)
   {
     var n = new AST_JsonObj();
-    n.type = root_type_name;
+    n.type = root_type;
     n.line_num = line_num;
     return n;
   }
@@ -643,7 +643,7 @@ static public class AST_Util
   static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type, int line_num)
   {
     var n = new AST_JsonArr();
-    n.type = arr_type.name;
+    n.type = arr_type;
     n.line_num = line_num;
     return n;
   }

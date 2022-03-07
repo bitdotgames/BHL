@@ -1132,9 +1132,8 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(ctx, "type '" + curr_type + "' can't be specified with {..}");
 
     Wrap(ctx).eval_type = curr_type;
-    var root_type_name = curr_type.GetName();
 
-    var ast = AST_Util.New_JsonObj(root_type_name, ctx.Start.Line);
+    var ast = AST_Util.New_JsonObj(curr_type, ctx.Start.Line);
 
     PushAST(ast);
     var pairs = ctx.jsonPair();

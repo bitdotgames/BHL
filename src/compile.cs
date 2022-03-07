@@ -1392,17 +1392,17 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
     VisitChildren(ast);
   }
 
   public override void DoVisit(bhl.AST_JsonArr ast)
   {
-    var arr_symb = module.scope.Resolve(ast.type) as ArrayTypeSymbol;
+    var arr_symb = ast.type as ArrayTypeSymbol;
     if(arr_symb == null)
-      throw new Exception("Could not find class binding: " + ast.type);
+      throw new Exception("Could not find class binding: " + ast.type.GetName());
 
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
 
     for(int i=0;i<ast.children.Count;++i)
     {
@@ -1411,7 +1411,7 @@ public class Compiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type), 1 });
+        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type.GetName()), 1 });
       }
       else
         Visit(c);
@@ -1420,7 +1420,7 @@ public class Compiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type), 1 });
+      Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type.GetName()), 1 });
     }
   }
 
