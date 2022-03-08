@@ -319,7 +319,7 @@ public class AST_JsonPair : AST
 {
   public string name = "";
   public uint symb_idx;
-  public string scope_type = "";
+  public IType scope_type;
 }
 
 public class AST_PopValue : IAST
@@ -649,7 +649,7 @@ static public class AST_Util
     return n;
   }
 
-  static public AST_JsonPair New_JsonPair(string scope_type, string name, int symb_idx)
+  static public AST_JsonPair New_JsonPair(IType scope_type, string name, int symb_idx)
   {
     var n = new AST_JsonPair();
     n.scope_type = scope_type;

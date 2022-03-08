@@ -1432,7 +1432,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(bhl.AST_JsonPair ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.SetAttrInplace, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx });
+    Emit(Opcodes.SetAttrInplace, new int[] { AddConstant(ast.scope_type.GetName()), (int)ast.symb_idx });
   }
 }
 
