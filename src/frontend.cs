@@ -1029,9 +1029,10 @@ public class Frontend : bhlBaseVisitor<object>
     int default_args_num;
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
+      func_name,
       ParseFuncSignature(tp, funcLambda.funcParams(), out default_args_num),
-      this.func_decl_stack,
-      ast
+      ast.upvals,
+      this.func_decl_stack
     );
 
     PushFuncDecl(lmb_symb);

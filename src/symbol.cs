@@ -897,19 +897,20 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
 public class LambdaSymbol : FuncSymbolScript
 {
-  public AST_LambdaDecl ldecl; 
+  List<AST_UpVal> upvals;
 
   List<FuncSymbol> fdecl_stack;
 
   public LambdaSymbol(
     WrappedParseTree parsed, 
+    string name,
     FuncSignature sig,
-    List<FuncSymbol> fdecl_stack,
-    AST_LambdaDecl ldecl
+    List<AST_UpVal> upvals,
+    List<FuncSymbol> fdecl_stack
   ) 
-    : base(parsed, sig, ldecl.name, 0)
+    : base(parsed, sig, name, 0)
   {
-    this.ldecl = ldecl;
+    this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
   }
 
@@ -920,7 +921,7 @@ public class LambdaSymbol : FuncSymbolScript
     this.Define(local);
 
     var up = AST_Util.New_UpVal(local.name, local.scope_idx, src.scope_idx); 
-    ldecl.upvals.Add(up);
+    upvals.Add(up);
 
     return local;
   }
