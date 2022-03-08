@@ -1093,7 +1093,7 @@ public class ClassSymbolScript : ClassSymbol
 
   //marshall factory version
   public ClassSymbolScript() 
-    : this(null, null, null)
+    : this(null, null)
   {}
 
   void ClassCreator(VM.Frame frm, ref Val data)
