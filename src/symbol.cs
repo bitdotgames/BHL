@@ -249,12 +249,6 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
   public string GetName() { return name; }
 
   public override SymbolsDictionary GetMembers() { return members; }
-
-  public override string ToString() 
-  {
-    return "class "+name+":{"+
-            string.Join(",", members.GetStringKeys().ToArray())+"}";
-  }
 }
 
 public abstract class ArrayTypeSymbol : ClassSymbol
@@ -1183,12 +1177,6 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumItemSymbol FindValue(string name)
   {
     return base.Resolve(name) as EnumItemSymbol;
-  }
-
-  public override string ToString() 
-  {
-    return "enum "+name+":{"+
-            string.Join(",", members.GetStringKeys().ToArray())+"}";
   }
 
   public override uint ClassId()
