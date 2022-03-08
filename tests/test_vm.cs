@@ -20218,11 +20218,11 @@ public class BHL_TestVM : BHL_TestBase
 
       ms.Define(new FuncSymbolScript(new FuncSignature(types.TypeArr(Types.String), types.Type("Bar")), "Make", 3, 15));
 
-      var Foo = new ClassSymbolScript("Foo", null);
+      var Foo = new ClassSymbolScript("Foo");
       Foo.Define(new FieldSymbolScript("Int", Types.Int));
       Foo.Define(new FuncSymbolScript(new FuncSignature(Types.Void), "Hey", 0, 3));
       ms.Define(Foo);
-      var Bar = new ClassSymbolScript("Bar", null, Foo);
+      var Bar = new ClassSymbolScript("Bar", Foo);
       Bar.Define(new FieldSymbolScript("Float", Types.Float));
       Bar.Define(new FuncSymbolScript(new FuncSignature(types.TypeTuple(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ms.Define(Bar);

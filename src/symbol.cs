@@ -1082,18 +1082,15 @@ public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
 
-  public AST_ClassDecl decl;
-
-  public ClassSymbolScript(string name, AST_ClassDecl decl, ClassSymbol super_class = null)
+  public ClassSymbolScript(string name, ClassSymbol super_class = null)
     : base(name, super_class)
   {
-    this.decl = decl;
     this.creator = ClassCreator;
   }
 
 #if BHL_FRONT
-  public ClassSymbolScript(WrappedParseTree parsed, string name, AST_ClassDecl decl, ClassSymbol super_class = null)
-    : this(name, decl, super_class)
+  public ClassSymbolScript(WrappedParseTree parsed, string name, ClassSymbol super_class = null)
+    : this(name, super_class)
   {
     this.parsed = parsed;
   }

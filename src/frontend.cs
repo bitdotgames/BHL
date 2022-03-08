@@ -1941,7 +1941,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     var ast = AST_Util.New_ClassDecl(class_name);
-    var class_symb = new ClassSymbolScript(Wrap(ctx), class_name, ast, super_class);
+    var class_symb = new ClassSymbolScript(Wrap(ctx), class_name, super_class);
 
     module.scope.Define(class_symb);
 
