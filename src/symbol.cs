@@ -315,7 +315,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {}
 
   public abstract void CreateArr(VM.Frame frame, ref Val v);
-  public abstract void GetCount(Val ctx, ref Val v);
+  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v);
   public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
@@ -354,16 +354,16 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     v.SetObj(ValList.New(frm.vm));
   }
 
-  public override void GetCount(Val ctx, ref Val v)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
   {
     var lst = AsList(ctx);
     v.SetNum(lst.Count);
   }
   
-  public override ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frame.stack.Pop();
-    var arr = frame.stack.Pop();
+    var val = frm.stack.Pop();
+    var arr = frm.stack.Pop();
     var lst = AsList(arr);
     lst.Add(val);
     val.Release();
@@ -454,15 +454,15 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     v.obj = Creator();
   }
 
-  public override void GetCount(Val ctx, ref Val v)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
   {
     v.SetNum(((IList<T>)ctx.obj).Count);
   }
   
-  public override ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frame.stack.Pop();
-    var arr = frame.stack.Pop();
+    var val = frm.stack.Pop();
+    var arr = frm.stack.Pop();
     var lst = (IList<T>)arr.obj;
     lst.Add((T)val.obj);
     val.Release();
@@ -649,13 +649,13 @@ public class FieldSymbolScript : FieldSymbol
     : this("", new TypeProxy())
   {}
 
-  void Getter(Val ctx, ref Val v)
+  void Getter(VM.Frame frm, Val ctx, ref Val v)
   {
     var m = (IList<Val>)ctx.obj;
     v.ValueCopyFrom(m[scope_idx]);
   }
 
-  void Setter(ref Val ctx, Val v)
+  void Setter(VM.Frame frm, ref Val ctx, Val v)
   {
     var m = (IList<Val>)ctx.obj;
     var curr = m[scope_idx];
@@ -667,7 +667,7 @@ public class FieldSymbolScript : FieldSymbol
     curr.ValueCopyFrom(v);
   }
 
-  void Getref(Val ctx, out Val v)
+  void Getref(VM.Frame frm, Val ctx, out Val v)
   {
     var m = (IList<Val>)ctx.obj;
     v = m[scope_idx];

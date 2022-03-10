@@ -686,9 +686,9 @@ public class VM
   IModuleLoader importer;
 
   public delegate void ClassCreator(VM.Frame frm, ref Val res);
-  public delegate void FieldGetter(Val v, ref Val res);
-  public delegate void FieldSetter(ref Val v, Val nv);
-  public delegate void FieldRef(Val v, out Val res);
+  public delegate void FieldGetter(VM.Frame frm, Val v, ref Val res);
+  public delegate void FieldSetter(VM.Frame frm, ref Val v, Val nv);
+  public delegate void FieldRef(VM.Frame frm, Val v, out Val res);
 
   public class ValPool : Pool<Val>
   {
@@ -900,7 +900,7 @@ public class VM
           var val = stack.Pop();
           var obj = stack.Peek();
           var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-          field_symb.setter(ref obj, val);
+          field_symb.setter(init_frame, ref obj, val);
           val.Release();
         }
         break;
@@ -1261,7 +1261,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var res = Val.New(this);
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.getter(obj, ref res);
+        field_symb.getter(curr_frame, obj, ref res);
         //NOTE: we retain only the payload since we make the copy of the value 
         //      and the new res already has refs = 1 while payload's refcount 
         //      is not incremented
@@ -1283,7 +1283,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         Val res;
-        field_symb.getref(obj, out res);
+        field_symb.getref(curr_frame, obj, out res);
         curr_frame.stack.PushRetain(res);
         obj.Release();
       }
@@ -1301,7 +1301,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var val = curr_frame.stack.Pop();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.setter(ref obj, val);
+        field_symb.setter(curr_frame, ref obj, val);
         val.Release();
         obj.Release();
       }
@@ -1319,7 +1319,7 @@ public class VM
         var val = curr_frame.stack.Pop();
         var obj = curr_frame.stack.Peek();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.setter(ref obj, val);
+        field_symb.setter(curr_frame, ref obj, val);
         val.Release();
       }
       break;

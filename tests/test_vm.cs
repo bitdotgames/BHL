@@ -15886,12 +15886,12 @@ public class BHL_TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("c", ts.Type("Color"), 
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var cn = (ColorNested)ctx.obj;
           v.obj = cn.c;
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var cn = (ColorNested)ctx.obj;
           cn.c = (Color)v.obj; 
@@ -20849,12 +20849,12 @@ public class BHL_TestVM : BHL_TestBase
 
     ts.globs.Define(cl);
     cl.Define(new FieldSymbol("r", ts.Type("float"),
-      delegate(Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v)
       {
         var c = (Color)ctx.obj;
         v.SetNum(c.r);
       },
-      delegate(ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v)
       {
         var c = (Color)ctx.obj;
         c.r = (float)v.num; 
@@ -20862,12 +20862,12 @@ public class BHL_TestVM : BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol("g", ts.Type("float"),
-      delegate(Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v)
       {
         var c = (Color)ctx.obj;
         v.SetNum(c.g);
       },
-      delegate(ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v)
       {
         var c = (Color)ctx.obj;
         c.g = (float)v.num; 
@@ -20959,12 +20959,12 @@ public class BHL_TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("a", ts.Type("float"),
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (ColorAlpha)ctx.obj;
           v.num = c.a;
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var c = (ColorAlpha)ctx.obj;
           c.a = (float)v.num; 
@@ -21018,13 +21018,13 @@ public class BHL_TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("n", Types.Int,
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
           v.num = s.n;
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
@@ -21053,12 +21053,12 @@ public class BHL_TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("str", ts.Type("string"),
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (StringClass)ctx.obj;
           v.str = c.str;
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var c = (StringClass)ctx.obj;
           c.str = v.str; 
@@ -21095,12 +21095,12 @@ public class BHL_TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("child", ts.Type("StringClass"),
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
           v.SetObj(c.child);
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var c = (MasterStruct)ctx.obj;
           c.child = (StringClass)v._obj; 
@@ -21109,12 +21109,12 @@ public class BHL_TestVM : BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol("child2", ts.Type("StringClass"),
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
           v.obj = c.child2;
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var c = (MasterStruct)ctx.obj;
           c.child2 = (StringClass)v.obj; 
@@ -21123,12 +21123,12 @@ public class BHL_TestVM : BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol("child_struct", ts.Type("IntStruct"),
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct.Encode(v, c.child_struct);
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct s = new IntStruct();
@@ -21139,12 +21139,12 @@ public class BHL_TestVM : BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol("child_struct2", ts.Type("IntStruct"),
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct.Encode(v, c.child_struct2);
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct s = new IntStruct();
@@ -21183,12 +21183,12 @@ public class BHL_TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("hey", Types.Int,
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
           v.SetNum(f.hey);
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var f = (Foo)ctx.obj;
           f.hey = (int)v.num; 
@@ -21196,24 +21196,24 @@ public class BHL_TestVM : BHL_TestBase
         }
       ));
       cl.Define(new FieldSymbol("colors", ts.Type("ArrayT_Color"),
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
           v.obj = f.colors;
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var f = (Foo)ctx.obj;
           f.colors = (List<Color>)v.obj;
         }
       ));
       cl.Define(new FieldSymbol("sub_color", ts.Type("Color"),
-        delegate(Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
           v.obj = f.sub_color;
         },
-        delegate(ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var f = (Foo)ctx.obj;
           f.sub_color = (Color)v.obj; 
@@ -21289,12 +21289,12 @@ public class BHL_TestVM : BHL_TestBase
 
     ts.globs.Define(cl);
     cl.Define(new FieldSymbol("Int", Types.Int,
-      delegate(Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
         v.SetNum(c.Int);
       },
-      delegate(ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v)
       {
         var c = (Bar)ctx.obj;
         c.Int = (int)v.num; 
@@ -21302,12 +21302,12 @@ public class BHL_TestVM : BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol("Flt", ts.Type("float"),
-      delegate(Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
         v.SetNum(c.Flt);
       },
-      delegate(ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v)
       {
         var c = (Bar)ctx.obj;
         c.Flt = (float)v.num; 
@@ -21315,12 +21315,12 @@ public class BHL_TestVM : BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol("Str", ts.Type("string"),
-      delegate(Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v)
       {
         var c = (Bar)ctx.obj;
         v.SetStr(c.Str);
       },
-      delegate(ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v)
       {
         var c = (Bar)ctx.obj;
         c.Str = (string)v.obj; 
@@ -21367,7 +21367,7 @@ public class BHL_TestVM : BHL_TestBase
       );
       {
         var vs = new bhl.FieldSymbol("refs", Types.Int,
-          delegate(Val ctx, ref Val v)
+          delegate(VM.Frame frm, Val ctx, ref Val v)
           {
             v.num = ((RefC)ctx.obj).refs;
           },
