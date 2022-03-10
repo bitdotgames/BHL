@@ -29,6 +29,11 @@ public class Val
   public int _refs;
   public double _num;
   public object _obj;
+  //NOTE: extra values below are for efficient encoding of small structs,
+  //      e.g Vector, Color, etc
+  public double _num2;
+  public double _num3;
+  public double _num4;
 
   public double num {
     get {
