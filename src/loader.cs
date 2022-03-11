@@ -50,10 +50,10 @@ public class ModuleLoader : IModuleLoader
   public ModuleLoader(Types types, Stream source)
   {
     this.types = types;
-    Load(source);
+    Init(source);
   }
 
-  void Load(Stream source_)
+  void Init(Stream source_)
   {
     name2entry.Clear();
 
