@@ -83,7 +83,7 @@ public class CompileCmd : ICmd
       Usage("Result file path not set");
 
     if(tmp_dir == "")
-      Usage("Cache dir not set");
+      Usage("Tmp dir not set");
 
     if(err_file == "")
       Usage("Err file not set");

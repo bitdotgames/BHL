@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-using marshall;
-
 public abstract class AST_Visitor
 {
   public abstract void DoVisit(AST_Interim node);
@@ -33,7 +31,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_JsonArrAddItem node);
   public abstract void DoVisit(AST_JsonPair node);
 
-  public void Visit(IMarshallableGeneric node)
+  public void Visit(IAST node)
   {
     if(node == null)
       throw new Exception("NULL node");
@@ -103,65 +101,27 @@ public abstract class AST_Visitor
   }
 }
 
-public class AST : IMarshallableGeneric
+public interface IAST
+{}
+
+public class AST : IAST
 {
-  public List<IMarshallableGeneric> children = new List<IMarshallableGeneric>();
-
-  public virtual uint ClassId() 
-  {
-    return 59352479; 
-  }
-
-  public virtual void Sync(SyncContext ctx) 
-  {
-    Marshall.SyncGeneric(ctx, children);
-  }
+  public List<IAST> children = new List<IAST>();
 }
 
 public class AST_Interim : AST 
 {
-  public override uint ClassId() 
-  {
-    return 240440595; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-  }
 }
 
-public class AST_Import  : IMarshallableGeneric
+public class AST_Import : IAST
 {
   public List<string> module_names = new List<string>();
-
-  public uint ClassId() 
-  {
-    return 117209009; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-    Marshall.Sync(ctx, module_names);
-  }
 }
 
 public class AST_Module : AST 
 {
   public uint id;
   public string name = "";
-
-  public override uint ClassId() 
-  {
-    return 127311748; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-    Marshall.Sync(ctx, ref id);
-    Marshall.Sync(ctx, ref name);
-  }
 }
 
 public enum EnumUnaryOp 
@@ -173,19 +133,6 @@ public enum EnumUnaryOp
 public class AST_UnaryOpExp : AST 
 {
   public EnumUnaryOp type = new EnumUnaryOp();
-
-  public override uint ClassId() 
-  {
-    return 224392343; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-    int __tmp_type = (int)type;
-    Marshall.Sync(ctx, ref __tmp_type);
-    if(ctx.is_read) type = (EnumUnaryOp)__tmp_type;
-  }
 }
 
 public enum EnumBinaryOp 
@@ -210,190 +157,60 @@ public enum EnumBinaryOp
 public class AST_BinaryOpExp  : AST 
 {
   public EnumBinaryOp type = new EnumBinaryOp();
-
-  public override uint ClassId() 
-  {
-    return 78094287; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-    int __tmp_type = (int)type;
-    Marshall.Sync(ctx, ref __tmp_type);
-    if(ctx.is_read) type = (EnumBinaryOp)__tmp_type;
-  }
 }
 
-public class AST_Inc : IMarshallableGeneric
+public class AST_Inc : IAST
 {
   public uint symb_idx;
-
-  public uint ClassId() 
-  {
-    return 192507281; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-    Marshall.Sync(ctx, ref symb_idx);
-  }
 }
 
-public class AST_Dec : IMarshallableGeneric
+public class AST_Dec : IAST
 {
   public uint symb_idx;
-
-  public uint ClassId() 
-  {
-    return 5580553; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-    Marshall.Sync(ctx, ref symb_idx);
-  }
 }
 
 public class AST_New : AST 
 {
-  public string type = "";
-
-  public override uint ClassId() 
-  {
-    return 119043746; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-    Marshall.Sync(ctx, ref type);
-  }
+  public IType type;
 }
 
 public class AST_FuncDecl : AST 
 {
-  public string type = "";
   public string name = "";
-
-  public override uint ClassId() 
-  {
-    return 19638951; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref type);
-    Marshall.Sync(ctx, ref name);
-  }
 }
 
 public class AST_ClassDecl : AST 
 {
   public string name = "";
-  public string parent = "";
-
-  public override uint ClassId() 
-  {
-    return 168955538; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref parent);
-  }
 }
 
-public class AST_EnumItem : IMarshallableGeneric
+public class AST_EnumItem : IAST
 {
   public string name;
   public int value;
-
-  public uint ClassId() 
-  {
-    return 42971075; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref value);
-  }
 }
 
 public class AST_EnumDecl : AST 
 {
   public string name = "";
-
-  public override uint ClassId() 
-  {
-    return 207366473; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref name);
-  }
 }
 
-public class AST_UpVal : IMarshallableGeneric
+public class AST_UpVal : IAST
 {
   public string name = "";
   public uint symb_idx;
   public uint upsymb_idx;
-
-  public uint ClassId() 
-  {
-    return 121447213; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref symb_idx);
-    Marshall.Sync(ctx, ref upsymb_idx);
-  }
 }
 
 public class AST_LambdaDecl : AST_FuncDecl 
 {
   public int local_vars_num;
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
-
-  public override uint ClassId() 
-  {
-    return 44443142; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-    Marshall.Sync(ctx, ref local_vars_num);
-    Marshall.Sync(ctx, upvals);
-  }
 }
 
 public class AST_TypeCast : AST 
 {
-  public string type = "";
-
-  public override uint ClassId() 
-  {
-    return 234453676; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-    Marshall.Sync(ctx, ref type);
-  }
+  public IType type;
 }
 
 public enum EnumCall 
@@ -423,71 +240,21 @@ public class AST_Call  : AST
   public uint cargs_bits;
   public int line_num;
   public int symb_idx;
-  public string scope_type = "";
-
-  public override uint ClassId() 
-  {
-    return 42771415; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    int __tmp_type = (int)type;
-    Marshall.Sync(ctx, ref __tmp_type);
-    if(ctx.is_read) type = (EnumCall)__tmp_type;
-
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref module_name);
-    Marshall.Sync(ctx, ref cargs_bits);
-    Marshall.Sync(ctx, ref line_num);
-    Marshall.Sync(ctx, ref symb_idx);
-    Marshall.Sync(ctx, ref scope_type);
-  }
+  public IType scope_type;
 }
 
 public class AST_Return  : AST 
 {
   public int num;
-
-  public override uint ClassId() 
-  {
-    return 204244643; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-    Marshall.Sync(ctx, ref num);
-  }
 }
 
-public class AST_Break : IMarshallableGeneric
+public class AST_Break : IAST
 {
-  public uint ClassId() 
-  {
-    return 93587594; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-  }
 }
 
-public class AST_Continue : IMarshallableGeneric
+public class AST_Continue : IAST
 {
   public bool jump_marker;
-
-  public uint ClassId() 
-  {
-    return 83587594; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-    Marshall.Sync(ctx, ref jump_marker);
-  }
 }
 
 public enum EnumLiteral 
@@ -498,51 +265,20 @@ public enum EnumLiteral
   NIL = 4,
 }
 
-public class AST_Literal : IMarshallableGeneric
+public class AST_Literal : IAST
 {
   public EnumLiteral type = new EnumLiteral();
   public double nval;
   public string sval = "";
-
-  public uint ClassId() 
-  {
-    return 246902930; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-    int __tmp_type = (int)type;
-    Marshall.Sync(ctx, ref __tmp_type);
-    if(ctx.is_read) type = (EnumLiteral)__tmp_type;
-
-    Marshall.Sync(ctx, ref nval);
-    Marshall.Sync(ctx, ref sval);
-  }
 }
 
 public class AST_VarDecl : AST 
 {
   public string name = "";
-  public string type = "";
+  public IType type;
   public uint symb_idx;
   public bool is_func_arg;
   public bool is_ref;
-
-  public override uint ClassId() 
-  {
-    return 232512499; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref symb_idx);
-    Marshall.Sync(ctx, ref is_func_arg);
-    Marshall.Sync(ctx, ref type);
-    Marshall.Sync(ctx, ref is_ref);
-  }
 }
 
 public enum EnumBlock 
@@ -561,154 +297,44 @@ public enum EnumBlock
 public class AST_Block : AST 
 {
   public EnumBlock type = new EnumBlock();
-
-  public override uint ClassId() 
-  {
-    return 183750514; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    int __tmp_type = (int)type;
-    Marshall.Sync(ctx, ref __tmp_type);
-    if(ctx.is_read) type = (EnumBlock)__tmp_type;
-  }
 }
 
 public class AST_JsonObj : AST 
 {
-  public string type = "";
+  public IType type;
   public int line_num;
-
-  public override uint ClassId() 
-  {
-    return 31901170; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref type);
-    Marshall.Sync(ctx, ref line_num);
-  }
 }
 
 public class AST_JsonArr : AST 
 {
-  public string type;
+  public IType type;
   public int line_num;
-
-  public override uint ClassId() 
-  {
-    return 47604479; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref type);
-    Marshall.Sync(ctx, ref line_num);
-  }
 }
 
-public class AST_JsonArrAddItem : IMarshallableGeneric
+public class AST_JsonArrAddItem : IAST
 {
-  public uint ClassId() 
-  {
-    return 58382586; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-  }
 }
 
 public class AST_JsonPair : AST 
 {
   public string name = "";
   public uint symb_idx;
-  public string scope_type = "";
-
-  public override uint ClassId() 
-  {
-    return 235544635; 
-  }
-
-  public override void Sync(SyncContext ctx) 
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref symb_idx);
-    Marshall.Sync(ctx, ref scope_type);
-  }
+  public IType scope_type;
 }
 
-public class AST_PopValue : IMarshallableGeneric
+public class AST_PopValue : IAST
 {
-  public uint ClassId() 
-  {
-    return 87387238; 
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-  }
-}
-
-public class AST_Factory : IFactory
-{
-  public IMarshallableGeneric CreateById(uint id) 
-  {
-    switch(id)
-    {
-      case 59352479: { return new AST(); };
-      case 240440595: { return new AST_Interim(); };
-      case 117209009: { return new AST_Import(); };
-      case 127311748: { return new AST_Module(); };
-      case 224392343: { return new AST_UnaryOpExp(); };
-      case 78094287: { return new AST_BinaryOpExp(); };
-      case 192507281: { return new AST_Inc(); };
-      case 5580553: { return new AST_Dec(); };
-      case 119043746: { return new AST_New(); };
-      case 19638951: { return new AST_FuncDecl(); };
-      case 168955538: { return new AST_ClassDecl(); };
-      case 42971075: { return new AST_EnumItem(); };
-      case 207366473: { return new AST_EnumDecl(); };
-      case 121447213: { return new AST_UpVal(); };
-      case 44443142: { return new AST_LambdaDecl(); };
-      case 234453676: { return new AST_TypeCast(); };
-      case 42771415: { return new AST_Call(); };
-      case 204244643: { return new AST_Return(); };
-      case 93587594: { return new AST_Break(); };
-      case 83587594: { return new AST_Continue(); };
-      case 246902930: { return new AST_Literal(); };
-      case 232512499: { return new AST_VarDecl(); };
-      case 183750514: { return new AST_Block(); };
-      case 31901170: { return new AST_JsonObj(); };
-      case 47604479: { return new AST_JsonArr(); };
-      case 58382586: { return new AST_JsonArrAddItem(); };
-      case 235544635: { return new AST_JsonPair(); };
-      case 87387238: { return new AST_PopValue(); };
-      default: 
-        return null;
-    }
-  }
 }
 
 static public class AST_Util
 {
-  static public List<IMarshallableGeneric> GetChildren(this IMarshallableGeneric self)
+  static public List<IAST> GetChildren(this IAST self)
   {
     var ast = self as AST;
     return ast == null ? null : ast.children;
   }
 
-  static public void AddChild(this IMarshallable self, IMarshallableGeneric c)
+  static public void AddChild(this IAST self, IAST c)
   {
     if(c == null)
       return;
@@ -716,14 +342,14 @@ static public class AST_Util
     ast.children.Add(c);
   }
 
-  static public void AddChild(this AST self, IMarshallableGeneric c)
+  static public void AddChild(this AST self, IAST c)
   {
     if(c == null)
       return;
     self.children.Add(c);
   }
 
-  static public void AddChildren(this AST self, IMarshallable b)
+  static public void AddChildren(this AST self, IAST b)
   {
     if(b is AST c)
     {
@@ -758,16 +384,15 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_FuncDecl New_FuncDecl(string name, string type)
+  static public AST_FuncDecl New_FuncDecl(string name)
   {
     var n = new AST_FuncDecl();
-    Init_FuncDecl(n, name, type);
+    Init_FuncDecl(n, name);
     return n;
   }
 
-  static void Init_FuncDecl(AST_FuncDecl n, string name, string type)
+  static void Init_FuncDecl(AST_FuncDecl n, string name)
   {
-    n.type = type;
     n.name = name;
     //fparams
     n.NewInterimChild();
@@ -812,21 +437,19 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_LambdaDecl New_LambdaDecl(string name, string type)
+  static public AST_LambdaDecl New_LambdaDecl(string name)
   {
     var n = new AST_LambdaDecl();
-    Init_FuncDecl(n, name, type);
-
+    Init_FuncDecl(n, name);
     return n;
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_ClassDecl New_ClassDecl(string name, string parent)
+  static public AST_ClassDecl New_ClassDecl(string name)
   {
     var n = new AST_ClassDecl();
     n.name = name;
-    n.parent = parent;
 
     return n;
   }
@@ -863,7 +486,7 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_TypeCast New_TypeCast(string type)
+  static public AST_TypeCast New_TypeCast(IType type)
   {
     var n = new AST_TypeCast();
     n.type = type;
@@ -887,15 +510,15 @@ static public class AST_Util
 
   static public AST_Call New_Call(EnumCall type, int line_num, string name = "", string module_name = "", ClassSymbol scope_symb = null, int symb_idx = -1)
   {
-    return New_Call(type, line_num, name, scope_symb != null ? scope_symb.name : "", symb_idx, module_name);
+    return New_Call(type, line_num, name, scope_symb as IType, symb_idx, module_name);
   }
 
   static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, ClassSymbol scope_symb = null)
   {
-    return New_Call(type, line_num, symb.name, scope_symb != null ? scope_symb.name : "", symb.scope_idx, symb.module_name);
+    return New_Call(type, line_num, symb.name, scope_symb as IType, symb.scope_idx, symb.module_name);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name, string scope_type, int symb_idx = -1, string module_name = "")
+  static public AST_Call New_Call(EnumCall type, int line_num, string name, IType scope_type, int symb_idx = -1, string module_name = "")
   {
     var n = new AST_Call();
     n.type = type;
@@ -939,7 +562,7 @@ static public class AST_Util
   static public AST_New New_New(ClassSymbol type)
   {
     var n = new AST_New();
-    n.type = type.name;
+    n.type = type;
 
     return n;
   }
@@ -958,10 +581,10 @@ static public class AST_Util
 
   static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref)
   {
-    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.name, symb.scope_idx);
+    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx);
   }
 
-  static public AST_VarDecl New_VarDecl(string name, bool is_ref, bool is_func_arg, string type, int symb_idx)
+  static public AST_VarDecl New_VarDecl(string name, bool is_ref, bool is_func_arg, IType type, int symb_idx)
   {
     var n = new AST_VarDecl();
     n.name = name;
@@ -1004,10 +627,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_JsonObj New_JsonObj(string root_type_name, int line_num)
+  static public AST_JsonObj New_JsonObj(IType root_type, int line_num)
   {
     var n = new AST_JsonObj();
-    n.type = root_type_name;
+    n.type = root_type;
     n.line_num = line_num;
     return n;
   }
@@ -1015,7 +638,7 @@ static public class AST_Util
   static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type, int line_num)
   {
     var n = new AST_JsonArr();
-    n.type = arr_type.name;
+    n.type = arr_type;
     n.line_num = line_num;
     return n;
   }
@@ -1026,7 +649,7 @@ static public class AST_Util
     return n;
   }
 
-  static public AST_JsonPair New_JsonPair(string scope_type, string name, int symb_idx)
+  static public AST_JsonPair New_JsonPair(IType scope_type, string name, int symb_idx)
   {
     var n = new AST_JsonPair();
     n.scope_type = scope_type;

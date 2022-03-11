@@ -9,6 +9,6 @@ obj
 *.exe
 *.dylib*
 *.mdb
-bhl*.dll*
+*.dll*
 
 .idea

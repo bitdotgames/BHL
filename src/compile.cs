@@ -1019,12 +1019,12 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type) });
+    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type.GetName()) });
   }
 
   public override void DoVisit(AST_New ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) });
     VisitChildren(ast);
   }
 
@@ -1105,60 +1105,60 @@ public class Compiler : AST_Visitor
       case EnumCall.MVAR:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
-        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MVARW:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
-        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MFUNC:
       {
-        var class_symb = module.scope.Resolve(ast.scope_type) as ClassSymbol;
+        var class_symb = ast.scope_type as ClassSymbol;
         if(class_symb == null)
-          throw new Exception("Class type not found: " + ast.scope_type);
+          throw new Exception("Class type not found: " + ast.scope_type.GetName());
 
         var mfunc = class_symb.members.TryAt(ast.symb_idx) as FuncSymbol;
         if(mfunc == null)
-          throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type + "' by index " + ast.symb_idx);
+          throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type.GetName() + "' by index " + ast.symb_idx);
 
         VisitChildren(ast);
         
         if(mfunc is FuncSymbolScript)
-          Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
         else
-          Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.MVARREF:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type);
+          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
-        Emit(Opcodes.RefAttr, new int[] {AddConstant(ast.scope_type), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.RefAttr, new int[] {AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDX:
       {
-        var arr_symb = module.scope.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        var arr_symb = ast.scope_type as ArrayTypeSymbol;
         Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, AddConstant(arr_symb.name), 1 }, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        var arr_symb = module.scope.Resolve(ast.scope_type) as ArrayTypeSymbol;
+        var arr_symb = ast.scope_type as ArrayTypeSymbol;
         Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, AddConstant(arr_symb.name), 3 }, ast.line_num);
       }
       break;
@@ -1374,7 +1374,7 @@ public class Compiler : AST_Visitor
 
     if(!ast.is_func_arg)
     {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type) });
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type.GetName()) });
     }
     //check if it's not a module scope var (global)
     else if(func_decls.Count > 0)
@@ -1386,23 +1386,23 @@ public class Compiler : AST_Visitor
     }
     else
     {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type)});
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type.GetName())});
     }
   }
 
   public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
     VisitChildren(ast);
   }
 
   public override void DoVisit(bhl.AST_JsonArr ast)
   {
-    var arr_symb = module.scope.Resolve(ast.type) as ArrayTypeSymbol;
+    var arr_symb = ast.type as ArrayTypeSymbol;
     if(arr_symb == null)
-      throw new Exception("Could not find class binding: " + ast.type);
+      throw new Exception("Could not find class binding: " + ast.type.GetName());
 
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
 
     for(int i=0;i<ast.children.Count;++i)
     {
@@ -1411,7 +1411,7 @@ public class Compiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type), 1 });
+        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type.GetName()), 1 });
       }
       else
         Visit(c);
@@ -1420,7 +1420,7 @@ public class Compiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type), 1 });
+      Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type.GetName()), 1 });
     }
   }
 
@@ -1432,7 +1432,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(bhl.AST_JsonPair ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.SetAttrInplace, new int[] { AddConstant(ast.scope_type), (int)ast.symb_idx });
+    Emit(Opcodes.SetAttrInplace, new int[] { AddConstant(ast.scope_type.GetName()), (int)ast.symb_idx });
   }
 }
 

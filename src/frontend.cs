@@ -67,9 +67,6 @@ public class Frontend : bhlBaseVisitor<object>
   ITokenStream tokens;
   ParseTreeProperty<WrappedParseTree> tree_props = new ParseTreeProperty<WrappedParseTree>();
 
-  Dictionary<FuncSymbolScript, bhlParser.FuncParamsContext> func2fparams = 
-    new Dictionary<FuncSymbolScript, bhlParser.FuncParamsContext>(); 
-
   IScope curr_scope;
   int scope_level;
 
@@ -412,7 +409,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(imported != null)
     {
       module.scope.AddImport(imported.scope);
-      ast.module_names.Add(name);
+      ast.module_names.Add(imported.name);
     }
   }
 
@@ -609,7 +606,7 @@ public class Frontend : bhlBaseVisitor<object>
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
             var_symb.name,
-            class_scope != null ? class_scope.name : "",
+            (IType)class_scope,
             var_symb.scope_idx,
             is_global ? var_symb.module_name : ""
           );
@@ -670,7 +667,7 @@ public class Frontend : bhlBaseVisitor<object>
     type = arr_type.item_type.Get();
 
     var ast = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
-    ast.scope_type = arr_type.name;
+    ast.scope_type = arr_type;
 
     PeekAST().AddChild(ast);
   }
@@ -747,7 +744,7 @@ public class Frontend : bhlBaseVisitor<object>
           //NOTE: for func native symbols we assume default arguments  
           //      are specified manually in bindings
           if(func_symb is FuncSymbolNative || 
-            (func_symb is FuncSymbolScript fss && GetDefaultArgsExprAt(fss, i) != null))
+            (func_symb is FuncSymbolScript fss && fss.HasDefaultArgAt(i)))
           {
             int default_arg_idx = i - required_args_num;
             if(!args_info.UseDefaultArg(default_arg_idx, true))
@@ -922,17 +919,6 @@ public class Frontend : bhlBaseVisitor<object>
     PushAST(var_tmp_read);
   }
 
-  IParseTree GetDefaultArgsExprAt(FuncSymbolScript fss, int idx)
-  {
-    var fparams = func2fparams[fss];
-    if(fparams == null)
-      return null; 
-
-    var vdecl = fparams.funcParamDeclare()[idx];
-    var vinit = vdecl.assignExp(); 
-    return vinit;
-  }
-
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
   {
     for(int i=0;i<cargs.callArg().Length;++i)
@@ -973,17 +959,21 @@ public class Frontend : bhlBaseVisitor<object>
     return new FuncSignature(ret_type, arg_types);
   }
 
-  FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams)
+  FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
   {
+    default_args_num = 0;
     var sig = new FuncSignature(ret_type);
     if(fparams != null)
     {
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
         var vd = fparams.funcParamDeclare()[i];
+
         var tp = ParseType(vd.type());
         if(vd.isRef() != null)
           tp = types.Type(new RefType(tp));
+        if(vd.assignExp() != null)
+          ++default_args_num;
         sig.AddArg(tp);
       }
     }
@@ -1035,14 +1025,15 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(funcLambda.retType());
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name, tp.name);
+    var ast = AST_Util.New_LambdaDecl(func_name);
+    int default_args_num;
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
-      ParseFuncSignature(tp, funcLambda.funcParams()),
-      this.func_decl_stack,
-      ast
+      func_name,
+      ParseFuncSignature(tp, funcLambda.funcParams(), out default_args_num),
+      ast.upvals,
+      this.func_decl_stack
     );
-    func2fparams[lmb_symb] = funcLambda.funcParams();
 
     PushFuncDecl(lmb_symb);
 
@@ -1142,9 +1133,8 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(ctx, "type '" + curr_type + "' can't be specified with {..}");
 
     Wrap(ctx).eval_type = curr_type;
-    var root_type_name = curr_type.GetName();
 
-    var ast = AST_Util.New_JsonObj(root_type_name, ctx.Start.Line);
+    var ast = AST_Util.New_JsonObj(curr_type, ctx.Start.Line);
 
     PushAST(ast);
     var pairs = ctx.jsonPair();
@@ -1212,7 +1202,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(member == null)
       FireError(ctx, "no such attribute '" + name_str + "' in class '" + scoped_symb.name + "'");
 
-    var ast = AST_Util.New_JsonPair(curr_type.GetName(), name_str, member.scope_idx);
+    var ast = AST_Util.New_JsonPair(curr_type, name_str, member.scope_idx);
 
     PushJsonType(member.type.Get());
 
@@ -1320,7 +1310,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = AST_Util.New_TypeCast(tp.name);
+    var ast = AST_Util.New_TypeCast(tp.Get());
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
@@ -1951,8 +1941,8 @@ public class Frontend : bhlBaseVisitor<object>
         FireError(ctx.classEx(), "extending native classes is not supported");
     }
 
-    var ast = AST_Util.New_ClassDecl(class_name, super_class == null ? "" : super_class.name);
-    var class_symb = new ClassSymbolScript(Wrap(ctx), class_name, ast, super_class);
+    var ast = AST_Util.New_ClassDecl(class_name);
+    var class_symb = new ClassSymbolScript(Wrap(ctx), class_name, super_class);
 
     module.scope.Define(class_symb);
 
@@ -1992,14 +1982,15 @@ public class Frontend : bhlBaseVisitor<object>
     var func_tree = Wrap(context);
     func_tree.eval_type = tp.Get();
 
-    var ast = AST_Util.New_FuncDecl(context.NAME().GetText(), tp.name);
+    var ast = AST_Util.New_FuncDecl(context.NAME().GetText());
 
+    int default_args_num;
     var func_symb = new FuncSymbolScript(
       func_tree, 
-      ParseFuncSignature(tp, context.funcParams()),
-      ast.name
+      ParseFuncSignature(tp, context.funcParams(), out default_args_num),
+      ast.name,
+      default_args_num
     );
-    func2fparams[func_symb] = context.funcParams();
     scope.Define(func_symb);
 
     //NOTE: let's check if this is a method and if so
@@ -2759,9 +2750,6 @@ public class Frontend : bhlBaseVisitor<object>
     PopJsonType();
     types.CheckAssign(Wrap(exp), arr_type);
 
-    //generic fallback if the concrete type is not found 
-    string arr_stype = arr_type.GetName();
-
     var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
     var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
     if(arr_tmp_symb == null)
@@ -2795,7 +2783,7 @@ public class Frontend : bhlBaseVisitor<object>
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_stype, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));
+    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_type, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
@@ -2803,7 +2791,7 @@ public class Frontend : bhlBaseVisitor<object>
     var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_stype, ((FuncSymbol)arr_type.Resolve("At")).scope_idx));
+    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_type, ((FuncSymbol)arr_type.Resolve("At")).scope_idx));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
 

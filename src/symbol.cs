@@ -249,12 +249,6 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
   public string GetName() { return name; }
 
   public override SymbolsDictionary GetMembers() { return members; }
-
-  public override string ToString() 
-  {
-    return "class "+name+":{"+
-            string.Join(",", members.GetStringKeys().ToArray())+"}";
-  }
 }
 
 public abstract class ArrayTypeSymbol : ClassSymbol
@@ -321,7 +315,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {}
 
   public abstract void CreateArr(VM.Frame frame, ref Val v);
-  public abstract void GetCount(Val ctx, ref Val v);
+  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v);
   public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
@@ -360,16 +354,16 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     v.SetObj(ValList.New(frm.vm));
   }
 
-  public override void GetCount(Val ctx, ref Val v)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
   {
     var lst = AsList(ctx);
     v.SetNum(lst.Count);
   }
   
-  public override ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frame.stack.Pop();
-    var arr = frame.stack.Pop();
+    var val = frm.stack.Pop();
+    var arr = frm.stack.Pop();
     var lst = AsList(arr);
     lst.Add(val);
     val.Release();
@@ -460,15 +454,15 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     v.obj = Creator();
   }
 
-  public override void GetCount(Val ctx, ref Val v)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
   {
     v.SetNum(((IList<T>)ctx.obj).Count);
   }
   
-  public override ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frame.stack.Pop();
-    var arr = frame.stack.Pop();
+    var val = frm.stack.Pop();
+    var arr = frm.stack.Pop();
     var lst = (IList<T>)arr.obj;
     lst.Add((T)val.obj);
     val.Release();
@@ -655,13 +649,13 @@ public class FieldSymbolScript : FieldSymbol
     : this("", new TypeProxy())
   {}
 
-  void Getter(Val ctx, ref Val v)
+  void Getter(VM.Frame frm, Val ctx, ref Val v)
   {
     var m = (IList<Val>)ctx.obj;
     v.ValueCopyFrom(m[scope_idx]);
   }
 
-  void Setter(ref Val ctx, Val v)
+  void Setter(VM.Frame frm, ref Val ctx, Val v)
   {
     var m = (IList<Val>)ctx.obj;
     var curr = m[scope_idx];
@@ -673,7 +667,7 @@ public class FieldSymbolScript : FieldSymbol
     curr.ValueCopyFrom(v);
   }
 
-  void Getref(Val ctx, out Val v)
+  void Getref(VM.Frame frm, Val ctx, out Val v)
   {
     var m = (IList<Val>)ctx.obj;
     v = m[scope_idx];
@@ -809,6 +803,13 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public abstract int GetDefaultArgsNum();
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
 
+  public bool HasDefaultArgAt(int i)
+  {
+    if(i >= GetTotalArgsNum())
+      return false;
+    return i >= (GetDefaultArgsNum() - GetDefaultArgsNum());
+  }
+
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
@@ -857,9 +858,10 @@ public class FuncSymbolScript : FuncSymbol
   public FuncSymbolScript(
     WrappedParseTree parsed, 
     FuncSignature sig,
-    string name
+    string name,
+    int default_args_num
   ) 
-    : this(sig, name, 0, 0)
+    : this(sig, name, default_args_num, 0)
   {
     this.parsed = parsed;
   }
@@ -895,19 +897,20 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
 public class LambdaSymbol : FuncSymbolScript
 {
-  public AST_LambdaDecl ldecl; 
+  List<AST_UpVal> upvals;
 
   List<FuncSymbol> fdecl_stack;
 
   public LambdaSymbol(
     WrappedParseTree parsed, 
+    string name,
     FuncSignature sig,
-    List<FuncSymbol> fdecl_stack,
-    AST_LambdaDecl ldecl
+    List<AST_UpVal> upvals,
+    List<FuncSymbol> fdecl_stack
   ) 
-    : base(parsed, sig, ldecl.name)
+    : base(parsed, sig, name, 0)
   {
-    this.ldecl = ldecl;
+    this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
   }
 
@@ -918,7 +921,7 @@ public class LambdaSymbol : FuncSymbolScript
     this.Define(local);
 
     var up = AST_Util.New_UpVal(local.name, local.scope_idx, src.scope_idx); 
-    ldecl.upvals.Add(up);
+    upvals.Add(up);
 
     return local;
   }
@@ -1074,18 +1077,15 @@ public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
 
-  public AST_ClassDecl decl;
-
-  public ClassSymbolScript(string name, AST_ClassDecl decl, ClassSymbol super_class = null)
+  public ClassSymbolScript(string name, ClassSymbol super_class = null)
     : base(name, super_class)
   {
-    this.decl = decl;
     this.creator = ClassCreator;
   }
 
 #if BHL_FRONT
-  public ClassSymbolScript(WrappedParseTree parsed, string name, AST_ClassDecl decl, ClassSymbol super_class = null)
-    : this(name, decl, super_class)
+  public ClassSymbolScript(WrappedParseTree parsed, string name, ClassSymbol super_class = null)
+    : this(name, super_class)
   {
     this.parsed = parsed;
   }
@@ -1093,7 +1093,7 @@ public class ClassSymbolScript : ClassSymbol
 
   //marshall factory version
   public ClassSymbolScript() 
-    : this(null, null, null)
+    : this(null, null)
   {}
 
   void ClassCreator(VM.Frame frm, ref Val data)
@@ -1178,12 +1178,6 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumItemSymbol FindValue(string name)
   {
     return base.Resolve(name) as EnumItemSymbol;
-  }
-
-  public override string ToString() 
-  {
-    return "enum "+name+":{"+
-            string.Join(",", members.GetStringKeys().ToArray())+"}";
   }
 
   public override uint ClassId()

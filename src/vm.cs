@@ -683,12 +683,12 @@ public class VM
   int fibers_ids = 0;
   List<Fiber> fibers = new List<Fiber>();
 
-  IModuleLoader importer;
+  IModuleLoader loader;
 
   public delegate void ClassCreator(VM.Frame frm, ref Val res);
-  public delegate void FieldGetter(Val v, ref Val res);
-  public delegate void FieldSetter(ref Val v, Val nv);
-  public delegate void FieldRef(Val v, out Val res);
+  public delegate void FieldGetter(VM.Frame frm, Val v, ref Val res);
+  public delegate void FieldSetter(VM.Frame frm, ref Val v, Val nv);
+  public delegate void FieldRef(VM.Frame frm, Val v, out Val res);
 
   public class ValPool : Pool<Val>
   {
@@ -758,13 +758,13 @@ public class VM
     }
   }
 
-  public VM(Types types = null, IModuleLoader importer = null)
+  public VM(Types types = null, IModuleLoader loader = null)
   {
     if(types == null)
       types = new Types();
     this.types = types;
     this.globs = types.globs;
-    this.importer = importer;
+    this.loader = loader;
 
     init_frame = new Frame(this);
 
@@ -778,13 +778,13 @@ public class VM
 
   public void LoadModule(string module_name)
   {
-    var imported_module = importer.Load(module_name);
+    var imported_module = loader.Load(module_name);
     RegisterModule(imported_module);
   }
 
   void LoadModule(CompiledModule module, string module_name)
   {
-    var imported_module = importer.Load(module_name);
+    var imported_module = loader.Load(module_name);
     RegisterModule(imported_module);
 
     module.scope.AddImport(imported_module.scope);
@@ -900,7 +900,7 @@ public class VM
           var val = stack.Pop();
           var obj = stack.Peek();
           var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-          field_symb.setter(ref obj, val);
+          field_symb.setter(init_frame, ref obj, val);
           val.Release();
         }
         break;
@@ -1261,7 +1261,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var res = Val.New(this);
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.getter(obj, ref res);
+        field_symb.getter(curr_frame, obj, ref res);
         //NOTE: we retain only the payload since we make the copy of the value 
         //      and the new res already has refs = 1 while payload's refcount 
         //      is not incremented
@@ -1283,7 +1283,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         Val res;
-        field_symb.getref(obj, out res);
+        field_symb.getref(curr_frame, obj, out res);
         curr_frame.stack.PushRetain(res);
         obj.Release();
       }
@@ -1301,7 +1301,7 @@ public class VM
         var obj = curr_frame.stack.Pop();
         var val = curr_frame.stack.Pop();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.setter(ref obj, val);
+        field_symb.setter(curr_frame, ref obj, val);
         val.Release();
         obj.Release();
       }
@@ -1319,7 +1319,7 @@ public class VM
         var val = curr_frame.stack.Pop();
         var obj = curr_frame.stack.Peek();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.setter(ref obj, val);
+        field_symb.setter(curr_frame, ref obj, val);
         val.Release();
       }
       break;
@@ -1909,31 +1909,7 @@ public class VM
     for(int i=0;i<fibers.Count;++i)
     {
       var fb = fibers[i];
-
-      //let's check if this Fiber was already stopped
-      if(fb.IsStopped())
-        continue;
-
-      try
-      {
-        ++fb.tick;
-        fb.status = Execute(
-          ref fb.ip, fb.ctx_frames, 
-          ref fb.coroutine, 
-          //NOTE: we exclude the special case 0 frame
-          fb.ctx_frames[1].frame,
-          1
-        );
-        
-        if(fb.status != BHS.RUNNING)
-          Stop(fb);
-      }
-      catch(Exception e)
-      {
-        var trace = new List<VM.TraceItem>();
-        fb.GetStackTrace(trace);
-        throw new Error(trace, e); 
-      }
+      Tick(fb);
     }
 
     for(int i=fibers.Count;i-- > 0;)
@@ -1944,6 +1920,34 @@ public class VM
     }
 
     return fibers.Count != 0;
+  }
+
+  public bool Tick(Fiber fb)
+  {
+    if(fb.IsStopped())
+      return false;
+
+    try
+    {
+      ++fb.tick;
+      fb.status = Execute(
+        ref fb.ip, fb.ctx_frames, 
+        ref fb.coroutine, 
+        //NOTE: we exclude the special case 0 frame
+        fb.ctx_frames[1].frame,
+        1
+      );
+
+      if(fb.status != BHS.RUNNING)
+        Stop(fb);
+    }
+    catch(Exception e)
+    {
+      var trace = new List<VM.TraceItem>();
+      fb.GetStackTrace(trace);
+      throw new Error(trace, e); 
+    }
+    return !fb.IsStopped();
   }
 
   void ExecuteUnaryOp(Opcodes op, Frame curr_frame)

@@ -472,7 +472,7 @@ public class Build
 
       try
       {
-        return Marshall.File2Obj<FileImports>(cache_imports_file, new AST_Factory());
+        return Marshall.File2Obj<FileImports>(cache_imports_file);
       }
       catch
       {
