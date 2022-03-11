@@ -105,11 +105,11 @@ public class Frontend : bhlBaseVisitor<object>
   //NOTE: a list is used instead of stack, so that it's easier to traverse by index
   List<FuncSymbol> func_decl_stack = new List<FuncSymbol>();
 
-  Stack<IType> json_type_stack = new Stack<IType>();
-
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
   Stack<AST> ast_stack = new Stack<AST>();
+
+  Stack<IType> json_type_stack = new Stack<IType>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s)
   {
