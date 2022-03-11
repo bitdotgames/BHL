@@ -1909,31 +1909,7 @@ public class VM
     for(int i=0;i<fibers.Count;++i)
     {
       var fb = fibers[i];
-
-      //let's check if this Fiber was already stopped
-      if(fb.IsStopped())
-        continue;
-
-      try
-      {
-        ++fb.tick;
-        fb.status = Execute(
-          ref fb.ip, fb.ctx_frames, 
-          ref fb.coroutine, 
-          //NOTE: we exclude the special case 0 frame
-          fb.ctx_frames[1].frame,
-          1
-        );
-        
-        if(fb.status != BHS.RUNNING)
-          Stop(fb);
-      }
-      catch(Exception e)
-      {
-        var trace = new List<VM.TraceItem>();
-        fb.GetStackTrace(trace);
-        throw new Error(trace, e); 
-      }
+      Tick(fb);
     }
 
     for(int i=fibers.Count;i-- > 0;)
@@ -1944,6 +1920,34 @@ public class VM
     }
 
     return fibers.Count != 0;
+  }
+
+  public bool Tick(Fiber fb)
+  {
+    if(fb.IsStopped())
+      return false;
+
+    try
+    {
+      ++fb.tick;
+      fb.status = Execute(
+        ref fb.ip, fb.ctx_frames, 
+        ref fb.coroutine, 
+        //NOTE: we exclude the special case 0 frame
+        fb.ctx_frames[1].frame,
+        1
+      );
+
+      if(fb.status != BHS.RUNNING)
+        Stop(fb);
+    }
+    catch(Exception e)
+    {
+      var trace = new List<VM.TraceItem>();
+      fb.GetStackTrace(trace);
+      throw new Error(trace, e); 
+    }
+    return !fb.IsStopped();
   }
 
   void ExecuteUnaryOp(Opcodes op, Frame curr_frame)
