@@ -151,21 +151,13 @@ public static class Tasks
         $"{BHL_ROOT}/deps/Newtonsoft.Json.dll"
       },
       $"{BHL_ROOT}/bhlsp.dll",
-      "-target:library"
+      "-target:library -define:BHLSP_DEBUG"
     );
   }
   
   [Task(deps: "build_lsp_dll", verbose: false)]
   public static void lsp(Taskman tm, string[] args)
   {
-    var extra_args = "";
-    for(int i = 0; i < args.Length; i++)
-    {
-      extra_args += args[i];
-      if(i != args.Length - 1)
-        extra_args += " ";
-    }
-    
     BuildAndRunDllCmd(
       tm,
       "lsp",
@@ -175,7 +167,7 @@ public static class Tasks
         $"{BHL_ROOT}/bhlsp.dll",
         $"{BHL_ROOT}/deps/mono_opts.dll"
       },
-      $"{extra_args} -define:BHLSP_DEBUG",
+      "",
       args
     );
   }
