@@ -127,6 +127,9 @@ public class Val
   {
     type = null;
     _num = 0;
+    _num2 = 0;
+    _num3 = 0;
+    _num4 = 0;
     _obj = null;
   }
 
@@ -134,6 +137,9 @@ public class Val
   {
     type = dv.type;
     _num = dv._num;
+    _num2 = dv._num2;
+    _num3 = dv._num3;
+    _num4 = dv._num4;
     _obj = dv._obj;
   }
 
@@ -275,6 +281,9 @@ public class Val
   {
     bool res =
       _num == o._num &&
+      _num2 == o._num2 &&
+      _num3 == o._num3 &&
+      _num4 == o._num4 &&
       //TODO: delegate comparison to type?
       (type == Types.String ? (string)_obj == (string)o._obj : _obj == o._obj)
       ;
