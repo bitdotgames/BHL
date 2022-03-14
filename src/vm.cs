@@ -333,9 +333,9 @@ public class VM
           ip = bi.ip;
         return true;
       }
-      else if(i is ParalBlock pi)
+      else if(i is ParalBlock pi && pi.i < pi.branches.Count)
         return TryGetTraceInfo(pi.branches[pi.i], ref ip, calls);
-      else if(i is ParalAllBlock pai)
+      else if(i is ParalAllBlock pai && pai.i < pai.branches.Count)
         return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
       else
         return false;
@@ -437,6 +437,8 @@ public class VM
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;
+      if(defers != null)
+        defers.Clear();
     }
 
     public void Clear()
@@ -1158,7 +1160,9 @@ public class VM
 
     var curr_frame = ctx.frame;
 
-    //Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" + (ip > -1 && ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[ip] : " OP ? ") + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
+    //var trace = new List<TraceItem>();
+    //curr_frame.fb.GetStackTrace(trace);
+    //Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" + (ip > -1 && ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[ip] : " OP ? ") + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length/* + " " + Error.ToString(trace)*/ /* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(coroutine != null)
@@ -1887,7 +1891,7 @@ public class VM
     int block_size;
     var block_coro = TryMakeBlockCoroutine(ref ip, ctx_frames, curr_frame, out block_size, defer_scope);
 
-    //Console.WriteLine("BLOCK CORO " + block_coro?.GetType().Name);
+    //Console.WriteLine("BLOCK CORO " + block_coro?.GetType().Name + " " + block_coro?.GetHashCode());
     if(block_coro is IBranchyCoroutine bi) 
     {
       int tmp_ip = ip;
@@ -2558,6 +2562,10 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
   {
     this.min_ip = min_ip;
     this.max_ip = max_ip;
+    i = 0;
+    branches.Clear();
+    if(defers != null)
+      defers.Clear();
   }
 
   public void Tick(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)
@@ -2629,6 +2637,10 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
   {
     this.min_ip = min_ip;
     this.max_ip = max_ip;
+    i = 0;
+    branches.Clear();
+    if(defers != null)
+      defers.Clear();
   }
 
   public void Tick(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)

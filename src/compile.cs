@@ -51,13 +51,13 @@ public class Compiler : AST_Visitor
   Stack<FuncSymbol> func_decls = new Stack<FuncSymbol>();
   HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
 
-  internal struct Jump
+  internal struct Offset
   {
-    internal Instruction jump_op;
+    internal Instruction src;
     internal Instruction dst;
     internal int operand_idx;
   }
-  List<Jump> jumps = new List<Jump>();
+  List<Offset> offsets = new List<Offset>();
 
   static Dictionary<byte, Definition> opcode_decls = new Dictionary<byte, Definition>();
 
@@ -684,7 +684,7 @@ public class Compiler : AST_Visitor
       var npb = non_patched_breaks[i];
       if(npb.block == block)
       {
-        AddJumpFromTo(npb.jump_op, Peek());
+        AddOffsetFromTo(npb.jump_op, Peek());
         non_patched_breaks.RemoveAt(i);
       }
     }
@@ -697,23 +697,31 @@ public class Compiler : AST_Visitor
       var npc = non_patched_continues[i];
       if(npc.block == block)
       {
-        AddJumpFromTo(npc.jump_op, continue_jump_markers[npc.block]);
+        AddOffsetFromTo(npc.jump_op, continue_jump_markers[npc.block]);
         non_patched_continues.RemoveAt(i);
       }
     }
     continue_jump_markers.Clear();
   }
 
-  void AddJumpFromTo(Instruction jump_op, Instruction dst, int operand_idx = 0)
+  void AddOffsetFromTo(Instruction src, Instruction dst, int operand_idx = 0)
   {
-    jumps.Add(new Jump() {
-      jump_op = jump_op,
+    offsets.Add(new Offset() {
+      src = src,
       dst = dst,
       operand_idx = operand_idx
     });
   }
 
-  void PatchJumps()
+  bool HasOffsetsTo(Instruction dst)
+  {
+    foreach(var offset in offsets)
+      if(offset.dst == dst)
+        return true;
+    return false;
+  }
+
+  void PatchOffsets()
   {
     //1. let's calculate absolute positions of all instructions
     int pos = 0;
@@ -724,17 +732,24 @@ public class Compiler : AST_Visitor
     }
 
     //2. let's patch jump candidates
-    for(int i=0;i<jumps.Count;++i)
+    for(int i=0;i<offsets.Count;++i)
     {
-      var jp = jumps[i];
-      int offset = jp.dst.pos - jp.jump_op.pos;
-      jp.jump_op.SetOperand(jp.operand_idx, offset);
+      var jp = offsets[i];
+      if(jp.dst.pos <= 0)
+        throw new Exception("Invalid position of destination instruction: " + jp.dst.def.name);
+
+      if(jp.src.pos <= 0)
+        throw new Exception("Invalid position of source instruction: " + jp.src.def.name);
+
+      int offset = jp.dst.pos - jp.src.pos;
+
+      jp.src.SetOperand(jp.operand_idx, offset);
     }
   }
 
   public void Bake(out byte[] init_bytes, out byte[] code_bytes, out Dictionary<int, int> ip2src_line)
   {
-    PatchJumps();
+    PatchOffsets();
 
     {
       var bytecode = new Bytecode();
@@ -806,7 +821,7 @@ public class Compiler : AST_Visitor
     Emit(Opcodes.InitFrame, new int[] { ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
     Emit(Opcodes.Return);
-    AddJumpFromTo(lmbd_op, Peek());
+    AddOffsetFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.upvals)
       Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
@@ -866,23 +881,23 @@ public class Compiler : AST_Visitor
 
           var if_op = EmitConditionPlaceholderAndBody(ast, i);
           if(last_jmp_op != null)
-            AddJumpFromTo(last_jmp_op, Peek());
+            AddOffsetFromTo(last_jmp_op, Peek());
 
           //check if uncoditional jump out of 'if body' is required,
           //it's required only if there are other 'else if' or 'else'
           if(ast.children.Count > 2)
           {
             last_jmp_op = Emit(Opcodes.Jump, new int[] { 0 });
-            AddJumpFromTo(if_op, Peek());
+            AddOffsetFromTo(if_op, Peek());
           }
           else
-            AddJumpFromTo(if_op, Peek());
+            AddOffsetFromTo(if_op, Peek());
         }
         //check fo 'else leftover'
         if(i != ast.children.Count)
         {
           Visit(ast.children[i]);
-          AddJumpFromTo(last_jmp_op, Peek());
+          AddOffsetFromTo(last_jmp_op, Peek());
         }
       break;
       case EnumBlock.WHILE:
@@ -898,10 +913,10 @@ public class Compiler : AST_Visitor
 
         //to the beginning of the loop
         var jump_op = Emit(Opcodes.Jump, new int[] { 0 });
-        AddJumpFromTo(jump_op, begin_op);
+        AddOffsetFromTo(jump_op, begin_op);
 
         //patch 'jump out of the loop' position
-        AddJumpFromTo(cond_op, Peek());
+        AddOffsetFromTo(cond_op, Peek());
 
         PatchContinues(ast);
 
@@ -925,10 +940,10 @@ public class Compiler : AST_Visitor
 
         //to the beginning of the loop
         var jump_op = Emit(Opcodes.Jump, new int[] { 0 });
-        AddJumpFromTo(jump_op, begin_op);
+        AddOffsetFromTo(jump_op, begin_op);
 
         //patch 'jump out of the loop' position
-        AddJumpFromTo(cond_op, Peek());
+        AddOffsetFromTo(cond_op, Peek());
 
         PatchContinues(ast);
 
@@ -997,10 +1012,10 @@ public class Compiler : AST_Visitor
 
     ctrl_blocks.Pop();
 
-    bool need_block = is_paral || parent_is_paral || block_has_defers.Contains(ast);
+    bool need_block = is_paral || parent_is_paral || block_has_defers.Contains(ast) || HasOffsetsTo(block_op);
 
     if(need_block)
-      AddJumpFromTo(block_op, Peek(), operand_idx: 1);
+      AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
     else
       head.Remove(block_op); 
   }
@@ -1013,7 +1028,7 @@ public class Compiler : AST_Visitor
 
     var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
     VisitChildren(ast);
-    AddJumpFromTo(block_op, Peek(), operand_idx: 1);
+    AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
   }
 
   public override void DoVisit(AST_TypeCast ast)
@@ -1275,7 +1290,7 @@ public class Compiler : AST_Visitor
         var jump_op = Emit(Opcodes.JumpPeekZ, new int[] { 0 /*patched later*/});
         Visit(ast.children[1]);
         Emit(Opcodes.And);
-        AddJumpFromTo(jump_op, Peek());
+        AddOffsetFromTo(jump_op, Peek());
       }
       break;
       case EnumBinaryOp.OR:
@@ -1284,7 +1299,7 @@ public class Compiler : AST_Visitor
         var jump_op = Emit(Opcodes.JumpPeekNZ, new int[] { 0 /*patched later*/});
         Visit(ast.children[1]);
         Emit(Opcodes.Or);
-        AddJumpFromTo(jump_op, Peek());
+        AddOffsetFromTo(jump_op, Peek());
       }
       break;
       case EnumBinaryOp.BIT_AND:
@@ -1369,7 +1384,7 @@ public class Compiler : AST_Visitor
       var fsymb = func_decls.Peek();
       var arg_op = Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - fsymb.GetRequiredArgsNum(), 0 /*patched later*/ });
       VisitChildren(ast);
-      AddJumpFromTo(arg_op, Peek(), operand_idx: 1);
+      AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
     }
 
     if(!ast.is_func_arg)

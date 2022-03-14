@@ -4508,6 +4508,43 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestParalReuse()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int n = 0
+      paral {
+        {
+          suspend()
+          n = 10
+        }
+        {
+          n = 1
+        }
+      }
+
+      paral {
+        {
+          n = 2
+        }
+        {
+          suspend()
+          n = 3
+        }
+      }
+      return n
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBreakFromNestedSequences()
   {
     string bhl = @"
@@ -9011,8 +9048,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    var c = Compile(bhl, ts);
+    var c = Compile(bhl);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -9023,6 +9059,33 @@ public class BHL_TestVM : BHL_TestBase
     AssertFalse(vm.Tick());
     var val = fb.result.PopRelease();
     AssertEqual(3, val.num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSeveralYieldWhilesInParal()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      paral {
+        yield while(i < 5)
+        while(true) {
+          yield while(i < 7)
+        }
+        while(true) {
+          i = i + 1
+          yield()
+        }
+      }
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(5, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
