@@ -10642,6 +10642,44 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSubSubFuncDefer()
+  {
+    string bhl = @"
+
+    func level_start() {
+      defer {
+        trace(""~level_start"")
+      }
+    }
+
+    func level_body(func() test) {
+      defer {
+        trace(""~level_body"")
+      }
+
+      yield()
+
+      test()
+
+      level_start()
+    }
+
+    func test() {
+      level_body(func() { yield() } )
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("~level_start~level_body", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSequenceDefer()
   {
     string bhl = @"

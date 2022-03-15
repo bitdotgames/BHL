@@ -318,6 +318,13 @@ public class VM
       }
     }
 
+    public string GetStackTrace()
+    {
+      var trace = new List<TraceItem>();
+      GetStackTrace(trace);
+      return Error.ToString(trace);
+    }
+
     static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
     {
       if(i is SeqBlock si)
@@ -437,8 +444,6 @@ public class VM
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;
-      if(defers != null)
-        defers.Clear();
     }
 
     public void Clear()
@@ -457,13 +462,19 @@ public class VM
         val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       }
       stack.Clear();
+
+      if(defers != null)
+        defers.Clear();
     }
 
     public void RegisterDefer(DeferBlock cb)
     {
       if(defers == null)
         defers = new List<DeferBlock>();
+
       defers.Add(cb);
+      //if(cb.frm != this)
+      //  throw new Exception("INVALID DEFER BLOCK " + fb.GetStackTrace());
     }
 
     public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
@@ -1160,9 +1171,7 @@ public class VM
 
     var curr_frame = ctx.frame;
 
-    //var trace = new List<TraceItem>();
-    //curr_frame.fb.GetStackTrace(trace);
-    //Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" + (ip > -1 && ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[ip] : " OP ? ") + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length + " " + Error.ToString(trace) /* + " " + Environment.StackTrace*/);
+    //Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" + (ip > -1 && ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[ip] : " OP ? ") + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length + " " + curr_frame.fb.GetStackTrace() /* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(coroutine != null)
@@ -1383,7 +1392,6 @@ public class VM
         ip = curr_frame.return_ip;
         curr_frame.Clear();
         curr_frame.Release();
-        //Console.WriteLine("RET IP " + ip + " FRAMES " + ctx_frames.Count);
         ctx_frames.Pop();
         //let's restore the defer scope
         defer_scope = curr_frame.origin;
