@@ -806,7 +806,7 @@ public class Compiler : AST_Visitor
 
     Emit(Opcodes.InitFrame, new int[] { fsymb.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
-    Emit(Opcodes.Return);
+    Emit(Opcodes.Return, null, ast.last_line_num);
 
     func_decls.Pop();
 
@@ -819,7 +819,7 @@ public class Compiler : AST_Visitor
     //skipping lambda opcode
     Emit(Opcodes.InitFrame, new int[] { ast.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
-    Emit(Opcodes.Return);
+    Emit(Opcodes.Return, null, ast.last_line_num);
     AddOffsetFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.upvals)
@@ -1033,7 +1033,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type.GetName()) }, ast.line);
+    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
   }
 
   public override void DoVisit(AST_New ast)
@@ -1235,7 +1235,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_Return ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.ReturnVal, new int[] { ast.num });
+    Emit(Opcodes.ReturnVal, new int[] { ast.num }, ast.line_num);
   }
 
   public override void DoVisit(AST_Break ast)
@@ -1288,7 +1288,7 @@ public class Compiler : AST_Visitor
         Visit(ast.children[0]);
         var jump_op = Emit(Opcodes.JumpPeekZ, new int[] { 0 /*patched later*/});
         Visit(ast.children[1]);
-        Emit(Opcodes.And, null, ast.line);
+        Emit(Opcodes.And, null, ast.line_num);
         AddOffsetFromTo(jump_op, Peek());
       }
       break;
@@ -1297,63 +1297,63 @@ public class Compiler : AST_Visitor
         Visit(ast.children[0]);
         var jump_op = Emit(Opcodes.JumpPeekNZ, new int[] { 0 /*patched later*/});
         Visit(ast.children[1]);
-        Emit(Opcodes.Or, null, ast.line);
+        Emit(Opcodes.Or, null, ast.line_num);
         AddOffsetFromTo(jump_op, Peek());
       }
       break;
       case EnumBinaryOp.BIT_AND:
         VisitChildren(ast);
-        Emit(Opcodes.BitAnd, null, ast.line);
+        Emit(Opcodes.BitAnd, null, ast.line_num);
       break;
       case EnumBinaryOp.BIT_OR:
         VisitChildren(ast);
-        Emit(Opcodes.BitOr, null, ast.line);
+        Emit(Opcodes.BitOr, null, ast.line_num);
       break;
       case EnumBinaryOp.MOD:
         VisitChildren(ast);
-        Emit(Opcodes.Mod, null, ast.line);
+        Emit(Opcodes.Mod, null, ast.line_num);
       break;
       case EnumBinaryOp.ADD:
       {
         VisitChildren(ast);
-        Emit(Opcodes.Add, null, ast.line);
+        Emit(Opcodes.Add, null, ast.line_num);
       }
       break;
       case EnumBinaryOp.SUB:
         VisitChildren(ast);
-        Emit(Opcodes.Sub, null, ast.line);
+        Emit(Opcodes.Sub, null, ast.line_num);
       break;
       case EnumBinaryOp.DIV:
         VisitChildren(ast);
-        Emit(Opcodes.Div, null, ast.line);
+        Emit(Opcodes.Div, null, ast.line_num);
       break;
       case EnumBinaryOp.MUL:
         VisitChildren(ast);
-        Emit(Opcodes.Mul, null, ast.line);
+        Emit(Opcodes.Mul, null, ast.line_num);
       break;
       case EnumBinaryOp.EQ:
         VisitChildren(ast);
-        Emit(Opcodes.Equal, null, ast.line);
+        Emit(Opcodes.Equal, null, ast.line_num);
       break;
       case EnumBinaryOp.NQ:
         VisitChildren(ast);
-        Emit(Opcodes.NotEqual, null, ast.line);
+        Emit(Opcodes.NotEqual, null, ast.line_num);
       break;
       case EnumBinaryOp.LT:
         VisitChildren(ast);
-        Emit(Opcodes.LT, null, ast.line);
+        Emit(Opcodes.LT, null, ast.line_num);
       break;
       case EnumBinaryOp.LTE:
         VisitChildren(ast);
-        Emit(Opcodes.LTE, null, ast.line);
+        Emit(Opcodes.LTE, null, ast.line_num);
       break;
       case EnumBinaryOp.GT:
         VisitChildren(ast);
-        Emit(Opcodes.GT, null, ast.line);
+        Emit(Opcodes.GT, null, ast.line_num);
       break;
       case EnumBinaryOp.GTE:
         VisitChildren(ast);
-        Emit(Opcodes.GTE, null, ast.line);
+        Emit(Opcodes.GTE, null, ast.line_num);
       break;
       default:
         throw new Exception("Not supported binary type: " + ast.type);

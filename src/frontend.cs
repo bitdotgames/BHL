@@ -1025,7 +1025,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(funcLambda.retType());
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name);
+    var ast = AST_Util.New_LambdaDecl(func_name, funcLambda.Stop.Line);
     int default_args_num;
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
@@ -1768,7 +1768,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     return_found.Add(func_symb);
 
-    var ret_ast = AST_Util.New_Return();
+    var ret_ast = AST_Util.New_Return(ctx.Start.Line);
     
     var explist = ctx.explist();
     if(explist != null)
@@ -1976,18 +1976,18 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
+  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext ctx, IScope scope)
   {
-    var tp = ParseType(context.retType());
-    var func_tree = Wrap(context);
+    var tp = ParseType(ctx.retType());
+    var func_tree = Wrap(ctx);
     func_tree.eval_type = tp.Get();
 
-    var ast = AST_Util.New_FuncDecl(context.NAME().GetText());
+    var ast = AST_Util.New_FuncDecl(ctx.NAME().GetText(), ctx.Stop.Line);
 
     int default_args_num;
     var func_symb = new FuncSymbolScript(
       func_tree, 
-      ParseFuncSignature(tp, context.funcParams(), out default_args_num),
+      ParseFuncSignature(tp, ctx.funcParams(), out default_args_num),
       ast.name,
       default_args_num
     );
@@ -2004,7 +2004,7 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope = func_symb;
     PushFuncDecl(func_symb);
 
-    var func_params = context.funcParams();
+    var func_params = ctx.funcParams();
     if(func_params != null)
     {
       PushAST(ast.fparams());
@@ -2015,11 +2015,11 @@ public class Frontend : bhlBaseVisitor<object>
     if(!decls_only)
     {
       PushAST(ast.block());
-      Visit(context.funcBlock());
+      Visit(ctx.funcBlock());
       PopAST();
 
       if(tp.Get() != Types.Void && !return_found.Contains(func_symb))
-        FireError(context.NAME(), "matching 'return' statement not found");
+        FireError(ctx.NAME(), "matching 'return' statement not found");
     }
     
     PopFuncDecl();
