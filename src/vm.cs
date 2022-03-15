@@ -306,7 +306,7 @@ public class VM
           var fsymb = TryMapIp2Func(frm.module, calls[i].start_ip);
 
           item.func = fsymb == null ? "?" : fsymb.name;
-          frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
+          item.line = frm.module.ip2src_line.TryMap(item.ip);
         }
         else
         {
@@ -1162,7 +1162,7 @@ public class VM
 
     //var trace = new List<TraceItem>();
     //curr_frame.fb.GetStackTrace(trace);
-    //Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" + (ip > -1 && ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[ip] : " OP ? ") + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length/* + " " + Error.ToString(trace)*/ /* + " " + Environment.StackTrace*/);
+    //Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" + (ip > -1 && ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[ip] : " OP ? ") + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length + " " /*+ Error.ToString(trace) */ /* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(coroutine != null)
@@ -2043,6 +2043,44 @@ public class VM
   }
 }
 
+public class Ip2SrcLine
+{
+  public List<int> ips = new List<int>();
+  public List<int> lines = new List<int>();
+
+  public void Add(int ip, int line)
+  {
+    ips.Add(ip);
+    lines.Add(line);
+  }
+
+  public int TryMap(int ip)
+  {
+    int idx = Search(ip, 0, ips.Count-1);
+    if(idx == -1)
+      return 0;
+    return lines[idx];
+  }
+
+  int Search(int ip, int l, int r)
+  {
+    if(r >= l)
+    {
+      int mid = l + (r - l) / 2;
+
+      //checking for IP range
+      if(ip <= ips[mid] && (mid == 0 || ip > ips[mid-1]))
+        return mid;
+
+      if(ips[mid] > ip)
+        return Search(ip, l, mid - 1);
+      else
+        return Search(ip, mid + 1, r);
+    }
+    return -1;
+  }
+}
+
 public class CompiledModule
 {
   public const int MAX_GLOBALS = 128;
@@ -2054,7 +2092,7 @@ public class CompiledModule
   public byte[] bytecode;
   public List<Const> constants;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
-  public Dictionary<int, int> ip2src_line;
+  public Ip2SrcLine ip2src_line;
 
   public CompiledModule(
     string name,
@@ -2062,7 +2100,7 @@ public class CompiledModule
     List<Const> constants, 
     byte[] initcode,
     byte[] bytecode, 
-    Dictionary<int, int> ip2src_line = null
+    Ip2SrcLine ip2src_line = null
   )
   {
     this.name = name;
@@ -2114,7 +2152,7 @@ public class CompiledModule
         constants.Add(cn);
       }
 
-      var ip2src_line = new Dictionary<int, int>();
+      var ip2src_line = new Ip2SrcLine();
       int ip2src_line_len = r.ReadInt32();
       for(int i=0;i<ip2src_line_len;++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
@@ -2164,11 +2202,11 @@ public class CompiledModule
       }
 
       //TODO: add this info only for development builds
-      w.Write(cm.ip2src_line.Count);
-      foreach(var kv in cm.ip2src_line)
+      w.Write(cm.ip2src_line.ips.Count);
+      for(int i=0;i<cm.ip2src_line.ips.Count;++i)
       {
-        w.Write(kv.Key);
-        w.Write(kv.Value);
+        w.Write(cm.ip2src_line.ips[i]);
+        w.Write(cm.ip2src_line.lines[i]);
       }
     }
   }

@@ -157,6 +157,7 @@ public enum EnumBinaryOp
 public class AST_BinaryOpExp  : AST 
 {
   public EnumBinaryOp type = new EnumBinaryOp();
+  public int line;
 }
 
 public class AST_Inc : IAST
@@ -211,6 +212,7 @@ public class AST_LambdaDecl : AST_FuncDecl
 public class AST_TypeCast : AST 
 {
   public IType type;
+  public int line;
 }
 
 public enum EnumCall 
@@ -476,20 +478,22 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_BinaryOpExp New_BinaryOpExp(EnumBinaryOp type)
+  static public AST_BinaryOpExp New_BinaryOpExp(EnumBinaryOp type, int line)
   {
     var n = new AST_BinaryOpExp();
     n.type = type;
+    n.line = line;
 
     return n;
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_TypeCast New_TypeCast(IType type)
+  static public AST_TypeCast New_TypeCast(IType type, int line)
   {
     var n = new AST_TypeCast();
     n.type = type;
+    n.line = line;
 
     return n;
   }

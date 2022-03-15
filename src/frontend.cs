@@ -1310,7 +1310,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = AST_Util.New_TypeCast(tp.Get());
+    var ast = AST_Util.New_TypeCast(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
@@ -1384,7 +1384,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
     var op_type = GetBinaryOpType(op);
-    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
+    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
 
     PushAST(bin_op_ast);
     bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
@@ -1494,7 +1494,7 @@ public class Frontend : bhlBaseVisitor<object>
   void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
-    AST ast = AST_Util.New_BinaryOpExp(op_type);
+    AST ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
     PushAST(ast);
     Visit(lhs);
     Visit(rhs);
@@ -1538,7 +1538,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpBitAnd(bhlParser.ExpBitAndContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_AND);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1556,7 +1556,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpBitOr(bhlParser.ExpBitOrContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_OR);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_OR, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1574,7 +1574,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpAnd(bhlParser.ExpAndContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.AND);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1600,7 +1600,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpOr(bhlParser.ExpOrContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.OR);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.OR, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -2780,7 +2780,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //adding while condition
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
-    var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
+    var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_type, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));

@@ -208,7 +208,7 @@ public class Compiler : AST_Visitor
 
       byte[] init_bytes;
       byte[] code_bytes;
-      Dictionary<int, int> ip2src_line;
+      Ip2SrcLine ip2src_line;
       Bake(out init_bytes, out code_bytes, out ip2src_line);
 
       compiled = new CompiledModule(
@@ -747,7 +747,7 @@ public class Compiler : AST_Visitor
     }
   }
 
-  public void Bake(out byte[] init_bytes, out byte[] code_bytes, out Dictionary<int, int> ip2src_line)
+  public void Bake(out byte[] init_bytes, out byte[] code_bytes, out Ip2SrcLine ip2src_line)
   {
     PatchOffsets();
 
@@ -765,9 +765,8 @@ public class Compiler : AST_Visitor
       code_bytes = bytecode.GetBytes();
     }
 
-    ip2src_line = new Dictionary<int, int>();
+    ip2src_line = new Ip2SrcLine();
     int pos = 0;
-    //TODO: should we take into account init code?
     for(int i=0;i<code.Count;++i)
     {
       pos += code[i].def.size;
@@ -1034,7 +1033,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type.GetName()) });
+    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type.GetName()) }, ast.line);
   }
 
   public override void DoVisit(AST_New ast)
@@ -1289,7 +1288,7 @@ public class Compiler : AST_Visitor
         Visit(ast.children[0]);
         var jump_op = Emit(Opcodes.JumpPeekZ, new int[] { 0 /*patched later*/});
         Visit(ast.children[1]);
-        Emit(Opcodes.And);
+        Emit(Opcodes.And, null, ast.line);
         AddOffsetFromTo(jump_op, Peek());
       }
       break;
@@ -1298,61 +1297,63 @@ public class Compiler : AST_Visitor
         Visit(ast.children[0]);
         var jump_op = Emit(Opcodes.JumpPeekNZ, new int[] { 0 /*patched later*/});
         Visit(ast.children[1]);
-        Emit(Opcodes.Or);
+        Emit(Opcodes.Or, null, ast.line);
         AddOffsetFromTo(jump_op, Peek());
       }
       break;
       case EnumBinaryOp.BIT_AND:
         VisitChildren(ast);
-        Emit(Opcodes.BitAnd);
+        Emit(Opcodes.BitAnd, null, ast.line);
       break;
       case EnumBinaryOp.BIT_OR:
         VisitChildren(ast);
-        Emit(Opcodes.BitOr);
+        Emit(Opcodes.BitOr, null, ast.line);
       break;
       case EnumBinaryOp.MOD:
         VisitChildren(ast);
-        Emit(Opcodes.Mod);
+        Emit(Opcodes.Mod, null, ast.line);
       break;
       case EnumBinaryOp.ADD:
+      {
         VisitChildren(ast);
-        Emit(Opcodes.Add);
+        Emit(Opcodes.Add, null, ast.line);
+      }
       break;
       case EnumBinaryOp.SUB:
         VisitChildren(ast);
-        Emit(Opcodes.Sub);
+        Emit(Opcodes.Sub, null, ast.line);
       break;
       case EnumBinaryOp.DIV:
         VisitChildren(ast);
-        Emit(Opcodes.Div);
+        Emit(Opcodes.Div, null, ast.line);
       break;
       case EnumBinaryOp.MUL:
         VisitChildren(ast);
-        Emit(Opcodes.Mul);
+        Emit(Opcodes.Mul, null, ast.line);
       break;
       case EnumBinaryOp.EQ:
         VisitChildren(ast);
-        Emit(Opcodes.Equal);
+        Emit(Opcodes.Equal, null, ast.line);
       break;
       case EnumBinaryOp.NQ:
         VisitChildren(ast);
-        Emit(Opcodes.NotEqual);
+        Emit(Opcodes.NotEqual, null, ast.line);
       break;
       case EnumBinaryOp.LT:
         VisitChildren(ast);
-        Emit(Opcodes.LT);
+        Emit(Opcodes.LT, null, ast.line);
       break;
       case EnumBinaryOp.LTE:
         VisitChildren(ast);
-        Emit(Opcodes.LTE);
+        Emit(Opcodes.LTE, null, ast.line);
       break;
       case EnumBinaryOp.GT:
         VisitChildren(ast);
-        Emit(Opcodes.GT);
+        Emit(Opcodes.GT, null, ast.line);
       break;
       case EnumBinaryOp.GTE:
         VisitChildren(ast);
-        Emit(Opcodes.GTE);
+        Emit(Opcodes.GTE, null, ast.line);
       break;
       default:
         throw new Exception("Not supported binary type: " + ast.type);
