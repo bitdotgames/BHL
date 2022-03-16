@@ -84,6 +84,13 @@ public class Val
     Val dv;
     if(vm.vals_pool.stack.Count == 0)
     {
+      //for debug
+      //if(vm.vals_pool.miss > 200)
+      //{
+      //  if(vm.last_fiber != null)
+      //    Util.Debug(vm.last_fiber.GetStackTrace());
+      //}
+
       ++vm.vals_pool.miss;
       dv = new Val(vm);
 #if DEBUG_REFS

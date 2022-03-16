@@ -710,6 +710,7 @@ public class VM
 
   int fibers_ids = 0;
   List<Fiber> fibers = new List<Fiber>();
+  public Fiber last_fiber = null;
 
   IModuleLoader loader;
 
@@ -1940,6 +1941,8 @@ public class VM
 
     try
     {
+      last_fiber = fb;
+
       ++fb.tick;
       fb.status = Execute(
         ref fb.ip, fb.ctx_frames, 
