@@ -10657,15 +10657,15 @@ public class BHL_TestVM : BHL_TestBase
         trace(""~level_body"")
       }
 
-      yield()
-
       test()
 
       level_start()
     }
 
     func test() {
-      level_body(func() { yield() } )
+      level_body(func() { 
+        yield() 
+      } )
     }
     ";
 
