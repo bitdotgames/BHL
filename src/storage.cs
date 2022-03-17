@@ -301,20 +301,17 @@ public class Val
   public override string ToString() 
   {
     string str = "";
-    if(type == Types.Int)
-      str = _num + ":<INT>";
-    else if(type == Types.Float)
-      str = _num + ":<FLOAT>";
-    else if(type == Types.Bool)
-      str = bval + ":<BOOL>";
-    else if(type == Types.String)
-      str = this.str + ":<STRING>";
-    else if(type == Types.Any)
-      str = _obj?.GetType().Name + ":<OBJ>";
-    else if(type == null)
-      str = "<NONE>";
+    if(type != null)
+      str += "(" + type.GetName() + ")";
     else
-      str = "Val: type:"+type;
+      str += "(?)";
+    str += " num:" + _num;
+    str += " num2:" + _num2;
+    str += " num3:" + _num3;
+    str += " num4:" + _num4;
+    str += " obj.type:" + _obj?.GetType().Name;
+    str += " obj:" + _obj;
+    str += " (refs:" + _refs + ")";
 
     return str;// + " " + GetHashCode();//for extra debug
   }
