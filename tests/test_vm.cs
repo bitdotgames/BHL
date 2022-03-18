@@ -1633,7 +1633,7 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSemicolonsSeparator()
+  public void TestSemicolonStatementSeparator()
   {
     string bhl = @"
       
@@ -18402,6 +18402,52 @@ public class BHL_TestVM : BHL_TestBase
     string bhl1 = @"
     import ""bhl2""  
     import ""bhl3""  
+
+    func float test(float k) 
+    {
+      return bar(k)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+
+    func float bar(float k)
+    {
+      return hey(k)
+    }
+    ";
+
+    string bhl3 = @"
+    import ""bhl2""
+
+    func float hey(float k)
+    {
+      return k
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files));
+
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(23, Execute(vm, "test", Val.NewNum(vm, 23)).result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportWithSemicolon()
+  {
+    string bhl1 = @"
+    import ""bhl2"";import ""bhl3"";  
 
     func float test(float k) 
     {

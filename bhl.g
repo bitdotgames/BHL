@@ -13,7 +13,7 @@ imports
   ;
 
 mimport
-  : 'import' NORMALSTRING
+  : 'import' NORMALSTRING ';'?
   ;
 
 decls 
