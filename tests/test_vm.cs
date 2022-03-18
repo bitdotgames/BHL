@@ -1639,7 +1639,7 @@ public class BHL_TestVM : BHL_TestBase
       
     func float test(float k) 
     {
-      int a = 100; int b = 100; int c = 400
+      int a = 100; ; int b = 100; int c = 400
       return ((k*a) + b) / c
     }
     ";
@@ -18447,7 +18447,7 @@ public class BHL_TestVM : BHL_TestBase
   public void TestImportWithSemicolon()
   {
     string bhl1 = @"
-    import ""bhl2"";import ""bhl3"";  
+    import ""bhl2"";;;import ""bhl3"";  
 
     func float test(float k) 
     {
