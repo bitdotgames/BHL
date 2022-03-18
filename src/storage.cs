@@ -319,9 +319,9 @@ public class Val
 
 public class ValList : IList<Val>, IValRefcounted
 {
-  //NOTE: exposed to allow manipulations like Reverse(). 
+  //NOTE: Exposed to allow low-level optimal manipulations. 
   //      Use with caution.
-  public readonly List<Val> lst = new List<Val>();
+  public List<Val> lst = new List<Val>();
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection
