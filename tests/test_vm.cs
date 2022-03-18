@@ -1633,6 +1633,23 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSemicolonsSeparator()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      int a = 100; int b = 100; int c = 400
+      return ((k*a) + b) / c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestDanglingBrackets()
   {
     string bhl = @"

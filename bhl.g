@@ -187,7 +187,7 @@ callArg
   ;
 
 block 
-  : '{' statement* '}'
+  : '{' (statement ';'?)* '}'
   ;
 
 classDecl
