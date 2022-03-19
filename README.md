@@ -25,6 +25,7 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 
 ## Quick example
 
+```go
 func GoToTarget(Unit u, Unit t) {
   NavPath path
   paral {
@@ -37,6 +38,7 @@ func GoToTarget(Unit u, Unit t) {
      FollowPath(u, path)
    }
 }
+```
 
 ## Code samples
 
