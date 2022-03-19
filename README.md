@@ -163,35 +163,31 @@ func Attack(Unit u) {
 ### Example of some unit's top behavior
 
 ```go
-class Gremlin extends Unit {
-  float heavy_attack_last_time
-  float roll_last_time
-}
-
-func UnitGremlin(Gremlin u) {
-  float radius_max = 10
-
-  paral_all {
-    ScatterAfterGetHit(u)
-    forever {
-      paral {
-        StateChanged(u)
-        prio {
-          Spawned(u)
-          OnWatch(u)
-          Wander(u)
-          Dead(u)
-          Dying(u)
-          Scatter(u)
-          Attack(u)
-          Idle(u)
-        }
-      }
+func Selector([]func bool() fns) {
+  foreach(fns as func bool() fn) {
+    if(!fn()) {
+      continue
+    } else {
+      break
     }
   }
 }
 
-```
+func UnitScript(Unit u) {
+  while(true) {
+    paral {
+      WaitStateChanged(u)
+      Selector(
+            [
+              func bool() { return FindTarget(u) },
+              func bool() { return AttackTarget(u) },
+              func bool() { return Idle(u) }
+            ]
+       )
+    }
+    yield()
+  }
+}```
 ## Architecture
 
 ![bhl architecture](https://puu.sh/qEkYv/edf3b678aa.png)
