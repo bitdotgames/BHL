@@ -23,6 +23,21 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 * Hot code reload
 * Strict control over memory allocations 
 
+## Quick example
+
+func GoToTarget(Unit u, Unit t) {
+  NavPath path
+  paral {
+   yield while(IsDead(u) != false && !IsDead(t) && !IsInRange(u, t))
+   {
+     path = FindPathTo(u, t)
+     Wait(1)
+   }
+   {
+     FollowPath(u, path)
+   }
+}
+
 ## Code samples
 
 ### Structs
