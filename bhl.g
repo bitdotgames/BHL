@@ -13,7 +13,7 @@ imports
   ;
 
 mimport
-  : 'import' NORMALSTRING
+  : 'import' NORMALSTRING SEPARATOR*
   ;
 
 decls 
@@ -92,7 +92,7 @@ forPostIter
   ;
 
 forExp
-  : '(' forPre? ';' forCond ';' forPostIter? ')' 
+  : '(' forPre? SEPARATOR forCond SEPARATOR forPostIter? ')' 
   ;
 
 varDeclareAssign
@@ -187,7 +187,7 @@ callArg
   ;
 
 block 
-  : '{' statement* '}'
+  : '{' (statement SEPARATOR*)* '}'
   ;
 
 classDecl
@@ -370,6 +370,10 @@ ARR
 
 OBJ
   : '{' '}'
+  ;
+
+SEPARATOR
+  : ';'
   ;
 
 NORMALSTRING

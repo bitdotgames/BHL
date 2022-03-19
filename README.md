@@ -12,7 +12,7 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 
 * [ANTLR](http://www.antlr.org/) based: C# frontend + C# interpreting backend
 * Statically typed
-* Supports core BT building blocks: *seq, paral, paral_all, prio, not, forever, until_success, until_failure,* etc
+* Built-in support for pseudo parallel code orchestration
 * Basic types: *float, int, bool, string, enums, arrays, classes*
 * Supports imperative style control constructs: *if/else, while, break, return*
 * Allows user defined: *functions, lambdas, classes*
@@ -22,6 +22,23 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 * Multiple returned values like in Golang
 * Hot code reload
 * Strict control over memory allocations 
+
+## Quick example
+
+```go
+func GoToTarget(Unit u, Unit t) {
+  NavPath path
+  paral {
+   yield while(!IsDead(u) && !IsDead(t) && !IsInRange(u, t))
+   {
+     path = FindPathTo(u, t)
+     Wait(1)
+   }
+   {
+     FollowPath(u, path)
+   }
+}
+```
 
 ## Code samples
 

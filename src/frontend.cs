@@ -1025,7 +1025,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(funcLambda.retType());
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name);
+    var ast = AST_Util.New_LambdaDecl(func_name, funcLambda.Stop.Line);
     int default_args_num;
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
@@ -1310,7 +1310,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = AST_Util.New_TypeCast(tp.Get());
+    var ast = AST_Util.New_TypeCast(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
@@ -1384,7 +1384,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
     var op_type = GetBinaryOpType(op);
-    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
+    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
 
     PushAST(bin_op_ast);
     bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
@@ -1494,7 +1494,7 @@ public class Frontend : bhlBaseVisitor<object>
   void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
-    AST ast = AST_Util.New_BinaryOpExp(op_type);
+    AST ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
     PushAST(ast);
     Visit(lhs);
     Visit(rhs);
@@ -1538,7 +1538,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpBitAnd(bhlParser.ExpBitAndContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_AND);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1556,7 +1556,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpBitOr(bhlParser.ExpBitOrContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_OR);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_OR, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1574,7 +1574,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpAnd(bhlParser.ExpAndContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.AND);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1600,7 +1600,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpOr(bhlParser.ExpOrContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.OR);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.OR, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1768,7 +1768,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     return_found.Add(func_symb);
 
-    var ret_ast = AST_Util.New_Return();
+    var ret_ast = AST_Util.New_Return(ctx.Start.Line);
     
     var explist = ctx.explist();
     if(explist != null)
@@ -1976,18 +1976,18 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
+  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext ctx, IScope scope)
   {
-    var tp = ParseType(context.retType());
-    var func_tree = Wrap(context);
+    var tp = ParseType(ctx.retType());
+    var func_tree = Wrap(ctx);
     func_tree.eval_type = tp.Get();
 
-    var ast = AST_Util.New_FuncDecl(context.NAME().GetText());
+    var ast = AST_Util.New_FuncDecl(ctx.NAME().GetText(), ctx.Stop.Line);
 
     int default_args_num;
     var func_symb = new FuncSymbolScript(
       func_tree, 
-      ParseFuncSignature(tp, context.funcParams(), out default_args_num),
+      ParseFuncSignature(tp, ctx.funcParams(), out default_args_num),
       ast.name,
       default_args_num
     );
@@ -2004,7 +2004,7 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope = func_symb;
     PushFuncDecl(func_symb);
 
-    var func_params = context.funcParams();
+    var func_params = ctx.funcParams();
     if(func_params != null)
     {
       PushAST(ast.fparams());
@@ -2015,11 +2015,11 @@ public class Frontend : bhlBaseVisitor<object>
     if(!decls_only)
     {
       PushAST(ast.block());
-      Visit(context.funcBlock());
+      Visit(ctx.funcBlock());
       PopAST();
 
       if(tp.Get() != Types.Void && !return_found.Contains(func_symb))
-        FireError(context.NAME(), "matching 'return' statement not found");
+        FireError(ctx.NAME(), "matching 'return' statement not found");
     }
     
     PopFuncDecl();
@@ -2780,7 +2780,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //adding while condition
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
-    var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
+    var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_type, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));

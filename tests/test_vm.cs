@@ -1633,6 +1633,23 @@ public class BHL_TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSemicolonStatementSeparator()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      int a = 100; ; int b = 100; int c = 400
+      return ((k*a) + b) / c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestDanglingBrackets()
   {
     string bhl = @"
@@ -4504,6 +4521,43 @@ public class BHL_TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(num, 1);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestParalReuse()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int n = 0
+      paral {
+        {
+          suspend()
+          n = 10
+        }
+        {
+          n = 1
+        }
+      }
+
+      paral {
+        {
+          n = 2
+        }
+        {
+          suspend()
+          n = 3
+        }
+      }
+      return n
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(num, 2);
     CommonChecks(vm);
   }
 
@@ -9011,8 +9065,7 @@ public class BHL_TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    var c = Compile(bhl, ts);
+    var c = Compile(bhl);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -9023,6 +9076,33 @@ public class BHL_TestVM : BHL_TestBase
     AssertFalse(vm.Tick());
     var val = fb.result.PopRelease();
     AssertEqual(3, val.num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSeveralYieldWhilesInParal()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int i = 0
+      paral {
+        yield while(i < 5)
+        while(true) {
+          yield while(i < 7)
+        }
+        while(true) {
+          i = i + 1
+          yield()
+        }
+      }
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(5, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10575,6 +10655,44 @@ public class BHL_TestVM : BHL_TestBase
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("foofoo2foo1testtest2test1", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSubSubFuncDefer()
+  {
+    string bhl = @"
+
+    func level_start() {
+      defer {
+        trace(""~level_start"")
+      }
+    }
+
+    func level_body(func() test) {
+      defer {
+        trace(""~level_body"")
+      }
+
+      test()
+
+      level_start()
+    }
+
+    func test() {
+      level_body(func() { 
+        yield() 
+      } )
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("~level_start~level_body", log.ToString());
     CommonChecks(vm);
   }
 
@@ -18284,6 +18402,52 @@ public class BHL_TestVM : BHL_TestBase
     string bhl1 = @"
     import ""bhl2""  
     import ""bhl3""  
+
+    func float test(float k) 
+    {
+      return bar(k)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+
+    func float bar(float k)
+    {
+      return hey(k)
+    }
+    ";
+
+    string bhl3 = @"
+    import ""bhl2""
+
+    func float hey(float k)
+    {
+      return k
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files));
+
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(23, Execute(vm, "test", Val.NewNum(vm, 23)).result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportWithSemicolon()
+  {
+    string bhl1 = @"
+    import ""bhl2"";;;import ""bhl3"";  
 
     func float test(float k) 
     {

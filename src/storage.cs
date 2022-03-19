@@ -84,6 +84,13 @@ public class Val
     Val dv;
     if(vm.vals_pool.stack.Count == 0)
     {
+      //for debug
+      //if(vm.vals_pool.miss > 200)
+      //{
+      //  if(vm.last_fiber != null)
+      //    Util.Debug(vm.last_fiber.GetStackTrace());
+      //}
+
       ++vm.vals_pool.miss;
       dv = new Val(vm);
 #if DEBUG_REFS
@@ -294,20 +301,17 @@ public class Val
   public override string ToString() 
   {
     string str = "";
-    if(type == Types.Int)
-      str = _num + ":<INT>";
-    else if(type == Types.Float)
-      str = _num + ":<FLOAT>";
-    else if(type == Types.Bool)
-      str = bval + ":<BOOL>";
-    else if(type == Types.String)
-      str = this.str + ":<STRING>";
-    else if(type == Types.Any)
-      str = _obj?.GetType().Name + ":<OBJ>";
-    else if(type == null)
-      str = "<NONE>";
+    if(type != null)
+      str += "(" + type.GetName() + ")";
     else
-      str = "Val: type:"+type;
+      str += "(?)";
+    str += " num:" + _num;
+    str += " num2:" + _num2;
+    str += " num3:" + _num3;
+    str += " num4:" + _num4;
+    str += " obj.type:" + _obj?.GetType().Name;
+    str += " obj:" + _obj;
+    str += " (refs:" + _refs + ")";
 
     return str;// + " " + GetHashCode();//for extra debug
   }
@@ -315,9 +319,9 @@ public class Val
 
 public class ValList : IList<Val>, IValRefcounted
 {
-  //NOTE: exposed to allow manipulations like Reverse(). 
+  //NOTE: Exposed to allow low-level optimal manipulations. 
   //      Use with caution.
-  public readonly List<Val> lst = new List<Val>();
+  public List<Val> lst = new List<Val>();
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection

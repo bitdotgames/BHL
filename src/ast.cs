@@ -157,6 +157,7 @@ public enum EnumBinaryOp
 public class AST_BinaryOpExp  : AST 
 {
   public EnumBinaryOp type = new EnumBinaryOp();
+  public int line_num;
 }
 
 public class AST_Inc : IAST
@@ -177,6 +178,7 @@ public class AST_New : AST
 public class AST_FuncDecl : AST 
 {
   public string name = "";
+  public int last_line_num;
 }
 
 public class AST_ClassDecl : AST 
@@ -211,6 +213,7 @@ public class AST_LambdaDecl : AST_FuncDecl
 public class AST_TypeCast : AST 
 {
   public IType type;
+  public int line_num;
 }
 
 public enum EnumCall 
@@ -246,6 +249,7 @@ public class AST_Call  : AST
 public class AST_Return  : AST 
 {
   public int num;
+  public int line_num;
 }
 
 public class AST_Break : IAST
@@ -384,16 +388,17 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_FuncDecl New_FuncDecl(string name)
+  static public AST_FuncDecl New_FuncDecl(string name, int last_line_num)
   {
     var n = new AST_FuncDecl();
-    Init_FuncDecl(n, name);
+    Init_FuncDecl(n, name, last_line_num);
     return n;
   }
 
-  static void Init_FuncDecl(AST_FuncDecl n, string name)
+  static void Init_FuncDecl(AST_FuncDecl n, string name, int last_line_num)
   {
     n.name = name;
+    n.last_line_num = last_line_num;
     //fparams
     n.NewInterimChild();
     //block
@@ -437,10 +442,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_LambdaDecl New_LambdaDecl(string name)
+  static public AST_LambdaDecl New_LambdaDecl(string name, int last_line_num)
   {
     var n = new AST_LambdaDecl();
-    Init_FuncDecl(n, name);
+    Init_FuncDecl(n, name, last_line_num);
     return n;
   }
 
@@ -476,20 +481,22 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_BinaryOpExp New_BinaryOpExp(EnumBinaryOp type)
+  static public AST_BinaryOpExp New_BinaryOpExp(EnumBinaryOp type, int line_num)
   {
     var n = new AST_BinaryOpExp();
     n.type = type;
+    n.line_num = line_num;
 
     return n;
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_TypeCast New_TypeCast(IType type)
+  static public AST_TypeCast New_TypeCast(IType type, int line_num)
   {
     var n = new AST_TypeCast();
     n.type = type;
+    n.line_num = line_num;
 
     return n;
   }
@@ -533,9 +540,12 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Return New_Return()
+  static public AST_Return New_Return(int line_num)
   {
-    return new AST_Return();
+    var ast = new AST_Return();
+    ast.line_num = line_num;
+    
+     return ast;
   }
 
   static public AST_Break New_Break()
