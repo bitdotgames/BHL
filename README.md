@@ -28,12 +28,17 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 ```go
 func GoToTarget(Unit u, Unit t) {
   NavPath path
+  defer {
+    PathRelease(path)
+  }
   paral {
    yield while(!IsDead(u) && !IsDead(t) && !IsInRange(u, t))
+   
    {
      path = FindPathTo(u, t)
      Wait(1)
    }
+   
    {
      FollowPath(u, path)
    }
