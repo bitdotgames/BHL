@@ -12,7 +12,7 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 
 * [ANTLR](http://www.antlr.org/) based: C# frontend + C# interpreting backend
 * Statically typed
-* Supports core BT building blocks: *seq, paral, paral_all, prio, not, forever, until_success, until_failure,* etc
+* Built-in support for pseudo parallel code orchestration
 * Basic types: *float, int, bool, string, enums, arrays, classes*
 * Supports imperative style control constructs: *if/else, while, break, return*
 * Allows user defined: *functions, lambdas, classes*
