@@ -31,6 +31,7 @@ func GoToTarget(Unit u, Unit t) {
   defer {
     PathRelease(path)
   }
+  
   paral {
    yield while(!IsDead(u) && !IsDead(t) && !IsInRange(u, t))
    
