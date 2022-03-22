@@ -206,7 +206,7 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
   //marshall factory version
   public InterfaceSymbolScript() 
-    : this(null, null)
+    : this(null)
   {}
 
   public override uint ClassId()
