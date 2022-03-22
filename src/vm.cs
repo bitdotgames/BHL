@@ -2072,6 +2072,7 @@ public class Ip2SrcLine
 
 public class CompiledModule
 {
+  const uint HEADER_VERSION = 1;
   public const int MAX_GLOBALS = 128;
 
   public uint id;
@@ -2106,7 +2107,7 @@ public class CompiledModule
     {
       //TODO: add better support for version
       uint version = r.ReadUInt32();
-      if(version != 1)
+      if(version != HEADER_VERSION)
         throw new Exception("Unsupported version: " + version);
 
       string name = r.ReadString();
@@ -2164,7 +2165,7 @@ public class CompiledModule
     {
       //TODO: add better support for version
       //TODO: introduce header info with offsets to data
-      w.Write((uint)1);
+      w.Write(HEADER_VERSION);
 
       w.Write(cm.name);
 

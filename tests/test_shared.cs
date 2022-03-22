@@ -16,11 +16,11 @@ public class IsTestedAttribute : Attribute
 
 public static class BHL_TestExt 
 {
-  public static Types Clone(this Types ts)
+  public static Types CloneGlobs(this Types ts)
   {
     var ts_copy = new Types();
     var ms = ts.globs.GetMembers();
-    //let's skip already defined built-ins
+    //let's skip already defined built-in globs
     for(int i=ts_copy.globs.GetMembers().Count;i<ms.Count;++i)
       ts_copy.globs.Define(ms[i]);
     return ts_copy;
@@ -484,17 +484,26 @@ public class BHL_TestBase
     }
   }
 
-  public static VM MakeVM(Compiler c)
-  {
-    var vm = new VM(c.Types);
-    var m = c.Compile();
-    vm.RegisterModule(m);
-    return vm;
-  }
-
   public VM MakeVM(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
   {
-    return MakeVM(Compile(bhl, ts, show_ast: show_ast, show_bytes: show_bytes));
+    return MakeVM(Compile(bhl, ts, show_ast: show_ast, show_bytes: show_bytes), ts);
+  }
+
+  public static VM MakeVM(CompiledModule orig_cm, Types ts = null)
+  {
+    if(ts == null)
+      ts = new Types();
+
+    //let's serialize/unserialize the compiled module so that
+    //it's going to go thru the full compilation cycle
+    var ms = new MemoryStream();
+    CompiledModule.ToStream(orig_cm, ms);
+    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()));
+
+    ts.AddSource(cm.scope);
+    var vm = new VM(ts);
+    vm.RegisterModule(cm);
+    return vm;
   }
 
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
@@ -555,44 +564,44 @@ public class BHL_TestBase
     files.Add(full_path);
   }
 
-  public static int ConstIdx(Compiler c, string str)
+  public static int ConstIdx(CompiledModule cm, string str)
   {
-    for(int i=0;i<c.Constants.Count;++i)
+    for(int i=0;i<cm.constants.Count;++i)
     {
-      var cn = c.Constants[i];
+      var cn = cm.constants[i];
       if(cn.type == EnumLiteral.STR && cn.str == str)
         return i;
     }
     throw new Exception("Constant not found: " + str);
   }
 
-  public static int ConstIdx(Compiler c, bool v)
+  public static int ConstIdx(CompiledModule cm, double num)
   {
-    for(int i=0;i<c.Constants.Count;++i)
+    for(int i=0;i<cm.constants.Count;++i)
     {
-      var cn = c.Constants[i];
-      if(cn.type == EnumLiteral.BOOL && cn.num == (v ? 1 : 0))
-        return i;
-    }
-    throw new Exception("Constant not found: " + v);
-  }
-
-  public static int ConstIdx(Compiler c, double num)
-  {
-    for(int i=0;i<c.Constants.Count;++i)
-    {
-      var cn = c.Constants[i];
+      var cn = cm.constants[i];
       if(cn.type == EnumLiteral.NUM && cn.num == num)
         return i;
     }
     throw new Exception("Constant not found: " + num);
   }
 
-  public static int ConstNullIdx(Compiler c)
+  public static int ConstIdx(CompiledModule cm, bool v)
   {
-    for(int i=0;i<c.Constants.Count;++i)
+    for(int i=0;i<cm.constants.Count;++i)
     {
-      var cn = c.Constants[i];
+      var cn = cm.constants[i];
+      if(cn.type == EnumLiteral.BOOL && cn.num == (v ? 1 : 0))
+        return i;
+    }
+    throw new Exception("Constant not found: " + v);
+  }
+
+  public static int ConstNullIdx(CompiledModule cm)
+  {
+    for(int i=0;i<cm.constants.Count;++i)
+    {
+      var cn = cm.constants[i];
       if(cn.type == EnumLiteral.NIL)
         return i;
     }
@@ -713,7 +722,7 @@ public class BHL_TestBase
     if(ts == null)
       ts = new Types();
     //NOTE: we don't want to affect the original ts
-    var ts_copy = ts.Clone();
+    var ts_copy = ts.CloneGlobs();
 
     var conf = new BuildConf();
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
@@ -733,24 +742,24 @@ public class BHL_TestBase
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
 
-  public Compiler Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
+  public CompiledModule Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
   {
     if(ts == null)
       ts = new Types();
     //NOTE: we don't want to affect the original ts
-    var ts_copy = ts.Clone();
+    var ts_copy = ts.CloneGlobs();
 
     var mdl = new bhl.Module(ts_copy.globs, "", "");
 
-    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts);
+    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts_copy);
 
     if(show_ast)
       Util.ASTDump(front_res.ast);
     var c  = new Compiler(ts_copy, front_res);
-    c.Compile();
+    var cm = c.Compile();
     if(show_bytes)
       Dump(c);
-    return c;
+    return cm;
   }
 
   public static string ByteArrayToString(byte[] ba)

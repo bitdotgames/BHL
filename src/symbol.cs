@@ -152,8 +152,8 @@ public class NullSymbol : BuiltInSymbol
 
 public abstract class InterfaceSymbol : Symbol, IType 
 {
-  List<string> names = new List<string>();
-  List<FuncSignature> sigs = new List<FuncSignature>();
+  protected List<string> names = new List<string>();
+  protected List<FuncSignature> sigs = new List<FuncSignature>();
 
 #if BHL_FRONT
   public InterfaceSymbol(
@@ -222,6 +222,8 @@ public class InterfaceSymbolScript : InterfaceSymbol
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, names); 
+    Marshall.Sync(ctx, sigs); 
   }
 }
 

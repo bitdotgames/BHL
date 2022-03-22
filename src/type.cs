@@ -83,7 +83,8 @@ public struct TypeProxy : IMarshallable
         resolved is Symbol symb && 
         (symb.scope is ModuleScope || 
          symb is ClassSymbolNative ||
-         symb is EnumSymbol
+         symb is EnumSymbol ||
+         (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol))
          );
 
       //NOTE: we want to marshall only those types which are not
