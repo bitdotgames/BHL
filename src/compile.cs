@@ -10,26 +10,9 @@ public class Compiler : AST_Visitor
   CompiledModule compiled;
 
   Module module;
-  public Module Module {
-    get {
-      return module;
-    }
-  }
 
   Types types;
-  public Types Types {
-    get {
-      return types;
-    }
-  }
-
   List<Const> constants = new List<Const>();
-  public List<Const> Constants {
-    get {
-      return constants;
-    }
-  }
-
   List<Instruction> init = new List<Instruction>();
   List<Instruction> code = new List<Instruction>();
   List<Instruction> head = null;
