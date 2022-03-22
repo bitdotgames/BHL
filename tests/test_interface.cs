@@ -13,7 +13,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.Types.Resolve("Foo");
+    var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
   }
 }
