@@ -369,7 +369,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
   {
-    //Console.WriteLine(">>>> PROG VISIT " + curr_module.norm_path + " decls: " + decls_only);
+    //Console.WriteLine(">>>> PROG VISIT " + module.name + " decls: " + decls_only);
     for(int i=0;i<ctx.progblock().Length;++i)
       Visit(ctx.progblock()[i]);
     return null;
@@ -1901,6 +1901,12 @@ public class Frontend : bhlBaseVisitor<object>
         Visit(cldecl);
         continue;
       }
+      var ifacedecl = decls[i].interfaceDecl();
+      if(ifacedecl != null)
+      {
+        Visit(ifacedecl);
+        continue;
+      }
       var vdecl = decls[i].varDeclareAssign();
       if(vdecl != null)
       {
@@ -1926,9 +1932,20 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitInterfaceDecl(bhlParser.InterfaceDeclContext ctx)
+  {
+    var name = ctx.NAME().GetText();
+
+    var symb = new InterfaceSymbolScript(Wrap(ctx), name);
+
+    module.scope.Define(symb);
+
+    return null;
+  }
+
   public override object VisitClassDecl(bhlParser.ClassDeclContext ctx)
   {
-    var class_name = ctx.NAME().GetText();
+    var name = ctx.NAME().GetText();
 
     ClassSymbol super_class = null;
     if(ctx.classEx() != null)
@@ -1941,8 +1958,8 @@ public class Frontend : bhlBaseVisitor<object>
         FireError(ctx.classEx(), "extending native classes is not supported");
     }
 
-    var ast = AST_Util.New_ClassDecl(class_name);
-    var class_symb = new ClassSymbolScript(Wrap(ctx), class_name, super_class);
+    var ast = AST_Util.New_ClassDecl(name);
+    var class_symb = new ClassSymbolScript(Wrap(ctx), name, super_class);
 
     module.scope.Define(class_symb);
 

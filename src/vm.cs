@@ -695,13 +695,6 @@ public class VM
     }
   }
 
-  GlobalScope globs;
-  public GlobalScope Globs {
-    get {
-      return globs;
-    }
-  }
-
   public struct ModuleAddr
   {
     public CompiledModule module;
@@ -792,7 +785,6 @@ public class VM
     if(types == null)
       types = new Types();
     this.types = types;
-    this.globs = types.globs;
     this.loader = loader;
 
     init_frame = new Frame(this);
@@ -1419,7 +1411,7 @@ public class VM
       case Opcodes.GetFuncNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
+        var func_symb = (FuncSymbolNative)types.globs.GetMembers()[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
@@ -1472,7 +1464,7 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        var native = (FuncSymbolNative)globs.GetMembers()[func_idx];
+        var native = (FuncSymbolNative)types.globs.GetMembers()[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))

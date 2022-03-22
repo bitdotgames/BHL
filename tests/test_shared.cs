@@ -46,9 +46,10 @@ public class BHL_TestRunner
 
     var names = p.Parse(args);
 
-    Run(names, new BHL_TestNodes(), verbose);
-    Run(names, new BHL_TestVM(), verbose);
-    Run(names, new BHL_TestClasses(), verbose);
+    Run(names, new TestNodes(), verbose);
+    Run(names, new TestVM(), verbose);
+    Run(names, new TestClasses(), verbose);
+    Run(names, new TestInterfaces(), verbose);
     Run(names, new TestLSP(), verbose);
   }
 
@@ -482,7 +483,6 @@ public class BHL_TestBase
       ts.globs.Define(fn);
     }
   }
-
 
   public static VM MakeVM(Compiler c)
   {
@@ -979,5 +979,4 @@ public class BHL_TestBase
       AssertEqual(cas[i].str, cbs[i].str);
     }
   }
-
 }

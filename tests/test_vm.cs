@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using bhl;
 using bhl.marshall;
 
-public class BHL_TestVM : BHL_TestBase
+public class TestVM : BHL_TestBase
 {
   [IsTested()]
   public void TestReturnNumConstant()

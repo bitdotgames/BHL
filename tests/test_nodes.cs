@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using bhl;
 
-public class BHL_TestNodes : BHL_TestBase
+public class TestNodes : BHL_TestBase
 {
   public class TestNode : BehaviorTreeTerminalNode
   {

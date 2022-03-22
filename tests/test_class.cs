@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using bhl;
 
-public class BHL_TestClasses : BHL_TestBase
+public class TestClasses : BHL_TestBase
 {
   [IsTested()]
   public void TestEmptyUserClass()
