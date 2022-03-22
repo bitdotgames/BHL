@@ -1105,6 +1105,66 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitClassMember([NotNull] bhlParser.ClassMemberContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.interfaceDecl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterInterfaceDecl([NotNull] bhlParser.InterfaceDeclContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.interfaceDecl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitInterfaceDecl([NotNull] bhlParser.InterfaceDeclContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.interfaceEx"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterInterfaceEx([NotNull] bhlParser.InterfaceExContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.interfaceEx"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitInterfaceEx([NotNull] bhlParser.InterfaceExContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.interfaceBlock"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterInterfaceBlock([NotNull] bhlParser.InterfaceBlockContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.interfaceBlock"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitInterfaceBlock([NotNull] bhlParser.InterfaceBlockContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.interfaceMembers"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterInterfaceMembers([NotNull] bhlParser.InterfaceMembersContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.interfaceMembers"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitInterfaceMembers([NotNull] bhlParser.InterfaceMembersContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.interfaceMember"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterInterfaceMember([NotNull] bhlParser.InterfaceMemberContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.interfaceMember"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitInterfaceMember([NotNull] bhlParser.InterfaceMemberContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.enumDecl"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -1176,6 +1236,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFuncBlock([NotNull] bhlParser.FuncBlockContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.interfaceFuncDecl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterInterfaceFuncDecl([NotNull] bhlParser.InterfaceFuncDeclContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.interfaceFuncDecl"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitInterfaceFuncDecl([NotNull] bhlParser.InterfaceFuncDeclContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcLambda"/>.
 	/// <para>The default implementation does nothing.</para>

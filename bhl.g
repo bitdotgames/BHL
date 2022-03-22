@@ -21,7 +21,7 @@ decls
   ;
 
 decl
-  : (classDecl | funcDecl | varDeclareAssign | enumDecl)
+  : (classDecl | interfaceDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
 type
@@ -176,7 +176,6 @@ arrAccess
 memberAccess
   : '.' NAME
   ;
-
   
 callArgs
   : '(' callArg? (',' callArg)* ')'
@@ -210,6 +209,26 @@ classMember
   : (varDeclare | funcDecl)
   ;
 
+interfaceDecl
+  : 'interface' NAME interfaceEx? interfaceBlock
+  ;
+
+interfaceEx
+  : ':' NAME (',' NAME)*
+  ;
+
+interfaceBlock
+  : '{' interfaceMembers '}'
+  ;
+
+interfaceMembers
+  : interfaceMember*
+  ;
+
+interfaceMember
+  : interfaceFuncDecl
+  ;
+
 enumDecl
   : 'enum' NAME enumBlock
   ;
@@ -232,6 +251,10 @@ funcType
 
 funcBlock
   : block
+  ;
+
+interfaceFuncDecl
+  : 'func' retType? NAME '(' funcParams? ')'
   ;
 
 funcLambda

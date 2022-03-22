@@ -567,6 +567,36 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitClassMember([NotNull] bhlParser.ClassMemberContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.interfaceDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInterfaceDecl([NotNull] bhlParser.InterfaceDeclContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.interfaceEx"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInterfaceEx([NotNull] bhlParser.InterfaceExContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.interfaceBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInterfaceBlock([NotNull] bhlParser.InterfaceBlockContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.interfaceMembers"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInterfaceMembers([NotNull] bhlParser.InterfaceMembersContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.interfaceMember"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInterfaceMember([NotNull] bhlParser.InterfaceMemberContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.enumDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -602,6 +632,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitFuncBlock([NotNull] bhlParser.FuncBlockContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.interfaceFuncDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInterfaceFuncDecl([NotNull] bhlParser.InterfaceFuncDeclContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcLambda"/>.
 	/// </summary>
