@@ -150,9 +150,10 @@ public class NullSymbol : BuiltInSymbol
   }
 }
 
-public abstract class InterfaceSymbol : Symbol, IScope, IType 
+public abstract class InterfaceSymbol : Symbol, IType 
 {
-  protected SymbolsDictionary members;
+  List<string> names = new List<string>();
+  List<FuncSignature> sigs = new List<FuncSignature>();
 
 #if BHL_FRONT
   public InterfaceSymbol(
@@ -168,23 +169,27 @@ public abstract class InterfaceSymbol : Symbol, IScope, IType
   public InterfaceSymbol(string name)
     : base(name, default(TypeProxy))
   {
-    this.members = new SymbolsDictionary(this);
     this.type = new TypeProxy(this);
   }
 
   public string GetName() { return name; }
 
-  public SymbolsDictionary GetMembers() { return members; }
-
-  public IScope GetFallbackScope() { return null; }
-
-  public void Define(Symbol sym) 
+  public bool AddSignature(string name, FuncSignature sig)
   {
+    if(names.Contains(name))
+      return false;
+
+    names.Add(name);
+    sigs.Add(sig);
+    return true;
   }
 
-  public Symbol Resolve(string name) 
+  public FuncSignature FindSignature(string name)
   {
-    return null;
+    int idx = names.IndexOf(name);
+    if(idx == -1)
+      return null;
+    return sigs[idx];
   }
 }
 
@@ -217,8 +222,6 @@ public class InterfaceSymbolScript : InterfaceSymbol
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref name);
-
-    Marshall.Sync(ctx, ref members);
   }
 }
 

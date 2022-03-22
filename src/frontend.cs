@@ -938,17 +938,16 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
+  FuncSignature ParseFuncSignature(bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
   {
-    var ret_type = ParseType(ctx.retType());
+    var ret_type = ParseType(ret_ctx);
 
     var arg_types = new List<TypeProxy>();
-    var types = ctx.types();
-    if(types != null)
+    if(types_ctx != null)
     {
-      for(int i=0;i<types.refType().Length;++i)
+      for(int i=0;i<types_ctx.refType().Length;++i)
       {
-        var refType = types.refType()[i];
+        var refType = types_ctx.refType()[i];
         var arg_type = ParseType(refType.type());
         if(refType.isRef() != null)
           arg_type = this.types.TypeRef(arg_type);
@@ -957,6 +956,11 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     return new FuncSignature(ret_type, arg_types);
+  }
+
+  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
+  {
+    return ParseFuncSignature(ctx.retType(), ctx.types());
   }
 
   FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
@@ -1939,6 +1943,22 @@ public class Frontend : bhlBaseVisitor<object>
     var symb = new InterfaceSymbolScript(Wrap(ctx), name);
 
     module.scope.Define(symb);
+
+    for(int i=0;i<ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
+    {
+      var ib = ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
+
+      var fd = ib.interfaceFuncDecl();
+      if(fd != null)
+      {
+        int default_args_num;
+        var sig = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams(), out default_args_num);
+        if(default_args_num != 0)
+          FireError(ib, "default value is not allowed for interface argument");
+
+        symb.AddSignature(fd.NAME().GetText(), sig);
+      }
+    }
 
     return null;
   }
