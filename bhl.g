@@ -13,7 +13,7 @@ imports
   ;
 
 mimport
-  : 'import' NORMALSTRING
+  : 'import' NORMALSTRING SEPARATOR*
   ;
 
 decls 
@@ -21,7 +21,7 @@ decls
   ;
 
 decl
-  : (classDecl | funcDecl | varDeclareAssign | enumDecl)
+  : (classDecl | interfaceDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
 type
@@ -92,7 +92,7 @@ forPostIter
   ;
 
 forExp
-  : '(' forPre? ';' forCond ';' forPostIter? ')' 
+  : '(' forPre? SEPARATOR forCond SEPARATOR forPostIter? ')' 
   ;
 
 varDeclareAssign
@@ -176,7 +176,6 @@ arrAccess
 memberAccess
   : '.' NAME
   ;
-
   
 callArgs
   : '(' callArg? (',' callArg)* ')'
@@ -187,7 +186,7 @@ callArg
   ;
 
 block 
-  : '{' statement* '}'
+  : '{' (statement SEPARATOR*)* '}'
   ;
 
 classDecl
@@ -208,6 +207,26 @@ classMembers
 
 classMember
   : (varDeclare | funcDecl)
+  ;
+
+interfaceDecl
+  : 'interface' NAME interfaceEx? interfaceBlock
+  ;
+
+interfaceEx
+  : ':' NAME (',' NAME)*
+  ;
+
+interfaceBlock
+  : '{' interfaceMembers '}'
+  ;
+
+interfaceMembers
+  : interfaceMember*
+  ;
+
+interfaceMember
+  : interfaceFuncDecl
   ;
 
 enumDecl
@@ -232,6 +251,10 @@ funcType
 
 funcBlock
   : block
+  ;
+
+interfaceFuncDecl
+  : 'func' retType? NAME '(' funcParams? ')'
   ;
 
 funcLambda
@@ -370,6 +393,10 @@ ARR
 
 OBJ
   : '{' '}'
+  ;
+
+SEPARATOR
+  : ';'
   ;
 
 NORMALSTRING

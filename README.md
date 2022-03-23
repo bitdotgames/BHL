@@ -12,7 +12,7 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 
 * [ANTLR](http://www.antlr.org/) based: C# frontend + C# interpreting backend
 * Statically typed
-* Supports core BT building blocks: *seq, paral, paral_all, prio, not, forever, until_success, until_failure,* etc
+* Built-in support for pseudo parallel code orchestration
 * Basic types: *float, int, bool, string, enums, arrays, classes*
 * Supports imperative style control constructs: *if/else, while, break, return*
 * Allows user defined: *functions, lambdas, classes*
@@ -22,6 +22,29 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 * Multiple returned values like in Golang
 * Hot code reload
 * Strict control over memory allocations 
+
+## Quick example
+
+```go
+func GoToTarget(Unit u, Unit t) {
+  NavPath path
+  defer {
+    PathRelease(path)
+  }
+  
+  paral {
+   yield while(!IsDead(u) && !IsDead(t) && !IsInRange(u, t))
+   
+   {
+     path = FindPathTo(u, t)
+     Wait(1)
+   }
+   
+   {
+     FollowPath(u, path)
+   }
+}
+```
 
 ## Code samples
 
@@ -146,35 +169,33 @@ func Attack(Unit u) {
 ### Example of some unit's top behavior
 
 ```go
-class Gremlin extends Unit {
-  float heavy_attack_last_time
-  float roll_last_time
-}
-
-func UnitGremlin(Gremlin u) {
-  float radius_max = 10
-
-  paral_all {
-    ScatterAfterGetHit(u)
-    forever {
-      paral {
-        StateChanged(u)
-        prio {
-          Spawned(u)
-          OnWatch(u)
-          Wander(u)
-          Dead(u)
-          Dying(u)
-          Scatter(u)
-          Attack(u)
-          Idle(u)
-        }
-      }
+func Selector([]func bool() fns) {
+  foreach(fns as func bool() fn) {
+    if(!fn()) {
+      continue
+    } else {
+      break
     }
   }
 }
 
+func UnitScript(Unit u) {
+  while(true) {
+    paral {
+      WaitStateChanged(u)
+      Selector(
+            [
+              func bool() { return FindTarget(u) },
+              func bool() { return AttackTarget(u) },
+              func bool() { return Idle(u) }
+            ]
+       )
+    }
+    yield()
+  }
+}
 ```
+
 ## Architecture
 
 ![bhl architecture](https://puu.sh/qEkYv/edf3b678aa.png)

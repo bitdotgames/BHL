@@ -369,7 +369,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
   {
-    //Console.WriteLine(">>>> PROG VISIT " + curr_module.norm_path + " decls: " + decls_only);
+    //Console.WriteLine(">>>> PROG VISIT " + module.name + " decls: " + decls_only);
     for(int i=0;i<ctx.progblock().Length;++i)
       Visit(ctx.progblock()[i]);
     return null;
@@ -938,17 +938,16 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
+  FuncSignature ParseFuncSignature(bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
   {
-    var ret_type = ParseType(ctx.retType());
+    var ret_type = ParseType(ret_ctx);
 
     var arg_types = new List<TypeProxy>();
-    var types = ctx.types();
-    if(types != null)
+    if(types_ctx != null)
     {
-      for(int i=0;i<types.refType().Length;++i)
+      for(int i=0;i<types_ctx.refType().Length;++i)
       {
-        var refType = types.refType()[i];
+        var refType = types_ctx.refType()[i];
         var arg_type = ParseType(refType.type());
         if(refType.isRef() != null)
           arg_type = this.types.TypeRef(arg_type);
@@ -957,6 +956,11 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     return new FuncSignature(ret_type, arg_types);
+  }
+
+  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
+  {
+    return ParseFuncSignature(ctx.retType(), ctx.types());
   }
 
   FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
@@ -1025,7 +1029,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(funcLambda.retType());
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name);
+    var ast = AST_Util.New_LambdaDecl(func_name, funcLambda.Stop.Line);
     int default_args_num;
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
@@ -1310,7 +1314,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = AST_Util.New_TypeCast(tp.Get());
+    var ast = AST_Util.New_TypeCast(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
@@ -1384,7 +1388,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
     var op_type = GetBinaryOpType(op);
-    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type);
+    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
 
     PushAST(bin_op_ast);
     bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
@@ -1494,7 +1498,7 @@ public class Frontend : bhlBaseVisitor<object>
   void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
-    AST ast = AST_Util.New_BinaryOpExp(op_type);
+    AST ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
     PushAST(ast);
     Visit(lhs);
     Visit(rhs);
@@ -1538,7 +1542,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpBitAnd(bhlParser.ExpBitAndContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_AND);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1556,7 +1560,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpBitOr(bhlParser.ExpBitOrContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_OR);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.BIT_OR, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1574,7 +1578,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpAnd(bhlParser.ExpAndContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.AND);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1600,7 +1604,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpOr(bhlParser.ExpOrContext ctx)
   {
-    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.OR);
+    var ast = AST_Util.New_BinaryOpExp(EnumBinaryOp.OR, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -1768,7 +1772,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     return_found.Add(func_symb);
 
-    var ret_ast = AST_Util.New_Return();
+    var ret_ast = AST_Util.New_Return(ctx.Start.Line);
     
     var explist = ctx.explist();
     if(explist != null)
@@ -1901,6 +1905,12 @@ public class Frontend : bhlBaseVisitor<object>
         Visit(cldecl);
         continue;
       }
+      var ifacedecl = decls[i].interfaceDecl();
+      if(ifacedecl != null)
+      {
+        Visit(ifacedecl);
+        continue;
+      }
       var vdecl = decls[i].varDeclareAssign();
       if(vdecl != null)
       {
@@ -1926,9 +1936,36 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitInterfaceDecl(bhlParser.InterfaceDeclContext ctx)
+  {
+    var name = ctx.NAME().GetText();
+
+    var symb = new InterfaceSymbolScript(Wrap(ctx), name);
+
+    module.scope.Define(symb);
+
+    for(int i=0;i<ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
+    {
+      var ib = ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
+
+      var fd = ib.interfaceFuncDecl();
+      if(fd != null)
+      {
+        int default_args_num;
+        var sig = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams(), out default_args_num);
+        if(default_args_num != 0)
+          FireError(ib, "default value is not allowed for interface argument");
+
+        symb.AddSignature(fd.NAME().GetText(), sig);
+      }
+    }
+
+    return null;
+  }
+
   public override object VisitClassDecl(bhlParser.ClassDeclContext ctx)
   {
-    var class_name = ctx.NAME().GetText();
+    var name = ctx.NAME().GetText();
 
     ClassSymbol super_class = null;
     if(ctx.classEx() != null)
@@ -1941,8 +1978,8 @@ public class Frontend : bhlBaseVisitor<object>
         FireError(ctx.classEx(), "extending native classes is not supported");
     }
 
-    var ast = AST_Util.New_ClassDecl(class_name);
-    var class_symb = new ClassSymbolScript(Wrap(ctx), class_name, super_class);
+    var ast = AST_Util.New_ClassDecl(name);
+    var class_symb = new ClassSymbolScript(Wrap(ctx), name, super_class);
 
     module.scope.Define(class_symb);
 
@@ -1976,18 +2013,18 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext context, IScope scope)
+  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext ctx, IScope scope)
   {
-    var tp = ParseType(context.retType());
-    var func_tree = Wrap(context);
+    var tp = ParseType(ctx.retType());
+    var func_tree = Wrap(ctx);
     func_tree.eval_type = tp.Get();
 
-    var ast = AST_Util.New_FuncDecl(context.NAME().GetText());
+    var ast = AST_Util.New_FuncDecl(ctx.NAME().GetText(), ctx.Stop.Line);
 
     int default_args_num;
     var func_symb = new FuncSymbolScript(
       func_tree, 
-      ParseFuncSignature(tp, context.funcParams(), out default_args_num),
+      ParseFuncSignature(tp, ctx.funcParams(), out default_args_num),
       ast.name,
       default_args_num
     );
@@ -2004,7 +2041,7 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope = func_symb;
     PushFuncDecl(func_symb);
 
-    var func_params = context.funcParams();
+    var func_params = ctx.funcParams();
     if(func_params != null)
     {
       PushAST(ast.fparams());
@@ -2015,11 +2052,11 @@ public class Frontend : bhlBaseVisitor<object>
     if(!decls_only)
     {
       PushAST(ast.block());
-      Visit(context.funcBlock());
+      Visit(ctx.funcBlock());
       PopAST();
 
       if(tp.Get() != Types.Void && !return_found.Contains(func_symb))
-        FireError(context.NAME(), "matching 'return' statement not found");
+        FireError(ctx.NAME(), "matching 'return' statement not found");
     }
     
     PopFuncDecl();
@@ -2780,7 +2817,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //adding while condition
     var cond = AST_Util.New_Block(EnumBlock.SEQ);
-    var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT);
+    var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_type, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));

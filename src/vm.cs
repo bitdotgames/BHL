@@ -145,15 +145,17 @@ public class VM
   {
     public Frame frame;
     public bool is_call;
+    public IExitableScope ex_scope;
     //NOTE: if current ip is not within *inclusive* range of these values 
     //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
 
-    public FrameContext(Frame frame, bool is_call, int min_ip = -1, int max_ip = MAX_IP)
+    public FrameContext(Frame frame, IExitableScope ex_scope, bool is_call, int min_ip = -1, int max_ip = MAX_IP)
     {
       this.frame = frame;
       this.is_call = is_call;
+      this.ex_scope = ex_scope;
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
@@ -164,9 +166,21 @@ public class VM
     public VM vm;
 
     internal int id;
+    public int Id {
+      get {
+        return id;
+      }
+    }
+
     internal int tick;
 
     internal int ip;
+    public int IP {
+      get {
+        return ip;
+      }
+    }
+
     internal ICoroutine coroutine;
     internal FixedStack<FrameContext> ctx_frames = new FixedStack<FrameContext>(256);
 
@@ -194,7 +208,7 @@ public class VM
       }
 
       //0 index frame used for return values consistency
-      fb.ctx_frames.Push(new VM.FrameContext(Frame.New(vm), is_call: false));
+      fb.ctx_frames.Push(new VM.FrameContext(Frame.New(vm), null, is_call: false));
 
       return fb;
     }
@@ -294,7 +308,7 @@ public class VM
           var fsymb = TryMapIp2Func(frm.module, calls[i].start_ip);
 
           item.func = fsymb == null ? "?" : fsymb.name;
-          frm.module.ip2src_line.TryGetValue(item.ip, out item.line);
+          item.line = frm.module.ip2src_line.TryMap(item.ip);
         }
         else
         {
@@ -304,6 +318,13 @@ public class VM
 
         info.Insert(0, item);
       }
+    }
+
+    public string GetStackTrace()
+    {
+      var trace = new List<TraceItem>();
+      GetStackTrace(trace);
+      return Error.ToString(trace);
     }
 
     static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
@@ -321,9 +342,9 @@ public class VM
           ip = bi.ip;
         return true;
       }
-      else if(i is ParalBlock pi)
+      else if(i is ParalBlock pi && pi.i < pi.branches.Count)
         return TryGetTraceInfo(pi.branches[pi.i], ref ip, calls);
-      else if(i is ParalAllBlock pai)
+      else if(i is ParalAllBlock pai && pai.i < pai.branches.Count)
         return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
       else
         return false;
@@ -443,13 +464,20 @@ public class VM
         val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       }
       stack.Clear();
+
+      if(defers != null)
+        defers.Clear();
     }
 
     public void RegisterDefer(DeferBlock cb)
     {
       if(defers == null)
         defers = new List<DeferBlock>();
+
       defers.Add(cb);
+      //for debug
+      //if(cb.frm != this)
+      //  throw new Exception("INVALID DEFER BLOCK: mine " + GetHashCode() + ", other " + cb.frm.GetHashCode() + " " + fb.GetStackTrace());
     }
 
     public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
@@ -667,13 +695,6 @@ public class VM
     }
   }
 
-  GlobalScope globs;
-  public GlobalScope Globs {
-    get {
-      return globs;
-    }
-  }
-
   public struct ModuleAddr
   {
     public CompiledModule module;
@@ -682,6 +703,7 @@ public class VM
 
   int fibers_ids = 0;
   List<Fiber> fibers = new List<Fiber>();
+  public Fiber last_fiber = null;
 
   IModuleLoader loader;
 
@@ -763,7 +785,6 @@ public class VM
     if(types == null)
       types = new Types();
     this.types = types;
-    this.globs = types.globs;
     this.loader = loader;
 
     init_frame = new Frame(this);
@@ -1046,7 +1067,7 @@ public class VM
   {
     fb.ip = frm.start_ip;
     frm.fb = fb;
-    fb.ctx_frames.Push(new FrameContext(frm, is_call: true));
+    fb.ctx_frames.Push(new FrameContext(frm, frm, is_call: true));
   }
 
   void Register(Fiber fb)
@@ -1106,24 +1127,16 @@ public class VM
     ref int ip,
     FixedStack<FrameContext> ctx_frames, 
     ref ICoroutine coroutine, 
-    IExitableScope defer_scope,
     int frames_waterline_idx = 0
   )
   {
     var status = BHS.SUCCESS;
-    IExitableScope tmp_defer_scope = null;
-    int init_ctx_num = ctx_frames.Count;
     int ctx_num = 0;
     while((ctx_num = ctx_frames.Count) > frames_waterline_idx && status == BHS.SUCCESS)
     {
-      //NOTE: we need to restore the original defer scope
-      //      once we pop all frames which were generated during execution 
-      if(ctx_num == init_ctx_num)
-        tmp_defer_scope = defer_scope;
       status = ExecuteOnce(
         ref ip, ctx_frames,
-        ref coroutine,
-        ref tmp_defer_scope
+        ref coroutine
       );
     }
     return status;
@@ -1132,8 +1145,7 @@ public class VM
   BHS ExecuteOnce(
     ref int ip, 
     FixedStack<FrameContext> ctx_frames, 
-    ref ICoroutine coroutine, 
-    ref IExitableScope defer_scope
+    ref ICoroutine coroutine
   )
   { 
     var ctx = ctx_frames.Peek();
@@ -1146,7 +1158,7 @@ public class VM
 
     var curr_frame = ctx.frame;
 
-    //Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" +  " OP " + (Opcodes)curr_frame.bytecode[ip] + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " SCOPE " + defer_scope?.GetType().Name + "(" + defer_scope?.GetHashCode() + ")"/* + " " + Environment.StackTrace*/);
+    //Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + ip + "(min:" + ctx.min_ip + ", max:" + ctx.max_ip + ")" + (ip > -1 && ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[ip] : " OP ? ") + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " EX.SCOPE " + ctx.ex_scope?.GetType().Name + "(" + ctx.ex_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(coroutine != null)
@@ -1367,10 +1379,7 @@ public class VM
         ip = curr_frame.return_ip;
         curr_frame.Clear();
         curr_frame.Release();
-        //Console.WriteLine("RET IP " + ip + " FRAMES " + ctx_frames.Count);
         ctx_frames.Pop();
-        //let's restore the defer scope
-        defer_scope = curr_frame.origin;
       }
       break;
       case Opcodes.ReturnVal:
@@ -1389,8 +1398,6 @@ public class VM
         curr_frame.Clear();
         curr_frame.Release();
         ctx_frames.Pop();
-        //let's restore the defer scope
-        defer_scope = curr_frame.origin;
       }
       break;
       case Opcodes.GetFunc:
@@ -1404,7 +1411,7 @@ public class VM
       case Opcodes.GetFuncNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolNative)globs.GetMembers()[func_idx];
+        var func_symb = (FuncSymbolNative)types.globs.GetMembers()[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
@@ -1449,7 +1456,7 @@ public class VM
 
         var frm = Frame.New(this);
         frm.Init(curr_frame, func_ip);
-        Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
       }
       break;
       case Opcodes.CallNative:
@@ -1457,7 +1464,7 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        var native = (FuncSymbolNative)globs.GetMembers()[func_idx];
+        var native = (FuncSymbolNative)types.globs.GetMembers()[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))
@@ -1475,7 +1482,7 @@ public class VM
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, maddr.module, maddr.ip);
-        Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
       }
       break;
       case Opcodes.CallMethodNative:
@@ -1511,7 +1518,7 @@ public class VM
 
         frm.locals[0] = self;
 
-        Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
       }
       break;
       case Opcodes.CallPtr:
@@ -1534,7 +1541,7 @@ public class VM
         {
           var frm = ptr.MakeFrame(this, curr_frame);
           val_ptr.Release();
-          Call(curr_frame, ctx_frames, frm, args_bits, ref ip, ref defer_scope);
+          Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
         }
       }
       break;
@@ -1637,7 +1644,7 @@ public class VM
       break;
       case Opcodes.Block:
       {
-        var new_coroutine = VisitBlock(ref ip, ctx_frames, curr_frame, defer_scope);
+        var new_coroutine = VisitBlock(ref ip, ctx_frames, curr_frame, ctx.ex_scope);
         if(new_coroutine != null)
         {
           //NOTE: since there's a new coroutine we want to skip ip incrementing
@@ -1687,7 +1694,7 @@ public class VM
     return v;
   }
 
-  void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip, ref IExitableScope defer_scope)
+  void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip)
   {
     var args_info = new FuncArgsInfo(args_bits);
     for(int i = 0; i < args_info.CountArgs(); ++i)
@@ -1696,12 +1703,9 @@ public class VM
 
     //let's remember ip to return to
     new_frame.return_ip = ip;
-    ctx_frames.Push(new FrameContext(new_frame, is_call: true));
+    ctx_frames.Push(new FrameContext(new_frame, new_frame, is_call: true));
     //since ip will be incremented below we decrement it intentionally here
     ip = new_frame.start_ip - 1; 
-
-    //forcing new defer scope with the new frame
-    defer_scope = new_frame;
   }
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
@@ -1825,7 +1829,7 @@ public class VM
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
   }
 
-  ICoroutine TryMakeBlockCoroutine(ref int ip, FixedStack<VM.FrameContext> ctx_frames, Frame curr_frame, out int size, IExitableScope defer_scope)
+  ICoroutine TryMakeBlockCoroutine(ref int ip, FixedStack<VM.FrameContext> ctx_frames, Frame curr_frame, out int size, IExitableScope ex_scope)
   {
     EnumBlock type;
     ReadBlockHeader(ref ip, curr_frame, out type, out size);
@@ -1844,7 +1848,7 @@ public class VM
     }
     else if(type == EnumBlock.SEQ)
     {
-      if(defer_scope is IBranchyCoroutine)
+      if(ex_scope is IBranchyCoroutine)
       {
         var br = CoroutinePool.New<ParalBranchBlock>(this);
         br.Init(curr_frame, ip + 1, ip + size);
@@ -1860,7 +1864,7 @@ public class VM
     else if(type == EnumBlock.DEFER)
     {
       var d = new DeferBlock(curr_frame, ip + 1, ip + size);
-      defer_scope.RegisterDefer(d);
+      ex_scope.RegisterDefer(d);
       //we need to skip defer block
       //Console.WriteLine("DEFER SKIP " + ip + " " + (ip+size) + " " + Environment.StackTrace);
       ip += size;
@@ -1870,12 +1874,12 @@ public class VM
       throw new Exception("Not supported block type: " + type);
   }
 
-  ICoroutine VisitBlock(ref int ip, FixedStack<VM.FrameContext> ctx_frames, Frame curr_frame, IExitableScope defer_scope)
+  ICoroutine VisitBlock(ref int ip, FixedStack<VM.FrameContext> ctx_frames, Frame curr_frame, IExitableScope ex_scope)
   {
     int block_size;
-    var block_coro = TryMakeBlockCoroutine(ref ip, ctx_frames, curr_frame, out block_size, defer_scope);
+    var block_coro = TryMakeBlockCoroutine(ref ip, ctx_frames, curr_frame, out block_size, ex_scope);
 
-    //Console.WriteLine("BLOCK CORO " + block_coro?.GetType().Name);
+    //Console.WriteLine("BLOCK CORO " + block_coro?.GetType().Name + " " + block_coro?.GetHashCode());
     if(block_coro is IBranchyCoroutine bi) 
     {
       int tmp_ip = ip;
@@ -1929,12 +1933,13 @@ public class VM
 
     try
     {
+      last_fiber = fb;
+
       ++fb.tick;
       fb.status = Execute(
         ref fb.ip, fb.ctx_frames, 
         ref fb.coroutine, 
         //NOTE: we exclude the special case 0 frame
-        fb.ctx_frames[1].frame,
         1
       );
 
@@ -2027,6 +2032,44 @@ public class VM
   }
 }
 
+public class Ip2SrcLine
+{
+  public List<int> ips = new List<int>();
+  public List<int> lines = new List<int>();
+
+  public void Add(int ip, int line)
+  {
+    ips.Add(ip);
+    lines.Add(line);
+  }
+
+  public int TryMap(int ip)
+  {
+    int idx = Search(ip, 0, ips.Count-1);
+    if(idx == -1)
+      return 0;
+    return lines[idx];
+  }
+
+  int Search(int ip, int l, int r)
+  {
+    if(r >= l)
+    {
+      int mid = l + (r - l) / 2;
+
+      //checking for IP range
+      if(ip <= ips[mid] && (mid == 0 || ip > ips[mid-1]))
+        return mid;
+
+      if(ips[mid] > ip)
+        return Search(ip, l, mid - 1);
+      else
+        return Search(ip, mid + 1, r);
+    }
+    return -1;
+  }
+}
+
 public class CompiledModule
 {
   public const int MAX_GLOBALS = 128;
@@ -2038,7 +2081,7 @@ public class CompiledModule
   public byte[] bytecode;
   public List<Const> constants;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
-  public Dictionary<int, int> ip2src_line;
+  public Ip2SrcLine ip2src_line;
 
   public CompiledModule(
     string name,
@@ -2046,7 +2089,7 @@ public class CompiledModule
     List<Const> constants, 
     byte[] initcode,
     byte[] bytecode, 
-    Dictionary<int, int> ip2src_line = null
+    Ip2SrcLine ip2src_line = null
   )
   {
     this.name = name;
@@ -2098,7 +2141,7 @@ public class CompiledModule
         constants.Add(cn);
       }
 
-      var ip2src_line = new Dictionary<int, int>();
+      var ip2src_line = new Ip2SrcLine();
       int ip2src_line_len = r.ReadInt32();
       for(int i=0;i<ip2src_line_len;++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
@@ -2148,11 +2191,11 @@ public class CompiledModule
       }
 
       //TODO: add this info only for development builds
-      w.Write(cm.ip2src_line.Count);
-      foreach(var kv in cm.ip2src_line)
+      w.Write(cm.ip2src_line.ips.Count);
+      for(int i=0;i<cm.ip2src_line.ips.Count;++i)
       {
-        w.Write(kv.Key);
-        w.Write(kv.Value);
+        w.Write(cm.ip2src_line.ips[i]);
+        w.Write(cm.ip2src_line.lines[i]);
       }
     }
   }
@@ -2332,13 +2375,12 @@ public struct DeferBlock
     ip = this.ip;
 
     //2. let's create the execution context
-    ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: ip, max_ip: max_ip));
+    ctx_frames.Push(new VM.FrameContext(frm, null, is_call: false, min_ip: ip, max_ip: max_ip));
     //Console.WriteLine("ENTER SCOPE " + ip + " " + end_ip + " " + ctx_frames.Count);
     //3. and execute it
     var status = frm.vm.Execute(
       ref ip, ctx_frames, 
       ref coro, 
-      null,
       ctx_frames.Count-1
     );
     if(status != BHS.SUCCESS)
@@ -2396,7 +2438,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     this.ip = min_ip;
     ext_ip = ip;
     this.waterline_idx = ext_frames.Count;
-    ext_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
+    ext_frames.Push(new VM.FrameContext(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
   public void Tick(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)
@@ -2404,7 +2446,6 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     status = frm.vm.Execute(
       ref ip, ext_frames, 
       ref coroutine, 
-      this,
       waterline_idx
     );
     ext_ip = ip;
@@ -2469,15 +2510,14 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     this.min_ip = min_ip;
     this.max_ip = max_ip;
     this.ip = min_ip;
-    ctx_frames.Push(new VM.FrameContext(frm, is_call: false, min_ip: min_ip, max_ip: max_ip));
+    ctx_frames.Push(new VM.FrameContext(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
   public void Tick(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)
   {
     status = frm.vm.Execute(
       ref ip, ctx_frames, 
-      ref coroutine, 
-      this
+      ref coroutine
     );
 
     if(status == BHS.SUCCESS)
@@ -2546,6 +2586,10 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
   {
     this.min_ip = min_ip;
     this.max_ip = max_ip;
+    i = 0;
+    branches.Clear();
+    if(defers != null)
+      defers.Clear();
   }
 
   public void Tick(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)
@@ -2617,6 +2661,10 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
   {
     this.min_ip = min_ip;
     this.max_ip = max_ip;
+    i = 0;
+    branches.Clear();
+    if(defers != null)
+      defers.Clear();
   }
 
   public void Tick(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)

@@ -150,6 +150,81 @@ public class NullSymbol : BuiltInSymbol
   }
 }
 
+public abstract class InterfaceSymbol : Symbol, IType 
+{
+  List<string> names = new List<string>();
+  List<FuncSignature> sigs = new List<FuncSignature>();
+
+#if BHL_FRONT
+  public InterfaceSymbol(
+    WrappedParseTree parsed, 
+    string name
+  )
+    : this(name)
+  {
+    this.parsed = parsed;
+  }
+#endif
+
+  public InterfaceSymbol(string name)
+    : base(name, default(TypeProxy))
+  {
+    this.type = new TypeProxy(this);
+  }
+
+  public string GetName() { return name; }
+
+  public bool AddSignature(string name, FuncSignature sig)
+  {
+    if(names.Contains(name))
+      return false;
+
+    names.Add(name);
+    sigs.Add(sig);
+    return true;
+  }
+
+  public FuncSignature FindSignature(string name)
+  {
+    int idx = names.IndexOf(name);
+    if(idx == -1)
+      return null;
+    return sigs[idx];
+  }
+}
+
+public class InterfaceSymbolScript : InterfaceSymbol
+{
+  public const uint CLASS_ID = 18;
+  
+  public InterfaceSymbolScript(string name)
+    : base(name)
+  {}
+
+#if BHL_FRONT
+  public InterfaceSymbolScript(WrappedParseTree parsed, string name)
+    : this(name)
+  {
+    this.parsed = parsed;
+  }
+#endif
+
+  //marshall factory version
+  public InterfaceSymbolScript() 
+    : this(null)
+  {}
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref name);
+  }
+}
+
 public abstract class ClassSymbol : EnclosingSymbol, IScope, IType 
 {
   public ClassSymbol super_class { get; protected set;}
@@ -223,19 +298,6 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
   public override IScope GetFallbackScope() 
   {
     return super_class == null ? this.scope : super_class;
-  }
-
-  public Symbol ResolveMember(string name)
-  {
-    Symbol sym = null;
-    members.TryGetValue(name, out sym);
-    if(sym != null)
-      return sym;
-
-    if(super_class != null)
-      return super_class.ResolveMember(name);
-
-    return null;
   }
 
   public override void Define(Symbol sym) 
@@ -694,7 +756,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 #endif
 
   public EnclosingSymbol(string name) 
-    : base(name, type: default(TypeProxy))
+    : base(name, type: default(TypeProxy) /*using empty value*/)
   {}
 
   public virtual IScope GetFallbackScope() { return this.scope; }
@@ -1439,6 +1501,8 @@ public class SymbolFactory : IFactory
         return new GenericArrayTypeSymbol(types); 
       case ClassSymbolScript.CLASS_ID:
         return new ClassSymbolScript();
+      case InterfaceSymbolScript.CLASS_ID:
+        return new InterfaceSymbolScript();
       case EnumSymbolScript.CLASS_ID:
         return new EnumSymbolScript();
       case EnumItemSymbol.CLASS_ID:
