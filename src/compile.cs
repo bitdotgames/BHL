@@ -1366,7 +1366,12 @@ public class Compiler : AST_Visitor
     if(ast.is_func_arg && ast.children.Count > 0)
     {                  
       var fsymb = func_decls.Peek();
-      var arg_op = Emit(Opcodes.DefArg, new int[] { (int)ast.symb_idx - fsymb.GetRequiredArgsNum(), 0 /*patched later*/ });
+      int def_idx = (int)ast.symb_idx - fsymb.GetRequiredArgsNum();
+      //let's take into account 'this' special case, which is 
+      //stored in '0' idx and is not part of official func args
+      if(fsymb.scope is ClassSymbol)
+        --def_idx;
+      var arg_op = Emit(Opcodes.DefArg, new int[] {def_idx , 0 /*patched later*/ });
       VisitChildren(ast);
       AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
     }

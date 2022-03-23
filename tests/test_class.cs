@@ -829,8 +829,7 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestDefaultArgValueInMethod()
   {
     string bhl = @"

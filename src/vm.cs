@@ -1506,7 +1506,6 @@ public class VM
         int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-
         string class_type = curr_frame.constants[class_type_idx].str; 
         var class_symb = (ClassSymbol)types.Resolve(class_type);
 
@@ -1641,8 +1640,9 @@ public class VM
       {
         byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
         int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
-        //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
+        uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count-1]._num; 
+        var args_info = new FuncArgsInfo(args_bits);
+        //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx) + " " + args_bits);
         //NOTE: if default argument is not used we need to jump out of default argument calculation code
         if(!args_info.IsDefaultArgUsed(def_arg_idx))
           ip += jump_pos;
