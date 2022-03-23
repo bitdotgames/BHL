@@ -498,9 +498,8 @@ public class BHL_TestBase
     //it's going to go thru the full compilation cycle
     var ms = new MemoryStream();
     CompiledModule.ToStream(orig_cm, ms);
-    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()));
+    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), add_source_to_types: true);
 
-    ts.AddSource(cm.scope);
     var vm = new VM(ts);
     vm.RegisterModule(cm);
     return vm;

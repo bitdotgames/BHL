@@ -799,16 +799,16 @@ public class VM
 
   public void LoadModule(string module_name)
   {
-    var imported_module = loader.Load(module_name);
-    RegisterModule(imported_module);
+    var loaded = loader.Load(module_name);
+    RegisterModule(loaded);
   }
 
   void LoadModule(CompiledModule module, string module_name)
   {
-    var imported_module = loader.Load(module_name);
-    RegisterModule(imported_module);
+    var loaded = loader.Load(module_name);
+    RegisterModule(loaded);
 
-    module.scope.AddImport(imported_module.scope);
+    module.scope.AddImport(loaded.scope);
   }
 
   public void RegisterModule(CompiledModule cm)
@@ -2101,7 +2101,7 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src)
+  static public CompiledModule FromStream(Types types, Stream src, bool add_source_to_types = false)
   {
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
     {
@@ -2115,6 +2115,8 @@ public class CompiledModule
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
       var symbols = new ModuleScope(name, types.globs);
+      if(add_source_to_types)
+        types.AddSource(symbols);
       Marshall.Stream2Obj(new MemoryStream(symb_bytes), symbols, new SymbolFactory(types));
 
       byte[] initcode = null;

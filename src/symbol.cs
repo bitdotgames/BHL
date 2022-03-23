@@ -1204,7 +1204,8 @@ public class ClassSymbolScript : ClassSymbol
     Marshall.Sync(ctx, ref super_name);
     if(ctx.is_read && super_name != "")
     {
-      var tmp_class = (ClassSymbol)((SymbolFactory)ctx.factory).types.Resolve(super_name);
+      var types = ((SymbolFactory)ctx.factory).types;
+      var tmp_class = (ClassSymbol)types.Resolve(super_name);
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
       super_class = tmp_class;

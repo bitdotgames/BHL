@@ -1485,7 +1485,7 @@ public class TestClasses : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertTrue(fb.result.PopRelease().bval);
@@ -1547,7 +1547,7 @@ public class TestClasses : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
