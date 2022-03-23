@@ -1954,7 +1954,7 @@ public class Frontend : bhlBaseVisitor<object>
         int default_args_num;
         var sig = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams(), out default_args_num);
         if(default_args_num != 0)
-          FireError(ib, "default value is not allowed for interface argument");
+          FireError(ib, "default value is not allowed in this context");
 
         symb.AddSignature(fd.NAME().GetText(), sig);
       }

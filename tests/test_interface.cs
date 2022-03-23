@@ -70,4 +70,22 @@ public class TestInterfaces : BHL_TestBase
     AssertEqual("Bar", tuple[0].name);
     AssertEqual(Types.Int, tuple[1].Get());
   }
+
+  [IsTested()]
+  public void TestUserInterfaceMethodDefaultValuesNotAllowed()
+  {
+    string bhl = @"
+    interface Foo { 
+      func hey(int a, float b = 1)
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "default value is not allowed"
+    );
+  }
+
 }
