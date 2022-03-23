@@ -189,10 +189,10 @@ public struct FuncArgsInfo
 {
   //NOTE: 6 bits are used for a total number of args passed (max 63), 
   //      26 bits are reserved for default args set bits (max 26 default args)
-  const int ARGS_NUM_BITS = 6;
-  const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
-  const int MAX_ARGS = (int)ARGS_NUM_MASK;
-  const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS; 
+  public const int ARGS_NUM_BITS = 6;
+  public const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
+  public const int MAX_ARGS = (int)ARGS_NUM_MASK;
+  public const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS; 
 
   public uint bits;
 

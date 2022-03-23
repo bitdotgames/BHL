@@ -162,7 +162,12 @@ namespace bhlsp
         AddSemanticToken(ctx.Start.StartIndex, classDeclName.Symbol.StartIndex - 1, SemanticTokenTypes.keyword);
         
         AddSemanticToken(classDeclName, SemanticTokenTypes.@class);
-        AddSemanticToken(ctx.classEx()?.NAME(), SemanticTokenTypes.@class);
+
+        if(ctx.extensions() != null)
+        {
+          for(int i=0;i<ctx.extensions().NAME().Length;++i)
+            AddSemanticToken(ctx.extensions().NAME()[i], SemanticTokenTypes.@class);
+        }
         
         foreach(var classMember in ctx.classBlock().classMembers().classMember())
         {

@@ -760,13 +760,13 @@ public class Frontend : bhlBaseVisitor<object>
         if(!args_info.IncArgsNum())
           FireError(ca, "max arguments reached");
 
-        var func_arg_symb = (Symbol)func_args[i];
+        var func_arg_symb = (FuncArgSymbol)func_args[i];
         var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
         bool is_ref = ca.isRef() != null;
-        if(!is_ref && func_symb.GetArg(i).is_ref)
+        if(!is_ref && func_arg_symb.is_ref)
           FireError(ca, "'ref' is missing");
-        else if(is_ref && !func_symb.GetArg(i).is_ref)
+        else if(is_ref && !func_arg_symb.is_ref)
           FireError(ca, "argument is not a 'ref'");
 
         PushCallByRef(is_ref);
@@ -1967,15 +1967,32 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var name = ctx.NAME().GetText();
 
+    var implements = new List<InterfaceSymbol>();
     ClassSymbol super_class = null;
-    if(ctx.classEx() != null)
+    if(ctx.extensions() != null)
     {
-      super_class = module.scope.Resolve(ctx.classEx().NAME().GetText()) as ClassSymbol;
-      if(super_class == null)
-        FireError(ctx.classEx(), "parent class symbol not resolved");
+      for(int i=0;i<ctx.extensions().NAME().Length;++i)
+      {
+        var ext_name = ctx.extensions().NAME()[i]; 
 
-      if(super_class is ClassSymbolNative)
-        FireError(ctx.classEx(), "extending native classes is not supported");
+        var ext = module.scope.Resolve(ext_name.GetText());
+        if(ext is ClassSymbol cs)
+        {
+          if(super_class != null)
+            FireError(ext_name, "only one parent class is allowed");
+
+          if(cs is ClassSymbolNative)
+            FireError(ext_name, "extending native classes is not supported");
+
+          super_class = cs;
+        }
+        else if(ext is InterfaceSymbol ifs)
+        {
+          implements.Add(ifs);
+        }
+        else
+          FireError(ext_name, "only classes and interfaces supported");
+      }
     }
 
     var ast = AST_Util.New_ClassDecl(name);
@@ -2026,17 +2043,11 @@ public class Frontend : bhlBaseVisitor<object>
       func_tree, 
       ParseFuncSignature(tp, ctx.funcParams(), out default_args_num),
       ast.name,
-      default_args_num
+      default_args_num,
+      0,
+      scope as ClassSymbolScript
     );
     scope.Define(func_symb);
-
-    //NOTE: let's check if this is a method and if so
-    //      let's define a special case 'this' local variable
-    if(scope is ClassSymbolScript class_scope)
-    {
-      var this_symb = new VariableSymbol(func_tree, "this", types.Type(class_scope));
-      func_symb.Define(this_symb);
-    }
 
     curr_scope = func_symb;
     PushFuncDecl(func_symb);

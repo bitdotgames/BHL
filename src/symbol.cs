@@ -229,7 +229,9 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
 public abstract class ClassSymbol : EnclosingSymbol, IScope, IType 
 {
-  public ClassSymbol super_class { get; protected set;}
+  public ClassSymbol super_class {get; protected set;}
+
+  public IList<InterfaceSymbol> implements {get; protected set;}
 
   public SymbolsDictionary members;
 
@@ -240,9 +242,10 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
     WrappedParseTree parsed, 
     string name, 
     ClassSymbol super_class, 
+    IList<InterfaceSymbol> implements = null,
     VM.ClassCreator creator = null
   )
-    : this(name, super_class, creator)
+    : this(name, super_class, implements, creator)
   {
     this.parsed = parsed;
   }
@@ -251,6 +254,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
   public ClassSymbol(
     string name, 
     ClassSymbol super_class, 
+    IList<InterfaceSymbol> implements = null,
     VM.ClassCreator creator = null
   )
     : base(name)
@@ -260,6 +264,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
     this.creator = creator;
 
     SetSuperClass(super_class);
+    SetImplements(implements);
   }
 
   void SetSuperClass(ClassSymbol super_class)
@@ -282,6 +287,14 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
         base.Define(sym);
       }
     }
+  }
+
+  void SetImplements(IList<InterfaceSymbol> implements)
+  {
+    if(implements == null)
+      implements = new List<InterfaceSymbol>();
+
+    this.implements = implements;
   }
 
   public bool IsSubclassOf(ClassSymbol p)
@@ -813,19 +826,34 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   }
 
 #if BHL_FRONT
-  public FuncSymbol(WrappedParseTree parsed, string name, FuncSignature sig) 
-    : this(name, sig)
+  public FuncSymbol(
+    WrappedParseTree parsed, 
+    string name, 
+    FuncSignature sig,
+    ClassSymbolScript class_scope = null
+  ) 
+    : this(name, sig, class_scope)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public FuncSymbol(string name, FuncSignature signature) 
+  public FuncSymbol(
+    string name, 
+    FuncSignature signature,
+    ClassSymbolScript class_scope = null
+  ) 
     : base(name)
   {
     this.members = new SymbolsDictionary(this);
     this.signature = signature;
     this.type = new TypeProxy(signature);
+
+    if(class_scope != null)
+    {
+      var this_symb = new FuncArgSymbol(null, "this", new TypeProxy(class_scope));
+      Define(this_symb);
+    }
   }
 
   public override SymbolsDictionary GetMembers() { return members; }
@@ -834,7 +862,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   { 
     //NOTE: we forbid resolving class members 
     //      inside methods without 'this.' prefix on purpose
-    if(this.scope is ClassSymbol cs)
+    if(scope is ClassSymbolScript cs)
       return cs.scope;
     else
       return this.scope; 
@@ -850,16 +878,14 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     return GetSignature().ret_type.Get();
   }
 
-  public FuncArgSymbol GetArg(int idx)
-  {
-    return (FuncArgSymbol)members[idx];
-  }
-
   public SymbolsDictionary GetArgs()
   {
     var args = new SymbolsDictionary(this);
     for(int i=0;i<GetSignature().arg_types.Count;++i)
-      args.Add(members[i]);
+    {
+      //let's skip hidden 'this' argument if needed
+      args.Add((FuncArgSymbol)members[i + ((scope is ClassSymbolScript) ? 1 : 0)]);
+    }
     return args;
   }
 
@@ -905,28 +931,20 @@ public class FuncSymbolScript : FuncSymbol
   public int default_args_num;
   public int ip_addr;
 
-  public FuncSymbolScript(
-      FuncSignature sig, 
-      string name, 
-      int default_args_num, 
-      int ip_addr
-  )
-    : base(name, sig)
-  {
-    this.name = name;
-    this.default_args_num = default_args_num;
-    this.ip_addr = ip_addr;
-  }
-
 #if BHL_FRONT
   public FuncSymbolScript(
     WrappedParseTree parsed, 
     FuncSignature sig,
     string name,
-    int default_args_num
+    int default_args_num,
+    int ip_addr,
+    ClassSymbolScript class_scope = null
   ) 
-    : this(sig, name, default_args_num, 0)
+    : base(name, sig, class_scope)
   {
+    this.name = name;
+    this.default_args_num = default_args_num;
+    this.ip_addr = ip_addr;
     this.parsed = parsed;
   }
 #endif
@@ -972,7 +990,7 @@ public class LambdaSymbol : FuncSymbolScript
     List<AST_UpVal> upvals,
     List<FuncSymbol> fdecl_stack
   ) 
-    : base(parsed, sig, name, 0)
+    : base(parsed, sig, name, 0, 0)
   {
     this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
@@ -1112,12 +1130,12 @@ public class FuncSymbolNative : FuncSymbol
 public class ClassSymbolNative : ClassSymbol
 {
   public ClassSymbolNative(string name, ClassSymbol super_class, VM.ClassCreator creator = null)
-    : base(name, super_class, creator)
+    : base(name, super_class, null, creator)
   {}
 
   public void OverloadBinaryOperator(FuncSymbol s)
   {
-    if(s.GetArgs().Count != 1)
+    if(s.GetTotalArgsNum() != 1)
       throw new SymbolError(s, "operator overload must have exactly one argument");
 
     if(s.GetReturnType() == Types.Void)
@@ -1141,15 +1159,15 @@ public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
 
-  public ClassSymbolScript(string name, ClassSymbol super_class = null)
-    : base(name, super_class)
+  public ClassSymbolScript(string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
+    : base(name, super_class, implements)
   {
     this.creator = ClassCreator;
   }
 
 #if BHL_FRONT
-  public ClassSymbolScript(WrappedParseTree parsed, string name, ClassSymbol super_class = null)
-    : this(name, super_class)
+  public ClassSymbolScript(WrappedParseTree parsed, string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
+    : this(name, super_class, implements)
   {
     this.parsed = parsed;
   }
@@ -1157,7 +1175,7 @@ public class ClassSymbolScript : ClassSymbol
 
   //marshall factory version
   public ClassSymbolScript() 
-    : this(null, null)
+    : this(null, null, null)
   {}
 
   void ClassCreator(VM.Frame frm, ref Val data)

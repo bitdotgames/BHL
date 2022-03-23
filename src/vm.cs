@@ -898,7 +898,8 @@ public class VM
         {
           int const_idx = (int)Bytecode.Decode24(bytecode, ref ip);
           var cn = constants[const_idx];
-          stack.Push(cn.ToVal(this));
+          var cv = cn.ToVal(this);
+          stack.Push(cv);
         }
         break;
         case Opcodes.New:
@@ -1172,7 +1173,8 @@ public class VM
       {
         int const_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         var cn = curr_frame.constants[const_idx];
-        curr_frame.stack.Push(cn.ToVal(this));
+        var cv = cn.ToVal(this);
+        curr_frame.stack.Push(cv);
       }
       break;
       case Opcodes.TypeCast:
@@ -1511,7 +1513,11 @@ public class VM
         var field_symb = (FuncSymbolScript)class_symb.members[func_idx];
         int func_ip = field_symb.ip_addr;
 
-        var self = curr_frame.stack.Pop();
+        //TODO: use a simpler schema where 'self' is passed on the top
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+        curr_frame.stack.RemoveAt(self_idx);
 
         var frm = Frame.New(this);
         frm.Init(curr_frame, func_ip);

@@ -537,17 +537,17 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitBlock([NotNull] bhlParser.BlockContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.extensions"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExtensions([NotNull] bhlParser.ExtensionsContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.classDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitClassDecl([NotNull] bhlParser.ClassDeclContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.classEx"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitClassEx([NotNull] bhlParser.ClassExContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.classBlock"/>.
 	/// </summary>
@@ -572,12 +572,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitInterfaceDecl([NotNull] bhlParser.InterfaceDeclContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.interfaceEx"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitInterfaceEx([NotNull] bhlParser.InterfaceExContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.interfaceBlock"/>.
 	/// </summary>

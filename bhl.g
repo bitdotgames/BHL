@@ -189,12 +189,12 @@ block
   : '{' (statement SEPARATOR*)* '}'
   ;
 
-classDecl
-  : 'class' NAME classEx? classBlock
+extensions
+  : ':' NAME (',' NAME)*
   ;
 
-classEx
-  : ':' NAME
+classDecl
+  : 'class' NAME extensions? classBlock
   ;
 
 classBlock
@@ -210,11 +210,7 @@ classMember
   ;
 
 interfaceDecl
-  : 'interface' NAME interfaceEx? interfaceBlock
-  ;
-
-interfaceEx
-  : ':' NAME (',' NAME)*
+  : 'interface' NAME extensions? interfaceBlock
   ;
 
 interfaceBlock

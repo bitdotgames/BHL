@@ -88,4 +88,27 @@ public class TestInterfaces : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestClassImplementsInterface()
+  {
+    string bhl = @"
+    interface IFoo { 
+      func int bar(int i)
+    }
+
+    class Foo : IFoo {
+      func int bar(int i) {
+        return i
+      }
+    }
+
+    func int test() {
+      Foo foo = {}
+      return foo.bar(42)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+  }
 }
