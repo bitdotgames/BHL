@@ -188,6 +188,8 @@ namespace bhlsp
         BHLSPWorkspace.self.AddRoot(args.rootPath, true, false);
       }
       
+      BHLSPWorkspace.self.Scan();
+      
       ServerCapabilities capabilities = new ServerCapabilities();
 
       if(args.capabilities.textDocument != null)
@@ -257,8 +259,8 @@ namespace bhlsp
             range = false,
             legend = new SemanticTokensLegend
             {
-              tokenTypes = BHLTextDocument.semanticTokenTypes,
-              tokenModifiers = BHLTextDocument.semanticTokenModifiers
+              tokenTypes = BHLSemanticTokens.semanticTokenTypes,
+              tokenModifiers = BHLSemanticTokens.semanticTokenModifiers
             }
           };
         }
