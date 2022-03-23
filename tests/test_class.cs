@@ -802,6 +802,91 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassArgToClassMethod()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+
+      func int getA(int i)
+      {
+        return this.a + i
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      return f.getA(2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestDefaultArgValueInMethod()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+
+      func int getA(int i, int c = 10)
+      {
+        return this.a + i + c
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      return f.getA(2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(22, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDefaultArgValueInMethod2()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+
+      func int getA(int i, int c = 10)
+      {
+        return this.a + i + c
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      return f.getA(2, 100)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(112, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassMethodNamedLikeClass()
   {
     string bhl = @"

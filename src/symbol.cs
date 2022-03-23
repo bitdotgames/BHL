@@ -851,7 +851,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
     if(class_scope != null)
     {
-      var this_symb = new FuncArgSymbol(null, "this", new TypeProxy(class_scope));
+      var this_symb = new FuncArgSymbol("this", new TypeProxy(class_scope));
       Define(this_symb);
     }
   }
