@@ -285,10 +285,6 @@ namespace bhlsp
     public override RpcResult Shutdown()
     {
       BHLSPWorkspace.self.Shutdown();
-      
-      if(processId != null)
-        Environment.Exit(0);
-      
       return RpcResult.Success();
     }
 

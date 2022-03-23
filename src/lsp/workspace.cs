@@ -41,12 +41,17 @@ namespace bhlsp
     public bool implementationLinkSupport;
     
     public void Shutdown()
-    {
+    {  
       documents.Clear();
       for(int i = roots.Count - 1; i >= 0; i--)
       {
         if(roots[i].cleanup)
           roots.RemoveAt(i);
+      }
+      
+      lock(addDocumentPathLock)
+      {
+        documentPaths.Clear();
       }
     }
 
