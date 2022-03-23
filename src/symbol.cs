@@ -880,12 +880,12 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
   public SymbolsDictionary GetArgs()
   {
+    //let's skip hidden 'this' argument if needed
+    int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
+
     var args = new SymbolsDictionary(this);
     for(int i=0;i<GetSignature().arg_types.Count;++i)
-    {
-      //let's skip hidden 'this' argument if needed
-      args.Add((FuncArgSymbol)members[i + ((scope is ClassSymbolScript) ? 1 : 0)]);
-    }
+      args.Add((FuncArgSymbol)members[i + this_offset]);
     return args;
   }
 
