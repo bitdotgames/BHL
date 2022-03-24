@@ -471,14 +471,14 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Inc node)
   {
     Console.Write("(INC ");
-    Console.Write(node.symb_idx);
+    Console.Write(node.symbol.name + " " + node.symbol.scope_idx);
     Console.Write(")");
   }
   
   public override void DoVisit(AST_Dec node)
   {
     Console.Write("(DEC ");
-    Console.Write(node.symb_idx);
+    Console.Write(node.symbol.name + " " + node.symbol.scope_idx);
     Console.Write(")");
   }
 

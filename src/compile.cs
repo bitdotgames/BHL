@@ -1019,12 +1019,12 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_Inc ast)
   {
-    Emit(Opcodes.Inc, new int[] { (int)ast.symb_idx });
+    Emit(Opcodes.Inc, new int[] { ast.symbol.scope_idx });
   }
 
   public override void DoVisit(AST_Dec ast)
   {
-    Emit(Opcodes.Dec, new int[] { (int)ast.symb_idx });
+    Emit(Opcodes.Dec, new int[] { ast.symbol.scope_idx });
   }
 
   public override void DoVisit(AST_Call ast)

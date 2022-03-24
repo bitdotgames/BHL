@@ -158,12 +158,12 @@ public class AST_BinaryOpExp  : AST_Tree
 
 public class AST_Inc : IAST
 {
-  public uint symb_idx;
+  public VariableSymbol symbol;
 }
 
 public class AST_Dec : IAST
 {
-  public uint symb_idx;
+  public VariableSymbol symbol;
 }
 
 public class AST_New : AST_Tree 
@@ -585,7 +585,7 @@ static public class AST_Util
   static public AST_Inc New_Inc(VariableSymbol symb)
   {
     var n = new AST_Inc();
-    n.symb_idx = (uint)symb.scope_idx;
+    n.symbol = symb;
 
     return n;
   }
@@ -595,7 +595,7 @@ static public class AST_Util
   static public AST_Dec New_Dec(VariableSymbol symb)
   {
     var n = new AST_Dec();
-    n.symb_idx = (uint)symb.scope_idx;
+    n.symbol = symb;
 
     return n;
   }
