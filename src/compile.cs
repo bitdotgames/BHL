@@ -6,7 +6,7 @@ namespace bhl {
 
 public class Compiler : AST_Visitor
 {
-  AST ast;
+  AST_Tree ast;
   CompiledModule compiled;
 
   Module module;
@@ -781,7 +781,7 @@ public class Compiler : AST_Visitor
   {
     UseCode();
 
-    var fsymb = (FuncSymbolScript)curr_scope.Resolve(ast.name);
+    var fsymb = ast.symbol;
 
     func_decls.Push(fsymb);
 

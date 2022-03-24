@@ -72,7 +72,7 @@ static public class Util
 
   ////////////////////////////////////////////////////////
 
-  public static void ASTDump(AST ast)
+  public static void ASTDump(AST_Tree ast)
   {
     new AST_Dumper().Visit(ast);
     Console.WriteLine("\n=============");
@@ -107,7 +107,7 @@ public static class Hash
 
 public static class Extensions
 {
-  public static void Append(this AST dst, AST src)
+  public static void Append(this AST_Tree dst, AST_Tree src)
   {
     for(int i=0;i<src.children.Count;++i)
     {
@@ -418,7 +418,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_FuncDecl node)
   {
     Console.Write("(FUNC ");
-    Console.Write(node.name);
+    Console.Write(node.symbol.name);
     VisitChildren(node);
     Console.Write(")");
   }
@@ -426,7 +426,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_LambdaDecl node)
   {
     Console.Write("(LMBD ");
-    Console.Write(node.name);
+    Console.Write(node.symbol.name);
     if(node.upvals.Count > 0)
       Console.Write(" USE:");
     for(int i=0;i<node.upvals.Count;++i)

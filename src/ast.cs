@@ -5,97 +5,97 @@ namespace bhl {
 
 public abstract class AST_Visitor
 {
-  public abstract void DoVisit(AST_Interim node);
-  public abstract void DoVisit(AST_Import node);
-  public abstract void DoVisit(AST_Module node);
-  public abstract void DoVisit(AST_VarDecl node);
-  public abstract void DoVisit(AST_FuncDecl node);
-  public abstract void DoVisit(AST_LambdaDecl node);
-  public abstract void DoVisit(AST_ClassDecl node);
-  public abstract void DoVisit(AST_EnumDecl node);
-  public abstract void DoVisit(AST_Block node);
-  public abstract void DoVisit(AST_TypeCast node);
-  public abstract void DoVisit(AST_Call node);
-  public abstract void DoVisit(AST_Return node);
-  public abstract void DoVisit(AST_Break node);
-  public abstract void DoVisit(AST_Continue node);
-  public abstract void DoVisit(AST_PopValue node);
-  public abstract void DoVisit(AST_Literal node);
-  public abstract void DoVisit(AST_BinaryOpExp node);
-  public abstract void DoVisit(AST_UnaryOpExp node);
-  public abstract void DoVisit(AST_New node);
-  public abstract void DoVisit(AST_Inc node);
-  public abstract void DoVisit(AST_Dec node);
-  public abstract void DoVisit(AST_JsonObj node);
-  public abstract void DoVisit(AST_JsonArr node);
-  public abstract void DoVisit(AST_JsonArrAddItem node);
-  public abstract void DoVisit(AST_JsonPair node);
+  public abstract void DoVisit(AST_Interim ast);
+  public abstract void DoVisit(AST_Import ast);
+  public abstract void DoVisit(AST_Module ast);
+  public abstract void DoVisit(AST_VarDecl ast);
+  public abstract void DoVisit(AST_FuncDecl ast);
+  public abstract void DoVisit(AST_LambdaDecl ast);
+  public abstract void DoVisit(AST_ClassDecl ast);
+  public abstract void DoVisit(AST_EnumDecl ast);
+  public abstract void DoVisit(AST_Block ast);
+  public abstract void DoVisit(AST_TypeCast ast);
+  public abstract void DoVisit(AST_Call ast);
+  public abstract void DoVisit(AST_Return ast);
+  public abstract void DoVisit(AST_Break ast);
+  public abstract void DoVisit(AST_Continue ast);
+  public abstract void DoVisit(AST_PopValue ast);
+  public abstract void DoVisit(AST_Literal ast);
+  public abstract void DoVisit(AST_BinaryOpExp ast);
+  public abstract void DoVisit(AST_UnaryOpExp ast);
+  public abstract void DoVisit(AST_New ast);
+  public abstract void DoVisit(AST_Inc ast);
+  public abstract void DoVisit(AST_Dec ast);
+  public abstract void DoVisit(AST_JsonObj ast);
+  public abstract void DoVisit(AST_JsonArr ast);
+  public abstract void DoVisit(AST_JsonArrAddItem ast);
+  public abstract void DoVisit(AST_JsonPair ast);
 
-  public void Visit(IAST node)
+  public void Visit(IAST ast)
   {
-    if(node == null)
+    if(ast == null)
       throw new Exception("NULL node");
 
-    if(node is AST_Interim)
-      DoVisit(node as AST_Interim);
-    else if(node is AST_Block)
-      DoVisit(node as AST_Block);
-    else if(node is AST_Literal)
-      DoVisit(node as AST_Literal);
-    else if(node is AST_Call)
-      DoVisit(node as AST_Call);
-    else if(node is AST_VarDecl)
-      DoVisit(node as AST_VarDecl);
-    else if(node is AST_LambdaDecl)
-      DoVisit(node as AST_LambdaDecl);
+    if(ast is AST_Interim _1)
+      DoVisit(_1);
+    else if(ast is AST_Block _2)
+      DoVisit(_2);
+    else if(ast is AST_Literal _3)
+      DoVisit(_3);
+    else if(ast is AST_Call _4)
+      DoVisit(_4);
+    else if(ast is AST_VarDecl _5)
+      DoVisit(_5);
+    else if(ast is AST_LambdaDecl _6)
+      DoVisit(_6);
     //NOTE: base class must be handled after AST_LambdaDecl
-    else if(node is AST_FuncDecl)
-      DoVisit(node as AST_FuncDecl);
-    else if(node is AST_ClassDecl)
-      DoVisit(node as AST_ClassDecl);
-    else if(node is AST_EnumDecl)
-      DoVisit(node as AST_EnumDecl);
-    else if(node is AST_TypeCast)
-      DoVisit(node as AST_TypeCast);
-    else if(node is AST_Return)
-      DoVisit(node as AST_Return);
-    else if(node is AST_Break)
-      DoVisit(node as AST_Break);
-    else if(node is AST_Continue)
-      DoVisit(node as AST_Continue);
-    else if(node is AST_PopValue)
-      DoVisit(node as AST_PopValue);
-    else if(node is AST_BinaryOpExp)
-      DoVisit(node as AST_BinaryOpExp);
-    else if(node is AST_UnaryOpExp)
-      DoVisit(node as AST_UnaryOpExp);
-    else if(node is AST_New)
-      DoVisit(node as AST_New);
-    else if(node is AST_Inc)
-      DoVisit(node as AST_Inc);
-    else if(node is AST_Dec)
-      DoVisit(node as AST_Dec);
-    else if(node is AST_JsonObj)
-      DoVisit(node as AST_JsonObj);
-    else if(node is AST_JsonArr)
-      DoVisit(node as AST_JsonArr);
-    else if(node is AST_JsonArrAddItem)
-      DoVisit(node as AST_JsonArrAddItem);
-    else if(node is AST_JsonPair)
-      DoVisit(node as AST_JsonPair);
-    else if(node is AST_Import)
-      DoVisit(node as AST_Import);
-    else if(node is AST_Module)
-      DoVisit(node as AST_Module);
+    else if(ast is AST_FuncDecl _7)
+      DoVisit(_7);
+    else if(ast is AST_ClassDecl _8)
+      DoVisit(_8);
+    else if(ast is AST_EnumDecl _9)
+      DoVisit(_9);
+    else if(ast is AST_TypeCast _10)
+      DoVisit(_10);
+    else if(ast is AST_Return _11)
+      DoVisit(_11);
+    else if(ast is AST_Break _12)
+      DoVisit(_12);
+    else if(ast is AST_Continue _13)
+      DoVisit(_13);
+    else if(ast is AST_PopValue _14)
+      DoVisit(_14);
+    else if(ast is AST_BinaryOpExp _15)
+      DoVisit(_15);
+    else if(ast is AST_UnaryOpExp _16)
+      DoVisit(_16);
+    else if(ast is AST_New _17)
+      DoVisit(_17);
+    else if(ast is AST_Inc _18)
+      DoVisit(_18);
+    else if(ast is AST_Dec _19)
+      DoVisit(_19);
+    else if(ast is AST_JsonObj _20)
+      DoVisit(_20);
+    else if(ast is AST_JsonArr _21)
+      DoVisit(_21);
+    else if(ast is AST_JsonArrAddItem _22)
+      DoVisit(_22);
+    else if(ast is AST_JsonPair _23)
+      DoVisit(_23);
+    else if(ast is AST_Import _24)
+      DoVisit(_24);
+    else if(ast is AST_Module _25)
+      DoVisit(_25);
     else 
-      throw new Exception("Not known type: " + node.GetType().Name);
+      throw new Exception("Not known type: " + ast.GetType().Name);
   }
 
-  public void VisitChildren(AST node)
+  public void VisitChildren(AST_Tree ast)
   {
-    if(node == null)
+    if(ast == null)
       return;
-    var children = node.children;
+    var children = ast.children;
     for(int i=0;i<children.Count;++i)
       Visit(children[i]);
   }
@@ -104,12 +104,12 @@ public abstract class AST_Visitor
 public interface IAST
 {}
 
-public abstract class AST : IAST
+public abstract class AST_Tree : IAST
 {
   public List<IAST> children = new List<IAST>();
 }
 
-public class AST_Interim : AST 
+public class AST_Interim : AST_Tree 
 {}
 
 public class AST_Import : IAST
@@ -117,7 +117,7 @@ public class AST_Import : IAST
   public List<string> module_names = new List<string>();
 }
 
-public class AST_Module : AST 
+public class AST_Module : AST_Tree 
 {
   public uint id;
   public string name = "";
@@ -129,7 +129,7 @@ public enum EnumUnaryOp
   NOT = 2,
 }
 
-public class AST_UnaryOpExp : AST 
+public class AST_UnaryOpExp : AST_Tree 
 {
   public EnumUnaryOp type = new EnumUnaryOp();
 }
@@ -153,7 +153,7 @@ public enum EnumBinaryOp
   BIT_AND = 15,
 }
 
-public class AST_BinaryOpExp  : AST 
+public class AST_BinaryOpExp  : AST_Tree 
 {
   public EnumBinaryOp type = new EnumBinaryOp();
   public int line_num;
@@ -169,20 +169,20 @@ public class AST_Dec : IAST
   public uint symb_idx;
 }
 
-public class AST_New : AST 
+public class AST_New : AST_Tree 
 {
   public IType type;
 }
 
-public class AST_FuncDecl : AST 
+public class AST_FuncDecl : AST_Tree 
 {
-  public string name = "";
+  public FuncSymbolScript symbol;
   public int last_line_num;
 }
 
-public class AST_ClassDecl : AST 
+public class AST_ClassDecl : AST_Tree 
 {
-  public ClassSymbol symbol;
+  public ClassSymbolScript symbol;
 }
 
 public class AST_EnumItem : IAST
@@ -191,7 +191,7 @@ public class AST_EnumItem : IAST
   public int value;
 }
 
-public class AST_EnumDecl : AST 
+public class AST_EnumDecl : AST_Tree 
 {
   public string name = "";
 }
@@ -209,7 +209,7 @@ public class AST_LambdaDecl : AST_FuncDecl
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
 }
 
-public class AST_TypeCast : AST 
+public class AST_TypeCast : AST_Tree 
 {
   public IType type;
   public int line_num;
@@ -234,7 +234,7 @@ public enum EnumCall
   GVARW           = 51,
 }
 
-public class AST_Call  : AST 
+public class AST_Call  : AST_Tree 
 {
   public EnumCall type = new EnumCall();
   public string name = "";
@@ -245,7 +245,7 @@ public class AST_Call  : AST
   public IType scope_type;
 }
 
-public class AST_Return  : AST 
+public class AST_Return  : AST_Tree 
 {
   public int num;
   public int line_num;
@@ -274,7 +274,7 @@ public class AST_Literal : IAST
   public string sval = "";
 }
 
-public class AST_VarDecl : AST 
+public class AST_VarDecl : AST_Tree 
 {
   public string name = "";
   public IType type;
@@ -296,18 +296,18 @@ public enum EnumBlock
   DOWHILE = 10,
 }
 
-public class AST_Block : AST 
+public class AST_Block : AST_Tree 
 {
   public EnumBlock type = new EnumBlock();
 }
 
-public class AST_JsonObj : AST 
+public class AST_JsonObj : AST_Tree 
 {
   public IType type;
   public int line_num;
 }
 
-public class AST_JsonArr : AST 
+public class AST_JsonArr : AST_Tree 
 {
   public IType type;
   public int line_num;
@@ -316,7 +316,7 @@ public class AST_JsonArr : AST
 public class AST_JsonArrAddItem : IAST
 {}
 
-public class AST_JsonPair : AST 
+public class AST_JsonPair : AST_Tree 
 {
   public string name = "";
   public uint symb_idx;
@@ -330,7 +330,7 @@ static public class AST_Util
 {
   static public List<IAST> GetChildren(this IAST self)
   {
-    var ast = self as AST;
+    var ast = self as AST_Tree;
     return ast == null ? null : ast.children;
   }
 
@@ -338,27 +338,27 @@ static public class AST_Util
   {
     if(c == null)
       return;
-    var ast = self as AST;
+    var ast = self as AST_Tree;
     ast.children.Add(c);
   }
 
-  static public void AddChild(this AST self, IAST c)
+  static public void AddChild(this AST_Tree self, IAST c)
   {
     if(c == null)
       return;
     self.children.Add(c);
   }
 
-  static public void AddChildren(this AST self, IAST b)
+  static public void AddChildren(this AST_Tree self, IAST b)
   {
-    if(b is AST c)
+    if(b is AST_Tree c)
     {
       for(int i=0;i<c.children.Count;++i)
         self.AddChild(c.children[i]);
     }
   }
 
-  static public AST NewInterimChild(this AST self)
+  static public AST_Tree NewInterimChild(this AST_Tree self)
   {
     var c = new AST_Interim();
     self.AddChild(c);
@@ -384,16 +384,16 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_FuncDecl New_FuncDecl(string name, int last_line_num)
+  static public AST_FuncDecl New_FuncDecl(FuncSymbolScript symbol, int last_line_num)
   {
     var n = new AST_FuncDecl();
-    Init_FuncDecl(n, name, last_line_num);
+    Init_FuncDecl(n, symbol, last_line_num);
     return n;
   }
 
-  static void Init_FuncDecl(AST_FuncDecl n, string name, int last_line_num)
+  static void Init_FuncDecl(AST_FuncDecl n, FuncSymbolScript symbol, int last_line_num)
   {
-    n.name = name;
+    n.symbol = symbol;
     n.last_line_num = last_line_num;
     //fparams
     n.NewInterimChild();
@@ -401,14 +401,14 @@ static public class AST_Util
     n.NewInterimChild();
   }
 
-  static public AST fparams(this AST_FuncDecl n)
+  static public AST_Tree fparams(this AST_FuncDecl n)
   {
-    return n.GetChildren()[0] as AST;
+    return n.GetChildren()[0] as AST_Tree;
   }
 
-  static public AST block(this AST_FuncDecl n)
+  static public AST_Tree block(this AST_FuncDecl n)
   {
-    return n.GetChildren()[1] as AST;
+    return n.GetChildren()[1] as AST_Tree;
   }
 
   static public int GetDefaultArgsNum(this AST_FuncDecl n)
@@ -438,16 +438,17 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_LambdaDecl New_LambdaDecl(string name, int last_line_num)
+  static public AST_LambdaDecl New_LambdaDecl(LambdaSymbol lmb_symb, List<AST_UpVal> upvals, int last_line_num)
   {
     var n = new AST_LambdaDecl();
-    Init_FuncDecl(n, name, last_line_num);
+    Init_FuncDecl(n, lmb_symb, last_line_num);
+    n.upvals = upvals;
     return n;
   }
 
   ////////////////////////////////////////////////////////
 
-  static public AST_ClassDecl New_ClassDecl(ClassSymbol symbol)
+  static public AST_ClassDecl New_ClassDecl(ClassSymbolScript symbol)
   {
     var n = new AST_ClassDecl();
     n.symbol = symbol;

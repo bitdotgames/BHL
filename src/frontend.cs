@@ -109,7 +109,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
-  Stack<AST> ast_stack = new Stack<AST>();
+  Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s)
   {
@@ -301,7 +301,7 @@ public class Frontend : bhlBaseVisitor<object>
     throw new SemanticError(module, place, tokens, msg);
   }
 
-  void PushAST(AST ast)
+  void PushAST(AST_Tree ast)
   {
     ast_stack.Push(ast);
   }
@@ -333,7 +333,7 @@ public class Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(tmp);
   }
 
-  AST PeekAST()
+  AST_Tree PeekAST()
   {
     return ast_stack.Peek();
   }
@@ -848,7 +848,7 @@ public class Frontend : bhlBaseVisitor<object>
     call.cargs_bits = args_info.bits;
   }
 
-  static bool HasFuncCalls(AST ast)
+  static bool HasFuncCalls(AST_Tree ast)
   {
     if(ast is AST_Call call && 
         (call.type == EnumCall.FUNC || 
@@ -861,7 +861,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     for(int i=0;i<ast.children.Count;++i)
     {
-      if(ast.children[i] is AST sub)
+      if(ast.children[i] is AST_Tree sub)
       {
         if(HasFuncCalls(sub))
           return true;
@@ -1029,15 +1029,17 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(funcLambda.retType());
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
-    var ast = AST_Util.New_LambdaDecl(func_name, funcLambda.Stop.Line);
     int default_args_num;
+    var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
       func_name,
       ParseFuncSignature(tp, funcLambda.funcParams(), out default_args_num),
-      ast.upvals,
+      upvals,
       this.func_decl_stack
     );
+
+    var ast = AST_Util.New_LambdaDecl(lmb_symb, upvals, funcLambda.Stop.Line);
 
     PushFuncDecl(lmb_symb);
 
@@ -1388,7 +1390,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
     var op_type = GetBinaryOpType(op);
-    AST bin_op_ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
+    AST_Tree bin_op_ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
 
     PushAST(bin_op_ast);
     bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
@@ -1498,7 +1500,7 @@ public class Frontend : bhlBaseVisitor<object>
   void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
-    AST ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
+    AST_Tree ast = AST_Util.New_BinaryOpExp(op_type, ctx.Start.Line);
     PushAST(ast);
     Visit(lhs);
     Visit(rhs);
@@ -2036,18 +2038,20 @@ public class Frontend : bhlBaseVisitor<object>
     var func_tree = Wrap(ctx);
     func_tree.eval_type = tp.Get();
 
-    var ast = AST_Util.New_FuncDecl(ctx.NAME().GetText(), ctx.Stop.Line);
+    string name = ctx.NAME().GetText();
 
     int default_args_num;
     var func_symb = new FuncSymbolScript(
       func_tree, 
       ParseFuncSignature(tp, ctx.funcParams(), out default_args_num),
-      ast.name,
+      name,
       default_args_num,
       0,
       scope as ClassSymbolScript
     );
     scope.Define(func_symb);
+
+    var ast = AST_Util.New_FuncDecl(func_symb, ctx.Stop.Line);
 
     curr_scope = func_symb;
     PushFuncDecl(func_symb);
@@ -2379,7 +2383,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
+  AST_Tree CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
   {
     var tp = ParseType(type_ctx);
 
@@ -2769,7 +2773,7 @@ public class Frontend : bhlBaseVisitor<object>
     var vd = vod.varDeclare();
     TypeProxy iter_type;
     string iter_str_name = "";
-    AST iter_ast_decl = null;
+    AST_Tree iter_ast_decl = null;
     VariableSymbol iter_symb = null;
     if(vod.NAME() != null)
     {
@@ -2852,7 +2856,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
+  AST_Tree CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
   {
     ++scope_level;
 
