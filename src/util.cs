@@ -439,7 +439,8 @@ public class AST_Dumper : AST_Visitor
   {
     Console.Write("(CLASS ");
     Console.Write(node.symbol.name);
-    VisitChildren(node);
+    for(int i=0;i<node.func_decls.Count;++i)
+      Visit(node.func_decls[i]);
     Console.Write(")");
   }
 

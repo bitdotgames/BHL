@@ -814,12 +814,8 @@ public class Compiler : AST_Visitor
     var scope_bak = curr_scope;
     curr_scope = ast.symbol;
 
-    for(int i=0;i<ast.children.Count;++i)
-    {
-      var child = ast.children[i];
-      if(child is AST_FuncDecl fd)
-        Visit(fd);
-    }
+    for(int i=0;i<ast.func_decls.Count;++i)
+      Visit(ast.func_decls[i]);
 
     curr_scope = scope_bak;
   }

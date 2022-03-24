@@ -177,9 +177,10 @@ public class AST_FuncDecl : AST_Tree
   public int last_line_num;
 }
 
-public class AST_ClassDecl : AST_Tree 
+public class AST_ClassDecl : IAST
 {
   public ClassSymbolScript symbol;
+  public List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
 }
 
 public class AST_UpVal : IAST

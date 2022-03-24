@@ -2023,7 +2023,7 @@ public class Frontend : bhlBaseVisitor<object>
           FireError(fd.NAME(), "the keyword \"this\" is reserved");
 
         var func_ast = CommonFuncDecl(class_symb, fd);
-        ast.AddChild(func_ast);
+        ast.func_decls.Add(func_ast);
       }
     }
 
