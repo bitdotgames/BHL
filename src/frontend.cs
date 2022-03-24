@@ -2091,8 +2091,6 @@ public class Frontend : bhlBaseVisitor<object>
     //      so that it doesn't really make sense to create AST for them.
     //      But we do it just for consistency. Later once we have runtime 
     //      type info this will be justified.
-    var ast = AST_Util.New_EnumDecl(enum_name);
-
     var symb = new EnumSymbolScript(enum_name);
     module.scope.Define(symb);
     curr_scope = symb;
@@ -2108,16 +2106,9 @@ public class Frontend : bhlBaseVisitor<object>
         FireError(em.NAME(), "duplicate key '" + em_name + "'");
       else if(res == 2)
         FireError(em.INT(), "duplicate value '" + em_val + "'");
-
-      var ast_item = new AST_EnumItem();
-      ast_item.name = enum_name;
-      ast_item.value = em_val;
-      ast.AddChild(ast_item);
     }
 
     curr_scope = module.scope;
-
-    PeekAST().AddChild(ast);
 
     return null;
   }

@@ -12,7 +12,6 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_FuncDecl ast);
   public abstract void DoVisit(AST_LambdaDecl ast);
   public abstract void DoVisit(AST_ClassDecl ast);
-  public abstract void DoVisit(AST_EnumDecl ast);
   public abstract void DoVisit(AST_Block ast);
   public abstract void DoVisit(AST_TypeCast ast);
   public abstract void DoVisit(AST_Call ast);
@@ -53,8 +52,6 @@ public abstract class AST_Visitor
       DoVisit(_7);
     else if(ast is AST_ClassDecl _8)
       DoVisit(_8);
-    else if(ast is AST_EnumDecl _9)
-      DoVisit(_9);
     else if(ast is AST_TypeCast _10)
       DoVisit(_10);
     else if(ast is AST_Return _11)
@@ -183,17 +180,6 @@ public class AST_FuncDecl : AST_Tree
 public class AST_ClassDecl : AST_Tree 
 {
   public ClassSymbolScript symbol;
-}
-
-public class AST_EnumItem : IAST
-{
-  public string name;
-  public int value;
-}
-
-public class AST_EnumDecl : AST_Tree 
-{
-  public string name = "";
 }
 
 public class AST_UpVal : IAST
@@ -458,16 +444,6 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_EnumDecl New_EnumDecl(string name)
-  {
-    var n = new AST_EnumDecl();
-    n.name = name;
-
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-  
   static public AST_UnaryOpExp New_UnaryOpExp(EnumUnaryOp type)
   {
     var n = new AST_UnaryOpExp();

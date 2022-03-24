@@ -824,10 +824,6 @@ public class Compiler : AST_Visitor
     curr_scope = scope_bak;
   }
 
-  public override void DoVisit(AST_EnumDecl ast)
-  {
-  }
-
   public override void DoVisit(AST_Block ast)
   {
     switch(ast.type)

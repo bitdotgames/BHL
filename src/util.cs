@@ -443,14 +443,6 @@ public class AST_Dumper : AST_Visitor
     Console.Write(")");
   }
 
-  public override void DoVisit(AST_EnumDecl node)
-  {
-    Console.Write("(ENUM ");
-    Console.Write(node.name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
   public override void DoVisit(AST_Block node)
   {
     Console.Write("(BLK ");
