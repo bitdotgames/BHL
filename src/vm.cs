@@ -71,58 +71,72 @@ public enum Opcodes
   Import           = 62,
 }
 
+public enum BlockType 
+{
+  FUNC = 0,
+  SEQ = 1,
+  DEFER = 2,
+  PARAL = 3,
+  PARAL_ALL = 4,
+  IF = 7,
+  WHILE = 8,
+  FOR = 9,
+  DOWHILE = 10,
+}
+
+public enum LiteralType 
+{
+  NUM = 1,
+  BOOL = 2,
+  STR = 3,
+  NIL = 4,
+}
+
 public class Const
 {
-  static public readonly Const Nil = new Const(EnumLiteral.NIL, 0, "");
+  static public readonly Const Nil = new Const(LiteralType.NIL, 0, "");
 
-  public EnumLiteral type;
+  public LiteralType type;
   public double num;
   public string str;
 
-  public Const(EnumLiteral type, double num, string str)
+  public Const(LiteralType type, double num, string str)
   {
     this.type = type;
     this.num = num;
     this.str = str;
   }
 
-  public Const(AST_Literal lt)
-  {
-    type = lt.type;
-    num = lt.nval;
-    str = lt.sval;
-  }
-
   public Const(double num)
   {
-    type = EnumLiteral.NUM;
+    type = LiteralType.NUM;
     this.num = num;
     str = "";
   }
 
   public Const(string str)
   {
-    type = EnumLiteral.STR;
+    type = LiteralType.STR;
     this.str = str;
     num = 0;
   }
 
   public Const(bool v)
   {
-    type = EnumLiteral.BOOL;
+    type = LiteralType.BOOL;
     num = v ? 1 : 0;
     this.str = "";
   }
 
   public Val ToVal(VM vm)
   {
-    if(type == EnumLiteral.NUM)
+    if(type == LiteralType.NUM)
       return Val.NewNum(vm, num);
-    else if(type == EnumLiteral.BOOL)
+    else if(type == LiteralType.BOOL)
       return Val.NewBool(vm, num == 1);
-    else if(type == EnumLiteral.STR)
+    else if(type == LiteralType.STR)
       return Val.NewStr(vm, str);
-    else if(type == EnumLiteral.NIL)
+    else if(type == LiteralType.NIL)
       return vm.Null;
     else
       throw new Exception("Bad type");
@@ -1829,30 +1843,30 @@ public class VM
     curr_frame.stack.Push(val);
   }
 
-  static void ReadBlockHeader(ref int ip, Frame curr_frame, out EnumBlock type, out int size)
+  static void ReadBlockHeader(ref int ip, Frame curr_frame, out BlockType type, out int size)
   {
-    type = (EnumBlock)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+    type = (BlockType)Bytecode.Decode8(curr_frame.bytecode, ref ip);
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
   }
 
   ICoroutine TryMakeBlockCoroutine(ref int ip, FixedStack<VM.FrameContext> ctx_frames, Frame curr_frame, out int size, IExitableScope ex_scope)
   {
-    EnumBlock type;
+    BlockType type;
     ReadBlockHeader(ref ip, curr_frame, out type, out size);
 
-    if(type == EnumBlock.PARAL)
+    if(type == BlockType.PARAL)
     {
       var paral = CoroutinePool.New<ParalBlock>(this);
       paral.Init(ip + 1, ip + size);
       return paral;
     }
-    else if(type == EnumBlock.PARAL_ALL) 
+    else if(type == BlockType.PARAL_ALL) 
     {
       var paral = CoroutinePool.New<ParalAllBlock>(this);
       paral.Init(ip + 1, ip + size);
       return paral;
     }
-    else if(type == EnumBlock.SEQ)
+    else if(type == BlockType.SEQ)
     {
       if(ex_scope is IBranchyCoroutine)
       {
@@ -1867,7 +1881,7 @@ public class VM
         return seq;
       }
     }
-    else if(type == EnumBlock.DEFER)
+    else if(type == BlockType.DEFER)
     {
       var d = new DeferBlock(curr_frame, ip + 1, ip + size);
       ex_scope.RegisterDefer(d);
@@ -2139,10 +2153,10 @@ public class CompiledModule
       int constants_len = r.ReadInt32();
       for(int i=0;i<constants_len;++i)
       {
-        var cn_type = (EnumLiteral)r.Read();
+        var cn_type = (LiteralType)r.Read();
         double cn_num = 0;
         string cn_str = "";
-        if(cn_type == EnumLiteral.STR)
+        if(cn_type == LiteralType.STR)
           cn_str = r.ReadString();
         else
           cn_num = r.ReadDouble();
@@ -2193,7 +2207,7 @@ public class CompiledModule
       foreach(var cn in cm.constants)
       {
         w.Write((byte)cn.type);
-        if(cn.type == EnumLiteral.STR)
+        if(cn.type == LiteralType.STR)
           w.Write(cn.str);
         else
           w.Write(cn.num);

@@ -568,7 +568,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == EnumLiteral.STR && cn.str == str)
+      if(cn.type == LiteralType.STR && cn.str == str)
         return i;
     }
     throw new Exception("Constant not found: " + str);
@@ -579,7 +579,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == EnumLiteral.NUM && cn.num == num)
+      if(cn.type == LiteralType.NUM && cn.num == num)
         return i;
     }
     throw new Exception("Constant not found: " + num);
@@ -590,7 +590,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == EnumLiteral.BOOL && cn.num == (v ? 1 : 0))
+      if(cn.type == LiteralType.BOOL && cn.num == (v ? 1 : 0))
         return i;
     }
     throw new Exception("Constant not found: " + v);
@@ -601,7 +601,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == EnumLiteral.NIL)
+      if(cn.type == LiteralType.NIL)
         return i;
     }
     throw new Exception("Constant null not found");
@@ -753,7 +753,7 @@ public class BHL_TestBase
     var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts_copy);
 
     if(show_ast)
-      Util.ASTDump(front_res.ast);
+      AST_Dumper.Dump(front_res.ast);
     var c  = new Compiler(ts_copy, front_res);
     var cm = c.Compile();
     if(show_bytes)

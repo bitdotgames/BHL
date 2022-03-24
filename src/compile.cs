@@ -236,7 +236,7 @@ public class Compiler : AST_Visitor
 
   int AddConstant(AST_Literal lt)
   {
-    return AddConstant(new Const(lt));
+    return AddConstant(new Const(lt.type, lt.nval, lt.sval));
   }
 
   int AddConstant(Const new_cn)
@@ -824,7 +824,7 @@ public class Compiler : AST_Visitor
   {
     switch(ast.type)
     {
-      case EnumBlock.IF:
+      case BlockType.IF:
 
         //if()
         // ^-- to be patched with position out of 'if body'
@@ -874,7 +874,7 @@ public class Compiler : AST_Visitor
           AddOffsetFromTo(last_jmp_op, Peek());
         }
       break;
-      case EnumBlock.WHILE:
+      case BlockType.WHILE:
       {
         if(ast.children.Count != 2)
          throw new Exception("Unexpected amount of children (must be 2)");
@@ -899,7 +899,7 @@ public class Compiler : AST_Visitor
         loop_blocks.Pop();
       }
       break;
-      case EnumBlock.DOWHILE:
+      case BlockType.DOWHILE:
       {
         if(ast.children.Count != 2)
          throw new Exception("Unexpected amount of children (must be 2)");
@@ -926,19 +926,19 @@ public class Compiler : AST_Visitor
         loop_blocks.Pop();
       }
       break;
-      case EnumBlock.FUNC:
+      case BlockType.FUNC:
       {
         VisitChildren(ast);
       }
       break;
-      case EnumBlock.SEQ:
-      case EnumBlock.PARAL:
-      case EnumBlock.PARAL_ALL:
+      case BlockType.SEQ:
+      case BlockType.PARAL:
+      case BlockType.PARAL_ALL:
       {
         VisitControlBlock(ast);
       }
       break;
-      case EnumBlock.DEFER:
+      case BlockType.DEFER:
       {
         VisitDefer(ast);
       }
@@ -954,12 +954,12 @@ public class Compiler : AST_Visitor
 
     bool parent_is_paral =
       parent_block != null &&
-      (parent_block.type == EnumBlock.PARAL ||
-       parent_block.type == EnumBlock.PARAL_ALL);
+      (parent_block.type == BlockType.PARAL ||
+       parent_block.type == BlockType.PARAL_ALL);
 
     bool is_paral = 
-      ast.type == EnumBlock.PARAL || 
-      ast.type == EnumBlock.PARAL_ALL;
+      ast.type == BlockType.PARAL || 
+      ast.type == BlockType.PARAL_ALL;
 
     ctrl_blocks.Push(ast);
 
@@ -973,10 +973,10 @@ public class Compiler : AST_Visitor
       //      they are inside paral block
       if(is_paral && 
           (!(child is AST_Block child_block) || 
-           (child_block.type != EnumBlock.SEQ && child_block.type != EnumBlock.DEFER)))
+           (child_block.type != BlockType.SEQ && child_block.type != BlockType.DEFER)))
       {
         var seq_child = new AST_Block();
-        seq_child.type = EnumBlock.SEQ;
+        seq_child.type = BlockType.SEQ;
         seq_child.children.Add(child);
         child = seq_child;
       }

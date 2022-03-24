@@ -1253,7 +1253,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = Types.Int;
 
-    var ast = AST_Util.New_Literal(EnumLiteral.NUM);
+    var ast = AST_Util.New_Literal(LiteralType.NUM);
     ast.nval = Hash.CRC28(tp.name);
     PeekAST().AddChild(ast);
 
@@ -1276,7 +1276,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = enum_symb;
 
-    var ast = AST_Util.New_Literal(EnumLiteral.NUM);
+    var ast = AST_Util.New_Literal(LiteralType.NUM);
     ast.nval = enum_val.val;
     PeekAST().AddChild(ast);
 
@@ -1632,7 +1632,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNum(bhlParser.ExpLiteralNumContext ctx)
   {
-    var ast = AST_Util.New_Literal(EnumLiteral.NUM);
+    var ast = AST_Util.New_Literal(LiteralType.NUM);
 
     var number = ctx.number();
     var int_num = number.INT();
@@ -1664,7 +1664,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Bool;
 
-    var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
+    var ast = AST_Util.New_Literal(LiteralType.BOOL);
     ast.nval = 0;
     PeekAST().AddChild(ast);
 
@@ -1675,7 +1675,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Null;
 
-    var ast = AST_Util.New_Literal(EnumLiteral.NIL);
+    var ast = AST_Util.New_Literal(LiteralType.NIL);
     PeekAST().AddChild(ast);
 
     return null;
@@ -1685,7 +1685,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Bool;
 
-    var ast = AST_Util.New_Literal(EnumLiteral.BOOL);
+    var ast = AST_Util.New_Literal(LiteralType.BOOL);
     ast.nval = 1;
     PeekAST().AddChild(ast);
 
@@ -1696,7 +1696,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.String;
 
-    var ast = AST_Util.New_Literal(EnumLiteral.STR);
+    var ast = AST_Util.New_Literal(LiteralType.STR);
     ast.sval = ctx.@string().NORMALSTRING().GetText();
     //removing quotes
     ast.sval = ast.sval.Substring(1, ast.sval.Length-2);
@@ -2399,25 +2399,25 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
   {
-    CommonVisitBlock(EnumBlock.SEQ, ctx.statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.SEQ, ctx.statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
-    CommonVisitBlock(EnumBlock.FUNC, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.FUNC, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitParal(bhlParser.ParalContext ctx)
   {
-    CommonVisitBlock(EnumBlock.PARAL, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.PARAL, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
   public override object VisitParalAll(bhlParser.ParalAllContext ctx)
   {
-    CommonVisitBlock(EnumBlock.PARAL_ALL, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.PARAL_ALL, ctx.block().statement(), new_local_scope: false);
     return null;
   }
 
@@ -2426,18 +2426,18 @@ public class Frontend : bhlBaseVisitor<object>
     ++defer_stack;
     if(defer_stack > 1)
       FireError(ctx, "nested defers are not allowed");
-    CommonVisitBlock(EnumBlock.DEFER, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.DEFER, ctx.block().statement(), new_local_scope: false);
     --defer_stack;
     return null;
   }
 
   public override object VisitIf(bhlParser.IfContext ctx)
   {
-    var ast = AST_Util.New_Block(EnumBlock.IF);
+    var ast = AST_Util.New_Block(BlockType.IF);
 
     var main = ctx.mainIf();
 
-    var main_cond = AST_Util.New_Block(EnumBlock.SEQ);
+    var main_cond = AST_Util.New_Block(BlockType.SEQ);
     PushAST(main_cond);
     Visit(main.exp());
     PopAST();
@@ -2450,7 +2450,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     ast.AddChild(main_cond);
     PushAST(ast);
-    CommonVisitBlock(EnumBlock.SEQ, main.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.SEQ, main.block().statement(), new_local_scope: false);
     PopAST();
 
     //NOTE: if in the block before there were no 'return' statements and in the current block
@@ -2490,7 +2490,7 @@ public class Frontend : bhlBaseVisitor<object>
     for(int i=0;i<else_if.Length;++i)
     {
       var item = else_if[i];
-      var item_cond = AST_Util.New_Block(EnumBlock.SEQ);
+      var item_cond = AST_Util.New_Block(BlockType.SEQ);
       PushAST(item_cond);
       Visit(item.exp());
       PopAST();
@@ -2502,7 +2502,7 @@ public class Frontend : bhlBaseVisitor<object>
 
       ast.AddChild(item_cond);
       PushAST(ast);
-      CommonVisitBlock(EnumBlock.SEQ, item.block().statement(), new_local_scope: false);
+      CommonVisitBlock(BlockType.SEQ, item.block().statement(), new_local_scope: false);
       PopAST();
 
       if(!seen_return && return_found.Contains(func_symb))
@@ -2516,7 +2516,7 @@ public class Frontend : bhlBaseVisitor<object>
       return_found.Remove(func_symb);
 
       PushAST(ast);
-      CommonVisitBlock(EnumBlock.SEQ, @else.block().statement(), new_local_scope: false);
+      CommonVisitBlock(BlockType.SEQ, @else.block().statement(), new_local_scope: false);
       PopAST();
 
       if(!seen_return && return_found.Contains(func_symb))
@@ -2530,7 +2530,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
   {
-    var ast = AST_Util.New_Block(EnumBlock.IF); //short-circuit evaluation
+    var ast = AST_Util.New_Block(BlockType.IF); //short-circuit evaluation
 
     var exp_0 = ctx.exp();
     var exp_1 = ctx.ternaryIfExp().exp(0);
@@ -2569,11 +2569,11 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitWhile(bhlParser.WhileContext ctx)
   {
-    var ast = AST_Util.New_Block(EnumBlock.WHILE);
+    var ast = AST_Util.New_Block(BlockType.WHILE);
 
     ++loops_stack;
 
-    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    var cond = AST_Util.New_Block(BlockType.SEQ);
     PushAST(cond);
     Visit(ctx.exp());
     PopAST();
@@ -2583,7 +2583,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     PopAST();
     ast.children[ast.children.Count-1].AddChild(AST_Util.New_Continue(jump_marker: true));
 
@@ -2596,16 +2596,16 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitDoWhile(bhlParser.DoWhileContext ctx)
   {
-    var ast = AST_Util.New_Block(EnumBlock.DOWHILE);
+    var ast = AST_Util.New_Block(BlockType.DOWHILE);
 
     ++loops_stack;
 
     PushAST(ast);
-    CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     PopAST();
     ast.children[ast.children.Count-1].AddChild(AST_Util.New_Continue(jump_marker: true));
 
-    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    var cond = AST_Util.New_Block(BlockType.SEQ);
     PushAST(cond);
     Visit(ctx.exp());
     PopAST();
@@ -2659,11 +2659,11 @@ public class Frontend : bhlBaseVisitor<object>
     var for_cond = ctx.forExp().forCond();
     var for_post_iter = ctx.forExp().forPostIter();
 
-    var ast = AST_Util.New_Block(EnumBlock.WHILE);
+    var ast = AST_Util.New_Block(BlockType.WHILE);
 
     ++loops_stack;
 
-    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    var cond = AST_Util.New_Block(BlockType.SEQ);
     PushAST(cond);
     Visit(for_cond);
     PopAST();
@@ -2673,7 +2673,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
+    var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     //appending post iteration code
     if(for_post_iter != null)
     {
@@ -2723,11 +2723,11 @@ public class Frontend : bhlBaseVisitor<object>
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
 
-    var ast = AST_Util.New_Block(EnumBlock.WHILE);
+    var ast = AST_Util.New_Block(BlockType.WHILE);
 
     ++loops_stack;
 
-    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    var cond = AST_Util.New_Block(BlockType.SEQ);
     PushAST(cond);
     Visit(ctx.exp());
     PopAST();
@@ -2736,7 +2736,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     ast.AddChild(cond);
 
-    var body = AST_Util.New_Block(EnumBlock.SEQ);
+    var body = AST_Util.New_Block(BlockType.SEQ);
     int line = ctx.Start.Line;
     body.AddChild(AST_Util.New_Call(EnumCall.FUNC, line, "yield"));
     ast.AddChild(body);
@@ -2814,12 +2814,12 @@ public class Frontend : bhlBaseVisitor<object>
     if(iter_ast_decl != null)
       PeekAST().AddChild(iter_ast_decl);
 
-    var ast = AST_Util.New_Block(EnumBlock.WHILE);
+    var ast = AST_Util.New_Block(BlockType.WHILE);
 
     ++loops_stack;
 
     //adding while condition
-    var cond = AST_Util.New_Block(EnumBlock.SEQ);
+    var cond = AST_Util.New_Block(BlockType.SEQ);
     var bin_op = AST_Util.New_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
@@ -2828,7 +2828,7 @@ public class Frontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = CommonVisitBlock(EnumBlock.SEQ, ctx.block().statement(), new_local_scope: false);
+    var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_type, ((FuncSymbol)arr_type.Resolve("At")).scope_idx));
@@ -2847,7 +2847,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_Tree CommonVisitBlock(EnumBlock type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
+  AST_Tree CommonVisitBlock(BlockType type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
   {
     ++scope_level;
 
@@ -2855,8 +2855,8 @@ public class Frontend : bhlBaseVisitor<object>
       curr_scope = new Scope(curr_scope); 
 
     bool is_paral = 
-      type == EnumBlock.PARAL || 
-      type == EnumBlock.PARAL_ALL;
+      type == BlockType.PARAL || 
+      type == BlockType.PARAL_ALL;
 
     var ast = AST_Util.New_Block(type);
     var tmp = new AST_Interim();
@@ -2875,7 +2875,7 @@ public class Frontend : bhlBaseVisitor<object>
         //NOTE: wrapping in group only in case there are more than one child
         if(tmp.children.Count > 1)
         {
-          var seq = AST_Util.New_Block(EnumBlock.SEQ);
+          var seq = AST_Util.New_Block(BlockType.SEQ);
           for(int c=0;c<tmp.children.Count;++c)
             seq.AddChild(tmp.children[c]);
           ast.AddChild(seq);
