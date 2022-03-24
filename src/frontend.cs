@@ -2046,7 +2046,7 @@ public class Frontend : bhlBaseVisitor<object>
     foreach(var m in iface.methods)
     {
       var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
-      if(func_symb == null)
+      if(func_symb == null || !func_symb.GetSignature().Matches(m.signature))
         FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
     }
   }

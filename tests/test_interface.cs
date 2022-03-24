@@ -91,21 +91,38 @@ public class TestInterfaces : BHL_TestBase
   [IsTested()]
   public void TestClassDoesntImplementInterface()
   {
-    string bhl = @"
-    interface IFoo { 
-      func int bar(int i)
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int bar(int i)
+      }
+      class Foo : IFoo {
+      }
+      ";
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'"
+      );
     }
 
-    class Foo : IFoo {
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int bar(int i)
+      }
+      class Foo : IFoo {
+        func bar(int i) { } 
+      }
+      ";
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'"
+      );
     }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'"
-    );
   }
 
   [IsTested()]

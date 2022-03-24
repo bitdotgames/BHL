@@ -199,7 +199,8 @@ public class FuncSignature : IType, IMarshallableGeneric
 {
   public const uint CLASS_ID = 14; 
 
-  public string name;
+  //full type name
+  string name;
 
   public TypeProxy ret_type;
   //TODO: include arg names as well since we support named args?
@@ -240,7 +241,7 @@ public class FuncSignature : IType, IMarshallableGeneric
 
   void Update()
   {
-    string tmp = ret_type.name + "^("; 
+    string tmp = "func " + ret_type.name + "("; 
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
@@ -263,6 +264,13 @@ public class FuncSignature : IType, IMarshallableGeneric
     Marshall.Sync(ctx, arg_types);
     if(ctx.is_read)
       Update();
+  }
+
+  public bool Matches(FuncSignature o)
+  {
+    //since type name contains non-ambigious(?) type specification
+    //we may use it for match tests
+    return name == o.name;
   }
 }
 

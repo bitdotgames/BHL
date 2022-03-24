@@ -4920,7 +4920,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "accessing not an array type 'bool^(int)'"
+      "accessing not an array type 'func bool(int)'"
     );
   }
 
@@ -18740,7 +18740,7 @@ public class TestVM : BHL_TestBase
       var Test = (FuncSymbolScript)ms.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(Test.scope, ms);
-      AssertEqual(types.TypeFunc(types.TypeTuple(Types.Int, Types.Float), types.TypeRef(Types.Int), Types.String).name, Test.GetSignature().name);
+      AssertEqual(types.TypeFunc(types.TypeTuple(Types.Int, Types.Float), types.TypeRef(Types.Int), Types.String).name, Test.GetSignature().GetName());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
