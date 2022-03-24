@@ -812,7 +812,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_ClassDecl ast)
   {
     var scope_bak = curr_scope;
-    curr_scope = (IScope)module.scope.Resolve(ast.name);
+    curr_scope = ast.symbol;
 
     for(int i=0;i<ast.children.Count;++i)
     {
@@ -1368,7 +1368,8 @@ public class Compiler : AST_Visitor
       var fsymb = func_decls.Peek();
       int symb_idx = (int)ast.symb_idx;
       //let's take into account 'this' special case, which is 
-      //stored in '0' idx and is not part of official func args
+      //stored at 0 idx and is not part of func args 
+      //(which are stored in the very beginning)
       if(fsymb.scope is ClassSymbol)
         --symb_idx;
       var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - fsymb.GetRequiredArgsNum(), 0 /*patched later*/ });

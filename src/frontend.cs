@@ -1931,7 +1931,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var func_ast = CommonFuncDecl(ctx, module.scope);
+    var func_ast = CommonFuncDecl(module.scope, ctx);
     PeekAST().AddChild(func_ast);
     return null;
   }
@@ -1995,8 +1995,8 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
-    var ast = AST_Util.New_ClassDecl(name);
     var class_symb = new ClassSymbolScript(Wrap(ctx), name, super_class);
+    var ast = AST_Util.New_ClassDecl(class_symb);
 
     module.scope.Define(class_symb);
 
@@ -2010,8 +2010,8 @@ public class Frontend : bhlBaseVisitor<object>
         if(vd.NAME().GetText() == "this")
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
-        var decl = (AST_VarDecl)CommonDeclVar(class_symb, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
-        ast.AddChild(decl);
+        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), ParseType(vd.type()));
+        class_symb.Define(fld_symb);
       }
 
       var fd = cb.funcDecl();
@@ -2020,7 +2020,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(fd.NAME().GetText() == "this")
           FireError(fd.NAME(), "the keyword \"this\" is reserved");
 
-        var func_ast = CommonFuncDecl(fd, class_symb);
+        var func_ast = CommonFuncDecl(class_symb, fd);
         ast.AddChild(func_ast);
       }
     }
@@ -2030,7 +2030,7 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_FuncDecl CommonFuncDecl(bhlParser.FuncDeclContext ctx, IScope scope)
+  AST_FuncDecl CommonFuncDecl(IScope scope, bhlParser.FuncDeclContext ctx)
   {
     var tp = ParseType(ctx.retType());
     var func_tree = Wrap(ctx);
@@ -2391,10 +2391,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     VariableSymbol symb = func_arg ? 
       (VariableSymbol) new FuncArgSymbol(var_tree, name.GetText(), tp, is_ref) :
-      (VariableSymbol) (curr_scope is ClassSymbolScript ? 
-          new FieldSymbolScript(name.GetText(), tp) :
-          new VariableSymbol(var_tree, name.GetText(), tp)
-      );
+      new VariableSymbol(var_tree, name.GetText(), tp);
 
     symb.scope_level = scope_level;
     curr_scope.Define(symb);

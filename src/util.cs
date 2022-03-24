@@ -438,7 +438,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_ClassDecl node)
   {
     Console.Write("(CLASS ");
-    Console.Write(node.name);
+    Console.Write(node.symbol.name);
     VisitChildren(node);
     Console.Write(")");
   }

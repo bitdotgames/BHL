@@ -880,7 +880,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
   public SymbolsDictionary GetArgs()
   {
-    //let's skip hidden 'this' argument if needed
+    //let's skip hidden 'this' argument which is stored at 0 idx
     int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
 
     var args = new SymbolsDictionary(this);

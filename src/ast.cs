@@ -104,14 +104,13 @@ public abstract class AST_Visitor
 public interface IAST
 {}
 
-public class AST : IAST
+public abstract class AST : IAST
 {
   public List<IAST> children = new List<IAST>();
 }
 
 public class AST_Interim : AST 
-{
-}
+{}
 
 public class AST_Import : IAST
 {
@@ -183,7 +182,7 @@ public class AST_FuncDecl : AST
 
 public class AST_ClassDecl : AST 
 {
-  public string name = "";
+  public ClassSymbol symbol;
 }
 
 public class AST_EnumItem : IAST
@@ -253,8 +252,7 @@ public class AST_Return  : AST
 }
 
 public class AST_Break : IAST
-{
-}
+{}
 
 public class AST_Continue : IAST
 {
@@ -316,8 +314,7 @@ public class AST_JsonArr : AST
 }
 
 public class AST_JsonArrAddItem : IAST
-{
-}
+{}
 
 public class AST_JsonPair : AST 
 {
@@ -327,8 +324,7 @@ public class AST_JsonPair : AST
 }
 
 public class AST_PopValue : IAST
-{
-}
+{}
 
 static public class AST_Util
 {
@@ -451,10 +447,10 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_ClassDecl New_ClassDecl(string name)
+  static public AST_ClassDecl New_ClassDecl(ClassSymbol symbol)
   {
     var n = new AST_ClassDecl();
-    n.name = name;
+    n.symbol = symbol;
 
     return n;
   }
