@@ -150,10 +150,47 @@ public class NullSymbol : BuiltInSymbol
   }
 }
 
+public class InterfaceMethod : IMarshallable
+{
+  public string name;
+  public FuncSignature signature;
+
+  public InterfaceMethod(string name, FuncSignature signature)
+  {
+    this.name = name;
+    this.signature = signature;
+  }
+
+  //marshall factory version
+  public InterfaceMethod()
+    : this("", new FuncSignature())
+  {}
+
+  public void Sync(SyncContext ctx)
+  {
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref signature);
+  }
+
+  public override string ToString() 
+  {
+    string s = "";
+    s += "func ";
+    if(signature.ret_type.Get() != Types.Void)
+      s += signature.ret_type.Get().GetName() + " ";
+    s += name;
+    s += "(";
+    foreach(var arg in signature.arg_types)
+      s += arg.name + ",";
+    s = s.TrimEnd(',');
+    s += ")";
+    return s;
+  }
+}
+
 public abstract class InterfaceSymbol : Symbol, IType 
 {
-  protected List<string> names = new List<string>();
-  protected List<FuncSignature> sigs = new List<FuncSignature>();
+  public List<InterfaceMethod> methods = new List<InterfaceMethod>(); 
 
 #if BHL_FRONT
   public InterfaceSymbol(
@@ -174,22 +211,28 @@ public abstract class InterfaceSymbol : Symbol, IType
 
   public string GetName() { return name; }
 
-  public bool AddSignature(string name, FuncSignature sig)
+  public bool Add(InterfaceMethod m)
   {
-    if(names.Contains(name))
+    if(Find(m.name) != null)
       return false;
 
-    names.Add(name);
-    sigs.Add(sig);
+    methods.Add(m);
     return true;
   }
 
-  public FuncSignature FindSignature(string name)
+  public InterfaceMethod Find(string name)
   {
-    int idx = names.IndexOf(name);
-    if(idx == -1)
-      return null;
-    return sigs[idx];
+    foreach(var m in methods)
+      if(m.name == name)
+        return m;
+    return null;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    base.Sync(ctx);
+
+    Marshall.Sync(ctx, methods); 
   }
 }
 
@@ -217,13 +260,6 @@ public class InterfaceSymbolScript : InterfaceSymbol
   public override uint ClassId()
   {
     return CLASS_ID;
-  }
-
-  public override void Sync(SyncContext ctx)
-  {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, names); 
-    Marshall.Sync(ctx, sigs); 
   }
 }
 

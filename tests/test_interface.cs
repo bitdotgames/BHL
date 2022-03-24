@@ -29,7 +29,7 @@ public class TestInterfaces : BHL_TestBase
     var vm = MakeVM(bhl);
     var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
-    var hey = symb.FindSignature("hey");
+    var hey = symb.Find("hey").signature;
     AssertTrue(hey != null);
     AssertEqual(2, hey.arg_types.Count);
     AssertEqual(Types.Int, hey.arg_types[0].Get());
@@ -54,14 +54,14 @@ public class TestInterfaces : BHL_TestBase
     var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
 
-    var hey = symb.FindSignature("hey");
+    var hey = symb.Find("hey").signature;
     AssertTrue(hey != null);
     AssertEqual(2, hey.arg_types.Count);
     AssertEqual(Types.Int, hey.arg_types[0].Get());
     AssertEqual(Types.Float, hey.arg_types[1].Get());
     AssertEqual(Types.Bool, hey.ret_type.Get());
 
-    var bar = symb.FindSignature("bar");
+    var bar = symb.Find("bar").signature;
     AssertTrue(bar != null);
     AssertEqual(1, bar.arg_types.Count);
     AssertEqual(Types.String, bar.arg_types[0].Get());
@@ -88,7 +88,7 @@ public class TestInterfaces : BHL_TestBase
     );
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestClassDoesntImplementInterface()
   {
     string bhl = @"
@@ -104,7 +104,7 @@ public class TestInterfaces : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int i)'"
+      "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'"
     );
   }
 

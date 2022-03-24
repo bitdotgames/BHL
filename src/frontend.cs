@@ -1958,7 +1958,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(default_args_num != 0)
           FireError(ib, "default value is not allowed in this context");
 
-        symb.AddSignature(fd.NAME().GetText(), sig);
+        symb.Add(new InterfaceMethod(fd.NAME().GetText(), sig));
       }
     }
 
@@ -1997,10 +1997,11 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
-    var class_symb = new ClassSymbolScript(Wrap(ctx), name, super_class);
-    var ast = AST_Util.New_ClassDecl(class_symb);
+    var class_symb = new ClassSymbolScript(Wrap(ctx), name, super_class, implements);
 
     module.scope.Define(class_symb);
+
+    var ast = AST_Util.New_ClassDecl(class_symb);
 
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
@@ -2027,9 +2028,27 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
+    ValidateInterfaces(ctx, class_symb);
+
     PeekAST().AddChild(ast);
 
     return null;
+  }
+
+  void ValidateInterfaces(bhlParser.ClassDeclContext ctx, ClassSymbolScript class_symb)
+  {
+    foreach(var imp in class_symb.implements)
+      ValidateInterfaceImplementation(ctx, imp, class_symb);
+  }
+
+  void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)
+  {
+    foreach(var m in iface.methods)
+    {
+      var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
+      if(func_symb == null)
+        FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
+    }
   }
 
   AST_FuncDecl CommonFuncDecl(IScope scope, bhlParser.FuncDeclContext ctx)

@@ -202,6 +202,7 @@ public class FuncSignature : IType, IMarshallableGeneric
   public string name;
 
   public TypeProxy ret_type;
+  //TODO: include arg names as well since we support named args?
   public List<TypeProxy> arg_types = new List<TypeProxy>();
 
   public string GetName() { return name; }
