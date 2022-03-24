@@ -123,29 +123,56 @@ public class TestInterfaces : BHL_TestBase
         "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'"
       );
     }
+
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int,string bar(int i)
+      }
+      class Foo : IFoo {
+        func int,int bar(int i) { 
+          return 1,2
+        } 
+      }
+      ";
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int,string bar(int)'"
+      );
+    }
   }
 
   [IsTested()]
   public void TestClassImplementsInterface()
   {
-    string bhl = @"
-    interface IFoo { 
-      func int bar(int i)
-    }
-
-    class Foo : IFoo {
-      func int bar(int i) {
-        return i
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int bar(int i)
       }
+      class Foo : IFoo {
+        func int bar(int i) {
+          return i
+        }
+      }
+      ";
+      Compile(bhl);
     }
 
-    func int test() {
-      Foo foo = {}
-      return foo.bar(42)
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int,string bar(int i)
+      }
+      class Foo : IFoo {
+        func int,string bar(int i) {
+          return i,""foo""
+        }
+      }
+      ";
+      Compile(bhl);
     }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
   }
 }
