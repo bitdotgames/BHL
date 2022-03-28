@@ -229,7 +229,7 @@ public class AST_Call  : AST_Tree
   public uint cargs_bits;
   public int line_num;
   public int symb_idx;
-  public IType scope_type;
+  public IScopeType scope_type;
 }
 
 public class AST_Return  : AST_Tree 
@@ -468,17 +468,17 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", string module_name = "", ClassSymbol scope_symb = null, int symb_idx = -1)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", string module_name = "", IScopeType scope_symb = null, int symb_idx = -1)
   {
-    return New_Call(type, line_num, name, scope_symb as IType, symb_idx, module_name);
+    return New_Call(type, line_num, name, scope_symb, symb_idx, module_name);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, ClassSymbol scope_symb = null)
+  static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, IScopeType scope_symb = null)
   {
-    return New_Call(type, line_num, symb.name, scope_symb as IType, symb.scope_idx, symb.module_name);
+    return New_Call(type, line_num, symb.name, scope_symb, symb.scope_idx, symb.module_name);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name, IType scope_type, int symb_idx = -1, string module_name = "")
+  static public AST_Call New_Call(EnumCall type, int line_num, string name, IScopeType scope_type, int symb_idx = -1, string module_name = "")
   {
     var n = new AST_Call();
     n.type = type;

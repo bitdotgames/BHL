@@ -150,53 +150,12 @@ public class NullSymbol : BuiltInSymbol
   }
 }
 
-public class InterfaceMethod : IMarshallable
+public abstract class InterfaceSymbol : EnclosingSymbol, IScopeType
 {
-  public string name;
-  public FuncSignature signature;
-
-  public InterfaceMethod(string name, FuncSignature signature)
-  {
-    this.name = name;
-    this.signature = signature;
-  }
-
-  //marshall factory version
-  public InterfaceMethod()
-    : this("", new FuncSignature())
-  {}
-
-  public void Sync(SyncContext ctx)
-  {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref signature);
-  }
-
-  public override string ToString() 
-  {
-    string s = "";
-    s += "func ";
-    if(signature.ret_type.Get() != Types.Void)
-      s += signature.ret_type.Get().GetName() + " ";
-    s += name;
-    s += "(";
-    foreach(var arg in signature.arg_types)
-      s += arg.name + ",";
-    s = s.TrimEnd(',');
-    s += ")";
-    return s;
-  }
-}
-
-public abstract class InterfaceSymbol : Symbol, IType 
-{
-  public List<InterfaceMethod> methods = new List<InterfaceMethod>(); 
+  SymbolsDictionary members;
 
 #if BHL_FRONT
-  public InterfaceSymbol(
-    WrappedParseTree parsed, 
-    string name
-  )
+  public InterfaceSymbol(WrappedParseTree parsed, string name)
     : this(name)
   {
     this.parsed = parsed;
@@ -204,35 +163,41 @@ public abstract class InterfaceSymbol : Symbol, IType
 #endif
 
   public InterfaceSymbol(string name)
-    : base(name, default(TypeProxy))
+    : base(name)
   {
     this.type = new TypeProxy(this);
+    members = new SymbolsDictionary(this);
   }
 
   public string GetName() { return name; }
-
-  public bool Add(InterfaceMethod m)
-  {
-    if(Find(m.name) != null)
-      return false;
-
-    methods.Add(m);
-    return true;
-  }
-
-  public InterfaceMethod Find(string name)
-  {
-    foreach(var m in methods)
-      if(m.name == name)
-        return m;
-    return null;
-  }
 
   public override void Sync(SyncContext ctx)
   {
     base.Sync(ctx);
 
-    Marshall.Sync(ctx, methods); 
+    Marshall.Sync(ctx, ref members); 
+  }
+
+  public override IScope GetFallbackScope()
+  {
+    return null;
+  }
+
+  public override void Define(Symbol sym)
+  {
+    if(!(sym is FuncSymbol))
+      throw new Exception("Only function symbols supported");
+    base.Define(sym);
+  }
+
+  public override SymbolsDictionary GetMembers()
+  {
+    return members;
+  }
+
+  public FuncSymbol FindMethod(string name)
+  {
+    return Resolve(name) as FuncSymbol;
   }
 }
 
@@ -263,7 +228,7 @@ public class InterfaceSymbolScript : InterfaceSymbol
   }
 }
 
-public abstract class ClassSymbol : EnclosingSymbol, IScope, IType 
+public abstract class ClassSymbol : EnclosingSymbol, IScopeType
 {
   public ClassSymbol super_class {get; protected set;}
 
@@ -943,6 +908,20 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     if(ctx.is_read)
       type = new TypeProxy(signature);
     Marshall.Sync(ctx, ref _scope_idx);
+  }
+
+  public override string ToString()
+  {
+    string s = "";
+    s += "func ";
+    s += GetSignature().ret_type.Get().GetName() + " ";
+    s += name;
+    s += "(";
+    foreach(var arg in GetSignature().arg_types)
+      s += arg.name + ",";
+    s = s.TrimEnd(',');
+    s += ")";
+    return s;
   }
 }
 

@@ -19,6 +19,9 @@ public interface IScope
   SymbolsDictionary GetMembers();
 }
 
+public interface IScopeType : IType, IScope 
+{}
+
 public class Scope : IScope 
 {
   protected IScope fallback;

@@ -529,7 +529,7 @@ public class Frontend : bhlBaseVisitor<object>
     ITerminalNode name, 
     bhlParser.CallArgsContext cargs, 
     bhlParser.ArrAccessContext arracc, 
-    ClassSymbol class_scope, 
+    IScopeType scope_type, 
     ref IType type, 
     ref AST_Interim pre_call,
     int line, 
@@ -541,7 +541,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(name != null)
     {
       string str_name = name.GetText();
-      var name_symb = class_scope == null ? curr_scope.Resolve(str_name) : class_scope.Resolve(str_name);
+      var name_symb = scope_type == null ? curr_scope.Resolve(str_name) : scope_type.Resolve(str_name);
       if(name_symb == null)
         FireError(name, "symbol not resolved");
 
@@ -559,7 +559,7 @@ public class Frontend : bhlBaseVisitor<object>
         {
           var ftype = var_symb.type.Get() as FuncSignature;
 
-          if(class_scope == null)
+          if(scope_type == null)
           {
             ast = AST_Util.New_Call(EnumCall.FUNC_VAR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
@@ -567,7 +567,7 @@ public class Frontend : bhlBaseVisitor<object>
           }
           else //func ptr member of class
           {
-            PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, var_symb, class_scope));
+            PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, var_symb, scope_type));
             ast = AST_Util.New_Call(EnumCall.FUNC_MVAR, line);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
@@ -575,7 +575,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = AST_Util.New_Call(class_scope != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), class_scope, func_symb.scope_idx);
+          ast = AST_Util.New_Call(scope_type != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), scope_type, func_symb.scope_idx);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -601,19 +601,22 @@ public class Frontend : bhlBaseVisitor<object>
           bool is_write = write && arracc == null;
           bool is_global = var_symb.scope is ModuleScope;
 
-          ast = AST_Util.New_Call(class_scope != null ? 
+          if(scope_type is InterfaceSymbol)
+            FireError(name, "attributes not supported by interfaces");
+
+          ast = AST_Util.New_Call(scope_type != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
             var_symb.name,
-            (IType)class_scope,
+            scope_type,
             var_symb.scope_idx,
             is_global ? var_symb.module_name : ""
           );
           //handling passing by ref for class fields
-          if(class_scope != null && PeekCallByRef())
+          if(scope_type != null && PeekCallByRef())
           {
-            if(class_scope is ClassSymbolNative)
+            if(scope_type is ClassSymbolNative)
               FireError(name, "getting field by 'ref' not supported for this class");
             ast.type = EnumCall.MVARREF; 
           }
@@ -1958,7 +1961,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(default_args_num != 0)
           FireError(ib, "default value is not allowed in this context");
 
-        symb.Add(new InterfaceMethod(fd.NAME().GetText(), sig));
+        symb.Define(new FuncSymbolScript(null, sig, fd.NAME().GetText(), 0, 0));
       }
     }
 
@@ -2043,10 +2046,11 @@ public class Frontend : bhlBaseVisitor<object>
 
   void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)
   {
-    foreach(var m in iface.methods)
+    for(int i=0;i<iface.GetMembers().Count;++i)
     {
+      var m = (FuncSymbol)iface.GetMembers()[i];
       var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
-      if(func_symb == null || !func_symb.GetSignature().Matches(m.signature))
+      if(func_symb == null || !func_symb.GetSignature().Matches(m.GetSignature()))
         FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
     }
   }

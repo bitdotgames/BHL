@@ -29,7 +29,7 @@ public class TestInterfaces : BHL_TestBase
     var vm = MakeVM(bhl);
     var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
-    var hey = symb.Find("hey").signature;
+    var hey = symb.FindMethod("hey").GetSignature();
     AssertTrue(hey != null);
     AssertEqual(2, hey.arg_types.Count);
     AssertEqual(Types.Int, hey.arg_types[0].Get());
@@ -54,14 +54,14 @@ public class TestInterfaces : BHL_TestBase
     var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
 
-    var hey = symb.Find("hey").signature;
+    var hey = symb.FindMethod("hey").GetSignature();
     AssertTrue(hey != null);
     AssertEqual(2, hey.arg_types.Count);
     AssertEqual(Types.Int, hey.arg_types[0].Get());
     AssertEqual(Types.Float, hey.arg_types[1].Get());
     AssertEqual(Types.Bool, hey.ret_type.Get());
 
-    var bar = symb.Find("bar").signature;
+    var bar = symb.FindMethod("bar").GetSignature();
     AssertTrue(bar != null);
     AssertEqual(1, bar.arg_types.Count);
     AssertEqual(Types.String, bar.arg_types[0].Get());
@@ -173,6 +173,35 @@ public class TestInterfaces : BHL_TestBase
       }
       ";
       Compile(bhl);
+    }
+  }
+
+  [IsTested()]
+  public void TestCallByInterfaceMethod()
+  {
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int bar(int i)
+      }
+      class Foo : IFoo {
+        func int bar(int i) {
+          return i
+        }
+      }
+
+      func int call(IFoo f, int i) {
+        return f.bar(i)
+      }
+
+      func int test() {
+        Foo f = {}
+        return call(f, 42)
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
     }
   }
 }
