@@ -154,7 +154,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
   SymbolsDictionary members;
 
-  public IList<InterfaceSymbol> extends {get; protected set;}
+  public List<InterfaceSymbol> extends { get; protected set; }
 
 #if BHL_FRONT
   public InterfaceSymbol(
@@ -207,9 +207,30 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
   {
     base.Sync(ctx);
 
+    //TODO: maybe 'extends' collection should be a SymbolsDictionary? 
+    var tmp_extends = new List<string>();
+
+    if(!ctx.is_read)
+    {
+      foreach(var ext in extends)
+        tmp_extends.Add(ext.GetName());
+    }
+
+    Marshall.Sync(ctx, tmp_extends); 
+
+    if(ctx.is_read)
+    {
+      var types = ((SymbolFactory)ctx.factory).types;
+      foreach(var tmp in tmp_extends)
+      {
+        var tmp_ext = (InterfaceSymbol)types.Resolve(tmp);
+        if(tmp_ext == null)
+          throw new Exception("Parent interface '" + tmp + "' not found");
+        extends.Add(tmp_ext);
+      }
+    }
+
     Marshall.Sync(ctx, ref members); 
-    //???
-    //Marshall.Sync(ctx, ref extends); 
   }
 
   public override IScope GetFallbackScope()
@@ -1287,6 +1308,29 @@ public class ClassSymbolScript : ClassSymbol
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
       super_class = tmp_class;
+    }
+
+    //TODO: maybe 'implements' collection should be a SymbolsDictionary? 
+    var tmp_implements = new List<string>();
+
+    if(!ctx.is_read)
+    {
+      foreach(var imp in implements)
+        tmp_implements.Add(imp.GetName());
+    }
+
+    Marshall.Sync(ctx, tmp_implements); 
+
+    if(ctx.is_read)
+    {
+      var types = ((SymbolFactory)ctx.factory).types;
+      foreach(var tmp in tmp_implements)
+      {
+        var tmp_imp = (InterfaceSymbol)types.Resolve(tmp);
+        if(tmp_imp == null)
+          throw new Exception("Parent interface '" + tmp + "' not found");
+        implements.Add(tmp_imp);
+      }
     }
 
     //NOTE: this includes super class members as well, maybe we

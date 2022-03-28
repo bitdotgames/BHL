@@ -92,6 +92,8 @@ public class TestInterfaces : BHL_TestBase
     {
       var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
       AssertTrue(symb != null);
+      AssertEqual(1, symb.extends.Count);
+      AssertEqual("Wow", symb.extends[0].GetName());
       AssertEqual(2, symb.GetMembers().Count);
 
       var hey = symb.FindMethod("hey").GetSignature();
@@ -114,6 +116,7 @@ public class TestInterfaces : BHL_TestBase
     {
       var symb = vm.Types.Resolve("Wow") as InterfaceSymbolScript;
       AssertTrue(symb != null);
+      AssertEqual(0, symb.extends.Count);
       AssertEqual(1, symb.GetMembers().Count);
 
       var bar = symb.FindMethod("bar").GetSignature();
@@ -239,7 +242,11 @@ public class TestInterfaces : BHL_TestBase
         }
       }
       ";
-      Compile(bhl);
+      var vm = MakeVM(bhl);
+      var symb = vm.Types.Resolve("Foo") as ClassSymbol;
+      AssertTrue(symb != null);
+      AssertEqual(1, symb.implements.Count);
+      AssertEqual("IFoo", symb.implements[0].GetName());
     }
 
     {
