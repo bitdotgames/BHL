@@ -89,24 +89,42 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
-    AssertTrue(symb != null);
+    {
+      var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
+      AssertTrue(symb != null);
+      AssertEqual(2, symb.GetMembers().Count);
 
-    var hey = symb.FindMethod("hey").GetSignature();
-    AssertTrue(hey != null);
-    AssertEqual(2, hey.arg_types.Count);
-    AssertEqual(Types.Int, hey.arg_types[0].Get());
-    AssertEqual(Types.Float, hey.arg_types[1].Get());
-    AssertEqual(Types.Bool, hey.ret_type.Get());
+      var hey = symb.FindMethod("hey").GetSignature();
+      AssertTrue(hey != null);
+      AssertEqual(2, hey.arg_types.Count);
+      AssertEqual(Types.Int, hey.arg_types[0].Get());
+      AssertEqual(Types.Float, hey.arg_types[1].Get());
+      AssertEqual(Types.Bool, hey.ret_type.Get());
 
-    var bar = symb.FindMethod("bar").GetSignature();
-    AssertTrue(bar != null);
-    AssertEqual(1, bar.arg_types.Count);
-    AssertEqual(Types.String, bar.arg_types[0].Get());
-    var tuple = (TupleType)bar.ret_type.Get();
-    AssertEqual(2, tuple.Count);
-    AssertEqual("Bar", tuple[0].name);
-    AssertEqual(Types.Int, tuple[1].Get());
+      var bar = symb.FindMethod("bar").GetSignature();
+      AssertTrue(bar != null);
+      AssertEqual(1, bar.arg_types.Count);
+      AssertEqual(Types.String, bar.arg_types[0].Get());
+      var tuple = (TupleType)bar.ret_type.Get();
+      AssertEqual(2, tuple.Count);
+      AssertEqual("Bar", tuple[0].name);
+      AssertEqual(Types.Int, tuple[1].Get());
+    }
+
+    {
+      var symb = vm.Types.Resolve("Wow") as InterfaceSymbolScript;
+      AssertTrue(symb != null);
+      AssertEqual(1, symb.GetMembers().Count);
+
+      var bar = symb.FindMethod("bar").GetSignature();
+      AssertTrue(bar != null);
+      AssertEqual(1, bar.arg_types.Count);
+      AssertEqual(Types.String, bar.arg_types[0].Get());
+      var tuple = (TupleType)bar.ret_type.Get();
+      AssertEqual(2, tuple.Count);
+      AssertEqual("Bar", tuple[0].name);
+      AssertEqual(Types.Int, tuple[1].Get());
+    }
   }
 
   [IsTested()]
