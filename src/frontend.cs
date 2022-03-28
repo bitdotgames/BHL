@@ -1945,7 +1945,24 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var name = ctx.NAME().GetText();
 
-    var symb = new InterfaceSymbolScript(Wrap(ctx), name);
+    var extends = new List<InterfaceSymbol>();
+    if(ctx.extensions() != null)
+    {
+      for(int i=0;i<ctx.extensions().NAME().Length;++i)
+      {
+        var ext_name = ctx.extensions().NAME()[i]; 
+
+        var ext = module.scope.Resolve(ext_name.GetText());
+        if(ext is InterfaceSymbol ifs)
+        {
+          extends.Add(ifs);
+        }
+        else
+          FireError(ext_name, "not an interface");
+      }
+    }
+
+    var symb = new InterfaceSymbolScript(Wrap(ctx), name, extends);
 
     module.scope.Define(symb);
 
@@ -2006,7 +2023,7 @@ public class Frontend : bhlBaseVisitor<object>
           implements.Add(ifs);
         }
         else
-          FireError(ext_name, "only classes and interfaces supported");
+          FireError(ext_name, "not a class or an interface");
       }
     }
 

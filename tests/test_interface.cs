@@ -72,6 +72,44 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserInterfaceInheritance()
+  {
+    string bhl = @"
+    class Bar { 
+    }
+
+    interface Wow 
+    {
+      func Bar,int bar(string s)
+    }
+
+    interface Foo : Wow { 
+      func bool hey(int a, float b)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
+    AssertTrue(symb != null);
+
+    var hey = symb.FindMethod("hey").GetSignature();
+    AssertTrue(hey != null);
+    AssertEqual(2, hey.arg_types.Count);
+    AssertEqual(Types.Int, hey.arg_types[0].Get());
+    AssertEqual(Types.Float, hey.arg_types[1].Get());
+    AssertEqual(Types.Bool, hey.ret_type.Get());
+
+    var bar = symb.FindMethod("bar").GetSignature();
+    AssertTrue(bar != null);
+    AssertEqual(1, bar.arg_types.Count);
+    AssertEqual(Types.String, bar.arg_types[0].Get());
+    var tuple = (TupleType)bar.ret_type.Get();
+    AssertEqual(2, tuple.Count);
+    AssertEqual("Bar", tuple[0].name);
+    AssertEqual(Types.Int, tuple[1].Get());
+  }
+
+  [IsTested()]
   public void TestUserInterfaceMethodDefaultValuesNotAllowed()
   {
     string bhl = @"

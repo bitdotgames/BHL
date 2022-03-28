@@ -154,19 +154,51 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
   SymbolsDictionary members;
 
+  public IList<InterfaceSymbol> extends {get; protected set;}
+
 #if BHL_FRONT
-  public InterfaceSymbol(WrappedParseTree parsed, string name)
-    : this(name)
+  public InterfaceSymbol(
+    WrappedParseTree parsed, 
+    string name,
+    IList<InterfaceSymbol> extends = null
+  )
+    : this(name, extends)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public InterfaceSymbol(string name)
+  public InterfaceSymbol(
+    string name,
+    IList<InterfaceSymbol> extends = null
+  )
     : base(name)
   {
     this.type = new TypeProxy(this);
     members = new SymbolsDictionary(this);
+
+    SetExtends(extends);
+  }
+
+  void SetExtends(IList<InterfaceSymbol> extends)
+  {
+    this.extends = new List<InterfaceSymbol>();
+    if(extends != null)
+    {
+      foreach(var ext in extends)
+      {
+        this.extends.Add(ext);
+
+        //NOTE: at the moment for resolving simplcity we add 
+        //      extension members right into the interface itself
+        var ext_members = ext.GetMembers();
+        for(int i=0;i<ext_members.Count;++i)
+        {
+          var mem = ext_members[i]; 
+          base.Define(mem);
+        }
+      }
+    }
   }
 
   public string GetName() { return name; }
@@ -176,6 +208,8 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     base.Sync(ctx);
 
     Marshall.Sync(ctx, ref members); 
+    //???
+    //Marshall.Sync(ctx, ref extends); 
   }
 
   public override IScope GetFallbackScope()
@@ -203,6 +237,8 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
   public void GetInstanceTypesSet(HashSet<IInstanceType> s)
   {
     s.Add(this);
+    foreach(var ext in extends)
+      s.Add(ext);
   }
 }
 
@@ -210,13 +246,20 @@ public class InterfaceSymbolScript : InterfaceSymbol
 {
   public const uint CLASS_ID = 18;
   
-  public InterfaceSymbolScript(string name)
-    : base(name)
+  public InterfaceSymbolScript(
+    string name,
+    IList<InterfaceSymbol> extends = null
+  )
+    : base(name, extends)
   {}
 
 #if BHL_FRONT
-  public InterfaceSymbolScript(WrappedParseTree parsed, string name)
-    : this(name)
+  public InterfaceSymbolScript(
+    WrappedParseTree parsed, 
+    string name,
+    IList<InterfaceSymbol> extends = null
+  )
+    : this(name, extends)
   {
     this.parsed = parsed;
   }
@@ -287,20 +330,22 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
       var super_members = super_class.GetMembers();
       for(int i=0;i<super_members.Count;++i)
       {
-        var sym = super_members[i];
+        var mem = super_members[i];
         //NOTE: using base Define instead of our own version
         //      since we want to avoid 'already defined' checks
-        base.Define(sym);
+        base.Define(mem);
       }
     }
   }
 
   void SetImplements(IList<InterfaceSymbol> implements)
   {
-    if(implements == null)
-      implements = new List<InterfaceSymbol>();
-
-    this.implements = implements;
+    this.implements = new List<InterfaceSymbol>();
+    if(implements != null)
+    {
+      foreach(var imp in implements)
+        this.implements.Add(imp);
+    }
   }
 
   public void GetInstanceTypesSet(HashSet<IInstanceType> s)
