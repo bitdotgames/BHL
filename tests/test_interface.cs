@@ -264,7 +264,7 @@ public class TestInterfaces : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestCallByInterfaceMethod()
   {
     {
@@ -280,6 +280,36 @@ public class TestInterfaces : BHL_TestBase
 
       func int call(IFoo f, int i) {
         return f.bar(i)
+      }
+
+      func int test() {
+        Foo f = {}
+        return call(f, 42)
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      interface IBarBase { 
+        func int bar(int i)
+      }
+      interface IBar : IBarBase { 
+        func foo()
+      }
+      class Foo : IBar {
+        func foo() { } 
+
+        func int bar(int i) {
+          return i
+        }
+      }
+
+      func int call(IBarBase b, int i) {
+        return b.bar(i)
       }
 
       func int test() {
