@@ -547,38 +547,46 @@ public class Types
     return false;
   }
 
-  static public bool CanAssignTo(IType src, IType dst, IType promotion) 
+  static public bool CanAssignTo(IType rhs, IType lhs, IType promotion) 
   {
-    return src == dst || 
-           promotion == dst || 
-           dst == Any ||
-           (dst is ClassSymbol && src == Null) ||
-           (dst is FuncSignature && src == Null) || 
-           src.GetName() == dst.GetName() ||
-           IsChildClass(src, dst)
+    return rhs == lhs || 
+           promotion == lhs || 
+           lhs == Any ||
+           (lhs is ClassSymbol && rhs == Null) ||
+           (lhs is InterfaceSymbol && rhs == Null) ||
+           (lhs is FuncSignature && rhs == Null) || 
+           rhs.GetName() == lhs.GetName() ||
+           Is(rhs, lhs)
            ;
   }
 
-  static public bool IsChildClass(IType t, IType pt) 
+  static public bool Is(IType a, IType b) 
   {
-    var cl = t as ClassSymbol;
-    if(cl == null)
+    if(a is IInstanceType ai && b is IInstanceType bi)
+    {
+      var aset = new HashSet<IInstanceType>();
+      ai.GetInstanceTypesSet(aset);
+
+      var bset = new HashSet<IInstanceType>();
+      bi.GetInstanceTypesSet(bset);
+
+      //Console.WriteLine(">>>>>>>>>");
+      //foreach(var a1 in aset)
+      //  Console.WriteLine(a1.GetName());
+      //Console.WriteLine("<<<<<<<<<");
+      //foreach(var b1 in bset)
+      //  Console.WriteLine(b1.GetName());
+      //Console.WriteLine("==========");
+
+      return aset.IsSupersetOf(bset);
+    }
+    else
       return false;
-    var pcl = pt as ClassSymbol;
-    if(pcl == null)
-      return false;
-    return cl.IsSubclassOf(pcl);
   }
 
-  static public bool IsInSameClassHierarchy(IType a, IType b) 
+  static public bool IsInSameHierarchy(IType a, IType b) 
   {
-    var ca = a as ClassSymbol;
-    if(ca == null)
-      return false;
-    var cb = b as ClassSymbol;
-    if(cb == null)
-      return false;
-    return cb.IsSubclassOf(ca) || ca.IsSubclassOf(cb);
+    return Is(a, b) || Is(b, a);
   }
 
   static public bool IsBinOpCompatible(IType type)
@@ -653,7 +661,7 @@ public class Types
     if(cast_type == ltype)
       return;
 
-    if(IsInSameClassHierarchy(rtype, ltype))
+    if(IsInSameHierarchy(rtype, ltype))
       return;
     
     throw new SemanticError(type, "incompatible types for casting");

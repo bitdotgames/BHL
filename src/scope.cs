@@ -19,8 +19,10 @@ public interface IScope
   SymbolsDictionary GetMembers();
 }
 
-public interface IScopeType : IType, IScope 
-{}
+public interface IInstanceType : IType, IScope 
+{
+  void GetInstanceTypesSet(HashSet<IInstanceType> s);
+}
 
 public class Scope : IScope 
 {

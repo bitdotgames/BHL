@@ -462,7 +462,7 @@ public class Frontend : bhlBaseVisitor<object>
     var orig_scope = curr_scope;
 
     ITerminalNode curr_name = root_name;
-    ClassSymbol curr_class = null;
+    IInstanceType curr_scope_type = null;
 
     if(root_name != null)
     {
@@ -488,23 +488,23 @@ public class Frontend : bhlBaseVisitor<object>
 
         if(cargs != null)
         {
-          ProcCallChainItem(curr_name, cargs, null, curr_class, ref curr_type, ref pre_call, line, write: false);
-          curr_class = null;
+          ProcCallChainItem(curr_name, cargs, null, curr_scope_type, ref curr_type, ref pre_call, line, write: false);
+          curr_scope_type = null;
           curr_name = null;
         }
         else if(arracc != null)
         {
-          ProcCallChainItem(curr_name, null, arracc, curr_class, ref curr_type, ref pre_call, line, write: write && is_last);
-          curr_class = null;
+          ProcCallChainItem(curr_name, null, arracc, curr_scope_type, ref curr_type, ref pre_call, line, write: write && is_last);
+          curr_scope_type = null;
           curr_name = null;
         }
         else if(macc != null)
         {
           if(curr_name != null)
-            ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, ref pre_call, line, write: false);
+            ProcCallChainItem(curr_name, null, null, curr_scope_type, ref curr_type, ref pre_call, line, write: false);
 
-          curr_class = curr_type as ClassSymbol; 
-          if(curr_class == null)
+          curr_scope_type = curr_type as IInstanceType; 
+          if(curr_scope_type == null)
             FireError(macc, "type doesn't support member access via '.'");
 
           curr_name = macc.NAME();
@@ -514,7 +514,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //checking the leftover of the call chain
     if(curr_name != null)
-      ProcCallChainItem(curr_name, null, null, curr_class, ref curr_type, ref pre_call, line, write);
+      ProcCallChainItem(curr_name, null, null, curr_scope_type, ref curr_type, ref pre_call, line, write);
 
     curr_scope = orig_scope;
 
@@ -529,7 +529,7 @@ public class Frontend : bhlBaseVisitor<object>
     ITerminalNode name, 
     bhlParser.CallArgsContext cargs, 
     bhlParser.ArrAccessContext arracc, 
-    IScopeType scope_type, 
+    IInstanceType scope_type, 
     ref IType type, 
     ref AST_Interim pre_call,
     int line, 
@@ -1961,7 +1961,17 @@ public class Frontend : bhlBaseVisitor<object>
         if(default_args_num != 0)
           FireError(ib, "default value is not allowed in this context");
 
-        symb.Define(new FuncSymbolScript(null, sig, fd.NAME().GetText(), 0, 0));
+        var func_symb = new FuncSymbolScript(null, sig, fd.NAME().GetText(), 0, 0);
+        symb.Define(func_symb);
+
+        var func_params = fd.funcParams();
+        if(func_params != null)
+        {
+          var scope_bak = curr_scope;
+          curr_scope = func_symb;
+          Visit(func_params);
+          curr_scope = scope_bak;
+        }
       }
     }
 

@@ -1113,11 +1113,11 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.MFUNC:
       {
-        var class_symb = ast.scope_type as ClassSymbol;
-        if(class_symb == null)
-          throw new Exception("Class type not found: " + ast.scope_type.GetName());
+        var instance_type = ast.scope_type as IInstanceType;
+        if(instance_type == null)
+          throw new Exception("Instance type not found: " + ast.scope_type.GetName());
 
-        var mfunc = class_symb.members.TryAt(ast.symb_idx) as FuncSymbol;
+        var mfunc = instance_type.GetMembers().TryAt(ast.symb_idx) as FuncSymbol;
         if(mfunc == null)
           throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type.GetName() + "' by index " + ast.symb_idx);
 

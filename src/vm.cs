@@ -948,11 +948,11 @@ public class VM
           uint args_bits = Bytecode.Decode32(bytecode, ref ip); 
 
           string class_type = constants[class_type_idx].str; 
-          var class_symb = (ClassSymbol)types.Resolve(class_type);
+          var instance_symb = (IInstanceType)types.Resolve(class_type);
 
           BHS status;
           ICoroutine coroutine = null;
-          CallNative(init_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine);
+          CallNative(init_frame, (FuncSymbolNative)instance_symb.GetMembers()[func_idx], args_bits, out status, ref coroutine);
         }
         break;
         default:
@@ -1508,10 +1508,10 @@ public class VM
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
         string class_type = curr_frame.constants[class_type_idx].str; 
-        var class_symb = (ClassSymbol)types.Resolve(class_type);
+        var instance_symb = (IInstanceType)types.Resolve(class_type);
 
         BHS status;
-        if(CallNative(curr_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine))
+        if(CallNative(curr_frame, (FuncSymbolNative)instance_symb.GetMembers()[func_idx], args_bits, out status, ref coroutine))
           return status;
       }
       break;
@@ -1521,9 +1521,9 @@ public class VM
         int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
         string class_type = curr_frame.constants[class_type_idx].str; 
-        var class_symb = (ClassSymbol)types.Resolve(class_type);
+        var instance_symb = (IInstanceType)types.Resolve(class_type);
 
-        var field_symb = (FuncSymbolScript)class_symb.members[func_idx];
+        var field_symb = (FuncSymbolScript)instance_symb.GetMembers()[func_idx];
         int func_ip = field_symb.ip_addr;
 
         //TODO: use a simpler schema where 'self' is passed on the top

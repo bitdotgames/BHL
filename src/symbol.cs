@@ -150,7 +150,7 @@ public class NullSymbol : BuiltInSymbol
   }
 }
 
-public abstract class InterfaceSymbol : EnclosingSymbol, IScopeType
+public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
   SymbolsDictionary members;
 
@@ -199,6 +199,11 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IScopeType
   {
     return Resolve(name) as FuncSymbol;
   }
+
+  public void GetInstanceTypesSet(HashSet<IInstanceType> s)
+  {
+    s.Add(this);
+  }
 }
 
 public class InterfaceSymbolScript : InterfaceSymbol
@@ -228,7 +233,7 @@ public class InterfaceSymbolScript : InterfaceSymbol
   }
 }
 
-public abstract class ClassSymbol : EnclosingSymbol, IScopeType
+public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 {
   public ClassSymbol super_class {get; protected set;}
 
@@ -298,17 +303,12 @@ public abstract class ClassSymbol : EnclosingSymbol, IScopeType
     this.implements = implements;
   }
 
-  public bool IsSubclassOf(ClassSymbol p)
+  public void GetInstanceTypesSet(HashSet<IInstanceType> s)
   {
-    if(this == p)
-      return true;
-
-    for(var tmp = super_class; tmp != null; tmp = tmp.super_class)
-    {
-      if(tmp == p)
-        return true;
-    }
-    return false;
+    s.Add(this);
+    super_class?.GetInstanceTypesSet(s);
+    foreach(var imp in implements)
+      imp.GetInstanceTypesSet(s);
   }
 
   public override IScope GetFallbackScope() 
