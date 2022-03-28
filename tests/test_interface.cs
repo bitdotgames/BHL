@@ -142,6 +142,31 @@ public class TestInterfaces : BHL_TestBase
         "class 'Foo' doesn't implement interface 'IFoo' method 'func int,string bar(int)'"
       );
     }
+
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int,string bar(int i)
+      }
+
+      class Foo {
+      }
+
+      func foo(IFoo ifoo) { 
+      }
+
+      func test() {
+        Foo f = {} 
+        foo(f)
+      }
+      ";
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "incompatible types"
+      );
+    }
   }
 
   [IsTested()]
