@@ -154,7 +154,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
   SymbolsDictionary members;
 
-  public List<InterfaceSymbol> extends { get; protected set; }
+  public List<InterfaceSymbol> extends;
 
 #if BHL_FRONT
   public InterfaceSymbol(
@@ -255,11 +255,11 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     return Resolve(name) as FuncSymbol;
   }
 
-  public void GetInstanceTypesSet(HashSet<IInstanceType> s)
+  public void GetInstanceTypesSet(HashSet<IInstanceType> all)
   {
-    s.Add(this);
+    all.Add(this);
     foreach(var ext in extends)
-      s.Add(ext);
+      all.Add(ext);
   }
 }
 
@@ -299,9 +299,15 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
 public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 {
-  public ClassSymbol super_class {get; protected set;}
+  public ClassSymbol super_class;
 
-  public IList<InterfaceSymbol> implements {get; protected set;}
+  public IList<InterfaceSymbol> implements;
+
+  //contains mapping of implemented interface method indices 
+  //to actual class method indices:
+  //  [IFoo][3,1,0]
+  //  [IBar][2,0]
+  public Dictionary<InterfaceSymbol, List<int>> vmap = new Dictionary<InterfaceSymbol, List<int>>();
 
   public SymbolsDictionary members;
 
@@ -369,12 +375,36 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     }
   }
 
-  public void GetInstanceTypesSet(HashSet<IInstanceType> s)
+  public void UpdateVirtMap()
   {
-    s.Add(this);
-    super_class?.GetInstanceTypesSet(s);
+    vmap.Clear();
+
+    var all = new HashSet<IInstanceType>();
     foreach(var imp in implements)
-      imp.GetInstanceTypesSet(s);
+      imp.GetInstanceTypesSet(all);
+    
+    foreach(var imp in all)
+    {
+      var imp2idx = new List<int>();
+      vmap.Add((InterfaceSymbol)imp, imp2idx);
+
+      for(int midx=0;midx<imp.GetMembers().Count;++midx)
+      {
+        var m = imp.GetMembers()[midx];
+        var symb = (FuncSymbol)Resolve(m.name);
+        if(symb == null)
+          throw new Exception("No such method '" + m.name + "' in class '" + this.name + "'");
+        imp2idx.Add(symb.scope_idx);
+      }
+    }
+  }
+
+  public void GetInstanceTypesSet(HashSet<IInstanceType> all)
+  {
+    all.Add(this);
+    super_class?.GetInstanceTypesSet(all);
+    foreach(var imp in implements)
+      imp.GetInstanceTypesSet(all);
   }
 
   public override IScope GetFallbackScope() 
@@ -880,6 +910,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
   protected FuncSignature signature;
+
   SymbolsDictionary members;
 
   int _scope_idx = -1;
@@ -1310,6 +1341,10 @@ public class ClassSymbolScript : ClassSymbol
       super_class = tmp_class;
     }
 
+    //NOTE: this includes super class members as well, maybe we
+    //      should make a copy which doesn't include parent members?
+    Marshall.Sync(ctx, ref members);
+
     //TODO: maybe 'implements' collection should be a SymbolsDictionary? 
     var tmp_implements = new List<string>();
 
@@ -1331,11 +1366,9 @@ public class ClassSymbolScript : ClassSymbol
           throw new Exception("Parent interface '" + tmp + "' not found");
         implements.Add(tmp_imp);
       }
-    }
 
-    //NOTE: this includes super class members as well, maybe we
-    //      should make a copy which doesn't include parent members?
-    Marshall.Sync(ctx, ref members);
+      UpdateVirtMap();
+    }
   }
 }
 

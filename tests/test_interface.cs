@@ -264,33 +264,33 @@ public class TestInterfaces : BHL_TestBase
     }
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestCallByInterfaceMethod()
   {
-    {
-      string bhl = @"
-      interface IFoo { 
-        func int bar(int i)
-      }
-      class Foo : IFoo {
-        func int bar(int i) {
-          return i
-        }
-      }
+    //{
+    //  string bhl = @"
+    //  interface IFoo { 
+    //    func int bar(int i)
+    //  }
+    //  class Foo : IFoo {
+    //    func int bar(int i) {
+    //      return i
+    //    }
+    //  }
 
-      func int call(IFoo f, int i) {
-        return f.bar(i)
-      }
+    //  func int call(IFoo f, int i) {
+    //    return f.bar(i)
+    //  }
 
-      func int test() {
-        Foo f = {}
-        return call(f, 42)
-      }
-      ";
-      var vm = MakeVM(bhl);
-      AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
-      CommonChecks(vm);
-    }
+    //  func int test() {
+    //    Foo f = {}
+    //    return call(f, 42)
+    //  }
+    //  ";
+    //  var vm = MakeVM(bhl);
+    //  AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    //  CommonChecks(vm);
+    //}
 
     {
       string bhl = @"

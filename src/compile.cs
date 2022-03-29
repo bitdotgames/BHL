@@ -490,6 +490,12 @@ public class Compiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.CallMethodVirtual,
+        2/*class member idx*/, 3/*type literal idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.CallPtr,
         4/*args bits*/
       )
@@ -1123,10 +1129,17 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
         
-        if(mfunc is FuncSymbolScript)
-          Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
+        if(instance_type is InterfaceSymbol)
+        {
+          Emit(Opcodes.CallMethodVirtual, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
+        }
         else
-          Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
+        {
+          if(mfunc is FuncSymbolScript)
+            Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
+          else
+            Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
+        }
       }
       break;
       case EnumCall.MVARREF:

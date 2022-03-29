@@ -2058,17 +2058,19 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
-    ValidateInterfaces(ctx, class_symb);
+    CheckInterfaces(ctx, class_symb);
 
     PeekAST().AddChild(ast);
 
     return null;
   }
 
-  void ValidateInterfaces(bhlParser.ClassDeclContext ctx, ClassSymbolScript class_symb)
+  void CheckInterfaces(bhlParser.ClassDeclContext ctx, ClassSymbolScript class_symb)
   {
     foreach(var imp in class_symb.implements)
       ValidateInterfaceImplementation(ctx, imp, class_symb);
+
+    class_symb.UpdateVirtMap();
   }
 
   void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)

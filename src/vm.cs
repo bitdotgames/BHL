@@ -8,67 +8,68 @@ using marshall;
 
 public enum Opcodes
 {
-  Constant         = 1,
-  Add              = 2,
-  Sub              = 3,
-  Div              = 4,
-  Mul              = 5,
-  SetVar           = 6,
-  GetVar           = 7,
-  DeclVar          = 8,
-  ArgVar           = 9,
-  SetGVar          = 10,
-  GetGVar          = 11,
-  SetGVarImported  = 12,
-  GetGVarImported  = 13,
-  Return           = 14,
-  ReturnVal        = 15,
-  Jump             = 16,
-  JumpZ            = 17,
-  JumpPeekZ        = 18,
-  JumpPeekNZ       = 19,
-  Break            = 20,
-  Continue         = 21,
-  Pop              = 22,
-  Call             = 23,
-  CallNative       = 24,
-  CallImported     = 25,
-  CallMethod       = 26,
-  CallMethodNative = 27,
-  CallPtr          = 28,
-  GetFunc          = 29,
-  GetFuncNative    = 30,
-  GetFuncFromVar   = 31,
-  GetFuncImported  = 32,
-  FuncPtrToTop     = 33,
-  GetAttr          = 34,
-  RefAttr          = 35,
-  SetAttr          = 36,
-  SetAttrInplace   = 37,
-  ArgRef           = 38,
-  UnaryNot         = 39,
-  UnaryNeg         = 40,
-  And              = 41,
-  Or               = 42,
-  Mod              = 43,
-  BitOr            = 44,
-  BitAnd           = 45,
-  Equal            = 46,
-  NotEqual         = 47,
-  LT               = 49,
-  LTE              = 50,
-  GT               = 51,
-  GTE              = 52,
-  DefArg           = 53, 
-  TypeCast         = 54,
-  Block            = 55,
-  New              = 56,
-  Lambda           = 57,
-  UseUpval         = 58,
-  InitFrame        = 59,
-  Inc              = 60,
-  Dec              = 61,
-  Import           = 62,
+  Constant          = 1,
+  Add               = 2,
+  Sub               = 3,
+  Div               = 4,
+  Mul               = 5,
+  SetVar            = 6,
+  GetVar            = 7,
+  DeclVar           = 8,
+  ArgVar            = 9,
+  SetGVar           = 10,
+  GetGVar           = 11,
+  SetGVarImported   = 12,
+  GetGVarImported   = 13,
+  Return            = 14,
+  ReturnVal         = 15,
+  Jump              = 16,
+  JumpZ             = 17,
+  JumpPeekZ         = 18,
+  JumpPeekNZ        = 19,
+  Break             = 20,
+  Continue          = 21,
+  Pop               = 22,
+  Call              = 23,
+  CallNative        = 24,
+  CallImported      = 25,
+  CallMethod        = 26,
+  CallMethodNative  = 27,
+  CallMethodVirtual = 28,
+  CallPtr           = 38,
+  GetFunc           = 39,
+  GetFuncNative     = 40,
+  GetFuncFromVar    = 41,
+  GetFuncImported   = 42,
+  FuncPtrToTop      = 43,
+  GetAttr           = 44,
+  RefAttr           = 45,
+  SetAttr           = 46,
+  SetAttrInplace    = 47,
+  ArgRef            = 48,
+  UnaryNot          = 49,
+  UnaryNeg          = 50,
+  And               = 51,
+  Or                = 52,
+  Mod               = 53,
+  BitOr             = 54,
+  BitAnd            = 55,
+  Equal             = 56,
+  NotEqual          = 57,
+  LT                = 59,
+  LTE               = 60,
+  GT                = 61,
+  GTE               = 62,
+  DefArg            = 63, 
+  TypeCast          = 64,
+  Block             = 65,
+  New               = 66,
+  Lambda            = 67,
+  UseUpval          = 68,
+  InitFrame         = 69,
+  Inc               = 70,
+  Dec               = 71,
+  Import            = 72,
 }
 
 public enum BlockType 
@@ -1508,10 +1509,10 @@ public class VM
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
         string class_type = curr_frame.constants[class_type_idx].str; 
-        var instance_symb = (IInstanceType)types.Resolve(class_type);
+        var type_symb = (ClassSymbol)types.Resolve(class_type);
 
         BHS status;
-        if(CallNative(curr_frame, (FuncSymbolNative)instance_symb.GetMembers()[func_idx], args_bits, out status, ref coroutine))
+        if(CallNative(curr_frame, (FuncSymbolNative)type_symb.members[func_idx], args_bits, out status, ref coroutine))
           return status;
       }
       break;
@@ -1520,10 +1521,11 @@ public class VM
         int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-        string class_type = curr_frame.constants[class_type_idx].str; 
-        var instance_symb = (IInstanceType)types.Resolve(class_type);
 
-        var field_symb = (FuncSymbolScript)instance_symb.GetMembers()[func_idx];
+        string class_type = curr_frame.constants[class_type_idx].str; 
+        var type_symb = (ClassSymbol)types.Resolve(class_type);
+
+        var field_symb = (FuncSymbolScript)type_symb.members[func_idx];
         int func_ip = field_symb.ip_addr;
 
         //TODO: use a simpler schema where 'self' is passed on the top
@@ -1531,6 +1533,35 @@ public class VM
         int self_idx = curr_frame.stack.Count - args_num - 1;
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
+
+        var frm = Frame.New(this);
+        frm.Init(curr_frame, func_ip);
+
+        frm.locals[0] = self;
+
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
+      }
+      break;
+      case Opcodes.CallMethodVirtual:
+      {
+        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+        string type_name = curr_frame.constants[type_idx].str; 
+        var iface_symb = (InterfaceSymbol)types.Resolve(type_name);
+
+        //TODO: use a simpler schema where 'self' is passed on the top
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+        curr_frame.stack.RemoveAt(self_idx);
+
+        var class_type = (ClassSymbol)self.type;
+        int func_idx = class_type.vmap[iface_symb][iface_func_idx];
+
+        var field_symb = (FuncSymbolScript)class_type.members[func_idx];
+        int func_ip = field_symb.ip_addr;
 
         var frm = Frame.New(this);
         frm.Init(curr_frame, func_ip);
@@ -1840,6 +1871,7 @@ public class VM
 
     var val = Val.New(this); 
     cls.creator(curr_frame, ref val);
+    val.type = cls;
     curr_frame.stack.Push(val);
   }
 
