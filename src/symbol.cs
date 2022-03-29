@@ -24,7 +24,7 @@ public abstract class Symbol : IMarshallableGeneric
 
   public override string ToString() 
   {
-    return '<' + name + ':' + type.name + '>';
+    return name + '(' + type.name + ')';
   }
 
   public abstract uint ClassId();
@@ -152,9 +152,9 @@ public class NullSymbol : BuiltInSymbol
 
 public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
-  public SymbolsDictionary members;
+  public SymbolsStorage members;
 
-  public SymbolsDictionary inherits;
+  public SymbolsSet inherits = new SymbolsSet();
 
 #if BHL_FRONT
   public InterfaceSymbol(
@@ -175,15 +175,13 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     : base(name)
   {
     this.type = new TypeProxy(this);
-    this.members = new SymbolsDictionary(this);
+    this.members = new SymbolsStorage(this);
 
     SetInherits(inherits);
   }
 
   void SetInherits(IList<InterfaceSymbol> inherits)
   {
-    this.inherits = new SymbolsDictionary(null/*null scope*/);
-
     if(inherits != null)
     {
       foreach(var ext in inherits)
@@ -224,7 +222,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     base.Define(sym);
   }
 
-  public override SymbolsDictionary GetMembers()
+  public override SymbolsStorage GetMembers()
   {
     return members;
   }
@@ -292,7 +290,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   //  [IBar][2,0]
   public Dictionary<InterfaceSymbol, List<int>> vmap = new Dictionary<InterfaceSymbol, List<int>>();
 
-  public SymbolsDictionary members;
+  public SymbolsStorage members;
 
   public VM.ClassCreator creator;
 
@@ -318,7 +316,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   )
     : base(name)
   {
-    this.members = new SymbolsDictionary(this);
+    this.members = new SymbolsStorage(this);
     this.type = new TypeProxy(this);
     this.creator = creator;
 
@@ -368,18 +366,17 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     
     foreach(var imp in all)
     {
-      var imp2idx = new List<int>();
+      var ifs2idx = new List<int>();
       var ifs = (InterfaceSymbol)imp;
-      //Console.WriteLine("IMP " + ifs.name + " " + name + " " + GetHashCode() + " ifs " + ifs.GetHashCode());
-      vmap.Add(ifs, imp2idx);
+      vmap.Add(ifs, ifs2idx);
 
-      for(int midx=0;midx<imp.GetMembers().Count;++midx)
+      for(int midx=0;midx<ifs.members.Count;++midx)
       {
-        var m = imp.GetMembers()[midx];
-        var symb = (FuncSymbol)Resolve(m.name);
+        var m = ifs.members[midx];
+        var symb = Resolve(m.name) as FuncSymbol;
         if(symb == null)
           throw new Exception("No such method '" + m.name + "' in class '" + this.name + "'");
-        imp2idx.Add(symb.scope_idx);
+        ifs2idx.Add(symb.scope_idx);
       }
     }
   }
@@ -410,7 +407,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
   public string GetName() { return name; }
 
-  public override SymbolsDictionary GetMembers() { return members; }
+  public override SymbolsStorage GetMembers() { return members; }
 }
 
 public abstract class ArrayTypeSymbol : ClassSymbol
@@ -845,7 +842,7 @@ public class FieldSymbolScript : FieldSymbol
 //      in Scope.Resolve(..) and Scope.Define(..)
 public abstract class EnclosingSymbol : Symbol, IScope 
 {
-  abstract public SymbolsDictionary GetMembers();
+  abstract public SymbolsStorage GetMembers();
 
 #if BHL_FRONT
   public EnclosingSymbol(WrappedParseTree parsed, string name) 
@@ -899,7 +896,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
   protected FuncSignature signature;
 
-  SymbolsDictionary members;
+  SymbolsStorage members;
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -931,7 +928,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   ) 
     : base(name)
   {
-    this.members = new SymbolsDictionary(this);
+    this.members = new SymbolsStorage(this);
     this.signature = signature;
     this.type = new TypeProxy(signature);
 
@@ -942,7 +939,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     }
   }
 
-  public override SymbolsDictionary GetMembers() { return members; }
+  public override SymbolsStorage GetMembers() { return members; }
 
   public override IScope GetFallbackScope() 
   { 
@@ -964,12 +961,12 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     return GetSignature().ret_type.Get();
   }
 
-  public SymbolsDictionary GetArgs()
+  public SymbolsStorage GetArgs()
   {
     //let's skip hidden 'this' argument which is stored at 0 idx
     int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
 
-    var args = new SymbolsDictionary(this);
+    var args = new SymbolsStorage(this);
     for(int i=0;i<GetSignature().arg_types.Count;++i)
       args.Add((FuncArgSymbol)members[i + this_offset]);
     return args;
@@ -1362,7 +1359,7 @@ public class ClassSymbolScript : ClassSymbol
 
 public class EnumSymbol : EnclosingSymbol, IType
 {
-  public SymbolsDictionary members;
+  public SymbolsStorage members;
 
 #if BHL_FRONT
   public EnumSymbol(WrappedParseTree parsed, string name)
@@ -1375,13 +1372,13 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumSymbol(string name)
      : base(name)
   {
-    this.members = new SymbolsDictionary(this);
+    this.members = new SymbolsStorage(this);
     this.type = new TypeProxy(this);
   }
 
   public string GetName() { return name; }
 
-  public override SymbolsDictionary GetMembers() { return members; }
+  public override SymbolsStorage GetMembers() { return members; }
 
   public EnumItemSymbol FindValue(string name)
   {
@@ -1497,7 +1494,7 @@ public class EnumItemSymbol : Symbol, IType
   }
 }
 
-public class SymbolsDictionary : IMarshallable
+public class SymbolsStorage : IMarshallable
 {
   IScope scope;
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
@@ -1517,7 +1514,7 @@ public class SymbolsDictionary : IMarshallable
     }
   }
 
-  public SymbolsDictionary(IScope scope)
+  public SymbolsStorage(IScope scope)
   {
     this.scope = scope;
   }
@@ -1541,8 +1538,7 @@ public class SymbolsDictionary : IMarshallable
 
   public void Add(Symbol s)
   {
-    if(scope != null)
-      s.scope = scope;
+    s.scope = scope;
     str2symb.Add(s.name, s);
     list.Add(s);
   }
@@ -1608,11 +1604,66 @@ public class SymbolsDictionary : IMarshallable
         {
           //NOTE: we need to add new symbol to str2sym collection ASAP
           var s = (Symbol)tmp;
-          if(this.scope != null)
-            s.scope = this.scope;
+          s.scope = this.scope;
           str2symb.Add(s.name, s);
         }
     });
+  }
+}
+
+public class SymbolsSet : IMarshallable
+{
+  List<string> names = new List<string>();
+  List<Symbol> list = new List<Symbol>();
+
+  public int Count
+  {
+    get {
+      return list.Count;
+    }
+  }
+
+  public Symbol this[int index]
+  {
+    get {
+      return list[index];
+    }
+  }
+
+  public SymbolsSet()
+  {}
+
+  public void Add(Symbol s)
+  {
+    string name = s.name;
+    if(names.IndexOf(name) != -1)
+      return;
+    names.Add(name);
+    list.Add(s);
+  }
+
+  public void Clear()
+  {
+    names.Clear();
+    list.Clear();
+  }
+
+  public void Sync(SyncContext ctx) 
+  {
+    Marshall.Sync(ctx, names); 
+
+    if(ctx.is_read)
+    {
+      var types = ((SymbolFactory)ctx.factory).types;
+
+      foreach(var name in names)
+      {
+        var symb = (Symbol)types.Resolve(name);
+        if(symb == null)
+          throw new Exception("Symbol '" + name + "' not found");
+        list.Add(symb);
+      }
+    }
   }
 }
 

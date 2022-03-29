@@ -16,7 +16,7 @@ public interface IScope
   Symbol Resolve(string name);
 
   // Readonly collection of members
-  SymbolsDictionary GetMembers();
+  SymbolsStorage GetMembers();
 }
 
 public interface IInstanceType : IType, IScope 
@@ -28,15 +28,15 @@ public class Scope : IScope
 {
   protected IScope fallback;
 
-  protected SymbolsDictionary members;
+  protected SymbolsStorage members;
 
   public Scope(IScope fallback = null) 
   { 
-    members = new SymbolsDictionary(this);
+    members = new SymbolsStorage(this);
     this.fallback = fallback;  
   }
 
-  public SymbolsDictionary GetMembers() { return members; }
+  public SymbolsStorage GetMembers() { return members; }
 
   public virtual Symbol Resolve(string name) 
   {

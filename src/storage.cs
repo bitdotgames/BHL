@@ -269,11 +269,6 @@ public class Val
     _obj = o;
   }
 
-  public void SetNull()
-  {
-    SetObj(null, Types.Any);
-  }
-
   public bool IsValueEqual(Val o)
   {
     bool res =

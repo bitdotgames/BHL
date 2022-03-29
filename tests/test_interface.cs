@@ -292,34 +292,34 @@ public class TestInterfaces : BHL_TestBase
       CommonChecks(vm);
     }
 
-    //{
-    //  string bhl = @"
-    //  interface IBarBase { 
-    //    func int bar(int i)
-    //  }
-    //  interface IBar : IBarBase { 
-    //    func foo()
-    //  }
-    //  class Foo : IBar {
-    //    func foo() { } 
+    {
+      string bhl = @"
+      interface IBarBase { 
+        func int bar(int i)
+      }
+      interface IBar : IBarBase { 
+        func foo()
+      }
+      class Foo : IBar {
+        func foo() { } 
 
-    //    func int bar(int i) {
-    //      return i
-    //    }
-    //  }
+        func int bar(int i) {
+          return i
+        }
+      }
 
-    //  func int call(IBarBase b, int i) {
-    //    return b.bar(i)
-    //  }
+      func int call(IBarBase b, int i) {
+        return b.bar(i)
+      }
 
-    //  func int test() {
-    //    Foo f = {}
-    //    return call(f, 42)
-    //  }
-    //  ";
-    //  var vm = MakeVM(bhl);
-    //  AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
-    //  CommonChecks(vm);
-    //}
+      func int test() {
+        Foo f = {}
+        return call(f, 42)
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
   }
 }

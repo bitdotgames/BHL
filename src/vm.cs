@@ -1561,7 +1561,6 @@ public class VM
         curr_frame.stack.RemoveAt(self_idx);
 
         var class_type = (ClassSymbol)self.type;
-        //Console.WriteLine("CLASS " + class_type.name + " " + class_type.GetHashCode() + " " + class_type.vmap.Count + " fs " + iface_symb.GetName() + " " + iface_symb.GetHashCode());
         int func_idx = class_type.vmap[iface_symb][iface_func_idx];
 
         var field_symb = (FuncSymbolScript)class_type.members[func_idx];
