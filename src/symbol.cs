@@ -152,9 +152,9 @@ public class NullSymbol : BuiltInSymbol
 
 public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
-  SymbolsDictionary members;
+  public SymbolsDictionary members;
 
-  public List<InterfaceSymbol> extends;
+  public SymbolsDictionary extends;
 
 #if BHL_FRONT
   public InterfaceSymbol(
@@ -175,14 +175,15 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     : base(name)
   {
     this.type = new TypeProxy(this);
-    members = new SymbolsDictionary(this);
+    this.members = new SymbolsDictionary(this);
 
     SetExtends(extends);
   }
 
   void SetExtends(IList<InterfaceSymbol> extends)
   {
-    this.extends = new List<InterfaceSymbol>();
+    this.extends = new SymbolsDictionary(null/*null scope*/);
+
     if(extends != null)
     {
       foreach(var ext in extends)
@@ -207,29 +208,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
   {
     base.Sync(ctx);
 
-    //TODO: maybe 'extends' collection should be a SymbolsDictionary? 
-    var tmp_extends = new List<string>();
-
-    if(!ctx.is_read)
-    {
-      foreach(var ext in extends)
-        tmp_extends.Add(ext.GetName());
-    }
-
-    Marshall.Sync(ctx, tmp_extends); 
-
-    if(ctx.is_read)
-    {
-      var types = ((SymbolFactory)ctx.factory).types;
-      foreach(var tmp in tmp_extends)
-      {
-        var tmp_ext = (InterfaceSymbol)types.Resolve(tmp);
-        if(tmp_ext == null)
-          throw new Exception("Parent interface '" + tmp + "' not found");
-        extends.Add(tmp_ext);
-      }
-    }
-
+    Marshall.Sync(ctx, ref extends); 
     Marshall.Sync(ctx, ref members); 
   }
 
@@ -258,8 +237,12 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
   public void GetInstanceTypesSet(HashSet<IInstanceType> all)
   {
     all.Add(this);
-    foreach(var ext in extends)
-      all.Add(ext);
+    for(int i=0;i<extends.Count;++i)
+    {
+      var ext = (IInstanceType)extends[i];
+      if(!all.Contains(ext))
+        ext.GetInstanceTypesSet(all);
+    }
   }
 }
 
@@ -386,7 +369,9 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     foreach(var imp in all)
     {
       var imp2idx = new List<int>();
-      vmap.Add((InterfaceSymbol)imp, imp2idx);
+      var ifs = (InterfaceSymbol)imp;
+      //Console.WriteLine("IMP " + ifs.name + " " + name + " " + GetHashCode() + " ifs " + ifs.GetHashCode());
+      vmap.Add(ifs, imp2idx);
 
       for(int midx=0;midx<imp.GetMembers().Count;++midx)
       {
@@ -404,7 +389,10 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     all.Add(this);
     super_class?.GetInstanceTypesSet(all);
     foreach(var imp in implements)
-      imp.GetInstanceTypesSet(all);
+    {
+      if(!all.Contains(imp))
+        imp.GetInstanceTypesSet(all);
+    }
   }
 
   public override IScope GetFallbackScope() 
@@ -1553,7 +1541,8 @@ public class SymbolsDictionary : IMarshallable
 
   public void Add(Symbol s)
   {
-    s.scope = scope;
+    if(scope != null)
+      s.scope = scope;
     str2symb.Add(s.name, s);
     list.Add(s);
   }
@@ -1619,7 +1608,8 @@ public class SymbolsDictionary : IMarshallable
         {
           //NOTE: we need to add new symbol to str2sym collection ASAP
           var s = (Symbol)tmp;
-          s.scope = this.scope;
+          if(this.scope != null)
+            s.scope = this.scope;
           str2symb.Add(s.name, s);
         }
     });

@@ -93,7 +93,7 @@ public class TestInterfaces : BHL_TestBase
       var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(1, symb.extends.Count);
-      AssertEqual("Wow", symb.extends[0].GetName());
+      AssertEqual("Wow", symb.extends[0].name);
       AssertEqual(2, symb.GetMembers().Count);
 
       var hey = symb.FindMethod("hey").GetSignature();
@@ -267,49 +267,19 @@ public class TestInterfaces : BHL_TestBase
   [IsTested()]
   public void TestCallByInterfaceMethod()
   {
-    //{
-    //  string bhl = @"
-    //  interface IFoo { 
-    //    func int bar(int i)
-    //  }
-    //  class Foo : IFoo {
-    //    func int bar(int i) {
-    //      return i
-    //    }
-    //  }
-
-    //  func int call(IFoo f, int i) {
-    //    return f.bar(i)
-    //  }
-
-    //  func int test() {
-    //    Foo f = {}
-    //    return call(f, 42)
-    //  }
-    //  ";
-    //  var vm = MakeVM(bhl);
-    //  AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
-    //  CommonChecks(vm);
-    //}
-
     {
       string bhl = @"
-      interface IBarBase { 
+      interface IFoo { 
         func int bar(int i)
       }
-      interface IBar : IBarBase { 
-        func foo()
-      }
-      class Foo : IBar {
-        func foo() { } 
-
+      class Foo : IFoo {
         func int bar(int i) {
           return i
         }
       }
 
-      func int call(IBarBase b, int i) {
-        return b.bar(i)
+      func int call(IFoo f, int i) {
+        return f.bar(i)
       }
 
       func int test() {
@@ -321,5 +291,35 @@ public class TestInterfaces : BHL_TestBase
       AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
+
+    //{
+    //  string bhl = @"
+    //  interface IBarBase { 
+    //    func int bar(int i)
+    //  }
+    //  interface IBar : IBarBase { 
+    //    func foo()
+    //  }
+    //  class Foo : IBar {
+    //    func foo() { } 
+
+    //    func int bar(int i) {
+    //      return i
+    //    }
+    //  }
+
+    //  func int call(IBarBase b, int i) {
+    //    return b.bar(i)
+    //  }
+
+    //  func int test() {
+    //    Foo f = {}
+    //    return call(f, 42)
+    //  }
+    //  ";
+    //  var vm = MakeVM(bhl);
+    //  AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    //  CommonChecks(vm);
+    //}
   }
 }

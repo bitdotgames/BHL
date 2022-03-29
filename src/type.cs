@@ -82,6 +82,7 @@ public struct TypeProxy : IMarshallable
       bool defined_in_scope = 
         resolved is Symbol symb && 
         (symb.scope is ModuleScope || 
+         symb is BuiltInSymbol ||
          symb is ClassSymbolNative ||
          symb is EnumSymbol ||
          (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol))
