@@ -1548,11 +1548,11 @@ public class VM
       case Opcodes.CallMethodVirtual:
       {
         int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int iface_name_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string type_name = curr_frame.constants[type_idx].str; 
-        var iface_symb = (InterfaceSymbol)types.Resolve(type_name);
+        string iface_name = curr_frame.constants[iface_name_idx].str; 
+        var iface_symb = (InterfaceSymbol)types.Resolve(iface_name);
 
         //TODO: use a simpler schema where 'self' is passed on the top
         int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
