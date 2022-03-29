@@ -479,7 +479,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethod,
-        2/*class member idx*/, 3/*type literal idx*/, 4/*args bits*/
+        2/*class member idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1136,7 +1136,7 @@ public class Compiler : AST_Visitor
         else
         {
           if(mfunc is FuncSymbolScript)
-            Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
+            Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           else
             Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
         }

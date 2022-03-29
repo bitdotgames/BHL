@@ -1519,20 +1519,18 @@ public class VM
       case Opcodes.CallMethod:
       {
         int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-
-        string class_type = curr_frame.constants[class_type_idx].str; 
-        var type_symb = (ClassSymbol)types.Resolve(class_type);
-
-        var field_symb = (FuncSymbolScript)type_symb.members[func_idx];
-        int func_ip = field_symb.ip_addr;
 
         //TODO: use a simpler schema where 'self' is passed on the top
         int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
         int self_idx = curr_frame.stack.Count - args_num - 1;
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
+
+        var class_type = ((ClassSymbol)self.type);
+
+        var field_symb = (FuncSymbolScript)class_type.members[func_idx];
+        int func_ip = field_symb.ip_addr;
 
         var frm = Frame.New(this);
         frm.Init(curr_frame, func_ip);

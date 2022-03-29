@@ -755,7 +755,7 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.CallMethod, new int[] { 1, ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.CallMethod, new int[] { 1, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
