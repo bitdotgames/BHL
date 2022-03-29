@@ -5963,7 +5963,7 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("refbool", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         {}
       );
       ts.globs.Define(cl);
@@ -10224,10 +10224,10 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("Bar", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
           //fake object
-          v.SetNull();
+          v.SetObj(null, type);
         }
       );
       ts.globs.Define(cl);
@@ -14241,9 +14241,9 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
-          v.SetNull();
+          v.SetObj(null, type);
         }
       );
       ts.globs.Define(cl);
@@ -14274,9 +14274,9 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
-          v.SetNull();
+          v.SetObj(null, type);
         }
       );
       ts.globs.Define(cl);
@@ -14310,9 +14310,9 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("ColorNested", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
-          v.SetObj(new ColorNested(), ts.Type("ColorNested").Get());
+          v.SetObj(new ColorNested(), type);
         }
       );
 
@@ -18930,7 +18930,7 @@ public class TestVM : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("IntStruct", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
           var s = new IntStruct();
           IntStruct.Encode(v, s);
@@ -18966,9 +18966,9 @@ public class TestVM : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("StringClass", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
-          v.SetObj(new StringClass(), ts.Type("StringClass").Get());
+          v.SetObj(new StringClass(), type);
         }
       );
 
@@ -19005,12 +19005,12 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("MasterStruct", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
           var o = new MasterStruct();
           o.child = new StringClass();
           o.child2 = new StringClass();
-          v.SetObj(o, ts.Type("MasterStruct").Get());
+          v.SetObj(o, type);
         }
       );
 
@@ -19144,9 +19144,9 @@ public class TestVM : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("RefC", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
-          v.SetObj(new RefC(logs), ts.Type("RefC").Get());
+          v.SetObj(new RefC(logs), type);
         }
       );
       {

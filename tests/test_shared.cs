@@ -167,9 +167,9 @@ public class BHL_TestBase
   public ClassSymbolNative BindColor(Types ts)
   {
     var cl = new ClassSymbolNative("Color", null,
-      delegate(VM.Frame frm, ref Val v) 
+      delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
       { 
-        v.SetObj(new Color(), ts.Type("Color").Get());
+        v.SetObj(new Color(), type);
       }
     );
 
@@ -276,9 +276,9 @@ public class BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.Type("Color").Get(),
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
-          v.SetObj(new ColorAlpha(), ts.Type("ColorAlpha").Get());
+          v.SetObj(new ColorAlpha(), type);
         }
       );
 
@@ -333,9 +333,9 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
-          v.SetObj(new Foo(), ts.Type("Foo").Get());
+          v.SetObj(new Foo(), type);
         }
       );
       ts.globs.Define(cl);
@@ -405,9 +405,9 @@ public class BHL_TestBase
   public ClassSymbolNative BindBar(Types ts)
   {
     var cl = new ClassSymbolNative("Bar", null,
-      delegate(VM.Frame frm, ref Val v) 
+      delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
       { 
-        v.SetObj(new Bar(), ts.Type("Bar").Get());
+        v.SetObj(new Bar(), type);
       }
     );
 

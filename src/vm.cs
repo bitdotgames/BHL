@@ -722,7 +722,7 @@ public class VM
 
   IModuleLoader loader;
 
-  public delegate void ClassCreator(VM.Frame frm, ref Val res);
+  public delegate void ClassCreator(VM.Frame frm, ref Val res, ClassSymbol type);
   public delegate void FieldGetter(VM.Frame frm, Val v, ref Val res);
   public delegate void FieldSetter(VM.Frame frm, ref Val v, Val nv);
   public delegate void FieldRef(VM.Frame frm, Val v, out Val res);
@@ -1873,8 +1873,7 @@ public class VM
       throw new Exception("Could not find class symbol: " + class_type);
 
     var val = Val.New(this); 
-    cls.creator(curr_frame, ref val);
-    val.type = cls;
+    cls.creator(curr_frame, ref val, cls);
     curr_frame.stack.Push(val);
   }
 

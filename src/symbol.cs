@@ -488,7 +488,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     : this(ts, item_type.name + "[]", item_type)
   {}
 
-  public abstract void CreateArr(VM.Frame frame, ref Val v);
+  public abstract void CreateArr(VM.Frame frame, ref Val v, ClassSymbol type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v);
   public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
@@ -523,9 +523,9 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return lst;
   }
 
-  public override void CreateArr(VM.Frame frm, ref Val v)
+  public override void CreateArr(VM.Frame frm, ref Val v, ClassSymbol type)
   {
-    v.SetObj(ValList.New(frm.vm), this);
+    v.SetObj(ValList.New(frm.vm), type);
   }
 
   public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
@@ -623,9 +623,9 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     : base(ts, item_type.name + "[]", item_type)
   {}
 
-  public override void CreateArr(VM.Frame frm, ref Val v)
+  public override void CreateArr(VM.Frame frm, ref Val v, ClassSymbol type)
   {
-    v.SetObj(Creator(), this);
+    v.SetObj(Creator(), type);
   }
 
   public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
@@ -1290,7 +1290,7 @@ public class ClassSymbolScript : ClassSymbol
     : this(null, null, null)
   {}
 
-  void ClassCreator(VM.Frame frm, ref Val data)
+  void ClassCreator(VM.Frame frm, ref Val data, ClassSymbol type)
   {
     //TODO: add handling of native super class
     //if(super_class is ClassSymbolNative cn)
@@ -1299,7 +1299,7 @@ public class ClassSymbolScript : ClassSymbol
 
     //NOTE: object's raw data is a list
     var vl = ValList.New(frm.vm);
-    data.SetObj(vl, Types.Any);
+    data.SetObj(vl, type);
     
     for(int i=0;i<members.Count;++i)
     {
@@ -1310,8 +1310,8 @@ public class ClassSymbolScript : ClassSymbol
       //      Maybe we should track data members and methods separately someday. 
       if(m is VariableSymbol)
       {
-        var type = m.type.Get();
-        var v = frm.vm.MakeDefaultVal(type);
+        var mtype = m.type.Get();
+        var v = frm.vm.MakeDefaultVal(mtype);
         vl.Add(v);
         //ownership was passed to list, let's release it
         v.Release();
