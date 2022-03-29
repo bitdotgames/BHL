@@ -407,7 +407,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.SetAttr,
-        3/*class type idx*/, 2/*member idx*/
+        2/*member idx*/
       )
     );
     DeclareOpcode(
@@ -1114,7 +1114,7 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.SetAttr, new int[] { AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MFUNC:
