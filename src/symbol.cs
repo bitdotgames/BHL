@@ -644,7 +644,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = (IList<T>)arr.obj;
-    var res = Val.NewObj(frame.vm, lst[idx], Types.Any);
+    var res = Val.NewObj(frame.vm, lst[idx], item_type.Get());
     frame.stack.Push(res);
     arr.Release();
     return null;

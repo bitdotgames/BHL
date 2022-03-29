@@ -419,7 +419,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetAttr,
-        3/*class type idx*/, 2/*member idx*/
+        2/*member idx*/
       )
     );
     DeclareOpcode(
@@ -1104,7 +1104,7 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.GetAttr, new int[] { AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.MVARW:

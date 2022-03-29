@@ -1286,11 +1286,9 @@ public class VM
       break;
       case Opcodes.GetAttr:
       {
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = (ClassSymbol)types.Resolve(class_type);
         var obj = curr_frame.stack.Pop();
+        var class_symb = (ClassSymbol)obj.type;
         var res = Val.New(this);
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         field_symb.getter(curr_frame, obj, ref res);
