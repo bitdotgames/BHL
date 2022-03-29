@@ -425,7 +425,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.RefAttr,
-        3/*class type idx*/, 2/*member idx*/
+        2/*member idx*/
       )
     );
     DeclareOpcode(
@@ -1149,7 +1149,7 @@ public class Compiler : AST_Visitor
 
         VisitChildren(ast);
 
-        Emit(Opcodes.RefAttr, new int[] {AddConstant(ast.scope_type.GetName()), ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.RefAttr, new int[] {ast.symb_idx}, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDX:
