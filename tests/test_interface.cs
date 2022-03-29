@@ -92,8 +92,8 @@ public class TestInterfaces : BHL_TestBase
     {
       var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
       AssertTrue(symb != null);
-      AssertEqual(1, symb.extends.Count);
-      AssertEqual("Wow", symb.extends[0].name);
+      AssertEqual(1, symb.inherits.Count);
+      AssertEqual("Wow", symb.inherits[0].name);
       AssertEqual(2, symb.GetMembers().Count);
 
       var hey = symb.FindMethod("hey").GetSignature();
@@ -116,7 +116,7 @@ public class TestInterfaces : BHL_TestBase
     {
       var symb = vm.Types.Resolve("Wow") as InterfaceSymbolScript;
       AssertTrue(symb != null);
-      AssertEqual(0, symb.extends.Count);
+      AssertEqual(0, symb.inherits.Count);
       AssertEqual(1, symb.GetMembers().Count);
 
       var bar = symb.FindMethod("bar").GetSignature();

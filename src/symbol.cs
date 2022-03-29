@@ -154,15 +154,15 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
   public SymbolsDictionary members;
 
-  public SymbolsDictionary extends;
+  public SymbolsDictionary inherits;
 
 #if BHL_FRONT
   public InterfaceSymbol(
     WrappedParseTree parsed, 
     string name,
-    IList<InterfaceSymbol> extends = null
+    IList<InterfaceSymbol> inherits = null
   )
-    : this(name, extends)
+    : this(name, inherits)
   {
     this.parsed = parsed;
   }
@@ -170,25 +170,25 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 
   public InterfaceSymbol(
     string name,
-    IList<InterfaceSymbol> extends = null
+    IList<InterfaceSymbol> inherits = null
   )
     : base(name)
   {
     this.type = new TypeProxy(this);
     this.members = new SymbolsDictionary(this);
 
-    SetExtends(extends);
+    SetInherits(inherits);
   }
 
-  void SetExtends(IList<InterfaceSymbol> extends)
+  void SetInherits(IList<InterfaceSymbol> inherits)
   {
-    this.extends = new SymbolsDictionary(null/*null scope*/);
+    this.inherits = new SymbolsDictionary(null/*null scope*/);
 
-    if(extends != null)
+    if(inherits != null)
     {
-      foreach(var ext in extends)
+      foreach(var ext in inherits)
       {
-        this.extends.Add(ext);
+        this.inherits.Add(ext);
 
         //NOTE: at the moment for resolving simplcity we add 
         //      extension members right into the interface itself
@@ -208,7 +208,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
   {
     base.Sync(ctx);
 
-    Marshall.Sync(ctx, ref extends); 
+    Marshall.Sync(ctx, ref inherits); 
     Marshall.Sync(ctx, ref members); 
   }
 
@@ -237,9 +237,9 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
   public void GetInstanceTypesSet(HashSet<IInstanceType> all)
   {
     all.Add(this);
-    for(int i=0;i<extends.Count;++i)
+    for(int i=0;i<inherits.Count;++i)
     {
-      var ext = (IInstanceType)extends[i];
+      var ext = (IInstanceType)inherits[i];
       if(!all.Contains(ext))
         ext.GetInstanceTypesSet(all);
     }
@@ -252,18 +252,18 @@ public class InterfaceSymbolScript : InterfaceSymbol
   
   public InterfaceSymbolScript(
     string name,
-    IList<InterfaceSymbol> extends = null
+    IList<InterfaceSymbol> inherits = null
   )
-    : base(name, extends)
+    : base(name, inherits)
   {}
 
 #if BHL_FRONT
   public InterfaceSymbolScript(
     WrappedParseTree parsed, 
     string name,
-    IList<InterfaceSymbol> extends = null
+    IList<InterfaceSymbol> inherits = null
   )
-    : this(name, extends)
+    : this(name, inherits)
   {
     this.parsed = parsed;
   }
