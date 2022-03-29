@@ -2069,8 +2069,8 @@ public class Frontend : bhlBaseVisitor<object>
 
   void CheckInterfaces(bhlParser.ClassDeclContext ctx, ClassSymbolScript class_symb)
   {
-    foreach(var imp in class_symb.implements)
-      ValidateInterfaceImplementation(ctx, imp, class_symb);
+    for(int i=0;i<class_symb.implements.Count;++i)
+      ValidateInterfaceImplementation(ctx, class_symb.implements[i], class_symb);
 
     class_symb.UpdateVirtMap();
   }

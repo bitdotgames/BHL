@@ -154,7 +154,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
   public SymbolsStorage members;
 
-  public SymbolsSet inherits = new SymbolsSet();
+  public SymbolsSet<InterfaceSymbol> inherits = new SymbolsSet<InterfaceSymbol>();
 
 #if BHL_FRONT
   public InterfaceSymbol(
@@ -282,7 +282,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 {
   public ClassSymbol super_class;
 
-  public IList<InterfaceSymbol> implements;
+  public SymbolsSet<InterfaceSymbol> implements = new SymbolsSet<InterfaceSymbol>();
 
   //contains mapping of implemented interface method indices 
   //to actual class method indices:
@@ -348,7 +348,6 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
   void SetImplements(IList<InterfaceSymbol> implements)
   {
-    this.implements = new List<InterfaceSymbol>();
     if(implements != null)
     {
       foreach(var imp in implements)
@@ -361,8 +360,8 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     vmap.Clear();
 
     var all = new HashSet<IInstanceType>();
-    foreach(var imp in implements)
-      imp.GetInstanceTypesSet(all);
+    for(int i=0;i<implements.Count;++i)
+      implements[i].GetInstanceTypesSet(all);
     
     foreach(var imp in all)
     {
@@ -385,10 +384,10 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   {
     all.Add(this);
     super_class?.GetInstanceTypesSet(all);
-    foreach(var imp in implements)
+    for(int i=0;i<implements.Count;++i)
     {
-      if(!all.Contains(imp))
-        imp.GetInstanceTypesSet(all);
+      if(!all.Contains(implements[i]))
+        implements[i].GetInstanceTypesSet(all);
     }
   }
 
@@ -1330,30 +1329,10 @@ public class ClassSymbolScript : ClassSymbol
     //      should make a copy which doesn't include parent members?
     Marshall.Sync(ctx, ref members);
 
-    //TODO: maybe 'implements' collection should be a SymbolsDictionary? 
-    var tmp_implements = new List<string>();
-
-    if(!ctx.is_read)
-    {
-      foreach(var imp in implements)
-        tmp_implements.Add(imp.GetName());
-    }
-
-    Marshall.Sync(ctx, tmp_implements); 
+    Marshall.Sync(ctx, ref implements); 
 
     if(ctx.is_read)
-    {
-      var types = ((SymbolFactory)ctx.factory).types;
-      foreach(var tmp in tmp_implements)
-      {
-        var tmp_imp = (InterfaceSymbol)types.Resolve(tmp);
-        if(tmp_imp == null)
-          throw new Exception("Parent interface '" + tmp + "' not found");
-        implements.Add(tmp_imp);
-      }
-
       UpdateVirtMap();
-    }
   }
 }
 
@@ -1611,10 +1590,10 @@ public class SymbolsStorage : IMarshallable
   }
 }
 
-public class SymbolsSet : IMarshallable
+public class SymbolsSet<T> : IMarshallable where T : Symbol
 {
   List<string> names = new List<string>();
-  List<Symbol> list = new List<Symbol>();
+  List<T> list = new List<T>();
 
   public int Count
   {
@@ -1623,7 +1602,7 @@ public class SymbolsSet : IMarshallable
     }
   }
 
-  public Symbol this[int index]
+  public T this[int index]
   {
     get {
       return list[index];
@@ -1633,13 +1612,14 @@ public class SymbolsSet : IMarshallable
   public SymbolsSet()
   {}
 
-  public void Add(Symbol s)
+  public bool Add(T s)
   {
     string name = s.name;
     if(names.IndexOf(name) != -1)
-      return;
+      return false;
     names.Add(name);
     list.Add(s);
+    return true;
   }
 
   public void Clear()
@@ -1658,7 +1638,7 @@ public class SymbolsSet : IMarshallable
 
       foreach(var name in names)
       {
-        var symb = (Symbol)types.Resolve(name);
+        var symb = types.Resolve(name) as T;
         if(symb == null)
           throw new Exception("Symbol '" + name + "' not found");
         list.Add(symb);
