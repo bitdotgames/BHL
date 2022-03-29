@@ -413,7 +413,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.SetAttrInplace,
-        3/*class type idx*/, 2/*member idx*/
+        2/*member idx*/
       )
     );
     DeclareOpcode(
@@ -1442,7 +1442,7 @@ public class Compiler : AST_Visitor
   public override void DoVisit(bhl.AST_JsonPair ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.SetAttrInplace, new int[] { AddConstant(ast.scope_type.GetName()), (int)ast.symb_idx });
+    Emit(Opcodes.SetAttrInplace, new int[] { (int)ast.symb_idx });
   }
 }
 

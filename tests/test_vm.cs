@@ -7526,8 +7526,8 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Bar") }) 
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Wow") }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Wow"), 0 })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 0 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.RefAttr, new int[] { 0 })
@@ -12070,11 +12070,11 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 1 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 2 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
@@ -12365,11 +12365,11 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 1 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 2 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
       .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -14694,11 +14694,11 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Bar") }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 0 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 1 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 2 })
+      .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
       .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -18920,8 +18920,9 @@ public class TestVM : BHL_TestBase
       dst.n = (int)v._num;
     }
 
-    public static void Encode(Val v, IntStruct src)
+    public static void Encode(Val v, IntStruct src, IType type)
     {
+      v.type = type;
       v._num = src.n;
     }
   }
@@ -18933,7 +18934,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
         { 
           var s = new IntStruct();
-          IntStruct.Encode(v, s);
+          IntStruct.Encode(v, s, type);
         }
       );
 
@@ -18951,7 +18952,7 @@ public class TestVM : BHL_TestBase
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
           s.n = (int)v.num;
-          IntStruct.Encode(ctx, s);
+          IntStruct.Encode(ctx, s, ctx.type);
         }
       ));
     }
@@ -19048,7 +19049,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(v, c.child_struct);
+          IntStruct.Encode(v, c.child_struct, ts.Type("IntStruct").Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v)
         {
@@ -19064,8 +19065,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(v, c.child_struct2);
-          v.type = ts.Type("IntStruct").Get();
+          IntStruct.Encode(v, c.child_struct2, ts.Type("IntStruct").Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v)
         {

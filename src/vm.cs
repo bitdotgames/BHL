@@ -926,16 +926,10 @@ public class VM
         break;
         case Opcodes.SetAttrInplace:
         {
-          int class_type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          string class_type = constants[class_type_idx].str;
           int fld_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-          var class_symb = types.Resolve(class_type) as ClassSymbol;
-          //TODO: this check must be in dev.version only
-          if(class_symb == null)
-            throw new Exception("Class type not found: " + class_type);
-
           var val = stack.Pop();
           var obj = stack.Peek();
+          var class_symb = (ClassSymbol)obj.type;
           var field_symb = (FieldSymbol)class_symb.members[fld_idx];
           field_symb.setter(init_frame, ref obj, val);
           val.Release();
@@ -1327,16 +1321,10 @@ public class VM
       break;
       case Opcodes.SetAttrInplace:
       {
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = types.Resolve(class_type) as ClassSymbol;
-        //TODO: this check must be in dev.version only
-        if(class_symb == null)
-          throw new Exception("Class type not found: " + class_type);
-
         var val = curr_frame.stack.Pop();
         var obj = curr_frame.stack.Peek();
+        var class_symb = (ClassSymbol)obj.type;
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         field_symb.setter(curr_frame, ref obj, val);
         val.Release();
