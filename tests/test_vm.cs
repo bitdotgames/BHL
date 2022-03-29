@@ -4252,10 +4252,10 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, ConstIdx(c, "[]"), 1 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddIdx, 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -4266,18 +4266,18 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 3 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "[]"), ArrCountIdx })
       .EmitThen(Opcodes.LT) //compare counter and tmp arr size
-      .EmitThen(Opcodes.JumpZ, new int[] { 28 })
+      .EmitThen(Opcodes.JumpZ, new int[] { 25 })
       //call arr idx method
       .EmitThen(Opcodes.GetVar, new int[] { 3 })
       .EmitThen(Opcodes.GetVar, new int[] { 4 })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 0 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 2 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 }) //accum = accum + iterator var
       .EmitThen(Opcodes.GetVar, new int[] { 2 }) 
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.Inc, new int[] { 4 }) //fast increment hidden counter
-      .EmitThen(Opcodes.Jump, new int[] { -42 })
+      .EmitThen(Opcodes.Jump, new int[] { -39 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -10227,7 +10227,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, ref Val v) 
         { 
           //fake object
-          v.obj = null;
+          v.SetNull();
         }
       );
       ts.globs.Define(cl);
@@ -10236,7 +10236,7 @@ public class TestVM : BHL_TestBase
         var m = new FuncSymbolNative("self", ts.Type("Bar"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             var obj = frm.stack.PopRelease().obj;
-            frm.stack.Push(Val.NewObj(frm.vm, obj));
+            frm.stack.Push(Val.NewObj(frm.vm, obj, ts.Type("Bar").Get()));
             return null;
           }
         );
@@ -12370,11 +12370,11 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Foo"), 2 })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, ConstIdx(c, "[]"), 1 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 1 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
@@ -12981,7 +12981,7 @@ public class TestVM : BHL_TestBase
     BindStringClass(ts);
 
     var vm = MakeVM(bhl, ts);
-    Execute(vm, "test", Val.NewObj(vm, null));
+    Execute(vm, "test", Val.NewObj(vm, null, Types.Any));
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }
@@ -13008,7 +13008,7 @@ public class TestVM : BHL_TestBase
     BindStringClass(ts);
 
     var vm = MakeVM(bhl, ts);
-    Execute(vm, "test", Val.NewObj(vm, null));
+    Execute(vm, "test", Val.NewObj(vm, null, Types.Any));
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }
@@ -14243,7 +14243,7 @@ public class TestVM : BHL_TestBase
       var cl = new ClassSymbolNative("Foo", null,
         delegate(VM.Frame frm, ref Val v) 
         { 
-          v.obj = null;
+          v.SetNull();
         }
       );
       ts.globs.Define(cl);
@@ -14276,7 +14276,7 @@ public class TestVM : BHL_TestBase
       var cl = new ClassSymbolNative("Foo", null,
         delegate(VM.Frame frm, ref Val v) 
         { 
-          v.obj = null;
+          v.SetNull();
         }
       );
       ts.globs.Define(cl);
@@ -14312,7 +14312,7 @@ public class TestVM : BHL_TestBase
       var cl = new ClassSymbolNative("ColorNested", null,
         delegate(VM.Frame frm, ref Val v) 
         { 
-          v.obj = new ColorNested();
+          v.SetObj(new ColorNested(), ts.Type("ColorNested").Get());
         }
       );
 
@@ -14322,13 +14322,13 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var cn = (ColorNested)ctx.obj;
-          v.obj = cn.c;
+          v.SetObj(cn.c, ts.Type("Color").Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var cn = (ColorNested)ctx.obj;
           cn.c = (Color)v.obj; 
-          ctx.obj = cn;
+          ctx.SetObj(cn, ctx.type);
         }
       ));
     }
@@ -14699,11 +14699,11 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { ConstIdx(c, "Bar"), 2 })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, ConstIdx(c, "[]"), 1 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, ConstIdx(c, "[]"), 1 })
+      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, 1 })
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 0 })
@@ -15192,7 +15192,7 @@ public class TestVM : BHL_TestBase
         newc.r = c.r + r.r;
         newc.g = c.g + r.g;
 
-        var v = Val.NewObj(frm.vm, newc);
+        var v = Val.NewObj(frm.vm, newc, ts.Type("Color").Get());
         frm.stack.Push(v);
 
         return null;
@@ -15234,7 +15234,7 @@ public class TestVM : BHL_TestBase
         newc.r = c.r * k;
         newc.g = c.g * k;
 
-        var v = Val.NewObj(frm.vm, newc);
+        var v = Val.NewObj(frm.vm, newc, ts.Type("Color").Get());
         frm.stack.Push(v);
 
         return null;
@@ -15278,7 +15278,7 @@ public class TestVM : BHL_TestBase
         newc.r = c.r * k;
         newc.g = c.g * k;
 
-        var v = Val.NewObj(frm.vm, newc);
+        var v = Val.NewObj(frm.vm, newc, ts.Type("Color").Get());
         frm.stack.Push(v);
 
         return null;
@@ -15299,7 +15299,7 @@ public class TestVM : BHL_TestBase
         newc.r = c.r + r.r;
         newc.g = c.g + r.g;
 
-        var v = Val.NewObj(frm.vm, newc);
+        var v = Val.NewObj(frm.vm, newc, ts.Type("Color").Get());
         frm.stack.Push(v);
 
         return null;
@@ -18968,7 +18968,7 @@ public class TestVM : BHL_TestBase
       var cl = new ClassSymbolNative("StringClass", null,
         delegate(VM.Frame frm, ref Val v) 
         { 
-          v.obj = new StringClass();
+          v.SetObj(new StringClass(), ts.Type("StringClass").Get());
         }
       );
 
@@ -18984,7 +18984,7 @@ public class TestVM : BHL_TestBase
         {
           var c = (StringClass)ctx.obj;
           c.str = v.str; 
-          ctx.obj = c;
+          ctx.SetObj(c, ctx.type);
         }
       ));
     }
@@ -19010,7 +19010,7 @@ public class TestVM : BHL_TestBase
           var o = new MasterStruct();
           o.child = new StringClass();
           o.child2 = new StringClass();
-          v.obj = o;
+          v.SetObj(o, ts.Type("MasterStruct").Get());
         }
       );
 
@@ -19020,13 +19020,13 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child);
+          v.SetObj(c.child, ts.Type("StringClass").Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var c = (MasterStruct)ctx.obj;
           c.child = (StringClass)v._obj; 
-          ctx.obj = c;
+          ctx.SetObj(c, ctx.type);
         }
       ));
 
@@ -19034,13 +19034,13 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var c = (MasterStruct)ctx.obj;
-          v.obj = c.child2;
+          v.SetObj(c.child2, ts.Type("StringClass").Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var c = (MasterStruct)ctx.obj;
           c.child2 = (StringClass)v.obj; 
-          ctx.obj = c;
+          ctx.SetObj(c, ctx.type);
         }
       ));
 
@@ -19056,7 +19056,7 @@ public class TestVM : BHL_TestBase
           IntStruct s = new IntStruct();
           IntStruct.Decode(v, ref s);
           c.child_struct = s;
-          ctx.obj = c;
+          ctx.SetObj(c, ctx.type);
         }
       ));
 
@@ -19072,7 +19072,7 @@ public class TestVM : BHL_TestBase
           IntStruct s = new IntStruct();
           IntStruct.Decode(v, ref s);
           c.child_struct2 = s;
-          ctx.obj = c;
+          ctx.SetObj(c, ctx.type);
         }
       ));
 
@@ -19146,7 +19146,7 @@ public class TestVM : BHL_TestBase
       var cl = new ClassSymbolNative("RefC", null,
         delegate(VM.Frame frm, ref Val v) 
         { 
-          v.obj = new RefC(logs);
+          v.SetObj(new RefC(logs), ts.Type("RefC").Get());
         }
       );
       {

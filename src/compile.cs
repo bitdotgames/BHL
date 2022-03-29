@@ -485,7 +485,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethodNative,
-        2/*class member idx*/, 3/*type literal idx*/, 4/*args bits*/
+        2/*class member idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1138,7 +1138,7 @@ public class Compiler : AST_Visitor
           if(mfunc is FuncSymbolScript)
             Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           else
-            Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
+            Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
         }
       }
       break;
@@ -1155,13 +1155,13 @@ public class Compiler : AST_Visitor
       case EnumCall.ARR_IDX:
       {
         var arr_symb = ast.scope_type as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, AddConstant(arr_symb.name), 1 }, ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, 1 }, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
         var arr_symb = ast.scope_type as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, AddConstant(arr_symb.name), 3 }, ast.line_num);
+        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, 1/*???*/ }, ast.line_num);
       }
       break;
       case EnumCall.LMBD:
@@ -1421,7 +1421,7 @@ public class Compiler : AST_Visitor
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
       {
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type.GetName()), 1 });
+        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, 1 });
       }
       else
         Visit(c);
@@ -1430,7 +1430,7 @@ public class Compiler : AST_Visitor
     //adding last item item
     if(ast.children.Count > 0)
     {
-      Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, AddConstant(ast.type.GetName()), 1 });
+      Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, 1 });
     }
   }
 

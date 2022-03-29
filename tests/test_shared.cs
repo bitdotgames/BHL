@@ -169,7 +169,7 @@ public class BHL_TestBase
     var cl = new ClassSymbolNative("Color", null,
       delegate(VM.Frame frm, ref Val v) 
       { 
-        v.obj = new Color();
+        v.SetObj(new Color(), ts.Type("Color").Get());
       }
     );
 
@@ -184,7 +184,7 @@ public class BHL_TestBase
       {
         var c = (Color)ctx.obj;
         c.r = (float)v.num; 
-        ctx.obj = c;
+        ctx.SetObj(c, ctx.type);
       }
     ));
     cl.Define(new FieldSymbol("g", ts.Type("float"),
@@ -197,7 +197,7 @@ public class BHL_TestBase
       {
         var c = (Color)ctx.obj;
         c.g = (float)v.num; 
-        ctx.obj = c;
+        ctx.SetObj(c, ctx.type);
       }
     ));
 
@@ -212,7 +212,7 @@ public class BHL_TestBase
           newc.r = c.r + k;
           newc.g = c.g + k;
 
-          var v = Val.NewObj(frm.vm, newc);
+          var v = Val.NewObj(frm.vm, newc, ts.Type("Color").Get());
           frm.stack.Push(v);
 
           return null;
@@ -244,7 +244,7 @@ public class BHL_TestBase
             var r = frm.stack.PopRelease().num;
             var c = new Color();
             c.r = (float)r;
-            var v = Val.NewObj(frm.vm, c);
+            var v = Val.NewObj(frm.vm, c, ts.Type("Color").Get());
             frm.stack.Push(v);
             return null;
           },
@@ -278,7 +278,7 @@ public class BHL_TestBase
       var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.Type("Color").Get(),
         delegate(VM.Frame frm, ref Val v) 
         { 
-          v.obj = new ColorAlpha();
+          v.SetObj(new ColorAlpha(), ts.Type("ColorAlpha").Get());
         }
       );
 
@@ -294,7 +294,7 @@ public class BHL_TestBase
         {
           var c = (ColorAlpha)ctx.obj;
           c.a = (float)v.num; 
-          ctx.obj = c;
+          ctx.SetObj(c, ctx.type);
         }
       ));
 
@@ -335,7 +335,7 @@ public class BHL_TestBase
       var cl = new ClassSymbolNative("Foo", null,
         delegate(VM.Frame frm, ref Val v) 
         { 
-          v.obj = new Foo();
+          v.SetObj(new Foo(), ts.Type("Foo").Get());
         }
       );
       ts.globs.Define(cl);
@@ -350,14 +350,15 @@ public class BHL_TestBase
         {
           var f = (Foo)ctx.obj;
           f.hey = (int)v.num; 
-          ctx.obj = f;
+          ctx.SetObj(f, ctx.type);
         }
       ));
-      cl.Define(new FieldSymbol("colors", ts.Type("ArrayT_Color"),
+      var type_ArrayT_Color = ts.Type("ArrayT_Color");
+      cl.Define(new FieldSymbol("colors", type_ArrayT_Color,
         delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
-          v.obj = f.colors;
+          v.SetObj(f.colors, type_ArrayT_Color.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v)
         {
@@ -365,17 +366,18 @@ public class BHL_TestBase
           f.colors = (List<Color>)v.obj;
         }
       ));
-      cl.Define(new FieldSymbol("sub_color", ts.Type("Color"),
+      var type_Color = ts.Type("Color");
+      cl.Define(new FieldSymbol("sub_color", type_Color,
         delegate(VM.Frame frm, Val ctx, ref Val v)
         {
           var f = (Foo)ctx.obj;
-          v.obj = f.sub_color;
+          v.SetObj(f.sub_color, type_Color.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v)
         {
           var f = (Foo)ctx.obj;
           f.sub_color = (Color)v.obj; 
-          ctx.obj = f;
+          ctx.SetObj(f, ctx.type);
         }
       ));
     }
@@ -405,7 +407,7 @@ public class BHL_TestBase
     var cl = new ClassSymbolNative("Bar", null,
       delegate(VM.Frame frm, ref Val v) 
       { 
-        v.SetObj(new Bar());
+        v.SetObj(new Bar(), ts.Type("Bar").Get());
       }
     );
 
@@ -420,7 +422,7 @@ public class BHL_TestBase
       {
         var c = (Bar)ctx.obj;
         c.Int = (int)v.num; 
-        ctx.SetObj(c);
+        ctx.SetObj(c, ctx.type);
       }
     ));
     cl.Define(new FieldSymbol("Flt", ts.Type("float"),
@@ -433,7 +435,7 @@ public class BHL_TestBase
       {
         var c = (Bar)ctx.obj;
         c.Flt = (float)v.num; 
-        ctx.obj = c;
+        ctx.SetObj(c, ctx.type);
       }
     ));
     cl.Define(new FieldSymbol("Str", ts.Type("string"),
@@ -446,7 +448,7 @@ public class BHL_TestBase
       {
         var c = (Bar)ctx.obj;
         c.Str = (string)v.obj; 
-        ctx.obj = c;
+        ctx.SetObj(c, ctx.type);
       }
     ));
 

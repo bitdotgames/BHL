@@ -1524,7 +1524,9 @@ public class Frontend : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      over_ast.AddChild(AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, "", class_symb, op_func.scope_idx));
+      var op_call = AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, "", class_symb, op_func.scope_idx);
+      op_call.cargs_bits = 1;
+      over_ast.AddChild(op_call);
       ast = over_ast;
     }
     else if(
@@ -2883,7 +2885,9 @@ public class Frontend : bhlBaseVisitor<object>
     var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_type, ((FuncSymbol)arr_type.Resolve("At")).scope_idx));
+    var arr_at = AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, "At", arr_type, ((FuncSymbol)arr_type.Resolve("At")).scope_idx);
+    arr_at.cargs_bits = 1;
+    block.children.Insert(0, arr_at);
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
 

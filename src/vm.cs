@@ -805,7 +805,7 @@ public class VM
     init_frame = new Frame(this);
 
     null_val = new Val(this);
-    null_val.SetObj(null);
+    null_val.SetObj(null, Types.Any);
     //NOTE: we don't want to store it in the values pool,
     //      still we need to retain it so that it's never 
     //      accidentally released when pushed/popped
@@ -942,18 +942,21 @@ public class VM
         }
         break;
         //TODO: it's used for array init, maybe it should not be here
+        //      (it's a copy paste!)
         case Opcodes.CallMethodNative:
         {
-          int func_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-          int class_type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          uint args_bits = Bytecode.Decode32(bytecode, ref ip); 
+        int func_idx = (int)Bytecode.Decode16(bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(bytecode, ref ip); 
 
-          string class_type = constants[class_type_idx].str; 
-          var instance_symb = (IInstanceType)types.Resolve(class_type);
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = init_frame.stack.Count - args_num - 1;
+        var self = init_frame.stack[self_idx];
+
+        var class_type = ((ClassSymbol)self.type);
 
           BHS status;
           ICoroutine coroutine = null;
-          CallNative(init_frame, (FuncSymbolNative)instance_symb.GetMembers()[func_idx], args_bits, out status, ref coroutine);
+          CallNative(init_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine);
         }
         break;
         default:
@@ -1505,14 +1508,16 @@ public class VM
       case Opcodes.CallMethodNative:
       {
         int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string class_type = curr_frame.constants[class_type_idx].str; 
-        var type_symb = (ClassSymbol)types.Resolve(class_type);
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+
+        var class_type = ((ClassSymbol)self.type);
 
         BHS status;
-        if(CallNative(curr_frame, (FuncSymbolNative)type_symb.members[func_idx], args_bits, out status, ref coroutine))
+        if(CallNative(curr_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine))
           return status;
       }
       break;

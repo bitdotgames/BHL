@@ -525,7 +525,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 
   public override void CreateArr(VM.Frame frm, ref Val v)
   {
-    v.SetObj(ValList.New(frm.vm));
+    v.SetObj(ValList.New(frm.vm), this);
   }
 
   public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
@@ -625,7 +625,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
   public override void CreateArr(VM.Frame frm, ref Val v)
   {
-    v.obj = Creator();
+    v.SetObj(Creator(), this);
   }
 
   public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
@@ -1299,7 +1299,7 @@ public class ClassSymbolScript : ClassSymbol
 
     //NOTE: object's raw data is a list
     var vl = ValList.New(frm.vm);
-    data.SetObj(vl);
+    data.SetObj(vl, Types.Any);
     
     for(int i=0;i<members.Count;++i)
     {

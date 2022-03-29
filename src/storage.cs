@@ -57,9 +57,6 @@ public class Val
     get {
       return _obj;
     }
-    set {
-      SetObj(value, Types.Any);
-    }
   }
 
   public bool bval {
@@ -272,16 +269,9 @@ public class Val
     _obj = o;
   }
 
-  static public Val NewObj(VM vm, object o)
+  public void SetNull()
   {
-    Val dv = New(vm);
-    dv.SetObj(o);
-    return dv;
-  }
-
-  public void SetObj(object o)
-  {
-    SetObj(o, Types.Any);
+    SetObj(null, Types.Any);
   }
 
   public bool IsValueEqual(Val o)
