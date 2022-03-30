@@ -35,7 +35,7 @@ public enum Opcodes
   CallImported      = 25,
   CallMethod        = 26,
   CallMethodNative  = 27,
-  CallMethodVirt = 28,
+  CallMethodVirt    = 28,
   CallPtr           = 38,
   GetFunc           = 39,
   GetFuncNative     = 40,
@@ -69,7 +69,9 @@ public enum Opcodes
   InitFrame         = 69,
   Inc               = 70,
   Dec               = 71,
-  Import            = 72,
+  ArrIdx            = 72,
+  ArrIdxW           = 73,
+  Import            = 74,
 }
 
 public enum BlockType 
@@ -948,9 +950,9 @@ public class VM
 
         var class_type = ((ClassSymbol)self.type);
 
-          BHS status;
-          ICoroutine coroutine = null;
-          CallNative(init_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine);
+        BHS status;
+        ICoroutine coroutine = null;
+        CallNative(init_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine);
         }
         break;
         default:
@@ -1207,6 +1209,22 @@ public class VM
       {
         int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
         --curr_frame.locals[var_idx]._num;
+      }
+      break;
+      case Opcodes.ArrIdx:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((ClassSymbol)self.type);
+        BHS status;
+        CallNative(curr_frame, (FuncSymbolNative)class_type.members[ArrayTypeSymbol.IDX_ARR], 0, out status, ref coroutine);
+      }
+      break;
+      case Opcodes.ArrIdxW:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((ClassSymbol)self.type);
+        BHS status;
+        CallNative(curr_frame, (FuncSymbolNative)class_type.members[ArrayTypeSymbol.IDX_ARRW], 0, out status, ref coroutine);
       }
       break;
       case Opcodes.Add:

@@ -608,6 +608,16 @@ public class Compiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.ArrIdx
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ArrIdxW
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.Import,
         4/*name idx*/
       )
@@ -1154,14 +1164,12 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.ARR_IDX:
       {
-        var arr_symb = ast.scope_type as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("At")).scope_idx, 1 }, ast.line_num);
+        Emit(Opcodes.ArrIdx, null, ast.line_num);
       }
       break;
       case EnumCall.ARR_IDXW:
       {
-        var arr_symb = ast.scope_type as ArrayTypeSymbol;
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("SetAt")).scope_idx, 1/*???*/ }, ast.line_num);
+        Emit(Opcodes.ArrIdxW, null, ast.line_num);
       }
       break;
       case EnumCall.LMBD:

@@ -411,6 +411,11 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
 public abstract class ArrayTypeSymbol : ClassSymbol
 {
+  //index of $ArrIdx member
+  public const int IDX_ARR  = 5;
+  //index of $ArrIdxW member
+  public const int IDX_ARRW = 6;
+
   public TypeProxy item_type;
 
   public ArrayTypeSymbol(Types ts, string name, TypeProxy item_type)     
@@ -422,21 +427,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     {
       var fn = new FuncSymbolNative("Add", ts.Type("void"), Add,
-        new FuncArgSymbol("o", item_type)
-      );
-      this.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("At", item_type, At,
-        new FuncArgSymbol("idx", ts.Type("int"))
-      );
-      this.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("SetAt", item_type, SetAt,
-        new FuncArgSymbol("idx", ts.Type("int")),
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
@@ -466,6 +456,18 @@ public abstract class ArrayTypeSymbol : ClassSymbol
       );
       this.Define(fn);
     }
+
+    {
+      //hidden system method not available directly
+      var fn = new FuncSymbolNative("$ArrIdx", item_type, ArrIdx);
+      this.Define(fn);
+    }
+
+    {
+      //hidden system method not available directly
+      var fn = new FuncSymbolNative("$ArrIdxW", ts.Type("void"), ArrIdxW);
+      this.Define(fn);
+    }
   }
 
   public ArrayTypeSymbol(Types ts, TypeProxy item_type) 
@@ -475,8 +477,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public abstract void CreateArr(VM.Frame frame, ref Val v, ClassSymbol type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v);
   public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
@@ -539,7 +541,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  //NOTE: follows special Opcodes.ArrIdx conventions
+  public override ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -550,7 +553,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  //NOTE: follows special Opcodes.ArrIdxW conventions
+  public override ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -639,7 +643,8 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  //NOTE: follows special Opcodes.ArrIdx conventions
+  public override ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -650,7 +655,8 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  //NOTE: follows special Opcodes.ArrIdxW conventions
+  public override ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();

@@ -468,17 +468,17 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", string module_name = "", IInstanceType scope_symb = null, int symb_idx = -1)
+  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", string module_name = "", IInstanceType scope_symb = null, int symb_idx = -1, uint cargs_bits = 0)
   {
-    return New_Call(type, line_num, name, scope_symb, symb_idx, module_name);
+    return New_Call(type, line_num, name, scope_symb, symb_idx, module_name, cargs_bits);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, IInstanceType scope_symb = null)
+  static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, IInstanceType scope_symb = null, uint cargs_bits = 0)
   {
-    return New_Call(type, line_num, symb.name, scope_symb, symb.scope_idx, symb.module_name);
+    return New_Call(type, line_num, symb.name, scope_symb, symb.scope_idx, symb.module_name, cargs_bits);
   }
 
-  static public AST_Call New_Call(EnumCall type, int line_num, string name, IInstanceType scope_type, int symb_idx = -1, string module_name = "")
+  static public AST_Call New_Call(EnumCall type, int line_num, string name, IInstanceType scope_type, int symb_idx = -1, string module_name = "", uint cargs_bits = 0)
   {
     var n = new AST_Call();
     n.type = type;
@@ -487,6 +487,7 @@ static public class AST_Util
     n.line_num = line_num;
     n.symb_idx = symb_idx;
     n.module_name = module_name;
+    n.cargs_bits = cargs_bits;
 
     return n;
   }

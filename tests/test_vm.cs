@@ -4266,18 +4266,18 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 3 })
       .EmitThen(Opcodes.GetAttr, new int[] { ArrCountIdx })
       .EmitThen(Opcodes.LT) //compare counter and tmp arr size
-      .EmitThen(Opcodes.JumpZ, new int[] { 25 })
+      .EmitThen(Opcodes.JumpZ, new int[] { 19 })
       //call arr idx method
       .EmitThen(Opcodes.GetVar, new int[] { 3 })
       .EmitThen(Opcodes.GetVar, new int[] { 4 })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, 1 })
+      .EmitThen(Opcodes.ArrIdx)
       .EmitThen(Opcodes.SetVar, new int[] { 2 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 }) //accum = accum + iterator var
       .EmitThen(Opcodes.GetVar, new int[] { 2 }) 
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.Inc, new int[] { 4 }) //fast increment hidden counter
-      .EmitThen(Opcodes.Jump, new int[] { -36 })
+      .EmitThen(Opcodes.Jump, new int[] { -30 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -12374,7 +12374,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, 1 })
+      .EmitThen(Opcodes.ArrIdx)
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
@@ -14703,7 +14703,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAtIdx, 1 })
+      .EmitThen(Opcodes.ArrIdx)
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
@@ -18877,14 +18877,6 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
       var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("Count")).scope_idx;
-    }
-  }
-
-  public static int ArrAtIdx {
-    get {
-      var ts = new Types();
-      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
-      return ((IScopeIndexed)class_symb.Resolve("At")).scope_idx;
     }
   }
 
