@@ -265,6 +265,91 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCallInterfaceFuncAsVar()
+  {
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int bar(int i)
+      }
+      class Foo : IFoo {
+        func int bar(int i) {
+          return i+1
+        }
+      }
+
+      func int test() {
+        Foo foo = {}
+        IFoo ifoo = foo
+        return ifoo.bar(42)
+      }
+      ";
+      var c = Compile(bhl);
+
+      var expected = 
+        new Compiler()
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1+1/*this*/+1/*args info*/})
+        .EmitThen(Opcodes.ArgVar, new int[] { 1 })
+        .EmitThen(Opcodes.GetVar, new int[] { 1 })
+        .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+        .EmitThen(Opcodes.Add)
+        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+        .EmitThen(Opcodes.Return)
+        .EmitThen(Opcodes.InitFrame, new int[] { 2+1 /*args info*/})
+        .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
+        .EmitThen(Opcodes.SetVar, new int[] { 0 })
+        .EmitThen(Opcodes.GetVar, new int[] { 0 })
+        .EmitThen(Opcodes.SetVar, new int[] { 1 })
+        .EmitThen(Opcodes.GetVar, new int[] { 1 })
+        .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
+        .EmitThen(Opcodes.CallMethodVirt, new int[] { 0, ConstIdx(c, "IFoo"), 1 })
+        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+        .EmitThen(Opcodes.Return)
+        ;
+      AssertEqual(c, expected);
+
+      var vm = MakeVM(c);
+      AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      interface IBarBase1 { 
+        func int bar1(int i)
+      }
+      interface IBarBase2 { 
+        func int bar2(int i)
+      }
+      interface IBar : IBarBase1, IBarBase2 { 
+        func foo()
+      }
+      class Foo : IBar {
+        func foo() { } 
+
+        func int bar1(int i) {
+          return i+1
+        }
+
+        func int bar2(int i) {
+          return i-1
+        }
+      }
+
+      func int test() {
+        Foo foo = {}
+        IBarBase2 ifoo = foo
+        return ifoo.bar2(42)
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
   public void TestPassInterfaceAsFuncArgAndCall()
   {
     {
@@ -323,63 +408,4 @@ public class TestInterfaces : BHL_TestBase
     }
   }
 
-  [IsTested()]
-  public void TestCallInterfaceFuncAsVar()
-  {
-    {
-      string bhl = @"
-      interface IFoo { 
-        func int bar(int i)
-      }
-      class Foo : IFoo {
-        func int bar(int i) {
-          return i+1
-        }
-      }
-
-      func int test() {
-        Foo foo = {}
-        IFoo ifoo = foo
-        return ifoo.bar(42)
-      }
-      ";
-      var vm = MakeVM(bhl);
-      AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
-      CommonChecks(vm);
-    }
-
-    {
-      string bhl = @"
-      interface IBarBase1 { 
-        func int bar1(int i)
-      }
-      interface IBarBase2 { 
-        func int bar2(int i)
-      }
-      interface IBar : IBarBase1, IBarBase2 { 
-        func foo()
-      }
-      class Foo : IBar {
-        func foo() { } 
-
-        func int bar1(int i) {
-          return i+1
-        }
-
-        func int bar2(int i) {
-          return i-1
-        }
-      }
-
-      func int test() {
-        Foo foo = {}
-        IBarBase2 ifoo = foo
-        return ifoo.bar2(42)
-      }
-      ";
-      var vm = MakeVM(bhl);
-      AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
-      CommonChecks(vm);
-    }
-  }
 }
