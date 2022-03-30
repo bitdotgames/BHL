@@ -265,7 +265,7 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCallByInterfaceMethod()
+  public void TestPassInterfaceAsFuncArgAndCall()
   {
     {
       string bhl = @"
@@ -274,7 +274,7 @@ public class TestInterfaces : BHL_TestBase
       }
       class Foo : IFoo {
         func int bar(int i) {
-          return i
+          return i+1
         }
       }
 
@@ -288,7 +288,7 @@ public class TestInterfaces : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+      AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -304,7 +304,7 @@ public class TestInterfaces : BHL_TestBase
         func foo() { } 
 
         func int bar(int i) {
-          return i
+          return i+1
         }
       }
 
@@ -318,7 +318,67 @@ public class TestInterfaces : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+      AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
+  public void TestCallInterfaceFuncAsVar()
+  {
+    {
+      string bhl = @"
+      interface IFoo { 
+        func int bar(int i)
+      }
+      class Foo : IFoo {
+        func int bar(int i) {
+          return i+1
+        }
+      }
+
+      func int test() {
+        Foo foo = {}
+        IFoo ifoo = foo
+        return ifoo.bar(42)
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      interface IBarBase1 { 
+        func int bar1(int i)
+      }
+      interface IBarBase2 { 
+        func int bar2(int i)
+      }
+      interface IBar : IBarBase1, IBarBase2 { 
+        func foo()
+      }
+      class Foo : IBar {
+        func foo() { } 
+
+        func int bar1(int i) {
+          return i+1
+        }
+
+        func int bar2(int i) {
+          return i-1
+        }
+      }
+
+      func int test() {
+        Foo foo = {}
+        IBarBase2 ifoo = foo
+        return ifoo.bar2(42)
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
   }

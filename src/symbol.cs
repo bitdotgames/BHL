@@ -232,14 +232,14 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     return Resolve(name) as FuncSymbol;
   }
 
-  public void GetInstanceTypesSet(HashSet<IInstanceType> all)
+  public void GetAllRelatedTypesSet(HashSet<IInstanceType> all)
   {
     all.Add(this);
     for(int i=0;i<inherits.Count;++i)
     {
       var ext = (IInstanceType)inherits[i];
       if(!all.Contains(ext))
-        ext.GetInstanceTypesSet(all);
+        ext.GetAllRelatedTypesSet(all);
     }
   }
 }
@@ -288,7 +288,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   //to actual class method indices:
   //  [IFoo][3,1,0]
   //  [IBar][2,0]
-  public Dictionary<InterfaceSymbol, List<int>> vmap = new Dictionary<InterfaceSymbol, List<int>>();
+  public Dictionary<InterfaceSymbol, List<int>> vtable = new Dictionary<InterfaceSymbol, List<int>>();
 
   public SymbolsStorage members;
 
@@ -355,19 +355,19 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     }
   }
 
-  public void UpdateVirtMap()
+  public void UpdateVTable()
   {
-    vmap.Clear();
+    vtable.Clear();
 
     var all = new HashSet<IInstanceType>();
     for(int i=0;i<implements.Count;++i)
-      implements[i].GetInstanceTypesSet(all);
+      implements[i].GetAllRelatedTypesSet(all);
     
     foreach(var imp in all)
     {
       var ifs2idx = new List<int>();
       var ifs = (InterfaceSymbol)imp;
-      vmap.Add(ifs, ifs2idx);
+      vtable.Add(ifs, ifs2idx);
 
       for(int midx=0;midx<ifs.members.Count;++midx)
       {
@@ -380,14 +380,14 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     }
   }
 
-  public void GetInstanceTypesSet(HashSet<IInstanceType> all)
+  public void GetAllRelatedTypesSet(HashSet<IInstanceType> all)
   {
     all.Add(this);
-    super_class?.GetInstanceTypesSet(all);
+    super_class?.GetAllRelatedTypesSet(all);
     for(int i=0;i<implements.Count;++i)
     {
       if(!all.Contains(implements[i]))
-        implements[i].GetInstanceTypesSet(all);
+        implements[i].GetAllRelatedTypesSet(all);
     }
   }
 
@@ -1332,7 +1332,7 @@ public class ClassSymbolScript : ClassSymbol
     Marshall.Sync(ctx, ref implements); 
 
     if(ctx.is_read)
-      UpdateVirtMap();
+      UpdateVTable();
   }
 }
 

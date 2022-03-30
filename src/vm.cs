@@ -35,7 +35,7 @@ public enum Opcodes
   CallImported      = 25,
   CallMethod        = 26,
   CallMethodNative  = 27,
-  CallMethodVirtual = 28,
+  CallMethodVirt = 28,
   CallPtr           = 38,
   GetFunc           = 39,
   GetFuncNative     = 40,
@@ -1520,7 +1520,7 @@ public class VM
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
       }
       break;
-      case Opcodes.CallMethodVirtual:
+      case Opcodes.CallMethodVirt:
       {
         int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         int iface_name_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
@@ -1537,7 +1537,7 @@ public class VM
         var iface_symb = (InterfaceSymbol)types.Resolve(iface_name);
 
         var class_type = (ClassSymbol)self.type;
-        int func_idx = class_type.vmap[iface_symb][iface_func_idx];
+        int func_idx = class_type.vtable[iface_symb][iface_func_idx];
 
         var field_symb = (FuncSymbolScript)class_type.members[func_idx];
         int func_ip = field_symb.ip_addr;

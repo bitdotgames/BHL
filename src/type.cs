@@ -566,10 +566,10 @@ public class Types
     if(a is IInstanceType ai && b is IInstanceType bi)
     {
       var aset = new HashSet<IInstanceType>();
-      ai.GetInstanceTypesSet(aset);
+      ai.GetAllRelatedTypesSet(aset);
 
       var bset = new HashSet<IInstanceType>();
-      bi.GetInstanceTypesSet(bset);
+      bi.GetAllRelatedTypesSet(bset);
 
       //Console.WriteLine(">>>>>>>>>");
       //foreach(var a1 in aset)

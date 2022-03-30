@@ -21,7 +21,7 @@ public interface IScope
 
 public interface IInstanceType : IType, IScope 
 {
-  void GetInstanceTypesSet(HashSet<IInstanceType> s);
+  void GetAllRelatedTypesSet(HashSet<IInstanceType> s);
 }
 
 public class Scope : IScope 

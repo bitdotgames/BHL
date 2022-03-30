@@ -1964,9 +1964,9 @@ public class Frontend : bhlBaseVisitor<object>
       }
     }
 
-    var symb = new InterfaceSymbolScript(Wrap(ctx), name, extends);
+    var iface_symb = new InterfaceSymbolScript(Wrap(ctx), name, extends);
 
-    module.scope.Define(symb);
+    module.scope.Define(iface_symb);
 
     for(int i=0;i<ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
     {
@@ -1981,14 +1981,19 @@ public class Frontend : bhlBaseVisitor<object>
           FireError(ib, "default value is not allowed in this context");
 
         var func_symb = new FuncSymbolScript(null, sig, fd.NAME().GetText(), 0, 0);
-        symb.Define(func_symb);
+        iface_symb.Define(func_symb);
 
         var func_params = fd.funcParams();
         if(func_params != null)
         {
           var scope_bak = curr_scope;
           curr_scope = func_symb;
+          //NOTE: we push some dummy interim AST and later
+          //      simply discard it since we don't care about
+          //      func args related AST for interfaces
+          PushAST(new AST_Interim());
           Visit(func_params);
+          PopAST();
           curr_scope = scope_bak;
         }
       }
@@ -2072,7 +2077,7 @@ public class Frontend : bhlBaseVisitor<object>
     for(int i=0;i<class_symb.implements.Count;++i)
       ValidateInterfaceImplementation(ctx, class_symb.implements[i], class_symb);
 
-    class_symb.UpdateVirtMap();
+    class_symb.UpdateVTable();
   }
 
   void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)
