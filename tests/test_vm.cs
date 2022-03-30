@@ -12370,7 +12370,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, 1 })
+      .EmitThen(Opcodes.ArrAddInplace)
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
@@ -14699,7 +14699,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
-      .EmitThen(Opcodes.CallMethodNative, new int[] { ArrAddInplaceIdx, 1 })
+      .EmitThen(Opcodes.ArrAddInplace)
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
@@ -18877,14 +18877,6 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
       var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
       return ((IScopeIndexed)class_symb.Resolve("Count")).scope_idx;
-    }
-  }
-
-  public static int ArrAddInplaceIdx {
-    get {
-      var ts = new Types();
-      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
-      return ((IScopeIndexed)class_symb.Resolve("$AddInplace")).scope_idx;
     }
   }
 

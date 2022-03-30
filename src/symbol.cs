@@ -411,10 +411,9 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
 public abstract class ArrayTypeSymbol : ClassSymbol
 {
-  //index of $ArrIdx member
-  public const int IDX_ARR  = 5;
-  //index of $ArrIdxW member
-  public const int IDX_ARRW = 6;
+  public readonly FuncSymbolNative FuncArrIdx = null;
+  public readonly FuncSymbolNative FuncArrIdxW = null;
+  public readonly FuncSymbolNative FuncAddInplace = null;
 
   public TypeProxy item_type;
 
@@ -451,22 +450,17 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      var fn = new FuncSymbolNative("$AddInplace", ts.Type("void"), AddInplace,
-        new FuncArgSymbol("o", item_type)
-      );
-      this.Define(fn);
+      FuncArrIdx = new FuncSymbolNative("$ArrIdx", item_type, ArrIdx);
     }
 
     {
       //hidden system method not available directly
-      var fn = new FuncSymbolNative("$ArrIdx", item_type, ArrIdx);
-      this.Define(fn);
+      FuncArrIdxW = new FuncSymbolNative("$ArrIdxW", ts.Type("void"), ArrIdxW);
     }
 
     {
       //hidden system method not available directly
-      var fn = new FuncSymbolNative("$ArrIdxW", ts.Type("void"), ArrIdxW);
-      this.Define(fn);
+      FuncAddInplace = new FuncSymbolNative("$AddInplace", ts.Type("void"), AddInplace);
     }
   }
 
@@ -531,6 +525,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
+  //NOTE: follows special Opcodes.ArrAddInPlace conventions
   public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();
@@ -632,6 +627,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
+  //NOTE: follows special Opcodes.ArrAddInPlace conventions
   public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var val = frame.stack.Pop();

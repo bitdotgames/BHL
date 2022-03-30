@@ -618,6 +618,11 @@ public class Compiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.ArrAddInplace
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.Import,
         4/*name idx*/
       )
@@ -1428,18 +1433,14 @@ public class Compiler : AST_Visitor
 
       //checking if there's an explicit add to array operand
       if(c is AST_JsonArrAddItem)
-      {
-        Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, 1 });
-      }
+        Emit(Opcodes.ArrAddInplace);
       else
         Visit(c);
     }
 
     //adding last item item
     if(ast.children.Count > 0)
-    {
-      Emit(Opcodes.CallMethodNative, new int[] { ((IScopeIndexed)arr_symb.Resolve("$AddInplace")).scope_idx, 1 });
-    }
+      Emit(Opcodes.ArrAddInplace);
   }
 
   public override void DoVisit(bhl.AST_JsonArrAddItem ast)

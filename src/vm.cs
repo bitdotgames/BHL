@@ -71,7 +71,8 @@ public enum Opcodes
   Dec               = 71,
   ArrIdx            = 72,
   ArrIdxW           = 73,
-  Import            = 74,
+  ArrAddInplace     = 74,
+  Import            = 75,
 }
 
 public enum BlockType 
@@ -937,22 +938,14 @@ public class VM
           val.Release();
         }
         break;
-        //TODO: it's used for array init, maybe it should not be here
-        //      (it's a copy paste!)
-        case Opcodes.CallMethodNative:
+        //TODO: it's used for json alike array initialization
+        case Opcodes.ArrAddInplace:
         {
-        int func_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-        uint args_bits = Bytecode.Decode32(bytecode, ref ip); 
-
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
-        int self_idx = init_frame.stack.Count - args_num - 1;
-        var self = init_frame.stack[self_idx];
-
-        var class_type = ((ClassSymbol)self.type);
-
-        BHS status;
-        ICoroutine coroutine = null;
-        CallNative(init_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine);
+          var self = stack[stack.Count - 2];
+          var class_type = ((ArrayTypeSymbol)self.type);
+          BHS status;
+          ICoroutine coroutine = null;
+          CallNative(init_frame, class_type.FuncAddInplace, 0, out status, ref coroutine);
         }
         break;
         default:
@@ -1214,17 +1207,25 @@ public class VM
       case Opcodes.ArrIdx:
       {
         var self = curr_frame.stack[curr_frame.stack.Count - 2];
-        var class_type = ((ClassSymbol)self.type);
+        var class_type = ((ArrayTypeSymbol)self.type);
         BHS status;
-        CallNative(curr_frame, (FuncSymbolNative)class_type.members[ArrayTypeSymbol.IDX_ARR], 0, out status, ref coroutine);
+        CallNative(curr_frame, class_type.FuncArrIdx, 0, out status, ref coroutine);
       }
       break;
       case Opcodes.ArrIdxW:
       {
         var self = curr_frame.stack[curr_frame.stack.Count - 2];
-        var class_type = ((ClassSymbol)self.type);
+        var class_type = ((ArrayTypeSymbol)self.type);
         BHS status;
-        CallNative(curr_frame, (FuncSymbolNative)class_type.members[ArrayTypeSymbol.IDX_ARRW], 0, out status, ref coroutine);
+        CallNative(curr_frame, class_type.FuncArrIdxW, 0, out status, ref coroutine);
+      }
+      break;
+      case Opcodes.ArrAddInplace:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((ArrayTypeSymbol)self.type);
+        BHS status;
+        CallNative(curr_frame, class_type.FuncAddInplace, 0, out status, ref coroutine);
       }
       break;
       case Opcodes.Add:
