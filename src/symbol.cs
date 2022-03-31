@@ -1297,9 +1297,8 @@ public class ClassSymbolScript : ClassSymbol
       {
         var mtype = m.type.Get();
         var v = frm.vm.MakeDefaultVal(mtype);
-        vl.Add(v);
-        //ownership was passed to list, let's release it
-        v.Release();
+        //adding directly, bypassing Retain call
+        vl.lst.Add(v);
       }
       else
         vl.Add(frm.vm.Null);
