@@ -439,4 +439,46 @@ public class TestInterfaces : BHL_TestBase
     AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestMixNativeAndScriptInterfaces()
+  {
+    string bhl = @"
+    interface IFoo { 
+      func int foo(int k)
+    }
+    class Foo : IBar, IFoo {
+      func int foo(int k) 
+      { 
+        return k
+      } 
+
+      func int bar(int i) {
+        return i+1
+      }
+    }
+
+    func int test() {
+      Foo f = {}
+      IBar ifb = f;
+      IFoo iff = f;
+      return iff.foo(1) + ifb.bar(10)
+    }
+    ";
+
+    var ts = new Types();
+
+    var ifs = new InterfaceSymbolNative(
+        "IBar", 
+        null, 
+        new FuncSymbolNative("bar", ts.Type("int"), null, 
+          new FuncArgSymbol("int", ts.Type("int")) 
+        )
+    );
+    ts.globs.Define(ifs);
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
