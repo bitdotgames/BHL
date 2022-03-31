@@ -945,9 +945,8 @@ public class VM
           var self = stack[stack.Count - 2];
           self.Retain();
           var class_type = ((ArrayTypeSymbol)self.type);
-          BHS status;
-          ICoroutine coroutine = null;
-          CallNative(init_frame, (FuncSymbolNative)class_type.members[0], 0, out status, ref coroutine);
+          var status = BHS.SUCCESS;
+          ((FuncSymbolNative)class_type.members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
           stack.Push(self);
         }
         break;
@@ -1211,16 +1210,16 @@ public class VM
       {
         var self = curr_frame.stack[curr_frame.stack.Count - 2];
         var class_type = ((ArrayTypeSymbol)self.type);
-        BHS status;
-        CallNative(curr_frame, class_type.FuncArrIdx, 0, out status, ref coroutine);
+        var status = BHS.SUCCESS;
+        class_type.FuncArrIdx.cb(curr_frame, new FuncArgsInfo(), ref status);
       }
       break;
       case Opcodes.ArrIdxW:
       {
         var self = curr_frame.stack[curr_frame.stack.Count - 2];
         var class_type = ((ArrayTypeSymbol)self.type);
-        BHS status;
-        CallNative(curr_frame, class_type.FuncArrIdxW, 0, out status, ref coroutine);
+        var status = BHS.SUCCESS;
+        class_type.FuncArrIdxW.cb(curr_frame, new FuncArgsInfo(), ref status);
       }
       break;
       case Opcodes.ArrAddInplace:
@@ -1228,8 +1227,8 @@ public class VM
         var self = curr_frame.stack[curr_frame.stack.Count - 2];
         self.Retain();
         var class_type = ((ArrayTypeSymbol)self.type);
-        BHS status;
-        CallNative(curr_frame, (FuncSymbolNative)class_type.members[0], 0, out status, ref coroutine);
+        var status = BHS.SUCCESS;
+        ((FuncSymbolNative)class_type.members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
         curr_frame.stack.Push(self);
       }
       break;
@@ -1750,8 +1749,8 @@ public class VM
 
   void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip)
   {
-    var args_info = new FuncArgsInfo(args_bits);
-    for(int i = 0; i < args_info.CountArgs(); ++i)
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+    for(int i = 0; i < args_num; ++i)
       new_frame.stack.Push(curr_frame.stack.Pop());
     new_frame.stack.Push(Val.NewNum(this, args_bits));
 
@@ -1765,12 +1764,8 @@ public class VM
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   static bool CallNative(Frame curr_frame, FuncSymbolNative native, uint args_bits, out BHS status, ref ICoroutine coroutine)
   {
-    var args_info = new FuncArgsInfo(args_bits);
-    for(int i = 0; i < args_info.CountArgs(); ++i)
-      curr_frame.stack.Push(curr_frame.stack.Pop());
-
     status = BHS.SUCCESS;
-    var new_coroutine = native.cb(curr_frame, args_info, ref status);
+    var new_coroutine = native.cb(curr_frame, new FuncArgsInfo(args_bits), ref status);
 
     if(new_coroutine != null)
     {

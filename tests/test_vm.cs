@@ -3087,6 +3087,38 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSimpleNativeFuncWithSeveralArgs()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return answer(1, 2)
+    }
+    ";
+
+    var ts = new Types();
+    
+    var fn = new FuncSymbolNative("answer", Types.Int,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+          
+          var b = frm.stack.PopRelease().num;
+          var a = frm.stack.PopRelease().num;
+
+          frm.stack.Push(Val.NewNum(frm.vm, b-a));
+          return null;
+        }, 
+        new FuncArgSymbol("a", ts.Type("int")),
+        new FuncArgSymbol("b", ts.Type("int"))
+    );
+    ts.globs.Define(fn);
+
+    var vm = MakeVM(bhl, ts);
+    var num = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(1, num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestNativeFuncBindConflict()
   {
     string bhl = @"
