@@ -41,7 +41,7 @@ exp
   | string                                                  #ExpLiteralStr
   | callExp                                                 #ExpCall
   | staticCallExp                                           #ExpStaticCall
-  | typeid                                                  #ExpTypeid
+  | typeof                                                  #ExpTypeof
   | jsonObject                                              #ExpJsonObj
   | jsonArray                                               #ExpJsonArr
   | funcLambda                                              #ExpLambda
@@ -165,8 +165,8 @@ staticCallItem
   : '::' NAME
   ;
 
-typeid 
-  : 'typeid' '(' type ')'
+typeof 
+  : 'typeof' '(' type ')'
   ;
 
 arrAccess

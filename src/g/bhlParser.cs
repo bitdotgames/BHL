@@ -55,7 +55,7 @@ public partial class bhlParser : Parser {
 		RULE_incrementOperator = 20, RULE_decrementOperator = 21, RULE_statement = 22, 
 		RULE_mainIf = 23, RULE_elseIf = 24, RULE_else = 25, RULE_callExp = 26, 
 		RULE_chainExp = 27, RULE_staticCallExp = 28, RULE_staticCallItem = 29, 
-		RULE_typeid = 30, RULE_arrAccess = 31, RULE_memberAccess = 32, RULE_callArgs = 33, 
+		RULE_typeof = 30, RULE_arrAccess = 31, RULE_memberAccess = 32, RULE_callArgs = 33, 
 		RULE_callArg = 34, RULE_block = 35, RULE_extensions = 36, RULE_classDecl = 37, 
 		RULE_classBlock = 38, RULE_classMembers = 39, RULE_classMember = 40, RULE_interfaceDecl = 41, 
 		RULE_interfaceBlock = 42, RULE_interfaceMembers = 43, RULE_interfaceMember = 44, 
@@ -75,7 +75,7 @@ public partial class bhlParser : Parser {
 		"explist", "exp", "ternaryIfExp", "newExp", "foreachExp", "forStmt", "forStmts", 
 		"forPre", "forCond", "forPostIter", "forExp", "varDeclareAssign", "callPostOperators", 
 		"incrementOperator", "decrementOperator", "statement", "mainIf", "elseIf", 
-		"else", "callExp", "chainExp", "staticCallExp", "staticCallItem", "typeid", 
+		"else", "callExp", "chainExp", "staticCallExp", "staticCallItem", "typeof", 
 		"arrAccess", "memberAccess", "callArgs", "callArg", "block", "extensions", 
 		"classDecl", "classBlock", "classMembers", "classMember", "interfaceDecl", 
 		"interfaceBlock", "interfaceMembers", "interfaceMember", "enumDecl", "enumBlock", 
@@ -92,7 +92,7 @@ public partial class bhlParser : Parser {
 		null, "'import'", "','", "'null'", "'false'", "'true'", "'('", "')'", 
 		"'?'", "':'", "'new'", "'as'", "'++'", "'--'", "'while'", "'do'", "'for'", 
 		"'foreach'", "'yield'", "'break'", "'continue'", "'return'", "'paral'", 
-		"'paral_all'", "'defer'", "'if'", "'else'", "'::'", "'typeid'", "'['", 
+		"'paral_all'", "'defer'", "'if'", "'else'", "'::'", "'typeof'", "'['", 
 		"']'", "'.'", "'{'", "'}'", "'class'", "'interface'", "'enum'", "'='", 
 		"'func'", "'||'", "'&&'", "'|'", "'&'", "'+='", "'-='", "'*='", "'/='", 
 		"'<'", "'>'", "'<='", "'>='", "'!='", "'=='", "'+'", "'-'", "'*'", "'/'", 
@@ -700,6 +700,25 @@ public partial class bhlParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
+	public partial class ExpTypeofContext : ExpContext {
+		public TypeofContext @typeof() {
+			return GetRuleContext<TypeofContext>(0);
+		}
+		public ExpTypeofContext(ExpContext context) { CopyFrom(context); }
+		public override void EnterRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.EnterExpTypeof(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.ExitExpTypeof(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitExpTypeof(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 	public partial class ExpOrContext : ExpContext {
 		public ExpContext[] exp() {
 			return GetRuleContexts<ExpContext>();
@@ -1147,25 +1166,6 @@ public partial class bhlParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class ExpTypeidContext : ExpContext {
-		public TypeidContext typeid() {
-			return GetRuleContext<TypeidContext>(0);
-		}
-		public ExpTypeidContext(ExpContext context) { CopyFrom(context); }
-		public override void EnterRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterExpTypeid(this);
-		}
-		public override void ExitRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitExpTypeid(this);
-		}
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitExpTypeid(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
 
 	[RuleVersion(0)]
 	public ExpContext exp() {
@@ -1245,10 +1245,10 @@ public partial class bhlParser : Parser {
 				break;
 			case 8:
 				{
-				_localctx = new ExpTypeidContext(_localctx);
+				_localctx = new ExpTypeofContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 225; typeid();
+				State = 225; @typeof();
 				}
 				break;
 			case 9:
@@ -3150,34 +3150,34 @@ public partial class bhlParser : Parser {
 		return _localctx;
 	}
 
-	public partial class TypeidContext : ParserRuleContext {
+	public partial class TypeofContext : ParserRuleContext {
 		public TypeContext type() {
 			return GetRuleContext<TypeContext>(0);
 		}
-		public TypeidContext(ParserRuleContext parent, int invokingState)
+		public TypeofContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_typeid; } }
+		public override int RuleIndex { get { return RULE_typeof; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterTypeid(this);
+			if (typedListener != null) typedListener.EnterTypeof(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitTypeid(this);
+			if (typedListener != null) typedListener.ExitTypeof(this);
 		}
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitTypeid(this);
+			if (typedVisitor != null) return typedVisitor.VisitTypeof(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public TypeidContext typeid() {
-		TypeidContext _localctx = new TypeidContext(Context, State);
-		EnterRule(_localctx, 60, RULE_typeid);
+	public TypeofContext @typeof() {
+		TypeofContext _localctx = new TypeofContext(Context, State);
+		EnterRule(_localctx, 60, RULE_typeof);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{

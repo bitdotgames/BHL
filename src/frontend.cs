@@ -1250,15 +1250,10 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
+  public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
   {
-    var tp = ParseType(ctx.typeid().type());
-
-    Wrap(ctx).eval_type = Types.Int;
-
-    var ast = AST_Util.New_Literal(LiteralType.NUM);
-    ast.nval = Hash.CRC28(tp.name);
-    PeekAST().AddChild(ast);
+    //TODO:
+    //var tp = ParseType(ctx.typeid().type());
 
     return null;
   }

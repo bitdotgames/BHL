@@ -87,6 +87,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpTypeof</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpTypeof([NotNull] bhlParser.ExpTypeofContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpOr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -233,13 +240,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpParen([NotNull] bhlParser.ExpParenContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpTypeid</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
 	/// </summary>
@@ -501,11 +501,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStaticCallItem([NotNull] bhlParser.StaticCallItemContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.typeof"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitTypeid([NotNull] bhlParser.TypeidContext context);
+	Result VisitTypeof([NotNull] bhlParser.TypeofContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// </summary>

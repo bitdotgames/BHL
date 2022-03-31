@@ -123,6 +123,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpTypeof</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpTypeof([NotNull] bhlParser.ExpTypeofContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpTypeof</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpTypeof([NotNull] bhlParser.ExpTypeofContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpOr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -374,18 +386,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpParen([NotNull] bhlParser.ExpParenContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpTypeid</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpTypeid</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpTypeid([NotNull] bhlParser.ExpTypeidContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
 	/// </summary>
@@ -827,15 +827,15 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStaticCallItem([NotNull] bhlParser.StaticCallItemContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.typeof"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterTypeid([NotNull] bhlParser.TypeidContext context);
+	void EnterTypeof([NotNull] bhlParser.TypeofContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.typeid"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.typeof"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitTypeid([NotNull] bhlParser.TypeidContext context);
+	void ExitTypeof([NotNull] bhlParser.TypeofContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// </summary>

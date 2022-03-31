@@ -899,13 +899,13 @@ namespace bhlsp
         return null;
       }
 
-      public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
+      public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
       {
-        var typeIdType = ctx.typeid()?.type();
-        if(typeIdType != null)
+        var typeOfType = ctx.@typeof()?.type();
+        if(typeOfType != null)
         {
-          AddSemanticToken(ctx.Start.StartIndex, typeIdType.Start.StartIndex-2, SemanticTokenTypes.keyword);
-          Visit(typeIdType);
+          AddSemanticToken(ctx.Start.StartIndex, typeOfType.Start.StartIndex-2, SemanticTokenTypes.keyword);
+          Visit(typeOfType);
         }
         return null;
       }
