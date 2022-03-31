@@ -1956,10 +1956,14 @@ public class Frontend : bhlBaseVisitor<object>
         var ext = module.scope.Resolve(ext_name.GetText());
         if(ext is InterfaceSymbol ifs)
         {
+          if(inherits.IndexOf(ifs) != -1)
+            FireError(ext_name, "interface is inherited already");
           inherits.Add(ifs);
         }
+        else if(ext_name.GetText() == name)
+          FireError(ext_name, "self inheritance is not allowed");
         else
-          FireError(ext_name, "not an interface");
+          FireError(ext_name, "not a valid interface");
       }
     }
 
@@ -2030,6 +2034,8 @@ public class Frontend : bhlBaseVisitor<object>
             FireError(ext_name, "interface is implemented already");
           implements.Add(ifs);
         }
+        else if(ext_name.GetText() == name)
+          FireError(ext_name, "self inheritance is not allowed");
         else
           FireError(ext_name, "not a class or an interface");
       }

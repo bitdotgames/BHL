@@ -253,6 +253,48 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDoubleInheritanceIsNotAllowed()
+  {
+    string bhl = @"
+    interface IFoo { 
+      func foo()
+    }
+
+    interface IBar : IFoo, IFoo { 
+      func bar()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "interface is inherited already"
+    );
+  }
+
+  [IsTested()]
+  public void TestSelfInheritanceIsNotAllowed()
+  {
+    string bhl = @"
+    interface IFoo { 
+      func foo()
+    }
+
+    interface IBar : IBar { 
+      func bar()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "self inheritance is not allowed"
+    );
+  }
+
+  [IsTested()]
   public void TestClassImplementsInterface()
   {
     {

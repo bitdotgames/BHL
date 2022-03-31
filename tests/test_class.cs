@@ -89,118 +89,11 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestTypeidForBuiltinType()
+  public void TestSelfInheritanceIsNotAllowed()
   {
     string bhl = @"
-
-    func int test() 
+    class Foo : Foo
     {
-      return typeid(int)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, Hash.CRC28("int"));
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTypeidForBuiltinArrType()
-  {
-    string bhl = @"
-
-    func int test() 
-    {
-      return typeid([]int)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, Hash.CRC28("[]"));
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTypeidForUserClass()
-  {
-    string bhl = @"
-
-    class Foo { }
-      
-    func int test() 
-    {
-      return typeid(Foo)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, Hash.CRC28("Foo"));
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTypeidEqual()
-  {
-    string bhl = @"
-
-    class Foo { }
-      
-    func bool test() 
-    {
-      return typeid(Foo) == typeid(Foo)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTypeidNotEqual()
-  {
-    string bhl = @"
-
-    class Foo { }
-    class Bar { }
-      
-    func bool test() 
-    {
-      return typeid(Foo) == typeid(Bar)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
-    CommonChecks(vm);
-  }
-
-  //TODO:
-  //[IsTested()]
-  public void TestTypeidNotEqualArrType()
-  {
-    string bhl = @"
-
-    func bool test() 
-    {
-      return typeid([]int) == typeid([]float)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
-    CommonChecks(vm);
-  }
-
-  //TODO:
-  //[IsTested()]
-  public void TestTypeidBadType()
-  {
-    string bhl = @"
-
-    func int test() 
-    {
-      return typeid(Foo)
     }
     ";
 
@@ -208,51 +101,8 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"type 'Foo' not found"
+      "self inheritance is not allowed"
     );
-  }
-
-  //TODO: do we really need it?
-  //[IsTested()]
-  public void TestTypeidIsEncodedInUserClassObj()
-  {
-    string bhl = @"
-
-    class Foo { }
-      
-    func Foo test() 
-    {
-      return {}
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var val = Execute(vm, "test").result.Pop();
-    AssertEqual(val.num, Hash.CRC28("Foo"));
-    val.Release();
-    CommonChecks(vm);
-  }
-
-  //TODO:
-  //[IsTested()]
-  public void TestTypeidIsEncodedInUserClassInHierarchy()
-  {
-    string bhl = @"
-
-    class Foo { }
-    class Bar : Foo { }
-      
-    func Bar test() 
-    {
-      return {}
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var val = Execute(vm, "test").result.Pop();
-    AssertEqual(val.num, Hash.CRC28("Bar"));
-    val.Release();
-    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -963,6 +813,58 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserChildAttributes()
+  {
+    string bhl = @"
+
+    class Foo {
+      int a
+      int b
+    }
+
+    class Bar : Foo {
+      int c
+    }
+
+    func int test()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.c = 100
+      return b.a + b.b + b.c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserChildAttributeConflict()
+  {
+    string bhl = @"
+
+    class Foo {
+      int a
+      int b
+    }
+
+    class Bar : Foo {
+      int b
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'b'"
+    );
+  }
+
+  [IsTested()]
   public void TestUserChildClassMethod()
   {
     string bhl = @"
@@ -1008,7 +910,6 @@ public class TestClasses : BHL_TestBase
   public void TestUserSubChildClassMethod()
   {
     string bhl = @"
-
     class Base {
       int a
 
@@ -1053,7 +954,6 @@ public class TestClasses : BHL_TestBase
   public void TestUserChildClassMethodAccessesParent()
   {
     string bhl = @"
-
     class Foo {
       
       int a
