@@ -229,6 +229,30 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDoubleImplementationIsNotAllowed()
+  {
+    string bhl = @"
+    interface IFoo { 
+      func foo()
+    }
+
+    interface IBar { 
+      func bar()
+    }
+
+    class Foo : IFoo, IBar, IFoo { 
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "interface is implemented already"
+    );
+  }
+
+  [IsTested()]
   public void TestClassImplementsInterface()
   {
     {

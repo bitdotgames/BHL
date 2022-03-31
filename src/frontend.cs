@@ -2026,6 +2026,8 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(ext is InterfaceSymbol ifs)
         {
+          if(implements.IndexOf(ifs) != -1)
+            FireError(ext_name, "interface is implemented already");
           implements.Add(ifs);
         }
         else
