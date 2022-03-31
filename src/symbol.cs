@@ -413,7 +413,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 {
   public readonly FuncSymbolNative FuncArrIdx = null;
   public readonly FuncSymbolNative FuncArrIdxW = null;
-  public readonly FuncSymbolNative FuncAddInplace = null;
 
   public TypeProxy item_type;
 
@@ -457,11 +456,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
       //hidden system method not available directly
       FuncArrIdxW = new FuncSymbolNative("$ArrIdxW", ts.Type("void"), ArrIdxW);
     }
-
-    {
-      //hidden system method not available directly
-      FuncAddInplace = new FuncSymbolNative("$AddInplace", ts.Type("void"), AddInplace);
-    }
   }
 
   public ArrayTypeSymbol(Types ts, TypeProxy item_type) 
@@ -475,7 +469,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public abstract ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
@@ -522,17 +515,6 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     lst.Add(val);
     val.Release();
     arr.Release();
-    return null;
-  }
-
-  //NOTE: follows special Opcodes.ArrAddInPlace conventions
-  public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
-  {
-    var val = frame.stack.Pop();
-    var arr = frame.stack.Peek();
-    var lst = AsList(arr);
-    lst.Add(val);
-    val.Release();
     return null;
   }
 
@@ -624,18 +606,6 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     lst.Add((T)val.obj);
     val.Release();
     arr.Release();
-    return null;
-  }
-
-  //NOTE: follows special Opcodes.ArrAddInPlace conventions
-  public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
-  {
-    var val = frame.stack.Pop();
-    var arr = frame.stack.Peek();
-    var lst = (IList<T>)arr.obj;
-    T obj = (T)val.obj;
-    lst.Add(obj);
-    val.Release();
     return null;
   }
 

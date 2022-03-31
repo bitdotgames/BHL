@@ -71,6 +71,8 @@ public enum Opcodes
   Dec               = 71,
   ArrIdx            = 72,
   ArrIdxW           = 73,
+ //TODO: used for json alike array initialization,
+ //      can be replaced with more low-level opcodes?
   ArrAddInplace     = 74,
   Import            = 75,
 }
@@ -938,14 +940,15 @@ public class VM
           val.Release();
         }
         break;
-        //TODO: it's used for json alike array initialization
         case Opcodes.ArrAddInplace:
         {
           var self = stack[stack.Count - 2];
+          self.Retain();
           var class_type = ((ArrayTypeSymbol)self.type);
           BHS status;
           ICoroutine coroutine = null;
-          CallNative(init_frame, class_type.FuncAddInplace, 0, out status, ref coroutine);
+          CallNative(init_frame, (FuncSymbolNative)class_type.members[0], 0, out status, ref coroutine);
+          stack.Push(self);
         }
         break;
         default:
@@ -1223,9 +1226,11 @@ public class VM
       case Opcodes.ArrAddInplace:
       {
         var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        self.Retain();
         var class_type = ((ArrayTypeSymbol)self.type);
         BHS status;
-        CallNative(curr_frame, class_type.FuncAddInplace, 0, out status, ref coroutine);
+        CallNative(curr_frame, (FuncSymbolNative)class_type.members[0], 0, out status, ref coroutine);
+        curr_frame.stack.Push(self);
       }
       break;
       case Opcodes.Add:
