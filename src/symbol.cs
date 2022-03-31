@@ -180,6 +180,11 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     SetInherits(inherits);
   }
 
+  //marshall factory version
+  public InterfaceSymbol()
+    : this(null, null)
+  {}
+
   void SetInherits(IList<InterfaceSymbol> inherits)
   {
     if(inherits != null)
@@ -201,14 +206,6 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
   }
 
   public string GetName() { return name; }
-
-  public override void Sync(SyncContext ctx)
-  {
-    base.Sync(ctx);
-
-    Marshall.Sync(ctx, ref inherits); 
-    Marshall.Sync(ctx, ref members); 
-  }
 
   public override IScope GetFallbackScope()
   {
@@ -275,6 +272,38 @@ public class InterfaceSymbolScript : InterfaceSymbol
   public override uint ClassId()
   {
     return CLASS_ID;
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    base.Sync(ctx);
+
+    Marshall.Sync(ctx, ref inherits); 
+    Marshall.Sync(ctx, ref members); 
+  }
+}
+
+public class InterfaceSymbolNative : InterfaceSymbol
+{
+  public InterfaceSymbolNative(
+    string name, 
+    IList<InterfaceSymbol> inherits,
+    params FuncSymbol[] funcs
+  )
+    : base(name, inherits)
+  {
+    foreach(var func in funcs)
+      Define(func);
+  }
+
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    throw new NotImplementedException();
   }
 }
 

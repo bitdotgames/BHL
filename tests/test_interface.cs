@@ -408,4 +408,35 @@ public class TestInterfaces : BHL_TestBase
     }
   }
 
+  [IsTested()]
+  public void TestBindNativeInterface()
+  {
+    string bhl = @"
+    class Foo : IFoo {
+      func int bar(int i) {
+        return i+1
+      }
+    }
+
+    func int test() {
+      Foo foo = {}
+      IFoo ifoo = foo
+      return ifoo.bar(42)
+    }
+    ";
+    var ts = new Types();
+
+    var ifs = new InterfaceSymbolNative(
+        "IFoo", 
+        null, 
+        new FuncSymbolNative("bar", ts.Type("int"), null, 
+          new FuncArgSymbol("int", ts.Type("int")) 
+        )
+    );
+    ts.globs.Define(ifs);
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
