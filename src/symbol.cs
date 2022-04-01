@@ -9,6 +9,16 @@ public abstract class Symbol : IMarshallableGeneric
 {
   public string name;
   public TypeProxy type;
+
+  IType _type;
+  public IType Type {
+    get {
+      if(_type == null)
+        _type = type.Get();
+      return _type;
+    }
+  }
+
   // All symbols know what scope contains them
   public IScope scope;
 #if BHL_FRONT
@@ -445,6 +455,15 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
   public TypeProxy item_type;
 
+  IType _item_type;
+  public IType ItemType {
+    get {
+      if(_item_type == null)
+        _item_type = item_type.Get();
+      return _item_type;
+    }
+  }
+
   public ArrayTypeSymbol(Types ts, string name, TypeProxy item_type)     
     : base(name, super_class: null)
   {
@@ -785,15 +804,6 @@ public class FieldSymbol : VariableSymbol
   public FieldGetter getter;
   public FieldSetter setter;
   public FieldRef getref;
-
-  IType _type;
-  public IType Type {
-    get {
-      if(_type == null)
-        _type = type.Get();
-      return _type;
-    }
-  }
 
   public FieldSymbol(string name, TypeProxy type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
     : base(name, type)
