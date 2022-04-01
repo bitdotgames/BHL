@@ -5995,7 +5995,7 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("refbool", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         {}
       );
       ts.globs.Define(cl);
@@ -10256,7 +10256,7 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("Bar", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           //fake object
           v.SetObj(null, type);
@@ -14273,7 +14273,7 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(null, type);
         }
@@ -14306,7 +14306,7 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(null, type);
         }
@@ -14342,7 +14342,7 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("ColorNested", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new ColorNested(), type);
         }
@@ -14351,12 +14351,12 @@ public class TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("c", ts.Type("Color"), 
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
           v.SetObj(cn.c, ts.Type("Color").Get());
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
           cn.c = (Color)v.obj; 
@@ -18947,7 +18947,7 @@ public class TestVM : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("IntStruct", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           var s = new IntStruct();
           IntStruct.Encode(v, s, type);
@@ -18957,13 +18957,13 @@ public class TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("n", Types.Int,
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
           v.num = s.n;
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
@@ -18983,7 +18983,7 @@ public class TestVM : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("StringClass", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new StringClass(), type);
         }
@@ -18992,12 +18992,12 @@ public class TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("str", ts.Type("string"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (StringClass)ctx.obj;
           v.str = c.str;
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (StringClass)ctx.obj;
           c.str = v.str; 
@@ -19022,7 +19022,7 @@ public class TestVM : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("MasterStruct", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           var o = new MasterStruct();
           o.child = new StringClass();
@@ -19034,12 +19034,12 @@ public class TestVM : BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("child", ts.Type("StringClass"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child, ts.Type("StringClass").Get());
+          v.SetObj(c.child, fld.Type);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           c.child = (StringClass)v._obj; 
@@ -19048,12 +19048,12 @@ public class TestVM : BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol("child2", ts.Type("StringClass"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child2, ts.Type("StringClass").Get());
+          v.SetObj(c.child2, fld.Type);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           c.child2 = (StringClass)v.obj; 
@@ -19062,12 +19062,12 @@ public class TestVM : BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol("child_struct", ts.Type("IntStruct"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(v, c.child_struct, ts.Type("IntStruct").Get());
+          IntStruct.Encode(v, c.child_struct, fld.Type);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct s = new IntStruct();
@@ -19078,12 +19078,12 @@ public class TestVM : BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol("child_struct2", ts.Type("IntStruct"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(v, c.child_struct2, ts.Type("IntStruct").Get());
+          IntStruct.Encode(v, c.child_struct2, fld.Type);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct s = new IntStruct();
@@ -19161,14 +19161,14 @@ public class TestVM : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("RefC", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new RefC(logs), type);
         }
       );
       {
         var vs = new bhl.FieldSymbol("refs", Types.Int,
-          delegate(VM.Frame frm, Val ctx, ref Val v)
+          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
           {
             v.num = ((RefC)ctx.obj).refs;
           },

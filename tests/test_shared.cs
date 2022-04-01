@@ -167,7 +167,7 @@ public class BHL_TestBase
   public ClassSymbolNative BindColor(Types ts)
   {
     var cl = new ClassSymbolNative("Color", null,
-      delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+      delegate(VM.Frame frm, ref Val v, IType type) 
       { 
         v.SetObj(new Color(), type);
       }
@@ -175,12 +175,12 @@ public class BHL_TestBase
 
     ts.globs.Define(cl);
     cl.Define(new FieldSymbol("r", ts.Type("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         v.SetNum(c.r);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         c.r = (float)v.num; 
@@ -188,12 +188,12 @@ public class BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol("g", ts.Type("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         v.SetNum(c.g);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         c.g = (float)v.num; 
@@ -276,7 +276,7 @@ public class BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.Type("Color").Get(),
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new ColorAlpha(), type);
         }
@@ -285,12 +285,12 @@ public class BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("a", ts.Type("float"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
           v.num = c.a;
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
           c.a = (float)v.num; 
@@ -333,7 +333,7 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new Foo(), type);
         }
@@ -341,39 +341,37 @@ public class BHL_TestBase
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("hey", Types.Int,
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           v.SetNum(f.hey);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.hey = (int)v.num; 
           ctx.SetObj(f, ctx.type);
         }
       ));
-      var type_ArrayT_Color = ts.Type("ArrayT_Color");
-      cl.Define(new FieldSymbol("colors", type_ArrayT_Color,
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+      cl.Define(new FieldSymbol("colors", ts.Type("ArrayT_Color"),
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          v.SetObj(f.colors, type_ArrayT_Color.Get());
+          v.SetObj(f.colors, fld.Type);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.colors = (List<Color>)v.obj;
         }
       ));
-      var type_Color = ts.Type("Color");
-      cl.Define(new FieldSymbol("sub_color", type_Color,
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+      cl.Define(new FieldSymbol("sub_color", ts.Type("Color"),
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          v.SetObj(f.sub_color, type_Color.Get());
+          v.SetObj(f.sub_color, fld.Type);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.sub_color = (Color)v.obj; 
@@ -405,7 +403,7 @@ public class BHL_TestBase
   public ClassSymbolNative BindBar(Types ts)
   {
     var cl = new ClassSymbolNative("Bar", null,
-      delegate(VM.Frame frm, ref Val v, ClassSymbol type) 
+      delegate(VM.Frame frm, ref Val v, IType type) 
       { 
         v.SetObj(new Bar(), type);
       }
@@ -413,12 +411,12 @@ public class BHL_TestBase
 
     ts.globs.Define(cl);
     cl.Define(new FieldSymbol("Int", Types.Int,
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         v.SetNum(c.Int);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Int = (int)v.num; 
@@ -426,12 +424,12 @@ public class BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol("Flt", ts.Type("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         v.SetNum(c.Flt);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Flt = (float)v.num; 
@@ -439,12 +437,12 @@ public class BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol("Str", ts.Type("string"),
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         v.SetStr(c.Str);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Str = (string)v.obj; 

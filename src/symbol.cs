@@ -491,8 +491,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     : this(ts, item_type.name + "[]", item_type)
   {}
 
-  public abstract void CreateArr(VM.Frame frame, ref Val v, ClassSymbol type);
-  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v);
+  public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
+  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
   public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
@@ -525,12 +525,12 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return lst;
   }
 
-  public override void CreateArr(VM.Frame frm, ref Val v, ClassSymbol type)
+  public override void CreateArr(VM.Frame frm, ref Val v, IType type)
   {
     v.SetObj(ValList.New(frm.vm), type);
   }
 
-  public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     var lst = AsList(ctx);
     v.SetNum(lst.Count);
@@ -617,12 +617,12 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     : base(ts, item_type.name + "[]", item_type)
   {}
 
-  public override void CreateArr(VM.Frame frm, ref Val v, ClassSymbol type)
+  public override void CreateArr(VM.Frame frm, ref Val v, IType type)
   {
     v.SetObj(Creator(), type);
   }
 
-  public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     v.SetNum(((IList<T>)ctx.obj).Count);
   }
@@ -778,11 +778,24 @@ public class FuncArgSymbol : VariableSymbol
 
 public class FieldSymbol : VariableSymbol
 {
-  public VM.FieldGetter getter;
-  public VM.FieldSetter setter;
-  public VM.FieldRef getref;
+  public delegate void FieldGetter(VM.Frame frm, Val v, ref Val res, FieldSymbol fld);
+  public delegate void FieldSetter(VM.Frame frm, ref Val v, Val nv, FieldSymbol fld);
+  public delegate void FieldRef(VM.Frame frm, Val v, out Val res, FieldSymbol fld);
 
-  public FieldSymbol(string name, TypeProxy type, VM.FieldGetter getter = null, VM.FieldSetter setter = null, VM.FieldRef getref = null) 
+  public FieldGetter getter;
+  public FieldSetter setter;
+  public FieldRef getref;
+
+  IType _type;
+  public IType Type {
+    get {
+      if(_type == null)
+        _type = type.Get();
+      return _type;
+    }
+  }
+
+  public FieldSymbol(string name, TypeProxy type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
     : base(name, type)
   {
     this.getter = getter;
@@ -808,13 +821,13 @@ public class FieldSymbolScript : FieldSymbol
     : this("", new TypeProxy())
   {}
 
-  void Getter(VM.Frame frm, Val ctx, ref Val v)
+  void Getter(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     var m = (IList<Val>)ctx.obj;
     v.ValueCopyFrom(m[scope_idx]);
   }
 
-  void Setter(VM.Frame frm, ref Val ctx, Val v)
+  void Setter(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
   {
     var m = (IList<Val>)ctx.obj;
     var curr = m[scope_idx];
@@ -826,7 +839,7 @@ public class FieldSymbolScript : FieldSymbol
     curr.ValueCopyFrom(v);
   }
 
-  void Getref(VM.Frame frm, Val ctx, out Val v)
+  void Getref(VM.Frame frm, Val ctx, out Val v, FieldSymbol fld)
   {
     var m = (IList<Val>)ctx.obj;
     v = m[scope_idx];
@@ -1275,7 +1288,7 @@ public class ClassSymbolScript : ClassSymbol
     : this(null, null, null)
   {}
 
-  void ClassCreator(VM.Frame frm, ref Val data, ClassSymbol type)
+  void ClassCreator(VM.Frame frm, ref Val data, IType type)
   {
     //TODO: add handling of native super class
     //if(super_class is ClassSymbolNative cn)
