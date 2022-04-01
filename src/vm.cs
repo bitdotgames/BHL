@@ -814,15 +814,20 @@ public class VM
     null_val.Retain();
   }
 
-  public void LoadModule(string module_name)
+  public bool LoadModule(string module_name)
   {
     var loaded = loader.Load(module_name);
+    if(loaded == null)
+      return false;
     RegisterModule(loaded);
+    return true;
   }
 
   void LoadModule(CompiledModule module, string module_name)
   {
     var loaded = loader.Load(module_name);
+    if(loaded == null)
+      throw new Exception("Module '" + module_name + "' not found");
     RegisterModule(loaded);
 
     module.scope.AddImport(loaded.scope);
