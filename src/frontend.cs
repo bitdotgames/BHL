@@ -1295,7 +1295,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(ctx.newExp().type());
     Wrap(ctx).eval_type = tp.Get();
 
-    var ast = AST_Util.New_New((ClassSymbol)tp.Get());
+    var ast = new AST_New(tp.Get());
     PeekAST().AddChild(ast);
 
     return null;

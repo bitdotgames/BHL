@@ -176,6 +176,11 @@ public class AST_Dec : IAST
 public class AST_New : AST_Tree 
 {
   public IType type;
+
+  public AST_New(IType type)
+  {
+    this.type = type;
+  }
 }
 
 public class AST_FuncDecl : AST_Tree 
@@ -506,16 +511,6 @@ static public class AST_Util
     };
   }
   
-  ////////////////////////////////////////////////////////
-
-  static public AST_New New_New(ClassSymbol type)
-  {
-    var n = new AST_New();
-    n.type = type;
-
-    return n;
-  }
-
   ////////////////////////////////////////////////////////
 
   static public AST_Literal New_Literal(LiteralType type)
