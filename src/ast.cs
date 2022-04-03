@@ -188,6 +188,11 @@ public class AST_ClassDecl : IAST
 {
   public ClassSymbolScript symbol;
   public List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
+
+  public AST_ClassDecl(ClassSymbolScript symbol)
+  {
+    this.symbol = symbol;
+  }
 }
 
 public class AST_UpVal : IAST
@@ -422,16 +427,6 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_ClassDecl New_ClassDecl(ClassSymbolScript symbol)
-  {
-    var n = new AST_ClassDecl();
-    n.symbol = symbol;
-
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
   static public AST_UnaryOpExp New_UnaryOpExp(EnumUnaryOp type)
   {
     var n = new AST_UnaryOpExp();
@@ -511,13 +506,6 @@ static public class AST_Util
     };
   }
   
-  ////////////////////////////////////////////////////////
-
-  static public AST_PopValue New_PopValue()
-  {
-    return new AST_PopValue();
-  }
-
   ////////////////////////////////////////////////////////
 
   static public AST_New New_New(ClassSymbol type)
@@ -601,12 +589,6 @@ static public class AST_Util
     var n = new AST_JsonArr();
     n.type = arr_type;
     n.line_num = line_num;
-    return n;
-  }
-
-  static public AST_JsonArrAddItem New_JsonArrAddItem()
-  {
-    var n = new AST_JsonArrAddItem();
     return n;
   }
 

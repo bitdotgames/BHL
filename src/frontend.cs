@@ -424,10 +424,10 @@ public class Frontend : bhlBaseVisitor<object>
       if(tuple != null)
       {
         for(int i=0;i<tuple.Count;++i)
-          PeekAST().AddChild(AST_Util.New_PopValue());
+          PeekAST().AddChild(new AST_PopValue());
       }
       else
-        PeekAST().AddChild(AST_Util.New_PopValue());
+        PeekAST().AddChild(new AST_PopValue());
     }
     return null;
   }
@@ -1185,7 +1185,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(vals[i]);
       //the last item is added implicitely
       if(i+1 < vals.Length)
-        ast.AddChild(AST_Util.New_JsonArrAddItem());
+        ast.AddChild(new AST_JsonArrAddItem());
     }
     PopAST();
 
@@ -2060,7 +2060,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     module.scope.Define(class_symb);
 
-    var ast = AST_Util.New_ClassDecl(class_symb);
+    var ast = new AST_ClassDecl(class_symb);
 
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
