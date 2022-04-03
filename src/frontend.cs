@@ -1329,6 +1329,25 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitExpAs(bhlParser.ExpAsContext ctx)
+  {
+    var tp = ParseType(ctx.type());
+
+    //var ast = AST_Util.New_TypeCast(tp.Get(), ctx.Start.Line);
+    //var exp = ctx.exp();
+    //PushAST(ast);
+    //Visit(exp);
+    //PopAST();
+
+    Wrap(ctx).eval_type = tp.Get();
+
+    //types.CheckCast(Wrap(ctx), Wrap(exp)); 
+
+    //PeekAST().AddChild(ast);
+
+    return null;
+  }
+
   public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
   {
     EnumUnaryOp type;

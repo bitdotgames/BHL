@@ -712,8 +712,8 @@ public class Types
       return Bool;
 
     //TODO: add INullableType?
-    if(((a.eval_type is ClassSymbol || a.eval_type is FuncSignature) && b.eval_type == Null) ||
-        ((b.eval_type is ClassSymbol || b.eval_type is FuncSignature) && a.eval_type == Null))
+    if(((a.eval_type is ClassSymbol || a.eval_type is InterfaceSymbol || a.eval_type is FuncSignature) && b.eval_type == Null) ||
+        ((b.eval_type is ClassSymbol || b.eval_type is InterfaceSymbol || b.eval_type is FuncSignature) && a.eval_type == Null))
       return Bool;
 
     MatchTypes(eq_op_res_type, a, b);

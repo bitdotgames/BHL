@@ -50,6 +50,7 @@ public class BHL_TestRunner
     Run(names, new TestVM(), verbose);
     Run(names, new TestClasses(), verbose);
     Run(names, new TestInterfaces(), verbose);
+    Run(names, new TestTypes(), verbose);
     Run(names, new TestLSP(), verbose);
   }
 
