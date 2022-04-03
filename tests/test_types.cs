@@ -5,7 +5,7 @@ using bhl;
 
 public class TestTypes : BHL_TestBase
 {
-  //[IsTested()]
+  [IsTested()]
   public void TestSimpleAs()
   {
     string bhl = @"

@@ -62,19 +62,19 @@ public enum Opcodes
   GTE               = 62,
   DefArg            = 63, 
   TypeCast          = 64,
-  Block             = 65,
-  New               = 66,
-  Lambda            = 67,
-  UseUpval          = 68,
-  InitFrame         = 69,
-  Inc               = 70,
-  Dec               = 71,
-  ArrIdx            = 72,
-  ArrIdxW           = 73,
- //TODO: used for json alike array initialization,
- //      can be replaced with more low-level opcodes?
-  ArrAddInplace     = 74,
-  Import            = 75,
+  TypeAs            = 65,
+  Block             = 75,
+  New               = 76,
+  Lambda            = 77,
+  UseUpval          = 78,
+  InitFrame         = 79,
+  Inc               = 80,
+  Dec               = 81,
+  ArrIdx            = 82,
+  ArrIdxW           = 83,
+  ArrAddInplace     = 84,  //TODO: used for json alike array initialization,   
+                           //      can be replaced with more low-level opcodes?
+  Import            = 85,
 }
 
 public enum BlockType 
@@ -1191,9 +1191,19 @@ public class VM
       case Opcodes.TypeCast:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        //TODO: maybe there should be special IType constants?
         string cast_type = curr_frame.constants[cast_type_idx].str;
 
         HandleTypeCast(curr_frame, cast_type);
+      }
+      break;
+      case Opcodes.TypeAs:
+      {
+        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        //TODO: maybe there should be special IType constants?
+        string as_type = curr_frame.constants[cast_type_idx].str;
+
+        HandleTypeAs(curr_frame, as_type);
       }
       break;
       case Opcodes.Inc:
@@ -1860,6 +1870,22 @@ public class VM
     }
 
     curr_frame.stack.Push(new_val);
+  }
+
+  void HandleTypeAs(Frame curr_frame, string type_name)
+  {
+    var val = curr_frame.stack.PopRelease();
+
+    var type = (IType)types.Resolve(type_name);
+    if(type != null && val.type != null && Types.Is(val.type, type))
+    {
+      var new_val = Val.New(this);
+      new_val.ValueCopyFrom(val);
+      new_val.RefMod(RefOp.USR_INC);
+      curr_frame.stack.Push(new_val);
+    }
+    else
+      curr_frame.stack.Push(Val.NewObj(this, null, Types.Any));
   }
 
   void HandleNew(Frame curr_frame, string class_type)

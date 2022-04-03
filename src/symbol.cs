@@ -166,6 +166,8 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 
   public SymbolsSet<InterfaceSymbol> inherits = new SymbolsSet<InterfaceSymbol>();
 
+  HashSet<IInstanceType> related_types;
+
 #if BHL_FRONT
   public InterfaceSymbol(
     WrappedParseTree parsed, 
@@ -239,15 +241,20 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     return Resolve(name) as FuncSymbol;
   }
 
-  public void GetAllRelatedTypesSet(HashSet<IInstanceType> all)
+  public HashSet<IInstanceType> GetAllRelatedTypesSet()
   {
-    all.Add(this);
-    for(int i=0;i<inherits.Count;++i)
+    if(related_types == null)
     {
-      var ext = (IInstanceType)inherits[i];
-      if(!all.Contains(ext))
-        ext.GetAllRelatedTypesSet(all);
+      related_types = new HashSet<IInstanceType>();
+      related_types.Add(this);
+      for(int i=0;i<inherits.Count;++i)
+      {
+        var ext = (IInstanceType)inherits[i];
+        if(!related_types.Contains(ext))
+          related_types.UnionWith(ext.GetAllRelatedTypesSet());
+      }
     }
+    return related_types;
   }
 }
 
@@ -329,6 +336,8 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   //  [IBar][2,0]
   public Dictionary<InterfaceSymbol, List<int>> vtable = new Dictionary<InterfaceSymbol, List<int>>();
 
+  HashSet<IInstanceType> related_types;
+
   public SymbolsStorage members;
 
   public VM.ClassCreator creator;
@@ -400,7 +409,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
     var all = new HashSet<IInstanceType>();
     for(int i=0;i<implements.Count;++i)
-      implements[i].GetAllRelatedTypesSet(all);
+      all.UnionWith(implements[i].GetAllRelatedTypesSet());
     
     foreach(var imp in all)
     {
@@ -419,15 +428,21 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     }
   }
 
-  public void GetAllRelatedTypesSet(HashSet<IInstanceType> all)
+  public HashSet<IInstanceType> GetAllRelatedTypesSet()
   {
-    all.Add(this);
-    super_class?.GetAllRelatedTypesSet(all);
-    for(int i=0;i<implements.Count;++i)
+    if(related_types == null)
     {
-      if(!all.Contains(implements[i]))
-        implements[i].GetAllRelatedTypesSet(all);
+      related_types = new HashSet<IInstanceType>();
+      related_types.Add(this);
+      if(super_class != null)
+        related_types.UnionWith(super_class.GetAllRelatedTypesSet());
+      for(int i=0;i<implements.Count;++i)
+      {
+        if(!related_types.Contains(implements[i]))
+          related_types.UnionWith(implements[i].GetAllRelatedTypesSet());
+      }
     }
+    return related_types;
   }
 
   public override IScope GetFallbackScope() 

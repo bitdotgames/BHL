@@ -14,6 +14,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_ClassDecl ast);
   public abstract void DoVisit(AST_Block ast);
   public abstract void DoVisit(AST_TypeCast ast);
+  public abstract void DoVisit(AST_TypeAs ast);
   public abstract void DoVisit(AST_Call ast);
   public abstract void DoVisit(AST_Return ast);
   public abstract void DoVisit(AST_Break ast);
@@ -84,6 +85,8 @@ public abstract class AST_Visitor
       DoVisit(_24);
     else if(ast is AST_Module _25)
       DoVisit(_25);
+    else if(ast is AST_TypeAs _26)
+      DoVisit(_26);
     else 
       throw new Exception("Not known type: " + ast.GetType().Name);
   }
@@ -200,6 +203,24 @@ public class AST_TypeCast : AST_Tree
 {
   public IType type;
   public int line_num;
+
+  public AST_TypeCast(IType type, int line_num)
+  {
+    this.type = type;
+    this.line_num = line_num;
+  }
+}
+
+public class AST_TypeAs : AST_Tree 
+{
+  public IType type;
+  public int line_num;
+
+  public AST_TypeAs(IType type, int line_num)
+  {
+    this.type = type;
+    this.line_num = line_num;
+  }
 }
 
 public enum EnumCall 
@@ -445,17 +466,6 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_TypeCast New_TypeCast(IType type, int line_num)
-  {
-    var n = new AST_TypeCast();
-    n.type = type;
-    n.line_num = line_num;
-
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
   static public AST_UpVal New_UpVal(string name, int symb_idx, int upsymb_idx)
   {
     var n = new AST_UpVal();
@@ -688,6 +698,14 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_TypeCast node)
   {
     Console.Write("(CAST ");
+    Console.Write(node.type.GetName() + " ");
+    VisitChildren(node);
+    Console.Write(")");
+  }
+
+  public override void DoVisit(AST_TypeAs node)
+  {
+    Console.Write("(AS ");
     Console.Write(node.type.GetName() + " ");
     VisitChildren(node);
     Console.Write(")");

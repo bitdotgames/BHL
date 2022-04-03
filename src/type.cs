@@ -569,19 +569,8 @@ public class Types
   {
     if(a is IInstanceType ai && b is IInstanceType bi)
     {
-      var aset = new HashSet<IInstanceType>();
-      ai.GetAllRelatedTypesSet(aset);
-
-      var bset = new HashSet<IInstanceType>();
-      bi.GetAllRelatedTypesSet(bset);
-
-      //Console.WriteLine(">>>>>>>>>");
-      //foreach(var a1 in aset)
-      //  Console.WriteLine(a1.GetName());
-      //Console.WriteLine("<<<<<<<<<");
-      //foreach(var b1 in bset)
-      //  Console.WriteLine(b1.GetName());
-      //Console.WriteLine("==========");
+      var aset = ai.GetAllRelatedTypesSet();
+      var bset = bi.GetAllRelatedTypesSet();
 
       return aset.IsSupersetOf(bset);
     }

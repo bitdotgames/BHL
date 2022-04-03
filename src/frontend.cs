@@ -1314,7 +1314,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = AST_Util.New_TypeCast(tp.Get(), ctx.Start.Line);
+    var ast = new AST_TypeCast(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
@@ -1333,17 +1333,18 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    //var ast = AST_Util.New_TypeCast(tp.Get(), ctx.Start.Line);
-    //var exp = ctx.exp();
-    //PushAST(ast);
-    //Visit(exp);
-    //PopAST();
+    var ast = new AST_TypeAs(tp.Get(), ctx.Start.Line);
+    var exp = ctx.exp();
+    PushAST(ast);
+    Visit(exp);
+    PopAST();
 
     Wrap(ctx).eval_type = tp.Get();
 
+    //TODO: do we need to pre-check absolutely unrelated types?
     //types.CheckCast(Wrap(ctx), Wrap(exp)); 
 
-    //PeekAST().AddChild(ast);
+    PeekAST().AddChild(ast);
 
     return null;
   }
