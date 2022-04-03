@@ -357,7 +357,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     if(result == null)
     {
-      var ast = AST_Util.New_Module(module.name);
+      var ast = new AST_Module(module.name);
       PushAST(ast);
       VisitProgram(parsed.prog);
       PopAST();

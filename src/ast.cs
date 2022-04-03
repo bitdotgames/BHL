@@ -119,8 +119,12 @@ public class AST_Import : IAST
 
 public class AST_Module : AST_Tree 
 {
-  public uint id;
-  public string name = "";
+  public string name;
+
+  public AST_Module(string name)
+  {
+    this.name = name;
+  }
 }
 
 public enum EnumUnaryOp 
@@ -350,15 +354,6 @@ static public class AST_Util
     var c = new AST_Interim();
     self.AddChild(c);
     return c;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_Module New_Module(string name)
-  {
-    var n = new AST_Module();
-    n.name = name;
-    return n;
   }
 
   ////////////////////////////////////////////////////////
@@ -637,7 +632,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Module node)
   {
-    Console.Write("(MODULE " + node.id + " " + node.name);
+    Console.Write("(MODULE " + node.name);
     VisitChildren(node);
     Console.Write(")");
   }
