@@ -475,6 +475,48 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNullInterface()
+  {
+    string bhl = @"
+    interface IFoo {
+      func int foo()
+    }
+
+    func bool test() {
+      IFoo ifoo = null
+      return ifoo == null
+    }
+    ";
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNonNullInterface()
+  {
+    string bhl = @"
+    interface IFoo {
+      func int foo()
+    }
+
+    class Foo : IFoo {
+      func int foo() {
+        return 42
+      }
+    }
+
+    func bool test() {
+      IFoo ifoo = new Foo
+      return ifoo != null
+    }
+    ";
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBindNativeInterface()
   {
     string bhl = @"
