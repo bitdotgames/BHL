@@ -243,6 +243,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpCompare([NotNull] bhlParser.ExpCompareContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpAs</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpAs([NotNull] bhlParser.ExpAsContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpAs</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpAs([NotNull] bhlParser.ExpAsContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLiteralStr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>

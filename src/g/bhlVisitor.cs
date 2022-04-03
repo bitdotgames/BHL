@@ -136,6 +136,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpCompare([NotNull] bhlParser.ExpCompareContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpAs</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpAs([NotNull] bhlParser.ExpAsContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpLiteralStr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>

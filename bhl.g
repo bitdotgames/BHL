@@ -46,6 +46,7 @@ exp
   | jsonArray                                               #ExpJsonArr
   | funcLambda                                              #ExpLambda
   | '(' type ')' exp                                        #ExpTypeCast
+  | exp 'as' type                                           #ExpAs
   | operatorUnary exp                                       #ExpUnary
   | '(' exp ')' chainExp*                                   #ExpParen
   | exp operatorBitAnd exp                                  #ExpBitAnd
