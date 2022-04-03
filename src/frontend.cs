@@ -388,13 +388,13 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitImports(bhlParser.ImportsContext ctx)
   {
-    var res = AST_Util.New_Imports();
+    var ast = new AST_Import();
 
     var imps = ctx.mimport();
     for(int i=0;i<imps.Length;++i)
-      AddImport(res, imps[i]);
+      AddImport(ast, imps[i]);
 
-    PeekAST().AddChild(res);
+    PeekAST().AddChild(ast);
     return null;
   }
 

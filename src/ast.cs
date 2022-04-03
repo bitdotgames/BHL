@@ -363,14 +363,6 @@ static public class AST_Util
 
   ////////////////////////////////////////////////////////
 
-  static public AST_Import New_Imports()
-  {
-    var n = new AST_Import();
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
   static public AST_FuncDecl New_FuncDecl(FuncSymbolScript symbol, int last_line_num)
   {
     var n = new AST_FuncDecl();
