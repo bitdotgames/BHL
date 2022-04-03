@@ -41,7 +41,7 @@ public enum Opcodes
   GetFuncNative     = 40,
   GetFuncFromVar    = 41,
   GetFuncImported   = 42,
-  FuncPtrToTop      = 43,
+  LastArgToTop      = 43,
   GetAttr           = 44,
   RefAttr           = 45,
   SetAttr           = 46,
@@ -1457,16 +1457,16 @@ public class VM
         curr_frame.stack.Push(val);
       }
       break;
-      case Opcodes.FuncPtrToTop:
+      case Opcodes.LastArgToTop:
       {
-        //NOTE: we need to move ptr to the top of the stack
+        //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
         //      so that it fullfills Opcode.Call requirements 
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-        var args_info = new FuncArgsInfo(args_bits);
-        int ptr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-        var ptr = curr_frame.stack[ptr_idx];
-        curr_frame.stack.RemoveAt(ptr_idx);
-        curr_frame.stack.Push(ptr);
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int arg_idx = curr_frame.stack.Count - args_num - 1; 
+        var arg = curr_frame.stack[arg_idx];
+        curr_frame.stack.RemoveAt(arg_idx);
+        curr_frame.stack.Push(arg);
       }
       break;
       case Opcodes.Call:

@@ -442,7 +442,7 @@ public class Compiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.FuncPtrToTop,
+        Opcodes.LastArgToTop,
         4/*args bits*/
       )
     );
@@ -1180,7 +1180,7 @@ public class Compiler : AST_Visitor
       case EnumCall.LMBD:
       {
         VisitChildren(ast);
-        Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
         Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
@@ -1194,7 +1194,7 @@ public class Compiler : AST_Visitor
       case EnumCall.FUNC_MVAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.FuncPtrToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
         Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
