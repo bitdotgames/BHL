@@ -136,6 +136,11 @@ public enum EnumUnaryOp
 public class AST_UnaryOpExp : AST_Tree 
 {
   public EnumUnaryOp type = new EnumUnaryOp();
+
+  public AST_UnaryOpExp(EnumUnaryOp type)
+  {
+    this.type = type;
+  }
 }
 
 public enum EnumBinaryOp 
@@ -161,6 +166,12 @@ public class AST_BinaryOpExp  : AST_Tree
 {
   public EnumBinaryOp type = new EnumBinaryOp();
   public int line_num;
+
+  public AST_BinaryOpExp(EnumBinaryOp type, int line_num)
+  {
+    this.type = type;
+    this.line_num = line_num;
+  }
 }
 
 public class AST_Inc : IAST
@@ -187,6 +198,16 @@ public class AST_FuncDecl : AST_Tree
 {
   public FuncSymbolScript symbol;
   public int last_line_num;
+
+  public AST_FuncDecl(FuncSymbolScript symbol, int last_line_num)
+  {
+    this.symbol = symbol;
+    this.last_line_num = last_line_num;
+    //fparams
+    this.NewInterimChild();
+    //block
+    this.NewInterimChild();
+  }
 }
 
 public class AST_ClassDecl : IAST
@@ -202,15 +223,28 @@ public class AST_ClassDecl : IAST
 
 public class AST_UpVal : IAST
 {
-  public string name = "";
-  public uint symb_idx;
-  public uint upsymb_idx;
+  public string name;
+  public int symb_idx;
+  public int upsymb_idx;
+
+  public AST_UpVal(string name, int symb_idx, int upsymb_idx)
+  {
+    this.name = name;
+    this.symb_idx = symb_idx;
+    this.upsymb_idx = upsymb_idx;
+  }
 }
 
 public class AST_LambdaDecl : AST_FuncDecl 
 {
   public int local_vars_num;
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
+
+  public AST_LambdaDecl(LambdaSymbol symbol, List<AST_UpVal> upvals, int last_line_num)
+    : base(symbol, last_line_num)
+  {
+    this.upvals = upvals;
+  }
 }
 
 public class AST_TypeCast : AST_Tree 
@@ -366,25 +400,6 @@ static public class AST_Util
     return c;
   }
 
-  ////////////////////////////////////////////////////////
-
-  static public AST_FuncDecl New_FuncDecl(FuncSymbolScript symbol, int last_line_num)
-  {
-    var n = new AST_FuncDecl();
-    Init_FuncDecl(n, symbol, last_line_num);
-    return n;
-  }
-
-  static void Init_FuncDecl(AST_FuncDecl n, FuncSymbolScript symbol, int last_line_num)
-  {
-    n.symbol = symbol;
-    n.last_line_num = last_line_num;
-    //fparams
-    n.NewInterimChild();
-    //block
-    n.NewInterimChild();
-  }
-
   static public AST_Tree fparams(this AST_FuncDecl n)
   {
     return n.GetChildren()[0] as AST_Tree;
@@ -418,49 +433,6 @@ static public class AST_Util
       return 0;
     int num = fparams.children.Count;
     return num;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_LambdaDecl New_LambdaDecl(LambdaSymbol lmb_symb, List<AST_UpVal> upvals, int last_line_num)
-  {
-    var n = new AST_LambdaDecl();
-    Init_FuncDecl(n, lmb_symb, last_line_num);
-    n.upvals = upvals;
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_UnaryOpExp New_UnaryOpExp(EnumUnaryOp type)
-  {
-    var n = new AST_UnaryOpExp();
-    n.type = type;
-
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_BinaryOpExp New_BinaryOpExp(EnumBinaryOp type, int line_num)
-  {
-    var n = new AST_BinaryOpExp();
-    n.type = type;
-    n.line_num = line_num;
-
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_UpVal New_UpVal(string name, int symb_idx, int upsymb_idx)
-  {
-    var n = new AST_UpVal();
-    n.name = name;
-    n.symb_idx = (uint)symb_idx;
-    n.upsymb_idx = (uint)upsymb_idx;
-
-    return n;
   }
 
   ////////////////////////////////////////////////////////

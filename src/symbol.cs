@@ -1137,7 +1137,7 @@ public class LambdaSymbol : FuncSymbolScript
 
     this.Define(local);
 
-    var up = AST_Util.New_UpVal(local.name, local.scope_idx, src.scope_idx); 
+    var up = new AST_UpVal(local.name, local.scope_idx, src.scope_idx); 
     upvals.Add(up);
 
     return local;
