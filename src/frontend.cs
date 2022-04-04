@@ -1274,7 +1274,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = enum_symb;
 
-    var ast = AST_Util.New_Literal(LiteralType.NUM);
+    var ast = new AST_Literal(LiteralType.NUM);
     ast.nval = enum_val.val;
     PeekAST().AddChild(ast);
 
@@ -1651,7 +1651,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNum(bhlParser.ExpLiteralNumContext ctx)
   {
-    var ast = AST_Util.New_Literal(LiteralType.NUM);
+    var ast = new AST_Literal(LiteralType.NUM);
 
     var number = ctx.number();
     var int_num = number.INT();
@@ -1683,7 +1683,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Bool;
 
-    var ast = AST_Util.New_Literal(LiteralType.BOOL);
+    var ast = new AST_Literal(LiteralType.BOOL);
     ast.nval = 0;
     PeekAST().AddChild(ast);
 
@@ -1694,7 +1694,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Null;
 
-    var ast = AST_Util.New_Literal(LiteralType.NIL);
+    var ast = new AST_Literal(LiteralType.NIL);
     PeekAST().AddChild(ast);
 
     return null;
@@ -1704,7 +1704,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Bool;
 
-    var ast = AST_Util.New_Literal(LiteralType.BOOL);
+    var ast = new AST_Literal(LiteralType.BOOL);
     ast.nval = 1;
     PeekAST().AddChild(ast);
 
@@ -1715,7 +1715,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.String;
 
-    var ast = AST_Util.New_Literal(LiteralType.STR);
+    var ast = new AST_Literal(LiteralType.STR);
     ast.sval = ctx.@string().NORMALSTRING().GetText();
     //removing quotes
     ast.sval = ast.sval.Substring(1, ast.sval.Length-2);
@@ -1793,7 +1793,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     return_found.Add(func_symb);
 
-    var ret_ast = AST_Util.New_Return(ctx.Start.Line);
+    var ret_ast = new AST_Return(ctx.Start.Line);
     
     var explist = ctx.explist();
     if(explist != null)
@@ -1891,7 +1891,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(loops_stack == 0)
       FireError(ctx, "not within loop construct");
 
-    PeekAST().AddChild(AST_Util.New_Break());
+    PeekAST().AddChild(new AST_Break());
 
     return null;
   }
@@ -1904,7 +1904,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(loops_stack == 0)
       FireError(ctx, "not within loop construct");
 
-    PeekAST().AddChild(AST_Util.New_Continue());
+    PeekAST().AddChild(new AST_Continue());
 
     return null;
   }
@@ -2666,7 +2666,7 @@ public class Frontend : bhlBaseVisitor<object>
     PushAST(ast);
     CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     PopAST();
-    ast.children[ast.children.Count-1].AddChild(AST_Util.New_Continue(jump_marker: true));
+    ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
     --loops_stack;
 
@@ -2684,7 +2684,7 @@ public class Frontend : bhlBaseVisitor<object>
     PushAST(ast);
     CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     PopAST();
-    ast.children[ast.children.Count-1].AddChild(AST_Util.New_Continue(jump_marker: true));
+    ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
@@ -2760,7 +2760,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       PushAST(block);
       
-      PeekAST().AddChild(AST_Util.New_Continue(jump_marker: true));
+      PeekAST().AddChild(new AST_Continue(jump_marker: true));
       var for_post_iter_stmts = for_post_iter.forStmts();
       for(int i=0;i<for_post_iter_stmts.forStmt().Length;++i)
       {
@@ -2917,7 +2917,7 @@ public class Frontend : bhlBaseVisitor<object>
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
 
-    block.AddChild(AST_Util.New_Continue(jump_marker: true));
+    block.AddChild(new AST_Continue(jump_marker: true));
     //appending counter increment
     block.AddChild(new AST_Inc(arr_cnt_symb));
     PopAST();

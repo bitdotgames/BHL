@@ -315,6 +315,11 @@ public class AST_Return  : AST_Tree
 {
   public int num;
   public int line_num;
+
+  public AST_Return(int line_num)
+  {
+    this.line_num = line_num;
+  }
 }
 
 public class AST_Break : IAST
@@ -323,6 +328,11 @@ public class AST_Break : IAST
 public class AST_Continue : IAST
 {
   public bool jump_marker;
+
+  public AST_Continue(bool jump_marker = false)
+  {
+    this.jump_marker = jump_marker;
+  }
 }
 
 public class AST_Literal : IAST
@@ -330,6 +340,11 @@ public class AST_Literal : IAST
   public LiteralType type = new LiteralType();
   public double nval;
   public string sval = "";
+
+  public AST_Literal(LiteralType type)
+  {
+    this.type = type;
+  }
 }
 
 public class AST_VarDecl : AST_Tree 
@@ -508,37 +523,6 @@ static public class AST_Util
     return n;
   }
 
-  ////////////////////////////////////////////////////////
-
-  static public AST_Return New_Return(int line_num)
-  {
-    var ast = new AST_Return();
-    ast.line_num = line_num;
-    
-     return ast;
-  }
-
-  static public AST_Break New_Break()
-  {
-    return new AST_Break();
-  }
-  
-  static public AST_Continue New_Continue(bool jump_marker = false)
-  {
-    return new AST_Continue() {
-      jump_marker = jump_marker
-    };
-  }
-  
-  ////////////////////////////////////////////////////////
-
-  static public AST_Literal New_Literal(LiteralType type)
-  {
-    var n = new AST_Literal();
-    n.type = type;
-
-    return n;
-  }
 }
 
 public class AST_Dumper : AST_Visitor
