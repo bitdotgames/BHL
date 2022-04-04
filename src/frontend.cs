@@ -1466,9 +1466,9 @@ public class Frontend : bhlBaseVisitor<object>
     }
     
     if(is_negative)
-      ast.AddChild(AST_Util.New_Dec(vs));
+      ast.AddChild(new AST_Dec(vs));
     else
-      ast.AddChild(AST_Util.New_Inc(vs));
+      ast.AddChild(new AST_Inc(vs));
     
     Wrap(ctx).eval_type = Types.Void;
     PeekAST().AddChild(ast);
@@ -2475,7 +2475,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(write)
       return AST_Util.New_Call(EnumCall.VARW, name.Symbol.Line, symb);
     else
-      return AST_Util.New_VarDecl(symb, is_ref);
+      return new AST_VarDecl(symb, is_ref);
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
@@ -2889,7 +2889,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
     //declaring counter var
-    PeekAST().AddChild(AST_Util.New_VarDecl(arr_cnt_symb, is_ref: false));
+    PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb, is_ref: false));
 
     //declaring iterating var
     if(iter_ast_decl != null)
@@ -2919,7 +2919,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     block.AddChild(AST_Util.New_Continue(jump_marker: true));
     //appending counter increment
-    block.AddChild(AST_Util.New_Inc(arr_cnt_symb));
+    block.AddChild(new AST_Inc(arr_cnt_symb));
     PopAST();
 
     --loops_stack;

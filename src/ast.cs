@@ -177,11 +177,21 @@ public class AST_BinaryOpExp  : AST_Tree
 public class AST_Inc : IAST
 {
   public VariableSymbol symbol;
+
+  public AST_Inc(VariableSymbol symbol)
+  {
+    this.symbol = symbol;
+  }
 }
 
 public class AST_Dec : IAST
 {
   public VariableSymbol symbol;
+
+  public AST_Dec(VariableSymbol symbol)
+  {
+    this.symbol = symbol;
+  }
 }
 
 public class AST_New : AST_Tree 
@@ -326,9 +336,22 @@ public class AST_VarDecl : AST_Tree
 {
   public string name = "";
   public IType type;
-  public uint symb_idx;
+  public int symb_idx;
   public bool is_func_arg;
   public bool is_ref;
+
+  public AST_VarDecl(VariableSymbol symb, bool is_ref)
+    : this(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx)
+  {}
+
+  public AST_VarDecl(string name, bool is_ref, bool is_func_arg, IType type, int symb_idx)
+  {
+    this.name = name;
+    this.type = type;
+    this.is_ref = is_ref;
+    this.is_func_arg = is_func_arg;
+    this.symb_idx = symb_idx;
+  }
 }
 
 public class AST_Block : AST_Tree 
@@ -516,46 +539,6 @@ static public class AST_Util
 
     return n;
   }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_VarDecl New_VarDecl(VariableSymbol symb, bool is_ref)
-  {
-    return New_VarDecl(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx);
-  }
-
-  static public AST_VarDecl New_VarDecl(string name, bool is_ref, bool is_func_arg, IType type, int symb_idx)
-  {
-    var n = new AST_VarDecl();
-    n.name = name;
-    n.type = type;
-    n.is_ref = is_ref;
-    n.is_func_arg = is_func_arg;
-    n.symb_idx = (uint)symb_idx;
-
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_Inc New_Inc(VariableSymbol symb)
-  {
-    var n = new AST_Inc();
-    n.symbol = symb;
-
-    return n;
-  }
-  
-  ////////////////////////////////////////////////////////
-
-  static public AST_Dec New_Dec(VariableSymbol symb)
-  {
-    var n = new AST_Dec();
-    n.symbol = symb;
-
-    return n;
-  }
-
 }
 
 public class AST_Dumper : AST_Visitor
