@@ -1143,7 +1143,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = curr_type;
 
-    var ast = AST_Util.New_JsonObj(curr_type, ctx.Start.Line);
+    var ast = new AST_JsonObj(curr_type, ctx.Start.Line);
 
     PushAST(ast);
     var pairs = ctx.jsonPair();
@@ -1176,7 +1176,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(ctx,  "type '" + arr_type.item_type.name + "' not found");
     PushJsonType(orig_type);
 
-    var ast = AST_Util.New_JsonArr(arr_type, ctx.Start.Line);
+    var ast = new AST_JsonArr(arr_type, ctx.Start.Line);
 
     PushAST(ast);
     var vals = ctx.jsonValue();
@@ -1211,7 +1211,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(member == null)
       FireError(ctx, "no such attribute '" + name_str + "' in class '" + scoped_symb.name + "'");
 
-    var ast = AST_Util.New_JsonPair(curr_type, name_str, member.scope_idx);
+    var ast = new AST_JsonPair(curr_type, name_str, member.scope_idx);
 
     PushJsonType(member.type.Get());
 
@@ -2514,11 +2514,11 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitIf(bhlParser.IfContext ctx)
   {
-    var ast = AST_Util.New_Block(BlockType.IF);
+    var ast = new AST_Block(BlockType.IF);
 
     var main = ctx.mainIf();
 
-    var main_cond = AST_Util.New_Block(BlockType.SEQ);
+    var main_cond = new AST_Block(BlockType.SEQ);
     PushAST(main_cond);
     Visit(main.exp());
     PopAST();
@@ -2571,7 +2571,7 @@ public class Frontend : bhlBaseVisitor<object>
     for(int i=0;i<else_if.Length;++i)
     {
       var item = else_if[i];
-      var item_cond = AST_Util.New_Block(BlockType.SEQ);
+      var item_cond = new AST_Block(BlockType.SEQ);
       PushAST(item_cond);
       Visit(item.exp());
       PopAST();
@@ -2611,7 +2611,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
   {
-    var ast = AST_Util.New_Block(BlockType.IF); //short-circuit evaluation
+    var ast = new AST_Block(BlockType.IF); //short-circuit evaluation
 
     var exp_0 = ctx.exp();
     var exp_1 = ctx.ternaryIfExp().exp(0);
@@ -2650,11 +2650,11 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitWhile(bhlParser.WhileContext ctx)
   {
-    var ast = AST_Util.New_Block(BlockType.WHILE);
+    var ast = new AST_Block(BlockType.WHILE);
 
     ++loops_stack;
 
-    var cond = AST_Util.New_Block(BlockType.SEQ);
+    var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
     Visit(ctx.exp());
     PopAST();
@@ -2677,7 +2677,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitDoWhile(bhlParser.DoWhileContext ctx)
   {
-    var ast = AST_Util.New_Block(BlockType.DOWHILE);
+    var ast = new AST_Block(BlockType.DOWHILE);
 
     ++loops_stack;
 
@@ -2686,7 +2686,7 @@ public class Frontend : bhlBaseVisitor<object>
     PopAST();
     ast.children[ast.children.Count-1].AddChild(AST_Util.New_Continue(jump_marker: true));
 
-    var cond = AST_Util.New_Block(BlockType.SEQ);
+    var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
     Visit(ctx.exp());
     PopAST();
@@ -2740,11 +2740,11 @@ public class Frontend : bhlBaseVisitor<object>
     var for_cond = ctx.forExp().forCond();
     var for_post_iter = ctx.forExp().forPostIter();
 
-    var ast = AST_Util.New_Block(BlockType.WHILE);
+    var ast = new AST_Block(BlockType.WHILE);
 
     ++loops_stack;
 
-    var cond = AST_Util.New_Block(BlockType.SEQ);
+    var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
     Visit(for_cond);
     PopAST();
@@ -2804,11 +2804,11 @@ public class Frontend : bhlBaseVisitor<object>
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
 
-    var ast = AST_Util.New_Block(BlockType.WHILE);
+    var ast = new AST_Block(BlockType.WHILE);
 
     ++loops_stack;
 
-    var cond = AST_Util.New_Block(BlockType.SEQ);
+    var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
     Visit(ctx.exp());
     PopAST();
@@ -2817,7 +2817,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     ast.AddChild(cond);
 
-    var body = AST_Util.New_Block(BlockType.SEQ);
+    var body = new AST_Block(BlockType.SEQ);
     int line = ctx.Start.Line;
     body.AddChild(AST_Util.New_Call(EnumCall.FUNC, line, "yield"));
     ast.AddChild(body);
@@ -2895,12 +2895,12 @@ public class Frontend : bhlBaseVisitor<object>
     if(iter_ast_decl != null)
       PeekAST().AddChild(iter_ast_decl);
 
-    var ast = AST_Util.New_Block(BlockType.WHILE);
+    var ast = new AST_Block(BlockType.WHILE);
 
     ++loops_stack;
 
     //adding while condition
-    var cond = AST_Util.New_Block(BlockType.SEQ);
+    var cond = new AST_Block(BlockType.SEQ);
     var bin_op = new AST_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
@@ -2940,7 +2940,7 @@ public class Frontend : bhlBaseVisitor<object>
       type == BlockType.PARAL || 
       type == BlockType.PARAL_ALL;
 
-    var ast = AST_Util.New_Block(type);
+    var ast = new AST_Block(type);
     var tmp = new AST_Interim();
     PushAST(ast);
     for(int i=0;i<sts.Length;++i)
@@ -2957,7 +2957,7 @@ public class Frontend : bhlBaseVisitor<object>
         //NOTE: wrapping in group only in case there are more than one child
         if(tmp.children.Count > 1)
         {
-          var seq = AST_Util.New_Block(BlockType.SEQ);
+          var seq = new AST_Block(BlockType.SEQ);
           for(int c=0;c<tmp.children.Count;++c)
             seq.AddChild(tmp.children[c]);
           ast.AddChild(seq);

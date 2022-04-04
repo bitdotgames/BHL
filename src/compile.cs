@@ -1002,8 +1002,7 @@ public class Compiler : AST_Visitor
           (!(child is AST_Block child_block) || 
            (child_block.type != BlockType.SEQ && child_block.type != BlockType.DEFER)))
       {
-        var seq_child = new AST_Block();
-        seq_child.type = BlockType.SEQ;
+        var seq_child = new AST_Block(BlockType.SEQ);
         seq_child.children.Add(child);
         child = seq_child;
       }

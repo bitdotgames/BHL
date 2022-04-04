@@ -334,18 +334,35 @@ public class AST_VarDecl : AST_Tree
 public class AST_Block : AST_Tree 
 {
   public BlockType type = new BlockType();
+
+  public AST_Block(BlockType type)
+  {
+    this.type = type;
+  }
 }
 
 public class AST_JsonObj : AST_Tree 
 {
   public IType type;
   public int line_num;
+
+  public AST_JsonObj(IType type, int line_num)
+  {
+    this.type = type;
+    this.line_num = line_num;
+  }
 }
 
 public class AST_JsonArr : AST_Tree 
 {
   public IType type;
   public int line_num;
+
+  public AST_JsonArr(IType type, int line_num)
+  {
+    this.type = type;
+    this.line_num = line_num;
+  }
 }
 
 public class AST_JsonArrAddItem : IAST
@@ -353,9 +370,16 @@ public class AST_JsonArrAddItem : IAST
 
 public class AST_JsonPair : AST_Tree 
 {
-  public string name = "";
-  public uint symb_idx;
   public IType scope_type;
+  public string name;
+  public int symb_idx;
+
+  public AST_JsonPair(IType scope_type, string name, int symb_idx)
+  {
+    this.scope_type = scope_type;
+    this.name = name;
+    this.symb_idx = symb_idx;
+  }
 }
 
 public class AST_PopValue : IAST
@@ -532,42 +556,6 @@ static public class AST_Util
     return n;
   }
 
-  ////////////////////////////////////////////////////////
-
-  static public AST_Block New_Block(BlockType type)
-  {
-    var n = new AST_Block();
-    n.type = type;
-    return n;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_JsonObj New_JsonObj(IType root_type, int line_num)
-  {
-    var n = new AST_JsonObj();
-    n.type = root_type;
-    n.line_num = line_num;
-    return n;
-  }
-
-  static public AST_JsonArr New_JsonArr(ArrayTypeSymbol arr_type, int line_num)
-  {
-    var n = new AST_JsonArr();
-    n.type = arr_type;
-    n.line_num = line_num;
-    return n;
-  }
-
-  static public AST_JsonPair New_JsonPair(IType scope_type, string name, int symb_idx)
-  {
-    var n = new AST_JsonPair();
-    n.scope_type = scope_type;
-    n.name = name;
-    n.symb_idx = (uint)symb_idx;
-
-    return n;
-  }
 }
 
 public class AST_Dumper : AST_Visitor
