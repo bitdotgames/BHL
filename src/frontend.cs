@@ -1274,7 +1274,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = enum_symb;
 
-    var ast = new AST_Literal(LiteralType.NUM);
+    var ast = new AST_Literal(ConstType.NUM);
     ast.nval = enum_val.val;
     PeekAST().AddChild(ast);
 
@@ -1651,7 +1651,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNum(bhlParser.ExpLiteralNumContext ctx)
   {
-    var ast = new AST_Literal(LiteralType.NUM);
+    var ast = new AST_Literal(ConstType.NUM);
 
     var number = ctx.number();
     var int_num = number.INT();
@@ -1683,7 +1683,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Bool;
 
-    var ast = new AST_Literal(LiteralType.BOOL);
+    var ast = new AST_Literal(ConstType.BOOL);
     ast.nval = 0;
     PeekAST().AddChild(ast);
 
@@ -1694,7 +1694,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Null;
 
-    var ast = new AST_Literal(LiteralType.NIL);
+    var ast = new AST_Literal(ConstType.NIL);
     PeekAST().AddChild(ast);
 
     return null;
@@ -1704,7 +1704,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.Bool;
 
-    var ast = new AST_Literal(LiteralType.BOOL);
+    var ast = new AST_Literal(ConstType.BOOL);
     ast.nval = 1;
     PeekAST().AddChild(ast);
 
@@ -1715,7 +1715,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     Wrap(ctx).eval_type = Types.String;
 
-    var ast = new AST_Literal(LiteralType.STR);
+    var ast = new AST_Literal(ConstType.STR);
     ast.sval = ctx.@string().NORMALSTRING().GetText();
     //removing quotes
     ast.sval = ast.sval.Substring(1, ast.sval.Length-2);

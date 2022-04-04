@@ -356,11 +356,11 @@ public class AST_Continue : IAST
 
 public class AST_Literal : IAST
 {
-  public LiteralType type = new LiteralType();
+  public ConstType type = new ConstType();
   public double nval;
   public string sval = "";
 
-  public AST_Literal(LiteralType type)
+  public AST_Literal(ConstType type)
   {
     this.type = type;
   }
@@ -565,13 +565,13 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Literal node)
   {
-    if(node.type == LiteralType.NUM)
+    if(node.type == ConstType.NUM)
       Console.Write(" (NUM " + node.nval + ")");
-    else if(node.type == LiteralType.BOOL)
+    else if(node.type == ConstType.BOOL)
       Console.Write(" (BOOL " + node.nval + ")");
-    else if(node.type == LiteralType.STR)
+    else if(node.type == ConstType.STR)
       Console.Write(" (STR '" + node.sval + "')");
-    else if(node.type == LiteralType.NIL)
+    else if(node.type == ConstType.NIL)
       Console.Write(" (NULL)");
   }
 

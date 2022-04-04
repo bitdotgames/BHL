@@ -569,7 +569,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == LiteralType.STR && cn.str == str)
+      if(cn.type == ConstType.STR && cn.str == str)
         return i;
     }
     throw new Exception("Constant not found: " + str);
@@ -580,7 +580,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == LiteralType.NUM && cn.num == num)
+      if(cn.type == ConstType.NUM && cn.num == num)
         return i;
     }
     throw new Exception("Constant not found: " + num);
@@ -591,7 +591,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == LiteralType.BOOL && cn.num == (v ? 1 : 0))
+      if(cn.type == ConstType.BOOL && cn.num == (v ? 1 : 0))
         return i;
     }
     throw new Exception("Constant not found: " + v);
@@ -602,7 +602,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == LiteralType.NIL)
+      if(cn.type == ConstType.NIL)
         return i;
     }
     throw new Exception("Constant null not found");

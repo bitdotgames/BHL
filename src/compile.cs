@@ -251,10 +251,14 @@ public class Compiler : AST_Visitor
     return constants.Count-1;
   }
 
-  //TODO: use implicit conversion in Const ctor?
   int AddConstant(string str)
   {
     return AddConstant(new Const(str));
+  }
+
+  int AddConstant(IType itype)
+  {
+    return AddConstant(new Const(itype));
   }
 
   static void DeclareOpcodes()

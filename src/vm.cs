@@ -90,23 +90,25 @@ public enum BlockType
   DOWHILE = 10,
 }
 
-public enum LiteralType 
+public enum ConstType 
 {
-  NUM = 1,
-  BOOL = 2,
-  STR = 3,
-  NIL = 4,
+  NUM   = 1,
+  BOOL  = 2,
+  STR   = 3,
+  NIL   = 4,
+  ITYPE = 5,
 }
 
 public class Const
 {
-  static public readonly Const Nil = new Const(LiteralType.NIL, 0, "");
+  static public readonly Const Nil = new Const(ConstType.NIL, 0, "");
 
-  public LiteralType type;
+  public ConstType type;
   public double num;
   public string str;
+  public IType itype;
 
-  public Const(LiteralType type, double num, string str)
+  public Const(ConstType type, double num, string str)
   {
     this.type = type;
     this.num = num;
@@ -115,35 +117,43 @@ public class Const
 
   public Const(double num)
   {
-    type = LiteralType.NUM;
+    type = ConstType.NUM;
     this.num = num;
     str = "";
   }
 
   public Const(string str)
   {
-    type = LiteralType.STR;
+    type = ConstType.STR;
     this.str = str;
     num = 0;
   }
 
   public Const(bool v)
   {
-    type = LiteralType.BOOL;
+    type = ConstType.BOOL;
     num = v ? 1 : 0;
     this.str = "";
   }
 
+  public Const(IType itype)
+  {
+    type = ConstType.ITYPE;
+    this.itype = itype;
+  }
+
   public Val ToVal(VM vm)
   {
-    if(type == LiteralType.NUM)
+    if(type == ConstType.NUM)
       return Val.NewNum(vm, num);
-    else if(type == LiteralType.BOOL)
+    else if(type == ConstType.BOOL)
       return Val.NewBool(vm, num == 1);
-    else if(type == LiteralType.STR)
+    else if(type == ConstType.STR)
       return Val.NewStr(vm, str);
-    else if(type == LiteralType.NIL)
+    else if(type == ConstType.NIL)
       return vm.Null;
+    else if(type == ConstType.ITYPE)
+      return Val.NewObj(vm, itype, Types.Any/*TODO: must be Types.Type*/);
     else
       throw new Exception("Bad type");
   }
@@ -2210,10 +2220,10 @@ public class CompiledModule
       int constants_len = r.ReadInt32();
       for(int i=0;i<constants_len;++i)
       {
-        var cn_type = (LiteralType)r.Read();
+        var cn_type = (ConstType)r.Read();
         double cn_num = 0;
         string cn_str = "";
-        if(cn_type == LiteralType.STR)
+        if(cn_type == ConstType.STR)
           cn_str = r.ReadString();
         else
           cn_num = r.ReadDouble();
@@ -2264,7 +2274,7 @@ public class CompiledModule
       foreach(var cn in cm.constants)
       {
         w.Write((byte)cn.type);
-        if(cn.type == LiteralType.STR)
+        if(cn.type == ConstType.STR)
           w.Write(cn.str);
         else
           w.Write(cn.num);
