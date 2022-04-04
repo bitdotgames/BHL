@@ -309,6 +309,25 @@ public class AST_Call  : AST_Tree
   public int line_num;
   public int symb_idx;
   public IInstanceType scope_type;
+
+  public AST_Call(EnumCall type, int line_num, string name = "", string module_name = "", IInstanceType scope_symb = null, int symb_idx = -1, uint cargs_bits = 0)
+    : this(type, line_num, name, scope_symb, symb_idx, module_name, cargs_bits)
+  {}
+
+  public AST_Call(EnumCall type, int line_num, VariableSymbol symb, IInstanceType scope_symb = null, uint cargs_bits = 0)
+    : this(type, line_num, symb.name, scope_symb, symb.scope_idx, symb.module_name, cargs_bits)
+  {}
+
+  public AST_Call(EnumCall type, int line_num, string name, IInstanceType scope_type, int symb_idx = -1, string module_name = "", uint cargs_bits = 0)
+  {
+    this.type = type;
+    this.name = name;
+    this.scope_type = scope_type;
+    this.line_num = line_num;
+    this.symb_idx = symb_idx;
+    this.module_name = module_name;
+    this.cargs_bits = cargs_bits;
+  }
 }
 
 public class AST_Return  : AST_Tree 
@@ -422,108 +441,6 @@ public class AST_JsonPair : AST_Tree
 
 public class AST_PopValue : IAST
 {}
-
-static public class AST_Util
-{
-  static public List<IAST> GetChildren(this IAST self)
-  {
-    var ast = self as AST_Tree;
-    return ast == null ? null : ast.children;
-  }
-
-  static public void AddChild(this IAST self, IAST c)
-  {
-    if(c == null)
-      return;
-    var ast = self as AST_Tree;
-    ast.children.Add(c);
-  }
-
-  static public void AddChild(this AST_Tree self, IAST c)
-  {
-    if(c == null)
-      return;
-    self.children.Add(c);
-  }
-
-  static public void AddChildren(this AST_Tree self, IAST b)
-  {
-    if(b is AST_Tree c)
-    {
-      for(int i=0;i<c.children.Count;++i)
-        self.AddChild(c.children[i]);
-    }
-  }
-
-  static public AST_Tree NewInterimChild(this AST_Tree self)
-  {
-    var c = new AST_Interim();
-    self.AddChild(c);
-    return c;
-  }
-
-  static public AST_Tree fparams(this AST_FuncDecl n)
-  {
-    return n.GetChildren()[0] as AST_Tree;
-  }
-
-  static public AST_Tree block(this AST_FuncDecl n)
-  {
-    return n.GetChildren()[1] as AST_Tree;
-  }
-
-  static public int GetDefaultArgsNum(this AST_FuncDecl n)
-  {
-    var fparams = n.fparams();
-    if(fparams.children.Count == 0)
-      return 0;
-
-    int num = 0;
-    for(int i=0;i<fparams.children.Count;++i)
-    {
-      var fc = fparams.children[i].GetChildren();
-      if(fc != null && fc.Count > 0)
-        ++num;
-    }
-    return num;
-  }
-
-  static public int GetTotalArgsNum(this AST_FuncDecl n)
-  {
-    var fparams = n.fparams();
-    if(fparams.children.Count == 0)
-      return 0;
-    int num = fparams.children.Count;
-    return num;
-  }
-
-  ////////////////////////////////////////////////////////
-
-  static public AST_Call New_Call(EnumCall type, int line_num, string name = "", string module_name = "", IInstanceType scope_symb = null, int symb_idx = -1, uint cargs_bits = 0)
-  {
-    return New_Call(type, line_num, name, scope_symb, symb_idx, module_name, cargs_bits);
-  }
-
-  static public AST_Call New_Call(EnumCall type, int line_num, VariableSymbol symb, IInstanceType scope_symb = null, uint cargs_bits = 0)
-  {
-    return New_Call(type, line_num, symb.name, scope_symb, symb.scope_idx, symb.module_name, cargs_bits);
-  }
-
-  static public AST_Call New_Call(EnumCall type, int line_num, string name, IInstanceType scope_type, int symb_idx = -1, string module_name = "", uint cargs_bits = 0)
-  {
-    var n = new AST_Call();
-    n.type = type;
-    n.name = name;
-    n.scope_type = scope_type;
-    n.line_num = line_num;
-    n.symb_idx = symb_idx;
-    n.module_name = module_name;
-    n.cargs_bits = cargs_bits;
-
-    return n;
-  }
-
-}
 
 public class AST_Dumper : AST_Visitor
 {
@@ -727,6 +644,78 @@ public static class AST_Extensions
     {
       dst.children.Add(src.children[i]);
     }
+  }
+
+  static public List<IAST> GetChildren(this IAST self)
+  {
+    var ast = self as AST_Tree;
+    return ast == null ? null : ast.children;
+  }
+
+  static public void AddChild(this IAST self, IAST c)
+  {
+    if(c == null)
+      return;
+    var ast = self as AST_Tree;
+    ast.children.Add(c);
+  }
+
+  static public void AddChild(this AST_Tree self, IAST c)
+  {
+    if(c == null)
+      return;
+    self.children.Add(c);
+  }
+
+  static public void AddChildren(this AST_Tree self, IAST b)
+  {
+    if(b is AST_Tree c)
+    {
+      for(int i=0;i<c.children.Count;++i)
+        self.AddChild(c.children[i]);
+    }
+  }
+
+  static public AST_Tree NewInterimChild(this AST_Tree self)
+  {
+    var c = new AST_Interim();
+    self.AddChild(c);
+    return c;
+  }
+
+  static public AST_Tree fparams(this AST_FuncDecl n)
+  {
+    return n.GetChildren()[0] as AST_Tree;
+  }
+
+  static public AST_Tree block(this AST_FuncDecl n)
+  {
+    return n.GetChildren()[1] as AST_Tree;
+  }
+
+  static public int GetDefaultArgsNum(this AST_FuncDecl n)
+  {
+    var fparams = n.fparams();
+    if(fparams.children.Count == 0)
+      return 0;
+
+    int num = 0;
+    for(int i=0;i<fparams.children.Count;++i)
+    {
+      var fc = fparams.children[i].GetChildren();
+      if(fc != null && fc.Count > 0)
+        ++num;
+    }
+    return num;
+  }
+
+  static public int GetTotalArgsNum(this AST_FuncDecl n)
+  {
+    var fparams = n.fparams();
+    if(fparams.children.Count == 0)
+      return 0;
+    int num = fparams.children.Count;
+    return num;
   }
 }
 

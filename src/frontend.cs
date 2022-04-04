@@ -561,21 +561,21 @@ public class Frontend : bhlBaseVisitor<object>
 
           if(scope_type == null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC_VAR, line, var_symb);
+            ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
-            PeekAST().AddChild(AST_Util.New_Call(EnumCall.MVAR, line, var_symb, scope_type));
-            ast = AST_Util.New_Call(EnumCall.FUNC_MVAR, line);
+            PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb, scope_type));
+            ast = new AST_Call(EnumCall.FUNC_MVAR, line);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
           }
         }
         else if(func_symb != null)
         {
-          ast = AST_Util.New_Call(scope_type != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), scope_type, func_symb.scope_idx);
+          ast = new AST_Call(scope_type != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), scope_type, func_symb.scope_idx);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -585,7 +585,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = module.scope.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = AST_Util.New_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), null, func_symb.scope_idx);
+            ast = new AST_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), null, func_symb.scope_idx);
             AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
             type = func_symb.GetReturnType();
           }
@@ -604,7 +604,7 @@ public class Frontend : bhlBaseVisitor<object>
           if(scope_type is InterfaceSymbol)
             FireError(name, "attributes not supported by interfaces");
 
-          ast = AST_Util.New_Call(scope_type != null ? 
+          ast = new AST_Call(scope_type != null ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
@@ -628,7 +628,7 @@ public class Frontend : bhlBaseVisitor<object>
           if(call_func_symb == null)
             FireError(name, "no such function found");
 
-          ast = AST_Util.New_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb is FuncSymbolScript fss ? fss.module_name : ""), null);
+          ast = new AST_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb is FuncSymbolScript fss ? fss.module_name : ""), null);
           type = func_symb.type.Get();
         }
         else
@@ -643,7 +643,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(ftype == null)
         FireError(cargs, "no func to call");
       
-      ast = AST_Util.New_Call(EnumCall.LMBD, line);
+      ast = new AST_Call(EnumCall.LMBD, line);
       AddCallArgs(ftype, cargs, ref ast, ref pre_call);
       type = ftype.ret_type.Get();
     }
@@ -669,7 +669,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     type = arr_type.item_type.Get();
 
-    var ast = AST_Util.New_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
+    var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
     ast.scope_type = arr_type;
 
     PeekAST().AddChild(ast);
@@ -910,8 +910,8 @@ public class Frontend : bhlBaseVisitor<object>
     var var_tmp_symb = new VariableSymbol(Wrap(ca), "$_tmp_" + ca.Start.Line + "_" + ca.Start.Column, types.Type(func_arg_type));
     curr_scope.Define(var_tmp_symb);
 
-    var var_tmp_decl = AST_Util.New_Call(EnumCall.VARW, ca.Start.Line, var_tmp_symb);
-    var var_tmp_read = AST_Util.New_Call(EnumCall.VAR, ca.Start.Line, var_tmp_symb);
+    var var_tmp_decl = new AST_Call(EnumCall.VARW, ca.Start.Line, var_tmp_symb);
+    var var_tmp_read = new AST_Call(EnumCall.VAR, ca.Start.Line, var_tmp_symb);
 
     if(pre_call == null)
       pre_call = new AST_Interim();
@@ -1411,14 +1411,14 @@ public class Frontend : bhlBaseVisitor<object>
     AST_Tree bin_op_ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
 
     PushAST(bin_op_ast);
-    bin_op_ast.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
+    bin_op_ast.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
     Visit(ctx.exp());
     PopAST();
 
     types.CheckAssign(vlhs.type.Get(), Wrap(ctx.exp()));
 
     PeekAST().AddChild(bin_op_ast);
-    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, vlhs));
+    PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, vlhs));
 
     return null;
   }
@@ -1539,7 +1539,7 @@ public class Frontend : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      var op_call = AST_Util.New_Call(EnumCall.MFUNC, ctx.Start.Line, op, "", class_symb, op_func.scope_idx, 1/*cargs bits*/);
+      var op_call = new AST_Call(EnumCall.MFUNC, ctx.Start.Line, op, "", class_symb, op_func.scope_idx, 1/*cargs bits*/);
       over_ast.AddChild(op_call);
       ast = over_ast;
     }
@@ -2318,7 +2318,7 @@ public class Frontend : bhlBaseVisitor<object>
           ptree = Wrap(vd.NAME());
           ptree.eval_type = curr_type;
 
-          var ast = AST_Util.New_Call(EnumCall.VARW, start_line, vd_symb);
+          var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
           root.AddChild(ast);
         }
         else
@@ -2473,7 +2473,7 @@ public class Frontend : bhlBaseVisitor<object>
     curr_scope.Define(symb);
 
     if(write)
-      return AST_Util.New_Call(EnumCall.VARW, name.Symbol.Line, symb);
+      return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb);
     else
       return new AST_VarDecl(symb, is_ref);
   }
@@ -2794,7 +2794,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitYield(bhlParser.YieldContext ctx)
   {
      int line = ctx.Start.Line;
-     var ast = AST_Util.New_Call(EnumCall.FUNC, line, "yield");
+     var ast = new AST_Call(EnumCall.FUNC, line, "yield");
      PeekAST().AddChild(ast);
      return null;
   }
@@ -2819,7 +2819,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var body = new AST_Block(BlockType.SEQ);
     int line = ctx.Start.Line;
-    body.AddChild(AST_Util.New_Call(EnumCall.FUNC, line, "yield"));
+    body.AddChild(new AST_Call(EnumCall.FUNC, line, "yield"));
     ast.AddChild(body);
 
     --loops_stack;
@@ -2887,7 +2887,7 @@ public class Frontend : bhlBaseVisitor<object>
       curr_scope.Define(arr_cnt_symb);
     }
 
-    PeekAST().AddChild(AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
+    PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
     //declaring counter var
     PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb, is_ref: false));
 
@@ -2902,20 +2902,20 @@ public class Frontend : bhlBaseVisitor<object>
     //adding while condition
     var cond = new AST_Block(BlockType.SEQ);
     var bin_op = new AST_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
-    bin_op.AddChild(AST_Util.New_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_type, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));
+    bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
+    bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
+    bin_op.AddChild(new AST_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_type, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
     PushAST(ast);
     var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
-    var arr_at = AST_Util.New_Call(EnumCall.ARR_IDX, ctx.Start.Line);
+    block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
+    var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line);
     block.children.Insert(0, arr_at);
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
-    block.children.Insert(0, AST_Util.New_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
+    block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
+    block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
 
     block.AddChild(new AST_Continue(jump_marker: true));
     //appending counter increment
