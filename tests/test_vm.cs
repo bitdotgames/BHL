@@ -4274,13 +4274,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var c = Compile(bhl);
+    var ts = new Types();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 3 + 2/*hidden vars*/ + 1/*cargs*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -4317,7 +4318,7 @@ public class TestVM : BHL_TestBase
 
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.result.PopRelease().num, 4);
@@ -7542,7 +7543,8 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var c = Compile(bhl);
+    var ts = new Types();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new Compiler()
@@ -7555,8 +7557,8 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Return)
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Bar") }) 
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Wow") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Bar")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Wow")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
@@ -7573,7 +7575,7 @@ public class TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     var num = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(num, 5);
     CommonChecks(vm);
@@ -8121,13 +8123,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var c = Compile(bhl);
+    var ts = new Types();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
@@ -8135,7 +8138,7 @@ public class TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     var lst = fb.result.Pop();
@@ -12100,7 +12103,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Foo")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
@@ -12394,8 +12397,8 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Foo")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
@@ -14723,8 +14726,8 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "[]") }) 
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Bar") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Bar")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })

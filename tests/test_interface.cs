@@ -350,6 +350,8 @@ public class TestInterfaces : BHL_TestBase
         return ifoo.bar(42)
       }
       ";
+
+      var ts = new Types();
       var c = Compile(bhl);
 
       var expected = 
@@ -363,7 +365,7 @@ public class TestInterfaces : BHL_TestBase
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
         .EmitThen(Opcodes.Return)
         .EmitThen(Opcodes.InitFrame, new int[] { 2+1 /*args info*/})
-        .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
+        .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Foo")) }) 
         .EmitThen(Opcodes.SetVar, new int[] { 0 })
         .EmitThen(Opcodes.GetVar, new int[] { 0 })
         .EmitThen(Opcodes.SetVar, new int[] { 1 })
@@ -375,7 +377,7 @@ public class TestInterfaces : BHL_TestBase
         ;
       AssertEqual(c, expected);
 
-      var vm = MakeVM(c);
+      var vm = MakeVM(c, ts);
       AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }

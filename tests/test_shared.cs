@@ -499,7 +499,7 @@ public class BHL_TestBase
     //it's going to go thru the full compilation cycle
     var ms = new MemoryStream();
     CompiledModule.ToStream(orig_cm, ms);
-    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), add_source_to_types: true);
+    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), add_symbols_to_types: true);
 
     var vm = new VM(ts);
     vm.RegisterModule(cm);
@@ -592,6 +592,17 @@ public class BHL_TestBase
     {
       var cn = cm.constants[i];
       if(cn.type == ConstType.BOOL && cn.num == (v ? 1 : 0))
+        return i;
+    }
+    throw new Exception("Constant not found: " + v);
+  }
+
+  public static int ConstIdx(CompiledModule cm, TypeProxy v)
+  {
+    for(int i=0;i<cm.constants.Count;++i)
+    {
+      var cn = cm.constants[i];
+      if(cn.type == ConstType.TPROXY && cn.tproxy.name == v.name)
         return i;
     }
     throw new Exception("Constant not found: " + v);

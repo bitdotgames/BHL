@@ -92,11 +92,11 @@ public enum BlockType
 
 public enum ConstType 
 {
-  NUM   = 1,
-  BOOL  = 2,
-  STR   = 3,
-  NIL   = 4,
-  ITYPE = 5,
+  NUM        = 1,
+  BOOL       = 2,
+  STR        = 3,
+  NIL        = 4,
+  TPROXY     = 5,
 }
 
 public class Const
@@ -106,7 +106,7 @@ public class Const
   public ConstType type;
   public double num;
   public string str;
-  public IType itype;
+  public TypeProxy tproxy;
 
   public Const(ConstType type, double num, string str)
   {
@@ -136,10 +136,10 @@ public class Const
     this.str = "";
   }
 
-  public Const(IType itype)
+  public Const(TypeProxy tp)
   {
-    type = ConstType.ITYPE;
-    this.itype = itype;
+    type = ConstType.TPROXY;
+    this.tproxy = tp;
   }
 
   public Val ToVal(VM vm)
@@ -152,8 +152,8 @@ public class Const
       return Val.NewStr(vm, str);
     else if(type == ConstType.NIL)
       return vm.Null;
-    else if(type == ConstType.ITYPE)
-      return Val.NewObj(vm, itype, Types.Any/*TODO: must be Types.Type*/);
+    else if(type == ConstType.TPROXY)
+      return Val.NewObj(vm, tproxy, Types.Any/*TODO: must be Types.Type*/);
     else
       throw new Exception("Bad type");
   }
@@ -162,7 +162,9 @@ public class Const
   {
     return type == o.type && 
            num == o.num && 
-           str == o.str;
+           str == o.str &&
+           tproxy.name == o.tproxy.name
+           ;
   }
 }
 
@@ -937,7 +939,7 @@ public class VM
         case Opcodes.New:
         {
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          string type = constants[type_idx].str;
+          IType type = constants[type_idx].tproxy.Get();
           HandleNew(init_frame, type);
         }
         break;
@@ -1733,7 +1735,7 @@ public class VM
       case Opcodes.New:
       {
         int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string type = curr_frame.constants[type_idx].str;
+        IType type = curr_frame.constants[type_idx].tproxy.Get();
         HandleNew(curr_frame, type);
       }
       break;
@@ -1898,12 +1900,11 @@ public class VM
       curr_frame.stack.Push(Val.NewObj(this, null, Types.Any));
   }
 
-  void HandleNew(Frame curr_frame, string class_type)
+  void HandleNew(Frame curr_frame, IType type)
   {
-    var cls = types.Resolve(class_type) as ClassSymbol;
-    //TODO: this check must be in dev.version only
+    var cls = type as ClassSymbol;
     if(cls == null)
-      throw new Exception("Could not find class symbol: " + class_type);
+      throw new Exception("Not a class symbol: " + type);
 
     var val = Val.New(this); 
     cls.creator(curr_frame, ref val, cls);
@@ -2188,7 +2189,7 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, bool add_source_to_types = false)
+  static public CompiledModule FromStream(Types types, Stream src, bool add_symbols_to_types = false)
   {
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
     {
@@ -2202,9 +2203,10 @@ public class CompiledModule
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
       var symbols = new ModuleScope(name, types.globs);
-      if(add_source_to_types)
+      var symb_factory = new SymbolFactory(types);
+      if(add_symbols_to_types)
         types.AddSource(symbols);
-      Marshall.Stream2Obj(new MemoryStream(symb_bytes), symbols, new SymbolFactory(types));
+      Marshall.Stream2Obj(new MemoryStream(symb_bytes), symbols, symb_factory);
 
       byte[] initcode = null;
       int initcode_len = r.ReadInt32();
@@ -2220,14 +2222,26 @@ public class CompiledModule
       int constants_len = r.ReadInt32();
       for(int i=0;i<constants_len;++i)
       {
+        Const cn = null;
+
         var cn_type = (ConstType)r.Read();
-        double cn_num = 0;
-        string cn_str = "";
+
         if(cn_type == ConstType.STR)
-          cn_str = r.ReadString();
+          cn = new Const(r.ReadString());
+        else if(cn_type == ConstType.NUM || 
+                cn_type == ConstType.BOOL ||
+                cn_type == ConstType.NIL)
+          cn = new Const(cn_type, r.ReadDouble(), "");
+        else if(cn_type == ConstType.TPROXY)
+        {
+          var tp = Marshall.Stream2Obj<TypeProxy>(src, symb_factory);
+          if(string.IsNullOrEmpty(tp.name))
+            throw new Exception("Missing name");
+          cn = new Const(tp);
+        }
         else
-          cn_num = r.ReadDouble();
-        var cn = new Const(cn_type, cn_num, cn_str);
+          throw new Exception("Unknown type: " + cn_type);
+
         constants.Add(cn);
       }
 
@@ -2276,8 +2290,16 @@ public class CompiledModule
         w.Write((byte)cn.type);
         if(cn.type == ConstType.STR)
           w.Write(cn.str);
-        else
+        else if(cn.type == ConstType.NUM || 
+                cn.type == ConstType.BOOL ||
+                cn.type == ConstType.NIL)
           w.Write(cn.num);
+        else if(cn.type == ConstType.TPROXY)
+        {
+          Marshall.Obj2Stream(cn.tproxy, dst);
+        }
+        else
+          throw new Exception("Unknown type: " + cn.type);
       }
 
       //TODO: add this info only for development builds

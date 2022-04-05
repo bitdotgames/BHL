@@ -258,7 +258,7 @@ public class Compiler : AST_Visitor
 
   int AddConstant(IType itype)
   {
-    return AddConstant(new Const(itype));
+    return AddConstant(new Const(new TypeProxy(itype)));
   }
 
   static void DeclareOpcodes()
@@ -1049,7 +1049,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_New ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
     VisitChildren(ast);
   }
 
@@ -1430,7 +1430,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
     VisitChildren(ast);
   }
 
@@ -1440,7 +1440,7 @@ public class Compiler : AST_Visitor
     if(arr_symb == null)
       throw new Exception("Could not find class binding: " + ast.type.GetName());
 
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
 
     for(int i=0;i<ast.children.Count;++i)
     {
