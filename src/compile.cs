@@ -1038,13 +1038,13 @@ public class Compiler : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
+    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type) }, ast.line_num);
   }
 
   public override void DoVisit(AST_TypeAs ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeAs, new int[] { AddConstant(ast.type.GetName()) }, ast.line_num);
+    Emit(Opcodes.TypeAs, new int[] { AddConstant(ast.type) }, ast.line_num);
   }
 
   public override void DoVisit(AST_New ast)

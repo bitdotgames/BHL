@@ -1203,8 +1203,7 @@ public class VM
       case Opcodes.TypeCast:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        //TODO: maybe there should be special IType constants?
-        string cast_type = curr_frame.constants[cast_type_idx].str;
+        var cast_type = curr_frame.constants[cast_type_idx].tproxy.Get();
 
         HandleTypeCast(curr_frame, cast_type);
       }
@@ -1212,8 +1211,7 @@ public class VM
       case Opcodes.TypeAs:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        //TODO: maybe there should be special IType constants?
-        string as_type = curr_frame.constants[cast_type_idx].str;
+        var as_type = curr_frame.constants[cast_type_idx].tproxy.Get();
 
         HandleTypeAs(curr_frame, as_type);
       }
@@ -1863,14 +1861,14 @@ public class VM
   }
 
   //TODO: make it more universal and robust
-  void HandleTypeCast(Frame curr_frame, string cast_type)
+  void HandleTypeCast(Frame curr_frame, IType cast_type)
   {
     var new_val = Val.New(this);
     var val = curr_frame.stack.PopRelease();
 
-    if(cast_type == "int")
+    if(cast_type == Types.Int)
       new_val.SetNum((int)val.num);
-    else if(cast_type == "string" && val.type != Types.String)
+    else if(cast_type == Types.String && val.type != Types.String)
       new_val.SetStr(val.num.ToString());
     else
     {
@@ -1881,11 +1879,10 @@ public class VM
     curr_frame.stack.Push(new_val);
   }
 
-  void HandleTypeAs(Frame curr_frame, string type_name)
+  void HandleTypeAs(Frame curr_frame, IType type)
   {
     var val = curr_frame.stack.PopRelease();
 
-    var type = (IType)types.Resolve(type_name);
     if(type != null && val.type != null && Types.Is(val.type, type))
     {
       var new_val = Val.New(this);

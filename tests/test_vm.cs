@@ -235,14 +235,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var c = Compile(bhl);
+    var ts = new Types();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "int") })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "int")) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -250,7 +251,7 @@ public class TestVM : BHL_TestBase
 
     AssertEqual(c.constants.Count, 2);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.result.PopRelease().num, 1);
@@ -267,14 +268,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var c = Compile(bhl);
+    var ts = new Types();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -282,7 +284,7 @@ public class TestVM : BHL_TestBase
 
     AssertEqual(c.constants.Count, 2);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.result.PopRelease().str, "7");
@@ -12113,12 +12115,12 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
@@ -12413,12 +12415,12 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
@@ -14742,12 +14744,12 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
