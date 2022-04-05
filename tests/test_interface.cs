@@ -371,7 +371,7 @@ public class TestInterfaces : BHL_TestBase
         .EmitThen(Opcodes.SetVar, new int[] { 1 })
         .EmitThen(Opcodes.GetVar, new int[] { 1 })
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
-        .EmitThen(Opcodes.CallMethodVirt, new int[] { 0, ConstIdx(c, "IFoo"), 1 })
+        .EmitThen(Opcodes.CallMethodVirt, new int[] { 0, ConstIdx(c, new TypeProxy(ts, "IFoo")), 1 })
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
         .EmitThen(Opcodes.Return)
         ;

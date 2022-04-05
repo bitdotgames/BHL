@@ -1570,7 +1570,7 @@ public class VM
       case Opcodes.CallMethodVirt:
       {
         int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int iface_name_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int iface_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
         //TODO: use a simpler schema where 'self' is passed on the top
@@ -1579,10 +1579,7 @@ public class VM
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
 
-        //TODO: find a more optimal way to fetch InterfaceSymbol
-        string iface_name = curr_frame.constants[iface_name_idx].str; 
-        var iface_symb = (InterfaceSymbol)types.Resolve(iface_name);
-
+        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_idx].tproxy.Get(); 
         var class_type = (ClassSymbol)self.type;
         int func_idx = class_type.vtable[iface_symb][iface_func_idx];
 

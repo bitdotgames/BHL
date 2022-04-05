@@ -84,6 +84,7 @@ public struct TypeProxy : IMarshallable
         (symb.scope is ModuleScope || 
          symb is BuiltInSymbol ||
          symb is ClassSymbolNative ||
+         symb is InterfaceSymbolNative ||
          symb is EnumSymbol ||
          (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol))
          );

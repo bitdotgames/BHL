@@ -495,7 +495,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethodVirt,
-        2/*class member idx*/, 3/*type literal idx*/, 4/*args bits*/
+        2/*class member idx*/, 3/*type idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1161,7 +1161,7 @@ public class Compiler : AST_Visitor
         
         if(instance_type is InterfaceSymbol)
         {
-          Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, AddConstant(ast.scope_type.GetName()), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
         }
         else
         {
