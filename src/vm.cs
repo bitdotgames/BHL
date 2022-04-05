@@ -912,10 +912,10 @@ public class VM
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          string type = constants[type_idx].str;
+          var type = constants[type_idx].tproxy.Get();
 
           module.gvars.Resize(var_idx+1);
-          module.gvars[var_idx] = MakeDefaultVal(module, type);
+          module.gvars[var_idx] = MakeDefaultVal(type);
         }
         break;
         case Opcodes.SetVar:
@@ -1314,13 +1314,13 @@ public class VM
       {
         int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
         int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string type = curr_frame.constants[type_idx].str;
+        var type = curr_frame.constants[type_idx].tproxy.Get();
 
         var curr = curr_frame.locals[local_idx];
         //NOTE: handling case when variables are 're-declared' within the nested loop
         if(curr != null)
           curr.Release();
-        curr_frame.locals[local_idx] = MakeDefaultVal(curr_frame.module, type);
+        curr_frame.locals[local_idx] = MakeDefaultVal(type);
       }
       break;
       case Opcodes.GetAttr:
@@ -1740,11 +1740,6 @@ public class VM
 
     ++ip;
     return BHS.SUCCESS;
-  }
-
-  internal Val MakeDefaultVal(CompiledModule cm, string type)
-  {
-    return MakeDefaultVal((IType)cm.scope.Resolve(type));
   }
 
   internal Val MakeDefaultVal(IType type)
