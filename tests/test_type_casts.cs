@@ -233,6 +233,37 @@ public class TestTypeCasts : BHL_TestBase
       AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
+
+    {
+      string bhl = @"
+      func float test() 
+      {
+        float s = 42.1
+        any foo = s
+        return foo as float
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(42.1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        bool s = true
+        any foo = s
+        return foo as bool
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
   }
 
   [IsTested()]
