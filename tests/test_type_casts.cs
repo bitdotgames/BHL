@@ -273,7 +273,7 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSimpleAs()
+  public void TestSimpleAsForSelf()
   {
     string bhl = @"
     class Foo
@@ -309,6 +309,32 @@ public class TestTypeCasts : BHL_TestBase
 
     var vm = MakeVM(bhl, ts);
     AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSimpleAsForChildClass()
+  {
+    string bhl = @"
+    class Bar 
+    {
+      int bar
+    }
+
+    class Foo : Bar
+    {
+      int foo
+    }
+
+    func int test() 
+    {
+      Foo f = {foo: 14, bar: 41}
+      return (f as Bar).bar
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
