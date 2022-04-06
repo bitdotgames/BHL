@@ -738,9 +738,10 @@ public class VM
     }
   }
 
-  public struct ModuleAddr
+  public struct FuncAddr
   {
     public CompiledModule module;
+    public FuncSymbolScript fs;
     public int ip;
   }
 
@@ -994,7 +995,7 @@ public class VM
 
   public Fiber Start(string func, uint cargs_bits, params Val[] args)
   {
-    ModuleAddr addr;
+    FuncAddr addr;
     if(!TryFindFuncAddr(func, out addr))
       return null;
 
@@ -1017,9 +1018,9 @@ public class VM
     return fb;
   }
 
-  bool TryFindFuncAddr(string name, out ModuleAddr addr)
+  bool TryFindFuncAddr(string name, out FuncAddr addr)
   {
-    addr = default(ModuleAddr);
+    addr = default(FuncAddr);
 
     var fs = types.Resolve(name) as FuncSymbolScript;
     if(fs == null)
@@ -1027,8 +1028,9 @@ public class VM
 
     var cm = modules[((ModuleScope)fs.scope).module_name];
 
-    addr = new ModuleAddr() {
+    addr = new FuncAddr() {
       module = cm,
+      fs = fs,
       ip = fs.ip_addr
     };
 
@@ -1036,12 +1038,13 @@ public class VM
   }
 
   //TODO: add caching?
-  ModuleAddr GetFuncAddr(string name)
+  FuncAddr GetFuncAddr(string name)
   {
     var fs = (FuncSymbolScript)types.Resolve(name);
     var cm = modules[((ModuleScope)fs.scope).module_name];
-    return new ModuleAddr() {
+    return new FuncAddr() {
       module = cm,
+      fs = fs,
       ip = fs.ip_addr
     };
   }
@@ -1474,7 +1477,7 @@ public class VM
         var func_symb = (FuncSymbolNative)types.globs.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.GetSignature()));
       }
       break;
       case Opcodes.GetFuncImported:
@@ -1482,11 +1485,11 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
         string func_name = curr_frame.constants[func_idx].str;
-        var maddr = GetFuncAddr(func_name);
+        var faddr = GetFuncAddr(func_name);
 
         var ptr = FuncPtr.New(this);
-        ptr.Init(maddr.module, maddr.ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
+        ptr.Init(faddr.module, faddr.ip);
+        curr_frame.stack.Push(Val.NewObj(this, ptr, faddr.fs.GetSignature()));
       }
       break;
       case Opcodes.GetFuncFromVar:

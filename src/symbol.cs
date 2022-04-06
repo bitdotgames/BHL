@@ -996,12 +996,12 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
   public FuncSignature GetSignature()
   {
-    return (FuncSignature)this.type.Get();
+    return signature;
   }
 
   public IType GetReturnType()
   {
-    return GetSignature().ret_type.Get();
+    return signature.ret_type.Get();
   }
 
   public SymbolsStorage GetArgs()

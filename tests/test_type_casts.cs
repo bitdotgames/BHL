@@ -512,6 +512,29 @@ public class TestTypeCasts : BHL_TestBase
       AssertEqual("hey", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
     }
+
+    {
+      string bhl = @"
+      func test() 
+      {
+        func(string) s = trace
+        any foo = s
+        //TODO: below line doesn't work
+        //(foo as func(string))(""hey"")
+        func(string) tmp = foo as func(string)
+        tmp(""hey"")
+      }
+      ";
+
+      var ts = new Types();
+      var log = new StringBuilder();
+      BindTrace(ts, log);
+
+      var vm = MakeVM(bhl, ts);
+      Execute(vm, "test");
+      AssertEqual("hey", log.ToString());
+      CommonChecks(vm);
+    }
   }
 
   [IsTested()]
