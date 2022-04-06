@@ -668,7 +668,7 @@ public class Types
 
   public IType CheckBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
   {
-    var op_func_arg_type = op_func.GetSignature().arg_types[0];
+    var op_func_arg_type = op_func.signature.arg_types[0];
     CheckAssign(op_func_arg_type.Get(), b);
     return op_func.GetReturnType();
   }

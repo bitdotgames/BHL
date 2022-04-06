@@ -937,9 +937,9 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
 public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
-  protected FuncSignature signature;
+  public FuncSignature signature;
 
-  SymbolsStorage members;
+  public SymbolsStorage members;
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -994,11 +994,6 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
       return this.scope; 
   }
 
-  public FuncSignature GetSignature()
-  {
-    return signature;
-  }
-
   public IType GetReturnType()
   {
     return signature.ret_type.Get();
@@ -1010,12 +1005,12 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
 
     var args = new SymbolsStorage(this);
-    for(int i=0;i<GetSignature().arg_types.Count;++i)
+    for(int i=0;i<signature.arg_types.Count;++i)
       args.Add((FuncArgSymbol)members[i + this_offset]);
     return args;
   }
 
-  public int GetTotalArgsNum() { return GetSignature().arg_types.Count; }
+  public int GetTotalArgsNum() { return signature.arg_types.Count; }
   public abstract int GetDefaultArgsNum();
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
 
@@ -1039,10 +1034,10 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   {
     string s = "";
     s += "func ";
-    s += GetSignature().ret_type.Get().GetName() + " ";
+    s += signature.ret_type.Get().GetName() + " ";
     s += name;
     s += "(";
-    foreach(var arg in GetSignature().arg_types)
+    foreach(var arg in signature.arg_types)
       s += arg.name + ",";
     s = s.TrimEnd(',');
     s += ")";
@@ -1245,7 +1240,7 @@ public class FuncSymbolNative : FuncSymbol
     foreach(var arg in args)
     {
       base.Define(arg);
-      GetSignature().AddArg(arg.type);
+      signature.AddArg(arg.type);
     }
   }
 

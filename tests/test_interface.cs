@@ -29,7 +29,7 @@ public class TestInterfaces : BHL_TestBase
     var vm = MakeVM(bhl);
     var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
-    var hey = symb.FindMethod("hey").GetSignature();
+    var hey = symb.FindMethod("hey").signature;
     AssertTrue(hey != null);
     AssertEqual(2, hey.arg_types.Count);
     AssertEqual(Types.Int, hey.arg_types[0].Get());
@@ -54,14 +54,14 @@ public class TestInterfaces : BHL_TestBase
     var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
 
-    var hey = symb.FindMethod("hey").GetSignature();
+    var hey = symb.FindMethod("hey").signature;
     AssertTrue(hey != null);
     AssertEqual(2, hey.arg_types.Count);
     AssertEqual(Types.Int, hey.arg_types[0].Get());
     AssertEqual(Types.Float, hey.arg_types[1].Get());
     AssertEqual(Types.Bool, hey.ret_type.Get());
 
-    var bar = symb.FindMethod("bar").GetSignature();
+    var bar = symb.FindMethod("bar").signature;
     AssertTrue(bar != null);
     AssertEqual(1, bar.arg_types.Count);
     AssertEqual(Types.String, bar.arg_types[0].Get());
@@ -96,14 +96,14 @@ public class TestInterfaces : BHL_TestBase
       AssertEqual("Wow", symb.inherits[0].name);
       AssertEqual(2, symb.GetMembers().Count);
 
-      var hey = symb.FindMethod("hey").GetSignature();
+      var hey = symb.FindMethod("hey").signature;
       AssertTrue(hey != null);
       AssertEqual(2, hey.arg_types.Count);
       AssertEqual(Types.Int, hey.arg_types[0].Get());
       AssertEqual(Types.Float, hey.arg_types[1].Get());
       AssertEqual(Types.Bool, hey.ret_type.Get());
 
-      var bar = symb.FindMethod("bar").GetSignature();
+      var bar = symb.FindMethod("bar").signature;
       AssertTrue(bar != null);
       AssertEqual(1, bar.arg_types.Count);
       AssertEqual(Types.String, bar.arg_types[0].Get());
@@ -119,7 +119,7 @@ public class TestInterfaces : BHL_TestBase
       AssertEqual(0, symb.inherits.Count);
       AssertEqual(1, symb.GetMembers().Count);
 
-      var bar = symb.FindMethod("bar").GetSignature();
+      var bar = symb.FindMethod("bar").signature;
       AssertTrue(bar != null);
       AssertEqual(1, bar.arg_types.Count);
       AssertEqual(Types.String, bar.arg_types[0].Get());

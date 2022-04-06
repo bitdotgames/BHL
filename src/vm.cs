@@ -1468,7 +1468,7 @@ public class VM
         var func_symb = (FuncSymbolScript)curr_frame.module.symbols.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, func_symb.ip_addr);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.GetSignature()));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;
       case Opcodes.GetFuncNative:
@@ -1477,7 +1477,7 @@ public class VM
         var func_symb = (FuncSymbolNative)types.globs.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.GetSignature()));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;
       case Opcodes.GetFuncImported:
@@ -1489,7 +1489,7 @@ public class VM
 
         var ptr = FuncPtr.New(this);
         ptr.Init(faddr.module, faddr.ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, faddr.fs.GetSignature()));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, faddr.fs.signature));
       }
       break;
       case Opcodes.GetFuncFromVar:

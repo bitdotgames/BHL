@@ -2133,7 +2133,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var m = (FuncSymbol)iface.GetMembers()[i];
       var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
-      if(func_symb == null || !func_symb.GetSignature().Matches(m.GetSignature()))
+      if(func_symb == null || !func_symb.signature.Matches(m.signature))
         FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
     }
   }

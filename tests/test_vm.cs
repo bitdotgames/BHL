@@ -18627,7 +18627,7 @@ public class TestVM : BHL_TestBase
       var Test = (FuncSymbolScript)ms.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(Test.scope, ms);
-      AssertEqual(types.TypeFunc(types.TypeTuple(Types.Int, Types.Float), types.TypeRef(Types.Int), Types.String).name, Test.GetSignature().GetName());
+      AssertEqual(types.TypeFunc(types.TypeTuple(Types.Int, Types.Float), types.TypeRef(Types.Int), Types.String).name, Test.signature.GetName());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
@@ -18637,9 +18637,9 @@ public class TestVM : BHL_TestBase
       var Make = (FuncSymbolScript)ms.Resolve("Make");
       AssertEqual(Make.name, "Make");
       AssertEqual(Make.scope, ms);
-      AssertEqual(1, Make.GetSignature().arg_types.Count);
+      AssertEqual(1, Make.signature.arg_types.Count);
       AssertEqual(types.TypeArr(Types.String).Get().GetName(), Make.GetReturnType().GetName());
-      AssertEqual(types.Type("Bar").Get(), Make.GetSignature().arg_types[0].Get());
+      AssertEqual(types.Type("Bar").Get(), Make.signature.arg_types[0].Get());
       AssertEqual(3, Make.default_args_num);
       AssertEqual(0, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);
@@ -18678,7 +18678,7 @@ public class TestVM : BHL_TestBase
       var Bar_What = Bar.Resolve("What") as FuncSymbolScript;
       AssertEqual(Bar_What.name, "What");
       AssertEqual(Bar_What.GetReturnType().GetName(), types.TypeTuple(Types.Bool, Types.Bool).Get().GetName());
-      AssertEqual(Bar_What.GetSignature().arg_types[0].Get(), Types.Int);
+      AssertEqual(Bar_What.signature.arg_types[0].Get(), Types.Int);
       AssertEqual(1, Bar_What.default_args_num);
       AssertEqual(0, Bar_What.local_vars_num);
       AssertEqual(1, Bar_What.ip_addr);
