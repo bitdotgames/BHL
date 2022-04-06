@@ -151,7 +151,7 @@ public class Compiler : AST_Visitor
     this.types = types;
     module = fres.module;
     ast = fres.ast;
-    curr_scope = module.scope;
+    curr_scope = module.symbols;
 
     UseInit();
   }
@@ -161,7 +161,7 @@ public class Compiler : AST_Visitor
   {
     types = new Types();
     module = new Module(types.globs, new ModulePath("", ""));
-    curr_scope = module.scope;
+    curr_scope = module.symbols;
 
     UseInit();
   }
@@ -196,7 +196,7 @@ public class Compiler : AST_Visitor
 
       compiled = new CompiledModule(
         module.name, 
-        module.scope,
+        module.symbols,
         constants, 
         init_bytes,
         code_bytes,
@@ -435,7 +435,7 @@ public class Compiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetFunc,
-        3/*module ip*/
+        3/*func module idx*/
       )
     );
     DeclareOpcode(
@@ -1123,7 +1123,7 @@ public class Compiler : AST_Visitor
         if(instr.op == Opcodes.GetFunc)
         {
           Pop();
-          Emit(Opcodes.Call, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.Call, new int[] { ((FuncSymbolScript)module.symbols.members[instr.operands[0]]).ip_addr, (int)ast.cargs_bits}, ast.line_num);
         }
         else if(instr.op == Opcodes.GetFuncNative)
         {
@@ -1237,7 +1237,7 @@ public class Compiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    var func_symb = module.scope.Resolve(ast.name) as FuncSymbol;
+    var func_symb = module.symbols.Resolve(ast.name) as FuncSymbol;
     if(func_symb == null)
       throw new Exception("Func '" + ast.name + "' code not found");
 
@@ -1246,11 +1246,15 @@ public class Compiler : AST_Visitor
       int func_idx = types.globs.GetMembers().IndexOf(fnative);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
-      return Emit(Opcodes.GetFuncNative, new int[] {(int)func_idx}, ast.line_num);
+      return Emit(Opcodes.GetFuncNative, new int[] { func_idx }, ast.line_num);
     }
-    else if(func_symb.scope == module.scope)
+    else if(func_symb.scope == module.symbols)
     {
-      return Emit(Opcodes.GetFunc, new int[] {((FuncSymbolScript)func_symb).ip_addr}, ast.line_num);
+      int func_idx = module.symbols.GetMembers().IndexOf(func_symb);
+      if(func_idx == -1)
+        throw new Exception("Func '" + ast.name + "' idx not found in symbols");
+
+      return Emit(Opcodes.GetFunc, new int[] { func_idx }, ast.line_num);
     }
     else
     {

@@ -493,6 +493,28 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestAsForFuncSignature()
+  {
+    {
+      string bhl = @"
+      func string hey() {
+        return ""hey""
+      }
+      func string test() 
+      {
+        func string() s = hey
+        any foo = s
+        return (foo as func string())()
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual("hey", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
   public void TestAsAndAny()
   {
     string bhl = @"

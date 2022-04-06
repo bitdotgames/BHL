@@ -28,7 +28,7 @@ public class Scope : IScope
 {
   protected IScope fallback;
 
-  protected SymbolsStorage members;
+  public SymbolsStorage members;
 
   public Scope(IScope fallback = null) 
   { 

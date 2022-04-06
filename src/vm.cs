@@ -853,7 +853,7 @@ public class VM
       throw new Exception("Module '" + module_name + "' not found");
     RegisterModule(loaded);
 
-    module.scope.AddImport(loaded.scope);
+    module.symbols.AddImport(loaded.symbols);
   }
 
   public void RegisterModule(CompiledModule cm)
@@ -862,7 +862,7 @@ public class VM
       return;
     modules.Add(cm.name, cm);
 
-    types.AddSource(cm.scope);
+    types.AddSource(cm.symbols);
 
     ExecInit(cm);
   }
@@ -881,7 +881,7 @@ public class VM
     }
     m.gvars.Clear();
 
-    types.RemoveSource(m.scope);
+    types.RemoveSource(m.symbols);
 
     modules.Remove(module_name);
   }
@@ -1048,9 +1048,9 @@ public class VM
 
   static FuncSymbol TryMapIp2Func(CompiledModule cm, int ip)
   {
-    for(int i=0;i<cm.scope.GetMembers().Count; ++i)
+    for(int i=0;i<cm.symbols.members.Count; ++i)
     {
-      var fsymb = cm.scope.GetMembers()[i] as FuncSymbolScript;
+      var fsymb = cm.symbols.members[i] as FuncSymbolScript;
       if(fsymb != null && fsymb.ip_addr == ip)
         return fsymb;
     }
@@ -1461,16 +1461,17 @@ public class VM
       break;
       case Opcodes.GetFunc:
       {
-        int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        var func_symb = (FuncSymbolScript)curr_frame.module.symbols.members[func_idx];
         var ptr = FuncPtr.New(this);
-        ptr.Init(curr_frame, func_ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
+        ptr.Init(curr_frame, func_symb.ip_addr);
+        curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.GetSignature()));
       }
       break;
       case Opcodes.GetFuncNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolNative)types.globs.GetMembers()[func_idx];
+        var func_symb = (FuncSymbolNative)types.globs.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
@@ -1523,7 +1524,7 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        var native = (FuncSymbolNative)types.globs.GetMembers()[func_idx];
+        var native = (FuncSymbolNative)types.globs.members[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))
@@ -2184,7 +2185,7 @@ public class CompiledModule
 
   public uint id;
   public string name;
-  public ModuleScope scope;
+  public ModuleScope symbols;
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
@@ -2201,7 +2202,7 @@ public class CompiledModule
   )
   {
     this.name = name;
-    this.scope = symbols;
+    this.symbols = symbols;
     this.constants = constants;
     this.initcode = initcode;
     this.bytecode = bytecode;
@@ -2292,7 +2293,7 @@ public class CompiledModule
 
       w.Write(cm.name);
 
-      var symb_bytes = Marshall.Obj2Bytes(cm.scope);
+      var symb_bytes = Marshall.Obj2Bytes(cm.symbols);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 

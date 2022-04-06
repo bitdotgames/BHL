@@ -284,8 +284,8 @@ public class Frontend : bhlBaseVisitor<object>
     this.tokens = parsed.tokens;
 
     this.module = module;
-    types.AddSource(module.scope);
-    curr_scope = this.module.scope;
+    types.AddSource(module.symbols);
+    curr_scope = this.module.symbols;
 
     if(importer == null)
       importer = new Importer();
@@ -408,7 +408,7 @@ public class Frontend : bhlBaseVisitor<object>
     //NOTE: null means module is already imported
     if(imported != null)
     {
-      module.scope.AddImport(imported.scope);
+      module.symbols.AddImport(imported.symbols);
       ast.module_names.Add(imported.name);
     }
   }
@@ -582,7 +582,7 @@ public class Frontend : bhlBaseVisitor<object>
         else
         {
           //NOTE: let's try fetching func symbol from the module scope
-          func_symb = module.scope.Resolve(str_name) as FuncSymbol;
+          func_symb = module.symbols.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
             ast = new AST_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), null, func_symb.scope_idx);
@@ -624,7 +624,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          var call_func_symb = module.scope.Resolve(str_name) as FuncSymbol;
+          var call_func_symb = module.symbols.Resolve(str_name) as FuncSymbol;
           if(call_func_symb == null)
             FireError(name, "no such function found");
 
@@ -1057,7 +1057,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    module.scope.Define(lmb_symb);
+    module.symbols.Define(lmb_symb);
 
     //NOTE: while we are inside lambda the eval type is its return type
     Wrap(ctx).eval_type = lmb_symb.GetReturnType();
@@ -1262,7 +1262,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var exp = ctx.staticCallExp(); 
     var ctx_name = exp.NAME();
-    var enum_symb = module.scope.Resolve(ctx_name.GetText()) as EnumSymbol;
+    var enum_symb = module.symbols.Resolve(ctx_name.GetText()) as EnumSymbol;
     if(enum_symb == null)
       FireError(ctx, "type '" + ctx_name + "' not found");
 
@@ -1553,7 +1553,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
 
-      Wrap(ctx).eval_type = types.CheckBinOpOverload(module.scope, wlhs, wrhs, op_func);
+      Wrap(ctx).eval_type = types.CheckBinOpOverload(module.symbols, wlhs, wrhs, op_func);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
@@ -1977,7 +1977,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var func_ast = CommonFuncDecl(module.scope, ctx);
+    var func_ast = CommonFuncDecl(module.symbols, ctx);
     PeekAST().AddChild(func_ast);
     return null;
   }
@@ -1993,7 +1993,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var ext_name = ctx.extensions().NAME()[i]; 
 
-        var ext = module.scope.Resolve(ext_name.GetText());
+        var ext = module.symbols.Resolve(ext_name.GetText());
         if(ext is InterfaceSymbol ifs)
         {
           if(inherits.IndexOf(ifs) != -1)
@@ -2009,7 +2009,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var iface_symb = new InterfaceSymbolScript(Wrap(ctx), name, inherits);
 
-    module.scope.Define(iface_symb);
+    module.symbols.Define(iface_symb);
 
     for(int i=0;i<ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
     {
@@ -2057,7 +2057,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var ext_name = ctx.extensions().NAME()[i]; 
 
-        var ext = module.scope.Resolve(ext_name.GetText());
+        var ext = module.symbols.Resolve(ext_name.GetText());
         if(ext is ClassSymbol cs)
         {
           if(super_class != null)
@@ -2083,7 +2083,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var class_symb = new ClassSymbolScript(Wrap(ctx), name, super_class, implements);
 
-    module.scope.Define(class_symb);
+    module.symbols.Define(class_symb);
 
     var ast = new AST_ClassDecl(class_symb);
 
@@ -2198,7 +2198,7 @@ public class Frontend : bhlBaseVisitor<object>
     //      But we do it just for consistency. Later once we have runtime 
     //      type info this will be justified.
     var symb = new EnumSymbolScript(enum_name);
-    module.scope.Define(symb);
+    module.symbols.Define(symb);
     curr_scope = symb;
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
@@ -2214,7 +2214,7 @@ public class Frontend : bhlBaseVisitor<object>
         FireError(em.INT(), "duplicate value '" + em_val + "'");
     }
 
-    curr_scope = module.scope;
+    curr_scope = module.symbols;
 
     return null;
   }
@@ -2227,7 +2227,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var tr = types.Type(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
-      module.scope.Define(symb);
+      module.symbols.Define(symb);
     }
     else
     {
@@ -3044,12 +3044,12 @@ public class Module
   }
   public ModulePath path;
   public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
-  public ModuleScope scope;
+  public ModuleScope symbols;
 
   public Module(GlobalScope globs, ModulePath path)
   {
     this.path = path;
-    scope = new ModuleScope(path.name, globs);
+    symbols = new ModuleScope(path.name, globs);
   }
 
   public Module(GlobalScope globs, string name, string file_path)

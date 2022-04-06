@@ -603,7 +603,7 @@ public class Build
             front_res = w.postproc.Patch(front_res, file);
 
             w.file2path.Add(file, file_module.path);
-            w.file2symbols.Add(file, front_res.module.scope);
+            w.file2symbols.Add(file, front_res.module.symbols);
 
             var c  = new Compiler(w.ts, front_res);
             var cm = c.Compile();

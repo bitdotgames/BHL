@@ -554,6 +554,8 @@ public class Types
   {
     if(a == b)
       return true;
+    else if(a.GetName() == b.GetName())
+      return true;
     else if(a is IInstanceType ai && b is IInstanceType bi)
     {
       var aset = ai.GetAllRelatedTypesSet();
