@@ -556,6 +556,56 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestAsForArray()
+  {
+    {
+      string bhl = @"
+      func string test() 
+      {
+        []string s = [""hey"", ""wow""]
+        any foo = s
+        return (foo as []string)[1]
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual("wow", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func int test() 
+      {
+        []int s = [10, 20]
+        any foo = s
+        return (foo as []int)[1]
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(20, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    //TODO:
+    //{
+    //  string bhl = @"
+    //  func bool test() 
+    //  {
+    //    []int s = [10, 20]
+    //    any foo = s
+    //    return (foo as []string) == null
+    //  }
+    //  ";
+
+    //  var vm = MakeVM(bhl);
+    //  AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    //  CommonChecks(vm);
+    //}
+  }
+
+  [IsTested()]
   public void TestAsAndAny()
   {
     string bhl = @"
