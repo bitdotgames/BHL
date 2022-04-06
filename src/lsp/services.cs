@@ -843,11 +843,21 @@ namespace bhlsp
     public override RpcResult SemanticTokensFull(SemanticTokensParams args)
     {
       BHLSPWorkspace.self.TryAddDocument(args.textDocument.uri);
-      if(BHLSPWorkspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+      var document = BHLSPWorkspace.self.FindDocument(args.textDocument.uri);
+      
+      if(document is BHLTextDocument bhldocument)
       {
         return RpcResult.Success(new SemanticTokens
         {
-          data = document.DataSemanticTokens.ToArray()
+          data = bhldocument.DataSemanticTokens.ToArray()
+        });
+      }
+      
+      if(document is JSTextDocument /*jsdocument*/)
+      {
+        return RpcResult.Success(new SemanticTokens
+        {
+            data = new uint[0]
         });
       }
       

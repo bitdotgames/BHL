@@ -112,6 +112,14 @@ namespace bhlsp
       return (min, index - indices[min]);
     }
   }
+
+  public class JSTextDocument : BHLSPTextDocument
+  {
+    public override void Sync(string text)
+    {
+      base.Sync(text);
+    }
+  }
   
   public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
   {

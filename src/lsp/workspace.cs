@@ -123,6 +123,7 @@ namespace bhlsp
         switch(ext)
         {
           case ".bhl": return new BHLTextDocument();
+          case ".js": return new JSTextDocument();
         }
       }
       
