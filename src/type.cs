@@ -82,8 +82,11 @@ public struct TypeProxy : IMarshallable
       bool defined_in_scope = 
         resolved is Symbol symb && 
         (symb.scope is ModuleScope || 
+         symb is BuiltInSymbol ||
          symb is ClassSymbolNative ||
-         symb is EnumSymbol
+         symb is InterfaceSymbolNative ||
+         symb is EnumSymbol ||
+         (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol))
          );
 
       //NOTE: we want to marshall only those types which are not
@@ -198,9 +201,11 @@ public class FuncSignature : IType, IMarshallableGeneric
 {
   public const uint CLASS_ID = 14; 
 
-  public string name;
+  //full type name
+  string name;
 
   public TypeProxy ret_type;
+  //TODO: include arg names as well since we support named args?
   public List<TypeProxy> arg_types = new List<TypeProxy>();
 
   public string GetName() { return name; }
@@ -238,7 +243,7 @@ public class FuncSignature : IType, IMarshallableGeneric
 
   void Update()
   {
-    string tmp = ret_type.name + "^("; 
+    string tmp = "func " + ret_type.name + "("; 
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
@@ -274,6 +279,8 @@ public class Types
   static public AnySymbol Any = new AnySymbol();
   static public NullSymbol Null = new NullSymbol();
 
+  public GenericArrayTypeSymbol ArrayGeneric;
+
 #if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
   {
@@ -306,9 +313,9 @@ public class Types
   };
 
   // Indicate whether a type supports a promotion to a wider type.
-  static Dictionary<Tuple<IType, IType>, IType> promote_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
+  static HashSet<Tuple<IType, IType>> is_subset_of = new HashSet<Tuple<IType, IType>>() 
   {
-    { new Tuple<IType, IType>(Int, Float), Float },
+    { new Tuple<IType, IType>(Int, Float) },
   };
 
   static Dictionary<Tuple<IType, IType>, IType> cast_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
@@ -369,10 +376,7 @@ public class Types
     globs.Define(Void);
     globs.Define(Any);
 
-    //TODO: probably we should get rid of this general fallback, 
-    //      once we have proper serialization of types this one 
-    //      won't be needed
-    globs.Define(new GenericArrayTypeSymbol(this, new TypeProxy(this, "")));
+    ArrayGeneric = new GenericArrayTypeSymbol(this, new TypeProxy(this, ""));
 
     {
       var fn = new FuncSymbolNative("suspend", Type("void"), 
@@ -537,38 +541,25 @@ public class Types
     return false;
   }
 
-  static public bool CanAssignTo(IType src, IType dst, IType promotion) 
+  static public bool Is(IType a, IType b) 
   {
-    return src == dst || 
-           promotion == dst || 
-           dst == Any ||
-           (dst is ClassSymbol && src == Null) ||
-           (dst is FuncSignature && src == Null) || 
-           src.GetName() == dst.GetName() ||
-           IsChildClass(src, dst)
-           ;
+    if(a == b)
+      return true;
+    else if(a.GetName() == b.GetName())
+      return true;
+    else if(a is IInstanceType ai && b is IInstanceType bi)
+    {
+      var aset = ai.GetAllRelatedTypesSet();
+      var bset = bi.GetAllRelatedTypesSet();
+      return aset.IsSupersetOf(bset);
+    }
+    else
+      return false;
   }
 
-  static public bool IsChildClass(IType t, IType pt) 
+  static public bool IsInSameHierarchy(IType a, IType b) 
   {
-    var cl = t as ClassSymbol;
-    if(cl == null)
-      return false;
-    var pcl = pt as ClassSymbol;
-    if(pcl == null)
-      return false;
-    return cl.IsSubclassOf(pcl);
-  }
-
-  static public bool IsInSameClassHierarchy(IType a, IType b) 
-  {
-    var ca = a as ClassSymbol;
-    if(ca == null)
-      return false;
-    var cb = b as ClassSymbol;
-    if(cb == null)
-      return false;
-    return cb.IsSubclassOf(ca) || ca.IsSubclassOf(cb);
+    return Is(a, b) || Is(b, a);
   }
 
   static public bool IsBinOpCompatible(IType type)
@@ -594,27 +585,32 @@ public class Types
     return result;
   }
 
+  static public bool CanAssignTo(IType rhs, IType lhs) 
+  {
+    return rhs == lhs || 
+           lhs == Any ||
+           (is_subset_of.Contains(new Tuple<IType, IType>(rhs, lhs))) ||
+           (lhs is IInstanceType && rhs == Null) ||
+           (lhs is FuncSignature && rhs == Null) || 
+           Is(rhs, lhs)
+           ;
+  }
+
   public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs.eval_type), out promote_to_type);
-    if(!CanAssignTo(rhs.eval_type, lhs.eval_type, promote_to_type)) 
+    if(!CanAssignTo(rhs.eval_type, lhs.eval_type)) 
       throw new SemanticError(lhs, "incompatible types");
   }
 
   public void CheckAssign(IType lhs, WrappedParseTree rhs) 
   {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs), out promote_to_type);
-    if(!CanAssignTo(rhs.eval_type, lhs, promote_to_type)) 
+    if(!CanAssignTo(rhs.eval_type, lhs)) 
       throw new SemanticError(rhs, "incompatible types");
   }
 
   public void CheckAssign(WrappedParseTree lhs, IType rhs) 
   {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs, lhs.eval_type), out promote_to_type);
-    if(!CanAssignTo(rhs, lhs.eval_type, promote_to_type)) 
+    if(!CanAssignTo(rhs, lhs.eval_type)) 
       throw new SemanticError(lhs, "incompatible types");
   }
 
@@ -643,7 +639,7 @@ public class Types
     if(cast_type == ltype)
       return;
 
-    if(IsInSameClassHierarchy(rtype, ltype))
+    if(IsInSameHierarchy(rtype, ltype))
       return;
     
     throw new SemanticError(type, "incompatible types for casting");
@@ -662,8 +658,8 @@ public class Types
 
   public IType CheckBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
   {
-    var op_func_arg = op_func.GetArgs()[0];
-    CheckAssign(op_func_arg.type.Get(), b);
+    var op_func_arg_type = op_func.signature.arg_types[0];
+    CheckAssign(op_func_arg_type.Get(), b);
     return op_func.GetReturnType();
   }
 
@@ -689,8 +685,8 @@ public class Types
       return Bool;
 
     //TODO: add INullableType?
-    if(((a.eval_type is ClassSymbol || a.eval_type is FuncSignature) && b.eval_type == Null) ||
-        ((b.eval_type is ClassSymbol || b.eval_type is FuncSignature) && a.eval_type == Null))
+    if(((a.eval_type is ClassSymbol || a.eval_type is InterfaceSymbol || a.eval_type is FuncSignature) && b.eval_type == Null) ||
+        ((b.eval_type is ClassSymbol || b.eval_type is InterfaceSymbol || b.eval_type is FuncSignature) && a.eval_type == Null))
       return Bool;
 
     MatchTypes(eq_op_res_type, a, b);

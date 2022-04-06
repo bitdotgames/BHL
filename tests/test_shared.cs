@@ -16,11 +16,11 @@ public class IsTestedAttribute : Attribute
 
 public static class BHL_TestExt 
 {
-  public static Types Clone(this Types ts)
+  public static Types CloneGlobs(this Types ts)
   {
     var ts_copy = new Types();
     var ms = ts.globs.GetMembers();
-    //let's skip already defined built-ins
+    //let's skip already defined built-in globs
     for(int i=ts_copy.globs.GetMembers().Count;i<ms.Count;++i)
       ts_copy.globs.Define(ms[i]);
     return ts_copy;
@@ -50,6 +50,7 @@ public class BHL_TestRunner
     Run(names, new TestVM(), verbose);
     Run(names, new TestClasses(), verbose);
     Run(names, new TestInterfaces(), verbose);
+    Run(names, new TestTypeCasts(), verbose);
     Run(names, new TestLSP(), verbose);
   }
 
@@ -167,37 +168,37 @@ public class BHL_TestBase
   public ClassSymbolNative BindColor(Types ts)
   {
     var cl = new ClassSymbolNative("Color", null,
-      delegate(VM.Frame frm, ref Val v) 
+      delegate(VM.Frame frm, ref Val v, IType type) 
       { 
-        v.obj = new Color();
+        v.SetObj(new Color(), type);
       }
     );
 
     ts.globs.Define(cl);
     cl.Define(new FieldSymbol("r", ts.Type("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
-        v.SetNum(c.r);
+        v.SetFlt(c.r);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         c.r = (float)v.num; 
-        ctx.obj = c;
+        ctx.SetObj(c, ctx.type);
       }
     ));
     cl.Define(new FieldSymbol("g", ts.Type("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
-        v.SetNum(c.g);
+        v.SetFlt(c.g);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         c.g = (float)v.num; 
-        ctx.obj = c;
+        ctx.SetObj(c, ctx.type);
       }
     ));
 
@@ -212,7 +213,7 @@ public class BHL_TestBase
           newc.r = c.r + k;
           newc.g = c.g + k;
 
-          var v = Val.NewObj(frm.vm, newc);
+          var v = Val.NewObj(frm.vm, newc, ts.Type("Color").Get());
           frm.stack.Push(v);
 
           return null;
@@ -229,7 +230,7 @@ public class BHL_TestBase
         {
           var k = frm.stack.PopRelease().num;
           var c = (Color)frm.stack.PopRelease().obj;
-          frm.stack.Push(Val.NewNum(frm.vm, (c.r * k) + (c.g * k)));
+          frm.stack.Push(Val.NewFlt(frm.vm, (c.r * k) + (c.g * k)));
           return null;
         },
         new FuncArgSymbol("k", ts.Type("float"))
@@ -244,7 +245,7 @@ public class BHL_TestBase
             var r = frm.stack.PopRelease().num;
             var c = new Color();
             c.r = (float)r;
-            var v = Val.NewObj(frm.vm, c);
+            var v = Val.NewObj(frm.vm, c, ts.Type("Color").Get());
             frm.stack.Push(v);
             return null;
           },
@@ -276,25 +277,25 @@ public class BHL_TestBase
 
     {
       var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.Type("Color").Get(),
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
-          v.obj = new ColorAlpha();
+          v.SetObj(new ColorAlpha(), type);
         }
       );
 
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("a", ts.Type("float"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
           v.num = c.a;
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
           c.a = (float)v.num; 
-          ctx.obj = c;
+          ctx.SetObj(c, ctx.type);
         }
       ));
 
@@ -304,7 +305,7 @@ public class BHL_TestBase
           {
             var c = (ColorAlpha)frm.stack.PopRelease().obj;
 
-            frm.stack.Push(Val.NewNum(frm.vm, (c.r * c.a) + (c.g * c.a)));
+            frm.stack.Push(Val.NewFlt(frm.vm, (c.r * c.a) + (c.g * c.a)));
 
             return null;
           }
@@ -333,49 +334,49 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v) 
+        delegate(VM.Frame frm, ref Val v, IType type) 
         { 
-          v.obj = new Foo();
+          v.SetObj(new Foo(), type);
         }
       );
       ts.globs.Define(cl);
 
       cl.Define(new FieldSymbol("hey", Types.Int,
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           v.SetNum(f.hey);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.hey = (int)v.num; 
-          ctx.obj = f;
+          ctx.SetObj(f, ctx.type);
         }
       ));
       cl.Define(new FieldSymbol("colors", ts.Type("ArrayT_Color"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          v.obj = f.colors;
+          v.SetObj(f.colors, fld.Type);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.colors = (List<Color>)v.obj;
         }
       ));
       cl.Define(new FieldSymbol("sub_color", ts.Type("Color"),
-        delegate(VM.Frame frm, Val ctx, ref Val v)
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          v.obj = f.sub_color;
+          v.SetObj(f.sub_color, fld.Type);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v)
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.sub_color = (Color)v.obj; 
-          ctx.obj = f;
+          ctx.SetObj(f, ctx.type);
         }
       ));
     }
@@ -403,50 +404,50 @@ public class BHL_TestBase
   public ClassSymbolNative BindBar(Types ts)
   {
     var cl = new ClassSymbolNative("Bar", null,
-      delegate(VM.Frame frm, ref Val v) 
+      delegate(VM.Frame frm, ref Val v, IType type) 
       { 
-        v.SetObj(new Bar());
+        v.SetObj(new Bar(), type);
       }
     );
 
     ts.globs.Define(cl);
     cl.Define(new FieldSymbol("Int", Types.Int,
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         v.SetNum(c.Int);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Int = (int)v.num; 
-        ctx.SetObj(c);
+        ctx.SetObj(c, ctx.type);
       }
     ));
     cl.Define(new FieldSymbol("Flt", ts.Type("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
-        v.SetNum(c.Flt);
+        v.SetFlt(c.Flt);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Flt = (float)v.num; 
-        ctx.obj = c;
+        ctx.SetObj(c, ctx.type);
       }
     ));
     cl.Define(new FieldSymbol("Str", ts.Type("string"),
-      delegate(VM.Frame frm, Val ctx, ref Val v)
+      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         v.SetStr(c.Str);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v)
+      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Str = (string)v.obj; 
-        ctx.obj = c;
+        ctx.SetObj(c, ctx.type);
       }
     ));
 
@@ -484,17 +485,25 @@ public class BHL_TestBase
     }
   }
 
-  public static VM MakeVM(Compiler c)
-  {
-    var vm = new VM(c.Types);
-    var m = c.Compile();
-    vm.RegisterModule(m);
-    return vm;
-  }
-
   public VM MakeVM(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
   {
-    return MakeVM(Compile(bhl, ts, show_ast: show_ast, show_bytes: show_bytes));
+    return MakeVM(Compile(bhl, ts, show_ast: show_ast, show_bytes: show_bytes), ts);
+  }
+
+  public static VM MakeVM(CompiledModule orig_cm, Types ts = null)
+  {
+    if(ts == null)
+      ts = new Types();
+
+    //let's serialize/unserialize the compiled module so that
+    //it's going to go thru the full compilation cycle
+    var ms = new MemoryStream();
+    CompiledModule.ToStream(orig_cm, ms);
+    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), add_symbols_to_types: true);
+
+    var vm = new VM(ts);
+    vm.RegisterModule(cm);
+    return vm;
   }
 
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
@@ -555,45 +564,67 @@ public class BHL_TestBase
     files.Add(full_path);
   }
 
-  public static int ConstIdx(Compiler c, string str)
+  public static int ConstIdx(CompiledModule cm, string str)
   {
-    for(int i=0;i<c.Constants.Count;++i)
+    for(int i=0;i<cm.constants.Count;++i)
     {
-      var cn = c.Constants[i];
-      if(cn.type == EnumLiteral.STR && cn.str == str)
+      var cn = cm.constants[i];
+      if(cn.type == ConstType.STR && cn.str == str)
         return i;
     }
     throw new Exception("Constant not found: " + str);
   }
 
-  public static int ConstIdx(Compiler c, bool v)
+  public static int ConstIdx(CompiledModule cm, int num)
   {
-    for(int i=0;i<c.Constants.Count;++i)
+    for(int i=0;i<cm.constants.Count;++i)
     {
-      var cn = c.Constants[i];
-      if(cn.type == EnumLiteral.BOOL && cn.num == (v ? 1 : 0))
-        return i;
-    }
-    throw new Exception("Constant not found: " + v);
-  }
-
-  public static int ConstIdx(Compiler c, double num)
-  {
-    for(int i=0;i<c.Constants.Count;++i)
-    {
-      var cn = c.Constants[i];
-      if(cn.type == EnumLiteral.NUM && cn.num == num)
+      var cn = cm.constants[i];
+      if(cn.type == ConstType.INT && cn.num == num)
         return i;
     }
     throw new Exception("Constant not found: " + num);
   }
 
-  public static int ConstNullIdx(Compiler c)
+  public static int ConstIdx(CompiledModule cm, double num)
   {
-    for(int i=0;i<c.Constants.Count;++i)
+    for(int i=0;i<cm.constants.Count;++i)
     {
-      var cn = c.Constants[i];
-      if(cn.type == EnumLiteral.NIL)
+      var cn = cm.constants[i];
+      if(cn.type == ConstType.FLT && cn.num == num)
+        return i;
+    }
+    throw new Exception("Constant not found: " + num);
+  }
+
+  public static int ConstIdx(CompiledModule cm, bool v)
+  {
+    for(int i=0;i<cm.constants.Count;++i)
+    {
+      var cn = cm.constants[i];
+      if(cn.type == ConstType.BOOL && cn.num == (v ? 1 : 0))
+        return i;
+    }
+    throw new Exception("Constant not found: " + v);
+  }
+
+  public static int ConstIdx(CompiledModule cm, TypeProxy v)
+  {
+    for(int i=0;i<cm.constants.Count;++i)
+    {
+      var cn = cm.constants[i];
+      if(cn.type == ConstType.TPROXY && cn.tproxy.name == v.name)
+        return i;
+    }
+    throw new Exception("Constant not found: " + v);
+  }
+
+  public static int ConstNullIdx(CompiledModule cm)
+  {
+    for(int i=0;i<cm.constants.Count;++i)
+    {
+      var cn = cm.constants[i];
+      if(cn.type == ConstType.NIL)
         return i;
     }
     throw new Exception("Constant null not found");
@@ -713,7 +744,7 @@ public class BHL_TestBase
     if(ts == null)
       ts = new Types();
     //NOTE: we don't want to affect the original ts
-    var ts_copy = ts.Clone();
+    var ts_copy = ts.CloneGlobs();
 
     var conf = new BuildConf();
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
@@ -733,24 +764,24 @@ public class BHL_TestBase
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
 
-  public Compiler Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
+  public CompiledModule Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
   {
     if(ts == null)
       ts = new Types();
     //NOTE: we don't want to affect the original ts
-    var ts_copy = ts.Clone();
+    var ts_copy = ts.CloneGlobs();
 
     var mdl = new bhl.Module(ts_copy.globs, "", "");
 
-    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts);
+    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts_copy);
 
     if(show_ast)
-      Util.ASTDump(front_res.ast);
+      AST_Dumper.Dump(front_res.ast);
     var c  = new Compiler(ts_copy, front_res);
-    c.Compile();
+    var cm = c.Compile();
     if(show_bytes)
       Dump(c);
-    return c;
+    return cm;
   }
 
   public static string ByteArrayToString(byte[] ba)

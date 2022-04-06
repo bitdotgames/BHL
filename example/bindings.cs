@@ -35,7 +35,7 @@ public class MyBindings : IUserBindings
 #if !BHL_FRONT
           var rnd = new Random();
           var val = rnd.NextDouble(); 
-          frm.stack.Push(Val.NewNum(frm.vm, val));
+          frm.stack.Push(Val.NewFlt(frm.vm, val));
 #endif
           return null;
         }

@@ -26,7 +26,7 @@ public class TestClasses : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Foo")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { 1 })
@@ -89,118 +89,11 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestTypeidForBuiltinType()
+  public void TestSelfInheritanceIsNotAllowed()
   {
     string bhl = @"
-
-    func int test() 
+    class Foo : Foo
     {
-      return typeid(int)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, Hash.CRC28("int"));
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTypeidForBuiltinArrType()
-  {
-    string bhl = @"
-
-    func int test() 
-    {
-      return typeid([]int)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, Hash.CRC28("[]"));
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTypeidForUserClass()
-  {
-    string bhl = @"
-
-    class Foo { }
-      
-    func int test() 
-    {
-      return typeid(Foo)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, Hash.CRC28("Foo"));
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTypeidEqual()
-  {
-    string bhl = @"
-
-    class Foo { }
-      
-    func bool test() 
-    {
-      return typeid(Foo) == typeid(Foo)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestTypeidNotEqual()
-  {
-    string bhl = @"
-
-    class Foo { }
-    class Bar { }
-      
-    func bool test() 
-    {
-      return typeid(Foo) == typeid(Bar)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
-    CommonChecks(vm);
-  }
-
-  //TODO:
-  //[IsTested()]
-  public void TestTypeidNotEqualArrType()
-  {
-    string bhl = @"
-
-    func bool test() 
-    {
-      return typeid([]int) == typeid([]float)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
-    CommonChecks(vm);
-  }
-
-  //TODO:
-  //[IsTested()]
-  public void TestTypeidBadType()
-  {
-    string bhl = @"
-
-    func int test() 
-    {
-      return typeid(Foo)
     }
     ";
 
@@ -208,51 +101,8 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"type 'Foo' not found"
+      "self inheritance is not allowed"
     );
-  }
-
-  //TODO: do we really need it?
-  //[IsTested()]
-  public void TestTypeidIsEncodedInUserClassObj()
-  {
-    string bhl = @"
-
-    class Foo { }
-      
-    func Foo test() 
-    {
-      return {}
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var val = Execute(vm, "test").result.Pop();
-    AssertEqual(val.num, Hash.CRC28("Foo"));
-    val.Release();
-    CommonChecks(vm);
-  }
-
-  //TODO:
-  //[IsTested()]
-  public void TestTypeidIsEncodedInUserClassInHierarchy()
-  {
-    string bhl = @"
-
-    class Foo { }
-    class Bar : Foo { }
-      
-    func Bar test() 
-    {
-      return {}
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var val = Execute(vm, "test").result.Pop();
-    AssertEqual(val.num, Hash.CRC28("Bar"));
-    val.Release();
-    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -285,37 +135,37 @@ public class TestClasses : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Foo")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.SetAttr, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Foo"), 1 })
+      .EmitThen(Opcodes.SetAttr, new int[] { 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Foo"), 2 })
+      .EmitThen(Opcodes.SetAttr, new int[] { 2 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.GetAttr, new int[] { 1 })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 2 })
+      .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.CallNative, new int[] { ts.globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
@@ -738,24 +588,25 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var c = Compile(bhl);
+    var ts = new Types();
+    var c = Compile(bhl, ts);
 
     var expected = 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Foo") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Foo")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.SetAttr, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.CallMethod, new int[] { 1, ConstIdx(c, "Foo"), 0 })
+      .EmitThen(Opcodes.CallMethod, new int[] { 1, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -798,6 +649,90 @@ public class TestClasses : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassArgToClassMethod()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+
+      func int getA(int i)
+      {
+        return this.a + i
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      return f.getA(2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDefaultArgValueInMethod()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+
+      func int getA(int i, int c = 10)
+      {
+        return this.a + i + c
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      return f.getA(2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(22, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDefaultArgValueInMethod2()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+
+      func int getA(int i, int c = 10)
+      {
+        return this.a + i + c
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      return f.getA(2, 100)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(112, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -879,6 +814,58 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserChildAttributes()
+  {
+    string bhl = @"
+
+    class Foo {
+      int a
+      int b
+    }
+
+    class Bar : Foo {
+      int c
+    }
+
+    func int test()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.c = 100
+      return b.a + b.b + b.c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserChildAttributeConflict()
+  {
+    string bhl = @"
+
+    class Foo {
+      int a
+      int b
+    }
+
+    class Bar : Foo {
+      int b
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'b'"
+    );
+  }
+
+  [IsTested()]
   public void TestUserChildClassMethod()
   {
     string bhl = @"
@@ -924,7 +911,6 @@ public class TestClasses : BHL_TestBase
   public void TestUserSubChildClassMethod()
   {
     string bhl = @"
-
     class Base {
       int a
 
@@ -969,7 +955,6 @@ public class TestClasses : BHL_TestBase
   public void TestUserChildClassMethodAccessesParent()
   {
     string bhl = @"
-
     class Foo {
       
       int a
@@ -1475,7 +1460,7 @@ public class TestClasses : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Bar") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Bar")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstNullIdx(c) })
@@ -1485,7 +1470,7 @@ public class TestClasses : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertTrue(fb.result.PopRelease().bval);
@@ -1517,37 +1502,37 @@ public class TestClasses : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, "Bar") }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Bar")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Bar"), 0 })
+      .EmitThen(Opcodes.SetAttr, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Bar"), 1 })
+      .EmitThen(Opcodes.SetAttr, new int[] { 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { ConstIdx(c, "Bar"), 2 })
+      .EmitThen(Opcodes.SetAttr, new int[] { 2 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, "string") })
+      .EmitThen(Opcodes.GetAttr, new int[] { 1 })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, new TypeProxy(ts, "string")) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { ConstIdx(c, "Bar"), 2 })
+      .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.CallNative, new int[] { ts.globs.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
+    var vm = MakeVM(c, ts);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);

@@ -41,11 +41,13 @@ exp
   | string                                                  #ExpLiteralStr
   | callExp                                                 #ExpCall
   | staticCallExp                                           #ExpStaticCall
-  | typeid                                                  #ExpTypeid
+  | typeof                                                  #ExpTypeof
   | jsonObject                                              #ExpJsonObj
   | jsonArray                                               #ExpJsonArr
   | funcLambda                                              #ExpLambda
   | '(' type ')' exp                                        #ExpTypeCast
+  | exp 'as' type                                           #ExpAs
+  | exp 'is' type                                           #ExpIs
   | operatorUnary exp                                       #ExpUnary
   | '(' exp ')' chainExp*                                   #ExpParen
   | exp operatorBitAnd exp                                  #ExpBitAnd
@@ -165,8 +167,8 @@ staticCallItem
   : '::' NAME
   ;
 
-typeid 
-  : 'typeid' '(' type ')'
+typeof 
+  : 'typeof' '(' type ')'
   ;
 
 arrAccess
@@ -189,12 +191,12 @@ block
   : '{' (statement SEPARATOR*)* '}'
   ;
 
-classDecl
-  : 'class' NAME classEx? classBlock
+extensions
+  : ':' NAME (',' NAME)*
   ;
 
-classEx
-  : ':' NAME
+classDecl
+  : 'class' NAME extensions? classBlock
   ;
 
 classBlock
@@ -210,11 +212,7 @@ classMember
   ;
 
 interfaceDecl
-  : 'interface' NAME interfaceEx? interfaceBlock
-  ;
-
-interfaceEx
-  : ':' NAME (',' NAME)*
+  : 'interface' NAME extensions? interfaceBlock
   ;
 
 interfaceBlock

@@ -9,6 +9,16 @@ public abstract class Symbol : IMarshallableGeneric
 {
   public string name;
   public TypeProxy type;
+
+  IType _type;
+  public IType Type {
+    get {
+      if(_type == null)
+        _type = type.Get();
+      return _type;
+    }
+  }
+
   // All symbols know what scope contains them
   public IScope scope;
 #if BHL_FRONT
@@ -24,7 +34,7 @@ public abstract class Symbol : IMarshallableGeneric
 
   public override string ToString() 
   {
-    return '<' + name + ':' + type.name + '>';
+    return name + '(' + type.name + ')';
   }
 
   public abstract uint ClassId();
@@ -150,46 +160,98 @@ public class NullSymbol : BuiltInSymbol
   }
 }
 
-public abstract class InterfaceSymbol : Symbol, IType 
+public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
-  List<string> names = new List<string>();
-  List<FuncSignature> sigs = new List<FuncSignature>();
+  public SymbolsStorage members;
+
+  public SymbolsSet<InterfaceSymbol> inherits = new SymbolsSet<InterfaceSymbol>();
+
+  HashSet<IInstanceType> related_types;
 
 #if BHL_FRONT
   public InterfaceSymbol(
     WrappedParseTree parsed, 
-    string name
+    string name,
+    IList<InterfaceSymbol> inherits = null
   )
-    : this(name)
+    : this(name, inherits)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public InterfaceSymbol(string name)
-    : base(name, default(TypeProxy))
+  public InterfaceSymbol(
+    string name,
+    IList<InterfaceSymbol> inherits = null
+  )
+    : base(name)
   {
     this.type = new TypeProxy(this);
+    this.members = new SymbolsStorage(this);
+
+    SetInherits(inherits);
+  }
+
+  //marshall factory version
+  public InterfaceSymbol()
+    : this(null, null)
+  {}
+
+  void SetInherits(IList<InterfaceSymbol> inherits)
+  {
+    if(inherits != null)
+    {
+      foreach(var ext in inherits)
+      {
+        this.inherits.Add(ext);
+
+        //NOTE: at the moment for resolving simplcity we add 
+        //      extension members right into the interface itself
+        var ext_members = ext.GetMembers();
+        for(int i=0;i<ext_members.Count;++i)
+        {
+          var mem = ext_members[i]; 
+          base.Define(mem);
+        }
+      }
+    }
   }
 
   public string GetName() { return name; }
 
-  public bool AddSignature(string name, FuncSignature sig)
+  public override IScope GetFallbackScope()
   {
-    if(names.Contains(name))
-      return false;
-
-    names.Add(name);
-    sigs.Add(sig);
-    return true;
+    return null;
   }
 
-  public FuncSignature FindSignature(string name)
+  public override void Define(Symbol sym)
   {
-    int idx = names.IndexOf(name);
-    if(idx == -1)
-      return null;
-    return sigs[idx];
+    if(!(sym is FuncSymbol))
+      throw new Exception("Only function symbols supported");
+    base.Define(sym);
+  }
+
+  public override SymbolsStorage GetMembers() { return members; }
+
+  public FuncSymbol FindMethod(string name)
+  {
+    return Resolve(name) as FuncSymbol;
+  }
+
+  public HashSet<IInstanceType> GetAllRelatedTypesSet()
+  {
+    if(related_types == null)
+    {
+      related_types = new HashSet<IInstanceType>();
+      related_types.Add(this);
+      for(int i=0;i<inherits.Count;++i)
+      {
+        var ext = (IInstanceType)inherits[i];
+        if(!related_types.Contains(ext))
+          related_types.UnionWith(ext.GetAllRelatedTypesSet());
+      }
+    }
+    return related_types;
   }
 }
 
@@ -197,13 +259,20 @@ public class InterfaceSymbolScript : InterfaceSymbol
 {
   public const uint CLASS_ID = 18;
   
-  public InterfaceSymbolScript(string name)
-    : base(name)
+  public InterfaceSymbolScript(
+    string name,
+    IList<InterfaceSymbol> inherits = null
+  )
+    : base(name, inherits)
   {}
 
 #if BHL_FRONT
-  public InterfaceSymbolScript(WrappedParseTree parsed, string name)
-    : this(name)
+  public InterfaceSymbolScript(
+    WrappedParseTree parsed, 
+    string name,
+    IList<InterfaceSymbol> inherits = null
+  )
+    : this(name, inherits)
   {
     this.parsed = parsed;
   }
@@ -221,15 +290,52 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
   public override void Sync(SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref name);
+    base.Sync(ctx);
+
+    Marshall.Sync(ctx, ref inherits); 
+    Marshall.Sync(ctx, ref members); 
   }
 }
 
-public abstract class ClassSymbol : EnclosingSymbol, IScope, IType 
+public class InterfaceSymbolNative : InterfaceSymbol
 {
-  public ClassSymbol super_class { get; protected set;}
+  public InterfaceSymbolNative(
+    string name, 
+    IList<InterfaceSymbol> inherits,
+    params FuncSymbol[] funcs
+  )
+    : base(name, inherits)
+  {
+    foreach(var func in funcs)
+      Define(func);
+  }
 
-  public SymbolsDictionary members;
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override void Sync(SyncContext ctx)
+  {
+    throw new NotImplementedException();
+  }
+}
+
+public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
+{
+  public ClassSymbol super_class;
+
+  public SymbolsSet<InterfaceSymbol> implements = new SymbolsSet<InterfaceSymbol>();
+
+  //contains mapping of implemented interface method indices 
+  //to actual class method indices:
+  //  [IFoo][3,1,0]
+  //  [IBar][2,0]
+  public Dictionary<InterfaceSymbol, List<int>> vtable = new Dictionary<InterfaceSymbol, List<int>>();
+
+  HashSet<IInstanceType> related_types;
+
+  public SymbolsStorage members;
 
   public VM.ClassCreator creator;
 
@@ -238,9 +344,10 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
     WrappedParseTree parsed, 
     string name, 
     ClassSymbol super_class, 
+    IList<InterfaceSymbol> implements = null,
     VM.ClassCreator creator = null
   )
-    : this(name, super_class, creator)
+    : this(name, super_class, implements, creator)
   {
     this.parsed = parsed;
   }
@@ -249,15 +356,17 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
   public ClassSymbol(
     string name, 
     ClassSymbol super_class, 
+    IList<InterfaceSymbol> implements = null,
     VM.ClassCreator creator = null
   )
     : base(name)
   {
-    this.members = new SymbolsDictionary(this);
+    this.members = new SymbolsStorage(this);
     this.type = new TypeProxy(this);
     this.creator = creator;
 
     SetSuperClass(super_class);
+    SetImplements(implements);
   }
 
   void SetSuperClass(ClassSymbol super_class)
@@ -271,28 +380,71 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
     //      address its members simply by int index
     if(super_class != null)
     {
-      var super_members = super_class.GetMembers();
+      var super_members = super_class.members;
       for(int i=0;i<super_members.Count;++i)
       {
-        var sym = super_members[i];
+        var mem = super_members[i];
         //NOTE: using base Define instead of our own version
         //      since we want to avoid 'already defined' checks
-        base.Define(sym);
+        base.Define(mem);
       }
     }
   }
 
-  public bool IsSubclassOf(ClassSymbol p)
+  void SetImplements(IList<InterfaceSymbol> implements)
   {
-    if(this == p)
-      return true;
-
-    for(var tmp = super_class; tmp != null; tmp = tmp.super_class)
+    if(implements != null)
     {
-      if(tmp == p)
-        return true;
+      foreach(var imp in implements)
+        this.implements.Add(imp);
     }
-    return false;
+  }
+
+  public void UpdateVTable()
+  {
+    vtable.Clear();
+
+    var all = new HashSet<IInstanceType>();
+    if(super_class != null)
+    {
+      for(int i=0;i<super_class.implements.Count;++i)
+        all.UnionWith(super_class.implements[i].GetAllRelatedTypesSet());
+    }
+    for(int i=0;i<implements.Count;++i)
+      all.UnionWith(implements[i].GetAllRelatedTypesSet());
+    
+    foreach(var imp in all)
+    {
+      var ifs2idx = new List<int>();
+      var ifs = (InterfaceSymbol)imp;
+      vtable.Add(ifs, ifs2idx);
+
+      for(int midx=0;midx<ifs.members.Count;++midx)
+      {
+        var m = ifs.members[midx];
+        var symb = Resolve(m.name) as FuncSymbol;
+        if(symb == null)
+          throw new Exception("No such method '" + m.name + "' in class '" + this.name + "'");
+        ifs2idx.Add(symb.scope_idx);
+      }
+    }
+  }
+
+  public HashSet<IInstanceType> GetAllRelatedTypesSet()
+  {
+    if(related_types == null)
+    {
+      related_types = new HashSet<IInstanceType>();
+      related_types.Add(this);
+      if(super_class != null)
+        related_types.UnionWith(super_class.GetAllRelatedTypesSet());
+      for(int i=0;i<implements.Count;++i)
+      {
+        if(!related_types.Contains(implements[i]))
+          related_types.UnionWith(implements[i].GetAllRelatedTypesSet());
+      }
+    }
+    return related_types;
   }
 
   public override IScope GetFallbackScope() 
@@ -302,7 +454,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
 
   public override void Define(Symbol sym) 
   {
-    if(super_class != null && super_class.GetMembers().Contains(sym.name))
+    if(super_class != null && super_class.members.Contains(sym.name))
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     base.Define(sym);
@@ -310,12 +462,24 @@ public abstract class ClassSymbol : EnclosingSymbol, IScope, IType
 
   public string GetName() { return name; }
 
-  public override SymbolsDictionary GetMembers() { return members; }
+  public override SymbolsStorage GetMembers() { return members; }
 }
 
 public abstract class ArrayTypeSymbol : ClassSymbol
 {
+  public readonly FuncSymbolNative FuncArrIdx = null;
+  public readonly FuncSymbolNative FuncArrIdxW = null;
+
   public TypeProxy item_type;
+
+  IType _item_type;
+  public IType ItemType {
+    get {
+      if(_item_type == null)
+        _item_type = item_type.Get();
+      return _item_type;
+    }
+  }
 
   public ArrayTypeSymbol(Types ts, string name, TypeProxy item_type)     
     : base(name, super_class: null)
@@ -326,21 +490,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     {
       var fn = new FuncSymbolNative("Add", ts.Type("void"), Add,
-        new FuncArgSymbol("o", item_type)
-      );
-      this.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("At", item_type, At,
-        new FuncArgSymbol("idx", ts.Type("int"))
-      );
-      this.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative("SetAt", item_type, SetAt,
-        new FuncArgSymbol("idx", ts.Type("int")),
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
@@ -365,10 +514,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      var fn = new FuncSymbolNative("$AddInplace", ts.Type("void"), AddInplace,
-        new FuncArgSymbol("o", item_type)
-      );
-      this.Define(fn);
+      FuncArrIdx = new FuncSymbolNative("$ArrIdx", item_type, ArrIdx);
+    }
+
+    {
+      //hidden system method not available directly
+      FuncArrIdxW = new FuncSymbolNative("$ArrIdxW", ts.Type("void"), ArrIdxW);
     }
   }
 
@@ -376,26 +527,23 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     : this(ts, item_type.name + "[]", item_type)
   {}
 
-  public abstract void CreateArr(VM.Frame frame, ref Val v);
-  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v);
+  public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
+  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
   public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
   public const uint CLASS_ID = 10; 
 
-  public static readonly string CLASS_TYPE = "[]";
-
   public GenericArrayTypeSymbol(Types types, TypeProxy item_type) 
     : base(types, item_type)
   {
-    name = CLASS_TYPE;
+    name = "[]" + item_type.name;
   }
 
   //marshall factory version
@@ -411,12 +559,12 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return lst;
   }
 
-  public override void CreateArr(VM.Frame frm, ref Val v)
+  public override void CreateArr(VM.Frame frm, ref Val v, IType type)
   {
-    v.SetObj(ValList.New(frm.vm));
+    v.SetObj(ValList.New(frm.vm), type);
   }
 
-  public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     var lst = AsList(ctx);
     v.SetNum(lst.Count);
@@ -433,17 +581,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
-  {
-    var val = frame.stack.Pop();
-    var arr = frame.stack.Peek();
-    var lst = AsList(arr);
-    lst.Add(val);
-    val.Release();
-    return null;
-  }
-
-  public override ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  //NOTE: follows special Opcodes.ArrIdx conventions
+  public override ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -454,7 +593,8 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return null;
   }
 
-  public override ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  //NOTE: follows special Opcodes.ArrIdxW conventions
+  public override ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -493,6 +633,9 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref item_type);
+
+    if(ctx.is_read)
+      name = "[]" + item_type.name;
   }
 }
 
@@ -511,12 +654,12 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     : base(ts, item_type.name + "[]", item_type)
   {}
 
-  public override void CreateArr(VM.Frame frm, ref Val v)
+  public override void CreateArr(VM.Frame frm, ref Val v, IType type)
   {
-    v.obj = Creator();
+    v.SetObj(Creator(), type);
   }
 
-  public override void GetCount(VM.Frame frm, Val ctx, ref Val v)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     v.SetNum(((IList<T>)ctx.obj).Count);
   }
@@ -532,29 +675,20 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine AddInplace(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
-  {
-    var val = frame.stack.Pop();
-    var arr = frame.stack.Peek();
-    var lst = (IList<T>)arr.obj;
-    T obj = (T)val.obj;
-    lst.Add(obj);
-    val.Release();
-    return null;
-  }
-
-  public override ICoroutine At(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  //NOTE: follows special Opcodes.ArrIdx conventions
+  public override ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = (IList<T>)arr.obj;
-    var res = Val.NewObj(frame.vm, lst[idx], Types.Any);
+    var res = Val.NewObj(frame.vm, lst[idx], item_type.Get());
     frame.stack.Push(res);
     arr.Release();
     return null;
   }
 
-  public override ICoroutine SetAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  //NOTE: follows special Opcodes.ArrIdxW conventions
+  public override ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
@@ -681,11 +815,15 @@ public class FuncArgSymbol : VariableSymbol
 
 public class FieldSymbol : VariableSymbol
 {
-  public VM.FieldGetter getter;
-  public VM.FieldSetter setter;
-  public VM.FieldRef getref;
+  public delegate void FieldGetter(VM.Frame frm, Val v, ref Val res, FieldSymbol fld);
+  public delegate void FieldSetter(VM.Frame frm, ref Val v, Val nv, FieldSymbol fld);
+  public delegate void FieldRef(VM.Frame frm, Val v, out Val res, FieldSymbol fld);
 
-  public FieldSymbol(string name, TypeProxy type, VM.FieldGetter getter = null, VM.FieldSetter setter = null, VM.FieldRef getref = null) 
+  public FieldGetter getter;
+  public FieldSetter setter;
+  public FieldRef getref;
+
+  public FieldSymbol(string name, TypeProxy type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
     : base(name, type)
   {
     this.getter = getter;
@@ -711,13 +849,13 @@ public class FieldSymbolScript : FieldSymbol
     : this("", new TypeProxy())
   {}
 
-  void Getter(VM.Frame frm, Val ctx, ref Val v)
+  void Getter(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     var m = (IList<Val>)ctx.obj;
     v.ValueCopyFrom(m[scope_idx]);
   }
 
-  void Setter(VM.Frame frm, ref Val ctx, Val v)
+  void Setter(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
   {
     var m = (IList<Val>)ctx.obj;
     var curr = m[scope_idx];
@@ -729,7 +867,7 @@ public class FieldSymbolScript : FieldSymbol
     curr.ValueCopyFrom(v);
   }
 
-  void Getref(VM.Frame frm, Val ctx, out Val v)
+  void Getref(VM.Frame frm, Val ctx, out Val v, FieldSymbol fld)
   {
     var m = (IList<Val>)ctx.obj;
     v = m[scope_idx];
@@ -745,7 +883,7 @@ public class FieldSymbolScript : FieldSymbol
 //      in Scope.Resolve(..) and Scope.Define(..)
 public abstract class EnclosingSymbol : Symbol, IScope 
 {
-  abstract public SymbolsDictionary GetMembers();
+  abstract public SymbolsStorage GetMembers();
 
 #if BHL_FRONT
   public EnclosingSymbol(WrappedParseTree parsed, string name) 
@@ -797,8 +935,9 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
 public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 {
-  protected FuncSignature signature;
-  SymbolsDictionary members;
+  public FuncSignature signature;
+
+  public SymbolsStorage members;
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -811,57 +950,65 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   }
 
 #if BHL_FRONT
-  public FuncSymbol(WrappedParseTree parsed, string name, FuncSignature sig) 
-    : this(name, sig)
+  public FuncSymbol(
+    WrappedParseTree parsed, 
+    string name, 
+    FuncSignature sig,
+    ClassSymbolScript class_scope = null
+  ) 
+    : this(name, sig, class_scope)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public FuncSymbol(string name, FuncSignature signature) 
+  public FuncSymbol(
+    string name, 
+    FuncSignature signature,
+    ClassSymbolScript class_scope = null
+  ) 
     : base(name)
   {
-    this.members = new SymbolsDictionary(this);
+    this.members = new SymbolsStorage(this);
     this.signature = signature;
     this.type = new TypeProxy(signature);
+
+    if(class_scope != null)
+    {
+      var this_symb = new FuncArgSymbol("this", new TypeProxy(class_scope));
+      Define(this_symb);
+    }
   }
 
-  public override SymbolsDictionary GetMembers() { return members; }
+  public override SymbolsStorage GetMembers() { return members; }
 
   public override IScope GetFallbackScope() 
   { 
     //NOTE: we forbid resolving class members 
     //      inside methods without 'this.' prefix on purpose
-    if(this.scope is ClassSymbol cs)
+    if(scope is ClassSymbolScript cs)
       return cs.scope;
     else
       return this.scope; 
   }
 
-  public FuncSignature GetSignature()
-  {
-    return (FuncSignature)this.type.Get();
-  }
-
   public IType GetReturnType()
   {
-    return GetSignature().ret_type.Get();
+    return signature.ret_type.Get();
   }
 
-  public FuncArgSymbol GetArg(int idx)
+  public SymbolsStorage GetArgs()
   {
-    return (FuncArgSymbol)members[idx];
-  }
+    //let's skip hidden 'this' argument which is stored at 0 idx
+    int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
 
-  public SymbolsDictionary GetArgs()
-  {
-    var args = new SymbolsDictionary(this);
-    for(int i=0;i<GetSignature().arg_types.Count;++i)
-      args.Add(members[i]);
+    var args = new SymbolsStorage(this);
+    for(int i=0;i<signature.arg_types.Count;++i)
+      args.Add((FuncArgSymbol)members[i + this_offset]);
     return args;
   }
 
-  public int GetTotalArgsNum() { return GetSignature().arg_types.Count; }
+  public int GetTotalArgsNum() { return signature.arg_types.Count; }
   public abstract int GetDefaultArgsNum();
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
 
@@ -880,6 +1027,20 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
       type = new TypeProxy(signature);
     Marshall.Sync(ctx, ref _scope_idx);
   }
+
+  public override string ToString()
+  {
+    string s = "";
+    s += "func ";
+    s += signature.ret_type.Get().GetName() + " ";
+    s += name;
+    s += "(";
+    foreach(var arg in signature.arg_types)
+      s += arg.name + ",";
+    s = s.TrimEnd(',');
+    s += ")";
+    return s;
+  }
 }
 
 public class FuncSymbolScript : FuncSymbol
@@ -888,7 +1049,7 @@ public class FuncSymbolScript : FuncSymbol
 
   public int local_vars_num {
     get {
-      return GetMembers().Count;
+      return members.Count;
     }
   }
 
@@ -903,28 +1064,20 @@ public class FuncSymbolScript : FuncSymbol
   public int default_args_num;
   public int ip_addr;
 
-  public FuncSymbolScript(
-      FuncSignature sig, 
-      string name, 
-      int default_args_num, 
-      int ip_addr
-  )
-    : base(name, sig)
-  {
-    this.name = name;
-    this.default_args_num = default_args_num;
-    this.ip_addr = ip_addr;
-  }
-
 #if BHL_FRONT
   public FuncSymbolScript(
     WrappedParseTree parsed, 
     FuncSignature sig,
     string name,
-    int default_args_num
+    int default_args_num,
+    int ip_addr,
+    ClassSymbolScript class_scope = null
   ) 
-    : this(sig, name, default_args_num, 0)
+    : base(name, sig, class_scope)
   {
+    this.name = name;
+    this.default_args_num = default_args_num;
+    this.ip_addr = ip_addr;
     this.parsed = parsed;
   }
 #endif
@@ -970,7 +1123,7 @@ public class LambdaSymbol : FuncSymbolScript
     List<AST_UpVal> upvals,
     List<FuncSymbol> fdecl_stack
   ) 
-    : base(parsed, sig, name, 0)
+    : base(parsed, sig, name, 0, 0)
   {
     this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
@@ -982,7 +1135,7 @@ public class LambdaSymbol : FuncSymbolScript
 
     this.Define(local);
 
-    var up = AST_Util.New_UpVal(local.name, local.scope_idx, src.scope_idx); 
+    var up = new AST_UpVal(local.name, local.scope_idx, src.scope_idx); 
     upvals.Add(up);
 
     return local;
@@ -991,7 +1144,7 @@ public class LambdaSymbol : FuncSymbolScript
   public override Symbol Resolve(string name) 
   {
     Symbol s = null;
-    GetMembers().TryGetValue(name, out s);
+    members.TryGetValue(name, out s);
     if(s != null)
       return s;
 
@@ -1018,7 +1171,7 @@ public class LambdaSymbol : FuncSymbolScript
 
       //NOTE: only variable symbols are considered
       Symbol res = null;
-      decl.GetMembers().TryGetValue(name, out res);
+      decl.members.TryGetValue(name, out res);
       if(res is VariableSymbol vs && !vs.is_out_of_scope)
         return AssignUpValues(vs, i+1, my_idx);
     }
@@ -1085,7 +1238,7 @@ public class FuncSymbolNative : FuncSymbol
     foreach(var arg in args)
     {
       base.Define(arg);
-      GetSignature().AddArg(arg.type);
+      signature.AddArg(arg.type);
     }
   }
 
@@ -1110,12 +1263,12 @@ public class FuncSymbolNative : FuncSymbol
 public class ClassSymbolNative : ClassSymbol
 {
   public ClassSymbolNative(string name, ClassSymbol super_class, VM.ClassCreator creator = null)
-    : base(name, super_class, creator)
+    : base(name, super_class, null, creator)
   {}
 
   public void OverloadBinaryOperator(FuncSymbol s)
   {
-    if(s.GetArgs().Count != 1)
+    if(s.GetTotalArgsNum() != 1)
       throw new SymbolError(s, "operator overload must have exactly one argument");
 
     if(s.GetReturnType() == Types.Void)
@@ -1139,15 +1292,15 @@ public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
 
-  public ClassSymbolScript(string name, ClassSymbol super_class = null)
-    : base(name, super_class)
+  public ClassSymbolScript(string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
+    : base(name, super_class, implements)
   {
     this.creator = ClassCreator;
   }
 
 #if BHL_FRONT
-  public ClassSymbolScript(WrappedParseTree parsed, string name, ClassSymbol super_class = null)
-    : this(name, super_class)
+  public ClassSymbolScript(WrappedParseTree parsed, string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
+    : this(name, super_class, implements)
   {
     this.parsed = parsed;
   }
@@ -1155,10 +1308,10 @@ public class ClassSymbolScript : ClassSymbol
 
   //marshall factory version
   public ClassSymbolScript() 
-    : this(null, null)
+    : this(null, null, null)
   {}
 
-  void ClassCreator(VM.Frame frm, ref Val data)
+  void ClassCreator(VM.Frame frm, ref Val data, IType type)
   {
     //TODO: add handling of native super class
     //if(super_class is ClassSymbolNative cn)
@@ -1167,7 +1320,7 @@ public class ClassSymbolScript : ClassSymbol
 
     //NOTE: object's raw data is a list
     var vl = ValList.New(frm.vm);
-    data.SetObj(vl);
+    data.SetObj(vl, type);
     
     for(int i=0;i<members.Count;++i)
     {
@@ -1178,11 +1331,10 @@ public class ClassSymbolScript : ClassSymbol
       //      Maybe we should track data members and methods separately someday. 
       if(m is VariableSymbol)
       {
-        var type = m.type.Get();
-        var v = frm.vm.MakeDefaultVal(type);
-        vl.Add(v);
-        //ownership was passed to list, let's release it
-        v.Release();
+        var mtype = m.type.Get();
+        var v = frm.vm.MakeDefaultVal(mtype);
+        //adding directly, bypassing Retain call
+        vl.lst.Add(v);
       }
       else
         vl.Add(frm.vm.Null);
@@ -1202,7 +1354,8 @@ public class ClassSymbolScript : ClassSymbol
     Marshall.Sync(ctx, ref super_name);
     if(ctx.is_read && super_name != "")
     {
-      var tmp_class = (ClassSymbol)((SymbolFactory)ctx.factory).types.Resolve(super_name);
+      var types = ((SymbolFactory)ctx.factory).types;
+      var tmp_class = (ClassSymbol)types.Resolve(super_name);
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
       super_class = tmp_class;
@@ -1211,12 +1364,17 @@ public class ClassSymbolScript : ClassSymbol
     //NOTE: this includes super class members as well, maybe we
     //      should make a copy which doesn't include parent members?
     Marshall.Sync(ctx, ref members);
+
+    Marshall.Sync(ctx, ref implements); 
+
+    if(ctx.is_read)
+      UpdateVTable();
   }
 }
 
 public class EnumSymbol : EnclosingSymbol, IType
 {
-  public SymbolsDictionary members;
+  public SymbolsStorage members;
 
 #if BHL_FRONT
   public EnumSymbol(WrappedParseTree parsed, string name)
@@ -1229,13 +1387,13 @@ public class EnumSymbol : EnclosingSymbol, IType
   public EnumSymbol(string name)
      : base(name)
   {
-    this.members = new SymbolsDictionary(this);
+    this.members = new SymbolsStorage(this);
     this.type = new TypeProxy(this);
   }
 
   public string GetName() { return name; }
 
-  public override SymbolsDictionary GetMembers() { return members; }
+  public override SymbolsStorage GetMembers() { return members; }
 
   public EnumItemSymbol FindValue(string name)
   {
@@ -1351,7 +1509,7 @@ public class EnumItemSymbol : Symbol, IType
   }
 }
 
-public class SymbolsDictionary : IMarshallable
+public class SymbolsStorage : IMarshallable
 {
   IScope scope;
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
@@ -1371,7 +1529,7 @@ public class SymbolsDictionary : IMarshallable
     }
   }
 
-  public SymbolsDictionary(IScope scope)
+  public SymbolsStorage(IScope scope)
   {
     this.scope = scope;
   }
@@ -1465,6 +1623,63 @@ public class SymbolsDictionary : IMarshallable
           str2symb.Add(s.name, s);
         }
     });
+  }
+}
+
+public class SymbolsSet<T> : IMarshallable where T : Symbol
+{
+  List<string> names = new List<string>();
+  List<T> list = new List<T>();
+
+  public int Count
+  {
+    get {
+      return list.Count;
+    }
+  }
+
+  public T this[int index]
+  {
+    get {
+      return list[index];
+    }
+  }
+
+  public SymbolsSet()
+  {}
+
+  public bool Add(T s)
+  {
+    string name = s.name;
+    if(names.IndexOf(name) != -1)
+      return false;
+    names.Add(name);
+    list.Add(s);
+    return true;
+  }
+
+  public void Clear()
+  {
+    names.Clear();
+    list.Clear();
+  }
+
+  public void Sync(SyncContext ctx) 
+  {
+    Marshall.Sync(ctx, names); 
+
+    if(ctx.is_read)
+    {
+      var types = ((SymbolFactory)ctx.factory).types;
+
+      foreach(var name in names)
+      {
+        var symb = types.Resolve(name) as T;
+        if(symb == null)
+          throw new Exception("Symbol '" + name + "' not found");
+        list.Add(symb);
+      }
+    }
   }
 }
 

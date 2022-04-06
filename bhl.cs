@@ -51,7 +51,6 @@ public static class Tasks
     MCSBuild(tm, new string[] {
       $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
       $"{BHL_ROOT}/deps/msgpack/*.cs",
-      $"{BHL_ROOT}/src/ast.cs", 
       $"{BHL_ROOT}/src/type.cs", 
       $"{BHL_ROOT}/src/vm.cs", 
       $"{BHL_ROOT}/src/error.cs", 

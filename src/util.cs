@@ -69,14 +69,6 @@ static public class Util
     }
     throw new Exception("Could not find file for path '" + path + "'");
   }
-
-  ////////////////////////////////////////////////////////
-
-  public static void ASTDump(AST ast)
-  {
-    new AST_Dumper().Visit(ast);
-    Console.WriteLine("\n=============");
-  }
 }
 
 public static class Hash
@@ -107,14 +99,6 @@ public static class Hash
 
 public static class Extensions
 {
-  public static void Append(this AST dst, AST src)
-  {
-    for(int i=0;i<src.children.Count;++i)
-    {
-      dst.children.Add(src.children[i]);
-    }
-  }
-
   public static Stream ToStream(this string str)
   {
     MemoryStream stream = new MemoryStream();
@@ -189,10 +173,10 @@ public struct FuncArgsInfo
 {
   //NOTE: 6 bits are used for a total number of args passed (max 63), 
   //      26 bits are reserved for default args set bits (max 26 default args)
-  const int ARGS_NUM_BITS = 6;
-  const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
-  const int MAX_ARGS = (int)ARGS_NUM_MASK;
-  const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS; 
+  public const int ARGS_NUM_BITS = 6;
+  public const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
+  public const int MAX_ARGS = (int)ARGS_NUM_MASK;
+  public const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS; 
 
   public uint bits;
 
@@ -388,193 +372,6 @@ public sealed class Crc32 : HashAlgorithm
       Array.Reverse(result);
 
     return result;
-  }
-}
-
-public class AST_Dumper : AST_Visitor
-{
-  public override void DoVisit(AST_Interim node)
-  {
-    Console.Write("(");
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_Module node)
-  {
-    Console.Write("(MODULE " + node.id + " " + node.name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_Import node)
-  {
-    Console.Write("(IMPORT ");
-    foreach(var m in node.module_names)
-      Console.Write("" + m);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_FuncDecl node)
-  {
-    Console.Write("(FUNC ");
-    Console.Write(node.name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_LambdaDecl node)
-  {
-    Console.Write("(LMBD ");
-    Console.Write(node.name);
-    if(node.upvals.Count > 0)
-      Console.Write(" USE:");
-    for(int i=0;i<node.upvals.Count;++i)
-      Console.Write(" " + node.upvals[i].name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_ClassDecl node)
-  {
-    Console.Write("(CLASS ");
-    Console.Write(node.name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_EnumDecl node)
-  {
-    Console.Write("(ENUM ");
-    Console.Write(node.name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_Block node)
-  {
-    Console.Write("(BLK ");
-    Console.Write(node.type + " {");
-    VisitChildren(node);
-    Console.Write("})");
-  }
-
-  public override void DoVisit(AST_TypeCast node)
-  {
-    Console.Write("(CAST ");
-    Console.Write(node.type.GetName() + " ");
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_Call node)
-  {
-    Console.Write("(CALL ");
-    Console.Write(node.type + " " + node.name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_Inc node)
-  {
-    Console.Write("(INC ");
-    Console.Write(node.symb_idx);
-    Console.Write(")");
-  }
-  
-  public override void DoVisit(AST_Dec node)
-  {
-    Console.Write("(DEC ");
-    Console.Write(node.symb_idx);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_Return node)
-  {
-    Console.Write("(RET ");
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_Break node)
-  {
-    Console.Write("(BRK)");
-  }
-
-  public override void DoVisit(AST_Continue node)
-  {
-    Console.Write("(CONT)");
-  }
-
-  public override void DoVisit(AST_PopValue node)
-  {
-    Console.Write("(POP)");
-  }
-
-  public override void DoVisit(AST_Literal node)
-  {
-    if(node.type == EnumLiteral.NUM)
-      Console.Write(" (NUM " + node.nval + ")");
-    else if(node.type == EnumLiteral.BOOL)
-      Console.Write(" (BOOL " + node.nval + ")");
-    else if(node.type == EnumLiteral.STR)
-      Console.Write(" (STR '" + node.sval + "')");
-    else if(node.type == EnumLiteral.NIL)
-      Console.Write(" (NULL)");
-  }
-
-  public override void DoVisit(AST_BinaryOpExp node)
-  {
-    Console.Write("(BOP " + node.type);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_UnaryOpExp node)
-  {
-    Console.Write("(UOP " + node.type);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_New node)
-  {
-    Console.Write("(NEW " + node.type.GetName());
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_VarDecl node)
-  {
-    Console.Write("(VARDECL " + node.name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_JsonObj node)
-  {
-    Console.Write("(JOBJ " + node.type.GetName());
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_JsonArr node)
-  {
-    Console.Write("(JARR ");
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_JsonPair node)
-  {
-    Console.Write("(JPAIR " + node.name);
-    VisitChildren(node);
-    Console.Write(")");
-  }
-
-  public override void DoVisit(AST_JsonArrAddItem node)
-  {
-    Console.Write("(JARDD)");
   }
 }
 

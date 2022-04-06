@@ -8,122 +8,163 @@ using marshall;
 
 public enum Opcodes
 {
-  Constant         = 1,
-  Add              = 2,
-  Sub              = 3,
-  Div              = 4,
-  Mul              = 5,
-  SetVar           = 6,
-  GetVar           = 7,
-  DeclVar          = 8,
-  ArgVar           = 9,
-  SetGVar          = 10,
-  GetGVar          = 11,
-  SetGVarImported  = 12,
-  GetGVarImported  = 13,
-  Return           = 14,
-  ReturnVal        = 15,
-  Jump             = 16,
-  JumpZ            = 17,
-  JumpPeekZ        = 18,
-  JumpPeekNZ       = 19,
-  Break            = 20,
-  Continue         = 21,
-  Pop              = 22,
-  Call             = 23,
-  CallNative       = 24,
-  CallImported     = 25,
-  CallMethod       = 26,
-  CallMethodNative = 27,
-  CallPtr          = 28,
-  GetFunc          = 29,
-  GetFuncNative    = 30,
-  GetFuncFromVar   = 31,
-  GetFuncImported  = 32,
-  FuncPtrToTop     = 33,
-  GetAttr          = 34,
-  RefAttr          = 35,
-  SetAttr          = 36,
-  SetAttrInplace   = 37,
-  ArgRef           = 38,
-  UnaryNot         = 39,
-  UnaryNeg         = 40,
-  And              = 41,
-  Or               = 42,
-  Mod              = 43,
-  BitOr            = 44,
-  BitAnd           = 45,
-  Equal            = 46,
-  NotEqual         = 47,
-  LT               = 49,
-  LTE              = 50,
-  GT               = 51,
-  GTE              = 52,
-  DefArg           = 53, 
-  TypeCast         = 54,
-  Block            = 55,
-  New              = 56,
-  Lambda           = 57,
-  UseUpval         = 58,
-  InitFrame        = 59,
-  Inc              = 60,
-  Dec              = 61,
-  Import           = 62,
+  Constant          = 1,
+  Add               = 2,
+  Sub               = 3,
+  Div               = 4,
+  Mul               = 5,
+  SetVar            = 6,
+  GetVar            = 7,
+  DeclVar           = 8,
+  ArgVar            = 9,
+  SetGVar           = 10,
+  GetGVar           = 11,
+  SetGVarImported   = 12,
+  GetGVarImported   = 13,
+  Return            = 14,
+  ReturnVal         = 15,
+  Jump              = 16,
+  JumpZ             = 17,
+  JumpPeekZ         = 18,
+  JumpPeekNZ        = 19,
+  Break             = 20,
+  Continue          = 21,
+  Pop               = 22,
+  Call              = 23,
+  CallNative        = 24,
+  CallImported      = 25,
+  CallMethod        = 26,
+  CallMethodNative  = 27,
+  CallMethodVirt    = 28,
+  CallPtr           = 38,
+  GetFunc           = 39,
+  GetFuncNative     = 40,
+  GetFuncFromVar    = 41,
+  GetFuncImported   = 42,
+  LastArgToTop      = 43,
+  GetAttr           = 44,
+  RefAttr           = 45,
+  SetAttr           = 46,
+  SetAttrInplace    = 47,
+  ArgRef            = 48,
+  UnaryNot          = 49,
+  UnaryNeg          = 50,
+  And               = 51,
+  Or                = 52,
+  Mod               = 53,
+  BitOr             = 54,
+  BitAnd            = 55,
+  Equal             = 56,
+  NotEqual          = 57,
+  LT                = 59,
+  LTE               = 60,
+  GT                = 61,
+  GTE               = 62,
+  DefArg            = 63, 
+  TypeCast          = 64,
+  TypeAs            = 65,
+  TypeIs            = 66,
+  Block             = 75,
+  New               = 76,
+  Lambda            = 77,
+  UseUpval          = 78,
+  InitFrame         = 79,
+  Inc               = 80,
+  Dec               = 81,
+  ArrIdx            = 82,
+  ArrIdxW           = 83,
+  ArrAddInplace     = 84,  //TODO: used for json alike array initialization,   
+                           //      can be replaced with more low-level opcodes?
+  Import            = 85,
+}
+
+public enum BlockType 
+{
+  FUNC      = 0,
+  SEQ       = 1,
+  DEFER     = 2,
+  PARAL     = 3,
+  PARAL_ALL = 4,
+  IF        = 7,
+  WHILE     = 8,
+  FOR       = 9,
+  DOWHILE   = 10,
+}
+
+public enum ConstType 
+{
+  INT        = 1,
+  FLT        = 2,
+  BOOL       = 3,
+  STR        = 4,
+  NIL        = 5,
+  TPROXY     = 6,
 }
 
 public class Const
 {
-  static public readonly Const Nil = new Const(EnumLiteral.NIL, 0, "");
+  static public readonly Const Nil = new Const(ConstType.NIL, 0, "");
 
-  public EnumLiteral type;
+  public ConstType type;
   public double num;
   public string str;
+  public TypeProxy tproxy;
 
-  public Const(EnumLiteral type, double num, string str)
+  public Const(ConstType type, double num, string str)
   {
     this.type = type;
     this.num = num;
     this.str = str;
   }
 
-  public Const(AST_Literal lt)
+  public Const(int num)
   {
-    type = lt.type;
-    num = lt.nval;
-    str = lt.sval;
+    type = ConstType.INT;
+    this.num = num;
+    str = "";
   }
 
   public Const(double num)
   {
-    type = EnumLiteral.NUM;
+    type = ConstType.FLT;
     this.num = num;
     str = "";
   }
 
   public Const(string str)
   {
-    type = EnumLiteral.STR;
+    type = ConstType.STR;
     this.str = str;
     num = 0;
   }
 
   public Const(bool v)
   {
-    type = EnumLiteral.BOOL;
+    type = ConstType.BOOL;
     num = v ? 1 : 0;
     this.str = "";
   }
 
+  public Const(TypeProxy tp)
+  {
+    type = ConstType.TPROXY;
+    this.tproxy = tp;
+  }
+
   public Val ToVal(VM vm)
   {
-    if(type == EnumLiteral.NUM)
-      return Val.NewNum(vm, num);
-    else if(type == EnumLiteral.BOOL)
+    if(type == ConstType.INT)
+      return Val.NewInt(vm, num);
+    else if(type == ConstType.FLT)
+      return Val.NewFlt(vm, num);
+    else if(type == ConstType.BOOL)
       return Val.NewBool(vm, num == 1);
-    else if(type == EnumLiteral.STR)
+    else if(type == ConstType.STR)
       return Val.NewStr(vm, str);
-    else if(type == EnumLiteral.NIL)
+    else if(type == ConstType.NIL)
       return vm.Null;
+    else if(type == ConstType.TPROXY)
+      return Val.NewObj(vm, tproxy, Types.Any/*TODO: must be Types.Type*/);
     else
       throw new Exception("Bad type");
   }
@@ -132,7 +173,9 @@ public class Const
   {
     return type == o.type && 
            num == o.num && 
-           str == o.str;
+           str == o.str &&
+           tproxy.name == o.tproxy.name
+           ;
   }
 }
 
@@ -695,9 +738,10 @@ public class VM
     }
   }
 
-  public struct ModuleAddr
+  public struct FuncAddr
   {
     public CompiledModule module;
+    public FuncSymbolScript fs;
     public int ip;
   }
 
@@ -707,10 +751,7 @@ public class VM
 
   IModuleLoader loader;
 
-  public delegate void ClassCreator(VM.Frame frm, ref Val res);
-  public delegate void FieldGetter(VM.Frame frm, Val v, ref Val res);
-  public delegate void FieldSetter(VM.Frame frm, ref Val v, Val nv);
-  public delegate void FieldRef(VM.Frame frm, Val v, out Val res);
+  public delegate void ClassCreator(VM.Frame frm, ref Val res, IType type);
 
   public class ValPool : Pool<Val>
   {
@@ -790,25 +831,30 @@ public class VM
     init_frame = new Frame(this);
 
     null_val = new Val(this);
-    null_val.SetObj(null);
+    null_val.SetObj(null, Types.Any);
     //NOTE: we don't want to store it in the values pool,
     //      still we need to retain it so that it's never 
     //      accidentally released when pushed/popped
     null_val.Retain();
   }
 
-  public void LoadModule(string module_name)
+  public bool LoadModule(string module_name)
   {
-    var imported_module = loader.Load(module_name);
-    RegisterModule(imported_module);
+    var loaded = loader.Load(module_name);
+    if(loaded == null)
+      return false;
+    RegisterModule(loaded);
+    return true;
   }
 
   void LoadModule(CompiledModule module, string module_name)
   {
-    var imported_module = loader.Load(module_name);
-    RegisterModule(imported_module);
+    var loaded = loader.Load(module_name);
+    if(loaded == null)
+      throw new Exception("Module '" + module_name + "' not found");
+    RegisterModule(loaded);
 
-    module.scope.AddImport(imported_module.scope);
+    module.symbols.AddImport(loaded.symbols);
   }
 
   public void RegisterModule(CompiledModule cm)
@@ -817,7 +863,7 @@ public class VM
       return;
     modules.Add(cm.name, cm);
 
-    types.AddSource(cm.scope);
+    types.AddSource(cm.symbols);
 
     ExecInit(cm);
   }
@@ -836,7 +882,7 @@ public class VM
     }
     m.gvars.Clear();
 
-    types.RemoveSource(m.scope);
+    types.RemoveSource(m.symbols);
 
     modules.Remove(module_name);
   }
@@ -878,10 +924,10 @@ public class VM
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          string type = constants[type_idx].str;
+          var type = constants[type_idx].tproxy.Get();
 
           module.gvars.Resize(var_idx+1);
-          module.gvars[var_idx] = MakeDefaultVal(module, type);
+          module.gvars[var_idx] = MakeDefaultVal(type);
         }
         break;
         case Opcodes.SetVar:
@@ -898,46 +944,36 @@ public class VM
         {
           int const_idx = (int)Bytecode.Decode24(bytecode, ref ip);
           var cn = constants[const_idx];
-          stack.Push(cn.ToVal(this));
+          var cv = cn.ToVal(this);
+          stack.Push(cv);
         }
         break;
         case Opcodes.New:
         {
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          string type = constants[type_idx].str;
+          IType type = constants[type_idx].tproxy.Get();
           HandleNew(init_frame, type);
         }
         break;
         case Opcodes.SetAttrInplace:
         {
-          int class_type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          string class_type = constants[class_type_idx].str;
           int fld_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-          var class_symb = types.Resolve(class_type) as ClassSymbol;
-          //TODO: this check must be in dev.version only
-          if(class_symb == null)
-            throw new Exception("Class type not found: " + class_type);
-
           var val = stack.Pop();
           var obj = stack.Peek();
+          var class_symb = (ClassSymbol)obj.type;
           var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-          field_symb.setter(init_frame, ref obj, val);
+          field_symb.setter(init_frame, ref obj, val, field_symb);
           val.Release();
         }
         break;
-        //TODO: it's used for array init, maybe it should not be here
-        case Opcodes.CallMethodNative:
+        case Opcodes.ArrAddInplace:
         {
-          int func_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-          int class_type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          uint args_bits = Bytecode.Decode32(bytecode, ref ip); 
-
-          string class_type = constants[class_type_idx].str; 
-          var class_symb = (ClassSymbol)types.Resolve(class_type);
-
-          BHS status;
-          ICoroutine coroutine = null;
-          CallNative(init_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine);
+          var self = stack[stack.Count - 2];
+          self.Retain();
+          var class_type = ((ArrayTypeSymbol)self.type);
+          var status = BHS.SUCCESS;
+          ((FuncSymbolNative)class_type.members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
+          stack.Push(self);
         }
         break;
         default:
@@ -959,7 +995,7 @@ public class VM
 
   public Fiber Start(string func, uint cargs_bits, params Val[] args)
   {
-    ModuleAddr addr;
+    FuncAddr addr;
     if(!TryFindFuncAddr(func, out addr))
       return null;
 
@@ -975,16 +1011,16 @@ public class VM
       frame.stack.Push(arg);
     }
     //cargs bits
-    frame.stack.Push(Val.NewNum(this, cargs_bits));
+    frame.stack.Push(Val.NewFlt(this, cargs_bits));
 
     Attach(fb, frame);
 
     return fb;
   }
 
-  bool TryFindFuncAddr(string name, out ModuleAddr addr)
+  bool TryFindFuncAddr(string name, out FuncAddr addr)
   {
-    addr = default(ModuleAddr);
+    addr = default(FuncAddr);
 
     var fs = types.Resolve(name) as FuncSymbolScript;
     if(fs == null)
@@ -992,8 +1028,9 @@ public class VM
 
     var cm = modules[((ModuleScope)fs.scope).module_name];
 
-    addr = new ModuleAddr() {
+    addr = new FuncAddr() {
       module = cm,
+      fs = fs,
       ip = fs.ip_addr
     };
 
@@ -1001,21 +1038,22 @@ public class VM
   }
 
   //TODO: add caching?
-  ModuleAddr GetFuncAddr(string name)
+  FuncAddr GetFuncAddr(string name)
   {
     var fs = (FuncSymbolScript)types.Resolve(name);
     var cm = modules[((ModuleScope)fs.scope).module_name];
-    return new ModuleAddr() {
+    return new FuncAddr() {
       module = cm,
+      fs = fs,
       ip = fs.ip_addr
     };
   }
 
   static FuncSymbol TryMapIp2Func(CompiledModule cm, int ip)
   {
-    for(int i=0;i<cm.scope.GetMembers().Count; ++i)
+    for(int i=0;i<cm.symbols.members.Count; ++i)
     {
-      var fsymb = cm.scope.GetMembers()[i] as FuncSymbolScript;
+      var fsymb = cm.symbols.members[i] as FuncSymbolScript;
       if(fsymb != null && fsymb.ip_addr == ip)
         return fsymb;
     }
@@ -1052,7 +1090,7 @@ public class VM
       var frame = ptr.MakeFrame(this, curr_frame);
       Attach(fb, frame);
       //cargs bits
-      frame.stack.Push(Val.NewNum(this, cargs_bits));
+      frame.stack.Push(Val.NewFlt(this, cargs_bits));
     }
 
     return fb;
@@ -1172,15 +1210,32 @@ public class VM
       {
         int const_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         var cn = curr_frame.constants[const_idx];
-        curr_frame.stack.Push(cn.ToVal(this));
+        var cv = cn.ToVal(this);
+        curr_frame.stack.Push(cv);
       }
       break;
       case Opcodes.TypeCast:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string cast_type = curr_frame.constants[cast_type_idx].str;
+        var cast_type = curr_frame.constants[cast_type_idx].tproxy.Get();
 
         HandleTypeCast(curr_frame, cast_type);
+      }
+      break;
+      case Opcodes.TypeAs:
+      {
+        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        var as_type = curr_frame.constants[cast_type_idx].tproxy.Get();
+
+        HandleTypeAs(curr_frame, as_type);
+      }
+      break;
+      case Opcodes.TypeIs:
+      {
+        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        var as_type = curr_frame.constants[cast_type_idx].tproxy.Get();
+
+        HandleTypeIs(curr_frame, as_type);
       }
       break;
       case Opcodes.Inc:
@@ -1193,6 +1248,32 @@ public class VM
       {
         int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
         --curr_frame.locals[var_idx]._num;
+      }
+      break;
+      case Opcodes.ArrIdx:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((ArrayTypeSymbol)self.type);
+        var status = BHS.SUCCESS;
+        class_type.FuncArrIdx.cb(curr_frame, new FuncArgsInfo(), ref status);
+      }
+      break;
+      case Opcodes.ArrIdxW:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((ArrayTypeSymbol)self.type);
+        var status = BHS.SUCCESS;
+        class_type.FuncArrIdxW.cb(curr_frame, new FuncArgsInfo(), ref status);
+      }
+      break;
+      case Opcodes.ArrAddInplace:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        self.Retain();
+        var class_type = ((ArrayTypeSymbol)self.type);
+        var status = BHS.SUCCESS;
+        ((FuncSymbolNative)class_type.members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
+        curr_frame.stack.Push(self);
       }
       break;
       case Opcodes.Add:
@@ -1255,25 +1336,23 @@ public class VM
       {
         int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
         int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string type = curr_frame.constants[type_idx].str;
+        var type = curr_frame.constants[type_idx].tproxy.Get();
 
         var curr = curr_frame.locals[local_idx];
         //NOTE: handling case when variables are 're-declared' within the nested loop
         if(curr != null)
           curr.Release();
-        curr_frame.locals[local_idx] = MakeDefaultVal(curr_frame.module, type);
+        curr_frame.locals[local_idx] = MakeDefaultVal(type);
       }
       break;
       case Opcodes.GetAttr:
       {
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = (ClassSymbol)types.Resolve(class_type);
         var obj = curr_frame.stack.Pop();
+        var class_symb = (ClassSymbol)obj.type;
         var res = Val.New(this);
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.getter(curr_frame, obj, ref res);
+        field_symb.getter(curr_frame, obj, ref res, field_symb);
         //NOTE: we retain only the payload since we make the copy of the value 
         //      and the new res already has refs = 1 while payload's refcount 
         //      is not incremented
@@ -1284,54 +1363,37 @@ public class VM
       break;
       case Opcodes.RefAttr:
       {
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = types.Resolve(class_type) as ClassSymbol;
-        //TODO: this check must be in dev.version only
-        if(class_symb == null)
-          throw new Exception("Class type not found: " + class_type);
-
         var obj = curr_frame.stack.Pop();
+        var class_symb = (ClassSymbol)obj.type;
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
         Val res;
-        field_symb.getref(curr_frame, obj, out res);
+        field_symb.getref(curr_frame, obj, out res, field_symb);
         curr_frame.stack.PushRetain(res);
         obj.Release();
       }
       break;
       case Opcodes.SetAttr:
       {
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = types.Resolve(class_type) as ClassSymbol;
-        //TODO: this check must be in dev.version only
-        if(class_symb == null)
-          throw new Exception("Class type not found: " + class_type);
 
         var obj = curr_frame.stack.Pop();
+        var class_symb = (ClassSymbol)obj.type;
         var val = curr_frame.stack.Pop();
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.setter(curr_frame, ref obj, val);
+        field_symb.setter(curr_frame, ref obj, val, field_symb);
         val.Release();
         obj.Release();
       }
       break;
       case Opcodes.SetAttrInplace:
       {
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string class_type = curr_frame.constants[class_type_idx].str;
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var class_symb = types.Resolve(class_type) as ClassSymbol;
-        //TODO: this check must be in dev.version only
-        if(class_symb == null)
-          throw new Exception("Class type not found: " + class_type);
-
         var val = curr_frame.stack.Pop();
         var obj = curr_frame.stack.Peek();
+        var class_symb = (ClassSymbol)obj.type;
         var field_symb = (FieldSymbol)class_symb.members[fld_idx];
-        field_symb.setter(curr_frame, ref obj, val);
+        field_symb.setter(curr_frame, ref obj, val, field_symb);
         val.Release();
       }
       break;
@@ -1402,19 +1464,20 @@ public class VM
       break;
       case Opcodes.GetFunc:
       {
-        int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        var func_symb = (FuncSymbolScript)curr_frame.module.symbols.members[func_idx];
         var ptr = FuncPtr.New(this);
-        ptr.Init(curr_frame, func_ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
+        ptr.Init(curr_frame, func_symb.ip_addr);
+        curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;
       case Opcodes.GetFuncNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolNative)types.globs.GetMembers()[func_idx];
+        var func_symb = (FuncSymbolNative)types.globs.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
+        curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;
       case Opcodes.GetFuncImported:
@@ -1422,11 +1485,11 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
         string func_name = curr_frame.constants[func_idx].str;
-        var maddr = GetFuncAddr(func_name);
+        var faddr = GetFuncAddr(func_name);
 
         var ptr = FuncPtr.New(this);
-        ptr.Init(maddr.module, maddr.ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
+        ptr.Init(faddr.module, faddr.ip);
+        curr_frame.stack.Push(Val.NewObj(this, ptr, faddr.fs.signature));
       }
       break;
       case Opcodes.GetFuncFromVar:
@@ -1437,16 +1500,16 @@ public class VM
         curr_frame.stack.Push(val);
       }
       break;
-      case Opcodes.FuncPtrToTop:
+      case Opcodes.LastArgToTop:
       {
-        //NOTE: we need to move ptr to the top of the stack
+        //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
         //      so that it fullfills Opcode.Call requirements 
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-        var args_info = new FuncArgsInfo(args_bits);
-        int ptr_idx = curr_frame.stack.Count-args_info.CountArgs()-1; 
-        var ptr = curr_frame.stack[ptr_idx];
-        curr_frame.stack.RemoveAt(ptr_idx);
-        curr_frame.stack.Push(ptr);
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int arg_idx = curr_frame.stack.Count - args_num - 1; 
+        var arg = curr_frame.stack[arg_idx];
+        curr_frame.stack.RemoveAt(arg_idx);
+        curr_frame.stack.Push(arg);
       }
       break;
       case Opcodes.Call:
@@ -1464,7 +1527,7 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        var native = (FuncSymbolNative)types.globs.GetMembers()[func_idx];
+        var native = (FuncSymbolNative)types.globs.members[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))
@@ -1488,30 +1551,61 @@ public class VM
       case Opcodes.CallMethodNative:
       {
         int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string class_type = curr_frame.constants[class_type_idx].str; 
-        var class_symb = (ClassSymbol)types.Resolve(class_type);
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+
+        var class_type = ((ClassSymbol)self.type);
 
         BHS status;
-        if(CallNative(curr_frame, (FuncSymbolNative)class_symb.members[func_idx], args_bits, out status, ref coroutine))
+        if(CallNative(curr_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine))
           return status;
       }
       break;
       case Opcodes.CallMethod:
       {
         int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int class_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string class_type = curr_frame.constants[class_type_idx].str; 
-        var class_symb = (ClassSymbol)types.Resolve(class_type);
+        //TODO: use a simpler schema where 'self' is passed on the top
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+        curr_frame.stack.RemoveAt(self_idx);
 
-        var field_symb = (FuncSymbolScript)class_symb.members[func_idx];
+        var class_type = ((ClassSymbol)self.type);
+
+        var field_symb = (FuncSymbolScript)class_type.members[func_idx];
         int func_ip = field_symb.ip_addr;
 
-        var self = curr_frame.stack.Pop();
+        var frm = Frame.New(this);
+        frm.Init(curr_frame, func_ip);
+
+        frm.locals[0] = self;
+
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
+      }
+      break;
+      case Opcodes.CallMethodVirt:
+      {
+        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        int iface_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+        //TODO: use a simpler schema where 'self' is passed on the top
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+        curr_frame.stack.RemoveAt(self_idx);
+
+        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_idx].tproxy.Get(); 
+        var class_type = (ClassSymbol)self.type;
+        int func_idx = class_type.vtable[iface_symb][iface_func_idx];
+
+        var field_symb = (FuncSymbolScript)class_type.members[func_idx];
+        int func_ip = field_symb.ip_addr;
 
         var frm = Frame.New(this);
         frm.Init(curr_frame, func_ip);
@@ -1635,8 +1729,9 @@ public class VM
       {
         byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref ip);
         int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        var args_info = new FuncArgsInfo((uint)curr_frame.locals[curr_frame.locals.Count-1]._num);
-        //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx));
+        uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count-1]._num; 
+        var args_info = new FuncArgsInfo(args_bits);
+        //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx) + " " + args_bits);
         //NOTE: if default argument is not used we need to jump out of default argument calculation code
         if(!args_info.IsDefaultArgUsed(def_arg_idx))
           ip += jump_pos;
@@ -1658,7 +1753,7 @@ public class VM
       case Opcodes.New:
       {
         int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        string type = curr_frame.constants[type_idx].str;
+        IType type = curr_frame.constants[type_idx].tproxy.Get();
         HandleNew(curr_frame, type);
       }
       break;
@@ -1670,11 +1765,6 @@ public class VM
     return BHS.SUCCESS;
   }
 
-  internal Val MakeDefaultVal(CompiledModule cm, string type)
-  {
-    return MakeDefaultVal((IType)cm.scope.Resolve(type));
-  }
-
   internal Val MakeDefaultVal(IType type)
   {
     var v = Val.New(this);
@@ -1683,7 +1773,7 @@ public class VM
     if(type == Types.Int)
       v.SetNum(0);
     else if(type == Types.Float)
-      v.SetNum((double)0);
+      v.SetFlt((double)0);
     else if(type == Types.String)
       v.SetStr("");
     else if(type == Types.Bool)
@@ -1696,10 +1786,10 @@ public class VM
 
   void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip)
   {
-    var args_info = new FuncArgsInfo(args_bits);
-    for(int i = 0; i < args_info.CountArgs(); ++i)
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+    for(int i = 0; i < args_num; ++i)
       new_frame.stack.Push(curr_frame.stack.Pop());
-    new_frame.stack.Push(Val.NewNum(this, args_bits));
+    new_frame.stack.Push(Val.NewFlt(this, args_bits));
 
     //let's remember ip to return to
     new_frame.return_ip = ip;
@@ -1711,12 +1801,8 @@ public class VM
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   static bool CallNative(Frame curr_frame, FuncSymbolNative native, uint args_bits, out BHS status, ref ICoroutine coroutine)
   {
-    var args_info = new FuncArgsInfo(args_bits);
-    for(int i = 0; i < args_info.CountArgs(); ++i)
-      curr_frame.stack.Push(curr_frame.stack.Pop());
-
     status = BHS.SUCCESS;
-    var new_coroutine = native.cb(curr_frame, args_info, ref status);
+    var new_coroutine = native.cb(curr_frame, new FuncArgsInfo(args_bits), ref status);
 
     if(new_coroutine != null)
     {
@@ -1793,14 +1879,14 @@ public class VM
   }
 
   //TODO: make it more universal and robust
-  void HandleTypeCast(Frame curr_frame, string cast_type)
+  void HandleTypeCast(Frame curr_frame, IType cast_type)
   {
     var new_val = Val.New(this);
     var val = curr_frame.stack.PopRelease();
 
-    if(cast_type == "int")
+    if(cast_type == Types.Int)
       new_val.SetNum((int)val.num);
-    else if(cast_type == "string" && val.type != Types.String)
+    else if(cast_type == Types.String && val.type != Types.String)
       new_val.SetStr(val.num.ToString());
     else
     {
@@ -1811,42 +1897,67 @@ public class VM
     curr_frame.stack.Push(new_val);
   }
 
-  void HandleNew(Frame curr_frame, string class_type)
+  void HandleTypeAs(Frame curr_frame, IType type)
   {
-    var cls = types.Resolve(class_type) as ClassSymbol;
-    //TODO: this check must be in dev.version only
+    var val = curr_frame.stack.PopRelease();
+
+    if(type != null && val.type != null && Types.Is(val.type, type))
+    {
+      var new_val = Val.New(this);
+      new_val.ValueCopyFrom(val);
+      new_val.RefMod(RefOp.USR_INC);
+      curr_frame.stack.Push(new_val);
+    }
+    else
+      curr_frame.stack.Push(Val.NewObj(this, null, Types.Any));
+  }
+
+  void HandleTypeIs(Frame curr_frame, IType type)
+  {
+    var val = curr_frame.stack.PopRelease();
+    curr_frame.stack.Push(Val.NewBool(this, 
+          type != null && 
+          val.type != null && 
+          Types.Is(val.type, type)
+        )
+    );
+  }
+
+  void HandleNew(Frame curr_frame, IType type)
+  {
+    var cls = type as ClassSymbol;
     if(cls == null)
-      throw new Exception("Could not find class symbol: " + class_type);
+      throw new Exception("Not a class symbol: " + type);
 
     var val = Val.New(this); 
-    cls.creator(curr_frame, ref val);
+    cls.creator(curr_frame, ref val, cls);
     curr_frame.stack.Push(val);
   }
 
-  static void ReadBlockHeader(ref int ip, Frame curr_frame, out EnumBlock type, out int size)
+  static void ReadBlockHeader(ref int ip, Frame curr_frame, out BlockType type, out int size)
   {
-    type = (EnumBlock)Bytecode.Decode8(curr_frame.bytecode, ref ip);
+    type = (BlockType)Bytecode.Decode8(curr_frame.bytecode, ref ip);
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
   }
 
   ICoroutine TryMakeBlockCoroutine(ref int ip, FixedStack<VM.FrameContext> ctx_frames, Frame curr_frame, out int size, IExitableScope ex_scope)
   {
-    EnumBlock type;
+    BlockType type;
     ReadBlockHeader(ref ip, curr_frame, out type, out size);
 
-    if(type == EnumBlock.PARAL)
+    if(type == BlockType.PARAL)
     {
       var paral = CoroutinePool.New<ParalBlock>(this);
       paral.Init(ip + 1, ip + size);
       return paral;
     }
-    else if(type == EnumBlock.PARAL_ALL) 
+    else if(type == BlockType.PARAL_ALL) 
     {
       var paral = CoroutinePool.New<ParalAllBlock>(this);
       paral.Init(ip + 1, ip + size);
       return paral;
     }
-    else if(type == EnumBlock.SEQ)
+    else if(type == BlockType.SEQ)
     {
       if(ex_scope is IBranchyCoroutine)
       {
@@ -1861,7 +1972,7 @@ public class VM
         return seq;
       }
     }
-    else if(type == EnumBlock.DEFER)
+    else if(type == BlockType.DEFER)
     {
       var d = new DeferBlock(curr_frame, ip + 1, ip + size);
       ex_scope.RegisterDefer(d);
@@ -1964,7 +2075,7 @@ public class VM
         curr_frame.stack.Push(Val.NewBool(this, operand != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.stack.Push(Val.NewNum(this, operand * -1));
+        curr_frame.stack.Push(Val.NewFlt(this, operand * -1));
       break;
     }
   }
@@ -1981,16 +2092,16 @@ public class VM
         if((r_operand.type == Types.String) && (l_operand.type == Types.String))
           curr_frame.stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
         else
-          curr_frame.stack.Push(Val.NewNum(this, l_operand._num + r_operand._num));
+          curr_frame.stack.Push(Val.NewFlt(this, l_operand._num + r_operand._num));
       break;
       case Opcodes.Sub:
-        curr_frame.stack.Push(Val.NewNum(this, l_operand._num - r_operand._num));
+        curr_frame.stack.Push(Val.NewFlt(this, l_operand._num - r_operand._num));
       break;
       case Opcodes.Div:
-        curr_frame.stack.Push(Val.NewNum(this, l_operand._num / r_operand._num));
+        curr_frame.stack.Push(Val.NewFlt(this, l_operand._num / r_operand._num));
       break;
       case Opcodes.Mul:
-        curr_frame.stack.Push(Val.NewNum(this, l_operand._num * r_operand._num));
+        curr_frame.stack.Push(Val.NewFlt(this, l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
         curr_frame.stack.Push(Val.NewBool(this, l_operand.IsValueEqual(r_operand)));
@@ -2023,7 +2134,7 @@ public class VM
         curr_frame.stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        curr_frame.stack.Push(Val.NewNum(this, l_operand._num % r_operand._num));
+        curr_frame.stack.Push(Val.NewFlt(this, l_operand._num % r_operand._num));
       break;
     }
 
@@ -2072,11 +2183,12 @@ public class Ip2SrcLine
 
 public class CompiledModule
 {
+  const uint HEADER_VERSION = 1;
   public const int MAX_GLOBALS = 128;
 
   public uint id;
   public string name;
-  public ModuleScope scope;
+  public ModuleScope symbols;
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
@@ -2093,20 +2205,20 @@ public class CompiledModule
   )
   {
     this.name = name;
-    this.scope = symbols;
+    this.symbols = symbols;
     this.constants = constants;
     this.initcode = initcode;
     this.bytecode = bytecode;
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src)
+  static public CompiledModule FromStream(Types types, Stream src, bool add_symbols_to_types = false)
   {
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
     {
       //TODO: add better support for version
       uint version = r.ReadUInt32();
-      if(version != 1)
+      if(version != HEADER_VERSION)
         throw new Exception("Unsupported version: " + version);
 
       string name = r.ReadString();
@@ -2114,7 +2226,10 @@ public class CompiledModule
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
       var symbols = new ModuleScope(name, types.globs);
-      Marshall.Stream2Obj(new MemoryStream(symb_bytes), symbols, new SymbolFactory(types));
+      var symb_factory = new SymbolFactory(types);
+      if(add_symbols_to_types)
+        types.AddSource(symbols);
+      Marshall.Stream2Obj(new MemoryStream(symb_bytes), symbols, symb_factory);
 
       byte[] initcode = null;
       int initcode_len = r.ReadInt32();
@@ -2130,14 +2245,27 @@ public class CompiledModule
       int constants_len = r.ReadInt32();
       for(int i=0;i<constants_len;++i)
       {
-        var cn_type = (EnumLiteral)r.Read();
-        double cn_num = 0;
-        string cn_str = "";
-        if(cn_type == EnumLiteral.STR)
-          cn_str = r.ReadString();
+        Const cn = null;
+
+        var cn_type = (ConstType)r.Read();
+
+        if(cn_type == ConstType.STR)
+          cn = new Const(r.ReadString());
+        else if(cn_type == ConstType.FLT || 
+                cn_type == ConstType.INT ||
+                cn_type == ConstType.BOOL ||
+                cn_type == ConstType.NIL)
+          cn = new Const(cn_type, r.ReadDouble(), "");
+        else if(cn_type == ConstType.TPROXY)
+        {
+          var tp = Marshall.Stream2Obj<TypeProxy>(src, symb_factory);
+          if(string.IsNullOrEmpty(tp.name))
+            throw new Exception("Missing name");
+          cn = new Const(tp);
+        }
         else
-          cn_num = r.ReadDouble();
-        var cn = new Const(cn_type, cn_num, cn_str);
+          throw new Exception("Unknown type: " + cn_type);
+
         constants.Add(cn);
       }
 
@@ -2164,11 +2292,11 @@ public class CompiledModule
     {
       //TODO: add better support for version
       //TODO: introduce header info with offsets to data
-      w.Write((uint)1);
+      w.Write(HEADER_VERSION);
 
       w.Write(cm.name);
 
-      var symb_bytes = Marshall.Obj2Bytes(cm.scope);
+      var symb_bytes = Marshall.Obj2Bytes(cm.symbols);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 
@@ -2184,10 +2312,19 @@ public class CompiledModule
       foreach(var cn in cm.constants)
       {
         w.Write((byte)cn.type);
-        if(cn.type == EnumLiteral.STR)
+        if(cn.type == ConstType.STR)
           w.Write(cn.str);
-        else
+        else if(cn.type == ConstType.FLT || 
+                cn.type == ConstType.INT ||
+                cn.type == ConstType.BOOL ||
+                cn.type == ConstType.NIL)
           w.Write(cn.num);
+        else if(cn.type == ConstType.TPROXY)
+        {
+          Marshall.Obj2Stream(cn.tproxy, dst);
+        }
+        else
+          throw new Exception("Unknown type: " + cn.type);
       }
 
       //TODO: add this info only for development builds
