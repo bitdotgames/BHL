@@ -339,6 +339,42 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSimpleAsForChildClassAndInterface()
+  {
+    string bhl = @"
+    interface IBar
+    {
+      func int GetBar()
+    }
+
+    class Bar : IBar 
+    {
+      int bar
+
+      func int GetBar()
+      {
+        return this.bar
+      }
+    }
+
+    class Foo : Bar
+    {
+      int foo
+    }
+
+    func int test() 
+    {
+      Foo f = {foo: 14, bar: 41}
+      return (f as IBar).GetBar()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestAsAndBuiltinTypes()
   {
     {

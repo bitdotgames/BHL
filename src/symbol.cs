@@ -408,6 +408,11 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     vtable.Clear();
 
     var all = new HashSet<IInstanceType>();
+    if(super_class != null)
+    {
+      for(int i=0;i<super_class.implements.Count;++i)
+        all.UnionWith(super_class.implements[i].GetAllRelatedTypesSet());
+    }
     for(int i=0;i<implements.Count;++i)
       all.UnionWith(implements[i].GetAllRelatedTypesSet());
     
