@@ -519,7 +519,7 @@ public class TestTypeCasts : BHL_TestBase
       {
         func(string) s = trace
         any foo = s
-        //TODO: below line doesn't work
+        //TODO: below line doesn't compile
         //(foo as func(string))(""hey"")
         func(string) tmp = foo as func(string)
         tmp(""hey"")
@@ -533,6 +533,24 @@ public class TestTypeCasts : BHL_TestBase
       var vm = MakeVM(bhl, ts);
       Execute(vm, "test");
       AssertEqual("hey", log.ToString());
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func string hey() {
+        return ""hey""
+      }
+      func bool test() 
+      {
+        func string() s = hey
+        any foo = s
+        return (foo as func int()) == null
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
   }
