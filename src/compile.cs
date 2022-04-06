@@ -606,6 +606,12 @@ public class Compiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.TypeIs,
+        3/*type idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.Inc,
         1/*local idx*/
       )
@@ -1045,6 +1051,12 @@ public class Compiler : AST_Visitor
   {
     VisitChildren(ast);
     Emit(Opcodes.TypeAs, new int[] { AddConstant(ast.type) }, ast.line_num);
+  }
+
+  public override void DoVisit(AST_TypeIs ast)
+  {
+    VisitChildren(ast);
+    Emit(Opcodes.TypeIs, new int[] { AddConstant(ast.type) }, ast.line_num);
   }
 
   public override void DoVisit(AST_New ast)

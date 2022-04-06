@@ -63,6 +63,7 @@ public enum Opcodes
   DefArg            = 63, 
   TypeCast          = 64,
   TypeAs            = 65,
+  TypeIs            = 66,
   Block             = 75,
   New               = 76,
   Lambda            = 77,
@@ -1226,6 +1227,14 @@ public class VM
         HandleTypeAs(curr_frame, as_type);
       }
       break;
+      case Opcodes.TypeIs:
+      {
+        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        var as_type = curr_frame.constants[cast_type_idx].tproxy.Get();
+
+        HandleTypeIs(curr_frame, as_type);
+      }
+      break;
       case Opcodes.Inc:
       {
         int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
@@ -1897,6 +1906,17 @@ public class VM
     }
     else
       curr_frame.stack.Push(Val.NewObj(this, null, Types.Any));
+  }
+
+  void HandleTypeIs(Frame curr_frame, IType type)
+  {
+    var val = curr_frame.stack.PopRelease();
+    curr_frame.stack.Push(Val.NewBool(this, 
+          type != null && 
+          val.type != null && 
+          Types.Is(val.type, type)
+        )
+    );
   }
 
   void HandleNew(Frame curr_frame, IType type)

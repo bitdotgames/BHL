@@ -162,7 +162,118 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSelfAs()
+  public void TestSimpleIs()
+  {
+    string bhl = @"
+    func bool test() 
+    {
+      int i = 1
+      return i is int
+    }
+    ";
+
+    var ts = new Types();
+    var c = Compile(bhl, ts);
+
+    var expected = 
+      new Compiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .EmitThen(Opcodes.SetVar, new int[] { 0 })
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.TypeIs, new int[] { ConstIdx(c, new TypeProxy(ts, "int")) })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIsAndBuiltinTypes()
+  {
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        string s = ""hey""
+        any foo = s
+        return foo is string
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        int s = 42
+        any foo = s
+        return foo is int
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        float s = 42.1
+        any foo = s
+        return foo is float
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        bool s = true
+        any foo = s
+        return foo is bool
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        string s = ""hey""
+        any foo = s
+        return foo is bool
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
+  public void TestSimpleAs()
   {
     string bhl = @"
     class Foo
@@ -263,7 +374,6 @@ public class TestTypeCasts : BHL_TestBase
       AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
-
   }
 
   [IsTested()]

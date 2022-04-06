@@ -13547,8 +13547,8 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      []int is = [1, 2, 3]
-      foreach(is as int it) {
+      []int its = [1, 2, 3]
+      foreach(its as int it) {
         trace((string)it)
       }
     }
@@ -13597,8 +13597,8 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       int it
-      []int is = [1, 2, 3]
-      foreach(is as it) {
+      []int its = [1, 2, 3]
+      foreach(its as it) {
         trace((string)it)
       }
     }
@@ -13759,12 +13759,12 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      []int is = [1,2,3]
-      foreach(is as int it) {
+      []int its = [1,2,3]
+      foreach(its as int it) {
         trace((string)it)
       }
 
-      foreach(is as int it2) {
+      foreach(its as int it2) {
         trace((string)it2)
       }
     }
@@ -13787,9 +13787,9 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      []int is = [1,2,3]
-      foreach(is as int it) {
-        foreach(is as int it2) {
+      []int its = [1,2,3]
+      foreach(its as int it) {
+        foreach(its as int it2) {
           trace((string)it + "","" + (string)it2 + "";"")
         }
       }

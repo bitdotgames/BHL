@@ -1349,6 +1349,26 @@ public class Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitExpIs(bhlParser.ExpIsContext ctx)
+  {
+    var tp = ParseType(ctx.type());
+
+    var ast = new AST_TypeIs(tp.Get(), ctx.Start.Line);
+    var exp = ctx.exp();
+    PushAST(ast);
+    Visit(exp);
+    PopAST();
+
+    Wrap(ctx).eval_type = Types.Bool;
+
+    //TODO: do we need to pre-check absolutely unrelated types?
+    //types.CheckCast(Wrap(ctx), Wrap(exp)); 
+
+    PeekAST().AddChild(ast);
+
+    return null;
+  }
+
   public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
   {
     EnumUnaryOp type;
