@@ -231,10 +231,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     base.Define(sym);
   }
 
-  public override SymbolsStorage GetMembers()
-  {
-    return members;
-  }
+  public override SymbolsStorage GetMembers() { return members; }
 
   public FuncSymbol FindMethod(string name)
   {
@@ -383,7 +380,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     //      address its members simply by int index
     if(super_class != null)
     {
-      var super_members = super_class.GetMembers();
+      var super_members = super_class.members;
       for(int i=0;i<super_members.Count;++i)
       {
         var mem = super_members[i];
@@ -457,7 +454,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
   public override void Define(Symbol sym) 
   {
-    if(super_class != null && super_class.GetMembers().Contains(sym.name))
+    if(super_class != null && super_class.members.Contains(sym.name))
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     base.Define(sym);
@@ -1051,7 +1048,7 @@ public class FuncSymbolScript : FuncSymbol
 
   public int local_vars_num {
     get {
-      return GetMembers().Count;
+      return members.Count;
     }
   }
 
@@ -1146,7 +1143,7 @@ public class LambdaSymbol : FuncSymbolScript
   public override Symbol Resolve(string name) 
   {
     Symbol s = null;
-    GetMembers().TryGetValue(name, out s);
+    members.TryGetValue(name, out s);
     if(s != null)
       return s;
 
@@ -1173,7 +1170,7 @@ public class LambdaSymbol : FuncSymbolScript
 
       //NOTE: only variable symbols are considered
       Symbol res = null;
-      decl.GetMembers().TryGetValue(name, out res);
+      decl.members.TryGetValue(name, out res);
       if(res is VariableSymbol vs && !vs.is_out_of_scope)
         return AssignUpValues(vs, i+1, my_idx);
     }

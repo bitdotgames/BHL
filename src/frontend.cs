@@ -2129,11 +2129,11 @@ public class Frontend : bhlBaseVisitor<object>
 
   void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)
   {
-    for(int i=0;i<iface.GetMembers().Count;++i)
+    for(int i=0;i<iface.members.Count;++i)
     {
-      var m = (FuncSymbol)iface.GetMembers()[i];
+      var m = (FuncSymbol)iface.members[i];
       var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
-      if(func_symb == null || !func_symb.signature.Matches(m.signature))
+      if(func_symb == null || !Types.Is(func_symb.signature, m.signature))
         FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
     }
   }
@@ -2383,7 +2383,7 @@ public class Frontend : bhlBaseVisitor<object>
         Symbol subst_symbol = null;
         if(is_decl)
         {
-          var symbols = ((FuncSymbol)curr_scope).GetMembers();
+          var symbols = ((FuncSymbol)curr_scope).members;
           disabled_symbol = (Symbol)symbols[symbols.Count - 1];
           symbols.RemoveAt(symbols.Count - 1);
           subst_symbol = new VariableSymbol(disabled_symbol.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
@@ -2403,7 +2403,7 @@ public class Frontend : bhlBaseVisitor<object>
         //NOTE: declaring disabled symbol again
         if(disabled_symbol != null)
         {
-          var symbols = ((FuncSymbol)curr_scope).GetMembers();
+          var symbols = ((FuncSymbol)curr_scope).members;
           symbols.RemoveAt(symbols.IndexOf(subst_symbol));
           curr_scope.Define(disabled_symbol);
         }

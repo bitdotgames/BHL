@@ -1243,14 +1243,14 @@ public class Compiler : AST_Visitor
 
     if(func_symb is FuncSymbolNative fnative)
     {
-      int func_idx = types.globs.GetMembers().IndexOf(fnative);
+      int func_idx = types.globs.members.IndexOf(fnative);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
       return Emit(Opcodes.GetFuncNative, new int[] { func_idx }, ast.line_num);
     }
     else if(func_symb.scope == module.symbols)
     {
-      int func_idx = module.symbols.GetMembers().IndexOf(func_symb);
+      int func_idx = module.symbols.members.IndexOf(func_symb);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
 

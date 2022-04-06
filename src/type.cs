@@ -267,13 +267,6 @@ public class FuncSignature : IType, IMarshallableGeneric
     if(ctx.is_read)
       Update();
   }
-
-  public bool Matches(FuncSignature o)
-  {
-    //since type name contains non-ambigious(?) type specification
-    //we may use it for match tests
-    return name == o.name;
-  }
 }
 
 public class Types
@@ -598,7 +591,6 @@ public class Types
   {
     return rhs == lhs || 
            lhs == Any ||
-           rhs.GetName() == lhs.GetName() ||
            (is_subset_of.Contains(new Tuple<IType, IType>(rhs, lhs))) ||
            (lhs is IInstanceType && rhs == Null) ||
            (lhs is FuncSignature && rhs == Null) || 
