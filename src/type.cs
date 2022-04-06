@@ -550,18 +550,6 @@ public class Types
     return false;
   }
 
-  static public bool CanAssignTo(IType rhs, IType lhs) 
-  {
-    return rhs == lhs || 
-           lhs == Any ||
-           rhs.GetName() == lhs.GetName() ||
-           (is_subset_of.Contains(new Tuple<IType, IType>(rhs, lhs))) ||
-           (lhs is IInstanceType && rhs == Null) ||
-           (lhs is FuncSignature && rhs == Null) || 
-           Is(rhs, lhs)
-           ;
-  }
-
   static public bool Is(IType a, IType b) 
   {
     if(a == b)
@@ -602,6 +590,18 @@ public class Types
     if(!table.TryGetValue(new Tuple<IType, IType>(a.eval_type, b.eval_type), out result))
       throw new SemanticError(a, "incompatible types");
     return result;
+  }
+
+  static public bool CanAssignTo(IType rhs, IType lhs) 
+  {
+    return rhs == lhs || 
+           lhs == Any ||
+           rhs.GetName() == lhs.GetName() ||
+           (is_subset_of.Contains(new Tuple<IType, IType>(rhs, lhs))) ||
+           (lhs is IInstanceType && rhs == Null) ||
+           (lhs is FuncSignature && rhs == Null) || 
+           Is(rhs, lhs)
+           ;
   }
 
   public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
