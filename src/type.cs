@@ -279,6 +279,8 @@ public class Types
   static public AnySymbol Any = new AnySymbol();
   static public NullSymbol Null = new NullSymbol();
 
+  public GenericArrayTypeSymbol ArrayGeneric;
+
 #if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
   {
@@ -374,11 +376,7 @@ public class Types
     globs.Define(Void);
     globs.Define(Any);
 
-
-    //TODO: probably we should get rid of this general fallback, 
-    //      once we have proper serialization of types this one 
-    //      won't be needed
-    globs.Define(new GenericArrayTypeSymbol(this, new TypeProxy(this, "")));
+    ArrayGeneric = new GenericArrayTypeSymbol(this, new TypeProxy(this, ""));
 
     {
       var fn = new FuncSymbolNative("suspend", Type("void"), 

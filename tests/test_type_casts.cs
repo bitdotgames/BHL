@@ -588,21 +588,20 @@ public class TestTypeCasts : BHL_TestBase
       CommonChecks(vm);
     }
 
-    //TODO:
-    //{
-    //  string bhl = @"
-    //  func bool test() 
-    //  {
-    //    []int s = [10, 20]
-    //    any foo = s
-    //    return (foo as []string) == null
-    //  }
-    //  ";
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        []int s = [10, 20]
+        any foo = s
+        return (foo as []string) == null
+      }
+      ";
 
-    //  var vm = MakeVM(bhl);
-    //  AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
-    //  CommonChecks(vm);
-    //}
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
   }
 
   [IsTested()]

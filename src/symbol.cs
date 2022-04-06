@@ -540,12 +540,10 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
   public const uint CLASS_ID = 10; 
 
-  public static readonly string CLASS_TYPE = "[]";
-
   public GenericArrayTypeSymbol(Types types, TypeProxy item_type) 
     : base(types, item_type)
   {
-    name = CLASS_TYPE;
+    name = "[]" + item_type.name;
   }
 
   //marshall factory version
@@ -635,6 +633,9 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
   public override void Sync(SyncContext ctx)
   {
     Marshall.Sync(ctx, ref item_type);
+
+    if(ctx.is_read)
+      name = "[]" + item_type.name;
   }
 }
 

@@ -4132,7 +4132,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 3 + 2/*hidden vars*/ + 1/*cargs*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]int")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -7981,7 +7981,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]int")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
@@ -12248,7 +12248,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]Foo")) }) 
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Foo")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
@@ -14577,7 +14577,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "[]Bar")) }) 
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Bar")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
@@ -18619,7 +18619,7 @@ public class TestVM : BHL_TestBase
 
       var wow = (VariableSymbol)ms.Resolve("wow");
       AssertEqual(wow.name, "wow");
-      AssertEqual(wow.type.Get().GetName(), types.TypeArr(Types.String).Get().GetName());
+      AssertEqual(wow.type.Get().GetName(), types.TypeArr(Types.Bool).Get().GetName());
       AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), Types.Bool);
       AssertEqual(wow.scope, ms);
       AssertEqual(wow.scope_idx, 2);
@@ -18738,32 +18738,28 @@ public class TestVM : BHL_TestBase
   public static int ArrAddIdx {
     get {
       var ts = new Types();
-      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
-      return ((IScopeIndexed)class_symb.Resolve("Add")).scope_idx;
+      return ((IScopeIndexed)ts.ArrayGeneric.Resolve("Add")).scope_idx;
     }
   }
 
   public static int ArrSetIdx {
     get {
       var ts = new Types();
-      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
-      return ((IScopeIndexed)class_symb.Resolve("SetAt")).scope_idx;
+      return ((IScopeIndexed)ts.ArrayGeneric.Resolve("SetAt")).scope_idx;
     }
   }
 
   public static int ArrRemoveIdx {
     get {
       var ts = new Types();
-      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
-      return ((IScopeIndexed)class_symb.Resolve("RemoveAt")).scope_idx;
+      return ((IScopeIndexed)ts.ArrayGeneric.Resolve("RemoveAt")).scope_idx;
     }
   }
 
   public static int ArrCountIdx {
     get {
       var ts = new Types();
-      var class_symb = (ClassSymbol)ts.Resolve(GenericArrayTypeSymbol.CLASS_TYPE);
-      return ((IScopeIndexed)class_symb.Resolve("Count")).scope_idx;
+      return ((IScopeIndexed)ts.ArrayGeneric.Resolve("Count")).scope_idx;
     }
   }
 
