@@ -100,7 +100,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test", Val.NewNum(vm, 3.9)).result.PopRelease().num;
+    var res = Execute(vm, "test", Val.NewFlt(vm, 3.9)).result.PopRelease().num;
     AssertEqual(res, 3);
     CommonChecks(vm);
   }
@@ -162,7 +162,7 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSelfs()
+  public void TestSelfAs()
   {
     string bhl = @"
     class Foo
@@ -199,6 +199,40 @@ public class TestTypeCasts : BHL_TestBase
     var vm = MakeVM(bhl, ts);
     AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAsAndBuiltinTypes()
+  {
+    {
+      string bhl = @"
+      func string test() 
+      {
+        string s = ""hey""
+        any foo = s
+        return foo as string
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual("hey", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func int test() 
+      {
+        int s = 42
+        any foo = s
+        return foo as int
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
   }
 
   [IsTested()]

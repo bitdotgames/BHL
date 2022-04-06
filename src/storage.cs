@@ -40,7 +40,7 @@ public class Val
       return _num;
     }
     set {
-      SetNum(value);
+      SetFlt(value);
     }
   }
 
@@ -227,14 +227,30 @@ public class Val
     _num = n;
   }
 
-  static public Val NewNum(VM vm, double n)
+  //NOTE: it's caller's responsibility to ensure 'int precision'
+  static public Val NewInt(VM vm, double n)
   {
     Val dv = New(vm);
-    dv.SetNum(n);
+    dv.SetInt(n);
     return dv;
   }
 
-  public void SetNum(double n)
+  static public Val NewFlt(VM vm, double n)
+  {
+    Val dv = New(vm);
+    dv.SetFlt(n);
+    return dv;
+  }
+
+  //NOTE: it's caller's responsibility to ensure 'int precision'
+  public void SetInt(double n)
+  {
+    Reset();
+    type = Types.Int;
+    _num = n;
+  }
+
+  public void SetFlt(double n)
   {
     Reset();
     type = Types.Float;

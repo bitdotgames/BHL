@@ -565,8 +565,10 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Literal node)
   {
-    if(node.type == ConstType.NUM)
-      Console.Write(" (NUM " + node.nval + ")");
+    if(node.type == ConstType.INT)
+      Console.Write(" (INT " + node.nval + ")");
+    else if(node.type == ConstType.FLT)
+      Console.Write(" (FLT " + node.nval + ")");
     else if(node.type == ConstType.BOOL)
       Console.Write(" (BOOL " + node.nval + ")");
     else if(node.type == ConstType.STR)

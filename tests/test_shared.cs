@@ -179,7 +179,7 @@ public class BHL_TestBase
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
-        v.SetNum(c.r);
+        v.SetFlt(c.r);
       },
       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
@@ -192,7 +192,7 @@ public class BHL_TestBase
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
-        v.SetNum(c.g);
+        v.SetFlt(c.g);
       },
       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
@@ -230,7 +230,7 @@ public class BHL_TestBase
         {
           var k = frm.stack.PopRelease().num;
           var c = (Color)frm.stack.PopRelease().obj;
-          frm.stack.Push(Val.NewNum(frm.vm, (c.r * k) + (c.g * k)));
+          frm.stack.Push(Val.NewFlt(frm.vm, (c.r * k) + (c.g * k)));
           return null;
         },
         new FuncArgSymbol("k", ts.Type("float"))
@@ -305,7 +305,7 @@ public class BHL_TestBase
           {
             var c = (ColorAlpha)frm.stack.PopRelease().obj;
 
-            frm.stack.Push(Val.NewNum(frm.vm, (c.r * c.a) + (c.g * c.a)));
+            frm.stack.Push(Val.NewFlt(frm.vm, (c.r * c.a) + (c.g * c.a)));
 
             return null;
           }
@@ -428,7 +428,7 @@ public class BHL_TestBase
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
-        v.SetNum(c.Flt);
+        v.SetFlt(c.Flt);
       },
       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
@@ -575,12 +575,23 @@ public class BHL_TestBase
     throw new Exception("Constant not found: " + str);
   }
 
+  public static int ConstIdx(CompiledModule cm, int num)
+  {
+    for(int i=0;i<cm.constants.Count;++i)
+    {
+      var cn = cm.constants[i];
+      if(cn.type == ConstType.INT && cn.num == num)
+        return i;
+    }
+    throw new Exception("Constant not found: " + num);
+  }
+
   public static int ConstIdx(CompiledModule cm, double num)
   {
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == ConstType.NUM && cn.num == num)
+      if(cn.type == ConstType.FLT && cn.num == num)
         return i;
     }
     throw new Exception("Constant not found: " + num);

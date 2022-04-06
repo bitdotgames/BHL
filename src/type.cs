@@ -318,9 +318,9 @@ public class Types
   };
 
   // Indicate whether a type supports a promotion to a wider type.
-  static Dictionary<Tuple<IType, IType>, IType> promote_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
+  static HashSet<Tuple<IType, IType>> is_subset_of = new HashSet<Tuple<IType, IType>>() 
   {
-    { new Tuple<IType, IType>(Int, Float), Float },
+    { new Tuple<IType, IType>(Int, Float) },
   };
 
   static Dictionary<Tuple<IType, IType>, IType> cast_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
@@ -550,26 +550,26 @@ public class Types
     return false;
   }
 
-  static public bool CanAssignTo(IType rhs, IType lhs, IType promotion) 
+  static public bool CanAssignTo(IType rhs, IType lhs) 
   {
     return rhs == lhs || 
-           promotion == lhs || 
            lhs == Any ||
-           (lhs is ClassSymbol && rhs == Null) ||
-           (lhs is InterfaceSymbol && rhs == Null) ||
-           (lhs is FuncSignature && rhs == Null) || 
            rhs.GetName() == lhs.GetName() ||
+           (is_subset_of.Contains(new Tuple<IType, IType>(rhs, lhs))) ||
+           (lhs is IInstanceType && rhs == Null) ||
+           (lhs is FuncSignature && rhs == Null) || 
            Is(rhs, lhs)
            ;
   }
 
   static public bool Is(IType a, IType b) 
   {
-    if(a is IInstanceType ai && b is IInstanceType bi)
+    if(a == b)
+      return true;
+    else if(a is IInstanceType ai && b is IInstanceType bi)
     {
       var aset = ai.GetAllRelatedTypesSet();
       var bset = bi.GetAllRelatedTypesSet();
-
       return aset.IsSupersetOf(bset);
     }
     else
@@ -606,25 +606,19 @@ public class Types
 
   public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs.eval_type), out promote_to_type);
-    if(!CanAssignTo(rhs.eval_type, lhs.eval_type, promote_to_type)) 
+    if(!CanAssignTo(rhs.eval_type, lhs.eval_type)) 
       throw new SemanticError(lhs, "incompatible types");
   }
 
   public void CheckAssign(IType lhs, WrappedParseTree rhs) 
   {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs.eval_type, lhs), out promote_to_type);
-    if(!CanAssignTo(rhs.eval_type, lhs, promote_to_type)) 
+    if(!CanAssignTo(rhs.eval_type, lhs)) 
       throw new SemanticError(rhs, "incompatible types");
   }
 
   public void CheckAssign(WrappedParseTree lhs, IType rhs) 
   {
-    IType promote_to_type = null;
-    promote_from_to.TryGetValue(new Tuple<IType, IType>(rhs, lhs.eval_type), out promote_to_type);
-    if(!CanAssignTo(rhs, lhs.eval_type, promote_to_type)) 
+    if(!CanAssignTo(rhs, lhs.eval_type)) 
       throw new SemanticError(lhs, "incompatible types");
   }
 

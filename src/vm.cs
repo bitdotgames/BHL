@@ -79,24 +79,25 @@ public enum Opcodes
 
 public enum BlockType 
 {
-  FUNC = 0,
-  SEQ = 1,
-  DEFER = 2,
-  PARAL = 3,
+  FUNC      = 0,
+  SEQ       = 1,
+  DEFER     = 2,
+  PARAL     = 3,
   PARAL_ALL = 4,
-  IF = 7,
-  WHILE = 8,
-  FOR = 9,
-  DOWHILE = 10,
+  IF        = 7,
+  WHILE     = 8,
+  FOR       = 9,
+  DOWHILE   = 10,
 }
 
 public enum ConstType 
 {
-  NUM        = 1,
-  BOOL       = 2,
-  STR        = 3,
-  NIL        = 4,
-  TPROXY     = 5,
+  INT        = 1,
+  FLT        = 2,
+  BOOL       = 3,
+  STR        = 4,
+  NIL        = 5,
+  TPROXY     = 6,
 }
 
 public class Const
@@ -115,9 +116,16 @@ public class Const
     this.str = str;
   }
 
+  public Const(int num)
+  {
+    type = ConstType.INT;
+    this.num = num;
+    str = "";
+  }
+
   public Const(double num)
   {
-    type = ConstType.NUM;
+    type = ConstType.FLT;
     this.num = num;
     str = "";
   }
@@ -144,8 +152,10 @@ public class Const
 
   public Val ToVal(VM vm)
   {
-    if(type == ConstType.NUM)
-      return Val.NewNum(vm, num);
+    if(type == ConstType.INT)
+      return Val.NewInt(vm, num);
+    else if(type == ConstType.FLT)
+      return Val.NewFlt(vm, num);
     else if(type == ConstType.BOOL)
       return Val.NewBool(vm, num == 1);
     else if(type == ConstType.STR)
@@ -999,7 +1009,7 @@ public class VM
       frame.stack.Push(arg);
     }
     //cargs bits
-    frame.stack.Push(Val.NewNum(this, cargs_bits));
+    frame.stack.Push(Val.NewFlt(this, cargs_bits));
 
     Attach(fb, frame);
 
@@ -1076,7 +1086,7 @@ public class VM
       var frame = ptr.MakeFrame(this, curr_frame);
       Attach(fb, frame);
       //cargs bits
-      frame.stack.Push(Val.NewNum(this, cargs_bits));
+      frame.stack.Push(Val.NewFlt(this, cargs_bits));
     }
 
     return fb;
@@ -1750,7 +1760,7 @@ public class VM
     if(type == Types.Int)
       v.SetNum(0);
     else if(type == Types.Float)
-      v.SetNum((double)0);
+      v.SetFlt((double)0);
     else if(type == Types.String)
       v.SetStr("");
     else if(type == Types.Bool)
@@ -1766,7 +1776,7 @@ public class VM
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
     for(int i = 0; i < args_num; ++i)
       new_frame.stack.Push(curr_frame.stack.Pop());
-    new_frame.stack.Push(Val.NewNum(this, args_bits));
+    new_frame.stack.Push(Val.NewFlt(this, args_bits));
 
     //let's remember ip to return to
     new_frame.return_ip = ip;
@@ -2041,7 +2051,7 @@ public class VM
         curr_frame.stack.Push(Val.NewBool(this, operand != 1));
       break;
       case Opcodes.UnaryNeg:
-        curr_frame.stack.Push(Val.NewNum(this, operand * -1));
+        curr_frame.stack.Push(Val.NewFlt(this, operand * -1));
       break;
     }
   }
@@ -2058,16 +2068,16 @@ public class VM
         if((r_operand.type == Types.String) && (l_operand.type == Types.String))
           curr_frame.stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
         else
-          curr_frame.stack.Push(Val.NewNum(this, l_operand._num + r_operand._num));
+          curr_frame.stack.Push(Val.NewFlt(this, l_operand._num + r_operand._num));
       break;
       case Opcodes.Sub:
-        curr_frame.stack.Push(Val.NewNum(this, l_operand._num - r_operand._num));
+        curr_frame.stack.Push(Val.NewFlt(this, l_operand._num - r_operand._num));
       break;
       case Opcodes.Div:
-        curr_frame.stack.Push(Val.NewNum(this, l_operand._num / r_operand._num));
+        curr_frame.stack.Push(Val.NewFlt(this, l_operand._num / r_operand._num));
       break;
       case Opcodes.Mul:
-        curr_frame.stack.Push(Val.NewNum(this, l_operand._num * r_operand._num));
+        curr_frame.stack.Push(Val.NewFlt(this, l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
         curr_frame.stack.Push(Val.NewBool(this, l_operand.IsValueEqual(r_operand)));
@@ -2100,7 +2110,7 @@ public class VM
         curr_frame.stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        curr_frame.stack.Push(Val.NewNum(this, l_operand._num % r_operand._num));
+        curr_frame.stack.Push(Val.NewFlt(this, l_operand._num % r_operand._num));
       break;
     }
 
@@ -2217,7 +2227,8 @@ public class CompiledModule
 
         if(cn_type == ConstType.STR)
           cn = new Const(r.ReadString());
-        else if(cn_type == ConstType.NUM || 
+        else if(cn_type == ConstType.FLT || 
+                cn_type == ConstType.INT ||
                 cn_type == ConstType.BOOL ||
                 cn_type == ConstType.NIL)
           cn = new Const(cn_type, r.ReadDouble(), "");
@@ -2279,7 +2290,8 @@ public class CompiledModule
         w.Write((byte)cn.type);
         if(cn.type == ConstType.STR)
           w.Write(cn.str);
-        else if(cn.type == ConstType.NUM || 
+        else if(cn.type == ConstType.FLT || 
+                cn.type == ConstType.INT ||
                 cn.type == ConstType.BOOL ||
                 cn.type == ConstType.NIL)
           w.Write(cn.num);

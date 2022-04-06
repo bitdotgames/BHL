@@ -309,7 +309,7 @@ public class TestVM : BHL_TestBase
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
             var a = frm.stack.PopRelease().num;
 
-            frm.stack.Push(Val.NewNum(frm.vm, a + b));
+            frm.stack.Push(Val.NewFlt(frm.vm, a + b));
 
             return null;
           },
@@ -351,7 +351,7 @@ public class TestVM : BHL_TestBase
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
             var a = frm.stack.PopRelease().num;
 
-            frm.stack.Push(Val.NewNum(frm.vm, a + b));
+            frm.stack.Push(Val.NewFlt(frm.vm, a + b));
 
             return null;
           },
@@ -387,7 +387,7 @@ public class TestVM : BHL_TestBase
           {
             var a = args_info.IsDefaultArgUsed(0) ? 14 : frm.stack.PopRelease().num;
 
-            frm.stack.Push(Val.NewNum(frm.vm, a));
+            frm.stack.Push(Val.NewFlt(frm.vm, a));
 
             return null;
           },
@@ -423,7 +423,7 @@ public class TestVM : BHL_TestBase
             var b = args_info.IsDefaultArgUsed(1) ? 2 : frm.stack.PopRelease().num;
             var a = args_info.IsDefaultArgUsed(0) ? 10 : frm.stack.PopRelease().num;
 
-            frm.stack.Push(Val.NewNum(frm.vm, a + b));
+            frm.stack.Push(Val.NewFlt(frm.vm, a + b));
 
             return null;
           },
@@ -1074,7 +1074,7 @@ public class TestVM : BHL_TestBase
       var fn = new FuncSymbolNative("func_mult", ts.TypeTuple("float","string","int","float"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
-            frm.stack.Push(Val.NewNum(frm.vm, 42.5));
+            frm.stack.Push(Val.NewFlt(frm.vm, 42.5));
             frm.stack.Push(Val.NewNum(frm.vm, 12));
             frm.stack.Push(Val.NewStr(frm.vm, "foo"));
             frm.stack.Push(Val.NewNum(frm.vm, 104));
@@ -2955,7 +2955,7 @@ public class TestVM : BHL_TestBase
           var b = frm.stack.PopRelease().num;
           var a = frm.stack.PopRelease().num;
 
-          frm.stack.Push(Val.NewNum(frm.vm, b-a));
+          frm.stack.Push(Val.NewFlt(frm.vm, b-a));
           return null;
         }, 
         new FuncArgSymbol("a", ts.Type("int")),
@@ -18773,7 +18773,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           var b = (float)frm.stack.PopRelease().num;
           var a = (float)frm.stack.PopRelease().num;
-          frm.stack.Push(Val.NewNum(frm.vm, a > b ? b : a)); 
+          frm.stack.Push(Val.NewFlt(frm.vm, a > b ? b : a)); 
           return null;
         },
         new FuncArgSymbol("a", ts.Type("float")),

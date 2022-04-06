@@ -1274,7 +1274,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = enum_symb;
 
-    var ast = new AST_Literal(ConstType.NUM);
+    var ast = new AST_Literal(ConstType.INT);
     ast.nval = enum_val.val;
     PeekAST().AddChild(ast);
 
@@ -1651,7 +1651,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNum(bhlParser.ExpLiteralNumContext ctx)
   {
-    var ast = new AST_Literal(ConstType.NUM);
+    AST_Literal ast = null;
 
     var number = ctx.number();
     var int_num = number.INT();
@@ -1660,19 +1660,24 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(int_num != null)
     {
+      ast = new AST_Literal(ConstType.INT);
       Wrap(ctx).eval_type = Types.Int;
       ast.nval = double.Parse(int_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(flt_num != null)
     {
+      ast = new AST_Literal(ConstType.FLT);
       Wrap(ctx).eval_type = Types.Float;
       ast.nval = double.Parse(flt_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(hex_num != null)
     {
+      ast = new AST_Literal(ConstType.INT);
       Wrap(ctx).eval_type = Types.Int;
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
     }
+    else
+      FireError(ctx, "unknown numeric literal type");
 
     PeekAST().AddChild(ast);
 
