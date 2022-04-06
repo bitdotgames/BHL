@@ -158,7 +158,15 @@ namespace bhlsp
       AddSemanticToken(ctx.Start.StartIndex, classDeclName.Symbol.StartIndex - 1, SemanticTokenTypes.keyword);
       
       AddSemanticToken(classDeclName, SemanticTokenTypes.@class);
-      AddSemanticToken(ctx.classEx()?.NAME(), SemanticTokenTypes.@class);
+      
+      if(ctx.extensions() != null)
+      {
+        for(int i=0;i<ctx.extensions().NAME().Length;++i)
+        {
+          var ext_name = ctx.extensions().NAME()[i];
+          AddSemanticToken(ext_name, SemanticTokenTypes.@class);
+        }
+      }
       
       foreach(var classMember in ctx.classBlock().classMembers().classMember())
       {
@@ -890,14 +898,15 @@ namespace bhlsp
       return null;
     }
 
-    public override object VisitExpTypeid(bhlParser.ExpTypeidContext ctx)
+    public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
     {
-      var typeIdType = ctx.typeid()?.type();
+      /*var typeIdType = ctx.typeid()?.type();
       if(typeIdType != null)
       {
         AddSemanticToken(ctx.Start.StartIndex, typeIdType.Start.StartIndex-2, SemanticTokenTypes.keyword);
         Visit(typeIdType);
-      }
+      }*/
+      
       return null;
     }
     
