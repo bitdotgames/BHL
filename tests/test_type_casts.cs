@@ -429,6 +429,28 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestAsAndAny()
+  {
+    string bhl = @"
+    class Foo
+    {
+      int foo
+    }
+
+    func int test() 
+    {
+      Foo f = {foo: 14}
+      any any_f = f
+      return (any_f as Foo).foo
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestAsAndBuiltinTypes()
   {
     {
@@ -605,25 +627,37 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestAsAndAny()
+  public void TestAsForArrayOfFuncPtrs()
   {
-    string bhl = @"
-    class Foo
     {
-      int foo
+      string bhl = @"
+      func string test() 
+      {
+        []func string() s = [func string() { return ""hey"" }, func string () { return ""wow"" } ]
+        any foo = s
+        return (foo as []func string())[1]()
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual("wow", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
     }
 
-    func int test() 
     {
-      Foo f = {foo: 14}
-      any any_f = f
-      return (any_f as Foo).foo
-    }
-    ";
+      string bhl = @"
+      func bool test() 
+      {
+        []func() s = [func() { }]
+        any foo = s
+        return (foo as []func int()) == null
+      }
+      ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
   }
 
   [IsTested()]
