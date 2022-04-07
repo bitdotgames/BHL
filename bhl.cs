@@ -166,7 +166,7 @@ public static class Tasks
         $"{BHL_ROOT}/bhl_lsp.dll",
         $"{BHL_ROOT}/deps/mono_opts.dll"
       },
-      "",
+      "-define:BHLSP_DEBUG",
       args
     );
   }

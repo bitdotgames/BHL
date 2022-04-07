@@ -8,7 +8,7 @@ namespace bhlsp
   public class BHLSPLogTextWriter : TextWriter
   {
     public override Encoding Encoding => throw new NotImplementedException();
-    private static readonly string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    private static readonly string home = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp/";
     private static readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
     private static bool done = false;
     

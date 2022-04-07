@@ -12,7 +12,8 @@
 			"enabled": true,
 			"command" : [
 				"path/to/bhl/bhl",
-				"lsp"
+				"lsp",
+				"--root=/path/to/root/configs"
 			],
 			"selector": "source.bhl"
 		}
