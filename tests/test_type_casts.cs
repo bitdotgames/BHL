@@ -804,4 +804,24 @@ public class TestTypeCasts : BHL_TestBase
       "type 'Foo' not found"
     );
   }
+
+  [IsTested()]
+  public void TestPassTypeAsArg()
+  {
+    string bhl = @"
+    func string name(Type t) 
+    {
+      return t.Name
+    }
+
+    func string test()
+    {
+      return name(typeof(int))
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("int", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
 }
