@@ -278,8 +278,7 @@ public class Types
   static public VoidSymbol Void = new VoidSymbol();
   static public AnySymbol Any = new AnySymbol();
   static public NullSymbol Null = new NullSymbol();
-
-  public GenericArrayTypeSymbol ArrayGeneric;
+  static public ClassSymbolNative ClassType = null;
 
 #if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
@@ -348,6 +347,30 @@ public class Types
 
   List<Scope> sources = new List<Scope>();
 
+  static Types()
+  {
+    {
+      ClassType = new ClassSymbolNative("Type", null, 
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(null, type);
+        }
+      );
+
+      {
+        var fld = new FieldSymbol("Name", String, 
+          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
+          {
+            var t = (IType)ctx.obj;
+            v.SetStr(t.GetName());
+          },
+          null
+        );
+        ClassType.Define(fld);
+      }
+    }
+  }
+
   public Types()
   {
     InitBuiltins(globs);
@@ -375,8 +398,7 @@ public class Types
     globs.Define(String);
     globs.Define(Void);
     globs.Define(Any);
-
-    ArrayGeneric = new GenericArrayTypeSymbol(this, new TypeProxy(this, ""));
+    globs.Define(ClassType);
 
     {
       var fn = new FuncSymbolNative("suspend", Type("void"), 

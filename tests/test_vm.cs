@@ -18738,28 +18738,32 @@ public class TestVM : BHL_TestBase
   public static int ArrAddIdx {
     get {
       var ts = new Types();
-      return ((IScopeIndexed)ts.ArrayGeneric.Resolve("Add")).scope_idx;
+      var arr = (ClassSymbol)ts.TypeArr("int").Get();
+      return ((IScopeIndexed)arr.Resolve("Add")).scope_idx;
     }
   }
 
   public static int ArrSetIdx {
     get {
       var ts = new Types();
-      return ((IScopeIndexed)ts.ArrayGeneric.Resolve("SetAt")).scope_idx;
+      var arr = (ClassSymbol)ts.TypeArr("int").Get();
+      return ((IScopeIndexed)arr.Resolve("SetAt")).scope_idx;
     }
   }
 
   public static int ArrRemoveIdx {
     get {
       var ts = new Types();
-      return ((IScopeIndexed)ts.ArrayGeneric.Resolve("RemoveAt")).scope_idx;
+      var arr = (ClassSymbol)ts.TypeArr("int").Get();
+      return ((IScopeIndexed)arr.Resolve("RemoveAt")).scope_idx;
     }
   }
 
   public static int ArrCountIdx {
     get {
       var ts = new Types();
-      return ((IScopeIndexed)ts.ArrayGeneric.Resolve("Count")).scope_idx;
+      var arr = (ClassSymbol)ts.TypeArr("int").Get();
+      return ((IScopeIndexed)arr.Resolve("Count")).scope_idx;
     }
   }
 

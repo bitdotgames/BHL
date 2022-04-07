@@ -1252,8 +1252,11 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
   {
-    //TODO:
-    //var tp = ParseType(ctx.typeid().type());
+    var tp = ParseType(ctx.@typeof().type());
+
+    Wrap(ctx).eval_type = Types.ClassType;
+
+    PeekAST().AddChild(new AST_Typeof(tp.Get()));
 
     return null;
   }

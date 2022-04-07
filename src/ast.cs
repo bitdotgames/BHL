@@ -16,6 +16,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_TypeCast ast);
   public abstract void DoVisit(AST_TypeAs ast);
   public abstract void DoVisit(AST_TypeIs ast);
+  public abstract void DoVisit(AST_Typeof ast);
   public abstract void DoVisit(AST_Call ast);
   public abstract void DoVisit(AST_Return ast);
   public abstract void DoVisit(AST_Break ast);
@@ -90,6 +91,8 @@ public abstract class AST_Visitor
       DoVisit(_26);
     else if(ast is AST_TypeIs _27)
       DoVisit(_27);
+    else if(ast is AST_Typeof _28)
+      DoVisit(_28);
     else 
       throw new Exception("Not known type: " + ast.GetType().Name);
   }
@@ -356,6 +359,16 @@ public class AST_Return  : AST_Tree
   }
 }
 
+public class AST_Typeof : IAST
+{
+  public IType type;
+
+  public AST_Typeof(IType type)
+  {
+    this.type = type;
+  }
+}
+
 public class AST_Break : IAST
 {}
 
@@ -569,6 +582,11 @@ public class AST_Dumper : AST_Visitor
     Console.Write("(RET ");
     VisitChildren(node);
     Console.Write(")");
+  }
+
+  public override void DoVisit(AST_Typeof node)
+  {
+    Console.Write("(TYPEOF " + node.type.GetName() + ")");
   }
 
   public override void DoVisit(AST_Break node)

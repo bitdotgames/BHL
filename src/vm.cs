@@ -64,6 +64,7 @@ public enum Opcodes
   TypeCast          = 64,
   TypeAs            = 65,
   TypeIs            = 66,
+  Typeof            = 67,
   Block             = 75,
   New               = 76,
   Lambda            = 77,
@@ -1236,6 +1237,14 @@ public class VM
         var as_type = curr_frame.constants[cast_type_idx].tproxy.Get();
 
         HandleTypeIs(curr_frame, as_type);
+      }
+      break;
+      case Opcodes.Typeof:
+      {
+        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        var type = curr_frame.constants[type_idx].tproxy.Get();
+
+        curr_frame.stack.Push(Val.NewObj(this, type, Types.ClassType));
       }
       break;
       case Opcodes.Inc:
