@@ -759,5 +759,32 @@ public class TestTypeCasts : BHL_TestBase
       AssertEqual("func void()", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
     }
+
+    {
+      string bhl = @"
+      func bool test()
+      {
+        return typeof(string) == typeof(string)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test()
+      {
+        return typeof(int) != typeof(string)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
   }
 }
