@@ -4117,7 +4117,7 @@ public class TestVM : BHL_TestBase
       arr.Add(3)
       int accum = 0
 
-      foreach(arr as int a) {
+      foreach(int a in arr) {
         accum = accum + a
       }
 
@@ -4303,7 +4303,7 @@ public class TestVM : BHL_TestBase
       arr.Add(3)
       int accum = 0
 
-      foreach(arr as int a) {
+      foreach(int a in arr) {
         if(a == 3) {
           break
         }
@@ -4488,7 +4488,7 @@ public class TestVM : BHL_TestBase
       arr.Add(3)
       int accum = 0
 
-      foreach(arr as int a) {
+      foreach(int a in arr) {
         if(a == 1) {
           continue
         }
@@ -13548,7 +13548,7 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       []int its = [1, 2, 3]
-      foreach(its as int it) {
+      foreach(int it in its) {
         trace((string)it)
       }
     }
@@ -13572,7 +13572,7 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       []Color cs = [{r:1}, {r:2}, {r:3}]
-      foreach(cs as Color c) {
+      foreach(Color c in cs) {
         trace((string)c.r)
       }
     }
@@ -13598,7 +13598,7 @@ public class TestVM : BHL_TestBase
     {
       int it
       []int its = [1, 2, 3]
-      foreach(its as it) {
+      foreach(it in its) {
         trace((string)it)
       }
     }
@@ -13621,7 +13621,7 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      foreach([1,2,3] as int it) {
+      foreach(int it in [1,2,3]) {
         trace((string)it)
       }
     }
@@ -13649,7 +13649,7 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      foreach(foo() as int it) {
+      foreach(int it in foo()) {
         trace((string)it)
       }
     }
@@ -13673,7 +13673,7 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       paral {
-        foreach([1,2,3] as int it) {
+        foreach(int it in [1,2,3]) {
           trace((string)it)
           yield()
         }
@@ -13704,11 +13704,11 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       paral_all {
-        foreach([1,2,3] as int it) {
+        foreach(int it in [1,2,3]) {
           trace((string)it)
           yield()
         }
-        foreach([4,5,6] as int it2) {
+        foreach(int it2 in [4,5,6]) {
           trace((string)it2)
           yield()
         }
@@ -13733,7 +13733,7 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      foreach([1,2,3] as int it) {
+      foreach(int it in [1,2,3]) {
         if(it == 3) {
           break
         }
@@ -13760,11 +13760,11 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       []int its = [1,2,3]
-      foreach(its as int it) {
+      foreach(int it in its) {
         trace((string)it)
       }
 
-      foreach(its as int it2) {
+      foreach(int it2 in its) {
         trace((string)it2)
       }
     }
@@ -13788,8 +13788,8 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       []int its = [1,2,3]
-      foreach(its as int it) {
-        foreach(its as int it2) {
+      foreach(int it in its) {
+        foreach(int it2 in its) {
           trace((string)it + "","" + (string)it2 + "";"")
         }
       }
@@ -13813,8 +13813,8 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      foreach([1,2,3] as int it) {
-        foreach([20,30] as int it2) {
+      foreach(int it in [1,2,3]) {
+        foreach(int it2 in [20,30]) {
           trace((string)it + "","" + (string)it2 + "";"")
         }
       }
@@ -13838,7 +13838,7 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      foreach([1,2,3] as string it) {
+      foreach(string it in [1,2,3]) {
       }
     }
     ";
@@ -13863,7 +13863,7 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      foreach(foo() as float it) {
+      foreach(float it in foo()) {
       }
     }
     ";
@@ -13884,7 +13884,7 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       string it
-      foreach([1,2,3] as it) {
+      foreach(it in [1,2,3]) {
       }
     }
     ";
@@ -13905,7 +13905,7 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       string it
-      foreach([1,2,3] as int it) {
+      foreach(int it in [1,2,3]) {
       }
     }
     ";

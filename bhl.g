@@ -70,7 +70,7 @@ newExp
   ;
 
 foreachExp
-  : '(' exp 'as' varOrDeclare ')' 
+  : '(' varOrDeclare 'in' exp ')' 
   ;
 
 forStmt
