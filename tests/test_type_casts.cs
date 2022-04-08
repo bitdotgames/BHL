@@ -824,4 +824,53 @@ public class TestTypeCasts : BHL_TestBase
     AssertEqual("int", Execute(vm, "test").result.PopRelease().str);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestBasicType()
+  {
+    {
+      string bhl = @"
+      func string test()
+      {
+        int a
+        Type t = type(a)
+        return t.Name
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual("int", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func string test()
+      {
+        string a
+        Type t = type(a)
+        return t.Name
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual("string", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func string test()
+      {
+        func() a 
+        Type t = type(a)
+        return t.Name
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual("func void()", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
+    }
+  }
 }
