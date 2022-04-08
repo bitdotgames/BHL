@@ -459,6 +459,20 @@ public class Types
       );
       globs.Define(fn);
     }
+
+    {
+      var fn = new FuncSymbolNative("type", Type("Type"),
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+        { 
+          var o = frm.stack.Pop();
+          frm.stack.Push(Val.NewObj(frm.vm, o.type, ClassType));
+          o.Release();
+          return null;
+        }, 
+        new FuncArgSymbol("o", Type("any"))
+      );
+      globs.Define(fn);
+    }
   }
 
   public Symbol Resolve(string name) 
