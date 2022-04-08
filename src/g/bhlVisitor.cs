@@ -557,6 +557,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExtensions([NotNull] bhlParser.ExtensionsContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.nsDecl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNsDecl([NotNull] bhlParser.NsDeclContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.classDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

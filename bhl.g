@@ -21,7 +21,7 @@ decls
   ;
 
 decl
-  : (classDecl | interfaceDecl | funcDecl | varDeclareAssign | enumDecl)
+  : (nsDecl | classDecl | interfaceDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
 type
@@ -193,6 +193,10 @@ block
 
 extensions
   : ':' NAME (',' NAME)*
+  ;
+
+nsDecl
+  : 'namespace' NAME '{' decls '}'
   ;
 
 classDecl
