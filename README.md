@@ -270,11 +270,12 @@ You can run unit tests by executing the following command:
 1. ~~Byte code optimization~~
 2. ~~More optimal executor (VM)~~
 3. ~~Better runtime errors reporting~~
-4. More robust type system
-5. Interfaces support
-6. Maps support
-7. Debugger support
-8. LSP integration
+4. ~~More robust type system~~
+5. ~~Interfaces support~~
+6. Namespaces support
+7. Maps support
+8. Debugger support
+9. LSP integration
 
 ## Version 1.0
 
