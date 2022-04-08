@@ -785,6 +785,43 @@ public class TestTypeCasts : BHL_TestBase
       AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
+  }
 
+  [IsTested()]
+  public void TestTypeNotFoundInTypeof()
+  {
+    string bhl = @"
+    func test()
+    {
+      Type t = typeof(Foo)
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "type 'Foo' not found"
+    );
+  }
+
+  [IsTested()]
+  public void TestPassTypeAsArg()
+  {
+    string bhl = @"
+    func string name(Type t) 
+    {
+      return t.Name
+    }
+
+    func string test()
+    {
+      return name(typeof(int))
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("int", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
   }
 }
