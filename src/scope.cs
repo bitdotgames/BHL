@@ -53,8 +53,7 @@ public class LocalScope : IScope
 
   public virtual void Define(Symbol sym) 
   {
-    var tmp = Resolve(sym.name);
-    if(tmp != null)
+    if(Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym);
@@ -63,11 +62,11 @@ public class LocalScope : IScope
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : IScope, IMarshallable
+public class Namespace : Symbol, IScope, IMarshallable
 {
-  public ModuleScope origin;
+  public const uint CLASS_ID = 20;
 
-  public string name;
+  public IScope origin;
 
   IScope fallback;
 
@@ -75,11 +74,18 @@ public class Namespace : IScope, IMarshallable
 
   public Namespace sibling { get; private set; }
 
-  public Namespace(ModuleScope origin, string name, IScope fallback = null)
+  public Namespace(IScope origin, string name, IScope fallback = null)
+    : base(name, default(TypeProxy))
   {
     this.origin = origin;
     this.name = name;
     this.fallback = fallback;
+    this.members = new SymbolsStorage(origin);
+  }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
   }
 
   public void AttachSibling(Namespace sibling)
@@ -114,9 +120,13 @@ public class Namespace : IScope, IMarshallable
 
   public void Define(Symbol sym) 
   {
+    if(Resolve(sym.name) != null)
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    members.Add(sym);
   }
 
-  public void Sync(SyncContext ctx) 
+  public override void Sync(SyncContext ctx) 
   {
     Marshall.Sync(ctx, ref name);
     Marshall.Sync(ctx, ref members);
@@ -129,7 +139,7 @@ public class NativeScope : IScope
 
   public NativeScope() 
   {
-    root = new Namespace(null, "");
+    root = new Namespace(this, "");
   }
 
   public IScope GetFallbackScope() { return null; }

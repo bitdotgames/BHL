@@ -16,15 +16,15 @@ public class IsTestedAttribute : Attribute
 
 public static class BHL_TestExt 
 {
-  public static Types CloneGlobs(this Types ts)
-  {
-    var ts_copy = new Types();
-    var ms = ts.natives.GetMembers();
-    //let's skip already defined built-in globs
-    for(int i=ts_copy.natives.GetMembers().Count;i<ms.Count;++i)
-      ts_copy.natives.Define(ms[i]);
-    return ts_copy;
-  }
+  //public static Types CloneGlobs(this Types ts)
+  //{
+  //  var ts_copy = new Types();
+  //  var ms = ts.natives.GetMembers();
+  //  //let's skip already defined built-in globs
+  //  for(int i=ts_copy.natives.GetMembers().Count;i<ms.Count;++i)
+  //    ts_copy.natives.Define(ms[i]);
+  //  return ts_copy;
+  //}
 
   public static string GetFullMessage(this Exception ex)
   {
@@ -745,11 +745,12 @@ public class BHL_TestBase
     if(ts == null)
       ts = new Types();
     //NOTE: we don't want to affect the original ts
-    var ts_copy = ts.CloneGlobs();
+    //var ts_copy = ts.CloneGlobs();
 
     var conf = new BuildConf();
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
-    conf.ts = ts_copy;
+    //conf.ts = ts_copy;
+    conf.ts = ts;
     conf.files = files;
     conf.res_file = TestDirPath() + "/result.bin";
     conf.inc_dir = TestDirPath();
@@ -770,15 +771,18 @@ public class BHL_TestBase
     if(ts == null)
       ts = new Types();
     //NOTE: we don't want to affect the original ts
-    var ts_copy = ts.CloneGlobs();
+    //var ts_copy = ts.CloneGlobs();
 
-    var mdl = new bhl.Module(ts_copy.natives, "", "");
+    //var mdl = new bhl.Module(ts_copy.natives, "", "");
+    var mdl = new bhl.Module(ts.natives, "", "");
 
-    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts_copy);
+    //var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts_copy);
+    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts);
 
     if(show_ast)
       AST_Dumper.Dump(front_res.ast);
-    var c  = new Compiler(ts_copy, front_res);
+    //var c  = new Compiler(ts_copy, front_res);
+    var c  = new Compiler(ts, front_res);
     var cm = c.Compile();
     if(show_bytes)
       Dump(c);

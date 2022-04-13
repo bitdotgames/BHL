@@ -5,7 +5,7 @@ using bhl;
 
 public class TestNamespace : BHL_TestBase
 {
-  //[IsTested()]
+  [IsTested()]
   public void TestNamespacesDecl()
   {
     string bhl = @"
@@ -26,7 +26,7 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var foo = vm.Types.Resolve("foo");
-    //AssertTrue(foo is Namespace);
+    AssertTrue(foo is Namespace);
   }
 
   //TODO:

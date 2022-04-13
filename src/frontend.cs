@@ -285,6 +285,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     this.module = module;
     types.AddSource(module.scope);
+
     curr_scope = this.module.scope;
 
     if(importer == null)
@@ -1942,6 +1943,12 @@ public class Frontend : bhlBaseVisitor<object>
     var decls = ctx.decl();
     for(int i=0;i<decls.Length;++i)
     {
+      var nsdecl = decls[i].nsDecl();
+      if(nsdecl != null)
+      {
+        Visit(nsdecl);
+        continue;
+      }
       var fndecl = decls[i].funcDecl();
       if(fndecl != null)
       {
@@ -2044,6 +2051,24 @@ public class Frontend : bhlBaseVisitor<object>
         }
       }
     }
+
+    return null;
+  }
+
+  public override object VisitNsDecl(bhlParser.NsDeclContext ctx)
+  {
+    var name = ctx.NAME().GetText();
+
+    var ns = new Namespace(module.scope, name, curr_scope);
+
+    var orig_scope = curr_scope;
+    curr_scope = ns;
+
+    module.scope.Define(ns);
+
+    VisitDecls(ctx.decls());
+
+    curr_scope = orig_scope;
 
     return null;
   }

@@ -390,15 +390,15 @@ public class Types
     sources.Remove(src);
   }
 
-  void InitBuiltins(NativeScope globs) 
+  void InitBuiltins(NativeScope natives) 
   {
-    globs.Define(Int);
-    globs.Define(Float);
-    globs.Define(Bool);
-    globs.Define(String);
-    globs.Define(Void);
-    globs.Define(Any);
-    globs.Define(ClassType);
+    natives.Define(Int);
+    natives.Define(Float);
+    natives.Define(Bool);
+    natives.Define(String);
+    natives.Define(Void);
+    natives.Define(Any);
+    natives.Define(ClassType);
 
     {
       var fn = new FuncSymbolNative("suspend", Type("void"), 
@@ -407,7 +407,7 @@ public class Types
           return CoroutineSuspend.Instance;
         } 
       );
-      globs.Define(fn);
+      natives.Define(fn);
     }
 
     {
@@ -417,7 +417,7 @@ public class Types
           return CoroutinePool.New<CoroutineYield>(frm.vm);
         } 
       );
-      globs.Define(fn);
+      natives.Define(fn);
     }
 
     //TODO: this one is controversary, it's defined for BC for now
@@ -429,7 +429,7 @@ public class Types
           return null;
         } 
       );
-      globs.Define(fn);
+      natives.Define(fn);
     }
 
     {
@@ -444,7 +444,7 @@ public class Types
         }, 
         new FuncArgSymbol("p", TypeFunc("void"))
       );
-      globs.Define(fn);
+      natives.Define(fn);
     }
 
     {
@@ -457,7 +457,7 @@ public class Types
         }, 
         new FuncArgSymbol("fid", Type("int"))
       );
-      globs.Define(fn);
+      natives.Define(fn);
     }
 
     {
@@ -471,7 +471,7 @@ public class Types
         }, 
         new FuncArgSymbol("o", Type("any"))
       );
-      globs.Define(fn);
+      natives.Define(fn);
     }
   }
 
