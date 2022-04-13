@@ -19,10 +19,10 @@ public static class BHL_TestExt
   public static Types CloneGlobs(this Types ts)
   {
     var ts_copy = new Types();
-    var ms = ts.globs.GetMembers();
+    var ms = ts.natives.GetMembers();
     //let's skip already defined built-in globs
-    for(int i=ts_copy.globs.GetMembers().Count;i<ms.Count;++i)
-      ts_copy.globs.Define(ms[i]);
+    for(int i=ts_copy.natives.GetMembers().Count;i<ms.Count;++i)
+      ts_copy.natives.Define(ms[i]);
     return ts_copy;
   }
 
@@ -175,7 +175,7 @@ public class BHL_TestBase
       }
     );
 
-    ts.globs.Define(cl);
+    ts.natives.Define(cl);
     cl.Define(new FieldSymbol("r", ts.Type("float"),
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
@@ -253,7 +253,7 @@ public class BHL_TestBase
         new FuncArgSymbol("r", ts.Type("float"))
       );
 
-      ts.globs.Define(fn);
+      ts.natives.Define(fn);
     }
     
     {
@@ -264,10 +264,10 @@ public class BHL_TestBase
           }
       );
 
-      ts.globs.Define(fn);
+      ts.natives.Define(fn);
     }
 
-    ts.globs.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.Type("Color"), delegate() { return new List<Color>(); } ));
+    ts.natives.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.Type("Color"), delegate() { return new List<Color>(); } ));
 
     return cl;
   }
@@ -284,7 +284,7 @@ public class BHL_TestBase
         }
       );
 
-      ts.globs.Define(cl);
+      ts.natives.Define(cl);
 
       cl.Define(new FieldSymbol("a", ts.Type("float"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -340,7 +340,7 @@ public class BHL_TestBase
           v.SetObj(new Foo(), type);
         }
       );
-      ts.globs.Define(cl);
+      ts.natives.Define(cl);
 
       cl.Define(new FieldSymbol("hey", Types.Int,
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -391,7 +391,7 @@ public class BHL_TestBase
           new FuncArgSymbol("foo", ts.Type("Foo"))
       );
 
-      ts.globs.Define(fn);
+      ts.natives.Define(fn);
     }
   }
 
@@ -411,7 +411,7 @@ public class BHL_TestBase
       }
     );
 
-    ts.globs.Define(cl);
+    ts.natives.Define(cl);
     cl.Define(new FieldSymbol("Int", Types.Int,
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
@@ -466,7 +466,7 @@ public class BHL_TestBase
         }, 
         new FuncArgSymbol("str", ts.Type("string"))
     );
-    ts.globs.Define(fn);
+    ts.natives.Define(fn);
     return fn;
   }
 
@@ -482,7 +482,7 @@ public class BHL_TestBase
           },
           new FuncArgSymbol("str", ts.Type("string"))
       );
-      ts.globs.Define(fn);
+      ts.natives.Define(fn);
     }
   }
 
@@ -772,7 +772,7 @@ public class BHL_TestBase
     //NOTE: we don't want to affect the original ts
     var ts_copy = ts.CloneGlobs();
 
-    var mdl = new bhl.Module(ts_copy.globs, "", "");
+    var mdl = new bhl.Module(ts_copy.natives, "", "");
 
     var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts_copy);
 

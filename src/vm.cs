@@ -1052,9 +1052,9 @@ public class VM
 
   static FuncSymbol TryMapIp2Func(CompiledModule cm, int ip)
   {
-    for(int i=0;i<cm.symbols.members.Count; ++i)
+    for(int i=0;i<cm.symbols.root.members.Count; ++i)
     {
-      var fsymb = cm.symbols.members[i] as FuncSymbolScript;
+      var fsymb = cm.symbols.root.members[i] as FuncSymbolScript;
       if(fsymb != null && fsymb.ip_addr == ip)
         return fsymb;
     }
@@ -1474,7 +1474,7 @@ public class VM
       case Opcodes.GetFunc:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolScript)curr_frame.module.symbols.members[func_idx];
+        var func_symb = (FuncSymbolScript)curr_frame.module.symbols.root.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, func_symb.ip_addr);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1483,7 +1483,7 @@ public class VM
       case Opcodes.GetFuncNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolNative)types.globs.members[func_idx];
+        var func_symb = (FuncSymbolNative)types.natives.root.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1536,7 +1536,7 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        var native = (FuncSymbolNative)types.globs.members[func_idx];
+        var native = (FuncSymbolNative)types.natives.root.members[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))
@@ -2234,7 +2234,7 @@ public class CompiledModule
 
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
-      var symbols = new ModuleScope(name, types.globs);
+      var symbols = new ModuleScope(name, types.natives);
       var symb_factory = new SymbolFactory(types);
       if(add_symbols_to_types)
         types.AddSource(symbols);

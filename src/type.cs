@@ -343,9 +343,9 @@ public class Types
   };
 #endif
 
-  public GlobalScope globs = new GlobalScope();
+  public NativeScope natives = new NativeScope();
 
-  List<Scope> sources = new List<Scope>();
+  List<IScope> sources = new List<IScope>();
 
   static Types()
   {
@@ -373,24 +373,24 @@ public class Types
 
   public Types()
   {
-    InitBuiltins(globs);
+    InitBuiltins(natives);
 
-    AddSource(globs);
+    AddSource(natives);
   }
 
-  public void AddSource(Scope src)
+  public void AddSource(IScope src)
   {
     if(sources.Contains(src))
       return;
     sources.Add(src);
   }
 
-  public void RemoveSource(Scope src)
+  public void RemoveSource(IScope src)
   {
     sources.Remove(src);
   }
 
-  void InitBuiltins(GlobalScope globs) 
+  void InitBuiltins(NativeScope globs) 
   {
     globs.Define(Int);
     globs.Define(Float);

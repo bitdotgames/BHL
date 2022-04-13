@@ -24,13 +24,13 @@ public interface IInstanceType : IType, IScope
   HashSet<IInstanceType> GetAllRelatedTypesSet();
 }
 
-public class Scope : IScope 
+public class LocalScope : IScope 
 {
-  protected IScope fallback;
+  IScope fallback;
 
   public SymbolsStorage members;
 
-  public Scope(IScope fallback = null) 
+  public LocalScope(IScope fallback = null) 
   { 
     members = new SymbolsStorage(this);
     this.fallback = fallback;  
@@ -45,7 +45,6 @@ public class Scope : IScope
     if(s != null)
       return s;
 
-    // if not here, check any fallback scope
     if(fallback != null) 
       return fallback.Resolve(name);
 
@@ -54,44 +53,144 @@ public class Scope : IScope
 
   public virtual void Define(Symbol sym) 
   {
-    if(fallback != null && fallback.Resolve(sym.name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
-    if(members.Contains(sym.name))
+    var tmp = Resolve(sym.name);
+    if(tmp != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym);
   }
 
   public IScope GetFallbackScope() { return fallback; }
-
-  public override string ToString() { return string.Join(",", members.GetStringKeys().ToArray()); }
 }
 
-public class GlobalScope : Scope 
+public class Namespace : IScope, IMarshallable
 {
-  public GlobalScope() 
-    : base(null) 
-  {}
+  public ModuleScope origin;
+
+  public string name;
+
+  IScope fallback;
+
+  public SymbolsStorage members;
+
+  public Namespace sibling { get; private set; }
+
+  public Namespace(ModuleScope origin, string name, IScope fallback = null)
+  {
+    this.origin = origin;
+    this.name = name;
+    this.fallback = fallback;
+  }
+
+  public void AttachSibling(Namespace sibling)
+  {
+    if(this.sibling != null)
+      sibling.sibling = this.sibling;
+    
+    this.sibling = sibling;
+  }
+
+  public IScope GetFallbackScope() { return fallback; }
+
+  public SymbolsStorage GetMembers() { return members; }
+
+  public Symbol Resolve(string name)
+  {
+    Symbol s = null;
+    Namespace curr = this;
+    while(curr != null)
+    {
+      curr.members.TryGetValue(name, out s);
+      if(s != null)
+        return s;
+      curr = curr.sibling;
+    }
+
+    if(fallback != null) 
+      return fallback.Resolve(name);
+    
+    return null;
+  }
+
+  public void Define(Symbol sym) 
+  {
+  }
+
+  public void Sync(SyncContext ctx) 
+  {
+    Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref members);
+  }
 }
 
-public class ModuleScope : Scope, IMarshallable
+public class NativeScope : IScope
+{
+  public Namespace root;
+
+  public NativeScope() 
+  {
+    root = new Namespace(null, "");
+  }
+
+  public IScope GetFallbackScope() { return null; }
+
+  public SymbolsStorage GetMembers() { return root.members; }
+
+  public Symbol Resolve(string name) 
+  {
+    return root.Resolve(name);
+  }
+
+  public void Define(Symbol sym) 
+  {
+    root.Define(sym);
+  }
+}
+
+public class ModuleScope : IScope, IMarshallable
 {
   public string module_name;
 
+  NativeScope globs;
+
   List<ModuleScope> imports = new List<ModuleScope>();
 
-  public ModuleScope(string module_name, GlobalScope globs) 
-    : base(globs) 
+  public Namespace root;
+
+  public ModuleScope(string module_name, NativeScope globs) 
   {
     this.module_name = module_name;
+
+    this.globs = globs;
+
+    root = new Namespace(this, "", globs);
+    root.AttachSibling(globs.root);
+  }
+
+  public IScope GetFallbackScope() { return globs; }
+
+  public SymbolsStorage GetMembers() 
+  { 
+    var all = new SymbolsStorage(this);
+
+    Namespace curr = root;
+    while(curr != null)
+    {
+      all.UnionWith(curr.GetMembers());
+      curr = curr.sibling;
+    }
+
+    return all;
   }
 
   //marshall version
-  public ModuleScope(GlobalScope globs) 
-    : base(globs)
-  {}
+  public ModuleScope(NativeScope globs) 
+  {
+    root = new Namespace(this, "", globs);
+    root.AttachSibling(globs.root);
+  }
 
+  //TODO: Union root namespace
   public void AddImport(ModuleScope other)
   {
     if(other == this)
@@ -101,33 +200,30 @@ public class ModuleScope : Scope, IMarshallable
     imports.Add(other);
   }
 
-  public override Symbol Resolve(string name) 
+  public Symbol Resolve(string name) 
   {
-    var s = ResolveLocal(name);
-    if(s != null)
-      return s;
+    //var s = ResolveLocal(name);
+    //if(s != null)
+    //  return s;
 
-    foreach(var imp in imports)
-    {
-      s = imp.ResolveLocal(name);
-      if(s != null)
-        return s;
-    }
-    return null;
+    //foreach(var imp in imports)
+    //{
+    //  s = imp.ResolveLocal(name);
+    //  if(s != null)
+    //    return s;
+    //}
+    //return null;
+
+    return root.Resolve(name);
   }
 
-  public Symbol ResolveLocal(string name) 
+  public void Define(Symbol sym) 
   {
-    return base.Resolve(name);
-  }
-
-  public override void Define(Symbol sym) 
-  {
-    foreach(var imp in imports)
-    {
-      if(imp.ResolveLocal(sym.name) != null)
-        throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-    }
+    //foreach(var imp in imports)
+    //{
+    //  if(imp.ResolveLocal(sym.name) != null)
+    //    throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+    //}
 
     if(sym is VariableSymbol vs)
     {
@@ -137,6 +233,7 @@ public class ModuleScope : Scope, IMarshallable
       if(vs.scope_idx == -1)
       {
         int c = 0;
+        var members = root.GetMembers();
         for(int i=0;i<members.Count;++i)
           if(members[i] is VariableSymbol)
             ++c;
@@ -144,13 +241,14 @@ public class ModuleScope : Scope, IMarshallable
       }
     } 
 
-    base.Define(sym);
+    root.Define(sym);
   }
 
   public void Sync(SyncContext ctx) 
   {
     Marshall.Sync(ctx, ref module_name);
-    Marshall.Sync(ctx, ref members);
+
+    root.Sync(ctx);
   }
 }
 

@@ -879,8 +879,6 @@ public class FieldSymbolScript : FieldSymbol
   }
 }
 
-//TODO: the code in Resolve(..) and Define(..) is quite similar to the one
-//      in Scope.Resolve(..) and Scope.Define(..)
 public abstract class EnclosingSymbol : Symbol, IScope 
 {
   abstract public SymbolsStorage GetMembers();
@@ -1623,6 +1621,12 @@ public class SymbolsStorage : IMarshallable
           str2symb.Add(s.name, s);
         }
     });
+  }
+
+  public void UnionWith(SymbolsStorage o)
+  {
+    for(int i=0;i<o.Count;++i)
+      Add(o[i]);
   }
 }
 
