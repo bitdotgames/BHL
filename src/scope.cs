@@ -68,7 +68,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public SymbolsStorage members;
 
-  public Namespace sibling { get; private set; }
+  public List<Namespace> parts = new List<Namespace>();
 
   public override uint ClassId()
   {
@@ -88,28 +88,66 @@ public class Namespace : Symbol, IScope, IMarshallable
     this.members = new SymbolsStorage(this);
   }
 
-  public void AttachSibling(Namespace sibling)
+  public void AttachPart(Namespace part)
   {
-    if(this.sibling != null)
-      sibling.sibling = this.sibling;
-    
-    this.sibling = sibling;
+    //TODO: add validation
+    this.parts.Add(part);
   }
 
   public IScope GetFallbackScope() { return scope; }
 
   public SymbolsStorage GetMembers() { return members; }
 
+  public struct Iterator
+  {
+    Namespace owner;
+    int c;
+
+    public Namespace current;
+
+    public Iterator(Namespace owner)
+    {
+      this.owner = owner;
+      c = -1;
+      current = null;
+    }
+
+    public bool Next()
+    {
+      //special case for itself
+      if(c == -1)
+      {
+        current = owner;
+        ++c;
+        return true;
+      }
+
+      if(c < owner.parts.Count)
+      {
+        current = owner.parts[c];
+        ++c;
+        return true;
+      }
+      else
+        return false;
+    }
+  }
+
+  public Iterator GetIterator()
+  {
+    return new Iterator(this);
+  }
+
   public Symbol Resolve(string name)
   {
     Symbol s = null;
-    Namespace curr = this;
-    while(curr != null)
+
+    var it = GetIterator();
+    while(it.Next())
     {
-      curr.members.TryGetValue(name, out s);
+      it.current.members.TryGetValue(name, out s);
       if(s != null)
         return s;
-      curr = curr.sibling;
     }
 
     if(scope != null) 
@@ -174,7 +212,7 @@ public class ModuleScope : IScope, IMarshallable
     this.globs = globs;
 
     root = new Namespace("");
-    root.AttachSibling(globs.root);
+    root.AttachPart(globs.root);
   }
 
   public IScope GetFallbackScope() { return globs; }
@@ -183,12 +221,9 @@ public class ModuleScope : IScope, IMarshallable
   { 
     var all = new SymbolsStorage(this);
 
-    Namespace curr = root;
-    while(curr != null)
-    {
-      all.UnionWith(curr.GetMembers());
-      curr = curr.sibling;
-    }
+    var it = root.GetIterator();
+    while(it.Next())
+      all.UnionWith(it.current.members);
 
     return all;
   }

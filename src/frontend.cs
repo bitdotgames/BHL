@@ -2059,9 +2059,12 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var name = ctx.NAME().GetText();
 
-    var ns = new Namespace(name);
-
-    curr_scope.Define(ns);
+    var ns = curr_scope.Resolve(name) as Namespace;
+    if(ns == null)
+    {
+      ns = new Namespace(name);
+      curr_scope.Define(ns);
+    }
 
     var orig_scope = curr_scope;
     curr_scope = ns;
