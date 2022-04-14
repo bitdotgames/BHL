@@ -148,6 +148,67 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(ns2.Resolve("foo") is Namespace);
   }
 
+  [IsTested()]
+  public void TestSubNamespacesLink()
+  {
+    var ns1 = new Namespace("");
+    {
+      var foo = new Namespace("foo");
+
+      var foo_sub = new Namespace("foo_sub");
+
+      var cl = new ClassSymbolNative("Wow", null);
+      foo_sub.Define(cl);
+
+      foo.Define(foo_sub);
+
+      ns1.Define(foo);
+
+      var wow = new Namespace("wow");
+      ns1.Define(wow);
+    }
+
+    var ns2 = new Namespace("");
+    {
+      var foo = new Namespace("foo");
+
+      var foo_sub = new Namespace("foo_sub");
+
+      var cl = new ClassSymbolNative("Hey", null);
+      foo_sub.Define(cl);
+
+      foo.Define(foo_sub);
+
+      ns2.Define(foo);
+
+      var bar = new Namespace("bar");
+      ns2.Define(bar);
+    }
+
+    ns2.Link(ns1);
+
+    {
+      var foo = ns2.Resolve("foo") as Namespace;
+      AssertTrue(foo != null);
+
+      var foo_sub = foo.Resolve("foo_sub") as Namespace;
+      AssertTrue(foo_sub != null);
+
+      var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
+      AssertTrue(cl_wow != null);
+
+      var cl_hey = foo_sub.Resolve("Hey") as ClassSymbol;
+      AssertTrue(cl_hey != null);
+
+      var bar = ns2.Resolve("bar") as Namespace;
+      AssertTrue(bar != null);
+
+      var wow = ns2.Resolve("wow") as Namespace;
+      AssertTrue(wow != null);
+
+    }
+  }
+
   //TODO:
   //[IsTested()]
   public void TestNamespacesExec()

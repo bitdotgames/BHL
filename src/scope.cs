@@ -90,7 +90,23 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public void Link(Namespace ns)
   {
-    //TODO: add validation
+    for(int i=0;i<ns.members.Count;++i)
+    {
+      if(ns.members[i] is Namespace mns)
+      {
+        var sym = ResolveLocal(mns.name);
+        //NOTE: if there's no such local symbol let's
+        //      create an empty namespace which can be
+        //      later linked
+        if(sym == null)
+          sym = new Namespace(mns.name);
+        if(sym is Namespace lns)
+          lns.Link(mns);
+        else if(sym != null)
+          throw new SymbolError(sym, "already defined symbol '" + sym.name + "'");
+      }
+    }
+
     this.links.Add(ns);
   }
 
