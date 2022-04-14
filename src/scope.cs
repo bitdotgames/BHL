@@ -176,6 +176,37 @@ public class Namespace : Symbol, IScope, IMarshallable
     return null;
   }
 
+  public Symbol ResolvePath(string path)
+  {
+    var names = path.Split('.');
+    IScope scope = this;
+    for(int i=0;i<names.Length;++i)
+    {
+      var name = names[i];
+
+      Symbol symb;
+      //special case for namespace
+      if(scope is Namespace ns)
+        symb = ns.ResolveLocal(name);
+      else
+        scope.GetMembers().TryGetValue(name, out symb);
+
+      if(symb == null)
+        break;
+      //let's check if it's the last path item
+      else if(i == names.Length-1)
+        return symb;
+
+      scope = symb as IScope;
+      //we can't proceed 'deeper' if the last resolved 
+      //symbol is not a scope
+      if(scope == null)
+        break;
+    }
+
+    return null;
+  }
+
   public void Define(Symbol sym) 
   {
     if(ResolveLocal(sym.name) != null)

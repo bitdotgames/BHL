@@ -188,25 +188,40 @@ public class TestNamespace : BHL_TestBase
     ns2.Link(ns1);
 
     {
-      var foo = ns2.Resolve("foo") as Namespace;
+      var foo = ns2.ResolveLocal("foo") as Namespace;
       AssertTrue(foo != null);
 
-      var foo_sub = foo.Resolve("foo_sub") as Namespace;
+      var foo_sub = foo.ResolveLocal("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
 
-      var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
+      var cl_wow = foo_sub.ResolveLocal("Wow") as ClassSymbol;
       AssertTrue(cl_wow != null);
 
-      var cl_hey = foo_sub.Resolve("Hey") as ClassSymbol;
+      var cl_hey = foo_sub.ResolveLocal("Hey") as ClassSymbol;
       AssertTrue(cl_hey != null);
 
-      var bar = ns2.Resolve("bar") as Namespace;
+      var bar = ns2.ResolveLocal("bar") as Namespace;
       AssertTrue(bar != null);
 
-      var wow = ns2.Resolve("wow") as Namespace;
+      var wow = ns2.ResolveLocal("wow") as Namespace;
       AssertTrue(wow != null);
-
     }
+
+
+    AssertEqual("foo", ns2.ResolvePath("foo").name);
+    AssertEqual("foo_sub", ns2.ResolvePath("foo.foo_sub").name);
+    AssertEqual("Hey", ns2.ResolvePath("foo.foo_sub.Hey").name);
+    AssertEqual("Wow", ns2.ResolvePath("foo.foo_sub.Wow").name);
+    AssertEqual("wow", ns2.ResolvePath("wow").name);
+    AssertEqual("bar", ns2.ResolvePath("bar").name);
+
+    AssertTrue(ns2.ResolvePath("") == null);
+    AssertTrue(ns2.ResolvePath(".") == null);
+    AssertTrue(ns2.ResolvePath("foo.") == null);
+    AssertTrue(ns2.ResolvePath(".foo.") == null);
+    AssertTrue(ns2.ResolvePath("foo..") == null);
+    AssertTrue(ns2.ResolvePath("foo.bar") == null);
+    AssertTrue(ns2.ResolvePath(".foo.foo_sub..") == null);
   }
 
   //TODO:
