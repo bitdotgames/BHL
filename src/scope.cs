@@ -122,14 +122,11 @@ public class Namespace : Symbol, IScope, IMarshallable
         return true;
       }
 
-      if(c < owner.parts.Count)
-      {
-        current = owner.parts[c];
-        ++c;
-        return true;
-      }
-      else
+      if(c == owner.parts.Count)
         return false;
+      current = owner.parts[c];
+      ++c;
+      return true;
     }
   }
 
@@ -140,15 +137,9 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public Symbol Resolve(string name)
   {
-    Symbol s = null;
-
-    var it = GetIterator();
-    while(it.Next())
-    {
-      it.current.members.TryGetValue(name, out s);
-      if(s != null)
-        return s;
-    }
+    var s = ResolveLocal(name); 
+    if(s != null)
+      return s;
 
     if(scope != null) 
       return scope.Resolve(name);
@@ -156,9 +147,22 @@ public class Namespace : Symbol, IScope, IMarshallable
     return null;
   }
 
+  public Symbol ResolveLocal(string name)
+  {
+    var it = GetIterator();
+    while(it.Next())
+    {
+      Symbol s;
+      it.current.members.TryGetValue(name, out s);
+      if(s != null)
+        return s;
+    }
+    return null;
+  }
+
   public void Define(Symbol sym) 
   {
-    if(Resolve(sym.name) != null)
+    if(ResolveLocal(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym);

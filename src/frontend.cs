@@ -286,7 +286,7 @@ public class Frontend : bhlBaseVisitor<object>
     this.module = module;
     types.AddSource(module.scope);
 
-    curr_scope = this.module.scope;
+    curr_scope = this.module.scope.root;
 
     if(importer == null)
       importer = new Importer();
@@ -2059,7 +2059,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var name = ctx.NAME().GetText();
 
-    var ns = curr_scope.Resolve(name) as Namespace;
+    var ns = (curr_scope as Namespace).ResolveLocal(name) as Namespace;
     if(ns == null)
     {
       ns = new Namespace(name);
