@@ -68,7 +68,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public SymbolsStorage members;
 
-  public List<Namespace> parts = new List<Namespace>();
+  public List<Namespace> links = new List<Namespace>();
 
   public override uint ClassId()
   {
@@ -88,10 +88,10 @@ public class Namespace : Symbol, IScope, IMarshallable
     this.members = new SymbolsStorage(this);
   }
 
-  public void AttachPart(Namespace part)
+  public void Link(Namespace ns)
   {
     //TODO: add validation
-    this.parts.Add(part);
+    this.links.Add(ns);
   }
 
   public IScope GetFallbackScope() { return scope; }
@@ -122,9 +122,9 @@ public class Namespace : Symbol, IScope, IMarshallable
         return true;
       }
 
-      if(c == owner.parts.Count)
+      if(c == owner.links.Count)
         return false;
-      current = owner.parts[c];
+      current = owner.links[c];
       ++c;
       return true;
     }
@@ -216,7 +216,7 @@ public class ModuleScope : IScope, IMarshallable
     this.globs = globs;
 
     root = new Namespace("");
-    root.AttachPart(globs.root);
+    root.Link(globs.root);
   }
 
   public IScope GetFallbackScope() { return globs; }

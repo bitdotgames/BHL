@@ -134,8 +134,18 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesCombine()
+  public void TestNamespacesLink()
   {
+    var ns1 = new Namespace("");
+    {
+      var foo = new Namespace("foo");
+      ns1.Define(foo);
+    }
+
+    var ns2 = new Namespace("");
+    ns2.Link(ns1);
+
+    AssertTrue(ns2.Resolve("foo") is Namespace);
   }
 
   //TODO:
