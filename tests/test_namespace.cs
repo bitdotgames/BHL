@@ -25,12 +25,20 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var foo = vm.Types.Resolve("foo");
-    AssertTrue(foo is Namespace);
+
+    var foo = vm.Types.Resolve("foo") as Namespace;
+    AssertTrue(foo != null);
+    AssertEqual(1, foo.members.Count);
+    AssertTrue(foo.Resolve("test") is FuncSymbol);
+
+    var bar = vm.Types.Resolve("bar") as Namespace;
+    AssertTrue(bar != null);
+    AssertEqual(1, bar.members.Count);
+    AssertTrue(foo.Resolve("test") is FuncSymbol);
   }
 
   [IsTested()]
-  public void TestNamespacesCombine()
+  public void TestNamespacesPartialDecls()
   {
     string bhl = @"
     namespace foo {
@@ -56,8 +64,17 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var foo = vm.Types.Resolve("foo");
-    AssertTrue(foo is Namespace);
+
+    var foo = vm.Types.Resolve("foo") as Namespace;
+    AssertTrue(foo != null);
+    AssertEqual(2, foo.members.Count);
+    AssertTrue(foo.Resolve("test") is FuncSymbol);
+    AssertTrue(foo.Resolve("what") is FuncSymbol);
+
+    var bar = vm.Types.Resolve("bar") as Namespace;
+    AssertTrue(bar != null);
+    AssertEqual(1, bar.members.Count);
+    AssertTrue(bar.Resolve("test") is FuncSymbol);
   }
 
   //TODO:
