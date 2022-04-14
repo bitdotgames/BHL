@@ -18595,7 +18595,7 @@ public class TestVM : BHL_TestBase
       var types = new Types();
       var factory = new SymbolFactory(types);
 
-      var ms = new ModuleScope(types.natives);
+      var ms = new ModuleScope("", types.natives);
       types.AddSource(ms);
 
       s.Position = 0;

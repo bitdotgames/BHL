@@ -1987,7 +1987,7 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitFuncDecl(bhlParser.FuncDeclContext ctx)
   {
-    var func_ast = CommonFuncDecl(module.scope, ctx);
+    var func_ast = CommonFuncDecl(curr_scope, ctx);
     PeekAST().AddChild(func_ast);
     return null;
   }
@@ -2059,12 +2059,12 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var name = ctx.NAME().GetText();
 
-    var ns = new Namespace(module.scope, name, curr_scope);
+    var ns = new Namespace(name);
+
+    curr_scope.Define(ns);
 
     var orig_scope = curr_scope;
     curr_scope = ns;
-
-    module.scope.Define(ns);
 
     VisitDecls(ctx.decls());
 

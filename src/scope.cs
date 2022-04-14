@@ -66,26 +66,26 @@ public class Namespace : Symbol, IScope, IMarshallable
 {
   public const uint CLASS_ID = 20;
 
-  public IScope origin;
-
-  IScope fallback;
-
   public SymbolsStorage members;
 
   public Namespace sibling { get; private set; }
 
-  public Namespace(IScope origin, string name, IScope fallback = null)
-    : base(name, default(TypeProxy))
-  {
-    this.origin = origin;
-    this.name = name;
-    this.fallback = fallback;
-    this.members = new SymbolsStorage(origin);
-  }
-
   public override uint ClassId()
   {
     return CLASS_ID;
+  }
+
+  public Namespace(string name)
+    : base(name, default(TypeProxy))
+  {
+    this.members = new SymbolsStorage(this);
+  }
+
+  //marshall version
+  public Namespace()
+    : base("", default(TypeProxy))
+  {
+    this.members = new SymbolsStorage(this);
   }
 
   public void AttachSibling(Namespace sibling)
@@ -96,7 +96,7 @@ public class Namespace : Symbol, IScope, IMarshallable
     this.sibling = sibling;
   }
 
-  public IScope GetFallbackScope() { return fallback; }
+  public IScope GetFallbackScope() { return scope; }
 
   public SymbolsStorage GetMembers() { return members; }
 
@@ -112,8 +112,8 @@ public class Namespace : Symbol, IScope, IMarshallable
       curr = curr.sibling;
     }
 
-    if(fallback != null) 
-      return fallback.Resolve(name);
+    if(scope != null) 
+      return scope.Resolve(name);
     
     return null;
   }
@@ -139,7 +139,7 @@ public class NativeScope : IScope
 
   public NativeScope() 
   {
-    root = new Namespace(this, "");
+    root = new Namespace("");
   }
 
   public IScope GetFallbackScope() { return null; }
@@ -173,7 +173,7 @@ public class ModuleScope : IScope, IMarshallable
 
     this.globs = globs;
 
-    root = new Namespace(this, "", globs);
+    root = new Namespace("");
     root.AttachSibling(globs.root);
   }
 
@@ -191,13 +191,6 @@ public class ModuleScope : IScope, IMarshallable
     }
 
     return all;
-  }
-
-  //marshall version
-  public ModuleScope(NativeScope globs) 
-  {
-    root = new Namespace(this, "", globs);
-    root.AttachSibling(globs.root);
   }
 
   //TODO: Union root namespace

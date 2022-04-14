@@ -1734,6 +1734,8 @@ public class SymbolFactory : IFactory
         return new RefType();
       case TupleType.CLASS_ID:
         return new TupleType();
+      case Namespace.CLASS_ID:
+        return new Namespace();
       default:
         return null;
     }
