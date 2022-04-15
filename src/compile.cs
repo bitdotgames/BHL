@@ -12,6 +12,7 @@ public class Compiler : AST_Visitor
   Module module;
 
   Types types;
+
   List<Const> constants = new List<Const>();
   List<Instruction> init = new List<Instruction>();
   List<Instruction> code = new List<Instruction>();

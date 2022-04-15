@@ -282,27 +282,6 @@ public class Build
     return lz4_bytes;
   }
 
-  public class Symbols : IMarshallable
-  {
-    //all collections have the same amount ot items
-    public List<string> names = new List<string>();
-    public List<string> files = new List<string>();
-
-    public int Count => names.Count;
-
-    public void Sync(SyncContext ctx) 
-    {
-      Marshall.Sync(ctx, names);
-      Marshall.Sync(ctx, files);
-    }
-
-    public void Add(string name, string file)
-    {
-      names.Add(name);
-      files.Add(file);
-    }
-  }
-
   void CheckUniqueSymbols(CompilerWorker w)
   {
     foreach(var kv in w.file2symbols)

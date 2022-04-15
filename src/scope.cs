@@ -142,16 +142,17 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public IScope GetFallbackScope() { return scope; }
 
+  //TODO: should we consider linked members?
   public SymbolsStorage GetMembers() { return members; }
 
-  public struct Iterator
+  public struct LinksIterator
   {
     Namespace owner;
     int c;
 
     public Namespace current;
 
-    public Iterator(Namespace owner)
+    public LinksIterator(Namespace owner)
     {
       this.owner = owner;
       c = -1;
@@ -176,9 +177,9 @@ public class Namespace : Symbol, IScope, IMarshallable
     }
   }
 
-  public Iterator GetIterator()
+  LinksIterator GetLinksIterator()
   {
-    return new Iterator(this);
+    return new LinksIterator(this);
   }
 
   public Symbol Resolve(string name)
@@ -195,7 +196,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public Symbol ResolveLocal(string name)
   {
-    var it = GetIterator();
+    var it = GetLinksIterator();
     while(it.Next())
     {
       Symbol s;
@@ -244,6 +245,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
     members.Add(sym);
   }
+
   //TODO: restore this stuff for module scope vars
   //if(sym is VariableSymbol vs)
   //{

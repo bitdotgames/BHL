@@ -16,16 +16,6 @@ public class IsTestedAttribute : Attribute
 
 public static class BHL_TestExt 
 {
-  //public static Types CloneGlobs(this Types ts)
-  //{
-  //  var ts_copy = new Types();
-  //  var ms = ts.natives.GetMembers();
-  //  //let's skip already defined built-in globs
-  //  for(int i=ts_copy.natives.GetMembers().Count;i<ms.Count;++i)
-  //    ts_copy.natives.Define(ms[i]);
-  //  return ts_copy;
-  //}
-
   public static string GetFullMessage(this Exception ex)
   {
     return ex.InnerException == null 
