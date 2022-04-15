@@ -88,26 +88,40 @@ public class Namespace : Symbol, IScope, IMarshallable
     this.members = new SymbolsStorage(this);
   }
 
-  public void Link(Namespace ns)
+  public void Link(Namespace other)
   {
-    for(int i=0;i<ns.members.Count;++i)
+    var conflict_symb = TryLink(other);
+    if(conflict_symb != null)
+      throw new SymbolError(conflict_symb, "already defined symbol '" + conflict_symb.name + "'");
+  }
+
+  //NOTE: returns conflicting symbol or null
+  public Symbol TryLink(Namespace other)
+  {
+    for(int i=0;i<other.members.Count;++i)
     {
-      if(ns.members[i] is Namespace mns)
+      var other_symb = other.members[i];
+
+      var this_symb = ResolveLocal(other_symb.name);
+
+      if(other_symb is Namespace other_ns)
       {
-        var sym = ResolveLocal(mns.name);
         //NOTE: if there's no such local symbol let's
         //      create an empty namespace which can be
         //      later linked
-        if(sym == null)
-          sym = new Namespace(mns.name);
-        if(sym is Namespace lns)
-          lns.Link(mns);
-        else if(sym != null)
-          throw new SymbolError(sym, "already defined symbol '" + sym.name + "'");
+        if(this_symb == null)
+          this_symb = new Namespace(other_symb.name);
+        if(this_symb is Namespace this_ns)
+          return this_ns.TryLink(other_ns);
+        else if(this_symb != null)
+          return this_symb;
       }
+      else if(this_symb != null)
+        return this_symb;
     }
 
-    this.links.Add(ns);
+    this.links.Add(other);
+    return null;
   }
 
   public IScope GetFallbackScope() { return scope; }
@@ -263,7 +277,7 @@ public class ModuleScope : IScope, IMarshallable
     this.globs = globs;
 
     root = new Namespace("");
-    root.Link(globs.root);
+    root.TryLink(globs.root);
   }
 
   public IScope GetFallbackScope() { return globs; }
