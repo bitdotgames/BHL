@@ -317,7 +317,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.Type("float"))
         );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -359,7 +359,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.Type("float"))
         );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -394,7 +394,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("a", ts.Type("float"))
         );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -431,7 +431,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("b", Types.Int)
         );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -485,7 +485,7 @@ public class TestVM : BHL_TestBase
             status = BHS.FAILURE; 
             return null;
           });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -1027,7 +1027,7 @@ public class TestVM : BHL_TestBase
             return null;
           }
         );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -1081,7 +1081,7 @@ public class TestVM : BHL_TestBase
             return null;
           }
         );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -2899,7 +2899,7 @@ public class TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
@@ -2929,7 +2929,7 @@ public class TestVM : BHL_TestBase
           return null;
         } 
     );
-    ts.natives.Define(fn);
+    ts.ns.Define(fn);
 
     var vm = MakeVM(bhl, ts);
     var num = Execute(vm, "test").result.PopRelease().num;
@@ -2961,7 +2961,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("a", ts.Type("int")),
         new FuncArgSymbol("b", ts.Type("int"))
     );
-    ts.natives.Define(fn);
+    ts.ns.Define(fn);
 
     var vm = MakeVM(bhl, ts);
     var num = Execute(vm, "test").result.PopRelease().num;
@@ -5850,7 +5850,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, ref Val v, IType type) 
         {}
       );
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
     }
 
     BindTrace(ts, log);
@@ -6014,7 +6014,7 @@ public class TestVM : BHL_TestBase
             return null;
           }
           );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -6132,7 +6132,7 @@ public class TestVM : BHL_TestBase
           return null;
         } 
     );
-    ts.natives.Define(fn);
+    ts.ns.Define(fn);
 
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
@@ -6183,7 +6183,7 @@ public class TestVM : BHL_TestBase
           return inst;
         } 
       );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -7103,7 +7103,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.Type("float"), true/*is ref*/)
         );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -8478,7 +8478,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf("suspend"), 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf("suspend"), 0 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -8512,7 +8512,7 @@ public class TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
@@ -8627,9 +8627,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, new TypeProxy(ts, "int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf("suspend"), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf("suspend"), 0 })
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf("yield"), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -8674,9 +8674,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, new TypeProxy(ts, "int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf("suspend"), 0})
+          .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf("suspend"), 0})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf("yield"), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -9228,7 +9228,7 @@ public class TestVM : BHL_TestBase
           },
           new FuncArgSymbol("b", ts.Type("bool"))
         );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     {
@@ -9240,7 +9240,7 @@ public class TestVM : BHL_TestBase
           },
           new FuncArgSymbol("n", Types.Int)
         );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -9335,7 +9335,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("s", ts.Type("string")),
           new FuncArgSymbol("i", Types.Int)
         );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts); 
@@ -9538,7 +9538,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("fn", ts.TypeFunc(ts.TypeArr(Types.Int)))
       );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -10116,7 +10116,7 @@ public class TestVM : BHL_TestBase
           v.SetObj(null, type);
         }
       );
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
 
       {
         var m = new FuncSymbolNative("self", ts.Type("Bar"),
@@ -10174,9 +10174,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-        .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf(fn), 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -11976,7 +11976,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -12276,7 +12276,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -14132,7 +14132,7 @@ public class TestVM : BHL_TestBase
           v.SetObj(null, type);
         }
       );
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
     }
 
     AssertError<Exception>(
@@ -14165,7 +14165,7 @@ public class TestVM : BHL_TestBase
           v.SetObj(null, type);
         }
       );
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
     }
 
     AssertError<Exception>(
@@ -14202,7 +14202,7 @@ public class TestVM : BHL_TestBase
         }
       );
 
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("c", ts.Type("Color"), 
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -14605,7 +14605,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.GetMembers().IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.ns.GetMembers().IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -15278,7 +15278,7 @@ public class TestVM : BHL_TestBase
   void BindEnum(Types ts)
   {
     var en = new EnumSymbol("EnumState");
-    ts.natives.Define(en);
+    ts.ns.Define(en);
 
     en.Define(new EnumItemSymbol("SPAWNED",  10));
     en.Define(new EnumItemSymbol("SPAWNED2", 20));
@@ -15463,7 +15463,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("state", ts.Type("EnumState"))
         );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -16941,7 +16941,7 @@ public class TestVM : BHL_TestBase
             return null;
           }
           );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -17143,7 +17143,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17221,7 +17221,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17355,7 +17355,7 @@ public class TestVM : BHL_TestBase
           frm.fb = null;
           return null;
         });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17443,7 +17443,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17522,7 +17522,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17600,7 +17600,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17684,7 +17684,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17772,7 +17772,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -18561,72 +18561,74 @@ public class TestVM : BHL_TestBase
     {
       var types = new Types();
 
-      var ms = new ModuleScope("module", types.natives);
-      types.AddSource(ms);
+      var ns = new Namespace();
+      ns.Link(types.ns);
+      //???
+      //types.ns.Link(ns);
 
-      ms.Define(new VariableSymbol("foo", Types.Int));
+      ns.Define(new VariableSymbol("foo", Types.Int));
 
-      ms.Define(new VariableSymbol("bar", Types.String));
+      ns.Define(new VariableSymbol("bar", Types.String));
 
-      ms.Define(new VariableSymbol("wow", types.TypeArr(Types.Bool)));
+      ns.Define(new VariableSymbol("wow", types.TypeArr(Types.Bool)));
 
-      ms.Define(new FuncSymbolScript(null, new FuncSignature(types.TypeTuple(Types.Int,Types.Float), types.TypeRef(Types.Int), Types.String), "Test", 1, 155));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(types.TypeTuple(Types.Int,Types.Float), types.TypeRef(Types.Int), Types.String), "Test", 1, 155));
 
-      ms.Define(new FuncSymbolScript(null, new FuncSignature(types.TypeArr(Types.String), types.Type("Bar")), "Make", 3, 15));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(types.TypeArr(Types.String), types.Type("Bar")), "Make", 3, 15));
 
       var Foo = new ClassSymbolScript("Foo");
       Foo.Define(new FieldSymbolScript("Int", Types.Int));
       Foo.Define(new FuncSymbolScript(null, new FuncSignature(Types.Void), "Hey", 0, 3));
-      ms.Define(Foo);
+      ns.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", Foo);
       Bar.Define(new FieldSymbolScript("Float", Types.Float));
       Bar.Define(new FuncSymbolScript(null, new FuncSignature(types.TypeTuple(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
-      ms.Define(Bar);
+      ns.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");
       Enum.TryAddItem("Type1", 1);
       Enum.TryAddItem("Type2", 2);
-      ms.Define(Enum);
+      ns.Define(Enum);
 
-      Marshall.Obj2Stream(ms, s);
+      Marshall.Obj2Stream(ns, s);
     }
 
     {
       var types = new Types();
       var factory = new SymbolFactory(types);
 
-      var ms = new ModuleScope("", types.natives);
-      types.AddSource(ms);
+      var ns = new Namespace();
+      ns.Link(types.ns);
+      //????
+      //types.ns.Link(ns);
 
       s.Position = 0;
-      Marshall.Stream2Obj(s, ms, factory);
+      Marshall.Stream2Obj(s, ns, factory);
 
-      AssertEqual(ms.module_name, "module");
+      AssertEqual(8, ns.GetMembers().Count);
 
-      AssertEqual(8, ms.GetMembers().Count);
-
-      var foo = (VariableSymbol)ms.Resolve("foo");
+      var foo = (VariableSymbol)ns.Resolve("foo");
       AssertEqual(foo.name, "foo");
       AssertEqual(foo.type.Get(), Types.Int);
-      AssertEqual(foo.scope, ms);
+      AssertEqual(foo.scope, ns);
       AssertEqual(foo.scope_idx, 0);
 
-      var bar = (VariableSymbol)ms.Resolve("bar");
+      var bar = (VariableSymbol)ns.Resolve("bar");
       AssertEqual(bar.name, "bar");
       AssertEqual(bar.type.Get(), Types.String);
-      AssertEqual(bar.scope, ms);
+      AssertEqual(bar.scope, ns);
       AssertEqual(bar.scope_idx, 1);
 
-      var wow = (VariableSymbol)ms.Resolve("wow");
+      var wow = (VariableSymbol)ns.Resolve("wow");
       AssertEqual(wow.name, "wow");
       AssertEqual(wow.type.Get().GetName(), types.TypeArr(Types.Bool).Get().GetName());
       AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), Types.Bool);
-      AssertEqual(wow.scope, ms);
+      AssertEqual(wow.scope, ns);
       AssertEqual(wow.scope_idx, 2);
 
-      var Test = (FuncSymbolScript)ms.Resolve("Test");
+      var Test = (FuncSymbolScript)ns.Resolve("Test");
       AssertEqual(Test.name, "Test");
-      AssertEqual(Test.scope, ms);
+      AssertEqual(Test.scope, ns);
       AssertEqual(types.TypeFunc(types.TypeTuple(Types.Int, Types.Float), types.TypeRef(Types.Int), Types.String).name, Test.signature.GetName());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
@@ -18634,9 +18636,9 @@ public class TestVM : BHL_TestBase
       //global funcs don't have scope idx set
       AssertEqual(-1, Test.scope_idx);
 
-      var Make = (FuncSymbolScript)ms.Resolve("Make");
+      var Make = (FuncSymbolScript)ns.Resolve("Make");
       AssertEqual(Make.name, "Make");
-      AssertEqual(Make.scope, ms);
+      AssertEqual(Make.scope, ns);
       AssertEqual(1, Make.signature.arg_types.Count);
       AssertEqual(types.TypeArr(Types.String).Get().GetName(), Make.GetReturnType().GetName());
       AssertEqual(types.Type("Bar").Get(), Make.signature.arg_types[0].Get());
@@ -18646,8 +18648,8 @@ public class TestVM : BHL_TestBase
       //global funcs don't have scope idx set
       AssertEqual(-1, Make.scope_idx);
 
-      var Foo = (ClassSymbolScript)ms.Resolve("Foo");
-      AssertEqual(Foo.scope, ms);
+      var Foo = (ClassSymbolScript)ns.Resolve("Foo");
+      AssertEqual(Foo.scope, ns);
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
       AssertEqual(Foo.GetMembers().Count, 2);
@@ -18665,8 +18667,8 @@ public class TestVM : BHL_TestBase
       AssertEqual(3, Foo_Hey.ip_addr);
       AssertEqual(1, Foo_Hey.scope_idx);
 
-      var Bar = (ClassSymbolScript)ms.Resolve("Bar");
-      AssertEqual(Bar.scope, ms);
+      var Bar = (ClassSymbolScript)ns.Resolve("Bar");
+      AssertEqual(Bar.scope, ns);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
       AssertEqual(Bar.GetMembers().Count, 2/*from parent*/+2);
@@ -18683,8 +18685,8 @@ public class TestVM : BHL_TestBase
       AssertEqual(0, Bar_What.local_vars_num);
       AssertEqual(1, Bar_What.ip_addr);
 
-      var Enum = (EnumSymbolScript)ms.Resolve("Enum");
-      AssertEqual(Enum.scope, ms);
+      var Enum = (EnumSymbolScript)ns.Resolve("Enum");
+      AssertEqual(Enum.scope, ns);
       AssertEqual(Enum.name, "Enum");
       AssertEqual(Enum.GetMembers().Count, 2);
       AssertEqual(Enum.Resolve("Type1").type.Get(), Enum);
@@ -18779,7 +18781,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("a", ts.Type("float")),
         new FuncArgSymbol("b", ts.Type("float"))
     );
-    ts.natives.Define(fn);
+    ts.ns.Define(fn);
   }
 
   public struct IntStruct
@@ -18809,7 +18811,7 @@ public class TestVM : BHL_TestBase
         }
       );
 
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("n", Types.Int,
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -18844,7 +18846,7 @@ public class TestVM : BHL_TestBase
         }
       );
 
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("str", ts.Type("string"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -18886,7 +18888,7 @@ public class TestVM : BHL_TestBase
         }
       );
 
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("child", ts.Type("StringClass"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -18983,7 +18985,7 @@ public class TestVM : BHL_TestBase
         }, 
         new FuncArgSymbol("ticks", Types.Int)
     );
-    ts.natives.Define(fn);
+    ts.ns.Define(fn);
     return fn;
   }
 
@@ -19032,7 +19034,7 @@ public class TestVM : BHL_TestBase
         );
         cl.Define(vs);
       }
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
     }
   }
 
@@ -19055,7 +19057,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("spawns", Types.Int)
       );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
   }
 

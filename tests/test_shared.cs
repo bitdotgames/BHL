@@ -175,7 +175,7 @@ public class BHL_TestBase
       }
     );
 
-    ts.natives.Define(cl);
+    ts.ns.Define(cl);
     cl.Define(new FieldSymbol("r", ts.Type("float"),
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
@@ -253,7 +253,7 @@ public class BHL_TestBase
         new FuncArgSymbol("r", ts.Type("float"))
       );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
     
     {
@@ -264,10 +264,10 @@ public class BHL_TestBase
           }
       );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
 
-    ts.natives.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.Type("Color"), delegate() { return new List<Color>(); } ));
+    ts.ns.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.Type("Color"), delegate() { return new List<Color>(); } ));
 
     return cl;
   }
@@ -284,7 +284,7 @@ public class BHL_TestBase
         }
       );
 
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("a", ts.Type("float"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -340,7 +340,7 @@ public class BHL_TestBase
           v.SetObj(new Foo(), type);
         }
       );
-      ts.natives.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("hey", Types.Int,
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -391,7 +391,7 @@ public class BHL_TestBase
           new FuncArgSymbol("foo", ts.Type("Foo"))
       );
 
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
   }
 
@@ -411,7 +411,7 @@ public class BHL_TestBase
       }
     );
 
-    ts.natives.Define(cl);
+    ts.ns.Define(cl);
     cl.Define(new FieldSymbol("Int", Types.Int,
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
@@ -466,7 +466,7 @@ public class BHL_TestBase
         }, 
         new FuncArgSymbol("str", ts.Type("string"))
     );
-    ts.natives.Define(fn);
+    ts.ns.Define(fn);
     return fn;
   }
 
@@ -482,7 +482,7 @@ public class BHL_TestBase
           },
           new FuncArgSymbol("str", ts.Type("string"))
       );
-      ts.natives.Define(fn);
+      ts.ns.Define(fn);
     }
   }
 
@@ -774,7 +774,7 @@ public class BHL_TestBase
     //var ts_copy = ts.CloneGlobs();
 
     //var mdl = new bhl.Module(ts_copy.natives, "", "");
-    var mdl = new bhl.Module(ts.natives, "", "");
+    var mdl = new bhl.Module(ts.ns, "", "");
 
     //var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts_copy);
     var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts);

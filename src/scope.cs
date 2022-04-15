@@ -81,12 +81,10 @@ public class Namespace : Symbol, IScope, IMarshallable
     this.members = new SymbolsStorage(this);
   }
 
-  //marshall version
+  //root and marshall version 
   public Namespace()
-    : base("", default(TypeProxy))
-  {
-    this.members = new SymbolsStorage(this);
-  }
+    : this("")
+  {}
 
   public void Link(Namespace other)
   {
@@ -96,8 +94,13 @@ public class Namespace : Symbol, IScope, IMarshallable
   }
 
   //NOTE: returns conflicting symbol or null
+  //NOTE: here we combine only similar namespaces but we don't
+  //      add other symbols from them
   public Symbol TryLink(Namespace other)
   {
+    if(links.Contains(other))
+      return null;
+
     for(int i=0;i<other.members.Count;++i)
     {
       var other_symb = other.members[i];
@@ -110,9 +113,17 @@ public class Namespace : Symbol, IScope, IMarshallable
         //      create an empty namespace which can be
         //      later linked
         if(this_symb == null)
-          this_symb = new Namespace(other_symb.name);
-        if(this_symb is Namespace this_ns)
-          return this_ns.TryLink(other_ns);
+        {
+          var ns = new Namespace(other_symb.name);
+          members.Add(ns);
+          ns.links.Add(other_ns);
+        }
+        else if(this_symb is Namespace this_ns)
+        {
+          var conflict = this_ns.TryLink(other_ns);
+          if(conflict != null)
+            return conflict;
+        }
         else if(this_symb != null)
           return this_symb;
       }
@@ -120,8 +131,13 @@ public class Namespace : Symbol, IScope, IMarshallable
         return this_symb;
     }
 
-    this.links.Add(other);
+    links.Add(other);
     return null;
+  }
+
+  public void Unlink(Namespace other)
+  {
+    //TODO:
   }
 
   public IScope GetFallbackScope() { return scope; }
@@ -228,130 +244,27 @@ public class Namespace : Symbol, IScope, IMarshallable
 
     members.Add(sym);
   }
+  //TODO: restore this stuff for module scope vars
+  //if(sym is VariableSymbol vs)
+  //{
+  //  //NOTE: calculating scope idx only for global variables for now
+  //  //      (we are not interested in calculating scope indices for global
+  //  //      funcs for now so that these indices won't clash)
+  //  if(vs.scope_idx == -1)
+  //  {
+  //    int c = 0;
+  //    var members = root.GetMembers();
+  //    for(int i=0;i<members.Count;++i)
+  //      if(members[i] is VariableSymbol)
+  //        ++c;
+  //    vs.scope_idx = c;
+  //  }
+  //} 
 
   public override void Sync(SyncContext ctx) 
   {
     Marshall.Sync(ctx, ref name);
     Marshall.Sync(ctx, ref members);
-  }
-}
-
-public class NativeScope : IScope
-{
-  public Namespace root;
-
-  public NativeScope() 
-  {
-    root = new Namespace("");
-  }
-
-  public IScope GetFallbackScope() { return null; }
-
-  public SymbolsStorage GetMembers() { return root.members; }
-
-  public Symbol Resolve(string name) 
-  {
-    return root.Resolve(name);
-  }
-
-  public void Define(Symbol sym) 
-  {
-    root.Define(sym);
-  }
-}
-
-public class ModuleScope : IScope, IMarshallable
-{
-  public string module_name;
-
-  NativeScope globs;
-
-  List<ModuleScope> imports = new List<ModuleScope>();
-
-  public Namespace root;
-
-  public ModuleScope(string module_name, NativeScope globs) 
-  {
-    this.module_name = module_name;
-
-    this.globs = globs;
-
-    root = new Namespace("");
-    root.TryLink(globs.root);
-  }
-
-  public IScope GetFallbackScope() { return globs; }
-
-  public SymbolsStorage GetMembers() 
-  { 
-    var all = new SymbolsStorage(this);
-
-    var it = root.GetIterator();
-    while(it.Next())
-      all.UnionWith(it.current.members);
-
-    return all;
-  }
-
-  //TODO: Union root namespace
-  public void AddImport(ModuleScope other)
-  {
-    if(other == this)
-      return;
-    if(imports.Contains(other))
-      return;
-    imports.Add(other);
-  }
-
-  public Symbol Resolve(string name) 
-  {
-    //var s = ResolveLocal(name);
-    //if(s != null)
-    //  return s;
-
-    //foreach(var imp in imports)
-    //{
-    //  s = imp.ResolveLocal(name);
-    //  if(s != null)
-    //    return s;
-    //}
-    //return null;
-
-    return root.Resolve(name);
-  }
-
-  public void Define(Symbol sym) 
-  {
-    //foreach(var imp in imports)
-    //{
-    //  if(imp.ResolveLocal(sym.name) != null)
-    //    throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-    //}
-
-    if(sym is VariableSymbol vs)
-    {
-      //NOTE: calculating scope idx only for global variables for now
-      //      (we are not interested in calculating scope indices for global
-      //      funcs for now so that these indices won't clash)
-      if(vs.scope_idx == -1)
-      {
-        int c = 0;
-        var members = root.GetMembers();
-        for(int i=0;i<members.Count;++i)
-          if(members[i] is VariableSymbol)
-            ++c;
-        vs.scope_idx = c;
-      }
-    } 
-
-    root.Define(sym);
-  }
-
-  public void Sync(SyncContext ctx) 
-  {
-    Marshall.Sync(ctx, ref module_name);
-
-    root.Sync(ctx);
   }
 }
 

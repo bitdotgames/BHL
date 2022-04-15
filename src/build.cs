@@ -310,9 +310,9 @@ public class Build
       var symbols = kv.Value;
       var file = kv.Key;
 
-      for(int i=0;i<symbols.GetMembers().Count;++i)
+      for(int i=0;i<symbols.Count;++i)
       {
-        var s = symbols.GetMembers()[i];
+        var s = symbols[i];
         string fpath;
         if(name2file.TryGetValue(s.name, out fpath))
         {
@@ -538,7 +538,7 @@ public class Build
     public Cache cache;
     public Dictionary<string, ModulePath> file2path = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
-    public Dictionary<string, ModuleScope> file2symbols = new Dictionary<string, ModuleScope>();
+    public Dictionary<string, SymbolsStorage> file2symbols = new Dictionary<string, SymbolsStorage>();
 
     public void Start()
     {
@@ -577,7 +577,7 @@ public class Build
           var file = w.files[i]; 
 
           var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
-          var file_module = new Module(w.ts.natives, imp.FilePath2ModuleName(file), file);
+          var file_module = new Module(w.ts.ns, imp.FilePath2ModuleName(file), file);
 
           InterimResult interim;
           if(w.cache.file2interim.TryGetValue(file, out interim) 
@@ -586,8 +586,6 @@ public class Build
             ++cache_hit;
 
             w.file2path.Add(file, file_module.path);
-            //TODO: load from the cached file?
-            //w.file2symbols.Add(file, ...);
           }
           else
           {
@@ -603,7 +601,7 @@ public class Build
             front_res = w.postproc.Patch(front_res, file);
 
             w.file2path.Add(file, file_module.path);
-            w.file2symbols.Add(file, front_res.module.scope);
+            w.file2symbols.Add(file, front_res.module.ns.members);
 
             var c  = new Compiler(w.ts, front_res);
             var cm = c.Compile();

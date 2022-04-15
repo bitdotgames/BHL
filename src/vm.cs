@@ -855,7 +855,7 @@ public class VM
       throw new Exception("Module '" + module_name + "' not found");
     RegisterModule(loaded);
 
-    module.symbols.AddImport(loaded.symbols);
+    module.ns.Link(loaded.ns);
   }
 
   public void RegisterModule(CompiledModule cm)
@@ -864,7 +864,7 @@ public class VM
       return;
     modules.Add(cm.name, cm);
 
-    types.AddSource(cm.symbols);
+    types.ns.Link(cm.ns);
 
     ExecInit(cm);
   }
@@ -883,7 +883,7 @@ public class VM
     }
     m.gvars.Clear();
 
-    types.RemoveSource(m.symbols);
+    types.ns.Unlink(m.ns);
 
     modules.Remove(module_name);
   }
@@ -1023,11 +1023,12 @@ public class VM
   {
     addr = default(FuncAddr);
 
-    var fs = types.Resolve(name) as FuncSymbolScript;
+    var fs = types.ns.Resolve(name) as FuncSymbolScript;
     if(fs == null)
       return false;
 
-    var cm = modules[((ModuleScope)fs.scope).module_name];
+    //var cm = modules[fs.module_name];
+    var cm = modules["TODO"];
 
     addr = new FuncAddr() {
       module = cm,
@@ -1041,8 +1042,9 @@ public class VM
   //TODO: add caching?
   FuncAddr GetFuncAddr(string name)
   {
-    var fs = (FuncSymbolScript)types.Resolve(name);
-    var cm = modules[((ModuleScope)fs.scope).module_name];
+    var fs = (FuncSymbolScript)types.ns.Resolve(name);
+    //var cm = modules[fs.module_name];
+    var cm = modules["TODO"];
     return new FuncAddr() {
       module = cm,
       fs = fs,
@@ -1052,12 +1054,13 @@ public class VM
 
   static FuncSymbol TryMapIp2Func(CompiledModule cm, int ip)
   {
-    for(int i=0;i<cm.symbols.root.members.Count; ++i)
-    {
-      var fsymb = cm.symbols.root.members[i] as FuncSymbolScript;
-      if(fsymb != null && fsymb.ip_addr == ip)
-        return fsymb;
-    }
+    //TODO: we need to recursively traverse all namespaces
+    //for(int i=0;i<cm.ns.members.Count; ++i)
+    //{
+    //  var fsymb = cm.ns.members[i] as FuncSymbolScript;
+    //  if(fsymb != null && fsymb.ip_addr == ip)
+    //    return fsymb;
+    //}
     return null;
   }
 
@@ -1474,7 +1477,8 @@ public class VM
       case Opcodes.GetFunc:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolScript)curr_frame.module.symbols.root.members[func_idx];
+        //TODO: consider namespaces
+        var func_symb = (FuncSymbolScript)curr_frame.module.ns.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, func_symb.ip_addr);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1483,7 +1487,8 @@ public class VM
       case Opcodes.GetFuncNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolNative)types.natives.root.members[func_idx];
+        //TODO: consider namespaces
+        var func_symb = (FuncSymbolNative)types.ns.members[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1536,7 +1541,8 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        var native = (FuncSymbolNative)types.natives.root.members[func_idx];
+        //TODO: consider namespaces
+        var native = (FuncSymbolNative)types.ns.members[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))
@@ -2197,7 +2203,7 @@ public class CompiledModule
 
   public uint id;
   public string name;
-  public ModuleScope symbols;
+  public Namespace ns;
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
@@ -2206,7 +2212,7 @@ public class CompiledModule
 
   public CompiledModule(
     string name,
-    ModuleScope symbols,
+    Namespace ns,
     List<Const> constants, 
     byte[] initcode,
     byte[] bytecode, 
@@ -2214,7 +2220,7 @@ public class CompiledModule
   )
   {
     this.name = name;
-    this.symbols = symbols;
+    this.ns = ns;
     this.constants = constants;
     this.initcode = initcode;
     this.bytecode = bytecode;
@@ -2234,11 +2240,12 @@ public class CompiledModule
 
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
-      var symbols = new ModuleScope(name, types.natives);
+      var ns = new Namespace();
+      ns.Link(types.ns);
       var symb_factory = new SymbolFactory(types);
-      if(add_symbols_to_types)
-        types.AddSource(symbols);
-      Marshall.Stream2Obj(new MemoryStream(symb_bytes), symbols, symb_factory);
+      //if(add_symbols_to_types)
+      //  types.AddSource(ns);
+      Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
 
       byte[] initcode = null;
       int initcode_len = r.ReadInt32();
@@ -2286,7 +2293,7 @@ public class CompiledModule
       return new 
         CompiledModule(
           name, 
-          symbols, 
+          ns, 
           constants, 
           initcode, 
           bytecode, 
@@ -2305,7 +2312,7 @@ public class CompiledModule
 
       w.Write(cm.name);
 
-      var symb_bytes = Marshall.Obj2Bytes(cm.symbols);
+      var symb_bytes = Marshall.Obj2Bytes(cm.ns);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 

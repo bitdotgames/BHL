@@ -743,8 +743,9 @@ public class VariableSymbol : Symbol, IScopeIndexed
 
   public string module_name { 
     get {
-      if(scope is ModuleScope ms)
-        return ms.module_name;
+      //TODO:???
+      //if(scope is ModuleScope ms)
+      //  return ms.module_name;
       return "";
     }
   }
@@ -1053,8 +1054,9 @@ public class FuncSymbolScript : FuncSymbol
 
   public string module_name {
     get {
-      if(scope is ModuleScope ms)
-        return ms.module_name;
+      //TODO: ???
+      //if(scope is ModuleScope ms)
+      //  return ms.module_name;
       return "";
     }
   }
@@ -1353,7 +1355,7 @@ public class ClassSymbolScript : ClassSymbol
     if(ctx.is_read && super_name != "")
     {
       var types = ((SymbolFactory)ctx.factory).types;
-      var tmp_class = (ClassSymbol)types.Resolve(super_name);
+      var tmp_class = (ClassSymbol)types.ns.Resolve(super_name);
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
       super_class = tmp_class;
@@ -1678,7 +1680,7 @@ public class SymbolsSet<T> : IMarshallable where T : Symbol
 
       foreach(var name in names)
       {
-        var symb = types.Resolve(name) as T;
+        var symb = types.ns.Resolve(name) as T;
         if(symb == null)
           throw new Exception("Symbol '" + name + "' not found");
         list.Add(symb);

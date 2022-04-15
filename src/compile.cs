@@ -151,7 +151,7 @@ public class Compiler : AST_Visitor
     this.types = types;
     module = fres.module;
     ast = fres.ast;
-    curr_scope = module.scope;
+    curr_scope = module.ns;
 
     UseInit();
   }
@@ -160,8 +160,8 @@ public class Compiler : AST_Visitor
   public Compiler()
   {
     types = new Types();
-    module = new Module(types.natives, new ModulePath("", ""));
-    curr_scope = module.scope;
+    module = new Module(types.ns, new ModulePath("", ""));
+    curr_scope = module.ns;
 
     UseInit();
   }
@@ -196,7 +196,7 @@ public class Compiler : AST_Visitor
 
       compiled = new CompiledModule(
         module.name, 
-        module.scope,
+        module.ns,
         constants, 
         init_bytes,
         code_bytes,
@@ -1134,7 +1134,8 @@ public class Compiler : AST_Visitor
         if(instr.op == Opcodes.GetFunc)
         {
           Pop();
-          Emit(Opcodes.Call, new int[] { ((FuncSymbolScript)module.scope.root.members[instr.operands[0]]).ip_addr, (int)ast.cargs_bits}, ast.line_num);
+          //TODO: consider namespaces 
+          Emit(Opcodes.Call, new int[] { ((FuncSymbolScript)module.ns.members[instr.operands[0]]).ip_addr, (int)ast.cargs_bits}, ast.line_num);
         }
         else if(instr.op == Opcodes.GetFuncNative)
         {
@@ -1248,20 +1249,22 @@ public class Compiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    var func_symb = module.scope.Resolve(ast.name) as FuncSymbol;
+    var func_symb = module.ns.Resolve(ast.name) as FuncSymbol;
     if(func_symb == null)
       throw new Exception("Func '" + ast.name + "' code not found");
 
     if(func_symb is FuncSymbolNative fnative)
     {
-      int func_idx = types.natives.root.members.IndexOf(fnative);
+      //TODO: consider namespaces
+      int func_idx = types.ns.members.IndexOf(fnative);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
       return Emit(Opcodes.GetFuncNative, new int[] { func_idx }, ast.line_num);
     }
-    else if(func_symb.scope == module.scope)
+    else if(func_symb.scope == module.ns)
     {
-      int func_idx = module.scope.root.members.IndexOf(func_symb);
+      //TODO: consider namespaces
+      int func_idx = module.ns.members.IndexOf(func_symb);
       if(func_idx == -1)
         throw new Exception("Func '" + ast.name + "' idx not found in symbols");
 

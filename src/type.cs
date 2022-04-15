@@ -56,7 +56,8 @@ public struct TypeProxy : IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)types.Resolve(_name);
+    //TODO: should it rather be ResolvePath(..)?
+    type = (bhl.IType)types.ns.Resolve(_name);
     return type;
   }
 
@@ -81,8 +82,7 @@ public struct TypeProxy : IMarshallable
       //TODO: make this check more robust
       bool defined_in_scope = 
         resolved is Symbol symb && 
-        (symb.scope is ModuleScope || 
-         symb is BuiltInSymbol ||
+        (symb is BuiltInSymbol ||
          symb is ClassSymbolNative ||
          symb is InterfaceSymbolNative ||
          symb is EnumSymbol ||
@@ -343,9 +343,7 @@ public class Types
   };
 #endif
 
-  public NativeScope natives = new NativeScope();
-
-  List<IScope> sources = new List<IScope>();
+  public Namespace ns = new Namespace();
 
   static Types()
   {
@@ -373,32 +371,18 @@ public class Types
 
   public Types()
   {
-    InitBuiltins(natives);
-
-    AddSource(natives);
+    InitBuiltins();
   }
 
-  public void AddSource(IScope src)
+  void InitBuiltins() 
   {
-    if(sources.Contains(src))
-      return;
-    sources.Add(src);
-  }
-
-  public void RemoveSource(IScope src)
-  {
-    sources.Remove(src);
-  }
-
-  void InitBuiltins(NativeScope natives) 
-  {
-    natives.Define(Int);
-    natives.Define(Float);
-    natives.Define(Bool);
-    natives.Define(String);
-    natives.Define(Void);
-    natives.Define(Any);
-    natives.Define(ClassType);
+    ns.Define(Int);
+    ns.Define(Float);
+    ns.Define(Bool);
+    ns.Define(String);
+    ns.Define(Void);
+    ns.Define(Any);
+    ns.Define(ClassType);
 
     {
       var fn = new FuncSymbolNative("suspend", Type("void"), 
@@ -407,7 +391,7 @@ public class Types
           return CoroutineSuspend.Instance;
         } 
       );
-      natives.Define(fn);
+      ns.Define(fn);
     }
 
     {
@@ -417,7 +401,7 @@ public class Types
           return CoroutinePool.New<CoroutineYield>(frm.vm);
         } 
       );
-      natives.Define(fn);
+      ns.Define(fn);
     }
 
     //TODO: this one is controversary, it's defined for BC for now
@@ -429,7 +413,7 @@ public class Types
           return null;
         } 
       );
-      natives.Define(fn);
+      ns.Define(fn);
     }
 
     {
@@ -444,7 +428,7 @@ public class Types
         }, 
         new FuncArgSymbol("p", TypeFunc("void"))
       );
-      natives.Define(fn);
+      ns.Define(fn);
     }
 
     {
@@ -457,7 +441,7 @@ public class Types
         }, 
         new FuncArgSymbol("fid", Type("int"))
       );
-      natives.Define(fn);
+      ns.Define(fn);
     }
 
     {
@@ -471,19 +455,8 @@ public class Types
         }, 
         new FuncArgSymbol("o", Type("any"))
       );
-      natives.Define(fn);
+      ns.Define(fn);
     }
-  }
-
-  public Symbol Resolve(string name) 
-  {
-    foreach(var src in sources)
-    {
-      var s = src.Resolve(name);
-      if(s != null)
-        return s;
-    }
-    return null;
   }
 
   public struct TypeArg

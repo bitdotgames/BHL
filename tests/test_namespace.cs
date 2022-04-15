@@ -8,13 +8,13 @@ public class TestNamespace : BHL_TestBase
   [IsTested()]
   public void TestNamespacesSimpleLink()
   {
-    var ns1 = new Namespace("");
+    var ns1 = new Namespace();
     {
       var foo = new Namespace("foo");
       ns1.Define(foo);
     }
 
-    var ns2 = new Namespace("");
+    var ns2 = new Namespace();
 
     /*
     {
@@ -42,7 +42,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns1 = new Namespace("");
+    var ns1 = new Namespace();
     {
       var foo = new Namespace("foo");
 
@@ -71,7 +71,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns2 = new Namespace("");
+    var ns2 = new Namespace();
     {
       var foo = new Namespace("foo");
 
@@ -158,7 +158,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns1 = new Namespace("");
+    var ns1 = new Namespace();
     {
       var foo = new Namespace("foo");
 
@@ -184,7 +184,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns2 = new Namespace("");
+    var ns2 = new Namespace();
     {
       var foo = new Namespace("foo");
 
@@ -224,12 +224,12 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.Types.Resolve("foo") as Namespace;
+    var foo = vm.Types.ns.Resolve("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(1, foo.members.Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
 
-    var bar = vm.Types.Resolve("bar") as Namespace;
+    var bar = vm.Types.ns.Resolve("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.members.Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
@@ -263,13 +263,13 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.Types.Resolve("foo") as Namespace;
+    var foo = vm.Types.ns.Resolve("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(2, foo.members.Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
 
-    var bar = vm.Types.Resolve("bar") as Namespace;
+    var bar = vm.Types.ns.Resolve("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.members.Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -317,14 +317,14 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.Types.Resolve("foo") as Namespace;
+    var foo = vm.Types.ns.Resolve("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(3, foo.members.Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
     AssertTrue(foo.Resolve("bar") is Namespace);
 
-    var bar = vm.Types.Resolve("bar") as Namespace;
+    var bar = vm.Types.ns.Resolve("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(2, bar.members.Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);

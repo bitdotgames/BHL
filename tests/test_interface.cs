@@ -13,7 +13,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
+    var symb = vm.Types.ns.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
   }
 
@@ -27,7 +27,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
+    var symb = vm.Types.ns.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
     var hey = symb.FindMethod("hey").signature;
     AssertTrue(hey != null);
@@ -51,7 +51,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
+    var symb = vm.Types.ns.Resolve("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
 
     var hey = symb.FindMethod("hey").signature;
@@ -90,7 +90,7 @@ public class TestInterfaces : BHL_TestBase
 
     var vm = MakeVM(bhl);
     {
-      var symb = vm.Types.Resolve("Foo") as InterfaceSymbolScript;
+      var symb = vm.Types.ns.Resolve("Foo") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(1, symb.inherits.Count);
       AssertEqual("Wow", symb.inherits[0].name);
@@ -114,7 +114,7 @@ public class TestInterfaces : BHL_TestBase
     }
 
     {
-      var symb = vm.Types.Resolve("Wow") as InterfaceSymbolScript;
+      var symb = vm.Types.ns.Resolve("Wow") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(0, symb.inherits.Count);
       AssertEqual(1, symb.GetMembers().Count);
@@ -309,7 +309,7 @@ public class TestInterfaces : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      var symb = vm.Types.Resolve("Foo") as ClassSymbol;
+      var symb = vm.Types.ns.Resolve("Foo") as ClassSymbol;
       AssertTrue(symb != null);
       AssertEqual(1, symb.implements.Count);
       AssertEqual("IFoo", symb.implements[0].GetName());
@@ -543,7 +543,7 @@ public class TestInterfaces : BHL_TestBase
           new FuncArgSymbol("int", ts.Type("int")) 
         )
     );
-    ts.natives.Define(ifs);
+    ts.ns.Define(ifs);
 
     var vm = MakeVM(bhl, ts);
     AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
@@ -585,7 +585,7 @@ public class TestInterfaces : BHL_TestBase
           new FuncArgSymbol("int", ts.Type("int")) 
         )
     );
-    ts.natives.Define(ifs);
+    ts.ns.Define(ifs);
 
     var vm = MakeVM(bhl, ts);
     AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
