@@ -226,12 +226,12 @@ public class TestNamespace : BHL_TestBase
 
     var foo = vm.Types.ns.Resolve("foo") as Namespace;
     AssertTrue(foo != null);
-    AssertEqual(1, foo.members.Count);
+    AssertEqual(1, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
 
     var bar = vm.Types.ns.Resolve("bar") as Namespace;
     AssertTrue(bar != null);
-    AssertEqual(1, bar.members.Count);
+    AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
   }
 
@@ -265,13 +265,13 @@ public class TestNamespace : BHL_TestBase
 
     var foo = vm.Types.ns.Resolve("foo") as Namespace;
     AssertTrue(foo != null);
-    AssertEqual(2, foo.members.Count);
+    AssertEqual(2, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
 
     var bar = vm.Types.ns.Resolve("bar") as Namespace;
     AssertTrue(bar != null);
-    AssertEqual(1, bar.members.Count);
+    AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
   }
 
@@ -319,14 +319,14 @@ public class TestNamespace : BHL_TestBase
 
     var foo = vm.Types.ns.Resolve("foo") as Namespace;
     AssertTrue(foo != null);
-    AssertEqual(3, foo.members.Count);
+    AssertEqual(3, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
     AssertTrue(foo.Resolve("bar") is Namespace);
 
     var bar = vm.Types.ns.Resolve("bar") as Namespace;
     AssertTrue(bar != null);
-    AssertEqual(2, bar.members.Count);
+    AssertEqual(2, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
     AssertTrue(bar.Resolve("foo") is Namespace);
   }

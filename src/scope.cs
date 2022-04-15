@@ -140,11 +140,6 @@ public class Namespace : Symbol, IScope, IMarshallable
     //TODO:
   }
 
-  public IScope GetFallbackScope() { return scope; }
-
-  //TODO: should we consider linked members?
-  public SymbolsStorage GetMembers() { return members; }
-
   public struct LinksIterator
   {
     Namespace owner;
@@ -180,6 +175,21 @@ public class Namespace : Symbol, IScope, IMarshallable
   LinksIterator GetLinksIterator()
   {
     return new LinksIterator(this);
+  }
+
+  public IScope GetFallbackScope() { return scope; }
+
+  //TODO: cache it?
+  public SymbolsStorage GetMembers() 
+  { 
+    var all = new SymbolsStorage(this);
+    var it = GetLinksIterator();
+    while(it.Next())
+    {
+      for(int i=0;i<it.current.members.Count;++i)
+        all.Add(it.current.members[i]);
+    }
+    return all;
   }
 
   public Symbol Resolve(string name)
