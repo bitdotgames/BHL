@@ -24,7 +24,11 @@ public class TestNamespace : BHL_TestBase
     */
     ns2.Link(ns1);
 
-    AssertTrue(ns2.Resolve("foo") is Namespace);
+    {
+      var foo = ns2.Resolve("foo") as Namespace;
+      AssertTrue(foo != null);
+      AssertEqual(0, foo.GetMembers().Count);
+    }
   }
 
   [IsTested()]
@@ -110,9 +114,11 @@ public class TestNamespace : BHL_TestBase
     {
       var foo = ns2.ResolveLocal("foo") as Namespace;
       AssertTrue(foo != null);
+      AssertEqual(1, foo.GetMembers().Count);
 
       var foo_sub = foo.ResolveLocal("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
+      AssertEqual(2, foo_sub.GetMembers().Count);
 
       var cl_wow = foo_sub.ResolveLocal("Wow") as ClassSymbol;
       AssertTrue(cl_wow != null);
@@ -122,9 +128,11 @@ public class TestNamespace : BHL_TestBase
 
       var bar = ns2.ResolveLocal("bar") as Namespace;
       AssertTrue(bar != null);
+      AssertEqual(0, bar.GetMembers().Count);
 
       var wow = ns2.ResolveLocal("wow") as Namespace;
       AssertTrue(wow != null);
+      AssertEqual(0, wow.GetMembers().Count);
     }
 
     AssertEqual("foo", ns2.ResolvePath("foo").name);

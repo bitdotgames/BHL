@@ -187,7 +187,18 @@ public class Namespace : Symbol, IScope, IMarshallable
     while(it.Next())
     {
       for(int i=0;i<it.current.members.Count;++i)
-        all.Add(it.current.members[i]);
+      {
+        var m = it.current.members[i];
+        if(m is Namespace ns)
+        {
+          if(!all.Contains(ns.name))
+            all.Add(ns);
+          else 
+            continue;
+        }
+        else
+          all.Add(m);
+      }
     }
     return all;
   }
