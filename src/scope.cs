@@ -137,7 +137,24 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public void Unlink(Namespace other)
   {
-    //TODO:
+    for(int i=0;i<other.members.Count;++i)
+    {
+      var other_symb = other.members[i];
+
+      if(other_symb is Namespace other_ns)
+      {
+        Symbol this_symb;
+        members.TryGetValue(other_symb.name, out this_symb);
+        if(this_symb is Namespace this_ns)
+        {
+          this_ns.Unlink(other_ns);
+          if(this_ns.scope == this && this_ns.members.Count == 0)
+            members.RemoveAt(members.IndexOf(this_ns));
+        }
+      }
+    }
+
+    links.Remove(other);
   }
 
   public struct LinksIterator
