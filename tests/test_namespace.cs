@@ -271,6 +271,133 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNamespacesUnlinkPreserveChangedStuff()
+  {
+    /*
+    {
+      foo {
+        foo_sub {
+          class Wow {}
+        }
+      }
+
+      wow {
+      }
+    }
+    */
+    var ns1 = new Namespace();
+    {
+      var foo = new Namespace("foo");
+
+      var foo_sub = new Namespace("foo_sub");
+
+      var cl = new ClassSymbolNative("Wow", null);
+      foo_sub.Define(cl);
+
+      foo.Define(foo_sub);
+
+      ns1.Define(foo);
+
+      var wow = new Namespace("wow");
+      ns1.Define(wow);
+    }
+
+    /*
+    {
+      foo {
+        foo_sub {
+          class Hey {}
+        }
+      }
+
+      bar {
+      }
+    }
+    */
+    var ns2 = new Namespace();
+    {
+      var foo = new Namespace("foo");
+
+      var foo_sub = new Namespace("foo_sub");
+
+      var cl = new ClassSymbolNative("Hey", null);
+      foo_sub.Define(cl);
+
+      foo.Define(foo_sub);
+
+      ns2.Define(foo);
+
+      var bar = new Namespace("bar");
+      ns2.Define(bar);
+    }
+
+    ns2.Link(ns1);
+
+    /*
+    {
+      foo {
+        foo_sub {
+          class Wow {}
+
+          class Hey {}
+        }
+      }
+
+      wow {
+      }
+
+      bar {
+      }
+    }
+    */
+
+    (ns2.ResolveLocal("wow") as Namespace).Define(new Namespace("wow_sub"));
+    ns2.Unlink(ns1);
+
+    /*
+    {
+      foo {
+        foo_sub {
+          class Hey {}
+        }
+      }
+
+      wow {
+        wow_sub {
+        }
+      }
+
+      bar {
+      }
+    }
+    */
+
+    {
+      var foo = ns2.ResolveLocal("foo") as Namespace;
+      AssertTrue(foo != null);
+      AssertEqual(1, foo.GetMembers().Count);
+
+      var foo_sub = foo.ResolveLocal("foo_sub") as Namespace;
+      AssertTrue(foo_sub != null);
+      AssertEqual(1, foo_sub.GetMembers().Count);
+
+      var cl_wow = foo_sub.ResolveLocal("Wow") as ClassSymbol;
+      AssertTrue(cl_wow == null);
+
+      var cl_hey = foo_sub.ResolveLocal("Hey") as ClassSymbol;
+      AssertTrue(cl_hey != null);
+
+      var bar = ns2.ResolveLocal("bar") as Namespace;
+      AssertTrue(bar != null);
+
+      var wow = ns2.ResolveLocal("wow") as Namespace;
+      AssertTrue(wow != null);
+
+      AssertTrue(wow.ResolveLocal("wow_sub") is Namespace);
+    }
+  }
+
+  [IsTested()]
   public void TestNamespacesLinkConflict()
   {
     /*
