@@ -3080,11 +3080,12 @@ public class Module
   }
   public ModulePath path;
   public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
-  public Namespace ns = new Namespace();
+  public Namespace ns;
 
   public Module(Namespace dflt, ModulePath path)
   {
     this.path = path;
+    ns = new Namespace("", name);
     ns.Link(dflt);
   }
 
