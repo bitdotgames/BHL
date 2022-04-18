@@ -283,15 +283,17 @@ public class Frontend : bhlBaseVisitor<object>
     this.parsed = parsed;
     this.tokens = parsed.tokens;
 
+    types.ns.Link(module.ns);
+
+    this.types = types;
     this.module = module;
 
     curr_scope = this.module.ns;
 
+
     if(importer == null)
       importer = new Importer();
     this.importer = importer;
-
-    this.types = types;
 
     this.decls_only = decls_only;
   }
