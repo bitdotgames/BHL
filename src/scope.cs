@@ -66,6 +66,8 @@ public class Namespace : Symbol, IScope, IMarshallable
 {
   public const uint CLASS_ID = 20;
 
+  public string module_name = "";
+
   public SymbolsStorage members;
 
   public List<Namespace> links = new List<Namespace>();
@@ -75,15 +77,16 @@ public class Namespace : Symbol, IScope, IMarshallable
     return CLASS_ID;
   }
 
-  public Namespace(string name)
+  public Namespace(string name, string module_name = "")
     : base(name, default(TypeProxy))
   {
+    this.module_name = module_name;
     this.members = new SymbolsStorage(this);
   }
 
   //root and marshall version 
   public Namespace()
-    : this("")
+    : this("", "")
   {}
 
   public void Link(Namespace other)
@@ -105,7 +108,7 @@ public class Namespace : Symbol, IScope, IMarshallable
     {
       var other_symb = other.members[i];
 
-      var this_symb = ResolveLocal(other_symb.name);
+      var this_symb = ResolveNoFallback(other_symb.name);
 
       if(other_symb is Namespace other_ns)
       {
@@ -222,7 +225,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public Symbol Resolve(string name)
   {
-    var s = ResolveLocal(name); 
+    var s = ResolveNoFallback(name); 
     if(s != null)
       return s;
 
@@ -232,7 +235,7 @@ public class Namespace : Symbol, IScope, IMarshallable
     return null;
   }
 
-  public Symbol ResolveLocal(string name)
+  public Symbol ResolveNoFallback(string name)
   {
     var it = GetLinksIterator();
     while(it.Next())
@@ -256,7 +259,7 @@ public class Namespace : Symbol, IScope, IMarshallable
       Symbol symb;
       //special case for namespace
       if(scope is Namespace ns)
-        symb = ns.ResolveLocal(name);
+        symb = ns.ResolveNoFallback(name);
       else
         scope.GetMembers().TryGetValue(name, out symb);
 
@@ -278,7 +281,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public void Define(Symbol sym) 
   {
-    if(ResolveLocal(sym.name) != null)
+    if(ResolveNoFallback(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym);
@@ -304,6 +307,7 @@ public class Namespace : Symbol, IScope, IMarshallable
   public override void Sync(SyncContext ctx) 
   {
     Marshall.Sync(ctx, ref name);
+    Marshall.Sync(ctx, ref module_name);
     Marshall.Sync(ctx, ref members);
   }
 }

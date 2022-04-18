@@ -853,9 +853,8 @@ public class VM
     var loaded = loader.Load(module_name);
     if(loaded == null)
       throw new Exception("Module '" + module_name + "' not found");
-    RegisterModule(loaded);
 
-    module.ns.Link(loaded.ns);
+    RegisterModule(loaded);
   }
 
   public void RegisterModule(CompiledModule cm)
@@ -1027,8 +1026,7 @@ public class VM
     if(fs == null)
       return false;
 
-    //var cm = modules[fs.module_name];
-    var cm = modules["TODO"];
+    var cm = modules[((Namespace)fs.scope).module_name];
 
     addr = new FuncAddr() {
       module = cm,

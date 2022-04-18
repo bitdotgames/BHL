@@ -2058,11 +2058,17 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var name = ctx.NAME().GetText();
 
-    var ns = (curr_scope as Namespace).ResolveLocal(name) as Namespace;
+    var ns = (curr_scope as Namespace).ResolveNoFallback(name) as Namespace;
     if(ns == null)
     {
-      ns = new Namespace(name);
+      ns = new Namespace(name, module.name);
       curr_scope.Define(ns);
+    }
+    else 
+    {
+      if(!string.IsNullOrEmpty(ns.module_name))
+        throw new Exception("Expected an empty namespace's module name, got: " + ns.module_name);
+      ns.module_name = module.name;
     }
 
     var orig_scope = curr_scope;
