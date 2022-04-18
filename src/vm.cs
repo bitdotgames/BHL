@@ -1041,8 +1041,7 @@ public class VM
   FuncAddr GetFuncAddr(string name)
   {
     var fs = (FuncSymbolScript)types.ns.Resolve(name);
-    //var cm = modules[fs.module_name];
-    var cm = modules["TODO"];
+    var cm = modules[((Namespace)fs.scope).module_name];
     return new FuncAddr() {
       module = cm,
       fs = fs,
