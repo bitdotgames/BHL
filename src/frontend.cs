@@ -286,7 +286,10 @@ public class Frontend : bhlBaseVisitor<object>
     this.types = types;
     this.module = module;
 
+    //NOTE: we need to link the built-in namespace and at the same time
+    //      we need to link the global namespace with the module's namespace
     module.ns.Link(types.ns);
+    types.ns.Link(module.ns);
 
     curr_scope = this.module.ns;
 
