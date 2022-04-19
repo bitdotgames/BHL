@@ -161,7 +161,7 @@ public class Compiler : AST_Visitor
   public Compiler()
   {
     types = new Types();
-    module = new Module(types.ns, new ModulePath("", ""));
+    module = new Module("", "");
     curr_scope = module.ns;
 
     UseInit();

@@ -767,7 +767,7 @@ public class BHL_TestBase
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
 
-    var mdl = new bhl.Module(ts.ns, "", "");
+    var mdl = new bhl.Module("", "");
 
     var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts);
 
