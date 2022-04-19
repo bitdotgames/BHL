@@ -583,7 +583,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope_type != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), scope_type, func_symb.scope_idx);
+          ast = new AST_Call(scope_type != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb.scope is Namespace ns ? ns.module_name : ""), scope_type, func_symb.scope_idx);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -593,7 +593,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = module.ns.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = new AST_Call(EnumCall.FUNC, line, func_symb.name, (func_symb is FuncSymbolScript fss ? fss.module_name : ""), null, func_symb.scope_idx);
+            ast = new AST_Call(EnumCall.FUNC, line, func_symb.name, (func_symb.scope is Namespace ns ? ns.module_name : ""), null, func_symb.scope_idx);
             AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
             type = func_symb.GetReturnType();
           }
@@ -636,7 +636,7 @@ public class Frontend : bhlBaseVisitor<object>
           if(call_func_symb == null)
             FireError(name, "no such function found");
 
-          ast = new AST_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb is FuncSymbolScript fss ? fss.module_name : ""), null);
+          ast = new AST_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb.scope is Namespace ns ? ns.module_name : ""), null);
           type = func_symb.type.Get();
         }
         else

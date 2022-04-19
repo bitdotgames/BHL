@@ -1043,15 +1043,6 @@ public class FuncSymbolScript : FuncSymbol
     }
   }
 
-  public string module_name {
-    get {
-      //TODO: ???
-      //if(scope is ModuleScope ms)
-      //  return ms.module_name;
-      return "";
-    }
-  }
-
   public int default_args_num;
   public int ip_addr;
 
