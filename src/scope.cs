@@ -263,11 +263,13 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public Symbol ResolvePath(string path)
   {
-    var names = path.Split('.');
+    int start_idx = 0;
+    int next_idx = path.IndexOf('.');
+
     IScope scope = this;
-    for(int i=0;i<names.Length;++i)
+    while(true)
     {
-      var name = names[i];
+      string name = next_idx == -1 ? path.Substring(start_idx) : path.Substring(start_idx, next_idx - start_idx);
 
       Symbol symb;
       //special case for namespace
@@ -278,9 +280,13 @@ public class Namespace : Symbol, IScope, IMarshallable
 
       if(symb == null)
         break;
+
       //let's check if it's the last path item
-      else if(i == names.Length-1)
+      if(next_idx == -1)
         return symb;
+
+      start_idx = next_idx + 1;
+      next_idx = path.IndexOf('.', start_idx);
 
       scope = symb as IScope;
       //we can't proceed 'deeper' if the last resolved 

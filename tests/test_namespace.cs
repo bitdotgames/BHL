@@ -585,9 +585,8 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(bar.Resolve("foo") is Namespace);
   }
 
-  //TODO:
-  //[IsTested()]
-  public void TestNamespacesExec()
+  [IsTested()]
+  public void TestNamespacesFuncExec()
   {
     string bhl = @"
     namespace foo {
