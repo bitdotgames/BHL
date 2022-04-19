@@ -1052,12 +1052,12 @@ public class VM
   static FuncSymbol TryMapIp2Func(CompiledModule cm, int ip)
   {
     //TODO: we need to recursively traverse all namespaces
-    //for(int i=0;i<cm.ns.members.Count; ++i)
-    //{
-    //  var fsymb = cm.ns.members[i] as FuncSymbolScript;
-    //  if(fsymb != null && fsymb.ip_addr == ip)
-    //    return fsymb;
-    //}
+    for(int i=0;i<cm.ns.members.Count; ++i)
+    {
+      var fsymb = cm.ns.members[i] as FuncSymbolScript;
+      if(fsymb != null && fsymb.ip_addr == ip)
+        return fsymb;
+    }
     return null;
   }
 

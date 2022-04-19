@@ -18556,15 +18556,13 @@ public class TestVM : BHL_TestBase
   [IsTested()]
   public void TestSerializeModuleSymbols()
   {
-
     var s = new MemoryStream();
     {
       var types = new Types();
 
       var ns = new Namespace();
       ns.Link(types.ns);
-      //???
-      //types.ns.Link(ns);
+      types.ns.Link(ns);
 
       ns.Define(new VariableSymbol("foo", Types.Int));
 
@@ -18599,13 +18597,13 @@ public class TestVM : BHL_TestBase
 
       var ns = new Namespace();
       ns.Link(types.ns);
-      //????
-      //types.ns.Link(ns);
+      types.ns.Link(ns);
 
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
 
-      AssertEqual(8, ns.GetMembers().Count);
+      AssertEqual(8 + types.ns.members.Count, ns.GetMembers().Count);
+      AssertEqual(8, ns.members.Count);
 
       var foo = (VariableSymbol)ns.Resolve("foo");
       AssertEqual(foo.name, "foo");

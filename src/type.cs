@@ -80,11 +80,13 @@ public struct TypeProxy : IMarshallable
     {   
       var resolved = Get();
       //TODO: make this check more robust
-      bool defined_in_scope = 
+      bool name_referenced = 
         resolved is Symbol symb && 
         (symb is BuiltInSymbol ||
          symb is ClassSymbolNative ||
+         symb is ClassSymbolScript ||
          symb is InterfaceSymbolNative ||
+         symb is InterfaceSymbolScript ||
          symb is EnumSymbol ||
          (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol))
          );
@@ -92,7 +94,7 @@ public struct TypeProxy : IMarshallable
       //NOTE: we want to marshall only those types which are not
       //      defined elsewhere otherwise we just want to keep
       //      string reference at them
-      if(!defined_in_scope)
+      if(!name_referenced)
       {
         mg = resolved as IMarshallableGeneric;
         if(mg == null)
