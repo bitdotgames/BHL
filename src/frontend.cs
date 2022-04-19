@@ -290,7 +290,6 @@ public class Frontend : bhlBaseVisitor<object>
 
     curr_scope = this.module.ns;
 
-
     if(importer == null)
       importer = new Importer();
     this.importer = importer;

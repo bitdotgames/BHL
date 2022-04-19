@@ -374,6 +374,16 @@ public class Types
     InitBuiltins();
   }
 
+  Types(Namespace ns)
+  {
+    this.ns = ns;
+  }
+
+  public Types Clone()
+  {
+    return new Types(ns.Clone());
+  }
+
   void InitBuiltins() 
   {
     ns.Define(Int);

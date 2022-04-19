@@ -89,6 +89,19 @@ public class Namespace : Symbol, IScope, IMarshallable
     : this("", "")
   {}
 
+  public Namespace Clone()
+  {
+    var copy = new Namespace(name, module_name);
+
+    for(int i=0;i<members.Count;++i)
+      copy.members.Add(members[i]);
+
+    foreach(var link in links)
+      copy.links.Add(link.Clone());
+
+    return copy;
+  }
+
   public void Link(Namespace other)
   {
     var conflict_symb = TryLink(other);

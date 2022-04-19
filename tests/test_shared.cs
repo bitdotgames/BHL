@@ -485,6 +485,9 @@ public class BHL_TestBase
   {
     if(ts == null)
       ts = new Types();
+    else
+      //NOTE: we don't want to affect the original ts
+      ts = ts.Clone();
 
     //let's serialize/unserialize the compiled module so that
     //it's going to go thru the full compilation cycle
@@ -734,12 +737,12 @@ public class BHL_TestBase
   {
     if(ts == null)
       ts = new Types();
-    //NOTE: we don't want to affect the original ts
-    //var ts_copy = ts.CloneGlobs();
+    else
+      //NOTE: we don't want to affect the original ts
+      ts = ts.Clone();
 
     var conf = new BuildConf();
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
-    //conf.ts = ts_copy;
     conf.ts = ts;
     conf.files = files;
     conf.res_file = TestDirPath() + "/result.bin";
@@ -760,18 +763,16 @@ public class BHL_TestBase
   {
     if(ts == null)
       ts = new Types();
-    //NOTE: we don't want to affect the original ts
-    //var ts_copy = ts.CloneGlobs();
+    else
+      //NOTE: we don't want to affect the original ts
+      ts = ts.Clone();
 
-    //var mdl = new bhl.Module(ts_copy.natives, "", "");
     var mdl = new bhl.Module(ts.ns, "", "");
 
-    //var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts_copy);
     var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts);
 
     if(show_ast)
       AST_Dumper.Dump(front_res.ast);
-    //var c  = new Compiler(ts_copy, front_res);
     var c  = new Compiler(ts, front_res);
     var cm = c.Compile();
     if(show_bytes)
