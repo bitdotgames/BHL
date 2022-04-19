@@ -2224,7 +2224,7 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, bool add_symbols_to_types = false)
+  static public CompiledModule FromStream(Types types, Stream src, bool link_types_ns = false)
   {
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
     {
@@ -2239,9 +2239,9 @@ public class CompiledModule
       var symb_bytes = r.ReadBytes(symb_len);
       var ns = new Namespace();
       ns.Link(types.ns);
+      if(link_types_ns)
+        types.ns.Link(ns);
       var symb_factory = new SymbolFactory(types);
-      //if(add_symbols_to_types)
-      //  types.AddSource(ns);
       Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
 
       byte[] initcode = null;

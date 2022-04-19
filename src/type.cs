@@ -80,7 +80,7 @@ public struct TypeProxy : IMarshallable
     {   
       var resolved = Get();
       //TODO: make this check more robust
-      bool name_referenced = 
+      bool is_weak_ref = 
         resolved is Symbol symb && 
         (symb is BuiltInSymbol ||
          symb is ClassSymbolNative ||
@@ -94,7 +94,7 @@ public struct TypeProxy : IMarshallable
       //NOTE: we want to marshall only those types which are not
       //      defined elsewhere otherwise we just want to keep
       //      string reference at them
-      if(!name_referenced)
+      if(!is_weak_ref)
       {
         mg = resolved as IMarshallableGeneric;
         if(mg == null)
