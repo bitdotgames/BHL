@@ -2203,6 +2203,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var ast = new AST_FuncDecl(func_symb, ctx.Stop.Line);
 
+    var orig_scope = curr_scope;
     curr_scope = func_symb;
     PushFuncDecl(func_symb);
 
@@ -2226,7 +2227,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     PopFuncDecl();
 
-    curr_scope = scope;
+    curr_scope = orig_scope;
 
     func_symb.default_args_num = ast.GetDefaultArgsNum();
 
