@@ -297,25 +297,23 @@ public class Namespace : Symbol, IScope, IMarshallable
     if(ResolveNoFallback(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
+    //NOTE: calculating scope idx only for global variables for now
+    //      (we are not interested in calculating scope indices for global
+    //      funcs for now so that these indices won't clash)
+    if(sym is VariableSymbol vs)
+    {
+      if(vs.scope_idx == -1)
+      {
+        int c = 0;
+        for(int i=0;i<members.Count;++i)
+          if(members[i] is VariableSymbol)
+            ++c;
+        vs.scope_idx = c;
+      }
+    } 
+
     members.Add(sym);
   }
-
-  //TODO: restore this stuff for module scope vars
-  //if(sym is VariableSymbol vs)
-  //{
-  //  //NOTE: calculating scope idx only for global variables for now
-  //  //      (we are not interested in calculating scope indices for global
-  //  //      funcs for now so that these indices won't clash)
-  //  if(vs.scope_idx == -1)
-  //  {
-  //    int c = 0;
-  //    var members = root.GetMembers();
-  //    for(int i=0;i<members.Count;++i)
-  //      if(members[i] is VariableSymbol)
-  //        ++c;
-  //    vs.scope_idx = c;
-  //  }
-  //} 
 
   public override void Sync(SyncContext ctx) 
   {

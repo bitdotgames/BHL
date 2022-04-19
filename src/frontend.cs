@@ -288,6 +288,10 @@ public class Frontend : bhlBaseVisitor<object>
 
     //NOTE: we need to link the built-in namespace and at the same time
     //      we need to link the global namespace with the module's namespace
+    //TODO: maybe we need to separate built-in namespace from the global one in Types? 
+    //      E.g:
+    //       module.ns.Link(types.default_ns);
+    //       types.global_ns.Link(module.ns);
     module.ns.Link(types.ns);
     types.ns.Link(module.ns);
 
@@ -615,7 +619,7 @@ public class Frontend : bhlBaseVisitor<object>
             var_symb.name,
             scope_type,
             var_symb.scope_idx,
-            is_global ? var_symb.module_name : ""
+            is_global ? ((Namespace)var_symb.scope).module_name : ""
           );
           //handling passing by ref for class fields
           if(scope_type != null && PeekCallByRef())

@@ -741,15 +741,6 @@ public class VariableSymbol : Symbol, IScopeIndexed
 {
   public const uint CLASS_ID = 8;
 
-  public string module_name { 
-    get {
-      //TODO:???
-      //if(scope is ModuleScope ms)
-      //  return ms.module_name;
-      return "";
-    }
-  }
-
   int _scope_idx = -1;
   public int scope_idx {
     get {
