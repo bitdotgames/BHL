@@ -1131,8 +1131,7 @@ public class Compiler : AST_Visitor
         if(instr.op == Opcodes.GetFunc)
         {
           Pop();
-          //TODO: consider namespaces 
-          Emit(Opcodes.Call, new int[] { ((FuncSymbolScript)module.ns.members[instr.operands[0]]).ip_addr, (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.Call, new int[] { ((FuncSymbolScript)ast.symb).ip_addr, (int)ast.cargs_bits}, ast.line_num);
         }
         else if(instr.op == Opcodes.GetFuncNative)
         {
@@ -1252,7 +1251,7 @@ public class Compiler : AST_Visitor
 
     if(func_symb is FuncSymbolNative)
       return Emit(Opcodes.GetFuncNative, new int[] { func_symb.scope_idx }, ast.line_num);
-    else if(func_symb.scope == module.ns)
+    else if(((Namespace)func_symb.scope).module_name == module.name)
       return Emit(Opcodes.GetFunc, new int[] { func_symb.scope_idx }, ast.line_num);
     else
     {
