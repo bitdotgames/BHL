@@ -2974,7 +2974,7 @@ public class Frontend : bhlBaseVisitor<object>
     var bin_op = new AST_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
     bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
-    bin_op.AddChild(new AST_Call(EnumCall.MVAR, ctx.Start.Line, "Count", arr_type, ((FieldSymbol)arr_type.Resolve("Count")).scope_idx));
+    bin_op.AddChild(new AST_Call(EnumCall.MVAR, ctx.Start.Line, arr_type.Resolve("Count")));
     cond.AddChild(bin_op);
     ast.AddChild(cond);
 
