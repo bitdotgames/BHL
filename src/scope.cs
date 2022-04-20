@@ -269,9 +269,15 @@ public class Namespace : Symbol, IScope, IMarshallable
     IScope scope = this;
     while(true)
     {
-      string name = next_idx == -1 ? path.Substring(start_idx) : path.Substring(start_idx, next_idx - start_idx);
+      string name = 
+        next_idx == -1 ? 
+        (start_idx == 0 ? path : path.Substring(start_idx)) : 
+        path.Substring(start_idx, next_idx - start_idx);
 
       Symbol symb;
+      //TODO: make 'no-fallback' feature part of the IScope interface
+      //var symb = scope.ResolveLocal(name);
+
       //special case for namespace
       if(scope is Namespace ns)
         symb = ns.ResolveNoFallback(name);
