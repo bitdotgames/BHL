@@ -321,12 +321,15 @@ public enum EnumCall
 public class AST_Call  : AST_Tree 
 {
   public EnumCall type = new EnumCall();
-  public string name = "";
-  public string module_name = "";
-  public uint cargs_bits;
   public int line_num;
+  public Symbol symb;
+  //TODO: can be calculated using symbol
+  public string module_name = "";
+  //TODO: can be calculated using symbol
   public int symb_idx;
+  //TODO: can be calculated using symbol
   public IInstanceType scope_type;
+  public uint cargs_bits;
 
   public AST_Call(
     EnumCall type, 
@@ -335,32 +338,13 @@ public class AST_Call  : AST_Tree
     IInstanceType scope_type = null, 
     uint cargs_bits = 0
   )
-    : this(
-        type, 
-        line_num, 
-        symb.name, 
-        scope_type, 
-        symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1, 
-        symb.scope is Namespace ? ((Namespace)symb.scope).module_name : "", 
-        cargs_bits)
-  {}
-
-  public AST_Call(
-    EnumCall type, 
-    int line_num, 
-    string name = "", 
-    IInstanceType scope_type = null, 
-    int symb_idx = -1, 
-    string module_name = "", 
-    uint cargs_bits = 0
-  )
   {
     this.type = type;
-    this.name = name;
-    this.scope_type = scope_type;
     this.line_num = line_num;
-    this.symb_idx = symb_idx;
-    this.module_name = module_name;
+    this.symb = symb;
+    this.scope_type = scope_type;
+    this.symb_idx = symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1;
+    this.module_name = symb.scope is Namespace ? ((Namespace)symb.scope).module_name : "";
     this.cargs_bits = cargs_bits;
   }
 }
@@ -575,7 +559,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Call node)
   {
     Console.Write("(CALL ");
-    Console.Write(node.type + " " + node.name);
+    Console.Write(node.type + " " + node.symb?.name);
     VisitChildren(node);
     Console.Write(")");
   }

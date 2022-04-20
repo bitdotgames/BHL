@@ -773,7 +773,7 @@ public class BHL_TestBase
 
     if(show_ast)
       AST_Dumper.Dump(front_res.ast);
-    var c  = new Compiler(ts, front_res);
+    var c  = new Compiler(front_res);
     var cm = c.Compile();
     if(show_bytes)
       Dump(c);

@@ -601,7 +601,7 @@ public class Frontend : bhlBaseVisitor<object>
           else //func ptr member of class
           {
             PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb));
-            ast = new AST_Call(EnumCall.FUNC_MVAR, line);
+            ast = new AST_Call(EnumCall.FUNC_MVAR, line, null);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
           }
@@ -674,7 +674,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(ftype == null)
         FireError(cargs, "no func to call");
       
-      ast = new AST_Call(EnumCall.LMBD, line);
+      ast = new AST_Call(EnumCall.LMBD, line, null);
       AddCallArgs(ftype, cargs, ref ast, ref pre_call);
       type = ftype.ret_type.Get();
     }
@@ -700,8 +700,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     type = arr_type.item_type.Get();
 
-    var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line);
-    ast.scope_type = arr_type;
+    var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null, arr_type);
 
     PeekAST().AddChild(ast);
   }
@@ -1593,7 +1592,7 @@ public class Frontend : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      var op_call = new AST_Call(EnumCall.MFUNC, ctx.Start.Line, op, class_symb, op_func.scope_idx, "", 1/*cargs bits*/);
+      var op_call = new AST_Call(EnumCall.MFUNC, ctx.Start.Line, op_func, class_symb, 1/*cargs bits*/);
       over_ast.AddChild(op_call);
       ast = over_ast;
     }
@@ -2889,7 +2888,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitYield(bhlParser.YieldContext ctx)
   {
      int line = ctx.Start.Line;
-     var ast = new AST_Call(EnumCall.FUNC, line, "yield");
+     var ast = new AST_Call(EnumCall.FUNC, line, types.ns.Resolve("yield"));
      PeekAST().AddChild(ast);
      return null;
   }
@@ -2914,7 +2913,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var body = new AST_Block(BlockType.SEQ);
     int line = ctx.Start.Line;
-    body.AddChild(new AST_Call(EnumCall.FUNC, line, "yield"));
+    body.AddChild(new AST_Call(EnumCall.FUNC, line, types.ns.Resolve("yield")));
     ast.AddChild(body);
 
     --loops_stack;
@@ -3007,7 +3006,7 @@ public class Frontend : bhlBaseVisitor<object>
     var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
     //prepending filling of the iterator var
     block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
-    var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line);
+    var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line, null);
     block.children.Insert(0, arr_at);
     block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
     block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));

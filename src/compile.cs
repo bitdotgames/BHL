@@ -11,8 +11,6 @@ public class Compiler : AST_Visitor
 
   Module module;
 
-  Types types;
-
   List<Const> constants = new List<Const>();
   List<Instruction> init = new List<Instruction>();
   List<Instruction> code = new List<Instruction>();
@@ -147,9 +145,8 @@ public class Compiler : AST_Visitor
     DeclareOpcodes();
   }
 
-  public Compiler(Types types, Frontend.Result fres)
+  public Compiler(Frontend.Result fres)
   {
-    this.types = types;
     module = fres.module;
     ast = fres.ast;
     curr_scope = module.ns;
@@ -160,7 +157,6 @@ public class Compiler : AST_Visitor
   //NOTE: for testing purposes only
   public Compiler()
   {
-    types = new Types();
     module = new Module("", "");
     curr_scope = module.ns;
 
@@ -1155,7 +1151,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVAR:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
@@ -1165,7 +1161,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVARW:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
@@ -1178,9 +1174,9 @@ public class Compiler : AST_Visitor
         if(instance_type == null)
           throw new Exception("Instance type not found: " + ast.scope_type.GetName());
 
-        var mfunc = instance_type.GetMembers().TryAt(ast.symb_idx) as FuncSymbol;
+        var mfunc = ast.symb as FuncSymbol;
         if(mfunc == null)
-          throw new Exception("Class method '" + ast.name + "' not found in type '" + ast.scope_type.GetName() + "' by index " + ast.symb_idx);
+          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + ast.scope_type.GetName() + "' by index " + ast.symb_idx);
 
         VisitChildren(ast);
         
@@ -1200,7 +1196,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVARREF:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.name + "' idx is not valid: " + ast.scope_type.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type.GetName());
 
         VisitChildren(ast);
 
@@ -1250,32 +1246,19 @@ public class Compiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    var func_symb = module.ns.Resolve(ast.name) as FuncSymbol;
+    var func_symb = ast.symb as FuncSymbol;
     if(func_symb == null)
-      throw new Exception("Func '" + ast.name + "' code not found");
+      throw new Exception("Symbol '" + ast.symb?.name + "' is not a func");
 
-    if(func_symb is FuncSymbolNative fnative)
-    {
-      //TODO: consider namespaces
-      int func_idx = types.ns.members.IndexOf(fnative);
-      if(func_idx == -1)
-        throw new Exception("Func '" + ast.name + "' idx not found in symbols");
-      return Emit(Opcodes.GetFuncNative, new int[] { func_idx }, ast.line_num);
-    }
+    if(func_symb is FuncSymbolNative)
+      return Emit(Opcodes.GetFuncNative, new int[] { func_symb.scope_idx }, ast.line_num);
     else if(func_symb.scope == module.ns)
-    {
-      //TODO: consider namespaces
-      int func_idx = module.ns.members.IndexOf(func_symb);
-      if(func_idx == -1)
-        throw new Exception("Func '" + ast.name + "' idx not found in symbols");
-
-      return Emit(Opcodes.GetFunc, new int[] { func_idx }, ast.line_num);
-    }
+      return Emit(Opcodes.GetFunc, new int[] { func_symb.scope_idx }, ast.line_num);
     else
     {
-      int func_idx = AddConstant(ast.name);
-
-      return Emit(Opcodes.GetFuncImported, new int[] {func_idx}, ast.line_num);
+      //TODO: use full namespace path?
+      int func_path_idx = AddConstant(ast.symb.name);
+      return Emit(Opcodes.GetFuncImported, new int[] { func_path_idx }, ast.line_num);
     }
   }
 

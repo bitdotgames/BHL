@@ -582,7 +582,7 @@ public class Build
             w.file2path.Add(file, file_module.path);
             w.file2symbols.Add(file, front_res.module.ns.members);
 
-            var c  = new Compiler(w.ts, front_res);
+            var c  = new Compiler(front_res);
             var cm = c.Compile();
             CompiledModule.ToFile(cm, compiled_file);
           }

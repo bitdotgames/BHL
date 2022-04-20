@@ -608,8 +608,7 @@ public class TestNamespace : BHL_TestBase
     AssertEqual(0, Execute(vm, "bar.test").result.PopRelease().num);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestNamespacesFuncCall()
   {
     string bhl = @"

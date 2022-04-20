@@ -1551,9 +1551,9 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string func_name = curr_frame.constants[func_idx].str;
+        string func_path = curr_frame.constants[func_idx].str;
         
-        var maddr = GetFuncAddr(func_name);
+        var maddr = GetFuncAddr(func_path);
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, maddr.module, maddr.ip);
