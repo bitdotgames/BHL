@@ -2855,23 +2855,58 @@ public class TestVM : BHL_TestBase
   [IsTested()]
   public void TestNotAllowedAssignAFuncCall()
   {
-    string bhl = @"
-    func int bar() 
     {
-      return 123
-    }
-    func test()
-    {
-      bar() = 1
-    }
-    ";
+      string bhl = @"
+      func int bar() 
+      {
+        return 123
+      }
+      func test()
+      {
+        bar() = 1
+      }
+      ";
 
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "invalid assignment"
-    );
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "invalid assignment"
+      );
+    }
+
+    {
+      string bhl = @"
+      func test()
+      {
+        func int () { return 1 }() = 1
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "mismatched input"
+      );
+    }
+
+    {
+      string bhl = @"
+      func test()
+      {
+        func int() f = func int () { return 1 }
+        f() = 1
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "invalid assignment"
+      );
+    }
   }
 
   [IsTested()]
