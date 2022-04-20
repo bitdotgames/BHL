@@ -265,7 +265,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImplicitIntArgsCasNativeFunc()
+  public void TestImplicitIntArgsCastNativeFunc()
   {
     string bhl = @"
 
