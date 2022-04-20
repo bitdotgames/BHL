@@ -328,15 +328,32 @@ public class AST_Call  : AST_Tree
   public int symb_idx;
   public IInstanceType scope_type;
 
-  public AST_Call(EnumCall type, int line_num, string name = "", string module_name = "", IInstanceType scope_type = null, int symb_idx = -1, uint cargs_bits = 0)
-    : this(type, line_num, name, scope_type, symb_idx, module_name, cargs_bits)
+  public AST_Call(
+    EnumCall type, 
+    int line_num, 
+    Symbol symb, 
+    IInstanceType scope_type = null, 
+    uint cargs_bits = 0
+  )
+    : this(
+        type, 
+        line_num, 
+        symb.name, 
+        scope_type, 
+        symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1, 
+        symb.scope is Namespace ? ((Namespace)symb.scope).module_name : "", 
+        cargs_bits)
   {}
 
-  public AST_Call(EnumCall type, int line_num, VariableSymbol symb, IInstanceType scope_type = null, uint cargs_bits = 0)
-    : this(type, line_num, symb.name, scope_type, symb.scope_idx, symb.scope is Namespace ? ((Namespace)symb.scope).module_name : "", cargs_bits)
-  {}
-
-  public AST_Call(EnumCall type, int line_num, string name, IInstanceType scope_type, int symb_idx = -1, string module_name = "", uint cargs_bits = 0)
+  public AST_Call(
+    EnumCall type, 
+    int line_num, 
+    string name = "", 
+    IInstanceType scope_type = null, 
+    int symb_idx = -1, 
+    string module_name = "", 
+    uint cargs_bits = 0
+  )
   {
     this.type = type;
     this.name = name;

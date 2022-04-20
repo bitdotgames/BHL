@@ -583,7 +583,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope_type != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb.name, (func_symb.scope is Namespace ns ? ns.module_name : ""), scope_type, func_symb.scope_idx);
+          ast = new AST_Call(scope_type != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb, scope_type);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -593,7 +593,7 @@ public class Frontend : bhlBaseVisitor<object>
           func_symb = module.ns.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
           {
-            ast = new AST_Call(EnumCall.FUNC, line, func_symb.name, (func_symb.scope is Namespace ns ? ns.module_name : ""), null, func_symb.scope_idx);
+            ast = new AST_Call(EnumCall.FUNC, line, func_symb);
             AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
             type = func_symb.GetReturnType();
           }
@@ -616,10 +616,8 @@ public class Frontend : bhlBaseVisitor<object>
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
-            var_symb.name,
-            scope_type,
-            var_symb.scope_idx,
-            is_global ? ((Namespace)var_symb.scope).module_name : ""
+            var_symb,
+            scope_type
           );
           //handling passing by ref for class fields
           if(scope_type != null && PeekCallByRef())
@@ -636,7 +634,7 @@ public class Frontend : bhlBaseVisitor<object>
           if(call_func_symb == null)
             FireError(name, "no such function found");
 
-          ast = new AST_Call(EnumCall.GET_ADDR, line, call_func_symb.name, (call_func_symb.scope is Namespace ns ? ns.module_name : ""), null);
+          ast = new AST_Call(EnumCall.GET_ADDR, line, call_func_symb);
           type = func_symb.type.Get();
         }
         else
@@ -1570,7 +1568,7 @@ public class Frontend : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      var op_call = new AST_Call(EnumCall.MFUNC, ctx.Start.Line, op, "", class_symb, op_func.scope_idx, 1/*cargs bits*/);
+      var op_call = new AST_Call(EnumCall.MFUNC, ctx.Start.Line, op, class_symb, op_func.scope_idx, "", 1/*cargs bits*/);
       over_ast.AddChild(op_call);
       ast = over_ast;
     }
