@@ -1131,7 +1131,7 @@ public class Compiler : AST_Visitor
         if(instr.op == Opcodes.GetFunc)
         {
           Pop();
-          Emit(Opcodes.Call, new int[] { ((FuncSymbolScript)ast.symb).ip_addr, (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.Call, new int[] {((FuncSymbolScript)ast.symb).ip_addr, (int)ast.cargs_bits}, ast.line_num);
         }
         else if(instr.op == Opcodes.GetFuncNative)
         {
