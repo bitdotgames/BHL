@@ -2853,6 +2853,28 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNotAllowedAssignAFuncCall()
+  {
+    string bhl = @"
+    func int bar() 
+    {
+      return 123
+    }
+    func test()
+    {
+      bar() = 1
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "invalid assignment"
+    );
+  }
+
+  [IsTested()]
   public void TestSimpleSubFuncsReturn()
   {
     string bhl = @"

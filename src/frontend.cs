@@ -2366,6 +2366,8 @@ public class Frontend : bhlBaseVisitor<object>
       {
         if(assign_exp == null)
           FireError(cexp, "assign expression expected");
+        else if(cexp.chainExp()?.Length > 0 && cexp.chainExp()[cexp.chainExp().Length-1].callArgs() != null)
+          FireError(cexp, "invalid assignment");
 
         ProcChainedCall(cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
 
