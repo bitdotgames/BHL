@@ -586,7 +586,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesFuncExec()
+  public void TestNamespacesFuncStart()
   {
     string bhl = @"
     namespace foo {
@@ -604,7 +604,30 @@ public class TestNamespace : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "foo.test", Val.NewNum(vm, 3)).result.PopRelease().num);
-    AssertEqual(0, Execute(vm, "bar.test", Val.NewNum(vm, 3)).result.PopRelease().num);
+    AssertEqual(1, Execute(vm, "foo.test").result.PopRelease().num);
+    AssertEqual(0, Execute(vm, "bar.test").result.PopRelease().num);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestNamespacesFuncCall()
+  {
+    string bhl = @"
+    namespace foo {
+      func bool test()
+      {
+        return true
+      }
+    }
+
+    namespace bar {
+      func bool test()
+      {
+        return foo.test()
+      }
+    }
+    ";
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "bar.test").result.PopRelease().num);
   }
 }

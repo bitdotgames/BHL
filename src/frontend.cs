@@ -575,7 +575,7 @@ public class Frontend : bhlBaseVisitor<object>
           }
           else //func ptr member of class
           {
-            PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb, scope_type));
+            PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb));
             ast = new AST_Call(EnumCall.FUNC_MVAR, line);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
             type = ftype.ret_type.Get();
