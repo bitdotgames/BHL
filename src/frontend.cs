@@ -472,12 +472,37 @@ public class Frontend : bhlBaseVisitor<object>
     ITerminalNode curr_name = root_name;
     IInstanceType curr_scope_type = null;
 
+    int ns_offset = 0;
+
     if(root_name != null)
     {
       var root_str_name = root_name.GetText();
       var name_symb = curr_scope.Resolve(root_str_name);
       if(name_symb == null)
         FireError(root_name, "symbol not resolved");
+
+      //let's figure out the namespace offset
+      if(name_symb is Namespace ns && chain != null)
+      {
+        curr_scope = ns;
+        for(ns_offset=0;ns_offset<chain.Length;)
+        {
+          var ch = chain[ns_offset];
+          var macc = ch.memberAccess();
+          if(macc == null)
+            FireError(ch, "bad chain call");
+          name_symb = ns.Resolve(macc.NAME().GetText());
+          if(name_symb == null)
+            FireError(macc.NAME(), "symbol not resolved");
+           ++ns_offset;
+           curr_name = macc.NAME(); 
+          if(name_symb is Namespace name_ns)
+            curr_scope = name_ns;
+          else
+            break;
+        }
+      }
+
       if(name_symb.type.Get() == null)
         FireError(root_name, "bad chain call");
       curr_type = name_symb.type.Get();
@@ -485,7 +510,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(chain != null)
     {
-      for(int c=0;c<chain.Length;++c)
+      for(int c=ns_offset;c<chain.Length;++c)
       {
         var ch = chain[c];
 
