@@ -1169,19 +1169,21 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.MFUNC:
       {
+        //TODO:
+        //var instance_type = ast.symb.scope as IInstanceType;
         var instance_type = ast.scope_type as IInstanceType;
         if(instance_type == null)
-          throw new Exception("Instance type not found: " + ast.scope_type?.GetName());
+          throw new Exception("Not instance type: " + ast.symb.name);
 
         var mfunc = ast.symb as FuncSymbol;
         if(mfunc == null)
-          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + ast.scope_type?.GetName() + "' by index " + ast.symb_idx);
+          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + instance_type.GetName() + "' by index " + ast.symb_idx);
 
         VisitChildren(ast);
         
         if(instance_type is InterfaceSymbol)
         {
-          Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, AddConstant(ast.scope_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
         }
         else
         {

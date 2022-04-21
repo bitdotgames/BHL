@@ -444,7 +444,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     IType curr_type = null;
 
-    ProcChainedCall(ctx.NAME(), ctx.chainExp(), ref curr_type, ctx.Start.Line, write: false);
+    ProcChainedCall(curr_scope, ctx.NAME(), ctx.chainExp(), ref curr_type, ctx.Start.Line, write: false);
 
     Wrap(ctx).eval_type = curr_type;
     return null;
@@ -457,6 +457,7 @@ public class Frontend : bhlBaseVisitor<object>
   }
 
   void ProcChainedCall(
+    IScope scope,
     ITerminalNode root_name, 
     bhlParser.ChainExpContext[] chain, 
     ref IType curr_type, 
@@ -467,24 +468,21 @@ public class Frontend : bhlBaseVisitor<object>
     AST_Interim pre_call = null;
     PushAST(new AST_Interim());
 
-    var orig_scope = curr_scope;
-
     ITerminalNode curr_name = root_name;
-    IInstanceType curr_scope_type = null;
 
     int ns_offset = 0;
 
     if(root_name != null)
     {
       var root_str_name = root_name.GetText();
-      var name_symb = curr_scope.Resolve(root_str_name);
+      var name_symb = scope.Resolve(root_str_name);
       if(name_symb == null)
         FireError(root_name, "symbol not resolved");
 
       //let's figure out the namespace offset
       if(name_symb is Namespace ns && chain != null)
       {
-        curr_scope = ns;
+        scope = ns;
         for(ns_offset=0;ns_offset<chain.Length;)
         {
           var ch = chain[ns_offset];
@@ -497,7 +495,7 @@ public class Frontend : bhlBaseVisitor<object>
            ++ns_offset;
            curr_name = macc.NAME(); 
           if(name_symb is Namespace name_ns)
-            curr_scope = name_ns;
+            scope = name_ns;
           else
             break;
         }
@@ -521,23 +519,21 @@ public class Frontend : bhlBaseVisitor<object>
 
         if(cargs != null)
         {
-          ProcCallChainItem(curr_name, cargs, null, curr_scope_type, ref curr_type, ref pre_call, line, write: false);
-          curr_scope_type = null;
+          ProcCallChainItem(scope, curr_name, cargs, null, ref curr_type, ref pre_call, line, write: false);
           curr_name = null;
         }
         else if(arracc != null)
         {
-          ProcCallChainItem(curr_name, null, arracc, curr_scope_type, ref curr_type, ref pre_call, line, write: write && is_last);
-          curr_scope_type = null;
+          ProcCallChainItem(scope, curr_name, null, arracc, ref curr_type, ref pre_call, line, write: write && is_last);
           curr_name = null;
         }
         else if(macc != null)
         {
           if(curr_name != null)
-            ProcCallChainItem(curr_name, null, null, curr_scope_type, ref curr_type, ref pre_call, line, write: false);
+            ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write: false);
 
-          curr_scope_type = curr_type as IInstanceType; 
-          if(curr_scope_type == null)
+          scope = curr_type as IInstanceType; 
+          if(scope == null)
             FireError(macc, "type doesn't support member access via '.'");
 
           curr_name = macc.NAME();
@@ -547,9 +543,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     //checking the leftover of the call chain
     if(curr_name != null)
-      ProcCallChainItem(curr_name, null, null, curr_scope_type, ref curr_type, ref pre_call, line, write);
-
-    curr_scope = orig_scope;
+      ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write);
 
     var chain_ast = PeekAST();
     PopAST();
@@ -559,10 +553,10 @@ public class Frontend : bhlBaseVisitor<object>
   }
 
   void ProcCallChainItem(
+    IScope scope, 
     ITerminalNode name, 
     bhlParser.CallArgsContext cargs, 
     bhlParser.ArrAccessContext arracc, 
-    IInstanceType scope_type, 
     ref IType type, 
     ref AST_Interim pre_call,
     int line, 
@@ -574,13 +568,14 @@ public class Frontend : bhlBaseVisitor<object>
     if(name != null)
     {
       string str_name = name.GetText();
-      var name_symb = scope_type == null ? curr_scope.Resolve(str_name) : scope_type.Resolve(str_name);
+      var name_symb = scope.Resolve(str_name);
       if(name_symb == null)
         FireError(name, "symbol not resolved");
 
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
 
+      //Console.WriteLine("!!!! " + name_symb.name + " " + name_symb.type.Get().GetName() + " " + (name_symb.scope is IType ? ((IType)name_symb.scope).GetName() : ""));
       //func or method call
       if(cargs != null)
       {
@@ -592,7 +587,7 @@ public class Frontend : bhlBaseVisitor<object>
         {
           var ftype = var_symb.type.Get() as FuncSignature;
 
-          if(scope_type == null)
+          if(!(scope is IInstanceType))
           {
             ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
@@ -608,12 +603,13 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope_type != null ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb, scope_type);
+          ast = new AST_Call(scope is IInstanceType ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb, scope as IInstanceType);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
         else
         {
+          //TODO: get rid of this lookup?
           //NOTE: let's try fetching func symbol from the module scope
           func_symb = module.ns.Resolve(str_name) as FuncSymbol;
           if(func_symb != null)
@@ -634,20 +630,20 @@ public class Frontend : bhlBaseVisitor<object>
           bool is_write = write && arracc == null;
           bool is_global = (var_symb.scope is Namespace ns && ns.scope == null);
 
-          if(scope_type is InterfaceSymbol)
+          if(scope is InterfaceSymbol)
             FireError(name, "attributes not supported by interfaces");
 
-          ast = new AST_Call(scope_type != null ? 
+          ast = new AST_Call(scope is IInstanceType ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
             var_symb,
-            scope_type
+            scope as IInstanceType
           );
           //handling passing by ref for class fields
-          if(scope_type != null && PeekCallByRef())
+          if(scope is IInstanceType && PeekCallByRef())
           {
-            if(scope_type is ClassSymbolNative)
+            if(scope is ClassSymbolNative)
               FireError(name, "getting field by 'ref' not supported for this class");
             ast.type = EnumCall.MVARREF; 
           }
@@ -1118,7 +1114,7 @@ public class Frontend : bhlBaseVisitor<object>
       var interim = new AST_Interim();
       interim.AddChild(ast);
       PushAST(interim);
-      ProcChainedCall(null, chain, ref curr_type, funcLambda.Start.Line, write: false);
+      ProcChainedCall(curr_scope, null, chain, ref curr_type, funcLambda.Start.Line, write: false);
       PopAST();
       Wrap(ctx).eval_type = curr_type;
       PeekAST().AddChild(interim);
@@ -1438,7 +1434,7 @@ public class Frontend : bhlBaseVisitor<object>
     var curr_type = Wrap(exp).eval_type;
     var chain = ctx.chainExp(); 
     if(chain != null)
-      ProcChainedCall(null, chain, ref curr_type, exp.Start.Line, write: false);
+      ProcChainedCall(curr_scope, null, chain, ref curr_type, exp.Start.Line, write: false);
     PopAST();
     
     PeekAST().AddChild(ast);
@@ -2391,7 +2387,7 @@ public class Frontend : bhlBaseVisitor<object>
         else if(cexp.chainExp()?.Length > 0 && cexp.chainExp()[cexp.chainExp().Length-1].callArgs() != null)
           FireError(assign_exp, "invalid assignment");
 
-        ProcChainedCall(cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
+        ProcChainedCall(curr_scope, cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
 
         ptree = Wrap(cexp.NAME());
         ptree.eval_type = curr_type;
