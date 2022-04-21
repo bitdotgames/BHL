@@ -323,10 +323,16 @@ public class AST_Call  : AST_Tree
   public EnumCall type = new EnumCall();
   public int line_num;
   public Symbol symb;
-  //TODO: can be calculated using symbol
-  public string module_name = "";
-  //TODO: can be calculated using symbol
-  public int symb_idx;
+  public int symb_idx {
+    get {
+      return symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1;
+    }
+  }
+  public string module_name {
+    get {
+      return symb?.scope is Namespace ? ((Namespace)symb.scope).module_name : "";
+    }
+  }
   //TODO: can be calculated using symbol
   public IInstanceType scope_type;
   public uint cargs_bits;
@@ -343,8 +349,6 @@ public class AST_Call  : AST_Tree
     this.line_num = line_num;
     this.symb = symb;
     this.scope_type = scope_type;
-    this.symb_idx = symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1;
-    this.module_name = symb?.scope is Namespace ? ((Namespace)symb.scope).module_name : "";
     this.cargs_bits = cargs_bits;
   }
 }
