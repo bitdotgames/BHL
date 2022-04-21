@@ -309,20 +309,8 @@ public class Namespace : Symbol, IScope, IMarshallable
     if(ResolveNoFallback(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
-    //NOTE: calculating scope idx only for global variables for now
-    //      (we are not interested in calculating scope indices for global
-    //      funcs for now so that these indices won't clash)
-    if(sym is VariableSymbol vs)
-    {
-      if(vs.scope_idx == -1)
-      {
-        int c = 0;
-        for(int i=0;i<members.Count;++i)
-          if(members[i] is VariableSymbol)
-            ++c;
-        vs.scope_idx = c;
-      }
-    } 
+    if(sym is IScopeIndexed si && si.scope_idx == -1)
+      si.scope_idx = members.Count; 
 
     members.Add(sym);
   }

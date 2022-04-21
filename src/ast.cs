@@ -344,7 +344,7 @@ public class AST_Call  : AST_Tree
     this.symb = symb;
     this.scope_type = scope_type;
     this.symb_idx = symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1;
-    this.module_name = symb.scope is Namespace ? ((Namespace)symb.scope).module_name : "";
+    this.module_name = symb?.scope is Namespace ? ((Namespace)symb.scope).module_name : "";
     this.cargs_bits = cargs_bits;
   }
 }

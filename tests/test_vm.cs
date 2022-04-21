@@ -18688,8 +18688,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
-      //global funcs don't have scope idx set
-      AssertEqual(-1, Test.scope_idx);
+      AssertEqual(3, Test.scope_idx);
 
       var Make = (FuncSymbolScript)ns.Resolve("Make");
       AssertEqual(Make.name, "Make");
@@ -18700,8 +18699,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(3, Make.default_args_num);
       AssertEqual(0, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);
-      //global funcs don't have scope idx set
-      AssertEqual(-1, Make.scope_idx);
+      AssertEqual(4, Make.scope_idx);
 
       var Foo = (ClassSymbolScript)ns.Resolve("Foo");
       AssertEqual(Foo.scope, ns);
