@@ -1169,9 +1169,7 @@ public class Compiler : AST_Visitor
       break;
       case EnumCall.MFUNC:
       {
-        //TODO:
-        //var instance_type = ast.symb.scope as IInstanceType;
-        var instance_type = ast.scope_type as IInstanceType;
+        var instance_type = ast.symb.scope as IInstanceType;
         if(instance_type == null)
           throw new Exception("Not instance type: " + ast.symb.name);
 
