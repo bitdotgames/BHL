@@ -613,15 +613,13 @@ public class TestNamespace : BHL_TestBase
   {
     string bhl = @"
     namespace foo {
-      func bool test()
-      {
+      func bool test() {
         return true
       }
     }
 
     namespace bar {
-      func bool test()
-      {
+      func bool test() {
         return foo.test()
       }
     }
