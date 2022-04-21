@@ -611,20 +611,44 @@ public class TestNamespace : BHL_TestBase
   [IsTested()]
   public void TestNamespacesFuncCall()
   {
-    string bhl = @"
-    namespace foo {
-      func bool test() {
-        return true
+    {
+      string bhl = @"
+      namespace foo {
+        func bool test() {
+          return true
+        }
       }
+
+      namespace bar {
+        func bool test() {
+          return foo.test()
+        }
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "bar.test").result.PopRelease().num);
     }
 
-    namespace bar {
-      func bool test() {
-        return foo.test()
+    {
+      string bhl = @"
+      namespace foo {
+        func int wow() {
+          return 1
+        }
       }
+
+      namespace bar {
+        func int wow() {
+          return 10
+        }
+
+        func int test() {
+          return foo.wow() + wow()
+        }
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(11, Execute(vm, "bar.test").result.PopRelease().num);
     }
-    ";
-    var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "bar.test").result.PopRelease().num);
   }
 }
