@@ -1150,7 +1150,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVAR:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type?.GetName());
 
         VisitChildren(ast);
 
@@ -1160,7 +1160,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVARW:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type?.GetName());
 
         VisitChildren(ast);
 
@@ -1171,11 +1171,11 @@ public class Compiler : AST_Visitor
       {
         var instance_type = ast.scope_type as IInstanceType;
         if(instance_type == null)
-          throw new Exception("Instance type not found: " + ast.scope_type.GetName());
+          throw new Exception("Instance type not found: " + ast.scope_type?.GetName());
 
         var mfunc = ast.symb as FuncSymbol;
         if(mfunc == null)
-          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + ast.scope_type.GetName() + "' by index " + ast.symb_idx);
+          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + ast.scope_type?.GetName() + "' by index " + ast.symb_idx);
 
         VisitChildren(ast);
         
@@ -1195,7 +1195,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVARREF:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type?.GetName());
 
         VisitChildren(ast);
 
