@@ -608,19 +608,7 @@ public class Frontend : bhlBaseVisitor<object>
           type = func_symb.GetReturnType();
         }
         else
-        {
-          //TODO: get rid of this lookup?
-          //NOTE: let's try fetching func symbol from the module scope
-          func_symb = module.ns.Resolve(str_name) as FuncSymbol;
-          if(func_symb != null)
-          {
-            ast = new AST_Call(EnumCall.FUNC, line, func_symb);
-            AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
-            type = func_symb.GetReturnType();
-          }
-          else
-            FireError(name, "symbol is not a function");
-        }
+          FireError(name, "symbol is not a function");
       }
       //variable or attribute call
       else
@@ -659,9 +647,7 @@ public class Frontend : bhlBaseVisitor<object>
           type = func_symb.type.Get();
         }
         else
-        {
           FireError(name, "symbol usage is not valid");
-        }
       }
     }
     else if(cargs != null)

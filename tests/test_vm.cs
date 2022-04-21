@@ -1624,7 +1624,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLocalVarHiding2()
+  public void TestLocalVarConflictsWithFunc()
   {
     string bhl = @"
       
@@ -1644,16 +1644,14 @@ public class TestVM : BHL_TestBase
         return time()
       }
     }
-
-    func float test() 
-    {
-      return bar(100)
-    }
     ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 42);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol is not a function"
+    );
   }
 
   [IsTested()]
