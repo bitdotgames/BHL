@@ -575,7 +575,6 @@ public class Frontend : bhlBaseVisitor<object>
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
 
-      //Console.WriteLine("!!!! " + name_symb.name + " " + name_symb.type.Get().GetName() + " " + (name_symb.scope is IType ? ((IType)name_symb.scope).GetName() : ""));
       //func or method call
       if(cargs != null)
       {
@@ -603,7 +602,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope is IInstanceType ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb, scope as IInstanceType);
+          ast = new AST_Call(scope is IInstanceType ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb, func_symb.scope as IInstanceType);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }

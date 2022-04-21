@@ -1535,7 +1535,10 @@ public class SymbolsStorage : IMarshallable
 
   public void Add(Symbol s)
   {
-    s.scope = scope;
+    //if(s.scope != null && s.scope != scope)
+    // throw new Exception("Symbol '" + s.name + "' scope is already set");
+    if(s.scope == null)
+      s.scope = scope;
     str2symb.Add(s.name, s);
     list.Add(s);
   }
@@ -1543,7 +1546,8 @@ public class SymbolsStorage : IMarshallable
   public void RemoveAt(int index)
   {
     var s = list[index];
-    s.scope = null;
+    if(s.scope == scope)
+      s.scope = null;
     str2symb.Remove(s.name);
     list.RemoveAt(index);
   }
@@ -1571,7 +1575,10 @@ public class SymbolsStorage : IMarshallable
   public void Clear()
   {
     foreach(var s in list)
-      s.scope = null;
+    {
+      if(s.scope == scope)
+        s.scope = null;
+    }
     str2symb.Clear();
     list.Clear();
   }
