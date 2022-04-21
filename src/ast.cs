@@ -333,22 +333,18 @@ public class AST_Call  : AST_Tree
       return symb?.scope is Namespace ? ((Namespace)symb.scope).module_name : "";
     }
   }
-  //TODO: can be calculated using symbol
-  public IInstanceType scope_type;
   public uint cargs_bits;
 
   public AST_Call(
     EnumCall type, 
     int line_num, 
     Symbol symb, 
-    IInstanceType scope_type = null, 
     uint cargs_bits = 0
   )
   {
     this.type = type;
     this.line_num = line_num;
     this.symb = symb;
-    this.scope_type = scope_type;
     this.cargs_bits = cargs_bits;
   }
 }

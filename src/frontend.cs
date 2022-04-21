@@ -602,7 +602,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope is IInstanceType ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb, func_symb.scope as IInstanceType);
+          ast = new AST_Call(scope is IInstanceType ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -624,8 +624,7 @@ public class Frontend : bhlBaseVisitor<object>
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
-            var_symb,
-            scope as IInstanceType
+            var_symb
           );
           //handling passing by ref for class fields
           if(scope is IInstanceType && PeekCallByRef())
@@ -681,7 +680,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     type = arr_type.item_type.Get();
 
-    var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null, arr_type);
+    var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null);
 
     PeekAST().AddChild(ast);
   }
@@ -1573,7 +1572,7 @@ public class Frontend : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      var op_call = new AST_Call(EnumCall.MFUNC, ctx.Start.Line, op_func, class_symb, 1/*cargs bits*/);
+      var op_call = new AST_Call(EnumCall.MFUNC, ctx.Start.Line, op_func, 1/*cargs bits*/);
       over_ast.AddChild(op_call);
       ast = over_ast;
     }

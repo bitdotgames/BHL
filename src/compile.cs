@@ -1150,7 +1150,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVAR:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type?.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
 
         VisitChildren(ast);
 
@@ -1160,7 +1160,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVARW:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type?.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
 
         VisitChildren(ast);
 
@@ -1195,7 +1195,7 @@ public class Compiler : AST_Visitor
       case EnumCall.MVARREF:
       {
         if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid: " + ast.scope_type?.GetName());
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
 
         VisitChildren(ast);
 
