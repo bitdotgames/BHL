@@ -151,7 +151,7 @@ else
 
 //vars && funcs
 callExp
-  : NAME chainExp* 
+  : DOT? NAME chainExp* 
   ;
 
 chainExp
@@ -395,6 +395,10 @@ ARR
 
 OBJ
   : '{' '}'
+  ;
+
+DOT
+  : '.'
   ;
 
 SEPARATOR

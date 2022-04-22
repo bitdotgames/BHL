@@ -6,7 +6,7 @@ using bhl;
 public class TestNamespace : BHL_TestBase
 {
   [IsTested()]
-  public void TestNamespacesSimpleLink()
+  public void TestSimpleLink()
   {
     var ns1 = new Namespace();
     {
@@ -32,7 +32,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesDeepLink()
+  public void TestDeepLink()
   {
     /*
     {
@@ -152,7 +152,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesUnlink()
+  public void TestUnlink()
   {
     /*
     {
@@ -271,7 +271,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesUnlinkPreserveChangedStuff()
+  public void TestUnlinkPreserveChangedStuff()
   {
     /*
     {
@@ -398,7 +398,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesLinkConflict()
+  public void TestLinkConflict()
   {
     /*
     {
@@ -458,7 +458,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesDecl()
+  public void TestSimpleDecl()
   {
     string bhl = @"
     namespace foo {
@@ -490,7 +490,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesPartialDecls()
+  public void TestPartialDecls()
   {
     string bhl = @"
     namespace foo {
@@ -586,7 +586,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesFuncStart()
+  public void TestStartFuncByPath()
   {
     string bhl = @"
     namespace foo {
@@ -609,7 +609,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNamespacesFuncCall()
+  public void TestCallFuncByPath()
   {
     {
       string bhl = @"
@@ -650,5 +650,48 @@ public class TestNamespace : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual(11, Execute(vm, "bar.test").result.PopRelease().num);
     }
+  }
+
+  //TODO: this is quite contraversary
+  [IsTested()]
+  public void TestPreferLocalVersion()
+  {
+    string bhl = @"
+    func int bar() { 
+      return 1
+    }
+    namespace foo {
+      func int bar() {
+        return 10
+      }
+
+      func int test() {
+        return bar()
+      }
+    }
+    ";
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "foo.test").result.PopRelease().num);
+  }
+
+  [IsTested()]
+  public void TestCallGlobalVersion()
+  {
+    string bhl = @"
+    func int bar() { 
+      return 1
+    }
+    namespace foo {
+      func int bar() {
+        return 10
+      }
+
+      func int test() {
+        return .bar()
+      }
+    }
+    ";
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "foo.test").result.PopRelease().num);
   }
 }

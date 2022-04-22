@@ -444,7 +444,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     IType curr_type = null;
 
-    ProcChainedCall(curr_scope, ctx.NAME(), ctx.chainExp(), ref curr_type, ctx.Start.Line, write: false);
+    ProcChainedCall(ctx.DOT() != null ? types.ns : curr_scope, ctx.NAME(), ctx.chainExp(), ref curr_type, ctx.Start.Line, write: false);
 
     Wrap(ctx).eval_type = curr_type;
     return null;
@@ -474,8 +474,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(root_name != null)
     {
-      var root_str_name = root_name.GetText();
-      var name_symb = scope.Resolve(root_str_name);
+      var name_symb = scope.Resolve(curr_name.GetText());
       if(name_symb == null)
         FireError(root_name, "symbol not resolved");
 
@@ -2371,7 +2370,7 @@ public class Frontend : bhlBaseVisitor<object>
         else if(cexp.chainExp()?.Length > 0 && cexp.chainExp()[cexp.chainExp().Length-1].callArgs() != null)
           FireError(assign_exp, "invalid assignment");
 
-        ProcChainedCall(curr_scope, cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
+        ProcChainedCall(cexp.DOT() != null ? types.ns : curr_scope, cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
 
         ptree = Wrap(cexp.NAME());
         ptree.eval_type = curr_type;
