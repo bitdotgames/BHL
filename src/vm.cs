@@ -2237,12 +2237,14 @@ public class CompiledModule
 
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
+      var symb_factory = new SymbolFactory(types);
       var ns = new Namespace();
-      ns.Link(types.ns);
       if(link_types_ns)
         types.ns.Link(ns);
-      var symb_factory = new SymbolFactory(types);
       Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
+      //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
+      //      with the global namespace only once the objec is un-marshalled
+      ns.Link(types.ns);
 
       byte[] initcode = null;
       int initcode_len = r.ReadInt32();

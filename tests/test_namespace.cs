@@ -652,6 +652,48 @@ public class TestNamespace : BHL_TestBase
     }
   }
 
+  [IsTested()]
+  public void TestCallNativeFuncByPath()
+  {
+    {
+      string bhl = @"
+      namespace bar {
+        func int test() {
+          return foo.wow() + wow()
+        }
+      }
+      ";
+      var ts = new Types();
+      var ns = new Namespace();
+      {
+        var foo = new Namespace("foo");
+        var fn = new FuncSymbolNative("wow", ts.Type("int"),
+            delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+              frm.stack.Push(Val.NewInt(frm.vm, 1)); 
+              return null;
+            }
+        );
+        foo.Define(fn);
+        ns.Define(foo);
+      }
+      {
+        var bar = new Namespace("bar");
+        var fn = new FuncSymbolNative("wow", ts.Type("int"),
+            delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+              frm.stack.Push(Val.NewInt(frm.vm, 10)); 
+              return null;
+            }
+        );
+        bar.Define(fn);
+        ns.Define(bar);
+      }
+      ts.ns.Link(ns);
+
+      var vm = MakeVM(bhl, ts);
+      AssertEqual(11, Execute(vm, "bar.test").result.PopRelease().num);
+    }
+  }
+
   //TODO: this is quite contraversary
   [IsTested()]
   public void TestPreferLocalVersion()

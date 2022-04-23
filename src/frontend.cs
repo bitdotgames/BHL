@@ -488,11 +488,11 @@ public class Frontend : bhlBaseVisitor<object>
           var macc = ch.memberAccess();
           if(macc == null)
             FireError(ch, "bad chain call");
-          name_symb = ns.Resolve(macc.NAME().GetText());
+          name_symb = scope.Resolve(macc.NAME().GetText());
           if(name_symb == null)
             FireError(macc.NAME(), "symbol not resolved");
-           ++ns_offset;
            curr_name = macc.NAME(); 
+          ++ns_offset;
           if(name_symb is Namespace name_ns)
             scope = name_ns;
           else

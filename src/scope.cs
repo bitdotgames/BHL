@@ -131,8 +131,9 @@ public class Namespace : Symbol, IScope, IMarshallable
         if(this_symb == null)
         {
           var ns = new Namespace(other_symb.name);
-          members.Add(ns);
           ns.links.Add(other_ns);
+          ns.links.AddRange(other_ns.links);
+          members.Add(ns);
         }
         else if(this_symb is Namespace this_ns)
         {

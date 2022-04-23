@@ -1583,24 +1583,6 @@ public class SymbolsStorage : IMarshallable
     list.Clear();
   }
 
-  public List<string> GetStringKeys()
-  {
-    var res = new List<string>();
-    for(int i=0;i<list.Count;++i)
-      res.Add(list[i].name);
-    return res;
-  }
-
-  public int FindStringKeyIndex(string key)
-  {
-    for(int i=0;i<list.Count;++i)
-    {
-      if(list[i].name == key)
-        return i;
-    }
-    return -1;
-  }
-
   public void Sync(SyncContext ctx) 
   {
     Marshall.SyncGeneric(ctx, list, delegate(IMarshallableGeneric tmp) {
@@ -1618,6 +1600,16 @@ public class SymbolsStorage : IMarshallable
   {
     for(int i=0;i<o.Count;++i)
       Add(o[i]);
+  }
+
+  public int FindStringKeyIndex(string key)
+  {
+    for(int i=0;i<list.Count;++i)
+    {
+      if(list[i].name == key)
+        return i;
+    }
+    return -1;
   }
 }
 
