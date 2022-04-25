@@ -1484,8 +1484,7 @@ public class VM
       case Opcodes.GetFuncNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        //TODO: consider namespaces
-        var func_symb = (FuncSymbolNative)types.ns.members[func_idx];
+        var func_symb = (FuncSymbolNative)types.natives[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1538,8 +1537,7 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        //TODO: consider namespaces
-        var native = (FuncSymbolNative)types.ns.members[func_idx];
+        var native = (FuncSymbolNative)types.natives[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))
@@ -2238,7 +2236,7 @@ public class CompiledModule
       int symb_len = r.ReadInt32();
       var symb_bytes = r.ReadBytes(symb_len);
       var symb_factory = new SymbolFactory(types);
-      var ns = new Namespace();
+      var ns = new Namespace(types);
       if(link_types_ns)
         types.ns.Link(ns);
       Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);

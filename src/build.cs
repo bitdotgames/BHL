@@ -556,7 +556,7 @@ public class Build
           var file = w.files[i]; 
 
           var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
-          var file_module = new Module(imp.FilePath2ModuleName(file), file);
+          var file_module = new Module(w.ts, imp.FilePath2ModuleName(file), file);
 
           InterimResult interim;
           if(w.cache.file2interim.TryGetValue(file, out interim) 

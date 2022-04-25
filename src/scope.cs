@@ -66,6 +66,8 @@ public class Namespace : Symbol, IScope, IMarshallable
 {
   public const uint CLASS_ID = 20;
 
+  Types types;
+
   public string module_name = "";
 
   public SymbolsStorage members;
@@ -77,21 +79,22 @@ public class Namespace : Symbol, IScope, IMarshallable
     return CLASS_ID;
   }
 
-  public Namespace(string name, string module_name = "")
+  public Namespace(Types types, string name, string module_name = "")
     : base(name, default(TypeProxy))
   {
+    this.types = types;
     this.module_name = module_name;
     this.members = new SymbolsStorage(this);
   }
 
   //root and marshall version 
-  public Namespace()
-    : this("", "")
+  public Namespace(Types types)
+    : this(types, "", "")
   {}
 
   public Namespace Clone()
   {
-    var copy = new Namespace(name, module_name);
+    var copy = new Namespace(types, name, module_name);
 
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
@@ -130,7 +133,7 @@ public class Namespace : Symbol, IScope, IMarshallable
         //      later linked
         if(this_symb == null)
         {
-          var ns = new Namespace(other_symb.name);
+          var ns = new Namespace(types, other_symb.name);
           ns.links.Add(other_ns);
           ns.links.AddRange(other_ns.links);
           members.Add(ns);
@@ -311,7 +314,16 @@ public class Namespace : Symbol, IScope, IMarshallable
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)
-      si.scope_idx = members.Count; 
+    {
+      //for native func symbols we store unique global index
+      if(sym is FuncSymbolNative)
+      {
+        si.scope_idx = types.natives.Count;
+        types.natives.Add(sym);
+      }
+      else
+        si.scope_idx = members.Count; 
+    }
 
     members.Add(sym);
   }

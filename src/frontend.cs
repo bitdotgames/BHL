@@ -123,7 +123,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     using(var sfs = File.OpenRead(file))
     {
-      var mod = new Module(imp.FilePath2ModuleName(file), file);
+      var mod = new Module(ts, imp.FilePath2ModuleName(file), file);
       return ProcessStream(mod, sfs, ts, imp);
     }
   }
@@ -216,7 +216,7 @@ public class Frontend : bhlBaseVisitor<object>
       }
 
       //3. Ok, let's parse it otherwise
-      m = new Module(norm_path, full_path);
+      m = new Module(ts, norm_path, full_path);
      
       //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
       curr_module.imports.Add(full_path, m);
@@ -2070,7 +2070,7 @@ public class Frontend : bhlBaseVisitor<object>
     var ns = (curr_scope as Namespace).ResolveNoFallback(name) as Namespace;
     if(ns == null)
     {
-      ns = new Namespace(name, module.name);
+      ns = new Namespace(types, name, module.name);
       curr_scope.Define(ns);
     }
     else 
@@ -3094,14 +3094,14 @@ public class Module
   public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
   public Namespace ns;
 
-  public Module(ModulePath path)
+  public Module(Types ts, ModulePath path)
   {
     this.path = path;
-    ns = new Namespace("", name);
+    ns = new Namespace(ts, "", name);
   }
 
-  public Module(string name, string file_path)
-    : this(new ModulePath(name, file_path))
+  public Module(Types ts, string name, string file_path)
+    : this(ts, new ModulePath(name, file_path))
   {}
 }
 

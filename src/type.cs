@@ -345,7 +345,9 @@ public class Types
   };
 #endif
 
-  public Namespace ns = new Namespace();
+  public Namespace ns;
+
+  public List<Symbol> natives = new List<Symbol>();
 
   static Types()
   {
@@ -373,17 +375,21 @@ public class Types
 
   public Types()
   {
+    ns = new Namespace(this);
+
     InitBuiltins();
   }
 
-  Types(Namespace ns)
+  Types(List<Symbol> natives, Namespace ns)
   {
+    this.natives = natives;
     this.ns = ns;
   }
 
   public Types Clone()
   {
-    return new Types(ns.Clone());
+    var clone = new Types(new List<Symbol>(natives), ns.Clone());
+    return clone;
   }
 
   void InitBuiltins() 
