@@ -1025,7 +1025,10 @@ public class Frontend : bhlBaseVisitor<object>
     if(ctx.funcType() != null)
       tp = types.Type(ParseFuncSignature(ctx.funcType()));
     else
-      tp = types.Type(ctx.NAME().GetText());
+    {
+      //TODO: add full namespace name type parsing
+      tp = types.Type(ctx.nsName().NAME().GetText());
+    }
 
     if(ctx.ARR() != null)
       tp = types.TypeArr(tp);

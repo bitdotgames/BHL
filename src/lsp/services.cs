@@ -402,7 +402,7 @@ namespace bhlsp
           if(t.exception != null)
             continue;
 
-          label += t.NAME().GetText() + " ";
+          label += t.nsName().GetText() + " ";
         }
       }
       else
@@ -518,9 +518,9 @@ namespace bhlsp
           string classTypeName = string.Empty;
           string memberClassName = string.Empty;
           
-          if(type?.NAME() != null)
+          if(type?.nsName() != null)
           {
-            classTypeName = type.NAME().GetText();
+            classTypeName = type.nsName().GetText();
           }
           else if(memberAccess != null)
           {
@@ -564,7 +564,7 @@ namespace bhlsp
 
                   if(node is bhlParser.VarDeclareContext varDeclare && varDeclare?.NAME().GetText() == callExpMemberAccessName)
                   {
-                    classTypeName = varDeclare.type().NAME().GetText();
+                    classTypeName = varDeclare.type().nsName().GetText();
                     break;
                   }
                 }
@@ -817,7 +817,7 @@ namespace bhlsp
               if(t.exception != null)
                 continue;
 
-              label += t.NAME().GetText() + " ";
+              label += t.nsName().GetText() + " ";
             }
           }
           else

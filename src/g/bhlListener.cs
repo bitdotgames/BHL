@@ -91,6 +91,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitDecl([NotNull] bhlParser.DeclContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.nsName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterNsName([NotNull] bhlParser.NsNameContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.nsName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitNsName([NotNull] bhlParser.NsNameContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.type"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

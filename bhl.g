@@ -24,8 +24,12 @@ decl
   : (nsDecl | classDecl | interfaceDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
+nsName
+  : DOT? NAME memberAccess*
+  ;
+
 type
-  : ARR? (NAME | funcType) 
+  : ARR? (nsName | funcType) 
   ;
 
 //expressions

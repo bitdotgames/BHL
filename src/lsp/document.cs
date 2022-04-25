@@ -920,7 +920,8 @@ namespace bhlsp
     
     public override object VisitType(bhlParser.TypeContext ctx)
     {
-      AddSemanticTokenTypeName(ctx.NAME());
+      //TODO: parse the whole nsName()
+      AddSemanticTokenTypeName(ctx.nsName().NAME());
 
       var fnType = ctx.funcType();
       if(fnType != null && fnType.types() is bhlParser.TypesContext types)
@@ -928,7 +929,8 @@ namespace bhlsp
         foreach(var refType in types.refType())
         {
           var refNameIsRef = refType.isRef();
-          var refNameName = refType.type()?.NAME();
+          //TODO: parse the whole nsName()
+          var refNameName = refType.type()?.nsName().NAME();
           if(refNameName != null)
           {
             if(refNameIsRef != null)

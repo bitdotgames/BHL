@@ -59,7 +59,7 @@ namespace bhlsp
           if(fpd.exception != null)
             continue;
 
-          var fpdl = $"{(fpd.isRef() != null ? "ref " : "")}{fpd.type().NAME().GetText()} {fpd.NAME().GetText()}";
+          var fpdl = $"{(fpd.isRef() != null ? "ref " : "")}{fpd.type().nsName().GetText()} {fpd.NAME().GetText()}";
           if(fpd.assignExp() is bhlParser.AssignExpContext assignExp)
             fpdl += assignExp.GetText();
           
