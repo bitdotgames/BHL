@@ -746,4 +746,38 @@ public class TestNamespace : BHL_TestBase
     var vm = MakeVM(bhl);
     AssertEqual(1, Execute(vm, "foo.test").result.PopRelease().num);
   }
+
+  [IsTested()]
+  public void TestUserClasses()
+  {
+    string bhl = @"
+
+    namespace foo {
+      namespace sub_foo {
+        class Foo { 
+          float b
+          int c
+        }
+      }
+    }
+
+    namespace bar {
+      class Bar {
+        float a
+      }
+    }
+      
+    func float test() 
+    {
+      foo.sub_foo.Foo f = { c : 2, b : 101.5 }
+      bar.Bar b = { a : 10 }
+      f.b = f.b + f.c + b.a
+      return f.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(113.5, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
