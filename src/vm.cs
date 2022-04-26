@@ -1022,7 +1022,7 @@ public class VM
   {
     addr = default(FuncAddr);
 
-    var fs = types.ns.ResolvePath(name) as FuncSymbolScript;
+    var fs = types.ns.ResolveFullName(name) as FuncSymbolScript;
     if(fs == null)
       return false;
 

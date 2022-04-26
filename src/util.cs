@@ -167,6 +167,18 @@ public static class Extensions
       s[idx] = curr;
     }
   }
+
+  public static string GetFullName(this IType type)
+  {
+    var name = type.GetName();
+    Namespace parent = (type is Symbol sym) ? sym.scope as Namespace : null;
+    while(parent != null && parent.name.Length > 0)
+    {
+      name = parent.name + '.' + name;
+      parent = (Namespace)parent.scope;
+    }
+    return name;
+  }
 }
 
 public struct FuncArgsInfo

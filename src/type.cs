@@ -33,7 +33,7 @@ public struct TypeProxy : IMarshallable
   public TypeProxy(IType type)
   {
     types = null;
-    _name = type.GetName();
+    _name = type.GetFullName();
     this.type = type;
   }
 
@@ -56,7 +56,7 @@ public struct TypeProxy : IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)types.ns.ResolvePath(_name);
+    type = (bhl.IType)types.ns.ResolveFullName(_name);
     return type;
   }
 

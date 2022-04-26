@@ -265,18 +265,18 @@ public class Namespace : Symbol, IScope, IMarshallable
     return null;
   }
 
-  public Symbol ResolvePath(string path)
+  public Symbol ResolveFullName(string full_name)
   {
     int start_idx = 0;
-    int next_idx = path.IndexOf('.');
+    int next_idx = full_name.IndexOf('.');
 
     IScope scope = this;
     while(true)
     {
       string name = 
         next_idx == -1 ? 
-        (start_idx == 0 ? path : path.Substring(start_idx)) : 
-        path.Substring(start_idx, next_idx - start_idx);
+        (start_idx == 0 ? full_name : full_name.Substring(start_idx)) : 
+        full_name.Substring(start_idx, next_idx - start_idx);
 
       Symbol symb;
       //TODO: make 'no-fallback' feature part of the IScope interface
@@ -296,7 +296,7 @@ public class Namespace : Symbol, IScope, IMarshallable
         return symb;
 
       start_idx = next_idx + 1;
-      next_idx = path.IndexOf('.', start_idx);
+      next_idx = full_name.IndexOf('.', start_idx);
 
       scope = symb as IScope;
       //we can't proceed 'deeper' if the last resolved 

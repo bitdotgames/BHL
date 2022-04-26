@@ -139,20 +139,20 @@ public class TestNamespace : BHL_TestBase
       AssertEqual(0, wow.GetMembers().Count);
     }
 
-    AssertEqual("foo", ns2.ResolvePath("foo").name);
-    AssertEqual("foo_sub", ns2.ResolvePath("foo.foo_sub").name);
-    AssertEqual("Hey", ns2.ResolvePath("foo.foo_sub.Hey").name);
-    AssertEqual("Wow", ns2.ResolvePath("foo.foo_sub.Wow").name);
-    AssertEqual("wow", ns2.ResolvePath("wow").name);
-    AssertEqual("bar", ns2.ResolvePath("bar").name);
+    AssertEqual("foo", ns2.ResolveFullName("foo").name);
+    AssertEqual("foo_sub", ns2.ResolveFullName("foo.foo_sub").name);
+    AssertEqual("Hey", ns2.ResolveFullName("foo.foo_sub.Hey").name);
+    AssertEqual("Wow", ns2.ResolveFullName("foo.foo_sub.Wow").name);
+    AssertEqual("wow", ns2.ResolveFullName("wow").name);
+    AssertEqual("bar", ns2.ResolveFullName("bar").name);
 
-    AssertTrue(ns2.ResolvePath("") == null);
-    AssertTrue(ns2.ResolvePath(".") == null);
-    AssertTrue(ns2.ResolvePath("foo.") == null);
-    AssertTrue(ns2.ResolvePath(".foo.") == null);
-    AssertTrue(ns2.ResolvePath("foo..") == null);
-    AssertTrue(ns2.ResolvePath("foo.bar") == null);
-    AssertTrue(ns2.ResolvePath(".foo.foo_sub..") == null);
+    AssertTrue(ns2.ResolveFullName("") == null);
+    AssertTrue(ns2.ResolveFullName(".") == null);
+    AssertTrue(ns2.ResolveFullName("foo.") == null);
+    AssertTrue(ns2.ResolveFullName(".foo.") == null);
+    AssertTrue(ns2.ResolveFullName("foo..") == null);
+    AssertTrue(ns2.ResolveFullName("foo.bar") == null);
+    AssertTrue(ns2.ResolveFullName(".foo.foo_sub..") == null);
   }
 
   [IsTested()]
