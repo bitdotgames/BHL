@@ -56,8 +56,7 @@ public struct TypeProxy : IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    //TODO: should it rather be ResolvePath(..)?
-    type = (bhl.IType)types.ns.Resolve(_name);
+    type = (bhl.IType)types.ns.ResolvePath(_name);
     return type;
   }
 
@@ -562,7 +561,7 @@ public class Types
     for(int i=0;i<name.Length;++i)
     {
       char c = name[i];
-      if(!(Char.IsLetterOrDigit(c) || c == '_'))
+      if(!(Char.IsLetterOrDigit(c) || c == '_' || c == '.'))
         return true;
     }
     return false;

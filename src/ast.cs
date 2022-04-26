@@ -203,10 +203,12 @@ public class AST_Dec : IAST
 public class AST_New : AST_Tree 
 {
   public IType type;
+  public int line_num;
 
-  public AST_New(IType type)
+  public AST_New(IType type, int line_num)
   {
     this.type = type;
+    this.line_num = line_num;
   }
 }
 

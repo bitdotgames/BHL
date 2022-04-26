@@ -1069,7 +1069,7 @@ public class Compiler : AST_Visitor
 
   public override void DoVisit(AST_New ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) });
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
     VisitChildren(ast);
   }
 

@@ -1025,10 +1025,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(ctx.funcType() != null)
       tp = types.Type(ParseFuncSignature(ctx.funcType()));
     else
-    {
-      //TODO: add full namespace name type parsing
-      tp = types.Type(ctx.nsName().NAME().GetText());
-    }
+      tp = types.Type(ctx.nsName().GetText());
 
     if(ctx.ARR() != null)
       tp = types.TypeArr(tp);
@@ -1310,7 +1307,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(ctx.newExp().type());
     Wrap(ctx).eval_type = tp.Get();
 
-    var ast = new AST_New(tp.Get());
+    var ast = new AST_New(tp.Get(), ctx.Start.Line);
     PeekAST().AddChild(ast);
 
     return null;
@@ -2014,7 +2011,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var ext_name = ctx.extensions().NAME()[i]; 
 
-        var ext = module.ns.Resolve(ext_name.GetText());
+        var ext = types.ns.ResolvePath(ext_name.GetText());
         if(ext is InterfaceSymbol ifs)
         {
           if(inherits.IndexOf(ifs) != -1)
@@ -2030,7 +2027,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var iface_symb = new InterfaceSymbolScript(Wrap(ctx), name, inherits);
 
-    module.ns.Define(iface_symb);
+    curr_scope.Define(iface_symb);
 
     for(int i=0;i<ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
     {
@@ -2105,7 +2102,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var ext_name = ctx.extensions().NAME()[i]; 
 
-        var ext = module.ns.Resolve(ext_name.GetText());
+        var ext = types.ns.ResolvePath(ext_name.GetText());
         if(ext is ClassSymbol cs)
         {
           if(super_class != null)
@@ -2131,7 +2128,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var class_symb = new ClassSymbolScript(Wrap(ctx), name, super_class, implements);
 
-    module.ns.Define(class_symb);
+    curr_scope.Define(class_symb);
 
     var ast = new AST_ClassDecl(class_symb);
 
