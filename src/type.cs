@@ -479,7 +479,7 @@ public class Types
 
   public struct TypeArg
   {
-    public string[] path;
+    public string name;
     public TypeProxy tp;
 
     public static implicit operator TypeArg(string name)
@@ -497,15 +497,15 @@ public class Types
       return new TypeArg(new TypeProxy(s));
     }
 
-    public TypeArg(params string[] path)
+    public TypeArg(string name)
     {
-      this.path = path;
+      this.name = name;
       this.tp = default(TypeProxy);
     }
 
     public TypeArg(TypeProxy tp)
     {
-      this.path = null;
+      this.name = null;
       this.tp = tp;
     }
   }
@@ -515,7 +515,7 @@ public class Types
     if(!tn.tp.IsEmpty())
       return tn.tp;
     else
-      return Type(tn.path[0]);
+      return Type(tn.name);
   }
 
   public TypeProxy TypeRef(TypeArg tn)
