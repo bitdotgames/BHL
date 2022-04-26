@@ -752,32 +752,64 @@ public class TestNamespace : BHL_TestBase
   {
     string bhl = @"
 
-    namespace foo {
-      namespace sub_foo {
-        class Foo { 
-          float b
-          int c
-        }
-      }
-    }
-
     namespace bar {
       class Bar {
         float a
       }
     }
       
+    namespace foo {
+      namespace sub_foo {
+        class Foo : bar.Bar { 
+          float b
+          int c
+        }
+      }
+    }
+
     func float test() 
     {
-      foo.sub_foo.Foo f = { c : 2, b : 101.5 }
+      foo.sub_foo.Foo f = { c : 2, b : 101.5, a : 1 }
       bar.Bar b = { a : 10 }
-      f.b = f.b + f.c + b.a
+      f.b = f.b + f.c + b.a + f.a
       return f.b
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(113.5, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(114.5, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserInterface()
+  {
+    string bhl = @"
+    namespace bar {
+      interface IFoo {
+        func int test()
+      }
+    }
+
+    namespace foo {
+      namespace sub_foo {
+        class Foo : bar.IFoo { 
+          func int test() {
+            return 42
+          }
+        }
+      }
+    }
+
+    func int test() 
+    {
+      foo.sub_foo.Foo f = {}
+      return f.test()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 }

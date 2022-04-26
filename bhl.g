@@ -196,7 +196,7 @@ block
   ;
 
 extensions
-  : ':' NAME (',' NAME)*
+  : ':' nsName (',' nsName)*
   ;
 
 nsDecl

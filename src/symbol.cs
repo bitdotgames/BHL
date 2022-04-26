@@ -1332,12 +1332,12 @@ public class ClassSymbolScript : ClassSymbol
   {
     Marshall.Sync(ctx, ref name);
 
-    string super_name = super_class == null ? "" : super_class.GetName();
+    string super_name = super_class == null ? "" : super_class.GetFullName();
     Marshall.Sync(ctx, ref super_name);
     if(ctx.is_read && super_name != "")
     {
       var types = ((SymbolFactory)ctx.factory).types;
-      var tmp_class = (ClassSymbol)types.ns.Resolve(super_name);
+      var tmp_class = (ClassSymbol)types.ns.ResolveFullName(super_name);
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
       super_class = tmp_class;
@@ -1613,7 +1613,7 @@ public class SymbolsStorage : IMarshallable
   }
 }
 
-public class SymbolsSet<T> : IMarshallable where T : Symbol
+public class SymbolsSet<T> : IMarshallable where T : Symbol,IType
 {
   List<string> names = new List<string>();
   List<T> list = new List<T>();
@@ -1637,7 +1637,7 @@ public class SymbolsSet<T> : IMarshallable where T : Symbol
 
   public bool Add(T s)
   {
-    string name = s.name;
+    string name = s.GetFullName();
     if(names.IndexOf(name) != -1)
       return false;
     names.Add(name);
@@ -1661,7 +1661,7 @@ public class SymbolsSet<T> : IMarshallable where T : Symbol
 
       foreach(var name in names)
       {
-        var symb = types.ns.Resolve(name) as T;
+        var symb = types.ns.ResolveFullName(name) as T;
         if(symb == null)
           throw new Exception("Symbol '" + name + "' not found");
         list.Add(symb);

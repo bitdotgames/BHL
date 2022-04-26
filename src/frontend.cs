@@ -2007,9 +2007,9 @@ public class Frontend : bhlBaseVisitor<object>
     var inherits = new List<InterfaceSymbol>();
     if(ctx.extensions() != null)
     {
-      for(int i=0;i<ctx.extensions().NAME().Length;++i)
+      for(int i=0;i<ctx.extensions().nsName().Length;++i)
       {
-        var ext_name = ctx.extensions().NAME()[i]; 
+        var ext_name = ctx.extensions().nsName()[i]; 
 
         var ext = types.ns.ResolveFullName(ext_name.GetText());
         if(ext is InterfaceSymbol ifs)
@@ -2098,9 +2098,9 @@ public class Frontend : bhlBaseVisitor<object>
     ClassSymbol super_class = null;
     if(ctx.extensions() != null)
     {
-      for(int i=0;i<ctx.extensions().NAME().Length;++i)
+      for(int i=0;i<ctx.extensions().nsName().Length;++i)
       {
-        var ext_name = ctx.extensions().NAME()[i]; 
+        var ext_name = ctx.extensions().nsName()[i]; 
 
         var ext = types.ns.ResolveFullName(ext_name.GetText());
         if(ext is ClassSymbol cs)

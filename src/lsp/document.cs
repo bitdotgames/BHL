@@ -169,10 +169,10 @@ namespace bhlsp
       
       if(ctx.extensions() != null)
       {
-        for(int i=0;i<ctx.extensions().NAME().Length;++i)
+        for(int i=0;i<ctx.extensions().nsName().Length;++i)
         {
-          var ext_name = ctx.extensions().NAME()[i];
-          AddSemanticToken(ext_name, SemanticTokenTypes.@class);
+          var ext_name = ctx.extensions().nsName()[i];
+          AddSemanticToken(ext_name.NAME(), SemanticTokenTypes.@class);
         }
       }
       

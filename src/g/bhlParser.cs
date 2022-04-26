@@ -3676,9 +3676,11 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class ExtensionsContext : ParserRuleContext {
-		public ITerminalNode[] NAME() { return GetTokens(bhlParser.NAME); }
-		public ITerminalNode NAME(int i) {
-			return GetToken(bhlParser.NAME, i);
+		public NsNameContext[] nsName() {
+			return GetRuleContexts<NsNameContext>();
+		}
+		public NsNameContext nsName(int i) {
+			return GetRuleContext<NsNameContext>(i);
 		}
 		public ExtensionsContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -3709,7 +3711,7 @@ public partial class bhlParser : Parser {
 			EnterOuterAlt(_localctx, 1);
 			{
 			State = 516; Match(T__10);
-			State = 517; Match(NAME);
+			State = 517; nsName();
 			State = 522;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
@@ -3717,7 +3719,7 @@ public partial class bhlParser : Parser {
 				{
 				{
 				State = 518; Match(T__1);
-				State = 519; Match(NAME);
+				State = 519; nsName();
 				}
 				}
 				State = 524;
@@ -6845,21 +6847,21 @@ public partial class bhlParser : Parser {
 		'\x204', '\x3', '\x2', '\x2', '\x2', '\x203', '\x201', '\x3', '\x2', '\x2', 
 		'\x2', '\x204', '\x205', '\a', '$', '\x2', '\x2', '\x205', 'K', '\x3', 
 		'\x2', '\x2', '\x2', '\x206', '\x207', '\a', '\r', '\x2', '\x2', '\x207', 
-		'\x20C', '\a', '@', '\x2', '\x2', '\x208', '\x209', '\a', '\x4', '\x2', 
-		'\x2', '\x209', '\x20B', '\a', '@', '\x2', '\x2', '\x20A', '\x208', '\x3', 
-		'\x2', '\x2', '\x2', '\x20B', '\x20E', '\x3', '\x2', '\x2', '\x2', '\x20C', 
-		'\x20A', '\x3', '\x2', '\x2', '\x2', '\x20C', '\x20D', '\x3', '\x2', '\x2', 
-		'\x2', '\x20D', 'M', '\x3', '\x2', '\x2', '\x2', '\x20E', '\x20C', '\x3', 
-		'\x2', '\x2', '\x2', '\x20F', '\x210', '\a', '%', '\x2', '\x2', '\x210', 
-		'\x211', '\a', '@', '\x2', '\x2', '\x211', '\x212', '\a', '#', '\x2', 
-		'\x2', '\x212', '\x213', '\x5', '\n', '\x6', '\x2', '\x213', '\x214', 
-		'\a', '$', '\x2', '\x2', '\x214', 'O', '\x3', '\x2', '\x2', '\x2', '\x215', 
-		'\x216', '\a', '&', '\x2', '\x2', '\x216', '\x218', '\a', '@', '\x2', 
-		'\x2', '\x217', '\x219', '\x5', 'L', '\'', '\x2', '\x218', '\x217', '\x3', 
-		'\x2', '\x2', '\x2', '\x218', '\x219', '\x3', '\x2', '\x2', '\x2', '\x219', 
-		'\x21A', '\x3', '\x2', '\x2', '\x2', '\x21A', '\x21B', '\x5', 'R', '*', 
-		'\x2', '\x21B', 'Q', '\x3', '\x2', '\x2', '\x2', '\x21C', '\x21D', '\a', 
-		'#', '\x2', '\x2', '\x21D', '\x21E', '\x5', 'T', '+', '\x2', '\x21E', 
+		'\x20C', '\x5', '\xE', '\b', '\x2', '\x208', '\x209', '\a', '\x4', '\x2', 
+		'\x2', '\x209', '\x20B', '\x5', '\xE', '\b', '\x2', '\x20A', '\x208', 
+		'\x3', '\x2', '\x2', '\x2', '\x20B', '\x20E', '\x3', '\x2', '\x2', '\x2', 
+		'\x20C', '\x20A', '\x3', '\x2', '\x2', '\x2', '\x20C', '\x20D', '\x3', 
+		'\x2', '\x2', '\x2', '\x20D', 'M', '\x3', '\x2', '\x2', '\x2', '\x20E', 
+		'\x20C', '\x3', '\x2', '\x2', '\x2', '\x20F', '\x210', '\a', '%', '\x2', 
+		'\x2', '\x210', '\x211', '\a', '@', '\x2', '\x2', '\x211', '\x212', '\a', 
+		'#', '\x2', '\x2', '\x212', '\x213', '\x5', '\n', '\x6', '\x2', '\x213', 
+		'\x214', '\a', '$', '\x2', '\x2', '\x214', 'O', '\x3', '\x2', '\x2', '\x2', 
+		'\x215', '\x216', '\a', '&', '\x2', '\x2', '\x216', '\x218', '\a', '@', 
+		'\x2', '\x2', '\x217', '\x219', '\x5', 'L', '\'', '\x2', '\x218', '\x217', 
+		'\x3', '\x2', '\x2', '\x2', '\x218', '\x219', '\x3', '\x2', '\x2', '\x2', 
+		'\x219', '\x21A', '\x3', '\x2', '\x2', '\x2', '\x21A', '\x21B', '\x5', 
+		'R', '*', '\x2', '\x21B', 'Q', '\x3', '\x2', '\x2', '\x2', '\x21C', '\x21D', 
+		'\a', '#', '\x2', '\x2', '\x21D', '\x21E', '\x5', 'T', '+', '\x2', '\x21E', 
 		'\x21F', '\a', '$', '\x2', '\x2', '\x21F', 'S', '\x3', '\x2', '\x2', '\x2', 
 		'\x220', '\x222', '\x5', 'V', ',', '\x2', '\x221', '\x220', '\x3', '\x2', 
 		'\x2', '\x2', '\x222', '\x225', '\x3', '\x2', '\x2', '\x2', '\x223', '\x221', 
