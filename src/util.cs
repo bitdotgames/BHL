@@ -179,6 +179,19 @@ public static class Extensions
     }
     return name;
   }
+
+  public static Symbol ResolveWithFallback(this IScope scope, string name)
+  {
+    var s = scope.Resolve(name);
+    if(s != null)
+      return s;
+
+    var fallback = scope.GetFallbackScope();
+    if(fallback != null) 
+      return fallback.ResolveWithFallback(name);
+
+    return null;
+  }
 }
 
 public struct FuncArgsInfo

@@ -474,7 +474,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(root_name != null)
     {
-      var name_symb = scope.Resolve(curr_name.GetText());
+      var name_symb = scope.ResolveWithFallback(curr_name.GetText());
       if(name_symb == null)
         FireError(root_name, "symbol not resolved");
 
@@ -488,7 +488,7 @@ public class Frontend : bhlBaseVisitor<object>
           var macc = ch.memberAccess();
           if(macc == null)
             FireError(ch, "bad chain call");
-          name_symb = scope.Resolve(macc.NAME().GetText());
+          name_symb = scope.ResolveWithFallback(macc.NAME().GetText());
           if(name_symb == null)
             FireError(macc.NAME(), "symbol not resolved");
            curr_name = macc.NAME(); 
@@ -567,7 +567,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(name != null)
     {
       string str_name = name.GetText();
-      var name_symb = scope.Resolve(str_name);
+      var name_symb = scope.ResolveWithFallback(str_name);
       if(name_symb == null)
         FireError(name, "symbol not resolved");
 
@@ -636,7 +636,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          var call_func_symb = module.ns.Resolve(str_name) as FuncSymbol;
+          var call_func_symb = module.ns.ResolveWithFallback(str_name) as FuncSymbol;
           if(call_func_symb == null)
             FireError(name, "no such function found");
 
@@ -1216,7 +1216,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var name_str = ctx.NAME().GetText();
     
-    var member = scoped_symb.Resolve(name_str) as VariableSymbol;
+    var member = scoped_symb.ResolveWithFallback(name_str) as VariableSymbol;
     if(member == null)
       FireError(ctx, "no such attribute '" + name_str + "' in class '" + scoped_symb.name + "'");
 
@@ -1274,7 +1274,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var exp = ctx.staticCallExp(); 
     var ctx_name = exp.NAME();
-    var enum_symb = module.ns.Resolve(ctx_name.GetText()) as EnumSymbol;
+    var enum_symb = module.ns.ResolveWithFallback(ctx_name.GetText()) as EnumSymbol;
     if(enum_symb == null)
       FireError(ctx, "type '" + ctx_name + "' not found");
 
@@ -1430,7 +1430,7 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitVarPostOpAssign(bhlParser.VarPostOpAssignContext ctx)
   {
     var lhs = ctx.NAME().GetText();
-    var vlhs = curr_scope.Resolve(lhs) as VariableSymbol;
+    var vlhs = curr_scope.ResolveWithFallback(lhs) as VariableSymbol;
 
     if(vlhs == null)
       FireError(ctx.NAME(), "symbol not resolved");
@@ -1484,7 +1484,7 @@ public class Frontend : bhlBaseVisitor<object>
     var v = ctx.NAME();
     var ast = new AST_Interim();
     
-    var vs = curr_scope.Resolve(v.GetText()) as VariableSymbol;
+    var vs = curr_scope.ResolveWithFallback(v.GetText()) as VariableSymbol;
     if(vs == null)
       FireError(v, "symbol not resolved");
     
@@ -2067,7 +2067,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var name = ctx.NAME().GetText();
 
-    var ns = (curr_scope as Namespace).ResolveNoFallback(name) as Namespace;
+    var ns = curr_scope.Resolve(name) as Namespace;
     if(ns == null)
     {
       ns = new Namespace(types, name, module.name);
@@ -2383,7 +2383,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(vd_type == null)
         {
           string vd_name = vd.NAME().GetText(); 
-          var vd_symb = curr_scope.Resolve(vd_name) as VariableSymbol;
+          var vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
           if(vd_symb == null)
             FireError(vd, "symbol not resolved");
           curr_type = vd_symb.type.Get();
@@ -2923,7 +2923,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(vod.NAME() != null)
     {
       iter_str_name = vod.NAME().GetText();
-      iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
+      iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
       if(iter_symb == null)
         FireError(vod.NAME(), "symbol is not a valid variable");
       iter_type = iter_symb.type;
@@ -2932,7 +2932,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       iter_str_name = vd.NAME().GetText();
       iter_ast_decl = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
-      iter_symb = curr_scope.Resolve(iter_str_name) as VariableSymbol;
+      iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
       iter_type = iter_symb.type;
     }
     var arr_type = (ArrayTypeSymbol)types.TypeArr(iter_type).Get();
@@ -2945,7 +2945,7 @@ public class Frontend : bhlBaseVisitor<object>
     types.CheckAssign(Wrap(exp), arr_type);
 
     var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
-    var arr_tmp_symb = curr_scope.Resolve(arr_tmp_name) as VariableSymbol;
+    var arr_tmp_symb = curr_scope.ResolveWithFallback(arr_tmp_name) as VariableSymbol;
     if(arr_tmp_symb == null)
     {
       arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, types.Type(iter_type));
@@ -2953,7 +2953,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
 
     var arr_cnt_name = "$foreach_cnt" + exp.Start.Line + "_" + exp.Start.Column;
-    var arr_cnt_symb = curr_scope.Resolve(arr_cnt_name) as VariableSymbol;
+    var arr_cnt_symb = curr_scope.ResolveWithFallback(arr_cnt_name) as VariableSymbol;
     if(arr_cnt_symb == null)
     {
       arr_cnt_symb = new VariableSymbol(Wrap(exp), arr_cnt_name, types.Type("int"));

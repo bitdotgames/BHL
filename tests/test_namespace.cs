@@ -116,25 +116,25 @@ public class TestNamespace : BHL_TestBase
     }
     */
     {
-      var foo = ns2.ResolveNoFallback("foo") as Namespace;
+      var foo = ns2.Resolve("foo") as Namespace;
       AssertTrue(foo != null);
       AssertEqual(1, foo.GetMembers().Count);
 
-      var foo_sub = foo.ResolveNoFallback("foo_sub") as Namespace;
+      var foo_sub = foo.Resolve("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
       AssertEqual(2, foo_sub.GetMembers().Count);
 
-      var cl_wow = foo_sub.ResolveNoFallback("Wow") as ClassSymbol;
+      var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       AssertTrue(cl_wow != null);
 
-      var cl_hey = foo_sub.ResolveNoFallback("Hey") as ClassSymbol;
+      var cl_hey = foo_sub.Resolve("Hey") as ClassSymbol;
       AssertTrue(cl_hey != null);
 
-      var bar = ns2.ResolveNoFallback("bar") as Namespace;
+      var bar = ns2.Resolve("bar") as Namespace;
       AssertTrue(bar != null);
       AssertEqual(0, bar.GetMembers().Count);
 
-      var wow = ns2.ResolveNoFallback("wow") as Namespace;
+      var wow = ns2.Resolve("wow") as Namespace;
       AssertTrue(wow != null);
       AssertEqual(0, wow.GetMembers().Count);
     }
@@ -254,24 +254,24 @@ public class TestNamespace : BHL_TestBase
     */
 
     {
-      var foo = ns2.ResolveNoFallback("foo") as Namespace;
+      var foo = ns2.Resolve("foo") as Namespace;
       AssertTrue(foo != null);
       AssertEqual(1, foo.GetMembers().Count);
 
-      var foo_sub = foo.ResolveNoFallback("foo_sub") as Namespace;
+      var foo_sub = foo.Resolve("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
       AssertEqual(1, foo_sub.GetMembers().Count);
 
-      var cl_wow = foo_sub.ResolveNoFallback("Wow") as ClassSymbol;
+      var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       AssertTrue(cl_wow == null);
 
-      var cl_hey = foo_sub.ResolveNoFallback("Hey") as ClassSymbol;
+      var cl_hey = foo_sub.Resolve("Hey") as ClassSymbol;
       AssertTrue(cl_hey != null);
 
-      var bar = ns2.ResolveNoFallback("bar") as Namespace;
+      var bar = ns2.Resolve("bar") as Namespace;
       AssertTrue(bar != null);
 
-      var wow = ns2.ResolveNoFallback("wow") as Namespace;
+      var wow = ns2.Resolve("wow") as Namespace;
       AssertTrue(wow == null);
     }
   }
@@ -359,7 +359,7 @@ public class TestNamespace : BHL_TestBase
     }
     */
 
-    (ns2.ResolveNoFallback("wow") as Namespace).Define(new Namespace(ts, "wow_sub"));
+    (ns2.Resolve("wow") as Namespace).Define(new Namespace(ts, "wow_sub"));
     ns2.Unlink(ns1);
 
     /*
@@ -381,27 +381,27 @@ public class TestNamespace : BHL_TestBase
     */
 
     {
-      var foo = ns2.ResolveNoFallback("foo") as Namespace;
+      var foo = ns2.Resolve("foo") as Namespace;
       AssertTrue(foo != null);
       AssertEqual(1, foo.GetMembers().Count);
 
-      var foo_sub = foo.ResolveNoFallback("foo_sub") as Namespace;
+      var foo_sub = foo.Resolve("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
       AssertEqual(1, foo_sub.GetMembers().Count);
 
-      var cl_wow = foo_sub.ResolveNoFallback("Wow") as ClassSymbol;
+      var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       AssertTrue(cl_wow == null);
 
-      var cl_hey = foo_sub.ResolveNoFallback("Hey") as ClassSymbol;
+      var cl_hey = foo_sub.Resolve("Hey") as ClassSymbol;
       AssertTrue(cl_hey != null);
 
-      var bar = ns2.ResolveNoFallback("bar") as Namespace;
+      var bar = ns2.Resolve("bar") as Namespace;
       AssertTrue(bar != null);
 
-      var wow = ns2.ResolveNoFallback("wow") as Namespace;
+      var wow = ns2.Resolve("wow") as Namespace;
       AssertTrue(wow != null);
 
-      AssertTrue(wow.ResolveNoFallback("wow_sub") is Namespace);
+      AssertTrue(wow.Resolve("wow_sub") is Namespace);
     }
   }
 

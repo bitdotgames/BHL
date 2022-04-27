@@ -7,16 +7,17 @@ using marshall;
 
 public interface IScope
 {
-  // Where to look next for symbols in case if not found (e.g super class) 
-  IScope GetFallbackScope();
+  // Look up name in this scope without fallback!
+  Symbol Resolve(string name);
 
   // Define a symbol in the current scope
   void Define(Symbol sym);
-  // Look up name in this scope or in fallback scope if not here
-  Symbol Resolve(string name);
 
   // Readonly collection of members
   SymbolsStorage GetMembers();
+
+  // Where to look next for symbols in case if not found (e.g super class) 
+  IScope GetFallbackScope();
 }
 
 public interface IInstanceType : IType, IScope 
@@ -42,18 +43,12 @@ public class LocalScope : IScope
   {
     Symbol s = null;
     members.TryGetValue(name, out s);
-    if(s != null)
-      return s;
-
-    if(fallback != null) 
-      return fallback.Resolve(name);
-
-    return null;
+    return s;
   }
 
   public virtual void Define(Symbol sym) 
   {
-    if(Resolve(sym.name) != null)
+    if(this.Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     members.Add(sym);
@@ -124,7 +119,7 @@ public class Namespace : Symbol, IScope, IMarshallable
     {
       var other_symb = other.members[i];
 
-      var this_symb = ResolveNoFallback(other_symb.name);
+      var this_symb = Resolve(other_symb.name);
 
       if(other_symb is Namespace other_ns)
       {
@@ -242,18 +237,6 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public Symbol Resolve(string name)
   {
-    var s = ResolveNoFallback(name); 
-    if(s != null)
-      return s;
-
-    if(scope != null) 
-      return scope.Resolve(name);
-    
-    return null;
-  }
-
-  public Symbol ResolveNoFallback(string name)
-  {
     var it = GetLinksIterator();
     while(it.Next())
     {
@@ -278,15 +261,7 @@ public class Namespace : Symbol, IScope, IMarshallable
         (start_idx == 0 ? full_name : full_name.Substring(start_idx)) : 
         full_name.Substring(start_idx, next_idx - start_idx);
 
-      Symbol symb;
-      //TODO: make 'no-fallback' feature part of the IScope interface
-      //var symb = scope.ResolveLocal(name);
-
-      //special case for namespace
-      if(scope is Namespace ns)
-        symb = ns.ResolveNoFallback(name);
-      else
-        scope.GetMembers().TryGetValue(name, out symb);
+      var symb = scope.Resolve(name);
 
       if(symb == null)
         break;
@@ -310,7 +285,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public void Define(Symbol sym) 
   {
-    if(ResolveNoFallback(sym.name) != null)
+    if(this.Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)

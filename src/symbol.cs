@@ -902,11 +902,6 @@ public abstract class EnclosingSymbol : Symbol, IScope
 #endif
         return s;
     }
-
-    var fallback = GetFallbackScope();
-    if(fallback != null)
-      return fallback.Resolve(name);
-
     return null;
   }
 
@@ -1130,15 +1125,7 @@ public class LambdaSymbol : FuncSymbolScript
     if(s != null)
       return s;
 
-    s = ResolveUpvalue(name);
-    if(s != null)
-      return s;
-
-    var fback = GetFallbackScope();
-    if(fback != null)
-      return fback.Resolve(name);
-
-    return null;
+    return ResolveUpvalue(name);
   }
 
   Symbol ResolveUpvalue(string name)
