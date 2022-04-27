@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 using bhl;
 
 public class TestNamespace : BHL_TestBase
@@ -810,6 +811,43 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportUserClass()
+  {
+    string bhl1 = @"
+    namespace foo {
+      class Foo { 
+        int Int
+        float Flt
+        string Str
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+    func int test() 
+    {
+      foo.Foo f = {}
+      f.Int = 10
+      return f.Int
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl2");
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 }

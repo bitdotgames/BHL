@@ -292,6 +292,9 @@ public class Build
       for(int i=0;i<symbols.Count;++i)
       {
         var s = symbols[i];
+        //TODO: make this check more robust
+        if(s is Namespace)
+          continue;
         string fpath;
         if(name2file.TryGetValue(s.name, out fpath))
         {
