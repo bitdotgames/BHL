@@ -41,9 +41,7 @@ public class LocalScope : IScope
 
   public virtual Symbol Resolve(string name) 
   {
-    Symbol s = null;
-    members.TryGetValue(name, out s);
-    return s;
+    return members.Find(name);
   }
 
   public virtual void Define(Symbol sym) 
@@ -158,8 +156,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
       if(other_symb is Namespace other_ns)
       {
-        Symbol this_symb;
-        members.TryGetValue(other_symb.name, out this_symb);
+        var this_symb = members.Find(other_symb.name);
         if(this_symb is Namespace this_ns)
         {
           this_ns.Unlink(other_ns);
@@ -240,8 +237,7 @@ public class Namespace : Symbol, IScope, IMarshallable
     var it = GetLinksIterator();
     while(it.Next())
     {
-      Symbol s;
-      it.current.members.TryGetValue(name, out s);
+      var s = it.current.members.Find(name);
       if(s != null)
         return s;
     }

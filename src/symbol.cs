@@ -891,8 +891,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
   public virtual Symbol Resolve(string name) 
   {
-    Symbol s;
-    GetMembers().TryGetValue(name, out s);
+    var s = GetMembers().Find(name);
     if(s != null)
     {
 #if BHL_FRONT
@@ -1120,8 +1119,7 @@ public class LambdaSymbol : FuncSymbolScript
 
   public override Symbol Resolve(string name) 
   {
-    Symbol s = null;
-    members.TryGetValue(name, out s);
+    var s = members.Find(name);
     if(s != null)
       return s;
 
@@ -1139,8 +1137,7 @@ public class LambdaSymbol : FuncSymbolScript
       var decl = fdecl_stack[i];
 
       //NOTE: only variable symbols are considered
-      Symbol res = null;
-      decl.members.TryGetValue(name, out res);
+      var res = decl.members.Find(name);
       if(res is VariableSymbol vs && !vs.is_out_of_scope)
         return AssignUpValues(vs, i+1, my_idx);
     }
@@ -1508,15 +1505,10 @@ public class SymbolsStorage : IMarshallable
     return str2symb.ContainsKey(key);
   }
 
-  public bool TryGetValue(string key, out Symbol val)
-  {
-    return str2symb.TryGetValue(key, out val);
-  }
-
   public Symbol Find(string key)
   {
     Symbol s = null;
-    TryGetValue(key, out s);
+    str2symb.TryGetValue(key, out s);
     return s;
   }
 
