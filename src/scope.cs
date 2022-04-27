@@ -244,44 +244,9 @@ public class Namespace : Symbol, IScope, IMarshallable
     return null;
   }
 
-  public Symbol ResolveFullName(string full_name)
-  {
-    int start_idx = 0;
-    int next_idx = full_name.IndexOf('.');
-
-    IScope scope = this;
-    while(true)
-    {
-      string name = 
-        next_idx == -1 ? 
-        (start_idx == 0 ? full_name : full_name.Substring(start_idx)) : 
-        full_name.Substring(start_idx, next_idx - start_idx);
-
-      var symb = scope.Resolve(name);
-
-      if(symb == null)
-        break;
-
-      //let's check if it's the last path item
-      if(next_idx == -1)
-        return symb;
-
-      start_idx = next_idx + 1;
-      next_idx = full_name.IndexOf('.', start_idx);
-
-      scope = symb as IScope;
-      //we can't proceed 'deeper' if the last resolved 
-      //symbol is not a scope
-      if(scope == null)
-        break;
-    }
-
-    return null;
-  }
-
   public void Define(Symbol sym) 
   {
-    if(this.Resolve(sym.name) != null)
+    if(Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)
