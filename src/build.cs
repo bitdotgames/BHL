@@ -34,8 +34,6 @@ public class Build
   const uint FILE_VERSION = 1;
   const int ERROR_EXIT_CODE = 2;
 
-  Dictionary<string, string> name2file = new Dictionary<string, string>();
-
   public struct InterimResult
   {
     public bool use_file_cache;
@@ -212,11 +210,14 @@ public class Build
       mwriter.Write(ModuleLoader.COMPILE_FMT);
       mwriter.Write(FILE_VERSION);
 
+      //used as a global namespace for unique symbols check
+      var ns = new Namespace(conf.ts);
+
       int total_modules = 0;
       foreach(var w in compiler_workers)
       {
         if(w.error == null)
-          CheckUniqueSymbols(w);
+          CheckUniqueSymbols(ns, w);
 
         //NOTE: exit in case of error
         if(w.error != null)
@@ -282,30 +283,17 @@ public class Build
     return lz4_bytes;
   }
 
-  void CheckUniqueSymbols(CompilerWorker w)
+  void CheckUniqueSymbols(Namespace ns, CompilerWorker w)
   {
-    foreach(var kv in w.file2symbols)
+    foreach(var kv in w.file2ns)
     {
-      var symbols = kv.Value;
       var file = kv.Key;
+      var file_ns = new Namespace(w.ts);
+      file_ns.members = kv.Value.members;
 
-      for(int i=0;i<symbols.Count;++i)
-      {
-        var s = symbols[i];
-        //TODO: make this check more robust
-        if(s is Namespace)
-          continue;
-        string fpath;
-        if(name2file.TryGetValue(s.name, out fpath))
-        {
-          w.error = new BuildError(file, "symbol '" + s.name + "' is already declared in '" + fpath + "'");
-          break;
-        }
-        else
-        {
-          name2file.Add(s.name, file);
-        }
-      }
+      var conflict = ns.TryLink(file_ns);
+      if(conflict != null)
+        w.error = new BuildError(file, "symbol '" + conflict.GetFullName() + "' is already declared in module '" + (conflict.scope as Namespace)?.module_name + "'");
     }
   }
 
@@ -520,7 +508,7 @@ public class Build
     public Cache cache;
     public Dictionary<string, ModulePath> file2path = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
-    public Dictionary<string, SymbolsStorage> file2symbols = new Dictionary<string, SymbolsStorage>();
+    public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
 
     public void Start()
     {
@@ -583,7 +571,7 @@ public class Build
             front_res = w.postproc.Patch(front_res, file);
 
             w.file2path.Add(file, file_module.path);
-            w.file2symbols.Add(file, front_res.module.ns.members);
+            w.file2ns.Add(file, front_res.module.ns);
 
             var c  = new Compiler(front_res);
             var cm = c.Compile();

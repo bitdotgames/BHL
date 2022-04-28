@@ -1008,4 +1008,36 @@ public class TestNamespace : BHL_TestBase
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestImportSymbolsConflict()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Foo() {
+        return 10
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    namespace foo {
+      func void Foo() {
+      }
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    AssertError<Exception>(
+      delegate() { 
+        CompileFiles(files);
+      },
+      @"symbol 'Foo' is already declared in module 'bhl1'"
+    );
+  }
+
 }
