@@ -493,7 +493,7 @@ public class BHL_TestBase
     //it's going to go thru the full compilation cycle
     var ms = new MemoryStream();
     CompiledModule.ToStream(orig_cm, ms);
-    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), link_types_ns: true);
+    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), on_import: null, link_types_ns: true);
 
     var vm = new VM(ts);
     vm.RegisterModule(cm);
@@ -537,7 +537,7 @@ public class BHL_TestBase
   {
     public Dictionary<string, CompiledModule> mods = new Dictionary<string, CompiledModule>();
 
-    public CompiledModule Load(string name)
+    public CompiledModule Load(string name, System.Action<string> on_import)
     {
       return mods[name];
     }

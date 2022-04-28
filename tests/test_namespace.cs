@@ -899,8 +899,6 @@ public class TestNamespace : BHL_TestBase
     namespace foo {
       class Foo { 
         int Int
-        float Flt
-        string Str
       }
     }
     ";
@@ -926,6 +924,47 @@ public class TestNamespace : BHL_TestBase
 
     vm.LoadModule("bhl2");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportUserInterface()
+  {
+    string bhl1 = @"
+    namespace foo {
+      interface IFoo { 
+        func int Do()
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+
+    class Foo : foo.IFoo {
+      func int Do() {
+        return 42
+      }
+    }
+
+    func int test() 
+    {
+      Foo f = {}
+      return f.Do()
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl2");
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 

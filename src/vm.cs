@@ -76,7 +76,6 @@ public enum Opcodes
   ArrIdxW           = 83,
   ArrAddInplace     = 84,  //TODO: used for json alike array initialization,   
                            //      can be replaced with more low-level opcodes?
-  Import            = 85,
 }
 
 public enum BlockType 
@@ -731,6 +730,7 @@ public class VM
   }
 
   Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
+  HashSet<string> loading_modules = new HashSet<string>();
 
   Types types;
   public Types Types {
@@ -841,20 +841,25 @@ public class VM
 
   public bool LoadModule(string module_name)
   {
-    var loaded = loader.Load(module_name);
+    if(loading_modules.Contains(module_name))
+      return true;
+    loading_modules.Add(module_name);
+
+    var loaded = loader.Load(module_name, OnImport);
+
+    loading_modules.Remove(module_name);
+
     if(loaded == null)
       return false;
+
     RegisterModule(loaded);
+
     return true;
   }
 
-  void LoadModule(CompiledModule module, string module_name)
+  void OnImport(string module_name)
   {
-    var loaded = loader.Load(module_name);
-    if(loaded == null)
-      throw new Exception("Module '" + module_name + "' not found");
-
-    RegisterModule(loaded);
+    LoadModule(module_name);
   }
 
   public void RegisterModule(CompiledModule cm)
@@ -913,14 +918,6 @@ public class VM
       //Util.Debug("EXEC INIT " + opcode);
       switch(opcode)
       {
-        case Opcodes.Import:
-        {
-          int module_idx = (int)Bytecode.Decode32(bytecode, ref ip);
-          string module_name = constants[module_idx].str;
-
-          LoadModule(module, module_name);
-        }
-        break;
         case Opcodes.DeclVar:
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
@@ -2201,6 +2198,7 @@ public class CompiledModule
   public Namespace ns;
   public byte[] initcode;
   public byte[] bytecode;
+  public List<string> imports;
   public List<Const> constants;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
   public Ip2SrcLine ip2src_line;
@@ -2208,6 +2206,7 @@ public class CompiledModule
   public CompiledModule(
     string name,
     Namespace ns,
+    List<string> imports,
     List<Const> constants, 
     byte[] initcode,
     byte[] bytecode, 
@@ -2216,14 +2215,25 @@ public class CompiledModule
   {
     this.name = name;
     this.ns = ns;
+    this.imports = imports;
     this.constants = constants;
     this.initcode = initcode;
     this.bytecode = bytecode;
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, bool link_types_ns = false)
+  static public CompiledModule FromStream(Types types, Stream src, System.Action<string> on_import, bool link_types_ns = false)
   {
+    var symb_factory = new SymbolFactory(types);
+
+    string name = "";
+    var imports = new List<string>();
+    var constants = new List<Const>();
+    byte[] symb_bytes = null;
+    byte[] initcode = null;
+    byte[] bytecode = null;
+    var ip2src_line = new Ip2SrcLine();
+
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
     {
       //TODO: add better support for version
@@ -2231,30 +2241,23 @@ public class CompiledModule
       if(version != HEADER_VERSION)
         throw new Exception("Unsupported version: " + version);
 
-      string name = r.ReadString();
+      name = r.ReadString();
+
+      int imports_len = r.ReadInt32();
+      for(int i=0;i<imports_len;++i)
+        imports.Add(r.ReadString());
 
       int symb_len = r.ReadInt32();
-      var symb_bytes = r.ReadBytes(symb_len);
-      var symb_factory = new SymbolFactory(types);
-      var ns = new Namespace(types);
-      if(link_types_ns)
-        types.ns.Link(ns);
-      Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
-      //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
-      //      with the global namespace only once the objec is un-marshalled
-      ns.Link(types.ns);
+      symb_bytes = r.ReadBytes(symb_len);
 
-      byte[] initcode = null;
       int initcode_len = r.ReadInt32();
       if(initcode_len > 0)
         initcode = r.ReadBytes(initcode_len);
 
-      byte[] bytecode = null;
       int bytecode_len = r.ReadInt32();
       if(bytecode_len > 0)
         bytecode = r.ReadBytes(bytecode_len);
 
-      var constants = new List<Const>();
       int constants_len = r.ReadInt32();
       for(int i=0;i<constants_len;++i)
       {
@@ -2282,21 +2285,32 @@ public class CompiledModule
         constants.Add(cn);
       }
 
-      var ip2src_line = new Ip2SrcLine();
       int ip2src_line_len = r.ReadInt32();
       for(int i=0;i<ip2src_line_len;++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
-
-      return new 
-        CompiledModule(
-          name, 
-          ns, 
-          constants, 
-          initcode, 
-          bytecode, 
-          ip2src_line
-       );
     }
+
+    foreach(var import in imports)
+      on_import?.Invoke(import);
+
+    var ns = new Namespace(types);
+    if(link_types_ns)
+      types.ns.Link(ns);
+    Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
+    //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
+    //      with the global namespace only once the object is un-marshalled
+    ns.Link(types.ns);
+
+    return new 
+      CompiledModule(
+        name, 
+        ns, 
+        imports,
+        constants, 
+        initcode, 
+        bytecode, 
+        ip2src_line
+     );
   }
 
   static public void ToStream(CompiledModule cm, Stream dst)
@@ -2308,6 +2322,10 @@ public class CompiledModule
       w.Write(HEADER_VERSION);
 
       w.Write(cm.name);
+
+      w.Write(cm.imports.Count);
+      foreach(var import in cm.imports)
+        w.Write(import);
 
       var symb_bytes = Marshall.Obj2Bytes(cm.ns);
       w.Write(symb_bytes.Length);

@@ -12,6 +12,7 @@ public class Compiler : AST_Visitor
   Module module;
 
   List<Const> constants = new List<Const>();
+  List<string> imports = new List<string>();
   List<Instruction> init = new List<Instruction>();
   List<Instruction> code = new List<Instruction>();
   List<Instruction> head = null;
@@ -194,6 +195,7 @@ public class Compiler : AST_Visitor
       compiled = new CompiledModule(
         module.name, 
         module.ns,
+        imports,
         constants, 
         init_bytes,
         code_bytes,
@@ -640,12 +642,6 @@ public class Compiler : AST_Visitor
         Opcodes.ArrAddInplace
       )
     );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.Import,
-        4/*name idx*/
-      )
-    );
   }
 
   static void DeclareOpcode(Definition def)
@@ -811,9 +807,8 @@ public class Compiler : AST_Visitor
   {
     for(int i=0;i<ast.module_names.Count;++i)
     {
-      int module_idx = AddConstant(ast.module_names[i]);
-
-      Emit(Opcodes.Import, new int[] { module_idx });
+      if(!imports.Contains(ast.module_names[i]))
+        imports.Add(ast.module_names[i]);
     }
   }
 

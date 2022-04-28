@@ -16225,21 +16225,17 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    AssertEqual(loader.Load("bhl1"), 
+    AssertEqual(loader.Load("bhl1", null), 
       new Compiler()
-      .UseInit()
-      .EmitThen(Opcodes.Import, new int[] { 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { 1 })
-      .EmitThen(Opcodes.CallImported, new int[] { 0, 1 })
+      .EmitThen(Opcodes.Constant, new int[] { 0 })
+      .EmitThen(Opcodes.CallImported, new int[] { 1, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
-    AssertEqual(loader.Load("bhl2"), 
+    AssertEqual(loader.Load("bhl2", null), 
       new Compiler()
-      .UseInit()
-      .EmitThen(Opcodes.Import, new int[] { 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
@@ -16248,7 +16244,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
-    AssertEqual(loader.Load("bhl3"), 
+    AssertEqual(loader.Load("bhl3", null), 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})

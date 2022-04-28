@@ -251,7 +251,11 @@ public class Namespace : Symbol, IScope, IMarshallable
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)
     {
-      //for native func symbols we store unique global index
+      //TODO: We need some abstraction here for all kinds of
+      //      symbols. For example, we need to know an index of 
+      //      a function defined in a module. Likewise we have
+      //      something similar for global variables.
+      //NOTE: For native func symbols we store the unique global index
       if(sym is FuncSymbolNative)
       {
         si.scope_idx = types.natives.Count;
