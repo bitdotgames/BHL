@@ -33,7 +33,7 @@ public struct TypeProxy : IMarshallable
   public TypeProxy(IType type)
   {
     types = null;
-    _name = type.GetFullName();
+    _name = (type is Symbol sym) ? sym.GetFullName() : type.GetName();
     this.type = type;
   }
 

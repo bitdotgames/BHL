@@ -1037,10 +1037,9 @@ public class VM
     return true;
   }
 
-  //TODO: add caching?
   FuncAddr GetFuncAddr(string name)
   {
-    var fs = (FuncSymbolScript)types.ns.Resolve(name);
+    var fs = (FuncSymbolScript)types.ns.ResolveFullName(name);
     var cm = modules[((Namespace)fs.scope).module_name];
     return new FuncAddr() {
       module = cm,
@@ -1549,9 +1548,9 @@ public class VM
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string func_path = curr_frame.constants[func_idx].str;
-        
-        var maddr = GetFuncAddr(func_path);
+        string func_name = curr_frame.constants[func_idx].str;
+        //TODO: during final compilation phase we can replace 'func names' with actual addresses
+        var maddr = GetFuncAddr(func_name);
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, maddr.module, maddr.ip);

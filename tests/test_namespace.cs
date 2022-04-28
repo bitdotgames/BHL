@@ -815,6 +815,44 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportUserFunc()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Foo() {
+        return 10
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+
+    func int Foo() {
+      return 1
+    }
+
+    func int test() 
+    {
+      return foo.Foo() + Foo()
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl2");
+    AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestImportUserClass()
   {
     string bhl1 = @"

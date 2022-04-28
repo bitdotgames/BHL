@@ -168,10 +168,16 @@ public static class Extensions
     }
   }
 
-  public static string GetFullName(this IType type)
+  public static string GetFullName(this Symbol sym)
   {
-    var name = type.GetName();
-    Namespace parent = (type is Symbol sym) ? sym.scope as Namespace : null;
+    return GetNamespaceNamePrefix(
+      sym.scope as Namespace, 
+      sym.name
+    );
+  }
+
+  public static string GetNamespaceNamePrefix(Namespace parent, string name)
+  {
     while(parent != null && parent.name.Length > 0)
     {
       name = parent.name + '.' + name;

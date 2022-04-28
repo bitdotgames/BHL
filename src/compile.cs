@@ -1255,8 +1255,7 @@ public class Compiler : AST_Visitor
       return Emit(Opcodes.GetFunc, new int[] { func_symb.scope_idx }, ast.line_num);
     else
     {
-      //TODO: use full namespace path?
-      int func_path_idx = AddConstant(ast.symb.name);
+      int func_path_idx = AddConstant(ast.symb.GetFullName());
       return Emit(Opcodes.GetFuncImported, new int[] { func_path_idx }, ast.line_num);
     }
   }
