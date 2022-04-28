@@ -2281,7 +2281,8 @@ public class CompiledModule
     Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
     //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
     //      with the global namespace only once the object is un-marshalled
-    ns.Link(types.ns);
+    //NOTE: we use lightweight linking without any validation
+    ns.links.Add(types.ns);
 
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);
