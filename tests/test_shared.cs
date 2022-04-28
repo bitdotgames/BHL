@@ -493,7 +493,13 @@ public class BHL_TestBase
     //it's going to go thru the full compilation cycle
     var ms = new MemoryStream();
     CompiledModule.ToStream(orig_cm, ms);
-    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), on_import: null, link_types_ns: true);
+
+    //NOTE: we force our version of the module namespace and link it with the 
+    //      global namespace ASAP so that module symbols will be resolved during unmarshalling
+    var ns = new Namespace(ts);
+    ts.ns.Link(ns);
+
+    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), on_import: null, ns: ns);
 
     var vm = new VM(ts);
     vm.RegisterModule(cm);

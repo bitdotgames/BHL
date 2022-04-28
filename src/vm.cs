@@ -2222,7 +2222,7 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, System.Action<string> on_import, bool link_types_ns = false)
+  static public CompiledModule FromStream(Types types, Stream src, System.Action<string> on_import, Namespace ns = null)
   {
     var symb_factory = new SymbolFactory(types);
 
@@ -2272,9 +2272,9 @@ public class CompiledModule
     foreach(var import in imports)
       on_import?.Invoke(import);
 
-    var ns = new Namespace(types);
-    if(link_types_ns)
-      types.ns.Link(ns);
+    if(ns == null)
+      ns = new Namespace(types);
+
     Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
     //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
     //      with the global namespace only once the object is un-marshalled
