@@ -928,4 +928,45 @@ public class TestNamespace : BHL_TestBase
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestImportGlobalObjectVar()
+  {
+    string bhl1 = @"
+    import ""bhl3""  
+    func float test() {
+      return bar.foo.x
+    }
+    ";
+
+    string bhl2 = @"
+    namespace foo {
+      class Foo {
+        float x
+      }
+    }
+    ";
+
+    string bhl3 = @"
+    import ""bhl2""  
+    namespace bar {
+      foo.Foo foo = {x : 10}
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files));
+
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }

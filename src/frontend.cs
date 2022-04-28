@@ -613,7 +613,7 @@ public class Frontend : bhlBaseVisitor<object>
         if(var_symb != null)
         {
           bool is_write = write && arracc == null;
-          bool is_global = (var_symb.scope is Namespace ns && ns.scope == null);
+          bool is_global = var_symb.scope is Namespace;
 
           if(scope is InterfaceSymbol)
             FireError(name, "attributes not supported by interfaces");
@@ -2268,7 +2268,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var tr = types.Type(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
-      module.ns.Define(symb);
+      curr_scope.Define(symb);
     }
     else
     {
