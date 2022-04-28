@@ -288,8 +288,8 @@ public class Build
     foreach(var kv in w.file2ns)
     {
       var file = kv.Key;
-      var file_ns = new Namespace(w.ts);
-      file_ns.members = kv.Value.members;
+      var file_ns = kv.Value;
+      file_ns.UnlinkAll();
 
       var conflict = ns.TryLink(file_ns);
       if(conflict != null)

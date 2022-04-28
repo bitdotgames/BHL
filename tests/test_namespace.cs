@@ -1036,7 +1036,7 @@ public class TestNamespace : BHL_TestBase
       delegate() { 
         CompileFiles(files);
       },
-      @"symbol 'Foo' is already declared in module 'bhl1'"
+      @"symbol 'foo.Foo' is already declared in module 'bhl1'"
     );
   }
 

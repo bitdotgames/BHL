@@ -169,6 +169,16 @@ public class Namespace : Symbol, IScope, IMarshallable
     links.Remove(other);
   }
 
+  public void UnlinkAll()
+  {
+    for(int i=0;i<members.Count;++i)
+    {
+      if(members[i] is Namespace ns)
+        ns.UnlinkAll();
+    }
+    links.Clear();
+  }
+
   public struct LinksIterator
   {
     Namespace owner;
