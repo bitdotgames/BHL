@@ -566,8 +566,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(name != null)
     {
-      string str_name = name.GetText();
-      var name_symb = scope.ResolveWithFallback(str_name);
+      var name_symb = scope.ResolveWithFallback(name.GetText());
       if(name_symb == null)
         FireError(name, "symbol not resolved");
 
@@ -636,11 +635,7 @@ public class Frontend : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          var call_func_symb = module.ns.ResolveWithFallback(str_name) as FuncSymbol;
-          if(call_func_symb == null)
-            FireError(name, "no such function found");
-
-          ast = new AST_Call(EnumCall.GET_ADDR, line, call_func_symb);
+          ast = new AST_Call(EnumCall.GET_ADDR, line, func_symb);
           type = func_symb.type.Get();
         }
         else
