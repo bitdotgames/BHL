@@ -2228,6 +2228,8 @@ public class CompiledModule
 
     string name = "";
     var imports = new List<string>();
+    int constants_len = 0;
+    byte[] constant_bytes = null;
     var constants = new List<Const>();
     byte[] symb_bytes = null;
     byte[] initcode = null;
@@ -2258,8 +2260,48 @@ public class CompiledModule
       if(bytecode_len > 0)
         bytecode = r.ReadBytes(bytecode_len);
 
-      int constants_len = r.ReadInt32();
-      for(int i=0;i<constants_len;++i)
+      constants_len = r.ReadInt32();
+      if(constants_len > 0)
+        constant_bytes = r.ReadBytes(constants_len);
+
+      int ip2src_line_len = r.ReadInt32();
+      for(int i=0;i<ip2src_line_len;++i)
+        ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
+    }
+
+    foreach(var import in imports)
+      on_import?.Invoke(import);
+
+    var ns = new Namespace(types);
+    if(link_types_ns)
+      types.ns.Link(ns);
+    Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
+    //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
+    //      with the global namespace only once the object is un-marshalled
+    ns.Link(types.ns);
+
+    if(constants_len > 0)
+      ReadConstants(symb_factory, constant_bytes, constants);
+
+    return new 
+      CompiledModule(
+        name, 
+        ns, 
+        imports,
+        constants, 
+        initcode, 
+        bytecode, 
+        ip2src_line
+     );
+  }
+
+  static void ReadConstants(SymbolFactory symb_factory, byte[] constant_bytes, List<Const> constants)
+  {
+    var src = new MemoryStream(constant_bytes); 
+    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8))
+    {
+      int constants_num = r.ReadInt32();
+      for(int i=0;i<constants_num;++i)
       {
         Const cn = null;
 
@@ -2284,33 +2326,7 @@ public class CompiledModule
 
         constants.Add(cn);
       }
-
-      int ip2src_line_len = r.ReadInt32();
-      for(int i=0;i<ip2src_line_len;++i)
-        ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
     }
-
-    foreach(var import in imports)
-      on_import?.Invoke(import);
-
-    var ns = new Namespace(types);
-    if(link_types_ns)
-      types.ns.Link(ns);
-    Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
-    //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
-    //      with the global namespace only once the object is un-marshalled
-    ns.Link(types.ns);
-
-    return new 
-      CompiledModule(
-        name, 
-        ns, 
-        imports,
-        constants, 
-        initcode, 
-        bytecode, 
-        ip2src_line
-     );
   }
 
   static public void ToStream(CompiledModule cm, Stream dst)
@@ -2339,24 +2355,9 @@ public class CompiledModule
       if(cm.bytecode != null)
         w.Write(cm.bytecode, 0, cm.bytecode.Length);
 
-      w.Write(cm.constants.Count);
-      foreach(var cn in cm.constants)
-      {
-        w.Write((byte)cn.type);
-        if(cn.type == ConstType.STR)
-          w.Write(cn.str);
-        else if(cn.type == ConstType.FLT || 
-                cn.type == ConstType.INT ||
-                cn.type == ConstType.BOOL ||
-                cn.type == ConstType.NIL)
-          w.Write(cn.num);
-        else if(cn.type == ConstType.TPROXY)
-        {
-          Marshall.Obj2Stream(cn.tproxy, dst);
-        }
-        else
-          throw new Exception("Unknown type: " + cn.type);
-      }
+      var constant_bytes = WriteConstants(cm.constants);
+      w.Write(constant_bytes.Length);
+      w.Write(constant_bytes, 0, constant_bytes.Length);
 
       //TODO: add this info only for development builds
       w.Write(cm.ip2src_line.ips.Count);
@@ -2366,6 +2367,33 @@ public class CompiledModule
         w.Write(cm.ip2src_line.lines[i]);
       }
     }
+  }
+
+  static byte[] WriteConstants(List<Const> constants)
+  {
+    var dst = new MemoryStream();
+    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
+    {
+      w.Write(constants.Count);
+      foreach(var cn in constants)
+      {
+        w.Write((byte)cn.type);
+        if(cn.type == ConstType.STR)
+          w.Write(cn.str);
+        else if(cn.type == ConstType.FLT || 
+            cn.type == ConstType.INT ||
+            cn.type == ConstType.BOOL ||
+            cn.type == ConstType.NIL)
+          w.Write(cn.num);
+        else if(cn.type == ConstType.TPROXY)
+        {
+          Marshall.Obj2Stream(cn.tproxy, dst);
+        }
+        else
+          throw new Exception("Unknown type: " + cn.type);
+      }
+    }
+    return dst.GetBuffer();
   }
 
   static public void ToFile(CompiledModule cm, string file)
