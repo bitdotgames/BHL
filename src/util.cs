@@ -232,6 +232,22 @@ public static class Extensions
 
     return null;
   }
+
+  public static string DumpMembers(this IScope scope, int level = 0)
+  {
+    string str = new String(' ', level) + (scope is Symbol sym ? "'" + sym.name + "' : " : "") + scope.GetType().Name + " {\n";
+    var ms = scope.GetMembers();
+    for(int i=0;i<ms.Count;++i)
+    {
+      var m = ms[i];
+      if(m is IScope s)
+        str += new String(' ', level) + s.DumpMembers(level+1) + "\n";
+      else
+        str += new String(' ', level+1) + "'" + m.name + "' : " + m.GetType().Name + "\n";
+    }
+    str += new String(' ', level) + "}";
+    return str;
+  }
 }
 
 public struct FuncArgsInfo
