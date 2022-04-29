@@ -179,14 +179,16 @@ public class Namespace : Symbol, IScope, IMarshallable
     links.Clear();
   }
 
-  public struct LinksIterator
+  //NOTE: iterator is used for convenience since we need
+  //      to iterate ourself and all other linked namespaces
+  public struct Iterator
   {
     Namespace owner;
     int c;
 
     public Namespace current;
 
-    public LinksIterator(Namespace owner)
+    public Iterator(Namespace owner)
     {
       this.owner = owner;
       c = -1;
@@ -211,9 +213,9 @@ public class Namespace : Symbol, IScope, IMarshallable
     }
   }
 
-  LinksIterator GetLinksIterator()
+  Iterator GetIterator()
   {
-    return new LinksIterator(this);
+    return new Iterator(this);
   }
 
   public IScope GetFallbackScope() { return scope; }
@@ -222,7 +224,7 @@ public class Namespace : Symbol, IScope, IMarshallable
   public SymbolsStorage GetMembers() 
   { 
     var all = new SymbolsStorage(this);
-    var it = GetLinksIterator();
+    var it = GetIterator();
     while(it.Next())
     {
       for(int i=0;i<it.current.members.Count;++i)
@@ -244,7 +246,7 @@ public class Namespace : Symbol, IScope, IMarshallable
 
   public Symbol Resolve(string name)
   {
-    var it = GetLinksIterator();
+    var it = GetIterator();
     while(it.Next())
     {
       var s = it.current.members.Find(name);

@@ -1040,4 +1040,55 @@ public class TestNamespace : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestImportedSymbolsInGlobalNamespace()
+  {
+    string bhl1 = @"
+    namespace foo {
+      class Foo { 
+        int Int
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""  
+    namespace foo {
+      namespace sub {
+        class Sub { 
+          foo.Foo foo
+        }
+      }
+    }
+    ";
+      
+      
+  string bhl3 = @"
+    import ""bhl2""  
+
+    func int test() 
+    {
+      foo.Foo f = {Int: 10}
+      foo.sub.Sub s = {foo: f}
+      return s.foo.Int
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl3");
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    AssertTrue(ts.ns.ResolveFullName("foo.sub.Sub") is ClassSymbol);
+    CommonChecks(vm);
+  }
+
+
 }

@@ -23,9 +23,9 @@ public struct TypeProxy : IMarshallable
     private set { _name = value; }
   }
 
-  public TypeProxy(Types ts, string name)
+  public TypeProxy(Types types, string name)
   {
-    this.types = ts;
+    this.types = types;
     type = null;
     _name = name;
   }

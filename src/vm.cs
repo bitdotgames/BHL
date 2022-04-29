@@ -868,10 +868,7 @@ public class VM
       return;
     modules.Add(cm.name, cm);
 
-    //NOTE: in runtime we use lightweight linking without
-    //      any validation since it's assumed it was done
-    //      during compile time phase
-    types.ns.links.Add(cm.ns);
+    types.ns.Link(cm.ns);
 
     ExecInit(cm);
   }
@@ -890,7 +887,7 @@ public class VM
     }
     m.gvars.Clear();
 
-    types.ns.links.Remove(m.ns);
+    types.ns.Unlink(m.ns);
 
     modules.Remove(module_name);
   }
