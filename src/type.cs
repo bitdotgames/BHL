@@ -15,6 +15,7 @@ public interface IType
 public struct TypeProxy : IMarshallable
 {
   Types types;
+  IScope scope;
   IType type;
   string _name;
   public string name 
@@ -23,9 +24,24 @@ public struct TypeProxy : IMarshallable
     private set { _name = value; }
   }
 
+  public TypeProxy(IScope scope, string name)
+  {
+    if(name.Length == 0 || Types.IsCompoundType(name))
+      throw new Exception("Type name contains illegal characters: '" + name + "'");
+    
+    this.scope = scope;
+    types = null;
+    type = null;
+    _name = name;
+  }
+
   public TypeProxy(Types types, string name)
   {
+    if(name.Length == 0 || Types.IsCompoundType(name))
+      throw new Exception("Type name contains illegal characters: '" + name + "'");
+    
     this.types = types;
+    scope = types.ns;
     type = null;
     _name = name;
   }
@@ -33,6 +49,7 @@ public struct TypeProxy : IMarshallable
   public TypeProxy(IType type)
   {
     types = null;
+    scope = null;
     _name = (type is Symbol sym) ? sym.GetFullName() : type.GetName();
     this.type = type;
   }
@@ -56,14 +73,17 @@ public struct TypeProxy : IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)types.ns.ResolveFullName(_name);
+    type = (bhl.IType)scope.ResolveFullName(_name);
     return type;
   }
 
   public void Sync(SyncContext ctx)
   {
     if(ctx.is_read)
+    {
       types = ((SymbolFactory)ctx.factory).types;
+      scope = types.ns;
+    }
     else if(string.IsNullOrEmpty(_name))
       throw new Exception("TypeProxy name is empty");
 
@@ -545,9 +565,6 @@ public class Types
 
   public TypeProxy Type(string name)
   {
-    if(name.Length == 0 || IsCompoundType(name))
-      throw new Exception("Type name contains illegal characters: '" + name + "'");
-    
     return new TypeProxy(this, name);
   }
 

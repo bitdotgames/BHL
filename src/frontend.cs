@@ -1013,7 +1013,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(ctx.funcType() != null)
       tp = types.Type(ParseFuncSignature(ctx.funcType()));
     else
-      tp = types.Type(ctx.nsName().GetText());
+      tp = module.ns.ProxyType(ctx.nsName().GetText());
 
     if(ctx.ARR() != null)
       tp = types.TypeArr(tp);
@@ -2259,7 +2259,8 @@ public class Frontend : bhlBaseVisitor<object>
 
     if(decls_only)
     {
-      var tr = types.Type(vd.type().GetText());
+      //var tr = types.Type(vd.type().GetText());
+      var tr = module.ns.ProxyType(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
       curr_scope.Define(symb);
     }

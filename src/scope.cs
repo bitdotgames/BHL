@@ -281,6 +281,11 @@ public class Namespace : Symbol, IScope, IMarshallable
     Marshall.Sync(ctx, ref module_name);
     Marshall.Sync(ctx, ref members);
   }
+
+  public TypeProxy ProxyType(string name)
+  {
+    return new TypeProxy(this, name);
+  }
 }
 
 } //namespace bhl
