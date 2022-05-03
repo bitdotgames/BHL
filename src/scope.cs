@@ -113,41 +113,34 @@ public class Namespace : Symbol, IScope, IMarshallable
     if(links.Contains(other))
       return null;
 
-    var other_it = other.GetIterator();
-    while(other_it.Next())
+    for(int i=0;i<other.members.Count;++i)
     {
-      var other_members = other_it.current.members; 
-      for(int i=0;i<other_members.Count;++i)
+      var other_symb = other.members[i];
+
+      var this_symb = Resolve(other_symb.name);
+
+      if(other_symb is Namespace other_ns)
       {
-        var other_symb = other_members[i];
-
-        var this_symb = Resolve(other_symb.name);
-
-        if(other_symb is Namespace other_ns)
+        //NOTE: if there's no such local symbol let's
+        //      create an empty namespace which can be
+        //      later linked
+        if(this_symb == null)
         {
-          //NOTE: if there's no such local symbol let's
-          //      create an empty namespace which can be
-          //      later linked
-          if(this_symb == null)
-          {
-            var ns = new Namespace(types, other_symb.name);
-            ns.TryLink(other_ns);
-            //ns.links.Add(other_ns);
-            //ns.links.AddRange(other_ns.links);
-            members.Add(ns);
-          }
-          else if(this_symb is Namespace this_ns)
-          {
-            var conflict = this_ns.TryLink(other_ns);
-            if(conflict != null)
-              return conflict;
-          }
-          else if(this_symb != null)
-            return this_symb;
+          var ns = new Namespace(types, other_symb.name);
+          ns.links.Add(other_ns);
+          members.Add(ns);
+        }
+        else if(this_symb is Namespace this_ns)
+        {
+          var conflict = this_ns.TryLink(other_ns);
+          if(conflict != null)
+            return conflict;
         }
         else if(this_symb != null)
           return this_symb;
       }
+      else if(this_symb != null)
+        return this_symb;
     }
 
     links.Add(other);

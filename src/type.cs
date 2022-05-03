@@ -48,7 +48,7 @@ public struct TypeProxy : IMarshallable
            type == null;
   }
 
-  public IType Get(Namespace ns)
+  public IType Get()
   {
     if(type != null)
       return type;
@@ -56,16 +56,8 @@ public struct TypeProxy : IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)ns.ResolveFullName(_name);
+    type = (bhl.IType)types.ns.ResolveFullName(_name);
     return type;
-  }
-
-  public IType Get()
-  {
-    if(type != null)
-      return type;
-
-    return Get(types.ns);
   }
 
   public void Sync(SyncContext ctx)

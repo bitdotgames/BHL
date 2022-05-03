@@ -409,13 +409,7 @@ public class Frontend : bhlBaseVisitor<object>
     //NOTE: null means module is already imported
     if(imported != null)
     {
-      Console.WriteLine("==IMPORTED==");
-      Console.WriteLine(imported.ns.DumpMembers());
-      Console.WriteLine("<<<<<<<");
       module.ns.Link(imported.ns);
-      Console.WriteLine("==LINKED==");
-      Console.WriteLine(module.ns.DumpMembers());
-      Console.WriteLine("<<<<<<<");
       ast.module_names.Add(imported.name);
     }
   }
@@ -499,12 +493,9 @@ public class Frontend : bhlBaseVisitor<object>
         }
       }
 
-      if(name_symb.type.Get(module.ns) == null)
-      {
-        Console.WriteLine(module.ns.DumpMembers());
+      if(name_symb.type.Get() == null)
         FireError(root_name, "bad chain call");
-      }
-      curr_type = name_symb.type.Get(module.ns);
+      curr_type = name_symb.type.Get();
     }
 
     if(chain != null)
@@ -578,26 +569,26 @@ public class Frontend : bhlBaseVisitor<object>
       //func or method call
       if(cargs != null)
       {
-        if(var_symb is FieldSymbol && !(var_symb.type.Get(module.ns) is FuncSignature))
+        if(var_symb is FieldSymbol && !(var_symb.type.Get() is FuncSignature))
           FireError(name, "symbol is not a function");
 
         //func ptr
-        if(var_symb != null && var_symb.type.Get(module.ns) is FuncSignature)
+        if(var_symb != null && var_symb.type.Get() is FuncSignature)
         {
-          var ftype = var_symb.type.Get(module.ns) as FuncSignature;
+          var ftype = var_symb.type.Get() as FuncSignature;
 
           if(!(scope is IInstanceType))
           {
             ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-            type = ftype.ret_type.Get(module.ns);
+            type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
             PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb));
             ast = new AST_Call(EnumCall.FUNC_MVAR, line, null);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-            type = ftype.ret_type.Get(module.ns);
+            type = ftype.ret_type.Get();
           }
         }
         else if(func_symb != null)
@@ -633,12 +624,12 @@ public class Frontend : bhlBaseVisitor<object>
               FireError(name, "getting field by 'ref' not supported for this class");
             ast.type = EnumCall.MVARREF; 
           }
-          type = var_symb.type.Get(module.ns);
+          type = var_symb.type.Get();
         }
         else if(func_symb != null)
         {
           ast = new AST_Call(EnumCall.GET_ADDR, line, func_symb);
-          type = func_symb.type.Get(module.ns);
+          type = func_symb.type.Get();
         }
         else
           FireError(name, "symbol usage is not valid");
@@ -652,7 +643,7 @@ public class Frontend : bhlBaseVisitor<object>
       
       ast = new AST_Call(EnumCall.LMBD, line, null);
       AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-      type = ftype.ret_type.Get(module.ns);
+      type = ftype.ret_type.Get();
     }
 
     if(ast != null)
@@ -674,7 +665,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(Wrap(arr_exp).eval_type != Types.Int)
       FireError(arr_exp, "array index expression is not of type int");
 
-    type = arr_type.item_type.Get(module.ns);
+    type = arr_type.item_type.Get();
 
     var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null);
 
@@ -770,7 +761,7 @@ public class Frontend : bhlBaseVisitor<object>
           FireError(ca, "max arguments reached");
 
         var func_arg_symb = (FuncArgSymbol)func_args[i];
-        var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get(module.ns) : func_arg_symb.parsed.eval_type;  
+        var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
         bool is_ref = ca.isRef() != null;
         if(!is_ref && func_arg_symb.is_ref)
@@ -792,9 +783,9 @@ public class Frontend : bhlBaseVisitor<object>
         //NOTE: if symbol is from bindings we don't have a parse tree attached to it
         if(func_arg_symb.parsed == null)
         {
-          if(func_arg_symb.type.Get(module.ns) == null)
+          if(func_arg_symb.type.Get() == null)
             FireError(ca, "invalid type");
-          types.CheckAssign(func_arg_symb.type.Get(module.ns), wca);
+          types.CheckAssign(func_arg_symb.type.Get(), wca);
         }
         else
           types.CheckAssign(func_arg_symb.parsed, wca);
@@ -828,7 +819,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(ca_name != null)
         FireError(ca_name, "named arguments not supported for function pointers");
 
-      var arg_type = arg_type_ref.Get(module.ns);
+      var arg_type = arg_type_ref.Get();
       PushJsonType(arg_type);
       PushAST(new AST_Interim());
       Visit(ca);
@@ -837,11 +828,11 @@ public class Frontend : bhlBaseVisitor<object>
       PopJsonType();
 
       var wca = Wrap(ca);
-      types.CheckAssign(arg_type is RefType rt ? rt.subj.Get(module.ns) : arg_type, wca);
+      types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, wca);
 
-      if(arg_type_ref.Get(module.ns) is RefType && ca.isRef() == null)
+      if(arg_type_ref.Get() is RefType && ca.isRef() == null)
         FireError(ca, "'ref' is missing");
-      else if(!(arg_type_ref.Get(module.ns) is RefType) && ca.isRef() != null)
+      else if(!(arg_type_ref.Get() is RefType) && ca.isRef() != null)
         FireError(ca, "argument is not a 'ref'");
 
       prev_ca = ca;
@@ -1010,7 +1001,7 @@ public class Frontend : bhlBaseVisitor<object>
     else
       tp = ParseType(parsed.type()[0]);
 
-    if(tp.Get(module.ns) == null)
+    if(tp.Get() == null)
       FireError(parsed, "type '" + tp.name + "' not found");
 
     return tp;
@@ -1027,7 +1018,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(ctx.ARR() != null)
       tp = types.TypeArr(tp);
 
-    if(tp.Get(module.ns) == null)
+    if(tp.Get() == null)
       FireError(ctx, "type '" + tp.name + "' not found");
 
    return tp;
@@ -1072,13 +1063,13 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(funcLambda.funcBlock());
     PopAST();
 
-    if(tp.Get(module.ns) != Types.Void && !return_found.Contains(lmb_symb))
+    if(tp.Get() != Types.Void && !return_found.Contains(lmb_symb))
       FireError(funcLambda.funcBlock(), "matching 'return' statement not found");
 
     PopFuncDecl();
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
-    var curr_type = lmb_symb.type.Get(module.ns); 
+    var curr_type = lmb_symb.type.Get(); 
     Wrap(ctx).eval_type = curr_type;
 
     curr_scope = scope_backup;
@@ -1136,7 +1127,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(new_exp != null)
     {
       var tp = ParseType(new_exp.type());
-      PushJsonType(tp.Get(module.ns));
+      PushJsonType(tp.Get());
     }
 
     var curr_type = PeekJsonType();
@@ -1177,7 +1168,7 @@ public class Frontend : bhlBaseVisitor<object>
       FireError(ctx, "[..] is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
-    var orig_type = arr_type.item_type.Get(module.ns);
+    var orig_type = arr_type.item_type.Get();
     if(orig_type == null)
       FireError(ctx,  "type '" + arr_type.item_type.name + "' not found");
     PushJsonType(orig_type);
@@ -1219,7 +1210,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     var ast = new AST_JsonPair(curr_type, name_str, member.scope_idx);
 
-    PushJsonType(member.type.Get(module.ns));
+    PushJsonType(member.type.Get());
 
     var jval = ctx.jsonValue(); 
     PushAST(ast);
@@ -1228,7 +1219,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     PopJsonType();
 
-    Wrap(ctx).eval_type = member.type.Get(module.ns);
+    Wrap(ctx).eval_type = member.type.Get();
 
     PeekAST().AddChild(ast);
     return null;
@@ -1262,7 +1253,7 @@ public class Frontend : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = Types.ClassType;
 
-    PeekAST().AddChild(new AST_Typeof(tp.Get(module.ns)));
+    PeekAST().AddChild(new AST_Typeof(tp.Get()));
 
     return null;
   }
@@ -1302,9 +1293,9 @@ public class Frontend : bhlBaseVisitor<object>
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
     var tp = ParseType(ctx.newExp().type());
-    Wrap(ctx).eval_type = tp.Get(module.ns);
+    Wrap(ctx).eval_type = tp.Get();
 
-    var ast = new AST_New(tp.Get(module.ns), ctx.Start.Line);
+    var ast = new AST_New(tp.Get(), ctx.Start.Line);
     PeekAST().AddChild(ast);
 
     return null;
@@ -1323,13 +1314,13 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeCast(tp.Get(module.ns), ctx.Start.Line);
+    var ast = new AST_TypeCast(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = tp.Get(module.ns);
+    Wrap(ctx).eval_type = tp.Get();
 
     types.CheckCast(Wrap(ctx), Wrap(exp)); 
 
@@ -1342,13 +1333,13 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeAs(tp.Get(module.ns), ctx.Start.Line);
+    var ast = new AST_TypeAs(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = tp.Get(module.ns);
+    Wrap(ctx).eval_type = tp.Get();
 
     //TODO: do we need to pre-check absolutely unrelated types?
     //types.CheckCast(Wrap(ctx), Wrap(exp)); 
@@ -1362,7 +1353,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeIs(tp.Get(module.ns), ctx.Start.Line);
+    var ast = new AST_TypeIs(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
@@ -1432,7 +1423,7 @@ public class Frontend : bhlBaseVisitor<object>
     if(vlhs == null)
       FireError(ctx.NAME(), "symbol not resolved");
 
-    if(!Types.IsRtlOpCompatible(vlhs.type.Get(module.ns)))
+    if(!Types.IsRtlOpCompatible(vlhs.type.Get()))
       FireError(ctx.NAME(), "incompatible types");
 
     var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
@@ -1444,7 +1435,7 @@ public class Frontend : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    types.CheckAssign(vlhs.type.Get(module.ns), Wrap(ctx.exp()));
+    types.CheckAssign(vlhs.type.Get(), Wrap(ctx.exp()));
 
     PeekAST().AddChild(bin_op_ast);
     PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, vlhs));
@@ -1487,7 +1478,7 @@ public class Frontend : bhlBaseVisitor<object>
     
     bool is_negative = ctx.decrementOperator() != null;
     
-    if(!Types.IsRtlOpCompatible(vs.type.Get(module.ns))) // only numeric types
+    if(!Types.IsRtlOpCompatible(vs.type.Get())) // only numeric types
     {
       FireError(v,
         $"operator {(is_negative ? "--" : "++")} is not supported for {vs.type.name} type"
@@ -1892,7 +1883,7 @@ public class Frontend : bhlBaseVisitor<object>
         for(int i=0;i<explen;++i)
         {
           var exp = explist.exp()[i];
-          types.CheckAssign(fmret_type[i].Get(module.ns), Wrap(exp));
+          types.CheckAssign(fmret_type[i].Get(), Wrap(exp));
         }
 
         Wrap(ctx).eval_type = ret_type;
@@ -2184,7 +2175,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.retType());
     var func_tree = Wrap(ctx);
-    func_tree.eval_type = tp.Get(module.ns);
+    func_tree.eval_type = tp.Get();
 
     string name = ctx.NAME().GetText();
 
@@ -2219,7 +2210,7 @@ public class Frontend : bhlBaseVisitor<object>
       Visit(ctx.funcBlock());
       PopAST();
 
-      if(tp.Get(module.ns) != Types.Void && !return_found.Contains(func_symb))
+      if(tp.Get() != Types.Void && !return_found.Contains(func_symb))
         FireError(ctx.NAME(), "matching 'return' statement not found");
     }
     
@@ -2283,7 +2274,7 @@ public class Frontend : bhlBaseVisitor<object>
 
         exp_ast = new AST_Interim();
         PushAST(exp_ast);
-        PushJsonType(tp.Get(module.ns));
+        PushJsonType(tp.Get());
         Visit(assign_exp);
         PopJsonType();
         PopAST();
@@ -2324,7 +2315,7 @@ public class Frontend : bhlBaseVisitor<object>
       if(found_default_arg)
       {
         var tp = ParseType(fp.type());
-        PushJsonType(tp.Get(module.ns));
+        PushJsonType(tp.Get());
         pop_json_type = true;
       }
 
@@ -2383,7 +2374,7 @@ public class Frontend : bhlBaseVisitor<object>
           var vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
           if(vd_symb == null)
             FireError(vd, "symbol not resolved");
-          curr_type = vd_symb.type.Get(module.ns);
+          curr_type = vd_symb.type.Get();
 
           ptree = Wrap(vd.NAME());
           ptree.eval_type = curr_type;
@@ -2473,7 +2464,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var tuple = assign_type as TupleType;
         if(tuple != null)
-          types.CheckAssign(ptree, tuple[i].Get(module.ns));
+          types.CheckAssign(ptree, tuple[i].Get());
         else
           types.CheckAssign(ptree, Wrap(assign_exp));
       }
@@ -2530,7 +2521,7 @@ public class Frontend : bhlBaseVisitor<object>
     var tp = ParseType(type_ctx);
 
     var var_tree = Wrap(name); 
-    var_tree.eval_type = tp.Get(module.ns);
+    var_tree.eval_type = tp.Get();
 
     if(is_ref && !func_arg)
       FireError(name, "'ref' is only allowed in function declaration");
@@ -2932,7 +2923,7 @@ public class Frontend : bhlBaseVisitor<object>
       iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
       iter_type = iter_symb.type;
     }
-    var arr_type = (ArrayTypeSymbol)types.TypeArr(iter_type).Get(module.ns);
+    var arr_type = (ArrayTypeSymbol)types.TypeArr(iter_type).Get();
 
     PushJsonType(arr_type);
     var exp = ctx.foreachExp().exp();
