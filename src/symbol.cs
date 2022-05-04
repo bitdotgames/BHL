@@ -481,7 +481,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(IScope ns, string name, TypeProxy item_type)     
+  public ArrayTypeSymbol(Namespace ns, string name, TypeProxy item_type)     
     : base(name, super_class: null)
   {
     this.item_type = item_type;
@@ -523,7 +523,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(IScope ns, TypeProxy item_type) 
+  public ArrayTypeSymbol(Namespace ns, TypeProxy item_type) 
     : this(ns, item_type.name + "[]", item_type)
   {}
 
@@ -540,14 +540,14 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
   public const uint CLASS_ID = 10; 
 
-  public GenericArrayTypeSymbol(IScope ns, TypeProxy item_type) 
+  public GenericArrayTypeSymbol(Namespace ns, TypeProxy item_type) 
     : base(ns, item_type)
   {
     name = "[]" + item_type.name;
   }
 
   //marshall factory version
-  public GenericArrayTypeSymbol(IScope ns)
+  public GenericArrayTypeSymbol(Namespace ns)
     : this(ns, new TypeProxy())
   {}
 
@@ -644,13 +644,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(IScope ns, string name, TypeProxy item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Namespace ns, string name, TypeProxy item_type, CreatorCb creator) 
     : base(ns, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(IScope ns, TypeProxy item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Namespace ns, TypeProxy item_type, CreatorCb creator) 
     : base(ns, item_type.name + "[]", item_type)
   {}
 
@@ -1320,8 +1320,8 @@ public class ClassSymbolScript : ClassSymbol
     Marshall.Sync(ctx, ref super_name);
     if(ctx.is_read && super_name != "")
     {
-      var types = ((SymbolFactory)ctx.factory).types;
-      var tmp_class = (ClassSymbol)types.ns.ResolveFullName(super_name);
+      var rslv = ((SymbolFactory)ctx.factory).resolver;
+      var tmp_class = (ClassSymbol)rslv.ResolveFullName(super_name);
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
       super_class = tmp_class;
@@ -1636,11 +1636,11 @@ public class SymbolsSet<T> : IMarshallable where T : Symbol,IType
 
     if(ctx.is_read)
     {
-      var types = ((SymbolFactory)ctx.factory).types;
+      var rslv = ((SymbolFactory)ctx.factory).resolver;
 
       foreach(var name in names)
       {
-        var symb = types.ns.ResolveFullName(name) as T;
+        var symb = rslv.ResolveFullName(name) as T;
         if(symb == null)
           throw new Exception("Symbol '" + name + "' not found");
         list.Add(symb);
@@ -1652,10 +1652,12 @@ public class SymbolsSet<T> : IMarshallable where T : Symbol,IType
 public class SymbolFactory : IFactory
 {
   public Types types;
+  public ISymbolResolver resolver;
 
-  public SymbolFactory(Types types)
+  public SymbolFactory(Types types, ISymbolResolver resolver)
   {
     this.types = types;
+    this.resolver = resolver;
   }
 
   public IMarshallableGeneric CreateById(uint id) 

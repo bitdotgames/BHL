@@ -494,12 +494,12 @@ public class BHL_TestBase
     var ms = new MemoryStream();
     CompiledModule.ToStream(orig_cm, ms);
 
-    //NOTE: we force our version of the module namespace and link it with the 
-    //      global namespace ASAP so that module symbols will be resolved during unmarshalling
+    //NOTE: we force our version of the symbols resolver 
+    //      so that module symbols will be resolved properly 
+    //      during unmarshalling
     var ns = new Namespace(ts);
-    ts.ns.Import(ns);
 
-    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), on_import: null, ns: ns);
+    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), resolver: ns, on_import: null, ns: ns);
 
     var vm = new VM(ts);
     vm.RegisterModule(cm);
@@ -543,7 +543,7 @@ public class BHL_TestBase
   {
     public Dictionary<string, CompiledModule> mods = new Dictionary<string, CompiledModule>();
 
-    public CompiledModule Load(string name, System.Action<string> on_import)
+    public CompiledModule Load(string name, ISymbolResolver resolver, System.Action<string> on_import)
     {
       return mods[name];
     }

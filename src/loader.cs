@@ -24,7 +24,7 @@ public enum ModuleBinaryFormat
 
 public interface IModuleLoader
 {
-  CompiledModule Load(string module_name, System.Action<string> on_import);
+  CompiledModule Load(string module_name, ISymbolResolver resolver, System.Action<string> on_import);
 }
 
 public class ModuleLoader : IModuleLoader
@@ -96,7 +96,7 @@ public class ModuleLoader : IModuleLoader
     }
   }
 
-  public CompiledModule Load(string module_name, System.Action<string> on_import)
+  public CompiledModule Load(string module_name, ISymbolResolver resolver, System.Action<string> on_import)
   {
     Entry ent;
     if(!name2entry.TryGetValue(module_name, out ent))
@@ -108,7 +108,7 @@ public class ModuleLoader : IModuleLoader
 
     mod_stream.SetData(res, 0, res_len);
 
-    return CompiledModule.FromStream(types, mod_stream, on_import);
+    return CompiledModule.FromStream(types, mod_stream, resolver, on_import);
   }
 
   void DecodeBin(Entry ent, ref byte[] res, ref int res_len)

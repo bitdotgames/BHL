@@ -179,7 +179,7 @@ public class Const
   }
 }
 
-public class VM
+public class VM : ISymbolResolver
 {
   public const int MAX_IP = int.MaxValue;
   public const int STOP_IP = MAX_IP - 1;
@@ -733,11 +733,6 @@ public class VM
   HashSet<string> loading_modules = new HashSet<string>();
 
   Types types;
-  public Types Types {
-    get {
-      return types;
-    }
-  }
 
   public struct FuncAddr
   {
@@ -845,7 +840,7 @@ public class VM
       return true;
     loading_modules.Add(module_name);
 
-    var loaded = loader.Load(module_name, OnImport);
+    var loaded = loader.Load(module_name, this, OnImport);
 
     loading_modules.Remove(module_name);
 
@@ -868,8 +863,6 @@ public class VM
       return;
     modules.Add(cm.name, cm);
 
-    types.ns.Import(cm.ns);
-
     ExecInit(cm);
   }
 
@@ -886,8 +879,6 @@ public class VM
         val.RefMod(RefOp.DEC | RefOp.USR_DEC);
     }
     m.gvars.Clear();
-
-    types.ns.Unimport(m.ns);
 
     modules.Remove(module_name);
   }
@@ -1020,7 +1011,7 @@ public class VM
   {
     addr = default(FuncAddr);
 
-    var fs = ResolveSymbol(name) as FuncSymbolScript;
+    var fs = ResolveFullName(name) as FuncSymbolScript;
     if(fs == null)
       return false;
 
@@ -1037,7 +1028,7 @@ public class VM
 
   FuncAddr GetFuncAddr(string name)
   {
-    var fs = (FuncSymbolScript)ResolveSymbol(name);
+    var fs = (FuncSymbolScript)ResolveFullName(name);
     var cm = modules[((Namespace)fs.scope).module_name];
     return new FuncAddr() {
       module = cm,
@@ -1046,7 +1037,7 @@ public class VM
     };
   }
 
-  public Symbol ResolveSymbol(string name)
+  public Symbol ResolveFullName(string name)
   {
     foreach(var kv in modules)
     {
@@ -2233,9 +2224,17 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, System.Action<string> on_import, Namespace ns = null)
+  static public CompiledModule FromStream(Types types, Stream src, ISymbolResolver resolver, System.Action<string> on_import, Namespace ns = null)
   {
-    var symb_factory = new SymbolFactory(types);
+    if(ns == null)
+      ns = new Namespace(types);
+    //NOTE: it's assumed types.ns is always imported by each module, 
+    //      however we add it directly to imports array in order
+    //      avoid duplicate symbols error during un-marshalling
+    if(!ns.imports.Contains(types.ns))
+      ns.imports.Add(types.ns);
+
+    var symb_factory = new SymbolFactory(types, resolver);
 
     string name = "";
     var imports = new List<string>();
@@ -2283,14 +2282,11 @@ public class CompiledModule
     foreach(var import in imports)
       on_import?.Invoke(import);
 
-    if(ns == null)
-      ns = new Namespace(types);
-
     Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
-    //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
-    //      with the global namespace only once the object is un-marshalled
-    //NOTE: we use lightweight linking without any validation
-    ns.imports.Add(types.ns);
+    //NOTE: in order to avoid duplicate symbols error during un-marshalling we import
+    //      the global namespace only once the object is un-marshalled
+    //NOTE: we use lightweight importing without any validation
+    //ns.imports.Add(types.ns);
 
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);

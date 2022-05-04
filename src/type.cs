@@ -14,7 +14,7 @@ public interface IType
 // TypeProxy is used instead of IType
 public struct TypeProxy : IMarshallable
 {
-  IScope scope;
+  ISymbolResolver resolver;
   IType type;
   string _name;
   public string name 
@@ -23,19 +23,19 @@ public struct TypeProxy : IMarshallable
     private set { _name = value; }
   }
 
-  public TypeProxy(IScope scope, string name)
+  public TypeProxy(ISymbolResolver resolver, string name)
   {
     if(name.Length == 0 || Types.IsCompoundType(name))
       throw new Exception("Type name contains illegal characters: '" + name + "'");
     
-    this.scope = scope;
+    this.resolver = resolver;
     type = null;
     _name = name;
   }
 
   public TypeProxy(IType type)
   {
-    scope = null;
+    resolver = null;
     _name = (type is Symbol sym) ? sym.GetFullName() : type.GetName();
     this.type = type;
   }
@@ -59,14 +59,14 @@ public struct TypeProxy : IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)scope.ResolveFullName(_name);
+    type = (bhl.IType)resolver.ResolveFullName(_name);
     return type;
   }
 
   public void Sync(SyncContext ctx)
   {
     if(ctx.is_read)
-      scope = ((SymbolFactory)ctx.factory).types.ns;
+      resolver = ((SymbolFactory)ctx.factory).resolver;
     else if(string.IsNullOrEmpty(_name))
       throw new Exception("TypeProxy name is empty");
 

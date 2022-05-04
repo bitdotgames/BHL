@@ -20,6 +20,11 @@ public interface IScope
   IScope GetFallbackScope();
 }
 
+public interface ISymbolResolver
+{
+  Symbol ResolveFullName(string name);
+}
+
 public interface IInstanceType : IType, IScope 
 {
   HashSet<IInstanceType> GetAllRelatedTypesSet();
@@ -55,7 +60,7 @@ public class LocalScope : IScope
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, IMarshallable
+public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -275,6 +280,42 @@ public class Namespace : Symbol, IScope, IMarshallable
     members.Add(sym);
   }
 
+  public Symbol ResolveFullName(string full_name)
+  {
+    IScope scope = this;
+
+    int start_idx = 0;
+    int next_idx = full_name.IndexOf('.');
+
+    while(true)
+    {
+      string name = 
+        next_idx == -1 ? 
+        (start_idx == 0 ? full_name : full_name.Substring(start_idx)) : 
+        full_name.Substring(start_idx, next_idx - start_idx);
+
+      var symb = scope.Resolve(name);
+
+      if(symb == null)
+        break;
+
+      //let's check if it's the last path item
+      if(next_idx == -1)
+        return symb;
+
+      start_idx = next_idx + 1;
+      next_idx = full_name.IndexOf('.', start_idx);
+
+      scope = symb as IScope;
+      //we can't proceed 'deeper' if the last resolved 
+      //symbol is not a scope
+      if(scope == null)
+        break;
+    }
+
+    return null;
+  }
+
   public override void Sync(SyncContext ctx) 
   {
     Marshall.Sync(ctx, ref name);
@@ -312,40 +353,6 @@ public static class ScopeExtensions
     var fallback = scope.GetFallbackScope();
     if(fallback != null) 
       return fallback.ResolveWithFallback(name);
-
-    return null;
-  }
-
-  public static Symbol ResolveFullName(this IScope scope, string full_name)
-  {
-    int start_idx = 0;
-    int next_idx = full_name.IndexOf('.');
-
-    while(true)
-    {
-      string name = 
-        next_idx == -1 ? 
-        (start_idx == 0 ? full_name : full_name.Substring(start_idx)) : 
-        full_name.Substring(start_idx, next_idx - start_idx);
-
-      var symb = scope.Resolve(name);
-
-      if(symb == null)
-        break;
-
-      //let's check if it's the last path item
-      if(next_idx == -1)
-        return symb;
-
-      start_idx = next_idx + 1;
-      next_idx = full_name.IndexOf('.', start_idx);
-
-      scope = symb as IScope;
-      //we can't proceed 'deeper' if the last resolved 
-      //symbol is not a scope
-      if(scope == null)
-        break;
-    }
 
     return null;
   }
@@ -399,17 +406,17 @@ public static class ScopeExtensions
     }
   }
 
-  public static TypeProxy T(this IScope scope, IType t)
+  public static TypeProxy T(this Namespace scope, IType t)
   {
     return new TypeProxy(t);
   }
 
-  public static TypeProxy T(this IScope scope, string name)
+  public static TypeProxy T(this Namespace scope, string name)
   {
     return new TypeProxy(scope, name);
   }
 
-  public static TypeProxy T(this IScope scope, TypeArg tn)
+  public static TypeProxy T(this Namespace scope, TypeArg tn)
   {
     if(!tn.tp.IsEmpty())
       return tn.tp;
@@ -417,17 +424,17 @@ public static class ScopeExtensions
       return scope.T(tn.name);
   }
 
-  public static TypeProxy TRef(this IScope scope, TypeArg tn)
+  public static TypeProxy TRef(this Namespace scope, TypeArg tn)
   {           
     return scope.T(new RefType(scope.T(tn)));
   }
 
-  public static TypeProxy TArr(this IScope scope, TypeArg tn)
+  public static TypeProxy TArr(this Namespace scope, TypeArg tn)
   {           
     return scope.T(new GenericArrayTypeSymbol(scope, scope.T(tn)));
   }
 
-  public static TypeProxy TFunc(this IScope scope, TypeArg ret_type, params TypeArg[] arg_types)
+  public static TypeProxy TFunc(this Namespace scope, TypeArg ret_type, params TypeArg[] arg_types)
   {           
     var sig = new FuncSignature(scope.T(ret_type));
     foreach(var arg_type in arg_types)
@@ -435,7 +442,7 @@ public static class ScopeExtensions
     return scope.T(sig);
   }
 
-  public static TypeProxy TTuple(this IScope scope, params TypeArg[] types)
+  public static TypeProxy TTuple(this Namespace scope, params TypeArg[] types)
   {
     var tuple = new TupleType();
     foreach(var type in types)

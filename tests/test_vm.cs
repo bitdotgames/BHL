@@ -16225,7 +16225,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    AssertEqual(loader.Load("bhl1", null), 
+    AssertEqual(loader.Load("bhl1", ts.ns, null), 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
@@ -16234,7 +16234,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
-    AssertEqual(loader.Load("bhl2", null), 
+    AssertEqual(loader.Load("bhl2", ts.ns, null), 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
@@ -16244,7 +16244,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
-    AssertEqual(loader.Load("bhl3", null), 
+    AssertEqual(loader.Load("bhl3", ts.ns, null), 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
@@ -18613,17 +18613,16 @@ public class TestVM : BHL_TestBase
 
       var ns = new Namespace(ts);
       ns.Import(ts.ns);
-      ts.ns.Import(ns);
 
       ns.Define(new VariableSymbol("foo", Types.Int));
 
       ns.Define(new VariableSymbol("bar", Types.String));
 
-      ns.Define(new VariableSymbol("wow", ts.ns.TArr(Types.Bool)));
+      ns.Define(new VariableSymbol("wow", ns.TArr(Types.Bool)));
 
-      ns.Define(new FuncSymbolScript(null, new FuncSignature(ts.ns.TTuple(Types.Int,Types.Float), ts.ns.TRef(Types.Int), Types.String), "Test", 1, 155));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.TTuple(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
 
-      ns.Define(new FuncSymbolScript(null, new FuncSignature(ts.ns.TArr(Types.String), ts.ns.T("Bar")), "Make", 3, 15));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15));
 
       var Foo = new ClassSymbolScript("Foo");
       Foo.Define(new FieldSymbolScript("Int", Types.Int));
@@ -18631,7 +18630,7 @@ public class TestVM : BHL_TestBase
       ns.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", Foo);
       Bar.Define(new FieldSymbolScript("Float", Types.Float));
-      Bar.Define(new FuncSymbolScript(null, new FuncSignature(ts.ns.TTuple(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
+      Bar.Define(new FuncSymbolScript(null, new FuncSignature(ns.TTuple(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");
@@ -18644,11 +18643,11 @@ public class TestVM : BHL_TestBase
 
     {
       var ts = new Types();
-      var factory = new SymbolFactory(ts);
 
       var ns = new Namespace(ts);
       ns.Import(ts.ns);
-      ts.ns.Import(ns);
+
+      var factory = new SymbolFactory(ts, ns);
 
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
@@ -18670,7 +18669,7 @@ public class TestVM : BHL_TestBase
 
       var wow = (VariableSymbol)ns.Resolve("wow");
       AssertEqual(wow.name, "wow");
-      AssertEqual(wow.type.Get().GetName(), ts.ns.TArr(Types.Bool).Get().GetName());
+      AssertEqual(wow.type.Get().GetName(), ns.TArr(Types.Bool).Get().GetName());
       AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), Types.Bool);
       AssertEqual(wow.scope, ns);
       AssertEqual(wow.scope_idx, 2);
@@ -18678,7 +18677,7 @@ public class TestVM : BHL_TestBase
       var Test = (FuncSymbolScript)ns.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(Test.scope, ns);
-      AssertEqual(ts.ns.TFunc(ts.ns.TTuple(Types.Int, Types.Float), ts.ns.TRef(Types.Int), Types.String).name, Test.signature.GetName());
+      AssertEqual(ns.TFunc(ns.TTuple(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).name, Test.signature.GetName());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
@@ -18688,8 +18687,8 @@ public class TestVM : BHL_TestBase
       AssertEqual(Make.name, "Make");
       AssertEqual(Make.scope, ns);
       AssertEqual(1, Make.signature.arg_types.Count);
-      AssertEqual(ts.ns.TArr(Types.String).Get().GetName(), Make.GetReturnType().GetName());
-      AssertEqual(ts.ns.T("Bar").Get(), Make.signature.arg_types[0].Get());
+      AssertEqual(ns.TArr(Types.String).Get().GetName(), Make.GetReturnType().GetName());
+      AssertEqual(ns.T("Bar").Get(), Make.signature.arg_types[0].Get());
       AssertEqual(3, Make.default_args_num);
       AssertEqual(0, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);
@@ -18726,7 +18725,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(Bar_Float.scope_idx, 2);
       var Bar_What = Bar.Resolve("What") as FuncSymbolScript;
       AssertEqual(Bar_What.name, "What");
-      AssertEqual(Bar_What.GetReturnType().GetName(), ts.ns.TTuple(Types.Bool, Types.Bool).Get().GetName());
+      AssertEqual(Bar_What.GetReturnType().GetName(), ns.TTuple(Types.Bool, Types.Bool).Get().GetName());
       AssertEqual(Bar_What.signature.arg_types[0].Get(), Types.Int);
       AssertEqual(1, Bar_What.default_args_num);
       AssertEqual(0, Bar_What.local_vars_num);

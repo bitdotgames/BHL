@@ -489,12 +489,12 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.Types.ns.Resolve("foo") as Namespace;
+    var foo = vm.ResolveFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(1, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
 
-    var bar = vm.Types.ns.Resolve("bar") as Namespace;
+    var bar = vm.ResolveFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
@@ -528,13 +528,13 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.Types.ns.Resolve("foo") as Namespace;
+    var foo = vm.ResolveFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(2, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
 
-    var bar = vm.Types.ns.Resolve("bar") as Namespace;
+    var bar = vm.ResolveFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -582,14 +582,14 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.Types.ns.Resolve("foo") as Namespace;
+    var foo = vm.ResolveFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(3, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
     AssertTrue(foo.Resolve("bar") is Namespace);
 
-    var bar = vm.Types.ns.Resolve("bar") as Namespace;
+    var bar = vm.ResolveFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(2, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -1085,7 +1085,8 @@ public class TestNamespace : BHL_TestBase
 
     vm.LoadModule("bhl3");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
-    AssertTrue(ts.ns.ResolveFullName("foo.sub.Sub") is ClassSymbol);
+    AssertTrue(ts.ns.ResolveFullName("foo.sub.Sub") == null);
+    AssertTrue(vm.ResolveFullName("foo.sub.Sub") is ClassSymbol);
     CommonChecks(vm);
   }
 }
