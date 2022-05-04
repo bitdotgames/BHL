@@ -2224,15 +2224,16 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, ISymbolResolver resolver, System.Action<string> on_import, Namespace ns = null)
+  static public CompiledModule FromStream(Types types, Stream src, ISymbolResolver resolver = null, System.Action<string> on_import = null)
   {
-    if(ns == null)
-      ns = new Namespace(types);
+    var ns = new Namespace(types);
     //NOTE: it's assumed types.ns is always imported by each module, 
     //      however we add it directly to imports array in order
     //      avoid duplicate symbols error during un-marshalling
-    if(!ns.imports.Contains(types.ns))
-      ns.imports.Add(types.ns);
+    ns.imports.Add(types.ns);
+
+    if(resolver == null)
+      resolver = ns;
 
     var symb_factory = new SymbolFactory(types, resolver);
 

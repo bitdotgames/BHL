@@ -494,12 +494,7 @@ public class BHL_TestBase
     var ms = new MemoryStream();
     CompiledModule.ToStream(orig_cm, ms);
 
-    //NOTE: we force our version of the symbols resolver 
-    //      so that module symbols will be resolved properly 
-    //      during unmarshalling
-    var ns = new Namespace(ts);
-
-    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), resolver: ns, on_import: null, ns: ns);
+    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()));
 
     var vm = new VM(ts);
     vm.RegisterModule(cm);
