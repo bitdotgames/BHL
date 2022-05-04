@@ -25,7 +25,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    ns2.Link(ns1);
+    ns2.Import(ns1);
 
     {
       var foo = ns2.Resolve("foo") as Namespace;
@@ -97,7 +97,7 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(bar);
     }
 
-    ns2.Link(ns1);
+    ns2.Import(ns1);
 
     /*
     {
@@ -219,7 +219,7 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(bar);
     }
 
-    ns2.Link(ns1);
+    ns2.Import(ns1);
 
     /*
     {
@@ -239,7 +239,7 @@ public class TestNamespace : BHL_TestBase
     }
     */
 
-    ns2.Unlink(ns1);
+    ns2.Unimport(ns1);
 
     /*
     {
@@ -340,7 +340,7 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(bar);
     }
 
-    ns2.Link(ns1);
+    ns2.Import(ns1);
 
     /*
     {
@@ -361,7 +361,7 @@ public class TestNamespace : BHL_TestBase
     */
 
     (ns2.Resolve("wow") as Namespace).Define(new Namespace(ts, "wow_sub"));
-    ns2.Unlink(ns1);
+    ns2.Unimport(ns1);
 
     /*
     {
@@ -463,7 +463,7 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(foo);
     }
 
-    var conflict_symb = ns2.TryLink(ns1);
+    var conflict_symb = ns2.TryImport(ns1);
     AssertEqual("Wow", conflict_symb.name);
 
   }
@@ -675,30 +675,28 @@ public class TestNamespace : BHL_TestBase
       }
       ";
       var ts = new Types();
-      var ns = new Namespace(ts);
       {
         var foo = new Namespace(ts, "foo");
-        var fn = new FuncSymbolNative("wow", ts.Type("int"),
+        var fn = new FuncSymbolNative("wow", ts.ns.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 1)); 
               return null;
             }
         );
         foo.Define(fn);
-        ns.Define(foo);
+        ts.ns.Define(foo);
       }
       {
         var bar = new Namespace(ts, "bar");
-        var fn = new FuncSymbolNative("wow", ts.Type("int"),
+        var fn = new FuncSymbolNative("wow", ts.ns.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 10)); 
               return null;
             }
         );
         bar.Define(fn);
-        ns.Define(bar);
+        ts.ns.Define(bar);
       }
-      ts.ns.Link(ns);
 
       var vm = MakeVM(bhl, ts);
       AssertEqual(11, Execute(vm, "bar.test").result.PopRelease().num);
@@ -1064,6 +1062,7 @@ public class TestNamespace : BHL_TestBase
       
       
   string bhl3 = @"
+    import ""bhl1""  
     import ""bhl2""  
 
     func int test() 
@@ -1089,6 +1088,4 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(ts.ns.ResolveFullName("foo.sub.Sub") is ClassSymbol);
     CommonChecks(vm);
   }
-
-
 }

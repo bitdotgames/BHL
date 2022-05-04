@@ -365,13 +365,13 @@ public class TestInterfaces : BHL_TestBase
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
         .EmitThen(Opcodes.Return)
         .EmitThen(Opcodes.InitFrame, new int[] { 2+1 /*args info*/})
-        .EmitThen(Opcodes.New, new int[] { ConstIdx(c, new TypeProxy(ts, "Foo")) }) 
+        .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.T("Foo")) }) 
         .EmitThen(Opcodes.SetVar, new int[] { 0 })
         .EmitThen(Opcodes.GetVar, new int[] { 0 })
         .EmitThen(Opcodes.SetVar, new int[] { 1 })
         .EmitThen(Opcodes.GetVar, new int[] { 1 })
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
-        .EmitThen(Opcodes.CallMethodVirt, new int[] { 0, ConstIdx(c, new TypeProxy(ts, "IFoo")), 1 })
+        .EmitThen(Opcodes.CallMethodVirt, new int[] { 0, ConstIdx(c, ts.ns.T("IFoo")), 1 })
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
         .EmitThen(Opcodes.Return)
         ;
@@ -539,8 +539,8 @@ public class TestInterfaces : BHL_TestBase
     var ifs = new InterfaceSymbolNative(
         "IFoo", 
         null, 
-        new FuncSymbolNative("bar", ts.Type("int"), null, 
-          new FuncArgSymbol("int", ts.Type("int")) 
+        new FuncSymbolNative("bar", ts.ns.T("int"), null, 
+          new FuncArgSymbol("int", ts.ns.T("int")) 
         )
     );
     ts.ns.Define(ifs);
@@ -581,8 +581,8 @@ public class TestInterfaces : BHL_TestBase
     var ifs = new InterfaceSymbolNative(
         "IBar", 
         null, 
-        new FuncSymbolNative("bar", ts.Type("int"), null, 
-          new FuncArgSymbol("int", ts.Type("int")) 
+        new FuncSymbolNative("bar", ts.ns.T("int"), null, 
+          new FuncArgSymbol("int", ts.ns.T("int")) 
         )
     );
     ts.ns.Define(ifs);

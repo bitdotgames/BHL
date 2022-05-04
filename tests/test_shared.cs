@@ -166,7 +166,7 @@ public class BHL_TestBase
     );
 
     ts.ns.Define(cl);
-    cl.Define(new FieldSymbol("r", ts.Type("float"),
+    cl.Define(new FieldSymbol("r", ts.ns.T("float"),
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
@@ -179,7 +179,7 @@ public class BHL_TestBase
         ctx.SetObj(c, ctx.type);
       }
     ));
-    cl.Define(new FieldSymbol("g", ts.Type("float"),
+    cl.Define(new FieldSymbol("g", ts.ns.T("float"),
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
@@ -194,7 +194,7 @@ public class BHL_TestBase
     ));
 
     {
-      var m = new FuncSymbolNative("Add", ts.Type("Color"),
+      var m = new FuncSymbolNative("Add", ts.ns.T("Color"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
           var k = (float)frm.stack.PopRelease().num;
@@ -204,19 +204,19 @@ public class BHL_TestBase
           newc.r = c.r + k;
           newc.g = c.g + k;
 
-          var v = Val.NewObj(frm.vm, newc, ts.Type("Color").Get());
+          var v = Val.NewObj(frm.vm, newc, ts.ns.T("Color").Get());
           frm.stack.Push(v);
 
           return null;
         },
-        new FuncArgSymbol("k", ts.Type("float"))
+        new FuncArgSymbol("k", ts.ns.T("float"))
       );
 
       cl.Define(m);
     }
     
     {
-      var m = new FuncSymbolNative("mult_summ", ts.Type("float"),
+      var m = new FuncSymbolNative("mult_summ", ts.ns.T("float"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
           var k = frm.stack.PopRelease().num;
@@ -224,30 +224,30 @@ public class BHL_TestBase
           frm.stack.Push(Val.NewFlt(frm.vm, (c.r * k) + (c.g * k)));
           return null;
         },
-        new FuncArgSymbol("k", ts.Type("float"))
+        new FuncArgSymbol("k", ts.ns.T("float"))
       );
 
       cl.Define(m);
     }
     
     {
-      var fn = new FuncSymbolNative("mkcolor", ts.Type("Color"),
+      var fn = new FuncSymbolNative("mkcolor", ts.ns.T("Color"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             var r = frm.stack.PopRelease().num;
             var c = new Color();
             c.r = (float)r;
-            var v = Val.NewObj(frm.vm, c, ts.Type("Color").Get());
+            var v = Val.NewObj(frm.vm, c, ts.ns.T("Color").Get());
             frm.stack.Push(v);
             return null;
           },
-        new FuncArgSymbol("r", ts.Type("float"))
+        new FuncArgSymbol("r", ts.ns.T("float"))
       );
 
       ts.ns.Define(fn);
     }
     
     {
-      var fn = new FuncSymbolNative("mkcolor_null", ts.Type("Color"),
+      var fn = new FuncSymbolNative("mkcolor_null", ts.ns.T("Color"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             frm.stack.Push(frm.vm.Null);
             return null;
@@ -257,7 +257,7 @@ public class BHL_TestBase
       ts.ns.Define(fn);
     }
 
-    ts.ns.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.Type("Color"), delegate() { return new List<Color>(); } ));
+    ts.ns.Define(new ArrayTypeSymbolT<Color>(ts.ns, "ArrayT_Color", ts.ns.T("Color"), delegate() { return new List<Color>(); } ));
 
     return cl;
   }
@@ -267,7 +267,7 @@ public class BHL_TestBase
     BindColor(ts);
 
     {
-      var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.Type("Color").Get(),
+      var cl = new ClassSymbolNative("ColorAlpha", (ClassSymbol)ts.ns.T("Color").Get(),
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new ColorAlpha(), type);
@@ -276,7 +276,7 @@ public class BHL_TestBase
 
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol("a", ts.Type("float"),
+      cl.Define(new FieldSymbol("a", ts.ns.T("float"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
@@ -291,7 +291,7 @@ public class BHL_TestBase
       ));
 
       {
-        var m = new FuncSymbolNative("mult_summ_alpha", ts.Type("float"),
+        var m = new FuncSymbolNative("mult_summ_alpha", ts.ns.T("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var c = (ColorAlpha)frm.stack.PopRelease().obj;
@@ -345,7 +345,7 @@ public class BHL_TestBase
           ctx.SetObj(f, ctx.type);
         }
       ));
-      cl.Define(new FieldSymbol("colors", ts.Type("ArrayT_Color"),
+      cl.Define(new FieldSymbol("colors", ts.ns.T("ArrayT_Color"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
@@ -357,7 +357,7 @@ public class BHL_TestBase
           f.colors = (List<Color>)v.obj;
         }
       ));
-      cl.Define(new FieldSymbol("sub_color", ts.Type("Color"),
+      cl.Define(new FieldSymbol("sub_color", ts.ns.T("Color"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
@@ -373,12 +373,12 @@ public class BHL_TestBase
     }
 
     {
-      var fn = new FuncSymbolNative("PassthruFoo", ts.Type("Foo"),
+      var fn = new FuncSymbolNative("PassthruFoo", ts.ns.T("Foo"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             frm.stack.Push(frm.stack.Pop());
             return null;
           },
-          new FuncArgSymbol("foo", ts.Type("Foo"))
+          new FuncArgSymbol("foo", ts.ns.T("Foo"))
       );
 
       ts.ns.Define(fn);
@@ -415,7 +415,7 @@ public class BHL_TestBase
         ctx.SetObj(c, ctx.type);
       }
     ));
-    cl.Define(new FieldSymbol("Flt", ts.Type("float"),
+    cl.Define(new FieldSymbol("Flt", ts.ns.T("float"),
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
@@ -428,7 +428,7 @@ public class BHL_TestBase
         ctx.SetObj(c, ctx.type);
       }
     ));
-    cl.Define(new FieldSymbol("Str", ts.Type("string"),
+    cl.Define(new FieldSymbol("Str", ts.ns.T("string"),
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
@@ -454,7 +454,7 @@ public class BHL_TestBase
           log.Append(str);
           return null;
         }, 
-        new FuncArgSymbol("str", ts.Type("string"))
+        new FuncArgSymbol("str", ts.ns.T("string"))
     );
     ts.ns.Define(fn);
     return fn;
@@ -470,7 +470,7 @@ public class BHL_TestBase
             Console.WriteLine(str); 
             return null;
           },
-          new FuncArgSymbol("str", ts.Type("string"))
+          new FuncArgSymbol("str", ts.ns.T("string"))
       );
       ts.ns.Define(fn);
     }
@@ -497,7 +497,7 @@ public class BHL_TestBase
     //NOTE: we force our version of the module namespace and link it with the 
     //      global namespace ASAP so that module symbols will be resolved during unmarshalling
     var ns = new Namespace(ts);
-    ts.ns.Link(ns);
+    ts.ns.Import(ns);
 
     var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()), on_import: null, ns: ns);
 

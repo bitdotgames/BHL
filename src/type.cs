@@ -14,7 +14,6 @@ public interface IType
 // TypeProxy is used instead of IType
 public struct TypeProxy : IMarshallable
 {
-  Types types;
   IScope scope;
   IType type;
   string _name;
@@ -30,25 +29,12 @@ public struct TypeProxy : IMarshallable
       throw new Exception("Type name contains illegal characters: '" + name + "'");
     
     this.scope = scope;
-    types = null;
-    type = null;
-    _name = name;
-  }
-
-  public TypeProxy(Types types, string name)
-  {
-    if(name.Length == 0 || Types.IsCompoundType(name))
-      throw new Exception("Type name contains illegal characters: '" + name + "'");
-    
-    this.types = types;
-    scope = types.ns;
     type = null;
     _name = name;
   }
 
   public TypeProxy(IType type)
   {
-    types = null;
     scope = null;
     _name = (type is Symbol sym) ? sym.GetFullName() : type.GetName();
     this.type = type;
@@ -80,10 +66,7 @@ public struct TypeProxy : IMarshallable
   public void Sync(SyncContext ctx)
   {
     if(ctx.is_read)
-    {
-      types = ((SymbolFactory)ctx.factory).types;
-      scope = types.ns;
-    }
+      scope = ((SymbolFactory)ctx.factory).types.ns;
     else if(string.IsNullOrEmpty(_name))
       throw new Exception("TypeProxy name is empty");
 
@@ -422,7 +405,7 @@ public class Types
     ns.Define(ClassType);
 
     {
-      var fn = new FuncSymbolNative("suspend", Type("void"), 
+      var fn = new FuncSymbolNative("suspend", ns.T("void"), 
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutineSuspend.Instance;
@@ -432,7 +415,7 @@ public class Types
     }
 
     {
-      var fn = new FuncSymbolNative("yield", Type("void"),
+      var fn = new FuncSymbolNative("yield", ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutinePool.New<CoroutineYield>(frm.vm);
@@ -443,7 +426,7 @@ public class Types
 
     //TODO: this one is controversary, it's defined for BC for now
     {
-      var fn = new FuncSymbolNative("fail", Type("void"),
+      var fn = new FuncSymbolNative("fail", ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           status = BHS.FAILURE;
@@ -454,7 +437,7 @@ public class Types
     }
 
     {
-      var fn = new FuncSymbolNative("start", Type("int"),
+      var fn = new FuncSymbolNative("start", ns.T("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var val_ptr = frm.stack.Pop();
@@ -463,26 +446,26 @@ public class Types
           frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
-        new FuncArgSymbol("p", TypeFunc("void"))
+        new FuncArgSymbol("p", ns.TFunc("void"))
       );
       ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("stop", Type("void"),
+      var fn = new FuncSymbolNative("stop", ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var fid = (int)frm.stack.PopRelease().num;
           frm.vm.Stop(fid);
           return null;
         }, 
-        new FuncArgSymbol("fid", Type("int"))
+        new FuncArgSymbol("fid", ns.T("int"))
       );
       ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("type", Type("Type"),
+      var fn = new FuncSymbolNative("type", ns.T("Type"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var o = frm.stack.Pop();
@@ -490,87 +473,10 @@ public class Types
           o.Release();
           return null;
         }, 
-        new FuncArgSymbol("o", Type("any"))
+        new FuncArgSymbol("o", ns.T("any"))
       );
       ns.Define(fn);
     }
-  }
-
-  public struct TypeArg
-  {
-    public string name;
-    public TypeProxy tp;
-
-    public static implicit operator TypeArg(string name)
-    {
-      return new TypeArg(name);
-    }
-
-    public static implicit operator TypeArg(TypeProxy tp)
-    {
-      return new TypeArg(tp);
-    }
-
-    public static implicit operator TypeArg(BuiltInSymbol s)
-    {
-      return new TypeArg(new TypeProxy(s));
-    }
-
-    public TypeArg(string name)
-    {
-      this.name = name;
-      this.tp = default(TypeProxy);
-    }
-
-    public TypeArg(TypeProxy tp)
-    {
-      this.name = null;
-      this.tp = tp;
-    }
-  }
-
-  public TypeProxy Type(TypeArg tn)
-  {
-    if(!tn.tp.IsEmpty())
-      return tn.tp;
-    else
-      return Type(tn.name);
-  }
-
-  public TypeProxy TypeRef(TypeArg tn)
-  {           
-    return Type(new RefType(Type(tn)));
-  }
-
-  public TypeProxy TypeArr(TypeArg tn)
-  {           
-    return Type(new GenericArrayTypeSymbol(this, Type(tn)));
-  }
-
-  public TypeProxy TypeFunc(TypeArg ret_type, params TypeArg[] arg_types)
-  {           
-    var sig = new FuncSignature(Type(ret_type));
-    foreach(var arg_type in arg_types)
-      sig.AddArg(Type(arg_type));
-    return Type(sig);
-  }
-
-  public TypeProxy TypeTuple(params TypeArg[] types)
-  {
-    var tuple = new TupleType();
-    foreach(var type in types)
-      tuple.Add(Type(type));
-    return Type(tuple);
-  }
-
-  public TypeProxy Type(string name)
-  {
-    return new TypeProxy(this, name);
-  }
-
-  public TypeProxy Type(IType t)
-  {
-    return new TypeProxy(t);
   }
 
   static public bool IsCompoundType(string name)

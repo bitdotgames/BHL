@@ -868,7 +868,7 @@ public class VM
       return;
     modules.Add(cm.name, cm);
 
-    types.ns.Link(cm.ns);
+    types.ns.Import(cm.ns);
 
     ExecInit(cm);
   }
@@ -887,7 +887,7 @@ public class VM
     }
     m.gvars.Clear();
 
-    types.ns.Unlink(m.ns);
+    types.ns.Unimport(m.ns);
 
     modules.Remove(module_name);
   }
@@ -1020,7 +1020,7 @@ public class VM
   {
     addr = default(FuncAddr);
 
-    var fs = types.ns.ResolveFullName(name) as FuncSymbolScript;
+    var fs = ResolveFullName(name) as FuncSymbolScript;
     if(fs == null)
       return false;
 
@@ -1037,13 +1037,24 @@ public class VM
 
   FuncAddr GetFuncAddr(string name)
   {
-    var fs = (FuncSymbolScript)types.ns.ResolveFullName(name);
+    var fs = (FuncSymbolScript)ResolveFullName(name);
     var cm = modules[((Namespace)fs.scope).module_name];
     return new FuncAddr() {
       module = cm,
       fs = fs,
       ip = fs.ip_addr
     };
+  }
+
+  public Symbol ResolveFullName(string name)
+  {
+    foreach(var kv in modules)
+    {
+      var s = kv.Value.ns.ResolveFullName(name);
+      if(s != null)
+        return s;
+    }
+    return null;
   }
 
   static FuncSymbol TryMapIp2Func(CompiledModule cm, int ip)
@@ -2279,7 +2290,7 @@ public class CompiledModule
     //NOTE: in order to avoid duplicate symbols error during un-marshalling we link
     //      with the global namespace only once the object is un-marshalled
     //NOTE: we use lightweight linking without any validation
-    ns.links.Add(types.ns);
+    ns.imports.Add(types.ns);
 
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);

@@ -289,9 +289,9 @@ public class Build
     {
       var file = kv.Key;
       var file_ns = kv.Value;
-      file_ns.UnlinkAll();
+      file_ns.UnimportAll();
 
-      var conflict = ns.TryLink(file_ns);
+      var conflict = ns.TryImport(file_ns);
       if(conflict != null)
         w.error = new BuildError(file, "symbol '" + conflict.GetFullName() + "' is already declared in module '" + (conflict.scope as Namespace)?.module_name + "'");
     }

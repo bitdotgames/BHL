@@ -59,13 +59,14 @@ public class Namespace : Symbol, IScope, IMarshallable
 {
   public const uint CLASS_ID = 20;
 
+  //TODO: think how to get rid of this dependency
   Types types;
 
   public string module_name = "";
 
   public SymbolsStorage members;
 
-  public List<Namespace> links = new List<Namespace>();
+  public List<Namespace> imports = new List<Namespace>();
 
   public override uint ClassId()
   {
@@ -92,15 +93,15 @@ public class Namespace : Symbol, IScope, IMarshallable
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
 
-    foreach(var link in links)
-      copy.links.Add(link.Clone());
+    foreach(var imp in imports)
+      copy.imports.Add(imp.Clone());
 
     return copy;
   }
 
-  public void Link(Namespace other)
+  public void Import(Namespace other)
   {
-    var conflict_symb = TryLink(other);
+    var conflict_symb = TryImport(other);
     if(conflict_symb != null)
       throw new SymbolError(conflict_symb, "already defined symbol '" + conflict_symb.name + "'");
   }
@@ -108,9 +109,9 @@ public class Namespace : Symbol, IScope, IMarshallable
   //NOTE: returns conflicting symbol or null
   //NOTE: here we combine only similar namespaces but we don't
   //      add other symbols from them
-  public Symbol TryLink(Namespace other)
+  public Symbol TryImport(Namespace other)
   {
-    if(links.Contains(other))
+    if(imports.Contains(other))
       return null;
 
     for(int i=0;i<other.members.Count;++i)
@@ -122,17 +123,16 @@ public class Namespace : Symbol, IScope, IMarshallable
       if(other_symb is Namespace other_ns)
       {
         //NOTE: if there's no such local symbol let's
-        //      create an empty namespace which can be
-        //      later linked
+        //      create an empty namespace
         if(this_symb == null)
         {
           var ns = new Namespace(types, other_symb.name);
-          ns.links.Add(other_ns);
+          ns.imports.Add(other_ns);
           members.Add(ns);
         }
         else if(this_symb is Namespace this_ns)
         {
-          var conflict = this_ns.TryLink(other_ns);
+          var conflict = this_ns.TryImport(other_ns);
           if(conflict != null)
             return conflict;
         }
@@ -143,11 +143,11 @@ public class Namespace : Symbol, IScope, IMarshallable
         return this_symb;
     }
 
-    links.Add(other);
+    imports.Add(other);
     return null;
   }
 
-  public void Unlink(Namespace other)
+  public void Unimport(Namespace other)
   {
     for(int i=0;i<other.members.Count;++i)
     {
@@ -158,24 +158,24 @@ public class Namespace : Symbol, IScope, IMarshallable
         var this_symb = members.Find(other_symb.name);
         if(this_symb is Namespace this_ns)
         {
-          this_ns.Unlink(other_ns);
+          this_ns.Unimport(other_ns);
           if(this_ns.scope == this && this_ns.members.Count == 0)
             members.RemoveAt(members.IndexOf(this_ns));
         }
       }
     }
 
-    links.Remove(other);
+    imports.Remove(other);
   }
 
-  public void UnlinkAll()
+  public void UnimportAll()
   {
     for(int i=0;i<members.Count;++i)
     {
       if(members[i] is Namespace ns)
-        ns.UnlinkAll();
+        ns.UnimportAll();
     }
-    links.Clear();
+    imports.Clear();
   }
 
   //NOTE: iterator is used for convenience since we need
@@ -204,9 +204,9 @@ public class Namespace : Symbol, IScope, IMarshallable
         return true;
       }
 
-      if(c == owner.links.Count)
+      if(c == owner.imports.Count)
         return false;
-      current = owner.links[c];
+      current = owner.imports[c];
       ++c;
       return true;
     }
@@ -281,10 +281,166 @@ public class Namespace : Symbol, IScope, IMarshallable
     Marshall.Sync(ctx, ref module_name);
     Marshall.Sync(ctx, ref members);
   }
+}
 
-  public TypeProxy ProxyType(string name)
+public static class ScopeExtensions
+{
+  public static string GetFullName(this Symbol sym)
   {
-    return new TypeProxy(this, name);
+    return GetNamespaceNamePrefix(
+      sym.scope as Namespace, 
+      sym.name
+    );
+  }
+
+  public static string GetNamespaceNamePrefix(Namespace parent, string name)
+  {
+    while(parent != null && parent.name.Length > 0)
+    {
+      name = parent.name + '.' + name;
+      parent = (Namespace)parent.scope;
+    }
+    return name;
+  }
+
+  public static Symbol ResolveWithFallback(this IScope scope, string name)
+  {
+    var s = scope.Resolve(name);
+    if(s != null)
+      return s;
+
+    var fallback = scope.GetFallbackScope();
+    if(fallback != null) 
+      return fallback.ResolveWithFallback(name);
+
+    return null;
+  }
+
+  public static Symbol ResolveFullName(this IScope scope, string full_name)
+  {
+    int start_idx = 0;
+    int next_idx = full_name.IndexOf('.');
+
+    while(true)
+    {
+      string name = 
+        next_idx == -1 ? 
+        (start_idx == 0 ? full_name : full_name.Substring(start_idx)) : 
+        full_name.Substring(start_idx, next_idx - start_idx);
+
+      var symb = scope.Resolve(name);
+
+      if(symb == null)
+        break;
+
+      //let's check if it's the last path item
+      if(next_idx == -1)
+        return symb;
+
+      start_idx = next_idx + 1;
+      next_idx = full_name.IndexOf('.', start_idx);
+
+      scope = symb as IScope;
+      //we can't proceed 'deeper' if the last resolved 
+      //symbol is not a scope
+      if(scope == null)
+        break;
+    }
+
+    return null;
+  }
+
+  public static string DumpMembers(this IScope scope, int level = 0)
+  {
+    string str = new String(' ', level) + (scope is Symbol sym ? "'" + sym.name + "' : " : "") + scope.GetType().Name + " {\n";
+    var ms = scope.GetMembers();
+    for(int i=0;i<ms.Count;++i)
+    {
+      var m = ms[i];
+      if(m is IScope s)
+        str += new String(' ', level) + s.DumpMembers(level+1) + "\n";
+      else
+        str += new String(' ', level+1) + "'" + m.name + "' : " + m.GetType().Name + "\n";
+    }
+    str += new String(' ', level) + "}";
+    return str;
+  }
+
+  public struct TypeArg
+  {
+    public string name;
+    public TypeProxy tp;
+
+    public static implicit operator TypeArg(string name)
+    {
+      return new TypeArg(name);
+    }
+
+    public static implicit operator TypeArg(TypeProxy tp)
+    {
+      return new TypeArg(tp);
+    }
+
+    public static implicit operator TypeArg(BuiltInSymbol s)
+    {
+      return new TypeArg(new TypeProxy(s));
+    }
+
+    public TypeArg(string name)
+    {
+      this.name = name;
+      this.tp = default(TypeProxy);
+    }
+
+    public TypeArg(TypeProxy tp)
+    {
+      this.name = null;
+      this.tp = tp;
+    }
+  }
+
+  public static TypeProxy T(this IScope scope, IType t)
+  {
+    return new TypeProxy(t);
+  }
+
+  public static TypeProxy T(this IScope scope, string name)
+  {
+    return new TypeProxy(scope, name);
+  }
+
+  public static TypeProxy T(this IScope scope, TypeArg tn)
+  {
+    if(!tn.tp.IsEmpty())
+      return tn.tp;
+    else
+      return scope.T(tn.name);
+  }
+
+  public static TypeProxy TRef(this IScope scope, TypeArg tn)
+  {           
+    return scope.T(new RefType(scope.T(tn)));
+  }
+
+  public static TypeProxy TArr(this IScope scope, TypeArg tn)
+  {           
+    return scope.T(new GenericArrayTypeSymbol(scope, scope.T(tn)));
+  }
+
+  public static TypeProxy TFunc(this IScope scope, TypeArg ret_type, params TypeArg[] arg_types)
+  {           
+    var sig = new FuncSignature(scope.T(ret_type));
+    foreach(var arg_type in arg_types)
+      sig.AddArg(scope.T(arg_type));
+    return scope.T(sig);
+  }
+
+  public static TypeProxy TTuple(this IScope scope, params TypeArg[] types)
+  {
+    var tuple = new TupleType();
+    foreach(var type in types)
+      tuple.Add(scope.T(type));
+    return scope.T(tuple);
   }
 }
 

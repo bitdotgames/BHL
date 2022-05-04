@@ -481,7 +481,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(Types ts, string name, TypeProxy item_type)     
+  public ArrayTypeSymbol(IScope ns, string name, TypeProxy item_type)     
     : base(name, super_class: null)
   {
     this.item_type = item_type;
@@ -489,26 +489,26 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     this.creator = CreateArr;
 
     {
-      var fn = new FuncSymbolNative("Add", ts.Type("void"), Add,
+      var fn = new FuncSymbolNative("Add", ns.T("void"), Add,
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("RemoveAt", ts.Type("void"), RemoveAt,
-        new FuncArgSymbol("idx", ts.Type("int"))
+      var fn = new FuncSymbolNative("RemoveAt", ns.T("void"), RemoveAt,
+        new FuncArgSymbol("idx", ns.T("int"))
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Clear", ts.Type("void"), Clear);
+      var fn = new FuncSymbolNative("Clear", ns.T("void"), Clear);
       this.Define(fn);
     }
 
     {
-      var vs = new FieldSymbol("Count", ts.Type("int"), GetCount, null);
+      var vs = new FieldSymbol("Count", ns.T("int"), GetCount, null);
       this.Define(vs);
     }
 
@@ -519,12 +519,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      FuncArrIdxW = new FuncSymbolNative("$ArrIdxW", ts.Type("void"), ArrIdxW);
+      FuncArrIdxW = new FuncSymbolNative("$ArrIdxW", ns.T("void"), ArrIdxW);
     }
   }
 
-  public ArrayTypeSymbol(Types ts, TypeProxy item_type) 
-    : this(ts, item_type.name + "[]", item_type)
+  public ArrayTypeSymbol(IScope ns, TypeProxy item_type) 
+    : this(ns, item_type.name + "[]", item_type)
   {}
 
   public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
@@ -540,15 +540,15 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
   public const uint CLASS_ID = 10; 
 
-  public GenericArrayTypeSymbol(Types types, TypeProxy item_type) 
-    : base(types, item_type)
+  public GenericArrayTypeSymbol(IScope ns, TypeProxy item_type) 
+    : base(ns, item_type)
   {
     name = "[]" + item_type.name;
   }
 
   //marshall factory version
-  public GenericArrayTypeSymbol(Types types)
-    : this(types, new TypeProxy())
+  public GenericArrayTypeSymbol(IScope ns)
+    : this(ns, new TypeProxy())
   {}
 
   static IList<Val> AsList(Val arr)
@@ -644,14 +644,14 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(Types ts, string name, TypeProxy item_type, CreatorCb creator) 
-    : base(ts, name, item_type)
+  public ArrayTypeSymbolT(IScope ns, string name, TypeProxy item_type, CreatorCb creator) 
+    : base(ns, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(Types ts, TypeProxy item_type, CreatorCb creator) 
-    : base(ts, item_type.name + "[]", item_type)
+  public ArrayTypeSymbolT(IScope ns, TypeProxy item_type, CreatorCb creator) 
+    : base(ns, item_type.name + "[]", item_type)
   {}
 
   public override void CreateArr(VM.Frame frm, ref Val v, IType type)
@@ -1679,7 +1679,7 @@ public class SymbolFactory : IFactory
       case FieldSymbolScript.CLASS_ID:
         return new FieldSymbolScript(); 
       case GenericArrayTypeSymbol.CLASS_ID:
-        return new GenericArrayTypeSymbol(types); 
+        return new GenericArrayTypeSymbol(types.ns); 
       case ClassSymbolScript.CLASS_ID:
         return new ClassSymbolScript();
       case InterfaceSymbolScript.CLASS_ID:
