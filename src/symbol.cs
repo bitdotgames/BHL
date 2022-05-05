@@ -481,7 +481,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(Namespace ns, string name, TypeProxy item_type)     
+  public ArrayTypeSymbol(ISymbolResolver ns, string name, TypeProxy item_type)     
     : base(name, super_class: null)
   {
     this.item_type = item_type;
@@ -523,7 +523,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(Namespace ns, TypeProxy item_type) 
+  public ArrayTypeSymbol(ISymbolResolver ns, TypeProxy item_type) 
     : this(ns, item_type.name + "[]", item_type)
   {}
 
@@ -540,14 +540,14 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
 {
   public const uint CLASS_ID = 10; 
 
-  public GenericArrayTypeSymbol(Namespace ns, TypeProxy item_type) 
+  public GenericArrayTypeSymbol(ISymbolResolver ns, TypeProxy item_type) 
     : base(ns, item_type)
   {
     name = "[]" + item_type.name;
   }
 
   //marshall factory version
-  public GenericArrayTypeSymbol(Namespace ns)
+  public GenericArrayTypeSymbol(ISymbolResolver ns)
     : this(ns, new TypeProxy())
   {}
 
@@ -644,13 +644,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(Namespace ns, string name, TypeProxy item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(ISymbolResolver ns, string name, TypeProxy item_type, CreatorCb creator) 
     : base(ns, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(Namespace ns, TypeProxy item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(ISymbolResolver ns, TypeProxy item_type, CreatorCb creator) 
     : base(ns, item_type.name + "[]", item_type)
   {}
 

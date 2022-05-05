@@ -406,17 +406,17 @@ public static class ScopeExtensions
     }
   }
 
-  public static TypeProxy T(this Namespace scope, IType t)
+  public static TypeProxy T(this ISymbolResolver scope, IType t)
   {
     return new TypeProxy(t);
   }
 
-  public static TypeProxy T(this Namespace scope, string name)
+  public static TypeProxy T(this ISymbolResolver scope, string name)
   {
     return new TypeProxy(scope, name);
   }
 
-  public static TypeProxy T(this Namespace scope, TypeArg tn)
+  public static TypeProxy T(this ISymbolResolver scope, TypeArg tn)
   {
     if(!tn.tp.IsEmpty())
       return tn.tp;
@@ -424,17 +424,17 @@ public static class ScopeExtensions
       return scope.T(tn.name);
   }
 
-  public static TypeProxy TRef(this Namespace scope, TypeArg tn)
+  public static TypeProxy TRef(this ISymbolResolver scope, TypeArg tn)
   {           
     return scope.T(new RefType(scope.T(tn)));
   }
 
-  public static TypeProxy TArr(this Namespace scope, TypeArg tn)
+  public static TypeProxy TArr(this ISymbolResolver scope, TypeArg tn)
   {           
     return scope.T(new GenericArrayTypeSymbol(scope, scope.T(tn)));
   }
 
-  public static TypeProxy TFunc(this Namespace scope, TypeArg ret_type, params TypeArg[] arg_types)
+  public static TypeProxy TFunc(this ISymbolResolver scope, TypeArg ret_type, params TypeArg[] arg_types)
   {           
     var sig = new FuncSignature(scope.T(ret_type));
     foreach(var arg_type in arg_types)
@@ -442,7 +442,7 @@ public static class ScopeExtensions
     return scope.T(sig);
   }
 
-  public static TypeProxy TTuple(this Namespace scope, params TypeArg[] types)
+  public static TypeProxy TTuple(this ISymbolResolver scope, params TypeArg[] types)
   {
     var tuple = new TupleType();
     foreach(var type in types)

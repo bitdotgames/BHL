@@ -677,7 +677,7 @@ public class TestNamespace : BHL_TestBase
       var ts = new Types();
       {
         var foo = new Namespace(ts, "foo");
-        var fn = new FuncSymbolNative("wow", ts.ns.T("int"),
+        var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 1)); 
               return null;
@@ -688,7 +688,7 @@ public class TestNamespace : BHL_TestBase
       }
       {
         var bar = new Namespace(ts, "bar");
-        var fn = new FuncSymbolNative("wow", ts.ns.T("int"),
+        var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 10)); 
               return null;
@@ -1085,7 +1085,7 @@ public class TestNamespace : BHL_TestBase
 
     vm.LoadModule("bhl3");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
-    AssertTrue(ts.ns.ResolveFullName("foo.sub.Sub") == null);
+    AssertTrue(ts.ResolveFullName("foo.sub.Sub") == null);
     AssertTrue(vm.ResolveFullName("foo.sub.Sub") is ClassSymbol);
     CommonChecks(vm);
   }

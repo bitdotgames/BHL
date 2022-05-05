@@ -303,7 +303,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", ts.ns.T("float"), 1,
+      var fn = new FuncSymbolNative("func_with_def", ts.T("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
@@ -313,8 +313,8 @@ public class TestVM : BHL_TestBase
 
             return null;
           },
-          new FuncArgSymbol("a", ts.ns.T("float")),
-          new FuncArgSymbol("b", ts.ns.T("float"))
+          new FuncArgSymbol("a", ts.T("float")),
+          new FuncArgSymbol("b", ts.T("float"))
         );
 
       ts.ns.Define(fn);
@@ -345,7 +345,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", ts.ns.T("float"), 1,
+      var fn = new FuncSymbolNative("func_with_def", ts.T("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(0) ? 2 : frm.stack.PopRelease().num;
@@ -355,8 +355,8 @@ public class TestVM : BHL_TestBase
 
             return null;
           },
-          new FuncArgSymbol("a", ts.ns.T("float")),
-          new FuncArgSymbol("b", ts.ns.T("float"))
+          new FuncArgSymbol("a", ts.T("float")),
+          new FuncArgSymbol("b", ts.T("float"))
         );
 
       ts.ns.Define(fn);
@@ -382,7 +382,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", ts.ns.T("float"), 1,
+      var fn = new FuncSymbolNative("func_with_def", ts.T("float"), 1,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var a = args_info.IsDefaultArgUsed(0) ? 14 : frm.stack.PopRelease().num;
@@ -391,7 +391,7 @@ public class TestVM : BHL_TestBase
 
             return null;
           },
-          new FuncArgSymbol("a", ts.ns.T("float"))
+          new FuncArgSymbol("a", ts.T("float"))
         );
 
       ts.ns.Define(fn);
@@ -417,7 +417,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_with_def", ts.ns.T("float"), 2,
+      var fn = new FuncSymbolNative("func_with_def", ts.T("float"), 2,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var b = args_info.IsDefaultArgUsed(1) ? 2 : frm.stack.PopRelease().num;
@@ -480,7 +480,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("foo", ts.ns.T("float"),
+      var fn = new FuncSymbolNative("foo", ts.T("float"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
             status = BHS.FAILURE; 
             return null;
@@ -532,7 +532,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.ns.T("float")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("float")) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -1019,7 +1019,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_mult", ts.ns.TTuple("float", "string"),
+      var fn = new FuncSymbolNative("func_mult", ts.TTuple("float", "string"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
             frm.stack.Push(Val.NewStr(frm.vm, "foo"));
@@ -1071,7 +1071,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_mult", ts.ns.TTuple("float","string","int","float"),
+      var fn = new FuncSymbolNative("func_mult", ts.TTuple("float","string","int","float"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
             frm.stack.Push(Val.NewFlt(frm.vm, 42.5));
@@ -1692,7 +1692,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.ns.T("int")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -1724,7 +1724,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.ns.T("float")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("float")) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -1756,7 +1756,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.ns.T("string"))})
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("string"))})
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -1788,7 +1788,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.ns.T("bool")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("bool")) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -3013,8 +3013,8 @@ public class TestVM : BHL_TestBase
           frm.stack.Push(Val.NewFlt(frm.vm, b-a));
           return null;
         }, 
-        new FuncArgSymbol("a", ts.ns.T("int")),
-        new FuncArgSymbol("b", ts.ns.T("int"))
+        new FuncArgSymbol("a", ts.T("int")),
+        new FuncArgSymbol("b", ts.T("int"))
     );
     ts.ns.Define(fn);
 
@@ -4187,7 +4187,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 3 + 2/*hidden vars*/ + 1/*cargs*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.TArr("int")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("int")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -4199,8 +4199,8 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.SetVar, new int[] { 3 }) //assign tmp arr
-      .EmitThen(Opcodes.DeclVar, new int[] { 4, ConstIdx(c, ts.ns.T("int")) })//declare counter
-      .EmitThen(Opcodes.DeclVar, new int[] { 2, ConstIdx(c, ts.ns.T("int"))  })//declare iterator
+      .EmitThen(Opcodes.DeclVar, new int[] { 4, ConstIdx(c, ts.T("int")) })//declare counter
+      .EmitThen(Opcodes.DeclVar, new int[] { 2, ConstIdx(c, ts.T("int"))  })//declare iterator
       .EmitThen(Opcodes.GetVar, new int[] { 4 })
       .EmitThen(Opcodes.GetVar, new int[] { 3 })
       .EmitThen(Opcodes.GetAttr, new int[] { ArrCountIdx })
@@ -7154,8 +7154,8 @@ public class TestVM : BHL_TestBase
             b.Release();
             return null;
           },
-          new FuncArgSymbol("a", ts.ns.T("float")),
-          new FuncArgSymbol("b", ts.ns.T("float"), true/*is ref*/)
+          new FuncArgSymbol("a", ts.T("float")),
+          new FuncArgSymbol("b", ts.T("float"), true/*is ref*/)
         );
 
       ts.ns.Define(fn);
@@ -7463,8 +7463,8 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Return)
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.T("Bar")) }) 
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.T("Wow")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Bar")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Wow")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
@@ -8036,7 +8036,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.TArr("int")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("int")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
@@ -8533,7 +8533,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ns.Resolve("suspend")), 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("suspend")), 0 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -8679,12 +8679,12 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.ns.T("int")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ns.Resolve("suspend")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("suspend")), 0 })
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ns.Resolve("yield")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("yield")), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -8726,12 +8726,12 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.ns.T("int")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ns.Resolve("suspend")), 0})
+          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("suspend")), 0})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ns.Resolve("yield")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("yield")), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -9281,7 +9281,7 @@ public class TestVM : BHL_TestBase
             frm.stack.Push(Val.NewNum(frm.vm, 42));
             return null;
           },
-          new FuncArgSymbol("b", ts.ns.T("bool"))
+          new FuncArgSymbol("b", ts.T("bool"))
         );
       ts.ns.Define(fn);
     }
@@ -9387,7 +9387,7 @@ public class TestVM : BHL_TestBase
       var fn = new FuncSymbolNative("hey", Types.Void,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           { return null; },
-          new FuncArgSymbol("s", ts.ns.T("string")),
+          new FuncArgSymbol("s", ts.T("string")),
           new FuncArgSymbol("i", Types.Int)
         );
       ts.ns.Define(fn);
@@ -9583,14 +9583,14 @@ public class TestVM : BHL_TestBase
     BindTrace(ts, log);
 
     {
-      var fn = new FuncSymbolNative("foo", ts.ns.T("Foo"),
+      var fn = new FuncSymbolNative("foo", ts.T("Foo"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
           var fn_ptr = frm.stack.Pop();
           frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
           fn_ptr.Release();
           return null;
         },
-        new FuncArgSymbol("fn", ts.ns.TFunc(ts.ns.TArr(Types.Int)))
+        new FuncArgSymbol("fn", ts.TFunc(ts.TArr(Types.Int)))
       );
 
       ts.ns.Define(fn);
@@ -10174,10 +10174,10 @@ public class TestVM : BHL_TestBase
       ts.ns.Define(cl);
 
       {
-        var m = new FuncSymbolNative("self", ts.ns.T("Bar"),
+        var m = new FuncSymbolNative("self", ts.T("Bar"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             var obj = frm.stack.PopRelease().obj;
-            frm.stack.Push(Val.NewObj(frm.vm, obj, ts.ns.T("Bar").Get()));
+            frm.stack.Push(Val.NewObj(frm.vm, obj, ts.T("Bar").Get()));
             return null;
           }
         );
@@ -12009,7 +12009,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.T("Foo")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Foo")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
@@ -12019,12 +12019,12 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.ns.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.ns.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
@@ -12303,8 +12303,8 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.TArr("Foo")) }) 
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.T( "Foo")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("Foo")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T( "Foo")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
@@ -12319,12 +12319,12 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.ns.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.ns.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
@@ -14259,11 +14259,11 @@ public class TestVM : BHL_TestBase
 
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol("c", ts.ns.T("Color"), 
+      cl.Define(new FieldSymbol("c", ts.T("Color"), 
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
-          v.SetObj(cn.c, ts.ns.T("Color").Get());
+          v.SetObj(cn.c, ts.T("Color").Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -14632,8 +14632,8 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.TArr("Bar")) }) 
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.ns.T("Bar")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("Bar")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Bar")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })
@@ -14648,12 +14648,12 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.ns.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.ns.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
@@ -15123,7 +15123,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     
     var cl = BindColor(ts);
-    var op = new FuncSymbolNative("+", ts.ns.T("Color"),
+    var op = new FuncSymbolNative("+", ts.T("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var r = (Color)frm.stack.PopRelease().obj;
@@ -15133,12 +15133,12 @@ public class TestVM : BHL_TestBase
         newc.r = c.r + r.r;
         newc.g = c.g + r.g;
 
-        var v = Val.NewObj(frm.vm, newc, ts.ns.T("Color").Get());
+        var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         frm.stack.Push(v);
 
         return null;
       },
-      new FuncArgSymbol("r", ts.ns.T("Color"))
+      new FuncArgSymbol("r", ts.T("Color"))
     );
     cl.OverloadBinaryOperator(op);
 
@@ -15165,7 +15165,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     
     var cl = BindColor(ts);
-    var op = new FuncSymbolNative("*", ts.ns.T("Color"),
+    var op = new FuncSymbolNative("*", ts.T("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var k = (float)frm.stack.PopRelease().num;
@@ -15175,12 +15175,12 @@ public class TestVM : BHL_TestBase
         newc.r = c.r * k;
         newc.g = c.g * k;
 
-        var v = Val.NewObj(frm.vm, newc, ts.ns.T("Color").Get());
+        var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         frm.stack.Push(v);
 
         return null;
       },
-      new FuncArgSymbol("k", ts.ns.T("float"))
+      new FuncArgSymbol("k", ts.T("float"))
     );
     cl.OverloadBinaryOperator(op);
 
@@ -15209,7 +15209,7 @@ public class TestVM : BHL_TestBase
     
     var cl = BindColor(ts);
     {
-      var op = new FuncSymbolNative("*", ts.ns.T("Color"),
+      var op = new FuncSymbolNative("*", ts.T("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var k = (float)frm.stack.PopRelease().num;
@@ -15219,18 +15219,18 @@ public class TestVM : BHL_TestBase
         newc.r = c.r * k;
         newc.g = c.g * k;
 
-        var v = Val.NewObj(frm.vm, newc, ts.ns.T("Color").Get());
+        var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         frm.stack.Push(v);
 
         return null;
       },
-      new FuncArgSymbol("k", ts.ns.T("float"))
+      new FuncArgSymbol("k", ts.T("float"))
       );
       cl.OverloadBinaryOperator(op);
     }
     
     {
-      var op = new FuncSymbolNative("+", ts.ns.T("Color"),
+      var op = new FuncSymbolNative("+", ts.T("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var r = (Color)frm.stack.PopRelease().obj;
@@ -15240,12 +15240,12 @@ public class TestVM : BHL_TestBase
         newc.r = c.r + r.r;
         newc.g = c.g + r.g;
 
-        var v = Val.NewObj(frm.vm, newc, ts.ns.T("Color").Get());
+        var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         frm.stack.Push(v);
 
         return null;
       },
-      new FuncArgSymbol("r", ts.ns.T("Color"))
+      new FuncArgSymbol("r", ts.T("Color"))
       );
       cl.OverloadBinaryOperator(op);
     }
@@ -15281,7 +15281,7 @@ public class TestVM : BHL_TestBase
     BindTrace(ts, log);
     
     var cl = BindColor(ts);
-    var op = new FuncSymbolNative("==", ts.ns.T("bool"),
+    var op = new FuncSymbolNative("==", ts.T("bool"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
         var arg = (Color)frm.stack.PopRelease().obj;
@@ -15292,7 +15292,7 @@ public class TestVM : BHL_TestBase
 
         return null;
       },
-      new FuncArgSymbol("arg", ts.ns.T("Color"))
+      new FuncArgSymbol("arg", ts.T("Color"))
     );
     cl.OverloadBinaryOperator(op);
 
@@ -15317,8 +15317,8 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     
     var cl = BindColor(ts);
-    var op = new FuncSymbolNative("*", ts.ns.T("Color"), null,
-      new FuncArgSymbol("k", ts.ns.T("float"))
+    var op = new FuncSymbolNative("*", ts.T("Color"), null,
+      new FuncArgSymbol("k", ts.T("float"))
     );
     cl.OverloadBinaryOperator(op);
 
@@ -15509,13 +15509,13 @@ public class TestVM : BHL_TestBase
     BindEnum(ts);
 
     {
-      var fn = new FuncSymbolNative("StateIs", ts.ns.T("bool"),
+      var fn = new FuncSymbolNative("StateIs", ts.T("bool"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           var n = frm.stack.PopRelease().num;
           frm.stack.Push(Val.NewBool(frm.vm, n == 20));
           return null;
         },
-        new FuncArgSymbol("state", ts.ns.T("EnumState"))
+        new FuncArgSymbol("state", ts.T("EnumState"))
         );
 
       ts.ns.Define(fn);
@@ -16225,7 +16225,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    AssertEqual(loader.Load("bhl1", ts.ns, null), 
+    AssertEqual(loader.Load("bhl1", ts, null), 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
@@ -16234,7 +16234,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
-    AssertEqual(loader.Load("bhl2", ts.ns, null), 
+    AssertEqual(loader.Load("bhl2", ts, null), 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
@@ -16244,7 +16244,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
-    AssertEqual(loader.Load("bhl3", ts.ns, null), 
+    AssertEqual(loader.Load("bhl3", ts, null), 
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
@@ -17881,7 +17881,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new Compiler()
       .UseInit()
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.ns.T("float")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("float")) })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.GetGVar, new int[] { 0 })
@@ -18786,7 +18786,7 @@ public class TestVM : BHL_TestBase
   public static int ArrAddIdx {
     get {
       var ts = new Types();
-      var arr = (ClassSymbol)ts.ns.TArr("int").Get();
+      var arr = (ClassSymbol)ts.TArr("int").Get();
       return ((IScopeIndexed)arr.Resolve("Add")).scope_idx;
     }
   }
@@ -18794,7 +18794,7 @@ public class TestVM : BHL_TestBase
   public static int ArrSetIdx {
     get {
       var ts = new Types();
-      var arr = (ClassSymbol)ts.ns.TArr("int").Get();
+      var arr = (ClassSymbol)ts.TArr("int").Get();
       return ((IScopeIndexed)arr.Resolve("SetAt")).scope_idx;
     }
   }
@@ -18802,7 +18802,7 @@ public class TestVM : BHL_TestBase
   public static int ArrRemoveIdx {
     get {
       var ts = new Types();
-      var arr = (ClassSymbol)ts.ns.TArr("int").Get();
+      var arr = (ClassSymbol)ts.TArr("int").Get();
       return ((IScopeIndexed)arr.Resolve("RemoveAt")).scope_idx;
     }
   }
@@ -18810,22 +18810,22 @@ public class TestVM : BHL_TestBase
   public static int ArrCountIdx {
     get {
       var ts = new Types();
-      var arr = (ClassSymbol)ts.ns.TArr("int").Get();
+      var arr = (ClassSymbol)ts.TArr("int").Get();
       return ((IScopeIndexed)arr.Resolve("Count")).scope_idx;
     }
   }
 
   void BindMin(Types ts)
   {
-    var fn = new FuncSymbolNative("min", ts.ns.T("float"),
+    var fn = new FuncSymbolNative("min", ts.T("float"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           var b = (float)frm.stack.PopRelease().num;
           var a = (float)frm.stack.PopRelease().num;
           frm.stack.Push(Val.NewFlt(frm.vm, a > b ? b : a)); 
           return null;
         },
-        new FuncArgSymbol("a", ts.ns.T("float")),
-        new FuncArgSymbol("b", ts.ns.T("float"))
+        new FuncArgSymbol("a", ts.T("float")),
+        new FuncArgSymbol("b", ts.T("float"))
     );
     ts.ns.Define(fn);
   }
@@ -18894,7 +18894,7 @@ public class TestVM : BHL_TestBase
 
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol("str", ts.ns.T("string"),
+      cl.Define(new FieldSymbol("str", ts.T("string"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (StringClass)ctx.obj;
@@ -18936,7 +18936,7 @@ public class TestVM : BHL_TestBase
 
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol("child", ts.ns.T("StringClass"),
+      cl.Define(new FieldSymbol("child", ts.T("StringClass"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
@@ -18950,7 +18950,7 @@ public class TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child2", ts.ns.T("StringClass"),
+      cl.Define(new FieldSymbol("child2", ts.T("StringClass"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
@@ -18964,7 +18964,7 @@ public class TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child_struct", ts.ns.T("IntStruct"),
+      cl.Define(new FieldSymbol("child_struct", ts.T("IntStruct"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
@@ -18980,7 +18980,7 @@ public class TestVM : BHL_TestBase
         }
       ));
 
-      cl.Define(new FieldSymbol("child_struct2", ts.ns.T("IntStruct"),
+      cl.Define(new FieldSymbol("child_struct2", ts.T("IntStruct"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
@@ -19099,7 +19099,7 @@ public class TestVM : BHL_TestBase
 
             return null;
           },
-        new FuncArgSymbol("script", ts.ns.TFunc(Types.Void)),
+        new FuncArgSymbol("script", ts.TFunc(Types.Void)),
         new FuncArgSymbol("spawns", Types.Int)
       );
 

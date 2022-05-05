@@ -273,7 +273,7 @@ public class FuncSignature : IType, IMarshallableGeneric
   }
 }
 
-public class Types
+public class Types : ISymbolResolver
 {
   static public BoolSymbol Bool = new BoolSymbol();
   static public StringSymbol String = new StringSymbol();
@@ -386,6 +386,11 @@ public class Types
   {
     this.natives = natives;
     this.ns = ns;
+  }
+
+  public Symbol ResolveFullName(string name)
+  {
+    return ns.ResolveFullName(name);
   }
 
   public Types Clone()
