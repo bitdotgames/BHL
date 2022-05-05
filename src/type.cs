@@ -59,7 +59,7 @@ public struct TypeProxy : IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)resolver.ResolveFullName(_name);
+    type = (bhl.IType)resolver.ResolveByFullName(_name);
     return type;
   }
 
@@ -388,9 +388,9 @@ public class Types : ISymbolResolver
     this.ns = ns;
   }
 
-  public Symbol ResolveFullName(string name)
+  public Symbol ResolveByFullName(string name)
   {
-    return ns.ResolveFullName(name);
+    return ns.ResolveByFullName(name);
   }
 
   public Types Clone()

@@ -22,7 +22,7 @@ public interface IScope
 
 public interface ISymbolResolver
 {
-  Symbol ResolveFullName(string name);
+  Symbol ResolveByFullName(string full_name);
 }
 
 public interface IInstanceType : IType, IScope 
@@ -280,7 +280,7 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
     members.Add(sym);
   }
 
-  public Symbol ResolveFullName(string full_name)
+  public Symbol ResolveByFullName(string full_name)
   {
     IScope scope = this;
 
@@ -442,9 +442,10 @@ public static class ScopeExtensions
     return scope.T(sig);
   }
 
-  public static TypeProxy TTuple(this ISymbolResolver scope, params TypeArg[] types)
+  public static TypeProxy T(this ISymbolResolver scope, TypeArg tn, params TypeArg[] types)
   {
     var tuple = new TupleType();
+    tuple.Add(scope.T(tn));
     foreach(var type in types)
       tuple.Add(scope.T(type));
     return scope.T(tuple);

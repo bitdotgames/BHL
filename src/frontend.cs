@@ -2002,7 +2002,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var ext_name = ctx.extensions().nsName()[i]; 
 
-        var ext = ns.ResolveFullName(ext_name.GetText());
+        var ext = ns.ResolveByFullName(ext_name.GetText());
         if(ext is InterfaceSymbol ifs)
         {
           if(inherits.IndexOf(ifs) != -1)
@@ -2093,7 +2093,7 @@ public class Frontend : bhlBaseVisitor<object>
       {
         var ext_name = ctx.extensions().nsName()[i]; 
 
-        var ext = ns.ResolveFullName(ext_name.GetText());
+        var ext = ns.ResolveByFullName(ext_name.GetText());
         if(ext is ClassSymbol cs)
         {
           if(super_class != null)

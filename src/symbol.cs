@@ -1321,7 +1321,7 @@ public class ClassSymbolScript : ClassSymbol
     if(ctx.is_read && super_name != "")
     {
       var rslv = ((SymbolFactory)ctx.factory).resolver;
-      var tmp_class = (ClassSymbol)rslv.ResolveFullName(super_name);
+      var tmp_class = (ClassSymbol)rslv.ResolveByFullName(super_name);
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
       super_class = tmp_class;
@@ -1640,7 +1640,7 @@ public class SymbolsSet<T> : IMarshallable where T : Symbol,IType
 
       foreach(var name in names)
       {
-        var symb = rslv.ResolveFullName(name) as T;
+        var symb = rslv.ResolveByFullName(name) as T;
         if(symb == null)
           throw new Exception("Symbol '" + name + "' not found");
         list.Add(symb);

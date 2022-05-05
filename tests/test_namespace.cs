@@ -140,20 +140,20 @@ public class TestNamespace : BHL_TestBase
       AssertEqual(0, wow.GetMembers().Count);
     }
 
-    AssertEqual("foo", ns2.ResolveFullName("foo").name);
-    AssertEqual("foo_sub", ns2.ResolveFullName("foo.foo_sub").name);
-    AssertEqual("Hey", ns2.ResolveFullName("foo.foo_sub.Hey").name);
-    AssertEqual("Wow", ns2.ResolveFullName("foo.foo_sub.Wow").name);
-    AssertEqual("wow", ns2.ResolveFullName("wow").name);
-    AssertEqual("bar", ns2.ResolveFullName("bar").name);
+    AssertEqual("foo", ns2.ResolveByFullName("foo").name);
+    AssertEqual("foo_sub", ns2.ResolveByFullName("foo.foo_sub").name);
+    AssertEqual("Hey", ns2.ResolveByFullName("foo.foo_sub.Hey").name);
+    AssertEqual("Wow", ns2.ResolveByFullName("foo.foo_sub.Wow").name);
+    AssertEqual("wow", ns2.ResolveByFullName("wow").name);
+    AssertEqual("bar", ns2.ResolveByFullName("bar").name);
 
-    AssertTrue(ns2.ResolveFullName("") == null);
-    AssertTrue(ns2.ResolveFullName(".") == null);
-    AssertTrue(ns2.ResolveFullName("foo.") == null);
-    AssertTrue(ns2.ResolveFullName(".foo.") == null);
-    AssertTrue(ns2.ResolveFullName("foo..") == null);
-    AssertTrue(ns2.ResolveFullName("foo.bar") == null);
-    AssertTrue(ns2.ResolveFullName(".foo.foo_sub..") == null);
+    AssertTrue(ns2.ResolveByFullName("") == null);
+    AssertTrue(ns2.ResolveByFullName(".") == null);
+    AssertTrue(ns2.ResolveByFullName("foo.") == null);
+    AssertTrue(ns2.ResolveByFullName(".foo.") == null);
+    AssertTrue(ns2.ResolveByFullName("foo..") == null);
+    AssertTrue(ns2.ResolveByFullName("foo.bar") == null);
+    AssertTrue(ns2.ResolveByFullName(".foo.foo_sub..") == null);
   }
 
   [IsTested()]
@@ -489,12 +489,12 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveFullName("foo") as Namespace;
+    var foo = vm.ResolveByFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(1, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
 
-    var bar = vm.ResolveFullName("bar") as Namespace;
+    var bar = vm.ResolveByFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
@@ -528,13 +528,13 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveFullName("foo") as Namespace;
+    var foo = vm.ResolveByFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(2, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
 
-    var bar = vm.ResolveFullName("bar") as Namespace;
+    var bar = vm.ResolveByFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -582,14 +582,14 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveFullName("foo") as Namespace;
+    var foo = vm.ResolveByFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(3, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
     AssertTrue(foo.Resolve("bar") is Namespace);
 
-    var bar = vm.ResolveFullName("bar") as Namespace;
+    var bar = vm.ResolveByFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(2, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -1085,8 +1085,8 @@ public class TestNamespace : BHL_TestBase
 
     vm.LoadModule("bhl3");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
-    AssertTrue(ts.ResolveFullName("foo.sub.Sub") == null);
-    AssertTrue(vm.ResolveFullName("foo.sub.Sub") is ClassSymbol);
+    AssertTrue(ts.ResolveByFullName("foo.sub.Sub") == null);
+    AssertTrue(vm.ResolveByFullName("foo.sub.Sub") is ClassSymbol);
     CommonChecks(vm);
   }
 }

@@ -1019,7 +1019,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_mult", ts.TTuple("float", "string"),
+      var fn = new FuncSymbolNative("func_mult", ts.T("float", "string"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
             frm.stack.Push(Val.NewStr(frm.vm, "foo"));
@@ -1071,7 +1071,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
 
     {
-      var fn = new FuncSymbolNative("func_mult", ts.TTuple("float","string","int","float"),
+      var fn = new FuncSymbolNative("func_mult", ts.T("float","string","int","float"),
           delegate(VM.Frame frm, FuncArgsInfo arg_info, ref BHS status)
           {
             frm.stack.Push(Val.NewFlt(frm.vm, 42.5));
@@ -8533,7 +8533,7 @@ public class TestVM : BHL_TestBase
       new Compiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("suspend")), 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveByFullName("suspend")), 0 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -8682,9 +8682,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("suspend")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveByFullName("suspend")), 0 })
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("yield")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveByFullName("yield")), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -8729,9 +8729,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("suspend")), 0})
+          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveByFullName("suspend")), 0})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveFullName("yield")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveByFullName("yield")), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -18620,7 +18620,7 @@ public class TestVM : BHL_TestBase
 
       ns.Define(new VariableSymbol("wow", ns.TArr(Types.Bool)));
 
-      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.TTuple(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
 
       ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15));
 
@@ -18630,7 +18630,7 @@ public class TestVM : BHL_TestBase
       ns.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", Foo);
       Bar.Define(new FieldSymbolScript("Float", Types.Float));
-      Bar.Define(new FuncSymbolScript(null, new FuncSignature(ns.TTuple(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
+      Bar.Define(new FuncSymbolScript(null, new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");
@@ -18677,7 +18677,7 @@ public class TestVM : BHL_TestBase
       var Test = (FuncSymbolScript)ns.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(Test.scope, ns);
-      AssertEqual(ns.TFunc(ns.TTuple(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).name, Test.signature.GetName());
+      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).name, Test.signature.GetName());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
@@ -18725,7 +18725,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(Bar_Float.scope_idx, 2);
       var Bar_What = Bar.Resolve("What") as FuncSymbolScript;
       AssertEqual(Bar_What.name, "What");
-      AssertEqual(Bar_What.GetReturnType().GetName(), ns.TTuple(Types.Bool, Types.Bool).Get().GetName());
+      AssertEqual(Bar_What.GetReturnType().GetName(), ns.T(Types.Bool, Types.Bool).Get().GetName());
       AssertEqual(Bar_What.signature.arg_types[0].Get(), Types.Int);
       AssertEqual(1, Bar_What.default_args_num);
       AssertEqual(0, Bar_What.local_vars_num);
