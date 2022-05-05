@@ -13,7 +13,7 @@ public class MyBindings : IUserBindings
   public void Register(Types types)
   {
     {
-      var fn = new FuncSymbolNative("Trace", types.Type("void"),
+      var fn = new FuncSymbolNative("Trace", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
 #if !BHL_FRONT
@@ -22,14 +22,14 @@ public class MyBindings : IUserBindings
 #endif
           return null;
         },
-        new FuncArgSymbol("str", types.Type("string"))
+        new FuncArgSymbol("str", Types.String)
         );
 
-      types.globs.Define(fn);
+      types.ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Rand", types.Type("float"),
+      var fn = new FuncSymbolNative("Rand", Types.Float,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
 #if !BHL_FRONT
@@ -40,17 +40,17 @@ public class MyBindings : IUserBindings
           return null;
         }
       );
-      types.globs.Define(fn);
+      types.ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Wait", types.Type("void"),
+      var fn = new FuncSymbolNative("Wait", Types.Void,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           { return new WaitNode(); },
-          new FuncArgSymbol("t", types.Type("float"))
+          new FuncArgSymbol("t", Types.Float)
         );
 
-      types.globs.Define(fn);
+      types.ns.Define(fn);
     }
   }
 }
