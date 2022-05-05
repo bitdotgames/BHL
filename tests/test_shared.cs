@@ -257,7 +257,7 @@ public class BHL_TestBase
       ts.ns.Define(fn);
     }
 
-    ts.ns.Define(new ArrayTypeSymbolT<Color>(ts, "ArrayT_Color", ts.T("Color"), delegate() { return new List<Color>(); } ));
+    ts.ns.Define(new ArrayTypeSymbolT<Color>("ArrayT_Color", ts.T("Color"), delegate() { return new List<Color>(); } ));
 
     return cl;
   }

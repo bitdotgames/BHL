@@ -406,49 +406,49 @@ public static class ScopeExtensions
     }
   }
 
-  public static TypeProxy T(this ISymbolResolver scope, IType t)
+  public static TypeProxy T(this ISymbolResolver self, IType t)
   {
     return new TypeProxy(t);
   }
 
-  public static TypeProxy T(this ISymbolResolver scope, string name)
+  public static TypeProxy T(this ISymbolResolver self, string name)
   {
-    return new TypeProxy(scope, name);
+    return new TypeProxy(self, name);
   }
 
-  public static TypeProxy T(this ISymbolResolver scope, TypeArg tn)
+  public static TypeProxy T(this ISymbolResolver self, TypeArg tn)
   {
     if(!tn.tp.IsEmpty())
       return tn.tp;
     else
-      return scope.T(tn.name);
+      return self.T(tn.name);
   }
 
-  public static TypeProxy TRef(this ISymbolResolver scope, TypeArg tn)
+  public static TypeProxy TRef(this ISymbolResolver self, TypeArg tn)
   {           
-    return scope.T(new RefType(scope.T(tn)));
+    return self.T(new RefType(self.T(tn)));
   }
 
-  public static TypeProxy TArr(this ISymbolResolver scope, TypeArg tn)
+  public static TypeProxy TArr(this ISymbolResolver self, TypeArg tn)
   {           
-    return scope.T(new GenericArrayTypeSymbol(scope, scope.T(tn)));
+    return self.T(new GenericArrayTypeSymbol(self.T(tn)));
   }
 
-  public static TypeProxy TFunc(this ISymbolResolver scope, TypeArg ret_type, params TypeArg[] arg_types)
+  public static TypeProxy TFunc(this ISymbolResolver self, TypeArg ret_type, params TypeArg[] arg_types)
   {           
-    var sig = new FuncSignature(scope.T(ret_type));
+    var sig = new FuncSignature(self.T(ret_type));
     foreach(var arg_type in arg_types)
-      sig.AddArg(scope.T(arg_type));
-    return scope.T(sig);
+      sig.AddArg(self.T(arg_type));
+    return self.T(sig);
   }
 
-  public static TypeProxy T(this ISymbolResolver scope, TypeArg tn, params TypeArg[] types)
+  public static TypeProxy T(this ISymbolResolver self, TypeArg tn, params TypeArg[] types)
   {
     var tuple = new TupleType();
-    tuple.Add(scope.T(tn));
+    tuple.Add(self.T(tn));
     foreach(var type in types)
-      tuple.Add(scope.T(type));
-    return scope.T(tuple);
+      tuple.Add(self.T(type));
+    return self.T(tuple);
   }
 }
 
