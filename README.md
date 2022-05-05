@@ -77,7 +77,7 @@ enum Status {
   Connected  = 2
 }
 
-Status s = Status::Connected
+Status s = Status.Connected
 
 ```
 
@@ -135,7 +135,7 @@ u.InjectScript(func() {
 ### Function pointers
 
 ```go
-bool^(int) p = func bool(int b) { return b > 1 }
+func bool(int) p = func bool(int b) { return b > 1 }
 return p(10)
 ```
 
