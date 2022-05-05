@@ -15346,7 +15346,7 @@ public class TestVM : BHL_TestBase
       
     func int test() 
     {
-      return (int)EnumState::SPAWNED + (int)EnumState::SPAWNED2
+      return (int)EnumState.SPAWNED + (int)EnumState.SPAWNED2
     }
     ";
 
@@ -15367,7 +15367,7 @@ public class TestVM : BHL_TestBase
       
     func int test() 
     {
-      return (int)EnumState::SPAWNED2
+      return (int)EnumState.SPAWNED2
     }
     ";
 
@@ -15388,7 +15388,7 @@ public class TestVM : BHL_TestBase
       
     func float test() 
     {
-      return (float)EnumState::SPAWNED
+      return (float)EnumState.SPAWNED
     }
     ";
 
@@ -15409,7 +15409,7 @@ public class TestVM : BHL_TestBase
       
     func string test() 
     {
-      return (string)EnumState::SPAWNED2
+      return (string)EnumState.SPAWNED2
     }
     ";
 
@@ -15430,7 +15430,7 @@ public class TestVM : BHL_TestBase
       
     func bool test(EnumState state) 
     {
-      return state == EnumState::SPAWNED2
+      return state == EnumState.SPAWNED2
     }
     ";
 
@@ -15451,7 +15451,7 @@ public class TestVM : BHL_TestBase
       
     func bool test(EnumState state) 
     {
-      return state != EnumState::SPAWNED
+      return state != EnumState.SPAWNED
     }
     ";
 
@@ -15473,8 +15473,8 @@ public class TestVM : BHL_TestBase
     func []EnumState test() 
     {
       []EnumState arr = new []EnumState
-      arr.Add(EnumState::SPAWNED2)
-      arr.Add(EnumState::SPAWNED)
+      arr.Add(EnumState.SPAWNED2)
+      arr.Add(EnumState.SPAWNED)
       return arr
     }
     ";
@@ -15500,7 +15500,7 @@ public class TestVM : BHL_TestBase
       
     func bool test() 
     {
-      return StateIs(state : EnumState::SPAWNED2)
+      return StateIs(state : EnumState.SPAWNED2)
     }
     ";
 
@@ -15539,7 +15539,7 @@ public class TestVM : BHL_TestBase
       
     func int test() 
     {
-      Foo f = Foo::B 
+      Foo f = Foo.B 
       return (int)f
     }
     ";
@@ -15563,7 +15563,7 @@ public class TestVM : BHL_TestBase
       
     func int test() 
     {
-      return (int)Foo::B + (int)Foo::A
+      return (int)Foo.B + (int)Foo.A
     }
     ";
 
@@ -15687,36 +15687,6 @@ public class TestVM : BHL_TestBase
       @"already defined symbol 'Foo'"
     );
   }
-
-  [IsTested()]
-  public void TestUserEnumItemBadChainCall()
-  {
-    string bhl = @"
-
-    enum Foo
-    {
-      A = 1
-    }
-
-    func foo(Foo f) 
-    {
-    }
-
-    func test() 
-    {
-      foo(Foo.A)
-    }
-
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      @"symbol usage is not valid"
-    );
-  }
-
 
   [IsTested()]
   public void TestUsingBultinTypeAsFunc()
@@ -16387,7 +16357,7 @@ public class TestVM : BHL_TestBase
 
     func float test() 
     {
-      Foo f = Foo::B
+      Foo f = Foo.B
       return bar(f)
     }
     ";

@@ -44,7 +44,6 @@ exp
   | number                                                  #ExpLiteralNum
   | string                                                  #ExpLiteralStr
   | callExp                                                 #ExpCall
-  | staticCallExp                                           #ExpStaticCall
   | typeof                                                  #ExpTypeof
   | jsonObject                                              #ExpJsonObj
   | jsonArray                                               #ExpJsonArr
@@ -160,15 +159,6 @@ callExp
 
 chainExp
   : callArgs | memberAccess | arrAccess
-  ;
-
-//for now supporting only Foo::Bar type of static call
-staticCallExp
-  : NAME staticCallItem
-  ;
-
-staticCallItem
-  : '::' NAME
   ;
 
 typeof 

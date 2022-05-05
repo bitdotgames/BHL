@@ -749,17 +749,6 @@ namespace bhlsp
       return null;
     }
     
-    public override object VisitExpStaticCall(bhlParser.ExpStaticCallContext ctx)
-    {
-      var staticCallExp = ctx.staticCallExp();
-      var staticCallItem = staticCallExp.staticCallItem();
-        
-      AddSemanticTokenTypeName(staticCallExp.NAME());
-      AddSemanticToken(staticCallItem.NAME(), SemanticTokenTypes.variable, SemanticTokenModifiers.@static);
-
-      return null;
-    }
-    
     public override object VisitExpJsonObj(bhlParser.ExpJsonObjContext ctx)
     {
       Visit(ctx.jsonObject());

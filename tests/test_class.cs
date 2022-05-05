@@ -468,7 +468,7 @@ public class TestClasses : BHL_TestBase
     func bool test() 
     {
       Foo f = {}
-      return f.b == Bar::NONE
+      return f.b == Bar.NONE
     }
     ";
 

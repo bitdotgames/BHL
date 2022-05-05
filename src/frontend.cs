@@ -501,9 +501,10 @@ public class Frontend : bhlBaseVisitor<object>
       curr_type = name_symb.type.Get();
     }
 
+    int c = ns_offset;
     if(chain != null)
     {
-      for(int c=ns_offset;c<chain.Length;++c)
+      for(;c<chain.Length;++c)
       {
         var ch = chain[c];
 
@@ -527,8 +528,8 @@ public class Frontend : bhlBaseVisitor<object>
           if(curr_name != null)
             ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write: false);
 
-          scope = curr_type as IInstanceType; 
-          if(scope == null)
+          scope = curr_type as IScope;
+          if(!(scope is IInstanceType) && !(scope is EnumSymbol))
             FireError(macc, "type doesn't support member access via '.'");
 
           curr_name = macc.NAME();
@@ -568,6 +569,8 @@ public class Frontend : bhlBaseVisitor<object>
 
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
+      var enum_symb = name_symb as EnumSymbol;
+      var enum_item = name_symb as EnumItemSymbol;
 
       //func or method call
       if(cargs != null)
@@ -633,6 +636,16 @@ public class Frontend : bhlBaseVisitor<object>
         {
           ast = new AST_Call(EnumCall.GET_ADDR, line, func_symb);
           type = func_symb.type.Get();
+        }
+        else if(enum_symb != null)
+        {
+          type = enum_symb;
+        }
+        else if(enum_item != null)
+        {
+          var ast_literal = new AST_Literal(ConstType.INT);
+          ast_literal.nval = enum_item.val;
+          PeekAST().AddChild(ast_literal);
         }
         else
           FireError(name, "symbol usage is not valid");
@@ -1257,29 +1270,6 @@ public class Frontend : bhlBaseVisitor<object>
     Wrap(ctx).eval_type = Types.ClassType;
 
     PeekAST().AddChild(new AST_Typeof(tp.Get()));
-
-    return null;
-  }
-
-  public override object VisitExpStaticCall(bhlParser.ExpStaticCallContext ctx)
-  {
-    var exp = ctx.staticCallExp(); 
-    var ctx_name = exp.NAME();
-    var enum_symb = ns.ResolveWithFallback(ctx_name.GetText()) as EnumSymbol;
-    if(enum_symb == null)
-      FireError(ctx, "type '" + ctx_name + "' not found");
-
-    var item_name = exp.staticCallItem().NAME();
-    var enum_val = enum_symb.FindValue(item_name.GetText());
-
-    if(enum_val == null)
-      FireError(ctx, "enum value not found '" + item_name.GetText() + "'");
-
-    Wrap(ctx).eval_type = enum_symb;
-
-    var ast = new AST_Literal(ConstType.INT);
-    ast.nval = enum_val.val;
-    PeekAST().AddChild(ast);
 
     return null;
   }
