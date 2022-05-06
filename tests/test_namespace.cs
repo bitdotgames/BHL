@@ -666,24 +666,22 @@ public class TestNamespace : BHL_TestBase
       ";
       var ts = new Types();
       {
-        var foo = ts.ns.Declare("foo");
         var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 1)); 
               return null;
             }
         );
-        foo.Define(fn);
+        ts.ns.Namespace("foo").Define(fn);
       }
       {
-        var bar = ts.ns.Declare("bar");
         var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 10)); 
               return null;
             }
         );
-        bar.Define(fn);
+        ts.ns.Namespace("bar").Define(fn);
       }
 
       var vm = MakeVM(bhl, ts);
