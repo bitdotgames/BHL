@@ -2230,7 +2230,7 @@ public class CompiledModule
     //NOTE: it's assumed types.ns is always imported by each module, 
     //      however we add it directly to imports array in order
     //      avoid duplicate symbols error during un-marshalling
-    ns.links.Add(types.default_ns);
+    ns.links.Add(types.ns);
 
     if(resolver == null)
       resolver = ns;

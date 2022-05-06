@@ -317,7 +317,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.T("float"))
         );
 
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -359,7 +359,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.T("float"))
         );
 
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -394,7 +394,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("a", ts.T("float"))
         );
 
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -431,7 +431,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("b", Types.Int)
         );
 
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -485,7 +485,7 @@ public class TestVM : BHL_TestBase
             status = BHS.FAILURE; 
             return null;
           });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -1027,7 +1027,7 @@ public class TestVM : BHL_TestBase
             return null;
           }
         );
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -1081,7 +1081,7 @@ public class TestVM : BHL_TestBase
             return null;
           }
         );
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -2984,7 +2984,7 @@ public class TestVM : BHL_TestBase
           return null;
         } 
     );
-    ts.default_ns.Define(fn);
+    ts.ns.Define(fn);
 
     var vm = MakeVM(bhl, ts);
     var num = Execute(vm, "test").result.PopRelease().num;
@@ -3016,7 +3016,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("a", ts.T("int")),
         new FuncArgSymbol("b", ts.T("int"))
     );
-    ts.default_ns.Define(fn);
+    ts.ns.Define(fn);
 
     var vm = MakeVM(bhl, ts);
     var num = Execute(vm, "test").result.PopRelease().num;
@@ -5905,7 +5905,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, ref Val v, IType type) 
         {}
       );
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
     }
 
     BindTrace(ts, log);
@@ -6069,7 +6069,7 @@ public class TestVM : BHL_TestBase
             return null;
           }
           );
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -6187,7 +6187,7 @@ public class TestVM : BHL_TestBase
           return null;
         } 
     );
-    ts.default_ns.Define(fn);
+    ts.ns.Define(fn);
 
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
@@ -6238,7 +6238,7 @@ public class TestVM : BHL_TestBase
           return inst;
         } 
       );
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -7158,7 +7158,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("b", ts.T("float"), true/*is ref*/)
         );
 
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -9283,7 +9283,7 @@ public class TestVM : BHL_TestBase
           },
           new FuncArgSymbol("b", ts.T("bool"))
         );
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     {
@@ -9295,7 +9295,7 @@ public class TestVM : BHL_TestBase
           },
           new FuncArgSymbol("n", Types.Int)
         );
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -9390,7 +9390,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("s", ts.T("string")),
           new FuncArgSymbol("i", Types.Int)
         );
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts); 
@@ -9593,7 +9593,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("fn", ts.TFunc(ts.TArr(Types.Int)))
       );
 
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -10171,7 +10171,7 @@ public class TestVM : BHL_TestBase
           v.SetObj(null, type);
         }
       );
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
 
       {
         var m = new FuncSymbolNative("self", ts.T("Bar"),
@@ -14187,7 +14187,7 @@ public class TestVM : BHL_TestBase
           v.SetObj(null, type);
         }
       );
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
     }
 
     AssertError<Exception>(
@@ -14220,7 +14220,7 @@ public class TestVM : BHL_TestBase
           v.SetObj(null, type);
         }
       );
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
     }
 
     AssertError<Exception>(
@@ -14257,7 +14257,7 @@ public class TestVM : BHL_TestBase
         }
       );
 
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("c", ts.T("Color"), 
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -15333,7 +15333,7 @@ public class TestVM : BHL_TestBase
   void BindEnum(Types ts)
   {
     var en = new EnumSymbol("EnumState");
-    ts.default_ns.Define(en);
+    ts.ns.Define(en);
 
     en.Define(new EnumItemSymbol("SPAWNED",  10));
     en.Define(new EnumItemSymbol("SPAWNED2", 20));
@@ -15518,7 +15518,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("state", ts.T("EnumState"))
         );
 
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -16962,7 +16962,7 @@ public class TestVM : BHL_TestBase
             return null;
           }
           );
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     var vm = MakeVM(bhl, ts);
@@ -17164,7 +17164,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17242,7 +17242,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17376,7 +17376,7 @@ public class TestVM : BHL_TestBase
           frm.fb = null;
           return null;
         });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17464,7 +17464,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17543,7 +17543,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17621,7 +17621,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17705,7 +17705,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -17793,7 +17793,7 @@ public class TestVM : BHL_TestBase
           frm.fb.GetStackTrace(trace); 
           return null;
         });
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
 
     CleanTestDir();
@@ -18582,7 +18582,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       var ns = new Namespace();
-      ns.Link(ts.default_ns);
+      ns.Link(ts.ns);
 
       ns.Define(new VariableSymbol("foo", Types.Int));
 
@@ -18615,14 +18615,14 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       var ns = new Namespace();
-      ns.Link(ts.default_ns);
+      ns.Link(ts.ns);
 
       var factory = new SymbolFactory(ts, ns);
 
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
 
-      AssertEqual(8 + ts.default_ns.members.Count, ns.GetMembers().Count);
+      AssertEqual(8 + ts.ns.members.Count, ns.GetMembers().Count);
       AssertEqual(8, ns.members.Count);
 
       var foo = (VariableSymbol)ns.Resolve("foo");
@@ -18797,7 +18797,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("a", ts.T("float")),
         new FuncArgSymbol("b", ts.T("float"))
     );
-    ts.default_ns.Define(fn);
+    ts.ns.Define(fn);
   }
 
   public struct IntStruct
@@ -18827,7 +18827,7 @@ public class TestVM : BHL_TestBase
         }
       );
 
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("n", Types.Int,
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -18862,7 +18862,7 @@ public class TestVM : BHL_TestBase
         }
       );
 
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("str", ts.T("string"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -18904,7 +18904,7 @@ public class TestVM : BHL_TestBase
         }
       );
 
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol("child", ts.T("StringClass"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -19001,7 +19001,7 @@ public class TestVM : BHL_TestBase
         }, 
         new FuncArgSymbol("ticks", Types.Int)
     );
-    ts.default_ns.Define(fn);
+    ts.ns.Define(fn);
     return fn;
   }
 
@@ -19050,7 +19050,7 @@ public class TestVM : BHL_TestBase
         );
         cl.Define(vs);
       }
-      ts.default_ns.Define(cl);
+      ts.ns.Define(cl);
     }
   }
 
@@ -19073,7 +19073,7 @@ public class TestVM : BHL_TestBase
         new FuncArgSymbol("spawns", Types.Int)
       );
 
-      ts.default_ns.Define(fn);
+      ts.ns.Define(fn);
     }
   }
 

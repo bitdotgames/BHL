@@ -289,7 +289,7 @@ public class Frontend : bhlBaseVisitor<object>
     this.module = module;
 
     ns = module.ns;
-    ns.Link(types.default_ns);
+    ns.Link(types.ns);
 
     curr_scope = ns;
 

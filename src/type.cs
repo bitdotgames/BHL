@@ -347,7 +347,7 @@ public class Types : ISymbolResolver
   };
 #endif
 
-  public NamespaceNative default_ns;
+  public NamespaceNative ns;
 
   public SymbolIndex natives = new SymbolIndex();
 
@@ -377,7 +377,7 @@ public class Types : ISymbolResolver
 
   public Types()
   {
-    default_ns = new NamespaceNative(natives);
+    ns = new NamespaceNative(natives);
 
     InitBuiltins();
   }
@@ -385,64 +385,64 @@ public class Types : ISymbolResolver
   Types(SymbolIndex natives, NamespaceNative ns)
   {
     this.natives = natives;
-    this.default_ns = ns;
+    this.ns = ns;
   }
 
   public Symbol ResolveByFullName(string name)
   {
-    return default_ns.ResolveByFullName(name);
+    return ns.ResolveByFullName(name);
   }
 
   public Types Clone()
   {
-    var clone = new Types(natives.Clone(), default_ns.Clone());
+    var clone = new Types(natives.Clone(), ns.Clone());
     return clone;
   }
 
   void InitBuiltins() 
   {
-    default_ns.Define(Int);
-    default_ns.Define(Float);
-    default_ns.Define(Bool);
-    default_ns.Define(String);
-    default_ns.Define(Void);
-    default_ns.Define(Any);
-    default_ns.Define(ClassType);
+    ns.Define(Int);
+    ns.Define(Float);
+    ns.Define(Bool);
+    ns.Define(String);
+    ns.Define(Void);
+    ns.Define(Any);
+    ns.Define(ClassType);
 
     {
-      var fn = new FuncSymbolNative("suspend", default_ns.T("void"), 
+      var fn = new FuncSymbolNative("suspend", ns.T("void"), 
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutineSuspend.Instance;
         } 
       );
-      default_ns.Define(fn);
+      ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("yield", default_ns.T("void"),
+      var fn = new FuncSymbolNative("yield", ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutinePool.New<CoroutineYield>(frm.vm);
         } 
       );
-      default_ns.Define(fn);
+      ns.Define(fn);
     }
 
     //TODO: this one is controversary, it's defined for BC for now
     {
-      var fn = new FuncSymbolNative("fail", default_ns.T("void"),
+      var fn = new FuncSymbolNative("fail", ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           status = BHS.FAILURE;
           return null;
         } 
       );
-      default_ns.Define(fn);
+      ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("start", default_ns.T("int"),
+      var fn = new FuncSymbolNative("start", ns.T("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var val_ptr = frm.stack.Pop();
@@ -451,26 +451,26 @@ public class Types : ISymbolResolver
           frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
-        new FuncArgSymbol("p", default_ns.TFunc("void"))
+        new FuncArgSymbol("p", ns.TFunc("void"))
       );
-      default_ns.Define(fn);
+      ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("stop", default_ns.T("void"),
+      var fn = new FuncSymbolNative("stop", ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var fid = (int)frm.stack.PopRelease().num;
           frm.vm.Stop(fid);
           return null;
         }, 
-        new FuncArgSymbol("fid", default_ns.T("int"))
+        new FuncArgSymbol("fid", ns.T("int"))
       );
-      default_ns.Define(fn);
+      ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("type", default_ns.T("Type"),
+      var fn = new FuncSymbolNative("type", ns.T("Type"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var o = frm.stack.Pop();
@@ -478,9 +478,9 @@ public class Types : ISymbolResolver
           o.Release();
           return null;
         }, 
-        new FuncArgSymbol("o", default_ns.T("any"))
+        new FuncArgSymbol("o", ns.T("any"))
       );
-      default_ns.Define(fn);
+      ns.Define(fn);
     }
   }
 
