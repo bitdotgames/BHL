@@ -25,7 +25,7 @@ public class MyBindings : IUserBindings
         new FuncArgSymbol("str", Types.String)
         );
 
-      types.ns.Define(fn);
+      types.default_ns.Define(fn);
     }
 
     {
@@ -40,7 +40,7 @@ public class MyBindings : IUserBindings
           return null;
         }
       );
-      types.ns.Define(fn);
+      types.default_ns.Define(fn);
     }
 
     {
@@ -50,7 +50,7 @@ public class MyBindings : IUserBindings
           new FuncArgSymbol("t", Types.Float)
         );
 
-      types.ns.Define(fn);
+      types.default_ns.Define(fn);
     }
   }
 }
