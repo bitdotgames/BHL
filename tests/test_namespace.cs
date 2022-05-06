@@ -23,7 +23,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    ns2.Import(ns1);
+    ns2.Link(ns1);
 
     {
       var foo = ns2.Resolve("foo") as Namespace;
@@ -93,7 +93,7 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(bar);
     }
 
-    ns2.Import(ns1);
+    ns2.Link(ns1);
 
     /*
     {
@@ -213,7 +213,7 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(bar);
     }
 
-    ns2.Import(ns1);
+    ns2.Link(ns1);
 
     /*
     {
@@ -233,7 +233,7 @@ public class TestNamespace : BHL_TestBase
     }
     */
 
-    ns2.Unimport(ns1);
+    ns2.Unlink(ns1);
 
     /*
     {
@@ -332,7 +332,7 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(bar);
     }
 
-    ns2.Import(ns1);
+    ns2.Link(ns1);
 
     /*
     {
@@ -353,7 +353,7 @@ public class TestNamespace : BHL_TestBase
     */
 
     (ns2.Resolve("wow") as Namespace).Define(new Namespace("wow_sub"));
-    ns2.Unimport(ns1);
+    ns2.Unlink(ns1);
 
     /*
     {
@@ -453,7 +453,7 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(foo);
     }
 
-    var conflict_symb = ns2.TryImport(ns1);
+    var conflict_symb = ns2.TryLink(ns1);
     AssertEqual("Wow", conflict_symb.name);
 
   }

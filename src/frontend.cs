@@ -289,7 +289,7 @@ public class Frontend : bhlBaseVisitor<object>
     this.module = module;
 
     ns = module.ns;
-    ns.Import(types.default_ns);
+    ns.Link(types.default_ns);
 
     curr_scope = ns;
 
@@ -412,7 +412,7 @@ public class Frontend : bhlBaseVisitor<object>
     //NOTE: null means module is already imported
     if(imported != null)
     {
-      ns.Import(imported.ns);
+      ns.Link(imported.ns);
       ast.module_names.Add(imported.name);
     }
   }

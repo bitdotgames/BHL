@@ -68,7 +68,7 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
 
   public SymbolsStorage members;
 
-  public List<Namespace> imports = new List<Namespace>();
+  public List<Namespace> links = new List<Namespace>();
 
   public override uint ClassId()
   {
@@ -94,25 +94,25 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
 
-    foreach(var imp in imports)
-      copy.imports.Add(imp.Clone());
+    foreach(var imp in links)
+      copy.links.Add(imp.Clone());
 
     return copy;
   }
 
-  public void Import(Namespace other)
+  public void Link(Namespace other)
   {
-    var conflict_symb = TryImport(other);
+    var conflict_symb = TryLink(other);
     if(conflict_symb != null)
       throw new SymbolError(conflict_symb, "already defined symbol '" + conflict_symb.name + "'");
   }
 
   //NOTE: returns conflicting symbol or null
-  //NOTE: here we combine only similar namespaces but we don't
-  //      add other symbols from them
-  public Symbol TryImport(Namespace other)
+  //NOTE: here we link only namespaces named similar but we don't
+  //      add symbols from them
+  public Symbol TryLink(Namespace other)
   {
-    if(imports.Contains(other))
+    if(links.Contains(other))
       return null;
 
     for(int i=0;i<other.members.Count;++i)
@@ -128,12 +128,12 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
         if(this_symb == null)
         {
           var ns = new Namespace(other_symb.name);
-          ns.imports.Add(other_ns);
+          ns.links.Add(other_ns);
           members.Add(ns);
         }
         else if(this_symb is Namespace this_ns)
         {
-          var conflict = this_ns.TryImport(other_ns);
+          var conflict = this_ns.TryLink(other_ns);
           if(conflict != null)
             return conflict;
         }
@@ -144,11 +144,11 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
         return this_symb;
     }
 
-    imports.Add(other);
+    links.Add(other);
     return null;
   }
 
-  public void Unimport(Namespace other)
+  public void Unlink(Namespace other)
   {
     for(int i=0;i<other.members.Count;++i)
     {
@@ -159,24 +159,24 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
         var this_symb = members.Find(other_symb.name);
         if(this_symb is Namespace this_ns)
         {
-          this_ns.Unimport(other_ns);
+          this_ns.Unlink(other_ns);
           if(this_ns.scope == this && this_ns.members.Count == 0)
             members.RemoveAt(members.IndexOf(this_ns));
         }
       }
     }
 
-    imports.Remove(other);
+    links.Remove(other);
   }
 
-  public void UnimportAll()
+  public void UnlinkAll()
   {
     for(int i=0;i<members.Count;++i)
     {
       if(members[i] is Namespace ns)
-        ns.UnimportAll();
+        ns.UnlinkAll();
     }
-    imports.Clear();
+    links.Clear();
   }
 
   //NOTE: iterator is used for convenience since we need
@@ -205,9 +205,9 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
         return true;
       }
 
-      if(c == owner.imports.Count)
+      if(c == owner.links.Count)
         return false;
-      current = owner.imports[c];
+      current = owner.links[c];
       ++c;
       return true;
     }
@@ -341,8 +341,8 @@ public class NativeNamespace : Namespace
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
 
-    foreach(var imp in imports)
-      copy.imports.Add(imp.Clone());
+    foreach(var imp in links)
+      copy.links.Add(imp.Clone());
 
     return copy;
   }

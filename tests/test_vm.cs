@@ -18582,7 +18582,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       var ns = new Namespace();
-      ns.Import(ts.default_ns);
+      ns.Link(ts.default_ns);
 
       ns.Define(new VariableSymbol("foo", Types.Int));
 
@@ -18615,7 +18615,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       var ns = new Namespace();
-      ns.Import(ts.default_ns);
+      ns.Link(ts.default_ns);
 
       var factory = new SymbolFactory(ts, ns);
 
