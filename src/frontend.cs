@@ -289,7 +289,7 @@ public class Frontend : bhlBaseVisitor<object>
     this.module = module;
 
     ns = module.ns;
-    ns.Import(types.ns);
+    ns.Import(types.default_ns);
 
     curr_scope = ns;
 
@@ -2051,7 +2051,7 @@ public class Frontend : bhlBaseVisitor<object>
     var ns = curr_scope.Resolve(name) as Namespace;
     if(ns == null)
     {
-      ns = new Namespace(types, name, module.name);
+      ns = new Namespace(name, module.name);
       curr_scope.Define(ns);
     }
     else 
@@ -3078,7 +3078,7 @@ public class Module
   public Module(Types ts, ModulePath path)
   {
     this.path = path;
-    ns = new Namespace(ts, "", name);
+    ns = new Namespace("", name);
   }
 
   public Module(Types ts, string name, string file_path)

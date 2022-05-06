@@ -2226,11 +2226,11 @@ public class CompiledModule
 
   static public CompiledModule FromStream(Types types, Stream src, ISymbolResolver resolver = null, System.Action<string> on_import = null)
   {
-    var ns = new Namespace(types);
+    var ns = new Namespace();
     //NOTE: it's assumed types.ns is always imported by each module, 
     //      however we add it directly to imports array in order
     //      avoid duplicate symbols error during un-marshalling
-    ns.imports.Add(types.ns);
+    ns.imports.Add(types.default_ns);
 
     if(resolver == null)
       resolver = ns;

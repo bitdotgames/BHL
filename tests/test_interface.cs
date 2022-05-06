@@ -543,7 +543,7 @@ public class TestInterfaces : BHL_TestBase
           new FuncArgSymbol("int", ts.T("int")) 
         )
     );
-    ts.ns.Define(ifs);
+    ts.default_ns.Define(ifs);
 
     var vm = MakeVM(bhl, ts);
     AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
@@ -585,7 +585,7 @@ public class TestInterfaces : BHL_TestBase
           new FuncArgSymbol("int", ts.T("int")) 
         )
     );
-    ts.ns.Define(ifs);
+    ts.default_ns.Define(ifs);
 
     var vm = MakeVM(bhl, ts);
     AssertEqual(12, Execute(vm, "test").result.PopRelease().num);

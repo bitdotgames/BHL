@@ -165,7 +165,7 @@ public class BHL_TestBase
       }
     );
 
-    ts.ns.Define(cl);
+    ts.default_ns.Define(cl);
     cl.Define(new FieldSymbol("r", ts.T("float"),
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
@@ -243,7 +243,7 @@ public class BHL_TestBase
         new FuncArgSymbol("r", ts.T("float"))
       );
 
-      ts.ns.Define(fn);
+      ts.default_ns.Define(fn);
     }
     
     {
@@ -254,10 +254,10 @@ public class BHL_TestBase
           }
       );
 
-      ts.ns.Define(fn);
+      ts.default_ns.Define(fn);
     }
 
-    ts.ns.Define(new ArrayTypeSymbolT<Color>("ArrayT_Color", ts.T("Color"), delegate() { return new List<Color>(); } ));
+    ts.default_ns.Define(new ArrayTypeSymbolT<Color>("ArrayT_Color", ts.T("Color"), delegate() { return new List<Color>(); } ));
 
     return cl;
   }
@@ -274,7 +274,7 @@ public class BHL_TestBase
         }
       );
 
-      ts.ns.Define(cl);
+      ts.default_ns.Define(cl);
 
       cl.Define(new FieldSymbol("a", ts.T("float"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -330,7 +330,7 @@ public class BHL_TestBase
           v.SetObj(new Foo(), type);
         }
       );
-      ts.ns.Define(cl);
+      ts.default_ns.Define(cl);
 
       cl.Define(new FieldSymbol("hey", Types.Int,
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -381,7 +381,7 @@ public class BHL_TestBase
           new FuncArgSymbol("foo", ts.T("Foo"))
       );
 
-      ts.ns.Define(fn);
+      ts.default_ns.Define(fn);
     }
   }
 
@@ -401,7 +401,7 @@ public class BHL_TestBase
       }
     );
 
-    ts.ns.Define(cl);
+    ts.default_ns.Define(cl);
     cl.Define(new FieldSymbol("Int", Types.Int,
       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
       {
@@ -456,7 +456,7 @@ public class BHL_TestBase
         }, 
         new FuncArgSymbol("str", ts.T("string"))
     );
-    ts.ns.Define(fn);
+    ts.default_ns.Define(fn);
     return fn;
   }
 
@@ -472,7 +472,7 @@ public class BHL_TestBase
           },
           new FuncArgSymbol("str", ts.T("string"))
       );
-      ts.ns.Define(fn);
+      ts.default_ns.Define(fn);
     }
   }
 

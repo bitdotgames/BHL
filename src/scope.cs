@@ -64,9 +64,6 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
 {
   public const uint CLASS_ID = 20;
 
-  //TODO: think how to get rid of this dependency
-  Types types;
-
   public string module_name = "";
 
   public SymbolsStorage members;
@@ -78,22 +75,21 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
     return CLASS_ID;
   }
 
-  public Namespace(Types types, string name, string module_name = "")
+  public Namespace(string name, string module_name = "")
     : base(name, default(TypeProxy))
   {
-    this.types = types;
     this.module_name = module_name;
     this.members = new SymbolsStorage(this);
   }
 
-  //root and marshall version 
-  public Namespace(Types types)
-    : this(types, "", "")
+  //marshall version 
+  public Namespace()
+    : this("", "")
   {}
 
   public Namespace Clone()
   {
-    var copy = new Namespace(types, name, module_name);
+    var copy = new Namespace(name, module_name);
 
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
@@ -131,7 +127,7 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
         //      create an empty namespace
         if(this_symb == null)
         {
-          var ns = new Namespace(types, other_symb.name);
+          var ns = new Namespace(other_symb.name);
           ns.imports.Add(other_ns);
           members.Add(ns);
         }
@@ -256,26 +252,17 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
     return null;
   }
 
-  public void Define(Symbol sym) 
+  public virtual void Define(Symbol sym) 
   {
     if(Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
+    //TODO: We need some abstraction here for all kinds of
+    //      symbols. For example, we need to know an index of 
+    //      a function defined in a module. Likewise we have
+    //      something similar for global variables.
     if(sym is IScopeIndexed si && si.scope_idx == -1)
-    {
-      //TODO: We need some abstraction here for all kinds of
-      //      symbols. For example, we need to know an index of 
-      //      a function defined in a module. Likewise we have
-      //      something similar for global variables.
-      //NOTE: For native func symbols we store the unique global index
-      if(sym is FuncSymbolNative)
-      {
-        si.scope_idx = types.natives.Count;
-        types.natives.Add(sym);
-      }
-      else
-        si.scope_idx = members.Count; 
-    }
+      si.scope_idx = members.Count; 
 
     members.Add(sym);
   }
@@ -321,6 +308,43 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
     Marshall.Sync(ctx, ref name);
     Marshall.Sync(ctx, ref module_name);
     Marshall.Sync(ctx, ref members);
+  }
+}
+
+public class NativeNamespace : Namespace
+{
+  public SymbolIndex natives;
+
+  public NativeNamespace(SymbolIndex natives, string name = "")
+    : base(name, "")
+  {
+    this.natives = natives;
+  }
+
+  public override void Define(Symbol sym) 
+  {
+    var fsn = sym as FuncSymbolNative;
+    bool is_native = fsn != null && fsn.scope_idx == -1;
+
+    base.Define(sym);
+
+    //NOTE: For native func symbols we store the unique global index
+    if(is_native)
+      fsn.scope_idx = natives.Add(sym);
+  }
+
+  public new NativeNamespace Clone()
+  {
+    var copy = new NativeNamespace(natives);
+
+    //TODO: get rid of this copy-paste?
+    for(int i=0;i<members.Count;++i)
+      copy.members.Add(members[i]);
+
+    foreach(var imp in imports)
+      copy.imports.Add(imp.Clone());
+
+    return copy;
   }
 }
 

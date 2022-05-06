@@ -9,15 +9,13 @@ public class TestNamespace : BHL_TestBase
   [IsTested()]
   public void TestSimpleLink()
   {
-    var ts = new Types();
-
-    var ns1 = new Namespace(ts);
+    var ns1 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
       ns1.Define(foo);
     }
 
-    var ns2 = new Namespace(ts);
+    var ns2 = new Namespace();
 
     /*
     {
@@ -37,8 +35,6 @@ public class TestNamespace : BHL_TestBase
   [IsTested()]
   public void TestDeepLink()
   {
-    var ts = new Types();
-
     /*
     {
       foo {
@@ -51,11 +47,11 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns1 = new Namespace(ts);
+    var ns1 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
 
-      var foo_sub = new Namespace(ts, "foo_sub");
+      var foo_sub = new Namespace("foo_sub");
 
       var cl = new ClassSymbolNative("Wow", null);
       foo_sub.Define(cl);
@@ -64,7 +60,7 @@ public class TestNamespace : BHL_TestBase
 
       ns1.Define(foo);
 
-      var wow = new Namespace(ts, "wow");
+      var wow = new Namespace("wow");
       ns1.Define(wow);
     }
 
@@ -80,11 +76,11 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns2 = new Namespace(ts);
+    var ns2 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
 
-      var foo_sub = new Namespace(ts, "foo_sub");
+      var foo_sub = new Namespace("foo_sub");
 
       var cl = new ClassSymbolNative("Hey", null);
       foo_sub.Define(cl);
@@ -93,7 +89,7 @@ public class TestNamespace : BHL_TestBase
 
       ns2.Define(foo);
 
-      var bar = new Namespace(ts, "bar");
+      var bar = new Namespace("bar");
       ns2.Define(bar);
     }
 
@@ -159,8 +155,6 @@ public class TestNamespace : BHL_TestBase
   [IsTested()]
   public void TestUnlink()
   {
-    var ts = new Types();
-
     /*
     {
       foo {
@@ -173,11 +167,11 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns1 = new Namespace(ts);
+    var ns1 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
 
-      var foo_sub = new Namespace(ts, "foo_sub");
+      var foo_sub = new Namespace("foo_sub");
 
       var cl = new ClassSymbolNative("Wow", null);
       foo_sub.Define(cl);
@@ -186,7 +180,7 @@ public class TestNamespace : BHL_TestBase
 
       ns1.Define(foo);
 
-      var wow = new Namespace(ts, "wow");
+      var wow = new Namespace("wow");
       ns1.Define(wow);
     }
 
@@ -202,11 +196,11 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns2 = new Namespace(ts);
+    var ns2 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
 
-      var foo_sub = new Namespace(ts, "foo_sub");
+      var foo_sub = new Namespace("foo_sub");
 
       var cl = new ClassSymbolNative("Hey", null);
       foo_sub.Define(cl);
@@ -215,7 +209,7 @@ public class TestNamespace : BHL_TestBase
 
       ns2.Define(foo);
 
-      var bar = new Namespace(ts, "bar");
+      var bar = new Namespace("bar");
       ns2.Define(bar);
     }
 
@@ -280,8 +274,6 @@ public class TestNamespace : BHL_TestBase
   [IsTested()]
   public void TestUnlinkPreserveChangedStuff()
   {
-    var ts = new Types();
-
     /*
     {
       foo {
@@ -294,11 +286,11 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns1 = new Namespace(ts);
+    var ns1 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
 
-      var foo_sub = new Namespace(ts, "foo_sub");
+      var foo_sub = new Namespace("foo_sub");
 
       var cl = new ClassSymbolNative("Wow", null);
       foo_sub.Define(cl);
@@ -307,7 +299,7 @@ public class TestNamespace : BHL_TestBase
 
       ns1.Define(foo);
 
-      var wow = new Namespace(ts, "wow");
+      var wow = new Namespace("wow");
       ns1.Define(wow);
     }
 
@@ -323,11 +315,11 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns2 = new Namespace(ts);
+    var ns2 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
 
-      var foo_sub = new Namespace(ts, "foo_sub");
+      var foo_sub = new Namespace("foo_sub");
 
       var cl = new ClassSymbolNative("Hey", null);
       foo_sub.Define(cl);
@@ -336,7 +328,7 @@ public class TestNamespace : BHL_TestBase
 
       ns2.Define(foo);
 
-      var bar = new Namespace(ts, "bar");
+      var bar = new Namespace("bar");
       ns2.Define(bar);
     }
 
@@ -360,7 +352,7 @@ public class TestNamespace : BHL_TestBase
     }
     */
 
-    (ns2.Resolve("wow") as Namespace).Define(new Namespace(ts, "wow_sub"));
+    (ns2.Resolve("wow") as Namespace).Define(new Namespace("wow_sub"));
     ns2.Unimport(ns1);
 
     /*
@@ -409,8 +401,6 @@ public class TestNamespace : BHL_TestBase
   [IsTested()]
   public void TestLinkConflict()
   {
-    var ts = new Types();
-
     /*
     {
       foo {
@@ -423,11 +413,11 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns1 = new Namespace(ts);
+    var ns1 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
 
-      var foo_sub = new Namespace(ts, "foo_sub");
+      var foo_sub = new Namespace("foo_sub");
 
       var cl = new ClassSymbolNative("Wow", null);
       foo_sub.Define(cl);
@@ -436,7 +426,7 @@ public class TestNamespace : BHL_TestBase
 
       ns1.Define(foo);
 
-      var wow = new Namespace(ts, "wow");
+      var wow = new Namespace("wow");
       ns1.Define(wow);
     }
 
@@ -449,11 +439,11 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns2 = new Namespace(ts);
+    var ns2 = new Namespace();
     {
-      var foo = new Namespace(ts, "foo");
+      var foo = new Namespace("foo");
 
-      var foo_sub = new Namespace(ts, "foo_sub");
+      var foo_sub = new Namespace("foo_sub");
 
       var cl = new ClassSymbolNative("Wow", null);
       foo_sub.Define(cl);
@@ -676,7 +666,7 @@ public class TestNamespace : BHL_TestBase
       ";
       var ts = new Types();
       {
-        var foo = new Namespace(ts, "foo");
+        var foo = new NativeNamespace(ts.natives, "foo");
         var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 1)); 
@@ -684,10 +674,10 @@ public class TestNamespace : BHL_TestBase
             }
         );
         foo.Define(fn);
-        ts.ns.Define(foo);
+        ts.default_ns.Define(foo);
       }
       {
-        var bar = new Namespace(ts, "bar");
+        var bar = new NativeNamespace(ts.natives, "bar");
         var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 10)); 
@@ -695,7 +685,7 @@ public class TestNamespace : BHL_TestBase
             }
         );
         bar.Define(fn);
-        ts.ns.Define(bar);
+        ts.default_ns.Define(bar);
       }
 
       var vm = MakeVM(bhl, ts);

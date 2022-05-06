@@ -347,9 +347,9 @@ public class Types : ISymbolResolver
   };
 #endif
 
-  public Namespace ns;
+  public NativeNamespace default_ns;
 
-  public List<Symbol> natives = new List<Symbol>();
+  public SymbolIndex natives = new SymbolIndex();
 
   static Types()
   {
@@ -377,72 +377,72 @@ public class Types : ISymbolResolver
 
   public Types()
   {
-    ns = new Namespace(this);
+    default_ns = new NativeNamespace(natives);
 
     InitBuiltins();
   }
 
-  Types(List<Symbol> natives, Namespace ns)
+  Types(SymbolIndex natives, NativeNamespace ns)
   {
     this.natives = natives;
-    this.ns = ns;
+    this.default_ns = ns;
   }
 
   public Symbol ResolveByFullName(string name)
   {
-    return ns.ResolveByFullName(name);
+    return default_ns.ResolveByFullName(name);
   }
 
   public Types Clone()
   {
-    var clone = new Types(new List<Symbol>(natives), ns.Clone());
+    var clone = new Types(natives.Clone(), default_ns.Clone());
     return clone;
   }
 
   void InitBuiltins() 
   {
-    ns.Define(Int);
-    ns.Define(Float);
-    ns.Define(Bool);
-    ns.Define(String);
-    ns.Define(Void);
-    ns.Define(Any);
-    ns.Define(ClassType);
+    default_ns.Define(Int);
+    default_ns.Define(Float);
+    default_ns.Define(Bool);
+    default_ns.Define(String);
+    default_ns.Define(Void);
+    default_ns.Define(Any);
+    default_ns.Define(ClassType);
 
     {
-      var fn = new FuncSymbolNative("suspend", ns.T("void"), 
+      var fn = new FuncSymbolNative("suspend", default_ns.T("void"), 
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutineSuspend.Instance;
         } 
       );
-      ns.Define(fn);
+      default_ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("yield", ns.T("void"),
+      var fn = new FuncSymbolNative("yield", default_ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutinePool.New<CoroutineYield>(frm.vm);
         } 
       );
-      ns.Define(fn);
+      default_ns.Define(fn);
     }
 
     //TODO: this one is controversary, it's defined for BC for now
     {
-      var fn = new FuncSymbolNative("fail", ns.T("void"),
+      var fn = new FuncSymbolNative("fail", default_ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           status = BHS.FAILURE;
           return null;
         } 
       );
-      ns.Define(fn);
+      default_ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("start", ns.T("int"),
+      var fn = new FuncSymbolNative("start", default_ns.T("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var val_ptr = frm.stack.Pop();
@@ -451,26 +451,26 @@ public class Types : ISymbolResolver
           frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
-        new FuncArgSymbol("p", ns.TFunc("void"))
+        new FuncArgSymbol("p", default_ns.TFunc("void"))
       );
-      ns.Define(fn);
+      default_ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("stop", ns.T("void"),
+      var fn = new FuncSymbolNative("stop", default_ns.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var fid = (int)frm.stack.PopRelease().num;
           frm.vm.Stop(fid);
           return null;
         }, 
-        new FuncArgSymbol("fid", ns.T("int"))
+        new FuncArgSymbol("fid", default_ns.T("int"))
       );
-      ns.Define(fn);
+      default_ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("type", ns.T("Type"),
+      var fn = new FuncSymbolNative("type", default_ns.T("Type"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var o = frm.stack.Pop();
@@ -478,9 +478,9 @@ public class Types : ISymbolResolver
           o.Release();
           return null;
         }, 
-        new FuncArgSymbol("o", ns.T("any"))
+        new FuncArgSymbol("o", default_ns.T("any"))
       );
-      ns.Define(fn);
+      default_ns.Define(fn);
     }
   }
 

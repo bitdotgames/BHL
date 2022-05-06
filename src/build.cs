@@ -211,7 +211,7 @@ public class Build
       mwriter.Write(FILE_VERSION);
 
       //used as a global namespace for unique symbols check
-      var ns = new Namespace(conf.ts);
+      var ns = new Namespace();
 
       int total_modules = 0;
       foreach(var w in compiler_workers)

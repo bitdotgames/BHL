@@ -1649,6 +1649,40 @@ public class SymbolsSet<T> : IMarshallable where T : Symbol,IType
   }
 }
 
+public class SymbolIndex 
+{
+  List<Symbol> index = new List<Symbol>();
+
+  public int Add(Symbol sym)
+  {
+    int idx = index.IndexOf(sym);
+    if(idx != -1)
+      return idx;
+    idx = index.Count;
+    index.Add(sym);
+    return idx;
+  }
+
+  public Symbol this[int i]
+  {
+    get {
+      return index[i];
+    }
+  }
+
+  public int IndexOf(Symbol s)
+  {
+    return index.IndexOf(s);
+  }
+
+  public SymbolIndex Clone()
+  {
+    var clone = new SymbolIndex();
+    clone.index.AddRange(index);
+    return clone;
+  }
+}
+
 public class SymbolFactory : IFactory
 {
   public Types types;
@@ -1699,7 +1733,7 @@ public class SymbolFactory : IFactory
       case TupleType.CLASS_ID:
         return new TupleType();
       case Namespace.CLASS_ID:
-        return new Namespace(types);
+        return new Namespace();
       default:
         return null;
     }
