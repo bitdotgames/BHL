@@ -472,7 +472,7 @@ public class Frontend : bhlBaseVisitor<object>
     {
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
       if(name_symb == null)
-        FireError(root_name, "symbol not resolved" + curr_name.GetText());
+        FireError(root_name, "symbol not resolved");
 
       //let's figure out the namespace offset
       if(name_symb is Namespace ns && chain != null)
@@ -1070,7 +1070,10 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
+    //NOTE: all lambdas are defined in a global scope
     ns.Define(lmb_symb);
+    //NOTE: ...however as a symbol resolve fallback we set the scope it's actually defined in 
+    lmb_symb.scope = scope_backup;
 
     //NOTE: while we are inside lambda the eval type is its return type
     Wrap(ctx).eval_type = lmb_symb.GetReturnType();
