@@ -321,7 +321,7 @@ public class NamespaceNative : Namespace
     this.natives = natives;
   }
 
-  public NamespaceNative Nest(string name)
+  public NamespaceNative Declare(string name)
   {
     var sym = Resolve(name);
     if(sym != null && !(sym is NamespaceNative)) 

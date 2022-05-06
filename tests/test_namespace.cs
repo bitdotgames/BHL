@@ -666,7 +666,7 @@ public class TestNamespace : BHL_TestBase
       ";
       var ts = new Types();
       {
-        var foo = ts.ns.Nest("foo");
+        var foo = ts.ns.Declare("foo");
         var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 1)); 
@@ -676,7 +676,7 @@ public class TestNamespace : BHL_TestBase
         foo.Define(fn);
       }
       {
-        var bar = ts.ns.Nest("bar");
+        var bar = ts.ns.Declare("bar");
         var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 10)); 
