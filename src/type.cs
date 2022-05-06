@@ -347,7 +347,7 @@ public class Types : ISymbolResolver
   };
 #endif
 
-  public NativeNamespace default_ns;
+  public NamespaceNative default_ns;
 
   public SymbolIndex natives = new SymbolIndex();
 
@@ -377,12 +377,12 @@ public class Types : ISymbolResolver
 
   public Types()
   {
-    default_ns = new NativeNamespace(natives);
+    default_ns = new NamespaceNative(natives);
 
     InitBuiltins();
   }
 
-  Types(SymbolIndex natives, NativeNamespace ns)
+  Types(SymbolIndex natives, NamespaceNative ns)
   {
     this.natives = natives;
     this.default_ns = ns;

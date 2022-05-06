@@ -311,14 +311,29 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
   }
 }
 
-public class NativeNamespace : Namespace
+public class NamespaceNative : Namespace
 {
   public SymbolIndex natives;
 
-  public NativeNamespace(SymbolIndex natives, string name = "")
+  public NamespaceNative(SymbolIndex natives, string name = "")
     : base(name, "")
   {
     this.natives = natives;
+  }
+
+  public NamespaceNative Nest(string name)
+  {
+    var sym = Resolve(name);
+    if(sym != null && !(sym is NamespaceNative)) 
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    if(sym == null)
+    {
+      sym = new NamespaceNative(natives, name);
+      Define(sym);
+    }
+
+    return sym as NamespaceNative;
   }
 
   public override void Define(Symbol sym) 
@@ -333,9 +348,9 @@ public class NativeNamespace : Namespace
       fsn.scope_idx = natives.Add(sym);
   }
 
-  public new NativeNamespace Clone()
+  public new NamespaceNative Clone()
   {
-    var copy = new NativeNamespace(natives);
+    var copy = new NamespaceNative(natives);
 
     //TODO: get rid of this copy-paste?
     for(int i=0;i<members.Count;++i)

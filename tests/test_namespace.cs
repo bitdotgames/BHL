@@ -666,7 +666,7 @@ public class TestNamespace : BHL_TestBase
       ";
       var ts = new Types();
       {
-        var foo = new NativeNamespace(ts.natives, "foo");
+        var foo = ts.default_ns.Nest("foo");
         var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 1)); 
@@ -674,10 +674,9 @@ public class TestNamespace : BHL_TestBase
             }
         );
         foo.Define(fn);
-        ts.default_ns.Define(foo);
       }
       {
-        var bar = new NativeNamespace(ts.natives, "bar");
+        var bar = ts.default_ns.Nest("bar");
         var fn = new FuncSymbolNative("wow", ts.T("int"),
             delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
               frm.stack.Push(Val.NewInt(frm.vm, 10)); 
@@ -685,7 +684,6 @@ public class TestNamespace : BHL_TestBase
             }
         );
         bar.Define(fn);
-        ts.default_ns.Define(bar);
       }
 
       var vm = MakeVM(bhl, ts);
