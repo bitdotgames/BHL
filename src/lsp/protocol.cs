@@ -9,24 +9,27 @@ namespace bhlsp
   {
     public override bool CanConvert(Type objectType)
     {
-      return true;
+      return objectType == typeof(ISumType);
     }
 
     public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
     {
-      if(writer == null)
-        throw new ArgumentNullException(nameof(writer));
+      WriteJson(writer, (ISumType)value, serializer);
+    }
 
-      var obj = ((ISumType) value).Value;
+    void WriteJson(JsonWriter writer, ISumType value, JsonSerializer serializer)
+    {
+      var obj = value.Value;
       if(obj == null)
       {
         writer.WriteNull();
         return;
       }
-
-      JToken.FromObject(obj).WriteTo(writer, Array.Empty<JsonConverter>());
+      
+      var jsonObject = JToken.FromObject(obj, serializer);
+      jsonObject.WriteTo(writer);
     }
-
+    
     public override bool CanRead => false;
 
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
@@ -368,6 +371,12 @@ namespace bhlsp
 
   public class DocumentSymbolOptions : WorkDoneProgressOptions
   {
+    /**
+	   * A human-readable string that is shown when multiple outlines trees
+	   * are shown for the same document.
+	   *
+	   * @since 3.16.0
+	   */
     public string label { get; set; }
   }
 

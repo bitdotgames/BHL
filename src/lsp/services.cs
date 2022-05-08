@@ -496,6 +496,7 @@ namespace bhlsp
         bhlParser.MemberAccessContext memberAccess = null;
         bhlParser.TypeContext type = null;
         bhlParser.StatementContext statement = null;
+        bhlParser.NsNameContext nsName = null;
 
         foreach(IParseTree node in BHLSPUtil.DFS(document.ToParser().program()))
         {
@@ -508,11 +509,12 @@ namespace bhlsp
               memberAccess = prc as bhlParser.MemberAccessContext;
               type         = prc as bhlParser.TypeContext;
               statement    = prc as bhlParser.StatementContext;
+              nsName       = prc as bhlParser.NsNameContext;
               break;
             }
           }
         }
-
+        
         if(funcDecl == null)
         {
           string classTypeName = string.Empty;
@@ -521,6 +523,12 @@ namespace bhlsp
           if(type?.nsName() != null)
           {
             classTypeName = type.nsName().GetText();
+          }
+          else if(nsName != null)
+          {
+            var nsNameStr = nsName.NAME()?.GetText();
+            if(nsNameStr != null)
+              classTypeName = nsNameStr;
           }
           else if(memberAccess != null)
           {
