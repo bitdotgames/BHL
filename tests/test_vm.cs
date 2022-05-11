@@ -8219,6 +8219,66 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestArrayIndexOf()
+  {
+    {
+      string bhl = @"
+      func int test() 
+      {
+        []int arr = [1, 2, 10]
+        return arr.IndexOf(2)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func int test() 
+      {
+        []int arr = [1, 2, 10]
+        return arr.IndexOf(1)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func int test() 
+      {
+        []int arr = [1, 2, 10]
+        return arr.IndexOf(10)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func int test() 
+      {
+        []int arr = [1, 2, 10]
+        return arr.IndexOf(100)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
   public void TestStringArrayAssign()
   {
     string bhl = @"
@@ -8453,6 +8513,76 @@ public class TestVM : BHL_TestBase
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().str;
     AssertEqual(res, "3102030");
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeClassArrayIndexOf()
+  {
+    {
+      string bhl = @"
+      func int test() 
+      {
+        ArrayT_Color cs = []
+        Color c0 = {r:1}
+        Color c1 = {r:2}
+        cs.Add(c0)
+        cs.Add(c1)
+        return cs.IndexOf(c0)
+      }
+      ";
+
+      var ts = new Types();
+      BindColor(ts);
+      var vm = MakeVM(bhl, ts);
+      AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func int test() 
+      {
+        ArrayT_Color cs = []
+        Color c0 = {r:1}
+        Color c1 = {r:2}
+        cs.Add(c0)
+        cs.Add(c1)
+        return cs.IndexOf(c1)
+      }
+      ";
+
+      var ts = new Types();
+      BindColor(ts);
+      var vm = MakeVM(bhl, ts);
+      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    //NOTE: Color is a class not a struct, and when we search
+    //      for a similar element in an array the 'value equality' 
+    //      routine is not used but rather the 'pointers equality' 
+    //      one. Maybe it's an expected behavior, maybe not :(
+    //      Need more real feed back.
+    //
+    {
+      string bhl = @"
+      func int test() 
+      {
+        ArrayT_Color cs = []
+        Color c0 = {r:1}
+        Color c1 = {r:2}
+        cs.Add(c0)
+        cs.Add(c1)
+        return cs.IndexOf({r:1})
+      }
+      ";
+
+      var ts = new Types();
+      BindColor(ts);
+      var vm = MakeVM(bhl, ts);
+      AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
   }
 
   [IsTested()]

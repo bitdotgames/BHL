@@ -513,6 +513,13 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
 
     {
+      var fn = new FuncSymbolNative("IndexOf", Types.Int, IndexOf,
+        new FuncArgSymbol("o", item_type)
+      );
+      this.Define(fn);
+    }
+
+    {
       //hidden system method not available directly
       FuncArrIdx = new FuncSymbolNative("$ArrIdx", item_type, ArrIdx);
     }
@@ -533,6 +540,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public abstract ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine IndexOf(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
@@ -578,6 +586,28 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     lst.Add(val);
     val.Release();
     arr.Release();
+    return null;
+  }
+
+  public override ICoroutine IndexOf(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+  {
+    var val = frm.stack.Pop();
+    var arr = frm.stack.Pop();
+    var lst = AsList(arr);
+
+    int idx = -1;
+    for(int i=0;i<lst.Count;++i)
+    {
+      if(lst[i].IsValueEqual(val))
+      {
+        idx = i;
+        break;
+      }
+    }
+
+    val.Release();
+    arr.Release();
+    frm.stack.Push(Val.NewInt(frm.vm, idx));
     return null;
   }
 
@@ -672,6 +702,18 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     lst.Add((T)val.obj);
     val.Release();
     arr.Release();
+    return null;
+  }
+
+  public override ICoroutine IndexOf(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+  {
+    var val = frm.stack.Pop();
+    var arr = frm.stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    int idx = lst.IndexOf((T)val.obj);
+    val.Release();
+    arr.Release();
+    frm.stack.Push(Val.NewInt(frm.vm, idx));
     return null;
   }
 
