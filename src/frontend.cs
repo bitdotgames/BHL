@@ -55,10 +55,9 @@ public class Frontend : bhlBaseVisitor<object>
 
   Types types;
 
-  //NOTE: in 'declarations only' mode only declarations are filled,
-  //      full definitions are omitted. This is useful when we only need 
-  //      to know which symbols can be imported from the current module
-  bool decls_only;
+  //NOTE: In this mode only top symbols declarations are inspected.
+  //      This mode is used when module is imported by another one.
+  bool being_imported;
 
   Importer importer;
 
@@ -139,17 +138,17 @@ public class Frontend : bhlBaseVisitor<object>
     return p;
   }
   
-  public static Result ProcessStream(Module module, Stream src, Types ts, Frontend.Importer imp = null, bool decls_only = false)
+  public static Result ProcessStream(Module module, Stream src, Types ts, Frontend.Importer imp = null, bool being_imported = false)
   {
     var p = Stream2Parser(module.file_path, src);
     var parsed = new ANTLR_Result(p.TokenStream, p.program());
-    return ProcessParsed(module, parsed, ts, imp, decls_only);
+    return ProcessParsed(module, parsed, ts, imp, being_imported);
   }
 
-  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, Frontend.Importer imp = null, bool decls_only = false)
+  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, Frontend.Importer imp = null, bool being_imported = false)
   {
     //var sw1 = System.Diagnostics.Stopwatch.StartNew();
-    var f = new Frontend(parsed, module, ts, imp, decls_only);
+    var f = new Frontend(parsed, module, ts, imp, being_imported);
     var res = f.Process();
     //sw1.Stop();
     //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
@@ -229,13 +228,13 @@ public class Frontend : bhlBaseVisitor<object>
       if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
       {
         //Console.WriteLine("HIT " + full_path);
-        Frontend.ProcessParsed(m, parsed, ts, this, decls_only: true);
+        Frontend.ProcessParsed(m, parsed, ts, this, being_imported: true);
       }
       else
       {
         var stream = File.OpenRead(full_path);
         //Console.WriteLine("MISS " + full_path);
-        Frontend.ProcessStream(m, stream, ts, this, decls_only: true);
+        Frontend.ProcessStream(m, stream, ts, this, being_imported: true);
         stream.Close();
       }
 
@@ -280,7 +279,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
-  public Frontend(ANTLR_Result parsed, Module module, Types types, Importer importer, bool decls_only = false)
+  public Frontend(ANTLR_Result parsed, Module module, Types types, Importer importer, bool being_imported = false)
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;
@@ -297,7 +296,7 @@ public class Frontend : bhlBaseVisitor<object>
       importer = new Importer();
     this.importer = importer;
 
-    this.decls_only = decls_only;
+    this.being_imported = being_imported;
   }
 
   void FireError(IParseTree place, string msg) 
@@ -373,7 +372,6 @@ public class Frontend : bhlBaseVisitor<object>
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
   {
-    //Console.WriteLine(">>>> PROG VISIT " + module.name + " decls: " + decls_only);
     for(int i=0;i<ctx.progblock().Length;++i)
       Visit(ctx.progblock()[i]);
     return null;
@@ -2200,7 +2198,7 @@ public class Frontend : bhlBaseVisitor<object>
       PopAST();
     }
 
-    if(!decls_only)
+    if(!being_imported)
     {
       PushAST(ast.block());
       Visit(ctx.funcBlock());
@@ -2253,7 +2251,7 @@ public class Frontend : bhlBaseVisitor<object>
   {
     var vd = ctx.varDeclare(); 
 
-    if(decls_only)
+    if(being_imported)
     {
       var tr = ns.T(vd.type().GetText());
       var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
