@@ -8562,7 +8562,7 @@ public class TestVM : BHL_TestBase
     //      for a similar element in an array the 'value equality' 
     //      routine is not used but rather the 'pointers equality' 
     //      one. Maybe it's an expected behavior, maybe not :(
-    //      Need more real feed back.
+    //      Need more feedback on this issue.
     //
     {
       string bhl = @"
