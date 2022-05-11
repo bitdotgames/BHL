@@ -51,14 +51,9 @@ namespace bhlsp
 
 #if BHLSP_DEBUG
       if(req != null)
-      {
         BHLSPLogger.WriteLine($":: bhlsp <-- {req.method}({req.id.Value})");
-        //BHLSPLogger.WriteLine($":: bhlsp <-- {json}");
-      }
-      else
-      {
-        //BHLSPLogger.WriteLine($":: bhlsp <-- {json}");
-      }
+      
+      //BHLSPLogger.WriteLine($":: bhlsp <-- {json}");
 #endif
       
       if(resp == null && req != null)
@@ -85,24 +80,16 @@ namespace bhlsp
          * They work like events.
          */
         bool isNotification = req != null && req.id.Value == null;
-        if(!isNotification) 
+        if(!isNotification)
         {
-          response = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None,
-              new JsonSerializerSettings
-              {
-                  NullValueHandling = NullValueHandling.Ignore
-              });
-        
+          var jSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+          response = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None, jSettings);
+          
 #if BHLSP_DEBUG
           if(req != null)
-          {
             BHLSPLogger.WriteLine($":: bhlsp --> {req.method}({req.id.Value})");
-            //BHLSPLogger.WriteLine($":: bhlsp --> {response}");
-          }
-          else
-          {
-            //BHLSPLogger.WriteLine($":: bhlsp --> {response}");
-          }
+          
+          //BHLSPLogger.WriteLine($":: bhlsp --> {JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.Indented, jSettings)}");
 #endif
         }
       }
