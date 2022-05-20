@@ -24,6 +24,7 @@ public class CompileConf
   public IUserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
+  public bool debug = false;
   public bool verbose = true;
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
