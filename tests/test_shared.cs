@@ -524,7 +524,7 @@ public class BHL_TestBase
     throw new Exception("Too many iterations: " + c);
   }
 
-  public static int PredictOpcodeSize(Compiler.Definition op, byte[] bytes, int start_pos)
+  public static int PredictOpcodeSize(ModuleCompiler.Definition op, byte[] bytes, int start_pos)
   {
     if(op.operand_width == null)
       return 0;
@@ -742,7 +742,7 @@ public class BHL_TestBase
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
 
-    var conf = new BuildConf();
+    var conf = new CompileConf();
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.ts = ts;
     conf.files = files;
@@ -752,8 +752,8 @@ public class BHL_TestBase
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = false;
 
-    var bld = new Build();
-    int res = bld.Exec(conf);
+    var cmp = new Compiler();
+    int res = cmp.Exec(conf);
     if(res != 0)
       throw new Exception(File.ReadAllText(conf.err_file));
 
@@ -770,11 +770,11 @@ public class BHL_TestBase
 
     var mdl = new bhl.Module(ts, "", "");
 
-    var front_res = Frontend.ProcessStream(mdl, bhl.ToStream(), ts);
+    var front_res = ModuleFrontend.ProcessStream(mdl, bhl.ToStream(), ts);
 
     if(show_ast)
       AST_Dumper.Dump(front_res.ast);
-    var c  = new Compiler(front_res);
+    var c  = new ModuleCompiler(front_res);
     var cm = c.Compile();
     if(show_bytes)
       Dump(c);
@@ -821,10 +821,10 @@ public class BHL_TestBase
     }
   }
 
-  public static void Print(Compiler c)
+  public static void Print(ModuleCompiler c)
   {
     var bs = c.Compile().bytecode;
-    Compiler.Definition op = null;
+    ModuleCompiler.Definition op = null;
     int op_size = 0;
 
     for(int i=0;i<bs.Length;i++)
@@ -838,7 +838,7 @@ public class BHL_TestBase
       }
       else
       {
-        op = Compiler.LookupOpcode((Opcodes)bs[i]);
+        op = ModuleCompiler.LookupOpcode((Opcodes)bs[i]);
         op_size = PredictOpcodeSize(op, bs, i);
         str += "(" + op.name.ToString() + ")";
         if(op_size == 0)
@@ -849,12 +849,12 @@ public class BHL_TestBase
     Console.WriteLine("============");
   }
 
-  public static void AssertEqual(Compiler ca, Compiler cb)
+  public static void AssertEqual(ModuleCompiler ca, ModuleCompiler cb)
   {
     AssertEqual(ca.Compile(), cb.Compile());
   }
 
-  public static void AssertEqual(CompiledModule ca, Compiler cb)
+  public static void AssertEqual(CompiledModule ca, ModuleCompiler cb)
   {
     AssertEqual(ca, cb.Compile());
   }
@@ -876,7 +876,7 @@ public class BHL_TestBase
     }
   }
 
-  static void Dump(Compiler c)
+  static void Dump(ModuleCompiler c)
   {
     Dump(c.Compile());
   }
@@ -896,7 +896,7 @@ public class BHL_TestBase
   {
     string res = "";
 
-    Compiler.Definition op = null;
+    ModuleCompiler.Definition op = null;
     int op_size = 0;
 
     for(int i=0;i<bs?.Length;i++)
@@ -910,7 +910,7 @@ public class BHL_TestBase
       }
       else
       {
-        op = Compiler.LookupOpcode((Opcodes)bs[i]);
+        op = ModuleCompiler.LookupOpcode((Opcodes)bs[i]);
         op_size = PredictOpcodeSize(op, bs, i);
         res += "(" + op.name.ToString() + ")";
         if(op_size == 0)
@@ -924,9 +924,9 @@ public class BHL_TestBase
 
   static bool CompareCode(byte[] a, byte[] b, out string cmp)
   {
-    Compiler.Definition aop = null;
+    ModuleCompiler.Definition aop = null;
     int aop_size = 0;
-    Compiler.Definition bop = null;
+    ModuleCompiler.Definition bop = null;
     int bop_size = 0;
 
     bool equal = true;
@@ -947,7 +947,7 @@ public class BHL_TestBase
         }
         else
         {
-          aop = Compiler.LookupOpcode((Opcodes)a[i]);
+          aop = ModuleCompiler.LookupOpcode((Opcodes)a[i]);
           aop_size = PredictOpcodeSize(aop, a, i);
           astr += "(" + aop.name.ToString() + ")";
           if(aop_size == 0)
@@ -967,7 +967,7 @@ public class BHL_TestBase
         }
         else
         {
-          bop = Compiler.LookupOpcode((Opcodes)b[i]);
+          bop = ModuleCompiler.LookupOpcode((Opcodes)b[i]);
           bop_size = PredictOpcodeSize(bop, b, i);
           bstr += "(" + bop.name.ToString() + ")";
           if(bop_size == 0)

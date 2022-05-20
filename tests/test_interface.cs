@@ -355,7 +355,7 @@ public class TestInterfaces : BHL_TestBase
       var c = Compile(bhl);
 
       var expected = 
-        new Compiler()
+        new ModuleCompiler()
         .UseCode()
         .EmitThen(Opcodes.InitFrame, new int[] { 1+1/*this*/+1/*args info*/})
         .EmitThen(Opcodes.ArgVar, new int[] { 1 })

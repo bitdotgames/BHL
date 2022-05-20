@@ -111,7 +111,7 @@ public class CompileCmd : ICmd
     }
 
     if(files.Count == 0)
-      Build.AddFilesFromDir(src_dir, files);
+      Compiler.AddFilesFromDir(src_dir, files);
 
     for(int i=files.Count;i-- > 0;)
     {
@@ -123,7 +123,7 @@ public class CompileCmd : ICmd
       files.Sort();
 
     Console.WriteLine("BHL total files: {0}(debug: {1}, cache: {2})", files.Count, debug, use_cache);
-    var conf = new BuildConf();
+    var conf = new CompileConf();
     conf.args = string.Join(";", args);
     conf.module_fmt = module_fmt;
     conf.use_cache = use_cache;
@@ -139,8 +139,8 @@ public class CompileCmd : ICmd
     conf.postproc = postproc;
     conf.debug = debug;
 
-    var build = new Build();
-    int err = build.Exec(conf);
+    var cmp = new Compiler();
+    int err = cmp.Exec(conf);
     if(err != 0)
       Environment.Exit(err);
   }

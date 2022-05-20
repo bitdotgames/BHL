@@ -9,7 +9,7 @@ namespace bhl {
 
 using marshall;
 
-public class BuildConf
+public class CompileConf
 {
   public string args = ""; 
   public List<string> files = new List<string>();
@@ -28,7 +28,7 @@ public class BuildConf
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
  
-public class Build
+public class Compiler
 {
   const byte COMPILE_FMT = 2;
   const uint FILE_VERSION = 1;
@@ -40,7 +40,7 @@ public class Build
     public ANTLR_Result parsed;
   }
 
-  public class Cache : Frontend.IParsedCache
+  public class Cache : ModuleFrontend.IParsedCache
   {
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
 
@@ -57,7 +57,7 @@ public class Build
     }
   }
 
-  public int Exec(BuildConf conf)
+  public int Exec(CompileConf conf)
   {
     var sw = new Stopwatch();
     sw.Start();
@@ -71,7 +71,7 @@ public class Build
     return code;
   }
 
-  int DoExec(BuildConf conf)
+  int DoExec(CompileConf conf)
   {
     var res_dir = Path.GetDirectoryName(conf.res_file); 
     if(res_dir.Length > 0)
@@ -113,7 +113,7 @@ public class Build
     return 0;
   }
 
-  static List<ParseWorker> StartParseWorkers(BuildConf conf)
+  static List<ParseWorker> StartParseWorkers(CompileConf conf)
   {
     var parse_workers = new List<ParseWorker>();
 
@@ -148,7 +148,7 @@ public class Build
     return parse_workers;
   }
 
-  static List<CompilerWorker> StartAndWaitCompileWorkers(BuildConf conf, Types ts, List<ParseWorker> parse_workers)
+  static List<CompilerWorker> StartAndWaitCompileWorkers(CompileConf conf, Types ts, List<ParseWorker> parse_workers)
   {
     var compiler_workers = new List<CompilerWorker>();
 
@@ -201,7 +201,7 @@ public class Build
     return compiler_workers;
   }
 
-  bool WriteCompilationResultToFile(BuildConf conf, List<CompilerWorker> compiler_workers, string file_path)
+  bool WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
   {
     using(FileStream dfs = new FileStream(file_path, FileMode.Create, System.IO.FileAccess.Write))
     {
@@ -266,7 +266,7 @@ public class Build
     }
   }
 
-  static bool CheckArgsSignatureFile(BuildConf conf)
+  static bool CheckArgsSignatureFile(CompileConf conf)
   {
     var tmp_args_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".args";
     bool changed = !File.Exists(tmp_args_file) || (File.Exists(tmp_args_file) && File.ReadAllText(tmp_args_file) != conf.args);
@@ -371,7 +371,7 @@ public class Build
 
             if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
             {
-              var parser = Frontend.Stream2Parser(file, sfs);
+              var parser = ModuleFrontend.Stream2Parser(file, sfs);
               var parsed = new ANTLR_Result(parser.TokenStream, parser.program());
 
               interim.parsed = parsed;
@@ -531,7 +531,7 @@ public class Build
       w.file2path.Clear();
       w.file2compiled.Clear();
 
-      var imp = new Frontend.Importer();
+      var imp = new ModuleFrontend.Importer();
       imp.SetParsedCache(w.cache);
       imp.AddToIncludePath(w.inc_dir);
 
@@ -561,19 +561,19 @@ public class Build
           {
             ++cache_miss;
 
-            Frontend.Result front_res = null;
+            ModuleFrontend.Result front_res = null;
 
             if(interim.parsed != null)
-              front_res = Frontend.ProcessParsed(file_module, interim.parsed, w.ts, imp);
+              front_res = ModuleFrontend.ProcessParsed(file_module, interim.parsed, w.ts, imp);
             else
-              front_res = Frontend.ProcessFile(file, w.ts, imp);
+              front_res = ModuleFrontend.ProcessFile(file, w.ts, imp);
 
             front_res = w.postproc.Patch(front_res, file);
 
             w.file2path.Add(file, file_module.path);
             w.file2ns.Add(file, front_res.module.ns);
 
-            var c  = new Compiler(front_res);
+            var c  = new ModuleCompiler(front_res);
             var cm = c.Compile();
             CompiledModule.ToFile(cm, compiled_file);
           }
@@ -639,13 +639,13 @@ public class Build
 public interface IFrontPostProcessor
 {
   //NOTE: returns patched result
-  Frontend.Result Patch(Frontend.Result fres, string src_file);
+  ModuleFrontend.Result Patch(ModuleFrontend.Result fres, string src_file);
   void Tally();
 }
 
 public class EmptyPostProcessor : IFrontPostProcessor 
 {
-  public Frontend.Result Patch(Frontend.Result fres, string src_file) { return fres; }
+  public ModuleFrontend.Result Patch(ModuleFrontend.Result fres, string src_file) { return fres; }
   public void Tally() {}
 }
 

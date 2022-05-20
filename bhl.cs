@@ -121,6 +121,16 @@ public static class Tasks
     BuildAndRunCompiler(tm, user_sources, postproc_sources, ref runtime_args);
   }
 
+  [Task(deps: "build_front_dll", verbose: false)]
+  public static void run(Taskman tm, string[] args)
+  {
+    List<string> postproc_sources;
+    List<string> user_sources;
+    var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
+
+    BuildAndRunCompiler(tm, user_sources, postproc_sources, ref runtime_args);
+  }
+
   [Task("build_front_dll", "build_lsp_dll")]
   public static void test(Taskman tm, string[] args)
   {

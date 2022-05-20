@@ -27,7 +27,7 @@ public class ANTLR_Result
   }
 }
 
-public class Frontend : bhlBaseVisitor<object>
+public class ModuleFrontend : bhlBaseVisitor<object>
 {
   public class Result
   {
@@ -120,7 +120,7 @@ public class Frontend : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static Result ProcessFile(string file, Types ts, Frontend.Importer imp)
+  public static Result ProcessFile(string file, Types ts, ModuleFrontend.Importer imp)
   {
     using(var sfs = File.OpenRead(file))
     {
@@ -138,17 +138,17 @@ public class Frontend : bhlBaseVisitor<object>
     return p;
   }
   
-  public static Result ProcessStream(Module module, Stream src, Types ts, Frontend.Importer imp = null, bool being_imported = false)
+  public static Result ProcessStream(Module module, Stream src, Types ts, ModuleFrontend.Importer imp = null, bool being_imported = false)
   {
     var p = Stream2Parser(module.file_path, src);
     var parsed = new ANTLR_Result(p.TokenStream, p.program());
     return ProcessParsed(module, parsed, ts, imp, being_imported);
   }
 
-  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, Frontend.Importer imp = null, bool being_imported = false)
+  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, ModuleFrontend.Importer imp = null, bool being_imported = false)
   {
     //var sw1 = System.Diagnostics.Stopwatch.StartNew();
-    var f = new Frontend(parsed, module, ts, imp, being_imported);
+    var f = new ModuleFrontend(parsed, module, ts, imp, being_imported);
     var res = f.Process();
     //sw1.Stop();
     //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
@@ -228,13 +228,13 @@ public class Frontend : bhlBaseVisitor<object>
       if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
       {
         //Console.WriteLine("HIT " + full_path);
-        Frontend.ProcessParsed(m, parsed, ts, this, being_imported: true);
+        ModuleFrontend.ProcessParsed(m, parsed, ts, this, being_imported: true);
       }
       else
       {
         var stream = File.OpenRead(full_path);
         //Console.WriteLine("MISS " + full_path);
-        Frontend.ProcessStream(m, stream, ts, this, being_imported: true);
+        ModuleFrontend.ProcessStream(m, stream, ts, this, being_imported: true);
         stream.Close();
       }
 
@@ -279,7 +279,7 @@ public class Frontend : bhlBaseVisitor<object>
     }
   }
 
-  public Frontend(ANTLR_Result parsed, Module module, Types types, Importer importer, bool being_imported = false)
+  public ModuleFrontend(ANTLR_Result parsed, Module module, Types types, Importer importer, bool being_imported = false)
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;

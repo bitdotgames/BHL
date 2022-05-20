@@ -20,7 +20,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
@@ -81,7 +81,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
@@ -112,7 +112,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, false) })
@@ -143,7 +143,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
@@ -175,7 +175,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, false) })
@@ -207,7 +207,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hello") })
@@ -529,7 +529,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("float")) })
@@ -560,7 +560,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
@@ -615,7 +615,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
@@ -1255,7 +1255,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, false) })
@@ -1289,7 +1289,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, false) })
@@ -1323,7 +1323,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
@@ -1356,7 +1356,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
@@ -1389,7 +1389,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
@@ -1423,7 +1423,7 @@ public class TestVM : BHL_TestBase
 
 
     var expected =
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2.7) })
@@ -1552,7 +1552,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
@@ -1689,7 +1689,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
@@ -1721,7 +1721,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("float")) })
@@ -1753,7 +1753,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("string"))})
@@ -1785,7 +1785,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("bool")) })
@@ -1839,7 +1839,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { 0 })
@@ -1875,7 +1875,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -1909,7 +1909,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -1942,7 +1942,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
@@ -2454,7 +2454,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -2685,7 +2685,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -2828,7 +2828,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
@@ -2950,7 +2950,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
@@ -3173,7 +3173,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
@@ -3223,7 +3223,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
@@ -3284,7 +3284,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
@@ -3613,7 +3613,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
@@ -3687,7 +3687,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
@@ -3802,7 +3802,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
@@ -3896,7 +3896,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
@@ -4092,7 +4092,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1/*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -4184,7 +4184,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 3 + 2/*hidden vars*/ + 1/*cargs*/})
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("int")) }) 
@@ -4252,7 +4252,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -4311,7 +4311,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -4620,7 +4620,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -4677,7 +4677,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -4775,7 +4775,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       //dummy
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
@@ -5101,7 +5101,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       //dummy
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
@@ -5152,7 +5152,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       //dummy
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
@@ -5214,7 +5214,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       //dummy
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
@@ -6583,7 +6583,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       //foo
       .EmitThen(Opcodes.InitFrame, new int[] { 3+1/*args info*/ })
@@ -6979,7 +6979,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgRef, new int[] { 0 })
@@ -7453,7 +7453,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgRef, new int[] { 0 })
@@ -8033,7 +8033,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("int")) }) 
@@ -8660,7 +8660,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.CallNative, new int[] { ts.natives.IndexOf(ts.ResolveByFullName("suspend")), 0 })
@@ -8693,7 +8693,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
@@ -8806,7 +8806,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
@@ -8853,7 +8853,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
@@ -10354,7 +10354,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.DEFER, 12})
@@ -12136,7 +12136,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Foo")) }) 
@@ -12430,7 +12430,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("Foo")) }) 
@@ -14759,7 +14759,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("Bar")) }) 
@@ -16326,7 +16326,7 @@ public class TestVM : BHL_TestBase
     var loader = new ModuleLoader(ts, CompileFiles(files));
 
     AssertEqual(loader.Load("bhl1", ts, null), 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
@@ -16335,7 +16335,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
     );
     AssertEqual(loader.Load("bhl2", ts, null), 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
@@ -16345,7 +16345,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.Return)
     );
     AssertEqual(loader.Load("bhl3", ts, null), 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
@@ -17979,7 +17979,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("float")) })
       .UseCode()
@@ -18012,7 +18012,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
@@ -18047,7 +18047,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })

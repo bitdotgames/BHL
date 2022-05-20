@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public class Compiler : AST_Visitor
+public class ModuleCompiler : AST_Visitor
 {
   AST_Tree ast;
   CompiledModule compiled;
@@ -141,12 +141,12 @@ public class Compiler : AST_Visitor
     }
   }
 
-  static Compiler()
+  static ModuleCompiler()
   {
     DeclareOpcodes();
   }
 
-  public Compiler(Frontend.Result fres)
+  public ModuleCompiler(ModuleFrontend.Result fres)
   {
     module = fres.module;
     ast = fres.ast;
@@ -156,7 +156,7 @@ public class Compiler : AST_Visitor
   }
 
   //NOTE: for testing purposes only
-  public Compiler()
+  public ModuleCompiler()
   {
     module = new Module(null, "", "");
     curr_scope = module.ns;
@@ -165,14 +165,14 @@ public class Compiler : AST_Visitor
   }
 
   //NOTE: public for testing purposes only
-  public Compiler UseCode()
+  public ModuleCompiler UseCode()
   {
     head = code;
     return this;
   }
 
   //NOTE: public for testing purposes only
-  public Compiler UseInit()
+  public ModuleCompiler UseInit()
   {
     head = init;
     return this;
@@ -680,7 +680,7 @@ public class Compiler : AST_Visitor
   }
 
   //NOTE: for testing purposes only
-  public Compiler EmitThen(Opcodes op, params int[] operands)
+  public ModuleCompiler EmitThen(Opcodes op, params int[] operands)
   {
     Emit(op, operands);
     return this;

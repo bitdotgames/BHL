@@ -19,7 +19,7 @@ public class TestTypeCasts : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
@@ -52,7 +52,7 @@ public class TestTypeCasts : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
@@ -176,7 +176,7 @@ public class TestTypeCasts : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -292,7 +292,7 @@ public class TestTypeCasts : BHL_TestBase
     var c = Compile(bhl, ts);
 
     var expected = 
-      new Compiler()
+      new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Foo")) })
