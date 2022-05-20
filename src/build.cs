@@ -24,7 +24,7 @@ public class CompileConf
   public IUserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool check_deps = true;
-  public bool debug = false; //TODO: not really used
+  public bool verbose = true;
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
  
@@ -66,7 +66,8 @@ public class Compiler
 
     sw.Stop();
 
-    Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    if(conf.verbose)
+      Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     return code;
   }
@@ -82,11 +83,12 @@ public class Compiler
     var args_changed = CheckArgsSignatureFile(conf);
 
     if(conf.use_cache && 
-        !args_changed && 
-        !BuildUtil.NeedToRegen(conf.res_file, conf.files)
+       !args_changed && 
+       !BuildUtil.NeedToRegen(conf.res_file, conf.files)
       )
     {
-      Console.WriteLine("BHL no need to re-build");
+      if(conf.verbose)
+        Console.WriteLine("BHL no need to re-build");
       return 0;
     }
 
@@ -138,6 +140,7 @@ public class Compiler
       pw.cache_dir = conf.tmp_dir;
       pw.check_deps = conf.check_deps;
       pw.files = conf.files;
+      pw.verbose = conf.verbose;
 
       parse_workers.Add(pw);
       pw.Start();
@@ -176,6 +179,7 @@ public class Compiler
       cw.files = pw.files;
       cw.start = pw.start;
       cw.count = pw.count;
+      cw.verbose = pw.verbose;
       cw.postproc = conf.postproc;
 
       //passing parser error if any
@@ -307,6 +311,7 @@ public class Compiler
     public string cache_dir;
     public int start;
     public int count;
+    public bool verbose;
     public List<string> inc_path = new List<string>();
     public List<string> files;
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
@@ -342,13 +347,6 @@ public class Compiler
       {
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
         {
-          //too verbose?
-          //if(cnt > 0 && cnt % 1000 == 0)
-          //{
-          //  var elapsed = Math.Round(sw.ElapsedMilliseconds/1000.0f,2);
-          //  Console.WriteLine("BHL Parser " + w.id + " " + cnt + "/" + w.count + ", " + elapsed + " sec");
-          //}
-
           var file = w.files[i]; 
           using(var sfs = File.OpenRead(file))
           {
@@ -403,7 +401,8 @@ public class Compiler
       }
 
       sw.Stop();
-      Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
+      if(w.verbose)
+        Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
 
     public class FileImports : IMarshallable
@@ -503,6 +502,7 @@ public class Compiler
     public Types ts;
     public int start;
     public int count;
+    public bool verbose;
     public IFrontPostProcessor postproc;
     public Exception error = null;
     public Cache cache;
@@ -533,7 +533,8 @@ public class Compiler
 
       var imp = new ModuleFrontend.Importer();
       imp.SetParsedCache(w.cache);
-      imp.AddToIncludePath(w.inc_dir);
+      if(!string.IsNullOrEmpty(w.inc_dir))
+        imp.AddToIncludePath(w.inc_dir);
 
       int i = w.start;
 
@@ -594,7 +595,8 @@ public class Compiler
       }
 
       sw.Stop();
-      Console.WriteLine("BHL compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
+      if(w.verbose)
+        Console.WriteLine("BHL compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
   }
 

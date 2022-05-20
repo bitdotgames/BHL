@@ -124,11 +124,20 @@ public static class Tasks
   [Task(deps: "build_front_dll", verbose: false)]
   public static void run(Taskman tm, string[] args)
   {
-    List<string> postproc_sources;
-    List<string> user_sources;
-    var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
-
-    BuildAndRunCompiler(tm, user_sources, postproc_sources, ref runtime_args);
+    BuildAndRunDllCmd(
+      tm,
+      "run",
+      new string[] {
+        $"{BHL_ROOT}/src/cmd/run.cs",
+        $"{BHL_ROOT}/src/cmd/cmd.cs",
+        $"{BHL_ROOT}/bhl_front.dll", 
+        $"{BHL_ROOT}/deps/mono_opts.dll",
+        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
+        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
+      },
+      "-define:BHL_FRONT",
+      args
+    );
   }
 
   [Task("build_front_dll", "build_lsp_dll")]

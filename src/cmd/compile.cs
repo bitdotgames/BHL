@@ -138,6 +138,7 @@ public class CompileCmd : ICmd
     conf.userbindings = userbindings;
     conf.postproc = postproc;
     conf.debug = debug;
+    conf.verbose = true;
 
     var cmp = new Compiler();
     int err = cmp.Exec(conf);
