@@ -162,10 +162,10 @@ public class RunCmd : ICmd
     var lines = File.ReadAllLines(file);
 
     if(err_obj.line < lines.Length)
-    {
       Console.Error.WriteLine(lines[err_obj.line-1]);
-      Console.Error.WriteLine(new String('-', err_obj.column) + '^');
-    }
+    else if(err_obj.line-1 == lines.Length)
+      Console.Error.WriteLine(lines[lines.Length-1]);
+    Console.Error.WriteLine(new String('-', err_obj.column) + '^');
   }
 
   public static string GetSelfFile()
