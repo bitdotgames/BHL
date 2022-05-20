@@ -1,0 +1,100 @@
+
+func bool Idle()
+{
+  bool done = false
+  defer {
+    if(!done) {
+      Trace("Idle interrupted!")
+    } else {
+      Trace("Idle complete")
+    }
+  }
+
+  int sec = (int)(1 + Rand() * 3)
+  Trace("Idling " + (string)sec + " sec...")
+
+  Wait(sec)
+
+  done = true
+  return true
+}
+
+func bool FindTarget(ref int target_id)
+{
+  target_id = 0
+
+  if(Rand() < 0.6) {
+    Trace("No target in range")
+    return false
+  }
+
+  int tmp_target_id = (int)(Rand() * 1000)
+  Trace("Found new target " + (string)tmp_target_id + "! Approaching it.")
+
+  int sec = (int)(1 + Rand() * 3)
+  Wait(sec)
+  target_id = tmp_target_id
+  return true
+}
+
+func bool AttackTarget(ref int target_id)
+{
+  if(target_id == 0) {
+    return false
+  }
+
+  Trace("Attacking target " + (string)target_id + "")
+  Wait(0.2)
+  Trace("Target " + (string)target_id + " is dead!")
+  target_id = 0
+  return true
+}
+
+func StateChanged(ref int state)
+{
+  int last_state = state
+  yield while(last_state == state)
+  Trace("State changed!")
+}
+
+func RandomStateChanger(ref int state)
+{
+  while(true) {
+    Wait(1 + Rand() * 4)
+    state = state + 1
+  }
+}
+
+func Selector([]func bool() fns) {
+  foreach(func bool() fn in fns) {
+    if(!fn()) {
+      continue
+    } else {
+      break
+    }
+  }
+}
+
+func Unit() {
+  Trace("Unit starts...")
+
+  int state = 0
+  int target_id = 0
+
+  paral {
+    RandomStateChanger(ref state)
+    while(true) {
+      paral {
+        StateChanged(ref state)
+        Selector(
+            [
+              func bool() { return AttackTarget(ref target_id) }, 
+              func bool() { return FindTarget(ref target_id) }, 
+              func bool() { return Idle() }
+            ]
+          )
+      }
+      yield()
+    }
+  }
+}

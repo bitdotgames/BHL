@@ -1,0 +1,4 @@
+
+func main(string[] argv) {
+  std.io.WriteLine("Hello World!")
+}
