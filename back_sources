@@ -1,4 +1,3 @@
-src/msgpack/BoxingPacker.cs
 src/msgpack/MsgPackReader.cs
 src/msgpack/MsgPackWriter.cs
 src/msgpack/TypePrefixes.cs
