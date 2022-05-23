@@ -15,7 +15,7 @@ public static class Tasks
   public static void build_front_dll(Taskman tm, string[] args)
   {
     MCSBuild(tm, new string[] {
-      $"{BHL_ROOT}/deps/msgpack/*.cs",
+      $"{BHL_ROOT}/src/msgpack/*.cs",
       $"{BHL_ROOT}/src/g/*.cs",
       $"{BHL_ROOT}/src/vm/*.cs",
       $"{BHL_ROOT}/src/*.cs",

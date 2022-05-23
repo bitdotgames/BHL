@@ -1,10 +1,10 @@
-deps/msgpack/BoxingPacker.cs
-deps/msgpack/MsgPackReader.cs
-deps/msgpack/MsgPackWriter.cs
-deps/msgpack/ObjectPacker.cs
-deps/msgpack/ReflectionCache.cs
-deps/msgpack/ReflectionCacheEntry.cs
-deps/msgpack/TypePrefixes.cs
+src/msgpack/BoxingPacker.cs
+src/msgpack/MsgPackReader.cs
+src/msgpack/MsgPackWriter.cs
+src/msgpack/ObjectPacker.cs
+src/msgpack/ReflectionCache.cs
+src/msgpack/ReflectionCacheEntry.cs
+src/msgpack/TypePrefixes.cs
 src/vm/type.cs
 src/vm/vm.cs
 src/vm/error.cs
