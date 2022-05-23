@@ -11,17 +11,23 @@ using Mono.Options;
 
 public static class Tasks
 {
+  static readonly string[] VM_SRC = new string[] {
+    $"{BHL_ROOT}/src/vm/*.cs",
+    $"{BHL_ROOT}/src/msgpack/*.cs",
+  };
+
   [Task()]
   public static void build_front_dll(Taskman tm, string[] args)
   {
-    MCSBuild(tm, new string[] {
+    var front_src = new List<string>() {
       $"{BHL_ROOT}/src/*.cs",
       $"{BHL_ROOT}/src/g/*.cs",
-      $"{BHL_ROOT}/src/msgpack/*.cs",
-      $"{BHL_ROOT}/src/vm/*.cs",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
       $"{BHL_ROOT}/deps/lz4.dll", 
-     },
+    };
+    front_src.AddRange(VM_SRC);
+
+    MCSBuild(tm, front_src.ToArray(),
      $"{BHL_ROOT}/bhl_front.dll",
      "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library"
     );
@@ -48,10 +54,7 @@ public static class Tasks
       extra_args = "-debug";
     }
 
-    MCSBuild(tm, new string[] {
-        $"{BHL_ROOT}/src/msgpack/*.cs",
-        $"{BHL_ROOT}/src/vm/*.cs",
-      },
+    MCSBuild(tm, VM_SRC,
       dll_file,
       $"{extra_args} -target:library",
       mcs_bin
