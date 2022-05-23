@@ -18,6 +18,7 @@ public static class Tasks
       $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
       $"{BHL_ROOT}/deps/msgpack/*.cs",
       $"{BHL_ROOT}/src/g/*.cs",
+      $"{BHL_ROOT}/src/vm/*.cs",
       $"{BHL_ROOT}/src/*.cs",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
       $"{BHL_ROOT}/deps/lz4.dll", 
