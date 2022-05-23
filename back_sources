@@ -1,9 +1,4 @@
-deps/msgpack/Compiler/EmitExtensions.cs
-deps/msgpack/Compiler/PackILGenerator.cs
-deps/msgpack/Compiler/Variable.cs
-deps/msgpack/Compiler/VariableType.cs
 deps/msgpack/BoxingPacker.cs
-deps/msgpack/CompiledPacker.cs
 deps/msgpack/MsgPackReader.cs
 deps/msgpack/MsgPackWriter.cs
 deps/msgpack/ObjectPacker.cs
