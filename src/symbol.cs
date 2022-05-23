@@ -3,9 +3,7 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-using marshall;
-
-public abstract class Symbol : IMarshallableGeneric 
+public abstract class Symbol : marshall.IMarshallableGeneric 
 {
   public string name;
   public TypeProxy type;
@@ -39,10 +37,10 @@ public abstract class Symbol : IMarshallableGeneric
 
   public abstract uint ClassId();
 
-  public virtual void Sync(SyncContext ctx)
+  public virtual void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref type);
+    marshall.Marshall.Sync(ctx, ref name);
+    marshall.Marshall.Sync(ctx, ref type);
   }
 }
 
@@ -57,7 +55,7 @@ public abstract class BuiltInSymbol : Symbol, IType
   public string GetName() { return name; }
 
   //contains no data
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
   }
 }
@@ -288,12 +286,12 @@ public class InterfaceSymbolScript : InterfaceSymbol
     return CLASS_ID;
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
     base.Sync(ctx);
 
-    Marshall.Sync(ctx, ref inherits); 
-    Marshall.Sync(ctx, ref members); 
+    marshall.Marshall.Sync(ctx, ref inherits); 
+    marshall.Marshall.Sync(ctx, ref members); 
   }
 }
 
@@ -315,7 +313,7 @@ public class InterfaceSymbolNative : InterfaceSymbol
     throw new NotImplementedException();
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
   }
@@ -660,9 +658,9 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     return CLASS_ID;
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref item_type);
+    marshall.Marshall.Sync(ctx, ref item_type);
 
     if(ctx.is_read)
       name = "[]" + item_type.name;
@@ -767,7 +765,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     throw new NotImplementedException();
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
   }
@@ -821,10 +819,10 @@ public class VariableSymbol : Symbol, IScopeIndexed
     return CLASS_ID;
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
     base.Sync(ctx);
-    Marshall.Sync(ctx, ref _scope_idx);
+    marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
 }
 
@@ -1045,13 +1043,13 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     return i >= (GetDefaultArgsNum() - GetDefaultArgsNum());
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref signature);
+    marshall.Marshall.Sync(ctx, ref name);
+    marshall.Marshall.Sync(ctx, ref signature);
     if(ctx.is_read)
       type = new TypeProxy(signature);
-    Marshall.Sync(ctx, ref _scope_idx);
+    marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
 
   public override string ToString()
@@ -1112,7 +1110,7 @@ public class FuncSymbolScript : FuncSymbol
     return CLASS_ID;
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
     base.Sync(ctx);
 
@@ -1122,8 +1120,8 @@ public class FuncSymbolScript : FuncSymbol
     //      variables (check if they are stored in the 
     //      same members dictionary)
 
-    Marshall.Sync(ctx, ref default_args_num);
-    Marshall.Sync(ctx, ref ip_addr);
+    marshall.Marshall.Sync(ctx, ref default_args_num);
+    marshall.Marshall.Sync(ctx, ref ip_addr);
   }
 }
 
@@ -1262,7 +1260,7 @@ public class FuncSymbolNative : FuncSymbol
     throw new NotImplementedException();
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
   }
@@ -1290,7 +1288,7 @@ public class ClassSymbolNative : ClassSymbol
     throw new NotImplementedException();
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
   }
@@ -1354,12 +1352,12 @@ public class ClassSymbolScript : ClassSymbol
     return CLASS_ID;
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref name);
+    marshall.Marshall.Sync(ctx, ref name);
 
     string super_name = super_class == null ? "" : super_class.GetFullName();
-    Marshall.Sync(ctx, ref super_name);
+    marshall.Marshall.Sync(ctx, ref super_name);
     if(ctx.is_read && super_name != "")
     {
       var rslv = ((SymbolFactory)ctx.factory).resolver;
@@ -1371,9 +1369,9 @@ public class ClassSymbolScript : ClassSymbol
 
     //NOTE: this includes super class members as well, maybe we
     //      should make a copy which doesn't include parent members?
-    Marshall.Sync(ctx, ref members);
+    marshall.Marshall.Sync(ctx, ref members);
 
-    Marshall.Sync(ctx, ref implements); 
+    marshall.Marshall.Sync(ctx, ref implements); 
 
     if(ctx.is_read)
       UpdateVTable();
@@ -1413,7 +1411,7 @@ public class EnumSymbol : EnclosingSymbol, IType
     throw new NotImplementedException();
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
   }
@@ -1456,10 +1454,10 @@ public class EnumSymbolScript : EnumSymbol
     return CLASS_ID;
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref members);
+    marshall.Marshall.Sync(ctx, ref name);
+    marshall.Marshall.Sync(ctx, ref members);
     if(ctx.is_read)
     {
       for(int i=0;i<members.Count;++i)
@@ -1510,14 +1508,14 @@ public class EnumItemSymbol : Symbol, IType
     return CLASS_ID;
   }
 
-  public override void Sync(SyncContext ctx)
+  public override void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref val);
+    marshall.Marshall.Sync(ctx, ref name);
+    marshall.Marshall.Sync(ctx, ref val);
   }
 }
 
-public class SymbolsStorage : IMarshallable
+public class SymbolsStorage : marshall.IMarshallable
 {
   IScope scope;
   Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
@@ -1604,9 +1602,9 @@ public class SymbolsStorage : IMarshallable
     list.Clear();
   }
 
-  public void Sync(SyncContext ctx) 
+  public void Sync(marshall.SyncContext ctx) 
   {
-    Marshall.SyncGeneric(ctx, list, delegate(IMarshallableGeneric tmp) {
+    marshall.Marshall.SyncGeneric(ctx, list, delegate(marshall.IMarshallableGeneric tmp) {
         if(ctx.is_read)
         {
           //NOTE: we need to add new symbol to str2sym collection ASAP
@@ -1634,7 +1632,7 @@ public class SymbolsStorage : IMarshallable
   }
 }
 
-public class SymbolsSet<T> : IMarshallable where T : Symbol,IType
+public class SymbolsSet<T> : marshall.IMarshallable where T : Symbol,IType
 {
   List<string> names = new List<string>();
   List<T> list = new List<T>();
@@ -1672,9 +1670,9 @@ public class SymbolsSet<T> : IMarshallable where T : Symbol,IType
     list.Clear();
   }
 
-  public void Sync(SyncContext ctx) 
+  public void Sync(marshall.SyncContext ctx) 
   {
-    Marshall.Sync(ctx, names); 
+    marshall.Marshall.Sync(ctx, names); 
 
     if(ctx.is_read)
     {
@@ -1725,7 +1723,7 @@ public class SymbolIndex
   }
 }
 
-public class SymbolFactory : IFactory
+public class SymbolFactory : marshall.IFactory
 {
   public Types types;
   public ISymbolResolver resolver;
@@ -1736,7 +1734,7 @@ public class SymbolFactory : IFactory
     this.resolver = resolver;
   }
 
-  public IMarshallableGeneric CreateById(uint id) 
+  public marshall.IMarshallableGeneric CreateById(uint id) 
   {
     switch(id)
     {

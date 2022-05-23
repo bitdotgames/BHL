@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-using marshall;
-
 public interface IType 
 {
   string GetName();
@@ -12,7 +10,7 @@ public interface IType
 
 // For lazy evaluation of types and forward declarations
 // TypeProxy is used instead of IType
-public struct TypeProxy : IMarshallable
+public struct TypeProxy : marshall.IMarshallable
 {
   ISymbolResolver resolver;
   IType type;
@@ -63,19 +61,19 @@ public struct TypeProxy : IMarshallable
     return type;
   }
 
-  public void Sync(SyncContext ctx)
+  public void Sync(marshall.SyncContext ctx)
   {
     if(ctx.is_read)
       resolver = ((SymbolFactory)ctx.factory).resolver;
     else if(string.IsNullOrEmpty(_name))
       throw new Exception("TypeProxy name is empty");
 
-    Marshall.Sync(ctx, ref _name);
+    marshall.Marshall.Sync(ctx, ref _name);
 
-    IMarshallableGeneric mg = null;
+    marshall.IMarshallableGeneric mg = null;
     if(ctx.is_read)
     {
-      Marshall.SyncGeneric(ctx, ref mg);
+      marshall.Marshall.SyncGeneric(ctx, ref mg);
       type = (IType)mg;
     }
     else
@@ -98,16 +96,16 @@ public struct TypeProxy : IMarshallable
       //      string reference at them
       if(!is_weak_ref)
       {
-        mg = resolved as IMarshallableGeneric;
+        mg = resolved as marshall.IMarshallableGeneric;
         if(mg == null)
           throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _name);
       }
-      Marshall.SyncGeneric(ctx, ref mg);
+      marshall.Marshall.SyncGeneric(ctx, ref mg);
     }
   }
 }
 
-public class RefType : IType, IMarshallableGeneric
+public class RefType : IType, marshall.IMarshallableGeneric
 {
   public const uint CLASS_ID = 17;
 
@@ -129,13 +127,13 @@ public class RefType : IType, IMarshallableGeneric
     return CLASS_ID;
   }
 
-  public void Sync(SyncContext ctx)
+  public void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref subj);
+    marshall.Marshall.Sync(ctx, ref subj);
   }
 }
 
-public class TupleType : IType, IMarshallableGeneric
+public class TupleType : IType, marshall.IMarshallableGeneric
 {
   public const uint CLASS_ID = 16;
 
@@ -193,15 +191,15 @@ public class TupleType : IType, IMarshallableGeneric
     return CLASS_ID;
   }
 
-  public void Sync(SyncContext ctx)
+  public void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, items);
+    marshall.Marshall.Sync(ctx, items);
     if(ctx.is_read)
       Update();
   }
 }
 
-public class FuncSignature : IType, IMarshallableGeneric
+public class FuncSignature : IType, marshall.IMarshallableGeneric
 {
   public const uint CLASS_ID = 14; 
 
@@ -264,10 +262,10 @@ public class FuncSignature : IType, IMarshallableGeneric
     return CLASS_ID;
   }
 
-  public void Sync(SyncContext ctx)
+  public void Sync(marshall.SyncContext ctx)
   {
-    Marshall.Sync(ctx, ref ret_type);
-    Marshall.Sync(ctx, arg_types);
+    marshall.Marshall.Sync(ctx, ref ret_type);
+    marshall.Marshall.Sync(ctx, arg_types);
     if(ctx.is_read)
       Update();
   }

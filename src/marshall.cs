@@ -2,10 +2,8 @@ using System.IO;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using bhl.MsgPack;
 
-namespace bhl {
-namespace marshall {
+namespace bhl.marshall {
 
 public enum ErrorCode
 {
@@ -528,7 +526,7 @@ public static class Marshall
 
 public class MsgPackDataWriter : IWriter 
 {
-  MsgPackWriter io;
+  bhl.MsgPack.MsgPackWriter io;
   Stack<int> space = new Stack<int>();
 
   public MsgPackDataWriter(Stream stream) 
@@ -538,7 +536,7 @@ public class MsgPackDataWriter : IWriter
 
   public void Reset(Stream stream)
   {
-    io = new MsgPackWriter(stream);
+    io = new bhl.MsgPack.MsgPackWriter(stream);
     space.Clear();
     space.Push(1);
   }
@@ -668,7 +666,7 @@ public class MsgPackDataWriter : IWriter
 public class MsgPackDataReader : IReader 
 {
   Stream stream;
-  MsgPackReader io;
+  bhl.MsgPack.MsgPackReader io;
 
   struct StructPos
   {
@@ -693,7 +691,7 @@ public class MsgPackDataReader : IReader
   {
     stream = _stream;
     structs_pos.Clear();
-    io = new MsgPackReader(stream);
+    io = new bhl.MsgPack.MsgPackReader(stream);
   }
 
   public void SetPos(long pos)
@@ -816,10 +814,10 @@ public class MsgPackDataReader : IReader
     {
       switch(io.Type)
       {
-        case TypePrefixes.Float:
+        case bhl.MsgPack.TypePrefixes.Float:
           v = io.ValueFloat;
           break;
-        case TypePrefixes.Double:
+        case bhl.MsgPack.TypePrefixes.Double:
           var tmp = io.ValueDouble;
           //TODO:
           //if(tmp > float.MaxValue || tmp < float.MinValue)
@@ -850,16 +848,16 @@ public class MsgPackDataReader : IReader
     {
       switch(io.Type)
       {
-        case TypePrefixes.Float:
+        case bhl.MsgPack.TypePrefixes.Float:
           v = (double)io.ValueFloat;
           break;
-        case TypePrefixes.Double:
+        case bhl.MsgPack.TypePrefixes.Double:
           v = io.ValueDouble;
           break;
-        case TypePrefixes.UInt64:
+        case bhl.MsgPack.TypePrefixes.UInt64:
           v = (double)io.ValueUnsigned64;
           break;
-        case TypePrefixes.Int64:
+        case bhl.MsgPack.TypePrefixes.Int64:
           v = (double)io.ValueSigned64;    
           break;
         default:
@@ -989,5 +987,4 @@ public class MsgPackDataReader : IReader
   }
 }
 
-} // namespace marshall
 } // namespace bhl

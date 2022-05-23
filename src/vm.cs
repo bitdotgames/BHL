@@ -4,8 +4,6 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-using marshall;
-
 public enum Opcodes
 {
   Constant          = 1,
@@ -2283,7 +2281,7 @@ public class CompiledModule
     foreach(var import in imports)
       on_import?.Invoke(import);
 
-    Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
+    marshall.Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
     //NOTE: in order to avoid duplicate symbols error during un-marshalling we import
     //      the global namespace only once the object is un-marshalled
     //NOTE: we use lightweight importing without any validation
@@ -2325,7 +2323,7 @@ public class CompiledModule
           cn = new Const(cn_type, r.ReadDouble(), "");
         else if(cn_type == ConstType.TPROXY)
         {
-          var tp = Marshall.Stream2Obj<TypeProxy>(src, symb_factory);
+          var tp = marshall.Marshall.Stream2Obj<TypeProxy>(src, symb_factory);
           if(string.IsNullOrEmpty(tp.name))
             throw new Exception("Missing name");
           cn = new Const(tp);
@@ -2352,7 +2350,7 @@ public class CompiledModule
       foreach(var import in cm.imports)
         w.Write(import);
 
-      var symb_bytes = Marshall.Obj2Bytes(cm.ns);
+      var symb_bytes = marshall.Marshall.Obj2Bytes(cm.ns);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 
@@ -2396,7 +2394,7 @@ public class CompiledModule
           w.Write(cn.num);
         else if(cn.type == ConstType.TPROXY)
         {
-          Marshall.Obj2Stream(cn.tproxy, dst);
+          marshall.Marshall.Obj2Stream(cn.tproxy, dst);
         }
         else
           throw new Exception("Unknown type: " + cn.type);

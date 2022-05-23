@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-using marshall;
-
 public interface IScope
 {
   // Look up name in this scope without fallback!
@@ -60,7 +58,7 @@ public class LocalScope : IScope
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
+public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -303,11 +301,11 @@ public class Namespace : Symbol, IScope, IMarshallable, ISymbolResolver
     return null;
   }
 
-  public override void Sync(SyncContext ctx) 
+  public override void Sync(marshall.SyncContext ctx) 
   {
-    Marshall.Sync(ctx, ref name);
-    Marshall.Sync(ctx, ref module_name);
-    Marshall.Sync(ctx, ref members);
+    marshall.Marshall.Sync(ctx, ref name);
+    marshall.Marshall.Sync(ctx, ref module_name);
+    marshall.Marshall.Sync(ctx, ref members);
   }
 }
 
