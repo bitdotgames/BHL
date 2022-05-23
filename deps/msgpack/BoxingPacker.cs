@@ -20,7 +20,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-namespace MsgPack
+namespace bhl.MsgPack
 {
 	public class BoxingPacker
 	{

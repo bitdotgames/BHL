@@ -20,7 +20,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
 
-namespace MsgPack.Compiler
+namespace bhl.MsgPack.Compiler
 {
 	static class PackILGenerator
 	{

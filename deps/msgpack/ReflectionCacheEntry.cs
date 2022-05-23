@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace MsgPack
+namespace bhl.MsgPack
 {
 	public class ReflectionCacheEntry
 	{

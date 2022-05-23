@@ -20,9 +20,9 @@ using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
-using MsgPack.Compiler;
+using bhl.MsgPack.Compiler;
 
-namespace MsgPack
+namespace bhl.MsgPack
 {
 	public class CompiledPacker
 	{

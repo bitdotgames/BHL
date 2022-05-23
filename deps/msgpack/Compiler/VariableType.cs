@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-namespace MsgPack.Compiler
+namespace bhl.MsgPack.Compiler
 {
 	public enum VariableType
 	{

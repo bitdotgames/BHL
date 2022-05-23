@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-namespace MsgPack
+namespace bhl.MsgPack
 {
 	public enum TypePrefixes : byte
 	{

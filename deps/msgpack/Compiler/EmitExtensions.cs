@@ -18,7 +18,7 @@ using System;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace MsgPack.Compiler
+namespace bhl.MsgPack.Compiler
 {
 	public static class EmitExtensions
 	{

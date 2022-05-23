@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MsgPack
+namespace bhl.MsgPack
 {
 	public static class ReflectionCache
 	{

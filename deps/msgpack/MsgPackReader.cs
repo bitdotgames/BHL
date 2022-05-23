@@ -18,7 +18,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace MsgPack
+namespace bhl.MsgPack
 {
 	public class MsgPackReader
 	{

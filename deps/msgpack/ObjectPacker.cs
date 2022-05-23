@@ -21,7 +21,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace MsgPack
+namespace bhl.MsgPack
 {
 	public class ObjectPacker
 	{
