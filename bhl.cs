@@ -48,21 +48,8 @@ public static class Tasks
       extra_args = "-debug";
     }
 
-    MCSBuild(tm, new string[] {
-      $"{BHL_ROOT}/deps/msgpack/Compiler/*.cs",
-      $"{BHL_ROOT}/deps/msgpack/*.cs",
-      $"{BHL_ROOT}/src/type.cs", 
-      $"{BHL_ROOT}/src/vm.cs", 
-      $"{BHL_ROOT}/src/error.cs", 
-      $"{BHL_ROOT}/src/symbol.cs", 
-      $"{BHL_ROOT}/src/scope.cs", 
-      $"{BHL_ROOT}/src/loader.cs", 
-      $"{BHL_ROOT}/src/storage.cs", 
-      $"{BHL_ROOT}/src/nodes.cs", 
-      $"{BHL_ROOT}/src/util.cs",
-      $"{BHL_ROOT}/src/marshall.cs",
-      $"{BHL_ROOT}/src/lz4.cs",
-     }, 
+    MCSBuild(tm, 
+      File.ReadLines($"{BHL_ROOT}/back_sources").ToArray(),
       dll_file,
       $"{extra_args} -target:library",
       mcs_bin
