@@ -64,8 +64,6 @@ public static class Tasks
   [Task()]
   public static void clean(Taskman tm, string[] args)
   {
-    tm.Rm($"{BHL_ROOT}/src/autogen.cs");
-
     foreach(var dll in tm.Glob($"{BHL_ROOT}/*.dll"))
     {
       if(!dll.StartsWith("bhl_"))
