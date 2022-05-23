@@ -15,10 +15,10 @@ public static class Tasks
   public static void build_front_dll(Taskman tm, string[] args)
   {
     MCSBuild(tm, new string[] {
-      $"{BHL_ROOT}/src/msgpack/*.cs",
-      $"{BHL_ROOT}/src/g/*.cs",
-      $"{BHL_ROOT}/src/vm/*.cs",
       $"{BHL_ROOT}/src/*.cs",
+      $"{BHL_ROOT}/src/g/*.cs",
+      $"{BHL_ROOT}/src/msgpack/*.cs",
+      $"{BHL_ROOT}/src/vm/*.cs",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
       $"{BHL_ROOT}/deps/lz4.dll", 
      },
@@ -48,8 +48,10 @@ public static class Tasks
       extra_args = "-debug";
     }
 
-    MCSBuild(tm, 
-      File.ReadLines($"{BHL_ROOT}/back_sources").ToArray(),
+    MCSBuild(tm, new string[] {
+        $"{BHL_ROOT}/src/msgpack/*.cs",
+        $"{BHL_ROOT}/src/vm/*.cs",
+      },
       dll_file,
       $"{extra_args} -target:library",
       mcs_bin
