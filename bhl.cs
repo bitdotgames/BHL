@@ -22,6 +22,7 @@ public static class Tasks
     var front_src = new List<string>() {
       $"{BHL_ROOT}/src/*.cs",
       $"{BHL_ROOT}/src/g/*.cs",
+      $"{BHL_ROOT}/deps/mono_opts.dll",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
       $"{BHL_ROOT}/deps/lz4.dll", 
     };
