@@ -119,7 +119,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 
       var this_symb = Resolve(other_symb.name);
 
-      if(other_symb is Namespace other_ns)
+      if(other_symb is Namespace other_ns && !(other_symb is NamespaceNative))
       {
         //NOTE: if there's no such local symbol let's
         //      create an empty namespace
