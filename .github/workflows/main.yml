@@ -12,7 +12,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
+  test_linux:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -27,7 +27,7 @@ jobs:
       
     - name: Run example
       run: cd example && ./run.sh
-  build2:
+  test_win:
     # The type of runner that the job will run on
     runs-on: windows-latest
 
@@ -38,4 +38,4 @@ jobs:
 
     # Runs a single command using the runners shell
     - name: Run all tests
-      run: bhl test
+      run: ./bhl test
