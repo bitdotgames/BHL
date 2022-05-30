@@ -43,4 +43,4 @@ jobs:
 
     # Runs a single command using the runners shell
     - name: Run all tests
-      run: ./bhl test
+      run: refreshenv && ./bhl test
