@@ -22,14 +22,14 @@ jobs:
       run: ./bhl test
     - name: Run example
       run: cd example && ./run.sh
-  test_win:
-    # The type of runner that the job will run on
-    runs-on: windows-latest
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-    - name: Install mono
-      run: choco install mono && refreshenv && mcs --version
-    - name: Run all tests
-      run: ./bhl test
+# test_win:
+#   # The type of runner that the job will run on
+#   runs-on: windows-latest
+#   # Steps represent a sequence of tasks that will be executed as part of the job
+#   steps:
+#   # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+#   - uses: actions/checkout@v2
+#   - name: Install mono
+#     run: choco install mono
+#   - name: Run all tests
+#     run: ./bhl test
