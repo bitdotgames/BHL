@@ -31,6 +31,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install mono
       run: choco install mono
-    - run: mcs --version
+    - run: mono --version
     - name: Run all tests
       run: ./bhl test
