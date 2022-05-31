@@ -1,4 +1,13 @@
 
 func main([]string argv) {
-  std.io.WriteLine("Hello World!")
+  paral {
+    {
+      yield()
+      std.io.WriteLine("World!")
+    }
+    {
+      std.io.Write("Hello ")
+      suspend()
+    }
+  }
 }

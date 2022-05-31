@@ -159,11 +159,20 @@ public class RunCmd : ICmd
 
     var bytes = new MemoryStream(File.ReadAllBytes(conf.res_file));
     var vm = new VM(conf.ts, new ModuleLoader(conf.ts, bytes));
+
     vm.LoadModule(Path.GetFileNameWithoutExtension(files[0]));
-    var argv = Val.NewObj(vm, ValList.New(vm), new GenericArrayTypeSymbol(new TypeProxy()));
+
+    var argv_lst = ValList.New(vm); 
+    //TODO:
+    //foreach(var arg in args)
+    //  argv_lst.Add(Val.NewStr(vm, arg));
+    var argv = Val.NewObj(vm, argv_lst, new GenericArrayTypeSymbol(new TypeProxy()));
     if(vm.Start("main", argv) == null)
       throw new Exception("No 'main' function found");
-    vm.Tick();
+
+    const float dt = 0.016f;
+    while(vm.Tick())
+      System.Threading.Thread.Sleep((int)(dt * 1000));
   }
 
   static void ShowPosition(string file, Error err_obj)
