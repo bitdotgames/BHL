@@ -9,7 +9,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src/*.cs" />
+    <Compile Include="src/vm/*.cs" />
+    <Compile Include="src/std/*.cs" />
+    <Compile Include="src/cmd/*.cs" />
     <Compile Include="src/g/*.cs" />
     <Compile Include="src/lsp/*.cs" />
     <Compile Include="tests/*.cs" />

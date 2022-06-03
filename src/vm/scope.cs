@@ -303,6 +303,8 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 
   public override void Sync(marshall.SyncContext ctx) 
   {
+    //NOTE: links are not persisted since it's assumed 
+    //      they are restored by code above
     marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref module_name);
     marshall.Marshall.Sync(ctx, ref members);
@@ -311,12 +313,12 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 
 public class NamespaceNative : Namespace
 {
-  public SymbolIndex natives;
+  public SymbolIndex native_indices;
 
-  public NamespaceNative(SymbolIndex natives, string name = "")
+  public NamespaceNative(SymbolIndex native_indices, string name = "")
     : base(name, "")
   {
-    this.natives = natives;
+    this.native_indices = native_indices;
   }
 
   public NamespaceNative Namespace(string name)
@@ -327,7 +329,7 @@ public class NamespaceNative : Namespace
 
     if(sym == null)
     {
-      sym = new NamespaceNative(natives, name);
+      sym = new NamespaceNative(native_indices, name);
       Define(sym);
     }
 
@@ -337,18 +339,18 @@ public class NamespaceNative : Namespace
   public override void Define(Symbol sym) 
   {
     var fsn = sym as FuncSymbolNative;
-    bool is_native = fsn != null && fsn.scope_idx == -1;
+    bool need_native_index = fsn != null && fsn.scope_idx == -1;
 
     base.Define(sym);
 
     //NOTE: For native func symbols we store the unique global index
-    if(is_native)
-      fsn.scope_idx = natives.Add(sym);
+    if(need_native_index)
+      fsn.scope_idx = native_indices.Add(sym);
   }
 
   public new NamespaceNative Clone()
   {
-    var copy = new NamespaceNative(natives);
+    var copy = new NamespaceNative(native_indices);
 
     //TODO: get rid of this copy-paste?
     for(int i=0;i<members.Count;++i)
