@@ -10,5 +10,6 @@ obj
 *.dylib*
 *.mdb
 *.dll*
+*.bhc
 
 .idea

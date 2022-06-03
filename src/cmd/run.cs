@@ -127,6 +127,7 @@ public class RunCmd : ICmd
       src_dir = "./";
 
     var conf = new CompileConf();
+    conf.ts = new Types();
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.use_cache = false;
     conf.self_file = GetSelfFile();
@@ -134,7 +135,7 @@ public class RunCmd : ICmd
     conf.files = files;
     conf.inc_dir = src_dir;
     conf.max_threads = 1;
-    conf.res_file = files[0] + ".bhc";
+    conf.res_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
     conf.tmp_dir = Path.GetTempPath();
     conf.err_file = Path.GetTempPath() + "/bhl.error";
     conf.userbindings = userbindings;
@@ -155,6 +156,23 @@ public class RunCmd : ICmd
     }
     if(err != 0)
       Environment.Exit(err);
+
+    var bytes = new MemoryStream(File.ReadAllBytes(conf.res_file));
+    var vm = new VM(conf.ts, new ModuleLoader(conf.ts, bytes));
+
+    vm.LoadModule(Path.GetFileNameWithoutExtension(files[0]));
+
+    var argv_lst = ValList.New(vm); 
+    //TODO:
+    //foreach(var arg in args)
+    //  argv_lst.Add(Val.NewStr(vm, arg));
+    var argv = Val.NewObj(vm, argv_lst, new GenericArrayTypeSymbol(new TypeProxy()));
+    if(vm.Start("main", argv) == null)
+      throw new Exception("No 'main' function found");
+
+    const float dt = 0.016f;
+    while(vm.Tick())
+      System.Threading.Thread.Sleep((int)(dt * 1000));
   }
 
   static void ShowPosition(string file, Error err_obj)

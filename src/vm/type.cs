@@ -83,6 +83,7 @@ public struct TypeProxy : marshall.IMarshallable
       bool is_weak_ref = 
         resolved is Symbol symb && 
         (symb is BuiltInSymbol ||
+         symb is NamespaceNative ||
          symb is ClassSymbolNative ||
          symb is ClassSymbolScript ||
          symb is InterfaceSymbolNative ||
@@ -378,6 +379,8 @@ public class Types : ISymbolResolver
     ns = new NamespaceNative(natives);
 
     InitBuiltins();
+
+    std.Init(this);
   }
 
   Types(SymbolIndex natives, NamespaceNative ns)

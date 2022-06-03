@@ -2225,8 +2225,8 @@ public class CompiledModule
   static public CompiledModule FromStream(Types types, Stream src, ISymbolResolver resolver = null, System.Action<string> on_import = null)
   {
     var ns = new Namespace();
-    //NOTE: it's assumed types.ns is always imported by each module, 
-    //      however we add it directly to imports array in order
+    //NOTE: it's assumed types.ns is always linked by each module, 
+    //      however we add it directly to links list in order
     //      avoid duplicate symbols error during un-marshalling
     ns.links.Add(types.ns);
 
