@@ -83,7 +83,6 @@ public struct TypeProxy : marshall.IMarshallable
       bool is_weak_ref = 
         resolved is Symbol symb && 
         (symb is BuiltInSymbol ||
-         symb is NamespaceNative ||
          symb is ClassSymbolNative ||
          symb is ClassSymbolScript ||
          symb is InterfaceSymbolNative ||
@@ -346,9 +345,10 @@ public class Types : ISymbolResolver
   };
 #endif
 
-  public NamespaceNative ns;
+  public Namespace ns;
 
-  public SymbolIndex natives = new SymbolIndex();
+  //NOTE: used for global symbol indices (e.g native funcs)
+  public Symbol2Index gindex = new Symbol2Index();
 
   static Types()
   {
@@ -376,16 +376,16 @@ public class Types : ISymbolResolver
 
   public Types()
   {
-    ns = new NamespaceNative(natives);
+    ns = new Namespace(gindex, "", "");
 
     InitBuiltins();
 
     std.Init(this);
   }
 
-  Types(SymbolIndex natives, NamespaceNative ns)
+  Types(Symbol2Index native_indices, Namespace ns)
   {
-    this.natives = natives;
+    this.gindex = native_indices;
     this.ns = ns;
   }
 
@@ -396,7 +396,7 @@ public class Types : ISymbolResolver
 
   public Types Clone()
   {
-    var clone = new Types(natives.Clone(), ns.Clone());
+    var clone = new Types(gindex.Clone(), ns.Clone());
     return clone;
   }
 

@@ -158,7 +158,7 @@ public class ModuleCompiler : AST_Visitor
   //NOTE: for testing purposes only
   public ModuleCompiler()
   {
-    module = new Module(null, "", "");
+    module = new Module(new Types(), "", "");
     curr_scope = module.ns;
 
     UseInit();

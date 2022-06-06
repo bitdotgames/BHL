@@ -672,7 +672,7 @@ public class TestNamespace : BHL_TestBase
               return null;
             }
         );
-        ts.ns.Namespace("foo").Define(fn);
+        ts.ns.Nest("foo").Define(fn);
       }
       {
         var fn = new FuncSymbolNative("wow", ts.T("int"),
@@ -681,7 +681,7 @@ public class TestNamespace : BHL_TestBase
               return null;
             }
         );
-        ts.ns.Namespace("bar").Define(fn);
+        ts.ns.Nest("bar").Define(fn);
       }
 
       var vm = MakeVM(bhl, ts);

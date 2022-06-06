@@ -1689,7 +1689,7 @@ public class SymbolsSet<T> : marshall.IMarshallable where T : Symbol,IType
   }
 }
 
-public class SymbolIndex 
+public class Symbol2Index 
 {
   List<Symbol> index = new List<Symbol>();
 
@@ -1715,9 +1715,9 @@ public class SymbolIndex
     return index.IndexOf(s);
   }
 
-  public SymbolIndex Clone()
+  public Symbol2Index Clone()
   {
-    var clone = new SymbolIndex();
+    var clone = new Symbol2Index();
     clone.index.AddRange(index);
     return clone;
   }
@@ -1773,7 +1773,7 @@ public class SymbolFactory : marshall.IFactory
       case TupleType.CLASS_ID:
         return new TupleType();
       case Namespace.CLASS_ID:
-        return new Namespace();
+        return new Namespace(types.gindex);
       default:
         return null;
     }

@@ -6,7 +6,7 @@ public static class std
 {
   static public void Init(Types ts)
   {
-    var io = ts.ns.Namespace("std").Namespace("io");
+    var io = ts.ns.Nest("std").Nest("io");
 
     {
       var fn = new FuncSymbolNative("Write", ts.ns.T("void"),

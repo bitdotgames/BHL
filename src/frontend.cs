@@ -2052,12 +2052,12 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     var ns = curr_scope.Resolve(name) as Namespace;
     if(ns == null)
     {
-      ns = new Namespace(name, module.name);
+      ns = new Namespace(types.gindex, name, module.name);
       curr_scope.Define(ns);
     }
     else 
     {
-      if(!string.IsNullOrEmpty(ns.module_name))
+      if(!string.IsNullOrEmpty(ns.module_name) && ns.module_name != module.name)
         throw new Exception("Expected an empty namespace's module name, got: " + ns.module_name);
       ns.module_name = module.name;
     }
@@ -3079,7 +3079,7 @@ public class Module
   public Module(Types ts, ModulePath path)
   {
     this.path = path;
-    ns = new Namespace("", name);
+    ns = new Namespace(ts.gindex, "", name);
   }
 
   public Module(Types ts, string name, string file_path)

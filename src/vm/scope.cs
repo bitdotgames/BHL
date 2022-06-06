@@ -68,26 +68,49 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 
   public List<Namespace> links = new List<Namespace>();
 
+  public Symbol2Index gindex;
+
   public override uint ClassId()
   {
     return CLASS_ID;
   }
 
-  public Namespace(string name, string module_name = "")
+  //for tests
+  public Namespace(string name)
+    : this(null, name, "")
+  {}
+
+  public Namespace(Symbol2Index gindex, string name, string module_name)
     : base(name, default(TypeProxy))
   {
+    this.gindex = gindex;
     this.module_name = module_name;
     this.members = new SymbolsStorage(this);
   }
 
   //marshall version 
-  public Namespace()
-    : this("", "")
+  public Namespace(Symbol2Index gindex = null)
+    : this(gindex, "", "")
   {}
+
+  public Namespace Nest(string name)
+  {
+    var sym = Resolve(name);
+    if(sym != null && !(sym is Namespace)) 
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    if(sym == null)
+    {
+      sym = new Namespace(gindex, name, module_name);
+      Define(sym);
+    }
+
+    return sym as Namespace;
+  }
 
   public Namespace Clone()
   {
-    var copy = new Namespace(name, module_name);
+    var copy = new Namespace(gindex, name, module_name);
 
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
@@ -119,17 +142,9 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 
       var this_symb = Resolve(other_symb.name);
 
-      if(other_symb is Namespace other_ns && !(other_symb is NamespaceNative))
+      if(other_symb is Namespace other_ns)
       {
-        //NOTE: if there's no such local symbol let's
-        //      create an empty namespace
-        if(this_symb == null)
-        {
-          var ns = new Namespace(other_symb.name);
-          ns.links.Add(other_ns);
-          members.Add(ns);
-        }
-        else if(this_symb is Namespace this_ns)
+        if(this_symb is Namespace this_ns)
         {
           var conflict = this_ns.TryLink(other_ns);
           if(conflict != null)
@@ -241,16 +256,31 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
   public Symbol Resolve(string name)
   {
     var it = GetIterator();
+    int c = 0;
     while(it.Next())
     {
       var s = it.current.members.Find(name);
       if(s != null)
-        return s;
+      {
+        //NOTE: let's create a local version of the linked namespace,
+        //      we create it here assuming it might be changed 'on demand',
+        //      since we want to prevent changing of the linked namespace
+        if(c > 0 && s is Namespace ons)
+        {
+          var ns = new Namespace(gindex, s.name, module_name);
+          ns.links.Add(ons);
+          members.Add(ns);
+          return ns;
+        }
+        else
+          return s;
+      }
+      ++c;
     }
     return null;
   }
 
-  public virtual void Define(Symbol sym) 
+  public void Define(Symbol sym) 
   {
     if(Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
@@ -260,7 +290,12 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
     //      a function defined in a module. Likewise we have
     //      something similar for global variables.
     if(sym is IScopeIndexed si && si.scope_idx == -1)
-      si.scope_idx = members.Count; 
+    {
+      if(sym is FuncSymbolNative fsn)
+        fsn.scope_idx = gindex.Add(sym);
+      else
+        si.scope_idx = members.Count; 
+    }
 
     members.Add(sym);
   }
@@ -308,58 +343,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
     marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref module_name);
     marshall.Marshall.Sync(ctx, ref members);
-  }
-}
-
-public class NamespaceNative : Namespace
-{
-  public SymbolIndex native_indices;
-
-  public NamespaceNative(SymbolIndex native_indices, string name = "")
-    : base(name, "")
-  {
-    this.native_indices = native_indices;
-  }
-
-  public NamespaceNative Namespace(string name)
-  {
-    var sym = Resolve(name);
-    if(sym != null && !(sym is NamespaceNative)) 
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
-    if(sym == null)
-    {
-      sym = new NamespaceNative(native_indices, name);
-      Define(sym);
-    }
-
-    return sym as NamespaceNative;
-  }
-
-  public override void Define(Symbol sym) 
-  {
-    var fsn = sym as FuncSymbolNative;
-    bool need_native_index = fsn != null && fsn.scope_idx == -1;
-
-    base.Define(sym);
-
-    //NOTE: For native func symbols we store the unique global index
-    if(need_native_index)
-      fsn.scope_idx = native_indices.Add(sym);
-  }
-
-  public new NamespaceNative Clone()
-  {
-    var copy = new NamespaceNative(native_indices);
-
-    //TODO: get rid of this copy-paste?
-    for(int i=0;i<members.Count;++i)
-      copy.members.Add(members[i]);
-
-    foreach(var imp in links)
-      copy.links.Add(imp.Clone());
-
-    return copy;
   }
 }
 
