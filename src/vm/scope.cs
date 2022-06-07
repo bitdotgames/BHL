@@ -78,10 +78,10 @@ public class LocalScope : IScope
     if(sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = next_idx;
 
-    ++next_idx;
-
     if(next_idx >= func_symb.local_vars_num)
       func_symb.local_vars_num = next_idx + 1;
+
+    ++next_idx;
 
     members.Add(sym);
   }
