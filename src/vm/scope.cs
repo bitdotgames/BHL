@@ -82,8 +82,15 @@ public class LocalScope : IScope
 
   public void Define(Symbol sym) 
   {
-    if(this.Resolve(sym.name) != null || fallback.Resolve(sym.name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+    IScope tmp = this;
+    while(true)
+    {
+      if(tmp.Resolve(sym.name) != null)
+        throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+      if(tmp == func_owner)
+        break;
+      tmp = tmp.GetFallbackScope();
+    }
 
     RawDefine(sym);
   }

@@ -2730,6 +2730,50 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLocalScopeVarHidingInSubSubScope()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 1
+      {
+        {
+          {
+            int i = 2
+          }
+        }
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'i'"
+    );
+  }
+
+  [IsTested()]
+  public void TestLocalScopeVarOverridesGlobalVar()
+  {
+    string bhl = @"
+
+    int i = 10
+    func int test() 
+    {
+      int i = 1
+      return i
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLocalScopeForVars()
   {
     string bhl = @"
