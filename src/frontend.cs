@@ -2979,7 +2979,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
   AST_Tree CommonVisitBlock(BlockType type, IParseTree[] sts)
   {
     var orig_scope = curr_scope;
-    curr_scope = new LocalScope(curr_scope); 
+    curr_scope = new LocalScope(orig_scope); 
 
     bool is_paral = 
       type == BlockType.PARAL || 

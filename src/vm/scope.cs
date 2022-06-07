@@ -42,7 +42,9 @@ public class LocalScope : IScope
   public LocalScope(IScope fallback) 
   { 
     this.fallback = fallback;  
-    func_symb = fallback.FindTopFuncSymbolScript();
+    func_symb = fallback.FindEnclosingFuncSymbol();
+    if(func_symb == null)
+      throw new Exception("No top func symbol found");
     members = new SymbolsStorage(this);
   }
 
@@ -408,9 +410,9 @@ public static class ScopeExtensions
     return null;
   }
 
-  public static FuncSymbolScript FindTopFuncSymbolScript(this IScope scope)
+  public static FuncSymbolScript FindEnclosingFuncSymbol(this IScope scope)
 	{
-    var fallback = scope.GetFallbackScope();
+    var fallback = scope;
     while(fallback != null)
     {
       if(fallback is FuncSymbolScript fss)
