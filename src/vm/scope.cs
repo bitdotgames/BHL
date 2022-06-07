@@ -35,7 +35,7 @@ public class LocalScope : IScope
   int start_idx;
   int next_idx;
 
-  FuncSymbolScript func_symb;
+  FuncSymbolScript func_owner;
 
   IScope fallback;
 
@@ -46,8 +46,8 @@ public class LocalScope : IScope
     this.is_paral = is_paral;
 
     this.fallback = fallback;  
-    func_symb = fallback.FindEnclosingFuncSymbol();
-    if(func_symb == null)
+    func_owner = fallback.FindEnclosingFuncSymbol();
+    if(func_owner == null)
       throw new Exception("No top func symbol found");
     members = new SymbolsStorage(this);
   }
@@ -60,7 +60,7 @@ public class LocalScope : IScope
     else if(fallback is LocalScope fallback_ls)
       start_idx = fallback_ls.next_idx;
     next_idx = start_idx;
-    func_symb.local_scope = this;
+    func_owner.local_scope = this;
   }
 
   public void Exit()
@@ -69,13 +69,13 @@ public class LocalScope : IScope
     {
       if(fallback_ls.is_paral)
         fallback_ls.next_idx = next_idx;
-      func_symb.local_scope = fallback_ls;
+      func_owner.local_scope = fallback_ls;
     }
   }
 
   public SymbolsStorage GetMembers() { return members; }
 
-  public virtual Symbol Resolve(string name) 
+  public Symbol Resolve(string name) 
   {
     return members.Find(name);
   }
@@ -96,8 +96,8 @@ public class LocalScope : IScope
       si.scope_idx = next_idx;
     }
 
-    if(next_idx >= func_symb.local_vars_num)
-      func_symb.local_vars_num = next_idx + 1;
+    if(next_idx >= func_owner.local_vars_num)
+      func_owner.local_vars_num = next_idx + 1;
 
     ++next_idx;
 
