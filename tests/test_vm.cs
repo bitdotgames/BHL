@@ -2708,7 +2708,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLocalScopeNotSupported()
+  public void TestLocalScopeVarHiding()
   {
     string bhl = @"
 
@@ -2730,7 +2730,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestLocalScopeNotSupported2()
+  public void TestLocalScopeForVars()
   {
     string bhl = @"
 
@@ -2739,20 +2739,25 @@ public class TestVM : BHL_TestBase
       {
         int i = 1
         i = i + 1
+        trace((string)i)
       }
       {
         string i
         i = ""foo""
+        trace((string)i)
       }
     }
     ";
 
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "already defined symbol 'i'"
-    );
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+
+    AssertEqual("1foo", log.ToString());
+    CommonChecks(vm);
   }
 
   [IsTested()]

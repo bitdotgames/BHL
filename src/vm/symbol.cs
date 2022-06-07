@@ -792,12 +792,6 @@ public class VariableSymbol : Symbol, IScopeIndexed
   }
 
 #if BHL_FRONT
-  //e.g. for  { { int a = 1 } } scope level will be 2
-  public int scope_level;
-  //once we leave the scope level the variable was defined at   
-  //we mark this symbol as 'out of scope'
-  public bool is_out_of_scope;
-
   public VariableSymbol(WrappedParseTree parsed, string name, TypeProxy type) 
     : this(name, type) 
   {
@@ -931,17 +925,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
   public virtual Symbol Resolve(string name) 
   {
-    var s = GetMembers().Find(name);
-    if(s != null)
-    {
-#if BHL_FRONT
-      if(s is VariableSymbol vs && vs.is_out_of_scope)
-        return null;
-      else
-#endif
-        return s;
-    }
-    return null;
+    return GetMembers().Find(name);
   }
 
   public virtual void Define(Symbol sym) 
@@ -1071,11 +1055,7 @@ public class FuncSymbolScript : FuncSymbol
 {
   public const uint CLASS_ID = 13; 
 
-  public int local_vars_num {
-    get {
-      return members.Count;
-    }
-  }
+  public int local_vars_num;
 
   public int default_args_num;
   public int ip_addr;
@@ -1122,6 +1102,16 @@ public class FuncSymbolScript : FuncSymbol
 
     marshall.Marshall.Sync(ctx, ref default_args_num);
     marshall.Marshall.Sync(ctx, ref ip_addr);
+  }
+
+  public override void Define(Symbol sym) 
+  {
+    if(!(sym is FuncArgSymbol))
+      throw new Exception("Only func arguments allowed, got: " + sym.GetType().Name);
+
+    ++local_vars_num;
+
+    base.Define(sym);
   }
 }
 
@@ -1178,7 +1168,7 @@ public class LambdaSymbol : FuncSymbolScript
 
       //NOTE: only variable symbols are considered
       var res = decl.members.Find(name);
-      if(res is VariableSymbol vs && !vs.is_out_of_scope)
+      if(res is VariableSymbol vs)
         return AssignUpValues(vs, i+1, my_idx);
     }
 

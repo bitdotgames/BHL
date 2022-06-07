@@ -30,14 +30,22 @@ public interface IInstanceType : IType, IScope
 
 public class LocalScope : IScope 
 {
+  public int start_idx;
+  int last_idx;
+
+  FuncSymbolScript func_symb;
+
   IScope fallback;
 
   public SymbolsStorage members;
 
-  public LocalScope(IScope fallback = null) 
+  public LocalScope(int start_idx, IScope fallback) 
   { 
-    members = new SymbolsStorage(this);
+    this.start_idx = start_idx;
+    last_idx = start_idx;
     this.fallback = fallback;  
+    func_symb = fallback.FindTopFuncSymbolScript();
+    members = new SymbolsStorage(this);
   }
 
   public SymbolsStorage GetMembers() { return members; }
@@ -51,6 +59,14 @@ public class LocalScope : IScope
   {
     if(this.Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    if(sym is IScopeIndexed si && si.scope_idx == -1)
+      si.scope_idx = last_idx;
+
+    ++last_idx;
+
+    if(last_idx >= func_symb.local_vars_num)
+      func_symb.local_vars_num = last_idx + 1;
 
     members.Add(sym);
   }
@@ -378,6 +394,18 @@ public static class ScopeExtensions
 
     return null;
   }
+
+  public static FuncSymbolScript FindTopFuncSymbolScript(this IScope scope)
+	{
+    var fallback = scope.GetFallbackScope();
+    while(fallback != null)
+    {
+      if(fallback is FuncSymbolScript fss)
+        return fss;
+      fallback = fallback.GetFallbackScope();
+    }
+    return null;
+	}
 
   public static string DumpMembers(this IScope scope, int level = 0)
   {

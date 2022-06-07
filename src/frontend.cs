@@ -69,7 +69,6 @@ public class ModuleFrontend : bhlBaseVisitor<object>
   ParseTreeProperty<WrappedParseTree> tree_props = new ParseTreeProperty<WrappedParseTree>();
 
   IScope curr_scope;
-  int scope_level;
 
   HashSet<FuncSymbol> return_found = new HashSet<FuncSymbol>();
 
@@ -2520,7 +2519,6 @@ public class ModuleFrontend : bhlBaseVisitor<object>
       (VariableSymbol) new FuncArgSymbol(var_tree, name.GetText(), tp, is_ref) :
       new VariableSymbol(var_tree, name.GetText(), tp);
 
-    symb.scope_level = scope_level;
     curr_scope.Define(symb);
 
     if(write)
@@ -2531,25 +2529,25 @@ public class ModuleFrontend : bhlBaseVisitor<object>
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
   {
-    CommonVisitBlock(BlockType.SEQ, ctx.statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.SEQ, ctx.statement());
     return null;
   }
 
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
-    CommonVisitBlock(BlockType.FUNC, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
     return null;
   }
 
   public override object VisitParal(bhlParser.ParalContext ctx)
   {
-    CommonVisitBlock(BlockType.PARAL, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.PARAL, ctx.block().statement());
     return null;
   }
 
   public override object VisitParalAll(bhlParser.ParalAllContext ctx)
   {
-    CommonVisitBlock(BlockType.PARAL_ALL, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.PARAL_ALL, ctx.block().statement());
     return null;
   }
 
@@ -2558,7 +2556,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     ++defer_stack;
     if(defer_stack > 1)
       FireError(ctx, "nested defers are not allowed");
-    CommonVisitBlock(BlockType.DEFER, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.DEFER, ctx.block().statement());
     --defer_stack;
     return null;
   }
@@ -2582,7 +2580,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
 
     ast.AddChild(main_cond);
     PushAST(ast);
-    CommonVisitBlock(BlockType.SEQ, main.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.SEQ, main.block().statement());
     PopAST();
 
     //NOTE: if in the block before there were no 'return' statements and in the current block
@@ -2634,7 +2632,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
 
       ast.AddChild(item_cond);
       PushAST(ast);
-      CommonVisitBlock(BlockType.SEQ, item.block().statement(), new_local_scope: false);
+      CommonVisitBlock(BlockType.SEQ, item.block().statement());
       PopAST();
 
       if(!seen_return && return_found.Contains(func_symb))
@@ -2648,7 +2646,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
       return_found.Remove(func_symb);
 
       PushAST(ast);
-      CommonVisitBlock(BlockType.SEQ, @else.block().statement(), new_local_scope: false);
+      CommonVisitBlock(BlockType.SEQ, @else.block().statement());
       PopAST();
 
       if(!seen_return && return_found.Contains(func_symb))
@@ -2715,7 +2713,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
     PopAST();
     ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
@@ -2733,7 +2731,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     ++loops_stack;
 
     PushAST(ast);
-    CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
+    CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
     PopAST();
     ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
@@ -2805,7 +2803,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
+    var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
     //appending post iteration code
     if(for_post_iter != null)
     {
@@ -2960,7 +2958,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement(), new_local_scope: false);
+    var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
     //prepending filling of the iterator var
     block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
     var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line, null);
@@ -2980,12 +2978,10 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_Tree CommonVisitBlock(BlockType type, IParseTree[] sts, bool new_local_scope, bool auto_add = true)
+  AST_Tree CommonVisitBlock(BlockType type, IParseTree[] sts)
   {
-    ++scope_level;
-
-    if(new_local_scope)
-      curr_scope = new LocalScope(curr_scope); 
+    var orig_scope = curr_scope;
+    curr_scope = new LocalScope(0, curr_scope); 
 
     bool is_paral = 
       type == BlockType.PARAL || 
@@ -3022,24 +3018,13 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     }
     PopAST();
 
-    //NOTE: we need to undefine all symbols which were defined at the current
-    //      scope level
-    var scope_members = curr_scope.GetMembers();
-    for(int m=scope_members.Count;m-- > 0;)
-    {
-      if(scope_members[m] is VariableSymbol vs && vs.scope_level == scope_level)
-        vs.is_out_of_scope = true;
-    }
-    --scope_level;
-
-    if(new_local_scope)
-      curr_scope = curr_scope.GetFallbackScope();
+    //TODO: do something with scope start_idx
+    curr_scope = orig_scope;
 
     if(is_paral)
       return_found.Remove(PeekFuncDecl());
 
-    if(auto_add)
-      PeekAST().AddChild(ast);
+    PeekAST().AddChild(ast);
     return ast;
   }
 }
