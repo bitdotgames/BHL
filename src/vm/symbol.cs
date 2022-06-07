@@ -1136,7 +1136,9 @@ public class LambdaSymbol : FuncSymbolScript
   {
     var local = new VariableSymbol(src.parsed, src.name, src.type);
 
-    this.local_scope.LocalDefine(local);
+    //NOTE: we want to avoid possible recursion during resolve
+    //      checks that's why we use a 'raw' version
+    this.local_scope.RawDefine(local);
 
     var up = new AST_UpVal(local.name, local.scope_idx, src.scope_idx); 
     upvals.Add(up);

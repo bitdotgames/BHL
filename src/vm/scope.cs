@@ -85,10 +85,10 @@ public class LocalScope : IScope
     if(this.Resolve(sym.name) != null || fallback.Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
-    LocalDefine(sym);
+    RawDefine(sym);
   }
 
-  public void LocalDefine(Symbol sym) 
+  public void RawDefine(Symbol sym) 
   {
     if(sym is IScopeIndexed si && si.scope_idx == -1)
     {
