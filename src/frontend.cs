@@ -2408,11 +2408,10 @@ public class ModuleFrontend : bhlBaseVisitor<object>
         Symbol subst_symbol = null;
         if(is_decl)
         {
-          var symbols = ((FuncSymbol)curr_scope).members;
+          var symbols = curr_scope.GetMembers();
           disabled_symbol = (Symbol)symbols[symbols.Count - 1];
-          symbols.RemoveAt(symbols.Count - 1);
           subst_symbol = new VariableSymbol(disabled_symbol.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
-          curr_scope.Define(subst_symbol);
+          symbols.Replace(disabled_symbol, subst_symbol);
         }
 
         //NOTE: need to put expression nodes first
@@ -2428,9 +2427,8 @@ public class ModuleFrontend : bhlBaseVisitor<object>
         //NOTE: declaring disabled symbol again
         if(disabled_symbol != null)
         {
-          var symbols = ((FuncSymbol)curr_scope).members;
-          symbols.RemoveAt(symbols.IndexOf(subst_symbol));
-          curr_scope.Define(disabled_symbol);
+          var symbols = curr_scope.GetMembers();
+          symbols.Replace(subst_symbol, disabled_symbol);
         }
 
         if(pop_json_type)
@@ -2981,7 +2979,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
   AST_Tree CommonVisitBlock(BlockType type, IParseTree[] sts)
   {
     var orig_scope = curr_scope;
-    curr_scope = new LocalScope(0, curr_scope); 
+    curr_scope = new LocalScope(curr_scope); 
 
     bool is_paral = 
       type == BlockType.PARAL || 
@@ -3018,7 +3016,9 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     }
     PopAST();
 
-    //TODO: do something with scope start_idx
+    if(orig_scope is LocalScope ls)
+      ls.last_idx = is_paral ? ((LocalScope)curr_scope).last_idx : ls.start_idx; 
+
     curr_scope = orig_scope;
 
     if(is_paral)

@@ -2756,7 +2756,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
 
-    AssertEqual("1foo", log.ToString());
+    AssertEqual("2foo", log.ToString());
     CommonChecks(vm);
   }
 

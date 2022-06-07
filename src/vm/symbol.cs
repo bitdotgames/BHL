@@ -1581,6 +1581,19 @@ public class SymbolsStorage : marshall.IMarshallable
     return IndexOf(s);
   }
 
+  public bool Replace(Symbol what, Symbol subst)
+  {
+    int idx = IndexOf(what);
+    if(idx == -1)
+      return false;
+    
+    list[idx] = subst;
+    str2symb.Remove(what.name);
+    str2symb.Add(subst.name, subst);
+
+    return true;
+  }
+
   public void Clear()
   {
     foreach(var s in list)

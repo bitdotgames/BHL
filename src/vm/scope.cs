@@ -31,7 +31,7 @@ public interface IInstanceType : IType, IScope
 public class LocalScope : IScope 
 {
   public int start_idx;
-  int last_idx;
+  public int last_idx;
 
   FuncSymbolScript func_symb;
 
@@ -39,9 +39,13 @@ public class LocalScope : IScope
 
   public SymbolsStorage members;
 
-  public LocalScope(int start_idx, IScope fallback) 
+  public LocalScope(IScope fallback) 
   { 
-    this.start_idx = start_idx;
+    if(fallback is FuncSymbolScript fss)
+      start_idx = fss.local_vars_num;
+    else if(fallback is LocalScope ls)
+      start_idx = ls.last_idx;
+
     last_idx = start_idx;
     this.fallback = fallback;  
     func_symb = fallback.FindTopFuncSymbolScript();
