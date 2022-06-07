@@ -2985,6 +2985,8 @@ public class ModuleFrontend : bhlBaseVisitor<object>
       type == BlockType.PARAL || 
       type == BlockType.PARAL_ALL;
 
+    ((LocalScope)curr_scope).Enter(is_paral);
+
     var ast = new AST_Block(type);
     var tmp = new AST_Interim();
     PushAST(ast);
@@ -3016,8 +3018,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     }
     PopAST();
 
-    if(orig_scope is LocalScope ls)
-      ls.last_idx = is_paral ? ((LocalScope)curr_scope).last_idx : ls.start_idx; 
+    ((LocalScope)curr_scope).Exit(is_paral);
 
     curr_scope = orig_scope;
 

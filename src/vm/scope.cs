@@ -30,26 +30,35 @@ public interface IInstanceType : IType, IScope
 
 public class LocalScope : IScope 
 {
-  public int start_idx;
-  public int last_idx;
+  int start_idx;
+  int next_idx;
 
   FuncSymbolScript func_symb;
 
   IScope fallback;
 
-  public SymbolsStorage members;
+  SymbolsStorage members;
 
   public LocalScope(IScope fallback) 
   { 
-    if(fallback is FuncSymbolScript fss)
-      start_idx = fss.local_vars_num;
-    else if(fallback is LocalScope ls)
-      start_idx = ls.last_idx;
-
-    last_idx = start_idx;
     this.fallback = fallback;  
     func_symb = fallback.FindTopFuncSymbolScript();
     members = new SymbolsStorage(this);
+  }
+
+  public void Enter(bool is_paral)
+  {
+    if(fallback is FuncSymbolScript fss)
+      start_idx = fss.local_vars_num;
+    else if(fallback is LocalScope fallback_ls)
+      start_idx = fallback_ls.next_idx;
+    next_idx = start_idx;
+  }
+
+  public void Exit(bool is_paral)
+  {
+    if(fallback is LocalScope fallback_ls)
+      fallback_ls.next_idx = is_paral ? next_idx : fallback_ls.start_idx; 
   }
 
   public SymbolsStorage GetMembers() { return members; }
@@ -65,12 +74,12 @@ public class LocalScope : IScope
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)
-      si.scope_idx = last_idx;
+      si.scope_idx = next_idx;
 
-    ++last_idx;
+    ++next_idx;
 
-    if(last_idx >= func_symb.local_vars_num)
-      func_symb.local_vars_num = last_idx + 1;
+    if(next_idx >= func_symb.local_vars_num)
+      func_symb.local_vars_num = next_idx + 1;
 
     members.Add(sym);
   }
