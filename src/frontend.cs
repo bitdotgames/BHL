@@ -2055,12 +2055,8 @@ public class ModuleFrontend : bhlBaseVisitor<object>
       ns = new Namespace(types.gindex, name, module.name);
       curr_scope.Define(ns);
     }
-    else 
-    {
-      if(!string.IsNullOrEmpty(ns.module_name) && ns.module_name != module.name)
-        throw new Exception("Expected an empty namespace's module name, got: " + ns.module_name);
-      ns.module_name = module.name;
-    }
+    else if(ns.module_name != module.name)
+      throw new Exception("Unexpected namespace's module name: " + ns.module_name);
 
     var orig_scope = curr_scope;
     curr_scope = ns;
