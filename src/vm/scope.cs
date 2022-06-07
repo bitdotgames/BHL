@@ -60,7 +60,7 @@ public class LocalScope : IScope
   public void Exit(bool is_paral)
   {
     if(fallback is LocalScope fallback_ls)
-      fallback_ls.next_idx = is_paral ? next_idx : fallback_ls.start_idx; 
+      fallback_ls.next_idx = is_paral ? next_idx : fallback_ls.start_idx + 1; 
   }
 
   public SymbolsStorage GetMembers() { return members; }
@@ -72,7 +72,7 @@ public class LocalScope : IScope
 
   public virtual void Define(Symbol sym) 
   {
-    if(this.Resolve(sym.name) != null)
+    if(this.Resolve(sym.name) != null || fallback.Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)

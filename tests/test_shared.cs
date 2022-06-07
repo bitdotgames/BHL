@@ -30,7 +30,7 @@ public class BHL_TestRunner
   {
     bool verbose = false;
     var p = new OptionSet() {
-      { "verbose", "don't use cache",
+      { "verbose", "be verbose",
         v => verbose = v != null },
      };
 
