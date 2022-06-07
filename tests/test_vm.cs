@@ -2756,7 +2756,49 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
 
+    var fn = (FuncSymbolScript)vm.ResolveByFullName("test");
+    AssertEqual(1, fn.local_vars_num);
+
     AssertEqual("2foo", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLocalScopeForVarsInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral_all {
+        {
+          int i = 1
+          i = i + 1
+          yield()
+          trace((string)i)
+        }
+        {
+          string i
+          i = ""foo""
+          yield()
+          trace((string)i)
+        }
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+
+    AssertEqual("2foo", log.ToString());
+
+    var fn = (FuncSymbolScript)vm.ResolveByFullName("test");
+    AssertEqual(2, fn.local_vars_num);
+
     CommonChecks(vm);
   }
 

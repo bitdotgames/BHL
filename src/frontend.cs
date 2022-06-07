@@ -2979,13 +2979,14 @@ public class ModuleFrontend : bhlBaseVisitor<object>
   AST_Tree CommonVisitBlock(BlockType type, IParseTree[] sts)
   {
     var orig_scope = curr_scope;
-    curr_scope = new LocalScope(orig_scope); 
 
     bool is_paral = 
       type == BlockType.PARAL || 
       type == BlockType.PARAL_ALL;
 
-    ((LocalScope)curr_scope).Enter(is_paral);
+    curr_scope = new LocalScope(is_paral, orig_scope); 
+
+    ((LocalScope)curr_scope).Enter();
 
     var ast = new AST_Block(type);
     var tmp = new AST_Interim();
@@ -3018,7 +3019,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     }
     PopAST();
 
-    ((LocalScope)curr_scope).Exit(is_paral);
+    ((LocalScope)curr_scope).Exit();
 
     curr_scope = orig_scope;
 

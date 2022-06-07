@@ -1096,12 +1096,7 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
-    //NOTE: we don't Sync actual arguments for now,
-    //      we probably should be doint this however
-    //      we need to separate arguments from local
-    //      variables (check if they are stored in the 
-    //      same members dictionary)
-
+    marshall.Marshall.Sync(ctx, ref local_vars_num);
     marshall.Marshall.Sync(ctx, ref default_args_num);
     marshall.Marshall.Sync(ctx, ref ip_addr);
   }

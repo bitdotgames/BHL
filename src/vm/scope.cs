@@ -30,6 +30,8 @@ public interface IInstanceType : IType, IScope
 
 public class LocalScope : IScope 
 {
+  bool is_paral;
+
   int start_idx;
   int next_idx;
 
@@ -39,8 +41,10 @@ public class LocalScope : IScope
 
   SymbolsStorage members;
 
-  public LocalScope(IScope fallback) 
+  public LocalScope(bool is_paral, IScope fallback) 
   { 
+    this.is_paral = is_paral;
+
     this.fallback = fallback;  
     func_symb = fallback.FindEnclosingFuncSymbol();
     if(func_symb == null)
@@ -48,9 +52,10 @@ public class LocalScope : IScope
     members = new SymbolsStorage(this);
   }
 
-  public void Enter(bool is_paral)
+  public void Enter()
   {
     if(fallback is FuncSymbolScript fss)
+      //start with func arguments number
       start_idx = fss.local_vars_num;
     else if(fallback is LocalScope fallback_ls)
       start_idx = fallback_ls.next_idx;
@@ -58,11 +63,11 @@ public class LocalScope : IScope
     func_symb.local_scope = this;
   }
 
-  public void Exit(bool is_paral)
+  public void Exit()
   {
     if(fallback is LocalScope fallback_ls)
     {
-      if(is_paral)
+      if(fallback_ls.is_paral)
         fallback_ls.next_idx = next_idx;
       func_symb.local_scope = fallback_ls;
     }
