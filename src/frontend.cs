@@ -103,7 +103,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
   }
 
   //NOTE: a list is used instead of stack, so that it's easier to traverse by index
-  List<FuncSymbol> func_decl_stack = new List<FuncSymbol>();
+  List<FuncSymbolScript> func_decl_stack = new List<FuncSymbolScript>();
 
   Stack<IType> json_type_stack = new Stack<IType>();
 
@@ -1747,7 +1747,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     return null;
   }
 
-  void PushFuncDecl(FuncSymbol symb)
+  void PushFuncDecl(FuncSymbolScript symb)
   {
     func_decl_stack.Add(symb);
   }
@@ -1757,7 +1757,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     func_decl_stack.RemoveAt(func_decl_stack.Count-1);
   }
 
-  FuncSymbol PeekFuncDecl()
+  FuncSymbolScript PeekFuncDecl()
   {
     if(func_decl_stack.Count == 0)
       return null;

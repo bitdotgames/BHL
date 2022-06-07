@@ -1057,6 +1057,8 @@ public class FuncSymbolScript : FuncSymbol
 
   public int local_vars_num;
 
+  public LocalScope local_scope;
+
   public int default_args_num;
   public int ip_addr;
 
@@ -1120,14 +1122,14 @@ public class LambdaSymbol : FuncSymbolScript
 {
   List<AST_UpVal> upvals;
 
-  List<FuncSymbol> fdecl_stack;
+  List<FuncSymbolScript> fdecl_stack;
 
   public LambdaSymbol(
     WrappedParseTree parsed, 
     string name,
     FuncSignature sig,
     List<AST_UpVal> upvals,
-    List<FuncSymbol> fdecl_stack
+    List<FuncSymbolScript> fdecl_stack
   ) 
     : base(parsed, sig, name, 0, 0)
   {
@@ -1139,7 +1141,7 @@ public class LambdaSymbol : FuncSymbolScript
   {
     var local = new VariableSymbol(src.parsed, src.name, src.type);
 
-    this.Define(local);
+    this.local_scope.LocalDefine(local);
 
     var up = new AST_UpVal(local.name, local.scope_idx, src.scope_idx); 
     upvals.Add(up);
@@ -1153,10 +1155,10 @@ public class LambdaSymbol : FuncSymbolScript
     if(s != null)
       return s;
 
-    return ResolveUpvalue(name);
+    return ResolveUpValue(name);
   }
 
-  Symbol ResolveUpvalue(string name)
+  Symbol ResolveUpValue(string name)
   {
     int my_idx = FindMyIdxInStack();
     if(my_idx == -1)
@@ -1166,8 +1168,7 @@ public class LambdaSymbol : FuncSymbolScript
     {
       var decl = fdecl_stack[i];
 
-      //NOTE: only variable symbols are considered
-      var res = decl.members.Find(name);
+      var res = decl.local_scope.ResolveWithFallback(name);
       if(res is VariableSymbol vs)
         return AssignUpValues(vs, i+1, my_idx);
     }

@@ -55,12 +55,17 @@ public class LocalScope : IScope
     else if(fallback is LocalScope fallback_ls)
       start_idx = fallback_ls.next_idx;
     next_idx = start_idx;
+    func_symb.local_scope = this;
   }
 
   public void Exit(bool is_paral)
   {
     if(fallback is LocalScope fallback_ls)
-      fallback_ls.next_idx = is_paral ? next_idx : fallback_ls.start_idx + 1; 
+    {
+      if(is_paral)
+        fallback_ls.next_idx = next_idx;
+      func_symb.local_scope = fallback_ls;
+    }
   }
 
   public SymbolsStorage GetMembers() { return members; }
@@ -70,13 +75,21 @@ public class LocalScope : IScope
     return members.Find(name);
   }
 
-  public virtual void Define(Symbol sym) 
+  public void Define(Symbol sym) 
   {
     if(this.Resolve(sym.name) != null || fallback.Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
+    LocalDefine(sym);
+  }
+
+  public void LocalDefine(Symbol sym) 
+  {
     if(sym is IScopeIndexed si && si.scope_idx == -1)
+    {
+      //Console.WriteLine(sym.name + " " + next_idx);
       si.scope_idx = next_idx;
+    }
 
     if(next_idx >= func_symb.local_vars_num)
       func_symb.local_vars_num = next_idx + 1;
