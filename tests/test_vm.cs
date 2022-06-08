@@ -4253,6 +4253,300 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForLoopLocalScope()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 10
+
+      for( int i = 0; i < 3; i = i + 1 )
+      {
+        x1 = x1 - i
+      }
+
+      int i = 2
+
+      return x1 - i
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 5);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForMultiExpression()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0, int j = 1; i < 3; i = i + 1, j = j + 2) {
+        trace((string)(i*j) + "";"")
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("0;3;10;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForReverse()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 2; i >= 0; i = i - 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("210", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForUseExternalVar()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i
+      for(i = 1; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("12", log.ToString());
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestForNested()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0; i < 3; i = i + 1) {
+        for(int j = 0; j < 2; j = j + 1) {
+          trace((string)i + "","" + (string)j + "";"")
+        }
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("0,0;0,1;1,0;1,1;2,0;2,1;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral {
+        for(int i = 0; i < 3; i = i + 1) {
+          trace((string)i)
+          yield()
+        }
+        suspend()
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual("012", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForBadPreSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(i ; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var ts = new Types();
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts);
+      },
+      "no viable alternative at input 'i ;"
+    );
+  }
+
+  [IsTested()]
+  public void TestForEmptyPreSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(; i < 3; i = i + 1) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("012", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForEmptyPostSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int i = 0
+      for(; i < 3;) {
+        trace((string)i)
+        i = i + 1
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("012", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForBadPostSection()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(int i = 0 ; i < 3; i) {
+        trace((string)i)
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "no viable alternative at input 'i)'"
+    );
+  }
+
+  [IsTested()]
+  public void TestForCondIsRequired()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      for(;;) {
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "no viable alternative at input ';'"
+    );
+  }
+
+  [IsTested()]
+  public void TestForNonBoolCond()
+  {
+    string bhl = @"
+
+    func int foo() 
+    {
+      return 14
+    }
+
+    func test() 
+    {
+      for(; foo() ;) {
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types"
+    );
+  }
+
+
+  [IsTested()]
   public void TestForeachLoop()
   {
     string bhl = @"
@@ -4323,6 +4617,384 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForeachTraceItems()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      []int its = [1, 2, 3]
+      foreach(int it in its) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachForNativeArrayBinding()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      []Color cs = [{r:1}, {r:2}, {r:3}]
+      foreach(Color c in cs) {
+        trace((string)c.r)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+    BindColor(ts);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachUseExternalIteratorVar()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int it
+      []int its = [1, 2, 3]
+      foreach(it in its) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachWithInPlaceArr()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach(int it in [1,2,3]) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachWithReturnedArr()
+  {
+    string bhl = @"
+
+    func []int foo()
+    {
+      return [1,2,3]
+    }
+
+    func test() 
+    {
+      foreach(int it in foo()) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachInParal()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral {
+        foreach(int it in [1,2,3]) {
+          trace((string)it)
+          yield()
+        }
+        suspend()
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual("123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSeveralForeachInParalAll()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      paral_all {
+        foreach(int it in [1,2,3]) {
+          trace((string)it)
+          yield()
+        }
+        foreach(int it2 in [4,5,6]) {
+          trace((string)it2)
+          yield()
+        }
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("142536", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachBreak()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach(int it in [1,2,3]) {
+        if(it == 3) {
+          break
+        }
+        trace((string)it)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("12", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachSeveral()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      []int its = [1,2,3]
+      foreach(int it in its) {
+        trace((string)it)
+      }
+
+      foreach(int it2 in its) {
+        trace((string)it2)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("123123", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachNested()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      []int its = [1,2,3]
+      foreach(int it in its) {
+        foreach(int it2 in its) {
+          trace((string)it + "","" + (string)it2 + "";"")
+        }
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachNested2()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach(int it in [1,2,3]) {
+        foreach(int it2 in [20,30]) {
+          trace((string)it + "","" + (string)it2 + "";"")
+        }
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("1,20;1,30;2,20;2,30;3,20;3,30;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeachIteratorVarBadType()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach(string it in [1,2,3]) {
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachArrBadType()
+  {
+    string bhl = @"
+
+    func float foo()
+    {
+      return 14
+    }
+
+    func test() 
+    {
+      foreach(float it in foo()) {
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachExternalIteratorVarBadType()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      string it
+      foreach(it in [1,2,3]) {
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachRedeclareError()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      string it
+      foreach(int it in [1,2,3]) {
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'it'"
+    );
+  }
+
+  [IsTested()]
   public void TestBreakInForLoop()
   {
     string bhl = @"
@@ -4379,6 +5051,48 @@ public class TestVM : BHL_TestBase
     AssertFalse(vm.Tick());
     AssertEqual(fb.result.PopRelease().num, 9);
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBadBreak()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      break
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "not within loop construct"
+    );
+  }
+
+  [IsTested()]
+  public void TestBadBreakInDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      while(true) {
+        defer {
+          break
+        }
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "not within loop construct"
+    );
   }
 
   [IsTested()]
@@ -11112,7 +11826,7 @@ public class TestVM : BHL_TestBase
         trace((string)j)
       }
 
-      for(j = 0, int k = 0, k++; j < 3; j++, k++) {
+      for(int j = 0, int k = 0, k++; j < 3; j++, k++) {
         trace((string)j)
         trace((string)k)
       }
@@ -13499,741 +14213,6 @@ public class TestVM : BHL_TestBase
     Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestFor()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(int i = 0; i < 3; i = i + 1) {
-        trace((string)i)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("012", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForMultiExpression()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(int i = 0, int j = 1; i < 3; i = i + 1, j = j + 2) {
-        trace((string)(i*j) + "";"")
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("0;3;10;", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForReverse()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(int i = 2; i >= 0; i = i - 1) {
-        trace((string)i)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("210", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForUseExternalVar()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int i
-      for(i = 1; i < 3; i = i + 1) {
-        trace((string)i)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("12", log.ToString());
-    CommonChecks(vm);
-  }
-  
-  [IsTested()]
-  public void TestForNested()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(int i = 0; i < 3; i = i + 1) {
-        for(int j = 0; j < 2; j = j + 1) {
-          trace((string)i + "","" + (string)j + "";"")
-        }
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("0,0;0,1;1,0;1,1;2,0;2,1;", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForSeveral()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(int i = 0; i < 3; i = i + 1) {
-        trace((string)i)
-      }
-
-      for(i = 0; i < 30; i = i + 10) {
-        trace((string)i)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("01201020", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForInParal()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      paral {
-        for(int i = 0; i < 3; i = i + 1) {
-          trace((string)i)
-          yield()
-        }
-        suspend()
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
-    AssertEqual("012", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForBadPreSection()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int i = 0
-      for(i ; i < 3; i = i + 1) {
-        trace((string)i)
-      }
-    }
-    ";
-
-    var ts = new Types();
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts);
-      },
-      "no viable alternative at input 'i ;"
-    );
-  }
-
-  [IsTested()]
-  public void TestForEmptyPreSection()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int i = 0
-      for(; i < 3; i = i + 1) {
-        trace((string)i)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("012", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForEmptyPostSection()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int i = 0
-      for(; i < 3;) {
-        trace((string)i)
-        i = i + 1
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("012", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForBadPostSection()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(int i = 0 ; i < 3; i) {
-        trace((string)i)
-      }
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "no viable alternative at input 'i)'"
-    );
-  }
-
-  [IsTested()]
-  public void TestForCondIsRequired()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      for(;;) {
-      }
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "no viable alternative at input ';'"
-    );
-  }
-
-  [IsTested()]
-  public void TestForNonBoolCond()
-  {
-    string bhl = @"
-
-    func int foo() 
-    {
-      return 14
-    }
-
-    func test() 
-    {
-      for(; foo() ;) {
-      }
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "incompatible types"
-    );
-  }
-
-  [IsTested()]
-  public void TestForeachTraceItems()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      []int its = [1, 2, 3]
-      foreach(int it in its) {
-        trace((string)it)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("123", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachForNativeArrayBinding()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      []Color cs = [{r:1}, {r:2}, {r:3}]
-      foreach(Color c in cs) {
-        trace((string)c.r)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindColor(ts);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("123", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachUseExternalIteratorVar()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      int it
-      []int its = [1, 2, 3]
-      foreach(it in its) {
-        trace((string)it)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("123", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachWithInPlaceArr()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      foreach(int it in [1,2,3]) {
-        trace((string)it)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("123", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachWithReturnedArr()
-  {
-    string bhl = @"
-
-    func []int foo()
-    {
-      return [1,2,3]
-    }
-
-    func test() 
-    {
-      foreach(int it in foo()) {
-        trace((string)it)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("123", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachInParal()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      paral {
-        foreach(int it in [1,2,3]) {
-          trace((string)it)
-          yield()
-        }
-        suspend()
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
-    AssertEqual("123", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestSeveralForeachInParalAll()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      paral_all {
-        foreach(int it in [1,2,3]) {
-          trace((string)it)
-          yield()
-        }
-        foreach(int it2 in [4,5,6]) {
-          trace((string)it2)
-          yield()
-        }
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("142536", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachBreak()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      foreach(int it in [1,2,3]) {
-        if(it == 3) {
-          break
-        }
-        trace((string)it)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("12", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachSeveral()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      []int its = [1,2,3]
-      foreach(int it in its) {
-        trace((string)it)
-      }
-
-      foreach(int it2 in its) {
-        trace((string)it2)
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("123123", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachNested()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      []int its = [1,2,3]
-      foreach(int it in its) {
-        foreach(int it2 in its) {
-          trace((string)it + "","" + (string)it2 + "";"")
-        }
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachNested2()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      foreach(int it in [1,2,3]) {
-        foreach(int it2 in [20,30]) {
-          trace((string)it + "","" + (string)it2 + "";"")
-        }
-      }
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(bhl, ts);
-    Execute(vm, "test");
-    AssertEqual("1,20;1,30;2,20;2,30;3,20;3,30;", log.ToString());
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestForeachIteratorVarBadType()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      foreach(string it in [1,2,3]) {
-      }
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "incompatible types"
-    );
-  }
-
-  [IsTested()]
-  public void TestForeachArrBadType()
-  {
-    string bhl = @"
-
-    func float foo()
-    {
-      return 14
-    }
-
-    func test() 
-    {
-      foreach(float it in foo()) {
-      }
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "incompatible types"
-    );
-  }
-
-  [IsTested()]
-  public void TestForeachExternalIteratorVarBadType()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      string it
-      foreach(it in [1,2,3]) {
-      }
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "incompatible types"
-    );
-  }
-
-  [IsTested()]
-  public void TestForeachRedeclareError()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      string it
-      foreach(int it in [1,2,3]) {
-      }
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "already defined symbol 'it'"
-    );
-  }
-
-  [IsTested()]
-  public void TestBadBreak()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      break
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "not within loop construct"
-    );
-  }
-
-  [IsTested()]
-  public void TestBadBreakInDefer()
-  {
-    string bhl = @"
-
-    func test() 
-    {
-      while(true) {
-        defer {
-          break
-        }
-      }
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "not within loop construct"
-    );
   }
 
   [IsTested()]

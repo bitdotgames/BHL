@@ -2759,6 +2759,10 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     // ...
     // <post iter code>
     //}
+
+    var local_scope = new LocalScope(false, curr_scope);
+    curr_scope = local_scope;
+    local_scope.Enter();
     
     var for_pre = ctx.forExp().forPre();
     if(for_pre != null)
@@ -2830,6 +2834,9 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       PopAST();
     }
     PopAST();
+
+    local_scope.Exit();
+    curr_scope = local_scope.GetFallbackScope();
 
     --loops_stack;
 
@@ -2978,15 +2985,13 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
   AST_Tree CommonVisitBlock(BlockType type, IParseTree[] sts)
   {
-    var orig_scope = curr_scope;
-
     bool is_paral = 
       type == BlockType.PARAL || 
       type == BlockType.PARAL_ALL;
 
-    curr_scope = new LocalScope(is_paral, orig_scope); 
-
-    ((LocalScope)curr_scope).Enter();
+    var local_scope = new LocalScope(is_paral, curr_scope);
+    curr_scope = local_scope;  
+    local_scope.Enter();
 
     var ast = new AST_Block(type);
     var tmp = new AST_Interim();
@@ -3019,9 +3024,8 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     }
     PopAST();
 
-    ((LocalScope)curr_scope).Exit();
-
-    curr_scope = orig_scope;
+    local_scope.Exit();
+    curr_scope = local_scope.GetFallbackScope();
 
     if(is_paral)
       return_found.Remove(PeekFuncDecl());
