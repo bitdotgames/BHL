@@ -21,7 +21,7 @@ public static class Tasks
   public static void build_front_dll(Taskman tm, string[] args)
   {
     var front_src = new List<string>() {
-      $"{BHL_ROOT}/src/*.cs",
+      $"{BHL_ROOT}/src/compile/*.cs",
       $"{BHL_ROOT}/src/g/*.cs",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
       $"{BHL_ROOT}/deps/lz4.dll", 
