@@ -7414,9 +7414,6 @@ public class TestVM : BHL_TestBase
 
     func float test() 
     {
-      //TODO: need more flexible types support for this:
-      //func(float) func(float)
-      
       return func func float(float) (float a) {
         return func float (float b) { return a + b }
       }(2)(3)
@@ -13948,54 +13945,6 @@ public class TestVM : BHL_TestBase
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }
-
-  ////TODO: do we really need this behavior supported?
-  ////[IsTested()]
-  //public void TestNullPassedAsCustomNull()
-  //{
-  //  string bhl = @"
-  //    
-  //  func test(CustomNull c) 
-  //  {
-  //    if(c != null) {
-  //      trace(""NOTNULL;"")
-  //    }
-  //    if(c == null) {
-  //      trace(""NULL;"")
-  //    }
-
-  //    yield()
-
-  //    if(c != null) {
-  //      trace(""NOTNULL2;"")
-  //    }
-  //    if(c == null) {
-  //      trace(""NULL2;"")
-  //    }
-  //  }
-  //  ";
-
-  //  var ts = SymbolTable.CreateBuiltins();
-  //  var trace_stream = new MemoryStream();
-
-  //  BindTrace(ts, trace_stream);
-  //  BindCustomNull(ts);
-
-  //  var intp = Interpret(bhl, ts);
-  //  var node = intp.GetFuncCallNode("test");
-  //  var cn = new CustomNull();
-  //  node.SetArgs(DynVal.NewObj(cn));
-
-  //  cn.is_null = false;
-  //  node.run();
-
-  //  cn.is_null = true;
-  //  node.run();
-
-  //  var str = GetString(trace_stream);
-  //  AssertEqual("NOTNULL;NULL2;", str);
-  //  CommonChecks(intp);
-  //}
 
   [IsTested()]
   public void TestSetNullObjFromUserBinding()
