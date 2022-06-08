@@ -79,18 +79,19 @@ public class LocalScope : IScope
 
   public void Define(Symbol sym) 
   {
-    EnsureNotDeclaredInEnclosingScopes(sym);
+    EnsureNotDefinedInEnclosingScopes(sym);
 
     RawDefine(sym);
   }
 
-  void EnsureNotDeclaredInEnclosingScopes(Symbol sym)
+  void EnsureNotDefinedInEnclosingScopes(Symbol sym)
   {
     IScope tmp = this;
     while(true)
     {
       if(tmp.Resolve(sym.name) != null)
         throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+      //going 'up' until the owning function
       if(tmp == func_owner)
         break;
       tmp = tmp.GetFallbackScope();
