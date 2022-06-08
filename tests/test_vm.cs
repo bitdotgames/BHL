@@ -15787,6 +15787,33 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserEnumOrderIrrelevant()
+  {
+    string bhl = @"
+
+    func int test() {
+      return (int)foo()
+    }
+
+    func Foo foo() {
+      return Foo.B
+    }
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+      
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserEnumIntCast()
   {
     string bhl = @"

@@ -405,15 +405,6 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       TryVisitArtifact(kv.Value);
   }
 
-  void TryVisitArtifact(IScope scope, string name)
-  {
-    var full_name = scope.GetFullName(name);
-
-    ParserArtifact pa;
-    if(parser_artifacts.TryGetValue(full_name, out pa))
-      TryVisitArtifact(pa);
-  }
-
   void TryVisitArtifact(ParserArtifact artifact)
   {
     if(artifact.visited)
@@ -437,6 +428,15 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     PopAST();
 
     curr_scope = orig_scope;
+  }
+
+  void TryVisitArtifact(IScope scope, string name)
+  {
+    var full_name = scope.GetFullName(name);
+
+    ParserArtifact pa;
+    if(parser_artifacts.TryGetValue(full_name, out pa))
+      TryVisitArtifact(pa);
   }
 
   public override object VisitImports(bhlParser.ImportsContext ctx)
