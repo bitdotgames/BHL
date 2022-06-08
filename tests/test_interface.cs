@@ -72,10 +72,11 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserInterfaceInheritance()
+  public void TestUserInterfaceInheritanceIrrelevantOrder()
   {
     string bhl = @"
-    class Bar { 
+    interface Foo : Wow { 
+      func bool hey(int a, float b)
     }
 
     interface Wow 
@@ -83,9 +84,9 @@ public class TestInterfaces : BHL_TestBase
       func Bar,int bar(string s)
     }
 
-    interface Foo : Wow { 
-      func bool hey(int a, float b)
+    class Bar { 
     }
+
     ";
 
     var vm = MakeVM(bhl);

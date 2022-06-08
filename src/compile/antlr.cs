@@ -2073,6 +2073,12 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
         var ext_name = ctx.extensions().nsName()[i]; 
 
         var ext = ns.ResolveSymbol(ext_name.GetText());
+        if(ext == null)
+        {
+          TryVisitArtifact(ns, ext_name.GetText());
+          ext = ns.ResolveSymbol(ext_name.GetText());
+        }
+
         if(ext is InterfaceSymbol ifs)
         {
           if(inherits.IndexOf(ifs) != -1)
@@ -2160,6 +2166,12 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
         var ext_name = ctx.extensions().nsName()[i]; 
 
         var ext = ns.ResolveSymbol(ext_name.GetText());
+        if(ext == null)
+        {
+          TryVisitArtifact(ns, ext_name.GetText());
+          ext = ns.ResolveSymbol(ext_name.GetText());
+        }
+
         if(ext is ClassSymbol cs)
         {
           if(super_class != null)

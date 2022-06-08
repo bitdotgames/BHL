@@ -74,7 +74,7 @@ public class TestClasses : BHL_TestBase
 
     class Foo { }
     class Bar { }
-      
+
     func bool test() 
     {
       Foo f = {}
@@ -817,7 +817,6 @@ public class TestClasses : BHL_TestBase
   public void TestUserChildAttributes()
   {
     string bhl = @"
-
     class Foo {
       int a
       int b
@@ -1200,6 +1199,31 @@ public class TestClasses : BHL_TestBase
       Foo f = { x : 1, y : 2}
       return f.y + f.x
     }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestChildUserClassOrderIrrelevant()
+  {
+    string bhl = @"
+
+    func float test() {
+      Foo f = { x : 1, y : 2}
+      return f.y + f.x
+    }
+
+    class Foo : Base { 
+      float y
+    }
+      
+    class Base {
+      float x 
+    }
+
     ";
 
     var vm = MakeVM(bhl);
