@@ -4281,6 +4281,39 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSeveralForLoopsLocalScope()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 10
+
+      for( int i = 0; i < 3; i = i + 1 )
+      {
+        x1 = x1 - i
+      }
+
+      for( int i = 1; i < 3; i = i + 1 )
+      {
+        x1 = x1 - i
+      }
+
+
+      return x1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 4);
+    CommonChecks(vm);
+  }
+
+
+  [IsTested()]
   public void TestForMultiExpression()
   {
     string bhl = @"
