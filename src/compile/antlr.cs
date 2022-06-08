@@ -68,6 +68,15 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
   ITokenStream tokens;
   ParseTreeProperty<WrappedParseTree> tree_props = new ParseTreeProperty<WrappedParseTree>();
 
+  class ParserArtifact
+  {
+    public bool visited;
+    public IScope scope;
+    public ParserRuleContext ctx;
+  }
+
+  Dictionary<string, ParserArtifact> parser_artifacts = new Dictionary<string, ParserArtifact>();
+
   IScope curr_scope;
 
   HashSet<FuncSymbol> return_found = new HashSet<FuncSymbol>();
@@ -109,6 +118,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
+  AST_Module root_ast;
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s)
@@ -359,12 +369,12 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
   {
     if(result == null)
     {
-      var ast = new AST_Module(module.name);
-      PushAST(ast);
+      root_ast = new AST_Module(module.name);
+      PushAST(root_ast);
       VisitProgram(parsed.prog);
       PopAST();
 
-      result = new Result(module, ast);
+      result = new Result(module, root_ast);
     }
     return result;
   }
@@ -384,7 +394,49 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     
     Visit(ctx.decls()); 
 
+    VisitArtifacts();
+
     return null;
+  }
+
+  void VisitArtifacts()
+  {
+    foreach(var kv in parser_artifacts)
+      TryVisitArtifact(kv.Value);
+  }
+
+  void TryVisitArtifact(IScope scope, string name)
+  {
+    var full_name = scope.GetFullName(name);
+
+    ParserArtifact pa;
+    if(parser_artifacts.TryGetValue(full_name, out pa))
+      TryVisitArtifact(pa);
+  }
+
+  void TryVisitArtifact(ParserArtifact artifact)
+  {
+    if(artifact.visited)
+      return;
+    artifact.visited = true;
+
+    PushAST(root_ast);
+
+    var orig_scope = curr_scope;
+    curr_scope = artifact.scope;
+
+    if(artifact.ctx is bhlParser.FuncDeclContext fndecl)
+      Visit(fndecl);
+    else if(artifact.ctx is bhlParser.ClassDeclContext cldecl)
+      Visit(cldecl);
+    else if(artifact.ctx is bhlParser.InterfaceDeclContext ifacedecl)
+      Visit(ifacedecl);
+    else
+      throw new Exception("Unknown artifact parser context");
+
+    PopAST();
+
+    curr_scope = orig_scope;
   }
 
   public override object VisitImports(bhlParser.ImportsContext ctx)
@@ -467,9 +519,15 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     if(root_name != null)
     {
+      //TODO: re-write this code below
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
       if(name_symb == null)
-        FireError(root_name, "symbol not resolved");
+      {
+        TryVisitArtifact(scope, curr_name.GetText());
+        name_symb = scope.ResolveWithFallback(curr_name.GetText());
+        if(name_symb == null)
+          FireError(root_name, "symbol not resolved");
+      }
 
       //let's figure out the namespace offset
       if(name_symb is Namespace ns && chain != null)
@@ -1032,7 +1090,11 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       tp = ns.TArr(tp);
 
     if(tp.Get() == null)
-      FireError(ctx, "type '" + tp.name + "' not found");
+    {
+      TryVisitArtifact(ns, tp.name);
+      if(tp.Get() == null)
+        FireError(ctx, "type '" + tp.name + "' not found");
+    }
 
    return tp;
   }
@@ -1186,7 +1248,12 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     var arr_type = curr_type as ArrayTypeSymbol;
     var orig_type = arr_type.item_type.Get();
     if(orig_type == null)
-      FireError(ctx,  "type '" + arr_type.item_type.name + "' not found");
+    {
+      TryVisitArtifact(curr_scope, arr_type.item_type.name);
+      orig_type = arr_type.item_type.Get();
+      if(orig_type == null)
+        FireError(ctx,  "type '" + arr_type.item_type.name + "' not found");
+    }
     PushJsonType(orig_type);
 
     var ast = new AST_JsonArr(arr_type, ctx.Start.Line);
@@ -1927,6 +1994,20 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  ParserArtifact NewArtifact(string name, ParserRuleContext ctx)
+  {
+    string full_name = curr_scope.GetFullName(name); 
+
+    var pa = new ParserArtifact();
+    pa.visited = false;
+    pa.scope = curr_scope;
+    pa.ctx = ctx;
+
+    parser_artifacts.Add(full_name, pa);
+
+    return pa; 
+  }
+
   public override object VisitDecls(bhlParser.DeclsContext ctx)
   {
     var decls = ctx.decl();
@@ -1941,19 +2022,19 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       var fndecl = decls[i].funcDecl();
       if(fndecl != null)
       {
-        Visit(fndecl);
+        NewArtifact(fndecl.NAME().GetText(), fndecl);
         continue;
       }
       var cldecl = decls[i].classDecl();
       if(cldecl != null)
       {
-        Visit(cldecl);
+        NewArtifact(cldecl.NAME().GetText(), cldecl);
         continue;
       }
       var ifacedecl = decls[i].interfaceDecl();
       if(ifacedecl != null)
       {
-        Visit(ifacedecl);
+        NewArtifact(ifacedecl.NAME().GetText(), ifacedecl);
         continue;
       }
       var vdecl = decls[i].varDeclareAssign();
@@ -1962,7 +2043,6 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
         Visit(vdecl);
         continue;
       }
-
       var edecl = decls[i].enumDecl();
       if(edecl != null)
       {

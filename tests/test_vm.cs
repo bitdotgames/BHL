@@ -3025,6 +3025,33 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncDeclOrderIsIrrelevant()
+  {
+    string bhl = @"
+    func int bar() {
+      return foo()
+    }
+
+    func int foo() {
+      return wow()
+    }
+
+    func int test() {
+      return bar()
+    }
+
+    func int wow() {
+      return 1
+    }
+
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSimpleNativeFunc()
   {
     string bhl = @"

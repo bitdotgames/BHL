@@ -409,18 +409,20 @@ public static class ScopeExtensions
 {
   public static string GetFullName(this Symbol sym)
   {
-    return GetNamespaceNamePrefix(
-      sym.scope as Namespace, 
-      sym.name
-    );
+    return sym.scope.GetFullName(sym.name);
   }
 
-  public static string GetNamespaceNamePrefix(Namespace parent, string name)
+  public static string GetFullName(this IScope scope, string name)
   {
-    while(parent != null && parent.name.Length > 0)
+    while(scope != null)
     {
-      name = parent.name + '.' + name;
-      parent = (Namespace)parent.scope;
+      if(scope is Namespace ns)
+      {
+        if(ns.name.Length == 0)
+          break;
+        name = ns.name + '.' + name;
+      }
+      scope = scope.GetFallbackScope();
     }
     return name;
   }
