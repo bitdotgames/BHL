@@ -41,7 +41,7 @@ public class Compiler
     public ANTLR_Result parsed;
   }
 
-  public class Cache : ModuleFrontend.IParsedCache
+  public class Cache : ANTLR_Frontend.IParsedCache
   {
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
 
@@ -370,7 +370,7 @@ public class Compiler
 
             if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
             {
-              var parser = ModuleFrontend.Stream2Parser(file, sfs);
+              var parser = ANTLR_Frontend.Stream2Parser(file, sfs);
               var parsed = new ANTLR_Result(parser.TokenStream, parser.program());
 
               interim.parsed = parsed;
@@ -532,7 +532,7 @@ public class Compiler
       w.file2path.Clear();
       w.file2compiled.Clear();
 
-      var imp = new ModuleFrontend.Importer();
+      var imp = new ANTLR_Frontend.Importer();
       imp.SetParsedCache(w.cache);
       if(!string.IsNullOrEmpty(w.inc_dir))
         imp.AddToIncludePath(w.inc_dir);
@@ -563,12 +563,12 @@ public class Compiler
           {
             ++cache_miss;
 
-            ModuleFrontend.Result front_res = null;
+            ANTLR_Frontend.Result front_res = null;
 
             if(interim.parsed != null)
-              front_res = ModuleFrontend.ProcessParsed(file_module, interim.parsed, w.ts, imp);
+              front_res = ANTLR_Frontend.ProcessParsed(file_module, interim.parsed, w.ts, imp);
             else
-              front_res = ModuleFrontend.ProcessFile(file, w.ts, imp);
+              front_res = ANTLR_Frontend.ProcessFile(file, w.ts, imp);
 
             front_res = w.postproc.Patch(front_res, file);
 
@@ -642,13 +642,13 @@ public class Compiler
 public interface IFrontPostProcessor
 {
   //NOTE: returns patched result
-  ModuleFrontend.Result Patch(ModuleFrontend.Result fres, string src_file);
+  ANTLR_Frontend.Result Patch(ANTLR_Frontend.Result fres, string src_file);
   void Tally();
 }
 
 public class EmptyPostProcessor : IFrontPostProcessor 
 {
-  public ModuleFrontend.Result Patch(ModuleFrontend.Result fres, string src_file) { return fres; }
+  public ANTLR_Frontend.Result Patch(ANTLR_Frontend.Result fres, string src_file) { return fres; }
   public void Tally() {}
 }
 

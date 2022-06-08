@@ -770,7 +770,7 @@ public class BHL_TestBase
 
     var mdl = new bhl.Module(ts, "", "");
 
-    var front_res = ModuleFrontend.ProcessStream(mdl, bhl.ToStream(), ts);
+    var front_res = ANTLR_Frontend.ProcessStream(mdl, bhl.ToStream(), ts);
 
     if(show_ast)
       AST_Dumper.Dump(front_res.ast);

@@ -7,14 +7,6 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl {
 
-public class WrappedParseTree
-{
-  public IParseTree tree;
-  public Module module;
-  public ITokenStream tokens;
-  public IType eval_type;
-}
-
 public class ANTLR_Result
 {
   public ITokenStream tokens { get; private set; }
@@ -27,7 +19,15 @@ public class ANTLR_Result
   }
 }
 
-public class ModuleFrontend : bhlBaseVisitor<object>
+public class WrappedParseTree
+{
+  public IParseTree tree;
+  public Module module;
+  public ITokenStream tokens;
+  public IType eval_type;
+}
+
+public class ANTLR_Frontend : bhlBaseVisitor<object>
 {
   public class Result
   {
@@ -119,7 +119,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static Result ProcessFile(string file, Types ts, ModuleFrontend.Importer imp)
+  public static Result ProcessFile(string file, Types ts, ANTLR_Frontend.Importer imp)
   {
     using(var sfs = File.OpenRead(file))
     {
@@ -137,17 +137,17 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     return p;
   }
   
-  public static Result ProcessStream(Module module, Stream src, Types ts, ModuleFrontend.Importer imp = null, bool being_imported = false)
+  public static Result ProcessStream(Module module, Stream src, Types ts, ANTLR_Frontend.Importer imp = null, bool being_imported = false)
   {
     var p = Stream2Parser(module.file_path, src);
     var parsed = new ANTLR_Result(p.TokenStream, p.program());
     return ProcessParsed(module, parsed, ts, imp, being_imported);
   }
 
-  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, ModuleFrontend.Importer imp = null, bool being_imported = false)
+  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, ANTLR_Frontend.Importer imp = null, bool being_imported = false)
   {
     //var sw1 = System.Diagnostics.Stopwatch.StartNew();
-    var f = new ModuleFrontend(parsed, module, ts, imp, being_imported);
+    var f = new ANTLR_Frontend(parsed, module, ts, imp, being_imported);
     var res = f.Process();
     //sw1.Stop();
     //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
@@ -227,13 +227,13 @@ public class ModuleFrontend : bhlBaseVisitor<object>
       if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
       {
         //Console.WriteLine("HIT " + full_path);
-        ModuleFrontend.ProcessParsed(m, parsed, ts, this, being_imported: true);
+        ANTLR_Frontend.ProcessParsed(m, parsed, ts, this, being_imported: true);
       }
       else
       {
         var stream = File.OpenRead(full_path);
         //Console.WriteLine("MISS " + full_path);
-        ModuleFrontend.ProcessStream(m, stream, ts, this, being_imported: true);
+        ANTLR_Frontend.ProcessStream(m, stream, ts, this, being_imported: true);
         stream.Close();
       }
 
@@ -278,7 +278,7 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     }
   }
 
-  public ModuleFrontend(ANTLR_Result parsed, Module module, Types types, Importer importer, bool being_imported = false)
+  public ANTLR_Frontend(ANTLR_Result parsed, Module module, Types types, Importer importer, bool being_imported = false)
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;
@@ -3029,45 +3029,6 @@ public class ModuleFrontend : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
     return ast;
   }
-}
-
-public class ModulePath
-{
-  public string name;
-  public string file_path;
-
-  public ModulePath(string name, string file_path)
-  {
-    this.name = name;
-    this.file_path = file_path;
-  }
-}
-
-public class Module
-{
-  public string name {
-    get {
-      return path.name;
-    }
-  }
-  public string file_path {
-    get {
-      return path.file_path;
-    }
-  }
-  public ModulePath path;
-  public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
-  public Namespace ns;
-
-  public Module(Types ts, ModulePath path)
-  {
-    this.path = path;
-    ns = new Namespace(ts.gindex, "", name);
-  }
-
-  public Module(Types ts, string name, string file_path)
-    : this(ts, new ModulePath(name, file_path))
-  {}
 }
 
 } //namespace bhl

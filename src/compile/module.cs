@@ -4,6 +4,45 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+public class ModulePath
+{
+  public string name;
+  public string file_path;
+
+  public ModulePath(string name, string file_path)
+  {
+    this.name = name;
+    this.file_path = file_path;
+  }
+}
+
+public class Module
+{
+  public string name {
+    get {
+      return path.name;
+    }
+  }
+  public string file_path {
+    get {
+      return path.file_path;
+    }
+  }
+  public ModulePath path;
+  public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
+  public Namespace ns;
+
+  public Module(Types ts, ModulePath path)
+  {
+    this.path = path;
+    ns = new Namespace(ts.gindex, "", name);
+  }
+
+  public Module(Types ts, string name, string file_path)
+    : this(ts, new ModulePath(name, file_path))
+  {}
+}
+
 public class ModuleCompiler : AST_Visitor
 {
   AST_Tree ast;
@@ -146,7 +185,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcodes();
   }
 
-  public ModuleCompiler(ModuleFrontend.Result fres)
+  public ModuleCompiler(ANTLR_Frontend.Result fres)
   {
     module = fres.module;
     ast = fres.ast;
