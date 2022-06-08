@@ -20,7 +20,7 @@ public interface IScope
 
 public interface ISymbolResolver
 {
-  Symbol ResolveByFullName(string full_name);
+  Symbol ResolveSymbol(string full_name);
 }
 
 public interface IInstanceType : IType, IScope 
@@ -353,7 +353,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
     members.Add(sym);
   }
 
-  public Symbol ResolveByFullName(string full_name)
+  public Symbol ResolveSymbol(string full_name)
   {
     IScope scope = this;
 
