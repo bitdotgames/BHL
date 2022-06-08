@@ -995,6 +995,55 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
+  //[IsTested()]
+  public void TestUserChildClassMethodsOrderIrrelevant()
+  {
+    string bhl = @"
+
+    func int test()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.c = 100
+      return b.getSumm()
+    }
+
+    class Bar : Foo {
+
+      func int getSumm() {
+        return this.getC() + this.getB() + this.getA() 
+      }
+
+      func int getC() {
+        return this.c
+      }
+
+      int c
+    }
+
+    class Foo {
+      
+      func int getA() {
+        return this.a
+      }
+
+      func int getB() {
+        return this.b
+      }
+
+      int a
+      int b
+    }
+
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestUserSubChildClassMethodAccessesParent()
   {
