@@ -501,6 +501,17 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     return null;
   }
 
+  T ResolveLazyArtifact<T>(IScope scope, string name, System.Func<string, T> resolver)
+  {
+    var o = resolver(name);
+    if(o == null)
+    {
+      TryVisitArtifact(scope, name);
+      o = resolver(name);
+    }
+    return o;
+  }
+
   void ProcChainedCall(
     IScope scope,
     ITerminalNode root_name, 
@@ -519,15 +530,9 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     if(root_name != null)
     {
-      //TODO: re-write this code below
-      var name_symb = scope.ResolveWithFallback(curr_name.GetText());
+      var name_symb = ResolveLazyArtifact(scope, curr_name.GetText(), scope.ResolveWithFallback);
       if(name_symb == null)
-      {
-        TryVisitArtifact(scope, curr_name.GetText());
-        name_symb = scope.ResolveWithFallback(curr_name.GetText());
-        if(name_symb == null)
-          FireError(root_name, "symbol not resolved");
-      }
+        FireError(root_name, "symbol not resolved");
 
       //let's figure out the namespace offset
       if(name_symb is Namespace ns && chain != null)
@@ -1246,14 +1251,9 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       FireError(ctx, "[..] is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
-    var orig_type = arr_type.item_type.Get();
+    var orig_type = ResolveLazyArtifact(curr_scope, arr_type.item_type.name, (_) => arr_type.item_type.Get());
     if(orig_type == null)
-    {
-      TryVisitArtifact(curr_scope, arr_type.item_type.name);
-      orig_type = arr_type.item_type.Get();
-      if(orig_type == null)
-        FireError(ctx,  "type '" + arr_type.item_type.name + "' not found");
-    }
+      FireError(ctx,  "type '" + arr_type.item_type.name + "' not found");
     PushJsonType(orig_type);
 
     var ast = new AST_JsonArr(arr_type, ctx.Start.Line);
@@ -2071,14 +2071,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       for(int i=0;i<ctx.extensions().nsName().Length;++i)
       {
         var ext_name = ctx.extensions().nsName()[i]; 
-
-        var ext = ns.ResolveSymbol(ext_name.GetText());
-        if(ext == null)
-        {
-          TryVisitArtifact(ns, ext_name.GetText());
-          ext = ns.ResolveSymbol(ext_name.GetText());
-        }
-
+        var ext = ResolveLazyArtifact(ns, ext_name.GetText(), ns.ResolveSymbol);
         if(ext is InterfaceSymbol ifs)
         {
           if(inherits.IndexOf(ifs) != -1)
@@ -2164,14 +2157,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       for(int i=0;i<ctx.extensions().nsName().Length;++i)
       {
         var ext_name = ctx.extensions().nsName()[i]; 
-
-        var ext = ns.ResolveSymbol(ext_name.GetText());
-        if(ext == null)
-        {
-          TryVisitArtifact(ns, ext_name.GetText());
-          ext = ns.ResolveSymbol(ext_name.GetText());
-        }
-
+        var ext = ResolveLazyArtifact(ns, ext_name.GetText(), ns.ResolveSymbol);
         if(ext is ClassSymbol cs)
         {
           if(super_class != null)
