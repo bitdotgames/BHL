@@ -79,6 +79,13 @@ public class LocalScope : IScope
 
   public void Define(Symbol sym) 
   {
+    EnsureNotDeclaredInEnclosingScopes(sym);
+
+    RawDefine(sym);
+  }
+
+  void EnsureNotDeclaredInEnclosingScopes(Symbol sym)
+  {
     IScope tmp = this;
     while(true)
     {
@@ -88,8 +95,6 @@ public class LocalScope : IScope
         break;
       tmp = tmp.GetFallbackScope();
     }
-
-    RawDefine(sym);
   }
 
   public void RawDefine(Symbol sym) 

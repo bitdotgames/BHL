@@ -2835,12 +2835,12 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     }
     PopAST();
 
-    local_scope.Exit();
-    curr_scope = local_scope.GetFallbackScope();
-
     --loops_stack;
 
     PeekAST().AddChild(ast);
+
+    local_scope.Exit();
+    curr_scope = local_scope.GetFallbackScope();
 
     return null;
   }
@@ -2895,6 +2895,10 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     // $foreach_cnt++
     //}
     
+    var local_scope = new LocalScope(false, curr_scope);
+    curr_scope = local_scope;
+    local_scope.Enter();
+
     var vod = ctx.foreachExp().varOrDeclare();
     var vd = vod.varDeclare();
     TypeProxy iter_type;
@@ -2979,6 +2983,9 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     --loops_stack;
 
     PeekAST().AddChild(ast);
+
+    local_scope.Exit();
+    curr_scope = local_scope.GetFallbackScope();
 
     return null;
   }

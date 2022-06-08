@@ -4312,7 +4312,6 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [IsTested()]
   public void TestForMultiExpression()
   {
@@ -4672,6 +4671,34 @@ public class TestVM : BHL_TestBase
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestForeachLocalScope()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach(int it in [1, 2, 3]) {
+        trace((string)it)
+      }
+
+      foreach(int it in [3, 2, 1]) {
+        trace((string)it)
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("123321", log.ToString());
+    CommonChecks(vm);
+  }
+
 
   [IsTested()]
   public void TestForeachForNativeArrayBinding()
