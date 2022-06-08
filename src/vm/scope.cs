@@ -57,7 +57,7 @@ public class LocalScope : IScope
       next_idx = fss.local_vars_num;
     else if(fallback is LocalScope fallback_ls)
       next_idx = fallback_ls.next_idx;
-    func_owner.local_scope = this;
+    func_owner.current_scope = this;
   }
 
   public void Exit()
@@ -66,7 +66,7 @@ public class LocalScope : IScope
     {
       if(fallback_ls.is_paral)
         fallback_ls.next_idx = next_idx;
-      func_owner.local_scope = fallback_ls;
+      func_owner.current_scope = fallback_ls;
     }
   }
 

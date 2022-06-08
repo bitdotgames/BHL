@@ -1057,7 +1057,7 @@ public class FuncSymbolScript : FuncSymbol
 
   public int local_vars_num;
 
-  public LocalScope local_scope;
+  public LocalScope current_scope;
 
   public int default_args_num;
   public int ip_addr;
@@ -1138,7 +1138,7 @@ public class LambdaSymbol : FuncSymbolScript
 
     //NOTE: we want to avoid possible recursion during resolve
     //      checks that's why we use a 'raw' version
-    this.local_scope.RawDefine(local);
+    this.current_scope.RawDefine(local);
 
     var up = new AST_UpVal(local.name, local.scope_idx, src.scope_idx); 
     upvals.Add(up);
@@ -1165,7 +1165,7 @@ public class LambdaSymbol : FuncSymbolScript
     {
       var decl = fdecl_stack[i];
 
-      var res = decl.local_scope.ResolveWithFallback(name);
+      var res = decl.current_scope.ResolveWithFallback(name);
       if(res is VariableSymbol vs)
         return AssignUpValues(vs, i+1, my_idx);
     }
