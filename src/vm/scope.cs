@@ -31,8 +31,6 @@ public interface IInstanceType : IType, IScope
 public class LocalScope : IScope 
 {
   bool is_paral;
-
-  int start_idx;
   int next_idx;
 
   FuncSymbolScript func_owner;
@@ -56,10 +54,9 @@ public class LocalScope : IScope
   {
     if(fallback is FuncSymbolScript fss)
       //start with func arguments number
-      start_idx = fss.local_vars_num;
+      next_idx = fss.local_vars_num;
     else if(fallback is LocalScope fallback_ls)
-      start_idx = fallback_ls.next_idx;
-    next_idx = start_idx;
+      next_idx = fallback_ls.next_idx;
     func_owner.local_scope = this;
   }
 
