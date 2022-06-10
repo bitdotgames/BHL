@@ -78,7 +78,12 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
   List<PostponedParserRule> postponed_parser_rules = new List<PostponedParserRule>();
 
-  IScope curr_scope;
+  Stack<IScope> scopes = new Stack<IScope>();
+  IScope curr_scope {
+    get {
+      return scopes.Peek();
+    }
+  }
 
   HashSet<FuncSymbol> return_found = new HashSet<FuncSymbol>();
 
@@ -299,7 +304,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     ns = module.ns;
     ns.Link(types.ns);
 
-    curr_scope = ns;
+    scopes.Push(ns);
 
     if(importer == null)
       importer = new Importer();
@@ -428,8 +433,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     PushAST(rule.ast);
 
-    var orig_scope = curr_scope;
-    curr_scope = rule.scope;
+    scopes.Push(rule.scope);
 
     if(rule.ctx is bhlParser.FuncDeclContext fndecl)
       Visit(fndecl);
@@ -442,7 +446,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     PopAST();
 
-    curr_scope = orig_scope;
+    scopes.Pop();
   }
 
   public override object VisitImports(bhlParser.ImportsContext ctx)
@@ -1130,7 +1134,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     PushFuncDecl(lmb_symb);
 
     var scope_backup = curr_scope;
-    curr_scope = lmb_symb;
+    scopes.Push(lmb_symb);
 
     var fparams = funcLambda.funcParams();
     if(fparams != null)
@@ -1161,7 +1165,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     var curr_type = lmb_symb.type.Get(); 
     Wrap(ctx).eval_type = curr_type;
 
-    curr_scope = scope_backup;
+    scopes.Pop();
 
     //NOTE: since lambda func symbol is currently compile-time only,
     //      we need to reflect local variables number in AST
@@ -2099,15 +2103,14 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
         var func_params = fd.funcParams();
         if(func_params != null)
         {
-          var scope_bak = curr_scope;
-          curr_scope = func_symb;
+          scopes.Push(func_symb);
           //NOTE: we push some dummy interim AST and later
           //      simply discard it since we don't care about
           //      func args related AST for interfaces
           PushAST(new AST_Interim());
           Visit(func_params);
           PopAST();
-          curr_scope = scope_bak;
+          scopes.Pop();
         }
       }
     }
@@ -2128,12 +2131,11 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     else if(ns.module_name != module.name)
       throw new Exception("Unexpected namespace's module name: " + ns.module_name);
 
-    var orig_scope = curr_scope;
-    curr_scope = ns;
+    scopes.Push(ns);
 
     VisitDecls(ctx.decls());
 
-    curr_scope = orig_scope;
+    scopes.Pop();
 
     return null;
   }
@@ -2258,8 +2260,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     var ast = new AST_FuncDecl(func_symb, ctx.Stop.Line);
 
-    var orig_scope = curr_scope;
-    curr_scope = func_symb;
+    scopes.Push(func_symb);
     PushFuncDecl(func_symb);
 
     var func_params = ctx.funcParams();
@@ -2282,7 +2283,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     
     PopFuncDecl();
 
-    curr_scope = orig_scope;
+    scopes.Pop();
 
     func_symb.default_args_num = ast.GetDefaultArgsNum();
 
@@ -2299,7 +2300,6 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     //      type info this will be justified.
     var symb = new EnumSymbolScript(enum_name);
     ns.Define(symb);
-    curr_scope = symb;
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
     {
@@ -2313,8 +2313,6 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       else if(res == 2)
         FireError(em.INT(), "duplicate value '" + em_val + "'");
     }
-
-    curr_scope = ns;
 
     return null;
   }
@@ -2838,7 +2836,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     //}
 
     var local_scope = new LocalScope(false, curr_scope);
-    curr_scope = local_scope;
+    scopes.Push(local_scope);
     local_scope.Enter();
     
     var for_pre = ctx.forExp().forPre();
@@ -2917,7 +2915,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     local_scope.Exit();
-    curr_scope = local_scope.GetFallbackScope();
+    scopes.Pop();
 
     return null;
   }
@@ -2973,7 +2971,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     //}
     
     var local_scope = new LocalScope(false, curr_scope);
-    curr_scope = local_scope;
+    scopes.Push(local_scope);
     local_scope.Enter();
 
     var vod = ctx.foreachExp().varOrDeclare();
@@ -3062,7 +3060,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     local_scope.Exit();
-    curr_scope = local_scope.GetFallbackScope();
+    scopes.Pop();
 
     return null;
   }
@@ -3074,7 +3072,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       type == BlockType.PARAL_ALL;
 
     var local_scope = new LocalScope(is_paral, curr_scope);
-    curr_scope = local_scope;  
+    scopes.Push(local_scope);
     local_scope.Enter();
 
     var ast = new AST_Block(type);
@@ -3109,7 +3107,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     PopAST();
 
     local_scope.Exit();
-    curr_scope = local_scope.GetFallbackScope();
+    scopes.Pop();
 
     if(is_paral)
       return_found.Remove(PeekFuncDecl());
