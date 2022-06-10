@@ -10,6 +10,8 @@ namespace bhl {
 
 public class CompileCmd : ICmd
 {
+  const int ERROR_EXIT_CODE = 2;
+
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
@@ -141,9 +143,9 @@ public class CompileCmd : ICmd
     conf.verbose = true;
 
     var cmp = new CompilationExecutor();
-    int err = cmp.Exec(conf);
-    if(err != 0)
-      Environment.Exit(err);
+    var err = cmp.Exec(conf);
+    if(err != null)
+      Environment.Exit(ERROR_EXIT_CODE);
   }
 
   public static string GetSelfFile()

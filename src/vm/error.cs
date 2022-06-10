@@ -13,19 +13,14 @@ namespace bhl {
 
 public static class ErrorUtils 
 {
-  public static string ToJson(Exception e)
+  public static string ToJson(IError ie)
   {
-    if(e is IError se)
-    {
-      return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3} }}", 
-        MakeJsonSafe(se.text),
-        se.file.Replace("\\", "/"),
-        se.line, 
-        se.char_pos
-      );
-    }
-    else
-      return string.Format(@"{{""error"": ""{0}""}}", MakeJsonSafe(e.Message));
+    return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3} }}", 
+      MakeJsonSafe(ie.text),
+      ie.file.Replace("\\", "/"),
+      ie.line, 
+      ie.char_pos
+    );
   }
 
   public static string MakeMessage(string file, int line, int char_pos, string msg)

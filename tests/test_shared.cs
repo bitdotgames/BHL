@@ -753,9 +753,9 @@ public class BHL_TestBase
     conf.use_cache = false;
 
     var cmp = new CompilationExecutor();
-    int res = cmp.Exec(conf);
-    if(res != 0)
-      throw new Exception(File.ReadAllText(conf.err_file));
+    var err = cmp.Exec(conf);
+    if(err != null)
+      throw new Exception(ErrorUtils.ToJson(err));
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }

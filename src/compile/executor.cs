@@ -33,7 +33,6 @@ public class CompilationExecutor
 {
   const byte COMPILE_FMT = 2;
   const uint FILE_VERSION = 1;
-  const int ERROR_EXIT_CODE = 2;
 
   public struct InterimResult
   {
@@ -58,22 +57,22 @@ public class CompilationExecutor
     }
   }
 
-  public int Exec(CompileConf conf)
+  public IError Exec(CompileConf conf)
   {
     var sw = new Stopwatch();
     sw.Start();
 
-    int code = DoExec(conf);
+    var err = DoExec(conf);
 
     sw.Stop();
 
     if(conf.verbose)
       Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
-    return code;
+    return err;
   }
 
-  int DoExec(CompileConf conf)
+  IError DoExec(CompileConf conf)
   {
     var res_dir = Path.GetDirectoryName(conf.res_file); 
     if(res_dir.Length > 0)
@@ -90,7 +89,7 @@ public class CompilationExecutor
     {
       if(conf.verbose)
         Console.WriteLine("BHL no need to re-build");
-      return 0;
+      return null;
     }
 
     var ts = conf.ts;
@@ -104,8 +103,9 @@ public class CompilationExecutor
 
     var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
 
-    if(!WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file))
-      return ERROR_EXIT_CODE;
+    var werror = WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file);
+    if(werror != null)
+      return werror;
 
     if(File.Exists(conf.res_file))
       File.Delete(conf.res_file);
@@ -113,7 +113,7 @@ public class CompilationExecutor
 
     conf.postproc.Tally();
 
-    return 0;
+    return null;
   }
 
   static List<ParseWorker> StartParseWorkers(CompileConf conf)
@@ -206,7 +206,7 @@ public class CompilationExecutor
     return compiler_workers;
   }
 
-  bool WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
+  IError WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
   {
     using(FileStream dfs = new FileStream(file_path, FileMode.Create, System.IO.FileAccess.Write))
     {
@@ -232,7 +232,7 @@ public class CompilationExecutor
           else
             File.WriteAllText(conf.err_file, ErrorUtils.ToJson(w.error));
 
-          return false;
+          return w.error;
         }
         total_modules += w.file2path.Count;
       }
@@ -267,7 +267,7 @@ public class CompilationExecutor
         }
       }
 
-      return true;
+      return null;
     }
   }
 
@@ -316,7 +316,7 @@ public class CompilationExecutor
     public List<string> inc_path = new List<string>();
     public List<string> files;
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
-    public Exception error = null;
+    public IError error = null;
 
     public void Start()
     {
@@ -391,8 +391,8 @@ public class CompilationExecutor
       }
       catch(Exception e)
       {
-        if(e is IError)
-          w.error = e;
+        if(e is IError ie)
+          w.error = ie;
         else
         {
           //let's log unexpected exceptions immediately
@@ -505,7 +505,7 @@ public class CompilationExecutor
     public int count;
     public bool verbose;
     public IFrontPostProcessor postproc;
-    public Exception error = null;
+    public IError error = null;
     public Cache cache;
     public Dictionary<string, ModulePath> file2path = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
@@ -585,8 +585,8 @@ public class CompilationExecutor
       }
       catch(Exception e)
       {
-        if(e is IError)
-          w.error = e;
+        if(e is IError ie)
+          w.error = ie;
         else
         {
           //let's log unexpected exceptions immediately

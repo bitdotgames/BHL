@@ -11,13 +11,7 @@ namespace bhl {
 
 public class RunCmd : ICmd
 {
-  public class Error
-  {
-    public string error;
-    public string file;
-    public int line;
-    public int column;
-  }
+  const int ERROR_EXIT_CODE = 2;
 
   public static void Usage(string msg = "")
   {
@@ -145,17 +139,15 @@ public class RunCmd : ICmd
     File.Delete(conf.err_file);
 
     var cmp = new CompilationExecutor();
-    int err = cmp.Exec(conf);
+    var err = cmp.Exec(conf);
 
-    if(File.Exists(conf.err_file))
+    if(err != null)
     {
-      string err_json = File.ReadAllText(conf.err_file);
-      var err_obj = JsonConvert.DeserializeObject<Error>(err_json);
-      ShowPosition(files[0], err_obj);
-      Console.Error.WriteLine("bhl: " + files[0] + ":" + err_obj.line + ":" + err_obj.column + ": " + err_obj.error);
+      ShowPosition(files[0], err);
+      Console.Error.WriteLine("bhl: " + files[0] + ":" + err.line + ":" + err.char_pos + ": " + err.text);
+
+      Environment.Exit(ERROR_EXIT_CODE);
     }
-    if(err != 0)
-      Environment.Exit(err);
 
     var bytes = new MemoryStream(File.ReadAllBytes(conf.res_file));
     var vm = new VM(conf.ts, new ModuleLoader(conf.ts, bytes));
@@ -175,15 +167,15 @@ public class RunCmd : ICmd
       System.Threading.Thread.Sleep((int)(dt * 1000));
   }
 
-  static void ShowPosition(string file, Error err_obj)
+  static void ShowPosition(string file, IError err)
   {
     var lines = File.ReadAllLines(file);
 
-    if(err_obj.line < lines.Length)
-      Console.Error.WriteLine(lines[err_obj.line-1]);
-    else if(err_obj.line-1 == lines.Length)
+    if(err.line < lines.Length)
+      Console.Error.WriteLine(lines[err.line-1]);
+    else if(err.line-1 == lines.Length)
       Console.Error.WriteLine(lines[lines.Length-1]);
-    Console.Error.WriteLine(new String('-', err_obj.column) + '^');
+    Console.Error.WriteLine(new String('-', err.char_pos) + '^');
   }
 
   public static string GetSelfFile()
