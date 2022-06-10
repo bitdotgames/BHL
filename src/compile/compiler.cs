@@ -1,705 +1,1546 @@
 using System;
 using System.IO;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
-using System.Diagnostics;
 
 namespace bhl {
 
-using marshall;
-
-public class CompileConf
+public class ModulePath
 {
-  public string args = ""; 
-  public List<string> files = new List<string>();
-  public Types ts;
-  public string self_file = "";
-  public string inc_dir = "";
-  public string res_file = "";
-  public string tmp_dir = "";
-  public bool use_cache = true;
-  public string err_file = "";
-  public IFrontPostProcessor postproc = new EmptyPostProcessor();
-  public IUserBindings userbindings = new EmptyUserBindings();
-  public int max_threads = 1;
-  public bool check_deps = true;
-  public bool debug = false;
-  public bool verbose = true;
-  public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
+  public string name;
+  public string file_path;
+
+  public ModulePath(string name, string file_path)
+  {
+    this.name = name;
+    this.file_path = file_path;
+  }
 }
- 
-public class Compiler
+
+public class Module
 {
-  const byte COMPILE_FMT = 2;
-  const uint FILE_VERSION = 1;
-  const int ERROR_EXIT_CODE = 2;
+  public string name {
+    get {
+      return path.name;
+    }
+  }
+  public string file_path {
+    get {
+      return path.file_path;
+    }
+  }
+  public ModulePath path;
+  public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
+  public Namespace ns;
 
-  public struct InterimResult
+  public Module(Types ts, ModulePath path)
   {
-    public bool use_file_cache;
-    public ANTLR_Result parsed;
+    this.path = path;
+    ns = new Namespace(ts.gindex, "", name);
   }
 
-  public class Cache : ANTLR_Frontend.IParsedCache
-  {
-    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
+  public Module(Types ts, string name, string file_path)
+    : this(ts, new ModulePath(name, file_path))
+  {}
+}
 
-    public bool TryFetch(string file, out ANTLR_Result parsed)
+public class ModuleCompiler : AST_Visitor
+{
+  AST_Tree ast;
+  CompiledModule compiled;
+
+  Module module;
+
+  List<Const> constants = new List<Const>();
+  List<string> imports = new List<string>();
+  List<Instruction> init = new List<Instruction>();
+  List<Instruction> code = new List<Instruction>();
+  List<Instruction> head = null;
+
+  IScope curr_scope;
+
+  Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
+  Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
+
+  internal struct BlockJump
+  {
+    internal AST_Block block;
+    internal Instruction jump_op;
+  }
+  List<BlockJump> non_patched_breaks = new List<BlockJump>();
+  List<BlockJump> non_patched_continues = new List<BlockJump>();
+  Dictionary<AST_Block, Instruction> continue_jump_markers = new Dictionary<AST_Block, Instruction>();
+
+  Stack<FuncSymbol> func_decls = new Stack<FuncSymbol>();
+  HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
+
+  internal struct Offset
+  {
+    internal Instruction src;
+    internal Instruction dst;
+    internal int operand_idx;
+  }
+  List<Offset> offsets = new List<Offset>();
+
+  internal struct Patch
+  {
+    internal Instruction inst;
+    internal System.Action<Instruction> cb;
+  }
+  List<Patch> patches = new List<Patch>();
+
+  static Dictionary<byte, Definition> opcode_decls = new Dictionary<byte, Definition>();
+
+  public class Definition
+  {
+    public Opcodes name { get; }
+     //each array item represents the size of the operand in bytes
+    public int[] operand_width { get; }
+    public int size { get; }
+
+    public Definition(Opcodes name, params int[] operand_width)
     {
-      parsed = null;
-      InterimResult interim;
-      if(file2interim.TryGetValue(file, out interim) && !interim.use_file_cache && interim.parsed != null)
+      this.name = name;
+      this.operand_width = operand_width;
+
+      size = 1;//op itself
+      for(int i=0;i<operand_width.Length;++i)
+        size += operand_width[i];
+    }
+  }
+
+  public class Instruction
+  {
+    public Definition def { get; }
+    public Opcodes op { get; }
+    public int[] operands { get; }
+    public int line_num;
+    //It's set automatically during final code traversal
+    //and reflects an actual absolute instruction byte position in
+    //a module. Used for post patching of jump instructions.
+    public int pos;
+
+    public Instruction(Opcodes op)
+    {
+      def = LookupOpcode(op);
+      this.op = op;
+      operands = new int[def.operand_width.Length];
+    }
+
+    public Instruction SetOperand(int idx, int op_val)
+    {
+      if(def.operand_width == null || def.operand_width.Length <= idx)
+        throw new Exception("Invalid operand for opcode:" + op + ", at index:" + idx);
+
+      int width = def.operand_width[idx];
+
+      switch(width)
       {
-        parsed = interim.parsed;
-        return true;
+        case 1:
+          if(op_val < sbyte.MinValue || op_val > sbyte.MaxValue)
+            throw new Exception("Operand value(1 byte) is out of bounds: " + op_val);
+        break;
+        case 2:
+          if(op_val < short.MinValue || op_val > short.MaxValue)
+            throw new Exception("Operand value(2 bytes) is out of bounds: " + op_val);
+        break;
+        case 3:
+          if(op_val < -8388607 || op_val > 8388607)
+            throw new Exception("Operand value(3 bytes) is out of bounds: " + op_val);
+        break;
+        case 4:
+        break;
+        default:
+          throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
       }
-      return false;
+
+      operands[idx] = op_val;
+
+      return this;
     }
-  }
-
-  public int Exec(CompileConf conf)
-  {
-    var sw = new Stopwatch();
-    sw.Start();
-
-    int code = DoExec(conf);
-
-    sw.Stop();
-
-    if(conf.verbose)
-      Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
-
-    return code;
-  }
-
-  int DoExec(CompileConf conf)
-  {
-    var res_dir = Path.GetDirectoryName(conf.res_file); 
-    if(res_dir.Length > 0)
-      Directory.CreateDirectory(res_dir);
-
-    Directory.CreateDirectory(conf.tmp_dir);
-
-    var args_changed = CheckArgsSignatureFile(conf);
-
-    if(conf.use_cache && 
-       !args_changed && 
-       !BuildUtil.NeedToRegen(conf.res_file, conf.files)
-      )
+    
+    public void Write(Bytecode code)
     {
-      if(conf.verbose)
-        Console.WriteLine("BHL no need to re-build");
-      return 0;
-    }
+      code.Write8((uint)op);
 
-    var ts = conf.ts;
-    if(ts == null)
-      ts = new Types();
-
-    conf.userbindings.Register(ts);
-
-    var parse_workers = StartParseWorkers(conf);
-    var compiler_workers = StartAndWaitCompileWorkers(conf, ts, parse_workers);
-
-    var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
-
-    if(!WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file))
-      return ERROR_EXIT_CODE;
-
-    if(File.Exists(conf.res_file))
-      File.Delete(conf.res_file);
-    File.Move(tmp_res_file, conf.res_file);
-
-    conf.postproc.Tally();
-
-    return 0;
-  }
-
-  static List<ParseWorker> StartParseWorkers(CompileConf conf)
-  {
-    var parse_workers = new List<ParseWorker>();
-
-    int files_per_worker = conf.files.Count < conf.max_threads ? conf.files.Count : (int)Math.Ceiling((float)conf.files.Count / (float)conf.max_threads);
-
-    int idx = 0;
-    int wid = 0;
-
-    while(idx < conf.files.Count)
-    {
-      int count = (idx + files_per_worker) > conf.files.Count ? (conf.files.Count - idx) : files_per_worker; 
-
-      ++wid;
-
-      var pw = new ParseWorker();
-      pw.id = wid;
-      pw.self_file = conf.self_file;
-      pw.start = idx;
-      pw.inc_path.Add(conf.inc_dir);
-      pw.count = count;
-      pw.use_cache = conf.use_cache;
-      pw.cache_dir = conf.tmp_dir;
-      pw.check_deps = conf.check_deps;
-      pw.files = conf.files;
-      pw.verbose = conf.verbose;
-
-      parse_workers.Add(pw);
-      pw.Start();
-
-      idx += count;
-    }
-
-    return parse_workers;
-  }
-
-  static List<CompilerWorker> StartAndWaitCompileWorkers(CompileConf conf, Types ts, List<ParseWorker> parse_workers)
-  {
-    var compiler_workers = new List<CompilerWorker>();
-
-    var cache = new Cache();
-
-    //1. waiting for parse workers to finish
-    foreach(var pw in parse_workers)
-    {
-      pw.Join();
-
-      //let's create the shared interim result
-      foreach(var kv in pw.file2interim)
-        cache.file2interim.Add(kv.Key, kv.Value);
-    }
-
-    bool had_errors = false;
-    foreach(var pw in parse_workers)
-    {
-      var cw = new CompilerWorker();
-      cw.id = pw.id;
-      cw.cache = cache;
-      cw.inc_dir = conf.inc_dir;
-      cw.cache_dir = pw.cache_dir;
-      cw.ts = ts;
-      cw.files = pw.files;
-      cw.start = pw.start;
-      cw.count = pw.count;
-      cw.verbose = pw.verbose;
-      cw.postproc = conf.postproc;
-
-      //passing parser error if any
-      cw.error = pw.error;
-
-      if(pw.error != null)
-        had_errors = true;
-
-      compiler_workers.Add(cw);
-    }
-
-    //2. starting workers which now actually compile the code
-    //   if there were no errors
-    if(!had_errors)
-    {
-      foreach(var w in compiler_workers)
-        w.Start();
-
-      foreach(var w in compiler_workers)
-        w.Join();
-    }
-
-    return compiler_workers;
-  }
-
-  bool WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
-  {
-    using(FileStream dfs = new FileStream(file_path, FileMode.Create, System.IO.FileAccess.Write))
-    {
-      var mwriter = new MsgPack.MsgPackWriter(dfs);
-
-      mwriter.Write(ModuleLoader.COMPILE_FMT);
-      mwriter.Write(FILE_VERSION);
-
-      //used as a global namespace for unique symbols check
-      var ns = new Namespace();
-
-      int total_modules = 0;
-      foreach(var w in compiler_workers)
+      for(int i=0;i<operands.Length;++i)
       {
-        if(w.error == null)
-          CheckUniqueSymbols(ns, w);
-
-        //NOTE: exit in case of error
-        if(w.error != null)
+        int op_val = operands[i];
+        int width = def.operand_width[i];
+        switch(width)
         {
-          if(conf.err_file == "-")
-            Console.Error.WriteLine(ErrorUtils.ToJson(w.error));
-          else
-            File.WriteAllText(conf.err_file, ErrorUtils.ToJson(w.error));
-
-          return false;
-        }
-        total_modules += w.file2path.Count;
-      }
-      mwriter.Write(total_modules);
-
-      //NOTE: we'd like to write file binary modules in the same order they were added
-      for(int file_idx=0; file_idx < conf.files.Count; ++file_idx)
-      {
-        var file = conf.files[file_idx];
-
-        foreach(var w in compiler_workers)
-        {
-          if(file_idx >= w.start && file_idx < w.start + w.count) 
-          {
-            var path = w.file2path[file];
-            var compiled_file = w.file2compiled[file];
-
-            mwriter.Write((byte)conf.module_fmt);
-            mwriter.Write(path.name);
-
-            if(conf.module_fmt == ModuleBinaryFormat.FMT_BIN)
-              mwriter.Write(File.ReadAllBytes(compiled_file));
-            else if(conf.module_fmt == ModuleBinaryFormat.FMT_LZ4)
-              mwriter.Write(EncodeToLZ4(File.ReadAllBytes(compiled_file)));
-            else if(conf.module_fmt == ModuleBinaryFormat.FMT_FILE_REF)
-              mwriter.Write(compiled_file);
-            else
-              throw new Exception("Unsupported format: " + conf.module_fmt);
-
-            break;
-          }
-        }
-      }
-
-      return true;
-    }
-  }
-
-  static bool CheckArgsSignatureFile(CompileConf conf)
-  {
-    var tmp_args_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".args";
-    bool changed = !File.Exists(tmp_args_file) || (File.Exists(tmp_args_file) && File.ReadAllText(tmp_args_file) != conf.args);
-    if(changed)
-      File.WriteAllText(tmp_args_file, conf.args);
-    return changed;
-  }
-
-  static byte[] EncodeToLZ4(byte[] bytes)
-  {
-    var lz4_bytes = LZ4ps.LZ4Codec.Encode64(
-        bytes, 0, bytes.Length
-        );
-    return lz4_bytes;
-  }
-
-  void CheckUniqueSymbols(Namespace ns, CompilerWorker w)
-  {
-    foreach(var kv in w.file2ns)
-    {
-      var file = kv.Key;
-      var file_ns = kv.Value;
-      file_ns.UnlinkAll();
-
-      var conflict = ns.TryLink(file_ns);
-      if(conflict != null)
-        w.error = new BuildError(file, "symbol '" + conflict.GetFullName() + "' is already declared in module '" + (conflict.scope as Namespace)?.module_name + "'");
-    }
-  }
-
-  public class ParseWorker
-  {
-    public int id;
-    public Thread th;
-    public string self_file;
-    public bool check_deps;
-    public bool use_cache;
-    public string cache_dir;
-    public int start;
-    public int count;
-    public bool verbose;
-    public List<string> inc_path = new List<string>();
-    public List<string> files;
-    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
-    public Exception error = null;
-
-    public void Start()
-    {
-      var th = new Thread(DoWork);
-      this.th = th;
-      this.th.Start(this);
-    }
-
-    public void Join()
-    {
-      th.Join();
-    }
-
-    public static void DoWork(object data)
-    {
-      var sw = new Stopwatch();
-      sw.Start();
-
-      var w = (ParseWorker)data;
-
-      string self_bin_file = w.self_file;
-
-      int i = w.start;
-
-      int cache_hit = 0;
-      int cache_miss = 0;
-
-      try
-      {
-        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
-        {
-          var file = w.files[i]; 
-          using(var sfs = File.OpenRead(file))
-          {
-            var deps = new List<string>();
-
-            if(w.check_deps)
-            {
-              var imports = w.ParseImports(file, sfs);
-              deps = imports.files;
-            }
-            deps.Add(file);
-
-            //NOTE: adding self binary as a dep
-            if(self_bin_file.Length > 0)
-              deps.Add(self_bin_file);
-
-            var cache_file = GetCompiledCacheFile(w.cache_dir, file);
-
-            var interim = new InterimResult();
-
-            if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
-            {
-              var parser = ANTLR_Frontend.Stream2Parser(file, sfs);
-              var parsed = new ANTLR_Result(parser.TokenStream, parser.program());
-
-              interim.parsed = parsed;
-
-              ++cache_miss;
-              //Console.WriteLine("PARSE " + file + " " + cache_file);
-            }
-            else
-            {
-              interim.use_file_cache = true;
-
-              ++cache_hit;
-            }
-
-            w.file2interim[file] = interim;
-          }
-        }
-      }
-      catch(Exception e)
-      {
-        if(e is IError)
-          w.error = e;
-        else
-        {
-          //let's log unexpected exceptions immediately
-          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-          w.error = new BuildError(w.files[i], e);
-        }
-      }
-
-      sw.Stop();
-      if(w.verbose)
-        Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
-    }
-
-    public class FileImports : IMarshallable
-    {
-      public List<string> files = new List<string>();
-
-      public void Reset() 
-      {
-        files.Clear();
-      }
-
-      public void Sync(SyncContext ctx) 
-      {
-        Marshall.Sync(ctx, files);
-      }
-    }
-
-    FileImports ParseImports(string file, FileStream fsf)
-    {
-      var imports = TryReadImportsCache(file);
-      if(imports == null)
-      {
-        imports = new FileImports();
-        imports.files = ParseImports(inc_path, file, fsf);
-        WriteImportsCache(file, imports);
-      }
-      return imports;
-    }
-
-    FileImports TryReadImportsCache(string file)
-    {
-      var cache_imports_file = GetImportsCacheFile(cache_dir, file);
-
-      if(BuildUtil.NeedToRegen(cache_imports_file, file))
-        return null;
-
-      try
-      {
-        return Marshall.File2Obj<FileImports>(cache_imports_file);
-      }
-      catch
-      {
-        return null;
-      }
-    }
-
-    void WriteImportsCache(string file, FileImports imports)
-    {
-      //Console.WriteLine("IMPORTS MISS " + file);
-      var cache_imports_file = GetImportsCacheFile(cache_dir, file);
-      Marshall.Obj2File(imports, cache_imports_file);
-    }
-
-    static List<string> ParseImports(List<string> inc_paths, string file, FileStream fs)
-    {
-      var imps = new List<string>();
-
-      var r = new StreamReader(fs);
-
-      while(true)
-      {
-        var line = r.ReadLine();
-        if(line == null)
+          case 1:
+            code.Write8((uint)op_val);
           break;
-
-        var import_idx = line.IndexOf("import");
-        if(import_idx != -1)
-        {
-          var q1_idx = line.IndexOf('"', import_idx + 1);
-          if(q1_idx != -1)
-          {
-            var q2_idx = line.IndexOf('"', q1_idx + 1);
-            if(q2_idx != -1)
-            {
-              var rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
-              var import = Util.ResolveImportPath(inc_paths, file, rel_import);
-              if(imps.IndexOf(import) == -1)
-                imps.Add(import);
-            }
-          }
+          case 2:
+            code.Write16((uint)op_val);
+          break;
+          case 3:
+            code.Write24((uint)op_val);
+          break;
+          case 4:
+            code.Write32((uint)op_val);
+          break;
+          default:
+            throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
         }
       }
-
-      fs.Position = 0;
-
-      return imps;
     }
   }
 
-  public class CompilerWorker
+  static ModuleCompiler()
   {
-    public int id;
-    public Thread th;
-    public string inc_dir;
-    public string cache_dir;
-    public List<string> files;
-    public Types ts;
-    public int start;
-    public int count;
-    public bool verbose;
-    public IFrontPostProcessor postproc;
-    public Exception error = null;
-    public Cache cache;
-    public Dictionary<string, ModulePath> file2path = new Dictionary<string, ModulePath>();
-    public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
-    public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
+    DeclareOpcodes();
+  }
 
-    public void Start()
+  public ModuleCompiler(ANTLR_Frontend.Result fres)
+  {
+    module = fres.module;
+    ast = fres.ast;
+    curr_scope = module.ns;
+
+    UseInit();
+  }
+
+  //NOTE: for testing purposes only
+  public ModuleCompiler()
+  {
+    module = new Module(new Types(), "", "");
+    curr_scope = module.ns;
+
+    UseInit();
+  }
+
+  //NOTE: public for testing purposes only
+  public ModuleCompiler UseCode()
+  {
+    head = code;
+    return this;
+  }
+
+  //NOTE: public for testing purposes only
+  public ModuleCompiler UseInit()
+  {
+    head = init;
+    return this;
+  }
+
+  public CompiledModule Compile()
+  {
+    if(compiled == null)
     {
-      var th = new Thread(DoWork);
-      this.th = th;
-      this.th.Start(this);
+      //special case for tests where we
+      //don't have any AST
+      if(ast != null)
+        Visit(ast);
+
+      byte[] init_bytes;
+      byte[] code_bytes;
+      Ip2SrcLine ip2src_line;
+      Bake(out init_bytes, out code_bytes, out ip2src_line);
+
+      compiled = new CompiledModule(
+        module.name, 
+        module.ns,
+        imports,
+        constants, 
+        init_bytes,
+        code_bytes,
+        ip2src_line
+      );    
     }
 
-    public void Join()
+    return compiled;
+  }
+
+  int GetCodeSize()
+  {
+    int size = 0;
+    for(int i=0;i<head.Count;++i)
+      size += head[i].def.size;
+    return size;
+  }
+
+  int GetPosition(Instruction inst)
+  {
+    int pos = 0;
+    bool found = false;
+    for(int i=0;i<head.Count;++i)
     {
-      th.Join();
-    }
-
-    public static void DoWork(object data)
-    {
-      var sw = new Stopwatch();
-      sw.Start();
-
-      var w = (CompilerWorker)data;
-      w.file2path.Clear();
-      w.file2compiled.Clear();
-
-      var imp = new ANTLR_Frontend.Importer();
-      imp.SetParsedCache(w.cache);
-      if(!string.IsNullOrEmpty(w.inc_dir))
-        imp.AddToIncludePath(w.inc_dir);
-
-      int i = w.start;
-
-      int cache_hit = 0;
-      int cache_miss = 0;
-
-      try
+      var tmp = head[i];
+      pos += tmp.def.size;
+      if(inst == tmp)
       {
-        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
-        {
-          var file = w.files[i]; 
-
-          var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
-          var file_module = new Module(w.ts, imp.FilePath2ModuleName(file), file);
-
-          InterimResult interim;
-          if(w.cache.file2interim.TryGetValue(file, out interim) 
-              && interim.use_file_cache)
-          {
-            ++cache_hit;
-
-            w.file2path.Add(file, file_module.path);
-          }
-          else
-          {
-            ++cache_miss;
-
-            ANTLR_Frontend.Result front_res = null;
-
-            if(interim.parsed != null)
-              front_res = ANTLR_Frontend.ProcessParsed(file_module, interim.parsed, w.ts, imp);
-            else
-              front_res = ANTLR_Frontend.ProcessFile(file, w.ts, imp);
-
-            front_res = w.postproc.Patch(front_res, file);
-
-            w.file2path.Add(file, file_module.path);
-            w.file2ns.Add(file, front_res.module.ns);
-
-            var c  = new ModuleCompiler(front_res);
-            var cm = c.Compile();
-            CompiledModule.ToFile(cm, compiled_file);
-          }
-
-          w.file2compiled.Add(file, compiled_file);
-        }
+        found = true;
+        break;
       }
-      catch(Exception e)
-      {
-        if(e is IError)
-          w.error = e;
-        else
-        {
-          //let's log unexpected exceptions immediately
-          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-          w.error = new BuildError(w.files[i], e);
-        }
-      }
-
-      sw.Stop();
-      if(w.verbose)
-        Console.WriteLine("BHL compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
+    if(!found)
+      throw new Exception("Instruction was not found: " + inst.op);
+    return pos;
   }
 
-  public static string GetCompiledCacheFile(string cache_dir, string file)
+  int AddConstant(AST_Literal lt)
   {
-    return cache_dir + "/" + Path.GetFileName(file) + "_" + Hash.CRC32(file) + ".compile.cache";
+    return AddConstant(new Const(lt.type, lt.nval, lt.sval));
   }
 
-  public static string GetImportsCacheFile(string cache_dir, string file)
+  int AddConstant(Const new_cn)
   {
-    return cache_dir + "/" + Hash.CRC32(file) + ".imports.cache";
+    for(int i = 0 ; i < constants.Count; ++i)
+    {
+      var cn = constants[i];
+      if(cn.IsEqual(new_cn))
+        return i;
+    }
+    constants.Add(new_cn);
+    return constants.Count-1;
   }
 
-  public static bool TestFile(string file)
+  int AddConstant(string str)
   {
-    return file.EndsWith(".bhl");
+    return AddConstant(new Const(str));
   }
 
-  public delegate void FileCb(string file);
-
-  public static void DirWalk(string sDir, FileCb cb)
+  int AddConstant(IType itype)
   {
-    foreach(string f in Directory.GetFiles(sDir))
-      cb(f);
-
-    foreach(string d in Directory.GetDirectories(sDir))
-      DirWalk(d, cb);
+    return AddConstant(new Const(new TypeProxy(itype)));
   }
 
-  public static void AddFilesFromDir(string dir, List<string> files)
+  static void DeclareOpcodes()
   {
-    DirWalk(dir, 
-      delegate(string file) 
-      { 
-        if(TestFile(file))
-          files.Add(file);
-      }
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Constant,
+        3/*const idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.And
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Or
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.BitAnd
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.BitOr
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Mod
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Add
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Sub
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Div
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Mul
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Equal
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.NotEqual
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.LT
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.LTE
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GT
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GTE
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.UnaryNot
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.UnaryNeg
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.DeclVar,
+        1 /*local idx*/, 3 /*type idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ArgVar,
+        1 /*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetVar,
+        1 /*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetVar,
+        1 /*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetGVar,
+        3/*idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetGVar,
+        3/*idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetGVarImported,
+        3/*module name idx*/, 3/*idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetGVarImported,
+        3/*module name idx*/, 3/*idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ArgRef,
+        1 /*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetAttr,
+        2/*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetAttrInplace,
+        2/*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetAttr,
+        2/*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.RefAttr,
+        2/*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetFunc,
+        3/*func module idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetFuncNative,
+        3/*globs idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.LastArgToTop,
+        4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetFuncFromVar,
+        1/*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetFuncImported,
+        3/*func name idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Call,
+        3/*func ip*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallNative,
+        3/*globs idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallImported,
+        3/*func name idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallMethod,
+        2/*class member idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallMethodNative,
+        2/*class member idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallMethodVirt,
+        2/*class member idx*/, 3/*type idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallPtr,
+        4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Lambda,
+        2/*rel.offset skip lambda pos*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.UseUpval,
+        1/*upval src idx*/, 1/*local dst idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.InitFrame,
+        1/*total local vars*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Block,
+        1/*type*/, 2/*len*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Return
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ReturnVal,
+        1/*returned amount*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Pop
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Jump,
+        2 /*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.JumpZ,
+        2/*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.JumpPeekZ,
+        2/*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.JumpPeekNZ,
+        2/*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Break,
+        2 /*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Continue,
+        2 /*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.DefArg,
+        1/*local scope idx*/, 2/*jump out of def.arg calc pos*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.New,
+        3/*type idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.TypeCast,
+        3/*type idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.TypeAs,
+        3/*type idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.TypeIs,
+        3/*type idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Typeof,
+        3/*type idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Inc,
+        1/*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Dec,
+        1/*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ArrIdx
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ArrIdxW
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ArrAddInplace
+      )
     );
   }
-}
 
-public interface IFrontPostProcessor
-{
-  //NOTE: returns patched result
-  ANTLR_Frontend.Result Patch(ANTLR_Frontend.Result fres, string src_file);
-  void Tally();
-}
-
-public class EmptyPostProcessor : IFrontPostProcessor 
-{
-  public ANTLR_Frontend.Result Patch(ANTLR_Frontend.Result fres, string src_file) { return fres; }
-  public void Tally() {}
-}
-
-public static class BuildUtil
-{
-  static ConcurrentDictionary<string, DateTime> mtimes = new ConcurrentDictionary<string, DateTime>();
-  static ConcurrentDictionary<string, bool> exists = new ConcurrentDictionary<string, bool>();
-
-  static public bool NeedToRegen(string file, List<string> deps)
+  static void DeclareOpcode(Definition def)
   {
-    if(!FileExists(file))
-    {
-      //Console.WriteLine("Missing " + file);
-      return true;
-    }
+    opcode_decls.Add((byte)def.name, def);
+  }
 
-    var fmtime = GetLastWriteTime(file);
-    foreach(var dep in deps)
+  static public Definition LookupOpcode(Opcodes op)
+  {
+    Definition def;
+    if(!opcode_decls.TryGetValue((byte)op, out def))
+       throw new Exception("No such opcode definition: " + op);
+    return def;
+  }
+
+  Instruction Peek()
+  {
+    return head[head.Count-1];
+  }
+
+  void Pop()
+  {
+    head.RemoveAt(head.Count-1);
+  }
+
+  Instruction Emit(Opcodes op, int[] operands = null, int line_num = 0)
+  {
+    var inst = new Instruction(op);
+    if(inst.operands.Length != (operands == null ? 0 : operands.Length))
+      throw new Exception("Invalid operands amount for opcode:" + op);
+    for(int i=0;i<operands?.Length;++i)
+      inst.SetOperand(i, operands[i]);
+    inst.line_num = line_num;
+    head.Add(inst);
+    return inst;
+  }
+
+  //NOTE: for testing purposes only
+  public ModuleCompiler EmitThen(Opcodes op, params int[] operands)
+  {
+    Emit(op, operands);
+    return this;
+  }
+
+  //NOTE: returns jump instruction to be patched later
+  Instruction EmitConditionPlaceholderAndBody(AST_Block ast, int idx)
+  {
+    //condition
+    Visit(ast.children[idx]);
+    var jump_op = Emit(Opcodes.JumpZ, new int[] { 0 });
+    Visit(ast.children[idx+1]);
+    return jump_op;
+  }
+
+  void PatchBreaks(AST_Block block)
+  {
+    for(int i=non_patched_breaks.Count;i-- > 0;)
     {
-      if(FileExists(dep) && GetLastWriteTime(dep) > fmtime)
+      var npb = non_patched_breaks[i];
+      if(npb.block == block)
       {
-        //Console.WriteLine("Stale " + dep + " " + file);
-        return true;
+        AddOffsetFromTo(npb.jump_op, Peek());
+        non_patched_breaks.RemoveAt(i);
       }
     }
+  }
 
-    //Console.WriteLine("Hit "+ file);
+  void PatchContinues(AST_Block block)
+  {
+    for(int i=non_patched_continues.Count;i-- > 0;)
+    {
+      var npc = non_patched_continues[i];
+      if(npc.block == block)
+      {
+        AddOffsetFromTo(npc.jump_op, continue_jump_markers[npc.block]);
+        non_patched_continues.RemoveAt(i);
+      }
+    }
+    continue_jump_markers.Clear();
+  }
+
+  void PatchLater(Instruction inst, System.Action<Instruction> cb)
+  {
+    patches.Add(new Patch() {
+        inst = inst,
+        cb = cb
+    });
+  }
+
+  void AddOffsetFromTo(Instruction src, Instruction dst, int operand_idx = 0)
+  {
+    offsets.Add(new Offset() {
+      src = src,
+      dst = dst,
+      operand_idx = operand_idx
+    });
+  }
+
+  bool HasOffsetsTo(Instruction dst)
+  {
+    foreach(var offset in offsets)
+      if(offset.dst == dst)
+        return true;
     return false;
   }
 
-  //optimized version for just one dependency
-  static public bool NeedToRegen(string file, string dep)
+  void PatchOffsets()
   {
-    if(!FileExists(file))
-      return true;
+    //1. let's calculate absolute positions of all instructions
+    int pos = 0;
+    for(int i=0;i<code.Count;++i)
+    {
+      pos += code[i].def.size;
+      code[i].pos = pos; 
+    }
 
-    var fmtime = GetLastWriteTime(file);
-    if(FileExists(dep) && GetLastWriteTime(dep) > fmtime)
-      return true;
+    //2. let's patch jump candidates
+    for(int i=0;i<offsets.Count;++i)
+    {
+      var jp = offsets[i];
+      if(jp.dst.pos <= 0)
+        throw new Exception("Invalid position of destination instruction: " + jp.dst.def.name);
 
-    return false;
+      if(jp.src.pos <= 0)
+        throw new Exception("Invalid position of source instruction: " + jp.src.def.name);
+
+      int offset = jp.dst.pos - jp.src.pos;
+
+      jp.src.SetOperand(jp.operand_idx, offset);
+    }
   }
 
-  static DateTime GetLastWriteTime(string file)
+  void PatchInstructions()
   {
-    return mtimes.GetOrAdd(file, (key) => new FileInfo(key).LastWriteTime);
+    for(int i=0;i<patches.Count;++i)
+    {
+      var p = patches[i];
+      p.cb(p.inst);
+    }
+
+    PatchOffsets();
   }
 
-  static bool FileExists(string file)
+  public void Bake(out byte[] init_bytes, out byte[] code_bytes, out Ip2SrcLine ip2src_line)
   {
-    return exists.GetOrAdd(file, (key) => File.Exists(key));
+    PatchInstructions();
+
+    {
+      var bytecode = new Bytecode();
+      for(int i=0;i<init.Count;++i)
+        init[i].Write(bytecode);
+      init_bytes = bytecode.GetBytes();
+    }
+
+    {
+      var bytecode = new Bytecode();
+      for(int i=0;i<code.Count;++i)
+        code[i].Write(bytecode);
+      code_bytes = bytecode.GetBytes();
+    }
+
+    ip2src_line = new Ip2SrcLine();
+    int pos = 0;
+    for(int i=0;i<code.Count;++i)
+    {
+      pos += code[i].def.size;
+      ip2src_line.Add(pos-1, code[i].line_num);
+    }
+  }
+
+  public override void DoVisit(AST_Interim ast)
+  {
+    VisitChildren(ast);
+  }
+
+  public override void DoVisit(AST_Module ast)
+  {
+    VisitChildren(ast);
+  }
+
+  public override void DoVisit(AST_Import ast)
+  {
+    for(int i=0;i<ast.module_names.Count;++i)
+    {
+      if(!imports.Contains(ast.module_names[i]))
+        imports.Add(ast.module_names[i]);
+    }
+  }
+
+  public override void DoVisit(AST_FuncDecl ast)
+  {
+    UseCode();
+
+    var fsymb = ast.symbol;
+
+    func_decls.Push(fsymb);
+
+    fsymb.ip_addr = GetCodeSize();
+
+    Emit(Opcodes.InitFrame, new int[] { fsymb.local_vars_num + 1/*cargs bits*/});
+    VisitChildren(ast);
+    Emit(Opcodes.Return, null, ast.last_line_num);
+
+    func_decls.Pop();
+
+    UseInit();
+  }
+
+  public override void DoVisit(AST_LambdaDecl ast)
+  {
+    var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
+    //skipping lambda opcode
+    Emit(Opcodes.InitFrame, new int[] { ast.local_vars_num + 1/*cargs bits*/});
+    VisitChildren(ast);
+    Emit(Opcodes.Return, null, ast.last_line_num);
+    AddOffsetFromTo(lmbd_op, Peek());
+
+    foreach(var p in ast.upvals)
+      Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
+  }
+
+  public override void DoVisit(AST_ClassDecl ast)
+  {
+    var scope_bak = curr_scope;
+    curr_scope = ast.symbol;
+
+    for(int i=0;i<ast.func_decls.Count;++i)
+      Visit(ast.func_decls[i]);
+
+    curr_scope = scope_bak;
+  }
+
+  public override void DoVisit(AST_Block ast)
+  {
+    switch(ast.type)
+    {
+      case BlockType.IF:
+
+        //if()
+        // ^-- to be patched with position out of 'if body'
+        //{
+        // ...
+        // jmp_opcode
+        // ^-- to be patched with position out of 'if body'
+        //}
+        //else if()
+        // ^-- to be patched with position out of 'if body'
+        //{
+        // ...
+        // jmp_opcode
+        // ^-- to be patched with position out of 'if body'
+        //}
+        //else
+        //{
+        //}
+
+        Instruction last_jmp_op = null;
+        int i = 0;
+        //NOTE: amount of children is even if there's no 'else'
+        for(;i < ast.children.Count; i += 2)
+        {
+          //break if there's only 'else leftover' left
+          if((i + 2) > ast.children.Count)
+            break;
+
+          var if_op = EmitConditionPlaceholderAndBody(ast, i);
+          if(last_jmp_op != null)
+            AddOffsetFromTo(last_jmp_op, Peek());
+
+          //check if uncoditional jump out of 'if body' is required,
+          //it's required only if there are other 'else if' or 'else'
+          if(ast.children.Count > 2)
+          {
+            last_jmp_op = Emit(Opcodes.Jump, new int[] { 0 });
+            AddOffsetFromTo(if_op, Peek());
+          }
+          else
+            AddOffsetFromTo(if_op, Peek());
+        }
+        //check fo 'else leftover'
+        if(i != ast.children.Count)
+        {
+          Visit(ast.children[i]);
+          AddOffsetFromTo(last_jmp_op, Peek());
+        }
+      break;
+      case BlockType.WHILE:
+      {
+        if(ast.children.Count != 2)
+         throw new Exception("Unexpected amount of children (must be 2)");
+
+        loop_blocks.Push(ast);
+
+        var begin_op = Peek();
+
+        var cond_op = EmitConditionPlaceholderAndBody(ast, 0);
+
+        //to the beginning of the loop
+        var jump_op = Emit(Opcodes.Jump, new int[] { 0 });
+        AddOffsetFromTo(jump_op, begin_op);
+
+        //patch 'jump out of the loop' position
+        AddOffsetFromTo(cond_op, Peek());
+
+        PatchContinues(ast);
+
+        PatchBreaks(ast);
+
+        loop_blocks.Pop();
+      }
+      break;
+      case BlockType.DOWHILE:
+      {
+        if(ast.children.Count != 2)
+         throw new Exception("Unexpected amount of children (must be 2)");
+
+        loop_blocks.Push(ast);
+
+        var begin_op = Peek();
+
+        Visit(ast.children[0]);
+        Visit(ast.children[1]);
+        var cond_op = Emit(Opcodes.JumpZ, new int[] { 0 });
+
+        //to the beginning of the loop
+        var jump_op = Emit(Opcodes.Jump, new int[] { 0 });
+        AddOffsetFromTo(jump_op, begin_op);
+
+        //patch 'jump out of the loop' position
+        AddOffsetFromTo(cond_op, Peek());
+
+        PatchContinues(ast);
+
+        PatchBreaks(ast);
+
+        loop_blocks.Pop();
+      }
+      break;
+      case BlockType.FUNC:
+      {
+        VisitChildren(ast);
+      }
+      break;
+      case BlockType.SEQ:
+      case BlockType.PARAL:
+      case BlockType.PARAL_ALL:
+      {
+        VisitControlBlock(ast);
+      }
+      break;
+      case BlockType.DEFER:
+      {
+        VisitDefer(ast);
+      }
+      break;
+      default:
+        throw new Exception("Not supported block type: " + ast.type); 
+    }
+  }
+
+  void VisitControlBlock(AST_Block ast)
+  {
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks.Peek() : null;
+
+    bool parent_is_paral =
+      parent_block != null &&
+      (parent_block.type == BlockType.PARAL ||
+       parent_block.type == BlockType.PARAL_ALL);
+
+    bool is_paral = 
+      ast.type == BlockType.PARAL || 
+      ast.type == BlockType.PARAL_ALL;
+
+    ctrl_blocks.Push(ast);
+
+    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
+
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var child = ast.children[i];
+
+      //NOTE: let's automatically wrap all children with sequence if 
+      //      they are inside paral block
+      if(is_paral && 
+          (!(child is AST_Block child_block) || 
+           (child_block.type != BlockType.SEQ && child_block.type != BlockType.DEFER)))
+      {
+        var seq_child = new AST_Block(BlockType.SEQ);
+        seq_child.children.Add(child);
+        child = seq_child;
+      }
+
+      Visit(child);
+    }
+
+    ctrl_blocks.Pop();
+
+    bool need_block = is_paral || parent_is_paral || block_has_defers.Contains(ast) || HasOffsetsTo(block_op);
+
+    if(need_block)
+      AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
+    else
+      head.Remove(block_op); 
+  }
+
+  void VisitDefer(AST_Block ast)
+  {
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks.Peek() : null;
+    if(parent_block != null)
+      block_has_defers.Add(parent_block);
+
+    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
+    VisitChildren(ast);
+    AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
+  }
+
+  public override void DoVisit(AST_TypeCast ast)
+  {
+    VisitChildren(ast);
+    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type) }, ast.line_num);
+  }
+
+  public override void DoVisit(AST_TypeAs ast)
+  {
+    VisitChildren(ast);
+    Emit(Opcodes.TypeAs, new int[] { AddConstant(ast.type) }, ast.line_num);
+  }
+
+  public override void DoVisit(AST_TypeIs ast)
+  {
+    VisitChildren(ast);
+    Emit(Opcodes.TypeIs, new int[] { AddConstant(ast.type) }, ast.line_num);
+  }
+
+  public override void DoVisit(AST_Typeof ast)
+  {
+    Emit(Opcodes.Typeof, new int[] { AddConstant(ast.type) });
+  }
+
+  public override void DoVisit(AST_New ast)
+  {
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    VisitChildren(ast);
+  }
+
+  public override void DoVisit(AST_Inc ast)
+  {
+    Emit(Opcodes.Inc, new int[] { ast.symbol.scope_idx });
+  }
+
+  public override void DoVisit(AST_Dec ast)
+  {
+    Emit(Opcodes.Dec, new int[] { ast.symbol.scope_idx });
+  }
+
+  public override void DoVisit(AST_Call ast)
+  {  
+    switch(ast.type)
+    {
+      case EnumCall.VARW:
+      {
+        Emit(Opcodes.SetVar, new int[] {ast.symb_idx}, ast.line_num);
+      }
+      break;
+      case EnumCall.VAR:
+      {
+        Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
+      }
+      break;
+      case EnumCall.GVAR:
+      {
+        if(ast.module_name != module.name)
+        {
+          int module_idx = AddConstant(ast.module_name);
+          Emit(Opcodes.GetGVarImported, new int[] {module_idx, ast.symb_idx}, ast.line_num);
+        }
+        else 
+        {
+          Emit(Opcodes.GetGVar, new int[] {ast.symb_idx}, ast.line_num);
+        }
+      }
+      break;
+      case EnumCall.GVARW:
+      {
+        if(ast.module_name != module.name)
+        {
+          int module_idx = AddConstant(ast.module_name);
+          Emit(Opcodes.SetGVarImported, new int[] {module_idx, ast.symb_idx}, ast.line_num);
+        }
+        else 
+        {
+          Emit(Opcodes.SetGVar, new int[] {ast.symb_idx}, ast.line_num);
+        }
+      }
+      break;
+      case EnumCall.FUNC:
+      {
+        VisitChildren(ast);
+        var instr = EmitGetFuncAddr(ast);
+        //let's optimize some primitive calls
+        if(instr.op == Opcodes.GetFunc)
+        {
+          Pop();
+          var fsymb = (FuncSymbolScript)ast.symb; 
+          var call_op = Emit(Opcodes.Call, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+          PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
+        }
+        else if(instr.op == Opcodes.GetFuncNative)
+        {
+          Pop();
+          Emit(Opcodes.CallNative, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
+        }
+        else if(instr.op == Opcodes.GetFuncImported)
+        {
+          Pop();
+          Emit(Opcodes.CallImported, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
+        }
+        else
+          Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+      }
+      break;
+      case EnumCall.MVAR:
+      {
+        if(ast.symb_idx == -1)
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
+
+        VisitChildren(ast);
+
+        Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
+      }
+      break;
+      case EnumCall.MVARW:
+      {
+        if(ast.symb_idx == -1)
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
+
+        VisitChildren(ast);
+
+        Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
+      }
+      break;
+      case EnumCall.MFUNC:
+      {
+        var instance_type = ast.symb.scope as IInstanceType;
+        if(instance_type == null)
+          throw new Exception("Not instance type: " + ast.symb.name);
+
+        var mfunc = ast.symb as FuncSymbol;
+        if(mfunc == null)
+          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + instance_type.GetName() + "' by index " + ast.symb_idx);
+
+        VisitChildren(ast);
+        
+        if(instance_type is InterfaceSymbol)
+        {
+          Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
+        }
+        else
+        {
+          if(mfunc is FuncSymbolScript)
+            Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+          else
+            Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+        }
+      }
+      break;
+      case EnumCall.MVARREF:
+      {
+        if(ast.symb_idx == -1)
+          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
+
+        VisitChildren(ast);
+
+        Emit(Opcodes.RefAttr, new int[] {ast.symb_idx}, ast.line_num);
+      }
+      break;
+      case EnumCall.ARR_IDX:
+      {
+        Emit(Opcodes.ArrIdx, null, ast.line_num);
+      }
+      break;
+      case EnumCall.ARR_IDXW:
+      {
+        Emit(Opcodes.ArrIdxW, null, ast.line_num);
+      }
+      break;
+      case EnumCall.LMBD:
+      {
+        VisitChildren(ast);
+        Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+      }
+      break;
+      case EnumCall.FUNC_VAR:
+      {
+        VisitChildren(ast);
+        Emit(Opcodes.GetFuncFromVar, new int[] {ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+      }
+      break;
+      case EnumCall.FUNC_MVAR:
+      {
+        VisitChildren(ast);
+        Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+      }
+      break;
+      case EnumCall.GET_ADDR:
+      {
+        EmitGetFuncAddr(ast);
+      }
+      break;
+      default:
+        throw new Exception("Not supported call: " + ast.type);
+    }
+  }
+
+  Instruction EmitGetFuncAddr(AST_Call ast)
+  {
+    var func_symb = ast.symb as FuncSymbol;
+    if(func_symb == null)
+      throw new Exception("Symbol '" + ast.symb?.name + "' is not a func");
+
+    if(func_symb is FuncSymbolNative)
+      return Emit(Opcodes.GetFuncNative, new int[] { func_symb.scope_idx }, ast.line_num);
+    else if(((Namespace)func_symb.scope).module_name == module.name)
+      return Emit(Opcodes.GetFunc, new int[] { func_symb.scope_idx }, ast.line_num);
+    else
+    {
+      int full_name_idx = AddConstant(ast.symb.GetFullName());
+      return Emit(Opcodes.GetFuncImported, new int[] { full_name_idx }, ast.line_num);
+    }
+  }
+
+  public override void DoVisit(AST_Return ast)
+  {
+    VisitChildren(ast);
+    Emit(Opcodes.ReturnVal, new int[] { ast.num }, ast.line_num);
+  }
+
+  public override void DoVisit(AST_Break ast)
+  {
+    var jump_op = Emit(Opcodes.Break, new int[] { 0 /*patched later*/});
+    non_patched_breaks.Add(
+      new BlockJump() 
+        { block = loop_blocks.Peek(), 
+          jump_op = jump_op
+        }
+    );
+  }
+
+  public override void DoVisit(AST_Continue ast)
+  {
+    var loop_block = loop_blocks.Peek();
+    if(ast.jump_marker)
+    {
+      continue_jump_markers.Add(loop_block, Peek());
+    }
+    else
+    {
+      var jump_op = Emit(Opcodes.Continue, new int[] { 0 /*patched later*/});
+      non_patched_continues.Add(
+        new BlockJump() 
+          { block = loop_block, 
+            jump_op = jump_op
+          }
+      );
+    }
+  }
+
+  public override void DoVisit(AST_PopValue ast)
+  {
+    Emit(Opcodes.Pop);
+  }
+
+  public override void DoVisit(AST_Literal ast)
+  {
+    int literal_idx = AddConstant(ast);
+    Emit(Opcodes.Constant, new int[] { literal_idx });
+  }
+
+  public override void DoVisit(AST_BinaryOpExp ast)
+  {
+    switch(ast.type)
+    {
+      case EnumBinaryOp.AND:
+      {
+        Visit(ast.children[0]);
+        var jump_op = Emit(Opcodes.JumpPeekZ, new int[] { 0 /*patched later*/});
+        Visit(ast.children[1]);
+        Emit(Opcodes.And, null, ast.line_num);
+        AddOffsetFromTo(jump_op, Peek());
+      }
+      break;
+      case EnumBinaryOp.OR:
+      {
+        Visit(ast.children[0]);
+        var jump_op = Emit(Opcodes.JumpPeekNZ, new int[] { 0 /*patched later*/});
+        Visit(ast.children[1]);
+        Emit(Opcodes.Or, null, ast.line_num);
+        AddOffsetFromTo(jump_op, Peek());
+      }
+      break;
+      case EnumBinaryOp.BIT_AND:
+        VisitChildren(ast);
+        Emit(Opcodes.BitAnd, null, ast.line_num);
+      break;
+      case EnumBinaryOp.BIT_OR:
+        VisitChildren(ast);
+        Emit(Opcodes.BitOr, null, ast.line_num);
+      break;
+      case EnumBinaryOp.MOD:
+        VisitChildren(ast);
+        Emit(Opcodes.Mod, null, ast.line_num);
+      break;
+      case EnumBinaryOp.ADD:
+      {
+        VisitChildren(ast);
+        Emit(Opcodes.Add, null, ast.line_num);
+      }
+      break;
+      case EnumBinaryOp.SUB:
+        VisitChildren(ast);
+        Emit(Opcodes.Sub, null, ast.line_num);
+      break;
+      case EnumBinaryOp.DIV:
+        VisitChildren(ast);
+        Emit(Opcodes.Div, null, ast.line_num);
+      break;
+      case EnumBinaryOp.MUL:
+        VisitChildren(ast);
+        Emit(Opcodes.Mul, null, ast.line_num);
+      break;
+      case EnumBinaryOp.EQ:
+        VisitChildren(ast);
+        Emit(Opcodes.Equal, null, ast.line_num);
+      break;
+      case EnumBinaryOp.NQ:
+        VisitChildren(ast);
+        Emit(Opcodes.NotEqual, null, ast.line_num);
+      break;
+      case EnumBinaryOp.LT:
+        VisitChildren(ast);
+        Emit(Opcodes.LT, null, ast.line_num);
+      break;
+      case EnumBinaryOp.LTE:
+        VisitChildren(ast);
+        Emit(Opcodes.LTE, null, ast.line_num);
+      break;
+      case EnumBinaryOp.GT:
+        VisitChildren(ast);
+        Emit(Opcodes.GT, null, ast.line_num);
+      break;
+      case EnumBinaryOp.GTE:
+        VisitChildren(ast);
+        Emit(Opcodes.GTE, null, ast.line_num);
+      break;
+      default:
+        throw new Exception("Not supported binary type: " + ast.type);
+    }
+  }
+
+  public override void DoVisit(AST_UnaryOpExp ast)
+  {
+    VisitChildren(ast);
+
+    switch(ast.type)
+    {
+      case EnumUnaryOp.NOT:
+        Emit(Opcodes.UnaryNot);
+      break;
+      case EnumUnaryOp.NEG:
+        Emit(Opcodes.UnaryNeg);
+      break;
+      default:
+        throw new Exception("Not supported unary type: " + ast.type);
+    }
+  }
+
+  public override void DoVisit(AST_VarDecl ast)
+  {
+    //checking of there are default args
+    if(ast.is_func_arg && ast.children.Count > 0)
+    {                  
+      var fsymb = func_decls.Peek();
+      int symb_idx = (int)ast.symb_idx;
+      //let's take into account 'this' special case, which is 
+      //stored at 0 idx and is not part of func args 
+      //(which are stored in the very beginning)
+      if(fsymb.scope is ClassSymbol)
+        --symb_idx;
+      var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - fsymb.GetRequiredArgsNum(), 0 /*patched later*/ });
+      VisitChildren(ast);
+      AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
+    }
+
+    if(!ast.is_func_arg)
+    {
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type) });
+    }
+    //check if it's not a module scope var (global)
+    else if(func_decls.Count > 0)
+    {
+      if(ast.is_ref)
+        Emit(Opcodes.ArgRef, new int[] { (int)ast.symb_idx });
+      else
+        Emit(Opcodes.ArgVar, new int[] { (int)ast.symb_idx });
+    }
+    else
+    {
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type)});
+    }
+  }
+
+  public override void DoVisit(bhl.AST_JsonObj ast)
+  {
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    VisitChildren(ast);
+  }
+
+  public override void DoVisit(bhl.AST_JsonArr ast)
+  {
+    var arr_symb = ast.type as ArrayTypeSymbol;
+    if(arr_symb == null)
+      throw new Exception("Could not find class binding: " + ast.type.GetName());
+
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var c = ast.children[i];
+
+      //checking if there's an explicit add to array operand
+      if(c is AST_JsonArrAddItem)
+        Emit(Opcodes.ArrAddInplace);
+      else
+        Visit(c);
+    }
+
+    //adding last item item
+    if(ast.children.Count > 0)
+      Emit(Opcodes.ArrAddInplace);
+  }
+
+  public override void DoVisit(bhl.AST_JsonArrAddItem ast)
+  {
+    //NOTE: it's handled above
+  }
+
+  public override void DoVisit(bhl.AST_JsonPair ast)
+  {
+    VisitChildren(ast);
+    Emit(Opcodes.SetAttrInplace, new int[] { (int)ast.symb_idx });
   }
 }
 

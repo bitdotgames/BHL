@@ -752,7 +752,7 @@ public class BHL_TestBase
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = false;
 
-    var cmp = new Compiler();
+    var cmp = new CompilationExecutor();
     int res = cmp.Exec(conf);
     if(res != 0)
       throw new Exception(File.ReadAllText(conf.err_file));

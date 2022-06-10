@@ -111,7 +111,7 @@ public class CompileCmd : ICmd
     }
 
     if(files.Count == 0)
-      Compiler.AddFilesFromDir(src_dir, files);
+      CompilationExecutor.AddFilesFromDir(src_dir, files);
 
     for(int i=files.Count;i-- > 0;)
     {
@@ -140,7 +140,7 @@ public class CompileCmd : ICmd
     conf.debug = debug;
     conf.verbose = true;
 
-    var cmp = new Compiler();
+    var cmp = new CompilationExecutor();
     int err = cmp.Exec(conf);
     if(err != 0)
       Environment.Exit(err);

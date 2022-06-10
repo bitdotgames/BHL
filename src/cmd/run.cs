@@ -144,7 +144,7 @@ public class RunCmd : ICmd
 
     File.Delete(conf.err_file);
 
-    var cmp = new Compiler();
+    var cmp = new CompilationExecutor();
     int err = cmp.Exec(conf);
 
     if(File.Exists(conf.err_file))
