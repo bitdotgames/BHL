@@ -57,7 +57,7 @@ public class CompilationExecutor
     }
   }
 
-  public IError Exec(CompileConf conf)
+  public ICompileError Exec(CompileConf conf)
   {
     var sw = new Stopwatch();
     sw.Start();
@@ -72,7 +72,7 @@ public class CompilationExecutor
     return err;
   }
 
-  IError DoExec(CompileConf conf)
+  ICompileError DoExec(CompileConf conf)
   {
     var res_dir = Path.GetDirectoryName(conf.res_file); 
     if(res_dir.Length > 0)
@@ -206,7 +206,7 @@ public class CompilationExecutor
     return compiler_workers;
   }
 
-  IError WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
+  ICompileError WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
   {
     using(FileStream dfs = new FileStream(file_path, FileMode.Create, System.IO.FileAccess.Write))
     {
@@ -316,7 +316,7 @@ public class CompilationExecutor
     public List<string> inc_path = new List<string>();
     public List<string> files;
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
-    public IError error = null;
+    public ICompileError error = null;
 
     public void Start()
     {
@@ -391,7 +391,7 @@ public class CompilationExecutor
       }
       catch(Exception e)
       {
-        if(e is IError ie)
+        if(e is ICompileError ie)
           w.error = ie;
         else
         {
@@ -505,7 +505,7 @@ public class CompilationExecutor
     public int count;
     public bool verbose;
     public IFrontPostProcessor postproc;
-    public IError error = null;
+    public ICompileError error = null;
     public Cache cache;
     public Dictionary<string, ModulePath> file2path = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
@@ -585,7 +585,7 @@ public class CompilationExecutor
       }
       catch(Exception e)
       {
-        if(e is IError ie)
+        if(e is ICompileError ie)
           w.error = ie;
         else
         {

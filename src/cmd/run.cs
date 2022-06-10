@@ -167,7 +167,7 @@ public class RunCmd : ICmd
       System.Threading.Thread.Sleep((int)(dt * 1000));
   }
 
-  static void ShowPosition(string file, IError err)
+  static void ShowPosition(string file, ICompileError err)
   {
     var lines = File.ReadAllLines(file);
 

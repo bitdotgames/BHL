@@ -13,7 +13,7 @@ namespace bhl {
 
 public static class ErrorUtils 
 {
-  public static string ToJson(IError ie)
+  public static string ToJson(ICompileError ie)
   {
     return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3} }}", 
       MakeJsonSafe(ie.text),
@@ -57,7 +57,7 @@ public static class ErrorUtils
   }
 }
 
-public interface IError
+public interface ICompileError
 {
   string text { get; }
   string file { get; }
@@ -66,7 +66,7 @@ public interface IError
 }
 
 #if BHL_FRONT
-public class SyntaxError : Exception, IError
+public class SyntaxError : Exception, ICompileError
 {
   public string text { get; }
   public int line { get; }
@@ -83,7 +83,7 @@ public class SyntaxError : Exception, IError
   }
 }
 
-public class BuildError : Exception, IError
+public class BuildError : Exception, ICompileError
 {
   public string text { get; }
   public int line { get { return 0; } }
@@ -105,7 +105,7 @@ public class BuildError : Exception, IError
   }
 }
 
-public class SemanticError : Exception, IError
+public class SemanticError : Exception, ICompileError
 {
   public string text { get; }
   public int line { get { return tokens.Get(place.SourceInterval.a).Line; } }
@@ -174,7 +174,7 @@ public class ErrorParserListener : IParserErrorListener
 
 #endif
 
-public class SymbolError : Exception, IError
+public class SymbolError : Exception, ICompileError
 {
   public Symbol symbol { get; }
 
