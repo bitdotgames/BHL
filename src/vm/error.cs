@@ -11,16 +11,9 @@ using Antlr4.Runtime.Sharpen;
 
 namespace bhl {
 
-public interface ICompileError
-{
-  string text { get; }
-  string file { get; }
-  int line { get; }
-  int char_pos { get; }
-}
-
 public static class ErrorUtils 
 {
+#if BHL_FRONT
   public static string ToJson(ICompileError ie)
   {
     return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3} }}", 
@@ -30,6 +23,7 @@ public static class ErrorUtils
       ie.char_pos
     );
   }
+#endif
 
   public static string MakeMessage(string file, int line, int char_pos, string msg)
   {
@@ -65,7 +59,10 @@ public static class ErrorUtils
   }
 }
 
-public class SymbolError : Exception, ICompileError
+public class SymbolError : Exception
+#if BHL_FRONT
+                           , ICompileError
+#endif
 {
   public Symbol symbol { get; }
 

@@ -9,6 +9,14 @@ using Antlr4.Runtime.Sharpen;
 
 namespace bhl {
 
+public interface ICompileError
+{
+  string text { get; }
+  string file { get; }
+  int line { get; }
+  int char_pos { get; }
+}
+
 public class SyntaxError : Exception, ICompileError
 {
   public string text { get; }
