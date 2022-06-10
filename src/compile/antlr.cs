@@ -68,14 +68,15 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
   ITokenStream tokens;
   ParseTreeProperty<WrappedParseTree> tree_props = new ParseTreeProperty<WrappedParseTree>();
 
-  class ParserArtifact
+  class PostponedParserRule
   {
     public bool visited;
+    public AST_Tree ast;
     public IScope scope;
     public ParserRuleContext ctx;
   }
 
-  Dictionary<string, ParserArtifact> parser_artifacts = new Dictionary<string, ParserArtifact>();
+  List<PostponedParserRule> postponed_parser_rules = new List<PostponedParserRule>();
 
   IScope curr_scope;
 
@@ -118,7 +119,6 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
-  AST_Module root_ast;
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s)
@@ -369,7 +369,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
   {
     if(result == null)
     {
-      root_ast = new AST_Module(module.name);
+      var root_ast = new AST_Module(module.name);
       PushAST(root_ast);
       VisitProgram(parsed.prog);
       PopAST();
@@ -394,49 +394,55 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     
     Visit(ctx.decls()); 
 
-    VisitArtifacts();
+    VisitPostponedParserRules();
 
     return null;
   }
 
-  void VisitArtifacts()
+  void PostponeParsing(ParserRuleContext ctx)
   {
-    foreach(var kv in parser_artifacts)
-      TryVisitArtifact(kv.Value);
+    var rule = new PostponedParserRule();
+    rule.visited = false;
+    rule.ast = PeekAST();
+    rule.scope = curr_scope;
+    rule.ctx = ctx;
+
+    postponed_parser_rules.Add(rule);
   }
 
-  void TryVisitArtifact(ParserArtifact artifact)
+  void VisitPostponedParserRules()
   {
-    if(artifact.visited)
-      return;
-    artifact.visited = true;
+    while(postponed_parser_rules.Count > 0)
+    {
+      var rule = postponed_parser_rules[0];
+      postponed_parser_rules.RemoveAt(0);
+      TryVisitPostponedParserRule(rule);
+    }
+  }
 
-    PushAST(root_ast);
+  void TryVisitPostponedParserRule(PostponedParserRule rule)
+  {
+    if(rule.visited)
+      return;
+    rule.visited = true;
+
+    PushAST(rule.ast);
 
     var orig_scope = curr_scope;
-    curr_scope = artifact.scope;
+    curr_scope = rule.scope;
 
-    if(artifact.ctx is bhlParser.FuncDeclContext fndecl)
+    if(rule.ctx is bhlParser.FuncDeclContext fndecl)
       Visit(fndecl);
-    else if(artifact.ctx is bhlParser.ClassDeclContext cldecl)
+    else if(rule.ctx is bhlParser.ClassDeclContext cldecl)
       Visit(cldecl);
-    else if(artifact.ctx is bhlParser.InterfaceDeclContext ifacedecl)
+    else if(rule.ctx is bhlParser.InterfaceDeclContext ifacedecl)
       Visit(ifacedecl);
     else
-      throw new Exception("Unknown artifact parser context");
+      throw new Exception("Unknown rule parser context");
 
     PopAST();
 
     curr_scope = orig_scope;
-  }
-
-  void TryVisitArtifact(IScope scope, string name)
-  {
-    var full_name = scope.GetFullName(name);
-
-    ParserArtifact pa;
-    if(parser_artifacts.TryGetValue(full_name, out pa))
-      TryVisitArtifact(pa);
   }
 
   public override object VisitImports(bhlParser.ImportsContext ctx)
@@ -506,7 +512,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     var o = resolver(name);
     if(o == null)
     {
-      TryVisitArtifact(scope, name);
+      VisitPostponedParserRules();
       o = resolver(name);
     }
     return o;
@@ -1096,7 +1102,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     if(tp.Get() == null)
     {
-      TryVisitArtifact(ns, tp.name);
+      VisitPostponedParserRules();
       if(tp.Get() == null)
         FireError(ctx, "type '" + tp.name + "' not found");
     }
@@ -1994,20 +2000,6 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  ParserArtifact NewArtifact(string name, ParserRuleContext ctx)
-  {
-    string full_name = curr_scope.GetFullName(name); 
-
-    var pa = new ParserArtifact();
-    pa.visited = false;
-    pa.scope = curr_scope;
-    pa.ctx = ctx;
-
-    parser_artifacts.Add(full_name, pa);
-
-    return pa; 
-  }
-
   public override object VisitDecls(bhlParser.DeclsContext ctx)
   {
     var decls = ctx.decl();
@@ -2022,19 +2014,19 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       var fndecl = decls[i].funcDecl();
       if(fndecl != null)
       {
-        NewArtifact(fndecl.NAME().GetText(), fndecl);
+        PostponeParsing(fndecl);
         continue;
       }
       var cldecl = decls[i].classDecl();
       if(cldecl != null)
       {
-        NewArtifact(cldecl.NAME().GetText(), cldecl);
+        PostponeParsing(cldecl);
         continue;
       }
       var ifacedecl = decls[i].interfaceDecl();
       if(ifacedecl != null)
       {
-        NewArtifact(ifacedecl.NAME().GetText(), ifacedecl);
+        PostponeParsing(ifacedecl);
         continue;
       }
       var vdecl = decls[i].varDeclareAssign();
@@ -2187,6 +2179,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     var ast = new AST_ClassDecl(class_symb);
 
+    //1. class attributes
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
       var cb = ctx.classBlock().classMembers().classMember()[i];
@@ -2200,6 +2193,12 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
         var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), ParseType(vd.type()));
         class_symb.Define(fld_symb);
       }
+    }
+
+    //2. class members
+    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
+    {
+      var cb = ctx.classBlock().classMembers().classMember()[i];
 
       var fd = cb.funcDecl();
       if(fd != null)

@@ -81,6 +81,13 @@ public class ModuleCompiler : AST_Visitor
   }
   List<Offset> offsets = new List<Offset>();
 
+  internal struct Patch
+  {
+    internal Instruction inst;
+    internal System.Action<Instruction> cb;
+  }
+  List<Patch> patches = new List<Patch>();
+
   static Dictionary<byte, Definition> opcode_decls = new Dictionary<byte, Definition>();
 
   public class Definition
@@ -762,6 +769,14 @@ public class ModuleCompiler : AST_Visitor
     continue_jump_markers.Clear();
   }
 
+  void PatchLater(Instruction inst, System.Action<Instruction> cb)
+  {
+    patches.Add(new Patch() {
+        inst = inst,
+        cb = cb
+    });
+  }
+
   void AddOffsetFromTo(Instruction src, Instruction dst, int operand_idx = 0)
   {
     offsets.Add(new Offset() {
@@ -805,9 +820,20 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
+  void PatchInstructions()
+  {
+    for(int i=0;i<patches.Count;++i)
+    {
+      var p = patches[i];
+      p.cb(p.inst);
+    }
+
+    PatchOffsets();
+  }
+
   public void Bake(out byte[] init_bytes, out byte[] code_bytes, out Ip2SrcLine ip2src_line)
   {
-    PatchOffsets();
+    PatchInstructions();
 
     {
       var bytecode = new Bytecode();
@@ -1165,7 +1191,9 @@ public class ModuleCompiler : AST_Visitor
         if(instr.op == Opcodes.GetFunc)
         {
           Pop();
-          Emit(Opcodes.Call, new int[] {((FuncSymbolScript)ast.symb).ip_addr, (int)ast.cargs_bits}, ast.line_num);
+          var fsymb = (FuncSymbolScript)ast.symb; 
+          var call_op = Emit(Opcodes.Call, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+          PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
         }
         else if(instr.op == Opcodes.GetFuncNative)
         {
