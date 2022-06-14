@@ -995,7 +995,7 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestUserChildClassMethodsOrderIrrelevant()
   {
     string bhl = @"

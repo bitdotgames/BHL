@@ -27,7 +27,7 @@ public class WrappedParseTree
   public IType eval_type;
 }
 
-public class ANTLR_Frontend : bhlBaseVisitor<object>
+public class ANTLR_Parser : bhlBaseVisitor<object>
 {
   public class Result
   {
@@ -70,8 +70,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
   class PostponedParserRule
   {
-    public bool visited;
-    public AST_Tree ast;
+    public IAST ast;
     public IScope scope;
     public ParserRuleContext ctx;
   }
@@ -134,7 +133,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static Result ProcessFile(string file, Types ts, ANTLR_Frontend.Importer imp)
+  public static Result ProcessFile(string file, Types ts, ANTLR_Parser.Importer imp)
   {
     using(var sfs = File.OpenRead(file))
     {
@@ -152,17 +151,17 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     return p;
   }
   
-  public static Result ProcessStream(Module module, Stream src, Types ts, ANTLR_Frontend.Importer imp = null, bool being_imported = false)
+  public static Result ProcessStream(Module module, Stream src, Types ts, ANTLR_Parser.Importer imp = null, bool being_imported = false)
   {
     var p = Stream2Parser(module.file_path, src);
     var parsed = new ANTLR_Result(p.TokenStream, p.program());
     return ProcessParsed(module, parsed, ts, imp, being_imported);
   }
 
-  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, ANTLR_Frontend.Importer imp = null, bool being_imported = false)
+  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, ANTLR_Parser.Importer imp = null, bool being_imported = false)
   {
     //var sw1 = System.Diagnostics.Stopwatch.StartNew();
-    var f = new ANTLR_Frontend(parsed, module, ts, imp, being_imported);
+    var f = new ANTLR_Parser(parsed, module, ts, imp, being_imported);
     var res = f.Process();
     //sw1.Stop();
     //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
@@ -242,13 +241,13 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
       {
         //Console.WriteLine("HIT " + full_path);
-        ANTLR_Frontend.ProcessParsed(m, parsed, ts, this, being_imported: true);
+        ANTLR_Parser.ProcessParsed(m, parsed, ts, this, being_imported: true);
       }
       else
       {
         var stream = File.OpenRead(full_path);
         //Console.WriteLine("MISS " + full_path);
-        ANTLR_Frontend.ProcessStream(m, stream, ts, this, being_imported: true);
+        ANTLR_Parser.ProcessStream(m, stream, ts, this, being_imported: true);
         stream.Close();
       }
 
@@ -293,7 +292,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     }
   }
 
-  public ANTLR_Frontend(ANTLR_Result parsed, Module module, Types types, Importer importer, bool being_imported = false)
+  public ANTLR_Parser(ANTLR_Result parsed, Module module, Types types, Importer importer, bool being_imported = false)
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;
@@ -404,15 +403,15 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  void PostponeParsing(ParserRuleContext ctx)
+  PostponedParserRule PostponeParsing(ParserRuleContext ctx)
   {
     var rule = new PostponedParserRule();
-    rule.visited = false;
     rule.ast = PeekAST();
     rule.scope = curr_scope;
     rule.ctx = ctx;
 
     postponed_parser_rules.Add(rule);
+    return rule;
   }
 
   void VisitPostponedParserRules()
@@ -427,26 +426,46 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
   void TryVisitPostponedParserRule(PostponedParserRule rule)
   {
-    if(rule.visited)
-      return;
-    rule.visited = true;
-
-    PushAST(rule.ast);
-
-    scopes.Push(rule.scope);
-
     if(rule.ctx is bhlParser.FuncDeclContext fndecl)
+    {
+      PushAST((AST_Tree)rule.ast);
+      scopes.Push(rule.scope);
       Visit(fndecl);
+      PopAST();
+      scopes.Pop();
+    }
     else if(rule.ctx is bhlParser.ClassDeclContext cldecl)
+    {
+      PushAST((AST_Tree)rule.ast);
+      scopes.Push(rule.scope);
       Visit(cldecl);
+      PopAST();
+      scopes.Pop();
+    }
     else if(rule.ctx is bhlParser.InterfaceDeclContext ifacedecl)
+    {
+      PushAST((AST_Tree)rule.ast);
+      scopes.Push(rule.scope);
       Visit(ifacedecl);
+      PopAST();
+      scopes.Pop();
+    }
+    else if(rule.ctx is bhlParser.ClassMemberContext cmdecl)
+    {
+      var ast_class = (AST_ClassDecl)rule.ast;
+      var fd = cmdecl.funcDecl();
+      if(fd != null)
+      {
+        if(fd.NAME().GetText() == "this")
+          FireError(fd.NAME(), "the keyword \"this\" is reserved");
+
+        var func_ast = CommonFuncDecl(ast_class.symbol, fd);
+        ast_class.func_decls.Add(func_ast);
+      }
+    }
     else
       throw new Exception("Unknown rule parser context");
 
-    PopAST();
-
-    scopes.Pop();
   }
 
   public override object VisitImports(bhlParser.ImportsContext ctx)
@@ -511,7 +530,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
     return null;
   }
 
-  T ResolveLazyArtifact<T>(IScope scope, string name, System.Func<string, T> resolver)
+  T ResolveLazy<T>(IScope scope, string name, System.Func<string, T> resolver)
   {
     var o = resolver(name);
     if(o == null)
@@ -540,7 +559,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     if(root_name != null)
     {
-      var name_symb = ResolveLazyArtifact(scope, curr_name.GetText(), scope.ResolveWithFallback);
+      var name_symb = ResolveLazy(scope, curr_name.GetText(), scope.ResolveWithFallback);
       if(name_symb == null)
         FireError(root_name, "symbol not resolved");
 
@@ -633,7 +652,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     if(name != null)
     {
-      var name_symb = scope.ResolveWithFallback(name.GetText());
+      var name_symb = ResolveLazy(scope, name.GetText(), scope.ResolveWithFallback);
       if(name_symb == null)
         FireError(name, "symbol not resolved");
 
@@ -1261,7 +1280,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       FireError(ctx, "[..] is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
-    var orig_type = ResolveLazyArtifact(curr_scope, arr_type.item_type.name, (_) => arr_type.item_type.Get());
+    var orig_type = ResolveLazy(curr_scope, arr_type.item_type.name, (_) => arr_type.item_type.Get());
     if(orig_type == null)
       FireError(ctx,  "type '" + arr_type.item_type.name + "' not found");
     PushJsonType(orig_type);
@@ -2067,7 +2086,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       for(int i=0;i<ctx.extensions().nsName().Length;++i)
       {
         var ext_name = ctx.extensions().nsName()[i]; 
-        var ext = ResolveLazyArtifact(ns, ext_name.GetText(), ns.ResolveSymbol);
+        var ext = ResolveLazy(ns, ext_name.GetText(), ns.ResolveSymbol);
         if(ext is InterfaceSymbol ifs)
         {
           if(inherits.IndexOf(ifs) != -1)
@@ -2151,7 +2170,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
       for(int i=0;i<ctx.extensions().nsName().Length;++i)
       {
         var ext_name = ctx.extensions().nsName()[i]; 
-        var ext = ResolveLazyArtifact(ns, ext_name.GetText(), ns.ResolveSymbol);
+        var ext = ResolveLazy(ns, ext_name.GetText(), ns.ResolveSymbol);
         if(ext is ClassSymbol cs)
         {
           if(super_class != null)
@@ -2181,7 +2200,7 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
 
     var ast = new AST_ClassDecl(class_symb);
 
-    //1. class attributes
+    //class members
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
       var cb = ctx.classBlock().classMembers().classMember()[i];
@@ -2195,23 +2214,14 @@ public class ANTLR_Frontend : bhlBaseVisitor<object>
         var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), ParseType(vd.type()));
         class_symb.Define(fld_symb);
       }
-    }
-
-    //2. class members
-    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
-    {
-      var cb = ctx.classBlock().classMembers().classMember()[i];
-
-      var fd = cb.funcDecl();
-      if(fd != null)
+      else if(cb.funcDecl() != null)
       {
-        if(fd.NAME().GetText() == "this")
-          FireError(fd.NAME(), "the keyword \"this\" is reserved");
-
-        var func_ast = CommonFuncDecl(class_symb, fd);
-        ast.func_decls.Add(func_ast);
+        var pp = PostponeParsing(cb);
+        pp.ast = ast;
       }
     }
+
+    VisitPostponedParserRules();
 
     CheckInterfaces(ctx, class_symb);
 
