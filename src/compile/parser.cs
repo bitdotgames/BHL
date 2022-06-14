@@ -403,14 +403,18 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  PostponedParserRule PostponeParsing(ParserRuleContext ctx)
+  PostponedParserRule PostponeParsing(ParserRuleContext ctx, bool at_0 = false)
   {
     var rule = new PostponedParserRule();
     rule.ast = PeekAST();
     rule.scope = curr_scope;
     rule.ctx = ctx;
 
-    postponed_parser_rules.Add(rule);
+    if(at_0)
+      postponed_parser_rules.Insert(0, rule);
+    else
+      postponed_parser_rules.Add(rule);
+
     return rule;
   }
 
@@ -2206,6 +2210,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       var cb = ctx.classBlock().classMembers().classMember()[i];
 
       var vd = cb.varDeclare();
+      var fd = cb.funcDecl();
+
       if(vd != null)
       {
         if(vd.NAME().GetText() == "this")
@@ -2214,9 +2220,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), ParseType(vd.type()));
         class_symb.Define(fld_symb);
       }
-      else if(cb.funcDecl() != null)
+      else if(fd != null)
       {
-        var pp = PostponeParsing(cb);
+        var pp = PostponeParsing(cb, at_0: true);
         pp.ast = ast;
       }
     }
