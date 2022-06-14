@@ -478,6 +478,40 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestPassInterfaceAsFuncArgAndCallOrderIrrelevant()
+  {
+    {
+      string bhl = @"
+      func int test() {
+        Foo f = {}
+        return call(f, 42)
+      }
+      class Foo : IBar {
+        func foo() { } 
+
+        func int bar(int i) {
+          return i+1
+        }
+      }
+
+      interface IBar : IBarBase { 
+        func foo()
+      }
+      interface IBarBase { 
+        func int bar(int i)
+      }
+      func int call(IBarBase b, int i) {
+        return b.bar(i)
+      }
+
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
   public void TestNullInterface()
   {
     string bhl = @"
