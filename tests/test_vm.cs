@@ -2800,7 +2800,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
 
-    var fn = (FuncSymbolScript)vm.ResolveSymbol("test");
+    var fn = (FuncSymbolScript)vm.ResolveSymbolByFullName("test");
     AssertEqual(1, fn.local_vars_num);
 
     AssertEqual("2foo", log.ToString());
@@ -2840,7 +2840,7 @@ public class TestVM : BHL_TestBase
 
     AssertEqual("2foo", log.ToString());
 
-    var fn = (FuncSymbolScript)vm.ResolveSymbol("test");
+    var fn = (FuncSymbolScript)vm.ResolveSymbolByFullName("test");
     AssertEqual(2, fn.local_vars_num);
 
     CommonChecks(vm);
@@ -9552,7 +9552,7 @@ public class TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbol("suspend")), 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbolByFullName("suspend")), 0 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -9701,9 +9701,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbol("suspend")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbolByFullName("suspend")), 0 })
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbol("yield")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbolByFullName("yield")), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -9748,9 +9748,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbol("suspend")), 0})
+          .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbolByFullName("suspend")), 0})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbol("yield")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.gindex.IndexOf(ts.ResolveSymbolByFullName("yield")), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })

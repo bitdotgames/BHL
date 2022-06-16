@@ -13,7 +13,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.ResolveSymbol("Foo") as InterfaceSymbolScript;
+    var symb = vm.ResolveSymbolByFullName("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
   }
 
@@ -27,7 +27,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.ResolveSymbol("Foo") as InterfaceSymbolScript;
+    var symb = vm.ResolveSymbolByFullName("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
     var hey = symb.FindMethod("hey").signature;
     AssertTrue(hey != null);
@@ -51,7 +51,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.ResolveSymbol("Foo") as InterfaceSymbolScript;
+    var symb = vm.ResolveSymbolByFullName("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
 
     var hey = symb.FindMethod("hey").signature;
@@ -91,7 +91,7 @@ public class TestInterfaces : BHL_TestBase
 
     var vm = MakeVM(bhl);
     {
-      var symb = vm.ResolveSymbol("Foo") as InterfaceSymbolScript;
+      var symb = vm.ResolveSymbolByFullName("Foo") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(1, symb.inherits.Count);
       AssertEqual("Wow", symb.inherits[0].name);
@@ -115,7 +115,7 @@ public class TestInterfaces : BHL_TestBase
     }
 
     {
-      var symb = vm.ResolveSymbol("Wow") as InterfaceSymbolScript;
+      var symb = vm.ResolveSymbolByFullName("Wow") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(0, symb.inherits.Count);
       AssertEqual(1, symb.GetMembers().Count);
@@ -310,7 +310,7 @@ public class TestInterfaces : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      var symb = vm.ResolveSymbol("Foo") as ClassSymbol;
+      var symb = vm.ResolveSymbolByFullName("Foo") as ClassSymbol;
       AssertTrue(symb != null);
       AssertEqual(1, symb.implements.Count);
       AssertEqual("IFoo", symb.implements[0].GetName());
@@ -416,6 +416,43 @@ public class TestInterfaces : BHL_TestBase
       AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
+  }
+
+  [IsTested()]
+  public void TestCallInterfaceFuncAsVarOrderIrrelevant()
+  {
+    string bhl = @"
+    func int test() {
+      Foo foo = {}
+      IBarBase2 ifoo = foo
+      return ifoo.bar2(42)
+    }
+    
+    interface IBar : IBarBase1, IBarBase2 { 
+      func foo()
+    }
+    class Foo : IBar {
+      func foo() { } 
+
+      func int bar1(int i) {
+        return i+1
+      }
+
+      func int bar2(int i) {
+        return i-1
+      }
+    }
+
+    interface IBarBase1 { 
+      func int bar1(int i)
+    }
+    interface IBarBase2 { 
+      func int bar2(int i)
+    }
+    ";
+    var vm = MakeVM(bhl);
+    AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]

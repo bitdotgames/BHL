@@ -20,7 +20,7 @@ public interface IScope
 
 public interface ISymbolResolver
 {
-  Symbol ResolveSymbol(string full_name);
+  Symbol ResolveSymbolByFullName(string full_name);
 }
 
 public interface IInstanceType : IType, IScope 
@@ -359,7 +359,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
     members.Add(sym);
   }
 
-  public Symbol ResolveSymbol(string full_name)
+  public Symbol ResolveSymbolByFullName(string full_name)
   {
     IScope scope = this;
 
@@ -414,6 +414,9 @@ public static class ScopeExtensions
 
   public static string GetFullName(this IScope scope, string name)
   {
+    if(string.IsNullOrEmpty(name) || name.IndexOf('.') != -1)
+      return name;
+
     while(scope != null)
     {
       if(scope is Namespace ns)
@@ -421,8 +424,23 @@ public static class ScopeExtensions
         if(ns.name.Length == 0)
           break;
         name = ns.name + '.' + name;
+
+        scope = ns.scope;
       }
-      scope = scope.GetFallbackScope();
+      else if(scope is ClassSymbol cl)
+      {
+        name = cl.name + '.' + name; 
+
+        scope = cl.scope;
+      }
+      else if(scope is InterfaceSymbol ifs)
+      {
+        name = ifs.name + '.' + name; 
+
+        scope = ifs.scope;
+      }
+      else
+        scope = scope.GetFallbackScope();
     }
     return name;
   }

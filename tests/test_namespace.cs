@@ -136,20 +136,20 @@ public class TestNamespace : BHL_TestBase
       AssertEqual(0, wow.GetMembers().Count);
     }
 
-    AssertEqual("foo", ns2.ResolveSymbol("foo").name);
-    AssertEqual("foo_sub", ns2.ResolveSymbol("foo.foo_sub").name);
-    AssertEqual("Hey", ns2.ResolveSymbol("foo.foo_sub.Hey").name);
-    AssertEqual("Wow", ns2.ResolveSymbol("foo.foo_sub.Wow").name);
-    AssertEqual("wow", ns2.ResolveSymbol("wow").name);
-    AssertEqual("bar", ns2.ResolveSymbol("bar").name);
+    AssertEqual("foo", ns2.ResolveSymbolByFullName("foo").name);
+    AssertEqual("foo_sub", ns2.ResolveSymbolByFullName("foo.foo_sub").name);
+    AssertEqual("Hey", ns2.ResolveSymbolByFullName("foo.foo_sub.Hey").name);
+    AssertEqual("Wow", ns2.ResolveSymbolByFullName("foo.foo_sub.Wow").name);
+    AssertEqual("wow", ns2.ResolveSymbolByFullName("wow").name);
+    AssertEqual("bar", ns2.ResolveSymbolByFullName("bar").name);
 
-    AssertTrue(ns2.ResolveSymbol("") == null);
-    AssertTrue(ns2.ResolveSymbol(".") == null);
-    AssertTrue(ns2.ResolveSymbol("foo.") == null);
-    AssertTrue(ns2.ResolveSymbol(".foo.") == null);
-    AssertTrue(ns2.ResolveSymbol("foo..") == null);
-    AssertTrue(ns2.ResolveSymbol("foo.bar") == null);
-    AssertTrue(ns2.ResolveSymbol(".foo.foo_sub..") == null);
+    AssertTrue(ns2.ResolveSymbolByFullName("") == null);
+    AssertTrue(ns2.ResolveSymbolByFullName(".") == null);
+    AssertTrue(ns2.ResolveSymbolByFullName("foo.") == null);
+    AssertTrue(ns2.ResolveSymbolByFullName(".foo.") == null);
+    AssertTrue(ns2.ResolveSymbolByFullName("foo..") == null);
+    AssertTrue(ns2.ResolveSymbolByFullName("foo.bar") == null);
+    AssertTrue(ns2.ResolveSymbolByFullName(".foo.foo_sub..") == null);
   }
 
   [IsTested()]
@@ -479,12 +479,12 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveSymbol("foo") as Namespace;
+    var foo = vm.ResolveSymbolByFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(1, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
 
-    var bar = vm.ResolveSymbol("bar") as Namespace;
+    var bar = vm.ResolveSymbolByFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
@@ -518,13 +518,13 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveSymbol("foo") as Namespace;
+    var foo = vm.ResolveSymbolByFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(2, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
 
-    var bar = vm.ResolveSymbol("bar") as Namespace;
+    var bar = vm.ResolveSymbolByFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -572,14 +572,14 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveSymbol("foo") as Namespace;
+    var foo = vm.ResolveSymbolByFullName("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(3, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
     AssertTrue(foo.Resolve("bar") is Namespace);
 
-    var bar = vm.ResolveSymbol("bar") as Namespace;
+    var bar = vm.ResolveSymbolByFullName("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(2, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -1099,8 +1099,8 @@ public class TestNamespace : BHL_TestBase
 
     vm.LoadModule("bhl3");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
-    AssertTrue(ts.ResolveSymbol("foo.sub.Sub") == null);
-    AssertTrue(vm.ResolveSymbol("foo.sub.Sub") is ClassSymbol);
+    AssertTrue(ts.ResolveSymbolByFullName("foo.sub.Sub") == null);
+    AssertTrue(vm.ResolveSymbolByFullName("foo.sub.Sub") is ClassSymbol);
     CommonChecks(vm);
   }
 }

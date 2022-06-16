@@ -57,7 +57,7 @@ public struct TypeProxy : marshall.IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)resolver.ResolveSymbol(_name);
+    type = (bhl.IType)resolver.ResolveSymbolByFullName(_name);
     return type;
   }
 
@@ -210,6 +210,8 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric
   //TODO: include arg names as well since we support named args?
   public List<TypeProxy> arg_types = new List<TypeProxy>();
 
+  public int default_args_num;
+
   public string GetName() { return name; }
 
   public FuncSignature(TypeProxy ret_type, params TypeProxy[] arg_types)
@@ -266,6 +268,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric
   {
     marshall.Marshall.Sync(ctx, ref ret_type);
     marshall.Marshall.Sync(ctx, arg_types);
+    marshall.Marshall.Sync(ctx, ref default_args_num);
     if(ctx.is_read)
       Update();
   }
@@ -389,9 +392,9 @@ public class Types : ISymbolResolver
     this.ns = ns;
   }
 
-  public Symbol ResolveSymbol(string name)
+  public Symbol ResolveSymbolByFullName(string name)
   {
-    return ns.ResolveSymbol(name);
+    return ns.ResolveSymbolByFullName(name);
   }
 
   public Types Clone()

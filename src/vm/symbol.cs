@@ -978,14 +978,19 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     : base(name)
   {
     this.members = new SymbolsStorage(this);
-    this.signature = signature;
-    this.type = new TypeProxy(signature);
+    SetSignature(signature);
 
     if(class_scope != null)
     {
       var this_symb = new FuncArgSymbol("this", new TypeProxy(class_scope));
       Define(this_symb);
     }
+  }
+
+  public void SetSignature(FuncSignature signature)
+  {
+    this.signature = signature;
+    this.type = new TypeProxy(signature);
   }
 
   public override SymbolsStorage GetMembers() { return members; }
@@ -1349,7 +1354,7 @@ public class ClassSymbolScript : ClassSymbol
     if(ctx.is_read && super_name != "")
     {
       var rslv = ((SymbolFactory)ctx.factory).resolver;
-      var tmp_class = (ClassSymbol)rslv.ResolveSymbol(super_name);
+      var tmp_class = (ClassSymbol)rslv.ResolveSymbolByFullName(super_name);
       if(tmp_class == null)
         throw new Exception("Parent class '" + super_name + "' not found");
       super_class = tmp_class;
@@ -1681,7 +1686,7 @@ public class SymbolsSet<T> : marshall.IMarshallable where T : Symbol,IType
 
       foreach(var name in names)
       {
-        var symb = rslv.ResolveSymbol(name) as T;
+        var symb = rslv.ResolveSymbolByFullName(name) as T;
         if(symb == null)
           throw new Exception("Symbol '" + name + "' not found");
         list.Add(symb);
