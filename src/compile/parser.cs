@@ -426,6 +426,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     //pass 0
     foreach(var rule in postponed_parser_rules)
     {
+      if(rule.ifsdecl != null)
+      {
+        scopes.Push(rule.scope);
+        VisitInterfaceDecl0(rule.ifsdecl);
+        scopes.Pop();
+      }
+
       if(rule.cldecl != null)
       {
         scopes.Push(rule.scope);
@@ -444,6 +451,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     //pass 1
     foreach(var rule in postponed_parser_rules)
     {
+      if(rule.ifsdecl != null)
+      {
+        scopes.Push(rule.scope);
+        VisitInterfaceDecl1(rule.ifsdecl);
+        scopes.Pop();
+      }
+
       if(rule.cldecl != null)
       {
         scopes.Push(rule.scope);
@@ -2143,9 +2157,20 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return func_ast;
   }
 
-  public override object VisitInterfaceDecl(bhlParser.InterfaceDeclContext ctx)
+  public void VisitInterfaceDecl0(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
+
+    var iface_symb = new InterfaceSymbolScript(Wrap(ctx), name, null);
+
+    curr_scope.Define(iface_symb);
+  }
+
+  public void VisitInterfaceDecl1(bhlParser.InterfaceDeclContext ctx)
+  {
+    var name = ctx.NAME().GetText();
+
+    var iface_symb = (InterfaceSymbolScript)curr_scope.Resolve(name);
 
     var inherits = new List<InterfaceSymbol>();
     if(ctx.extensions() != null)
@@ -2168,9 +2193,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       }
     }
 
-    var iface_symb = new InterfaceSymbolScript(Wrap(ctx), name, inherits);
-
-    curr_scope.Define(iface_symb);
+    if(inherits.Count > 0)
+      iface_symb.SetInherits(inherits);
 
     for(int i=0;i<ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
     {
@@ -2201,8 +2225,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         }
       }
     }
-
-    return null;
   }
 
   public override object VisitNsDecl(bhlParser.NsDeclContext ctx)

@@ -195,7 +195,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     : this(null, null)
   {}
 
-  void SetInherits(IList<InterfaceSymbol> inherits)
+  public void SetInherits(IList<InterfaceSymbol> inherits)
   {
     if(inherits != null)
     {
