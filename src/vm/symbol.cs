@@ -364,10 +364,10 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     this.creator = creator;
 
     SetSuperClass(super_class);
-    SetImplements(implements);
+    SetImplementedInterfaces(implements);
   }
 
-  void SetSuperClass(ClassSymbol super_class)
+  public void SetSuperClass(ClassSymbol super_class)
   {
     if(this.super_class == super_class)
       return;
@@ -389,7 +389,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     }
   }
 
-  void SetImplements(IList<InterfaceSymbol> implements)
+  public void SetImplementedInterfaces(IList<InterfaceSymbol> implements)
   {
     if(implements != null)
     {
