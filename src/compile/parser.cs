@@ -399,6 +399,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     for(int i=0;i<ctx.progblock().Length;++i)
       Visit(ctx.progblock()[i]);
+
+    VisitPostponedParserRules();
+
     return null;
   }
 
@@ -409,8 +412,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       Visit(imps);
     
     Visit(ctx.decls()); 
-
-    VisitPostponedParserRules();
 
     return null;
   }
