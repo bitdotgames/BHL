@@ -516,7 +516,7 @@ public static class Marshall
 
   static void InvokeOnceRead(SyncContext ctx)
   {
-    for(int i=ctx.once_read.Count;i-- > 0;)
+    for(int i=0;i<ctx.once_read.Count;++i)
       ctx.once_read[i]();
   }
 

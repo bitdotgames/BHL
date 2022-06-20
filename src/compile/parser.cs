@@ -423,7 +423,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   void VisitPostponedParserRules()
   {
-    //pass 0
+    //pass
     foreach(var rule in postponed_parser_rules)
     {
       if(rule.ifsdecl != null)
@@ -448,7 +448,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       }
     }
 
-    //pass 1
+    //pass
     foreach(var rule in postponed_parser_rules)
     {
       if(rule.ifsdecl != null)
@@ -466,7 +466,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       }
     }
 
-    //pass 2
+    //pass
     foreach(var rule in postponed_parser_rules)
     {
       if(rule.ifsdecl != null)
@@ -484,7 +484,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       }
     }
 
-    //pass 3
+    //pass
     foreach(var rule in postponed_parser_rules)
     {
       if(rule.cldecl != null)
@@ -2216,9 +2216,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     var iface_symb = (InterfaceSymbolScript)curr_scope.Resolve(name);
 
-    var inherits = new List<InterfaceSymbol>();
     if(ctx.extensions() != null)
     {
+      var inherits = new List<InterfaceSymbol>();
       for(int i=0;i<ctx.extensions().nsName().Length;++i)
       {
         var ext_name = ctx.extensions().nsName()[i]; 
@@ -2236,10 +2236,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         else
           FireError(ext_name, "not a valid interface");
       }
+      if(inherits.Count > 0)
+        iface_symb.SetInherits(inherits);
     }
-
-    if(inherits.Count > 0)
-      iface_symb.SetInherits(inherits);
   }
 
   public override object VisitNsDecl(bhlParser.NsDeclContext ctx)
@@ -2279,10 +2278,11 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
 
-    var implements = new List<InterfaceSymbol>();
-    ClassSymbol super_class = null;
     if(ctx.extensions() != null)
     {
+      var implements = new List<InterfaceSymbol>();
+      ClassSymbol super_class = null;
+
       for(int i=0;i<ctx.extensions().nsName().Length;++i)
       {
         var ext_name = ctx.extensions().nsName()[i]; 
@@ -2310,13 +2310,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         else
           FireError(ext_name, "not a class or an interface");
       }
+
+      if(super_class != null)
+        class_symb.SetSuperClass(super_class);
+
+      if(implements.Count > 0)
+        class_symb.SetImplementedInterfaces(implements);
     }
-
-    if(super_class != null)
-      class_symb.SetSuperClass(super_class);
-
-    if(implements.Count > 0)
-      class_symb.SetImplementedInterfaces(implements);
 
     //1. class attributes
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
@@ -2355,8 +2355,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         class_symb.Define(func_symb);
       }
     }
-
-    CheckInterfaces(ctx, class_symb);
   }
 
   public void VisitClassDecl2(bhlParser.ClassDeclContext ctx)
@@ -2364,6 +2362,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var name = ctx.NAME().GetText();
 
     var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
+
+    CheckInterfaces(ctx, class_symb);
 
     var ast_class = new AST_ClassDecl(class_symb);
 

@@ -68,15 +68,10 @@ public struct TypeProxy : marshall.IMarshallable
 
     marshall.Marshall.Sync(ctx, ref _name);
 
+    marshall.IMarshallableGeneric mg = null;
     if(!string.IsNullOrEmpty(_name))
     {
-      marshall.IMarshallableGeneric mg = null;
-      if(ctx.is_read)
-      {
-        marshall.Marshall.SyncGeneric(ctx, ref mg);
-        type = (IType)mg;
-      }
-      else
+      if(!ctx.is_read)
       {   
         var resolved = Get();
         //TODO: make this check more robust
@@ -100,9 +95,12 @@ public struct TypeProxy : marshall.IMarshallable
           if(mg == null)
             throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _name);
         }
-        marshall.Marshall.SyncGeneric(ctx, ref mg);
       }
     }
+
+    marshall.Marshall.SyncGeneric(ctx, ref mg);
+    if(ctx.is_read)
+      type = (IType)mg;
   }
 }
 
@@ -504,14 +502,16 @@ public class Types : ISymbolResolver
   {
     if(a == b)
       return true;
-    else if(a.GetName() == b.GetName())
-      return true;
     else if(a is IInstanceType ai && b is IInstanceType bi)
     {
       var aset = ai.GetAllRelatedTypesSet();
       var bset = bi.GetAllRelatedTypesSet();
+      
       return aset.IsSupersetOf(bset);
     }
+    //TODO: what about namespace clashing?
+    else if(a.GetName() == b.GetName())
+      return true;
     else
       return false;
   }
