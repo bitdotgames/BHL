@@ -2226,12 +2226,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         var ext = ns.ResolveSymbolByFullName(ext_full_name);
         if(ext is InterfaceSymbol ifs)
         {
+          if(ext == iface_symb)
+            FireError(ext_name, "self inheritance is not allowed");
+
           if(inherits.IndexOf(ifs) != -1)
             FireError(ext_name, "interface is inherited already");
           inherits.Add(ifs);
         }
-        else if(ext_name.GetText() == name)
-          FireError(ext_name, "self inheritance is not allowed");
         else
           FireError(ext_name, "not a valid interface");
       }
