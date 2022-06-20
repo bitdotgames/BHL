@@ -469,6 +469,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     //pass 2
     foreach(var rule in postponed_parser_rules)
     {
+      if(rule.ifsdecl != null)
+      {
+        scopes.Push(rule.scope);
+        VisitInterfaceDecl2(rule.ifsdecl);
+        scopes.Pop();
+      }
+
       if(rule.fndecl != null)
       {
         scopes.Push(rule.scope);
@@ -2172,30 +2179,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     var iface_symb = (InterfaceSymbolScript)curr_scope.Resolve(name);
 
-    var inherits = new List<InterfaceSymbol>();
-    if(ctx.extensions() != null)
-    {
-      for(int i=0;i<ctx.extensions().nsName().Length;++i)
-      {
-        var ext_name = ctx.extensions().nsName()[i]; 
-        string ext_full_name = curr_scope.GetFullName(ext_name.GetText());
-        var ext = ns.ResolveSymbolByFullName(ext_full_name);
-        if(ext is InterfaceSymbol ifs)
-        {
-          if(inherits.IndexOf(ifs) != -1)
-            FireError(ext_name, "interface is inherited already");
-          inherits.Add(ifs);
-        }
-        else if(ext_name.GetText() == name)
-          FireError(ext_name, "self inheritance is not allowed");
-        else
-          FireError(ext_name, "not a valid interface");
-      }
-    }
-
-    if(inherits.Count > 0)
-      iface_symb.SetInherits(inherits);
-
     for(int i=0;i<ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
     {
       var ib = ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
@@ -2225,6 +2208,37 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         }
       }
     }
+  }
+
+  public void VisitInterfaceDecl2(bhlParser.InterfaceDeclContext ctx)
+  {
+    var name = ctx.NAME().GetText();
+
+    var iface_symb = (InterfaceSymbolScript)curr_scope.Resolve(name);
+
+    var inherits = new List<InterfaceSymbol>();
+    if(ctx.extensions() != null)
+    {
+      for(int i=0;i<ctx.extensions().nsName().Length;++i)
+      {
+        var ext_name = ctx.extensions().nsName()[i]; 
+        string ext_full_name = curr_scope.GetFullName(ext_name.GetText());
+        var ext = ns.ResolveSymbolByFullName(ext_full_name);
+        if(ext is InterfaceSymbol ifs)
+        {
+          if(inherits.IndexOf(ifs) != -1)
+            FireError(ext_name, "interface is inherited already");
+          inherits.Add(ifs);
+        }
+        else if(ext_name.GetText() == name)
+          FireError(ext_name, "self inheritance is not allowed");
+        else
+          FireError(ext_name, "not a valid interface");
+      }
+    }
+
+    if(inherits.Count > 0)
+      iface_symb.SetInherits(inherits);
   }
 
   public override object VisitNsDecl(bhlParser.NsDeclContext ctx)

@@ -65,42 +65,43 @@ public struct TypeProxy : marshall.IMarshallable
   {
     if(ctx.is_read)
       resolver = ((SymbolFactory)ctx.factory).resolver;
-    else if(string.IsNullOrEmpty(_name))
-      throw new Exception("TypeProxy name is empty");
 
     marshall.Marshall.Sync(ctx, ref _name);
 
-    marshall.IMarshallableGeneric mg = null;
-    if(ctx.is_read)
+    if(!string.IsNullOrEmpty(_name))
     {
-      marshall.Marshall.SyncGeneric(ctx, ref mg);
-      type = (IType)mg;
-    }
-    else
-    {   
-      var resolved = Get();
-      //TODO: make this check more robust
-      bool is_weak_ref = 
-        resolved is Symbol symb && 
-        (symb is BuiltInSymbol ||
-         symb is ClassSymbolNative ||
-         symb is ClassSymbolScript ||
-         symb is InterfaceSymbolNative ||
-         symb is InterfaceSymbolScript ||
-         symb is EnumSymbol ||
-         (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol))
-         );
-
-      //NOTE: we want to marshall only those types which are not
-      //      defined elsewhere otherwise we just want to keep
-      //      string reference at them
-      if(!is_weak_ref)
+      marshall.IMarshallableGeneric mg = null;
+      if(ctx.is_read)
       {
-        mg = resolved as marshall.IMarshallableGeneric;
-        if(mg == null)
-          throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _name);
+        marshall.Marshall.SyncGeneric(ctx, ref mg);
+        type = (IType)mg;
       }
-      marshall.Marshall.SyncGeneric(ctx, ref mg);
+      else
+      {   
+        var resolved = Get();
+        //TODO: make this check more robust
+        bool is_weak_ref = 
+          resolved is Symbol symb && 
+          (symb is BuiltInSymbol ||
+           symb is ClassSymbolNative ||
+           symb is ClassSymbolScript ||
+           symb is InterfaceSymbolNative ||
+           symb is InterfaceSymbolScript ||
+           symb is EnumSymbol ||
+           (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol))
+           );
+
+        //NOTE: we want to marshall only those types which are not
+        //      defined elsewhere otherwise we just want to keep
+        //      string reference at them
+        if(!is_weak_ref)
+        {
+          mg = resolved as marshall.IMarshallableGeneric;
+          if(mg == null)
+            throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _name);
+        }
+        marshall.Marshall.SyncGeneric(ctx, ref mg);
+      }
     }
   }
 }

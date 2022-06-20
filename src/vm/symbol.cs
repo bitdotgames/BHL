@@ -197,20 +197,20 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
   {
-    if(inherits != null)
-    {
-      foreach(var ext in inherits)
-      {
-        this.inherits.Add(ext);
+    if(inherits == null)
+      return;
 
-        //NOTE: at the moment for resolving simplcity we add 
-        //      extension members right into the interface itself
-        var ext_members = ext.GetMembers();
-        for(int i=0;i<ext_members.Count;++i)
-        {
-          var mem = ext_members[i]; 
-          base.Define(mem);
-        }
+    foreach(var ext in inherits)
+    {
+      this.inherits.Add(ext);
+
+      //NOTE: at the moment for resolving simplcity we add 
+      //      extension members right into the interface itself
+      var ext_members = ext.GetMembers();
+      for(int i=0;i<ext_members.Count;++i)
+      {
+        var mem = ext_members[i]; 
+        Define(mem);
       }
     }
   }
@@ -321,7 +321,13 @@ public class InterfaceSymbolNative : InterfaceSymbol
 
 public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 {
-  public ClassSymbol super_class;
+  public ClassSymbol super_class {
+    get {
+      return (ClassSymbol)_super_class.Get();
+    }
+  }
+
+  protected TypeProxy _super_class;
 
   public SymbolsSet<InterfaceSymbol> implements = new SymbolsSet<InterfaceSymbol>();
 
@@ -372,7 +378,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     if(this.super_class == super_class)
       return;
 
-    this.super_class = super_class;
+    this._super_class = new TypeProxy(super_class);
     //NOTE: we define parent members in the current class
     //      scope as well. We do this since we want to  
     //      address its members simply by int index
@@ -1349,16 +1355,7 @@ public class ClassSymbolScript : ClassSymbol
   {
     marshall.Marshall.Sync(ctx, ref name);
 
-    string super_name = super_class == null ? "" : super_class.GetFullName();
-    marshall.Marshall.Sync(ctx, ref super_name);
-    if(ctx.is_read && super_name != "")
-    {
-      var rslv = ((SymbolFactory)ctx.factory).resolver;
-      var tmp_class = (ClassSymbol)rslv.ResolveSymbolByFullName(super_name);
-      if(tmp_class == null)
-        throw new Exception("Parent class '" + super_name + "' not found");
-      super_class = tmp_class;
-    }
+    marshall.Marshall.Sync(ctx, ref _super_class);
 
     //NOTE: this includes super class members as well, maybe we
     //      should make a copy which doesn't include parent members?
@@ -1366,8 +1363,7 @@ public class ClassSymbolScript : ClassSymbol
 
     marshall.Marshall.Sync(ctx, ref implements); 
 
-    if(ctx.is_read)
-      UpdateVTable();
+    marshall.Marshall.OnceRead(ctx, () => UpdateVTable());
   }
 }
 
@@ -1547,6 +1543,7 @@ public class SymbolsStorage : marshall.IMarshallable
 
   public void Add(Symbol s)
   {
+    //TODO:???
     //if(s.scope != null && s.scope != scope)
     // throw new Exception("Symbol '" + s.name + "' scope is already set");
     if(s.scope == null)
@@ -1678,20 +1675,19 @@ public class SymbolsSet<T> : marshall.IMarshallable where T : Symbol,IType
 
   public void Sync(marshall.SyncContext ctx) 
   {
-    marshall.Marshall.Sync(ctx, names); 
+    marshall.Marshall.Sync(ctx, names);
+    marshall.Marshall.OnceRead(ctx, () => {
+        var rslv = ((SymbolFactory)ctx.factory).resolver;
 
-    if(ctx.is_read)
-    {
-      var rslv = ((SymbolFactory)ctx.factory).resolver;
-
-      foreach(var name in names)
-      {
-        var symb = rslv.ResolveSymbolByFullName(name) as T;
-        if(symb == null)
-          throw new Exception("Symbol '" + name + "' not found");
-        list.Add(symb);
+        foreach(var name in names)
+        {
+          var symb = rslv.ResolveSymbolByFullName(name) as T;
+          if(symb == null)
+            throw new Exception("Symbol '" + name + "' not found");
+          list.Add(symb);
+        }
       }
-    }
+    );
   }
 }
 
