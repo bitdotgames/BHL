@@ -967,10 +967,9 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
   public FuncSymbol(
     WrappedParseTree parsed, 
     string name, 
-    FuncSignature sig,
-    ClassSymbolScript class_scope = null
+    FuncSignature sig
   ) 
-    : this(name, sig, class_scope)
+    : this(name, sig)
   {
     this.parsed = parsed;
   }
@@ -978,19 +977,12 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
 
   public FuncSymbol(
     string name, 
-    FuncSignature signature,
-    ClassSymbolScript class_scope = null
+    FuncSignature signature
   ) 
     : base(name)
   {
     this.members = new SymbolsStorage(this);
     SetSignature(signature);
-
-    if(class_scope != null)
-    {
-      var this_symb = new FuncArgSymbol("this", new TypeProxy(class_scope));
-      Define(this_symb);
-    }
   }
 
   public void SetSignature(FuncSignature signature)
@@ -1078,11 +1070,10 @@ public class FuncSymbolScript : FuncSymbol
     WrappedParseTree parsed, 
     FuncSignature sig,
     string name,
-    int default_args_num,
-    int ip_addr,
-    ClassSymbolScript class_scope = null
+    int default_args_num = 0,
+    int ip_addr = 0
   ) 
-    : base(name, sig, class_scope)
+    : base(name, sig)
   {
     this.name = name;
     this.default_args_num = default_args_num;
@@ -1090,6 +1081,12 @@ public class FuncSymbolScript : FuncSymbol
     this.parsed = parsed;
   }
 #endif
+
+  public void ReserveThisArgument(ClassSymbolScript class_scope)
+  {
+    var this_symb = new FuncArgSymbol("this", new TypeProxy(class_scope));
+    Define(this_symb);
+  }
 
   //symbol factory version
   public FuncSymbolScript()

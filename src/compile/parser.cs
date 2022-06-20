@@ -2105,8 +2105,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var func_symb = new FuncSymbolScript(
       Wrap(ctx), 
       new FuncSignature(),
-      name,
-      0, 0
+      name
     );
     curr_scope.Define(func_symb);
   }
@@ -2340,17 +2339,15 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       var fd = cm.funcDecl();
       if(fd != null)
       {
-        //non-postponed processing
         if(fd.NAME().GetText() == "this")
           FireError(fd.NAME(), "the keyword \"this\" is reserved");
 
         var func_symb = new FuncSymbolScript(
           Wrap(fd), 
           ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()),
-          fd.NAME().GetText(),
-          0, 0,
-          class_symb
+          fd.NAME().GetText()
         );
+        func_symb.ReserveThisArgument(class_symb);
         Wrap(fd).eval_type = func_symb.GetReturnType(); 
         class_symb.Define(func_symb);
       }
