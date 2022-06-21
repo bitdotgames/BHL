@@ -458,14 +458,13 @@ public static class Marshall
   }
 
   //TODO: make it private and deduce by IMarshallableGeneric interface
-  static public void SyncGeneric<T>(SyncContext ctx, List<T> v, System.Action<IMarshallableGeneric> item_cb = null) where T : IMarshallableGeneric
+  static public void SyncGeneric<T>(SyncContext ctx, List<T> v) where T : IMarshallableGeneric
   {
     int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = (IMarshallableGeneric)(ctx.is_read ? (IMarshallable)null : v[i]);
       SyncGeneric(ctx, ref tmp);
-      item_cb?.Invoke(tmp);
       if(ctx.is_read)
         v.Add((T)tmp);
     }

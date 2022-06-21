@@ -844,7 +844,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       //NOTE: checking if it's a named arg and finding its index
       if(ca_name != null)
       {
-        idx = func_args.FindStringKeyIndex(ca_name.GetText());
+        idx = func_args.IndexOf(ca_name.GetText());
         if(idx == -1)
           FireError(ca_name, "no such named argument");
 

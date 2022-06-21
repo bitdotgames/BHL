@@ -1504,7 +1504,6 @@ public class EnumItemSymbol : Symbol, IType
 public class SymbolsStorage : marshall.IMarshallable
 {
   IScope scope;
-  Dictionary<string, Symbol> str2symb = new Dictionary<string, Symbol>();
   List<Symbol> list = new List<Symbol>();
 
   public int Count
@@ -1523,19 +1522,22 @@ public class SymbolsStorage : marshall.IMarshallable
 
   public SymbolsStorage(IScope scope)
   {
+    if(scope == null)
+      throw new Exception("Scope is null");
     this.scope = scope;
   }
 
-  public bool Contains(string key)
+  public bool Contains(string name)
   {
-    return str2symb.ContainsKey(key);
+    return Find(name) != null;
   }
 
-  public Symbol Find(string key)
+  public Symbol Find(string name)
   {
-    Symbol s = null;
-    str2symb.TryGetValue(key, out s);
-    return s;
+    foreach(var s in list)
+      if(s.name == name)
+        return s;
+    return null;
   }
 
   public void Add(Symbol s)
@@ -1543,9 +1545,11 @@ public class SymbolsStorage : marshall.IMarshallable
     //TODO:???
     //if(s.scope != null && s.scope != scope)
     // throw new Exception("Symbol '" + s.name + "' scope is already set");
+    foreach(var tmp in list)
+      if(tmp == s || tmp.name == s.name)
+        throw new Exception("Duplicate symbol: " + s.name);
     if(s.scope == null)
       s.scope = scope;
-    str2symb.Add(s.name, s);
     list.Add(s);
   }
 
@@ -1554,7 +1558,6 @@ public class SymbolsStorage : marshall.IMarshallable
     var s = list[index];
     if(s.scope == scope)
       s.scope = null;
-    str2symb.Remove(s.name);
     list.RemoveAt(index);
   }
 
@@ -1570,12 +1573,14 @@ public class SymbolsStorage : marshall.IMarshallable
     return list.IndexOf(s);
   }
 
-  public int IndexOf(string key)
+  public int IndexOf(string name)
   {
-    var s = Find(key);
-    if(s == null)
-      return -1;
-    return IndexOf(s);
+    for(int i=0;i<list.Count;++i)
+    {
+      if(list[i].name == name)
+        return i;
+    }
+    return -1;
   }
 
   public bool Replace(Symbol what, Symbol subst)
@@ -1585,8 +1590,6 @@ public class SymbolsStorage : marshall.IMarshallable
       return false;
     
     list[idx] = subst;
-    str2symb.Remove(what.name);
-    str2symb.Add(subst.name, subst);
 
     return true;
   }
@@ -1598,37 +1601,21 @@ public class SymbolsStorage : marshall.IMarshallable
       if(s.scope == scope)
         s.scope = null;
     }
-    str2symb.Clear();
     list.Clear();
   }
 
   public void Sync(marshall.SyncContext ctx) 
   {
-    marshall.Marshall.SyncGeneric(ctx, list, delegate(marshall.IMarshallableGeneric tmp) {
-        if(ctx.is_read)
-        {
-          //NOTE: we need to add new symbol to str2sym collection ASAP
-          var s = (Symbol)tmp;
-          s.scope = this.scope;
-          str2symb.Add(s.name, s);
-        }
-    });
+    marshall.Marshall.SyncGeneric(ctx, list);
+    if(ctx.is_read)
+      foreach(var tmp in list)
+        tmp.scope = scope;
   }
 
   public void UnionWith(SymbolsStorage o)
   {
     for(int i=0;i<o.Count;++i)
       Add(o[i]);
-  }
-
-  public int FindStringKeyIndex(string key)
-  {
-    for(int i=0;i<list.Count;++i)
-    {
-      if(list[i].name == key)
-        return i;
-    }
-    return -1;
   }
 }
 
