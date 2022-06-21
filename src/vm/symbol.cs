@@ -162,7 +162,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 {
   public SymbolsStorage members;
 
-  public SymbolsSet<InterfaceSymbol> inherits = new SymbolsSet<InterfaceSymbol>();
+  public TypeSet<InterfaceSymbol> inherits = new TypeSet<InterfaceSymbol>();
 
   HashSet<IInstanceType> related_types;
 
@@ -329,7 +329,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
   protected TypeProxy _super_class;
 
-  public SymbolsSet<InterfaceSymbol> implements = new SymbolsSet<InterfaceSymbol>();
+  public TypeSet<InterfaceSymbol> implements = new TypeSet<InterfaceSymbol>();
 
   //contains mapping of implemented interface method indices 
   //to actual class method indices:
@@ -1632,10 +1632,9 @@ public class SymbolsStorage : marshall.IMarshallable
   }
 }
 
-public class SymbolsSet<T> : marshall.IMarshallable where T : Symbol,IType
+public class TypeSet<T> : marshall.IMarshallable where T : IType
 {
-  List<string> names = new List<string>();
-  List<T> list = new List<T>();
+  List<TypeProxy> list = new List<TypeProxy>();
 
   public int Count
   {
@@ -1647,44 +1646,35 @@ public class SymbolsSet<T> : marshall.IMarshallable where T : Symbol,IType
   public T this[int index]
   {
     get {
-      return list[index];
+      return (T)list[index].Get();
     }
   }
 
-  public SymbolsSet()
+  public TypeSet()
   {}
 
-  public bool Add(T s)
+  public bool Add(T t)
   {
-    string name = s.GetFullName();
-    if(names.IndexOf(name) != -1)
-      return false;
-    names.Add(name);
-    list.Add(s);
+    return Add(new TypeProxy(t));
+  }
+
+  public bool Add(TypeProxy tp)
+  {
+    foreach(var item in list)
+      if(item.name == tp.name)
+        return false;
+    list.Add(tp);
     return true;
   }
 
   public void Clear()
   {
-    names.Clear();
     list.Clear();
   }
 
   public void Sync(marshall.SyncContext ctx) 
   {
-    marshall.Marshall.Sync(ctx, names);
-    marshall.Marshall.OnceRead(ctx, () => {
-        var rslv = ((SymbolFactory)ctx.factory).resolver;
-
-        foreach(var name in names)
-        {
-          var symb = rslv.ResolveSymbolByFullName(name) as T;
-          if(symb == null)
-            throw new Exception("Symbol '" + name + "' not found");
-          list.Add(symb);
-        }
-      }
-    );
+    marshall.Marshall.Sync(ctx, list);
   }
 }
 
