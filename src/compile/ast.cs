@@ -698,6 +698,12 @@ public static class AST_Extensions
     return ast == null ? null : ast.children;
   }
 
+  static public IAST At(this IAST self, int idx)
+  {
+    var ast = self as AST_Tree;
+    return ast == null ? null : ast.children[idx];
+  }
+
   static public void AddChild(this IAST self, IAST c)
   {
     if(c == null)

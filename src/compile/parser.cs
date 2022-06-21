@@ -74,6 +74,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     public IScope scope;
 
     public bhlParser.FuncDeclContext fndecl;
+    public AST_FuncDecl ast_func;
     public bhlParser.ClassDeclContext cldecl;
     public bhlParser.InterfaceDeclContext ifsdecl;
 
@@ -315,7 +316,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     ns = module.ns;
     ns.Link(types.ns);
 
-    scopes.Push(ns);
+    PushScope(ns);
 
     if(importer == null)
       importer = new Importer();
@@ -327,6 +328,20 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   void FireError(IParseTree place, string msg) 
   {
     throw new SemanticError(module, place, tokens, msg);
+  }
+
+  void PushScope(IScope scope)
+  {
+    if(scope is FuncSymbolScript fsymb)
+      func_decl_stack.Add(fsymb);
+    scopes.Push(scope);
+  }
+
+  void PopScope()
+  {
+    if(curr_scope is FuncSymbolScript)
+      func_decl_stack.RemoveAt(func_decl_stack.Count-1);
+    scopes.Pop();
   }
 
   void PushAST(AST_Tree ast)
@@ -423,86 +438,77 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   void VisitPostponedParserRules()
   {
-    //pass
     foreach(var rule in postponed_parser_rules)
     {
       if(rule.ifsdecl != null)
       {
-        scopes.Push(rule.scope);
+        PushScope(rule.scope);
         VisitInterfaceDecl0(rule.ifsdecl);
-        scopes.Pop();
+        PopScope();
       }
 
       if(rule.cldecl != null)
       {
-        scopes.Push(rule.scope);
+        PushScope(rule.scope);
         VisitClassDecl0(rule.cldecl);
-        scopes.Pop();
+        PopScope();
       }
 
       if(rule.fndecl != null)
       {
-        scopes.Push(rule.scope);
-        VisitFuncDeclPass0(rule.fndecl);
-        scopes.Pop();
+        PushScope(rule.scope);
+        rule.ast_func = MakeFuncDecl(rule.fndecl);
+        rule.ast.AddChild(rule.ast_func);
+        PopScope();
       }
     }
 
-    //pass
     foreach(var rule in postponed_parser_rules)
     {
       if(rule.ifsdecl != null)
       {
-        scopes.Push(rule.scope);
+        PushScope(rule.scope);
         VisitInterfaceDecl1(rule.ifsdecl);
-        scopes.Pop();
+        PopScope();
       }
 
       if(rule.cldecl != null)
       {
-        scopes.Push(rule.scope);
+        PushScope(rule.scope);
         VisitClassDecl1(rule.cldecl);
-        scopes.Pop();
+        PopScope();
       }
     }
 
-    //pass
     foreach(var rule in postponed_parser_rules)
     {
       if(rule.ifsdecl != null)
       {
-        scopes.Push(rule.scope);
+        PushScope(rule.scope);
         VisitInterfaceDecl2(rule.ifsdecl);
-        scopes.Pop();
+        PopScope();
       }
 
       if(rule.fndecl != null)
       {
-        scopes.Push(rule.scope);
-        VisitFuncDeclPass1(rule.fndecl);
-        scopes.Pop();
+        VisitFuncSignature(rule.fndecl, rule.ast_func);
       }
     }
 
-    //pass
     foreach(var rule in postponed_parser_rules)
     {
       if(rule.cldecl != null)
       {
         PushAST((AST_Tree)rule.ast);
-        scopes.Push(rule.scope);
+        PushScope(rule.scope);
         VisitClassDecl2(rule.cldecl);
-        scopes.Pop();
+        PopScope();
         PopAST();
       }
 
       if(rule.fndecl != null)
       {
-        PushAST((AST_Tree)rule.ast);
-        scopes.Push(rule.scope);
-        VisitFuncDeclPass2(rule.fndecl);
-        scopes.Pop();
-        PopAST();
+        VisitFuncBlock(rule.fndecl, rule.ast_func);
       }
     }
   }
@@ -1179,10 +1185,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     var ast = new AST_LambdaDecl(lmb_symb, upvals, funcLambda.Stop.Line);
 
-    PushFuncDecl(lmb_symb);
-
     var scope_backup = curr_scope;
-    scopes.Push(lmb_symb);
+    PushScope(lmb_symb);
 
     var fparams = funcLambda.funcParams();
     if(fparams != null)
@@ -1207,13 +1211,11 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(tp.Get() != Types.Void && !return_found.Contains(lmb_symb))
       FireError(funcLambda.funcBlock(), "matching 'return' statement not found");
 
-    PopFuncDecl();
-
     //NOTE: once we are out of lambda the eval type is the lambda itself
     var curr_type = lmb_symb.type.Get(); 
     Wrap(ctx).eval_type = curr_type;
 
-    scopes.Pop();
+    PopScope();
 
     //NOTE: since lambda func symbol is currently compile-time only,
     //      we need to reflect local variables number in AST
@@ -1872,16 +1874,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  void PushFuncDecl(FuncSymbolScript symb)
-  {
-    func_decl_stack.Add(symb);
-  }
-
-  void PopFuncDecl()
-  {
-    func_decl_stack.RemoveAt(func_decl_stack.Count-1);
-  }
-
   FuncSymbolScript PeekFuncDecl()
   {
     if(func_decl_stack.Count == 0)
@@ -2098,7 +2090,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  public void VisitFuncDeclPass0(bhlParser.FuncDeclContext ctx)
+  public AST_FuncDecl MakeFuncDecl(bhlParser.FuncDeclContext ctx)
   {
     string name = ctx.NAME().GetText();
 
@@ -2108,59 +2100,49 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       name
     );
     curr_scope.Define(func_symb);
+
+    return new AST_FuncDecl(func_symb, ctx.Stop.Line);
   }
 
-  public void VisitFuncDeclPass1(bhlParser.FuncDeclContext ctx)
+  public void VisitFuncSignature(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
   {
-    string name = ctx.NAME().GetText();
+    func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(ctx.retType()), ctx.funcParams()));
 
-    var func_symb = (FuncSymbolScript)curr_scope.Resolve(name);
+    VisitFuncParams(ctx, func_ast);
 
-    func_symb.SetSignature(ParseFuncSignature(ParseType(ctx.retType()), ctx.funcParams()));
-    Wrap(ctx).eval_type = func_symb.GetReturnType();
+    Wrap(ctx).eval_type = func_ast.symbol.GetReturnType();
   }
 
-  public void VisitFuncDeclPass2(bhlParser.FuncDeclContext ctx)
+  void VisitFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
   {
-    string name = ctx.NAME().GetText();
-
-    var func_symb = (FuncSymbolScript)curr_scope.Resolve(name);
-
-    var func_ast = MakeAST_FuncDecl(func_symb, ctx);
-
-    PeekAST().AddChild(func_ast);
-  }
-
-  AST_FuncDecl MakeAST_FuncDecl(FuncSymbolScript func_symb, bhlParser.FuncDeclContext ctx)
-  {
-    var func_ast = new AST_FuncDecl(func_symb, ctx.Stop.Line);
-
-    scopes.Push(func_symb);
-    PushFuncDecl(func_symb);
-
     var func_params = ctx.funcParams();
     if(func_params != null)
     {
+      PushScope(func_ast.symbol);
       PushAST(func_ast.fparams());
       Visit(func_params);
       PopAST();
+      PopScope();
     }
 
+    func_ast.symbol.default_args_num = func_ast.GetDefaultArgsNum();
+  }
+
+  void VisitFuncBlock(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
+  {
     if(!being_imported)
     {
+      PushScope(func_ast.symbol);
+
       PushAST(func_ast.block());
       Visit(ctx.funcBlock());
       PopAST();
 
-      if(func_symb.GetReturnType() != Types.Void && !return_found.Contains(func_symb))
+      if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
         FireError(ctx.NAME(), "matching 'return' statement not found");
-    }
-    
-    PopFuncDecl();
-    scopes.Pop();
 
-    func_symb.default_args_num = func_ast.GetDefaultArgsNum();
-    return func_ast;
+      PopScope();
+    }
   }
 
   public void VisitInterfaceDecl0(bhlParser.InterfaceDeclContext ctx)
@@ -2196,14 +2178,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         var func_params = fd.funcParams();
         if(func_params != null)
         {
-          scopes.Push(func_symb);
+          PushScope(func_symb);
           //NOTE: we push some dummy interim AST and later
           //      simply discard it since we don't care about
           //      func args related AST for interfaces
           PushAST(new AST_Interim());
           Visit(func_params);
           PopAST();
-          scopes.Pop();
+          PopScope();
         }
       }
     }
@@ -2253,11 +2235,11 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     else if(ns.module_name != module.name)
       throw new Exception("Unexpected namespace's module name: " + ns.module_name);
 
-    scopes.Push(ns);
+    PushScope(ns);
 
     VisitDecls(ctx.decls());
 
-    scopes.Pop();
+    PopScope();
 
     return null;
   }
@@ -2373,7 +2355,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         var func_symb = (FuncSymbolScript)class_symb.Resolve(fd.NAME().GetText());
 
-        var func_ast = MakeAST_FuncDecl(func_symb, fd);
+        var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
+
+        VisitFuncParams(fd, func_ast);
+        VisitFuncBlock(fd, func_ast);
 
         ast_class.func_decls.Add(func_ast);
       }
@@ -2948,7 +2933,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     //}
 
     var local_scope = new LocalScope(false, curr_scope);
-    scopes.Push(local_scope);
+    PushScope(local_scope);
     local_scope.Enter();
     
     var for_pre = ctx.forExp().forPre();
@@ -3027,7 +3012,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     local_scope.Exit();
-    scopes.Pop();
+    PopScope();
 
     return null;
   }
@@ -3083,7 +3068,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     //}
     
     var local_scope = new LocalScope(false, curr_scope);
-    scopes.Push(local_scope);
+    PushScope(local_scope);
     local_scope.Enter();
 
     var vod = ctx.foreachExp().varOrDeclare();
@@ -3172,7 +3157,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     local_scope.Exit();
-    scopes.Pop();
+    PopScope();
 
     return null;
   }
@@ -3184,7 +3169,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       type == BlockType.PARAL_ALL;
 
     var local_scope = new LocalScope(is_paral, curr_scope);
-    scopes.Push(local_scope);
+    PushScope(local_scope);
     local_scope.Enter();
 
     var ast = new AST_Block(type);
@@ -3219,7 +3204,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     PopAST();
 
     local_scope.Exit();
-    scopes.Pop();
+    PopScope();
 
     if(is_paral)
       return_found.Remove(PeekFuncDecl());
