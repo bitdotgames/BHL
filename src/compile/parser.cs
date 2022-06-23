@@ -518,7 +518,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(rule.cldecl != null)
       {
+        PushScope(rule.scope);
         FinalizeClass(rule.cldecl);
+        PopScope();
       }
     }
 
