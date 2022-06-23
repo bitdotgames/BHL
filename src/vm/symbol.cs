@@ -344,6 +344,9 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   public VM.ClassCreator creator;
 
 #if BHL_FRONT
+  public ClassSymbol tmp_super_class;
+  public SymbolsStorage tmp_members;
+
   public ClassSymbol(
     WrappedParseTree parsed, 
     string name, 
@@ -355,6 +358,23 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   {
     this.parsed = parsed;
   }
+
+  public void FinalizeClass()
+  {
+    DoDefineMembers(this);
+
+    _super_class = new TypeProxy(tmp_super_class);
+  }
+
+  void DoDefineMembers(ClassSymbol tmp_class)
+  {
+    if(tmp_class.tmp_super_class != null)
+      DoDefineMembers(tmp_class.tmp_super_class);
+
+    for(int i=0;i<tmp_class.tmp_members.Count;++i)
+      Define(tmp_class.tmp_members[i]);
+  }
+
 #endif
 
   public ClassSymbol(
@@ -371,6 +391,10 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
     SetSuperClass(super_class);
     SetImplementedInterfaces(implements);
+
+#if BHL_FRONT
+    tmp_members = new SymbolsStorage(this);
+#endif
   }
 
   public void SetSuperClass(ClassSymbol super_class)
@@ -378,21 +402,20 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     if(this.super_class == super_class)
       return;
 
-    this._super_class = new TypeProxy(super_class);
     //NOTE: we define parent members in the current class
     //      scope as well. We do this since we want to  
     //      address its members simply by int index
     if(super_class != null)
     {
-      var super_members = super_class.members;
-      for(int i=0;i<super_members.Count;++i)
+      var tmp_members = super_class.members;
+      for(int i=0;i<tmp_members.Count;++i)
       {
-        var mem = super_members[i];
-        //NOTE: using base Define instead of our own version
-        //      since we want to avoid 'already defined' checks
-        base.Define(mem);
+        var mem = tmp_members[i];
+        Define(mem);
       }
     }
+
+    _super_class = new TypeProxy(super_class);
   }
 
   public void SetImplementedInterfaces(IList<InterfaceSymbol> implements)
@@ -1504,7 +1527,7 @@ public class EnumItemSymbol : Symbol, IType
 public class SymbolsStorage : marshall.IMarshallable
 {
   IScope scope;
-  List<Symbol> list = new List<Symbol>();
+  internal List<Symbol> list = new List<Symbol>();
 
   public int Count
   {
@@ -1547,7 +1570,7 @@ public class SymbolsStorage : marshall.IMarshallable
     // throw new Exception("Symbol '" + s.name + "' scope is already set");
     foreach(var tmp in list)
       if(tmp == s || tmp.name == s.name)
-        throw new Exception("Duplicate symbol: " + s.name);
+        throw new SymbolError(s, "already defined symbol '" + s.name + "'"); 
     if(s.scope == null)
       s.scope = scope;
     list.Add(s);

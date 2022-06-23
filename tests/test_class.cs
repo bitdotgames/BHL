@@ -1022,7 +1022,7 @@ public class TestClasses : BHL_TestBase
       int c
     }
 
-    class Foo {
+    class Foo : Hey {
       
       func int getA() {
         return this.a
@@ -1033,6 +1033,9 @@ public class TestClasses : BHL_TestBase
       }
 
       int a
+    }
+
+    class Hey {
       int b
     }
 

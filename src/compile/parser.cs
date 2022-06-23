@@ -443,21 +443,21 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(rule.ifsdecl != null)
       {
         PushScope(rule.scope);
-        VisitInterfaceDecl0(rule.ifsdecl);
+        OutlineInterfaceDecl(rule.ifsdecl);
         PopScope();
       }
 
       if(rule.cldecl != null)
       {
         PushScope(rule.scope);
-        VisitClassDecl0(rule.cldecl);
+        OutlineClassDecl(rule.cldecl);
         PopScope();
       }
 
       if(rule.fndecl != null)
       {
         PushScope(rule.scope);
-        rule.ast_func = MakeFuncDecl(rule.fndecl);
+        rule.ast_func = OutlineFuncDecl(rule.fndecl);
         rule.ast.AddChild(rule.ast_func);
         PopScope();
       }
@@ -465,17 +465,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     foreach(var rule in postponed_parser_rules)
     {
-      if(rule.ifsdecl != null)
-      {
-        PushScope(rule.scope);
-        VisitInterfaceDecl1(rule.ifsdecl);
-        PopScope();
-      }
-
       if(rule.cldecl != null)
       {
         PushScope(rule.scope);
-        VisitClassDecl1(rule.cldecl);
+        AddClassesExtensions(rule.cldecl);
         PopScope();
       }
     }
@@ -485,13 +478,30 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(rule.ifsdecl != null)
       {
         PushScope(rule.scope);
-        VisitInterfaceDecl2(rule.ifsdecl);
+        AddInterfacesMethods(rule.ifsdecl);
+        PopScope();
+      }
+
+      if(rule.cldecl != null)
+      {
+        PushScope(rule.scope);
+        SetClassesMembersTypes(rule.cldecl);
+        PopScope();
+      }
+    }
+
+    foreach(var rule in postponed_parser_rules)
+    {
+      if(rule.ifsdecl != null)
+      {
+        PushScope(rule.scope);
+        AddInterfacesExtensions(rule.ifsdecl);
         PopScope();
       }
 
       if(rule.fndecl != null)
       {
-        VisitFuncSignature(rule.fndecl, rule.ast_func);
+        FinishFuncSignature(rule.fndecl, rule.ast_func);
       }
     }
 
@@ -501,11 +511,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         PushAST((AST_Tree)rule.ast);
         PushScope(rule.scope);
-        VisitClassDecl2(rule.cldecl);
+        VisitClassMethodsBlocks(rule.cldecl);
         PopScope();
         PopAST();
       }
+    }
 
+    foreach(var rule in postponed_parser_rules)
+    {
       if(rule.fndecl != null)
       {
         VisitFuncBlock(rule.fndecl, rule.ast_func);
@@ -2090,7 +2103,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  public AST_FuncDecl MakeFuncDecl(bhlParser.FuncDeclContext ctx)
+  public AST_FuncDecl OutlineFuncDecl(bhlParser.FuncDeclContext ctx)
   {
     string name = ctx.NAME().GetText();
 
@@ -2104,7 +2117,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return new AST_FuncDecl(func_symb, ctx.Stop.Line);
   }
 
-  public void VisitFuncSignature(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
+  public void FinishFuncSignature(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
   {
     func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(ctx.retType()), ctx.funcParams()));
 
@@ -2145,7 +2158,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void VisitInterfaceDecl0(bhlParser.InterfaceDeclContext ctx)
+  public void OutlineInterfaceDecl(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2154,7 +2167,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     curr_scope.Define(iface_symb);
   }
 
-  public void VisitInterfaceDecl1(bhlParser.InterfaceDeclContext ctx)
+  public void AddInterfacesMethods(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2191,7 +2204,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void VisitInterfaceDecl2(bhlParser.InterfaceDeclContext ctx)
+  public void AddInterfacesExtensions(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2244,16 +2257,72 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  public void VisitClassDecl0(bhlParser.ClassDeclContext ctx)
+  public void OutlineClassDecl(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
     var class_symb = new ClassSymbolScript(Wrap(ctx), name, null, null);
+    //class members
+    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
+    {
+      var cm = ctx.classBlock().classMembers().classMember()[i];
+      var vd = cm.varDeclare();
+      if(vd != null)
+      {
+        if(vd.NAME().GetText() == "this")
+          FireError(vd.NAME(), "the keyword \"this\" is reserved");
+
+        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new TypeProxy());
+        class_symb.tmp_members.Add(fld_symb);
+      }
+
+      var fd = cm.funcDecl();
+      if(fd != null)
+      {
+        if(fd.NAME().GetText() == "this")
+          FireError(fd.NAME(), "the keyword \"this\" is reserved");
+
+        var func_symb = new FuncSymbolScript(
+          Wrap(fd), 
+          new FuncSignature(),
+          fd.NAME().GetText()
+        );
+        func_symb.ReserveThisArgument(class_symb);
+        class_symb.tmp_members.Add(func_symb);
+      }
+    }
 
     curr_scope.Define(class_symb);
   }
 
-  public void VisitClassDecl1(bhlParser.ClassDeclContext ctx)
+  public void SetClassesMembersTypes(bhlParser.ClassDeclContext ctx)
+  {
+    var name = ctx.NAME().GetText();
+
+    var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
+
+    //class members
+    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
+    {
+      var cm = ctx.classBlock().classMembers().classMember()[i];
+      var vd = cm.varDeclare();
+      if(vd != null)
+      {
+        var fld_symb = (FieldSymbolScript)class_symb.tmp_members.Find(vd.NAME().GetText());
+        fld_symb.type = ParseType(vd.type());
+      }
+
+      var fd = cm.funcDecl();
+      if(fd != null)
+      {
+        var func_symb = (FuncSymbolScript)class_symb.tmp_members.Find(fd.NAME().GetText());
+        func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
+        Wrap(fd).eval_type = func_symb.GetReturnType(); 
+      }
+    }
+  }
+
+  public void AddClassesExtensions(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2292,61 +2361,29 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           FireError(ext_name, "not a class or an interface");
       }
 
-      if(super_class != null)
-        class_symb.SetSuperClass(super_class);
+      class_symb.tmp_super_class = super_class;
 
       if(implements.Count > 0)
         class_symb.SetImplementedInterfaces(implements);
     }
-
-    //1. class attributes
-    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
-    {
-      var cm = ctx.classBlock().classMembers().classMember()[i];
-      var vd = cm.varDeclare();
-      if(vd != null)
-      {
-        if(vd.NAME().GetText() == "this")
-          FireError(vd.NAME(), "the keyword \"this\" is reserved");
-
-        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), ParseType(vd.type()));
-        class_symb.Define(fld_symb);
-      }
-    }
-
-    //2. class methods
-    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
-    {
-      var cm = ctx.classBlock().classMembers().classMember()[i];
-      var fd = cm.funcDecl();
-      if(fd != null)
-      {
-        if(fd.NAME().GetText() == "this")
-          FireError(fd.NAME(), "the keyword \"this\" is reserved");
-
-        var func_symb = new FuncSymbolScript(
-          Wrap(fd), 
-          ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()),
-          fd.NAME().GetText()
-        );
-        func_symb.ReserveThisArgument(class_symb);
-        Wrap(fd).eval_type = func_symb.GetReturnType(); 
-        class_symb.Define(func_symb);
-      }
-    }
   }
 
-  public void VisitClassDecl2(bhlParser.ClassDeclContext ctx)
+  public void VisitClassMethodsBlocks(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
     var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
 
-    CheckInterfaces(ctx, class_symb);
+    class_symb.FinalizeClass();
+
+    for(int i=0;i<class_symb.implements.Count;++i)
+      ValidateInterfaceImplementation(ctx, class_symb.implements[i], class_symb);
+
+    class_symb.UpdateVTable();
 
     var ast_class = new AST_ClassDecl(class_symb);
 
-    //class methods
+    //class methods bodies
     for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
     {
       var cm = ctx.classBlock().classMembers().classMember()[i];
@@ -2369,10 +2406,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   void CheckInterfaces(bhlParser.ClassDeclContext ctx, ClassSymbolScript class_symb)
   {
-    for(int i=0;i<class_symb.implements.Count;++i)
-      ValidateInterfaceImplementation(ctx, class_symb.implements[i], class_symb);
-
-    class_symb.UpdateVTable();
   }
 
   void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)

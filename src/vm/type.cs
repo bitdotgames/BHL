@@ -34,7 +34,10 @@ public struct TypeProxy : marshall.IMarshallable
   public TypeProxy(IType type)
   {
     resolver = null;
-    _name = (type is Symbol sym) ? sym.GetFullName() : type.GetName();
+    if(type != null)
+      _name = (type is Symbol sym) ? sym.GetFullName() : type.GetName();
+    else 
+      _name = null;
     this.type = type;
   }
 
