@@ -2355,7 +2355,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           FireError(ext_name, "not a class or an interface");
       }
 
-      pass.class_symb.tmp_super_class = super_class;
+      pass.class_symb.SetSuperClass(super_class);
 
       if(implements.Count > 0)
         pass.class_symb.SetImplementedInterfaces(implements);

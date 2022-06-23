@@ -344,7 +344,8 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   public VM.ClassCreator creator;
 
 #if BHL_FRONT
-  public ClassSymbol tmp_super_class;
+  //used for a temporary storage of class members during 
+  //parser multipasses
   public SymbolsStorage tmp_members;
 
   public ClassSymbol(
@@ -362,17 +363,19 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   public void FinalizeClass()
   {
     DoDefineMembers(this);
-
-    _super_class = new TypeProxy(tmp_super_class);
   }
 
   void DoDefineMembers(ClassSymbol tmp_class)
   {
-    if(tmp_class.tmp_super_class != null)
-      DoDefineMembers(tmp_class.tmp_super_class);
+    if(tmp_class.super_class != null)
+      DoDefineMembers(tmp_class.super_class);
 
     for(int i=0;i<tmp_class.tmp_members.Count;++i)
-      Define(tmp_class.tmp_members[i]);
+    {
+      //NOTE: we want to skip super class check here,
+      //      hence the usage of base.Define(..)
+      base.Define(tmp_class.tmp_members[i]);
+    }
   }
 
 #endif
