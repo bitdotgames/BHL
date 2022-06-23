@@ -442,13 +442,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     foreach(var rule in postponed_parser_rules)
     {
-      if(rule.vdecl != null)
-      {
-        PushScope(rule.scope);
-        OutlineGlobalVarDecl(rule.vdecl);
-        PopScope();
-      }
-
       if(rule.ifsdecl != null)
       {
         PushScope(rule.scope);
@@ -510,7 +503,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       if(rule.fndecl != null)
       {
-        FinishFuncSignature(rule.fndecl, rule.ast_func);
+        FinalizeFuncSignature(rule.fndecl, rule.ast_func);
       }
     }
 
@@ -2134,7 +2127,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  public AST_FuncDecl OutlineFuncDecl(bhlParser.FuncDeclContext ctx)
+  AST_FuncDecl OutlineFuncDecl(bhlParser.FuncDeclContext ctx)
   {
     string name = ctx.NAME().GetText();
 
@@ -2148,7 +2141,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return new AST_FuncDecl(func_symb, ctx.Stop.Line);
   }
 
-  public void FinishFuncSignature(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
+  void FinalizeFuncSignature(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
   {
     func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(ctx.retType()), ctx.funcParams()));
 
@@ -2189,7 +2182,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void OutlineInterfaceDecl(bhlParser.InterfaceDeclContext ctx)
+  void OutlineInterfaceDecl(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2198,7 +2191,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     curr_scope.Define(iface_symb);
   }
 
-  public void FinalizeInterfaceMethods(bhlParser.InterfaceDeclContext ctx)
+  void FinalizeInterfaceMethods(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2235,7 +2228,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void AddInterfaceExtensions(bhlParser.InterfaceDeclContext ctx)
+  void AddInterfaceExtensions(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2288,7 +2281,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  public void OutlineClassDecl(bhlParser.ClassDeclContext ctx)
+  void OutlineClassDecl(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2326,7 +2319,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     curr_scope.Define(class_symb);
   }
 
-  public void SetClassMembersTypes(bhlParser.ClassDeclContext ctx)
+  void SetClassMembersTypes(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2353,7 +2346,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void AddClassExtensions(bhlParser.ClassDeclContext ctx)
+  void AddClassExtensions(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2414,7 +2407,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   }
 
-  public void VisitClassMethodsBlocks(bhlParser.ClassDeclContext ctx)
+  void VisitClassMethodsBlocks(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2485,49 +2478,41 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  void OutlineGlobalVarDecl(bhlParser.VarDeclareAssignContext ctx)
-  {
-    //NOTE: the code below should be executed only if module is imported 
-    if(!being_imported)
-      return;
-
-    var vd = ctx.varDeclare(); 
-
-    var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), ns.T(vd.type().GetText()));
-    curr_scope.Define(symb);
-  }
-
   public void VisitGlobalVar(bhlParser.VarDeclareAssignContext ctx)
   {
-    //NOTE: the code below should be executed only if module is NOT imported 
-    if(being_imported)
-      return;
-
     var vd = ctx.varDeclare(); 
 
-    var assign_exp = ctx.assignExp();
-
-    AST_Interim exp_ast = null;
-    if(assign_exp != null)
+    if(being_imported)
     {
-      var tp = ParseType(vd.type());
-
-      exp_ast = new AST_Interim();
-      PushAST(exp_ast);
-      PushJsonType(tp.Get());
-      Visit(assign_exp);
-      PopJsonType();
-      PopAST();
+      var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), ns.T(vd.type().GetText()));
+      curr_scope.Define(symb);
     }
+    else
+    {
+      var assign_exp = ctx.assignExp();
 
-    var ast = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: true, write: assign_exp != null);
+      AST_Interim exp_ast = null;
+      if(assign_exp != null)
+      {
+        var tp = ParseType(vd.type());
 
-    if(exp_ast != null)
-      PeekAST().AddChild(exp_ast);
-    PeekAST().AddChild(ast);
+        exp_ast = new AST_Interim();
+        PushAST(exp_ast);
+        PushJsonType(tp.Get());
+        Visit(assign_exp);
+        PopJsonType();
+        PopAST();
+      }
 
-    if(assign_exp != null)
-      types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
+      var ast = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: true, write: assign_exp != null);
+
+      if(exp_ast != null)
+        PeekAST().AddChild(exp_ast);
+      PeekAST().AddChild(ast);
+
+      if(assign_exp != null)
+        types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
+    }
   }
 
   public override object VisitFuncParams(bhlParser.FuncParamsContext ctx)
