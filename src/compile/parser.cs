@@ -510,11 +510,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.gvar_ctx != null)
       {
-        PushAST((AST_Tree)pass.ast);
-        PushScope(pass.scope);
-        VisitGlobalVar(pass.gvar_ctx);
-        PopScope();
-        PopAST();
+        VisitGlobalVar(pass);
       }
     }
 
@@ -2452,9 +2448,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  void VisitGlobalVar(bhlParser.VarDeclareAssignContext ctx)
+  void VisitGlobalVar(ParserPass pass)
   {
-    var vd = ctx.varDeclare(); 
+    PushAST((AST_Tree)pass.ast);
+    PushScope(pass.scope);
+
+    var vd = pass.gvar_ctx.varDeclare(); 
 
     if(being_imported)
     {
@@ -2463,7 +2462,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
     else
     {
-      var assign_exp = ctx.assignExp();
+      var assign_exp = pass.gvar_ctx.assignExp();
 
       AST_Interim exp_ast = null;
       if(assign_exp != null)
@@ -2487,6 +2486,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(assign_exp != null)
         types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
     }
+
+    PopScope();
+    PopAST();
   }
 
   public override object VisitFuncParams(bhlParser.FuncParamsContext ctx)
