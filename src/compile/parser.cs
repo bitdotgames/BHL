@@ -2193,7 +2193,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         var ext_name = pass.iface_ctx.extensions().nsName()[i]; 
         string ext_full_name = curr_scope.GetFullName(ext_name.GetText());
-        var ext = ns.ResolveSymbolByFullName(ext_full_name);
+        var ext = ns.ResolveSymbolByPath(ext_full_name);
         if(ext is InterfaceSymbol ifs)
         {
           if(ext == pass.iface_symb)
@@ -2314,7 +2314,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         var ext_name = pass.class_ctx.extensions().nsName()[i]; 
         string ext_full_name = curr_scope.GetFullName(ext_name.GetText());
-        var ext = ns.ResolveSymbolByFullName(ext_full_name);
+        var ext = ns.ResolveSymbolByPath(ext_full_name);
         if(ext is ClassSymbol cs)
         {
           if(ext == pass.class_symb)

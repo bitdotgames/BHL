@@ -23,7 +23,9 @@ public struct TypeProxy : marshall.IMarshallable
 
   public TypeProxy(ISymbolResolver resolver, string name)
   {
-    if(name.Length == 0 || Types.IsCompoundType(name))
+    if(name.Length == 0)
+      throw new Exception("Type name is empty");
+    if(Types.IsCompoundType(name))
       throw new Exception("Type name contains illegal characters: '" + name + "'");
     
     this.resolver = resolver;
@@ -60,7 +62,7 @@ public struct TypeProxy : marshall.IMarshallable
     if(string.IsNullOrEmpty(_name))
       return null;
 
-    type = (bhl.IType)resolver.ResolveSymbolByFullName(_name);
+    type = (bhl.IType)resolver.ResolveSymbolByPath(_name);
     return type;
   }
 
@@ -394,9 +396,9 @@ public class Types : ISymbolResolver
     this.ns = ns;
   }
 
-  public Symbol ResolveSymbolByFullName(string name)
+  public Symbol ResolveSymbolByPath(string name)
   {
-    return ns.ResolveSymbolByFullName(name);
+    return ns.ResolveSymbolByPath(name);
   }
 
   public Types Clone()

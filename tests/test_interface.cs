@@ -13,7 +13,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.ResolveSymbolByFullName("Foo") as InterfaceSymbolScript;
+    var symb = vm.ResolveSymbolByPath("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
   }
 
@@ -27,7 +27,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.ResolveSymbolByFullName("Foo") as InterfaceSymbolScript;
+    var symb = vm.ResolveSymbolByPath("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
     var hey = symb.FindMethod("hey").signature;
     AssertTrue(hey != null);
@@ -51,7 +51,7 @@ public class TestInterfaces : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var symb = vm.ResolveSymbolByFullName("Foo") as InterfaceSymbolScript;
+    var symb = vm.ResolveSymbolByPath("Foo") as InterfaceSymbolScript;
     AssertTrue(symb != null);
 
     var hey = symb.FindMethod("hey").signature;
@@ -91,7 +91,7 @@ public class TestInterfaces : BHL_TestBase
 
     var vm = MakeVM(bhl);
     {
-      var symb = vm.ResolveSymbolByFullName("Foo") as InterfaceSymbolScript;
+      var symb = vm.ResolveSymbolByPath("Foo") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(1, symb.inherits.Count);
       AssertEqual("Wow", symb.inherits[0].name);
@@ -115,7 +115,7 @@ public class TestInterfaces : BHL_TestBase
     }
 
     {
-      var symb = vm.ResolveSymbolByFullName("Wow") as InterfaceSymbolScript;
+      var symb = vm.ResolveSymbolByPath("Wow") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(0, symb.inherits.Count);
       AssertEqual(1, symb.GetMembers().Count);
@@ -310,7 +310,7 @@ public class TestInterfaces : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      var symb = vm.ResolveSymbolByFullName("Foo") as ClassSymbol;
+      var symb = vm.ResolveSymbolByPath("Foo") as ClassSymbol;
       AssertTrue(symb != null);
       AssertEqual(1, symb.implements.Count);
       AssertEqual("IFoo", symb.implements[0].GetName());

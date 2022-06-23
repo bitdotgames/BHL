@@ -20,7 +20,7 @@ public interface IScope
 
 public interface ISymbolResolver
 {
-  Symbol ResolveSymbolByFullName(string full_name);
+  Symbol ResolveSymbolByPath(string full_name);
 }
 
 public interface IInstanceType : IType, IScope 
@@ -151,6 +151,14 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
   public Namespace(Symbol2Index gindex = null)
     : this(gindex, "", "")
   {}
+
+  public Namespace GetRoot()
+  {
+    var tmp = this;
+    while(tmp.scope != null)
+      tmp = (Namespace)tmp.scope;
+    return tmp;
+  }
 
   public Namespace Nest(string name)
   {
@@ -359,19 +367,25 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
     members.Add(sym);
   }
 
-  public Symbol ResolveSymbolByFullName(string full_name)
+  public Symbol ResolveSymbolByPath(string path)
   {
     IScope scope = this;
 
+    if(path[0] == '.')
+    {
+      scope = GetRoot();
+      path = path.Substring(1);
+    }
+
     int start_idx = 0;
-    int next_idx = full_name.IndexOf('.');
+    int next_idx = path.IndexOf('.');
 
     while(true)
     {
       string name = 
         next_idx == -1 ? 
-        (start_idx == 0 ? full_name : full_name.Substring(start_idx)) : 
-        full_name.Substring(start_idx, next_idx - start_idx);
+        (start_idx == 0 ? path : path.Substring(start_idx)) : 
+        path.Substring(start_idx, next_idx - start_idx);
 
       var symb = scope.Resolve(name);
 
@@ -383,7 +397,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
         return symb;
 
       start_idx = next_idx + 1;
-      next_idx = full_name.IndexOf('.', start_idx);
+      next_idx = path.IndexOf('.', start_idx);
 
       scope = symb as IScope;
       //we can't proceed 'deeper' if the last resolved 
@@ -414,7 +428,7 @@ public static class ScopeExtensions
 
   public static string GetFullName(this IScope scope, string name)
   {
-    if(string.IsNullOrEmpty(name) || name.IndexOf('.') != -1)
+    if(string.IsNullOrEmpty(name) || name[0] == '.')
       return name;
 
     while(scope != null)
@@ -442,7 +456,7 @@ public static class ScopeExtensions
       else
         scope = scope.GetFallbackScope();
     }
-    return name;
+    return '.' + name;
   }
 
   public static Symbol ResolveWithFallback(this IScope scope, string name)

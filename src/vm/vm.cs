@@ -1009,7 +1009,7 @@ public class VM : ISymbolResolver
   {
     addr = default(FuncAddr);
 
-    var fs = ResolveSymbolByFullName(name) as FuncSymbolScript;
+    var fs = ResolveSymbolByPath(name) as FuncSymbolScript;
     if(fs == null)
       return false;
 
@@ -1026,7 +1026,7 @@ public class VM : ISymbolResolver
 
   FuncAddr GetFuncAddr(string name)
   {
-    var fs = (FuncSymbolScript)ResolveSymbolByFullName(name);
+    var fs = (FuncSymbolScript)ResolveSymbolByPath(name);
     var cm = modules[((Namespace)fs.scope).module_name];
     return new FuncAddr() {
       module = cm,
@@ -1035,11 +1035,11 @@ public class VM : ISymbolResolver
     };
   }
 
-  public Symbol ResolveSymbolByFullName(string name)
+  public Symbol ResolveSymbolByPath(string name)
   {
     foreach(var kv in modules)
     {
-      var s = kv.Value.ns.ResolveSymbolByFullName(name);
+      var s = kv.Value.ns.ResolveSymbolByPath(name);
       if(s != null)
         return s;
     }
