@@ -430,6 +430,8 @@ public class TestInterfaces : BHL_TestBase
     
     interface IBar : IBarBase1, IBarBase2 { 
       func foo()
+
+      func Foo circularDependency()
     }
     class Foo : IBar {
       func foo() { } 
@@ -440,6 +442,10 @@ public class TestInterfaces : BHL_TestBase
 
       func int bar2(int i) {
         return i-1
+      }
+
+      func Foo circularDependency() {
+        return this
       }
     }
 
