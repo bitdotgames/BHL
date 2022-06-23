@@ -68,29 +68,35 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   ITokenStream tokens;
   ParseTreeProperty<WrappedParseTree> tree_props = new ParseTreeProperty<WrappedParseTree>();
 
-  class PostponedParserRule
+  class ParserPass
   {
     public IAST ast;
     public IScope scope;
 
-    public bhlParser.VarDeclareAssignContext vdecl;
-    public bhlParser.FuncDeclContext fndecl;
-    public AST_FuncDecl ast_func;
-    public bhlParser.ClassDeclContext cldecl;
-    public bhlParser.InterfaceDeclContext ifsdecl;
+    public bhlParser.VarDeclareAssignContext gvar_ctx;
 
-    public PostponedParserRule(IAST ast, IScope scope, ParserRuleContext ctx)
+    public bhlParser.FuncDeclContext func_ctx;
+    public AST_FuncDecl func_ast;
+    public FuncSymbolScript func_symb;
+
+    public bhlParser.ClassDeclContext class_ctx;
+    public ClassSymbolScript class_symb;
+
+    public bhlParser.InterfaceDeclContext iface_ctx;
+    public InterfaceSymbolScript iface_symb;
+
+    public ParserPass(IAST ast, IScope scope, ParserRuleContext ctx)
     {
       this.ast = ast;
       this.scope = scope;
-      this.vdecl = ctx as bhlParser.VarDeclareAssignContext;
-      this.fndecl = ctx as bhlParser.FuncDeclContext;
-      this.cldecl = ctx as bhlParser.ClassDeclContext;
-      this.ifsdecl = ctx as bhlParser.InterfaceDeclContext;
+      this.gvar_ctx = ctx as bhlParser.VarDeclareAssignContext;
+      this.func_ctx = ctx as bhlParser.FuncDeclContext;
+      this.class_ctx = ctx as bhlParser.ClassDeclContext;
+      this.iface_ctx = ctx as bhlParser.InterfaceDeclContext;
     }
   }
 
-  List<PostponedParserRule> postponed_parser_rules = new List<PostponedParserRule>();
+  List<ParserPass> passes = new List<ParserPass>();
 
   Stack<IScope> scopes = new Stack<IScope>();
   IScope curr_scope {
@@ -417,7 +423,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     for(int i=0;i<ctx.progblock().Length;++i)
       Visit(ctx.progblock()[i]);
 
-    VisitPostponedParserRules();
+    VisitPasses();
 
     return null;
   }
@@ -433,119 +439,98 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  void PostponeParsing(ParserRuleContext ctx, IScope scope, IAST ast)
+  void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)
   {
-    postponed_parser_rules.Add(new PostponedParserRule(ast, scope, ctx));
+    passes.Add(new ParserPass(ast, scope, ctx));
   }
 
-  void VisitPostponedParserRules()
+  void VisitPasses()
   {
-    foreach(var rule in postponed_parser_rules)
+    foreach(var pass in passes)
     {
-      if(rule.ifsdecl != null)
+      if(pass.iface_ctx != null)
       {
-        PushScope(rule.scope);
-        OutlineInterfaceDecl(rule.ifsdecl);
-        PopScope();
+        OutlineInterfaceDecl(pass);
       }
 
-      if(rule.cldecl != null)
+      if(pass.class_ctx != null)
       {
-        PushScope(rule.scope);
-        OutlineClassDecl(rule.cldecl);
-        PopScope();
+        OutlineClassDecl(pass);
       }
 
-      if(rule.fndecl != null)
+      if(pass.func_ctx != null)
       {
-        PushScope(rule.scope);
-        rule.ast_func = OutlineFuncDecl(rule.fndecl);
-        rule.ast.AddChild(rule.ast_func);
-        PopScope();
+        OutlineFuncDecl(pass);
       }
     }
 
-    foreach(var rule in postponed_parser_rules)
+    foreach(var pass in passes)
     {
-      if(rule.cldecl != null)
+      if(pass.class_ctx != null)
       {
-        PushScope(rule.scope);
-        AddClassExtensions(rule.cldecl);
-        PopScope();
+        AddClassExtensions(pass);
       }
     }
 
-    foreach(var rule in postponed_parser_rules)
+    foreach(var pass in passes)
     {
-      if(rule.ifsdecl != null)
+      if(pass.iface_ctx != null)
       {
-        PushScope(rule.scope);
-        FinalizeInterfaceMethods(rule.ifsdecl);
-        PopScope();
+        FinalizeInterfaceMethods(pass);
       }
 
-      if(rule.cldecl != null)
+      if(pass.class_ctx != null)
       {
-        PushScope(rule.scope);
-        SetClassMembersTypes(rule.cldecl);
-        PopScope();
+        SetClassMembersTypes(pass);
       }
     }
 
-    foreach(var rule in postponed_parser_rules)
+    foreach(var pass in passes)
     {
-      if(rule.ifsdecl != null)
+      if(pass.iface_ctx != null)
       {
-        PushScope(rule.scope);
-        AddInterfaceExtensions(rule.ifsdecl);
-        PopScope();
+        AddInterfaceExtensions(pass);
       }
 
-      if(rule.fndecl != null)
+      if(pass.func_ctx != null)
       {
-        FinalizeFuncSignature(rule.fndecl, rule.ast_func);
+        FinalizeFuncSignature(pass);
       }
     }
 
-    foreach(var rule in postponed_parser_rules)
+    foreach(var pass in passes)
     {
-      if(rule.cldecl != null)
+      if(pass.class_ctx != null)
       {
-        PushScope(rule.scope);
-        FinalizeClass(rule.cldecl);
-        PopScope();
+        FinalizeClass(pass);
       }
     }
 
-    foreach(var rule in postponed_parser_rules)
+    foreach(var pass in passes)
     {
-      if(rule.vdecl != null)
+      if(pass.gvar_ctx != null)
       {
-        PushAST((AST_Tree)rule.ast);
-        PushScope(rule.scope);
-        VisitGlobalVar(rule.vdecl);
+        PushAST((AST_Tree)pass.ast);
+        PushScope(pass.scope);
+        VisitGlobalVar(pass.gvar_ctx);
         PopScope();
         PopAST();
       }
     }
 
-    foreach(var rule in postponed_parser_rules)
+    foreach(var pass in passes)
     {
-      if(rule.cldecl != null)
+      if(pass.class_ctx != null)
       {
-        PushAST((AST_Tree)rule.ast);
-        PushScope(rule.scope);
-        VisitClassMethodsBlocks(rule.cldecl);
-        PopScope();
-        PopAST();
+        VisitClassMethodsBlocks(pass);
       }
     }
 
-    foreach(var rule in postponed_parser_rules)
+    foreach(var pass in passes)
     {
-      if(rule.fndecl != null)
+      if(pass.func_ctx != null)
       {
-        VisitFuncBlock(rule.fndecl, rule.ast_func);
+        VisitFuncBlock(pass.func_ctx, pass.func_ast);
       }
     }
   }
@@ -2095,25 +2080,25 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       var vdecl = decls[i].varDeclareAssign();
       if(vdecl != null)
       {
-        PostponeParsing(vdecl, curr_scope, PeekAST()); 
+        AddPass(vdecl, curr_scope, PeekAST()); 
         continue;
       }
       var fndecl = decls[i].funcDecl();
       if(fndecl != null)
       {
-        PostponeParsing(fndecl, curr_scope, PeekAST());
+        AddPass(fndecl, curr_scope, PeekAST());
         continue;
       }
       var cldecl = decls[i].classDecl();
       if(cldecl != null)
       {
-        PostponeParsing(cldecl, curr_scope, PeekAST());
+        AddPass(cldecl, curr_scope, PeekAST());
         continue;
       }
       var ifacedecl = decls[i].interfaceDecl();
       if(ifacedecl != null)
       {
-        PostponeParsing(ifacedecl, curr_scope, PeekAST());
+        AddPass(ifacedecl, curr_scope, PeekAST());
         continue;
       }
       var edecl = decls[i].enumDecl();
@@ -2127,27 +2112,28 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_FuncDecl OutlineFuncDecl(bhlParser.FuncDeclContext ctx)
+  void OutlineFuncDecl(ParserPass pass)
   {
-    string name = ctx.NAME().GetText();
+    string name = pass.func_ctx.NAME().GetText();
 
-    var func_symb = new FuncSymbolScript(
-      Wrap(ctx), 
+    pass.func_symb = new FuncSymbolScript(
+      Wrap(pass.func_ctx), 
       new FuncSignature(),
       name
     );
-    curr_scope.Define(func_symb);
+    pass.scope.Define(pass.func_symb);
 
-    return new AST_FuncDecl(func_symb, ctx.Stop.Line);
+    pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
+    pass.ast.AddChild(pass.func_ast);
   }
 
-  void FinalizeFuncSignature(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
+  void FinalizeFuncSignature(ParserPass pass)
   {
-    func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(ctx.retType()), ctx.funcParams()));
+    pass.func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams()));
 
-    VisitFuncParams(ctx, func_ast);
+    VisitFuncParams(pass.func_ctx, pass.func_ast);
 
-    Wrap(ctx).eval_type = func_ast.symbol.GetReturnType();
+    Wrap(pass.func_ctx).eval_type = pass.func_ast.symbol.GetReturnType();
   }
 
   void VisitFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
@@ -2182,24 +2168,22 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  void OutlineInterfaceDecl(bhlParser.InterfaceDeclContext ctx)
+  void OutlineInterfaceDecl(ParserPass pass)
   {
-    var name = ctx.NAME().GetText();
+    var name = pass.iface_ctx.NAME().GetText();
 
-    var iface_symb = new InterfaceSymbolScript(Wrap(ctx), name, null);
+    pass.iface_symb = new InterfaceSymbolScript(Wrap(pass.iface_ctx), name, null);
 
-    curr_scope.Define(iface_symb);
+    pass.scope.Define(pass.iface_symb);
   }
 
-  void FinalizeInterfaceMethods(bhlParser.InterfaceDeclContext ctx)
+  void FinalizeInterfaceMethods(ParserPass pass)
   {
-    var name = ctx.NAME().GetText();
+    PushScope(pass.scope);
 
-    var iface_symb = (InterfaceSymbolScript)curr_scope.Resolve(name);
-
-    for(int i=0;i<ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
+    for(int i=0;i<pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
     {
-      var ib = ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
+      var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
 
       var fd = ib.interfaceFuncDecl();
       if(fd != null)
@@ -2210,7 +2194,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           FireError(ib, "default value is not allowed in this context");
 
         var func_symb = new FuncSymbolScript(null, sig, fd.NAME().GetText(), 0, 0);
-        iface_symb.Define(func_symb);
+        pass.iface_symb.Define(func_symb);
 
         var func_params = fd.funcParams();
         if(func_params != null)
@@ -2226,25 +2210,23 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         }
       }
     }
+
+    PopScope();
   }
 
-  void AddInterfaceExtensions(bhlParser.InterfaceDeclContext ctx)
+  void AddInterfaceExtensions(ParserPass pass)
   {
-    var name = ctx.NAME().GetText();
-
-    var iface_symb = (InterfaceSymbolScript)curr_scope.Resolve(name);
-
-    if(ctx.extensions() != null)
+    if(pass.iface_ctx.extensions() != null)
     {
       var inherits = new List<InterfaceSymbol>();
-      for(int i=0;i<ctx.extensions().nsName().Length;++i)
+      for(int i=0;i<pass.iface_ctx.extensions().nsName().Length;++i)
       {
-        var ext_name = ctx.extensions().nsName()[i]; 
+        var ext_name = pass.iface_ctx.extensions().nsName()[i]; 
         string ext_full_name = curr_scope.GetFullName(ext_name.GetText());
         var ext = ns.ResolveSymbolByFullName(ext_full_name);
         if(ext is InterfaceSymbol ifs)
         {
-          if(ext == iface_symb)
+          if(ext == pass.iface_symb)
             FireError(ext_name, "self inheritance is not allowed");
 
           if(inherits.IndexOf(ifs) != -1)
@@ -2255,7 +2237,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           FireError(ext_name, "not a valid interface");
       }
       if(inherits.Count > 0)
-        iface_symb.SetInherits(inherits);
+        pass.iface_symb.SetInherits(inherits);
     }
   }
 
@@ -2281,15 +2263,15 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  void OutlineClassDecl(bhlParser.ClassDeclContext ctx)
+  void OutlineClassDecl(ParserPass pass)
   {
-    var name = ctx.NAME().GetText();
+    var name = pass.class_ctx.NAME().GetText();
 
-    var class_symb = new ClassSymbolScript(Wrap(ctx), name, null, null);
+    pass.class_symb = new ClassSymbolScript(Wrap(pass.class_ctx), name, null, null);
     //class members
-    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
+    for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
     {
-      var cm = ctx.classBlock().classMembers().classMember()[i];
+      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var vd = cm.varDeclare();
       if(vd != null)
       {
@@ -2297,7 +2279,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
         var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new TypeProxy());
-        class_symb.tmp_members.Add(fld_symb);
+        pass.class_symb.tmp_members.Add(fld_symb);
       }
 
       var fd = cm.funcDecl();
@@ -2311,60 +2293,56 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           new FuncSignature(),
           fd.NAME().GetText()
         );
-        func_symb.ReserveThisArgument(class_symb);
-        class_symb.tmp_members.Add(func_symb);
+        func_symb.ReserveThisArgument(pass.class_symb);
+        pass.class_symb.tmp_members.Add(func_symb);
       }
     }
 
-    curr_scope.Define(class_symb);
+    pass.scope.Define(pass.class_symb);
   }
 
-  void SetClassMembersTypes(bhlParser.ClassDeclContext ctx)
+  void SetClassMembersTypes(ParserPass pass)
   {
-    var name = ctx.NAME().GetText();
-
-    var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
+    PushScope(pass.scope);
 
     //class members
-    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
+    for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
     {
-      var cm = ctx.classBlock().classMembers().classMember()[i];
+      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var vd = cm.varDeclare();
       if(vd != null)
       {
-        var fld_symb = (FieldSymbolScript)class_symb.tmp_members.Find(vd.NAME().GetText());
+        var fld_symb = (FieldSymbolScript)pass.class_symb.tmp_members.Find(vd.NAME().GetText());
         fld_symb.type = ParseType(vd.type());
       }
 
       var fd = cm.funcDecl();
       if(fd != null)
       {
-        var func_symb = (FuncSymbolScript)class_symb.tmp_members.Find(fd.NAME().GetText());
+        var func_symb = (FuncSymbolScript)pass.class_symb.tmp_members.Find(fd.NAME().GetText());
         func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
         Wrap(fd).eval_type = func_symb.GetReturnType(); 
       }
     }
+
+    PopScope();
   }
 
-  void AddClassExtensions(bhlParser.ClassDeclContext ctx)
+  void AddClassExtensions(ParserPass pass)
   {
-    var name = ctx.NAME().GetText();
-
-    var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
-
-    if(ctx.extensions() != null)
+    if(pass.class_ctx.extensions() != null)
     {
       var implements = new List<InterfaceSymbol>();
       ClassSymbol super_class = null;
 
-      for(int i=0;i<ctx.extensions().nsName().Length;++i)
+      for(int i=0;i<pass.class_ctx.extensions().nsName().Length;++i)
       {
-        var ext_name = ctx.extensions().nsName()[i]; 
+        var ext_name = pass.class_ctx.extensions().nsName()[i]; 
         string ext_full_name = curr_scope.GetFullName(ext_name.GetText());
         var ext = ns.ResolveSymbolByFullName(ext_full_name);
         if(ext is ClassSymbol cs)
         {
-          if(ext == class_symb)
+          if(ext == pass.class_symb)
             FireError(ext_name, "self inheritance is not allowed");
 
           if(super_class != null)
@@ -2385,44 +2363,38 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           FireError(ext_name, "not a class or an interface");
       }
 
-      class_symb.tmp_super_class = super_class;
+      pass.class_symb.tmp_super_class = super_class;
 
       if(implements.Count > 0)
-        class_symb.SetImplementedInterfaces(implements);
+        pass.class_symb.SetImplementedInterfaces(implements);
     }
   }
 
-  void FinalizeClass(bhlParser.ClassDeclContext ctx)
+  void FinalizeClass(ParserPass pass)
   {
-    var name = ctx.NAME().GetText();
+    pass.class_symb.FinalizeClass();
 
-    var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
+    for(int i=0;i<pass.class_symb.implements.Count;++i)
+      ValidateInterfaceImplementation(pass.class_ctx, pass.class_symb.implements[i], pass.class_symb);
 
-    class_symb.FinalizeClass();
-
-    for(int i=0;i<class_symb.implements.Count;++i)
-      ValidateInterfaceImplementation(ctx, class_symb.implements[i], class_symb);
-
-    class_symb.UpdateVTable();
+    pass.class_symb.UpdateVTable();
 
   }
 
-  void VisitClassMethodsBlocks(bhlParser.ClassDeclContext ctx)
+  void VisitClassMethodsBlocks(ParserPass pass)
   {
-    var name = ctx.NAME().GetText();
+    PushScope(pass.scope);
 
-    var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
-
-    var ast_class = new AST_ClassDecl(class_symb);
+    var ast_class = new AST_ClassDecl(pass.class_symb);
 
     //class methods bodies
-    for(int i=0;i<ctx.classBlock().classMembers().classMember().Length;++i)
+    for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
     {
-      var cm = ctx.classBlock().classMembers().classMember()[i];
+      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var fd = cm.funcDecl();
       if(fd != null)
       {
-        var func_symb = (FuncSymbolScript)class_symb.Resolve(fd.NAME().GetText());
+        var func_symb = (FuncSymbolScript)pass.class_symb.Resolve(fd.NAME().GetText());
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
 
@@ -2433,7 +2405,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       }
     }
 
-    PeekAST().AddChild(ast_class);
+    pass.ast.AddChild(ast_class);
+
+    PopScope();
   }
 
   void CheckInterfaces(bhlParser.ClassDeclContext ctx, ClassSymbolScript class_symb)
@@ -2478,7 +2452,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  public void VisitGlobalVar(bhlParser.VarDeclareAssignContext ctx)
+  void VisitGlobalVar(bhlParser.VarDeclareAssignContext ctx)
   {
     var vd = ctx.varDeclare(); 
 
