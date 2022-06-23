@@ -468,7 +468,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(rule.cldecl != null)
       {
         PushScope(rule.scope);
-        AddClassesExtensions(rule.cldecl);
+        AddClassExtensions(rule.cldecl);
         PopScope();
       }
     }
@@ -478,14 +478,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(rule.ifsdecl != null)
       {
         PushScope(rule.scope);
-        AddInterfacesMethods(rule.ifsdecl);
+        FinalizeInterfaceMethods(rule.ifsdecl);
         PopScope();
       }
 
       if(rule.cldecl != null)
       {
         PushScope(rule.scope);
-        SetClassesMembersTypes(rule.cldecl);
+        SetClassMembersTypes(rule.cldecl);
         PopScope();
       }
     }
@@ -495,7 +495,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(rule.ifsdecl != null)
       {
         PushScope(rule.scope);
-        AddInterfacesExtensions(rule.ifsdecl);
+        AddInterfaceExtensions(rule.ifsdecl);
         PopScope();
       }
 
@@ -2167,7 +2167,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     curr_scope.Define(iface_symb);
   }
 
-  public void AddInterfacesMethods(bhlParser.InterfaceDeclContext ctx)
+  public void FinalizeInterfaceMethods(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2204,7 +2204,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void AddInterfacesExtensions(bhlParser.InterfaceDeclContext ctx)
+  public void AddInterfaceExtensions(bhlParser.InterfaceDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2295,7 +2295,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     curr_scope.Define(class_symb);
   }
 
-  public void SetClassesMembersTypes(bhlParser.ClassDeclContext ctx)
+  public void SetClassMembersTypes(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2322,7 +2322,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void AddClassesExtensions(bhlParser.ClassDeclContext ctx)
+  public void AddClassExtensions(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
