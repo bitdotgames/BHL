@@ -450,17 +450,17 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.iface_ctx != null)
       {
-        OutlineInterfaceDecl(pass);
+        Pass_OutlineInterfaceDecl(pass);
       }
 
       if(pass.class_ctx != null)
       {
-        OutlineClassDecl(pass);
+        Pass_OutlineClassDecl(pass);
       }
 
       if(pass.func_ctx != null)
       {
-        OutlineFuncDecl(pass);
+        Pass_OutlineFuncDecl(pass);
       }
     }
 
@@ -468,7 +468,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.class_ctx != null)
       {
-        AddClassExtensions(pass);
+        Pass_AddClassExtensions(pass);
       }
     }
 
@@ -476,12 +476,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.iface_ctx != null)
       {
-        FinalizeInterfaceMethods(pass);
+        Pass_FinalizeInterfaceMethods(pass);
       }
 
       if(pass.class_ctx != null)
       {
-        SetClassMembersTypes(pass);
+        Pass_SetClassMembersTypes(pass);
       }
     }
 
@@ -489,12 +489,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.iface_ctx != null)
       {
-        AddInterfaceExtensions(pass);
+        Pass_AddInterfaceExtensions(pass);
       }
 
       if(pass.func_ctx != null)
       {
-        FinalizeFuncSignature(pass);
+        Pass_FinalizeFuncSignature(pass);
       }
     }
 
@@ -502,7 +502,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.class_ctx != null)
       {
-        FinalizeClass(pass);
+        Pass_FinalizeClass(pass);
       }
     }
 
@@ -510,7 +510,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.gvar_ctx != null)
       {
-        VisitGlobalVar(pass);
+        Pass_VisitGlobalVar(pass);
       }
     }
 
@@ -518,7 +518,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.class_ctx != null)
       {
-        VisitClassMethodsBlocks(pass);
+        Pass_VisitClassMethodsBlocks(pass);
       }
     }
 
@@ -526,7 +526,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(pass.func_ctx != null)
       {
-        VisitFuncBlock(pass.func_ctx, pass.func_ast);
+        Pass_VisitFuncBlock(pass);
       }
     }
   }
@@ -2108,7 +2108,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  void OutlineFuncDecl(ParserPass pass)
+  void Pass_OutlineFuncDecl(ParserPass pass)
   {
     string name = pass.func_ctx.NAME().GetText();
 
@@ -2123,7 +2123,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     pass.ast.AddChild(pass.func_ast);
   }
 
-  void FinalizeFuncSignature(ParserPass pass)
+  void Pass_FinalizeFuncSignature(ParserPass pass)
   {
     pass.func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams()));
 
@@ -2147,6 +2147,11 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     func_ast.symbol.default_args_num = func_ast.GetDefaultArgsNum();
   }
 
+  void Pass_VisitFuncBlock(ParserPass pass)
+  {
+    VisitFuncBlock(pass.func_ctx, pass.func_ast);
+  }
+
   void VisitFuncBlock(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
   {
     if(!being_imported)
@@ -2164,7 +2169,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  void OutlineInterfaceDecl(ParserPass pass)
+  void Pass_OutlineInterfaceDecl(ParserPass pass)
   {
     var name = pass.iface_ctx.NAME().GetText();
 
@@ -2173,7 +2178,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     pass.scope.Define(pass.iface_symb);
   }
 
-  void FinalizeInterfaceMethods(ParserPass pass)
+  void Pass_FinalizeInterfaceMethods(ParserPass pass)
   {
     PushScope(pass.scope);
 
@@ -2210,7 +2215,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     PopScope();
   }
 
-  void AddInterfaceExtensions(ParserPass pass)
+  void Pass_AddInterfaceExtensions(ParserPass pass)
   {
     if(pass.iface_ctx.extensions() != null)
     {
@@ -2259,7 +2264,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  void OutlineClassDecl(ParserPass pass)
+  void Pass_OutlineClassDecl(ParserPass pass)
   {
     var name = pass.class_ctx.NAME().GetText();
 
@@ -2297,7 +2302,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     pass.scope.Define(pass.class_symb);
   }
 
-  void SetClassMembersTypes(ParserPass pass)
+  void Pass_SetClassMembersTypes(ParserPass pass)
   {
     PushScope(pass.scope);
 
@@ -2324,7 +2329,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     PopScope();
   }
 
-  void AddClassExtensions(ParserPass pass)
+  void Pass_AddClassExtensions(ParserPass pass)
   {
     if(pass.class_ctx.extensions() != null)
     {
@@ -2366,7 +2371,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  void FinalizeClass(ParserPass pass)
+  void Pass_FinalizeClass(ParserPass pass)
   {
     pass.class_symb.FinalizeClass();
 
@@ -2377,7 +2382,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   }
 
-  void VisitClassMethodsBlocks(ParserPass pass)
+  void Pass_VisitClassMethodsBlocks(ParserPass pass)
   {
     PushScope(pass.scope);
 
@@ -2448,7 +2453,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  void VisitGlobalVar(ParserPass pass)
+  void Pass_VisitGlobalVar(ParserPass pass)
   {
     PushAST((AST_Tree)pass.ast);
     PushScope(pass.scope);
