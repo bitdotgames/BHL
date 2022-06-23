@@ -457,40 +457,31 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     foreach(var pass in passes)
     {
-      Pass_AddClassExtensions(pass);
-    }
-
-    foreach(var pass in passes)
-    {
       Pass_ParseInterfaceMethods(pass);
 
-      Pass_ParseClassMembersTypes(pass);
-    }
+      Pass_AddClassExtensions(pass);
 
-    foreach(var pass in passes)
-    {
-      Pass_AddInterfaceExtensions(pass);
+      Pass_ParseClassMembersTypes(pass);
 
       Pass_ParseFuncSignature(pass);
     }
 
     foreach(var pass in passes)
     {
-      Pass_FinalizeClass(pass);
+      Pass_AddInterfaceExtensions(pass);
     }
 
     foreach(var pass in passes)
     {
+      Pass_FinalizeClass(pass);
+
       Pass_ParseGlobalVar(pass);
     }
 
     foreach(var pass in passes)
     {
       Pass_ParseClassMethodsBlocks(pass);
-    }
 
-    foreach(var pass in passes)
-    {
       Pass_ParseFuncBlock(pass);
     }
   }
@@ -2365,7 +2356,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       ValidateInterfaceImplementation(pass.class_ctx, pass.class_symb.implements[i], pass.class_symb);
 
     pass.class_symb.UpdateVTable();
-
   }
 
   void Pass_ParseClassMethodsBlocks(ParserPass pass)
