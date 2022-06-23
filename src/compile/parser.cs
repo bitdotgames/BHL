@@ -518,11 +518,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       if(rule.cldecl != null)
       {
-        PushAST((AST_Tree)rule.ast);
-        PushScope(rule.scope);
-        VisitClassMethodsBlocks(rule.cldecl);
-        PopScope();
-        PopAST();
+        FinalizeClass(rule.cldecl);
       }
     }
 
@@ -536,7 +532,22 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         PopScope();
         PopAST();
       }
+    }
 
+    foreach(var rule in postponed_parser_rules)
+    {
+      if(rule.cldecl != null)
+      {
+        PushAST((AST_Tree)rule.ast);
+        PushScope(rule.scope);
+        VisitClassMethodsBlocks(rule.cldecl);
+        PopScope();
+        PopAST();
+      }
+    }
+
+    foreach(var rule in postponed_parser_rules)
+    {
       if(rule.fndecl != null)
       {
         VisitFuncBlock(rule.fndecl, rule.ast_func);
@@ -2386,7 +2397,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void VisitClassMethodsBlocks(bhlParser.ClassDeclContext ctx)
+  void FinalizeClass(bhlParser.ClassDeclContext ctx)
   {
     var name = ctx.NAME().GetText();
 
@@ -2398,6 +2409,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       ValidateInterfaceImplementation(ctx, class_symb.implements[i], class_symb);
 
     class_symb.UpdateVTable();
+
+  }
+
+  public void VisitClassMethodsBlocks(bhlParser.ClassDeclContext ctx)
+  {
+    var name = ctx.NAME().GetText();
+
+    var class_symb = (ClassSymbolScript)curr_scope.Resolve(name);
 
     var ast_class = new AST_ClassDecl(class_symb);
 
@@ -2466,6 +2485,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   void OutlineGlobalVarDecl(bhlParser.VarDeclareAssignContext ctx)
   {
+    //NOTE: the code below should be executed only if module is imported 
     if(!being_imported)
       return;
 
@@ -2477,6 +2497,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   public void VisitGlobalVar(bhlParser.VarDeclareAssignContext ctx)
   {
+    //NOTE: the code below should be executed only if module is NOT imported 
     if(being_imported)
       return;
 
