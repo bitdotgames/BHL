@@ -73,6 +73,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     public IAST ast;
     public IScope scope;
 
+    public bhlParser.VarDeclareAssignContext vdecl;
     public bhlParser.FuncDeclContext fndecl;
     public AST_FuncDecl ast_func;
     public bhlParser.ClassDeclContext cldecl;
@@ -82,6 +83,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       this.ast = ast;
       this.scope = scope;
+      this.vdecl = ctx as bhlParser.VarDeclareAssignContext;
       this.fndecl = ctx as bhlParser.FuncDeclContext;
       this.cldecl = ctx as bhlParser.ClassDeclContext;
       this.ifsdecl = ctx as bhlParser.InterfaceDeclContext;
@@ -440,6 +442,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     foreach(var rule in postponed_parser_rules)
     {
+      if(rule.vdecl != null)
+      {
+        PushScope(rule.scope);
+        OutlineGlobalVarDecl(rule.vdecl);
+        PopScope();
+      }
+
       if(rule.ifsdecl != null)
       {
         PushScope(rule.scope);
@@ -519,6 +528,15 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     foreach(var rule in postponed_parser_rules)
     {
+      if(rule.vdecl != null)
+      {
+        PushAST((AST_Tree)rule.ast);
+        PushScope(rule.scope);
+        VisitGlobalVar(rule.vdecl);
+        PopScope();
+        PopAST();
+      }
+
       if(rule.fndecl != null)
       {
         VisitFuncBlock(rule.fndecl, rule.ast_func);
@@ -2068,6 +2086,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         Visit(nsdecl);
         continue;
       }
+      var vdecl = decls[i].varDeclareAssign();
+      if(vdecl != null)
+      {
+        PostponeParsing(vdecl, curr_scope, PeekAST()); 
+        continue;
+      }
       var fndecl = decls[i].funcDecl();
       if(fndecl != null)
       {
@@ -2084,12 +2108,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(ifacedecl != null)
       {
         PostponeParsing(ifacedecl, curr_scope, PeekAST());
-        continue;
-      }
-      var vdecl = decls[i].varDeclareAssign();
-      if(vdecl != null)
-      {
-        Visit(vdecl);
         continue;
       }
       var edecl = decls[i].enumDecl();
@@ -2446,45 +2464,47 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitVarDeclareAssign(bhlParser.VarDeclareAssignContext ctx)
+  void OutlineGlobalVarDecl(bhlParser.VarDeclareAssignContext ctx)
   {
+    if(!being_imported)
+      return;
+
     var vd = ctx.varDeclare(); 
 
+    var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), ns.T(vd.type().GetText()));
+    curr_scope.Define(symb);
+  }
+
+  public void VisitGlobalVar(bhlParser.VarDeclareAssignContext ctx)
+  {
     if(being_imported)
+      return;
+
+    var vd = ctx.varDeclare(); 
+
+    var assign_exp = ctx.assignExp();
+
+    AST_Interim exp_ast = null;
+    if(assign_exp != null)
     {
-      //global variables only affected
-      var tr = ns.T(vd.type().GetText());
-      var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), tr);
-      curr_scope.Define(symb);
-    }
-    else
-    {
-      var assign_exp = ctx.assignExp();
+      var tp = ParseType(vd.type());
 
-      AST_Interim exp_ast = null;
-      if(assign_exp != null)
-      {
-        var tp = ParseType(vd.type());
-
-        exp_ast = new AST_Interim();
-        PushAST(exp_ast);
-        PushJsonType(tp.Get());
-        Visit(assign_exp);
-        PopJsonType();
-        PopAST();
-      }
-
-      var ast = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: true, write: assign_exp != null);
-
-      if(exp_ast != null)
-        PeekAST().AddChild(exp_ast);
-      PeekAST().AddChild(ast);
-
-      if(assign_exp != null)
-        types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
+      exp_ast = new AST_Interim();
+      PushAST(exp_ast);
+      PushJsonType(tp.Get());
+      Visit(assign_exp);
+      PopJsonType();
+      PopAST();
     }
 
-    return null;
+    var ast = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: true, write: assign_exp != null);
+
+    if(exp_ast != null)
+      PeekAST().AddChild(exp_ast);
+    PeekAST().AddChild(ast);
+
+    if(assign_exp != null)
+      types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
   }
 
   public override object VisitFuncParams(bhlParser.FuncParamsContext ctx)
