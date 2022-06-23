@@ -505,6 +505,9 @@ public class Types : ISymbolResolver
   {
     if(a == b)
       return true;
+    //TODO: looks a bit like a hack, e.g. what about namespace short names clashing?
+    else if(a.GetName() == b.GetName())
+      return true;
     else if(a is IInstanceType ai && b is IInstanceType bi)
     {
       var aset = ai.GetAllRelatedTypesSet();
@@ -512,9 +515,6 @@ public class Types : ISymbolResolver
       
       return aset.IsSupersetOf(bset);
     }
-    //TODO: what about namespace clashing?
-    else if(a.GetName() == b.GetName())
-      return true;
     else
       return false;
   }
