@@ -1,6 +1,7 @@
-using System;
+using System;           
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 using bhl;
 
 public class TestClasses : BHL_TestBase
@@ -1735,4 +1736,43 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestCallImportedMethodFromLocalMethod()
+  {
+    string bhl1 = @"
+    class A { 
+      func int a() {
+        return 10
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+    class B { 
+      func int b() {
+        A a = {}
+        return a.a()
+      }
+    }
+
+    func int test() {
+      B b = {}
+      return b.b()
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl2");
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }

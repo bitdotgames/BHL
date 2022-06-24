@@ -298,7 +298,7 @@ public class CompilationExecutor
 
       var conflict = ns.TryLink(file_ns);
       if(conflict != null)
-        w.error = new BuildError(file, "symbol '" + conflict.GetFullName() + "' is already declared in module '" + (conflict.scope as Namespace)?.module_name + "'");
+        w.error = new BuildError(file, "symbol '" + conflict.GetFullPath() + "' is already declared in module '" + (conflict.scope as Namespace)?.module_name + "'");
     }
   }
 

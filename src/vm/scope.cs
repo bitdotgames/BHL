@@ -3,7 +3,12 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public interface IScope
+public interface ISymbolResolver
+{
+  Symbol ResolveSymbolByPath(string path);
+}
+
+public interface IScope : ISymbolResolver
 {
   // Look up name in this scope without fallback!
   Symbol Resolve(string name);
@@ -16,11 +21,6 @@ public interface IScope
 
   // Where to look next for symbols in case if not found (e.g super class) 
   IScope GetFallbackScope();
-}
-
-public interface ISymbolResolver
-{
-  Symbol ResolveSymbolByPath(string full_name);
 }
 
 public interface IInstanceType : IType, IScope 
@@ -68,6 +68,11 @@ public class LocalScope : IScope
         fallback_ls.next_idx = next_idx;
       func_owner.current_scope = fallback_ls;
     }
+  }
+
+  public Symbol ResolveSymbolByPath(string path)
+  {
+    return ScopeExtensions.ResolveSymbolByPath(this, path);
   }
 
   public SymbolsStorage GetMembers() { return members; }
@@ -151,14 +156,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
   public Namespace(Symbol2Index gindex = null)
     : this(gindex, "", "")
   {}
-
-  public Namespace GetRoot()
-  {
-    var tmp = this;
-    while(tmp.scope != null)
-      tmp = (Namespace)tmp.scope;
-    return tmp;
-  }
 
   public Namespace Nest(string name)
   {
@@ -369,44 +366,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 
   public Symbol ResolveSymbolByPath(string path)
   {
-    IScope scope = this;
-
-    if(path[0] == '.')
-    {
-      scope = GetRoot();
-      path = path.Substring(1);
-    }
-
-    int start_idx = 0;
-    int next_idx = path.IndexOf('.');
-
-    while(true)
-    {
-      string name = 
-        next_idx == -1 ? 
-        (start_idx == 0 ? path : path.Substring(start_idx)) : 
-        path.Substring(start_idx, next_idx - start_idx);
-
-      var symb = scope.Resolve(name);
-
-      if(symb == null)
-        break;
-
-      //let's check if it's the last path item
-      if(next_idx == -1)
-        return symb;
-
-      start_idx = next_idx + 1;
-      next_idx = path.IndexOf('.', start_idx);
-
-      scope = symb as IScope;
-      //we can't proceed 'deeper' if the last resolved 
-      //symbol is not a scope
-      if(scope == null)
-        break;
-    }
-
-    return null;
+    return ScopeExtensions.ResolveSymbolByPath(this, path);
   }
 
   public override void Sync(marshall.SyncContext ctx) 
@@ -421,12 +381,12 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 
 public static class ScopeExtensions
 {
-  public static string GetFullName(this Symbol sym)
+  public static string GetFullPath(this Symbol sym)
   {
-    return sym.scope.GetFullName(sym.name);
+    return sym.scope.GetFullPath(sym.name);
   }
 
-  public static string GetFullName(this IScope scope, string name)
+  public static string GetFullPath(this IScope scope, string name)
   {
     if(string.IsNullOrEmpty(name) || name[0] == '.')
       return name;
@@ -457,6 +417,63 @@ public static class ScopeExtensions
         scope = scope.GetFallbackScope();
     }
     return '.' + name;
+  }
+
+  public static IScope GetRootScope(this IScope scope)
+  {
+    var tmp = scope;
+    while(tmp.GetFallbackScope() != null)
+      tmp = tmp.GetFallbackScope();
+    return tmp;
+  }
+
+  public static Symbol ResolveSymbolByPath(this IScope scope, string path)
+  {
+    //check if it's a full path
+    if(path[0] == '.')
+    {
+      scope = scope.GetRootScope();
+      path = path.Substring(1);
+    }
+
+    int start_idx = 0;
+    int next_idx = path.IndexOf('.');
+
+    //check if it's a local path
+    if(next_idx == -1)
+      return scope.ResolveWithFallback(path);
+    else 
+      //TODO: if there are any dots in the path we start from the
+      //      root scope just for now
+      scope = scope.GetRootScope();
+
+    while(true)
+    {
+      string name = 
+        next_idx == -1 ? 
+        (start_idx == 0 ? path : path.Substring(start_idx)) : 
+        path.Substring(start_idx, next_idx - start_idx);
+
+      var symb = scope.Resolve(name);
+
+      if(symb == null)
+        break;
+
+      //let's check if it's the last path item
+      if(next_idx == -1)
+        return symb;
+
+      start_idx = next_idx + 1;
+      next_idx = path.IndexOf('.', start_idx);
+
+      scope = symb as IScope;
+      //we can't proceed 'deeper' if the last resolved 
+      //symbol is not a scope
+      if(scope == null)
+        break;
+    }
+
+    return null;
   }
 
   public static Symbol ResolveWithFallback(this IScope scope, string name)

@@ -955,6 +955,11 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
   public virtual IScope GetFallbackScope() { return this.scope; }
 
+  public Symbol ResolveSymbolByPath(string path)
+  {
+    return ScopeExtensions.ResolveSymbolByPath(this, path);
+  }
+
   public virtual Symbol Resolve(string name) 
   {
     return GetMembers().Find(name);
@@ -1730,10 +1735,10 @@ public class SymbolFactory : marshall.IFactory
   public Types types;
   public ISymbolResolver resolver;
 
-  public SymbolFactory(Types types, ISymbolResolver resolver)
+  public SymbolFactory(Types types, ISymbolResolver res) 
   {
     this.types = types;
-    this.resolver = resolver;
+    this.resolver = res; 
   }
 
   public marshall.IMarshallableGeneric CreateById(uint id) 
