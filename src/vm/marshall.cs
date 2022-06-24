@@ -38,7 +38,6 @@ public struct SyncContext
   public IReader reader;
   public IWriter writer;
   public IFactory factory;
-  public List<System.Action> once_read;
 
   public static SyncContext NewReader(IReader reader, IFactory factory = null)
   {
@@ -46,8 +45,7 @@ public struct SyncContext
       is_read = true,
       reader = reader,
       writer = null,
-      factory = factory,
-      once_read = new List<System.Action>()
+      factory = factory
     };
     return ctx;
   }
@@ -58,8 +56,7 @@ public struct SyncContext
       is_read = false,
       reader = null,
       writer = writer,
-      factory = factory,
-      once_read = null
+      factory = factory
     };
     return ctx;
   }
@@ -241,12 +238,6 @@ public static class Marshall
       ctx.reader.EndContainer();
     else
       ctx.writer.EndContainer();
-  }
-
-  static public void OnceRead(SyncContext ctx, System.Action cb)
-  {
-    if(ctx.is_read)
-      ctx.once_read.Add(cb);
   }
 
   static public void Sync(SyncContext ctx, List<string> v)
@@ -500,7 +491,6 @@ public static class Marshall
     var reader = new MsgPackDataReader(s);
     var ctx = SyncContext.NewReader(reader, f); 
     Sync(ctx, ref obj);
-    InvokeOnceRead(ctx);
   }
 
   static public T Stream2Obj<T>(Stream s, IFactory f = null) where T : IMarshallable, new()
@@ -509,14 +499,7 @@ public static class Marshall
     var obj = new T();
     var ctx = SyncContext.NewReader(reader, f); 
     Sync(ctx, ref obj);
-    InvokeOnceRead(ctx);
     return obj;
-  }
-
-  static void InvokeOnceRead(SyncContext ctx)
-  {
-    for(int i=0;i<ctx.once_read.Count;++i)
-      ctx.once_read[i]();
   }
 
   static public void Obj2Stream<T>(T obj, Stream dst) where T : IMarshallable

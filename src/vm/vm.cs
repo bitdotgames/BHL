@@ -1640,7 +1640,7 @@ public class VM : ISymbolResolver
         int func_ip = field_symb.ip_addr;
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame, func_ip);
+        frm.Init(curr_frame.fb, curr_frame, modules[((Namespace)class_type.scope).module_name], func_ip);
 
         frm.locals[0] = self;
 

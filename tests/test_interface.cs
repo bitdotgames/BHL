@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 using bhl;
 
 public class TestInterfaces : BHL_TestBase
@@ -667,6 +668,43 @@ public class TestInterfaces : BHL_TestBase
 
     var vm = MakeVM(bhl, ts);
     AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCallImportedMethodFromLocalMethod()
+  {
+    string bhl1 = @"
+    interface IFoo {
+      func int a()
+    }
+    class A : IFoo { 
+      func int a() {
+        return 10
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+
+    func int test() {
+      IFoo foo = new A
+      return foo.a()
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl2");
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 }

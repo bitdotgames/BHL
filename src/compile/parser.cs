@@ -2338,7 +2338,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           FireError(ext_name, "not a class or an interface");
       }
 
-      pass.class_symb.SetSuperClass(super_class);
+      if(super_class != null)
+        pass.class_symb.SetSuperClass(super_class);
 
       if(implements.Count > 0)
         pass.class_symb.SetImplementedInterfaces(implements);
@@ -2354,8 +2355,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     for(int i=0;i<pass.class_symb.implements.Count;++i)
       ValidateInterfaceImplementation(pass.class_ctx, pass.class_symb.implements[i], pass.class_symb);
-
-    pass.class_symb.UpdateVTable();
   }
 
   void Pass_ParseClassMethodsBlocks(ParserPass pass)

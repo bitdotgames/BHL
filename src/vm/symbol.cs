@@ -335,7 +335,15 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
   //to actual class method indices:
   //  [IFoo][3,1,0]
   //  [IBar][2,0]
-  public Dictionary<InterfaceSymbol, List<int>> vtable = new Dictionary<InterfaceSymbol, List<int>>();
+  Dictionary<InterfaceSymbol, List<int>> _vtable = null;
+  public Dictionary<InterfaceSymbol, List<int>> vtable {
+    get {
+      if(_vtable == null) {
+        UpdateVTable();
+      }
+      return _vtable;
+    }
+  }
 
   HashSet<IInstanceType> related_types;
 
@@ -392,8 +400,11 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     this.type = new TypeProxy(this);
     this.creator = creator;
 
-    SetSuperClass(super_class);
-    SetImplementedInterfaces(implements);
+    if(super_class != null)
+      SetSuperClass(super_class);
+
+    if(implements != null)
+      SetImplementedInterfaces(implements);
 
 #if BHL_FRONT
     tmp_members = new SymbolsStorage(this);
@@ -408,14 +419,11 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     //NOTE: we define parent members in the current class
     //      scope as well. We do this since we want to  
     //      address its members simply by int index
-    if(super_class != null)
+    var tmp_members = super_class.members;
+    for(int i=0;i<tmp_members.Count;++i)
     {
-      var tmp_members = super_class.members;
-      for(int i=0;i<tmp_members.Count;++i)
-      {
-        var mem = tmp_members[i];
-        Define(mem);
-      }
+      var mem = tmp_members[i];
+      Define(mem);
     }
 
     _super_class = new TypeProxy(super_class);
@@ -423,16 +431,14 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
   public void SetImplementedInterfaces(IList<InterfaceSymbol> implements)
   {
-    if(implements != null)
-    {
-      foreach(var imp in implements)
-        this.implements.Add(imp);
-    }
+    this.implements.Clear();
+    foreach(var imp in implements)
+      this.implements.Add(imp);
   }
 
-  public void UpdateVTable()
+  void UpdateVTable()
   {
-    vtable.Clear();
+    _vtable = new Dictionary<InterfaceSymbol, List<int>>();
 
     var all = new HashSet<IInstanceType>();
     if(super_class != null)
@@ -447,7 +453,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     {
       var ifs2idx = new List<int>();
       var ifs = (InterfaceSymbol)imp;
-      vtable.Add(ifs, ifs2idx);
+      _vtable.Add(ifs, ifs2idx);
 
       for(int midx=0;midx<ifs.members.Count;++midx)
       {
@@ -1390,8 +1396,6 @@ public class ClassSymbolScript : ClassSymbol
     marshall.Marshall.Sync(ctx, ref members);
 
     marshall.Marshall.Sync(ctx, ref implements); 
-
-    marshall.Marshall.OnceRead(ctx, () => UpdateVTable());
   }
 }
 
@@ -1664,7 +1668,11 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
   public T this[int index]
   {
     get {
-      return (T)list[index].Get();
+      var tp = list[index];
+      var s = (T)tp.Get();
+      if(s == null)
+        throw new Exception("Type not found: " + tp.name);
+      return s;
     }
   }
 
@@ -1679,8 +1687,11 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
   public bool Add(TypeProxy tp)
   {
     foreach(var item in list)
+    {
+      //TODO: this is quite arguable
       if(item.name == tp.name)
         return false;
+    }
     list.Add(tp);
     return true;
   }
