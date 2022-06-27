@@ -217,11 +217,6 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
 
   public string GetName() { return name; }
 
-  public override IScope GetFallbackScope()
-  {
-    return null;
-  }
-
   public override void Define(Symbol sym)
   {
     if(!(sym is FuncSymbol))
