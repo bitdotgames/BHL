@@ -1161,6 +1161,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var scope_backup = curr_scope;
     PushScope(lmb_symb);
 
+    //NOTE: all lambdas are defined in a global scope...
+    ns.Define(lmb_symb);
+
     var fparams = funcLambda.funcParams();
     if(fparams != null)
     {
@@ -1169,9 +1172,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       PopAST();
     }
 
-    //NOTE: all lambdas are defined in a global scope
-    ns.Define(lmb_symb);
-    //NOTE: ...however as a symbol resolve fallback we set the scope it's actually defined in 
+    //NOTE: ...however as a symbol resolve fallback we set the scope to the one 
+    //         it's actually defined in during body parsing 
     lmb_symb.scope = scope_backup;
 
     //NOTE: while we are inside lambda the eval type is its return type

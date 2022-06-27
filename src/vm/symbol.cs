@@ -1225,7 +1225,7 @@ public class LambdaSymbol : FuncSymbolScript
   {
     int my_idx = FindMyIdxInStack();
     if(my_idx == -1)
-      throw new Exception("Not found");
+      return null;
 
     for(int i=my_idx;i-- > 0;)
     {

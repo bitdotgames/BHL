@@ -128,7 +128,11 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     if(o.resolver == resolver && o._spec == _spec)
       return true;
 
-    return o.Get().Equals(Get());
+    var r = o.Get();
+    if(r != null)
+      return r.Equals(Get());
+    else
+      return null == Get();
   }
 
   public override int GetHashCode()
@@ -137,17 +141,19 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
   }
 }
 
-public class RefType : IType, marshall.IMarshallableGeneric
+public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
   public TypeProxy subj; 
 
-  public string GetName() { return "ref " + subj.spec; }
+  string name;
+  public string GetName() { return name; }
 
   public RefType(TypeProxy subj)
   {
     this.subj = subj;
+    name = "ref " + subj.spec;
   }
 
   //marshall factory version
@@ -163,9 +169,30 @@ public class RefType : IType, marshall.IMarshallableGeneric
   {
     marshall.Marshall.Sync(ctx, ref subj);
   }
+
+  public override bool Equals(object o)
+  {
+    if(!(o is RefType))
+      return false;
+    return this.Equals((RefType)o);
+  }
+
+  public bool Equals(RefType o)
+  {
+    if(ReferenceEquals(o, null))
+      return false;
+    if(ReferenceEquals(this, o))
+      return true;
+    return subj.Equals(o.subj);
+  }
+
+  public override int GetHashCode()
+  {
+    return name.GetHashCode();
+  }
 }
 
-public class TupleType : IType, marshall.IMarshallableGeneric
+public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleType>
 {
   public const uint CLASS_ID = 16;
 
@@ -229,9 +256,35 @@ public class TupleType : IType, marshall.IMarshallableGeneric
     if(ctx.is_read)
       Update();
   }
+
+  public override bool Equals(object o)
+  {
+    if(!(o is TupleType))
+      return false;
+    return this.Equals((TupleType)o);
+  }
+
+  public bool Equals(TupleType o)
+  {
+    if(ReferenceEquals(o, null))
+      return false;
+    if(ReferenceEquals(this, o))
+      return true;
+    if(items.Count != o.items.Count)
+      return false;
+    for(int i=0;i<items.Count;++i)
+      if(!items[i].Equals(o.items[i]))
+        return false;
+    return true;
+  }
+
+  public override int GetHashCode()
+  {
+    return name.GetHashCode();
+  }
 }
 
-public class FuncSignature : IType, marshall.IMarshallableGeneric
+public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<FuncSignature>
 {
   public const uint CLASS_ID = 14; 
 
@@ -303,6 +356,34 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric
     marshall.Marshall.Sync(ctx, ref default_args_num);
     if(ctx.is_read)
       Update();
+  }
+
+  public override bool Equals(object o)
+  {
+    if(!(o is FuncSignature))
+      return false;
+    return this.Equals((FuncSignature)o);
+  }
+
+  public bool Equals(FuncSignature o)
+  {
+    if(ReferenceEquals(o, null))
+      return false;
+    if(ReferenceEquals(this, o))
+      return true;
+    if(!ret_type.Equals(o.ret_type))
+      return false;
+    if(arg_types.Count != o.arg_types.Count)
+      return false;
+    for(int i=0;i<arg_types.Count;++i)
+      if(!arg_types[i].Equals(o.arg_types[i]))
+        return false;
+    return true;
+  }
+
+  public override int GetHashCode()
+  {
+    return name.GetHashCode();
   }
 }
 
