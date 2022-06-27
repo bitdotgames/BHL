@@ -1586,7 +1586,7 @@ public class VM : ISymbolResolver
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
 
-        var class_type = ((ClassSymbol)self.type);
+        var class_type = ((ClassSymbolScript)self.type);
 
         var field_symb = (FuncSymbolScript)class_type.members[func_idx];
         int func_ip = field_symb.ip_addr;
@@ -1610,7 +1610,7 @@ public class VM : ISymbolResolver
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
 
-        var class_type = ((ClassSymbol)self.type);
+        var class_type = ((ClassSymbolScript)self.type);
 
         var field_symb = (FuncSymbolScript)class_type.members[func_idx];
         int func_ip = field_symb.ip_addr;
