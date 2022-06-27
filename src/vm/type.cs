@@ -125,14 +125,15 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     if(o.type != null && type != null)
       return o.type.Equals(type);
      
+    //Console.WriteLine(o._spec + " VS " + _spec + " : " + o.resolver?.GetType().Name + " VS " + resolver?.GetType().Name);
     if(o.resolver == resolver && o._spec == _spec)
       return true;
 
-    var r = o.Get();
+    var r = Get();
     if(r != null)
-      return r.Equals(Get());
+      return r.Equals(o.Get());
     else
-      return null == Get();
+      return Get() == null;
   }
 
   public override int GetHashCode()
