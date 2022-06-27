@@ -608,7 +608,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == ConstType.TPROXY && cn.tproxy.name == v.name)
+      if(cn.type == ConstType.TPROXY && cn.tproxy.Equals(v))
         return i;
     }
     throw new Exception("Constant not found: " + v);

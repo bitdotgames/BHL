@@ -32,7 +32,7 @@ public abstract class Symbol : marshall.IMarshallableGeneric
 
   public override string ToString() 
   {
-    return name + '(' + type.name + ')';
+    return name + '(' + type.spec + ')';
   }
 
   public abstract uint ClassId();
@@ -567,7 +567,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   }
 
   public ArrayTypeSymbol(TypeProxy item_type) 
-    : this(item_type.name + "[]", item_type)
+    : this(item_type.spec + "[]", item_type)
   {}
 
   public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
@@ -580,14 +580,14 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
-public class GenericArrayTypeSymbol : ArrayTypeSymbol
+public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>
 {
   public const uint CLASS_ID = 10; 
 
   public GenericArrayTypeSymbol(TypeProxy item_type) 
     : base(item_type)
   {
-    name = "[]" + item_type.name;
+    name = "[]" + item_type.spec;
   }
 
   //marshall factory version
@@ -701,7 +701,28 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     marshall.Marshall.Sync(ctx, ref item_type);
 
     if(ctx.is_read)
-      name = "[]" + item_type.name;
+      name = "[]" + item_type.spec;
+  }
+
+  public override bool Equals(object o)
+  {
+    if(!(o is GenericArrayTypeSymbol))
+      return false;
+    return this.Equals((GenericArrayTypeSymbol)o);
+  }
+
+  public bool Equals(GenericArrayTypeSymbol o)
+  {
+    if(ReferenceEquals(o, null))
+      return false;
+    if(ReferenceEquals(this, o))
+      return true;
+    return item_type.Equals(o.item_type);
+  }
+
+  public override int GetHashCode()
+  {
+    return name.GetHashCode();
   }
 }
 
@@ -717,7 +738,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   }
 
   public ArrayTypeSymbolT(TypeProxy item_type, CreatorCb creator) 
-    : base(item_type.name + "[]", item_type)
+    : base(item_type.spec + "[]", item_type)
   {}
 
   public override void CreateArr(VM.Frame frm, ref Val v, IType type)
@@ -1084,7 +1105,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     s += name;
     s += "(";
     foreach(var arg in signature.arg_types)
-      s += arg.name + ",";
+      s += arg.spec + ",";
     s = s.TrimEnd(',');
     s += ")";
     return s;
@@ -1671,7 +1692,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
       var tp = list[index];
       var s = (T)tp.Get();
       if(s == null)
-        throw new Exception("Type not found: " + tp.name);
+        throw new Exception("Type not found: " + tp.spec);
       return s;
     }
   }
@@ -1689,7 +1710,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
     foreach(var item in list)
     {
       //TODO: this is quite arguable
-      if(item.name == tp.name)
+      if(item.spec == tp.spec)
         return false;
     }
     list.Add(tp);

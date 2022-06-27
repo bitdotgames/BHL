@@ -388,7 +388,7 @@ public static class ScopeExtensions
 
   public static string GetFullPath(this IScope scope, string name)
   {
-    if(string.IsNullOrEmpty(name) || name[0] == '.')
+    if(string.IsNullOrEmpty(name) || name.IndexOf('.') != -1)
       return name;
 
     while(scope != null)
@@ -416,7 +416,7 @@ public static class ScopeExtensions
       else
         scope = scope.GetFallbackScope();
     }
-    return '.' + name;
+    return name;
   }
 
   public static IScope GetRootScope(this IScope scope)
@@ -429,23 +429,12 @@ public static class ScopeExtensions
 
   public static Symbol ResolveSymbolByPath(this IScope scope, string path)
   {
-    //check if it's a full path
-    if(path[0] == '.')
-    {
-      scope = scope.GetRootScope();
-      path = path.Substring(1);
-    }
-
     int start_idx = 0;
     int next_idx = path.IndexOf('.');
 
     //check if it's a local path
     if(next_idx == -1)
       return scope.ResolveWithFallback(path);
-    else 
-      //TODO: if there are any dots in the path we start from the
-      //      root scope just for now
-      scope = scope.GetRootScope();
 
     while(true)
     {

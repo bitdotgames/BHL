@@ -922,7 +922,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(i == ca_len)
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
-        FireError(next_arg, "missing argument of type '" + arg_type_ref.name + "'");
+        FireError(next_arg, "missing argument of type '" + arg_type_ref.spec + "'");
       }
 
       var ca = cargs.callArg()[i];
@@ -1120,7 +1120,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       tp = ParseType(parsed.type()[0]);
 
     if(tp.Get() == null)
-      FireError(parsed, "type '" + tp.name + "' not found");
+      FireError(parsed, "type '" + tp.spec + "' not found");
 
     return tp;
   }
@@ -1137,7 +1137,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       tp = curr_scope.TArr(tp);
 
     if(tp.Get() == null)
-      FireError(ctx, "type '" + tp.name + "' not found");
+      FireError(ctx, "type '" + tp.spec + "' not found");
 
    return tp;
   }
@@ -1286,7 +1286,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var arr_type = curr_type as ArrayTypeSymbol;
     var orig_type = arr_type.item_type.Get();
     if(orig_type == null)
-      FireError(ctx,  "type '" + arr_type.item_type.name + "' not found");
+      FireError(ctx,  "type '" + arr_type.item_type.spec + "' not found");
     PushJsonType(orig_type);
 
     var ast = new AST_JsonArr(arr_type, ctx.Start.Line);
@@ -1574,7 +1574,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(!Types.IsRtlOpCompatible(vs.type.Get())) // only numeric types
     {
       FireError(v,
-        $"operator {(is_negative ? "--" : "++")} is not supported for {vs.type.name} type"
+        $"operator {(is_negative ? "--" : "++")} is not supported for {vs.type.spec} type"
       );
     }
     

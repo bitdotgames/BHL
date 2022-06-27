@@ -100,7 +100,7 @@ public enum ConstType
   TPROXY     = 6,
 }
 
-public class Const
+public class Const : IEquatable<Const>
 {
   static public readonly Const Nil = new Const(ConstType.NIL, 0, "");
 
@@ -168,12 +168,15 @@ public class Const
       throw new Exception("Bad type");
   }
 
-  public bool IsEqual(Const o)
+  public bool Equals(Const o)
   {
+    if(o == null)
+      return false;
+
     return type == o.type && 
            num == o.num && 
            str == o.str &&
-           tproxy.name == o.tproxy.name
+           tproxy.spec == o.tproxy.spec
            ;
   }
 }
@@ -2354,7 +2357,7 @@ public class CompiledModule
         else if(cn_type == ConstType.TPROXY)
         {
           var tp = marshall.Marshall.Stream2Obj<TypeProxy>(src, symb_factory);
-          if(string.IsNullOrEmpty(tp.name))
+          if(string.IsNullOrEmpty(tp.spec))
             throw new Exception("Missing name");
           cn = new Const(tp);
         }

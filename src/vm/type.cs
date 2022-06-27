@@ -10,36 +10,36 @@ public interface IType
 
 // For lazy evaluation of types and forward declarations
 // TypeProxy is used instead of IType
-public struct TypeProxy : marshall.IMarshallable
+public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
 {
   ISymbolResolver resolver;
   IType type;
-  string _name;
-  public string name 
+  string _spec;
+  public string spec 
   { 
-    get { return _name; } 
-    private set { _name = value; }
+    get { return _spec; } 
+    private set { _spec = value; }
   }
 
-  public TypeProxy(ISymbolResolver resolver, string name)
+  public TypeProxy(ISymbolResolver resolver, string spec)
   {
-    if(name.Length == 0)
-      throw new Exception("Type name is empty");
-    if(Types.IsCompoundType(name))
-      throw new Exception("Type name contains illegal characters: '" + name + "'");
+    if(spec.Length == 0)
+      throw new Exception("Type spec is empty");
+    if(Types.IsCompoundType(spec))
+      throw new Exception("Type spec contains illegal characters: '" + spec + "'");
     
     this.resolver = resolver;
     type = null;
-    _name = name;
+    _spec = spec;
   }
 
   public TypeProxy(IType type)
   {
     resolver = null;
     if(type != null)
-      _name = (type is Symbol sym) ? sym.GetFullPath() : type.GetName();
+      _spec = (type is Symbol sym) ? sym.GetFullPath() : type.GetName();
     else 
-      _name = null;
+      _spec = null;
     this.type = type;
   }
 
@@ -50,7 +50,7 @@ public struct TypeProxy : marshall.IMarshallable
 
   public bool IsEmpty()
   {
-    return string.IsNullOrEmpty(_name) && 
+    return string.IsNullOrEmpty(_spec) && 
            type == null;
   }
 
@@ -59,10 +59,10 @@ public struct TypeProxy : marshall.IMarshallable
     if(type != null)
       return type;
 
-    if(string.IsNullOrEmpty(_name))
+    if(string.IsNullOrEmpty(_spec))
       return null;
 
-    type = (bhl.IType)resolver.ResolveSymbolByPath(_name);
+    type = (bhl.IType)resolver.ResolveSymbolByPath(_spec);
     return type;
   }
 
@@ -71,10 +71,10 @@ public struct TypeProxy : marshall.IMarshallable
     if(ctx.is_read)
       resolver = ((SymbolFactory)ctx.factory).resolver;
 
-    marshall.Marshall.Sync(ctx, ref _name);
+    marshall.Marshall.Sync(ctx, ref _spec);
 
     marshall.IMarshallableGeneric mg = null;
-    if(!string.IsNullOrEmpty(_name))
+    if(!string.IsNullOrEmpty(_spec))
     {
       if(!ctx.is_read)
       {   
@@ -98,7 +98,7 @@ public struct TypeProxy : marshall.IMarshallable
         {
           mg = resolved as marshall.IMarshallableGeneric;
           if(mg == null)
-            throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _name);
+            throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _spec);
         }
       }
     }
@@ -106,6 +106,34 @@ public struct TypeProxy : marshall.IMarshallable
     marshall.Marshall.SyncGeneric(ctx, ref mg);
     if(ctx.is_read)
       type = (IType)mg;
+  }
+
+  public override string ToString() 
+  {
+    return _spec;
+  }
+
+  public override bool Equals(object o)
+  {
+    if(!(o is TypeProxy))
+      return false;
+    return this.Equals((TypeProxy)o);
+  }
+
+  public bool Equals(TypeProxy o)
+  {
+    if(o.type != null && type != null)
+      return o.type.Equals(type);
+     
+    if(o.resolver == resolver && o._spec == _spec)
+      return true;
+
+    return o.Get().Equals(Get());
+  }
+
+  public override int GetHashCode()
+  {
+    return _spec.GetHashCode();
   }
 }
 
@@ -115,7 +143,7 @@ public class RefType : IType, marshall.IMarshallableGeneric
 
   public TypeProxy subj; 
 
-  public string GetName() { return "ref " + subj.name; }
+  public string GetName() { return "ref " + subj.spec; }
 
   public RefType(TypeProxy subj)
   {
@@ -184,7 +212,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric
     {
       if(i > 0)
         tmp += ",";
-      tmp += items[i].name;
+      tmp += items[i].spec;
     }
 
     name = tmp;
@@ -251,12 +279,12 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric
 
   void Update()
   {
-    string tmp = "func " + ret_type.name + "("; 
+    string tmp = "func " + ret_type.spec + "("; 
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
         tmp += ",";
-      tmp += arg_types[i].name;
+      tmp += arg_types[i].spec;
     }
     tmp += ")";
 

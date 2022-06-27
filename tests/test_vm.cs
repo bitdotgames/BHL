@@ -18910,7 +18910,7 @@ public class TestVM : BHL_TestBase
       var Test = (FuncSymbolScript)ns.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(Test.scope, ns);
-      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).name, Test.signature.GetName());
+      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).spec, Test.signature.GetName());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);

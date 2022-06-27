@@ -289,7 +289,7 @@ public class ModuleCompiler : AST_Visitor
     for(int i = 0 ; i < constants.Count; ++i)
     {
       var cn = constants[i];
-      if(cn.IsEqual(new_cn))
+      if(cn.Equals(new_cn))
         return i;
     }
     constants.Add(new_cn);
