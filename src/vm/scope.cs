@@ -432,10 +432,6 @@ public static class ScopeExtensions
     int start_idx = 0;
     int next_idx = path.IndexOf('.');
 
-    //check if it's a local path
-    if(next_idx == -1)
-      return scope.ResolveWithFallback(path);
-
     while(true)
     {
       string name = 
@@ -443,7 +439,7 @@ public static class ScopeExtensions
         (start_idx == 0 ? path : path.Substring(start_idx)) : 
         path.Substring(start_idx, next_idx - start_idx);
 
-      var symb = scope.Resolve(name);
+      var symb = start_idx == 0 ? scope.ResolveWithFallback(name) : scope.Resolve(name);
 
       if(symb == null)
         break;

@@ -2316,7 +2316,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         var ext_name = pass.class_ctx.extensions().nsName()[i]; 
         string ext_full_path = curr_scope.GetFullPath(ext_name.GetText());
-        var ext = ns.ResolveSymbolByPath(ext_full_path);
+        var ext = curr_scope.ResolveSymbolByPath(ext_full_path);
         if(ext is ClassSymbol cs)
         {
           if(ext == pass.class_symb)
