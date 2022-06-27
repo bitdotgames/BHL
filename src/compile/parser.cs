@@ -536,6 +536,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     IType curr_type = null;
 
+    //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
     ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), ctx.chainExp(), ref curr_type, ctx.Start.Line, write: false);
 
     Wrap(ctx).eval_type = curr_type;
@@ -592,9 +593,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         }
       }
 
-      if(name_symb.type.Get() == null)
-        FireError(root_name, "bad chain call");
       curr_type = name_symb.type.Get();
+      if(curr_type == null)
+        FireError(root_name, "bad chain call");
     }
 
     int c = ns_offset;
@@ -2441,7 +2442,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     if(being_imported)
     {
-      var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), curr_scope.T(vd.type().GetText()));
+      var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), ParseType(vd.type()));
       curr_scope.Define(symb);
     }
     else
@@ -2540,6 +2541,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         else if(cexp.chainExp()?.Length > 0 && cexp.chainExp()[cexp.chainExp().Length-1].callArgs() != null)
           FireError(assign_exp, "invalid assignment");
 
+        //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
         ProcChainedCall(cexp.DOT() != null ? ns : curr_scope, cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
 
         ptree = Wrap(cexp.NAME());
