@@ -202,9 +202,6 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType
     if(!(sym is FuncSymbol))
       throw new Exception("Only function symbols supported");
     
-    if(Resolve(name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
     if(sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = members.Count; 
 
@@ -438,9 +435,6 @@ public abstract class ClassSymbol : Symbol, IScope, ISymbolResolver, IInstanceTy
 
   void DefineNoParentCheck(Symbol sym) 
   {
-    if(Resolve(name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
     if(sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = members.Count; 
 
@@ -1049,9 +1043,6 @@ public abstract class FuncSymbol : Symbol, IScope, IScopeIndexed, ISymbolResolve
 
   public virtual void Define(Symbol sym)
   {
-    if(Resolve(name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
     if(sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = members.Count; 
 
@@ -1460,9 +1451,6 @@ public class EnumSymbol : Symbol, IScope, IType
 
   public void Define(Symbol sym)
   {
-    if(Resolve(name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
     if(sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = members.Count; 
 
@@ -1629,11 +1617,16 @@ public class SymbolsStorage : marshall.IMarshallable
     //TODO:???
     //if(s.scope != null && s.scope != scope)
     // throw new Exception("Symbol '" + s.name + "' scope is already set");
-    foreach(var tmp in list)
-      if(tmp == s || tmp.name == s.name)
-        throw new SymbolError(s, "already defined symbol '" + s.name + "'"); 
+
+    if(Find(s.name) != null)
+      throw new SymbolError(s, "already defined symbol '" + s.name + "'"); 
+
     if(s.scope == null)
       s.scope = scope;
+
+    //if(s is IScopeIndexed si && si.scope_idx == -1)
+    //  si.scope_idx = list.Count;
+
     list.Add(s);
   }
 
