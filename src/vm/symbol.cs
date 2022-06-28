@@ -8,15 +8,6 @@ public abstract class Symbol : marshall.IMarshallableGeneric
   public string name;
   public TypeProxy type;
 
-  IType _type;
-  public IType Type {
-    get {
-      if(_type == null)
-        _type = type.Get();
-      return _type;
-    }
-  }
-
   // All symbols know what scope contains them
   public IScope scope;
 #if BHL_FRONT

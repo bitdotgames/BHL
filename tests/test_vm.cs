@@ -19189,7 +19189,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child, fld.Type);
+          v.SetObj(c.child, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -19203,7 +19203,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child2, fld.Type);
+          v.SetObj(c.child2, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -19217,7 +19217,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(v, c.child_struct, fld.Type);
+          IntStruct.Encode(v, c.child_struct, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -19233,7 +19233,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(v, c.child_struct2, fld.Type);
+          IntStruct.Encode(v, c.child_struct2, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {

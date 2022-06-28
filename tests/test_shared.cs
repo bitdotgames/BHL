@@ -349,7 +349,7 @@ public class BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          v.SetObj(f.colors, fld.Type);
+          v.SetObj(f.colors, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -361,7 +361,7 @@ public class BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          v.SetObj(f.sub_color, fld.Type);
+          v.SetObj(f.sub_color, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
