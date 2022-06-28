@@ -225,7 +225,7 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType
 
       //NOTE: at the moment for resolving simplcity we add 
       //      extension members right into the interface itself
-      var ext_members = ext.GetMembers();
+      var ext_members = ext.members;
       for(int i=0;i<ext_members.Count;++i)
       {
         var mem = ext_members[i]; 

@@ -96,7 +96,7 @@ public class TestInterfaces : BHL_TestBase
       AssertTrue(symb != null);
       AssertEqual(1, symb.inherits.Count);
       AssertEqual("Wow", symb.inherits[0].name);
-      AssertEqual(2, symb.GetMembers().Count);
+      AssertEqual(2, symb.members.Count);
 
       var hey = symb.FindMethod("hey").signature;
       AssertTrue(hey != null);
@@ -119,7 +119,7 @@ public class TestInterfaces : BHL_TestBase
       var symb = vm.ResolveSymbolByPath("Wow") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(0, symb.inherits.Count);
-      AssertEqual(1, symb.GetMembers().Count);
+      AssertEqual(1, symb.members.Count);
 
       var bar = symb.FindMethod("bar").signature;
       AssertTrue(bar != null);

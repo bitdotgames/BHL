@@ -18292,6 +18292,22 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGlobalVariableSelfAssignError()
+  {
+    string bhl = @"
+
+    int foo = foo
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"symbol not resolved"
+    );
+  }
+
+  [IsTested()]
   public void TestLocalVariableHasPriorityOverGlobalOne()
   {
     string bhl = @"
@@ -18931,7 +18947,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(Foo.scope, ns);
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
-      AssertEqual(Foo.GetMembers().Count, 2);
+      AssertEqual(Foo.members.Count, 2);
       var Foo_Int = Foo.Resolve("Int") as FieldSymbolScript;
       AssertEqual(Foo_Int.scope, Foo);
       AssertEqual(Foo_Int.name, "Int");
@@ -18950,7 +18966,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(Bar.scope, ns);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
-      AssertEqual(Bar.GetMembers().Count, 2/*from parent*/+2);
+      AssertEqual(Bar.members.Count, 2/*from parent*/+2);
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
       AssertEqual(Bar_Float.scope, Bar);
       AssertEqual(Bar_Float.name, "Float");
@@ -18967,7 +18983,7 @@ public class TestVM : BHL_TestBase
       var Enum = (EnumSymbolScript)ns.Resolve("Enum");
       AssertEqual(Enum.scope, ns);
       AssertEqual(Enum.name, "Enum");
-      AssertEqual(Enum.GetMembers().Count, 2);
+      AssertEqual(Enum.members.Count, 2);
       AssertEqual(Enum.Resolve("Type1").type.Get(), Enum);
       AssertEqual(Enum.Resolve("Type1").scope, Enum);
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type1")).val, 1);
