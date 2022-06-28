@@ -1224,7 +1224,7 @@ public class LambdaSymbol : FuncSymbolScript
 
   public override Symbol Resolve(string name) 
   {
-    var s = members.Find(name);
+    var s = base.Resolve(name);
     if(s != null)
       return s;
 
