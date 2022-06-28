@@ -961,8 +961,6 @@ public class FieldSymbolScript : FieldSymbol
 
 public abstract class EnclosingSymbol : Symbol, IScope 
 {
-  abstract public SymbolsStorage GetMembers();
-
 #if BHL_FRONT
   public EnclosingSymbol(WrappedParseTree parsed, string name) 
     : this(name)
@@ -974,6 +972,8 @@ public abstract class EnclosingSymbol : Symbol, IScope
   public EnclosingSymbol(string name) 
     : base(name, type: default(TypeProxy) /*using empty value*/)
   {}
+
+  abstract public SymbolsStorage GetMembers();
 
   public virtual IScope GetFallbackScope() { return this.scope; }
 
@@ -990,7 +990,7 @@ public abstract class EnclosingSymbol : Symbol, IScope
   public virtual void Define(Symbol sym) 
   {
     var members = GetMembers(); 
-    if(members.Contains(sym.name))
+    if(members.Find(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is IScopeIndexed si && si.scope_idx == -1)

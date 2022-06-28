@@ -13,10 +13,12 @@ public interface IScope : ISymbolResolver
   // Look up name in this scope without fallback!
   Symbol Resolve(string name);
 
-  // Define a symbol in the current scope
+  // Define a symbol in the current scope, throws an exception 
+  // if symbol with such a name already exists
   void Define(Symbol sym);
 
-  // Readonly collection of members
+  // Collection of members, depending on concrete implementation may be
+  // a readonly
   SymbolsStorage GetMembers();
 
   // Where to look next for symbols in case if not found (e.g super class) 
