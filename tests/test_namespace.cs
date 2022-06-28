@@ -940,7 +940,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportedLocalVisibility()
+  public void TestImportAndLocalVisibility()
   {
     string bhl1 = @"
     namespace foo {
@@ -959,6 +959,52 @@ public class TestNamespace : BHL_TestBase
         func int b() {
           //visible without namespace prefix
           A a = {}
+          return a.a()
+        }
+      }
+    }
+
+    func int test() {
+      foo.B b = {}
+      return b.b()
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl2");
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportAndRelativeLocalVisibility()
+  {
+    string bhl1 = @"
+    namespace foo {
+      namespace sub_foo {
+        class A { 
+          func int a() {
+            return 10
+          }
+        }
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+    namespace foo {
+      class B { 
+        func int b() {
+          sub_foo.A a = {}
           return a.a()
         }
       }
