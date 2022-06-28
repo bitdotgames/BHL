@@ -596,7 +596,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(name_symb is IType)
         curr_type = (IType)name_symb;
       else if(name_symb is ITyped typed)
-        curr_type = typed.Type();
+        curr_type = typed.GetIType();
       else
         curr_type = null;
       if(curr_type == null)

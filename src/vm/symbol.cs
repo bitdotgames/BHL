@@ -830,7 +830,7 @@ public interface IScopeIndexed
 
 public interface ITyped
 {
-  IType Type();
+  IType GetIType();
 }
 
 public class VariableSymbol : Symbol, ITyped, IScopeIndexed
@@ -868,7 +868,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
     : base("")
   {}
   
-  public IType Type()
+  public IType GetIType()
   {
     return type.Get();
   }
@@ -1009,7 +1009,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     SetSignature(signature);
   }
 
-  public IType Type()
+  public IType GetIType()
   {
     return signature;
   }
