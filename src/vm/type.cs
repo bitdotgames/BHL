@@ -43,7 +43,7 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     this.type = type;
   }
 
-  public static implicit operator TypeProxy(BuiltInSymbol s)
+  public static implicit operator TypeProxy(BuiltInSymbolType s)
   {
     return new TypeProxy((IType)s);
   }
@@ -82,7 +82,7 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
         //TODO: make this check more robust
         bool is_weak_ref = 
           resolved is Symbol symb && 
-          (symb is BuiltInSymbol ||
+          (symb is BuiltInSymbolType ||
            symb is ClassSymbolNative ||
            symb is ClassSymbolScript ||
            symb is InterfaceSymbolNative ||

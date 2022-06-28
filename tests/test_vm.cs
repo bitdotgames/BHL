@@ -18984,10 +18984,10 @@ public class TestVM : BHL_TestBase
       AssertEqual(Enum.scope, ns);
       AssertEqual(Enum.name, "Enum");
       AssertEqual(Enum.members.Count, 2);
-      AssertEqual(Enum.Resolve("Type1").type.Get(), Enum);
+      AssertEqual(((EnumItemSymbol)Enum.Resolve("Type1")).owner, Enum);
       AssertEqual(Enum.Resolve("Type1").scope, Enum);
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type1")).val, 1);
-      AssertEqual(Enum.Resolve("Type2").type.Get(), Enum);
+      AssertEqual(((EnumItemSymbol)Enum.Resolve("Type2")).owner, Enum);
       AssertEqual(Enum.Resolve("Type2").scope, Enum);
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type2")).val, 2);
     }

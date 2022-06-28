@@ -6,7 +6,6 @@ namespace bhl {
 public abstract class Symbol : marshall.IMarshallableGeneric 
 {
   public string name;
-  public TypeProxy type;
 
   // All symbols know what scope contains them
   public IScope scope;
@@ -15,33 +14,26 @@ public abstract class Symbol : marshall.IMarshallableGeneric
   public WrappedParseTree parsed;
 #endif
 
-  public Symbol(string name, TypeProxy type) 
+  public Symbol(string name) 
   { 
     this.name = name; 
-    this.type = type;
   }
 
   public override string ToString() 
   {
-    return name + '(' + type.spec + ')';
+    return name;
   }
 
   public abstract uint ClassId();
 
-  public virtual void Sync(marshall.SyncContext ctx)
-  {
-    marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.Sync(ctx, ref type);
-  }
+  public abstract void Sync(marshall.SyncContext ctx);
 }
 
-public abstract class BuiltInSymbol : Symbol, IType 
+public abstract class BuiltInSymbolType : Symbol, IType 
 {
-  public BuiltInSymbol(string name) 
-    : base(name, default(TypeProxy)/*set below*/) 
-  {
-    this.type = new TypeProxy(this);
-  }
+  public BuiltInSymbolType(string name) 
+    : base(name) 
+  {}
 
   public string GetName() { return name; }
 
@@ -51,7 +43,7 @@ public abstract class BuiltInSymbol : Symbol, IType
   }
 }
 
-public class IntSymbol : BuiltInSymbol
+public class IntSymbol : BuiltInSymbolType
 {
   public const uint CLASS_ID = 1;
 
@@ -65,7 +57,7 @@ public class IntSymbol : BuiltInSymbol
   }
 }
 
-public class BoolSymbol : BuiltInSymbol
+public class BoolSymbol : BuiltInSymbolType
 {
   public const uint CLASS_ID = 2;
 
@@ -79,7 +71,7 @@ public class BoolSymbol : BuiltInSymbol
   }
 }
 
-public class StringSymbol : BuiltInSymbol
+public class StringSymbol : BuiltInSymbolType
 {
   public const uint CLASS_ID = 3;
 
@@ -93,7 +85,7 @@ public class StringSymbol : BuiltInSymbol
   }
 }
 
-public class FloatSymbol : BuiltInSymbol
+public class FloatSymbol : BuiltInSymbolType
 {
   public const uint CLASS_ID = 4;
 
@@ -107,7 +99,7 @@ public class FloatSymbol : BuiltInSymbol
   }
 }
 
-public class VoidSymbol : BuiltInSymbol
+public class VoidSymbol : BuiltInSymbolType
 {
   public const uint CLASS_ID = 5;
 
@@ -121,7 +113,7 @@ public class VoidSymbol : BuiltInSymbol
   }
 }
 
-public class AnySymbol : BuiltInSymbol
+public class AnySymbol : BuiltInSymbolType
 {
   public const uint CLASS_ID = 6;
 
@@ -135,7 +127,7 @@ public class AnySymbol : BuiltInSymbol
   }
 }
 
-public class NullSymbol : BuiltInSymbol
+public class NullSymbol : BuiltInSymbolType
 {
   public const uint CLASS_ID = 7;
 
@@ -173,9 +165,8 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsS
     string name,
     IList<InterfaceSymbol> inherits = null
   )
-    : base(name, type: default(TypeProxy)/*set below*/)
+    : base(name)
   {
-    this.type = new TypeProxy(this);
     this.members = new SymbolsStorage(this);
 
     SetInherits(inherits);
@@ -281,8 +272,7 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
   public override void Sync(marshall.SyncContext ctx)
   {
-    base.Sync(ctx);
-
+    marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref inherits); 
     marshall.Marshall.Sync(ctx, ref members); 
   }
@@ -392,10 +382,9 @@ public abstract class ClassSymbol : Symbol, IScope, ISymbolResolver, IInstanceTy
     IList<InterfaceSymbol> implements = null,
     VM.ClassCreator creator = null
   )
-    : base(name, type: default(TypeProxy)/*set below*/)
+    : base(name)
   {
     this.members = new SymbolsStorage(this);
-    this.type = new TypeProxy(this);
     this.creator = creator;
 
     if(super_class != null)
@@ -844,9 +833,16 @@ public interface IScopeIndexed
   int scope_idx { get; set; }
 }
 
-public class VariableSymbol : Symbol, IScopeIndexed
+public interface ITyped
+{
+  IType Type();
+}
+
+public class VariableSymbol : Symbol, ITyped, IScopeIndexed
 {
   public const uint CLASS_ID = 8;
+
+  public TypeProxy type;
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -867,13 +863,20 @@ public class VariableSymbol : Symbol, IScopeIndexed
 #endif
 
   public VariableSymbol(string name, TypeProxy type) 
-    : base(name, type) 
-  {}
+    : base(name) 
+  {
+    this.type = type;
+  }
 
   //marshall factory version
   public VariableSymbol()
-    : base("", new TypeProxy())
+    : base("")
   {}
+  
+  public IType Type()
+  {
+    return type.Get();
+  }
 
   public override uint ClassId()
   {
@@ -882,7 +885,8 @@ public class VariableSymbol : Symbol, IScopeIndexed
 
   public override void Sync(marshall.SyncContext ctx)
   {
-    base.Sync(ctx);
+    marshall.Marshall.Sync(ctx, ref name);
+    marshall.Marshall.Sync(ctx, ref type);
     marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
 }
@@ -972,7 +976,7 @@ public class FieldSymbolScript : FieldSymbol
   }
 }
 
-public abstract class FuncSymbol : Symbol, IScope, IScopeIndexed, ISymbolResolver, ISymbolsStorage
+public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolResolver, ISymbolsStorage
 {
   public FuncSignature signature;
 
@@ -1004,16 +1008,20 @@ public abstract class FuncSymbol : Symbol, IScope, IScopeIndexed, ISymbolResolve
     string name, 
     FuncSignature signature
   ) 
-    : base(name, type: default(TypeProxy) /*set below*/)
+    : base(name)
   {
     this.members = new SymbolsStorage(this);
     SetSignature(signature);
   }
 
+  public IType Type()
+  {
+    return signature;
+  }
+
   public void SetSignature(FuncSignature signature)
   {
     this.signature = signature;
-    this.type = new TypeProxy(signature);
   }
 
   public Symbol ResolveSymbolByPath(string path)
@@ -1074,8 +1082,6 @@ public abstract class FuncSymbol : Symbol, IScope, IScopeIndexed, ISymbolResolve
   {
     marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref signature);
-    if(ctx.is_read)
-      type = new TypeProxy(signature);
     marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
 
@@ -1372,9 +1378,9 @@ public class ClassSymbolScript : ClassSymbol
       //      however we need to properly setup attributes only. 
       //      Methods will be initialized with special case 'nil' value.
       //      Maybe we should track data members and methods separately someday. 
-      if(m is VariableSymbol)
+      if(m is VariableSymbol vs)
       {
-        var mtype = m.type.Get();
+        var mtype = vs.type.Get();
         var v = frm.vm.MakeDefaultVal(mtype);
         //adding directly, bypassing Retain call
         vl.lst.Add(v);
@@ -1416,9 +1422,8 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorage
 #endif
 
   public EnumSymbol(string name)
-     : base(name, type: default(TypeProxy)/*set below*/)
+     : base(name)
   {
-    this.type = new TypeProxy(this);
     this.members = new SymbolsStorage(this);
   }
 
@@ -1501,7 +1506,6 @@ public class EnumSymbolScript : EnumSymbol
       {
         var item = (EnumItemSymbol)members[i];
         item.scope = this;
-        item.type = new TypeProxy(this); 
       }
     }
   }
@@ -1527,14 +1531,14 @@ public class EnumItemSymbol : Symbol, IType
 #endif
 
   public EnumItemSymbol(string name, int val = 0) 
-    : base(name, new TypeProxy()) 
+    : base(name) 
   {
     this.val = val;
   }
 
   //marshall factory version
   public EnumItemSymbol() 
-    : base(null, new TypeProxy())
+    : base(null)
   {}
 
   //type name

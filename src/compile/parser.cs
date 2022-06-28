@@ -593,7 +593,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         }
       }
 
-      curr_type = name_symb.type.Get();
+      if(name_symb is IType)
+        curr_type = (IType)name_symb;
+      else if(name_symb is ITyped typed)
+        curr_type = typed.Type();
+      else
+        curr_type = null;
       if(curr_type == null)
         FireError(root_name, "bad chain call");
     }
@@ -732,7 +737,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         else if(func_symb != null)
         {
           ast = new AST_Call(EnumCall.GET_ADDR, line, func_symb);
-          type = func_symb.type.Get();
+          type = func_symb.signature;
         }
         else if(enum_symb != null)
         {
@@ -1188,7 +1193,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       FireError(funcLambda.funcBlock(), "matching 'return' statement not found");
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
-    var curr_type = lmb_symb.type.Get(); 
+    var curr_type = (IType)lmb_symb.signature;
     Wrap(ctx).eval_type = curr_type;
 
     PopScope();
@@ -2599,12 +2604,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         //TODO: below is quite an ugly hack, fix it traversing the expression first
         //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
         //      assignment expression in order to avoid error like: float k = k
-        Symbol disabled_symbol = null;
-        Symbol subst_symbol = null;
+        VariableSymbol disabled_symbol = null;
+        VariableSymbol subst_symbol = null;
         if(is_decl)
         {
           var symbols = ((ISymbolsStorage)curr_scope).GetMembers();
-          disabled_symbol = (Symbol)symbols[symbols.Count - 1];
+          disabled_symbol = (VariableSymbol)symbols[symbols.Count - 1];
           subst_symbol = new VariableSymbol(disabled_symbol.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
           symbols.Replace(disabled_symbol, subst_symbol);
         }

@@ -148,7 +148,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
   {}
 
   public Namespace(Symbol2Index gindex, string name, string module_name)
-    : base(name, default(TypeProxy))
+    : base(name)
   {
     this.gindex = gindex;
     this.module_name = module_name;
@@ -517,7 +517,7 @@ public static class ScopeExtensions
       return new TypeArg(tp);
     }
 
-    public static implicit operator TypeArg(BuiltInSymbol s)
+    public static implicit operator TypeArg(BuiltInSymbolType s)
     {
       return new TypeArg(new TypeProxy(s));
     }
