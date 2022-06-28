@@ -158,7 +158,7 @@ public class NullSymbol : BuiltInSymbol
   }
 }
 
-public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
+public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType
 {
   public SymbolsStorage members;
 
@@ -182,7 +182,7 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
     string name,
     IList<InterfaceSymbol> inherits = null
   )
-    : base(name)
+    : base(name, type: default(TypeProxy)/*set below*/)
   {
     this.type = new TypeProxy(this);
     this.members = new SymbolsStorage(this);
@@ -194,6 +194,31 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
   public InterfaceSymbol()
     : this(null, null)
   {}
+
+  public string GetName() { return name; }
+
+  public void Define(Symbol sym)
+  {
+    if(!(sym is FuncSymbol))
+      throw new Exception("Only function symbols supported");
+    
+    if(Resolve(name) != null)
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    if(sym is IScopeIndexed si && si.scope_idx == -1)
+      si.scope_idx = members.Count; 
+
+    members.Add(sym);
+  }
+
+  public Symbol Resolve(string name) 
+  {
+    return members.Find(name);
+  }
+
+  public IScope GetFallbackScope() { return scope; }
+
+  public SymbolsStorage GetMembers() { return members; }
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
   {
@@ -214,18 +239,6 @@ public abstract class InterfaceSymbol : EnclosingSymbol, IInstanceType
       }
     }
   }
-
-  public string GetName() { return name; }
-
-  public override void Define(Symbol sym)
-  {
-    if(!(sym is FuncSymbol))
-      throw new Exception("Only function symbols supported");
-    base.Define(sym);
-  }
-
-  public override SymbolsStorage GetMembers() { return members; }
-
   public FuncSymbol FindMethod(string name)
   {
     return Resolve(name) as FuncSymbol;
@@ -314,7 +327,7 @@ public class InterfaceSymbolNative : InterfaceSymbol
   }
 }
 
-public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
+public abstract class ClassSymbol : Symbol, IScope, ISymbolResolver, IInstanceType
 {
   public ClassSymbol super_class {
     get {
@@ -377,7 +390,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     {
       //NOTE: we want to skip super class check here,
       //      hence the usage of base.Define(..)
-      base.Define(tmp_class.tmp_members[i]);
+      DefineNoParentCheck(tmp_class.tmp_members[i]);
     }
   }
 
@@ -389,7 +402,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     IList<InterfaceSymbol> implements = null,
     VM.ClassCreator creator = null
   )
-    : base(name)
+    : base(name, type: default(TypeProxy)/*set below*/)
   {
     this.members = new SymbolsStorage(this);
     this.type = new TypeProxy(this);
@@ -404,6 +417,44 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 #if BHL_FRONT
     tmp_members = new SymbolsStorage(this);
 #endif
+  }
+
+  public string GetName() { return name; }
+
+  public SymbolsStorage GetMembers() { return members; }
+
+  public IScope GetFallbackScope() 
+  {
+    return super_class == null ? this.scope : super_class;
+  }
+
+  public void Define(Symbol sym) 
+  {
+    if(super_class != null && super_class.Resolve(sym.name) != null)
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    DefineNoParentCheck(sym);
+  }
+
+  void DefineNoParentCheck(Symbol sym) 
+  {
+    if(Resolve(name) != null)
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    if(sym is IScopeIndexed si && si.scope_idx == -1)
+      si.scope_idx = members.Count; 
+
+    members.Add(sym);
+  }
+
+  public Symbol Resolve(string name) 
+  {
+    return members.Find(name);
+  }
+
+  public Symbol ResolveSymbolByPath(string path)
+  {
+    return ScopeExtensions.ResolveSymbolByPath(this, path);
   }
 
   public void SetSuperClass(ClassSymbol super_class)
@@ -431,7 +482,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
       this.implements.Add(imp);
   }
 
-  void UpdateVTable()
+  public void UpdateVTable()
   {
     _vtable = new Dictionary<InterfaceSymbol, List<int>>();
 
@@ -477,23 +528,6 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
     }
     return related_types;
   }
-
-  public override IScope GetFallbackScope() 
-  {
-    return super_class == null ? this.scope : super_class;
-  }
-
-  public override void Define(Symbol sym) 
-  {
-    if(super_class != null && super_class.Resolve(sym.name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
-    base.Define(sym);
-  }
-
-  public string GetName() { return name; }
-
-  public override SymbolsStorage GetMembers() { return members; }
 }
 
 public abstract class ArrayTypeSymbol : ClassSymbol
@@ -959,48 +993,7 @@ public class FieldSymbolScript : FieldSymbol
   }
 }
 
-public abstract class EnclosingSymbol : Symbol, IScope 
-{
-#if BHL_FRONT
-  public EnclosingSymbol(WrappedParseTree parsed, string name) 
-    : this(name)
-  {
-    this.parsed = parsed;
-  }
-#endif
-
-  public EnclosingSymbol(string name) 
-    : base(name, type: default(TypeProxy) /*using empty value*/)
-  {}
-
-  abstract public SymbolsStorage GetMembers();
-
-  public virtual IScope GetFallbackScope() { return this.scope; }
-
-  public Symbol ResolveSymbolByPath(string path)
-  {
-    return ScopeExtensions.ResolveSymbolByPath(this, path);
-  }
-
-  public virtual Symbol Resolve(string name) 
-  {
-    return GetMembers().Find(name);
-  }
-
-  public virtual void Define(Symbol sym) 
-  {
-    if(Resolve(name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
-    var members = GetMembers(); 
-    if(sym is IScopeIndexed si && si.scope_idx == -1)
-      si.scope_idx = members.Count; 
-
-    members.Add(sym);
-  }
-}
-
-public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
+public abstract class FuncSymbol : Symbol, IScope, IScopeIndexed, ISymbolResolver
 {
   public FuncSignature signature;
 
@@ -1032,7 +1025,7 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     string name, 
     FuncSignature signature
   ) 
-    : base(name)
+    : base(name, type: default(TypeProxy) /*set below*/)
   {
     this.members = new SymbolsStorage(this);
     SetSignature(signature);
@@ -1044,9 +1037,30 @@ public abstract class FuncSymbol : EnclosingSymbol, IScopeIndexed
     this.type = new TypeProxy(signature);
   }
 
-  public override SymbolsStorage GetMembers() { return members; }
+  public Symbol ResolveSymbolByPath(string path)
+  {
+    return ScopeExtensions.ResolveSymbolByPath(this, path);
+  }
 
-  public override IScope GetFallbackScope() 
+  public virtual Symbol Resolve(string name) 
+  {
+    return members.Find(name);
+  }
+
+  public virtual void Define(Symbol sym)
+  {
+    if(Resolve(name) != null)
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    if(sym is IScopeIndexed si && si.scope_idx == -1)
+      si.scope_idx = members.Count; 
+
+    members.Add(sym);
+  }
+
+  public SymbolsStorage GetMembers() { return members; }
+
+  public IScope GetFallbackScope() 
   { 
     //NOTE: we forbid resolving class members 
     //      inside methods without 'this.' prefix on purpose
@@ -1146,6 +1160,16 @@ public class FuncSymbolScript : FuncSymbol
     : base(null, new FuncSignature())
   {}
 
+  public override void Define(Symbol sym) 
+  {
+    if(!(sym is FuncArgSymbol))
+      throw new Exception("Only func arguments allowed, got: " + sym.GetType().Name);
+
+    ++local_vars_num;
+
+    base.Define(sym);
+  }
+
   public override int GetDefaultArgsNum() { return default_args_num; }
 
   public override uint ClassId()
@@ -1162,15 +1186,6 @@ public class FuncSymbolScript : FuncSymbol
     marshall.Marshall.Sync(ctx, ref ip_addr);
   }
 
-  public override void Define(Symbol sym) 
-  {
-    if(!(sym is FuncArgSymbol))
-      throw new Exception("Only func arguments allowed, got: " + sym.GetType().Name);
-
-    ++local_vars_num;
-
-    base.Define(sym);
-  }
 }
 
 #if BHL_FRONT
@@ -1415,7 +1430,7 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public class EnumSymbol : EnclosingSymbol, IType
+public class EnumSymbol : Symbol, IScope, IType
 {
   public SymbolsStorage members;
 
@@ -1428,19 +1443,37 @@ public class EnumSymbol : EnclosingSymbol, IType
 #endif
 
   public EnumSymbol(string name)
-     : base(name)
+     : base(name, type: default(TypeProxy)/*set below*/)
   {
-    this.members = new SymbolsStorage(this);
     this.type = new TypeProxy(this);
+    this.members = new SymbolsStorage(this);
   }
 
   public string GetName() { return name; }
 
-  public override SymbolsStorage GetMembers() { return members; }
+  public IScope GetFallbackScope() { return scope; }
+
+  public Symbol Resolve(string name) 
+  {
+    return members.Find(name);
+  }
+
+  public void Define(Symbol sym)
+  {
+    if(Resolve(name) != null)
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+
+    if(sym is IScopeIndexed si && si.scope_idx == -1)
+      si.scope_idx = members.Count; 
+
+    members.Add(sym);
+  }
+
+  public SymbolsStorage GetMembers() { return members; }
 
   public EnumItemSymbol FindValue(string name)
   {
-    return base.Resolve(name) as EnumItemSymbol;
+    return Resolve(name) as EnumItemSymbol;
   }
 
   public override uint ClassId()

@@ -3,12 +3,7 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public interface ISymbolResolver
-{
-  Symbol ResolveSymbolByPath(string path);
-}
-
-public interface IScope : ISymbolResolver
+public interface IScope
 {
   // Look up name in this scope without fallback!
   Symbol Resolve(string name);
@@ -17,12 +12,17 @@ public interface IScope : ISymbolResolver
   // if symbol with such a name already exists
   void Define(Symbol sym);
 
-  // Collection of members, depending on concrete implementation may be
-  // a readonly
-  SymbolsStorage GetMembers();
-
   // Where to look next for symbols in case if not found (e.g super class) 
   IScope GetFallbackScope();
+
+  // Collection of members, depending on concrete implementation may be
+  // a readonly one
+  SymbolsStorage GetMembers();
+}
+
+public interface ISymbolResolver
+{
+  Symbol ResolveSymbolByPath(string path);
 }
 
 public interface IInstanceType : IType, IScope 
@@ -30,7 +30,7 @@ public interface IInstanceType : IType, IScope
   HashSet<IInstanceType> GetAllRelatedTypesSet();
 }
 
-public class LocalScope : IScope 
+public class LocalScope : IScope, ISymbolResolver 
 {
   bool is_paral;
   int next_idx;
