@@ -1549,7 +1549,7 @@ public class EnumItemSymbol : Symbol, IType
 public class SymbolsStorage : marshall.IMarshallable
 {
   IScope scope;
-  internal List<Symbol> list = new List<Symbol>();
+  List<Symbol> list = new List<Symbol>();
 
   public int Count
   {
@@ -1587,13 +1587,10 @@ public class SymbolsStorage : marshall.IMarshallable
 
   public void Add(Symbol s)
   {
-    //TODO:???
-    //if(s.scope != null && s.scope != scope)
-    // throw new Exception("Symbol '" + s.name + "' scope is already set");
-
     if(Find(s.name) != null)
       throw new SymbolError(s, "already defined symbol '" + s.name + "'"); 
 
+    //only assingning scope if it's not assigned yet
     if(s.scope == null)
       s.scope = scope;
 
