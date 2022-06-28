@@ -989,10 +989,10 @@ public abstract class EnclosingSymbol : Symbol, IScope
 
   public virtual void Define(Symbol sym) 
   {
-    var members = GetMembers(); 
-    if(members.Find(sym.name) != null)
+    if(Resolve(name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
+    var members = GetMembers(); 
     if(sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = members.Count; 
 
