@@ -33,7 +33,7 @@ public interface IInstanceType : IType, IScope
   HashSet<IInstanceType> GetAllRelatedTypesSet();
 }
 
-public class LocalScope : IScope, ISymbolResolver, ISymbolsStorage 
+public class LocalScope : IScope, ISymbolsStorage 
 {
   bool is_paral;
   int next_idx;
@@ -73,11 +73,6 @@ public class LocalScope : IScope, ISymbolResolver, ISymbolsStorage
         fallback_ls.next_idx = next_idx;
       func_owner.current_scope = fallback_ls;
     }
-  }
-
-  public Symbol ResolveSymbolByPath(string path)
-  {
-    return ScopeExtensions.ResolveSymbolByPath(this, path);
   }
 
   public SymbolsStorage GetMembers() { return members; }
@@ -125,7 +120,7 @@ public class LocalScope : IScope, ISymbolResolver, ISymbolsStorage
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver, ISymbolsStorage
+public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage, ISymbolResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -159,6 +154,11 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
   public Namespace(Symbol2Index gindex = null)
     : this(gindex, "", "")
   {}
+
+  public Symbol ResolveSymbolByPath(string path)
+  {
+    return ((IScope)this).ResolveSymbolByPath(path);
+  }
 
   public Namespace Nest(string name)
   {
@@ -361,11 +361,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
     members.Add(sym);
   }
 
-  public Symbol ResolveSymbolByPath(string path)
-  {
-    return ScopeExtensions.ResolveSymbolByPath(this, path);
-  }
-
   public override void Sync(marshall.SyncContext ctx) 
   {
     //NOTE: links are not persisted since it's assumed 
@@ -533,6 +528,26 @@ public static class ScopeExtensions
       this.name = null;
       this.tp = tp;
     }
+  }
+
+  public struct IScope2ISymbolResolver : ISymbolResolver
+  {
+    public IScope scope;
+
+    public IScope2ISymbolResolver(IScope scope)
+    {
+      this.scope = scope;
+    }
+
+    public Symbol ResolveSymbolByPath(string path)
+    {
+      return scope.ResolveSymbolByPath(path);
+    }
+  }
+
+  public static IScope2ISymbolResolver S2R(this IScope s)
+  {
+    return new IScope2ISymbolResolver(s);
   }
 
   public static TypeProxy T(this ISymbolResolver self, IType t)

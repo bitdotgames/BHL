@@ -302,7 +302,7 @@ public class InterfaceSymbolNative : InterfaceSymbol
   }
 }
 
-public abstract class ClassSymbol : Symbol, IScope, ISymbolResolver, IInstanceType, ISymbolsStorage
+public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStorage
 {
   public ClassSymbol super_class {
     get {
@@ -418,11 +418,6 @@ public abstract class ClassSymbol : Symbol, IScope, ISymbolResolver, IInstanceTy
   public Symbol Resolve(string name) 
   {
     return members.Find(name);
-  }
-
-  public Symbol ResolveSymbolByPath(string path)
-  {
-    return ScopeExtensions.ResolveSymbolByPath(this, path);
   }
 
   public void SetSuperClass(ClassSymbol super_class)
@@ -976,7 +971,7 @@ public class FieldSymbolScript : FieldSymbol
   }
 }
 
-public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolResolver, ISymbolsStorage
+public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsStorage
 {
   public FuncSignature signature;
 
@@ -1022,11 +1017,6 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   public void SetSignature(FuncSignature signature)
   {
     this.signature = signature;
-  }
-
-  public Symbol ResolveSymbolByPath(string path)
-  {
-    return ScopeExtensions.ResolveSymbolByPath(this, path);
   }
 
   public virtual Symbol Resolve(string name) 

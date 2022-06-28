@@ -2264,7 +2264,7 @@ public class CompiledModule
     ns.links.Add(types.ns);
 
     if(resolver == null)
-      resolver = ns;
+      resolver = ns.S2R();
 
     var symb_factory = new SymbolFactory(types, resolver);
 

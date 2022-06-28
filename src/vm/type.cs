@@ -528,7 +528,7 @@ public class Types : ISymbolResolver
     ns.Define(ClassType);
 
     {
-      var fn = new FuncSymbolNative("suspend", ns.T("void"), 
+      var fn = new FuncSymbolNative("suspend", this.T("void"), 
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutineSuspend.Instance;
@@ -538,7 +538,7 @@ public class Types : ISymbolResolver
     }
 
     {
-      var fn = new FuncSymbolNative("yield", ns.T("void"),
+      var fn = new FuncSymbolNative("yield", this.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutinePool.New<CoroutineYield>(frm.vm);
@@ -549,7 +549,7 @@ public class Types : ISymbolResolver
 
     //TODO: this one is controversary, it's defined for BC for now
     {
-      var fn = new FuncSymbolNative("fail", ns.T("void"),
+      var fn = new FuncSymbolNative("fail", this.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           status = BHS.FAILURE;
@@ -560,7 +560,7 @@ public class Types : ISymbolResolver
     }
 
     {
-      var fn = new FuncSymbolNative("start", ns.T("int"),
+      var fn = new FuncSymbolNative("start", this.T("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var val_ptr = frm.stack.Pop();
@@ -569,26 +569,26 @@ public class Types : ISymbolResolver
           frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
-        new FuncArgSymbol("p", ns.TFunc("void"))
+        new FuncArgSymbol("p", this.TFunc("void"))
       );
       ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("stop", ns.T("void"),
+      var fn = new FuncSymbolNative("stop", this.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var fid = (int)frm.stack.PopRelease().num;
           frm.vm.Stop(fid);
           return null;
         }, 
-        new FuncArgSymbol("fid", ns.T("int"))
+        new FuncArgSymbol("fid", this.T("int"))
       );
       ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("type", ns.T("Type"),
+      var fn = new FuncSymbolNative("type", this.T("Type"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var o = frm.stack.Pop();
@@ -596,7 +596,7 @@ public class Types : ISymbolResolver
           o.Release();
           return null;
         }, 
-        new FuncArgSymbol("o", ns.T("any"))
+        new FuncArgSymbol("o", this.T("any"))
       );
       ns.Define(fn);
     }
