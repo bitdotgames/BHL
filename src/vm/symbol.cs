@@ -202,9 +202,6 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType
     if(!(sym is FuncSymbol))
       throw new Exception("Only function symbols supported");
     
-    if(sym is IScopeIndexed si && si.scope_idx == -1)
-      si.scope_idx = members.Count; 
-
     members.Add(sym);
   }
 
@@ -385,9 +382,14 @@ public abstract class ClassSymbol : Symbol, IScope, ISymbolResolver, IInstanceTy
 
     for(int i=0;i<tmp_class.tmp_members.Count;++i)
     {
+      var sym = tmp_class.tmp_members[i];
+      //NOTE: we need to recalculate attribute index taking account all 
+      //      parent classes
+      if(sym is IScopeIndexed si)
+        si.scope_idx = members.Count; 
       //NOTE: we want to skip super class check here,
-      //      hence the usage of base.Define(..)
-      DefineNoParentCheck(tmp_class.tmp_members[i]);
+      //      hence skipping the Define
+      members.Add(sym);
     }
   }
 
@@ -429,14 +431,6 @@ public abstract class ClassSymbol : Symbol, IScope, ISymbolResolver, IInstanceTy
   {
     if(super_class != null && super_class.Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
-    DefineNoParentCheck(sym);
-  }
-
-  void DefineNoParentCheck(Symbol sym) 
-  {
-    if(sym is IScopeIndexed si && si.scope_idx == -1)
-      si.scope_idx = members.Count; 
 
     members.Add(sym);
   }
@@ -1043,9 +1037,6 @@ public abstract class FuncSymbol : Symbol, IScope, IScopeIndexed, ISymbolResolve
 
   public virtual void Define(Symbol sym)
   {
-    if(sym is IScopeIndexed si && si.scope_idx == -1)
-      si.scope_idx = members.Count; 
-
     members.Add(sym);
   }
 
@@ -1205,7 +1196,7 @@ public class LambdaSymbol : FuncSymbolScript
 
     //NOTE: we want to avoid possible recursion during resolve
     //      checks that's why we use a 'raw' version
-    this.current_scope.RawDefine(local);
+    this.current_scope.DefineWithoutEnclosingChecks(local);
 
     var up = new AST_UpVal(local.name, local.scope_idx, src.scope_idx); 
     upvals.Add(up);
@@ -1451,9 +1442,6 @@ public class EnumSymbol : Symbol, IScope, IType
 
   public void Define(Symbol sym)
   {
-    if(sym is IScopeIndexed si && si.scope_idx == -1)
-      si.scope_idx = members.Count; 
-
     members.Add(sym);
   }
 
@@ -1624,8 +1612,8 @@ public class SymbolsStorage : marshall.IMarshallable
     if(s.scope == null)
       s.scope = scope;
 
-    //if(s is IScopeIndexed si && si.scope_idx == -1)
-    //  si.scope_idx = list.Count;
+    if(s is IScopeIndexed si && si.scope_idx == -1)
+      si.scope_idx = list.Count;
 
     list.Add(s);
   }

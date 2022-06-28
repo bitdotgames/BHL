@@ -88,7 +88,7 @@ public class LocalScope : IScope, ISymbolResolver
   {
     EnsureNotDefinedInEnclosingScopes(sym);
 
-    RawDefine(sym);
+    DefineWithoutEnclosingChecks(sym);
   }
 
   void EnsureNotDefinedInEnclosingScopes(Symbol sym)
@@ -105,13 +105,11 @@ public class LocalScope : IScope, ISymbolResolver
     }
   }
 
-  public void RawDefine(Symbol sym) 
+  public void DefineWithoutEnclosingChecks(Symbol sym) 
   {
+    //NOTE: overriding SymbolsStorage scope_idx assing logic
     if(sym is IScopeIndexed si && si.scope_idx == -1)
-    {
-      //Console.WriteLine(sym.name + " " + next_idx);
       si.scope_idx = next_idx;
-    }
 
     if(next_idx >= func_owner.local_vars_num)
       func_owner.local_vars_num = next_idx + 1;
@@ -355,13 +353,8 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
     //      symbols. For example, we need to know an index of 
     //      a function defined in a module. Likewise we have
     //      something similar for global variables.
-    if(sym is IScopeIndexed si && si.scope_idx == -1)
-    {
-      if(sym is FuncSymbolNative fsn)
-        fsn.scope_idx = gindex.Add(sym);
-      else
-        si.scope_idx = members.Count; 
-    }
+    if(sym is FuncSymbolNative fsn && fsn.scope_idx == -1)
+      fsn.scope_idx = gindex.Add(sym);
 
     members.Add(sym);
   }
