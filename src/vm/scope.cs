@@ -14,7 +14,10 @@ public interface IScope
 
   // Where to look next for symbols in case if not found (e.g super class) 
   IScope GetFallbackScope();
+}
 
+public interface ISymbolsStorage
+{
   // Collection of members, depending on concrete implementation may be
   // a readonly one
   SymbolsStorage GetMembers();
@@ -30,7 +33,7 @@ public interface IInstanceType : IType, IScope
   HashSet<IInstanceType> GetAllRelatedTypesSet();
 }
 
-public class LocalScope : IScope, ISymbolResolver 
+public class LocalScope : IScope, ISymbolResolver, ISymbolsStorage 
 {
   bool is_paral;
   int next_idx;
@@ -122,7 +125,7 @@ public class LocalScope : IScope, ISymbolResolver
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
+public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver, ISymbolsStorage
 {
   public const uint CLASS_ID = 20;
 
@@ -297,7 +300,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolResolver
 
   public IScope GetFallbackScope() { return scope; }
 
-  //TODO: cache it?
   public SymbolsStorage GetMembers() 
   { 
     var all = new SymbolsStorage(this);
@@ -484,14 +486,17 @@ public static class ScopeExtensions
   public static string DumpMembers(this IScope scope, int level = 0)
   {
     string str = new String(' ', level) + (scope is Symbol sym ? "'" + sym.name + "' : " : "") + scope.GetType().Name + " {\n";
-    var ms = scope.GetMembers();
-    for(int i=0;i<ms.Count;++i)
+    if(scope is ISymbolsStorage iss)
     {
-      var m = ms[i];
-      if(m is IScope s)
-        str += new String(' ', level) + s.DumpMembers(level+1) + "\n";
-      else
-        str += new String(' ', level+1) + "'" + m.name + "' : " + m.GetType().Name + "\n";
+      var ms = iss.GetMembers();
+      for(int i=0;i<ms.Count;++i)
+      {
+        var m = ms[i];
+        if(m is IScope s)
+          str += new String(' ', level) + s.DumpMembers(level+1) + "\n";
+        else
+          str += new String(' ', level+1) + "'" + m.name + "' : " + m.GetType().Name + "\n";
+      }
     }
     str += new String(' ', level) + "}";
     return str;
