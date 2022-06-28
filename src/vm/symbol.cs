@@ -485,7 +485,7 @@ public abstract class ClassSymbol : EnclosingSymbol, IInstanceType
 
   public override void Define(Symbol sym) 
   {
-    if(super_class != null && super_class.members.Contains(sym.name))
+    if(super_class != null && super_class.Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     base.Define(sym);
