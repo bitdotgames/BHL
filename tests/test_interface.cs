@@ -353,7 +353,6 @@ public class TestInterfaces : BHL_TestBase
       }
       ";
 
-      var ts = new Types();
       var c = Compile(bhl);
 
       var expected = 
@@ -379,7 +378,7 @@ public class TestInterfaces : BHL_TestBase
         ;
       AssertEqual(c, expected);
 
-      var vm = MakeVM(c, ts);
+      var vm = MakeVM(c);
       AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }

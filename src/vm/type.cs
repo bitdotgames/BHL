@@ -88,7 +88,8 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
            symb is InterfaceSymbolNative ||
            symb is InterfaceSymbolScript ||
            symb is EnumSymbol ||
-           (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol))
+           (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol)) ||
+           (/*symb is MapTypeSymbol && */!(symb is GenericMapTypeSymbol))
            );
 
         //NOTE: we want to marshall only those types which are not
@@ -133,7 +134,7 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     if(r != null)
       return r.Equals(o.Get());
     else
-      return Get() == null;
+      return r == o.Get();
   }
 
   public override int GetHashCode()

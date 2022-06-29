@@ -20,8 +20,7 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    var c = Compile(bhl, ts);
+    var c = Compile(bhl);
 
     var expected = 
       new ModuleCompiler()
@@ -589,8 +588,7 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    var c = Compile(bhl, ts);
+    var c = Compile(bhl);
 
     var expected = 
       new ModuleCompiler()

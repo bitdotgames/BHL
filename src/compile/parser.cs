@@ -1141,6 +1141,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     if(ctx.ARR() != null)
       tp = curr_scope.S2R().TArr(tp);
+    else if(ctx.mapType() != null)
+      tp = curr_scope.S2R().TMap(curr_scope.S2R().T(ctx.mapType().nsName().GetText()), tp);
 
     if(tp.Get() == null)
       FireError(ctx, "type '" + tp.spec + "' not found");

@@ -8338,8 +8338,7 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    var c = Compile(bhl, ts);
+    var c = Compile(bhl);
 
     var expected = 
       new ModuleCompiler()
@@ -8370,7 +8369,7 @@ public class TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c, ts);
+    var vm = MakeVM(c);
     var num = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(num, 5);
     CommonChecks(vm);
