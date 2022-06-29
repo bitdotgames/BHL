@@ -29,7 +29,11 @@ nsName
   ;
 
 type
-  : ARR? (nsName | funcType) 
+  : (ARR | mapType)? (nsName | funcType) 
+  ;
+
+mapType
+  : '[' nsName ']' 
   ;
 
 //expressions

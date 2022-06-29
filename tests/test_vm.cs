@@ -12083,7 +12083,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl7);
       },
-      "extraneous input '++' expecting ']'"
+      "no viable alternative at input '[i++'"
     );
 
     AssertError<Exception>(
@@ -12239,7 +12239,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl6);
       },
-      "extraneous input '--' expecting ']'"
+      "no viable alternative at input '[i--'"
     );
 
     AssertError<Exception>(
