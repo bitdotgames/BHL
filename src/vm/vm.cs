@@ -802,6 +802,7 @@ public class VM : ISymbolResolver
 
   public ValPool vals_pool = new ValPool();
   public Pool<ValList> vlsts_pool = new Pool<ValList>();
+  public Pool<ValMap> vmaps_pool = new Pool<ValMap>();
   public Pool<Frame> frames_pool = new Pool<Frame>();
   public Pool<Fiber> fibers_pool = new Pool<Fiber>();
   public Pool<FuncPtr> ptrs_pool = new Pool<FuncPtr>();

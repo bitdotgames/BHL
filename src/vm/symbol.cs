@@ -824,7 +824,7 @@ public class GenericMapTypeSymbol : ClassSymbol, IEquatable<GenericMapTypeSymbol
     this.key_type = key_type;
     this.val_type = val_type;
 
-    //this.creator = CreateArr;
+    this.creator = CreateMap;
 
     //{
     //  var fn = new FuncSymbolNative("Add", Types.Void, Add,
@@ -845,10 +845,10 @@ public class GenericMapTypeSymbol : ClassSymbol, IEquatable<GenericMapTypeSymbol
     //  this.Define(fn);
     //}
 
-    //{
-    //  var vs = new FieldSymbol("Count", Types.Int, GetCount, null);
-    //  this.Define(vs);
-    //}
+    {
+      var vs = new FieldSymbol("Count", Types.Int, GetCount, null);
+      this.Define(vs);
+    }
 
     //{
     //  //hidden system method not available directly
@@ -865,6 +865,14 @@ public class GenericMapTypeSymbol : ClassSymbol, IEquatable<GenericMapTypeSymbol
   public GenericMapTypeSymbol()
     : this(new TypeProxy(), new TypeProxy())
   {}
+
+  static IDictionary<Val,Val> AsMap(Val arr)
+  {
+    var map = arr.obj as IDictionary<Val,Val>;
+    if(map == null)
+      throw new Exception("Not a ValMap: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+    return map;
+  }
 
   //public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
   //public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
@@ -909,6 +917,17 @@ public class GenericMapTypeSymbol : ClassSymbol, IEquatable<GenericMapTypeSymbol
   public override int GetHashCode()
   {
     return name.GetHashCode();
+  }
+
+  public void CreateMap(VM.Frame frm, ref Val v, IType type)
+  {
+    v.SetObj(ValMap.New(frm.vm), type);
+  }
+
+  public void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  {
+    var m = AsMap(ctx);
+    v.SetNum(m.Count);
   }
 }
 

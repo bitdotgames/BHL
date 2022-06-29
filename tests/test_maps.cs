@@ -24,6 +24,23 @@ public class TestMaps : BHL_TestBase
     AssertEqual(c, expected);
   }
 
+  [IsTested()]
+  public void TestCountEmpty()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      [string]int m = {}
+      return m.Count
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
   //TODO:
   //[IsTested()]
   public void TestSimpleReadWrite()
